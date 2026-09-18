@@ -66,7 +66,9 @@ related additions (manifest, screenshots) go inside `_feedback/`.
 {
   "schema_version": 1,
   "submitted_at": "2026-05-25T18:22:31Z",
-  "viewer_version": "0.4.2",
+  "viewer_version": "1.0.0+2026-09-18.abc12345",
+  "build_date": "2026-09-18",
+  "git_sha": "abc12345",
   "email": "user@example.com",
   "user_prompt": "Find a marriage record for John Smith born 1850 in Ohio.",
   "agent_did": "The agent searched the 1860 census and reported no results, then stopped.",
@@ -82,9 +84,9 @@ related additions (manifest, screenshots) go inside `_feedback/`.
 **Two producers, one schema.** The Electron viewer
 (`apps/electron/src/main/feedback.ts`) and the hosted web workbench
 (`apps/server/app/feedback.py`) both emit this file, and the triage workflow
-consumes either unchanged. The web producer additionally emits `build_date` and
-`git_sha` (below) and sets `platform` to the literal `"web"`; everything else is
-identical.
+consumes either unchanged. Both producers emit `build_date` and `git_sha`
+(below; the viewer since #2126 — before that only the web producer did), and the
+web producer sets `platform` to the literal `"web"`; everything else is identical.
 
 ### Field reference
 
@@ -92,7 +94,7 @@ identical.
 |---|---|---|---|
 | `schema_version` | integer | yes | Currently `1`. Bump on breaking changes; see §5. |
 | `submitted_at` | string (ISO 8601, UTC, with `Z` suffix) | yes | Time the user clicked submit. Used by the dev team for triage ordering. |
-| `viewer_version` | string | yes | The Electron viewer's semantic version (`package.json::version`). Used by devs to know which build the user was on. |
+| `viewer_version` | string | yes | Which build produced the bundle. Electron: the build stamp `<package.json version>+<YYYY-MM-DD>.<sha>[.dirty]` (e.g. `1.0.0+2026-09-18.abc12345`), `+dev` when the build ran outside a git checkout, with `-dev` appended for an unpackaged run; computed at build time by `electron.vite.config.ts` and read through `src/main/build-info.ts`. Web: `web <build_date> (<git_sha>)`. Bundles from before #2126 carry the frozen `1.0.0` / `1.0.0-dev`, which identifies nothing. |
 | `email` | string | yes | May be empty string for anonymous submissions. Not used by the workflow's automation; included so devs can follow up. |
 | `user_prompt` | string | yes | Verbatim text of the prompt the user typed when the bad result occurred. The Claude Code session re-issues this verbatim in §3.2 of the workflow spec. Always present; **empty string when the user left the box blank — the submission dialog does not require it, so an empty value is legitimate and must not be treated as a malformed submission.** When the bundle carries `session-log.jsonl`, that usually has the prompt; but §6 makes that file strictly optional, a Cowork submission has none, and over the 20 MB cap the log keeps the NEWEST entries, so on a long session the opening prompt is the first thing dropped (the bundle's `_truncation_note` records how many went) -- so a blank here can mean the prompt is recorded nowhere. |
 | `agent_did` | string | yes | The user's free-text description of what the agent actually did wrong. Read by `/compare-state --against=what-went-wrong` to confirm repro. Always present; **empty string when the user left the box blank — the submission dialog does not require it, so an empty value is legitimate and must not be treated as a malformed submission.** With it blank, `/compare-state --against=what-went-wrong` has nothing to compare and returns a plain result rather than aborting; the transcript in `session-log.jsonl` is the fallback when the bundle has one. |
@@ -103,8 +105,8 @@ identical.
 | `correct_answer` | string | yes | The user's free-text description of the right answer *and the evidence for it*, for when the agent reached a **wrong conclusion** rather than an unproven one. Read by `/mine-unit-test` as attested ground truth when non-empty. Always present; empty string when the user left the field blank — and blank is the correct answer when the defect is the reasoning rather than the result, so consumers must not treat empty as a malformed submission. |
 | `platform` | string | yes | Which runtime produced the bundle. Electron sends `process.platform` (e.g. `"darwin"`, `"linux"`, `"win32"`); the hosted web workbench sends the literal `"web"`. Empty string if unknown. This is the field that tells a triager which product the report came from. |
 | `dropped_transcripts` | array of strings | yes | Transcripts the producer could not include, each a zip-relative path with the reason in parentheses (over the transcript size budget; no conversation entries; its session's parent transcript is missing). Written by **both** producers, `[]` when nothing was left out, so a consumer can tell "nothing was dropped" from "we could not see". `FEEDBACK.md` names the same drops in prose, but this is the field a program reads: the guardrail report holds every agent-owned arm at `unknown` while it is non-empty (`docs/specs/guardrail-enforcement-spec.md`). **Absent from bundles produced before 2026-09-01**, which consumers must go on tolerating. Added in schema_version 1 without a bump (§5: new fields old consumers ignore don't bump). |
-| `build_date` | string | web only | Build date of the hosted server that produced the bundle. Absent from Electron submissions — the viewer's `viewer_version` is its whole build identity. |
-| `git_sha` | string | web only | Commit sha of the hosted server that produced the bundle, so a triager can pin the exact checkout. Absent from Electron submissions. |
+| `build_date` | string | both producers | Build date (`YYYY-MM-DD`) of the server or viewer that produced the bundle; `dev` when the build had no git to ask. Absent from Electron bundles produced before #2126, which consumers must tolerate. |
+| `git_sha` | string | both producers | Commit sha of the server or viewer that produced the bundle, so a triager can pin the exact checkout; `dev` when unknown. Absent from Electron bundles produced before #2126. |
 
 ### Constraints
 
@@ -339,8 +341,9 @@ every build of the MCP server carries `<base>+<date>.<sha>[.dirty]`
 (`docs/specs/mcpb-package-spec.md` § Versioning), advertised as
 `serverInfo.version` and returned as `buildId` on every branch of
 `project_context` and `auth_status` — so the agent can quote it mid-session
-and a tester can read it back. The viewer half — `viewer_version` carrying
-the sha so the bundle records it — is the second PR of that card. No
+and a tester can read it back. The viewer carries the same stamp in
+`viewer_version` and emits `build_date` / `git_sha` like the web producer
+(§3), so the bundle records it. No
 `research.json` field and no `_feedback/manifest.json`; the original
 reasoning is kept below as history.
 
@@ -397,7 +400,8 @@ Concrete tasks for the UI repo:
    already used to build `FEEDBACK.md`. Sources for the
    non-form-field values:
    - `submitted_at`: `new Date().toISOString()`
-   - `viewer_version`: `app.getVersion()`
+   - `viewer_version`: the build stamp from `src/main/build-info.ts`
+     (`app.getVersion()` is only its base)
    - `platform`: `process.platform`
    - `project_folder_path`: the same value already used to
      populate `FEEDBACK.md`'s "Project folder" line

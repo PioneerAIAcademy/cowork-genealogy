@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 // @ts-expect-error -- plain .mjs build helper, no type declarations (tsconfig
 // only compiles src/**, so this import is never typechecked).
 import { BUILD_VERSION_RE, buildVersion, gitStamp } from "../../../../../scripts/build-stamp.mjs";
@@ -24,7 +25,21 @@ function hasGit(): boolean {
   }
 }
 
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..");
+
 describe("BUILD_VERSION_RE — the one shape every check accepts", () => {
+  // scripts/verify-mcpb.sh carries an inline copy of the regex (the unpacked
+  // bundle cannot import build-stamp.mjs), and that script is the only guard
+  // for a build that stops stamping. Two copies with nothing holding them
+  // together would let the guard's acceptance drift silently — the same shape
+  // test_write_lockdown_parity.py pins for the lockdown predicate.
+  it("verify-mcpb.sh's inline copy matches the exported regex", () => {
+    const sh = readFileSync(join(repoRoot, "scripts", "verify-mcpb.sh"), "utf8");
+    const m = sh.match(/const BUILD_VERSION_RE = (\/.*\/);/);
+    expect(m, "verify-mcpb.sh no longer declares BUILD_VERSION_RE").not.toBeNull();
+    expect(m![1]).toBe(BUILD_VERSION_RE.toString());
+  });
+
   it.each(["0.1.0+dev", "0.1.0+2026-09-17.abc12345", "0.1.0+2026-09-17.abc12345.dirty", "12.0.3+2026-01-01.0123456"])(
     "accepts %s",
     (v) => expect(v).toMatch(BUILD_VERSION_RE),
