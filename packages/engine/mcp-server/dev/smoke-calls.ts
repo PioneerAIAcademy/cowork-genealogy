@@ -26,10 +26,10 @@ export type SmokeMode = "no-bearer" | "bearer";
 
 /** The four auth tools the transport smoke never calls, each with its reason. */
 export const EXCLUDED_TOOLS: Readonly<Record<string, string>> = {
-  login: "writes ~/.familysearch-mcp/tokens.json, which the container layout omits",
-  logout: "writes ~/.familysearch-mcp/tokens.json, which the container layout omits",
-  configure_openrouter: "calls saveConfig against the read-only config mount",
-  auth_status: "only reads tokens and would answer cleanly, but is excluded with the other auth tools",
+  login: "every HTTP request is a bearer principal, so isHostedMode is true: answers HOSTED_REAUTH_INSTRUCTION without touching tokens.json",
+  logout: "a bearer principal has no token file: answers HOSTED_SESSION_MANAGED_MESSAGE without touching tokens.json",
+  configure_openrouter: "saveConfig throws HOSTED_CONFIG_READ_ONLY_MESSAGE for a bearer before any file write",
+  auth_status: "answers {loggedIn: token.length > 0} from the bearer alone, but is excluded with the other auth tools",
 };
 
 export interface CallResult {
@@ -457,7 +457,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: () => ({ personId: FS_PID }),
     expect: (res, ctx) => {
       if (ctx.mode === "no-bearer") return reauth(res, ctx);
-      const ok = !res.isError || !carries(res, HOSTED_REAUTH_INSTRUCTION);
+      const ok = !res.isError || (!carries(res, HOSTED_REAUTH_INSTRUCTION) && !carries(res, "Call the login tool"));
       return { ok, detail: brief(res) };
     },
   },

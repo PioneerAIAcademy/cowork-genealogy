@@ -30,5 +30,8 @@ console.error(`genealogy tool server listening on http://${values.host}:${boundP
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
     server.close(() => process.exit(0));
+    // server.close() waits without a deadline on an in-flight body; give it a
+    // bounded grace, then drop the sockets so `docker stop` gets a clean exit.
+    setTimeout(() => server.closeAllConnections(), 5_000).unref();
   });
 }

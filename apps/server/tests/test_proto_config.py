@@ -228,13 +228,18 @@ def test_tools_depends_on_nothing():
     assert "depends_on" not in _service(_load(COMPOSE), "tools"), "file backend today; no store service to wait for"
 
 
+def _wait_services(line: str) -> list[str]:
+    """The service names after `--wait` on one logical recipe line, a trailing comment stripped."""
+    return line.split("#", 1)[0].split("--wait", 1)[1].split()
+
+
 def test_proto_up_waits_for_tools_but_proto_up_core_does_not():
     core = _recipe("proto-up-core")
     assert core, "proto-up-core has a recipe"
     assert not any(re.search(r"\btools\b", line) for line in core), "the D3 smoke must not gate on the engine image"
     wait_lines = [line for line in _recipe("proto-up") if "--wait" in line]
     assert wait_lines, "proto-up has a --wait line"
-    assert any(re.search(r"\btools\b", line) for line in wait_lines), "proto-up must wait for the tool server's healthcheck"
+    assert any("tools" in _wait_services(line) for line in wait_lines), "proto-up must wait for the tool server's healthcheck"
 
 
 # ── step ceiling ────────────────────────────────────────────────────────────────
