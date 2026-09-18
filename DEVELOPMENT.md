@@ -118,7 +118,8 @@ Example: adding a "list providers" feature.
    - Create `packages/engine/mcp-server/src/tools/list-providers.ts`
    - Add its schema to `allToolSchemas` in `packages/engine/mcp-server/src/tool-schemas.ts`
      and its dispatch case to the `CallTool` handler in
-     `packages/engine/mcp-server/src/index.ts`
+     `packages/engine/mcp-server/src/server.ts` (`createServer`; the stdio
+     entrypoints `src/index.ts` and `src/hosted-stdio.ts` only bind a principal)
    - Add its name to `tools` in `packages/engine/mcp-server/manifest.json` — the packaging
      test (`tests/packaging/manifest.test.ts`) fails if the manifest and
      the registry drift apart

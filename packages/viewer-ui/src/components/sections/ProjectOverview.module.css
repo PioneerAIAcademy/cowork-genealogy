@@ -89,8 +89,8 @@
   line-height: 1.5;
 }
 
-/* Distinguishes intended_audience from narration_guidance, which shares the
-   .profileGuidance styling and would otherwise read as one run-on note. */
+/* Labels intended_audience so it reads as a stated fact about the researcher,
+   not a bare instruction; narration_guidance no longer renders here. */
 .profileLabel {
   color: var(--text-tertiary);
   text-transform: uppercase;
