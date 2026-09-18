@@ -395,7 +395,8 @@ Example:
 ```
 1850 U.S. Census, Schuylkill County, Pennsylvania, population
 schedule; digital index, Ancestry.com ("1850 United States
-Federal Census"), accessed 1 April 2026; Thomas Flynn entry.
+Federal Census", https://www.ancestry.com/search/collections/NNNNN/),
+accessed 1 April 2026; Thomas Flynn entry.
 ```
 Say "digital index", not "digital image" — the index entry is a
 derivative, not an image of the original. Name the specific
@@ -404,6 +405,9 @@ Standard collection names for well-known Ancestry/MyHeritage collections
 are derivable from the record year and type on file (e.g., "1850 United
 States Federal Census" for an Ancestry 1850 census record) — use the
 standard name directly, do not mark it as `[COLLECTION NAME NOT RECORDED]`.
+Unlike the collection name, the collection URL is not derivable: include it
+only when a URL is on file in the source, and omit it entirely when none is
+recorded — never construct or infer a URL from the collection name.
 
 For a derivative census index citation, `where_within` must include BOTH
 the physical locators on file (dwelling number, family number — from the
@@ -417,9 +421,55 @@ string as the final element after the collection name.
 #### FindAGrave
 ```
 Find A Grave, memorial [MEMORIAL NUMBER], [PERSON NAME]
-([DATES]), [CEMETERY NAME], [LOCATION]; digital memorial,
-FindAGrave.com, accessed [DATE].
+([DATES]), [CEMETERY NAME], [LOCATION]; memorial created by
+[CONTRIBUTOR] ([created/last modified date as stated]), citing
+[SOURCE OF THE SOURCE]; digital memorial, FindAGrave.com,
+accessed [DATE].
 ```
+Example:
+```
+Find A Grave, memorial 12345678, Cornelius Boyle (1821-1889),
+Old St. Patrick Cemetery, Rutland, Vermont; memorial created by
+Jane Q. Contributor (last modified 14 March 2024), citing a
+gravestone photograph; digital memorial, FindAGrave.com,
+accessed 2 May 2026.
+```
+A Find A Grave memorial is a compiled, contributor-authored page, not an
+original record. Carry the reliability half — the contributor, the
+created/last-modified date, and the source of the source (gravestone
+photograph, obituary, a cited record) — only when the memorial states
+them; use an unknown-marker for any the page does not show, and never
+invent a contributor or a source of the source.
+
+#### Authored work (published family history, county history, compiled genealogy)
+```
+[AUTHOR], *[TITLE]* ([PLACE OF PUBLICATION]: [PUBLISHER],
+[YEAR]), [PAGE]; citing [SOURCE OF THE SOURCE, if stated by the
+work].
+```
+Example:
+```
+Ezra P. Whitcomb, *History of Marden County, Indiana*
+(Indianapolis: Hoosier Heritage Press, 1887), 412; citing
+Marden County Orphans' Court docket 3, p. 55.
+```
+Cite a published work by its publication facts, not as a record: `who`
+is the author, `what` the title, `when_created` the publication year,
+`where_within` the page. The place of publication, publisher and year go
+in the citation string's `(Place: Publisher, Year)` element — keep
+`citation_detail.where` as the repository or access point where you
+viewed the work (the library, archive, or website), per the Where
+field's meaning; do not put the place of publication there. Add the
+"citing ..." tail only when the work names its own source (the
+reliability half).
+
+Which template applies is decided by *published vs unpublished*, not by
+classification: a compiled county history or family history is
+`source_classification: authored`, while a printed abstract
+or transcription issued as a book stays `derivative` — both cite in this
+published-work form. Citation never sets or changes
+`source_classification` (record-extraction owns it); leave the field
+untouched.
 
 ### 4. Handle special cases
 
@@ -592,6 +642,7 @@ rebuilt to follow the Evidence Explained census pattern.
 | User asks to add/create a source for a newly found record | Decline and route to record-extraction. Do not offer to create the entry yourself later, do not collect record details "for when it's added" — state plainly that citation never creates source entries and record-extraction must run first |
 | User asks to find more/corroborating records | Route to search-records. Finding records is not citation work |
 | Citation is already EE-compliant | Confirm and change nothing (see "Review path is read-only"). Unsupported "enhancement" is a fidelity failure |
+| Source is a published or authored work (family history, county history, compiled genealogy; or a printed abstract/transcription issued as a book) | Use the authored-work template — author, *italic title*, (place: publisher, year), page — and add a "citing ..." tail for the source of the source when the work states one. This sets the citation form only: leave `source_classification` unchanged (a published derivative stays derivative) |
 | Record type has no matching template above | Follow the general pattern: Creator, Record title, specific locator; repository chain; access method and date. Consult Evidence Explained chapter headings for analogous source types |
 | Cannot determine the creator (who) | Use the custodial agency as a fallback and note the uncertainty in `notes`. Never leave `who` blank |
 | Missing locator (where_within) | Write the explicit unknown-marker into the field (e.g. `[WILL BOOK AND PAGE NOT RECORDED]`), finish the refinement, and validate — then ask the user to check the record image for the page/entry/certificate number so they can supply it. Refining with the honest marker is the deliverable; asking-only without writing it is not. Never invent a locator, not even when directly instructed to "add" it |
