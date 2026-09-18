@@ -274,9 +274,14 @@ export function requirePre1880CensusHedge(notes: string): void {
   // Tie the year to the census it qualifies. When no year binds to a census
   // mention at all the note is undecidable on that axis, so fall back to the
   // old whole-note test rather than letting an unhedged 1870 household through
-  // on a phrasing the patterns above do not cover. On a fixed gate this branch
-  // only ever narrows: every note refused after this change was refused before
-  // it, so nothing that used to write can start failing.
+  // on a phrasing the patterns above do not cover. A note that reaches THIS
+  // branch gets its pre-change verdict, because the fallback below is the old
+  // gate verbatim and the `\bcensus\b` test above it is unchanged. That is a
+  // claim about this path and nothing wider: the rule as a whole does NOT only
+  // narrow -- a census named before 1800 is newly refused, and it is refused on
+  // the bound branch, never reaching this one. See the docstring's 1600-1799
+  // boundary, pinned by "refuses a census named before 1800, which the old
+  // whole-note test allowed".
   const bound = censusMentions(notes);
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
