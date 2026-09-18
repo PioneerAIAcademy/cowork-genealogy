@@ -28,7 +28,7 @@ Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads 
   session_activity.payload
       -> {"type": "agent_event", "event": {**payload, "kind": "task_progress"}}   (no id)
   documents.version moved
-      -> {"type": "research_updated" | "gedcomx_updated", "data": <doc>}          (no id)
+      -> {"type": "research_updated" | "gedcomx_updated", "name", "data": <doc>}  (no id)
 
 Only ``session_events`` frames carry ``id: <seq>``, so ``Last-Event-ID`` is always a seq
 and the transient frames are never replayed -- the same split as TRANSIENT_KINDS in the
@@ -38,7 +38,7 @@ Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a ful
 queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
 POLL_S (1), SSE_PING_S (15). Startup applies proto/sql/*.sql (all idempotent).
 
-Run: from apps/server, ``uv run uvicorn --app-dir proto web.app:app --port 8085``.
+Run: from apps/server, ``uv run python proto/web/app.py``.
 """
 
 from __future__ import annotations
@@ -684,3 +684,14 @@ def create_app(
 
 
 app = create_app()
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    # uvicorn's CLI builds the loop before this module is imported, and on Windows that
+    # is ProactorEventLoop, which psycopg3 async refuses; loop="none" lets us choose.
+    server = uvicorn.Server(uvicorn.Config(
+        app, host=os.environ.get("HOST", "127.0.0.1"), port=int(os.environ.get("PORT", "8085")), loop="none"
+    ))
+    asyncio.run(server.serve(), loop_factory=asyncio.SelectorEventLoop if sys.platform == "win32" else None)

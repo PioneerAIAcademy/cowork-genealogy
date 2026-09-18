@@ -62,8 +62,8 @@ and drops the one the 202's `seq` names; everything else relays.
   `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
   in worker mode — it proves the tier, not the resume, since the D3 stub's turn ends inside
   stream A (the driver says so in its own table).
-- **From the venv** (`make proto-web`): the same tier via `uvicorn --app-dir proto
-  web.app:app` against the compose postgres (`:5434`) and elasticmq (`:9324`).
+- **From the venv** (`make proto-web`): the same tier via `python proto/web/app.py`
+  against the compose postgres (`:5434`) and elasticmq (`:9324`).
 - **The SPA** (`make web-proto`, Chrome on `127.0.0.1:5173`) — **verified in review on
   the compose stack 2026-09-14**: the auth stubs answer, sessions list and create, two
   messages round-trip POST → queue → shim → worker → `turn_done` → SSE with exactly two

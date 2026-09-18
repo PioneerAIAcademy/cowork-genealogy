@@ -40,6 +40,7 @@ Checks (PASS/FAIL table, exit 1 on any FAIL, 2 when the tier is unreachable):
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import os
 import socket
@@ -242,8 +243,14 @@ class Embedded:
 
         port = free_port()
         self.base = f"http://127.0.0.1:{port}"
-        self.server = uvicorn.Server(uvicorn.Config(create_app(), host="127.0.0.1", port=port, log_level="warning"))
-        threading.Thread(target=self.server.run, daemon=True).start()
+        self.server = uvicorn.Server(uvicorn.Config(create_app(), host="127.0.0.1", port=port, log_level="warning", loop="none"))
+
+        def _serve() -> None:
+            # uvicorn picks ProactorEventLoop on Windows and psycopg3 async refuses it;
+            # loop="none" hands the loop choice back to us.
+            asyncio.run(self.server.serve(), loop_factory=asyncio.SelectorEventLoop if sys.platform == "win32" else None)
+
+        threading.Thread(target=_serve, daemon=True).start()
         deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             try:
