@@ -1165,7 +1165,7 @@ without whichever Bedrock refuses.
   open). `TOOL_SERVER=http` (`TOOL_SERVER=http make proto-turn`) points the CLI at
   D16's `tools` service under its contract — two headers, `Authorization: Bearer <patron
   token>` → the principal and `X-Genealogy-Project-Id` → the store; nothing else on the
-  request is read. Since 2026-09-18 (PR pending) that header binds a `PgS3ProjectStore`
+  request is read. Since 2026-09-18 (PR #2669) that header binds a `PgS3ProjectStore`
   per request through an `AsyncLocalStorage` in `src/store/project-store.ts`, so a turn
   there runs the project tools against the same Postgres/S3 store as the worker; an
   unbound store that throws is installed as the process store, so nothing falls through
@@ -1361,7 +1361,7 @@ without whichever Bedrock refuses.
   `dev/smoke-calls.ts` plan (and `make engine-smoke-stdio-pg` still drives it through
   `build/hosted-stdio.js`). Compose gained the `tools` service (`apps/server/proto/tools/`,
   `node:22-slim`, read-only, loopback `:8787`; gated on `postgres` and `minio` since
-  2026-09-18 (PR pending), when per-request store scoping landed: the
+  2026-09-18 (PR #2669), when per-request store scoping landed: the
   `X-Genealogy-Project-Id` header binds a `PgS3ProjectStore` per request through an
   `AsyncLocalStorage` in `src/store/project-store.ts`, an unbound store that throws is
   the process store so nothing falls through to the file backend, and the service runs
