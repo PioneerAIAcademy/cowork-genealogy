@@ -218,7 +218,7 @@ Record it **only** when the researcher volunteers access unprompted — the ques
 } }
 ```
 
-A memory whose `notes` says it was not transcribed gets **no** `sources` entry — never one with `transcription: null`. It is already in `tree.gedcomx.json` with its title and URL, which is the lead; a `sources` entry would assert it was examined. Name those memories to the user and say `image_transcribe` can read them later. If no memory was transcribed, `sources` stays empty.
+A memory whose `notes` says it was not transcribed gets **no** `sources` entry — never one with `transcription: null`. It is already in `tree.gedcomx.json` with its title and URL, which is the lead; a `sources` entry would assert it was examined. Name each one in the Step 5 report, which has a bullet for them. If no memory was transcribed, `sources` stays empty.
 
 **`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
@@ -267,6 +267,8 @@ here, only the framing changes.
 - The two or three gaps that set the first research question — gaps on people the
   objective does not cover are context only, not proposed research
 - Known holdings recorded (if any) and what each contributes
+- Any scanned documents or photos on the profile that could not be read this
+  time — name each one and say they can be read later
 - One sentence on what comes next, defining "objective" and "research
   question" on first use — never "use question-selection to…": "Your objective
   is the overall goal — <restate it>. The next step is the first research
