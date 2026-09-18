@@ -232,8 +232,7 @@ def aggregate_dimensions(
     `include_validator_failed=True` lifts that exclusion. It exists for ONE
     caller — `assemble_test_entry` building `review_dimensions`, the rows a
     human annotates — and must never feed `aggregated_dimensions`, which is
-    what the baseline readers (`skill_gate`, `judge_report`, the dashboards)
-    consume.
+    what the baseline readers (`skill_gate`, the dashboards) consume.
     """
     if not runs:
         return []
