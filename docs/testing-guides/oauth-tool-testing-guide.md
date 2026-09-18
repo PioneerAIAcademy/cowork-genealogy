@@ -132,7 +132,7 @@ correctly at each stage — no config, dummy config, real config?
    - `auth_status`
 
    If any of the three new ones (`login`, `logout`, `auth_status`) are
-   missing, check that `src/index.ts` imports and register them.
+   missing, check that `src/tool-schemas.ts` lists them in `allToolSchemas` and `src/server.ts` has their dispatch arms.
 
 ### Part A — No config yet (error messages)
 
@@ -308,7 +308,7 @@ step 1).
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Tools missing from Inspector | `src/index.ts` doesn't import or register the tool | Check imports + the two handler arrays |
+| Tools missing from Inspector | the tool is missing from `allToolSchemas` (`src/tool-schemas.ts`) or has no arm in `src/server.ts` | Check both; `tests/packaging/manifest.test.ts` fails on either |
 | `EADDRINUSE` error on login | Port 1837 already in use (maybe a previous stuck login) | `lsof -i :1837`, stop the offender, retry |
 | Browser doesn't open | Running in a headless env; or no default browser set | The error message will give you the URL — open it manually |
 | FS shows error page even with real key | Redirect URI not registered in your FS app config | Confirm `http://127.0.0.1:1837/callback` is registered *exactly* |

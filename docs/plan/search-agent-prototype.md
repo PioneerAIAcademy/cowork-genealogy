@@ -6,7 +6,9 @@ half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant w
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
 issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
 (PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
-against seeded rows until the worker exists); FamilySearch's
+against seeded rows until the worker exists); D16 built 2026-09-18 (PR #2659; the
+Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
+every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -94,7 +96,7 @@ carrying. Everything below is out on that test, not because it is unimportant.
 | Project state | Session filesystem is the only copy | Postgres jsonb documents, S3 blobs, behind one `ProjectStore` interface |
 | Conversation | SDK on-disk transcript | SDK `SessionStore` backed by Postgres/S3, hydrated per turn |
 | Agent shell | `Bash` under `bypassPermissions` | Removed via `disallowed_tools` on the worker's options — see below |
-| Tool layer | Node forked over stdio in the sandbox | Same, stdio, writing to Postgres/S3 — HTTP transport swapped in week 4 |
+| Tool layer | Node forked over stdio in the sandbox | Same tools, three entrypoints over one `createServer(principal)`: `build/index.js` stays stdio for the desktop `.mcpb`, both harnesses and the hosted alpha; `build/hosted-stdio.js` is the per-turn stdio fork on Postgres/S3 (D9–10); `build/http.js` serves Streamable HTTP at `/mcp` (compose service `tools`, swapped in at D16) |
 | Transport | One WebSocket per session | SSE plus a 1 s Postgres poll |
 | Model | Anthropic API direct | Bedrock direct (`CLAUDE_CODE_USE_BEDROCK`) for the prototype; production is the Messages-compatible Agent Gateway through `ANTHROPIC_BASE_URL` with the Bedrock flag unset (answered 2026-09-11; P3b) |
 | OCR | OpenRouter running Gemini | Unchanged — a pure HTTP caller the substrate does not touch |
@@ -1265,6 +1267,20 @@ without whichever Bedrock refuses.
   on D15's harness — goes with the ledger. Then P3's quota/concurrency half. (The model
   pin sits at D9–10, with the worker loop, because that is where the first worker cost
   figures come from.)
+  **Done 2026-09-18 (PR #2659).** `src/http.ts` → `build/http.js` is the HTTP entrypoint:
+  stateless Streamable HTTP at `/mcp` (one `createServer(principal)` + transport per POST,
+  `/healthz` for the compose healthcheck), the `Authorization: Bearer` header becoming the
+  per-request principal and never `LOCAL`; non-POST on `/mcp` is a 405 from the entrypoint
+  because the SDK transport would otherwise hold a GET open as an SSE stream. `src/index.ts`
+  keeps stdio and every tool. The smoke, `dev/smoke-http.ts` (`make engine-smoke-http`, or
+  `BASE=http://127.0.0.1:8787 PROJECT_ROOT=/projects` against compose), calls every
+  advertised tool but the four named exclusions and fails if any tool is neither called nor
+  excluded; `dev/smoke-stdio.ts` runs the offline subset through the same
+  `dev/smoke-calls.ts` plan (and `make engine-smoke-stdio-pg` still drives it through
+  `build/hosted-stdio.js`). Compose gained the `tools` service (`apps/server/proto/tools/`,
+  `node:22-slim`, read-only, loopback `:8787`, no `depends_on`, file backend today —
+  per-request store scoping for a shared HTTP server is the D9–10 worker half's question);
+  `proto-up-core` does not gate on it. The `turn_id` header plumbing stayed cut.
 - **D17** Real run, driven **interactively** (not `--autonomous`), killed **while a delegated
   `extraction_append` is in flight inside `@plugin:record-extractor`** — which puts a
   delegation in flight, the only thing criterion 1 requires. Six skills name an agent, and `person-evidence` has delegated to its own since
