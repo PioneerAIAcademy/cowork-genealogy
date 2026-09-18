@@ -182,6 +182,25 @@ async def test_an_interrupt_mid_literal_does_not_continue():
 
 
 @pytest.mark.asyncio
+async def test_an_error_after_the_literal_does_not_continue():
+    # The real agent emits `error` after the text blocks when a later assistant
+    # message or the result frame fails; the web refuses Continue on an error
+    # bubble, so the runner must refuse too or a failing key burns the budget.
+    class Errs(ScriptedAgent):
+        async def handle_turn(self, text):
+            self.turns.append(text)
+            yield {"kind": "text", "text": LITERAL}
+            yield {"kind": "error", "text": "The API key was rejected."}
+
+    agent = Errs([LITERAL])
+    events = await _drive(
+        agent, [{"type": "user_msg", "text": "go"}], auto=AutoContinue(enabled=True, max_steps=30)
+    )
+    assert agent.turns == ["go"]
+    assert not _kinds(events, "auto_continue")
+
+
+@pytest.mark.asyncio
 async def test_disabled_never_continues():
     agent = ScriptedAgent([LITERAL])
     events = await _drive(agent, [{"type": "user_msg", "text": "go"}],

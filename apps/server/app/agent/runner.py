@@ -177,6 +177,11 @@ async def serve(
         nonlocal last_text
         if event.get("kind") == "text" and "agent" not in event:
             last_text = str(event.get("text", ""))
+        elif event.get("kind") == "error":
+            # An errored turn never continues, whatever text preceded the
+            # error: the web refuses Continue on an error bubble, and the runner
+            # must not disagree with the button.
+            last_text = None
         emit(event)
 
     def _start(text: str, *, queued: bool = False) -> None:
