@@ -14,7 +14,7 @@ import {
   type SearchPlaceResult,
   type GetPlaceResult,
 } from "../utils/place-api.js";
-import { deriveContextName } from "../utils/place-resolver.js";
+import { deriveContextName, mapWithConcurrency } from "../utils/place-resolver.js";
 
 // Re-export the low-level FamilySearch places fetchers so existing tool/test
 // imports keep resolving from here. Their implementations live in
@@ -159,8 +159,8 @@ export async function placeSearch(
     }
   }
 
-  const results = await Promise.all(
-    entries.map((e) => buildPlaceResult(e.placeRepId, e))
+  const results = await mapWithConcurrency(entries, 8, (e) =>
+    buildPlaceResult(e.placeRepId, e)
   );
 
   placeSearchCache.set(key, results);
@@ -191,17 +191,15 @@ export async function placeSearchAllTool(
     new Set(base.map((r) => r.placeId).filter((p): p is string => !!p))
   );
 
-  const repIdSets = await Promise.all(pids.map((pid) => getPlaceRepIds(pid)));
+  const repIdSets = await mapWithConcurrency(pids, 8, (pid) => getPlaceRepIds(pid));
   const repIds = Array.from(new Set(repIdSets.flat()));
 
-  const built = await Promise.all(
-    repIds.map(async (repId) => {
-      const placeData = await getPlaceById(repId);
-      if (!placeData) return null;
-      const wikipediaUrl = await getPlaceWikipediaUrl(repId);
-      return simplifyPlaceResult(toPlaceResult(placeData, wikipediaUrl));
-    })
-  );
+  const built = await mapWithConcurrency(repIds, 8, async (repId) => {
+    const placeData = await getPlaceById(repId);
+    if (!placeData) return null;
+    const wikipediaUrl = await getPlaceWikipediaUrl(repId);
+    return simplifyPlaceResult(toPlaceResult(placeData, wikipediaUrl));
+  });
 
   return { results: built.filter((r): r is SimplifiedPlaceResult => r !== null) };
 }

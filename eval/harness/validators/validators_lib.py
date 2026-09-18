@@ -142,28 +142,53 @@ def assert_foreign_keys_valid(
     assert not errors, "Dangling references:\n  - " + "\n  - ".join(errors)
 
 
-def written_entries(
+def new_section_entries(
     before_state: dict[str, Any],
     after_state: dict[str, Any],
     section: str,
     *,
     include_modified: bool = False,
 ) -> list[dict]:
-    """Entries in `section` this run created (id absent from before) or, when
-    `include_modified` is set, also modified in place (same id, changed content).
+    """Entries of `section` present in `after_state` but not `before_state`, by id
+    — or, when `include_modified` is set, also entries with the same id whose
+    content changed in place (research_append op:"update").
 
-    Takes the wrapped per-run state dicts ({"research_json": {...}, ...}). Use
-    `include_modified=True` for a section a skill can update in place (e.g.
-    `localities` via research_append op:"update") so an in-place rewrite is not
-    silently skipped; leave it False for an append-only section like `log`.
+    The general form of `new_log_entries` below, which is now a thin alias for
+    `section="log"`. Generalised rather than copied when `test_record_extraction`
+    needed the same diff over `sources`; `include_modified` was added for
+    `localities`, which locality-guide can rewrite in place, so an update is not
+    silently skipped. `include_modified` defaults False, so `new_log_entries` and
+    the `sources` caller are unchanged.
+
+    An earlier draft of this docstring called that copy "the fifth" and credited
+    the `isinstance` guard to "the four earlier ones". Both were wrong, and the
+    reviewer who supplied the error corrected it (#2390 round 2). By the time
+    this PR began, `new_log_entries` was already a single shared helper on main
+    **carrying the guard** — the four byte-identical copies it was lifted from
+    were gone, and what remains is four *importing* files
+    (`test_search_full_text`, `test_search_records`, `test_search_external_sites`,
+    `test_search_images`). So the thing avoided here was a second helper beside
+    the first, not a fifth copy beside four.
+
+    Takes the wrapped per-run state dicts ({"research_json": {...}, ...}), not
+    the unwrapped research.json dict `assert_log_append_only` and its neighbours
+    above take — see `new_log_entries` for why that mismatch is deliberate.
     """
     before = before_state.get("research_json") or {}
     after = after_state.get("research_json") or {}
+    # `or []`, not `.get(section, [])`: an explicit `"log": null` satisfies the
+    # default and then raises TypeError on iteration. This is NEW here — the
+    # shared helper on main used `after.get("log", [])` — so it is not, as an
+    # earlier draft said, pre-existing in copies this replaced (#2390 round 2).
+    # It fires on 0 of the 2130 committed unit runs across 27 skills, so it is
+    # hardening rather than a fix; the section being caller-supplied is what
+    # widens the set of shapes that reach here. (2130 drifts as runs land — the
+    # 0 is the claim.)
     prior = {
-        e.get("id"): e for e in before.get(section, []) if isinstance(e, dict)
+        e.get("id"): e for e in (before.get(section) or []) if isinstance(e, dict)
     }
     out = []
-    for e in after.get(section, []):
+    for e in (after.get(section) or []):
         if not isinstance(e, dict):
             continue
         eid = e.get("id")
@@ -185,7 +210,7 @@ def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -
     with no logic change, rather than matching the unwrapped convention
     the two helpers above use.
     """
-    return written_entries(before_state, after_state, "log")
+    return new_section_entries(before_state, after_state, "log")
 
 
 def assert_log_append_only(

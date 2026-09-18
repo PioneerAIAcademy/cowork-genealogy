@@ -80,15 +80,16 @@ describe("mcpb manifest", () => {
  * The manifest check above is the only tool-list assertion the repo had, and it
  * cannot see the dispatcher. Follow the documented recipe — write the tool,
  * export its schema, add it to `allToolSchemas`, add the manifest entry — and
- * forget the `if` in `index.ts`, and every test still passes: `ListTools`
+ * forget the `if` in `server.ts`, and every test still passes: `ListTools`
  * spreads `allToolSchemas` straight through, so the tool is advertised to the
  * model and the *first real call* throws `Unknown tool: <name>`. CI is green
  * the whole way, and on the `.mcpb`/Cowork path that surfaces after shipping.
  *
- * Parsed rather than imported: `index.ts` connects the stdio transport as an
- * import side effect, which is the same reason `tool-schemas.ts` exists as a
- * separate module for the check above. `createSourceFile` only parses text, so
- * none of that runs.
+ * Parsed rather than imported: the chain lived in `index.ts`, which connects
+ * the stdio transport as an import side effect, which is the same reason
+ * `tool-schemas.ts` exists as a separate module for the check above. It now
+ * lives in `server.ts` (`createServer(principal)`), which both entrypoints
+ * share; `createSourceFile` only parses text, so nothing runs either way.
  *
  * Parsed rather than regex-matched for a second reason: a comment is not a
  * node, so a **commented-out** dispatch cannot be counted as a live case. That
@@ -99,7 +100,7 @@ describe("mcpb manifest", () => {
  * lint.
  */
 describe("tool dispatch", () => {
-  const indexPath = join(mcpRoot, "src", "index.ts");
+  const indexPath = join(mcpRoot, "src", "server.ts");
   const indexAst = ts.createSourceFile(
     indexPath,
     readFileSync(indexPath, "utf8"),
@@ -127,7 +128,7 @@ describe("tool dispatch", () => {
     // correct outcome: the replacement needs its own check, not a silent pass.
     expect(
       dispatched.length,
-      "no `request.params.name === \"…\"` comparisons found in src/index.ts — if " +
+      "no `request.params.name === \"…\"` comparisons found in src/server.ts — if " +
         "dispatch was refactored, replace this test rather than deleting it",
     ).toBeGreaterThan(0);
   });

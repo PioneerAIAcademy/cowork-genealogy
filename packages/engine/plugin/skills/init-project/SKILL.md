@@ -26,42 +26,26 @@ allowed-tools:
 If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Hand the turn off instead — **project-status** for status/resume wording, **question-selection** for next-question wording — and stop. If you cannot delegate, reply with exactly this and stop:
 > "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
 
-**Narration** (initialize path only — the guard clause above reads nothing): read `researcher_profile.narration_guidance` from `research.json` and apply it. If absent (new project being initialized), default to a one-line preamble per action.
+**Narration** (initialize path only — the guard clause above reads nothing): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
 
 **Places:** Follow `references/places-guidance.md`. Keep the `standard_place` a `person_read` fact carries; resolve anything else — hand-entered, or a fact returned with `place` and no `standard_place` — with `place_search`.
 
-## Opening-turn questions
+## Opening turn
 
-Ask two things in the opening turn, alongside the person ID/name request: the research objective and experience level (`researcher_profile` stores the latter). **Never stop and wait for either of them. Complete the full initialization in a single pass:**
+Ask one thing in the opening turn, alongside the person ID/name request: the research objective. **Never stop and wait for it. Complete the full initialization in a single pass:**
 
-1. **If the user's message already states an answer** to one or both — map and normalize it and keep going.
-2. **For anything left unanswered, ask it in this same opening-turn message, but do not wait for a reply before proceeding:**
-   - No stated objective → store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback, the same way a defaulted `narration_guidance` is stored verbatim, not paraphrased.
-   - No stated experience level → default to `intermediate`.
-   Write the files now with whatever mix of stated answers and defaults applies, and tell the user in the final summary exactly which fields were defaulted. Optionally repeat the questions *after* both files are written — never as a turn-ending prompt.
+1. **If the user's message already states an objective** — keep going.
+2. **If not, ask it in this same opening-turn message, but do not wait for a reply before proceeding.** Store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback. Write the files now and say in the final summary that the objective was defaulted.
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
 
-### Question — Experience level
+### Researcher profile — fixed, never asked
 
-> How would you describe your genealogy experience?
-> (a) just starting out → `novice`
-> (b) some research under my belt → `intermediate`
-> (c) experienced → `experienced`
-> (d) professional/certified → `professional`
+Do not ask about experience level or anything else about the researcher. Every project gets the same profile: `experience_level: "novice"` and this `narration_guidance`, stored verbatim:
 
-### Derive `narration_guidance`
+> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
 
-Store the matching text verbatim into `researcher_profile.narration_guidance`:
-
-| Experience level | `narration_guidance` |
-|---|---|
-| novice | "Narrate the *why* before each action. Define genealogy terms inline when first introduced. Explain which GPS step you are executing and what it produces. Err on the side of more context — the user is learning." |
-| intermediate | "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline." |
-| experienced | "No preambles. Do the work and report results concisely. Assume fluency with GPS and standard genealogy terminology." |
-| professional | "No preambles. Do the work and report results concisely. Assume fluency with GPS, BCG standards, and standard genealogy terminology." |
-
-Store `experience_level` and `narration_guidance` in `research.json` `researcher_profile` (Step 4). The user can edit the profile directly later.
+A stated level in the message ("I'm a professional genealogist") is not persisted. Store both fields in `research.json` `researcher_profile` (Step 4).
 
 ## Known-holdings survey
 
@@ -210,7 +194,7 @@ Then relay to the user that the project was created, naming the folder.
 
 `research_append` runs after `project_create` — never before, and never bundled into it. Two sections to write; one call each or one call carrying both in an `ops` array, either is fine.
 
-**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level first. Map `experience_level` and store the verbatim `narration_guidance` for that level (table above). When the message supplied an answer, never persist the `intermediate` default in its place. Since the opening-turn rule above always asks and always proceeds, this call always writes.
+**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: { experience_level: "novice", narration_guidance: "<the fixed string above, verbatim>" } })`. Always the same two values; this call always writes.
 
 **Do not ask about site access, and do not write `subscriptions`.** Access is assumed available; leave the field absent rather than defaulting it. `["none"]` asserts the researcher told us they have nothing, which is the opposite of what we now assume.
 
@@ -257,17 +241,18 @@ summary and findings, and never confirm it from the tree it came from
 (issue #1471). Recording and testing the doubt is question-selection's job —
 here, only the framing changes.
 
-**Present to the user:**
-- Research objective
-- **Tree summary table** — one row per person: local ID, full name, gender, key facts. Example: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
-- Pedigree analysis findings
+**Present to the user** — one short report in the house style, no tree table.
+- The objective in one sentence, and whether it was defaulted
+- Any obvious error found (the closed list above), one sentence each
+- The two or three gaps that set the first research question — gaps on people the
+  objective does not cover are context only, not proposed research
 - Known holdings recorded (if any) and what each contributes
-- What's missing (informs first research question) — gaps on people the
-  objective does not cover are context only, not proposed research.
-- Suggest the next step as a plain-language offer, defining "objective" and
-  "research question" on first use — never "use question-selection to…":
-  "Your objective is the overall goal — <restate it>. The next step is the
-  first research question: the single fact we go after first. Shall I?"
+- One sentence on what comes next, defining "objective" and "research
+  question" on first use — never "use question-selection to…": "Your objective
+  is the overall goal — <restate it>. The next step is the first research
+  question: the single fact we go after first."
+- Then the hand-back literal as the final line of the reply, exactly:
+  `Next: choose the first research question. Continue?`
 
 ## Example
 
@@ -277,11 +262,11 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
 3. Build the tree in memory — all persons, relationships, sources (quality: 1).
 4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
-5. `research_append` for `researcher_profile` (from their answers, not defaults) and one per volunteered holding.
+5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
 6. `Skill("check-warnings")` for I1, Mary Kelly, James, and Margaret. Pedigree
    analysis + summary, folding in whatever it returns. Mary Kelly and the
-   children are tree context only — their gaps are noted, not queued. Offer
-   the first research question in plain language.
+   children are tree context only — their gaps are noted, not queued. Close
+   with the hand-back literal.
 
 ## Important rules
 
@@ -294,7 +279,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
 - **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
-- **Never persist a default `researcher_profile` when the opening message stated an experience level.** Map it per the interview table before writing `research.json`.
+- **The profile is fixed.** Always `novice` and the house-style string, verbatim; never ask, never map a stated level.
 
 ## Re-invocation behavior
 

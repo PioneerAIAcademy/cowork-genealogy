@@ -19,7 +19,7 @@ from validators_lib import (  # noqa: E402
     assert_no_section_deletions,
     assert_only_writes_to_sections,
     new_log_entries,
-    written_entries,
+    new_section_entries,
 )
 
 
@@ -27,44 +27,20 @@ def _wrap(section, entries):
     return {"research_json": {section: entries}}
 
 
-# --- written_entries ------------------------------------------------------
+# --- new_section_entries: include_modified (main covers the new-only cases) ---
 
 
-def test_written_entries_returns_only_new_by_id():
-    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
-    after = _wrap("localities", [{"id": "loc_001", "place": "A"}, {"id": "loc_002", "place": "B"}])
-    got = written_entries(before, after, "localities")
-    assert [e["id"] for e in got] == ["loc_002"]
-
-
-def test_written_entries_ignores_unchanged_existing_entry():
-    same = [{"id": "loc_001", "place": "A"}]
-    assert written_entries(_wrap("localities", same), _wrap("localities", same), "localities") == []
-
-
-def test_written_entries_without_include_modified_ignores_an_inplace_change():
+def test_new_section_entries_without_include_modified_ignores_an_inplace_change():
     before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
     after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
-    assert written_entries(before, after, "localities") == []
+    assert new_section_entries(before, after, "localities") == []
 
 
-def test_written_entries_include_modified_catches_an_inplace_change():
+def test_new_section_entries_include_modified_catches_an_inplace_change():
     before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
     after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
-    got = written_entries(before, after, "localities", include_modified=True)
+    got = new_section_entries(before, after, "localities", include_modified=True)
     assert [e["place"] for e in got] == ["B"]
-
-
-def test_written_entries_skips_non_dict_entries():
-    after = _wrap("localities", [None, "junk", {"id": "loc_001"}])
-    got = written_entries(_wrap("localities", []), after, "localities", include_modified=True)
-    assert got == [{"id": "loc_001"}]
-
-
-def test_new_log_entries_delegates_new_only_on_log_section():
-    before = _wrap("log", [{"id": "log_001"}])
-    after = _wrap("log", [{"id": "log_001"}, {"id": "log_002"}])
-    assert [e["id"] for e in new_log_entries(before, after)] == ["log_002"]
 
 
 # --- assert_no_section_deletions ------------------------------------------
@@ -213,3 +189,55 @@ def test_log_append_only_fails_when_entry_deleted():
     after = {"log": [{"id": "log_1"}]}
     with pytest.raises(AssertionError, match="deleted"):
         assert_log_append_only(before, after)
+
+
+# --- new_section_entries / new_log_entries -----------------------------
+#
+# `new_log_entries` had no coverage here at all before #2390, despite four
+# validator files depending on it. It is now a one-line alias for the general
+# form, so both are exercised together.
+
+
+def _wrap(section, entries):
+    return {"research_json": {section: entries}}
+
+
+def test_new_section_entries_returns_only_what_is_new():
+    before = _wrap("sources", [{"id": "src_001"}])
+    after = _wrap("sources", [{"id": "src_001"}, {"id": "src_002"}])
+    assert [e["id"] for e in new_section_entries(before, after, "sources")] == ["src_002"]
+
+
+def test_new_section_entries_skips_non_dict_entries():
+    """The `isinstance` guard, which the shared helper on main already carried."""
+    before = _wrap("log", [{"id": "log_1"}, "junk"])
+    after = _wrap("log", [{"id": "log_1"}, "junk", {"id": "log_2"}])
+    assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_2"]
+
+
+def test_new_section_entries_tolerates_an_explicit_null_section():
+    """`"log": null` satisfies a `.get(section, [])` default and then raises
+    TypeError on iteration. NEW here — the shared helper on main used
+    `after.get("log", [])` — and it fires on 0 of the 2130 committed unit runs
+    across 27 skills, so it is hardening rather than a fix. The section being
+    caller-supplied is what widens the shapes that reach here."""
+    before = _wrap("log", None)
+    after = _wrap("log", [{"id": "log_1"}])
+    assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_1"]
+
+
+def test_new_section_entries_tolerates_a_missing_research_json():
+    assert new_section_entries({}, {}, "log") == []
+
+
+def test_new_log_entries_is_the_log_section_of_the_general_form():
+    before = _wrap("log", [{"id": "log_1"}])
+    after = _wrap("log", [{"id": "log_1"}, {"id": "log_2"}])
+    assert new_log_entries(before, after) == new_section_entries(before, after, "log")
+
+
+def test_new_log_entries_does_not_see_other_sections():
+    """A sources write must not read as a new log entry."""
+    before = _wrap("log", [])
+    after = {"research_json": {"log": [], "sources": [{"id": "src_001"}]}}
+    assert new_log_entries(before, after) == []

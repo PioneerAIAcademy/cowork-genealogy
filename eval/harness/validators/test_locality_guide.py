@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import pytest
 
-from validators_lib import bare_tool_name, written_entries
+from validators_lib import bare_tool_name, new_section_entries
 
 REQUIRED_WIKI_SECTIONS = {"home", "getting_started", "online_records", "research_tips"}
 
@@ -74,7 +74,7 @@ def _written_localities(before_state, after_state):
     isObjectEntry rejects a non-object at write time), so no entry-level guard
     is needed here.
     """
-    return written_entries(
+    return new_section_entries(
         before_state, after_state, "localities", include_modified=True
     )
 

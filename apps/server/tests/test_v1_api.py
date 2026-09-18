@@ -33,7 +33,7 @@ def _set_lock(sid: str, when):
 
 def _seed_active(sid: str):
     """Pre-write research.json into the sandbox project dir so the mock agent boots
-    straight into 'active' phase (skips the onboarding interview) — then a "search"
+    straight into 'active' phase (skips onboarding) — then a "search"
     turn runs the record_search tool. Must be called after create, before the first
     message (the agent reads phase from the FS when it spawns on first connect).
     Reaches into LocalProvider internals, same as test_sessions.py."""

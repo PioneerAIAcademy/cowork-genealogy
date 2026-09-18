@@ -43,6 +43,7 @@ import type {
 import {
   dimensionAllowsNa,
   isConfirmedNonFailing,
+  reviewDimensions,
   sampledTestIds,
   uncommentedSampledCorrections,
 } from '@/lib/types';
@@ -655,7 +656,7 @@ function GradesPane({
     return m;
   }, [annotation]);
 
-  const dims = entry.outcome_summary.aggregated_dimensions;
+  const dims = reviewDimensions(entry);
   // A test outside the sample is not unreviewed — nothing is asked of it.
   // Without this the header paints "6 unreviewed" on the very test the sidebar
   // labels `not sampled`.
@@ -1141,10 +1142,10 @@ function TestsPane({
       // and paint an orange badge on every test the annotator must not open.
       const total = sampled && !sampled.has(t.test_id)
         ? 0
-        : t.outcome_summary.aggregated_dimensions.length;
+        : reviewDimensions(t).length;
       const reviewed = total === 0
         ? 0
-        : t.outcome_summary.aggregated_dimensions.filter((d) =>
+        : reviewDimensions(t).filter((d) =>
             have.has(`${t.test_id}|${d.source}|${d.name}`),
           ).length;
       out[t.test_id] = { reviewed, total };
@@ -1360,7 +1361,7 @@ export default function RunLogDetailPage({
     const test = query.data.runLog.tests.find((t) => t.test_id === test_id);
     if (!test) return;
     const filtered = localAnn.corrections.filter((c) => c.test_id !== test_id);
-    const additions: AnnotationCorrection[] = test.outcome_summary.aggregated_dimensions.map((d) => {
+    const additions: AnnotationCorrection[] = reviewDimensions(test).map((d) => {
       const existing = localAnn.corrections.find(
         (c) =>
           c.test_id === test_id &&
@@ -1421,7 +1422,7 @@ export default function RunLogDetailPage({
         const score = Number(e.key) as 1 | 2 | 3;
         const tests = query.data?.runLog.tests;
         const test = tests?.find((t) => t.test_id === focusedDim.test_id);
-        const dim = test?.outcome_summary.aggregated_dimensions.find(
+        const dim = (test ? reviewDimensions(test) : []).find(
           (d) => d.source === focusedDim.source && d.name === focusedDim.name,
         );
         if (!dim) return;
@@ -1466,7 +1467,7 @@ export default function RunLogDetailPage({
   const allDimensions = log.tests
     .filter((t) => !sampled || sampled.has(t.test_id))
     .flatMap((t) =>
-      t.outcome_summary.aggregated_dimensions.map((d) => ({ t: t.test_id, d })),
+      reviewDimensions(t).map((d) => ({ t: t.test_id, d })),
     );
   const reviewedCount = allDimensions.filter(({ t, d }) =>
     ann?.corrections.some(

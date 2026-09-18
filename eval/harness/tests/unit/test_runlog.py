@@ -698,13 +698,22 @@ def test_aggregate_excludes_a_validator_failing_run():
         "excluded case above cannot be explained by the modal logic alone"
     )
 
+    # `include_validator_failed=True` is the switch `review_dimensions` is
+    # built with. Same runs as `excluded`, only the flag moves: it must land
+    # where `moved` did, or the flag lifts nothing.
+    lifted = aggregate_dimensions(
+        [_r(3, True), _r(1, False), _r(1, False)], include_validator_failed=True
+    )
+    assert [d["score"] for d in lifted] == [1]
+
 
 def test_aggregate_excludes_a_validator_failing_run_even_when_it_is_the_only_run():
     """The single-run case, which is the ONLY shape the committed corpus has:
     2120 of 2120 test entries carry exactly one run, so modal-across-runs never
     actually runs on real data. A lone validator-failing run must produce an
-    empty aggregate — which is what keeps `review_sample.is_gradeable` excluding
-    it and what keeps every committed baseline where it was."""
+    empty aggregate — which is what keeps every committed baseline where it
+    was. It no longer keeps the test out of review: the next test pins that
+    its scores reach `review_dimensions` instead."""
     run = SingleRun(
         outcome="fail", aborted_reason=None, duration_ms=0,
         input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
@@ -720,6 +729,64 @@ def test_aggregate_excludes_a_validator_failing_run_even_when_it_is_the_only_run
     )
     assert run.judge.dimensions, "the run IS graded — that is #2057"
     assert aggregate_dimensions([run]) == [], "but it is not in the aggregate"
+
+
+def test_review_dimensions_carry_a_validator_failing_test_the_aggregate_drops():
+    """Every annotation plane — the sampler's `is_gradeable`, CI rule 3, the
+    CRUD UI's completeness — reads ONE array per test. While that array was
+    `aggregated_dimensions`, a validator-failing test (`fail`, judge-scored,
+    mandatory by every trigger) demanded zero corrections and was filtered out
+    before the mandatory slot ran: 4 of the 7 non-passing tests on one
+    record-extraction run never reached review while CI passed. The array they
+    read now is `review_dimensions`; the aggregate keeps the #2057 exclusion.
+    """
+    entry = _make_entry(runs=[_stub_run(outcome="fail", validators_passed=False)])
+    assert entry["outcome"] == "fail"
+    summary = entry["outcome_summary"]
+    assert summary["aggregated_dimensions"] == [], "the #2057 exclusion stands"
+    assert [(d["source"], d["name"], d["score"]) for d in summary["review_dimensions"]] == [
+        (d["source"], d["name"], d["score"]) for d in _stub_judge().dimensions
+    ]
+    # And the schema admits the field — the run log is what CI and the UI read.
+    validate_run_log(_wrap_envelope(entry))
+
+
+def test_review_dimensions_equal_the_aggregate_whenever_it_has_rows():
+    """Only the empty aggregate is replaced. A clean test's review rows ARE its
+    aggregate, and on a MIXED test — one clean run beside a validator-failing
+    one — the review rows are still the clean modal, not a re-modal over both.
+    Otherwise a correction's `llm_score` would disagree with the aggregate row
+    `judge_report` and `skill_gate` join it to."""
+    clean = _make_entry(runs=[_stub_run()])
+    assert clean["outcome_summary"]["review_dimensions"] == clean["outcome_summary"]["aggregated_dimensions"]
+    assert clean["outcome_summary"]["review_dimensions"], "vacuous if both are empty"
+
+    all_ones = JudgeResult(
+        skipped=False,
+        dimensions=[
+            {**d, "score": 1, "rationale": "defective"} for d in _stub_judge().dimensions
+        ],
+        judge_cost_usd=0.001,
+    )
+    mixed = _make_entry(
+        runs=[_stub_run(), _stub_run(outcome="fail", validators_passed=False, judge=all_ones)]
+    )
+    summary = mixed["outcome_summary"]
+    assert summary["review_dimensions"] == summary["aggregated_dimensions"]
+    assert [d["score"] for d in summary["review_dimensions"]] == [3, 3, None, 3], (
+        "the failing run's 1s must not leak into the review rows when a clean "
+        "run supplied an aggregate"
+    )
+
+
+def test_review_dimensions_stay_empty_when_nothing_was_judged():
+    """A skipped judge (abort, or the judge raised) has no rows anywhere, so the
+    test stays ungradeable and rule 3 still warns about it rather than
+    requiring it."""
+    skipped = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
+    entry = _make_entry(runs=[_stub_run(outcome="fail", validators_passed=False, judge=skipped)])
+    assert entry["outcome_summary"]["aggregated_dimensions"] == []
+    assert entry["outcome_summary"]["review_dimensions"] == []
 
 
 def test_aggregate_still_counts_a_run_whose_validators_are_unknown():

@@ -34,11 +34,14 @@ export function runProjectStoreConformance(
       expect(await f.store.exists(f.projectPath, "research.json")).toBe(true);
     });
 
-    it("writeJson stores pretty JSON that readText returns verbatim", async () => {
+    it("writeJson stores pretty JSON that readText parses back to the value", async () => {
+      // Value equality, not byte equality: a jsonb backend keeps neither key
+      // order nor whitespace. The file backend's verbatim-bytes guarantee is
+      // its own case in fs-project-store.test.ts.
       await f.store.writeJson(f.projectPath, "research.json", { a: 1, b: [2, 3] });
-      expect(await f.store.readText(f.projectPath, "research.json")).toBe(
-        JSON.stringify({ a: 1, b: [2, 3] }, null, 2),
-      );
+      const text = await f.store.readText(f.projectPath, "research.json");
+      expect(JSON.parse(text)).toEqual({ a: 1, b: [2, 3] });
+      expect(text).toBe(JSON.stringify(JSON.parse(text), null, 2));
     });
 
     it("writeJson creates missing parents and overwrites in place", async () => {
@@ -88,6 +91,19 @@ export function runProjectStoreConformance(
       await f.store.appendText(f.projectPath, "results/match-scores.jsonl", "a\n");
       await f.store.appendText(f.projectPath, "results/match-scores.jsonl", "b\n");
       expect(await f.store.readText(f.projectPath, "results/match-scores.jsonl")).toBe("a\nb\n");
+    });
+
+    it("appendText keeps every line under concurrent appends", async () => {
+      // rank_search_matches appends to the score log without a lock, and a
+      // turn can rank in parallel. A read-modify-write append loses lines here
+      // unless the backend serialises it; the file backend's appendFile is
+      // atomic per call.
+      const ref = "results/match-scores.jsonl";
+      await Promise.all(
+        Array.from({ length: 10 }, (_, i) => f.store.appendText(f.projectPath, ref, `line-${i}\n`)),
+      );
+      const lines = (await f.store.readText(f.projectPath, ref)).split("\n").filter(Boolean).sort();
+      expect(lines).toEqual(Array.from({ length: 10 }, (_, i) => `line-${i}`).sort());
     });
 
     it("list is empty for an absent directory and carries a numeric mtime otherwise", async () => {
