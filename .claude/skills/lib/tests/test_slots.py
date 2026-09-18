@@ -152,6 +152,21 @@ def test_active_column_cross_cutting_card_is_a_holder_not_an_occupant(tmp_path):
     assert "occupant: #2482" not in out
 
 
+def test_unassigned_cross_cutting_holder_is_never_a_merge_target(tmp_path):
+    """`holders` is built without reading labels, so an UNASSIGNED cross-cutting card
+    in an active column would otherwise be tagged "merge INTO this one" — nominating
+    the lead's pre-assigned work as the merge target, which doctrine forbids. An
+    ordinary unassigned Ready card must keep that tag."""
+    out = run(_queued_pair() + [issue(2484, labels=["cross-cutting"], column="Ready"),
+                                issue(14, column="Ready")], tmp_path)
+
+    assert "holder: #2484 (Ready, cross-cutting -- not a merge target)" in out
+    assert "#2484" not in out.replace(
+        "holder: #2484 (Ready, cross-cutting -- not a merge target)", "")
+    # the ordinary unassigned Ready card is still the natural target
+    assert "holder: #14 (Ready, unassigned -- merge INTO this one)" in out
+
+
 def test_ordinary_card_is_untouched_by_a_cross_cutting_neighbour(tmp_path):
     """An ordinary pool card's membership and its slot's depth must equal what they
     are with the cross-cutting card removed entirely."""

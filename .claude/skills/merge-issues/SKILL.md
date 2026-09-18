@@ -55,8 +55,10 @@ direction. An *unassigned* Ready card is both in the pool and its slot's holder,
 which makes it the natural target — it is furthest along.
 
 A `cross-cutting` card is **not** in the pool — the lead assigns those directly — but
-it still sits in whatever slot its `**Touches:**` line names, so it prints as
-`occupant: #N`. **An occupant is not a merge target and is not part of queue depth.**
+it still sits in whatever slot its `**Touches:**` line names. A Backlog one prints as
+`occupant: #N`; one already in an active column prints as a holder tagged
+`cross-cutting -- not a merge target`. **Neither is a merge target, and neither is
+part of queue depth.**
 Never propose merging into one or out of one. Depth stays "this many mergeable
 cards", which is what `MUST CLEAR` acts on and what `audit-board`'s tax table copies
 out of these blocks — so do not add occupant lines into that column. Read them the

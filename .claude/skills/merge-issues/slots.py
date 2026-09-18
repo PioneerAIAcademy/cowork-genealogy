@@ -124,9 +124,20 @@ def main(board_path, open_path, prs_path):
         for s in slots_of(entries[n]):
             occupants.setdefault(s, []).append(n)
     for n, col in holders.items():
+        # A cross-cutting holder is never a merge target either, in either direction.
+        # `holders` is built above without reading labels, so without this arm an
+        # unassigned cross-cutting card in an active column -- a state
+        # fill-ready/SKILL.md calls a mis-file rather than an impossibility -- would
+        # be nominated as the thing to merge INTO, which is the one instruction
+        # doctrine forbids outright.
+        if "cross-cutting" in labels_of(issues[n]):
+            tag = "cross-cutting -- not a merge target"
+        elif issues[n].get("assignees"):
+            tag = "held"
+        else:
+            tag = "unassigned -- merge INTO this one"
         for s in slots_of(entries[n]):
-            unassigned = not issues[n].get("assignees")
-            held.setdefault(s, []).append((n, col, unassigned))
+            held.setdefault(s, []).append((n, col, tag))
 
     pr_slots = {}
     for p in prs:
@@ -143,8 +154,7 @@ def main(board_path, open_path, prs_path):
 
     def block(slot, members):
         print(f"  {slot}   queue {len(members)}")
-        for n, col, unassigned in sorted(held.get(slot, [])):
-            tag = "unassigned -- merge INTO this one" if unassigned else "held"
+        for n, col, tag in sorted(held.get(slot, [])):
             print(f"      holder: #{n} ({col}, {tag})")
         for p in sorted(pr_slots.get(slot, [])):
             print(f"      holder: PR #{p} (open, touches the snapshot)")
