@@ -120,10 +120,13 @@ import { allToolSchemas } from "./tool-schemas.js";
 // Tools that report failure by RETURNING `{ ok: false }` rather than throwing
 // need `isError` set explicitly — the catch arms below cannot see them.
 import { writerToolResult } from "./tool-result.js";
+import { readBuildInfo } from "./utils/build-info.js";
 
 export function createServer(principal: Principal): Server {
   const server = new Server(
-    { name: "genealogy-mcp", version: "0.1.0" },
+    // The stamped build (base+date.sha, or base+dev) — issue #2126. The same
+    // string is the `buildId` project_context and auth_status return.
+    { name: "genealogy-mcp", version: readBuildInfo().version },
     { capabilities: { tools: {} } }
   );
 
