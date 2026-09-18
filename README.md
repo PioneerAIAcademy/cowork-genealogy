@@ -323,44 +323,26 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks two
-short questions in one opening turn:
+When you start a new project with `init-project`, the skill asks one
+thing in its opening turn: what you want to find out. It does not ask
+about you. Every project gets the same `researcher_profile` in
+`research.json`: `experience_level` is `novice`, and `narration_guidance`
+is one house-style string that every skill but one reads and follows
+verbatim:
 
-1. **Research objective** — what you are trying to find out.
-2. **Experience level** — *just starting out / some research under my
-   belt / experienced / professional or certified*.
+> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
 
-You are no longer asked which subscription sites you have. Access is
-assumed available, so nothing is recorded unless you mention it
-yourself — a project that says nothing about access is not a project
-that said it has none.
+Subscription sites are not asked about either. Access is assumed
+available, so nothing is recorded unless you mention a site yourself —
+a project that says nothing about access is not a project that said it
+has none.
 
-Neither question blocks. Answer what you like; anything you skip takes
-a documented default, and the summary at the end names what was
-defaulted so you can correct it.
-
-The answers are written to a `researcher_profile` section of
-`research.json` alongside the rest of your project state. Every skill
-but one reads from it:
-
-- **Experience level** drives narration density. A novice gets
-  step-by-step "why I'm doing this" narration; an experienced
-  researcher gets concise reporting. Internally the level maps to a
-  `narration_guidance` string that the skill reads and follows
-  verbatim — one place defines the mapping (`init-project`), one place
-  stores it (`research.json`), every skill but one reads it.
-- **Access** guides `search-external-sites` URL prioritization. Sites
-  you can reach land first; the rest are still searchable but flagged.
-
-The profile takes under a minute to capture. It lives in
-`research.json` because Cowork sessions are ephemeral but the project
-folder persists — embedding the profile in the project's own file is
-the only storage that survives across sessions.
+The question does not block. Skip it and the objective takes a
+documented generic default, and the summary at the end says so.
 
 ### Mid-session overrides
 
-You can adjust narration on the fly without re-running the interview.
-Natural-language phrases that work:
+You can adjust narration on the fly. Natural-language phrases that work:
 
 - "Be more verbose" / "explain that step in more detail"
 - "Skip the explanations" / "just do it"
@@ -372,12 +354,10 @@ These take effect for the rest of the session without modifying
 
 ### Updating the profile
 
-To change your experience level or subscriptions later, edit
-`researcher_profile` directly in `research.json`. The fields are
-straightforward — `experience_level` is one of the four enum values,
-`subscriptions` is an array of the canonical site names listed above.
-If you change `experience_level`, also update `narration_guidance` to
-match the mapping table in `packages/engine/plugin/skills/init-project/SKILL.md`.
+To record subscriptions later, edit `researcher_profile` directly in
+`research.json`: `subscriptions` is an array of the canonical site names.
+`experience_level` and `narration_guidance` are fixed today; a user
+setting will own the level later.
 
 ## Installation (for end users)
 
@@ -515,13 +495,9 @@ What's shipped:
   the only caller that may declare one exhaustive), `person-evidence` (identity
   resolution, and the only writer of `person_evidence`) and `image-reader`
   (page OCR).
-- **Researcher profile.** `init-project` asks the research objective,
-  experience level, and site access together in one non-blocking opening
-  turn; every skill adapts narration density to the answer.
-  the only caller that may declare one exhaustive) and `image-reader` (page OCR).
-- **Researcher profile.** `init-project` asks the research objective and
-  experience level together in one non-blocking opening turn; every skill
-  adapts narration density to the answer. Site access is not asked.
+- **Researcher profile.** `init-project` asks only the research objective, in
+  one non-blocking opening turn; the profile itself is fixed (`novice`, one
+  house-style narration string) and nothing about the researcher is asked.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs

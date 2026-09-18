@@ -442,8 +442,15 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
 .PHONY: proto-up
-proto-up: ## D3 prototype: build + start postgres/minio/elasticmq/worker/shim and wait for health
+proto-up: ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web and wait for health
 	$(PROTO_COMPOSE) up -d --build
+	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web
+
+# The D3 services only. proto-smoke never touches the web tier, so it must not be gated
+# on the web image building (a network pip install) or its healthcheck.
+.PHONY: proto-up-core
+proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
+	$(PROTO_COMPOSE) up -d --build postgres minio minio-init elasticmq worker shim
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
 .PHONY: proto-down
@@ -459,12 +466,76 @@ proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS
 	cd apps/server && uv run python proto/enqueue.py $(ARGS)
 
 .PHONY: proto-smoke
-proto-smoke: proto-up ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
+proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
 	cd apps/server && uv run python proto/smoke.py
 
 .PHONY: proto-test
-proto-test: ## D3 offline tests: compose/conf/schema shape + the shim's pure decide()
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py
+proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py
+
+# ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
+# The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
+# the compose postgres/elasticmq instead; proto-drive is the D13 acceptance driver,
+# self-contained by default (embedded Postgres via the `proto` dependency group, the
+# tier in-process, no queue, the seeder standing in for the worker). BASE=… points it
+# at a running stack in --worker mode — a stack has a worker (the D3 stub counts), and a
+# worker racing the seeder is exactly what --seed refuses. PG_DSN defaults to the
+# compose postgres. web-proto is the SPA on the SSE transport against :8085.
+PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
+
+.PHONY: proto-web
+proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
+	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
+	  uv run python proto/web/app.py
+
+.PHONY: proto-drive
+proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Event-ID, miss nothing (embedded Postgres + seeder; BASE=http://localhost:8085 runs --worker against a stack)
+	cd apps/server && uv run --group proto python proto/drive.py $(if $(BASE),--base $(BASE) --pg-dsn $(or $(PG_DSN),$(PROTO_PG_DSN)) --worker,--embedded-pg) $(ARGS)
+
+.PHONY: web-proto
+web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype web tier (:8085)
+	cd apps/web && VITE_API_TARGET=http://localhost:8085 VITE_SESSION_TRANSPORT=sse pnpm dev
+
+# ── Search-agent prototype: D6–8 PgS3ProjectStore (packages/engine/mcp-server/src/store/) ─────
+# The Postgres+S3 ProjectStore's conformance suite needs only postgres, minio and the
+# bucket one-shot — no worker, shim, queue or web tier. Same two-call shape as
+# proto-up-core: `--wait` on the one-shot exits 1 the moment it finishes, so the wait
+# names the two long-running services; the suite creates the bucket itself if the
+# one-shot has not finished by the time it starts.
+.PHONY: proto-up-store
+proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) and wait for health
+	$(PROTO_COMPOSE) up -d postgres minio minio-init
+	$(PROTO_COMPOSE) up -d --wait postgres minio
+
+.PHONY: proto-store-test
+proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
+	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npx vitest run tests/store/pg-s3-project-store.test.ts
+
+# D9–10: the same offline calls as engine-smoke-stdio, driven through the prototype's
+# per-turn entrypoint (build/hosted-stdio.js) as a bearer principal against the
+# compose postgres/minio. One fresh project id per run; the psql count after the
+# smoke shows what landed for it (the projects row and the documents/blobs/staging
+# rows). The count prints even when the smoke fails, and the target's exit status
+# is the smoke's.
+.PHONY: engine-smoke-stdio-pg
+engine-smoke-stdio-pg: $(ENGINE_BUILD) proto-up-store ## D9–10: drive build/hosted-stdio.js over stdio against the compose postgres + minio (bearer principal, PgS3ProjectStore)
+	@id="smoke-$$(node -e 'console.log(crypto.randomUUID())')"; status=0; \
+	  echo "GENEALOGY_PROJECT_ID=$$id"; \
+	  ( cd $(ENGINE_DIR) && SMOKE_ENTRY=build/hosted-stdio.js SMOKE_PROJECT_PATH=/project \
+	    GENEALOGY_PG_DSN=$(PROTO_PG_DSN) GENEALOGY_S3_ENDPOINT=http://localhost:9000 \
+	    GENEALOGY_S3_BUCKET=projects GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
+	    GENEALOGY_PROJECT_ID=$$id GENEALOGY_ANCHOR_PATH=/project \
+	    npx tsx dev/smoke-stdio.ts ) || status=$$?; \
+	  docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
+	  docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"; \
+	  exit $$status
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
@@ -901,6 +972,22 @@ e2e-compaction: ## record_search subjectId supply by compaction segment, over co
 	# SINCE=2026-07-27 (the ranking fold) and SINCE=2026-08-04 (the
 	# rankingSkipped note) are the two invocations that answer it.
 	cd eval/harness && uv run python -m e2e.compaction_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-ranked-reads
+e2e-ranked-reads: ## Were the main thread's record reads inside the ranker's visible top 3, over committed e2e runs (issue #1156): make e2e-ranked-reads | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: joins each main-thread record_read against the
+	# ranked block of the search that supplied it. Only the VISIBLE top 3 is
+	# measurable -- judge.py truncates ranked.matches past three entries and
+	# the full list is never committed, so a read at rank 7 reads the same as
+	# an unranked one. Subagent reads are reported separately: they never saw
+	# the ranked block. Prints counts, not a rate (architecture.md 9.4 gap 3).
+	# The bare command's 14-day SINCE default is too narrow for this report's
+	# own question -- roughly half the ranked calls sit outside it. Pass
+	# SINCE=2026-08-04 (the day the capture fix landed; nothing before it
+	# carries a ranked block at all) to answer the issue.
+	cd eval/harness && uv run python -m e2e.ranked_read_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
