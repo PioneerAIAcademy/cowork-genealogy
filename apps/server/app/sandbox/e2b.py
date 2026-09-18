@@ -230,7 +230,12 @@ class E2BProvider(SandboxProvider):
 
     def _agent_env(self, model: str) -> dict[str, str]:
         s = get_settings()
-        return {"AGENT_MODE": s.agent_mode, "MODEL": model}
+        return {
+            "AGENT_MODE": s.agent_mode,
+            "MODEL": model,
+            "AUTO_CONTINUE": "1" if s.auto_continue else "0",
+            "AUTO_CONTINUE_MAX_STEPS": str(s.auto_continue_max_steps),
+        }
 
     async def create(self, spec: SandboxSpec) -> Sandbox:
         agent_env = self._agent_env(spec.model)

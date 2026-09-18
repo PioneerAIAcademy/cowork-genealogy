@@ -88,7 +88,7 @@ const TEXT_FILES: Array<{ path: string; text: string; eol: string; why: string }
     why: "extensionless: covered only by the blanket rule, and by nothing at all before it",
   },
   {
-    path: "packages/engine/mcp-server/src/index.ts",
+    path: "packages/engine/mcp-server/src/server.ts",
     text: "auto",
     eol: "lf",
     why: "an ordinary source file — the blanket rule's main case",

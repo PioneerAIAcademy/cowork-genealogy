@@ -1,16 +1,16 @@
 // MCP result envelopes for tools that signal failure by RETURNING rather than
 // throwing.
 //
-// `src/index.ts` sets `isError: true` only in its catch arms, so a tool that
+// `createServer` in `src/server.ts` sets `isError: true` only in its catch arms, so a tool that
 // returns `{ ok: false, errors }` emitted a normal MCP success: a rejected write
 // read as a successful call to the model in Cowork and the hosted path, and to
 // the eval harness's guardrail detectors. Measured over the committed e2e corpus,
 // roughly one in seven `research_append` calls and one in four
 // `extraction_append` calls were invisible that way.
 //
-// This lives in its own module rather than being extracted from `index.ts`:
-// that file exports nothing and calls `await server.connect(transport)` at module
-// scope, so importing it to reuse a helper would start a stdio server.
+// This lives in its own module rather than in `server.ts`: tool files import
+// it too, and `server.ts` imports every tool file, so sharing it from there
+// would be an import cycle.
 
 /** The only fields this helper reads. Deliberately NOT an index-signature type:
  *  the concrete result types (`ResearchAppendResult`, `TreeEditResult`, …) have

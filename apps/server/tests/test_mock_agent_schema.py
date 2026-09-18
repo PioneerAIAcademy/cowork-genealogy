@@ -75,11 +75,11 @@ async def _turn(agent: MockAgent, text: str) -> None:
 async def test_mock_agent_documents_validate(tmp_path: Path) -> None:
     agent = MockAgent(tmp_path)
 
-    # Drive the scripted interview: greet → experience → objective, which is the
-    # turn that writes research.json. There is deliberately no access turn — the
-    # real interview stopped asking, and this mock stands in for production.
+    # Drive the scripted onboarding: greet → objective, which is the turn that
+    # writes research.json. There is deliberately no experience turn and no
+    # access turn — the real skill asks nothing about the researcher, and this
+    # mock stands in for production.
     await _turn(agent, "hello")
-    await _turn(agent, "intermediate")
     await _turn(agent, "Identify the parents of Patrick Flynn")
 
     research = tmp_path / "research.json"
