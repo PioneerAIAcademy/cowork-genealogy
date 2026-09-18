@@ -179,9 +179,9 @@ matters when hand-authoring:
     "updated": "2026-05-26T00:00:00Z"
   },
   "researcher_profile": {
-    "experience_level": "intermediate",
+    "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "concise"
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
@@ -648,9 +648,9 @@ the `max_cost_usd` note in §6 step 5.
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
    the message that arrives once the run has *already finished* and the money
-   is already spent. All **nine** `cost_cap` runs in the corpus ended with the
+   is already spent. All **eleven** `cost_cap` runs in the corpus ended with the
    SDK's own `end_turn` and `is_error: false`; none was interrupted — spend ran
-   to **$15.86–$21.50** (median $17.12) against a $15 cap. Two things block real
+   to **$15.78–$21.50** (median $16.99) against a $15 cap. Two things block real
    enforcement, so
    it was left as-is rather than half-built: there is no per-model price table
    for agent models (`judge.py::JUDGE_PRICING` covers judge models only, and a

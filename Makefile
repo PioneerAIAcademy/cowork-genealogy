@@ -239,17 +239,12 @@ db-reset: ## Wipe the local SQLite DB + sandbox dirs (POC drop/recreate; schema 
 	@echo "✓ local DB + sandbox dirs reset — (re)start the server to recreate the schema"
 
 # Internal guard (a server-e2b prerequisite, NOT run directly — so no `## ` help
-# line): verifies the required keys are present and reminds that the baked E2B
-# image must be current.
+# line): verifies the required keys are present.
 .PHONY: e2b-preflight
 e2b-preflight:
 	@test -f apps/server/.env || { echo "ERROR: apps/server/.env is missing (needs E2B_API_KEY + ANTHROPIC_API_KEY)." >&2; exit 1; }
 	@grep -qE '^E2B_API_KEY=.'       apps/server/.env || { echo "ERROR: E2B_API_KEY is not set in apps/server/.env."       >&2; exit 1; }
 	@grep -qE '^ANTHROPIC_API_KEY=.' apps/server/.env || { echo "ERROR: ANTHROPIC_API_KEY is not set in apps/server/.env." >&2; exit 1; }
-	@echo "NOTE: server-e2b runs the in-sandbox code BAKED INTO the 'genealogy-agent' E2B image."
-	@echo "      If you changed the agent (app/agent/*, sandbox_server.py), MCP tools"
-	@echo "      (packages/engine/mcp-server/src), or skills (packages/engine/plugin) since your last"
-	@echo "      'make sandbox-image', rebuild the image first or the microVM runs STALE code."
 
 .PHONY: server-e2b
 server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1837 (web client: make web)
@@ -257,8 +252,11 @@ server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1
 	# in-sandbox WS server per session; the browser connects to it directly via
 	# /connect's {wssUrl, token}. AGENT_MODE/ANTHROPIC_API_KEY are injected into the
 	# sandbox. Use `make web` for the client, open http://127.0.0.1:5173.
-	# No local engine build needed — the image bakes the engine. The real hidden
-	# dep is a CURRENT image; e2b-preflight checks keys + reminds about staleness.
+	# No local engine build needed — the image bakes the engine. Unlike `make
+	# deploy`, this target does NOT rebuild the image: it runs whatever is baked
+	# into the template it resolves, so after changing in-sandbox code build a dev
+	# template first (E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image) and
+	# point at it with E2B_TEMPLATE=genealogy-agent-dev.
 	cd apps/server && \
 	  PUBLIC_URL=http://127.0.0.1:1837 WEB_ORIGIN=http://127.0.0.1:5173 \
 	  SANDBOX_PROVIDER=e2b AGENT_MODE=real REALTIME=local_ws FAMILYSEARCH_WEB_ENABLED=true \
@@ -444,8 +442,15 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
 .PHONY: proto-up
-proto-up: ## D3 prototype: build + start postgres/minio/elasticmq/worker/shim and wait for health
+proto-up: ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web and wait for health
 	$(PROTO_COMPOSE) up -d --build
+	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web
+
+# The D3 services only. proto-smoke never touches the web tier, so it must not be gated
+# on the web image building (a network pip install) or its healthcheck.
+.PHONY: proto-up-core
+proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
+	$(PROTO_COMPOSE) up -d --build postgres minio minio-init elasticmq worker shim
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
 .PHONY: proto-down
@@ -461,12 +466,76 @@ proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS
 	cd apps/server && uv run python proto/enqueue.py $(ARGS)
 
 .PHONY: proto-smoke
-proto-smoke: proto-up ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
+proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
 	cd apps/server && uv run python proto/smoke.py
 
 .PHONY: proto-test
-proto-test: ## D3 offline tests: compose/conf/schema shape + the shim's pure decide()
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py
+proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py
+
+# ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
+# The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
+# the compose postgres/elasticmq instead; proto-drive is the D13 acceptance driver,
+# self-contained by default (embedded Postgres via the `proto` dependency group, the
+# tier in-process, no queue, the seeder standing in for the worker). BASE=… points it
+# at a running stack in --worker mode — a stack has a worker (the D3 stub counts), and a
+# worker racing the seeder is exactly what --seed refuses. PG_DSN defaults to the
+# compose postgres. web-proto is the SPA on the SSE transport against :8085.
+PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
+
+.PHONY: proto-web
+proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
+	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
+	  uv run python proto/web/app.py
+
+.PHONY: proto-drive
+proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Event-ID, miss nothing (embedded Postgres + seeder; BASE=http://localhost:8085 runs --worker against a stack)
+	cd apps/server && uv run --group proto python proto/drive.py $(if $(BASE),--base $(BASE) --pg-dsn $(or $(PG_DSN),$(PROTO_PG_DSN)) --worker,--embedded-pg) $(ARGS)
+
+.PHONY: web-proto
+web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype web tier (:8085)
+	cd apps/web && VITE_API_TARGET=http://localhost:8085 VITE_SESSION_TRANSPORT=sse pnpm dev
+
+# ── Search-agent prototype: D6–8 PgS3ProjectStore (packages/engine/mcp-server/src/store/) ─────
+# The Postgres+S3 ProjectStore's conformance suite needs only postgres, minio and the
+# bucket one-shot — no worker, shim, queue or web tier. Same two-call shape as
+# proto-up-core: `--wait` on the one-shot exits 1 the moment it finishes, so the wait
+# names the two long-running services; the suite creates the bucket itself if the
+# one-shot has not finished by the time it starts.
+.PHONY: proto-up-store
+proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) and wait for health
+	$(PROTO_COMPOSE) up -d postgres minio minio-init
+	$(PROTO_COMPOSE) up -d --wait postgres minio
+
+.PHONY: proto-store-test
+proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
+	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npx vitest run tests/store/pg-s3-project-store.test.ts
+
+# D9–10: the same offline calls as engine-smoke-stdio, driven through the prototype's
+# per-turn entrypoint (build/hosted-stdio.js) as a bearer principal against the
+# compose postgres/minio. One fresh project id per run; the psql count after the
+# smoke shows what landed for it (the projects row and the documents/blobs/staging
+# rows). The count prints even when the smoke fails, and the target's exit status
+# is the smoke's.
+.PHONY: engine-smoke-stdio-pg
+engine-smoke-stdio-pg: $(ENGINE_BUILD) proto-up-store ## D9–10: drive build/hosted-stdio.js over stdio against the compose postgres + minio (bearer principal, PgS3ProjectStore)
+	@id="smoke-$$(node -e 'console.log(crypto.randomUUID())')"; status=0; \
+	  echo "GENEALOGY_PROJECT_ID=$$id"; \
+	  ( cd $(ENGINE_DIR) && SMOKE_ENTRY=build/hosted-stdio.js SMOKE_PROJECT_PATH=/project \
+	    GENEALOGY_PG_DSN=$(PROTO_PG_DSN) GENEALOGY_S3_ENDPOINT=http://localhost:9000 \
+	    GENEALOGY_S3_BUCKET=projects GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
+	    GENEALOGY_PROJECT_ID=$$id GENEALOGY_ANCHOR_PATH=/project \
+	    npx tsx dev/smoke-stdio.ts ) || status=$$?; \
+	  docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
+	  docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"; \
+	  exit $$status
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
@@ -906,6 +975,22 @@ e2e-compaction: ## record_search subjectId supply by compaction segment, over co
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-ranked-reads
+e2e-ranked-reads: ## Were the main thread's record reads inside the ranker's visible top 3, over committed e2e runs (issue #1156): make e2e-ranked-reads | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: joins each main-thread record_read against the
+	# ranked block of the search that supplied it. Only the VISIBLE top 3 is
+	# measurable -- judge.py truncates ranked.matches past three entries and
+	# the full list is never committed, so a read at rank 7 reads the same as
+	# an unranked one. Subagent reads are reported separately: they never saw
+	# the ranked block. Prints counts, not a rate (architecture.md 9.4 gap 3).
+	# The bare command's 14-day SINCE default is too narrow for this report's
+	# own question -- roughly half the ranked calls sit outside it. Pass
+	# SINCE=2026-08-04 (the day the capture fix landed; nothing before it
+	# carries a ranked block at all) to answer the issue.
+	cd eval/harness && uv run python -m e2e.ranked_read_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-branch-only
 e2e-branch-only: ## Graded e2e runs that exist on another ref but not HEAD (issue #1444): make e2e-branch-only
 	# On-demand crawl, not embedded in any reader (measured 2026-08-25: 23
@@ -1021,55 +1106,58 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
 
-# Marker recording the commit `make sandbox-image` last built the E2B template
-# from, so `deploy-preflight` can warn when in-sandbox agent code changed since.
-# Gitignored local build state, like the .make-installed dep stamps above.
-SANDBOX_IMAGE_STAMP := apps/server/sandbox/.last-image-build
-# Developer-edited sources baked into the genealogy-agent E2B image (NOT the Fly
-# container): the in-sandbox WS server + agent runner, the MCP tools (engine
-# src → compiled build/), and the plugin skills/agents. A change to ANY of these
-# means the image is stale until the next `make sandbox-image`.
-SANDBOX_IMAGE_SOURCES := apps/server/app/agent apps/server/app/sandbox_server.py packages/engine/mcp-server/src packages/engine/plugin
-
+# Builds and pushes the E2B agent image. `make deploy` runs this too, so the
+# control plane and the sandbox ship together; it stays a standalone target for
+# building a DEV template without deploying:
+#   E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image
+# With no override it rebuilds PRODUCTION's template in place, which is why the
+# name is a variable rather than a literal in build-image.sh.
 .PHONY: sandbox-image
-sandbox-image: ## Build (and push to E2B) the genealogy-agent sandbox template — the whole deploy of the agent image
+sandbox-image: ## Build + push the E2B agent template (E2B_TEMPLATE_NAME=... for a dev template; make deploy builds the PROD one)
 	bash apps/server/sandbox/build-image.sh
-	@git rev-parse HEAD > $(SANDBOX_IMAGE_STAMP)
 
-# Advisory (a deploy prerequisite, NOT run directly — so no `## ` help line):
-# warns, never blocks, when in-sandbox agent code changed since the last
-# `make sandbox-image`. The Fly container does NOT bake the agent — it runs on
-# the separate E2B `genealogy-agent` image — so a control-plane deploy can ship
-# while prod's agent image is stale, with nothing else to flag it. (A hard
-# `sandbox-image` prerequisite would be wrong: it's a heavy build+push to E2B,
-# referenced by stable name at runtime, with no build-time tie to the Fly image.)
+# Internal guard (a deploy prerequisite, NOT run directly — so no `## ` help line).
+#
+# There is no image-staleness check here any more, and that is the fix rather
+# than a gap: `make deploy` now BUILDS the E2B agent image (lead, 2026-09-10), so
+# the two images ship together and there is nothing left to be stale. The check
+# this replaced compared the tree against a gitignored local stamp, so on every
+# machine that had never run `make sandbox-image` it printed the same warning
+# whether the image was an hour or two months old — no signal, and advisory, so
+# nobody had to answer it either way.
 .PHONY: deploy-preflight
 deploy-preflight:
-	@base=""; [ -f $(SANDBOX_IMAGE_STAMP) ] && base="$$(cat $(SANDBOX_IMAGE_STAMP))"; \
-	if [ -n "$$base" ] && git cat-file -e "$$base^{commit}" 2>/dev/null; then \
-	  if ! git diff --quiet "$$base" -- $(SANDBOX_IMAGE_SOURCES); then \
-	    echo "⚠️  deploy: in-sandbox code (agent / MCP tools / skills) changed since the last 'make sandbox-image':"; \
-	    git diff --name-only "$$base" -- $(SANDBOX_IMAGE_SOURCES) | sed 's/^/        /'; \
-	    echo "    Prod runs the agent on the E2B 'genealogy-agent' image, NOT this Fly container."; \
-	    echo "    Run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
-	  fi; \
-	else \
-	  echo "⚠️  deploy: no 'make sandbox-image' record on this machine — can't tell if the E2B"; \
-	  echo "    'genealogy-agent' image is current. If you changed the agent, MCP tools, or skills,"; \
-	  echo "    run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
-	fi
-	# Stage 1 of deploy/Dockerfile, replayed locally in ~10s. BLOCKING, unlike
-	# the advisory above: this one is a real build of the thing about to ship, so
-	# a failure here is a failure on the Fly builder minutes later. Nothing in CI
-	# builds this image — `make deploy` is the only path, so this is the check.
+	# Stage 1 of deploy/Dockerfile, replayed locally in ~10s. BLOCKING: this one
+	# is a real build of the thing about to ship, so a failure here is a failure
+	# on the Fly builder minutes later. Nothing in CI builds this image —
+	# `make deploy` is the only path, so this is the check.
 	# SKIP_DEPLOY_STAGE1_CHECK=1 to bypass.
 	@node scripts/check-deploy-stage1.mjs
 
+# Both images, one command. The hosted product ships from TWO independent images
+# and only the Fly one used to be built here, so a green deploy could leave
+# production's microVMs on weeks-old skills and MCP tools.
+#
+# `sandbox-image` runs first, so the image is built and pushed before the Fly
+# deploy. `e2b template create` rebuilds the template IN PLACE by name with no
+# versioned tag, so a `fly deploy` failure after that point leaves prod sandboxes
+# on the new in-sandbox code against the old control plane. Recover by rebuilding
+# the image from the deployed commit:
+#   git checkout <previously-deployed-sha> && make sandbox-image
+#
+# E2B_TEMPLATE_NAME is INHERITED by the prerequisite, so setting it here builds
+# THAT template and then deploys production's control plane against an untouched
+# production image -- the skew this target exists to prevent, reachable from a
+# variable the docs tell you to set. To build a dev template, run
+# `make sandbox-image` on its own; never pass the variable to `make deploy`.
+#
+# Hard dependencies this target carries (accepted by the lead, 2026-09-10):
+# E2B_API_KEY, a globally-installed `e2b` CLI, and phase 1's npm build.
 .PHONY: deploy
-deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server image; single always-on machine)
+deploy: sandbox-image deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs E2B_API_KEY + the e2b CLI; single always-on machine)
 	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
 	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
-	# until init_db moves to a release_command (docs/TODOS.md). Secrets +
+	# until init_db moves to a release_command (issue #1127). Secrets +
 	# `fly apps create` are one-time (DEVELOPMENT.md § Deploy to Fly.io).
 	# NOTE: apps/web/dist is baked at build time — redeploy to ship UI changes.
 	# GIT_SHA/BUILD_DATE are stamped into feedback bundles (apps/server/app/config.py).

@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 10, hint-samples.csv row 356, flag adds_spouse, confidence 3). Draft transcribed from an 1820 Finnish baptismal index entry; unverified. Two independent objections — an impossible birth interval and a different patronymic — point at a second Huhtala household."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 10, hint-samples.csv row 356, flag adds_spouse, confidence 3). RESOLVED 2026-09-17: the hint is a false match. The Kauhava communion book (rippikirja) IAa:12, image group 100775028, folia 177 and 179, shows two different men named Gustaf Johansson at Huhtala farm N:o 40 — the tree person born 1794 with wife Caisa Johansdotter, and a second man born 1780 with wife Lisa Jöransdotter, whose son Jöran was born 3 February 1820. Encoded as an avoid finding plus a required negative conclusion. See README \"Notes for reviewers\"."
 }

@@ -221,7 +221,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **28** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
 The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
@@ -576,6 +576,22 @@ agents.**
 > as the current population, and re-measure it rather than quoting it at a
 > proposal that would change it.
 
+**`.claude/settings.json` also carries a `permissions.allow` list**, reducing
+repeat permission prompts for commands verified genuinely read-only or
+scratch-scoped in practice but not covered by Claude Code's built-in
+auto-allow set (which includes undocumented "read-only forms of `git`" per
+its own docs, without enumerating which subcommands qualify — an explicit
+entry here removes that ambiguity rather than duplicating a guarantee).
+JSON carries no comments, so the file itself is not the rationale's home:
+the safety case for each entry — what was checked, what was ruled out, and
+why — lives in the commit message that added it. Read the current file for
+the exact list; `git log -p -- .claude/settings.json` for why each entry is
+there. `record_search` is the one non-obvious entry — it is not read-only (stages a sidecar under
+`results/.staging/`, pruned after 24h — `results-staging.ts`), kept because
+the writes stay in the tool's own scratch directory — the entry itself is a
+bare string, and the adding commit's own text doesn't make that argument: it
+calls `record_search` read-only outright, which this paragraph corrects.
+
 ### 3.6 The lane rule — classify a finding before you edit prose
 
 An e2e failure, an eval miss, or a user complaint is **not** automatically a
@@ -605,12 +621,16 @@ Architecturally:
   template.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
-  `allToolSchemas`, **and** parses `src/index.ts` for the dispatch chain —
+  `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
   advertised-but-undispatched, dispatched-but-unregistered, and duplicate cases
   all fail. Forgetting the `if (request.params.name === "…")` block used to ship
   a tool that fell through to the `Unknown tool: …` throw closing
-  `src/index.ts`'s `CallToolRequestSchema` handler, on its first real
-  call with CI green; that is now a CI failure. A commented-out `case` does not
+  `src/server.ts`'s `CallToolRequestSchema` handler, on its first real
+  call with CI green; that is now a CI failure. The chain lives in
+  `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
+  `LOCAL`) and `src/hosted-stdio.ts` (the search-agent prototype's per-turn tool
+  server, binding a bearer) are entrypoints that only connect a transport, so a
+  new arm goes in `server.ts` and both get it. A commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
 - **If your tool signals failure by RETURNING `{ ok: false }` rather than
@@ -676,9 +696,11 @@ Architecturally:
   points at the compiled `build/`, and a live session holds the old catalog. The
   harness targets (`harness-test`, `eval-skill`, `e2e-run`) carry `$(ENGINE_BUILD)`
   and rebuild for you. Cowork: `make mcpb` and reinstall the extension, then fully
-  quit and reopen Claude Desktop. Hosted: `make sandbox-image` — the
-  `genealogy-agent` image bakes its own engine and `make server-e2b` does **not**
-  rebuild it (§7). `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
+  quit and reopen Claude Desktop. Hosted: `make deploy` (which rebuilds the image),
+  or `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify against a
+  dev template first — the `genealogy-agent` image bakes its own engine and
+  `make server-e2b` does **not** rebuild it (§7). A bare `make sandbox-image`
+  rebuilds PRODUCTION's template in place. `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
   covers the Claude Code and Cowork rows; the hosted row is only here.
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
@@ -1433,7 +1455,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
-| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. |
+| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
 **The `ResearchTransport` seam is the reuse mechanism.** The provider talks only
@@ -1575,8 +1597,10 @@ other. Both `apps/electron` and `apps/web` must still typecheck (`make typecheck
 
 **Change anything the sandbox runs.** `make server-e2b` does **not** rebuild the
 engine — the `genealogy-agent` image bakes its own. After changing
-`app/sandbox_server.py` or `app/agent/*`, run `make sandbox-image` or the microVM
-runs stale code.
+`app/sandbox_server.py` or `app/agent/*`, rebuild the image or the microVM runs
+stale code: `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify,
+since a bare `make sandbox-image` rebuilds PRODUCTION's template in place.
+`make deploy` rebuilds the production one as part of the deploy.
 
 **Add a control-plane endpoint.** `apps/server/app/v1.py` for the public REST
 API (see `DEVELOPMENT.md` "Public `/v1` REST API"), `sessions.py` for session
@@ -1692,7 +1716,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 
 | Test | Asserts |
 |---|---|
-| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/index.ts` (none missing, none orphaned, none duplicated) |
+| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/server.ts` (none missing, none orphaned, none duplicated) |
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
@@ -1716,14 +1740,16 @@ the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
 §3 — plus a **warn-only** arm that maps a changed shared fixture
 (`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
-and warns when their run logs go stale), and three **warn-only** lints
-worth knowing because they fire right after the three most common tasks:
+and warns when their run logs go stale), and four **warn-only** lints
+worth knowing because they fire right after the most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
-tools — what happens after you grant one), and `check_negative_reciprocity.py`
+tools — what happens after you grant one), `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
-after you widen a description).
+after you widen a description), and `check_slot_queue.py` (an open issue's
+`**Touches:**` line names a path in the eval snapshot this PR is about to make
+stale — what happens right before you buy a paid run).
 
 **These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
@@ -1827,11 +1853,14 @@ changes how a correct change is made:
    `research_append` on `proof_summaries` (the arm with no redundant copy in the
    hosted path) and requires the guard's own deny text, with a hooks-removed
    control arm so the deny is attributable. Hosted-only, for the same reason.
-2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
-   not rebuild the `genealogy-agent` E2B image production runs the agent on, and
-   both guards over it are advisory. Production can run weeks-old skills, agents,
-   and MCP tools while CI, the deploy, and `/api/health` all look correct, and
-   nothing surfaces the baked commit. Run `make sandbox-image` (§7).
+2. **Nothing checks the sandbox image itself.** `make deploy` now builds and
+   pushes the `genealogy-agent` E2B image, and `/api/health` reports the commit
+   baked into it, so a deploy no longer silently leaves production on weeks-old
+   skills, agents and MCP tools. What remains unchecked is the image as an
+   artifact: no CI job builds or verifies the template, `make server-e2b` runs
+   whatever is baked into the one it resolves, and a bare `make sandbox-image`
+   rebuilds PRODUCTION's template in place from the working tree. Build a dev
+   template (`E2B_TEMPLATE_NAME=genealogy-agent-dev`) when verifying (§7).
 3. **Every measurement in this repo describes the eval corpus, not production.**
    There is no production telemetry: `apps/server/app/obs.py` is PII-free stdout
    logging, and `sandbox_server.py`'s buffer is a reconnect *replay*, not a tool
@@ -1942,7 +1971,14 @@ and per-fixture concentration, across the last 14 days of committed runs —
 every run-log reader windows that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
 actually called across those runs, and the
-`/interpret-e2e-result` skill exists to read the log for you. Mechanics:
+`/interpret-e2e-result` skill exists to read the log for you. `make
+e2e-ranked-reads` reports whether the main thread's `record_read` calls landed
+inside the ranker's **visible** top 3 — visible is the limit, because
+`judge.py` truncates `ranked.matches` past three entries, so it cannot tell a
+read at rank 7 from a read of an unranked record. It says nothing about
+subagent reads, which never saw the `ranked` block and are counted separately,
+and it prints counts rather than a rate for the reason §9.4 gap 3 gives.
+Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
 a sub-skill regression rather than a routing one.

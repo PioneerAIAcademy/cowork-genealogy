@@ -70,6 +70,8 @@ const COMPONENTS = join(
  * grows past a dozen, the lint is asking the wrong question.
  */
 const NOT_RENDERED: Record<string, string> = {
+  "researcher_profile.narration_guidance":
+    "The instruction the agent reads for its narration style — a model instruction, never user content. The lay user must not see it on the Overview (lay-mode plan, 2026-09-18).",
   "timeline.generated":
     "Tool-set generation timestamp. Bookkeeping — the viewer shows the timeline, not when it was built.",
   "timeline_event.standard_place":
