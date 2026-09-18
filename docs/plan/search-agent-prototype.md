@@ -10,7 +10,7 @@ against seeded rows until the worker exists); the store half of D6–8 built 202
 #2652; `PgS3ProjectStore`, `createServer(principal)`, `hosted-stdio.js`); D9–10 and D15
 built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
 Postgres, the six agents via `agents=`); D14 scripted and the D17 prep built 2026-09-18
-(PR #D17PR; `make proto-kill`, `proto-seed`, `proto-audit`, `proto-token`, and
+(PR #2668; `make proto-kill`, `proto-seed`, `proto-audit`, `proto-token`, and
 `tool_calls.duration_ms` filled); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
@@ -1250,7 +1250,7 @@ without whichever Bedrock refuses.
   end of D15, and their receipt-time counterpart test, are cut (2026-09-10, P1:
   re-decide); the counterpart was the reject → repair → identical-retry regression
   replayed from the three corpus runs named in days 6–8, which needed no live agent.
-  **Done 2026-09-18 (PR #D17PR) as `make proto-kill` — the acceptance script's `--kill`
+  **Done 2026-09-18 (PR #2668) as `make proto-kill` — the acceptance script's `--kill`
   arm on a real turn, not the mock agent.** The D9–10 review's hand kill had already
   shown the mechanism, P1 had already measured what a killed delegation does on resume
   (re-run), and the real turn costs $0.12 — so the mock's thirty lines would have bought
@@ -1309,7 +1309,7 @@ without whichever Bedrock refuses.
   `ceiling_kills` table, no two-direction proof — see the step model for why that
   scaffolding was cut.
   **Done 2026-09-18 with the D9–10 worker (the `agents=` item, the precondition and
-  the deny-and-log hook); `tool_calls.duration_ms` filled the same day (PR #D17PR): a
+  the deny-and-log hook); `tool_calls.duration_ms` filled the same day (PR #2668): a
   `PostToolUse` / `PostToolUseFailure` hook stamps the row the `PreToolUse` hook wrote,
   keyed on `tool_use_id`, Postgres clock, first stamp wins; a call in flight at a kill
   keeps NULL, which `make proto-audit` reports as its own count.** The worker parses
@@ -1385,7 +1385,7 @@ without whichever Bedrock refuses.
   through `extraction_append`, so it still cannot time this kill. **Assert P1's `list_subkeys` criterion here too:** the
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
-  **Prep done 2026-09-18 (PR #D17PR); the run is four commands and a browser.**
+  **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
   1. `make proto-up` — builds the engine and the stack. `proto/env.sh` exports the model
      key and writes the FamilySearch token, refreshed from the desktop login through
      `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
