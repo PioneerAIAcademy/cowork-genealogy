@@ -443,9 +443,9 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
 .PHONY: proto-up
-proto-up: ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web and wait for health
+proto-up: ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools and wait for health
 	$(PROTO_COMPOSE) up -d --build
-	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web
+	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools
 
 # The D3 services only. proto-smoke never touches the web tier, so it must not be gated
 # on the web image building (a network pip install) or its healthcheck.
@@ -558,6 +558,28 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 .PHONY: engine-smoke-stdio
 engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and call every offline tool once (no FamilySearch login needed)
 	cd $(ENGINE_DIR) && npx tsx dev/smoke-stdio.ts
+
+# D16 transport smoke: every advertised tool but the four auth exclusions, over Streamable
+# HTTP. Default: build/http.js on a free loopback port for the duration of the run, killed
+# by the trap on every exit path. BASE=http://127.0.0.1:8787 PROJECT_ROOT=/projects runs the
+# same smoke against the compose `tools` service instead (proto-drive's BASE= switch).
+# PROJECT_ROOT empty -> the smoke picks a mkdtemp.
+PROJECT_ROOT ?=
+SMOKE_HTTP_ARGS = $(if $(PROJECT_ROOT),--project-root '$(PROJECT_ROOT)')
+
+.PHONY: engine-smoke-http
+engine-smoke-http: $(ENGINE_BUILD) ## Drive the built engine over Streamable HTTP and call every tool but the four auth exclusions (BASE=http://127.0.0.1:8787 PROJECT_ROOT=/projects runs against the compose tools service)
+ifdef BASE
+	cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' $(SMOKE_HTTP_ARGS)
+else
+	cd $(ENGINE_DIR) || exit 1; \
+	  port=$$(node -e 'const s=require("net").createServer().listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})'); \
+	  node build/http.js --host 127.0.0.1 --port $$port & pid=$$!; \
+	  trap 'kill $$pid 2>/dev/null; wait $$pid 2>/dev/null' EXIT; \
+	  for i in $$(seq 1 30); do kill -0 $$pid 2>/dev/null || break; curl -sf --max-time 0.5 "http://127.0.0.1:$$port/healthz" >/dev/null && break; sleep 0.5; done; \
+	  curl -sf --max-time 2 "http://127.0.0.1:$$port/healthz" >/dev/null || { echo "engine-smoke-http: build/http.js did not answer /healthz on :$$port within 30 s" >&2; exit 1; }; \
+	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" $(SMOKE_HTTP_ARGS)
+endif
 
 # $(ENGINE_BUILD) is a real prerequisite here, not a convenience. The mock MCP
 # server (eval/harness/harness/mock_mcp.py) shells out to the COMPILED build/
@@ -986,6 +1008,22 @@ e2e-compaction: ## record_search subjectId supply by compaction segment, over co
 	# SINCE=2026-07-27 (the ranking fold) and SINCE=2026-08-04 (the
 	# rankingSkipped note) are the two invocations that answer it.
 	cd eval/harness && uv run python -m e2e.compaction_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-ranked-reads
+e2e-ranked-reads: ## Were the main thread's record reads inside the ranker's visible top 3, over committed e2e runs (issue #1156): make e2e-ranked-reads | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: joins each main-thread record_read against the
+	# ranked block of the search that supplied it. Only the VISIBLE top 3 is
+	# measurable -- judge.py truncates ranked.matches past three entries and
+	# the full list is never committed, so a read at rank 7 reads the same as
+	# an unranked one. Subagent reads are reported separately: they never saw
+	# the ranked block. Prints counts, not a rate (architecture.md 9.4 gap 3).
+	# The bare command's 14-day SINCE default is too narrow for this report's
+	# own question -- roughly half the ranked calls sit outside it. Pass
+	# SINCE=2026-08-04 (the day the capture fix landed; nothing before it
+	# carries a ranked block at all) to answer the issue.
+	cd eval/harness && uv run python -m e2e.ranked_read_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
