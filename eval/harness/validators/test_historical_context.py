@@ -19,6 +19,8 @@ signature contract. The `test` argument is the parsed test JSON dict
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 
@@ -95,4 +97,35 @@ def test_topical_fixture_actually_used(tool_calls, test):
         "one tool call, but it never did -- the model's query phrasing missed the "
         f"fixture's args predicate and fell back to a generic fixture instead. "
         f"Fixtures actually hit: {hit_fixtures or '(none)'}"
+    )
+
+
+# --- Confident attribution in no-results tests (issue #2331) -----------
+
+CONFIDENT_ATTRIBUTION_RE = re.compile(
+    r'(?:'
+    r'(?:the\s+)?most\s+likely\s+explanations?'
+    r'|ordered\s+by\s+(?:probability|likelihood)'
+    r'|\(most\s+likely\)'
+    r'|is\s+almost\s+certainly'
+    r')',
+    re.IGNORECASE,
+)
+
+
+def report_confident_no_results_attribution(text_response, test):
+    """Tier 2: flags confident ranked/attributed cause lists on no-results
+    tests where no tool returned content about the subject."""
+    if "no-results" not in test.get("tags", []):
+        pytest.skip("not a no-results test")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no response text to check")
+    matches = CONFIDENT_ATTRIBUTION_RE.findall(response)
+    if not matches:
+        return
+    raise AssertionError(
+        "the response contains "
+        + "; ".join(f"'{m.strip()}'" for m in matches[:5])
+        + " \u2014 confident attribution language in a no-results test"
     )

@@ -69,6 +69,17 @@
           "rationale": "A US census placing Patrick as a child in a parents' household would link him to them.",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "death",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1908",
+          "repository": "FamilySearch",
+          "rationale": "Patrick's own Pennsylvania death certificate carries parent-name fields and is the one decisive parentage record reachable in the US records; it also anchors his identity in the tree.",
+          "fallback_for": null,
+          "status": "completed"
         }
       ]
     }
@@ -121,6 +132,22 @@
       "results_examined": 3,
       "notes": "Patrick does not appear as a child in any US household enumeration — his earliest US record is as an adult householder (1870). He immigrated after childhood, so no census places him in his parents' household.",
       "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-05-05T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Flynn",
+        "given": "Patrick",
+        "death_year": 1908,
+        "collection": "Pennsylvania Death Certificates"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "notes": "Certificate no. 4521 recovered: Patrick Flynn, d. 12 Mar 1908, Schuylkill County. Identifies Patrick and fixes his death, but BOTH parent-name fields are blank - the informant was his son-in-law, who did not know the Irish parents. Decisive for identity, silent on parentage.",
+      "external_site": null
     }
   ],
   "sources": [
@@ -143,6 +170,26 @@
       "url_archived": null,
       "notes": "Index entry; original register image not examined.",
       "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Pennsylvania, Department of Health, death certificate no. 4521 (1908), Patrick Flynn, Schuylkill County; digital image, FamilySearch, accessed 5 May 2026.",
+      "citation_detail": {
+        "who": "Schuylkill County registrar; informant, John Brennan (son-in-law)",
+        "what": "State death certificate",
+        "when_created": "1908",
+        "when_accessed": "2026-05-05",
+        "where": "Pennsylvania Dept. of Health / FamilySearch",
+        "where_within": "Certificate no. 4521, Schuylkill County, 12 Mar 1908"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-05",
+      "url": null,
+      "url_archived": null,
+      "notes": "Digital image of the original certificate examined.",
+      "log_entry_id": "log_004"
     }
   ],
   "assertions": [
@@ -171,6 +218,52 @@
       "extracted_for_question_ids": [
         "q_001"
       ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_002",
+      "record_id": "pa:death:flynn-patrick-1908",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Patrick Flynn died 12 March 1908, Schuylkill County, Pennsylvania",
+      "structured_value": {
+        "age_at_death": "63 years",
+        "birthplace_stated": "Ireland"
+      },
+      "date": "1908-03-12",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "primary",
+      "informant": "John Brennan, son-in-law (informant named on the certificate)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Present at the death and reporting it; reliable on the death itself, remote from Patrick's Irish origins.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_002",
+      "record_id": "pa:death:flynn-patrick-1908",
+      "record_role": "absent",
+      "fact_type": "relationship",
+      "value": "Father and mother: both fields left blank on the certificate",
+      "structured_value": {
+        "relationship_type": "parents",
+        "related_person_role": "deceased"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_bias_notes": "Negative evidence: the one US record carrying parent-name fields leaves both blank. The son-in-law informant did not know Patrick's parents, so this record cannot link the child to the couple.",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
   "person_evidence": [
@@ -192,6 +285,16 @@
       "rationale": "The bride Mary Doyle in the same marriage matches the candidate mother stub I3 and supplies the maiden name. Like pe_001, it links the couple to each other, not Patrick to the couple.",
       "match_score": null,
       "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name, age (63, so b. ca. 1845), stated Irish birth and Schuylkill County residence all match the subject; the certificate is the record the project was seeded from. Only Patrick Flynn of this age dying in the county in 1908.",
+      "match_score": null,
+      "created": "2026-05-05",
       "superseded_by": null
     }
   ],

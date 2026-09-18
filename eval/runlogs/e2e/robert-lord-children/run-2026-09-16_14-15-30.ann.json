@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Agent added R6/R7 asserting GSPY-NFZ as father of I3 (James) and I4 (Betsy) via the 1911 Rochdale census (S1); also added Couple R5 and 1911/1901 census facts to GSPY-NFZ — full over-claim, never found the disproving 1911 Bacup record (X4M8-5JM).",
+    "f2": "Agent concluded GSPY-NFZ was the Rochdale Robert Brierley (positive match, birth year corrected to 1866); no negative conclusion documented; parent-child links added instead. Proof quality 1 (unsound): proof flagged the Abel vs. Robert Brierley father discrepancy and dismissed it as not bearing on identity — that discrepancy is decisive; research declared not exhaustive while tier held at Probable."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "1f1ee7985eb65d8322617912e2c7062752b77ba7cfa12cd109e97b00c89ba65a"
+}

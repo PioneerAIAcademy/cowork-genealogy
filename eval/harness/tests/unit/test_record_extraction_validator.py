@@ -82,7 +82,7 @@ def test_classifications_matcher_fires_on_updated_assertion_with_wrong_value():
             {"record_role": "head", "fact_type": "birth", "informant_proximity": "unknown"}
         ]
     }
-    with pytest.raises(AssertionError, match="no new assertion"):
+    with pytest.raises(AssertionError, match="no assertion carried"):
         check_classifications(before, after, test)
 
 
@@ -104,6 +104,24 @@ def test_classifications_matcher_still_works_on_newly_created_assertion():
     test = {
         "expected_classifications": [
             {"record_role": "head", "fact_type": "birth", "informant_proximity": "unknown"}
+        ]
+    }
+    check_classifications(before, after, test)  # does not raise
+
+
+def test_classifications_matcher_role_list_fires_on_updated_assertion():
+    """The widened matcher + role-as-list must find an UPDATED assertion
+    when its role is one of the listed alternatives."""
+    before = {"research_json": {"assertions": [_assertion(
+        record_role="head", informant_proximity="self"
+    )]}}
+    after = {"research_json": {"assertions": [_assertion(
+        record_role="head", informant_proximity="unknown"
+    )]}}
+    test = {
+        "expected_classifications": [
+            {"record_role": ["head", "head_of_household"],
+             "fact_type": "birth", "informant_proximity": "unknown"}
         ]
     }
     check_classifications(before, after, test)  # does not raise
