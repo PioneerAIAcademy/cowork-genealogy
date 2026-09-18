@@ -348,9 +348,9 @@ author's. Until it is made the set is pinned by
 (`eval/harness/tests/unit/test_e2e_fixture_corpus.py`), which fails in
 **both** directions — a fourth fixture entering the state fails it, and
 fixing one of the three fails it too — so the defect can neither spread
-nor be silently repaired while the call is open. Issue #2480 is the
-closest relative and the mirror image (guards that can never go *red*),
-not the same defect.
+nor be silently repaired while the call is open. The mirror-image defect —
+a guard that can never go *red* — is a different thing and is tracked
+separately.
 
 #### 3.4.2 Relationship findings: `matched` is derived, not trusted
 
