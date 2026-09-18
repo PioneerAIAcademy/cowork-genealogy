@@ -1971,7 +1971,14 @@ and per-fixture concentration, across the last 14 days of committed runs —
 every run-log reader windows that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
 actually called across those runs, and the
-`/interpret-e2e-result` skill exists to read the log for you. Mechanics:
+`/interpret-e2e-result` skill exists to read the log for you. `make
+e2e-ranked-reads` reports whether the main thread's `record_read` calls landed
+inside the ranker's **visible** top 3 — visible is the limit, because
+`judge.py` truncates `ranked.matches` past three entries, so it cannot tell a
+read at rank 7 from a read of an unranked record. It says nothing about
+subagent reads, which never saw the `ranked` block and are counted separately,
+and it prints counts rather than a rate for the reason §9.4 gap 3 gives.
+Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
 a sub-skill regression rather than a routing one.
