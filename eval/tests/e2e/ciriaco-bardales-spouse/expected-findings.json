@@ -15,6 +15,7 @@
         "mother": "Carmen Morales"
       },
       "supporting_sources": [
+        "Guatemala, Guatemala, Registro Civil, 1874-2008 — marriage of the couple's surviving son José Luis Bardales, Chiquimula, 10 Jun 1924, Partida N.º 77 (ark:/61903/1:1:XSGQ-CNSC): names him \"hijo reconocido de Don Ciriaco Bardales y Carmen Morales, nieto por linea paterna de Don Ramón Sanabria y Josefa Bardales\" — the tree person KNYF-2Z8 is himself a son of Josefa Bardales (relationship R2; \"hijo de Josefa Bardales\" on ark:/61903/1:1:Z9YP-SKN2), so the father of these children and the tree person are sons of the same woman",
         "Guatemala, Guatemala, Registro Civil, 1874-2008 — death registration of 13 Aug 1905, Partida N.º 680 (ark:/61903/1:1:6D38-BQ8L; father persona ark:/61903/1:1:6D38-BQ8G): Ciriaco Bardales appeared in person to declare the death of Ciriaco, aged twelve days, \"hijo natural del exponente y de Carmen Morales, solteros, ladinos, católicos, de Chiquimula y de este vecindario\", at house 25, Avenida del Golfo",
         "Guatemala, Guatemala, Registro Civil, 1874-2008 — birth registration of 1 Aug 1905, Partida N.º 1118 (ark:/61903/1:1:6KNJ-27P8; father indexed as \"Ciriaco Bandales\"): the same father appeared, named Carmen Morales as the mother, gave the same address (house 25, Avenida del Golfo), stated both parents \"solteros ... originarios de Chiquimula la Sierra y de este vecindario\", formally acknowledged the child as his son, and signed the entry",
         "Guatemala, Guatemala, Registro Civil, 1874-2008 — the subject's own death registration of 12 Apr 1933, Partida N.º 1069 (ark:/61903/1:1:Z9YP-SKN2): aged 63, \"casado con Amelia Palacios, Coronel, hijo de Josefa Bardales, originario de Esquipulas y de este vecindario\" — Esquipulas is a municipality of the department of Chiquimula"
@@ -28,10 +29,11 @@
       "details": {
         "person": {
           "name": "Carmen Morales",
-          "role": "named as the child's mother on both the 1 Aug 1905 birth registration and the 13 Aug 1905 death registration, described as \"soltera\" and of Chiquimula origin"
+          "role": "named as the child's mother on both the 1 Aug 1905 birth registration and the 13 Aug 1905 death registration, described as \"soltera\"; also named as mother on the couple's surviving son's 1924 marriage entry"
         }
       },
       "supporting_sources": [
+        "Guatemala, Guatemala, Registro Civil, 1874-2008 — marriage of the couple's surviving son José Luis Bardales, Chiquimula, 10 Jun 1924, Partida N.º 77 (ark:/61903/1:1:XSGQ-CNSC): names him \"hijo reconocido de Don Ciriaco Bardales y Carmen Morales, nieto por linea paterna de Don Ramón Sanabria y Josefa Bardales\" — the tree person KNYF-2Z8 is himself a son of Josefa Bardales (relationship R2; \"hijo de Josefa Bardales\" on ark:/61903/1:1:Z9YP-SKN2), so the father of these children and the tree person are sons of the same woman",
         "Guatemala, Guatemala, Registro Civil, 1874-2008 — death registration of 13 Aug 1905, Partida N.º 680 (ark:/61903/1:1:6D38-BQ8L; father persona ark:/61903/1:1:6D38-BQ8G): Ciriaco Bardales appeared in person to declare the death of Ciriaco, aged twelve days, \"hijo natural del exponente y de Carmen Morales, solteros, ladinos, católicos, de Chiquimula y de este vecindario\", at house 25, Avenida del Golfo",
         "Guatemala, Guatemala, Registro Civil, 1874-2008 — birth registration of 1 Aug 1905, Partida N.º 1118 (ark:/61903/1:1:6KNJ-27P8; father indexed as \"Ciriaco Bandales\"): the same father appeared, named Carmen Morales as the mother, gave the same address (house 25, Avenida del Golfo), stated both parents \"solteros ... originarios de Chiquimula la Sierra y de este vecindario\", formally acknowledged the child as his son, and signed the entry"
       ],
