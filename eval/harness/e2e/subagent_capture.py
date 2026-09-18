@@ -198,7 +198,7 @@ def sdk_cache_dir(workspace: Path) -> Path | None:
     - **Windows 8.3 short names.** Committed run logs show the CLI keying on
       ``C--Users-KWESIA-1-AppData-Local-Temp-…`` while the home in the same
       string is ``C:\\Users\\KWESI ASANTE``. Python's ``realpath`` expands that,
-      so an exact key built from it never matches. Three operators and eleven
+      so an exact key built from it never matches. Three operators and nine
       logs carry that shape, and they capture successfully under a leaf match —
       so a resolved-only key would REGRESS the platform this team runs on.
     - **Symlinked parents** on Linux, and ``/var`` vs ``/private/var`` on macOS.

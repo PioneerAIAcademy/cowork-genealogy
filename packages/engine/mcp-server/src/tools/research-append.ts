@@ -397,6 +397,125 @@ function planActiveInvariants(entry: any, research: any): string[] {
   return [];
 }
 
+/** The mechanical floor a hypothesis must clear to stand at `supported`
+ *  (`research-schema-spec.md` §5.9; lead ruling 2026-09-07 on issue #2086).
+ *
+ *  Ported from the landed eval validator — `test_supported_requires_evidence_floor`
+ *  in `eval/harness/validators/test_hypothesis_tracking.py`. The two planes must
+ *  agree; change both or neither.
+ *
+ *  Conflicts are matched by **assertion overlap, never by shared `question_id`**.
+ *  `eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that
+ *  separates the two: its `h_001` is `supported` while `c_001` is unresolved and
+ *  blocks the same question, but names entirely different assertions. Matching
+ *  by question refuses that shipped, correct fixture.
+ *
+ *  **One-directional.** A hypothesis that clears the floor and was left `active`
+ *  is not a violation. The spec's third condition — evidence consistency, no
+ *  logical or geographic impossibility — is a genealogist's judgment call and is
+ *  deliberately not attempted here.
+ *
+ *  Reads the **pre-call snapshot**, both halves, per ADR-0011's rule: "Snapshot
+ *  when the precondition must be satisfied by someone else. Read live when it is
+ *  the same author's own prior step." Neither half is this author's own step —
+ *  `ownership.json` gives `hypotheses.callers` as `["skill:hypothesis-tracking"]`
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
+ *  `skill:record-extraction`. Both of those sections are `enforceableAt:
+ *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
+ *  stop a session from writing the satisfying conflict or assertion in the same
+ *  batch as the promote and clearing this gate from inside the call it gates.
+ *
+ *  Measured cost of the snapshot read: **0 refusals** across the calibration
+ *  corpus — no batch appends an assertion ahead of the promote, and neither of
+ *  the two carrying a `conflicts` op ahead of it is affected (one has no
+ *  assertion overlap, the other's conflict is already `resolved`). The single
+ *  batch that would be refused is in `_2491-exploratory-quarantine`, which is
+ *  exploratory-only by lead ruling #2491 and crosses two ownership lanes in one
+ *  call. A same-batch resolve-then-promote is refused, and the remedy is to
+ *  split the call.
+ *
+ *  The snapshot does NOT close the conflicts side: a conflict written anywhere
+ *  in the same batch is invisible to it, in either order, and the
+ *  promote-then-append ordering leaks under a live read too. Measured both
+ *  ways 2026-09-17 — see `guardrail-enforcement-spec.md` §5 for the table. */
+function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.status !== "supported") return [];
+  const hid = entry.id ?? "?";
+  const supporting: string[] = Array.isArray(entry.supporting_assertion_ids)
+    ? entry.supporting_assertion_ids
+    : [];
+  const contradicting: string[] = Array.isArray(entry.contradicting_assertion_ids)
+    ? entry.contradicting_assertion_ids
+    : [];
+  const linked = new Set<string>([...supporting, ...contradicting]);
+
+  // `c &&`: a legacy `conflicts: [null]` element must not take the writer down
+  // — the same guard planActiveInvariants carries, for the same reason.
+  const unresolved = (preCallResearch?.conflicts ?? [])
+    .filter(
+      (c: any) =>
+        c &&
+        (Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []).some(
+          (aid: string) => linked.has(aid),
+        ) &&
+        c.status !== "resolved" &&
+        c.status !== "moot",
+    )
+    .map((c: any) => c.id);
+  if (unresolved.length > 0) {
+    // Returns rather than falling through: the validator `continue`s here, so
+    // the evidence floor is moot once this already fails, and reporting both
+    // halves for one hypothesis would differ from the other plane.
+    //
+    // The remedy clause is a deliberate, one-directional divergence from the
+    // Python text, which was written to be read by a human in a pytest failure.
+    // The ruling asks for a refusal the agent can act on, and every
+    // neighbouring refusal in this file names the remedy.
+    return [
+      `hypotheses[${hid}]: supported but conflict(s) [${unresolved.join(", ")}] naming its ` +
+        `assertions are unresolved; settle each as "resolved" (independence, weighing and ` +
+        `rationale) or "moot" (with a rationale) in an EARLIER call — settling it in this same ` +
+        `call does not clear the gate — or drop the contested assertion from ` +
+        `supporting_assertion_ids`,
+    ];
+  }
+
+  const byId = new Map<string, any>();
+  for (const a of preCallResearch?.assertions ?? []) {
+    if (a && a.id != null) byId.set(a.id, a);
+  }
+  let direct = 0;
+  const indirectSources = new Set<string>();
+  for (const aid of supporting) {
+    const a = byId.get(aid);
+    if (!a) continue; // an id resolving to no assertion counts as nothing
+    if (a.evidence_type === "direct") direct += 1;
+    // Skipping a null/absent `source_id` diverges from the Python, which adds
+    // `None` to the set and so could count "no source" as a distinct source.
+    // Unreachable through this tool — `source_id` is required and typed
+    // `string` in research.schema.json, and every writer validates before
+    // persisting — so the two planes cannot observably disagree.
+    else if (a.evidence_type === "indirect" && typeof a.source_id === "string") {
+      indirectSources.add(a.source_id);
+    }
+  }
+  if (direct < 1 && indirectSources.size < 2) {
+    // The same-call clause matters as much here as in half (a), and for the
+    // same reason: this half also reads the pre-call snapshot, so an assertion
+    // appended earlier in THIS batch is invisible and the agent is told there is
+    // no direct assertion immediately after appending one. Without the clause it
+    // retries the same batch, or mints further assertions to satisfy a floor it
+    // has already met — the ADR-0011 satisfiability limit.
+    return [
+      `hypotheses[${hid}]: supported with no direct supporting assertion and only ` +
+        `${indirectSources.size} distinct indirect source(s) (needs >=1 direct or >=2 ` +
+        `distinct indirect sources). Assertions appended in THIS call do not count — ` +
+        `append them in an earlier call, then promote`,
+    ];
+  }
+  return [];
+}
+
 /** An uncertain transcription rides in the assertion's `value` as `[?]` — the
  *  record-extractor contract ("Keep the uncertain reading in `value` with
  *  `[?]`"). Nothing else in the entry marks doubt structurally. */
@@ -1800,34 +1919,89 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
 }
 
 /** Assertions with `evidence_type: "negative"` must set `record_role` to the
- *  exact string `"absent"` (research-schema-spec.md §5.6), and vice versa —
- *  the two fields are not independent judgment calls, `record_role: "absent"`
- *  is a mechanical corollary of the evidence_type decision, so this REJECTS
- *  rather than silently coercing. Silently overwriting `record_role` would
- *  risk masking an assertion whose `value` also failed to differentiate the
- *  person — observed live: three negative-evidence assertions on three
+ *  exact string `"absent"` (research-schema-spec.md §5.6, "Negative evidence") — and vice versa —
+ *  and must set `informant_proximity` to `"researcher"`: no record informant
+ *  reported an absence, whatever the record type, so a negative is always the
+ *  researcher's own conclusion. None of these are independent judgment calls;
+ *  each is a mechanical corollary of the evidence_type decision, so this
+ *  REJECTS rather than silently coercing. Silently overwriting `record_role`
+ *  would risk masking an assertion whose `value` also failed to differentiate
+ *  the person — observed live: three negative-evidence assertions on three
  *  different people sharing one generic `value` string ("preceded Harold
  *  Dean Whitaker in death"), with `record_role` as their only distinguishing
  *  field. No-op for a non-assertion entry (only assertions carry
- *  `evidence_type`) or a non-string `evidence_type`. */
+ *  `evidence_type`) or a non-string `evidence_type`.
+ *
+ *  The `record_role` arm is bidirectional; the `informant_proximity` arm is
+ *  FORWARD ONLY, matching the document tier — every `absent` assertion in the
+ *  corpus is already negative, so the converse is an unexercised branch.
+ *  `informant` is not checked at all: it is free text (ADR-0011 limit 1).
+ *
+ *  **Both messages name the ABSENCE TEST, not just the field to change**, and
+ *  that is load-bearing rather than decorative. The discriminator is whether
+ *  the finding is an absence — NOT whether the record states the fact, which
+ *  is wrong for the predeceased pattern (a person the record names can still
+ *  be absent from among the living). Neither message may prescribe an edit
+ *  another arm refuses: an earlier draft told the caller to flip
+ *  `evidence_type` to "direct", which the converse role arm then rejected. In
+ *  `eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`
+ *  (`ut_record_extraction_028`) the role arm refused two blank-field negatives;
+ *  the agent's very next call re-sent the same two defects with `record_role`
+ *  flipped to `"absent"` and they were accepted. A message that names one field
+ *  buys a relabel, not a fix. */
 function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   if (typeof entry.evidence_type !== "string") return;
   const isNegative = entry.evidence_type === "negative";
   const roleIsAbsent = entry.record_role === "absent";
+  // Both arms are COLLECTED, not thrown one at a time. An entry wrong on both
+  // fields is the commonest violating shape in the corpus (a_012's pre-retag
+  // state is exactly it), and throwing the role arm first hid the proximity
+  // error until the caller had already spent a round trip fixing the role.
+  // That is this change's own thesis applied to itself: a refusal that names
+  // one field at a time buys a relabel rather than a fix. The document tier
+  // already reports both.
+  const errors: string[] = [];
   if (isNegative && !roleIsAbsent) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
-        `— negative evidence always uses the literal record_role "absent". Keep the ` +
-        `person's identity in \`value\` instead (e.g. "Walter Whitaker preceded Harold ` +
-        `Dean Whitaker in death", not a generic value shared across multiple people).`,
+        `— negative evidence always uses the literal record_role "absent", and that ` +
+        `holds even when the record NAMES the person: an obituary's "preceded in death ` +
+        `by his wife, Ruth" is still negative evidence about her vital status, so her ` +
+        `role is "absent", not "spouse_1". Before changing the role, check the finding ` +
+        `is an ABSENCE at all. A fact about a person PRESENT in the record is ` +
+        `evidence_type "direct" carrying that person's real role — change both fields ` +
+        `together, not just this one. A blank field on a present person (no surname, no ` +
+        `occupation) is silence: write no assertion. If it is an absence, keep the ` +
+        `person's identity in \`value\` (e.g. "Walter Whitaker preceded Harold Dean ` +
+        `Whitaker in death"), not a generic value shared across multiple people. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
     );
   }
   if (roleIsAbsent && !isNegative) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
         `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
     );
   }
+  if (isNegative && entry.informant_proximity !== "researcher") {
+    errors.push(
+      `assertion has evidence_type "negative" but informant_proximity ` +
+        `'${entry.informant_proximity}' — negative evidence is the researcher's own ` +
+        `conclusion, so it always takes informant_proximity "researcher": no record ` +
+        `informant reported an absence, whatever the record type, and that holds even ` +
+        `when the record names the person (the "preceded in death by" shape). Set ` +
+        `informant_proximity to "researcher". Only if the finding is not an absence at ` +
+        `all — a fact about a person present in the record — is "negative" the wrong ` +
+        `evidence_type, and then record_role must change from "absent" to that person's ` +
+        `real role in the same edit; changing evidence_type alone is refused. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
+    );
+  }
+  if (errors.length) throw new ResearchAppendError(errors);
 }
 
 function applyOne(
@@ -2230,6 +2404,53 @@ function applyOne(
   // (re)sets status to "active"; the helper no-ops for non-active entries.
   if (section === "plans") {
     invariantErrors.push(...planActiveInvariants(resultEntry, research));
+  }
+  // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on
+  // the op that SETS the status — the same discipline as the `questions` and
+  // `proof_summaries` blocks — which is what makes the ruling's "a hypothesis
+  // set to supported" true rather than "an entry that stands at supported", so
+  // a narrative-only update to one promoted in an earlier call is not refused.
+  //
+  // Deliberately NOT the widened form `conflictedSourceInvariants` below uses.
+  // That rule asks "does the entry STAND in a forbidden state"; the ruling chose
+  // the narrow form here, and over the whole corpus the two are
+  // indistinguishable, so widening buys nothing. The cost is that the gate is
+  // unreachable from the `conflicts` side: a conflict written anywhere in the
+  // same batch is invisible to it, in EITHER order (measured 2026-09-17 — not
+  // order-sensitive, as an earlier draft of this comment claimed). Neither a
+  // snapshot nor a live read closes the promote-then-append ordering. Recorded
+  // in guardrail-enforcement-spec.md §5; closing it would widen the gate past
+  // "forward direction only", which is the lead's call.
+  if (section === "hypotheses") {
+    // ANY of the three coupled fields, not `status` alone. The invariant couples
+    // `status` to both id lists, so an op touching a list can break it without
+    // naming `status` — the same mirror-image hole the `questions` arm above
+    // found and closed, and it is not hypothetical here either: the skill's own
+    // documented re-invocation path writes `fields: {contradicting_assertion_ids:
+    // [...]}` and is told to "leave the status unchanged"
+    // (`hypothesis-tracking/SKILL.md`). Gating on `status` alone left three
+    // measured calls landing `ok: true` on exactly the state this refuses.
+    //
+    // Measured at 587d3c98d: 11 corpus update ops touch one of these lists
+    // without naming `status`, across 5 run logs, against 17 ops that set
+    // `status: "supported"` at all — so the ungated path was the size of the
+    // gated one. Widening costs nothing: reconstructing each hypothesis's status
+    // from the call ledger, **0 of those 11** stood at `supported` when the op
+    // arrived, so the widened arm refuses no write the corpus actually made.
+    //
+    // Still the forward direction: the entry must END at `supported` and fail
+    // the floor. `hypothesisSupportedInvariants` returns [] for every other
+    // status, so a narrative-only update — naming none of the three — is
+    // untouched.
+    const hypothesisFields = op.fields ?? {};
+    const floorFieldTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(hypothesisFields, "status") ||
+      Object.prototype.hasOwnProperty.call(hypothesisFields, "supporting_assertion_ids") ||
+      Object.prototype.hasOwnProperty.call(hypothesisFields, "contradicting_assertion_ids");
+    if (floorFieldTouchedThisOp) {
+      invariantErrors.push(...hypothesisSupportedInvariants(resultEntry, preCallResearch));
+    }
   }
   // Identity over-reach: runs on append AND on an update that raises confidence
   // to "confident"; the helper no-ops for every other confidence value.

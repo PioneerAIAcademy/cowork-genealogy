@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "user_message": "Have we searched enough for q_001? I've run out of budget — we haven't done probate records or the post-1860 censuses, but I can't search any more. Can you evaluate whether the research is exhaustive and write the declaration? It's clearly not exhaustive, so declared should be false — but I want an honest assessment with the stop criteria filled in so I can see exactly what gaps remain.",
+    "user_message": "Have we searched enough for q_001? I've run out of budget — we haven't done probate records or the post-1860 censuses, but I can't search any more. Can you evaluate whether the research is exhaustive and write the declaration? I want an honest assessment with the stop criteria filled in so I can see exactly what gaps remain.",
     "scenario": "flynn-census-exhausted"
   },
   "mcp_fixtures": [
@@ -26,6 +26,7 @@
     "Do not credit a stop_criteria entry that asserts research the log does not support, and do not penalize a grounded negative — \"zero sources bear on the mother\" is an honest assessment, not a gap.",
     "Claude does not need to call validate_research_schema — it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist and writes atomically in a single call. Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call; the research_append call alone is the complete, correct persistence step.",
     "CRITICAL: Claude should NOT set q_001.status to 'exhaustive_declared' — the question remains in_progress since research was terminated early, not declared exhaustive. The status 'exhaustive_declared' means the research WAS exhaustive; a declared:false early-termination is explicitly NOT exhaustive, so the status must stay 'in_progress'.",
+    "`questionStatuses[].state` is NOT `questions[].status` — do not read one as a contradiction of the other. `project_context` derives `questionStatuses[].state` from the documents (`utils/question-state.ts`: any proof summary present → `\"concluded\"`), and this scenario has `ps_001`, so `questionStatuses` reporting q_001 as `concluded` is CORRECT and is not something Claude wrote. The stored `questions[].status` in research.json is `in_progress`, which is also correct and is the field the point above is about. `project_context`'s own tool description says `questionStatuses` is ADVISORY — nothing is gated on it. Do NOT score Correctness down for an \"internal contradiction\" between a `concluded` advisory state and a persisted `exhaustive_declaration.declared: false` on an `in_progress` question: that combination is exactly what an honest early termination looks like.",
     "Claude must ONLY write to the questions section of research.json — specifically q_001.exhaustive_declaration. It must NOT modify the project section, proof_summaries, or any other section."
   ]
 }

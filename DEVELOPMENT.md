@@ -372,10 +372,12 @@ need via Make (no manual `npm install` / `npm run build`):
   `server-e2b` does **not**: the `genealogy-agent` E2B image bakes its
   own engine, so after changing in-sandbox code
   (`apps/server/app/sandbox_server.py` or `app/agent/*`) rebuild the
-  image with `make sandbox-image` or the microVM runs stale code.
+  image or the microVM runs stale code. Build a DEV template —
+  `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` — because a
+  bare `make sandbox-image` rebuilds production's template in place.
+  `make deploy` rebuilds the production one as part of the deploy.
 - `server-e2b` first runs an internal `e2b-preflight` guard (required
-  keys present + the stale-image reminder) — a prerequisite, not a
-  target you invoke.
+  keys present) — a prerequisite, not a target you invoke.
 - First-time setup for everything: `make install`.
 
 ### Operator / alpha tools (`?alpha=1`)
@@ -599,10 +601,23 @@ fly secrets set \
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
 # don't set it here (a secret would shadow the [env] value).
 
-# Build context is the REPO ROOT (the Dockerfile copies the pnpm workspace).
-# --ha=false: fly deploy otherwise provisions TWO machines (HA), which violates
-# the count = 1 invariant below until init_db moves to a release_command.
-fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
+# `make deploy` wraps this: it builds and pushes the genealogy-agent E2B image,
+# replays the Dockerfile's stage 1 locally, and then runs exactly the line below.
+# Use it rather than this command — a raw `fly deploy` ships the control plane
+# ALONE and leaves the agent image on whatever was last pushed, which is the skew
+# issue #1489 closed.
+#
+# Do NOT set E2B_TEMPLATE_NAME on this command. It is inherited by the
+# sandbox-image prerequisite, so it would build that template and then deploy
+# production's control plane against an untouched production image. Building a
+# dev template is `make sandbox-image` on its own.
+make deploy
+
+# The underlying command, for reference. Build context is the REPO ROOT (the
+# Dockerfile copies the pnpm workspace). --ha=false: fly deploy otherwise
+# provisions TWO machines (HA), which violates the count = 1 invariant below
+# until init_db moves to a release_command.
+#   fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
 
 curl -s https://genealogy-workbench.fly.dev/api/health | jq   # expect "db":"postgres"
 fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon deploy
@@ -619,8 +634,9 @@ the engine uses its compiled-in defaults, which name one developer's tailnet
 host. Changing one reaches existing sessions on their next connect — no need to
 recreate a project.
 
-The agent runs on **E2B**, not in this container
-(the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
+The agent runs on **E2B**, not in this container. The `genealogy-agent` image is
+a separate artifact built from its own Dockerfile, but `make deploy` builds and
+pushes it too, so a deploy ships both (`apps/server/sandbox/README.md`).
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
 one-time Fly `release_command` (two Machines otherwise race on `create_all` + the

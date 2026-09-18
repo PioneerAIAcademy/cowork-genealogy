@@ -86,6 +86,20 @@ describe("compactStagedRecordSearch", () => {
     expect(out.collections).toEqual({ "1234": "1850 United States Census" });
   });
 
+  it("preserves flat top-level fields (role, relativeTerms, batchNumber) after gedcomx is stripped", () => {
+    const resp = fullRecordSearchResponse();
+    (resp.results[0] as any).role = "Principal";
+    (resp.results[0] as any).batchNumber = "M01048-5";
+    (resp.results[0] as any).relativeTerms = { father: { present: true } };
+
+    const out = compactStagedRecordSearch(resp);
+    const row = out.results[0] as any;
+    expect(row.gedcomx).toBeUndefined();
+    expect(row.role).toBe("Principal");
+    expect(row.batchNumber).toBe("M01048-5");
+    expect(row.relativeTerms).toEqual({ father: { present: true } });
+  });
+
   it("leaves a nil result set alone", () => {
     const nil = {
       query: {},
