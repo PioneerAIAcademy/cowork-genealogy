@@ -3,15 +3,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
-import { foldChatEvent, type ChatMessage } from './chatEvents'
-
-import {
-  EXPERIENCE_CHIPS,
-  chipMessage,
-  applyChip,
-  shouldShowExperienceChips
-} from './experienceChips'
-import type { ExperienceLevel } from '@genealogy/schema'
+import { foldChatEvent, trackLiveTask, endsWithHandBack, type ChatMessage } from './chatEvents'
 
 const OPENING_TURN = "Let's start a new genealogy research project."
 
@@ -148,9 +140,10 @@ export default function ChatPane({
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
-  // Last experience chip written into the composer, so a second click replaces
-  // it instead of stacking a contradictory second answer (#1932).
-  const [lastChip, setLastChip] = useState<string | null>(null)
+  // Reasoning blocks are hidden by default: the lay user never asked for the
+  // model's private reasoning, and two alpha testers read the collapsed block's
+  // label as a cryptic message. The toggle is for whoever wants to look.
+  const [showThinking, setShowThinking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -161,6 +154,10 @@ export default function ChatPane({
   const [elapsed, setElapsed] = useState(0)
   const turnStartRef = useRef(0)
   const [activity, setActivity] = useState<AgentActivity | null>(null)
+  // Subagent tasks currently running, keyed by task_id. A ref, not state: it is
+  // read inside the setMessages updater, which must see the value as of the
+  // event being folded, not as of the last render. See trackLiveTask.
+  const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
   const { detached, follow, scrollToBottom } = useStickToBottom(scrollRef)
 
@@ -170,6 +167,9 @@ export default function ChatPane({
     if (kind === 'turn_done') {
       setBusy(false)
       setActivity(null)
+      // A task killed via TaskUpdated emits no task_done on the wire, so the
+      // set is reset at turn end rather than trusted to drain itself.
+      liveTasksRef.current = new Set()
       return
     }
     // Deliberately inert here. Busy is set in send() and on a `turn_active`
@@ -182,6 +182,7 @@ export default function ChatPane({
     // long delegation reads as "record-extractor · person_read · 12 tools"
     // instead of an unattributed spinner.
     if (kind === 'task_started' || kind === 'task_progress') {
+      liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)
       setActivity({
         agent: String(ev.agent ?? 'subagent'),
         lastTool: String(ev.last_tool ?? ''),
@@ -190,6 +191,7 @@ export default function ChatPane({
       return
     }
     if (kind === 'task_done') {
+      liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)
       setActivity(null)
       return
     }
@@ -206,7 +208,7 @@ export default function ChatPane({
     }
     // The text/thinking/tool accumulation lives in `foldChatEvent` (chatEvents.ts)
     // so it can be unit-tested without a DOM — see #1312.
-    setMessages((prev) => foldChatEvent(prev, kind, ev))
+    setMessages((prev) => foldChatEvent(prev, kind, ev, liveTasksRef.current))
   }
 
   useEffect(() => {
@@ -261,7 +263,6 @@ export default function ChatPane({
     conn.send({ type: 'user_msg', text: trimmed })
     setBusy(true)
     setInput('')
-    setLastChip(null)
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
     // the user had scrolled up to compose against something further back.
     scrollToBottom()
@@ -303,6 +304,10 @@ export default function ChatPane({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNew])
 
+  const lastMessage = messages[messages.length - 1]
+  const canContinue =
+    lastMessage?.role === 'assistant' && !lastMessage.error && endsWithHandBack(lastMessage.text)
+
   return (
     <div className="chatBody">
       <div className="chatScrollArea">
@@ -326,7 +331,7 @@ export default function ChatPane({
                   ))}
                 </div>
               )}
-              {(m.thinking || m.streamThinking) && (
+              {showThinking && (m.thinking || m.streamThinking) && (
                 <details className="thinkingBlock">
                   <summary>💭 Model&rsquo;s private reasoning — not its answer</summary>
                   <div className="thinkingBody">
@@ -350,28 +355,15 @@ export default function ChatPane({
               )}
             </div>
           ))}
-          {/* Selectable answers for init-project's opening-turn experience-level
-              question (#1932). Held entirely in the client: no new event kind,
-              no server plumbing, and the agent cannot emit them. Clicking fills
-              the composer but never sends — the lead's ruling (option A) is that
-              the onramp stays non-blocking, so a picker must not become a
-              stop-and-wait. Hosted web only; Cowork renders its own chat UI. */}
-          {shouldShowExperienceChips(isNew, messages) && (
-            <div className="optionChips" role="group" aria-label="Your genealogy experience">
-              {(Object.keys(EXPERIENCE_CHIPS) as ExperienceLevel[]).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className="optionChip"
-                  onClick={() => {
-                    const next = chipMessage(value)
-                    setInput((prev) => applyChip(prev, lastChip, next))
-                    setLastChip(next)
-                  }}
-                >
-                  {EXPERIENCE_CHIPS[value]}
-                </button>
-              ))}
+          {/* The orchestrator hands back after every completed step with a fixed
+              closing line (issue #2292). One tap answers it; doing nothing is
+              the stop. Cowork renders its own chat UI, so this is hosted-web
+              only and the literal keeps working as typed text everywhere. */}
+          {!busy && ready && canContinue && (
+            <div className="chatContinueRow">
+              <button type="button" className="chatContinue" onClick={() => send('Yes.')}>
+                Continue
+              </button>
             </div>
           )}
           {/* One status line, three distinct states. Reconnecting is shown even
@@ -437,6 +429,14 @@ export default function ChatPane({
             if (f) void handleFile(f)
           }}
         />
+        <label className="chatAdvanced" title="Show the model's reasoning blocks">
+          <input
+            type="checkbox"
+            checked={showThinking}
+            onChange={(e) => setShowThinking(e.target.checked)}
+          />
+          Reasoning
+        </label>
         <button
           type="button"
           className="chatAttach"
