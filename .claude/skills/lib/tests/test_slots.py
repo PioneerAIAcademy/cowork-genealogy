@@ -167,6 +167,18 @@ def test_unassigned_cross_cutting_holder_is_never_a_merge_target(tmp_path):
     assert "holder: #14 (Ready, unassigned -- merge INTO this one)" in out
 
 
+def test_cross_cutting_holder_reaches_a_renderer_on_an_unqueued_slot(tmp_path):
+    """The tag above is computed in `held`, and `held` is read only by block(), which
+    runs only at queue >= 2. Without `cc_held` widening the last section, an active
+    cross-cutting card alone on a slot renders NOWHERE — the exact looks-free-and-is-
+    not case this script exists to report, and the strongest claim on a slot there is
+    (someone is doing that work now)."""
+    out = run([issue(2485, labels=["cross-cutting"], column="In Progress")], tmp_path)
+
+    assert "--- occupied by cross-cutting work, not otherwise shown (1 slots) ---" in out
+    assert "holder: #2485 (In Progress, cross-cutting -- not a merge target)" in out
+
+
 def test_ordinary_card_is_untouched_by_a_cross_cutting_neighbour(tmp_path):
     """An ordinary pool card's membership and its slot's depth must equal what they
     are with the cross-cutting card removed entirely."""

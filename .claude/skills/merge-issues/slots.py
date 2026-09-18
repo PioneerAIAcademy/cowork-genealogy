@@ -116,7 +116,7 @@ def main(board_path, open_path, prs_path):
         elif col == "Ready" and not issue.get("assignees"):
             pool.append(n)
 
-    queues, held, occupants = {}, {}, {}
+    queues, held, occupants, cc_held = {}, {}, {}, set()
     for n in pool:
         for s in slots_of(entries[n]):
             queues.setdefault(s, []).append(n)
@@ -134,7 +134,8 @@ def main(board_path, open_path, prs_path):
         # fill-ready/SKILL.md calls a mis-file rather than an impossibility -- would
         # be nominated as the thing to merge INTO, which is the one instruction
         # doctrine forbids outright.
-        if "cross-cutting" in labels_of(issues[n]):
+        cc = "cross-cutting" in labels_of(issues[n])
+        if cc:
             tag = "cross-cutting -- not a merge target"
         elif issues[n].get("assignees"):
             tag = "held"
@@ -142,6 +143,13 @@ def main(board_path, open_path, prs_path):
             tag = "unassigned -- merge INTO this one"
         for s in slots_of(entries[n]):
             held.setdefault(s, []).append((n, col, tag))
+            # Cross-cutting work claims a slot from an active column too, and that
+            # claim is stronger than a Backlog occupant's -- someone is doing it now.
+            # Tracked separately because `held` alone reaches no renderer below a
+            # queue of 2, which would drop the tag above in exactly the
+            # looks-free-and-is-not case this script exists to report.
+            if cc:
+                cc_held.add(s)
 
     pr_slots = {}
     for p in prs:
@@ -192,7 +200,8 @@ def main(board_path, open_path, prs_path):
     # section exists to show, a slot that looks free and is not, would still be
     # invisible. Same renderer, so its holders and PR holders come with it: the most
     # contested slot here can be one with two active-column holders and a queue of 1.
-    spoken = {s: queues.get(s, []) for s in occupants if s not in must and s not in rest}
+    spoken = {s: queues.get(s, [])
+              for s in (set(occupants) | cc_held) - set(must) - set(rest)}
     print(f"--- occupied by cross-cutting work, not otherwise shown "
           f"({len(spoken)} slots) ---\n")
     for s in sorted(spoken):
