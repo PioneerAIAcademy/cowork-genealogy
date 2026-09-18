@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Carmen Morales (I1) is present and correctly linked — Couple R21 to KNYF-2Z8 and ParentChild R23 to the infant I2 — but she carries NO facts at all, and the pre-marital element of the finding lives only in the proof narrative, not in the tree. The agent also graded the pre-marital timing 'probable' rather than proved, having failed to locate the Clara Amelia marriage in civil records (262 results across three search strategies). Partial, not true: right person and right links, weaker representation than the finding states.",
+    "f1": "Fully recovered. I2 carries birth 1 Aug 1905, death 12 Aug 1905 and VitalRegistration 13 Aug 1905, all at Guatemala, Guatemala, Guatemala, with ParentChild links from both KNYF-2Z8 (R22) and Carmen Morales (R23). Cited both register arks the fixture names and read both original images."
+  },
+  "annotator": "Emruthwill",
+  "findings_hash": "00e026931f496f4566ed973a77af6cfb437a8c220de21ab75cc3b93854e6dfc5"
+}
