@@ -11,6 +11,8 @@
 -- claim; turns.input_tokens / cache_creation_tokens / cache_read_tokens /
 -- output_tokens: the usage summed over the assistant entries above it, one per API
 -- message -- so a killed attempt's spend is on the row, which cost_usd is not.
+-- tool_calls.tool_use_id: the CLI's id for the call, so the PostToolUse hook can stamp
+-- the row the PreToolUse hook wrote with its duration (acceptance criterion 4).
 
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS sdk_session_id        text;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS cost_usd              numeric;
@@ -21,3 +23,4 @@ ALTER TABLE turns    ADD COLUMN IF NOT EXISTS input_tokens          bigint;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS cache_creation_tokens bigint;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS cache_read_tokens     bigint;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS output_tokens         bigint;
+ALTER TABLE tool_calls ADD COLUMN IF NOT EXISTS tool_use_id         text;
