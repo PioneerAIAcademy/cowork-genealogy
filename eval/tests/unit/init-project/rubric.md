@@ -5,8 +5,8 @@ alongside the base rubric (Correctness, Completeness, Tool Arguments).
 
 > **DRAFT — pending genealogist review.** Expanded from the original
 > single "Stub person quality" dimension to cover all five jobs the skill
-> performs (define problem, survey tree, survey holdings, profile
-> interview, write + validate files). Genealogist to confirm thresholds
+> performs (define problem, survey tree, survey holdings, fixed
+> profile, write + validate files). Genealogist to confirm thresholds
 > and wording before release. Not every dimension applies to every test —
 > score `null` (N/A) when a test does not exercise it (e.g. place
 > standardization on a test with no hand-entered place).
@@ -59,35 +59,35 @@ objective copied into the title field) is a weakness.
 - **fail:** A required section is absent or malformed, the objective is
   missing/empty, or the file fails schema validation on init-written content.
 
-## Researcher-profile interview
+## Researcher profile
 
-When the user supplies an experience level, is it mapped to the correct
-`experience_level` and stored with the verbatim `narration_guidance` for that
-level? When no answer is available (single-turn), is the documented default
-used? The research objective shares this same opening-turn, non-blocking shape
-(issue #1510): when unanswered, does the skill ask it alongside the profile
-question, proceed in the same pass, and store the generic default rather than a
-hallucinated specific direction?
+The profile is fixed and never asked (lead ruling 2026-09-18): `experience_level`
+is `novice` and `narration_guidance` is the house-style string, stored verbatim,
+on every project. A level the user volunteers is not persisted. The research
+objective is the one opening-turn question, non-blocking (issue #1510): when
+unanswered, does the skill ask it, proceed in the same pass, and store the
+generic default rather than a hallucinated specific direction?
 
-Site access is no longer asked. `subscriptions` should be **absent** from the
-written profile — the question was dropped on 2026-08-31 and the field is left
-unwritten rather than defaulted, since `["none"]` asserts the researcher told us
-they have nothing. A volunteered access statement may still be recorded.
+Site access is never asked. `subscriptions` should be **absent** from the
+written profile — the field is left unwritten rather than defaulted, since
+`["none"]` asserts the researcher told us they have nothing. A volunteered
+access statement may still be recorded.
 
-- **pass:** `experience_level` correct; `narration_guidance` is the verbatim
-  table text for the level; `subscriptions` absent (or, if the user volunteered
-  access unprompted, recording it is equally correct). Single-turn with no
-  answers → `intermediate` default, noted as editable. Objective defaulting:
+- **pass:** `experience_level` is `novice` and `narration_guidance` is the
+  house-style string verbatim, whatever the user said about themselves;
+  `subscriptions` absent (or, if the user volunteered access unprompted,
+  recording it is equally correct). Objective defaulting:
   when no objective is stated, the agent asks in the opening turn, does not
   block, and writes the stated generic default — never a hallucinated specific
   direction — in the same single pass as the profile default.
-- **partial:** Mapping correct but `narration_guidance` paraphrased rather than
+- **partial:** Level correct but `narration_guidance` paraphrased rather than
   verbatim. Objective asked and defaulted correctly, but the summary doesn't
   clearly state it was defaulted.
-- **fail:** Wrong experience level, `narration_guidance` invented rather than
-  drawn from the table, a `subscriptions` value written when the user never
+- **fail:** Any level but `novice` (including one the user volunteered),
+  `narration_guidance` invented rather than the house-style string, the user
+  asked anything about themselves, a `subscriptions` value written when the user never
   mentioned access, the objective invented/hallucinated from person data
-  instead of using the generic default, or either question silently skipped
+  instead of using the generic default, or the objective question silently skipped
   (asked-and-then-blocked, or defaulted without being asked first).
 
 ## Place standardization

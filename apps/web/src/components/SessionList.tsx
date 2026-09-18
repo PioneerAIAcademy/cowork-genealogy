@@ -119,7 +119,7 @@ export default function SessionList({
           <div className="emptyState">
             <p>No sessions yet.</p>
             <p className="muted">
-              Start a new research session — the agent will interview you and seed your tree —
+              Start a new research session — name the person and the agent seeds your tree —
               or open a sample project to explore the viewer.
             </p>
           </div>
