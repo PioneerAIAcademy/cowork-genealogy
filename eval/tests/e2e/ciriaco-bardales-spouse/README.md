@@ -36,13 +36,14 @@ on this — the 1896 entries still say the couple were capital-born, and that is
 explained rather than refuted. The supporting evidence is a second,
 independent registration of the same infant that the hint batch did not
 surface, plus an earlier child of the same couple and the subject's own death
-entry. The origin field is what carries the identification; one record
-contradicts it, and that contradiction is argued down rather than eliminated.
+entry. The origin field is what carries the identification; the two 1896
+registers contradict it, and that contradiction is argued down rather than
+eliminated.
 
 **The hint record** (`ark:/61903/1:1:6D38-BQ8G`, father persona; principal
 `ark:/61903/1:1:6D38-BQ8L`) is Partida N.º 680 of the Guatemala City death
 register, 13 August 1905. The index carries no age, residence or birthplace for
-the father — as the draft note above predicted — but the page does. Ciriaco
+the father — which is why this had to be decided on the page, not the index. Ciriaco
 Bardales appeared **in person** to declare the death of Ciriaco, aged twelve
 days, "hijo natural del exponente y de Carmen Morales, solteros, ladinos,
 católicos, **de Chiquimula** y de este vecindario", at house 25, Avenida del
@@ -81,10 +82,11 @@ register a son, also named Ciriaco, by Carmen Morales; that child also died in
 infancy (`ark:/61903/1:1:Z95C-JY6Z`). Two people of these two names in one city,
 both naming a son Ciriaco, is not a coincidence worth entertaining — 1896 and
 1905 are the same couple. This makes the relationship a nine-year one rather
-than a single incident, which answers the draft's central objection ("29
+than a single incident, which answers the original central objection ("29
 sources and not one names a Carmen Morales") far better than the 1905 pair
-alone: a partner who bore two children who died in infancy, before a marriage
-that produced nine surviving children, leaves exactly this trace.
+alone: a partner who bore three children — two dying in infancy, one
+(José Luis) surviving — before a marriage that produced nine more, leaves
+exactly this trace.
 
 **The origin question, and how it resolved.** The father is identified only by
 the register's origin field, and that field looked contradictory until a third
@@ -137,17 +139,22 @@ revised twice while the records came in — asserted, withdrawn, then re-asserte
 on the 1924 marriage — so the reviewer should weigh the 1896 entries themselves
 rather than trust this summary.
 
-**Two corrections to the draft note above, and to the pre-handoff review.**
+**Two corrections to the fixture's original framing and to the pre-handoff
+review.**
 
 1. *Which marriage date the records support.* Both 1905 partidas describe the
    couple as **"solteros"**, so no marriage had taken place by 13 August 1905.
-   The couple relationship `R1` carries three Marriage facts — `<1906>`
-   (standardised `Bef 1906`) at Zacapa, `10 Jan 1907` with no place, and one
-   bare fact. The records support the **10 Jan 1907** fact; the `Bef 1906` fact
-   cannot be placing the marriage before the infant. Clara's first child
-   (Ricardo, `KN77-6NK`, b. 7 Nov 1907) fits a January 1907 marriage. So the
-   fixture's "before his marriage to Clara Amelia Palacios Oliva" framing is
-   correct, but its warrant is the register's "solteros", not the tree's dates.
+   That, and not any tree date, is what makes the fixture's "before his marriage
+   to Clara Amelia Palacios Oliva" framing correct. The dates themselves do not
+   agree and should not be asserted: the couple relationship `R1` carries three
+   Marriage facts (`Bef 1906` at Zacapa, `10 Jan 1907` with no place, and one
+   bare fact); the civil registration (`ark:/61903/1:1:XSGW-BYGR`, registered
+   late, in 1934) gives **10 Jan 1907**; and the church record
+   (`ark:/61903/1:1:X92L-7PCF`) gives **10 Dec 1907**, still calling him
+   *soltero*. Clara's first child (Ricardo, `KN77-6NK`) was born 7 Nov 1907 —
+   *between* those two dates, so he corroborates neither. What all of them agree
+   on, and all this finding needs, is that the marriage postdates August 1905.
+   The `Bef 1906` fact cannot be placing it before the infant.
 2. *The Guatemala City discriminator inverts.* The pre-handoff review suggested
    testing whether the subject was in Guatemala City in 1905, noting the earliest
    Guatemala City event in the family as Victor's birth on 5 Sep 1909. That is
@@ -157,10 +164,11 @@ rather than trust this summary.
    was. His Chiquimula → Zacapa → Chimaltenango → Guatemala City movement is what
    a career officer's postings look like.
 
-**Why the tree's silence is not a counter-argument.** The draft's central
+**Why the tree's silence is not a counter-argument.** The original central
 scepticism — twenty-nine sources and not one naming a Carmen Morales — is
-answered rather than overridden. A brief pre-marital relationship whose only
-child died at twelve days leaves no trace in a later marital record trail. The
+answered rather than overridden. A pre-marital relationship whose two infants
+died within days of birth, and whose surviving son was never added to this tree,
+leaves no trace in a later marital record trail. The
 live person page now carries thirty sources and none of them is
 `6D38-BQ8G`/`6D38-BQ8L` or `6KNJ-27P8`, so the hint is genuinely new evidence
 and not a re-indexing of a source already attached.
@@ -170,12 +178,22 @@ Civil, 1833-2009" and "Guatemala, Guatemala, Registro Civil, 1874-2008" for
 given name Ciriaco, surname Bardales, country Guatemala returned 559 fuzzy hits,
 of which 63 name a principal exactly "Ciriaco Bardales". None is a competing
 adult Ciriaco Bardales resident in Guatemala City: the undated ones are the
-subject himself appearing as father on his own children's registrations, the
-1924/1925 ones are his son Ciriaco de Jesús Bardales Palacios, and the other
-infant Ciriacos (d. 1896, d. 1897) were registered in **Chiquimula**, consistent
-with the given name recurring in that surname group in that department rather
-than in the capital. No marriage record for Ciriaco Bardales and Carmen Morales
+subject himself appearing as father on his own children's registrations, and the
+1924/1925 ones are his son Ciriaco de Jesús Bardales Palacios. Two further
+infant Ciriacos, a birth registered Nov 1896 and a death in Jul 1897, are
+**Chiquimula** registrations naming *different* parents (Juan/Juan José Bardales
+and Trinidad Lopez/Lemus) — evidence that the given name recurs in that surname
+group in that department, not a competing father. They are **not** the 1896
+Guatemala City child discussed above, who is this couple's own. No marriage record for Ciriaco Bardales and Carmen Morales
 was found, which is expected — both registrations call them "solteros".
+
+**A one-day discrepancy, left as the registers have it.** The birth partida says
+the child was born at 12.45 a.m. on 1 August 1905 ("nació hoy"); the death
+partida says he died on 12 August "á la edad de doce días", which counts to
+eleven, not twelve. `expected-findings.json` reports both as the registers state
+them and is deliberately **not** being edited to reconcile them: it is
+fingerprinted into the committed calibration annotation's `findings_hash`, so
+changing it would invalidate an already-graded run.
 
 **One trap worth recording.** `ark:/61903/1:1:Z92T-W2ZM` looks like a second
 witness — it indexes a Ciriaco Bardales who died 12 August 1905 at Guatemala —
