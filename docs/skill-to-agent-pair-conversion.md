@@ -65,7 +65,7 @@ The routing skill may contain **only** these, and nothing else:
 2. The narration line.
 3. Resolution of the user's words into the agent's arguments.
 4. The delegation call.
-5. Relay of what the agent returned, and the recommended next step.
+5. Relay of the agent's `summary_for_user` verbatim, and its `next_step`.
 
 No gates. No preconditions. No doctrine. No `Never` clause the agent does not
 also carry. If a sentence in a routing skill would change the outcome when
@@ -337,6 +337,16 @@ Two things this does NOT close:
    the agent". The delegation message now comes from the orchestrator, which the
    conversion does not own — so the agent must be correct under a delegation that
    names the artifact and pre-states the answer, not merely a well-phrased one.
+   **The agent's return ends with `summary_for_user` and `next_step`** (lead
+   ruling 2026-09-18): one paragraph for a researcher who has never done
+   genealogy — no identifiers, file names, tool names or field names — and one
+   plain sentence on what happens next, after the caller-facing lines and never
+   merged into them. The router relays both verbatim and appends the hand-back
+   literal issue #2292 rules; it never summarizes. `agents/record-extractor.md`'s
+   "Return contract" is the worked form, and
+   `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
+   refuses an agent body without the heading once its name leaves that test's
+   pending list.
 8. Apply the delete-the-skill acceptance check — now mechanically. **Author a
    direct twin**: copy the gate-bearing positive test byte for byte, give it a
    new `test.id` and name, replace `input.user_message` with an

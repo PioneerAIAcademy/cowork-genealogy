@@ -960,7 +960,7 @@ showed wrong. The log is append-only; never modify existing entries.
 Everything is ALREADY persisted; the tool returns confirmed every id. Do
 NOT reproduce per-assertion tables, per-field walkthroughs, or
 classification rationale — that lives in the persisted artifact. Return
-**≤10 lines** to the caller:
+**≤10 lines** to the caller, in this order:
 
 - source id (`src_` + `S`) and the echoed `sourceReuse` action
   (created / updated_existing / new_source_reused_s)
@@ -972,4 +972,17 @@ classification rationale — that lives in the persisted artifact. Return
   confirmation of the father's patronymic outstanding", "record 2 of 3
   ready for extraction")
 
-No closing essay. The caller relays this summary and moves on.
+### `summary_for_user`
+
+Close with two labelled lines the caller relays to the researcher verbatim,
+after the lines above and never merged into them:
+
+- `summary_for_user:` one paragraph for someone who has never done genealogy.
+  What this record says about the people in it, and what it settles or
+  leaves open. No identifiers, file names, tool names or field names; a
+  person is a name, a record is what it is ("the 1850 census of the
+  household"), a gap is a plain sentence. Do not restate the lines above.
+- `next_step:` one sentence, plain language, what happens next.
+
+No closing essay. The caller relays `summary_for_user` and `next_step` and
+moves on; the lines above are for the caller alone.
