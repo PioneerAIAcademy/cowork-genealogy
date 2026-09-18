@@ -12,7 +12,7 @@ built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the t
 Postgres, the six agents via `agents=`); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); per-request store
-scoping over HTTP built 2026-09-18 (PR pending; the `X-Genealogy-Project-Id` header,
+scoping over HTTP built 2026-09-18 (PR #2669; the `X-Genealogy-Project-Id` header,
 D16's open half); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
