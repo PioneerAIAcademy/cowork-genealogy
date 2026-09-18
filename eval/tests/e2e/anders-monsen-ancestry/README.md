@@ -24,7 +24,7 @@ Extended relatives not relevant to the marriage question (Mons's other marriages
 
 ## Expected difficulty
 
-Moderate, and harder than originally scoped — the marriage record is real and readable directly by ark (`record_read ark:/61903/1:1:NW44-PM2`, collection 1468080), but as of 2026-09-16 is confirmed **not** retrievable through `record_search` under either persona's own indexed name, by any query tried across two independent checks a week apart (see "What the live runs revealed" below). This fixture was originally scoped assuming `record_search` would find it; that premise is refuted. Digitalarkivet or another Norwegian-only archive may be the only current route to `f2`. Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) also makes both names extremely common, so disambiguation would rest on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography if the record ever re-enters the search index.
+Moderate, and harder than originally scoped — the marriage record is real and readable directly by ark (`record_read ark:/61903/1:1:NW44-PM2`, collection 1468080), and this premise held when the fixture was authored: run 1 (2026-07-09) recovered it via `record_search` itself, ranked #2 of 58, `attachedToSubject: true`. As of 2026-09-16/17 the record is confirmed **not** retrievable through `record_search` under either persona's own indexed name, by any query tried across two independent checks a week apart (see "What the live runs revealed" below). Consistent with the run-8 probe's own finding, this is the search index drifting, not the original premise having been wrong — and per that same probe, the record "may revert." Until it does, Digitalarkivet or another Norwegian-only archive may be the only current route to `f2`. Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) also makes both names extremely common, so disambiguation would rest on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography if the record re-enters the search index.
 
 ## Notes for reviewers
 
@@ -184,8 +184,11 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   own indexed name, under any query shape tried across nine attempts spanning
   two independent checks a week apart. Calling this "a ranking gap" invites the
   next reader to go looking for better query terms — there are none to find.
-  The fixture's `Expected difficulty` premise ("the agent should find it via
-  `record_search`") is refuted, corrected above and in `fixture.json`'s `notes`.
+  The fixture's `Expected difficulty` text has been corrected above and in
+  `fixture.json`'s `notes` to say so plainly -- not that the premise was wrong
+  when authored (run 1 recovered this record via `record_search` itself, and
+  the run-8 probe already established this is index drift, which may
+  revert), but that it does not hold *today*, confirmed twice a week apart.
   Whether this fixture's `f2` remains achievable at all — short of an
   interactive Digitalarkivet/Ancestry search this harness's autonomous mode
   cannot perform — is now an open question for whoever next reviews this
