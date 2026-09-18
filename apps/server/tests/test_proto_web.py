@@ -201,6 +201,14 @@ def test_activity_to_wire_is_a_task_progress_event():
     assert "seq" not in wire
 
 
+def test_activity_to_wire_keeps_the_payloads_own_kind():
+    # The worker writes the whole transient event, kind included (text_delta,
+    # thinking_delta, task_progress); relabelling a text delta as task_progress would
+    # hand the SPA a subagent progress line with a `text` field.
+    wire = activity_to_wire(Activity(T0, {"kind": "text_delta", "text": "Thom"}))
+    assert wire["event"] == {"kind": "text_delta", "text": "Thom"}
+
+
 @pytest.mark.parametrize(
     ("header", "after", "expected"),
     [
