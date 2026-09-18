@@ -35,7 +35,10 @@ describe("BUILD_VERSION_RE — the one shape every check accepts", () => {
   // test_write_lockdown_parity.py pins for the lockdown predicate.
   it("verify-mcpb.sh's inline copy matches the exported regex", () => {
     const sh = readFileSync(join(repoRoot, "scripts", "verify-mcpb.sh"), "utf8");
-    const m = sh.match(/const BUILD_VERSION_RE = (\/.*\/);/);
+    // Whitespace-tolerant around `=` so a reflowed declaration still counts
+    // as declared — the arm must accept a legitimate edit as well as reject a
+    // drifted regex (CLAUDE.md, "prove the other direction too").
+    const m = sh.match(/const\s+BUILD_VERSION_RE\s*=\s*(\/.*\/);/);
     expect(m, "verify-mcpb.sh no longer declares BUILD_VERSION_RE").not.toBeNull();
     expect(m![1]).toBe(BUILD_VERSION_RE.toString());
   });

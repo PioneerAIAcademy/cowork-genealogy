@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { resolve } from 'path'
+import { dirname, resolve } from 'path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 // Plain .mjs build helper shared with scripts/build-mcpb.mjs and
@@ -13,8 +14,12 @@ import { buildVersion, gitStamp } from '../../scripts/build-stamp.mjs'
 // build/build-info.json, so a feedback bundle's viewer_version and the engine's
 // buildId are directly comparable. The release workflow needs nothing extra:
 // actions/checkout leaves HEAD readable, which is all gitStamp asks for.
-const pkg = JSON.parse(readFileSync(resolve('package.json'), 'utf8')) as { version: string }
-const stamp = gitStamp(resolve('../..'))
+// Anchored to this file, not the working directory: run from the repo root a
+// cwd-relative read would pick up the root package.json (version 0.0.0) and
+// point gitStamp outside the checkout, stamping `0.0.0+dev` with no error.
+const here = dirname(fileURLToPath(import.meta.url))
+const pkg = JSON.parse(readFileSync(resolve(here, 'package.json'), 'utf8')) as { version: string }
+const stamp = gitStamp(resolve(here, '../..'))
 const buildInfo = {
   version: buildVersion(pkg.version, stamp),
   sha: stamp.sha ?? 'dev',
