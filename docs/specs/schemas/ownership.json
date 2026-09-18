@@ -41,9 +41,9 @@
       ],
       "enforceableAt": [],
       "notes": "Writable through `research_append` as a singleton section, which is what let init-project stop creating it with a raw file write the lockdown denies. Not enforceable on the unit plane: the section is outside the diff set that plane iterates, so the check cannot see it either way.",
-      "requires": "init-project writes the profile at project creation from its non-blocking opening-turn interview (issue #1510): the questions are always asked and the pass always completes, so the section is always written — with stated answers where given and the documented defaults where not, named as defaulted in the final summary. Any caller may correct a field afterwards; this section is deliberately NOT set-once, because a researcher who picked the wrong experience level needs a route that is not starting over.",
-      "failure": "Every skill reads `narration_guidance` from this section, so a fabricated profile silently changes narration across the whole project and is indistinguishable downstream from a real one. A project was observed created with an experience level and subscriptions the user was never asked for.",
-      "remedy": "Ask in the opening turn, then write it through `research_append`. Never write a value the user was not asked for — a defaulted field is legitimate only because the question was put to them in the same turn and the summary says it was defaulted.",
+      "requires": "init-project writes the profile at project creation as fixed values (novice and the house-style narration string; lead ruling 2026-09-18): nothing about the researcher is asked and the pass always completes, so the section is always written. Any caller may correct a field afterwards; this section is deliberately NOT set-once, because a researcher who picked the wrong experience level needs a route that is not starting over.",
+      "failure": "Every skill reads `narration_guidance` from this section, so a fabricated profile silently changes narration across the whole project and is indistinguishable downstream from a real one. A project written with any other level or style is a fabrication the researcher cannot tell from a choice they made.",
+      "remedy": "Write the fixed profile through `research_append`. Never write any other level or style at creation; a later user setting owns changes, and any caller may correct a field afterwards.",
       "override": "none"
     },
     {
@@ -254,9 +254,10 @@
         "research_append"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "tool"
       ],
-      "notes": "hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the skill.",
+      "notes": "hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the skill. The `tool` plane is claimed for the `supported` evidence floor only, not for caller routing: `hypothesisSupportedInvariants` in `packages/engine/mcp-server/src/tools/research-append.ts` refuses a promotion that fails §5.9's two mechanical halves, whoever calls it (issue #2086, lead ruling 2026-09-07).",
       "requires": "Only hypothesis-tracking states a hypothesis or rules one out.",
       "failure": "A ruled-out hypothesis rewritten by another skill loses the reasoning that ruled it out, and the same line gets re-researched.",
       "remedy": "Route through hypothesis-tracking.",

@@ -24,8 +24,8 @@ interface OpenSession {
 export default function App(): React.JSX.Element {
   const { user, loading } = useAuth()
   // Seed from the URL on first load. A restored session is never "new" — only
-  // the +New button below opens with isNew:true (which auto-sends the opening
-  // turn); a refresh must not re-fire that.
+  // the +New button below opens with isNew:true (which prefixes the opening
+  // turn onto the user's first message); a refresh must not re-fire that.
   const [open, setOpen] = useState<OpenSession | null>(() => {
     const id = readRoute()
     return id ? { id, isNew: false } : null

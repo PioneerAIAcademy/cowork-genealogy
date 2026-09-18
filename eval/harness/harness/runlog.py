@@ -211,7 +211,9 @@ def _modal_with_tiebreak_down(values, rank):
     return min(winners, key=lambda v: rank.get(v, 999))
 
 
-def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
+def aggregate_dimensions(
+    runs: list[SingleRun], *, include_validator_failed: bool = False
+) -> list[dict[str, Any]]:
     """Modal per-dimension score across runs (ties resolve down).
 
     A dimension may have score=None (N/A): the Tool Arguments base
@@ -226,6 +228,11 @@ def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
     Runs that FAILED a validator are excluded (#2057): they are graded now,
     but their scores stay out of the modal so committed baselines do not
     shift. Their per-run scores remain in `runs[].judge.dimensions`.
+
+    `include_validator_failed=True` lifts that exclusion. It exists for ONE
+    caller — `assemble_test_entry` building `review_dimensions`, the rows a
+    human annotates — and must never feed `aggregated_dimensions`, which is
+    what the baseline readers (`skill_gate`, the dashboards) consume.
     """
     if not runs:
         return []
@@ -249,7 +256,9 @@ def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
         # about intent surviving the next reader, and
         # test_aggregate_still_counts_a_run_whose_validators_are_unknown fails
         # if it is ever simplified back.
-        if r.judge.skipped or r.validators.passed is False:
+        if r.judge.skipped:
+            continue
+        if r.validators.passed is False and not include_validator_failed:
             continue
         for d in r.judge.dimensions:
             key = (d.get("source", ""), d.get("name", ""))
@@ -414,6 +423,14 @@ def assemble_test_entry(
             outcome = "xpass"
 
     aggregated_dims = aggregate_dimensions(runs)
+    # The rows a human annotates: the aggregate whenever it has any, else — when
+    # every judged run failed a validator — the modal over those runs, so the
+    # test reaches review instead of looking ungraded. Every annotation plane
+    # reads this through `review_sample.review_dimensions`. Empty only when
+    # nothing was judged (aborted, or the judge raised).
+    review_dims = aggregated_dims or aggregate_dimensions(
+        runs, include_validator_failed=True
+    )
 
     totals = {
         "duration_ms": sum(r.duration_ms for r in runs),
@@ -493,6 +510,7 @@ def assemble_test_entry(
         "outcome_summary": {
             "per_run_outcomes": per_run_outcomes,
             "aggregated_dimensions": aggregated_dims,
+            "review_dimensions": review_dims,
         },
         "totals": totals,
         "runs": runs_block,
