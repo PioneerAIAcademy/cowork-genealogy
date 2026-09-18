@@ -19,7 +19,7 @@ export default defineConfig({
       reporter: ["text", "html"],
       include: ["src/**/*.ts"],
       // The two stdio entrypoints connect a transport at import; no test loads them.
-      exclude: ["src/index.ts", "src/hosted-stdio.ts"],
+      exclude: ["src/index.ts", "src/hosted-stdio.ts", "src/http.ts"],
     },
   },
 });
