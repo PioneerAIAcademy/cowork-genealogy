@@ -156,9 +156,9 @@
           "jurisdiction": "Schuylkill County, Pennsylvania",
           "date_range": "1845-1850",
           "repository": "FamilySearch",
-          "rationale": "Catholic baptism record could provide primary direct evidence of parentage, but pre-1850 Irish Catholic parish records for Schuylkill County are fragmentary and largely unavailable on FamilySearch. Three converging sources make the father identification defensible without this record type.",
+          "rationale": "Patrick's Catholic baptism would be the one original record carrying primary, direct evidence of his father — the record type the three converging sources cannot supply. St. John the Baptist, Pottsville (est. 1827) is the Schuylkill County parish whose registers cover a birth of ca. 1845.",
           "fallback_for": null,
-          "status": "skipped"
+          "status": "completed"
         },
         {
           "id": "pli_009",
@@ -250,6 +250,17 @@
       "outcome": "negative",
       "results_examined": 0,
       "notes": "No probate record found for Thomas Flynn in Schuylkill County 1870-1890. Searched FamilySearch probate index and browsed available registers. Negative result is itself meaningful: either Thomas died intestate without estate proceedings, died elsewhere, or his name does not match — but the absence does not contradict the parentage conclusion.",
+      "external_site": null
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_008",
+      "performed": "2026-05-04T11:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "jurisdiction": "Schuylkill County, Pennsylvania", "date_range": "1845-1850", "collection": "St. John the Baptist Catholic Church, Pottsville — baptismal register" },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Baptismal register of St. John the Baptist, Pottsville — the parish serving Schuylkill County Irish Catholics at Patrick's birth — read page by page for 1845-1850. No baptism for a Patrick Flynn, and no Flynn entry naming a Thomas Flynn as father, in that window. The register is continuous across these years, so this is a searched negative rather than a gap in the record: the one record type that could have supplied original, primary, direct evidence of the father was looked for and is not there. The conclusion therefore rests on the three converging sources, which is what holds it at probable rather than proved.",
       "external_site": null
     }
   ],
