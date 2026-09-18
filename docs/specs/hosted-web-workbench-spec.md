@@ -177,10 +177,12 @@ correspondingly-numbered general sections below. The general spec remains the
   token cost — fine for comparison, watch the bill).
 - **New-session onboarding = conversational.** "New session" creates a fresh
   sandbox with an empty `/project`, starts `agent_runner`, and the client
-  **auto-sends an opening turn** ("start a new genealogy research project") that
-  triggers the existing **`init-project`** skill — researcher-profile interview +
-  FamilySearch-person seeding, in chat, reusing the skill as-is (no new onboarding
-  UI). The session is titled provisionally and renamed once the objective is set.
+  **prefixes the canned opener** ("Let's start a new genealogy research
+  project.") onto the user's first message on the wire, so the existing
+  **`init-project`** skill runs and reads the person and objective from that one
+  turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
+  onboarding UI). The bubble shows only what the user typed. The session is
+  titled provisionally and renamed once the objective is set.
 
 ---
 
@@ -787,7 +789,7 @@ every healthy session.
 > The `#/s/:id` hash route means a refresh or a shared link reopens the session.
 >
 > Two notes: the "researcher-profile onboarding" is conversational, not UI — a
-> new session auto-sends an opening turn that triggers `init-project` (§0.5) —
+> new session prefixes the opener onto the user's first message, which triggers `init-project` (§0.5) —
 > and the §7.4 this section twice points at **does not exist**; the spec has no
 > §7.4. It means §0.5's onboarding bullet.
 >

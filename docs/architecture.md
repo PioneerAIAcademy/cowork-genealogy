@@ -621,12 +621,16 @@ Architecturally:
   template.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
-  `allToolSchemas`, **and** parses `src/index.ts` for the dispatch chain —
+  `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
   advertised-but-undispatched, dispatched-but-unregistered, and duplicate cases
   all fail. Forgetting the `if (request.params.name === "…")` block used to ship
   a tool that fell through to the `Unknown tool: …` throw closing
-  `src/index.ts`'s `CallToolRequestSchema` handler, on its first real
-  call with CI green; that is now a CI failure. A commented-out `case` does not
+  `src/server.ts`'s `CallToolRequestSchema` handler, on its first real
+  call with CI green; that is now a CI failure. The chain lives in
+  `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
+  `LOCAL`) and `src/hosted-stdio.ts` (the search-agent prototype's per-turn tool
+  server, binding a bearer) are entrypoints that only connect a transport, so a
+  new arm goes in `server.ts` and both get it. A commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
 - **If your tool signals failure by RETURNING `{ ok: false }` rather than
@@ -1712,7 +1716,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 
 | Test | Asserts |
 |---|---|
-| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/index.ts` (none missing, none orphaned, none duplicated) |
+| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/server.ts` (none missing, none orphaned, none duplicated) |
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
