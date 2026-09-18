@@ -28,10 +28,12 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved: true match. The hint is confirmed.** The deciding evidence is a
-second, independent registration of the same infant that the hint batch did not
-surface, plus the subject's own death entry; together they place the father's
-origin, literacy and marital status where the tree person's do.
+**Resolved: true match, at *probable* confidence — see "The unresolved
+tension" below before relying on this.** The supporting evidence is a second,
+independent registration of the same infant that the hint batch did not
+surface, plus an earlier child of the same couple and the subject's own death
+entry. The origin field is what carries the identification; one record
+contradicts it, and that contradiction is argued down rather than eliminated.
 
 **The hint record** (`ark:/61903/1:1:6D38-BQ8G`, father persona; principal
 `ark:/61903/1:1:6D38-BQ8L`) is Partida N.º 680 of the Guatemala City death
@@ -52,7 +54,10 @@ corroboration. The same father appeared, named Carmen Morales as the mother,
 gave **the same address** (house 25, Avenida del Golfo), stated both parents
 "solteros ... **originarios de Chiquimula la Sierra** y de este vecindario",
 formally acknowledged the child as his own, and **signed the entry** — where the
-declarants in the surrounding partidas "no firmó" or "no sabe firmar".
+declarant in the preceding partida "no sabe firmar". Note the limit of that
+point: on the 13 Aug 1905 *death* entry this same man "no firmó", and every
+entry on that death page says the same, so signature is only informative on
+pages where the clerk actually varied it.
 
 **The identity chain closes on the subject's own death registration**, Partida
 N.º 1069 of 12 April 1933 (`ark:/61903/1:1:Z9YP-SKN2`): aged sixty-three
@@ -64,6 +69,43 @@ this declarant could sign when his neighbours could not. Chiquimula origin +
 Guatemala City residence + literate + unmarried in August 1905 + age fits: that
 combination is the discriminator, and it is not shared by any other Ciriaco
 Bardales found.
+
+**An earlier child of the same couple.** A search for the couple turned up
+Partida N.º 326 of 13 May 1896 (`ark:/61903/1:1:6K2Q-S4B2`), a Guatemala City
+birth registration in which Ciriaco Bardales again appeared "como padre" to
+register a son, also named Ciriaco, by Carmen Morales; that child also died in
+infancy (`ark:/61903/1:1:Z95C-JY6Z`). Two people of these two names in one city,
+both naming a son Ciriaco, is not a coincidence worth entertaining — 1896 and
+1905 are the same couple. This makes the relationship a nine-year one rather
+than a single incident, which answers the draft's central objection ("29
+sources and not one names a Carmen Morales") far better than the 1905 pair
+alone: a partner who bore two children who died in infancy, before a marriage
+that produced nine surviving children, leaves exactly this trace.
+
+**The unresolved tension — read this before trusting the verdict.** The 1896
+entry contradicts the 1905 ones on the single field the identification rests on.
+It reads "ambos originarios y vecinos de **esta ciudad**" — natives of Guatemala
+City, not of Chiquimula — and "no firmó". If that line is accurate, the couple
+were capital-born and the subject (b. Quezaltepeque, Chiquimula) is not the
+father.
+
+The argument for preferring the 1905 reading is about clerical practice, not
+about the man, and should be weighed as such:
+
+| Page | Origin field across entries | Signature field | Discriminating? |
+|---|---|---|---|
+| 1905 birth, Partida 1118 | varies — "de Sansare", "de Guatemala", "de Chiquimula la Sierra" | varies — 1117 "no sabe firmar", 1118 signed | yes, both |
+| 1905 death, Partida 680 | varies — "de San Juan", "originarios y vecinos de esta Ciudad", "de Chiquimula" | every entry "no firmó" | origin only |
+| 1896 birth, Partida 326 | 326 and 327 **verbatim identical** | both "no firmó" | **no — boilerplate** |
+
+Both clerks who demonstrably recorded origin as real data wrote *Chiquimula*;
+the clerk who wrote *esta ciudad* used a formula identical to the next entry on
+his page. That is a reasonable basis for preferring the 1905 reading, but it
+rests on a two-entry sample of one 1896 page. **Whoever gives the second
+opinion should go to this question first:** read more of the 1896 register
+(image `ark:/61903/3:1:3QSQ-G9CF-PZ27`) and see whether that clerk ever varied
+the origin formula. If he did, the 1896 line is real data and this verdict
+should be reopened.
 
 **Two corrections to the draft note above, and to the pre-handoff review.**
 
@@ -113,4 +155,6 @@ corroboration and must not be cited as such.
 
 **Second opinion:** _outstanding — to be named here and in the PR body before
 merge._ The card makes it mandatory for this fixture (difficulty `hard`, and the
-deciding evidence is a register image).
+deciding evidence is a register image). The specific question to put to the
+reviewer is the 1896-vs-1905 origin contradiction under "The unresolved
+tension" above, not the verdict in general.
