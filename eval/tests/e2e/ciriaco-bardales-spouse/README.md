@@ -71,9 +71,11 @@ N.º 1069 of 12 April 1933 (`ark:/61903/1:1:Z9YP-SKN2`): aged sixty-three
 **Esquipulas** y de este vecindario" — Esquipulas being a municipality of the
 department of **Chiquimula**. An army colonel is literate, which is precisely why
 this declarant could sign when his neighbours could not. Chiquimula origin +
-Guatemala City residence + literate + unmarried in August 1905 + age fits: that
-combination is the discriminator, and it is not shared by any other Ciriaco
-Bardales found.
+Guatemala City residence + literate + unmarried in August 1905: that combination
+is the discriminator, and it is not shared by any other Ciriaco Bardales found.
+Neither 1905 partida states the father's age, so **age is not part of the
+match** — the only age evidence is the tree person's own 1933 entry, which is
+the profile being matched *to*, not a point of correspondence.
 
 **An earlier child of the same couple.** A search for the couple turned up
 Partida N.º 326 of 13 May 1896 (`ark:/61903/1:1:6K2Q-S4B2`), a Guatemala City
@@ -105,12 +107,28 @@ Ciriaco Bardales and Carmen Morales registered a son Ciriaco on 13 May 1896 who
 died at half an hour old, and a son **José Luis, born 1903, who survived**. José
 Luis married Laura Calvinisti on 10 June 1924, and that marriage was registered
 **in Chiquimula** — the department the 1905 entries give as the couple's origin
-and the department the tree person was born in. A capital-born family with no
-Chiquimula connection does not marry its son off there.
+and the department the tree person was born in. The 1924 register itself names
+both parents, so the parentage and the place come from the same record.
 
-That, rather than any argument about handwriting, is what carries the
-identification. It is independent of the 1905 entries and postdates them by
-nineteen years.
+That parentage is independently confirmed half a century later. José Luis's own
+death registration, 4 October 1954 (`ark:/61903/1:1:Z9GZ-P9PZ`; image
+`ark:/61903/3:1:3Q9M-CS7W-CHN1`), records him as "hijo de Ciriaco Bardales y
+Carmen Morales", married to Marta Castro, and the informant was **Alfredo
+Chancilla — outside the family**, forty-nine years after the 1905 entries. It is
+the strongest independent corroboration in this file that the couple existed and
+had a surviving son. Two things it does **not** do: it gives his age as 56,
+implying birth ~1898 rather than the indexed 1903; and it calls **José Luis
+himself** "originario de esta Ciudad", which describes his own nativity, not his
+parents' origin — he was born in the capital where the couple lived, so it
+neither supports nor contradicts a Chiquimula-born father.
+
+**How much weight the 1924 marriage can bear.** A Guatemalan civil marriage is
+normally registered in the **bride's** municipality, and Laura Calvinisti's own
+residence has not been established. So a Chiquimula registration is
+circumstantial support, not proof: it tips the balance, it is independent of the
+1905 entries and postdates them by nineteen years, but the ordinary explanation
+— that the bride was from Chiquimula — has not been ruled out. Ruling it out is
+the single cheapest thing a reviewer could do to firm up this verdict.
 
 **A boilerplate defence of the 1905 reading was tried and failed — do not revive
 it.** The first attempt argued the 1896 clerk was reciting a formula. He was
@@ -133,11 +151,15 @@ fuller name the tree does not carry. (The birthplaces in that index entry are
 the record's own parish, not the parties' birthplaces — Clara's tree birthplace
 is Guatemala City.) It confirms he was still *soltero* in December 1907.
 
-**Residual doubt, stated plainly.** The 1896 pair is not explained away by
-evidence, only by a plausible reading of clerical habit. This verdict was
-revised twice while the records came in — asserted, withdrawn, then re-asserted
-on the 1924 marriage — so the reviewer should weigh the 1896 entries themselves
-rather than trust this summary.
+**Residual doubt, stated plainly.** Three things are unresolved, not two. First,
+the 1896 pair is not explained away by evidence, only by a plausible reading of
+clerical habit. Second, the 1924 Chiquimula registration — the fact carrying the
+identification — has an untested ordinary explanation in the bride's residence.
+Third, nothing places the tree person anywhere between his 1870 Chiquimula birth
+and his children's 1907/1909 registrations, so his presence in the capital in
+1905 is inferred, never documented. This verdict was revised twice while the
+records came in — asserted, withdrawn, then re-asserted on the 1924 marriage —
+so weigh the records themselves rather than trusting this summary.
 
 **Two corrections to the fixture's original framing and to the pre-handoff
 review.**
