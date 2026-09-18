@@ -81,18 +81,47 @@ services:
       timeout: 3s
       retries: 30
 
+  # D9-10 worker: one patron turn per message through the Agent SDK. Context is the
+  # repo root (the image carries packages/engine and apps/server); the root
+  # .dockerignore drops node_modules, .git, .venv and eval, and keeps the engine build/.
   worker:
-    build: ./worker
+    build:
+      context: ../../..
+      dockerfile: apps/server/proto/worker/Dockerfile
     container_name: proto-worker
     # D14 kills this container on a ceiling overrun (and the D3 `crash` turn exits it);
     # every subsequent redelivery needs a worker to POST to.
     restart: unless-stopped
     environment:
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      # The tool server's store (hosted-stdio.js), in-network hosts.
+      GENEALOGY_PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
+      GENEALOGY_ANCHOR_PATH: /project
+      # The model. Passed through from the host environment at `up` time, never a
+      # literal here; the stub arms run with it empty.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
+      # stdio (default): hosted-stdio.js forked per turn on the Postgres store above.
+      # http: the D16 `tools` service, file backend, bearer as Authorization.
+      TOOL_SERVER: ${TOOL_SERVER:-stdio}
+      ENGINE_DIR: /opt/genealogy/engine
+      ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
+      WORKER_CWD: /project
+      TMPDIR: /tmp
+    # The transcript, its per-turn CLAUDE_CONFIG_DIR and the oversized-result spill are
+    # writable-not-durable: a tmpfs, discarded with the container.
+    tmpfs:
+      - /tmp:size=1g,mode=1777
     expose:
       - "8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET

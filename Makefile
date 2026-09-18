@@ -434,8 +434,9 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 
 # ── Search-agent prototype: D3 compose skeleton (apps/server/proto/) ─────
 # postgres :5434 (5433 is the P1 probe's p1-postgres), minio :9000/:9001,
-# elasticmq :9324, plus the worker stub and the sqsd shim built from ./worker
-# and ./shim. Plan: docs/plan/search-agent-prototype.md, "Week 1" D3.
+# elasticmq :9324, plus the worker (D9–10; built from the repo root, see the compose
+# file) and the sqsd shim built from ./shim. Plan: docs/plan/search-agent-prototype.md,
+# "Week 1" D3 and "Week 2" D9–10.
 # proto-up waits in a second call that names the long-running services only:
 # `up --wait` on the whole stack exits 1 the moment the minio-init one-shot
 # exits 0 (Compose v5.1.4) and abandons the wait before the worker is healthy.
@@ -470,16 +471,29 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 	cd apps/server && uv run python proto/smoke.py
 
 .PHONY: proto-test
-proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py
+proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py
+
+# D9–10 acceptance, billed (two short Sonnet turns). The worker container reads
+# ANTHROPIC_API_KEY from the environment of the `up` that creates it, so the key is
+# exported for this recipe only — from the caller's environment, else eval/.env — and
+# never echoed (the recipe is silent). A changed key recreates the worker on `up`.
+.PHONY: proto-turn
+proto-turn: $(ENGINE_BUILD) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)
+	@key="$${ANTHROPIC_API_KEY:-$$(sed -n 's/^ANTHROPIC_API_KEY=//p' eval/.env 2>/dev/null | head -1)}"; \
+	  if [ -z "$$key" ]; then echo "proto-turn: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  export ANTHROPIC_API_KEY="$$key"; \
+	  $(PROTO_COMPOSE) up -d --build && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
+	  cd apps/server && uv run python proto/turn.py $(ARGS)
 
 # ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
 # The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
 # the compose postgres/elasticmq instead; proto-drive is the D13 acceptance driver,
 # self-contained by default (embedded Postgres via the `proto` dependency group, the
 # tier in-process, no queue, the seeder standing in for the worker). BASE=… points it
-# at a running stack in --worker mode — a stack has a worker (the D3 stub counts), and a
-# worker racing the seeder is exactly what --seed refuses. PG_DSN defaults to the
+# at a running stack in --worker mode — a stack has a worker (which since D9–10 runs a
+# real, billed turn), and a worker racing the seeder is exactly what --seed refuses. PG_DSN defaults to the
 # compose postgres. web-proto is the SPA on the SSE transport against :8085.
 PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 

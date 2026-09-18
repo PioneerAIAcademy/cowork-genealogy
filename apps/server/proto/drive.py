@@ -17,10 +17,11 @@ neither Docker nor Postgres. ``--worker`` runs no seeder and stops on the worker
 ``turn_done`` for our ``turn_id``.
 
 ``--seed`` is refused when the tier reports a live queue (``/api/health`` ``queue`` is not
-``NullQueue``) unless ``--allow-live-queue``: on a compose stack the D3 stub worker
-completes the enqueued turn within milliseconds, which races the seeder for the
-``turn_active`` frame and shows the SPA idle while rows are still being inserted. A stack
-with a worker is what ``--worker`` is for -- the stub is a worker.
+``NullQueue``) unless ``--allow-live-queue``: on a compose stack the worker runs the
+enqueued turn (a real, billed one since D9-10 -- with no model key it fails and the shim
+retries with backoff), which races the seeder for the ``turn_active`` frame and shows the
+SPA idle while rows are still being inserted. A stack with a worker is what ``--worker``
+is for.
 
 Every stream read has a wall-clock deadline (a ``: ping`` every 15 s would otherwise
 reset httpx's read timeout forever), so a missing stop condition is a FAIL, not a hang.
