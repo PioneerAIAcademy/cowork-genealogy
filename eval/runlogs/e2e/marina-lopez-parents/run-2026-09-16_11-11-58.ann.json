@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Agent reached the parents via Marina's own 1984 civil death registration (ark:/61903/1:1:6TMN-26CT), not the 1937 marriage act, and recorded them as 'Manolo Lopez' and 'Carmen Nida Lopez' against the fixture's 'Manuel Lopez G.' and 'Carmen Nelia Casado'. Manolo is a standard diminutive of Manuel, and the mother's form may be a married-name convention (birth surname replaced by the husband's) rather than a different woman — but the evidence leaves that open. Not marked true without stronger evidence that the two name forms are one woman.",
+    "f2": "No Marriage fact anywhere in the agent's final tree — no date, no place. The Couple relationship between LRQR-QM9 and P874-7BV was already present in the starting tree. The run's own search summary records civil marriage registers as negative, so it never located the act."
+  },
+  "annotator": "Emruthwill",
+  "findings_hash": "7a786e243a9480eb10b8eca6807369eb1f8e24afe5a9a26b3d4d1044f56ba3d9"
+}
