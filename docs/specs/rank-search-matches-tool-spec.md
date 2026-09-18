@@ -246,14 +246,26 @@ Sorted by `matchScore` descending; no gedcomx.
 }
 ```
 
-The stub also carries `events`, `collectionId`, `recordTitle` and
-`treeMatches`, so that `ranked` REPLACES the inline `results` block on a
-subject-named `record_search` rather than shipping beside it. Measured at 50
-rows: the old shape (50 inline rows + a 10-stub `ranked`) is 34,147 bytes, the
-new one (50 enriched stubs, no `results`) is 32,585 — 4.6% smaller. The saving
-is the deduplication, not the stub being lean: an enriched stub is 645 bytes
-against a full row's 607. The full scored set still lives in the score log and
-the staged file.
+On a subject-named `record_search` there is ONE row list: `results` comes back
+ANNOTATED in place with `matchScore` / `matchRank` / `searchRank` /
+`attachedTo*` and ordered best first, and `ranked` carries metadata only
+(ruled 2026-09-15). Measured on this branch at 50 rows, and pinned by
+`tests/utils/staged-compaction.test.ts` so it cannot go stale silently: the
+rejected drop shape is 36,956 bytes, the shipped one 35,206 — 4.7% smaller.
+
+The saving is STRUCTURAL rather than a leaner row. The drop shape's stub
+reintroduced `collectionTitle` on every scored row, immediately after
+compaction had hoisted it into `collections`; the shipped shape has no stub, so
+it cannot reintroduce anything. An earlier pass of this paragraph quoted
+34,147 → 32,585 (−4.6%) for a stub that also carried `events`, `collectionId`,
+`recordTitle` and `treeMatches`. Both the fields and the figure are gone: those
+four were removed with the drop shape, and the figure was measured on a fixture
+with no `collectionTitle` to duplicate, so it priced a saving the real shape
+never had — against production's shape the drop design was about 2.7% BIGGER.
+
+The full scored set still lives in the score log and the staged file. The staged
+sidecar is NOT re-sorted: it is written before ranking runs and is an audit
+record of what the repository returned.
 
 ### `relativeTerms` — carried, and called out; never scored
 

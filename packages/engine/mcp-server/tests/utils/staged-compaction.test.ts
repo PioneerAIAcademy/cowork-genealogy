@@ -317,6 +317,21 @@ describe("#1212 payload", () => {
     // this while a regression that reintroduces duplication does.
     expect(after).toBeLessThan(before);
     expect((before - after) / before).toBeGreaterThan(0.03);
+
+    // The ABSOLUTE figures, pinned because the rank spec quotes them by name.
+    // The ratio assertions above cannot hold them: widening a field moves both
+    // sides together and leaves the delta at 4.7%, so the spec's "36,956 /
+    // 35,206" would rot with the suite green — which is exactly how the -4.6%
+    // this replaced survived the pivot to Option B. Band is +/-1%, wide enough
+    // that reflowing a fixture string does not red it and narrow enough that a
+    // real shape change does.
+    //
+    // If these fail, the fixture moved: re-measure, then update BOTH this block
+    // and docs/specs/rank-search-matches-tool-spec.md, which cites the pair.
+    expect(before).toBeGreaterThan(36956 * 0.99);
+    expect(before).toBeLessThan(36956 * 1.01);
+    expect(after).toBeGreaterThan(35206 * 0.99);
+    expect(after).toBeLessThan(35206 * 1.01);
   });
 
   it("the ranking annotation is a small fraction of the row it rides on", () => {

@@ -1869,7 +1869,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 61 | Read past other root fields (`FilmNumber`, `RecordGroup`, `UniqueId`) | Position independence within the array |
 | 62 | Survives the staged slim block, inline **and** in the sidecar | The staged case is the normal one; proven by sabotage |
 | 63 | Reaches `ranked[].batchNumber` on a `subjectId` search | The projection a subject-named search actually reads |
-| 64 | `results` is dropped when `ranked` replaces it, and survives every shape where it does not | The drop is conditional; a length-only condition silently fails the scoreable-no-match arm. The condition itself is unit-tested in `tests/utils/staged-compaction.test.ts`; this suite's `record-search-ranked-drop.test.ts` sibling pins that `record_search` wires it in and forwards `top`. |
+| 64 | `results` is ALWAYS present and complete, and carries the ranking annotation when ranking ran | There is one row list, so the failure to guard against is a row going missing rather than a row being duplicated. `tests/utils/staged-compaction.test.ts` pins that no row is ever dropped, that an unscored row trails the scored ones rather than vanishing, and that `ranked` gives up `matches` once the rows carry the scores. The earlier conditional-drop design and its `record-search-ranked-drop.test.ts` were removed with it. |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
