@@ -734,7 +734,12 @@ Where to look first:
   `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
   reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
   also fails when an exemption stops being needed. A second backend runs
-  `tests/store/conformance.ts`.
+  `tests/store/conformance.ts`. That second backend is `PgS3ProjectStore`
+  (`pg-s3-project-store.ts`) — constructor-scoped to one project, documents in
+  Postgres jsonb, blobs and staged results in S3 with a Postgres index; its
+  dependencies (`pg`, `@aws-sdk/client-s3`, `@smithy/node-http-handler`) are
+  `optionalDependencies` omitted from the `.mcpb`, and `make proto-store-test`
+  runs its conformance against the compose stack.
 - **`src/types/`** — shared API response and tool I/O types live
   here. If a second tool touches the same upstream API, put the
   response shape here so both stay in sync.

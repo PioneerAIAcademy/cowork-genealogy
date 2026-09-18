@@ -128,9 +128,14 @@ running `npm ci --omit=dev` against it — never by mutating the developer's
 1. `cd packages/engine/mcp-server && npm install && npm run build` — compile to `build/`.
 2. Stage a temp dir (`mktemp -d`): copy `manifest.json`, `package.json`,
    `package-lock.json`, `build/`, `config/`, `.mcpbignore`.
-3. `npm ci --omit=dev --ignore-scripts` inside the stage — production
-   `node_modules` only (`--ignore-scripts` skips dependency lifecycle
-   scripts for a deterministic, side-effect-free install).
+3. `npm ci --omit=dev --omit=optional --ignore-scripts` inside the stage —
+   production `node_modules` only: no devDependencies, and no
+   optionalDependencies either (`pg`, `@aws-sdk/client-s3` and
+   `@smithy/node-http-handler` are the hosted `PgS3ProjectStore`'s clients; the
+   desktop server never loads that module). `--ignore-scripts` skips dependency
+   lifecycle scripts for a deterministic, side-effect-free install.
+   `scripts/verify-mcpb.sh` forbids all three optional packages in the packed
+   bundle.
 4. `npx mcpb validate <stage>` — fails the build on a non-conformant
    manifest (`mcpb pack` also validates).
 5. `npx mcpb pack <stage> releases/genealogy-mcp.mcpb`.

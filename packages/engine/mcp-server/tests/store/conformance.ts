@@ -34,11 +34,14 @@ export function runProjectStoreConformance(
       expect(await f.store.exists(f.projectPath, "research.json")).toBe(true);
     });
 
-    it("writeJson stores pretty JSON that readText returns verbatim", async () => {
+    it("writeJson stores pretty JSON that readText parses back to the value", async () => {
+      // Value equality, not byte equality: a jsonb backend keeps neither key
+      // order nor whitespace. The file backend's verbatim-bytes guarantee is
+      // its own case in fs-project-store.test.ts.
       await f.store.writeJson(f.projectPath, "research.json", { a: 1, b: [2, 3] });
-      expect(await f.store.readText(f.projectPath, "research.json")).toBe(
-        JSON.stringify({ a: 1, b: [2, 3] }, null, 2),
-      );
+      const text = await f.store.readText(f.projectPath, "research.json");
+      expect(JSON.parse(text)).toEqual({ a: 1, b: [2, 3] });
+      expect(text).toBe(JSON.stringify(JSON.parse(text), null, 2));
     });
 
     it("writeJson creates missing parents and overwrites in place", async () => {

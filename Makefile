@@ -496,6 +496,23 @@ proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Even
 web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype web tier (:8085)
 	cd apps/web && VITE_API_TARGET=http://localhost:8085 VITE_SESSION_TRANSPORT=sse pnpm dev
 
+# ── Search-agent prototype: D6–8 PgS3ProjectStore (packages/engine/mcp-server/src/store/) ─────
+# The Postgres+S3 ProjectStore's conformance suite needs only postgres, minio and the
+# bucket one-shot — no worker, shim, queue or web tier. Same two-call shape as
+# proto-up-core: `--wait` on the one-shot exits 1 the moment it finishes, so the wait
+# names the two long-running services; the suite creates the bucket itself if the
+# one-shot has not finished by the time it starts.
+.PHONY: proto-up-store
+proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) and wait for health
+	$(PROTO_COMPOSE) up -d postgres minio minio-init
+	$(PROTO_COMPOSE) up -d --wait postgres minio
+
+.PHONY: proto-store-test
+proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
+	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npx vitest run tests/store/pg-s3-project-store.test.ts
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
