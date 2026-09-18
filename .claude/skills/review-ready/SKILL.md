@@ -173,6 +173,20 @@ Settle the smaller forks yourself and write each one into its issue body as a
 stated assumption. An assumption that lives only in your report is invisible to
 the junior who picks the issue up.
 
+**Gate every surviving question on the agent's four-way test before you write a
+block.** A fork is the lead's only if one live option spends money the card does
+not budget, sets doctrine or precedent, adds hard-to-reverse surface, or touches
+a prior ruling. If none applies, the agent should have decided it; write its
+recommendation into the body as `**Decided (review-ready, <date>): A, <the
+consequence>.** B considered: <one line>.` and treat the verdict as `ready`. A
+$0, reversible, precedent-free recommendation is never a question for him.
+
+**Grep the comments for `Ruling` and `Decision` first.** A question already
+ruled in a comment gets the ruling applied, not a block and a label.
+
+**`needs-decision` routes to the lead and nobody else.** To reach a senior
+reviewer on a PR question, @-mention them on the issue. Do not use the label.
+
 Write each surviving question into the issue **body**, above the reviewed marker:
 
 ```
