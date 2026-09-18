@@ -1356,8 +1356,23 @@ open. The E2B sandbox image is still built by no CI job.
 **New dependencies go in with npm, not pnpm** — the engine is negated out of the
 workspace and both artifacts install from its npm lockfile.
 
-**One interface, two backends, and the tools never branch.** Otherwise the desktop
-write path rots silently, because nothing in CI runs it.
+**One interface, two backends, and the tools never branch.** The worry this sentence
+first carried — that the desktop write path would rot silently because nothing in CI
+runs it — is backwards now (lead, 2026-09-18). The file backend is what every vitest
+file, both harnesses and `make engine-smoke-stdio` exercise; it is the most-covered
+path in the repo. **The Postgres backend is the one nothing covers**: its proof is the
+16-case `tests/store/conformance.ts` run against the compose stack by
+`make proto-store-test` (D6–8), the stdio smoke when it is pointed at the Postgres
+backend, the D16 transport smoke, and the prototype's own D17–18 runs — and the harness
+is explicitly not ported to it, so no skill or agent is ever validated against it. That
+is acceptable for a prototype whose job is to reduce uncertainty, and it is the **first
+thing to fix when the two-backend implementation goes real** — otherwise the Postgres
+path ships with one engineer's D17 run as its only proof. What the real build adds,
+sized then: the engine's tool suites (`tests/tools/*.test.ts`, ~3,300 cases) run against
+the Postgres backend by writing their fixtures through `getProjectStore()` instead of
+`writeFile` (a test-helper refactor, one file at a time, with `PROTO_STORE=pg` selecting
+the backend), and the unit harness's engine gains the same switch so at least one paid
+run per skill has landed on Postgres before beta. Recorded as R14.
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the
@@ -1682,6 +1697,13 @@ for image calls. *Owner: us.*
 Docker image and the GitOps end state is not live, so a route tweak is a rebuild and a
 deploy through their pipeline — days, not minutes. Plan any `ai.routes` change with
 that lead time. *Owner: APT.*
+
+**R14 — The Postgres path's only proof is the prototype's own runs.** The coverage
+inversion above: the file backend is the most-exercised code in the repo, the Postgres
+backend has the conformance suite, the smokes and D17–18. Fine for a prototype; before
+beta the engine's tool suites and one paid harness run per skill have to land on
+Postgres, or a skill can be green on every check and broken on the only backend
+production runs. *Owner: us; sized when the two-backend build goes real.*
 
 ### Real but ordinary
 
