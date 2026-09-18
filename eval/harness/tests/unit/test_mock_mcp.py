@@ -979,10 +979,9 @@ def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
         tmp_path, "record_search", response, ranked
     )
 
-    assert len(out) == 5, f"the degrade arm must return five values, got {len(out)}"
-    staged, resp, unlogged, drop, rank = out          # the caller's unpack
+    assert len(out) == 4, f"the degrade arm must return four values, got {len(out)}"
+    staged, resp, unlogged, rank = out                # the caller's unpack
     assert staged is None
     assert resp == response
     assert unlogged == []
-    assert drop is False
     assert rank == ranked

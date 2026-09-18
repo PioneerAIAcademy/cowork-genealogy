@@ -150,7 +150,15 @@ class LogAppendError extends Error {}
  * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
  * form), measured at 86d50cf0f: refusals fall 355 -> 201, and the 154 removed
  * are 43.4% of every refusal the rule made -- 134 of them the year, 20 the
- * jurisdiction. Nothing in that corpus is newly refused. Re-derive rather than
+ * jurisdiction. THE SPLIT RULE, because the figure is meaningless without it: a
+ * freed note counts as JURISDICTION when `censusMentions` bound it to a non-US
+ * threshold (a mention whose `columnFrom` is not 1880), and as YEAR otherwise.
+ * The obvious alternative -- counterfactual, "would it still be refused if every
+ * census were treated as US/1880?" -- splits the same 154 as 146 year and 8
+ * jurisdiction, because a note naming BOTH a documented British census and a
+ * pre-1880 US one is freed by the year on one reading and by neither on the
+ * other. Neither rule is wrong; quoting a split without saying which is.
+ * Nothing in that corpus is newly refused. Re-derive rather than
  * quote these: the corpus grows with every committed run, and two earlier
  * passes of this same docstring read 3,275/332/136 and 3,392/338/142 on
  * smaller ones. The stamp is there so a reader can tell what the number was
@@ -170,9 +178,10 @@ class LogAppendError extends Error {}
  * The jurisdiction test is deliberately adjacency-bound and NOT a search of the
  * note, because most non-US words in this corpus are birthplaces on a US
  * schedule: "1850 US Census, Schuylkill County, PA ... born Ireland" is a US
- * census of Irish immigrants and must stay refused. 48 of the 196 surviving
- * refusals name a non-US place somewhere; read through, they are overwhelmingly
- * that shape, so a wider window would be a regression rather than a further fix.
+ * census of Irish immigrants and must stay refused. 50 of the 201 surviving
+ * refusals name a non-US place anywhere in the note (same corpus and stamp as
+ * above); read through, they are overwhelmingly that shape, so a wider window
+ * would be a regression rather than a further fix.
  *
  * Both are bound ADJACENTLY, never by scanning. The jurisdiction must sit in
  * the unbroken run of words touching the census token -- punctuation ends the

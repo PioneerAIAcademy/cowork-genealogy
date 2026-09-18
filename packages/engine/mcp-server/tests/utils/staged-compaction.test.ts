@@ -153,9 +153,17 @@ describe("compactStagedFulltextSearch", () => {
 });
 
 /**
- * `results` is dropped only when `ranked` genuinely replaces it (#1212). The
- * condition is positive and two-part; each arm below is a distinct production
- * shape, and a length-only condition silently fails the last one.
+ * `results` is ALWAYS present and complete; the ranking rides on the rows
+ * (#1212 ruling, 2026-09-15). There is no drop decision left to make, so the
+ * property each arm below holds is that nothing goes MISSING: every row
+ * survives, an unscored row trails the scored ones rather than vanishing, and
+ * `ranked` gives up `matches` once the scores are on the rows.
+ *
+ * The earlier design dropped `results` behind a positive two-part condition.
+ * That is gone, and so is the failure mode worth guarding then (a length-only
+ * condition silently failing the scoreable-no-match arm). Do not reinstate a
+ * drop here without re-measuring the payload claim in `#1212 payload` below:
+ * the drop shape was BIGGER, because its stub re-carried `collectionTitle`.
  */
 describe("annotateResultsWithRanking", () => {
   const rowA = { recordId: "ark:/61903/1:1:AAAA-AA1", events: [] };
