@@ -256,6 +256,14 @@ def test_premise_requires_a_new_question():
     # "Was it a married name" trips signal 4, and only the `maiden surname`
     # escape alternative rescues it — drop that term and this flips to reject.
     "Was it a married name, and what was her maiden surname?",
+    # An intervening parenthetical between the birth/maiden word and the
+    # name/surname word is tolerated (#1394 review): "birth (maiden) surname" is
+    # a spelling of the same fact as "birth surname", so it escapes — and,
+    # because the escape is a global exemption, so does the same question carrying
+    # a marriage clause. Drop the parenthetical tolerance and the second flips to
+    # reject (the marriage signal fires on a fact-naming question).
+    "What was the birth (maiden) surname of Rosalind?",
+    "What was the birth (maiden) surname of Rosalind, or was it acquired through marriage?",
     "Do independent records confirm or refute that Johann and Maria Vogt are the parents of Anton Vogt?",
     "Who were Caroline's parents?",  # objective restatement — the judge's call, not this guard's
 ])

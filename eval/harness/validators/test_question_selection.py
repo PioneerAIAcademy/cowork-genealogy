@@ -591,6 +591,9 @@ _PREMISE_PROPERTY_TEST_SIGNALS = (
 # marriage clause: a compound "Was X the birth surname, and if not, what was her maiden
 # name?" names the fact in its second branch, and "What maiden name did she use before her
 # marriage?" is a fact question, not a property test. Such a question escapes the guard.
+# An intervening parenthetical between the maiden/birth word and the name/surname word is
+# tolerated, so "birth (maiden) surname" escapes exactly as "birth surname" does -- the
+# parenthetical is a spelling of the same fact, not a different question (#1394 review).
 # Two deliberate narrowings keep the escape from rescuing a bad question:
 #   * the fact term must be the MAIDEN/BIRTH fact -- bare "surname" is NOT an escape term,
 #     because "what surname did she use after marriage?" / "what surname does the census
@@ -598,7 +601,7 @@ _PREMISE_PROPERTY_TEST_SIGNALS = (
 #     let a "maiden or married name" clause in the same sentence off the hook;
 #   * a bare "Was 'Curtis' the maiden name of Caroline?" (no "what") is still caught.
 # The positive "names the fact" class beyond this escape stays the judge's job.
-_FACT_NAMING_ESCAPE = r"\bwhat\b[^.?]*\b(?:maiden name|maiden surname|birth surname|birth name)\b"
+_FACT_NAMING_ESCAPE = r"\bwhat\b[^.?]*\b(?:maiden|birth)\s+(?:\([^)]*\)\s+)?(?:name|surname)\b"
 
 
 def test_premise_question_names_fact(before_state, after_state, test):
