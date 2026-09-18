@@ -308,9 +308,19 @@ linter's own matcher, given+surname token overlap plus fact type for
 recall fractions are recomputed, and the verdict is recomputed
 **downgrade-only**. What was forced is recorded under the result's
 `judge_output.avoid_guard.forced_false` and in the finding's `notes`.
-The judge still grades the subjective half (is the claim present "only
-as an explicitly rejected hypothesis"?); the guard only prevents a
-model grader from excusing the objective half. Authoring gates treat
+The guard is **unconditional on presence**: it overrides the
+rejected-hypothesis allowance rather than preserving it. A target that
+appears in the agent's final tree is forced to `matched: "false"`
+however the agent annotated it — including as an explicitly rejected
+candidate, which is the outcome the allowance exists to permit.
+Measured against the shipped guard with every judge label set to `true`:
+a clean final tree scores the avoid finding `true`, and the same tree
+plus the avoided person written in as a rejected candidate scores it
+`false`. So an `avoid` finding must not promise a pass route through the
+tree. Word its pass condition to put a rejected candidate in the
+research log (`research.json`) and keep it out of `tree.gedcomx.json`;
+a finding whose text offers the tree route describes a pass that cannot
+be taken. Authoring gates treat
 `avoid` findings accordingly: the presence mirror skips them (the
 claim was never in the tree), while the stripping linter still warns
 when an avoided claim is already present in the *starting* tree — a

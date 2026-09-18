@@ -153,9 +153,11 @@ and a `pass`, so it names the record.
 `f2` is `required: true` and its tokens were measured clean against the starting tree. That measurement is against the
 *starting* tree; the guard runs against the *final* one, where it matches on
 name tokens alone and ignores relationships. So a run that records Elsch in the
-tree as an explicitly rejected candidate — which `f2`'s own description allows —
-is force-failed too. **`f2` is a narrower version of `f1`'s problem, not an
-escape from it.** The corpus already shows this happening to people the agent
+tree as an explicitly rejected candidate is force-failed too. **`f2` is a
+narrower version of `f1`'s problem, not an escape from it.** Both findings
+used to offer that tree route in their own `Pass =` clauses — a pass that
+cannot be taken — and now direct a rejected candidate to the research log
+instead, which is where the guard cannot reach it (spec §3.4.1). The corpus already shows this happening to people the agent
 itself created: `antonio-lucas-spouse`'s `avoid_guard.forced_false` names
 thirteen ids, and nine of them (`I1`–`I13`) appear nowhere in that fixture's
 starting tree, so they can only have come from the agent's own final tree.
