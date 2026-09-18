@@ -534,9 +534,9 @@ re-issue it first. Then present the plan:
   repository or tool is unavailable but another isn't), execute those and
   report the block on the rest — don't let an item that's blocked for any
   reason hold up items that aren't.
-- Otherwise, suggest next step: "Would you like me to start executing this
-  plan?" (search-records / search-external-sites, depending on
-  the repositories)
+- Otherwise, one plain sentence on what comes next (which records, in which
+  repository), then the hand-back literal as the final line of the reply,
+  exactly: `Next: run the first search. Continue?`
 
 ## Example
 
@@ -561,7 +561,7 @@ Ancestry (fallback), land records (fallback).
 | Question is too vague to plan for | Return to `question-selection` to refine it |
 | All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `research-exhaustiveness` to evaluate the question against the GPS stop criteria. If it returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
-| The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand off to execution in the same turn — do not ask "would you like me to start?" first |
+| The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand off to execution in the same turn — do not close with the hand-back literal first |
 
 ## Re-invocation behavior
 
