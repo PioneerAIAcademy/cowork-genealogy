@@ -62,11 +62,12 @@ it, or when it hits something it can't resolve.
 
 ### Defining the problem and surveying what's known
 
-The session opens with a short interview: your experience level, which sets
-how much the system explains as it goes, and which subscription sites you
-hold, used later to break ties between equivalent sources — never as a gate
-on what gets searched. It then records your objective and what you already
-hold: family papers, prior research, certificates.
+The session opens by asking one thing: what you want to find out. Nothing is
+asked about you — every project gets plain-language narration, and every
+subscription site is assumed reachable (a site you mention is recorded and used
+later to break ties between equivalent sources — never as a gate on what gets
+searched). It then records your objective and what you already hold: family
+papers, prior research, certificates.
 
 If the project starts from an existing online tree, every fact imported
 from it is marked as *questionable* compiled data. Nothing arrives trusted

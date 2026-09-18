@@ -63,7 +63,7 @@ from harness.since_window import (
     run_date,
     staleness_cutoff,
 )
-from harness.review_sample import is_gradeable, is_mandatory
+from harness.review_sample import is_gradeable, is_mandatory, review_dimensions
 from harness.versioning import ann_filename_for
 from skill_latency_report import (
     UNIT_RUNLOGS,
@@ -232,18 +232,26 @@ def _load(path: Path) -> dict[str, Any]:
 def collect_dimensions(runlog: dict[str, Any], skill: str) -> list[DimensionStats]:
     """Per-dimension grading profile from one run log.
 
-    Reads `tests[].outcome_summary.aggregated_dimensions[]` — **not**
-    `tests[].dimensions[]`, which does not exist. Getting this wrong prints zeros
-    for every suite while every synthetic fixture still passes, which is why one
-    test in the suite reads a real committed log.
+    Reads `tests[].outcome_summary.review_dimensions[]` through
+    `review_sample.review_dimensions` (the aggregate on a run log written before
+    that field existed) — **not** `tests[].dimensions[]`, which does not exist.
+    Getting this wrong prints zeros for every suite while every synthetic fixture
+    still passes, which is why one test in the suite reads a real committed log.
+
+    The review rows, not the aggregate, because this report is about the gradings
+    a human reviewed: rule 3 requires a correction on every review row, and
+    `build_skill_report` derives `mandatory` through the same accessor. Reading
+    the aggregate here would credit a validator-failing test's correction against
+    an `instances` that never counted its grading — `reviewed` above `instances`,
+    `unreviewed` clamped to 0. The baseline readers (`skill_gate`, the dashboards)
+    stay on the aggregate; this one is not a baseline.
 
     `runlog.aggregate_dimensions` has already collapsed a test's runs to one modal
     score per dimension, so reading this path cannot double-count a multi-run test.
     """
     by_key: dict[tuple[str, str], DimensionStats] = {}
     for test in runlog.get("tests") or []:
-        summary = test.get("outcome_summary") or {}
-        for dim in summary.get("aggregated_dimensions") or []:
+        for dim in review_dimensions(test):
             source = str(dim.get("source") or "")
             name = str(dim.get("name") or "")
             key = (source, name)
