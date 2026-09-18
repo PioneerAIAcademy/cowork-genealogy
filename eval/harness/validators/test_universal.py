@@ -1832,6 +1832,8 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
 _INTERNAL_ID_RE = re.compile(
     r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|kh|tl)_\d{3,}\b"
     r"|\b(?:research\.json|tree\.gedcomx\.json)\b"
+    r"|\b(?:conflicts|hypotheses|assertions|sources|questions|plans|evaluations"
+    r"|proof_summaries|person_evidence|known_holdings|timelines|log)\[\]"
     r"|\bmcp__[A-Za-z_]+"
     r"|\b(?:research_append|research_query|extraction_append|research_log_append"
     r"|tree_edit|tree_correct|tree_forget|project_create|materialize_facts"

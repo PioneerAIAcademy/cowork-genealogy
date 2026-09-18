@@ -73,20 +73,21 @@ written profile — the field is left unwritten rather than defaulted, since
 `["none"]` asserts the researcher told us they have nothing. A volunteered
 access statement may still be recorded.
 
-- **pass:** `experience_level` correct; `narration_guidance` is the verbatim
-  table text for the level; `subscriptions` absent (or, if the user volunteered
-  access unprompted, recording it is equally correct). Single-turn with no
-  answers → `intermediate` default, noted as editable. Objective defaulting:
+- **pass:** `experience_level` is `novice` and `narration_guidance` is the
+  house-style string verbatim, whatever the user said about themselves;
+  `subscriptions` absent (or, if the user volunteered access unprompted,
+  recording it is equally correct). Objective defaulting:
   when no objective is stated, the agent asks in the opening turn, does not
   block, and writes the stated generic default — never a hallucinated specific
   direction — in the same single pass as the profile default.
-- **partial:** Mapping correct but `narration_guidance` paraphrased rather than
+- **partial:** Level correct but `narration_guidance` paraphrased rather than
   verbatim. Objective asked and defaulted correctly, but the summary doesn't
   clearly state it was defaulted.
-- **fail:** Wrong experience level, `narration_guidance` invented rather than
-  drawn from the table, a `subscriptions` value written when the user never
+- **fail:** Any level but `novice` (including one the user volunteered),
+  `narration_guidance` invented rather than the house-style string, the user
+  asked anything about themselves, a `subscriptions` value written when the user never
   mentioned access, the objective invented/hallucinated from person data
-  instead of using the generic default, or either question silently skipped
+  instead of using the generic default, or the objective question silently skipped
   (asked-and-then-blocked, or defaulted without being asked first).
 
 ## Place standardization

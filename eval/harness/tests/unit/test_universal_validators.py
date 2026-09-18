@@ -505,6 +505,13 @@ def test_identifier_report_names_each_schema_id_it_finds():
         assert ident in msg
 
 
+def test_identifier_report_fires_on_bracketed_section_names():
+    """The schema's section names written as arrays — `conflicts[]`,
+    `hypotheses[]` — are how issue #2493's own quoted reply spoke to the tester."""
+    msg = _report_fails("I added a conflicts[] entry and a hypotheses[] entry for Etta.")
+    assert msg is not None and "conflicts[]" in msg and "hypotheses[]" in msg
+
+
 def test_identifier_report_fires_on_project_file_and_tool_names():
     msg = _report_fails("I updated research.json through research_append.")
     assert msg is not None and "research.json" in msg and "research_append" in msg
