@@ -1,0 +1,16 @@
+[
+  { "kind": "text", "text": "Starting the extraction." },
+  { "kind": "task_started", "agent": "record-extractor", "task_id": "t1" },
+  { "kind": "text_delta", "text": "Reading the 1850 census" },
+  { "kind": "thinking_delta", "text": "The household lists" },
+  { "kind": "tool_use", "tool": "record_read", "summary": "recordId=X", "agent": "record-extractor" },
+  { "kind": "text", "text": "Found 12 assertions in the household.", "agent": "record-extractor" },
+  { "kind": "thinking", "text": "Now checking the ages.", "agent": "record-extractor" },
+  { "kind": "task_started", "agent": "record-extractor", "task_id": "t2" },
+  { "kind": "task_done", "agent": "record-extractor", "task_id": "t1", "status": "completed", "summary": "ok" },
+  { "kind": "text_delta", "text": "Second agent still streaming" },
+  { "kind": "text", "text": "Second record done.", "agent": "record-extractor" },
+  { "kind": "task_done", "agent": "record-extractor", "task_id": "t2", "status": "completed", "summary": "ok" },
+  { "kind": "text_delta", "text": "Both records" },
+  { "kind": "text", "text": "Both records are extracted.\n\nNext: search-records. Continue?" }
+]

@@ -95,6 +95,32 @@ services:
       postgres:
         condition: service_healthy
 
+  # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
+  # /events and the SSE stream read session_events / session_activity / documents.
+  # Depends on postgres and the queue only -- never on the worker: until D9-10 lands it
+  # is driven against rows proto/drive.py inserts. Context is ./ (not ./web) so the
+  # image carries enqueue.py and sql/.
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: proto-web
+    restart: unless-stopped
+    # Loopback only: the tier has no auth (README), so it must not be LAN-reachable.
+    ports:
+      - "127.0.0.1:8085:8085"
+    environment:
+      PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      # The same queue the shim reads (QUEUE_URL below); the tier keys SendMessage on it.
+      QUEUE_URL: http://elasticmq:9324/000000000000/turns
+      POLL_S: "1"
+      SSE_PING_S: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticmq:
+        condition: service_healthy
+
   shim:
     build: ./shim
     container_name: proto-shim

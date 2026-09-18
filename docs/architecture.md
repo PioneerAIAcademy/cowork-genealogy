@@ -576,6 +576,22 @@ agents.**
 > as the current population, and re-measure it rather than quoting it at a
 > proposal that would change it.
 
+**`.claude/settings.json` also carries a `permissions.allow` list**, reducing
+repeat permission prompts for commands verified genuinely read-only or
+scratch-scoped in practice but not covered by Claude Code's built-in
+auto-allow set (which includes undocumented "read-only forms of `git`" per
+its own docs, without enumerating which subcommands qualify — an explicit
+entry here removes that ambiguity rather than duplicating a guarantee).
+JSON carries no comments, so the file itself is not the rationale's home:
+the safety case for each entry — what was checked, what was ruled out, and
+why — lives in the commit message that added it. Read the current file for
+the exact list; `git log -p -- .claude/settings.json` for why each entry is
+there. `record_search` is the one non-obvious entry — it is not read-only (stages a sidecar under
+`results/.staging/`, pruned after 24h — `results-staging.ts`), kept because
+the writes stay in the tool's own scratch directory — the entry itself is a
+bare string, and the adding commit's own text doesn't make that argument: it
+calls `record_search` read-only outright, which this paragraph corrects.
+
 ### 3.6 The lane rule — classify a finding before you edit prose
 
 An e2e failure, an eval miss, or a user complaint is **not** automatically a
@@ -605,12 +621,16 @@ Architecturally:
   template.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
-  `allToolSchemas`, **and** parses `src/index.ts` for the dispatch chain —
+  `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
   advertised-but-undispatched, dispatched-but-unregistered, and duplicate cases
   all fail. Forgetting the `if (request.params.name === "…")` block used to ship
   a tool that fell through to the `Unknown tool: …` throw closing
-  `src/index.ts`'s `CallToolRequestSchema` handler, on its first real
-  call with CI green; that is now a CI failure. A commented-out `case` does not
+  `src/server.ts`'s `CallToolRequestSchema` handler, on its first real
+  call with CI green; that is now a CI failure. The chain lives in
+  `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
+  `LOCAL`) and `src/hosted-stdio.ts` (the search-agent prototype's per-turn tool
+  server, binding a bearer) are entrypoints that only connect a transport, so a
+  new arm goes in `server.ts` and both get it. A commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
 - **If your tool signals failure by RETURNING `{ ok: false }` rather than
@@ -1435,7 +1455,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
-| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. |
+| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
 **The `ResearchTransport` seam is the reuse mechanism.** The provider talks only
@@ -1696,7 +1716,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 
 | Test | Asserts |
 |---|---|
-| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/index.ts` (none missing, none orphaned, none duplicated) |
+| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/server.ts` (none missing, none orphaned, none duplicated) |
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
