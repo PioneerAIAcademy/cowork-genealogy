@@ -381,10 +381,10 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | 2026-09-13 (drafted) | — |
-| InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | 2026-09-13 (drafted) | — |
-| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | 2026-09-13 (drafted) | — |
-| Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | 2026-09-13 (drafted) | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18 | — |
+| InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
+| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
+| Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
 | FS platform / DPF | The SSE edge probe with the arm list under R3 — only if the Help team says they bypass DTM. | CloudFront and Imperva behaviour on `text/event-stream`. | R3 | not yet | — |
 
 Not an ask: R13's route-change lead time (days, an image rebuild) is a planning fact, and
@@ -1356,8 +1356,26 @@ open. The E2B sandbox image is still built by no CI job.
 **New dependencies go in with npm, not pnpm** — the engine is negated out of the
 workspace and both artifacts install from its npm lockfile.
 
-**One interface, two backends, and the tools never branch.** Otherwise the desktop
-write path rots silently, because nothing in CI runs it.
+**One interface, two backends, and the tools never branch.** The worry this sentence
+first carried — that the desktop write path would rot silently because nothing in CI
+runs it — is backwards now (lead, 2026-09-18). The file backend is what every vitest
+file that touches the store, both harnesses and `make engine-smoke-stdio` exercise; it
+is the most-covered
+path in the repo. **The Postgres backend is the one nothing covers**: its proof is
+`tests/store/pg-s3-project-store.test.ts` — the 16 shared conformance cases plus 21 of
+its own, 37 when the compose stack is up — run by `make proto-store-test` (D6–8), the
+stdio smoke when it is pointed at the Postgres
+backend, the D16 transport smoke, and the prototype's own D17–18 runs — and the harness
+is explicitly not ported to it, so no skill or agent is ever validated against it. That
+is acceptable for a prototype whose job is to reduce uncertainty, and it is the **first
+thing to fix when the two-backend implementation goes real** — otherwise the Postgres
+path ships with one engineer's D17 run as its only proof. What the real build adds,
+sized then: the engine's tool suites (`tests/tools/*.test.ts`, 1,939 cases; the 25 files
+that write fixtures to disk hold 1,120 of them) run against the Postgres backend by
+writing their fixtures through `getProjectStore()` instead of
+`writeFile` (a test-helper refactor, one file at a time, with `PROTO_STORE=pg` selecting
+the backend), and the unit harness's engine gains the same switch so at least one paid
+run per skill has landed on Postgres before beta. Recorded as R14.
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the
@@ -1682,6 +1700,13 @@ for image calls. *Owner: us.*
 Docker image and the GitOps end state is not live, so a route tweak is a rebuild and a
 deploy through their pipeline — days, not minutes. Plan any `ai.routes` change with
 that lead time. *Owner: APT.*
+
+**R14 — The Postgres path's only proof is the prototype's own runs.** The coverage
+inversion above: the file backend is the most-exercised code in the repo, the Postgres
+backend has the conformance suite, the smokes and D17–18. Fine for a prototype; before
+beta the engine's tool suites and one paid harness run per skill have to land on
+Postgres, or a skill can be green on every check and broken on the only backend
+production runs. *Owner: us; sized when the two-backend build goes real.*
 
 ### Real but ordinary
 
