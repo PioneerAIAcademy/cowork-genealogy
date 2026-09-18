@@ -158,9 +158,21 @@ describe("skill references are reachable", () => {
   for (const skill of listSkills()) {
     const refsDir = join(skillsDir, skill, "references");
     if (!existsSync(refsDir)) continue;
+    // A references/ dir holding no .md file generates a test that checks
+    // nothing: `present` is [], `reachable` is empty, `unreached` is [], and the
+    // assertion holds vacuously. Skip at COLLECTION time — not inside the `it` —
+    // so the generated test count matches CI's; a stray .DS_Store or an
+    // untracked empty dir left one machine reporting a phantom passing test the
+    // next did not (#2236). Deliberately a SKIP, not a FAIL: with no .md file
+    // the reachability invariant is vacuously satisfied, not violated — there is
+    // nothing to check — so failing would flag a legitimately-empty scaffolding
+    // dir, and for the truly-empty case a fail guard is unexercisable anyway
+    // since git tracks no empty dir. That is the shape CLAUDE.md's "A new lint
+    // must be proven to fail" calls worse than no check.
+    const present = readdirSync(refsDir).filter((f) => f.endsWith(".md"));
+    if (present.length === 0) continue;
 
     it(`${skill}: every references/ file is named by something the skill reads`, () => {
-      const present = readdirSync(refsDir).filter((f) => f.endsWith(".md"));
       const reachable = reachableRefs(skill);
       const unreached = present
         .filter((f) => !reachable.has(f))

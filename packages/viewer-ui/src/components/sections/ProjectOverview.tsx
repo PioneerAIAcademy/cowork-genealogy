@@ -56,9 +56,6 @@ function ResearcherProfileBlock({ profile }: { profile: ResearcherProfile }): Re
           <span className={styles.profileSubsEmpty}>No paid subscriptions</span>
         )}
       </div>
-      {profile.narration_guidance && (
-        <div className={styles.profileGuidance}><Linkify text={profile.narration_guidance} /></div>
-      )}
       {profile.intended_audience && (
         <div className={styles.profileGuidance}>
           <span className={styles.profileLabel}>Written for</span>{' '}

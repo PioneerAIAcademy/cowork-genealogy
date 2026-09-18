@@ -41,7 +41,7 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 |---|---|---|
 | `ready` | A junior can land it today | The `reviewed` label. Nothing else. |
 | `ready-after-edit` | Ready once the body carries the agent's text | Prepend the text; `reviewed`. |
-| `needs-a-decision` | An open fork only the lead can settle | Label `needs-decision` and `reviewed`; **no assignee**. Orthogonal to `senior` — carry both when the work would still be hard after the answer. Write the `## Decision needed` block into the body; `/make-decisions` splices the chosen option's pre-written text once it is answered. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
+| `needs-a-decision` | An open fork only the lead can settle, by the four-way test in 3.2 | Label `needs-decision` and `reviewed`; **no assignee**. Orthogonal to `senior` — carry both when the work would still be hard after the answer. Write the `## Decision needed` block into the body; `/make-decisions` splices the chosen option's pre-written text once it is answered. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
 | `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo — **and still hard once every open question is answered** | Label `senior` and `reviewed`, keeping the `developer`/`genealogist` label that picks the lane; **no assignee** — the lead takes no issues and nobody is assigned here; seniors self-serve. Report to `fill-ready`; it ranks in its lane's Ready pool like anything else. |
 | `stale-rewrite` | The premise moved; the issue asks for the wrong thing | **Replace** the ask with the agent's rewrite, keeping the original under `## Original issue`; `reviewed`. |
 | `close` | No longer needed, already done, or refuted | `gh issue close --reason "not planned"` with the evidence. No label. |
@@ -95,6 +95,40 @@ the caller's "prepend, never replace" rule carries an exception. It is kept
 distinct from `ready-after-edit` because the two carry different information to
 the lead — one says the body is thin, the other says the board is wrong — and
 from `close` because the need survives even though the ask does not.
+
+### 3.2 What counts as a lead decision
+
+`needs-a-decision` is earned only when at least one live option does one of
+these four:
+
+1. spends real money the card does not already budget (a subscription, a paid
+   run on an eval slot the card does not already buy; a $7–25 run the card
+   already pays for does not count);
+2. sets or changes doctrine or precedent (a first of its kind, such as the first
+   `person_warnings` tag not derived from FamilySearch's set; a rule other cards
+   will cite; an ADR or spec rule change);
+3. adds surface that is hard to reverse (a persisted `research.json` or tree
+   field, an MCP tool parameter, a manifest shape);
+4. contradicts or reinterprets an earlier lead ruling, or sits where the two
+   nearest rulings point opposite ways.
+
+Otherwise the reviewer decides and records it in the body as
+`**Decided (review-ready, <date>): A, <consequence>.** B considered: <one
+line>.`, and the verdict is `ready` or `ready-after-edit`. Two corollaries: a
+question already ruled in the issue's comments is applied, never re-labelled;
+and the label reaches the lead only, so a PR question for a senior reviewer is
+an @-mention on the issue, not a label.
+
+Why the test is this narrow, measured 2026-09-18 from the label timeline of the
+20 open `needs-decision` items: 19 were labelled between 2026-09-14 and
+2026-09-18, 16 of them by the `/fill-ready` and `/review-ready` runs and 3 by
+`/merge-issues`. On the lead's read, 3 were already answered or misrouted
+(one was labelled for a step he had approved two weeks earlier; one was
+labelled three times to reach a senior reviewer), 11 carried a written
+recommendation that was $0, reversible and precedent-free, and 6 were genuinely
+his. He ratified the 11 in bulk. The old bar, "genuinely undetermined", let a
+well-argued fork with an obvious answer through; the four-way test is what those
+six had that the eleven did not.
 
 ## 4. Why an agent plus a skill
 
