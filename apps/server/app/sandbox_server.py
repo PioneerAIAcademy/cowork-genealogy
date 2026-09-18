@@ -206,6 +206,8 @@ class Hub:
                     detail = f"{ev.get('agent', '')}: {str(ev.get('summary', ev.get('status', '')))[:140]}".strip()
                 elif kind == "error":
                     detail = str(ev.get("text", ""))[:200]
+                elif kind in ("auto_continue", "auto_continue_paused"):
+                    detail = f"step {ev.get('step', '?')}/{ev.get('max_steps', '?')}"
                 else:
                     detail = ""
                 # A log line must never kill the pump: this coroutine relays

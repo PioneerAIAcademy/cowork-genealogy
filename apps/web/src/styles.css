@@ -678,7 +678,13 @@ button {
    Send: it IS the primary action once a step has completed. */
 .chatContinueRow {
   display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 4px 0 10px;
+}
+.chatContinueNote {
+  font-size: 12px;
+  color: var(--ink-muted, var(--ink));
 }
 .chatContinue {
   background: var(--accent);
