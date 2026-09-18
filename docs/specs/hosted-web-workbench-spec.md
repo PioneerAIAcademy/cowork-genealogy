@@ -566,10 +566,10 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   so a reconnect or a second tab rebuilds the chat history.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
-> - **Lay mode: the server answers the hand-back itself (issue #2653, lead
+> - **Lay mode: the server answers the hand-back itself (lead
 >   ruling 2026-09-18).** Every hand-back the prompts produce ends with the
->   literal `Next: <step>. Continue?` (terminal `Research complete.`; issue
->   #2292). Whether anyone has to click is a control-plane setting, not a prompt
+>   literal `Next: <step>. Continue?` (terminal `Research complete.`).
+>   Whether anyone has to click is a control-plane setting, not a prompt
 >   rule: when a turn's final main-thread text ends with the literal, the
 >   in-sandbox runner (`app/agent/runner.py`, `AutoContinue`) starts the next
 >   turn with `Yes.` itself — the same text the web's Continue button sends.

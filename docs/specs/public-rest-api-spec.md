@@ -134,7 +134,7 @@ that turn's `turn_done` as its own reply. That is exactly the mis-attribution
 this paragraph exists to rule out, and the queue introduced it.
 
 **Lay mode's auto-continue never runs behind a `/v1` turn.** The hosted web's
-runner answers the hand-back literal with `Yes.` itself (issue #2653), which
+runner answers the hand-back literal with `Yes.` itself, which
 would put a synthetic turn behind a `/v1` caller's reply and hand its text over
 as the answer to the caller's next message — the same mis-attribution. So every
 `user_msg` `/v1` sends carries `auto_continue: false` (`_user_msg`, `app/v1.py`),
