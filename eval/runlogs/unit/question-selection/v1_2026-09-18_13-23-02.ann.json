@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-09-01_17-38-18.json",
+  "run_log": "v1_2026-09-18_13-23-02.json",
   "annotator": "dallan@quass.org",
   "corrections": [
     {
-      "test_id": "ut_research_plan_fbn",
+      "test_id": "ut_question_selection_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_fbn",
+      "test_id": "ut_question_selection_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_fbn",
+      "test_id": "ut_question_selection_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,71 +27,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_fbn",
+      "test_id": "ut_question_selection_001",
       "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -99,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -115,23 +59,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
+      "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_008",
+      "test_id": "ut_question_selection_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -139,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_008",
+      "test_id": "ut_question_selection_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -147,7 +83,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_008",
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -155,7 +123,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_012",
+      "test_id": "ut_question_selection_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -163,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_012",
+      "test_id": "ut_question_selection_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -171,15 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_009",
+      "test_id": "ut_question_selection_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -187,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_009",
+      "test_id": "ut_question_selection_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -195,11 +163,11 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_009",
+      "test_id": "ut_question_selection_011",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     }
   ]
