@@ -189,7 +189,7 @@ def test_new_section_entries_returns_only_what_is_new():
 
 
 def test_new_section_entries_skips_non_dict_entries():
-    """The guard the fifth hand-rolled copy had dropped."""
+    """The `isinstance` guard, which the shared helper on main already carried."""
     before = _wrap("log", [{"id": "log_1"}, "junk"])
     after = _wrap("log", [{"id": "log_1"}, "junk", {"id": "log_2"}])
     assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_2"]
@@ -197,9 +197,10 @@ def test_new_section_entries_skips_non_dict_entries():
 
 def test_new_section_entries_tolerates_an_explicit_null_section():
     """`"log": null` satisfies a `.get(section, [])` default and then raises
-    TypeError on iteration. Pre-existing in the four copies this helper
-    replaced, and it fires on 0 of 2131 committed runs — hardened because the
-    section is now caller-supplied, which widens the shapes that reach here."""
+    TypeError on iteration. NEW here — the shared helper on main used
+    `after.get("log", [])` — and it fires on 0 of the 2130 committed unit runs
+    across 27 skills, so it is hardening rather than a fix. The section being
+    caller-supplied is what widens the shapes that reach here."""
     before = _wrap("log", None)
     after = _wrap("log", [{"id": "log_1"}])
     assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_1"]

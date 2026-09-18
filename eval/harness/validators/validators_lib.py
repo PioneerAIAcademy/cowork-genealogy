@@ -171,9 +171,9 @@ def new_section_entries(
     # default and then raises TypeError on iteration. This is NEW here — the
     # shared helper on main used `after.get("log", [])` — so it is not, as an
     # earlier draft said, pre-existing in copies this replaced (#2390 round 2).
-    # It fires on 0 of the 2140 committed unit runs across 27 skills, so it is
+    # It fires on 0 of the 2130 committed unit runs across 27 skills, so it is
     # hardening rather than a fix; the section being caller-supplied is what
-    # widens the set of shapes that reach here. (2140 drifts as runs land — the
+    # widens the set of shapes that reach here. (2130 drifts as runs land — the
     # 0 is the claim.)
     before_ids = {
         e.get("id") for e in (before.get(section) or []) if isinstance(e, dict)
