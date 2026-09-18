@@ -562,8 +562,26 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
     both failure messages say which one applies. The numbers above will drift
     as logs rotate — the shape is the claim, not the arithmetic.
     """
-    if not _RECORD_EXTRACTION_LOGS:
-        pytest.skip("no committed record-extraction run logs to replay")
+    # Red, not skip. This is the third instance of one class in this file: a
+    # check that goes quiet instead of failing when its own wiring is wrong.
+    # The first was the gate closing and turning the firing tests into SKIPPED
+    # (fixed by `_checked`); the second was `parents[3]` globbing
+    # `eval/eval/runlogs` (fixed by correcting the path, which left the silence
+    # itself possible). Point `_RUNLOGS` at a directory that does not exist and
+    # the suite still reports `33 passed, 1 skipped` and exits 0 — measured
+    # (#2390 round 3). Rotation makes this worse, not better: the docstring
+    # above expects the pre-rule logs to age out, so an emptied corpus and a
+    # wrong path look identical, and both look like success.
+    assert _RUNLOGS.is_dir(), (
+        f"{_RUNLOGS} is not a directory - the replay corpus path is wrong. "
+        f"A wrong path skips this test instead of failing it, which is the "
+        f"defect the replay exists to catch."
+    )
+    assert _RECORD_EXTRACTION_LOGS, (
+        f"no record-extraction run logs under {_RUNLOGS} - this replay is the "
+        f"only test that exercises the validator against real runs, so an "
+        f"empty corpus is a red, not a skip."
+    )
 
     body = _REPO_SKILL.read_text(encoding="utf-8") if _REPO_SKILL.exists() else ""
     assert "Announce before delegating" in body, (

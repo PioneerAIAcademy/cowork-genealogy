@@ -1482,8 +1482,11 @@ def report_a_multi_record_batch_announces_each_record_position(
     "reads as coverage" failure the sibling #1950 work exists to prevent.
 
     Verifying the real batch case needs a multi-record test in
-    `eval/tests/unit/record-extraction/`, which is genealogist-authored, sits
-    inside the run-log snapshot, and is its own card.
+    `eval/tests/unit/record-extraction/`, which is genealogist-authored and
+    sits inside the run-log snapshot — so it needs a different skill and a
+    paid eval slot this PR does not buy. **Filed as issue #2644**, labelled
+    `nothing-checks`: until it lands, this check passes and cannot fail on the
+    case it was written for.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests extract records")
