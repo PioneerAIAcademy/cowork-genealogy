@@ -1359,17 +1359,20 @@ workspace and both artifacts install from its npm lockfile.
 **One interface, two backends, and the tools never branch.** The worry this sentence
 first carried — that the desktop write path would rot silently because nothing in CI
 runs it — is backwards now (lead, 2026-09-18). The file backend is what every vitest
-file, both harnesses and `make engine-smoke-stdio` exercise; it is the most-covered
-path in the repo. **The Postgres backend is the one nothing covers**: its proof is the
-16-case `tests/store/conformance.ts` run against the compose stack by
-`make proto-store-test` (D6–8), the stdio smoke when it is pointed at the Postgres
+file that touches the store, both harnesses and `make engine-smoke-stdio` exercise; it
+is the most-covered
+path in the repo. **The Postgres backend is the one nothing covers**: its proof is
+`tests/store/pg-s3-project-store.test.ts` — the 16 shared conformance cases plus 21 of
+its own, 37 when the compose stack is up — run by `make proto-store-test` (D6–8), the
+stdio smoke when it is pointed at the Postgres
 backend, the D16 transport smoke, and the prototype's own D17–18 runs — and the harness
 is explicitly not ported to it, so no skill or agent is ever validated against it. That
 is acceptable for a prototype whose job is to reduce uncertainty, and it is the **first
 thing to fix when the two-backend implementation goes real** — otherwise the Postgres
 path ships with one engineer's D17 run as its only proof. What the real build adds,
-sized then: the engine's tool suites (`tests/tools/*.test.ts`, ~3,300 cases) run against
-the Postgres backend by writing their fixtures through `getProjectStore()` instead of
+sized then: the engine's tool suites (`tests/tools/*.test.ts`, 1,939 cases; the 25 files
+that write fixtures to disk hold 1,120 of them) run against the Postgres backend by
+writing their fixtures through `getProjectStore()` instead of
 `writeFile` (a test-helper refactor, one file at a time, with `PROTO_STORE=pg` selecting
 the backend), and the unit harness's engine gains the same switch so at least one paid
 run per skill has landed on Postgres before beta. Recorded as R14.
