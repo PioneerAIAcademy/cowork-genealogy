@@ -33,6 +33,7 @@ from test_question_selection import (  # noqa: E402
     test_first_question_tests_disputed_parents as check_disputed_parents,
     test_new_question_not_vague as check_not_vague,
     test_premise_question_names_fact as check_premise,
+    test_single_fact_objective_not_narrowed as check_single_fact,
     test_timelines_queried_before_deciding as check_timelines_ordering,
     test_unblocks_nonempty as check_unblocks_nonempty,
 )
@@ -278,3 +279,70 @@ def test_premise_accepts_fact_naming_and_1471(question):
 def test_premise_rejects_bare_property_test(question):
     with pytest.raises(AssertionError, match="property test of a name"):
         check_premise(_EMPTY, _premise_after(question), _PREMISE_TAGS)
+
+
+# --- test_single_fact_objective_not_narrowed: the #1394-review paired-fact guard ---
+#
+# Pins the demonstrated reject/accept/skip behaviour of the single-fact-objective
+# guard (CLAUDE.md "a new lint must be proven to fail" -- both directions). It
+# rejects narrowing a paired "parents" objective to one side ("who was the
+# father...") while accepting the paired restatement ("who were the parents..."),
+# and skips when the tag is absent or the objective names no paired fact. Cases
+# mirror ut_002's regression (parents -> father) recorded in the PR body.
+
+_SINGLE_FACT_TAGS = {"tags": ["single-fact-objective"]}
+_PARENTS_OBJECTIVE = "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania"
+
+
+def _state_obj(objective, questions):
+    return {"research_json": {"project": {"objective": objective}, "questions": questions}}
+
+
+_EMPTY_PARENTS = _state_obj(_PARENTS_OBJECTIVE, [])
+
+
+def _parents_after(question):
+    return _state_obj(_PARENTS_OBJECTIVE, [_q("q_001", question)])
+
+
+def test_single_fact_skips_when_tag_absent():
+    with pytest.raises(pytest.skip.Exception, match="not a single-fact-objective scenario"):
+        check_single_fact(_EMPTY_PARENTS,
+                          _parents_after("Who was the father of Patrick Flynn?"),
+                          {"tags": ["first-question"]})
+
+
+def test_single_fact_skips_when_objective_not_paired():
+    # A single, non-paired objective: the guard must not fire even on a
+    # one-parent question -- proves the paired-fact gate.
+    before = _state_obj("Find the birth date of Patrick Flynn", [])
+    after = _state_obj("Find the birth date of Patrick Flynn",
+                       [_q("q_001", "Who was the father of Patrick Flynn?")])
+    with pytest.raises(pytest.skip.Exception, match="objective does not name a paired fact"):
+        check_single_fact(before, after, _SINGLE_FACT_TAGS)
+
+
+# Accept: the paired objective is restated at scope (or the question is unrelated).
+@pytest.mark.parametrize("question", [
+    "Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania?",
+    "When and where was Patrick Flynn born?",
+    "Who were Patrick Flynn's father and mother?",
+])
+def test_single_fact_accepts_paired_restatement(question):
+    check_single_fact(_EMPTY_PARENTS, _parents_after(question), _SINGLE_FACT_TAGS)
+
+
+# Reject: the paired objective is narrowed to one side.
+@pytest.mark.parametrize("question", [
+    "Who was the father of Patrick Flynn, born ca. 1845 in Pennsylvania?",
+    "Who was the mother of Patrick Flynn?",
+    "Identify the father of Patrick Flynn.",
+    # Finding-1 idiomatic variants: possessive form and present tense.
+    "Who was Patrick Flynn's father?",
+    "Who is Patrick Flynn's father?",
+    "Who is Patrick Flynn's mother?",
+    "Who is the father of Patrick Flynn?",
+])
+def test_single_fact_rejects_one_side_narrowing(question):
+    with pytest.raises(AssertionError, match="narrowed to"):
+        check_single_fact(_EMPTY_PARENTS, _parents_after(question), _SINGLE_FACT_TAGS)

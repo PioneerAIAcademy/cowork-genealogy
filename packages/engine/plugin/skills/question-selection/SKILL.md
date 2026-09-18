@@ -123,13 +123,16 @@ timeline-gap, or FAN-pivot, whichever signal fires); a question already
 When nothing in `questions[]` covers the objective yet, the question you write
 *is* the user's framing: name the fact sought, not the record that might carry
 it — record choice is `research-plan`'s. A single-fact objective **is** that
-question; restate it with identifying detail rather than narrowing it — unless
-the objective rests on an explicitly unverified, load-bearing premise: a fact
-it depends on that is sourced only to compiled/unsourced data (an online tree,
-`quality: 1` tree data), and whose falsity would change which person, family,
-or fact the objective is actually investigating — not ordinary uncertainty or
-an incidental unverified detail. Then the first question verifies that premise
-(Step 3), naming the gating fact. When verifying the premise and pursuing the
+question; restate it with identifying detail rather than narrowing it. Two
+parents are one fact, not two — never split such an objective into a father
+question and a mother question.
+
+**Exception — an explicitly unverified, load-bearing premise.** When the
+objective rests on a fact sourced only to compiled/unsourced data (an online
+tree, `quality: 1` tree data) whose falsity would change which person, family,
+or fact the objective is investigating — not ordinary uncertainty or an
+incidental unverified detail — the first question verifies that premise (Step
+3), naming the gating fact. When verifying the premise and pursuing the
 objective are distinct questions, the objective-scope question follows in a
 later invocation once the premise is sound; when the premise is a disputed
 relationship or identity assertion already on the tree (a parent-child or
@@ -163,17 +166,17 @@ timeline gaps do not trigger it.
 
 **Priority 4 detail:** Fires for the first question on a single-fact objective
 too — there the "decomposition" is one question at the objective's own scope.
-When that objective rests on an explicitly unverified, load-bearing premise —
-one whose falsity would change which person, family, or fact is under
-investigation (Step 1c / Step 3) — the first question verifies the premise
-instead of restating the objective, still on the `objective_decomposition` basis
-— and for a disputed relationship or identity assertion already on the tree
-(not a name/date property), via Step 3's confirm-or-refute framing, not a
-generic "verify" question.
 Split only when the objective holds more than one independent fact. Each
 sub-question targets a single fact and names that fact, not the record that
 might carry it: "Whom did Thomas Flynn marry?" / "When and where did Thomas
-Flynn die?" — the census or certificate belongs in the plan.
+Flynn die?" — the census or certificate belongs in the plan. When that
+objective rests on an explicitly unverified, load-bearing premise — one whose
+falsity would change which person, family, or fact is under investigation
+(Step 1c / Step 3) — the first question verifies the premise instead of
+restating the objective, still on the `objective_decomposition` basis — and for
+a disputed relationship or identity assertion already on the tree (not a
+name/date property), via Step 3's confirm-or-refute framing, not a generic
+"verify" question.
 
 **Priority 5 detail:** a gap on the subject's spouse or child is not a
 Priority 5 signal.

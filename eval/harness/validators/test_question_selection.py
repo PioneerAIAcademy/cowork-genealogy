@@ -632,3 +632,65 @@ def test_premise_question_names_fact(before_state, after_state, test):
         "of a name or date may not stand in for the fact. "
         f"Offending question(s): {offenders!r}"
     )
+
+
+# --- Tag-gated: a single-fact objective naming a paired fact must not be
+#     narrowed to one side (#1394 review -- ut_002 "parents" -> "father"). ----
+#
+# A "parents" objective is ONE fact, not two (SKILL.md Step 1c). Splitting it
+# into a father question or a mother question narrows the objective's scope.
+# Gated on `single-fact-objective` (only ut_002 carries it) and further
+# restricted to objectives that name a PAIRED fact ("parents"), so a non-paired
+# single-fact objective (a lone birth date) cannot trip it. It COEXISTS with
+# #1471 (verifies-disputed-parents) and the #1394 premise guard
+# (premise-question-names-fact): those carry different tags, so this never runs
+# on ut_014 or ut_016. The positive "restate the paired fact" class stays the
+# judge's job; this only rejects the one-side narrowing shape.
+_PAIRED_FACT_OBJECTIVE = r"\bparents\b"
+_SINGLE_PARENT_NARROWING = (
+    r"\bwho (?:was|were|is|are) the (?:father|mother)\b",
+    # possessive form: "Who was/is Patrick Flynn's father?" (name bounded to a
+    # single clause by [\w' -], so a comma/other clause can't be spanned).
+    r"\bwho (?:was|were|is|are) [\w' -]+'s (?:father|mother)\b",
+    r"\bthe (?:father|mother) of\b",
+    r"\b(?:father|mother)'s (?:identity|name)\b",
+    r"\bidentify the (?:father|mother)\b",
+)
+# A question that names BOTH sides (or "parents") is the correct restatement,
+# not a narrowing, so it escapes even if it also mentions one parent.
+_NAMES_PAIRED = r"\bparents\b|\bfather and mother\b|\bmother and father\b|\bboth parents\b"
+
+
+def test_single_fact_objective_not_narrowed(before_state, after_state, test):
+    """Tag-gated: a single-fact objective naming a PAIRED fact ("parents") must
+    be restated at that scope, not narrowed to one side -- two parents are one
+    fact (SKILL.md Step 1c). Gated on `single-fact-objective`; only fires when
+    the objective names a paired fact, so a non-paired single-fact objective
+    cannot trip it. Coexists with #1471 (verifies-disputed-parents) and the
+    #1394 premise guard (premise-question-names-fact) -- different tags, so it
+    never runs on ut_014 or ut_016. The positive case is the judge's; this
+    rejects only the one-side narrowing shape."""
+    if "single-fact-objective" not in test.get("tags", []):
+        pytest.skip("not a single-fact-objective scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    objective = ((after.get("project") or {}).get("objective") or "").lower()
+    if not re.search(_PAIRED_FACT_OBJECTIVE, objective):
+        pytest.skip("objective does not name a paired fact")
+    offenders = [
+        q.get("question")
+        for q in _new_questions(before, after)
+        if not re.search(_NAMES_PAIRED, (q.get("question") or "").lower())
+        and any(
+            re.search(sig, (q.get("question") or "").lower())
+            for sig in _SINGLE_PARENT_NARROWING
+        )
+    ]
+    assert not offenders, (
+        "a single-fact objective naming a paired fact (parents) was narrowed to "
+        "one side -- two parents are one fact; restate the objective ('Who were "
+        "the parents of X?') rather than asking only for the father or only the "
+        f"mother. Offending question(s): {offenders!r}"
+    )
