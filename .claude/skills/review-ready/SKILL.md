@@ -179,7 +179,8 @@ not budget, sets doctrine or precedent, adds hard-to-reverse surface, or touches
 a prior ruling. If none applies, the agent should have decided it; write its
 recommendation into the body as `**Decided (review-ready, <date>): A, <the
 consequence>.** B considered: <one line>.` and treat the verdict as `ready`. A
-$0, reversible, precedent-free recommendation is never a question for him.
+fork whose every live option is $0, reversible, precedent-free and clear of any
+prior ruling is never a question for him.
 
 **Grep the comments for `Ruling` and `Decision` first.** A question already
 ruled in a comment gets the ruling applied, not a block and a label.

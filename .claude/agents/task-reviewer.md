@@ -110,8 +110,9 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
    4. Contradicts or reinterprets an earlier lead ruling, or the two nearest
       rulings point opposite ways.
 
-   A fork whose recommended option is $0, reversible and precedent-free is not a
-   decision, however well argued the alternatives are. Decide it and write the
+   A fork whose every live option is $0, reversible, precedent-free and clear of
+   any prior ruling is not a decision, however well argued the alternatives are.
+   Decide it and write the
    decision into the body edit, where the `## Decision needed` block would have
    gone:
    `**Decided (review-ready, <date>): A, <the consequence that decided it>.**
