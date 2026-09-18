@@ -89,7 +89,7 @@ Evidence-based genealogy runs **Source → Information (persona) → Evidence �
 Conclusion**. This repo maps it onto two files:
 
 - **`research.json` assertions = the evidence layer.** Each assertion is
-  one source's classified claim about one persona (`evidence_type`,
+  one source's classified claim about one persona (`record_basis`,
   `information_quality`, `informant_proximity`, `date_certainty`). The GPS
   audit trail. **Unchanged.**
 - **`tree.gedcomx.json` = the conclusion layer.** Today, deliberately thin:
@@ -597,7 +597,7 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   rather than optional because a guard a caller can skip by omitting it is not a
   guard.
 - **Negative evidence cannot mint anyone.** An assertion with
-  `evidence_type: "negative"` records what a source does **not** say
+  `record_basis: "absent"` records what a source does **not** say
   (`"Father: not recorded (informant reported 'unknown')"` is live in the
   corpus), so minting a father from it would assert the opposite of the
   evidence. The persona arm already skips negative assertions per §7.1 (4);
@@ -864,7 +864,7 @@ Two conclusion paths for `proof-conclusion`, both of which set `primary` (§7):
 How indirect evidence flows through materialization:
 
 1. **Extraction already classifies it.** An indirect claim lands with
-   `evidence_type: indirect` and `date_certainty: calculated` (per `#711`,
+   `record_basis: inferred` and `date_certainty: calculated` (per `#711`,
    which splits a census into a *direct* birthplace assertion and an
    *indirect* computed birth-year). Materialization does not re-derive the
    class; it reads it.

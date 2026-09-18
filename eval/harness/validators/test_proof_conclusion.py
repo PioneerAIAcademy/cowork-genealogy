@@ -606,3 +606,102 @@ def test_per_claim_tree_encoding(before_state, after_state, test):
         "`possible`. post-state relationships="
         f"{after.get('relationships', [])!r}"
     )
+
+
+def test_shortfall_matches_document_state(after_state, test):
+    """`shortfall` must agree with the document it sits in.
+
+    The write boundary already refuses a MISSING `shortfall` — it is a required
+    field and `research_append` is live in the unit harness. What nothing checked
+    is whether the value is RIGHT, and a well-formed wrong value is the failure
+    mode that matters: `ceiling` says *the reachable record is exhausted, a
+    higher tier is not obtainable*, and asserting that over a question whose own
+    `exhaustive_declaration.declared` is false is exactly the overclaim this
+    field was added to expose.
+
+    Three rules, each read off the document rather than off the tier alone:
+
+    1. ``proved`` <-> ``none``, both directions. Nothing holds back a proved
+       conclusion, and nothing else can honestly claim nothing holds it back.
+    2. An unresolved conflict naming this summary's question in its
+       ``blocks_question_ids`` forces ``conflict``. Question-scoped, matching
+       proof-conclusion's decision rules: a conflict open on another question
+       does not bear on this conclusion.
+    3. ``ceiling`` requires ``declared is True``. Only ``ceiling`` makes the
+       finished-searching claim, so only ``ceiling`` is constrained — ``gap``
+       is always permitted, including on a declared-exhaustive question, where
+       a reachable source may still be named as unreached.
+
+    Deliberately NOT checked: that ``gap`` names its outstanding source. That is
+    a judgement about prose, which is the rubric's job (ADR-0011 limit 1 — a
+    semantic gate prefers a false allow).
+
+    Runs on every proof-conclusion test rather than behind a tag: any test that
+    writes a proof summary should get this, and one that writes none is silently
+    fine.
+    """
+    research = (after_state or {}).get("research_json") or {}
+    summaries = research.get("proof_summaries") or []
+    if not summaries:
+        return
+
+    questions = {
+        q.get("id"): q for q in (research.get("questions") or []) if isinstance(q, dict)
+    }
+    conflicts = research.get("conflicts") or []
+
+    for ps in summaries:
+        if not isinstance(ps, dict):
+            continue
+        sid = ps.get("id")
+        qid = ps.get("question_id")
+        tier = ps.get("tier")
+        shortfall = ps.get("shortfall")
+
+        if tier == "proved":
+            assert shortfall == "none", (
+                f"{sid}: tier 'proved' requires shortfall 'none' (nothing is "
+                f"holding a proved conclusion back); got {shortfall!r}"
+            )
+        else:
+            assert shortfall != "none", (
+                f"{sid}: shortfall 'none' says nothing is holding this "
+                f"conclusion back, but its tier is {tier!r} — below 'proved' "
+                f"something is, so name it: ceiling, gap or conflict"
+            )
+
+        blocking = [
+            c.get("id")
+            for c in conflicts
+            if isinstance(c, dict)
+            and c.get("status") == "unresolved"
+            and qid in (c.get("blocks_question_ids") or [])
+        ]
+        if blocking:
+            assert shortfall == "conflict", (
+                f"{sid}: conflict(s) {blocking} are unresolved and name {qid} in "
+                f"blocks_question_ids, so this conclusion is blocked by a dispute "
+                f"— shortfall should be 'conflict'; got {shortfall!r}"
+            )
+
+        question = questions.get(qid)
+        if question is None:
+            # Nothing to check the ceiling claim against; a dangling
+            # question_id is a different validator's business.
+            continue
+        declared = (question.get("exhaustive_declaration") or {}).get("declared")
+
+        def _check_ceiling(value, where):
+            if value == "ceiling":
+                assert declared is True, (
+                    f"{sid}{where}: shortfall 'ceiling' claims the reachable "
+                    f"record is exhausted, but {qid}'s "
+                    f"exhaustive_declaration.declared is {declared!r}. Use 'gap' "
+                    f"while a reachable source remains unsearched — 'ceiling' "
+                    f"is the stronger claim and the document does not support it"
+                )
+
+        _check_ceiling(shortfall, "")
+        for i, claim in enumerate(ps.get("claims") or []):
+            if isinstance(claim, dict) and "shortfall" in claim:
+                _check_ceiling(claim["shortfall"], f" claims[{i}]")

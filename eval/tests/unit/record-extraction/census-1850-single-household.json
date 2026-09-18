@@ -34,56 +34,56 @@
     {
       "record_role": "head_of_household",
       "fact_type": "name",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "age",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "occupation",
       "value": "miner",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "optional": true
     },
     {
       "record_role": "wife",
       "fact_type": "age",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "wife",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "child_1",
       "fact_type": "age",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "child_1",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     }
   ]
 }

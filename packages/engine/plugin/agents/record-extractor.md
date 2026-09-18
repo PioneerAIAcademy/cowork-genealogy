@@ -125,7 +125,7 @@ This agent implements BCG standards 23–36 during data collection:
 3. **Per-fact, per-layer analysis:** the three layers are INDEPENDENT —
    source (`original`/`derivative`/`authored`), information
    (`primary`/`secondary`/`indeterminate`), evidence
-   (`direct`/`indirect`/`negative`). An original source can hold
+   (`stated`/`inferred`/`absent`). An original source can hold
    secondary information; a derivative can yield direct evidence. Never
    let one layer's value influence another, and classify per-assertion,
    never per-source — one death certificate routinely yields primary AND
@@ -149,7 +149,7 @@ classification.
   **death certificate** (the record itself or its image) is ORIGINAL —
   it is the first recording of both the death and the informant's
   statements. The informant's secondhand knowledge is captured at the
-  information/evidence layers (`family_not_present`, `indirect`), never
+  information/evidence layers (`family_not_present`, `inferred`), never
   by demoting the source layer.
 - **derivative** — created from another source — indexes, abstracts,
   transcripts, translations, including an index/abstract/transcript OF
@@ -204,7 +204,7 @@ List every person mentioned and assign a `record_role`:
   these people lived in one household — extract each person's stated
   facts and the co-residence, and emit NO parent-child or spousal
   relationship assertion, in any form. Do not reach for `_inferred` or
-  `indirect` to persist the link anyway: that is asserting the
+  `inferred` to persist the link anyway: that is asserting the
   relationship while labelling the doubt, and the correlation it belongs
   to happens downstream, not here.** Say what you noticed in your
   summary — that is how the hypothesis reaches the next skill.
@@ -243,7 +243,7 @@ List every person mentioned and assign a `record_role`:
   - **Order / prior status.** A `marital_status` assertion per party
     whenever the record designates one — "second marriage", "previously
     married", "widow", "widower", or a marital-status column reading
-    anything other than single. `direct` when stated. A prior-marriage
+    anything other than single. `stated` when stated. A prior-marriage
     designation means a woman's recorded surname may be a **former
     husband's**, not her parents' — capture the designation so the
     downstream surname question has the evidence, and never silently treat
@@ -310,10 +310,10 @@ have no `Birthplace`/`Deathplace` type).
 assertion; when they differ, split into two — same fact_type, different
 attribute.** A witnessed death states date *and* place with the same
 proximity → one `death` assertion carrying both. But a census states a
-**birthplace** (`direct`) while the **birth year** is computed from age
-(`indirect`) — different `evidence_type`, so they must be two separate
-`birth` assertions: one with `place` set (the `direct` place-claim) and
-one with `date` set (the `indirect` computed-year claim). Field
+**birthplace** (`stated`) while the **birth year** is computed from age
+(`inferred`) — different `record_basis`, so they must be two separate
+`birth` assertions: one with `place` set (the `stated` place-claim) and
+one with `date` set (the `inferred` computed-year claim). Field
 population — `place` vs `date` — is what tells them apart, not the type
 name.
 
@@ -321,13 +321,13 @@ name.
 an exact date** — even when "died 3 Jan 1908, age 63y 2m 10d" would let you
 subtract to a day. The record states an **age**, not a birth date; the
 subtraction manufactures precision the source never had (ages are routinely
-rounded). Emit `~<year>` (indirect) and keep the stated age as its own
+rounded). Emit `~<year>` (`inferred`) and keep the stated age as its own
 assertion.
 
 **Assertion fields — closed set, schema rejects extras.**
 **Required:** `record_id`, `record_role`, `fact_type`, `value`,
 `information_quality`, `informant`, `informant_proximity`,
-`evidence_type`, `extracted_for_question_ids` (empty array if none), and
+`record_basis`, `extracted_for_question_ids` (empty array if none), and
 `source_id` — though in the Step-4 batch the tool auto-stamps `source_id`
 from the batch's source op, so omit it there; supply it only outside that
 batch (e.g. a later standalone negative). **Optional:**
@@ -430,7 +430,7 @@ spouse, or relative that person-evidence later mints from this record is
 silently created `gender: "Unknown"`, even when the record states the sex
 plainly.
 Classify it with the same three layers as that persona's `name` assertion
-on this record (same informant and proximity; `direct` where the record
+on this record (same informant and proximity; `stated` where the record
 states it outright).
 
 **`standard_place`** — leave it out: `extraction_append` resolves it at
@@ -520,7 +520,7 @@ reporting, secondhand relay, social pressure, duress.
 | Occupation (stated) | unknown household member (likely the worker or spouse) | household_member | |
 | Residence | census enumerator | witness | enumerator visited the dwelling |
 | Relationship (pre-1880) | none — inferred from household position | researcher | no relationship column exists; nobody reported it — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
-| Relationship (1880+, stated) | unknown household member (likely the head or spouse) | household_member | a household member answered the relationship-to-head column with firsthand knowledge → the stated relationship is `direct` (the 1880-onward rule below), not inferred from position |
+| Relationship (1880+, stated) | unknown household member (likely the head or spouse) | household_member | a household member answered the relationship-to-head column with firsthand knowledge → the stated relationship is `stated` (the 1880-onward rule below), not inferred from position |
 
 This table describes facts a record STATES. A **negative** assertion
 (`record_role: "absent"`) always takes `informant: "the researcher"` +
@@ -569,17 +569,17 @@ the record establishes about who spoke.
   not witnessed events.
   **Evidence type for these facts:** every one the certificate prints in a
   field — `name`, `occupation`, `marital status`, `age`, `birthplace`, and
-  the parents' names and birthplaces — is `direct`. The informant's
+  the parents' names and birthplaces — is `stated`. The informant's
   secondhand knowledge of the birth is recorded as `family_not_present`
   proximity and `secondary` quality, and changes nothing here. **"Age: 63
-  years, 2 months, 10 days" is `direct` evidence of AGE** — it is printed
-  in the Age field. What is `indirect` is the birth *date or year you
+  years, 2 months, 10 days" is `stated` evidence of AGE** — it is printed
+  in the Age field. What is `inferred` is the birth *date or year you
   compute from it*, because the certificate states no birth date: that
-  derived value is its own assertion. This is the same reasoning as the census
-  birth-year-computed-from-age rule above, extended one step further:
-  there it's the *derived* birth-year fact that's indirect; here the
-  *age fact itself* is indirect too, for the identical reason — the
-  informant wasn't there.
+  derived value is its own assertion. This is the same split as the census
+  birth-year-computed-from-age rule above: the *derived* birth year is
+  `inferred`, the printed age is `stated`. That the informant wasn't
+  present at the birth is `family_not_present` at the informant layer, and
+  never a reason to mark the age `inferred`.
 - **Funeral director:** informant for burial date/location, proximity
   `official_duty` — **scoped to a death certificate that names one.** A
   burial or cemetery index entry identifies no informant at all: use
@@ -589,18 +589,18 @@ the record establishes about who spoke.
 - **Groom and bride:** informants for their own identifying facts (name,
   sex, age, birthplace, parents, occupation), proximity `self`. **Every fact the
   parties state — their own name/age/birthplace/occupation/residence AND
-  their parents' names — is `direct`; the record states each outright.**
+  their parents' names — is `stated`; the record states each outright.**
   Information quality for the party's own parents' names is `primary` —
   the party has firsthand, ongoing knowledge of who their own parents
   are, the same basis as their own occupation, not the death-certificate
   secondhand-relay case. That is an `information_quality` call, NOT
-  `evidence_type` — never downgrade a stated fact to `indirect` on
+  `record_basis` — never downgrade a stated fact to `inferred` on
   "relaying another's identity" / "computed from memory" reasoning (that
   is death-certificate doctrine and does not transfer here). The
-  **only** `indirect` value on a marriage record is a
+  **only** `inferred` value on a marriage record is a
   birth *year* computed from a stated age (its own `birth` assertion).
   **Concretely: a stated parent name (the groom's or bride's father /
-  mother) is `evidence_type: direct` — never `indirect`.**
+  mother) is `record_basis: stated` — never `inferred`.**
 - **The marriage event itself** (date, place, ceremony): the **parties**,
   proximity `self` — they participated in it firsthand. The officiant and
   the clerk are **recorders**, not informants for the event; do not assign
@@ -631,69 +631,66 @@ the record establishes about who spoke.
 
 When the informant is named on the record, use their name.
 
-### Layer 3 — evidence type
+### Layer 3 — record basis
 
-**`evidence_type`** ∈ `direct` | `indirect` | `negative` (closed set —
+**`record_basis`** ∈ `stated` | `inferred` | `absent` (closed set —
 exactly three values; **there is no `no_evidence`**, and the schema
 rejects it. A fact irrelevant to every open question keeps its
 stated-vs-inferred value with `extracted_for_question_ids: []`.)
 
-- `direct` — the fact is explicitly stated in the record. Name, age,
+- `stated` — the record gives the fact explicitly. Name, age,
   birthplace, occupation — and **stated residence: the enumerator
   recorded the household at that dwelling; the residence column contains
-  the value, so residence is `direct`**, never downgraded.
-- `indirect` — the fact requires inference from what is stated (birth
+  the value, so residence is `stated`**, never downgraded.
+- `inferred` — the fact requires inference from what is stated (birth
   year computed from age, household position suggesting a relationship).
-- `negative` — the meaningful absence of expected information.
+- `absent` — the meaningful absence of expected information.
 
-**Stated-vs-inferred, NOT who reported it — and there is no exception.**
-`evidence_type` answers exactly one question: **does the record state this
-value, or did you have to infer it?** Nothing about the informant and
-nothing about the source's remove can change it. The informant's distance
-from the event lives in `informant_proximity` and
-`information_quality`; the source's remove lives in
-`source_classification`. Those three layers are independent, so a value
-may perfectly well be `direct` evidence carried by `secondary`
-information — that is the ordinary case, not a contradiction.
+**This grades the record, NOT who reported it — and there is no
+exception.** Nothing about the informant and nothing about the source's
+remove can change `record_basis`. The informant's distance from the event
+lives in `informant_proximity` and `information_quality`; the source's
+remove lives in `source_classification`. Those three layers are
+independent, so a `stated` value may perfectly well be carried by
+`secondary` information — that is the ordinary case, not a contradiction.
 
 **The one test: was this value in a field on the record?** If yes it is
-`direct`, no matter who supplied it. A stated age on an 1850 census is
-`direct` though a household member reported it. A death certificate's
-`Birthplace: Ireland` is `direct` though the widow was not at his birth —
+`stated`, no matter who supplied it. An age on an 1850 census is `stated`
+though a household member reported it. A death certificate's
+`Birthplace: Ireland` is `stated` though the widow was not at his birth —
 her distance makes the *information* secondary and her proximity
-`family_not_present`, and neither touches the evidence layer. Parents
-named in the `Father's name` / `Mother's maiden name` fields are `direct`
-for the same reason, on a death certificate and on a burial register
-alike.
+`family_not_present`, and neither touches this layer. Parents named in
+the `Father's name` / `Mother's maiden name` fields are `stated` for the
+same reason, on a death certificate and on a burial register alike.
 
-`indirect` is for a value the record does **not** state and you derived:
+`inferred` is for a value the record does **not** give and you derived:
 a birth **year** computed from an age, a relationship deduced from
 household position, anything reached by correlating two facts. If you are
-about to write `indirect` on a value you could point to in a field, stop —
+about to write `inferred` on a value you could point to in a field, stop —
 you are classifying the informant, and that is a different layer.
 
-**Worked example.** The one fact "born Ireland" is `direct` on **both** an
-1850 census and a 1908 death certificate — each states it in a field, so
-each is direct evidence of birthplace. What differs between them is the
-*other two layers*: on the census the household respondent is unknown
-(`household_member`, quality `indeterminate`); on the certificate the
-widow is named and was not present at his birth (`family_not_present`,
-quality `secondary`). Same evidence layer, different information layer.
-The birth *year* derived from a stated age is `indirect` on both — a value
-neither record stated outright.
+**Worked example.** The one fact "born Ireland" is `stated` on **both** an
+1850 census and a 1908 death certificate — each gives it in a field. What
+differs between them is the *other two layers*: on the census the
+household respondent is unknown (`household_member`, quality
+`indeterminate`); on the certificate the widow is named and was not
+present at his birth (`family_not_present`, quality `secondary`). Same
+`record_basis`, different information layer. The birth *year* derived
+from a stated age is `inferred` on both — a value neither record gave
+outright.
 
 **Age, birthplace, birth year — separate assertions:** on a census,
 "age 32, born Ireland" yields three atomic assertions with different
-classifications: the `age` assertion (`value: "32"`) is `direct`; the
+classifications: the `age` assertion (`value: "32"`) is `stated`; the
 birthplace is a **`birth` assertion with `place: "Ireland"`**, also
-`direct` (stated); and the computed birth year is a **`birth` assertion
-with `date: "~1818"`**, `indirect`. Two `birth` assertions on the same
+`stated`; and the computed birth year is a **`birth` assertion
+with `date: "~1818"`**, `inferred`. Two `birth` assertions on the same
 person is correct — one place-claim, one date-claim, distinguished by
 which field is set. **A death certificate splits the same way:** its
-stated age and stated birthplace are `direct` (they sit in fields), and
-only a birth year computed from that age is `indirect`. The widow's
-distance shows up as `family_not_present` and `secondary`, not as an
-evidence-type demotion. Prefer not to compute exact birth dates from
+stated age and stated birthplace are `stated` (they sit in fields), and
+only a birth year computed from that age is `inferred`. The widow's
+distance shows up as `family_not_present` and `secondary`, not as a
+`record_basis` demotion. Prefer not to compute exact birth dates from
 death-cert age arithmetic at all — a year is enough.
 
 **A pre-1880 census yields NO relationship assertions at all** — the
@@ -704,41 +701,41 @@ facts (name, sex, age, birthplace, occupation) and the residence; write
 `head_of_household`↔`wife` link. **Even when the gedcomx carries a
 `ParentChild` or `Couple` edge, the indexer inferred it from position —
 that edge is not a statement by the record, and you do not persist it.**
-The correct output is not an `indirect` link, and not a
+The correct output is not an `inferred` link, and not a
 `"child_inferred"` one: it is no assertion, plus a note in your summary
 that the household looks like a family, which is what carries the
 hypothesis to the correlation skills that own it.
 
 The 1880 census introduced an explicit relationship column, so from 1880
-on the relationship IS stated — those are `direct`, written with a bare
+on the relationship IS stated — those are `stated`, written with a bare
 `relationship_type` (`"child"`, `"spouse"`). **The dividing line is
 whether the record states the relationship, not how confident you are.**
 
-**Subject-identifying name stays `direct` — hard rule.** The **record
-subject's** `name` assertion is `direct` for where/when questions about
+**Subject-identifying name stays `stated` — hard rule.** The **record
+subject's** `name` assertion is `stated` for where/when questions about
 that subject — finding the subject in a dated, located record answers
 directly. A null/empty `place` on the name assertion is expected
 (location lives on sibling residence/event assertions) and is never
-grounds to classify or re-classify it `indirect`.
+grounds to classify or re-classify it `inferred`.
 
 **Scope — `name` assertions only, and only the record subject's.** Two
 misreadings to avoid, in both directions:
 
-- **A third party named _by_ an informant is still `direct`.** A decedent's
+- **A third party named _by_ an informant is still `stated`.** A decedent's
   parents sit in the `Father's name` / `Mother's maiden name` fields, so the
-  certificate states them: `direct`, at proximity `family_not_present` with
+  certificate states them: `stated`, at proximity `family_not_present` with
   `secondary` quality, because the informant relayed them secondhand. Same on
   a burial or cemetery index, where the informant is `unknown` and the quality
   `indeterminate` — an unknown informant is a fact about the *information*
   layer, not grounds to demote the evidence layer. What the third-party
   relationship does NOT license is inventing a fact the record never printed;
   it never changes the classification of one it did.
-- **Record-subject status is not what makes a fact `direct` — the field
-  is.** The subject's `name`, `age`, `birthplace` and parents are `direct`
+- **Record-subject status is not what makes a fact `stated` — the field
+  is.** The subject's `name`, `age`, `birthplace` and parents are `stated`
   because the certificate prints each of them, not because the record is
   about the subject. The distinction matters for the fact it does NOT
   cover: a birth date or year you computed from the stated age is
-  `indirect` however central the subject is.
+  `inferred` however central the subject is.
 
 **Evidence independence (GPS Standard 4):** when two or more assertions
 share the SAME informant — even across different sources — they form one
@@ -767,8 +764,8 @@ treat that name exactly as a record-level `[?]`: it is uncertain no matter
 how tidily the index renders it.
 
 The doubt is about **transcription accuracy**, so it lives in the
-information/source layers and the tree — **not** in `evidence_type`. A
-name the index **states** is `evidence_type: direct` (it was stated; the
+information/source layers and the tree — **not** in `record_basis`. A
+name the index **states** is `record_basis: stated` (it was stated; the
 question is only whether the transcriber read it right — that is not an
 inference). Express the uncertainty where it belongs: drop
 `information_quality` to `secondary`/`indeterminate` (a distrusted index
@@ -797,15 +794,15 @@ bears on (the caller may name them; otherwise use `project_context`'s
 actual `extraction_append` invocation, not text claiming you made it.
 
 **Evidence-type self-check before you persist.** Re-scan every
-`evidence_type` and ask only: **could I point to a field on this record
-holding this value?** If yes → `direct`, whoever reported it and however
-derivative the source. If no → `indirect`, and name in
+`record_basis` and ask only: **could I point to a field on this record
+holding this value?** If yes → `stated`, whoever reported it and however
+derivative the source. If no → `inferred`, and name in
 `informant_bias_notes` what you inferred it from. The label does **not**
 follow the record type, and it does not follow the informant: a death
-certificate's stated age, birthplace and parents' names are `direct`
-exactly as a marriage licence's are. A stated fact marked `indirect` while
+certificate's stated age, birthplace and parents' names are `stated`
+exactly as a marriage licence's are. A stated fact marked `inferred` while
 its own `informant_bias_notes` admit the record states it is the bug — set
-it `direct` and move the doubt to `information_quality`.
+it `stated` and move the doubt to `information_quality`.
 
 Make **one** `extraction_append` call with top-level `sourceDescription:
 { title, author?, url? }` (omit inapplicable fields entirely — never
@@ -870,7 +867,7 @@ When the caller hands you an analytically meaningful absence ("Patrick
 should appear in the 1870 census but doesn't"), append a negative
 assertion in the same Step-4 batch (or standalone with explicit
 `source_id`):
-- `record_role: "absent"`, `evidence_type: "negative"` (literal strings).
+- `record_role: "absent"`, `record_basis: "absent"` (literal strings).
 - `record_id`: the record/collection that was searched.
 - `value`: the **expected-but-missing** fact — "Patrick Flynn absent from
   1870 Schuylkill County census where expected" — never blank, never just
@@ -949,7 +946,7 @@ fact. This includes classification-refinement requests: re-examine the
 named assertions against the doctrine above and update only the
 classification fields that should change (`information_quality`,
 `informant`, `informant_proximity`, `informant_bias_notes`,
-`evidence_type`, `extracted_for_question_ids`) — one batched call, one
+`record_basis`, `extracted_for_question_ids`) — one batched call, one
 `update` op per changed assertion, immutable extraction fields left
 alone. If the analysis says a questioned value is already correct, say
 so and change nothing — but still fix any sibling assertion the analysis

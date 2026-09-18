@@ -123,7 +123,7 @@ def main(paths):
                                 notes_tagged += 1
                         # arm [1] — computed birth year
                         if (en.get("fact_type") == "birth"
-                                and en.get("evidence_type") == "indirect"
+                                and en.get("record_basis") == "inferred"
                                 and en.get("date_certainty")):
                             if tid not in N_EXCLUDE:
                                 n_den[tid] += 1

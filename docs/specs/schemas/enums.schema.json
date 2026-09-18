@@ -3,6 +3,7 @@
   "$id": "enums.schema.json",
   "title": "Cowork Genealogy Shared Enums",
   "description": "Enumerated string values used across research.json and tree.gedcomx.json. Closed enums use $defs/<name>; open enums use $defs/<name>_recommended (validators may warn on unknown values but not reject).",
+  "$comment": "Retired identifiers, kept here so the rename is discoverable from the schema rather than only from the lint that enforces it (ADR-0008's \"revisit if a first value removal ever happens\" row; issue #2524). 2026-09-18: `evidence_type` (direct | indirect | negative) was renamed to `record_basis` (stated | inferred | absent). Committed run logs under eval/runlogs/ are deliberately NOT migrated and still carry the retired spelling; packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts bans it everywhere else.",
   "$defs": {
     "question_status": {
       "enum": ["open", "in_progress", "exhaustive_declared", "resolved"]
@@ -22,8 +23,9 @@
     "information_quality": {
       "enum": ["primary", "secondary", "indeterminate"]
     },
-    "evidence_type": {
-      "enum": ["direct", "indirect", "negative"]
+    "record_basis": {
+      "description": "What the record mechanically did with this value: `stated` it outright, left it to be `inferred`, or was `absent` where the value was expected. This is NOT the GPS direct/indirect/negative evidence judgment — that is relative to the question being asked, and is not persisted. Renamed from `evidence_type` 2026-09-18 (#2524).",
+      "enum": ["stated", "inferred", "absent"]
     },
     "conflict_type": {
       "enum": ["fact", "identity"]
@@ -39,6 +41,10 @@
     },
     "proof_vehicle": {
       "enum": ["statement", "summary", "argument"]
+    },
+    "proof_shortfall": {
+      "description": "Why a conclusion is not at a higher tier — remediability, orthogonal to the confidence `tier` carries. `ceiling`: the reachable record is exhausted and a higher tier is not obtainable (reachable = retrievable by an MCP tool or constructible as a subscription-site handoff). `gap`: reachable sources remain unsearched. `conflict`: blocked by an unresolved conflict naming this question in its blocks_question_ids. `none`: on a proved conclusion.",
+      "enum": ["ceiling", "gap", "conflict", "none"]
     },
     "person_evidence_confidence": {
       "enum": ["confident", "probable", "speculative"]

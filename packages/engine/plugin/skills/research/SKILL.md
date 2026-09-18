@@ -161,7 +161,7 @@ time, regardless of how directly the request named the destination.
    skill — invoke it **once per batch of pending records** (it delegates
    internally, one `record-extractor` agent per record). Classification
    is **final at extraction**: there is no downstream classification
-   pass, so never re-derive or "refine" `evidence_type` /
+   pass, so never re-derive or "refine" `record_basis` /
    `information_quality` yourself — conflict-resolution and
    proof-conclusion trust what is recorded.
 
@@ -199,7 +199,7 @@ time, regardless of how directly the request named the destination.
    judgment — reading state, weighing routes — never for writing):
 
    - Closed enums, exactly these values, nothing else:
-     `evidence_type` ∈ `direct|indirect|negative` ·
+     `record_basis` ∈ `stated|inferred|absent` ·
      `information_quality` ∈ `primary|secondary|indeterminate` ·
      `informant_proximity` ∈ `self|witness|household_member|family_not_present|researcher|official_duty|unknown` ·
      `date_certainty` ∈ `exact|approximate|estimated|calculated|before|after|between` ·

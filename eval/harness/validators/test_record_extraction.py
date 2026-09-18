@@ -99,10 +99,10 @@ def test_new_assertions_have_required_classification(before_state, after_state):
     Per research-schema-spec.md §5.6, every assertion requires:
       - information_quality (primary | secondary | indeterminate)
       - informant_proximity (self, witness, household_member, ...)
-      - evidence_type (direct | indirect | negative)
+      - record_basis (direct | indirect | negative)
 
     Missing these silently breaks downstream skills (conflict-resolution
-    weighs by informant_proximity; proof-conclusion needs evidence_type).
+    weighs by informant_proximity; proof-conclusion needs record_basis).
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -116,7 +116,7 @@ def test_new_assertions_have_required_classification(before_state, after_state):
         if a.get("id") in before_ids:
             continue
         aid = a.get("id", "?")
-        for field in ("information_quality", "informant_proximity", "evidence_type"):
+        for field in ("information_quality", "informant_proximity", "record_basis"):
             if not a.get(field):
                 errors.append(f"assertions[{aid}]: missing {field}")
 
@@ -231,7 +231,7 @@ def test_expected_classifications(before_state, after_state, test):
     Gated on the test JSON's optional top-level `expected_classifications`
     block (threaded into `test` by the orchestrator; see
     unit-test-spec.md §5.10). Each matcher names a (record_role, fact_type)
-    pair plus expected values for any of `evidence_type`,
+    pair plus expected values for any of `record_basis`,
     `informant_proximity`, `information_quality`. Semantics:
 
       1. At least one NEW-OR-UPDATED assertion (created by this run, or an
@@ -249,7 +249,7 @@ def test_expected_classifications(before_state, after_state, test):
 
     record_role / fact_type matching is normalized (see the helpers above)
     because both are open, model-chosen strings; the classification values
-    themselves (`evidence_type`, `informant_proximity`,
+    themselves (`record_basis`, `informant_proximity`,
     `information_quality`) are closed enums and compare exactly. Failure
     messages always show the ORIGINAL strings, not the normalized forms.
 
@@ -276,7 +276,7 @@ def test_expected_classifications(before_state, after_state, test):
     ]
 
     classification_fields = (
-        "evidence_type",
+        "record_basis",
         "informant_proximity",
         "information_quality",
     )
@@ -399,11 +399,11 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
 
         {"fact_type": "birth", "value": "born about 1845, Ohio",
          "place": "Ohio, United States", "date": null,
-         "evidence_type": "direct"}
+         "record_basis": "stated"}
 
     has put TWO facts in one assertion. The birthplace is `direct` (stated)
     while a year derived from a stated age is `indirect`, so one assertion
-    cannot carry a correct `evidence_type` for both — and every structured
+    cannot carry a correct `record_basis` for both — and every structured
     matcher is blind to it, because the year lives in free text where
     `expected_classifications` never looks (ut_022 scored a false pass on
     `Assertion atomicity` eight times over).
@@ -477,7 +477,7 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     for a in new:
         if not _fact_type_matches(a.get("fact_type"), "birth"):
             continue
-        if a.get("evidence_type") != "direct":
+        if a.get("record_basis") != "stated":
             continue
         if not (a.get("place") or a.get("standard_place")):
             continue
@@ -729,12 +729,12 @@ def test_new_assertions_attached_to_record_role(before_state, after_state):
 
 
 def test_negative_evidence_uses_absent_role(before_state, after_state):
-    """Assertions with evidence_type='negative' must have record_role='absent'.
+    """Assertions with record_basis='absent' must have record_role='absent'.
 
     Per research-schema-spec.md §5.6 negative-evidence convention:
     when the absence of information is the finding, the role is `absent`
     and the value describes what was expected. Catches the common
-    mistake of using evidence_type='negative' on a regular role.
+    mistake of using record_basis='absent' on a regular role.
     """
     after = after_state.get("research_json")
     if after is None:
@@ -742,9 +742,9 @@ def test_negative_evidence_uses_absent_role(before_state, after_state):
 
     errors = []
     for a in after.get("assertions", []):
-        if a.get("evidence_type") == "negative" and a.get("record_role") != "absent":
+        if a.get("record_basis") == "absent" and a.get("record_role") != "absent":
             errors.append(
-                f"assertions[{a.get('id')}]: evidence_type=negative but "
+                f"assertions[{a.get('id')}]: record_basis=negative but "
                 f"record_role='{a.get('record_role')}' (expected 'absent')"
             )
 
@@ -860,7 +860,7 @@ def test_pre_1880_census_creates_no_relationship_assertions(
         errors.append(
             f"assertions[{a.get('id')}] (record_role="
             f"'{a.get('record_role')}', relationship_type='{rel_type}', "
-            f"evidence_type='{a.get('evidence_type')}'): a pre-1880 census "
+            f"record_basis='{a.get('record_basis')}'): a pre-1880 census "
             f"has no relationship column, so no relationship assertion may "
             f"be written — not even `indirect`/`_inferred`. Record the "
             f"people and their co-residence; the family links are "
@@ -877,7 +877,7 @@ def test_negative_evidence_assertion_created(
     before_state, after_state, test
 ):
     """For negative-evidence scenarios, the skill must create at least
-    one NEW assertion with `evidence_type: \"negative\"` and
+    one NEW assertion with `record_basis: \"negative\"` and
     `record_role: \"absent\"`. Otherwise the absence wasn't recorded.
 
     Tag-gated on `negative-evidence`.
@@ -894,12 +894,12 @@ def test_negative_evidence_assertion_created(
     new_neg = [
         a for a in after.get("assertions", [])
         if a.get("id") not in before_ids
-        and a.get("evidence_type") == "negative"
+        and a.get("record_basis") == "absent"
         and a.get("record_role") == "absent"
     ]
     assert new_neg, (
         "negative-evidence scenario produced no new assertion with "
-        "evidence_type='negative' and record_role='absent'"
+        "record_basis='absent' and record_role='absent'"
     )
 
 
@@ -930,7 +930,7 @@ def test_negative_evidence_value_describes_expectation(
     for a in after.get("assertions", []):
         if a.get("id") in before_ids:
             continue
-        if a.get("evidence_type") != "negative":
+        if a.get("record_basis") != "absent":
             continue
         value = (a.get("value") or "").strip()
         if not value or value.lower() in {"absent", "missing", "n/a", "none"}:
@@ -1177,7 +1177,7 @@ def test_refinement_preserves_extraction_fields_and_avoids_duplication(
     every other check here while still looking like a correct update), its
     `_EXTRACTION_FIELDS` unchanged, and at least one classification field
     (`information_quality`, `informant`, `informant_proximity`,
-    `informant_bias_notes`, `evidence_type`, `extracted_for_question_ids`)
+    `informant_bias_notes`, `record_basis`, `extracted_for_question_ids`)
     actually different -- an `update` call that changed nothing is not a
     completed refinement. Every OTHER pre-existing assertion (the
     fixture's un-named siblings) must be byte-identical to before, and no

@@ -132,8 +132,8 @@ active ──► supported ──► (to proof-conclusion)
 - Every `conflicts[]` entry whose `competing_assertion_ids` overlap this
   hypothesis's `supporting_assertion_ids` or `contradicting_assertion_ids`
   has `status` of `resolved` or `moot`
-- Either at least one supporting assertion carries `evidence_type: "direct"`,
-  or at least two carry `evidence_type: "indirect"` and cite at least two
+- Either at least one supporting assertion carries `record_basis: "stated"`,
+  or at least two carry `record_basis: "inferred"` and cite at least two
   distinct `source_id` values
 - The evidence is consistent — no logical impossibilities (check-warnings) or
   geographic infeasibilities (timeline)
@@ -205,9 +205,9 @@ Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn
 Status:     SUPPORTED
 
 Supporting evidence (3):
-  + a_004  1850 census: Patrick in Thomas's household (indirect)
-  + a_010  1860 census: Patrick in Thomas's household (indirect)
-  + a_013  Death certificate: "Father: Thomas Flynn" (direct)
+  + a_004  1850 census: Patrick in Thomas's household (inferred)
+  + a_010  1860 census: Patrick in Thomas's household (inferred)
+  + a_013  Death certificate: "Father: Thomas Flynn" (stated)
 
 Contradicting evidence (0):  (none)
 

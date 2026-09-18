@@ -199,7 +199,14 @@ assertion:
 
 - **Source** — original, derivative, or authored — *per source*
 - **Information** — primary, secondary, or undetermined — *per assertion*
-- **Evidence** — direct, indirect, or negative — *per assertion*
+- **Evidence** — direct, indirect, or negative — *per question*
+
+The first two are stored, per assertion. The third is **not**, and cannot be:
+direct-versus-indirect depends on the question being asked, so one assertion has
+no single answer — a stated age is direct evidence of age and indirect evidence
+of a birth year. What each assertion stores instead is `record_basis`
+(`stated` / `inferred` / `absent`), the mechanical fact of what the record did
+with the value. The evidence judgment is made per question, in the conclusion.
 
 The same record reached two ways is two sources with two classifications: the
 1850 census is *original* read from the image and *derivative* read as an
@@ -282,8 +289,8 @@ and *ruled out*. A new hypothesis starts active even when the evidence
 already leans toward it; promotion is a separate judgment against stated
 criteria — no unresolved contradictions naming the hypothesis's own
 evidence, no chronological impossibility, and either one supporting
-direct-evidence assertion or two supporting indirect assertions from two
-sources. An indirect argument resting on a single source doesn't clear that
+assertion the record **stated** or two supporting **inferred** assertions from
+two sources. An inferred argument resting on a single source doesn't clear that
 floor; it concludes through a proof conclusion instead of promotion.
 
 There is an explicit rule against demoting a supported hypothesis over
@@ -336,10 +343,17 @@ carrying their source citations, with no value yet marked as the right one.
 Writing the conclusion is what settles that. At *probable* or better, the
 concluded relationship is added and the concluded value is marked preferred
 over the competing ones — not piled on as another alternative. Below that
-threshold the evidence stays in the tree unranked, and nothing is uploaded
-to FamilySearch: only concluded facts leave the working tree. A conclusion
-that never reaches the tree is a result found and then lost, so the system
-verifies the write happened.
+threshold the evidence stays in the tree unranked: nothing has been concluded,
+so nothing is marked as the right answer. A conclusion that never reaches the
+tree is a result found and then lost, so the system verifies the write happened.
+
+**What reaches FamilySearch is the researcher's decision, not the system's.**
+The system does not withhold anything; it surfaces what it knows so the choice
+is informed — for every conclusion, the tier it reached and, alongside it, the
+`shortfall` saying why it is not higher: the reachable record is exhausted, a
+reachable source is still unsearched, or an unresolved conflict is blocking it.
+A conclusion left unranked in the working tree is unranked because it was never
+concluded, not because it is being held back.
 
 ### Critique of the conclusion
 

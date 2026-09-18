@@ -35,26 +35,26 @@
     {
       "record_role": "head_of_household",
       "fact_type": "age",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "occupation",
       "value": "Laborer",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "optional": true
     },
     {
@@ -62,21 +62,21 @@
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "child_2",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "child_3",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Pennsylvania",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     }
   ]
 }
