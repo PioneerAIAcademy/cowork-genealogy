@@ -104,8 +104,10 @@ at Schönberg in the same years, including another Hinrich on 9 May 1687
 (`ark:/61903/1:1:QPV4-2MW3`) when the subject's wife was still Liesbeth. The
 index cannot separate the two couples, and the adjudicating genealogist declined
 to invent a resolution the evidence does not carry. Finding `f3` therefore
-requires only that the agent report the 1687 hint as unsupported; asserting the
-1691 child as the subject's son is neither required nor penalised.
+takes no position on the 1691 child — asserting it as the subject's son is
+neither required nor penalised. What `f3` does require is that the 1687 hint be
+reported as unsupported *on the strength of a conflicting record*, not on a
+failure to find one.
 
 **Two tree defects noticed in passing, not acted on here.** (1) `GD6Y-89H`,
 the tree person holding *both* the 9 May 1687 and 20 January 1691 baptisms, is
@@ -139,8 +141,16 @@ correctly avoided the false attribution".
 
 The do-nothing-run protection that `required: true` normally provides is
 carried by `f3`, which is `required: true` and requires the agent to actually
-document the negative conclusion. `f2` is `required: true` and its tokens were
-measured clean against the starting tree. That measurement is against the
+document the negative conclusion. `f3`'s bar is a **record**, not an absence:
+the conclusion must rest on the 16 Oct 1690 baptism (`ark:/61903/1:1:QPV4-RS8D`),
+the 18 Aug 1683 Liesebeth control (`ark:/61903/1:1:QPVH-33NS`), or an equivalent
+conflicting record. That wording is load-bearing, because `f1` and `f2` are both
+`avoid` findings that a run which asserts nothing passes by default: a run that
+searches nothing and writes "I could not confirm this hint" would otherwise
+score `pass` on zero research. `f3` is the only finding standing between that run
+and a `pass`, so it names the record.
+
+`f2` is `required: true` and its tokens were measured clean against the starting tree. That measurement is against the
 *starting* tree; the guard runs against the *final* one, where it matches on
 name tokens alone and ignores relationships. So a run that records Elsch in the
 tree as an explicitly rejected candidate — which `f2`'s own description allows —
