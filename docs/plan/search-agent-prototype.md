@@ -6,7 +6,7 @@ half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant w
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
 issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
 (PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
-against seeded rows until the worker exists); D16 built 2026-09-18 (PR #TBD; the
+against seeded rows until the worker exists); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
@@ -1267,7 +1267,7 @@ without whichever Bedrock refuses.
   on D15's harness — goes with the ledger. Then P3's quota/concurrency half. (The model
   pin sits at D9–10, with the worker loop, because that is where the first worker cost
   figures come from.)
-  **Done 2026-09-18 (PR #TBD).** `src/http.ts` → `build/http.js` is the HTTP entrypoint:
+  **Done 2026-09-18 (PR #2659).** `src/http.ts` → `build/http.js` is the HTTP entrypoint:
   stateless Streamable HTTP at `/mcp` (one `createServer(principal)` + transport per POST,
   `/healthz` for the compose healthcheck), the `Authorization: Bearer` header becoming the
   per-request principal and never `LOCAL`; non-POST on `/mcp` is a 405 from the entrypoint
