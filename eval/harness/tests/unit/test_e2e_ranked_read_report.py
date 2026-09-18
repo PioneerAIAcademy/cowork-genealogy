@@ -58,7 +58,6 @@ def _search(
     staging_ref=None,
     include_results=True,
     agent_type=None,
-    rank_tail=None,
 ):
     payload = {"query": {}, "returned": 0}
     if include_results:
@@ -77,16 +76,6 @@ def _search(
                 "_first_n": list(matches),
             },
         }
-    if rank_tail is not None:
-        payload.setdefault("ranked", {"subjectId": "G8Q5-BJ1", "matches": {}})
-        payload["ranked"]["matches"]["_rank_tail"] = [
-            {
-                "matchRank": m["matchRank"],
-                "recordId": m["recordId"],
-                "recordArk": m["recordArk"],
-            }
-            for m in rank_tail
-        ]
     call = {
         "tool": "mcp__genealogy__record_search",
         "args": {"projectPath": "/p"},
@@ -208,6 +197,11 @@ def test_preamble_matches_the_recorded_corpus_figures():
     assert any(r.outcome == "in_top3" for r in scorable)
     assert any(r.arm in ("staging", "log") for r in scorable)
     assert sum(delegated.values()) > 0
+    # Formats the REAL rows through the REAL `ARM_ORDER`. The fixture tests
+    # above see only arms someone thought to write down; this sees every arm
+    # the corpus actually produces, and the table's guard fires if one of
+    # them is missing from the tuple.
+    format_report(rows, delegated, n_runs=len(paths), excluded=excluded)
 
 
 # --- the boundaries a one-character mutation would flip ---------------------
@@ -277,7 +271,7 @@ def test_read_after_a_ranked_search_that_surfaced_nothing_is_excluded():
     """A `ranked` block with no matches — the subject would not resolve, or the
     cap cut the capture before any match — is the same "no ranking to ignore"
     case as `rankingSkipped`. Scoring these as misses inflated the headline by
-    3 reads in the 2026-08-04 window."""
+    4 reads in the 2026-08-04 window."""
     doc = _doc([_search(matches=[]), _read("ark:/61903/1:1:AAAA-111")])
     assert _outcomes(doc)[0] == ["ranked-no-matches"]
 
@@ -611,71 +605,6 @@ def test_arm_three_still_takes_the_nearest_search_as_its_gate():
     ]
 
 
-def test_a_read_the_ranker_placed_below_three_is_told_from_one_it_never_ranked():
-    """The whole point of `_rank_tail` (issue #1156).
-
-    Before it, both of these were `not_in_top3` and the report could only give
-    their union as an upper bound. They mean opposite things: one is the agent
-    disagreeing with a ranking it could see, the other is the agent reading
-    something the ranker never offered."""
-    below = _match(7, "ark:/61903/1:1:DEEP-777")
-    doc = _doc(
-        [
-            _search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")], rank_tail=[below]),
-            _read("ark:/61903/1:1:DEEP-777"),
-        ]
-    )
-    assert [r.outcome for r in _rows(doc)] == ["ranked-below-top3"]
-
-
-def test_a_read_absent_from_the_tail_is_named_as_never_ranked():
-    """The other direction. With a tail present the report can say this
-    positively instead of hedging."""
-    doc = _doc(
-        [
-            _search(
-                matches=[_match(1, "ark:/61903/1:1:AAAA-111")],
-                rank_tail=[_match(7, "ark:/61903/1:1:DEEP-777")],
-            ),
-            _read("ark:/61903/1:1:NOPE-999"),
-        ]
-    )
-    assert [r.outcome for r in _rows(doc)] == ["not-ranked-at-all"]
-
-
-def test_a_capture_with_no_tail_keeps_the_merged_upper_bound():
-    """`_attach_rank_tail` is not retroactive, and this is the guard that stops
-    the split being applied to runs that cannot support it. Identical to the
-    test above but for the missing tail: the honest answer there is the merged
-    bucket, not `not-ranked-at-all`, because the capture simply cannot say."""
-    doc = _doc(
-        [
-            _search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")]),
-            _read("ark:/61903/1:1:NOPE-999"),
-        ]
-    )
-    assert [r.outcome for r in _rows(doc)] == ["not_in_top3"]
-
-
-def test_the_visible_top_three_still_wins_over_the_tail():
-    """A read in the visible three must not be re-labelled by the tail scan.
-
-    Behaviour test, not a unique guard: what makes this hold is the visible
-    loop returning first, which several tests above already pin. The rank
-    skip that used to sit in the tail loop was deleted because deleting it
-    changed no outcome and this test stayed green either way."""
-    doc = _doc(
-        [
-            _search(
-                matches=[_match(1, "ark:/61903/1:1:AAAA-111")],
-                rank_tail=[_match(7, "ark:/61903/1:1:DEEP-777")],
-            ),
-            _read("ark:/61903/1:1:AAAA-111"),
-        ]
-    )
-    assert [r.outcome for r in _rows(doc)] == ["in_top3"]
-
-
 def test_corrupt_json_is_excluded_as_unreadable_not_a_crash(tmp_path):
     d = tmp_path / "a-fixture"
     d.mkdir(parents=True, exist_ok=True)
@@ -771,10 +700,17 @@ def test_an_arm_value_no_one_listed_fails_the_table():
 
 
 def test_the_arm_table_accepts_every_arm_the_scanner_can_emit():
-    """The other direction — the guard must not block legitimate output. Every
-    value `scan_run` assigns to `ReadRow.arm` is in `ARM_ORDER`, so a report
-    carrying all four must format cleanly."""
-    rows = [ReadRow("f/r", 0, arm, "not_in_top3") for arm in ARM_ORDER]
+    """The other direction — the guard must not block legitimate output.
+
+    The arm names are spelled out here rather than read from `ARM_ORDER`.
+    Read from it, the fixture shrinks along with any name deleted from it, so
+    the test passes on a short list — a check that cannot fail, written
+    while fixing a check that cannot fail. Spelled out, this is what tells a
+    complete `ARM_ORDER` from one missing a value `scan_run` still emits."""
+    rows = [
+        ReadRow("f/r", 0, arm, "not_in_top3")
+        for arm in ("staging", "log", "nearest", "none")
+    ]
     out = format_report(rows, {}, n_runs=1, excluded={})
     for arm in ARM_ORDER:
         assert f"  {arm:<28} 1" in out

@@ -25,7 +25,6 @@ from e2e.orchestrator import (
     _render_user_message,
     _RUNLOG_MAX_CHARS,
     _RUNLOG_VERBATIM_MAX,
-    _attach_rank_tail,
     _summarize_tool_response,
     _timeline_tool_label,
     build_workspace,
@@ -353,129 +352,6 @@ def test_user_message_unchanged_without_provided_docs(tmp_path: Path):
     fixture = load_fixture(_make_fixture_dir(tmp_path))
     msg = _render_user_message(fixture)
     assert "Pre-provided" not in msg
-
-
-def _ranked_response(n_matches, *, pad=True):
-    """A `record_search` response whose `ranked.matches` holds `n_matches`
-    full-weight entries, padded past the verbatim threshold so the summarizer
-    actually runs (under `_RUNLOG_VERBATIM_MAX` it returns the raw string)."""
-    matches = [
-        {
-            "matchRank": i,
-            "searchRank": i,
-            "recordId": f"ark:/61903/1:1:AAAA-{i:03d}",
-            "recordArk": f"ark:/61903/1:2:BBBB-{i:03d}",
-            "personName": "Anders Monsen",
-            "collectionTitle": "Norway, Marriages, 1660-1926",
-        }
-        for i in range(1, n_matches + 1)
-    ]
-    out = {"ranked": {"subjectId": "G8Q5-BJ1", "matches": matches}}
-    if pad:
-        out["results"] = [{"filler": "x" * 120} for _ in range(40)]
-    return out
-
-
-def _tail_of(out):
-    """The tail, or None. `matches` is a plain list when the summarizer had
-    nothing to sample, which is the same answer: nothing was cut."""
-    doc = json.loads(out)
-    if isinstance(doc, list) and len(doc) == 1:
-        doc = doc[0]
-    block = doc["ranked"]["matches"]
-    return block.get("_rank_tail") if isinstance(block, dict) else None
-
-
-def test_a_ranked_list_past_the_sample_keeps_an_id_only_tail():
-    """Ranks 4+ were indistinguishable in the run log from records the ranker
-    never surfaced — opposite claims about the agent, reported as one upper
-    bound (issue #1156). The tail carries the join fields and nothing else."""
-    out = _summarize_tool_response(_ranked_response(10))
-    doc = json.loads(out)
-    if isinstance(doc, list) and len(doc) == 1:
-        doc = doc[0]
-    kept = doc["ranked"]["matches"]["_first_n"]
-    tail = doc["ranked"]["matches"]["_rank_tail"]
-    assert [m["matchRank"] for m in kept] == [1, 2, 3]
-    assert [m["matchRank"] for m in tail] == [4, 5, 6, 7, 8, 9, 10]
-    assert tail[0]["recordId"] == "ark:/61903/1:1:AAAA-004"
-    assert tail[0]["recordArk"] == "ark:/61903/1:2:BBBB-004"
-    # Id-only. Carrying whole entries is what would have forced the cap up.
-    assert set(tail[0]) == {"matchRank", "recordId", "recordArk"}
-    assert "personName" not in tail[0]
-
-
-def test_the_rank_tail_fits_inside_the_existing_run_log_cap():
-    """The reason this is additive rather than a cap raise. Ten FULL entries run
-    to ~4540 chars against a 4000-char cap; `_RUNLOG_MAX_CHARS` carries a
-    recorded decision not to grow a git-committed artifact. Pinned two-sided: a
-    tail that silently reverted to full entries would breach the cap, and one
-    that carried nothing would pass a bare upper bound."""
-    out = _summarize_tool_response(_ranked_response(10))
-    assert len(out) <= _RUNLOG_MAX_CHARS
-    assert len(_tail_of(out)) == 7
-
-
-def test_a_ranked_list_inside_the_sample_gets_no_tail():
-    """Absence is meaningful — it means nothing was cut. A tail defaulted to []
-    would read the same as a capture that predates this change."""
-    out = _summarize_tool_response(_ranked_response(3))
-    assert _tail_of(out) is None
-
-
-def test_a_response_with_no_ranked_block_is_untouched_by_the_tail():
-    """The summarizer runs on every tool result, not just `record_search`."""
-    out = _summarize_tool_response({"results": [{"filler": "x" * 120}] * 40})
-    assert "_rank_tail" not in out
-    assert '"results"' in out
-
-
-def test_the_tail_survives_the_mcp_text_block_envelope():
-    """Live `record_search` results arrive wrapped, so a tail that only worked
-    on a bare dict would never fire in production."""
-    inner = json.dumps(_ranked_response(10))
-    out = _summarize_tool_response([{"type": "text", "text": inner}])
-    assert [m["matchRank"] for m in _tail_of(out)] == [4, 5, 6, 7, 8, 9, 10]
-
-
-def test_no_tail_is_written_when_the_summary_kept_every_entry():
-    """Reached only by calling `_attach_rank_tail` directly.
-
-    Through `_summarize_tool_response` this is unreachable: the sampled dict
-    shape only exists when the list was longer than the sample, so
-    `len(entries) <= len(kept)` is never true there and deleting the guard
-    leaves the whole suite green (measured). It still guards a real case -- a
-    caller handing in a summary and document that disagree -- and an
-    unguarded slice would write an empty tail, which is NOT the same artifact
-    as no tail at all: absence means the run predates the feature."""
-    document = {"ranked": {"matches": [{"matchRank": 1, "recordId": "A"}]}}
-    summary = {
-        "ranked": {
-            "matches": {
-                "_summary_truncated": True,
-                "_full_length": 1,
-                "_first_n": [{"matchRank": 1, "recordId": "A"}],
-            }
-        }
-    }
-    out = _attach_rank_tail(summary, document)
-    assert "_rank_tail" not in out["ranked"]["matches"]
-
-
-def test_a_two_block_content_list_is_left_alone():
-    """`_only_element` descends a ONE-element list. With two blocks, which one
-    carries the tool document is not knowable, and picking element 0 would
-    write a tail derived from one block onto another."""
-    document = [
-        {"ranked": {"matches": [{"matchRank": i} for i in range(1, 6)]}},
-        {"other": "block"},
-    ]
-    summary = [
-        {"ranked": {"matches": {"_first_n": [{"matchRank": 1}]}}},
-        {"other": "block"},
-    ]
-    out = _attach_rank_tail(summary, document)
-    assert "_rank_tail" not in out[0]["ranked"]["matches"]
 
 
 def test_summarize_tool_response_short_string():

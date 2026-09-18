@@ -6,22 +6,12 @@ run JSONs only, same posture as `nudge_report.py`, `corpus_report.py`,
 
 ## The question this corpus can answer, and the one it cannot
 
-`_summarize_response` (`harness/judge.py`) samples any list past three entries
-into `{_summary_truncated, _full_length, _first_n}`, and `ranked.matches` is a
-list whose `_full_length` runs to 10. Ranks 4-10 were therefore absent from the
-artifact, and a read at rank 7 was indistinguishable from a read of a record
-the ranker never surfaced — opposite claims about the agent, reported as one
-upper bound.
-
-`orchestrator._attach_rank_tail` closes that from 2026-09-17 on: a capture now
-carries `_rank_tail`, the same ranks 4-10 reduced to the three fields a join
-needs. It is NOT retroactive. Every run committed before it has no tail, and
-for those the two cases stay merged — which is why `_read_outcome` keys the
-`ranked-below-top3` / `not-ranked-at-all` split on `has_rank_tail` being
-present rather than on whether a match happens to sit past rank 3. Absence of
-a tail means "this run cannot answer that", never "nothing ranked below 3".
-
-The full scored list is not recoverable either: `rank_search_matches` appends every candidate to
+Not "did the ranker surface it". `_summarize_response` (`harness/judge.py`)
+samples any list past three entries into `{_summary_truncated, _full_length,
+_first_n}`, and `ranked.matches` is a list whose `_full_length` runs to 10. So
+ranks 4-10 are never in the artifact and a read at rank 7 is indistinguishable
+from a read of an unranked record. The full scored list is not recoverable
+either: `rank_search_matches` appends every candidate to
 `results/match-scores.jsonl`, but the e2e harness commits only the
 `.final-research.json` / `.final-tree.gedcomx.json` sidecars — `results/` dies
 with the temp project.
@@ -132,10 +122,6 @@ bearing, not presentational:
 8. `ranked-unreadable`: a `ranked` block the recovery could not read. Split
    out of (7) because merging them let a parser limit assert that the search
    ranked nothing — a claim about the ranker drawn from a failure to parse.
-9a. `ranked-below-top3` / `not-ranked-at-all`: only on a capture carrying
-   `_rank_tail`. The read was outside the visible three, and the tail says
-   whether the ranker had surfaced it lower down or not at all. Without a
-   tail both stay `not_in_top3`, which is the upper bound #1156 describes.
 9. `unjoinable-id-space`: a read where no visible match carries the field
    this read's id space joins on — `recordArk` for a `1:2:` read,
    `recordId` for a `1:1:` or bare one. `toStub` leaves both optional. The
@@ -237,8 +223,6 @@ CAVEAT = (
     "10) is never committed, so a read at rank 7 is indistinguishable here "
     "from a read of an unranked record. 'not in visible top 3' is therefore "
     "an upper bound on ranker disagreement, not a count of ignored rankings "
-    "on any run captured before 2026-09-17; from then on `_rank_tail` splits "
-    "it into ranked-below-top3 and not-ranked-at-all "
     "— and a visible entry whose own id the capture lost is scored as a "
     "non-match. "
     "This measures the eval corpus, not production (architecture.md 9.4 gap "
@@ -300,12 +284,6 @@ _RECORD_ARK_RE = re.compile(r'\\?"recordArk\\?"\s*:\s*\\?"([^"\\]+)')
 #: as a key match rather than a bare substring so prose ("unranked") cannot
 #: satisfy it.
 _RANKED_KEY_RE = re.compile(r'\\?"ranked\\?"\s*:')
-
-#: `_rank_tail` in either serialization, by the same rule as the pattern above
-#: — an escaped capture does not contain the plain-quoted form, and matching
-#: only that one would make the tail invisible on exactly the truncated
-#: captures that need it most.
-_RANK_TAIL_KEY_RE = re.compile(r'\\?"_rank_tail\\?"\s*:')
 
 
 def _unwrap(summary: str) -> dict | None:
@@ -380,18 +358,7 @@ def ranked_matches(summary: str) -> tuple[list[RankedMatch], bool]:
         if isinstance(ranked, dict):
             raw = ranked.get("matches")
             if isinstance(raw, dict):
-                # `_rank_tail` carries ranks past `_first_n` with only the
-                # join fields (`orchestrator._attach_rank_tail`). It is what
-                # separates "the ranker put it 4th" from "the ranker never
-                # surfaced it"; before it existed this report could only
-                # report their union. Captures written before that change
-                # have no tail, and its ABSENCE is not an empty tail — those
-                # runs genuinely cannot answer the question, which is why
-                # `_read_outcome` keys on whether the tail is there.
-                tail = raw.get("_rank_tail")
-                raw = list(raw.get("_first_n") or []) + (
-                    list(tail) if isinstance(tail, list) else []
-                )
+                raw = raw.get("_first_n")
             if isinstance(raw, list):
                 out = []
                 for entry in raw:
@@ -420,11 +387,6 @@ class SearchInfo(NamedTuple):
     ranking_skipped: bool
     matches: list[RankedMatch]
     by_regex: bool
-    #: Whether the capture carries `_rank_tail`. Runs recorded before
-    #: `orchestrator._attach_rank_tail` do not, and for those a read absent
-    #: from the visible three is genuinely unresolvable between 'ranked 4th'
-    #: and 'never surfaced'. Keyed on presence, never defaulted.
-    has_rank_tail: bool
 
 
 class ReadRow(NamedTuple):
@@ -446,7 +408,6 @@ def _search_info(call: dict) -> SearchInfo:
         m = re.search(r'"resultsRef"\s*:\s*"(results/\.staging/[^"]+)"', summary)
         staging_ref = m.group(1) if m else None
     has_ranked = bool(_RANKED_KEY_RE.search(summary))
-    has_rank_tail = bool(_RANK_TAIL_KEY_RE.search(summary))
     matches, by_regex = ranked_matches(summary) if has_ranked else ([], False)
     return SearchInfo(
         staging_ref=staging_ref,
@@ -454,7 +415,6 @@ def _search_info(call: dict) -> SearchInfo:
         ranking_skipped="rankingSkipped" in summary,
         matches=matches,
         by_regex=by_regex,
-        has_rank_tail=has_rank_tail,
     )
 
 
@@ -485,22 +445,6 @@ def _read_outcome(read_id: tuple[str | None, str], info: SearchInfo) -> str:
     joinable = "record_ark" if kind == "1:2" else "record_id"
     if visible and not any(getattr(m, joinable) is not None for m in visible):
         return "unjoinable-id-space"
-    # Below the visible three, but the ranker DID surface it. Only a capture
-    # carrying `_rank_tail` can tell that from never surfacing it at all;
-    # without one the two collapse into the single upper bound this report
-    # was stuck reporting, so the answer stays `not_in_top3` rather than
-    # being guessed at. That is why this keys on `has_rank_tail` and not on
-    # whether some match happens to sit past rank 3.
-    if info.has_rank_tail:
-        # No `rank <= TOP_N` skip here. The visible loop above already returned
-        # for any match in the top three, so re-skipping them changes no
-        # outcome — it was dead logic that read like a guard, and a test
-        # asserting it passed with the skip deleted.
-        for match in info.matches:
-            target = match.record_ark if kind == "1:2" else match.record_id
-            if target is not None and target[1] == tail:
-                return "ranked-below-top3"
-        return "not-ranked-at-all"
     return "not_in_top3"
 
 

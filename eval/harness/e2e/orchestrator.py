@@ -1192,81 +1192,6 @@ def _raw_result_chars(content: Any) -> int:
     return len(_serialize_result(content))
 
 
-#: The fields a `ranked.matches` entry needs to be JOINABLE offline, and
-#: nothing else. A full entry is ~454 chars (name, dates, collection title,
-#: relativeTerms); these three are ~95. That ratio is the whole reason this
-#: works inside the existing cap instead of raising it.
-_RANK_TAIL_FIELDS = ("matchRank", "recordId", "recordArk")
-
-
-def _only_element(value: Any) -> Any:
-    """The document inside a one-element MCP content-block list, or `value`.
-
-    A list of two blocks is left alone rather than guessed at: which one holds
-    the tool's document is not knowable here, and picking element 0 would write
-    a tail derived from one block onto another.
-    """
-    if isinstance(value, list) and len(value) == 1:
-        return value[0]
-    return value
-
-
-def _attach_rank_tail(summary: Any, document: Any) -> Any:
-    """Restore ranks past `_first_n` as an id-only tail on `ranked.matches`.
-
-    `_summarize_response` samples every list to three entries, so a read of the
-    record the ranker put 4th was indistinguishable in the run log from a read
-    of a record it never surfaced at all — the two mean opposite things about
-    the agent, and `make e2e-ranked-reads` had to report their union as one
-    upper bound (issue #1156).
-
-    Keeping the full list instead costs ~4540 chars against a 4000-char cap, so
-    it would have forced `_RUNLOG_MAX_CHARS` up; that constant carries a
-    recorded decision NOT to raise it, because run logs are committed to git.
-    The join only ever needs three fields, so the tail carries three fields:
-    ~665 chars for ranks 4-10, which fits under the cap as it stands.
-
-    Deliberately ADDITIVE. `_first_n` keeps the same three full entries in the
-    same place, so every existing reader of this artifact is unaffected and a
-    capture written before this change is still a valid capture — it simply has
-    no `_rank_tail`, which is exactly what "this run predates the fix" looks
-    like. Absence is therefore meaningful and must not be filled in with a
-    default.
-    """
-    # The live shape is `[{...}]`, not `{...}` — `_unwrap_mcp_text_blocks`
-    # parses the text block but leaves the MCP content-block LIST in place.
-    # Requiring a bare dict here made this whole function a no-op on every real
-    # `record_search` while a bare-dict unit test passed, which is the failure
-    # mode that looks exactly like coverage. Descend both sides together so the
-    # summary being mutated stays the one that gets serialized.
-    summary_doc = _only_element(summary)
-    document_doc = _only_element(document)
-    if not isinstance(summary_doc, dict) or not isinstance(document_doc, dict):
-        return summary
-    ranked_summary = summary_doc.get("ranked")
-    ranked_document = document_doc.get("ranked")
-    if not isinstance(ranked_summary, dict) or not isinstance(ranked_document, dict):
-        return summary
-    block = ranked_summary.get("matches")
-    entries = ranked_document.get("matches")
-    # Only the SAMPLED shape has a tail to restore. An untruncated list was
-    # never cut, so there is nothing missing from it.
-    if not isinstance(block, dict) or not isinstance(entries, list):
-        return summary
-    kept = block.get("_first_n")
-    if not isinstance(kept, list) or len(entries) <= len(kept):
-        return summary
-    tail = [
-        {k: entry[k] for k in _RANK_TAIL_FIELDS if k in entry}
-        for entry in entries[len(kept) :]
-        if isinstance(entry, dict)
-    ]
-    if not tail:
-        return summary
-    block["_rank_tail"] = tail
-    return summary
-
-
 def _summarize_tool_response(content: Any) -> str:
     """Key-preserving summary of a tool result for the run log.
 
@@ -1307,9 +1232,8 @@ def _summarize_tool_response(content: Any) -> str:
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
         return raw
 
-    document = _unwrap_mcp_text_blocks(content)
-    summary = _attach_rank_tail(
-        _summarize_response(document, string_max=_RUNLOG_STRING_MAX), document
+    summary = _summarize_response(
+        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
     )
     try:
         text = summary if isinstance(summary, str) else json.dumps(summary)

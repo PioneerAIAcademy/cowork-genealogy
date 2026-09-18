@@ -1969,13 +1969,9 @@ e2e-agent-tools` reports, per plugin agent, which declared tools it never
 actually called across those runs, and the
 `/interpret-e2e-result` skill exists to read the log for you. `make
 e2e-ranked-reads` reports whether the main thread's `record_read` calls landed
-inside the ranker's **visible** top 3. `judge.py` truncates `ranked.matches`
-past three entries, so on any run captured before 2026-09-17 it cannot tell a
-read at rank 7 from a read of an unranked record; from then on
-`orchestrator._attach_rank_tail` records ranks 4-10 as id-only entries and the
-report splits those two apart. The fix is not retroactive, so a corpus
-spanning the change answers the question for its newer runs only. It says
-nothing about
+inside the ranker's **visible** top 3 — visible is the limit, because
+`judge.py` truncates `ranked.matches` past three entries, so it cannot tell a
+read at rank 7 from a read of an unranked record. It says nothing about
 subagent reads, which never saw the `ranked` block and are counted separately,
 and it prints counts rather than a rate for the reason §9.4 gap 3 gives.
 Mechanics:
