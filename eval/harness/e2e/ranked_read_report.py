@@ -35,8 +35,9 @@ the main thread chose to read inside the visible top 3 by `matchRank`?**
 runs land and shrinks when `make prune-runlogs STRIP=1` drops captures past 14
 days, so re-derive rather than quote: `make e2e-ranked-reads SINCE=2026-08-04`
 prints the current values as its own preamble. The figures below were measured
-**2026-09-17** over that window (35 runs, none excluded) on tree
-`2d6da86ef`, which is this branch merged with `main`.
+**2026-09-18** over that window (37 runs, none excluded) on this branch
+merged with `main`. They moved twice while the PR was open, purely from
+corpus growth; the command is the figure, not this paragraph.
 
 **Measured on the pre-#2473 capture shape**, where `ranked` sits alongside the
 inline `results` block. PR #2473 makes `ranked` REPLACE `results` and widens
@@ -50,23 +51,23 @@ question this module asks is the one that survives that change.
 
 `_summarize_tool_response` (`e2e/orchestrator.py`) leaves the MCP content-block
 list in place, so `response_summary` deserializes to `[{...}]` and NOT to the
-document itself. Of the 197 `ranked`-bearing captures, **123 parse to a list
-whose element 0 carries `ranked`, 74 raise, and zero parse to a dict**. An
+document itself. Of the 221 `ranked`-bearing captures, **131 parse to a list
+whose element 0 carries `ranked`, 90 raise, and zero parse to a dict**. An
 implementation reading `doc["ranked"]` joins nothing at all, on every capture,
 while every hand-written unit fixture passes.
 A second shape exists too — `[{"type": "text", "text": "{...}"}]`, which is
 what `research_log_append` returns — so `_unwrap` descends both.
 
 `ranked_matches` therefore gates its regex fallback on the `ranked` value being
-**unreachable**, never on `json.loads` failing (123 captures parse fine and
+**unreachable**, never on `json.loads` failing (131 captures parse fine and
 still need the descent) and never on `len(summary) >= 4000` (the cap is a
 constant that can move — `_RUNLOG_MAX_CHARS`, `orchestrator.py`).
 
 ## Only the main thread's reads count
 
 `record_search` is called only by the main thread, but a third of
-`record_read` calls are not its: 236 main-thread against 84 `record-extractor`
-and 37 `person-evidence`. A subagent runs in fresh context and never saw the `ranked` block — it reads the `recordId` it was
+`record_read` calls are not its: 268 main-thread against 90 `record-extractor`
+and 46 `person-evidence`. A subagent runs in fresh context and never saw the `ranked` block — it reads the `recordId` it was
 handed. Counting those against "the agent ignored the ranker" mis-attributes a
 third of the denominator, so they are reported separately as delegated reads.
 
@@ -80,19 +81,19 @@ third of the denominator, so they are reported separately as delegated reads.
 3. Nearest preceding main-thread `record_search` in `aligned_calls` order, for
    everything else — **including a ref that resolves to neither**.
 
-Arm 1 covers 19 of the 75 scorable reads and arm 2 just 1, so the headline is
+Arm 1 covers 23 of the 95 scorable reads and arm 2 just 1, so the headline is
 predominantly heuristic-joined. `format_report` prints the arm split so a
 reader can see how much of the number rests on arm 3.
 
 A fourth arm was tried and removed. When the nearest preceding search ranked
 nothing, it attributed the read to the last search that DID rank rather than
-excluding it — which scored 99 of those 127 reads (the other 28
-have no earlier ranking to fall back to) and quietly answered a
+excluding it — which scored 107 of the 135 reads the control removes (the
+other 28 have no earlier ranking to fall back to) and quietly answered a
 different question than #1156 commissioned: the exclusion count it asks for
 stopped meaning "reads the broad-sweep control removed". The observation that
 prompted it survives as a sub-bucket of that exclusion (below), where it turns
-out to be small: of 127 reads the control removes, 8 were in an earlier
-ranking's visible top 3 and 119 were not.
+out to be small: of 135 reads the control removes, 8 were in an earlier
+ranking's visible top 3 and 127 were not.
 
 ## Exclusions, each counted rather than silently dropped
 
@@ -115,7 +116,7 @@ bearing, not presentational:
    arm 3 that is the nearest preceding search, which is #1156's rule
    verbatim; on arms 1-2 it is the search the read's own handle names, which
    is stronger evidence than proximity. 3 reads differ, all of them between
-   exclusion buckets — the scorable count is 75 under either gate. This is the
+   exclusion buckets — the scorable count is unchanged under either gate. This is the
    analysis-time control `record-search-tool-spec-v2.md` says the field
    exists to enable, and the confound the issue was filed
    against (subject-less broad sweeps). The two buckets are ONE exclusion for
@@ -157,7 +158,7 @@ why that bucket carries a synthetic test rather than relying on live data.
 `docs/architecture.md` section 9.4 gap 3: "Do not quote a violation rate", and
 `make e2e-corpus` "deliberately reports counts, refusing a percentage whose
 denominator would be doing the work". Here the denominator is doing exactly
-that work — 236 main-thread reads become 75 scorable once the exclusions
+that work — 268 main-thread reads become 95 scorable once the exclusions
 above are applied — so this report's primary output is counts by bucket and
 any rate appears inline as `n/d`.
 
@@ -239,7 +240,7 @@ CAVEAT = (
     "on any run captured before 2026-09-17; from then on `_rank_tail` splits "
     "it into ranked-below-top3 and not-ranked-at-all "
     "— and a visible entry whose own id the capture lost is scored as a "
-    "non-match, which is 2 of the 47 in the 2026-08-04 window. "
+    "non-match. "
     "This measures the eval corpus, not production (architecture.md 9.4 gap "
     "3): there is no production telemetry, so it answers 'did this happen in "
     "our runs', never 'is this getting better for a real user'."
@@ -370,7 +371,7 @@ def ranked_matches(summary: str) -> tuple[list[RankedMatch], bool]:
     """`(matches, recovered_by_regex)` for one `record_search` capture.
 
     Gated on the `ranked` block being UNREACHABLE, not on the parse failing —
-    123 of the corpus's 197 ranked captures parse cleanly and still need the
+    131 of the corpus's 221 ranked captures parse cleanly and still need the
     list descent, and a length test would bind to a movable constant.
     """
     doc = _unwrap(summary)
@@ -598,12 +599,12 @@ def scan_run(
             # sounds: in the 2026-08-04 window it moves 3 reads, all on arm 1,
             # and all of them BETWEEN EXCLUSION BUCKETS — 2 out of
             # `no-ranking-signal` into this one, 1 the other way into
-            # `ranked-no-matches`. None becomes scorable: 75 either way, 28 of
+            # `ranked-no-matches`. None becomes scorable: 95 either way, 41 of
             # them in the visible top 3 either way. What it changes is the
-            # commissioned exclusion count, 126 under the nearest-preceding
-            # gate against 127 here.
+            # commissioned exclusion count, 134 under the nearest-preceding
+            # gate against 135 here.
             # An earlier draft attributed these to the last search that did
-            # rank instead of excluding them, which scored 99 of the 127 (the
+            # rank instead of excluding them, which scored 107 of the 135 (the
             # other 28 have no earlier ranking to fall back to) and silently
             # answered a different question than the one commissioned
             # — the exclusion count the issue asks for stopped meaning "reads
@@ -856,7 +857,11 @@ def format_report(
     dropped = Counter(r.outcome for r in rows if r.outcome not in SCORED)
 
     lines = [exclusion_line, ""]
-    lines.append(f"Main-thread record_read calls: {len(rows)}")
+    # NOT "main-thread calls": a read whose run predates `agent_type` reaches
+    # this path too and is unattributable, not main-thread. It is the first
+    # bucket below, so the two lines reconcile — but labelling the total
+    # "main-thread" would assert the very thing the bucket exists to deny.
+    lines.append(f"record_read calls on the main-thread path: {len(rows)}")
     for reason, n in sorted(dropped.items(), key=lambda kv: (-kv[1], kv[0])):
         lines.append(f"  excluded, {reason:<22} {n}")
     lines.append(f"  scorable                     {len(scorable)}")

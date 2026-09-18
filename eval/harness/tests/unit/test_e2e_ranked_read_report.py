@@ -178,8 +178,8 @@ def test_preamble_matches_the_recorded_corpus_figures():
     Deliberately floors rather than equalities: the corpus grows (it gained at
     least six runs in the fortnight this was being written), so pinned counts
     would fail on the next committed run. Recorded values at --since
-    2026-08-04 on 2026-09-17, tree 2d6da86ef: searches 537, ranked 197,
-    cut 74, main reads 236, scorable 75.
+    2026-08-04 on 2026-09-18: searches 575, ranked 221, cut 90, main reads
+    268, scorable 95.
     """
     paths = filter_since(all_result_jsons(), parse_since("2026-08-04"))
     if not paths:
@@ -401,7 +401,7 @@ def test_id_key_keeps_the_type_prefix():
 
 
 def test_list_envelope_is_reached_without_the_regex_fallback():
-    """123 of the corpus's 197 ranked captures parse cleanly to a LIST. An
+    """131 of the corpus's 221 ranked captures parse cleanly to a LIST. An
     implementation reading `doc["ranked"]` finds nothing on every one."""
     summary = _capture({"ranked": {"matches": {"_first_n": [_match(1, "ark:/61903/1:1:A-1")]}}})
     matches, by_regex = ranked_matches(summary)
@@ -419,7 +419,7 @@ def test_double_encoded_text_block_envelope_is_unwrapped():
 
 
 def test_capture_cut_mid_json_is_recovered_by_regex():
-    """74 of 197 ranked captures are cut at the run-log cap; `json.loads`
+    """90 of 221 ranked captures are cut at the run-log cap; `json.loads`
     raises on every one, so the bounded regex is the only way in."""
     full = _capture(
         {
@@ -443,7 +443,7 @@ def test_capture_cut_mid_json_is_recovered_by_regex():
 
 
 def test_capture_cut_at_exactly_the_run_log_cap_recovers_the_visible_matches():
-    """74 of the corpus's 197 ranked captures are cut at exactly 4000 chars.
+    """90 of the corpus's 221 ranked captures are cut at exactly 4000 chars.
     The cut must land INSIDE the match list for this to prove anything — a cut
     that lands before the ranked block recovers nothing whatever the gate
     does, which is the neighbouring case below."""
@@ -535,7 +535,7 @@ def test_staging_ref_attributes_to_its_emitting_search_not_the_nearest():
 
 def test_log_ref_resolves_through_research_log_append():
     """Arm 2. A `results/log_NNN.json` ref reaches its search only via the
-    append's `stagedResultsRef`; 95 of 357 corpus reads carry this form."""
+    append's `stagedResultsRef`; 107 of 404 corpus reads carry this form."""
     doc = _doc(
         [
             _search(
@@ -575,7 +575,7 @@ def test_the_skipped_gate_reads_the_supplying_search_not_the_nearest():
     #1156 words the `rankingSkipped` control on the nearest preceding search.
     Arms 1-2 know exactly which search produced the read, so a subject-less
     sweep that merely intervened must not discard it. Gating on `previous`
-    instead passed all 57 other tests in this file (measured), and
+    instead passed every other test in this file (measured), and
     `arm, supplying = "nearest", previous` two lines above makes `previous`
     the variable a refactor reaches for."""
     doc = _doc(
@@ -829,7 +829,7 @@ def test_format_report_prints_counts_and_the_arm_split():
         ReadRow("f/r", 0, "nearest", "ranking-skipped"),
     ]
     out = format_report(rows, {"record-extractor": 4}, n_runs=1, excluded={})
-    assert "Main-thread record_read calls: 3" in out
+    assert "record_read calls on the main-thread path: 3" in out
     assert "excluded, ranking-skipped        1" in out
     assert "scorable                     2" in out
     assert "staging                      1" in out
@@ -996,7 +996,7 @@ def test_a_1_2_read_against_entries_with_no_ark_is_excluded_not_scored():
     when the truth is that this report cannot see. It is an exclusion."""
     # `_match` fills a recordArk by default, so it has to be removed
     # explicitly — the shape the regex arm produces when `_RECORD_ARK_RE`
-    # finds nothing (33 of 203 regex-recovered entries carry no ark).
+    # finds nothing (44 of 245 regex-recovered entries carry no ark).
     bare = _match(1, "ABC-123")
     del bare["recordArk"]
     doc = _doc([_search(matches=[bare]), _read("ark:/61903/1:2:SOURCE-1")])
