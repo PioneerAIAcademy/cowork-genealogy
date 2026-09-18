@@ -43,13 +43,14 @@ const sourceImageCaps = new Map<string, boolean>();
 
 function truncatedImageKey(projectPath: string, imageRef: string): string {
   // Both halves arrive raw from an LLM relay, so a record and a query can spell the
-  // same thing differently and must still join. projectPath: strip the trailing
-  // separator (record `/p/`, query `/p`). imageRef is module-minted on the WRITE
-  // side but is a source's `image_filename` on the READ side, relayed by the agent
-  // — so `./images/x.jpg` or a backslash spelling must join the canonical
-  // `images/x.jpg`; normalize separators and a leading `./`. Without either the
-  // record/query symmetry is lost and a capped read reads back clean (#2457).
-  const proj = projectPath.replace(/[/\\]+$/, "");
+  // same thing differently and must still join. Normalize backslashes to forward
+  // slashes on both sides (a Windows caller can record under `C:\Users\…` and query
+  // `C:/Users/…`), strip a trailing separator on projectPath (record `/p/`, query
+  // `/p`), and strip a leading `./` on imageRef — it is module-minted on the WRITE
+  // side but is a source's `image_filename` on the READ side, relayed by the agent,
+  // so `./images/x.jpg` must join the canonical `images/x.jpg`. Without any of these
+  // the record/query symmetry is lost and a capped read reads back clean (#2457).
+  const proj = projectPath.replace(/\\/g, "/").replace(/\/+$/, "");
   const ref = imageRef.replace(/\\/g, "/").replace(/^\.\//, "");
   return `${proj}\0${ref}`;
 }

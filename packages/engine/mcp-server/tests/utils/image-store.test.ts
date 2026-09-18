@@ -171,4 +171,15 @@ describe("truncated-source-image cache (#2457)", () => {
     recordImageReadCap("/proj", "./images/y.jpg", true);
     expect(wasSourceImageTruncated("/proj", "images/y.jpg")).toBe(true);
   });
+
+  it("joins across a Windows projectPath spelled with backslashes vs forward slashes (#2457 review r5)", () => {
+    // The genealogist team is on Windows: a record under `C:\Users\proj` and a
+    // query under `C:/Users/proj` must join, or the truncation marker is silently
+    // lost. projectPath must normalize separators the same way imageRef does.
+    recordImageReadCap("C:\\Users\\proj", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("C:/Users/proj", "images/x.jpg")).toBe(true);
+    __clearTruncatedSourceImagesForTests();
+    recordImageReadCap("C:/Users/proj/", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("C:\\Users\\proj", "images/x.jpg")).toBe(true);
+  });
 });
