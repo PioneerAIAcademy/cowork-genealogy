@@ -179,9 +179,9 @@ matters when hand-authoring:
     "updated": "2026-05-26T00:00:00Z"
   },
   "researcher_profile": {
-    "experience_level": "intermediate",
+    "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "concise"
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
