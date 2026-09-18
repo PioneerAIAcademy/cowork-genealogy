@@ -54,8 +54,8 @@ In Progress card and a Review card are someone's work: never merge one, in eithe
 direction. An *unassigned* Ready card is both in the pool and its slot's holder,
 which makes it the natural target — it is furthest along.
 
-A `cross-cutting` card is **not** in the pool — the lead assigns those directly — but
-it still sits in whatever slot its `**Touches:**` line names. A Backlog one prints as
+A `cross-cutting` card is **not** in the pool — the label takes it out, whoever ends
+up doing it — but it still sits in whatever slot its `**Touches:**` line names. A Backlog one prints as
 `occupant: #N`; one already in an active column prints as a holder tagged
 `cross-cutting -- not a merge target`. **Neither is a merge target, and neither is
 part of queue depth.**

@@ -94,8 +94,12 @@ def main(board_path, open_path, prs_path):
         # it *and* holds a slot -- it is the natural merge target, being furthest
         # along. An assigned one is someone's work and is never a merge candidate.
         if "cross-cutting" in labs:
-            # The lead's direct assignments: never a merge candidate, so out of the
-            # pool. But it still SITS in whatever slot its Touches line names, and
+            # The label takes it out of the pool: never a merge candidate, whoever
+            # ends up doing it. Not "already assigned" -- measured 2026-09-18, all
+            # 14 open cross-cutting cards are UNASSIGNED, which is what refuted the
+            # rationale this comment used to carry.
+            #
+            # But it still SITS in whatever slot its Touches line names, and
             # that slot's next paid run is spoken for either way -- so collect it as
             # an occupant rather than dropping it. Occupancy and pool membership are
             # different questions; one list cannot answer both.
