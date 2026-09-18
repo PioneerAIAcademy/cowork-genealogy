@@ -178,9 +178,9 @@ correspondingly-numbered general sections below. The general spec remains the
 - **New-session onboarding = conversational.** "New session" creates a fresh
   sandbox with an empty `/project`, starts `agent_runner`, and the client
   **auto-sends an opening turn** ("start a new genealogy research project") that
-  triggers the existing **`init-project`** skill — researcher-profile interview +
+  triggers the existing **`init-project`** skill — the objective question +
   FamilySearch-person seeding, in chat, reusing the skill as-is (no new onboarding
-  UI). The session is titled provisionally and renamed once the objective is set.
+  UI; the researcher profile is fixed and nothing about the researcher is asked). The session is titled provisionally and renamed once the objective is set.
 
 ---
 

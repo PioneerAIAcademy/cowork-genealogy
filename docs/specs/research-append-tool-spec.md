@@ -203,8 +203,9 @@ camelCase convenience fields the same way `research_log_append` does.
   set-once — a researcher who picked the wrong experience level needs a route
   that is not starting the project over. It is also the one section created **on
   first write when absent**: the schema makes it optional, and an agent must
-  never fabricate a profile, so the object appears when a real interview answer
-  arrives rather than being seeded with assumed values.
+  never fabricate a profile, so the object appears when init-project writes the
+  fixed profile (or a caller corrects a field) rather than being seeded by any
+  other writer.
 
   Making another field settable later = extend that section's `allowedFields`.
 

@@ -26,6 +26,7 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_universal import (  # noqa: E402
+    report_no_internal_identifiers_in_response as check_ids,
     test_no_entries_deleted as check_no_deletes,
     test_ownership_table as check_research,
     test_tree_ownership_table as check_tree,
@@ -485,3 +486,44 @@ def test_an_UNSTUBBED_run_still_checks_tree_ownership():
     except BaseException as exc:  # noqa: BLE001 -- Skipped is a BaseException
         outcome = f"{type(exc).__name__}: {exc}"
     assert outcome == "refused", f"ownership was not enforced on an unstubbed run: {outcome}"
+
+
+# --- lay mode: no internal identifiers in the reply (tier 2, advisory) ------
+
+def _report_fails(text):
+    try:
+        check_ids(text, POSITIVE)
+    except AssertionError as exc:
+        return str(exc)
+    return None
+
+
+def test_identifier_report_names_each_schema_id_it_finds():
+    msg = _report_fails("q_001 written. I logged the search as log_003 and added a_283.")
+    assert msg is not None
+    for ident in ("q_001", "log_003", "a_283"):
+        assert ident in msg
+
+
+def test_identifier_report_fires_on_project_file_and_tool_names():
+    msg = _report_fails("I updated research.json through research_append.")
+    assert msg is not None and "research.json" in msg and "research_append" in msg
+
+
+def test_identifier_report_passes_a_lay_reply():
+    """The other direction: a reply in the house style, with a year, a place and
+    an ordinary numbered list, must not trip on numbers or underscores."""
+    assert _report_fails(
+        "I found the 1850 census for the household in Warren County. Mary is "
+        "listed as 12, born in Ohio, which fits. Next: search for her marriage."
+    ) is None
+
+
+def test_identifier_report_skips_a_negative_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_ids("q_001 written", {"type": "negative"})
+
+
+def test_identifier_report_skips_an_empty_reply():
+    with pytest.raises(pytest.skip.Exception):
+        check_ids("", POSITIVE)

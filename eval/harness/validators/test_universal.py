@@ -1821,3 +1821,46 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
         "flag needs-review/speculative before writing a plain link: "
         + "; ".join(messages)
     )
+
+
+# --- Lay mode: no internal identifiers in user-facing text ----------------
+
+# Schema ids, project file names, tool names. What the researcher must never
+# read (issue #2493, lead ruling 2026-09-14: technical jargon stays out of user
+# messages; lay-mode ruling 2026-09-18). `q_NNN` and `ps_NNN` are included
+# although #2493 left them open as navigation aids: this validator only reports.
+_INTERNAL_ID_RE = re.compile(
+    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|kh|tl)_\d{3,}\b"
+    r"|\b(?:research\.json|tree\.gedcomx\.json)\b"
+    r"|\bmcp__[A-Za-z_]+"
+    r"|\b(?:research_append|research_query|extraction_append|research_log_append"
+    r"|tree_edit|tree_correct|tree_forget|project_create|materialize_facts"
+    r"|validate_research_schema|record_search|record_read|person_read)\b"
+)
+
+
+def report_no_internal_identifiers_in_response(text_response, test):
+    """Tier 2 — reports, never gates (issue #2493 step 4; lay-mode plan
+    2026-09-18).
+
+    The researcher is a non-genealogist who never asked to see our schema, so a
+    reply that says "q_001 written" or names `research.json` is speaking our
+    language, not theirs. Advisory rather than gating because this runs on every
+    test of every suite and, measured over 33 hosted sessions, a quarter of all
+    reply blocks carried one of these today: an ungated test would red every
+    other suite on its next run. It hardens per suite as each agent gains the
+    `summary_for_user` return contract.
+
+    A literal property of the text — the identifiers themselves — not a
+    re-grade of prose quality, which is the judge's job.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative test — the decline text is graded elsewhere")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no assistant text")
+    hits = sorted({m.group(0) for m in _INTERNAL_ID_RE.finditer(response)})
+    assert not hits, (
+        "the reply names internal identifiers the researcher should never see: "
+        + ", ".join(hits)
+    )
