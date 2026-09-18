@@ -4,7 +4,9 @@
 #2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); the `sidecar_read`
 half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant with `Read`
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
-issue #2568 by the lead's scope ruling); FamilySearch's
+issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
+(PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
+against seeded rows until the worker exists); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -1123,9 +1125,48 @@ without whichever Bedrock refuses.
   reconnect, not the product. `fs-eng/bridge` runs this pattern over JetStream,
   load-tested at 100 subscribers / 50 events/s, and `fs-eng/help-research-only` raised
   its `SseEmitter` from 5 to 10 minutes because real multi-task turns were cut.
+  **Done 2026-09-14 (`apps/server/proto/web/`, compose service `web` on :8085).**
+  `POST /api/sessions/{id}/messages` mints the `turn_id` UUID, writes the `turns` row and
+  a `user_msg` event in one transaction, then `SendMessage`s
+  `{turn_id, session_id, project_id, text, enqueued_at}` (a failed send marks the turn
+  `enqueue_failed` and answers 502). `GET …/events?after=N` is the poll read;
+  `GET …/events/stream` is the SSE — `id: <seq>` on every `session_events` frame,
+  `Last-Event-ID` beats `?after=`, `: ping` at 15 s idle, a 1 s Postgres poll. Open order
+  is replay → document snapshot → `status turn_active`, because `ChatPane` clears busy on
+  any `turn_done`. The row→wire contract the worker writes to is in the module docstring
+  and `web/README.md`: `kind` is the `map_message` kind, `payload` its fields;
+  `session_activity` and `documents` changes go out without an id and are never
+  replayed. No auth (the tier is localhost; identity stays out of the prototype). The
+  `session_events` frames are the only ones carrying an id, so a resume is always a
+  seq. 33 offline tests (`tests/test_proto_web.py`); `003_web.sql` adds the three
+  session columns the reused SPA renders, applied at tier start on an existing volume.
 - **D13** Reuse `apps/web` with the WebSocket swapped for SSE. Plus the **80-line
   headless driver** — POST a message, poll events, assert on turn completion.
   Without it the acceptance test cannot be run until day 17.
+  **Done 2026-09-14.** `SseSessionConnection` behind `VITE_SESSION_TRANSPORT=sse`
+  (`make web-proto`); the WS path is untouched and the SPA is otherwise verbatim — the
+  tier serves the SPA's REST paths. The one behaviour that is not a relay: the tier
+  streams the `user_msg` row it just wrote and `ChatPane` already drew that bubble, so
+  the connection holds live `user_msg` frames while its POST is in flight and drops the
+  one the 202's `seq` names. The driver (`proto/drive.py`, ~440 lines rather than 80 —
+  it carries the seeder that stands in for the worker, an embedded-Postgres mode, and an
+  SSE parser that sees comment lines) posts, streams, cuts the connection after eight
+  frames, reopens with `Last-Event-ID` and a contradicting `?after=0`, drains, and
+  compares A ∪ B against `GET /events` exactly. **Measured 2026-09-14, `make proto-drive`
+  (pgserver + the tier in-process, no Docker): 17/17 — 42 events dense, A ∩ B empty, B
+  resumed at 9, one ping, activity and document frames without ids, turn closed.** The
+  compose path (`web` service, `make proto-up`) was verified in review on a Docker machine
+  2026-09-14: the image builds and comes up healthy, `make proto-smoke` passes 14/14
+  through `proto-up-core`, `003_web.sql` applies to a pre-existing volume, and a turn
+  round-trips POST → queue → shim → worker → `turn_done` → SSE. No CI job runs any proto
+  compose target, so it stays a hand check. The SPA on that stack (`make web-proto`) was
+  driven in the same review: two turns round-tripped with exactly two user bubbles, the
+  spinner cleared on `turn_done`, and a reload halfway through a hand-seeded 25 s turn
+  replayed the transcript without duplicates and came back busy — the replay-then-
+  `turn_active` order doing its job. What no run has yet exercised is a real worker's turn
+  driving the SPA; that is D17, and the run where the driver's strong resume check
+  (`B resumed at A's last seq + 1`) binds again. `--worker` runs the same checks against a real
+  worker for D17.
 - **D14** Kill-resume test **against the mock agent**, not a real fixture. Twenty
   debug iterations on a real run is $147 and 18 hours; the mock is ~90 s and free,
   and needs ~30 lines to fake a delegation. **Redelivery comes from the shim's
