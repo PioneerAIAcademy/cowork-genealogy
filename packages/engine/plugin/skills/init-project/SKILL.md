@@ -247,10 +247,12 @@ here, only the framing changes.
 - The two or three gaps that set the first research question — gaps on people the
   objective does not cover are context only, not proposed research
 - Known holdings recorded (if any) and what each contributes
-- Suggest the next step as a plain-language offer, defining "objective" and
-  "research question" on first use — never "use question-selection to…":
-  "Your objective is the overall goal — <restate it>. The next step is the
-  first research question: the single fact we go after first. Shall I?"
+- One sentence on what comes next, defining "objective" and "research
+  question" on first use — never "use question-selection to…": "Your objective
+  is the overall goal — <restate it>. The next step is the first research
+  question: the single fact we go after first."
+- Then the hand-back literal as the final line of the reply, exactly:
+  `Next: choose the first research question. Continue?`
 
 ## Example
 
@@ -263,8 +265,8 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
 6. `Skill("check-warnings")` for I1, Mary Kelly, James, and Margaret. Pedigree
    analysis + summary, folding in whatever it returns. Mary Kelly and the
-   children are tree context only — their gaps are noted, not queued. Offer
-   the first research question in plain language.
+   children are tree context only — their gaps are noted, not queued. Close
+   with the hand-back literal.
 
 ## Important rules
 
