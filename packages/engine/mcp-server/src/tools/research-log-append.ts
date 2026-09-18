@@ -146,13 +146,15 @@ class LogAppendError extends Error {}
  * xfail_reason): "not generalizable outside the US (post-1851 England & Wales
  * censuses do carry a relationship column)".
  *
- * MEASURED over the 3,392 distinct `notes` arguments of research_log_append in
+ * MEASURED over the 3,490 distinct `notes` arguments of research_log_append in
  * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
- * form): refusals fall 338 -> 196, and the 142 removed are 42.0% of every
- * refusal the rule made -- 128 of them the year, 14 the jurisdiction. Nothing
- * in that corpus is newly refused. Re-derive rather than quote these: the
- * corpus grows with every committed run, and an earlier pass of this same
- * docstring read 3,275/332/136 on a smaller one.
+ * form), measured at 86d50cf0f: refusals fall 355 -> 201, and the 154 removed
+ * are 43.4% of every refusal the rule made -- 134 of them the year, 20 the
+ * jurisdiction. Nothing in that corpus is newly refused. Re-derive rather than
+ * quote these: the corpus grows with every committed run, and two earlier
+ * passes of this same docstring read 3,275/332/136 and 3,392/338/142 on
+ * smaller ones. The stamp is there so a reader can tell what the number was
+ * true of, per tests/packaging/corpus-figures.test.ts's rule 3.
  *
  * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
  * leaning on it. `CENSUS_YEAR` spans 1600-1999 while the old gate was
