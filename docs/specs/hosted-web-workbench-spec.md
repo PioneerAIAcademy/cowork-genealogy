@@ -181,7 +181,8 @@ correspondingly-numbered general sections below. The general spec remains the
   project.") onto the user's first message on the wire, so the existing
   **`init-project`** skill runs and reads the person and objective from that one
   turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
-  onboarding UI). The bubble shows only what the user typed. The session is
+  onboarding UI; the researcher profile is fixed and nothing about the
+  researcher is asked). The bubble shows only what the user typed. The session is
   titled provisionally and renamed once the objective is set.
 
 ---
@@ -789,7 +790,7 @@ every healthy session.
 > The `#/s/:id` hash route means a refresh or a shared link reopens the session.
 >
 > Two notes: the "researcher-profile onboarding" is conversational, not UI — a
-> new session prefixes the opener onto the user's first message, which triggers `init-project` (§0.5) —
+> new session auto-sends an opening turn that triggers `init-project` (§0.5) —
 > and the §7.4 this section twice points at **does not exist**; the spec has no
 > §7.4. It means §0.5's onboarding bullet.
 >

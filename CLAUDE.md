@@ -385,11 +385,11 @@ workflow itself or building one of its skills.
 
 ## Researcher profile in `research.json`
 
-Per-project context about the researcher (experience level, paid
-subscriptions, derived narration guidance) lives in a
-`researcher_profile` section of `research.json`. `init-project` writes
-it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. 27 of the 28 skills
+Per-project context about the researcher lives in a `researcher_profile`
+section of `research.json`. `init-project` writes a fixed profile at
+project start (`experience_level: "novice"` and one house-style
+`narration_guidance` string) and asks nothing about the researcher; the
+only opening-turn question is the research objective, non-blocking. 27 of the 28 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
@@ -475,7 +475,7 @@ change, with different (and easy-to-undercount) site lists:
   healer (`tree-sanitize.ts`) reads the same sets; check whether the change
   needs a heal rule for pre-change trees.
 
-The interview lives in `init-project/SKILL.md`.
+The fixed profile and the objective question live in `init-project/SKILL.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
