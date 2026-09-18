@@ -607,6 +607,50 @@ def test_fact_findings_keep_their_own_advice_on_a_strip_fixture():
     assert "only a problem if the stripped fact is still on" in warn
 
 
+# The tests above all call `format_suspect` directly, so they prove the
+# advice *branches* correctly and nothing about whether `main()` reaches it.
+# Deleting `genre = suspect_genre(fixture_dir)` and the third argument at the
+# CLI call site left the whole suite green while the command-line linter went
+# back to telling record-hint reviewers to edit a tree the genre forbids
+# (senior review, PR #2634). These two run the CLI end to end, both
+# directions.
+
+
+def _genre_fixture(path: Path, genre: str) -> None:
+    """A fixture that lints clean but raises one suspect, at `genre`."""
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    _write_fixture(
+        path,
+        _valid_tree(
+            _valid_person("I1", "John", "Smith"),
+            _valid_person("I9", "Robert", "Smith"),  # the suspect
+        ),
+        {"findings": [finding]},
+    )
+    (path / "fixture.json").write_text(
+        json.dumps({"id": path.name, "genre": genre}), encoding="utf-8"
+    )
+
+
+def test_cli_wires_the_fixture_genre_into_the_advice_it_prints(tmp_path, capsys):
+    _genre_fixture(tmp_path, "record-hint")
+    assert vf.main([str(tmp_path)]) == 0  # suspects are warn-only
+    out = capsys.readouterr().out
+    assert "Do not" in out
+    for phrase in _EDIT_TREE_PHRASES:
+        assert phrase not in out, f"CLI still says {phrase!r} on a record-hint fixture"
+
+
+def test_cli_still_prints_strip_advice_for_a_strip_fixture(tmp_path, capsys):
+    # The other direction: a CLI that hardcoded record-hint wording, or a
+    # `suspect_genre` that swallowed every fixture, passes the test above.
+    _genre_fixture(tmp_path, "strip")
+    assert vf.main([str(tmp_path)]) == 0
+    out = capsys.readouterr().out
+    assert _EDIT_TREE_PHRASES[1] in out
+
+
 def test_suspect_genre_reads_fixture_json(tmp_path: Path):
     (tmp_path / "fixture.json").write_text(
         json.dumps({"genre": "record-hint"}), encoding="utf-8"
