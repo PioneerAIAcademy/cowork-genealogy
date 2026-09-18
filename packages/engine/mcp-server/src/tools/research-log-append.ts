@@ -146,15 +146,15 @@ class LogAppendError extends Error {}
  * xfail_reason): "not generalizable outside the US (post-1851 England & Wales
  * censuses do carry a relationship column)".
  *
- * MEASURED over the 3,490 distinct `notes` arguments of research_log_append in
+ * MEASURED over the 3,489 distinct `notes` arguments of research_log_append in
  * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
- * form), measured at 86d50cf0f: refusals fall 355 -> 201, and the 154 removed
- * are 43.4% of every refusal the rule made -- 134 of them the year, 20 the
+ * form), measured at 772e67358: refusals fall 355 -> 202, and the 153 removed
+ * are 43.1% of every refusal the rule made -- 133 of them the year, 20 the
  * jurisdiction. THE SPLIT RULE, because the figure is meaningless without it: a
  * freed note counts as JURISDICTION when `censusMentions` bound it to a non-US
  * threshold (a mention whose `columnFrom` is not 1880), and as YEAR otherwise.
  * The obvious alternative -- counterfactual, "would it still be refused if every
- * census were treated as US/1880?" -- splits the same 154 as 146 year and 8
+ * census were treated as US/1880?" -- splits the same 153 as 145 year and 8
  * jurisdiction. The two rules disagree on exactly 12 notes, and all 12 are the
  * same shape: a British census of 1881, 1891, 1901 or 1911, with a pre-1880
  * BIRTH year elsewhere in the note ("1901 England census ... Robert Brierley
@@ -168,8 +168,9 @@ class LogAppendError extends Error {}
  * wrong; quoting a split without saying which is.
  * Nothing in that corpus is newly refused. Re-derive rather than
  * quote these: the corpus grows with every committed run, and two earlier
- * passes of this same docstring read 3,275/332/136 and 3,392/338/142 on
- * smaller ones. The stamp is there so a reader can tell what the number was
+ * passes of this same docstring read 3,275/332/136, 3,392/338/142 and
+ * 3,490/355/154 on other snapshots of it -- note the corpus can SHRINK as well
+ * as grow, because a re-run replaces a skill's run log rather than adding one. The stamp is there so a reader can tell what the number was
  * true of, per tests/packaging/corpus-figures.test.ts's rule 3.
  *
  * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
@@ -186,7 +187,7 @@ class LogAppendError extends Error {}
  * The jurisdiction test is deliberately adjacency-bound and NOT a search of the
  * note, because most non-US words in this corpus are birthplaces on a US
  * schedule: "1850 US Census, Schuylkill County, PA ... born Ireland" is a US
- * census of Irish immigrants and must stay refused. 50 of the 201 surviving
+ * census of Irish immigrants and must stay refused. 52 of the 202 surviving
  * refusals name a non-US place anywhere in the note (same corpus and stamp as
  * above); read through, they are overwhelmingly that shape, so a wider window
  * would be a regression rather than a further fix.

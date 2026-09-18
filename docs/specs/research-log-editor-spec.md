@@ -345,9 +345,10 @@ Scope, and why it is this narrow:
 - **Undecidable inputs keep the prior behaviour** rather than failing open: when
   no year binds to a census at all, the whole-note test still applies.
 
-Measured over the 3,490 distinct `notes` arguments in the committed run logs
-(measured at 86d50cf0f; re-derive rather than quote, the corpus grows with every
-committed run), the rule refuses 201 (5.8%), down from 355 (10.2%) before the
+Measured over the 3,489 distinct `notes` arguments in the committed run logs
+(measured at 772e67358; re-derive rather than quote — the corpus moves with every
+committed run, and shrinks as well as grows, because a re-run replaces a skill's
+run log), the rule refuses 202 (5.8%), down from 355 (10.2%) before the
 binding. Nothing in that corpus is newly refused; the one shape that would be
 is a census named before 1800, which the old whole-note year test (`18[0-7]\d`)
 could not see and which the rule is squarely for -- the 1790-1840 US schedules
