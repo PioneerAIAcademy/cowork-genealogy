@@ -687,6 +687,12 @@ app = create_app()
 
 
 if __name__ == "__main__":
+    # The house pattern: a Windows console defaults to cp1252 and dies on the box-drawing
+    # glyphs in this module's own section rules (test_encoding_lint.py).
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+
     import uvicorn
 
     # uvicorn's CLI builds the loop before this module is imported, and on Windows that
