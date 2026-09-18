@@ -28,8 +28,10 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved: true match, at *probable* confidence — see "The unresolved
-tension" below before relying on this.** The supporting evidence is a second,
+**NOT RESOLVED — do not treat the findings below as settled ground truth.** The
+hint is *plausible but unproven*: the evidence divides two registers against two
+on the only field that identifies the father. See "The unresolved tension"
+below, which is the whole point of this file. The supporting evidence is a second,
 independent registration of the same infant that the hint batch did not
 surface, plus an earlier child of the same couple and the subject's own death
 entry. The origin field is what carries the identification; one record
@@ -82,30 +84,56 @@ sources and not one names a Carmen Morales") far better than the 1905 pair
 alone: a partner who bore two children who died in infancy, before a marriage
 that produced nine surviving children, leaves exactly this trace.
 
-**The unresolved tension — read this before trusting the verdict.** The 1896
-entry contradicts the 1905 ones on the single field the identification rests on.
-It reads "ambos originarios y vecinos de **esta ciudad**" — natives of Guatemala
-City, not of Chiquimula — and "no firmó". If that line is accurate, the couple
-were capital-born and the subject (b. Quezaltepeque, Chiquimula) is not the
-father.
+**The unresolved tension — this is the crux, and it is NOT settled.** The origin
+field is the only thing tying the tree person to this couple, and the four
+registers that state it disagree two against two:
 
-The argument for preferring the 1905 reading is about clerical practice, not
-about the man, and should be weighed as such:
+| Record | Origin stated | Register / clerk |
+|---|---|---|
+| 1896 birth, Partida 326 (`ark:/61903/1:1:6K2Q-S4B2`) | "originarios y vecinos de **esta ciudad**" | Guatemala City births |
+| 1896 death, Partida 406 (`ark:/61903/1:1:Z95C-JY6Z`) | "originarios y vecinos de **esta ciudad**" | Guatemala City deaths — **independent clerk** |
+| 1905 birth, Partida 1118 (`ark:/61903/1:1:6KNJ-27P8`) | "originarios de **Chiquimula la Sierra**" | Guatemala City births |
+| 1905 death, Partida 680 (`ark:/61903/1:1:6D38-BQ8L`) | "de **Chiquimula**" | Guatemala City deaths |
 
-| Page | Origin field across entries | Signature field | Discriminating? |
-|---|---|---|---|
-| 1905 birth, Partida 1118 | varies — "de Sansare", "de Guatemala", "de Chiquimula la Sierra" | varies — 1117 "no sabe firmar", 1118 signed | yes, both |
-| 1905 death, Partida 680 | varies — "de San Juan", "originarios y vecinos de esta Ciudad", "de Chiquimula" | every entry "no firmó" | origin only |
-| 1896 birth, Partida 326 | 326 and 327 **verbatim identical** | both "no firmó" | **no — boilerplate** |
+If the 1896 pair is right, this couple were capital-born and the tree person
+(b. Quezaltepeque, Chiquimula; "originario de Esquipulas" on his own 1933 death
+entry) is **not** the father — the hint is a false match. If the 1905 pair is
+right, the hint is true.
 
-Both clerks who demonstrably recorded origin as real data wrote *Chiquimula*;
-the clerk who wrote *esta ciudad* used a formula identical to the next entry on
-his page. That is a reasonable basis for preferring the 1905 reading, but it
-rests on a two-entry sample of one 1896 page. **Whoever gives the second
-opinion should go to this question first:** read more of the 1896 register
-(image `ark:/61903/3:1:3QSQ-G9CF-PZ27`) and see whether that clerk ever varied
-the origin formula. If he did, the 1896 line is real data and this verdict
-should be reopened.
+**A boilerplate defence of the 1905 reading was tried and failed.** The first
+attempt argued that the 1896 clerk was reciting a formula. He was not: on the
+facing page, same clerk, same day, Partida 328 reads "originarios y vecinos **de
+aquel lugar**" and Partida 329 "y **de este vecindario**". He varied the field,
+so his "esta ciudad" is real data. That argument is dead and should not be
+revived.
+
+**What is left is weaker and should be labelled as such.** Across these
+registers, "originarios y vecinos de esta ciudad" appears to be a single
+compound formula meaning *local*, while the split form "originario de X y de
+este vecindario" is used when origin and residence differ — visible on the 1905
+death page, where partidas 678 and 681 take the compound form and 677, 679 and
+680 take the split form. A clerk who did not probe would default to the
+compound. That would explain 1896 without impeaching 1905, but it is an
+inference about habit, not evidence about the man, and it is not strong enough
+to carry a ground-truth verdict on its own.
+
+**Two readings remain open, and picking between them is the second opinion's
+job, not this document's:**
+
+1. *One couple, hint true.* The 1905 clerks probed and got Chiquimula; the 1896
+   clerks defaulted to the compound. The tree person is the father.
+2. *One couple, hint false.* The couple were capital-born as both 1896 registers
+   independently state, and the 1905 "Chiquimula" is the anomaly. The tree
+   person is not the father, and this is outcome (c).
+
+A third reading — two distinct couples each named Ciriaco Bardales and Carmen
+Morales, each naming a son Ciriaco, in one city — is not worth entertaining.
+
+**What was NOT done and would settle it:** no record has been found stating the
+tree person's own whereabouts between his 1870 Chiquimula birth and his
+children's 1907 Chimaltenango / 1909 Guatemala City registrations. A record
+placing him in Guatemala City in the 1890s, or placing him elsewhere in 1896 or
+1905, would decide this outright. That search has not been run.
 
 **Two corrections to the draft note above, and to the pre-handoff review.**
 
@@ -155,6 +183,7 @@ corroboration and must not be cited as such.
 
 **Second opinion:** _outstanding — to be named here and in the PR body before
 merge._ The card makes it mandatory for this fixture (difficulty `hard`, and the
-deciding evidence is a register image). The specific question to put to the
-reviewer is the 1896-vs-1905 origin contradiction under "The unresolved
-tension" above, not the verdict in general.
+deciding evidence is a register image). The question to put to the reviewer is
+the 1896-vs-1905 origin contradiction under "The unresolved tension" above: two
+registers say this couple were capital-born, two say Chiquimula, and the hint is
+true only on the second reading.
