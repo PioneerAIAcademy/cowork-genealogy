@@ -115,14 +115,42 @@ def report_no_fs_quality_mention_without_call(tool_calls, text_response, test):
     if has_quality_call:
         return  # quality call happened — any mention is legitimate
 
+    # The id-type mention. SKILL.md forbids "a sentence about the id type"
+    # alongside the quality mention, and this half was invisible until
+    # 2026-09-19: the co-occurrence match below requires BOTH "familysearch"
+    # and "quality", so `ut_check_warnings_018` — the test whose whole job is
+    # policing this silence — opened with "Patrick Flynn is `I1` — a synthetic
+    # ID. Now running the offline warnings check.", near-verbatim the sentence
+    # SKILL.md quoted as the forbidden form, and scored 3. Nothing detected it,
+    # so the rule bound by prose alone and drifted for four consecutive runs
+    # (9 -> 3 -> 4 -> 5 violations). Safe to match loosely for the same reason
+    # the co-occurrence match is: person_quality was NOT called on this run, so
+    # the skill has no legitimate reason to characterise the id at all.
+    _ID_TYPE = _re.compile(r"\bsynthetic\b", _re.I)
+    # An absence/skip remark about the quality check, which the co-occurrence
+    # match catches only when the word "familysearch" also appears.
+    _SKIP_WORD = _re.compile(
+        r"\b(skip(?:ped|ping)?|not\s+checked|no\s+\w+\s+data|not\s+available|"
+        r"n/a|does\s*n[o']t\s+apply|doesn't\s+apply)\b",
+        _re.I,
+    )
+
     for sentence in _re.split(r"(?<=[.!?;:])\s+|\n+", response):
         low = sentence.lower()
+        why = None
         if "familysearch" in low and "quality" in low:
+            why = "mentions FamilySearch quality"
+        elif _ID_TYPE.search(sentence):
+            why = "characterises the id's type"
+        elif "quality" in low and _SKIP_WORD.search(sentence):
+            why = "remarks on the skipped quality check"
+        if why:
             raise AssertionError(
-                "the response mentions FamilySearch quality but person_quality "
-                "was never called — SKILL.md forbids any mention (standalone "
-                "note, 'not available' remark, or routing narration) when the "
-                f"id is synthetic and the tool was skipped: {sentence.strip()!r}"
+                f"the response {why} but person_quality was never called — "
+                "SKILL.md forbids any mention of FamilySearch quality, the "
+                "id's type, or the skipped call, in any position (opening "
+                "line, closing note, or parenthetical), when the id is "
+                f"synthetic and the tool was skipped: {sentence.strip()!r}"
             )
 
 
