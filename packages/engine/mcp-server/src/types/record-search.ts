@@ -217,12 +217,18 @@ export interface RecordSearchInput {
   isPrincipal?: boolean;
 
   // Results per page. Default 50 when `subjectId` is supplied (ranking is
-  // active, so a deep pool is worth fetching — the re-ranker cuts it back);
-  // otherwise 20. The two are deliberately coupled: a deep pool without
-  // ranking is 50 raw stubs for the model to triage by hand, which is the
-  // waste this default exists to avoid, not create.
+  // active, so a deep pool is worth fetching — every row comes back scored and
+  // ordered); otherwise 20. The two are deliberately coupled: a deep pool
+  // without ranking is 50 raw stubs for the model to triage by hand, which is
+  // the waste this default exists to avoid, not create. Ranking no longer
+  // truncates the pool host-side (#1212) — it orders it and says how good each
+  // row is, so `count` is the only thing that bounds how much comes back.
   count?: number;
   offset?: number;
+  // Forwarded to rank_search_matches as its `top`. Caps how many ranked stubs
+  // come back; omit for every scored candidate. Only meaningful alongside
+  // `subjectId` and `projectPath`, since without those no ranking runs.
+  top?: number;
 }
 
 export interface RecordSearchEvent {
@@ -251,6 +257,37 @@ export interface RecordSearchResult {
   deathDate?: string;
   deathPlace?: string;
   events: RecordSearchEvent[];
+  // ── Ranking annotations ─────────────────────────────────────────────────
+  // Present only when the search ranked (subjectId + projectPath + staged).
+  // They live on the row rather than on a parallel list because two lists of
+  // the same records, in two shapes, is what the #1212 ruling removed.
+  //
+  // `score`/`confidence` above are FAMILYSEARCH's own search score. These are
+  // the MATCHER's, computed against the subject — different numbers from a
+  // different system, which is why they do not share a name.
+  /** 1-based rank by match score; the order `results` is returned in. */
+  matchRank?: number;
+  /**
+   * The row's original 1-based position in FamilySearch's search order.
+   *
+   * This is what makes the re-ordering AUDITABLE rather than lossy: the
+   * response is sorted by match score, so without this the order the
+   * repository actually returned would be unrecoverable from the response.
+   * The staged sidecar preserves it too, by keeping search order.
+   */
+  searchRank?: number;
+  /** 0-1 match score; null when the FS call kept failing (the row is kept). */
+  matchScore?: number | null;
+  /** 1-10 confidence bucket; omitted on a no-match or a scoring failure. */
+  matchConfidence?: number;
+  /** How many facts this candidate carries that discriminate one human from
+   *  another. A low count means the score is unstable in either direction —
+   *  reported, never thresholded. */
+  candidateFactCount?: number;
+  /** Only set when attachment-checking ran and the batch call succeeded. */
+  attachedToSubject?: boolean;
+  attachedToOther?: boolean;
+  // ────────────────────────────────────────────────────────────────────────
   collectionId?: string;
   collectionTitle?: string;
   collectionUrl?: string;
@@ -309,16 +346,24 @@ export interface RecordSearchToolResponse {
   returned: number;
   offset: number;
   hasMore: boolean;
+  // ALWAYS present. There is one row list, never two: when ranking runs the
+  // rows are ANNOTATED IN PLACE with the score fields and re-ordered best
+  // first, and `ranked` carries metadata only (#1212 ruling, 2026-09-15).
+  // An earlier shape dropped this block whenever `ranked` was usable; that
+  // needed a four-branch conditional and a parity guard to hold two row
+  // shapes in step, and both are gone with it.
   results: RecordSearchResult[];
   // collectionId → collectionTitle for every collection in `results`, present
   // only on a STAGED response. The per-result `collectionTitle` repeats one of a
   // handful of strings on every row (9.4% of inline row bytes, measured); hoisting
   // it here says the same thing once. The staged sidecar keeps the per-row copy.
   collections?: Record<string, string>;
-  // Present only when `subjectId` was supplied and ranking succeeded: the
-  // candidates re-ordered by FamilySearch match score against the subject,
-  // carrying `matchScore` / `matchRank` / `searchRank`. `results` is left in
-  // FamilySearch's own search order so nothing that reads it changes meaning.
+  // Present only when `subjectId` was supplied and ranking succeeded. Carries
+  // METADATA ONLY — `scoredCount`, `returnedCount`, the subject and the
+  // diagnostics — because the rows themselves are annotated in `results` above
+  // and ordered best first, not duplicated here. Every scored candidate is
+  // annotated, not a top-N (#1212). `annotateResultsWithRanking` deletes
+  // `matches` off this block once it has moved the scores onto the rows.
   ranked?: RankSearchMatchesResult;
   // Set only when ranking was requested and failed — the search itself
   // succeeded, and `results` is usable unranked. Ranking degrading must never

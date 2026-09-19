@@ -378,7 +378,34 @@ reads the record.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because the re-ranker cuts it back host-side. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. |
+| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side — `count` is what bounds the response, and `top` is the caller's opt-in to fewer. |
+| `top` | number | Forwarded to `rank_search_matches` as its `top`: a cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful alongside `subjectId` and `projectPath`, since ranking does not otherwise run. **There is ONE row list.** `results` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom: the rows it cuts are the worst-scoring ones, not a second hidden copy. |
+
+### The response is re-ordered; the staged sidecar is not
+
+When a search ranks, `results` comes back **annotated in place** — each row
+carries `matchRank`, `searchRank`, `matchScore`, and where available
+`matchConfidence`, `candidateFactCount` and the `attachedTo*` flags — and the
+list is ordered **best first**. `ranked` carries metadata only; it has no row
+list of its own. There is one set of rows, never two.
+
+`searchRank` is what keeps that re-ordering **auditable rather than lossy**.
+Sorting by match score discards FamilySearch's own ordering, so without the
+original position recorded on each row it would be unrecoverable from the
+response.
+
+**The staged sidecar keeps FamilySearch's search order and is NOT re-sorted.**
+It is an audit record of what the repository returned, and re-sorting an audit
+trail by a score computed afterwards is the thing to regret later. This is a
+real divergence, not a theoretical one: the sidecar is written *before* ranking
+runs, so the response and the sidecar genuinely differ in order. A reader
+comparing the two should expect that — the sidecar answers "what did
+FamilySearch return, and in what order", the response answers "which of these
+best matches this subject".
+
+A row the ranker did not score keeps its search position, gains no score fields,
+and sorts after every scored row. It is never dropped.
+
 | `offset` | number | Pagination offset. Default 0. The combined value `offset + count` must be at most 4999. |
 
 ### Examples
@@ -458,7 +485,7 @@ Strict surname + birth-place match:
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
-| `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
+| `results` | RecordSearchResult[] \| undefined | The results in FamilySearch's own search order. **Omitted when `ranked` carries the same rows in a usable form** — `ranked` then holds every scored candidate, ordered by match score and carrying the same triage fields, so shipping both was the same records twice. Present whenever ranking did not run, threw (`rankingError`), or returned a ranking the caller must not triage on (`subjectResolvable: false`, either branch). |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
 
 ### `unloggedSearches` / `nilSearchNeedsLog` — the log obligation, at the tool
@@ -1813,7 +1840,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 25 | Throws on 403 with WAF/UA guidance | WAF rejection |
 | 26 | Returns empty results when entries is empty | Zero-match handling |
 | 27 | Maps entry → RecordSearchResult correctly using `display{}` first, `facts[]` fallback | Field mapping |
-| 28 | Surfaces `treeMatches` from `entry.hints` sorted by stars descending | Tree-match surfacing |
+| 28 | Surfaces `treeMatches` from `entry.hints` sorted by stars descending, and reaches `ranked[].treeMatches` on a `subjectId` search | Tree-match surfacing — the subject-named case is the one that reads `ranked`, not `results` |
 | 29 | Resolves the represented persona by ark suffix when there are multiple principals | Multi-principal handling |
 | 30 | Sets `hasMore: true` when `links.next` exists | Pagination flag |
 | 31 | Echoes `totalMatches` and `paginationCappedAt` correctly | Total-count surfacing |
@@ -1846,6 +1873,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 61 | Read past other root fields (`FilmNumber`, `RecordGroup`, `UniqueId`) | Position independence within the array |
 | 62 | Survives the staged slim block, inline **and** in the sidecar | The staged case is the normal one; proven by sabotage |
 | 63 | Reaches `ranked[].batchNumber` on a `subjectId` search | The projection a subject-named search actually reads |
+| 64 | `results` is ALWAYS present and complete, and carries the ranking annotation when ranking ran | There is one row list, so the failure to guard against is a row going missing rather than a row being duplicated. `tests/utils/staged-compaction.test.ts` pins that no row is ever dropped, that an unscored row trails the scored ones rather than vanishing, and that `ranked` gives up `matches` once the rows carry the scores. The earlier conditional-drop design and its `record-search-ranked-drop.test.ts` were removed with it. |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63

@@ -25,8 +25,16 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * #2071 then added the particle-surname clause to BOTH `surname` descriptions
  * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,292), combined
- * 20,164. Same direction again, and for the same reason: the clause records a
- * measured result (section K) that a model would otherwise guess at.
+ * 20,164.
+ *
+ * #1212 then added a `top` clause to `record_search` alone (14,872 -> 15,344,
+ * +472), combined 20,636. That clause described the REJECTED drop design, where
+ * `top` decided whether rows were visible at all. Under the shipped shape it
+ * does not: there is one row list, `results` is never truncated, and `top` caps
+ * only how many rows are scored and annotated. Corrected here (15,347 ->
+ * 15,486, +139) rather than left to read as a cap on what comes back — a model
+ * that believes `top` hides rows will omit it to avoid losing evidence, which
+ * is the opposite of what it does.
  *
  * The ruling on #1323 was to name
  * both roles and when each applies instead of recommending omission, and naming
@@ -143,7 +151,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14939],
+  ["record_search", 15486],
   ["person_search", 5292],
 ];
 
