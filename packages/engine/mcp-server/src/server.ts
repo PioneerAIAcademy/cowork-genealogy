@@ -596,7 +596,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "person_warnings") {
       try {
         const args = request.params.arguments as unknown as PersonWarningsInput;
-        const result = await personWarningsTool(args);
+        const result = await personWarningsTool(args, principal);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
