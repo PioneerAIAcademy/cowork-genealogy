@@ -688,13 +688,15 @@ the `max_cost_usd` note in §6 step 5.
    **in an e2e run the harness is the user**, so a yield is not by itself a defect.
    A `Stop` hook intercepts the voluntary yield and classifies the agent's closing
    words (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) into three
-   classes, counted per run in `usage.hand_back_classes`:
+   classes. The class is the FORM; the key counted in `usage.hand_back_classes` is the
+   OUTCOME, and for a completion claim the two differ — no run log ever carries a
+   `completion_claim` key:
 
-   | class | form | harness reply |
-   |---|---|---|
-   | `step` | ends with the literal `Next: <step>. Continue?` | **"Yes."** — the researcher's answer |
-   | `completion_claim` | ends with the literal `Research complete.` | if `project.status != "completed"`, says so and asks the agent to verify with `research_query` and continue |
-   | `silent` | anything else | the procedural resume instruction |
+   | class | form | counted as | harness reply |
+   |---|---|---|---|
+   | `step` | ends with the literal `Next: <step>. Continue?` | `step` | **"Yes."** — the researcher's answer |
+   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed | if `project.status != "completed"`, says so and asks the agent to verify with `research_query` and continue |
+   | `silent` | anything else | `silent` | the procedural resume instruction |
 
    **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
    literally and nothing else. Free-prose matching was set aside: the predicate it
@@ -710,7 +712,7 @@ the `max_cost_usd` note in §6 step 5.
 
    **What is NOT counted as a defect.** `should_continue_run` returns False for four
    reasons and only two are about the agent: budget exhausted and no-progress. A stop
-   on `project.status == "completed"` is the successful path (134 of the 180 committed
+   on `project.status == "completed"` is the successful path (134 of the 181 committed
    run logs) and `mcp_unavailable` is an infrastructure failure rather than agent
    behaviour; both are recorded as
    `terminal_completed` / `terminal_mcp_unavailable` and neither counts as a

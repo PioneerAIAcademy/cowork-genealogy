@@ -141,7 +141,7 @@ def terminal_reason(
     """Why `should_continue_run` is about to return False.
 
     That function returns a bare bool for FOUR different reasons and only two of them
-    are defects. 134 of the 180 committed e2e run logs stop on `completed` — counting
+    are defects. 134 of the 181 committed e2e run logs stop on `completed` — counting
     those as hand-back defects would make the rate dominated by successes, and the live
     acceptance run (which must end `completed`) would log one against itself.
 
