@@ -181,7 +181,8 @@ correspondingly-numbered general sections below. The general spec remains the
   project.") onto the user's first message on the wire, so the existing
   **`init-project`** skill runs and reads the person and objective from that one
   turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
-  onboarding UI). The bubble shows only what the user typed. The session is
+  onboarding UI; the researcher profile is fixed and nothing about the
+  researcher is asked). The bubble shows only what the user typed. The session is
   titled provisionally and renamed once the objective is set.
 
 ---
@@ -565,6 +566,35 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   so a reconnect or a second tab rebuilds the chat history.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
+> - **Lay mode: the server answers the hand-back itself (lead
+>   ruling 2026-09-18).** Every hand-back the prompts produce ends with the
+>   literal `Next: <step>. Continue?` (terminal `Research complete.`).
+>   Whether anyone has to click is a control-plane setting, not a prompt
+>   rule: when a turn's final main-thread text ends with the literal, the
+>   in-sandbox runner (`app/agent/runner.py`, `AutoContinue`) starts the next
+>   turn with `Yes.` itself — the same text the web's Continue button sends.
+>   Two new `agent_event` kinds ride the socket and the replay buffer:
+>   `{kind:"auto_continue", text:"Yes.", step, max_steps}` before each
+>   synthetic turn, and `{kind:"auto_continue_paused", reason:"budget", step,
+>   max_steps}` when the budget is spent. The web folds `auto_continue` as a
+>   bubble boundary (`chatEvents.ts`), so each auto-continued step is its own
+>   reply and no `Yes.` bubble ever appears; `auto_continue_paused` renders as a
+>   note beside the Continue button. The chain stops when: the turn ends with
+>   anything but the literal (a real question, `Research complete.`, an error,
+>   an interrupted turn); the budget of **consecutive auto steps since the last
+>   real user message** is spent (`AUTO_CONTINUE_MAX_STEPS`, default 30 — it
+>   bounds one unattended chain, not the session); or the user typed something
+>   meanwhile, in which case their message runs next and no `Yes.` is injected.
+>   Settings: `Settings.auto_continue` (default on) and
+>   `Settings.auto_continue_max_steps`, passed to the sandbox as
+>   `AUTO_CONTINUE` / `AUTO_CONTINUE_MAX_STEPS` by both providers. A `user_msg`
+>   frame may carry `auto_continue: false` to opt its whole chain out; the
+>   public `/v1` API always does (`public-rest-api-spec.md`). The canonical
+>   literal regex is `HAND_BACK_RE` in `apps/web/src/components/chatEvents.ts`;
+>   the runner's copy in `app/agent/hand_back.py` is pinned to it by
+>   `apps/server/tests/test_hand_back_parity.py`. Per-session on/off lands with
+>   the experience-level user setting. Cowork desktop has no control plane we
+>   own; the user clicks there.
 
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)
@@ -789,7 +819,7 @@ every healthy session.
 > The `#/s/:id` hash route means a refresh or a shared link reopens the session.
 >
 > Two notes: the "researcher-profile onboarding" is conversational, not UI — a
-> new session prefixes the opener onto the user's first message, which triggers `init-project` (§0.5) —
+> new session auto-sends an opening turn that triggers `init-project` (§0.5) —
 > and the §7.4 this section twice points at **does not exist**; the spec has no
 > §7.4. It means §0.5's onboarding bullet.
 >

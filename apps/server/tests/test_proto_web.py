@@ -76,9 +76,9 @@ class FakeStore:
         rows.append(EventRow(seq=seq, kind=kind, payload=payload, ts=T0 + timedelta(seconds=seq)))
         return seq
 
-    async def create_session(self, title: str, model: str) -> SessionRow:
+    async def create_session(self, title: str, model: str, project_id: str | None = None) -> SessionRow:
         n = len(self.sessions) + 1
-        row = SessionRow(f"sess_{n}", f"proj_{n}", title, model, T0, T0)
+        row = SessionRow(f"sess_{n}", project_id or f"proj_{n}", title, model, T0, T0)
         self.sessions[row.session_id] = row
         return row
 
@@ -201,6 +201,14 @@ def test_activity_to_wire_is_a_task_progress_event():
     assert "seq" not in wire
 
 
+def test_activity_to_wire_keeps_the_payloads_own_kind():
+    # The worker writes the whole transient event, kind included (text_delta,
+    # thinking_delta, task_progress); relabelling a text delta as task_progress would
+    # hand the SPA a subagent progress line with a `text` field.
+    wire = activity_to_wire(Activity(T0, {"kind": "text_delta", "text": "Thom"}))
+    assert wire["event"] == {"kind": "text_delta", "text": "Thom"}
+
+
 @pytest.mark.parametrize(
     ("header", "after", "expected"),
     [
@@ -299,13 +307,18 @@ async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502():
     assert queue.sent == []
 
 
-async def test_post_message_rejects_empty_text_and_unknown_session():
+async def test_post_message_rejects_empty_or_blank_text_and_unknown_session():
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()
     async with make_client(store, queue) as c:
-        assert (await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": ""})).status_code == 422
+        for blank in ("", " ", "\n", "  \t "):
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": blank})
+            assert r.status_code == 422, repr(blank)
         assert (await c.post("/api/sessions/nope/messages", json={"text": "x"})).status_code == 404
-    assert queue.sent == []
+        assert queue.sent == []
+        # Padding around real text is not blankness.
+        assert (await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "  hi  "})).status_code == 202
+    assert [m["text"] for m in queue.sent] == ["  hi  "]
 
 
 async def test_get_events_returns_rows_above_the_cursor():
@@ -487,3 +500,17 @@ def test_003_web_only_adds_not_null_default_columns_to_sessions():
         assert re.match(r"ALTER TABLE sessions ADD COLUMN IF NOT EXISTS \w+ .*NOT NULL DEFAULT", stmt), stmt
     columns = {re.match(r"ALTER TABLE sessions ADD COLUMN IF NOT EXISTS (\w+)", s).group(1) for s in statements}
     assert columns == {"title", "model", "updated_at"}
+
+
+async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
+    # proto/seed.py loads a fixture under a project id, then opens the session on it.
+    store, queue = FakeStore(), FakeQueue()
+    async with make_client(store, queue) as c:
+        r = await c.post("/api/sessions", json={"title": "Bagley", "project_id": "proj_bagley-father-1884_ab12cd"})
+        assert r.status_code == 200
+        assert store.sessions[r.json()["id"]].project_id == "proj_bagley-father-1884_ab12cd"
+        r = await c.post("/api/sessions", json={"title": "x"})
+        assert store.sessions[r.json()["id"]].project_id.startswith("proj_")
+        for bad in ("p/q", "", "..", "/p", "p q", "-p"):
+            assert (await c.post("/api/sessions", json={"project_id": bad})).status_code == 422, repr(bad)
+
