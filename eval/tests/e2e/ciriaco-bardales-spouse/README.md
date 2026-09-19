@@ -261,20 +261,34 @@ but it is a **duplicate index of the very same death partida** (same
 Jun 1905–Jan 1906 volume) that names only the mother. It is not independent
 corroboration and must not be cited as such.
 
-**Second opinion:** _outstanding — to be named here and in the PR body before
-merge._ The card makes it mandatory for this fixture (difficulty `hard`, and the
-deciding evidence is a register image). **One question, the same one the PR body
-asks:**
+**Second opinion given by: mercyokum.** The record was opened directly on
+familysearch.org (not taken from the committed transcription) — image
+`ark:/61903/3:1:939J-DD98-8M`, image 110 of 258 in "Chiquimula. Marriage
+Records 1923–1925," entry for José Luis Bardales. The question put to the
+reviewer was the same one the PR body asks:
 
 > Does "nieto por linea paterna de Don Ramón Sanabria y **Josefa Bardales**" on
 > the 1924 entry, set against the tree person being a documented son of Josefa
 > Bardales, identify them as the same man — or is it a name coincidence inside
 > one surname group in one city?
 
-Open `ark:/61903/1:1:XSGQ-CNSC` (image `ark:/61903/3:1:939J-DD98-8M`) yourself:
-it is the single load-bearing record here and is transcribed in no committed
-artifact, because the agent never touched it during the run. Issue #1346 is the
-precedent for trusting an ark nobody opened.
+**Verdict: identification holds.** Three checks against the actual handwriting,
+not the transcription:
+
+1. "Josefa Bardales" is legible and unambiguous — the surname's letterforms
+   match every other instance of "Bardales" in the same entry (the groom's own
+   surname), in the same hand. No plausible alternative reading fits.
+2. "Nieto por linea paterna" attaches grammatically to Ciriaco, not Carmen: the
+   clause follows directly from naming Ciriaco as the father, and Carmen
+   Morales's ancestry is not given in this entry at all. Josefa Bardales is
+   unambiguously Ciriaco's mother.
+3. No ink bleed, correction, overwriting, or damage in that passage — only
+   normal pen-pressure variation, which introduces no ambiguity.
+
+Combined with the tree's own independent naming of Josefa Bardales as
+Ciriaco's mother (a separate 1933 death record, above), this is two unrelated
+documents naming the same mother for the same man — a real identifier, not a
+shared-surname coincidence. Do not re-open this question without new evidence.
 
 The 1896 origin entries are **not** the question any more. An earlier revision of
 this file put them here, when the identification still ran on geography; that
