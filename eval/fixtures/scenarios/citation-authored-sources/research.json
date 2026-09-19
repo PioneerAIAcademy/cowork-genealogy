@@ -1,0 +1,82 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Bridget Fallon, born circa 1849 in Ireland, died 1921 in Dubuque County, Iowa",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Dubuque County history by Alvina T. Rourke, published 1880 by the Western Historical Society in Chicago; page 512; the book states its source for the Fallon entry as Dubuque County marriage register B, page 140. Viewed on FamilySearch.",
+      "citation_detail": {
+        "who": "FamilySearch",
+        "what": "Dubuque County history",
+        "when_created": "1880",
+        "when_accessed": "2026-06-01",
+        "where": "FamilySearch",
+        "where_within": "page 512"
+      },
+      "source_classification": "authored",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-01",
+      "url": null,
+      "url_archived": null,
+      "notes": "Full title on the title page: History of Dubuque County, Iowa. A compiled county history with the author's own analysis; it names its source for the Fallon family entry.",
+      "log_entry_id": null
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Find A Grave memorial for Bridget Fallon (1849-1921), Calvary Cemetery, Dubuque, Iowa; memorial number 87654321; page created by contributor Mark T. Steward, last modified 3 February 2019; the memorial cites her 1921 obituary in the Dubuque Telegraph-Herald. FindAGrave.com.",
+      "citation_detail": {
+        "who": "FindAGrave.com",
+        "what": "Bridget Fallon memorial",
+        "when_created": "1921",
+        "when_accessed": "2026-06-01",
+        "where": "FindAGrave.com",
+        "where_within": "memorial 87654321"
+      },
+      "source_classification": "authored",
+      "repository": "Find A Grave",
+      "access_date": "2026-06-01",
+      "url": null,
+      "url_archived": null,
+      "notes": "Contributor and a stated source of the source are both present in the before-state; the reliability half must be carried in the refined citation.",
+      "log_entry_id": null
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "Iowa death certificate for Bridget Fallon, no. 1921-4407, died 10 June 1921, Dubuque County, Iowa; Iowa Bureau of Vital Statistics; digital image on FamilySearch.",
+      "citation_detail": {
+        "who": "FamilySearch",
+        "what": "death certificate",
+        "when_created": "1921",
+        "when_accessed": "2026-06-01",
+        "where": "FamilySearch",
+        "where_within": "certificate no. 1921-4407"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-01",
+      "url": null,
+      "url_archived": null,
+      "notes": null,
+      "log_entry_id": null
+    }
+  ],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
