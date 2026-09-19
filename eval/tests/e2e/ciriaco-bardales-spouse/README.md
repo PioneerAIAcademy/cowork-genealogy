@@ -263,7 +263,19 @@ corroboration and must not be cited as such.
 
 **Second opinion:** _outstanding — to be named here and in the PR body before
 merge._ The card makes it mandatory for this fixture (difficulty `hard`, and the
-deciding evidence is a register image). The question to put to the reviewer is
-the 1896 origin entries under "The origin question" above: two independent
-registers call this couple capital-born, and they are explained by clerical
-habit rather than refuted by evidence. Everything else points to Chiquimula.
+deciding evidence is a register image). **One question, the same one the PR body
+asks:**
+
+> Does "nieto por linea paterna de Don Ramón Sanabria y **Josefa Bardales**" on
+> the 1924 entry, set against the tree person being a documented son of Josefa
+> Bardales, identify them as the same man — or is it a name coincidence inside
+> one surname group in one city?
+
+Open `ark:/61903/1:1:XSGQ-CNSC` (image `ark:/61903/3:1:939J-DD98-8M`) yourself:
+it is the single load-bearing record here and is transcribed in no committed
+artifact, because the agent never touched it during the run. Issue #1346 is the
+precedent for trusting an ark nobody opened.
+
+The 1896 origin entries are **not** the question any more. An earlier revision of
+this file put them here, when the identification still ran on geography; that
+argument is refuted above and the origin field now decides nothing.
