@@ -573,7 +573,7 @@ the `max_cost_usd` note in §6 step 5.
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
    | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
-   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress) — see note below |
+   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress). The terminal hand-back is classified and counted in `usage.hand_back_classes` — these are the two gate-False reasons that ARE agent defects — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
 
@@ -682,15 +682,49 @@ the `max_cost_usd` note in §6 step 5.
    sweep that lowers effort changes the conditions that forced this pin, and a
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
-   **Continue-nudge on premature yield.** An autonomous `/research` run
-   must end at `project.status == "completed"`; instead the agent
-   occasionally narrates the next step and yields mid-loop (a known
-   orchestration stall, not a real stop). A `Stop` hook intercepts that
-   voluntary yield: while the project is unfinished it vetoes the stop
-   (`decision: "block"`) and instructs the agent to re-read `research.json`
-   and invoke the next sub-skill. The nudge is bounded by
-   `caps.max_continue_nudges` plus a no-progress guard. That cap is generous
-   by design — a full GPS proof yields after each of ~10+ sub-skill steps, so
+   **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
+   `project.status == "completed"`. `/research` is *meant* to yield at every step
+   boundary — it names the next step and asks whether to do it (issue #2292) — and
+   **in an e2e run the harness is the user**, so a yield is not by itself a defect.
+   A `Stop` hook intercepts the voluntary yield and classifies the agent's closing
+   words (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) into three
+   classes, counted per run in `usage.hand_back_classes`:
+
+   | class | form | harness reply |
+   |---|---|---|
+   | `step` | ends with the literal `Next: <step>. Continue?` | **"Yes."** — the researcher's answer |
+   | `completion_claim` | ends with the literal `Research complete.` | if `project.status != "completed"`, says so and asks the agent to verify with `research_query` and continue |
+   | `silent` | anything else | the procedural resume instruction |
+
+   **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
+   literally and nothing else. Free-prose matching was set aside: the predicate it
+   replaced caught 15 of 41 real yields. `step` therefore reads **0** until #2292
+   lands the prose in `research/SKILL.md` — the correct result, not a broken
+   classifier. Do not loosen the pattern to make it non-zero, and note that markdown
+   emphasis around the line (`**Research complete.**`) does not match.
+
+   **A declared blocker reads as `silent`.** `research/SKILL.md` names a genuine
+   logged blocker as a third legitimate autonomous stop, but it names no next step,
+   so the three-class taxonomy has no separate slot for it. Recorded here rather than
+   left implicit; a fourth class is a live option if the distinction starts mattering.
+
+   **What is NOT counted as a defect.** `should_continue_run` returns False for four
+   reasons and only two are about the agent: budget exhausted and no-progress. A stop
+   on `project.status == "completed"` is the successful path (134 of the 180 committed
+   run logs) and `mcp_unavailable` is infrastructure (#941); both are recorded as
+   `terminal_completed` / `terminal_mcp_unavailable` and neither counts as a
+   hand-back defect. In particular a `completion_claim` on a project that *is*
+   completed is a **truthful** completion, never a `false_completion`. The nudge is bounded by
+   `caps.max_continue_nudges` (**40**; raised from 20 with #2328) plus a no-progress
+   guard. The raise is sized for the post-#2292 regime, where a well-formed
+   hand-back at every step boundary consumes a nudge and a full GPS proof runs ten-plus
+   of them — **not** because the old cap was observed binding: the single run that
+   reached 20/20 was an MCP-unavailable run from 2026-08-05, and `should_continue_run`
+   has short-circuited that case since 2026-08-07. The observed ceiling over the
+   14-day window is 4. The cost of the raise is that a stall which defeats the
+   no-progress guard (one tool call between nudges) can now burn 40 turns instead of
+   20 before `natural_end`, bounded only by `max_wall_clock_seconds` / `max_cost_usd`.
+   That cap is generous by design — a full GPS proof yields after each of ~10+ sub-skill steps, so
    a stingy one ends the loop before proof-conclusion; it only bounds the
    worst case, and the no-progress check is the real backstop against a
    genuinely idle agent. If a nudge produces no tool call, or the budget is
@@ -699,7 +733,14 @@ the `max_cost_usd` note in §6 step 5.
    reason is procedural only (no research hints), so it cannot affect
    recall; the number of nudges used is recorded in
    `usage.continue_nudges`, so a run that needed many pokes reads as weaker
-   signal. The decision logic is `should_continue_run` in
+   signal. `usage.hand_back_classes` sits beside it and counts hand-backs **including the
+   terminal one that ends the run**, so where a run ends through the Stop hook it
+   carries one more entry than `continue_nudges`. It is **not** universally larger: a run
+   killed by the wall clock, the tool cap, inactivity or an error never reaches the
+   hook at all and records no terminal class. (A count is deliberately not quoted —
+   `cost_cap` is a post-hoc label applied at the `ResultMessage`, so grouping by
+   `stop_reason` alone does not cleanly separate the two populations.) `continue_nudges` stays the count of nudges actually issued.
+   Both are additive — branch on key presence, no `harness_schema_version` bump. The decision logic is `should_continue_run` in
    `eval/harness/e2e/stop_checker.py`.
 
    **Stall-detect + resume.** The progress watchdog above doesn't only abort:
@@ -1117,7 +1158,7 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `4` for the shape above — and a `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `4` for the shape above — and a `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1611,6 +1652,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
+| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume. A run that needed many pokes reads as weaker signal. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is 0 until #2292 lands the hand-back prose. See the Continue-nudge note in §6. |
 | `wall_clock_seconds` | Active/monotonic — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |

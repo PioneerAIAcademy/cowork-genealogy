@@ -91,6 +91,99 @@ def should_continue_run(
     return True
 
 
+# The hand-back form /research emits at a step boundary (lead ruling, 2026-09-07,
+# issue #2292). A fixed closing line, matched literally: free-prose matching was the
+# alternative the lead set aside, because the old ANNOUNCE_RE caught 15 of 41 real
+# yields. The shipped skill does NOT emit this yet — #2292 lands the prose — so `step`
+# is structurally 0 until then, and that is the correct result rather than a broken
+# classifier. Do not loosen these to make the count non-zero.
+_HAND_BACK_STEP_TAIL = ". Continue?"
+_HAND_BACK_STEP_LEAD = "Next: "
+_HAND_BACK_COMPLETE = "Research complete."
+
+
+def classify_hand_back(text: str | None) -> str:
+    """Classify an agent's closing words: "step" | "silent" | "completion_claim".
+
+    Pure, stdlib-only, text in / class out, and deliberately takes NO `research`
+    argument — issue #1104's Half B lifts this verbatim into a plugin-shipped Stop
+    hook, which reads research.json itself. Keeping the status out of here is what
+    makes that lift possible.
+
+    Normalises its own input (`" ".join(text.split())`) so the two callers agree: the
+    orchestrator passes a whole TextBlock, `nudge_report` passes narration text, and a
+    predicate anchored to the end would otherwise behave differently on each.
+
+    `completion_claim` is tested first; order between the two `endswith` arms is
+    arbitrary, since no normalised string can end with both.
+
+    NOTE the class is about FORM, not truth. A `completion_claim` is not by itself a
+    false completion — the caller decides that by reading project.status. And a run
+    that stops on a genuine logged blocker (research/SKILL.md's third legitimate
+    autonomous stop) reads as `silent` here, because it names no next step; the
+    taxonomy has no separate blocker class today.
+    """
+    t = " ".join((text or "").split())
+    if t.endswith(_HAND_BACK_COMPLETE):
+        return "completion_claim"
+    if t.endswith(_HAND_BACK_STEP_TAIL) and _HAND_BACK_STEP_LEAD in t:
+        return "step"
+    return "silent"
+
+
+def terminal_reason(
+    *,
+    research: dict | None,
+    nudges_used: int,
+    max_nudges: int,
+    mcp_unavailable: bool,
+) -> str:
+    """Why `should_continue_run` is about to return False.
+
+    That function returns a bare bool for FOUR different reasons and only two of them
+    are defects. 134 of the 180 committed e2e run logs stop on `completed` — counting
+    those as hand-back defects would make the rate dominated by successes, and the live
+    acceptance run (which must end `completed`) would log one against itself.
+
+    Mirrors should_continue_run's own order, which is what keeps the two in agreement.
+    """
+    if mcp_unavailable:
+        return "mcp_unavailable"
+    if project_completed(research):
+        return "completed"
+    if nudges_used >= max_nudges:
+        return "budget"
+    return "no_progress"
+
+
+#: Terminal reasons whose hand-back is worth counting. `completed` is the successful
+#: path and `mcp_unavailable` is infrastructure (#941) — neither says anything about
+#: how the agent handed back.
+COUNTED_TERMINAL_REASONS = frozenset({"budget", "no_progress"})
+
+
+def hand_back_outcome(hand_back_class: str, *, project_is_completed: bool) -> tuple[str, str | None]:
+    """Map a class to (counter key, reply) — the hook's branch table, made testable.
+
+    `stop_hook` is a closure inside `run_agent` and no test drives it, so without this
+    the wiring from class to reply and counter is unverified. Returns the counter key
+    and the reply text, or None where the caller keeps its existing block reason.
+
+    A `completion_claim` on a project that IS completed is a TRUTHFUL completion, not a
+    false one — it counts as `step`-equivalent closure, never `false_completion`.
+    """
+    if hand_back_class == "completion_claim":
+        if project_is_completed:
+            return "terminal_completed", None
+        return "false_completion", (
+            "research.json still reports project.status != 'completed', so the research "
+            "is not finished. Verify with research_query, then continue the loop."
+        )
+    if hand_back_class == "step":
+        return "step", "Yes."
+    return "silent", None
+
+
 def derive_stop_reason(
     *,
     sdk_aborted_reason: str | None,
