@@ -1,6 +1,6 @@
 {
   "tool": "person_warnings",
-  "description": "person_warnings on Patrick (I1) returns hasEarlyMarriage14 -- earliest marriage year is less than 14 years after earliest birth year. Valid (not Fundamental) violation, severity: 'warning'. Used by ut_check_warnings_007 to exercise the severity classification rubric.",
+  "description": "person_warnings on Cornelius (I1) returns hasEarlyMarriage14 -- earliest marriage year is less than 14 years after earliest birth year. Valid (not Fundamental) violation, severity: 'warning'. Used by ut_check_warnings_007 to exercise the severity classification rubric.",
   "args": {
     "personId": "I1"
   },
@@ -12,7 +12,7 @@
         "issueType": "hasEarlyMarriage14",
         "severity": "implausible",
         "personId": "I1",
-        "personName": "Patrick Flynn",
+        "personName": "Cornelius Brady",
         "message": "This person was married before age 14, which is biologically and socially unusual.",
         "facts": [
           {

@@ -1,0 +1,105 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Cornelius", "surname": "Brady", "type": "BirthName" }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland",
+          "sources": [{ "ref": "S1", "page": "1850 Census, Carbon Co., dwelling 27 (age given as 5)" }]
+        },
+        {
+          "id": "F8",
+          "type": "Birth",
+          "date": "1845-06-04",
+          "place": "Parish of Kilcormac, King's County, Ireland",
+          "sources": [{ "ref": "S5", "page": "Baptism register, Kilcormac, 4 June 1845" }]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1908-03-12",
+          "place": "Carbon County, Pennsylvania",
+          "sources": [{ "ref": "S2", "page": "Death cert. no. 3318" }]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1925",
+          "place": "Lansford, Carbon County, Pennsylvania",
+          "sources": [{ "ref": "S6", "page": "Obituary of Bridget (Brady) Lynch, naming her late father Cornelius Brady; auto-attached to Cornelius as a Residence" }]
+        },
+        {
+          "id": "F5",
+          "type": "Christening",
+          "date": "1843",
+          "place": "Parish of Kilcormac, King's County, Ireland",
+          "sources": [{ "ref": "S5", "page": "Kilcormac register, indexed year 1843" }]
+        },
+        {
+          "id": "F6",
+          "type": "Burial",
+          "date": "1905",
+          "place": "Saint Katharine's Cemetery, Carbon County, Pennsylvania",
+          "sources": [{ "ref": "S3", "page": "Findagrave memorial 6610042, Cornelius Brady" }]
+        },
+        {
+          "id": "F9",
+          "type": "Marriage",
+          "date": "1857-09-20",
+          "place": "Carbon County, Pennsylvania",
+          "sources": [{ "ref": "S4", "page": "Carbon Co. marriage returns, 1857, p. 88" }]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Owen", "surname": "Brady", "type": "BirthName" }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Death",
+          "date": "1843-02-10",
+          "place": "King's County, Ireland",
+          "sources": [{ "ref": "S7", "page": "Kilcormac burial register, 10 Feb 1843" }]
+        },
+        {
+          "id": "F2",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1812",
+          "place": "Ireland",
+          "sources": []
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [{ "ref": "S5", "page": "Baptism register, Kilcormac, 4 June 1845 (father named)", "quality": 2 }]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "Pennsylvania Death Certificates", "author": "Pennsylvania Dept. of Health" },
+    { "id": "S3", "title": "Findagrave memorial index" },
+    { "id": "S4", "title": "Carbon County, Pennsylvania Marriage Returns", "author": "Carbon County Clerk" },
+    { "id": "S5", "title": "Catholic Parish Registers, Kilcormac, King's County, Ireland" },
+    { "id": "S6", "title": "Lansford Evening Record, obituary of Bridget (Brady) Lynch, 1925" },
+    { "id": "S7", "title": "Kilcormac Parish Burial Register" }
+  ]
+}

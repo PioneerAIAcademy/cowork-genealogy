@@ -1,6 +1,6 @@
 {
   "tool": "person_warnings",
-  "description": "person_warnings on Patrick (I1) returns 4 warnings: 3 on Patrick himself (hasEventAfterDeath1 error + hasAgeRangeGreaterThan120 error + tooManyDeathDates2 warning) and 1 on his relative Thomas (relativesHasAgeRangeGreaterThan120 error on I2). Multi-warning cluster exercising the 'almost certainly two people merged' escalation rule AND the focal-vs-relative separation requirement: the cluster verdict applies only to Patrick's three warnings, not to all four indiscriminately. Used by ut_check_warnings_009.",
+  "description": "person_warnings on Ambrose (I1) returns 4 warnings: 3 on Ambrose himself (hasEventAfterDeath1 error + hasAgeRangeGreaterThan120 error + tooManyDeathDates2 warning) and 1 on his relative Michael (relativesHasAgeRangeGreaterThan120 error on I2). Multi-warning cluster exercising the 'almost certainly two people merged' escalation rule AND the focal-vs-relative separation requirement: the cluster verdict applies only to Ambrose's three warnings, not to all four indiscriminately. Used by ut_check_warnings_009.",
   "args": {
     "personId": "I1"
   },
@@ -12,7 +12,7 @@
         "issueType": "hasEventAfterDeath1",
         "severity": "contradiction",
         "personId": "I1",
-        "personName": "Patrick Flynn",
+        "personName": "Ambrose Keane",
         "message": "An event is dated more than 1 year after this person's latest death-like fact.",
         "facts": [
           {
@@ -37,7 +37,7 @@
         "issueType": "hasAgeRangeGreaterThan120",
         "severity": "contradiction",
         "personId": "I1",
-        "personName": "Patrick Flynn",
+        "personName": "Ambrose Keane",
         "message": "This person's lifespan is greater than 120 years, which is implausible.",
         "facts": [
           {
@@ -57,7 +57,7 @@
         "issueType": "tooManyDeathDates2",
         "severity": "implausible",
         "personId": "I1",
-        "personName": "Patrick Flynn",
+        "personName": "Ambrose Keane",
         "message": "Two or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records.",
         "facts": [
           {
@@ -77,7 +77,7 @@
         "issueType": "relativesHasAgeRangeGreaterThan120",
         "severity": "contradiction",
         "personId": "I2",
-        "personName": "Thomas Flynn",
+        "personName": "Michael Keane",
         "message": "This relative's lifespan is greater than 120 years, which is implausible.",
         "relatedPersonId": "I2",
         "facts": [

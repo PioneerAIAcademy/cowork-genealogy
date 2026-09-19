@@ -14,14 +14,14 @@
     ]
   },
   "input": {
-    "user_message": "Run a warnings check on Patrick Flynn.",
-    "scenario": "mid-research-flynn"
+    "user_message": "Run a warnings check on Ambrose Keane.",
+    "scenario": "keane-impossible-lifespan"
   },
   "mcp_fixtures": [
     "person-warnings-impossible-lifespan"
   ],
   "judge_context": [
-    "Should call person_warnings on Patrick (I1)",
+    "Should call person_warnings on Ambrose (I1)",
     "Should report the hasAgeRangeGreaterThan120 warning with Critical severity",
     "Should recommend verifying both vital dates against source documents -- either could be the wrong one",
     "Should mention the identity-confusion possibility: clustering between very old recorded death and very early recorded birth is one of the classic two-people-merged signatures",

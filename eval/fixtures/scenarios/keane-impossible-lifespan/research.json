@@ -1,0 +1,105 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Establish which of the two recorded deaths for Ambrose Keane is his, and recover a defensible birth year",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-09-19",
+    "updated": "2026-09-19"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Which birth year and which death date on Ambrose Keane's profile belong to the same man?",
+      "rationale": "The profile carries a birth of about 1785 and two deaths, 1908 and 1909, giving a recorded lifespan of over 120 years. At least one of the three dates belongs to a different Ambrose Keane, or was mis-transcribed. Settling which is the precondition for any further work on him.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-09-19",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-09-19T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Keane",
+        "given": "Ambrose",
+        "collection": "1850 United States Census",
+        "place": "Luzerne County, Pennsylvania"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "1850 census entry gives an age of 65, implying a birth of about 1785. No other census entry for this man has been located.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1850 U.S. census, Luzerne County, Pennsylvania, population schedule, dwelling 61, Ambrose Keane; digital image, FamilySearch.org, accessed 19 Sep 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau enumerator",
+        "what": "1850 federal population schedule",
+        "when_created": "1850",
+        "when_accessed": "2026-09-19",
+        "where": "FamilySearch.org",
+        "where_within": "Luzerne County, Pennsylvania, dwelling 61"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-19",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:LUZ-0061",
+      "url_archived": null,
+      "notes": "Age 65 in 1850. Census ages are routinely rounded or misreported, so this birth year is an estimate and is the weakest of the three dates in question.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:LUZ-0061",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born about 1785",
+      "structured_value": { "year": "1785", "place": "Ireland" },
+      "date": "~1785",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member reporting to the enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derived from a stated age of 65, not from a birth record.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
