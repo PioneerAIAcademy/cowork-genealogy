@@ -23,6 +23,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { basename, dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { assertInsideProject, isInsideProject, ProjectEscapeError } from "./paths.js";
+import { AsyncMutex } from "./async-mutex.js";
 import type {
   JsonWrite,
   ProjectDirState,
@@ -55,21 +56,6 @@ import type {
 // session, so it holds there; whether two Cowork desktop sessions on the same
 // folder share one .mcpb process is unverified, and if they do not the lock does
 // not bind across them. The change is strictly better than today either way.
-
-/** A FIFO async mutex: `run` queues its callback behind every earlier one and
- *  releases the next only after this one settles (resolve OR reject). */
-class AsyncMutex {
-  private tail: Promise<void> = Promise.resolve();
-
-  run<T>(fn: () => Promise<T>): Promise<T> {
-    const prev = this.tail;
-    let release!: () => void;
-    // Reassigned synchronously, before the first await below, so callers arriving
-    // in the same tick chain in arrival order rather than racing on `tail`.
-    this.tail = new Promise<void>((resolve) => (release = resolve));
-    return prev.then(fn).finally(release);
-  }
-}
 
 /** The lock's identity. `resolve` alone is not enough: two callers can name one
  *  project through different symlinks — and on macOS `/tmp` IS a symlink to

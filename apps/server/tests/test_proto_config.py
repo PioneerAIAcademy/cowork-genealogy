@@ -11,7 +11,12 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   policy -- ChangeMessageVisibility never resets the receive count, so any
   maxReceiveCount would dead-letter a legitimately long turn;
 - the schema creates every table the plan names and not committed_batches
-  (cut 2026-09-10).
+  (cut 2026-09-10);
+- the D16 tool server runs read-only with /tmp its only tmpfs (no /projects: project
+  state is in Postgres/S3, bound per request from X-Genealogy-Project-Id), publishes on
+  loopback only, waits on postgres and minio being healthy, carries the worker's
+  GENEALOGY_* store block byte for byte (one store, two readers), and is waited on by
+  proto-up but never by proto-up-core (the D3 smoke must not gate on the engine image).
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -30,6 +35,7 @@ COMPOSE = PROTO / "docker-compose.yml"
 CEILING_OVERRIDE = PROTO / "docker-compose.ceiling.yml"
 ELASTICMQ_CONF = PROTO / "elasticmq.conf"
 SQL_DIR = PROTO / "sql"
+MAKEFILE = Path(__file__).resolve().parents[3] / "Makefile"
 
 STEP_CEILING_S = 1800
 
@@ -89,6 +95,41 @@ def _volumes(service: dict) -> list[str]:
         else:
             out.append(f"{entry.get('source')}:{entry.get('target')}")
     return out
+
+
+def _ports(service: dict) -> list[str]:
+    """Normalise short ("host:container") and long ({published, target}) port syntax to
+    the short string, so a loopback check can read the host side."""
+    out: list[str] = []
+    for entry in service.get("ports") or []:
+        if isinstance(entry, (str, int)):
+            out.append(str(entry))
+        else:
+            out.append(f"{entry.get('host_ip', '')}:{entry.get('published')}:{entry.get('target')}".lstrip(":"))
+    return out
+
+
+def _recipe(target: str) -> list[str]:
+    """The recipe of a root-Makefile target as make sees it: the tab-indented lines after
+    its rule line, up to the next non-indented line, with backslash-continued lines joined
+    into one logical line (so a reflowed `--wait` list is still one line)."""
+    lines = MAKEFILE.read_text(encoding="utf-8").splitlines()
+    rule = re.compile(rf"^{re.escape(target)}\s*:")
+    for i, line in enumerate(lines):
+        if rule.match(line):
+            body: list[str] = []
+            for follow in lines[i + 1:]:
+                if follow.startswith("\t"):
+                    if body and body[-1].endswith("\\"):
+                        body[-1] = body[-1][:-1] + " " + follow.strip()
+                    else:
+                        body.append(follow)
+                elif follow.strip() == "" or follow.startswith("#"):
+                    continue
+                else:
+                    break
+            return body
+    raise AssertionError(f"Makefile has no target {target!r}")
 
 
 def _strip_line_comments(text: str, markers: tuple[str, ...]) -> str:
@@ -168,6 +209,57 @@ def test_shim_waits_for_a_healthy_worker():
     """A shim that starts before the worker listens burns a receive count on a refused
     connection, so a crash/sleep turn sent right after `up` never runs its arm."""
     assert _service(_load(COMPOSE), "shim")["depends_on"]["worker"] == {"condition": "service_healthy"}
+
+
+# ── tool server (D16) ───────────────────────────────────────────────────────────
+
+
+def test_tools_runs_read_only_with_no_project_root():
+    tools = _service(_load(COMPOSE), "tools")
+    assert tools.get("read_only") is True, "project state is in Postgres/S3; nothing writes to the rootfs"
+    tmpfs = [str(t).split(":", 1)[0] for t in (tools.get("tmpfs") or [])]
+    assert "/projects" not in tmpfs, "no file root: a /projects tmpfs would mean the file backend is back"
+    assert "/tmp" in tmpfs, "/tmp stays writable on the read-only rootfs"
+
+
+def test_tools_is_published_on_loopback_only():
+    ports = _ports(_service(_load(COMPOSE), "tools"))
+    assert ports, "the host smoke (make engine-smoke-http BASE=...) reaches the server from the host"
+    assert all(p.startswith("127.0.0.1:") for p in ports), "no auth beyond header -> principal: publish on loopback only"
+
+
+def test_tools_depends_on_the_store_services():
+    depends = _service(_load(COMPOSE), "tools").get("depends_on") or {}
+    assert depends.get("postgres") == {"condition": "service_healthy"}, "the per-request PgS3ProjectStore needs Postgres up"
+    assert depends.get("minio") == {"condition": "service_healthy"}, "and the blob side needs minio up"
+
+
+def test_tools_and_worker_read_one_store():
+    """The stdio fork (worker) and the shared HTTP server (tools) are two readers of one
+    store: their GENEALOGY_* blocks must be identical, or a TOOL_SERVER flip silently
+    moves the project tools onto a store the rest of the stack never reads."""
+    compose = _load(COMPOSE)
+    tools = {k: v for k, v in _env(_service(compose, "tools")).items() if k.startswith("GENEALOGY_")}
+    worker = {k: v for k, v in _env(_service(compose, "worker")).items() if k.startswith("GENEALOGY_")}
+    assert tools == worker, f"tools and worker GENEALOGY_* differ: {tools} vs {worker}"
+    assert set(tools) == {
+        "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
+        "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
+    }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
+
+
+def _wait_services(line: str) -> list[str]:
+    """The service names after `--wait` on one logical recipe line, a trailing comment stripped."""
+    return line.split("#", 1)[0].split("--wait", 1)[1].split()
+
+
+def test_proto_up_waits_for_tools_but_proto_up_core_does_not():
+    core = _recipe("proto-up-core")
+    assert core, "proto-up-core has a recipe"
+    assert not any(re.search(r"\btools\b", line) for line in core), "the D3 smoke must not gate on the engine image"
+    wait_lines = [line for line in _recipe("proto-up") if "--wait" in line]
+    assert wait_lines, "proto-up has a --wait line"
+    assert any("tools" in _wait_services(line) for line in wait_lines), "proto-up must wait for the tool server's healthcheck"
 
 
 # ── step ceiling ────────────────────────────────────────────────────────────────
