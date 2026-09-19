@@ -4,7 +4,16 @@
 #2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); the `sidecar_read`
 half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant with `Read`
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
-issue #2568 by the lead's scope ruling); FamilySearch's
+issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
+(PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
+against seeded rows until the worker exists); the store half of D6–8 built 2026-09-18 (PR
+#2652; `PgS3ProjectStore`, `createServer(principal)`, `hosted-stdio.js`); D9–10 and D15
+built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
+Postgres, the six agents via `agents=`); D14 scripted and the D17 prep built 2026-09-18
+(PR #2668; `make proto-kill`, `proto-seed`, `proto-audit`, `proto-token`, and
+`tool_calls.duration_ms` filled); D16 built 2026-09-18 (PR #2659; the
+Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
+every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -92,7 +101,7 @@ carrying. Everything below is out on that test, not because it is unimportant.
 | Project state | Session filesystem is the only copy | Postgres jsonb documents, S3 blobs, behind one `ProjectStore` interface |
 | Conversation | SDK on-disk transcript | SDK `SessionStore` backed by Postgres/S3, hydrated per turn |
 | Agent shell | `Bash` under `bypassPermissions` | Removed via `disallowed_tools` on the worker's options — see below |
-| Tool layer | Node forked over stdio in the sandbox | Same, stdio, writing to Postgres/S3 — HTTP transport swapped in week 4 |
+| Tool layer | Node forked over stdio in the sandbox | Same tools, three entrypoints over one `createServer(principal)`: `build/index.js` stays stdio for the desktop `.mcpb`, both harnesses and the hosted alpha; `build/hosted-stdio.js` is the per-turn stdio fork on Postgres/S3 (D9–10); `build/http.js` serves Streamable HTTP at `/mcp` (compose service `tools`, swapped in at D16) |
 | Transport | One WebSocket per session | SSE plus a 1 s Postgres poll |
 | Model | Anthropic API direct | Bedrock direct (`CLAUDE_CODE_USE_BEDROCK`) for the prototype; production is the Messages-compatible Agent Gateway through `ANTHROPIC_BASE_URL` with the Bedrock flag unset (answered 2026-09-11; P3b) |
 | OCR | OpenRouter running Gemini | Unchanged — a pure HTTP caller the substrate does not touch |
@@ -379,10 +388,10 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | 2026-09-13 (drafted) | — |
-| InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | 2026-09-13 (drafted) | — |
-| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | 2026-09-13 (drafted) | — |
-| Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | 2026-09-13 (drafted) | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18 | — |
+| InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
+| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
+| Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
 | FS platform / DPF | The SSE edge probe with the arm list under R3 — only if the Help team says they bypass DTM. | CloudFront and Imperva behaviour on `text/event-stream`. | R3 | not yet | — |
 
 Not an ask: R13's route-change lead time (days, an image rebuild) is a planning fact, and
@@ -1107,6 +1116,63 @@ without whichever Bedrock refuses.
   figures come from. Raise `max_buffer_size`. **Treat `system/mirror_error` as fatal** — the SDK drops
   that batch permanently, and its "local disk is durable anyway" reasoning stops
   being true when local disk dies with the worker.
+  **Done 2026-09-18 — engine half (`src/server.ts` + `src/hosted-stdio.ts`, above) and
+  worker half (`apps/server/proto/worker/`).** `worker.py` replaces the D3 stub in place
+  and keeps its four arms (`make proto-smoke` 14/14 on the real image); a message
+  carrying `text` runs the turn. `session_store.py` is the `SessionStore` on
+  `session_entries`, constructor-scoped on the project id with the SDK's `project_key`
+  ignored; `options.py` is the option set (cwd `/project`, `setting_sources=[]`, the
+  plugin from disk, `agents=` from `plugin_agents.py`, `disallowed_tools` the four,
+  `hosted-stdio.js` forked per turn as `env -u ANTHROPIC_API_KEY node …` with the store
+  variables and the patron's `FS_ACCESS_TOKEN` in the server entry's env — the entry
+  written to a 0600 `mcp.json` under the per-turn config dir and passed as a **path**,
+  since a dict is `json.dumps`'d onto the CLI's argv where the bearer and the S3 secret
+  are `ps`-visible — `session_store_flush="eager"`, `max_buffer_size` 8 MiB, the model
+  pinned per `MODEL_PROVIDER`, `CLAUDE_CONFIG_DIR` a fresh `mkdtemp` under `TMPDIR` per
+  turn) and the deny-and-log hook; `deny.py` the ported read predicate. **The SDK
+  session id is the worker's choice, made at claim time:** `serve_real_turn` writes
+  `sessions.sdk_session_id` with one `COALESCE` statement before the CLI spawns and
+  passes it as `session_id=` (fresh) or `resume=` (the store holds entries) — exactly
+  one — and the CLI's `system/init` must declare that id or the turn fails; so there is
+  no window in which the store's first append lands under an id no row names.
+  `sql/004_worker.sql` adds `sessions.sdk_session_id`, `turns.cost_usd/num_turns/
+  duration_ms` (the **completing attempt's** `ResultMessage`), and
+  `turns.entries_seq_before` + `input_tokens/cache_creation_tokens/cache_read_tokens/
+  output_tokens` — the usage summed in `complete()` from `session_entries` above the
+  turn's first-claim high-water mark, one row per API message, so a killed attempt's
+  calls are on the row where `cost_usd` alone would not carry them. A
+  `MirrorErrorMessage` and an `is_error` result both fail the turn (500, the shim backs
+  off, the redelivery resumes); a redelivered turn whose `completed_at` is set answers
+  200 without running. The image
+  (`proto/worker/Dockerfile`, context = the repo root) is ubuntu:24.04 + Node 22 +
+  `claude-agent-sdk==0.2.128` (CLI 2.1.220, printed at start) + the engine prod tree
+  with its optional deps + the plugin, running **unprivileged** — the CLI refuses
+  `bypassPermissions` as root, which the first image did; `/tmp` is a tmpfs.
+  **Measured 2026-09-18, `make proto-turn` (14/14), the two-turn acceptance through
+  web tier → queue → shim → worker with zero kills:** turn 1 (`convert_calendar`) 3
+  model turns, $0.137, 9.2 s API / 10.4 s wall, 7 `session_events` rows + 46
+  `session_activity` upserts, 16 `session_entries`, 2 `tool_calls` rows (`ToolSearch`,
+  `mcp__genealogy__convert_calendar`, both `allow`); turn 2 (“repeat the date”)
+  **resumed the same SDK session in a fresh CLI process** (`resumed: true`, entries
+  16 → 21), 1 model turn, $0.058, 1.9 s API / 3.1 s wall, and answered “4 April 1751
+  (Julian) = 15 April 1751 (Gregorian)” — the transcript, not the prompt, held that.
+  `tool_calls.duration_ms` is filled since 2026-09-18 (the D15 note); the kill-resume
+  loop is D14, scripted the same day. Both halves of the registration
+  precondition are literals (`EXPECTED_AGENTS`, `EXPECTED_SKILLS = 28`), never a count
+  of the directory the SDK loads from — an image shipping a short plugin would
+  otherwise expect exactly what it shipped — and the CLI's `system/init` must arrive
+  and declare the chosen id, or the turn fails (the assertion would otherwise fail
+  open). `TOOL_SERVER=http` (`TOOL_SERVER=http make proto-turn`) points the CLI at
+  D16's `tools` service under its contract — `Authorization: Bearer <patron token>`,
+  nothing else on the request is read — so a turn there runs the project tools against
+  that service's file backend, not the Postgres store; the default stays `stdio` until
+  per-request store scoping over HTTP exists, the open half of D16's note.
+  **Re-measured 2026-09-18 after the second review, both modes 14/14:** stdio, turn 1
+  $0.137 / turn 2 $0.058, `entries_seq_before` 0 → 16, output tokens 320 + 28 = the
+  session's 348 (the check that replaced the tautology); http — the first turn through
+  D16's `tools` service, `convert_calendar` answered over Streamable HTTP with no
+  `hosted-stdio.js` fork — turn 1 $0.084 (3 model turns, 9.3 s wall), turn 2 resumed in
+  a fresh process, $0.061, the same 1751 answer.
 
 ### Week 3 — make it visible
 
@@ -1123,9 +1189,48 @@ without whichever Bedrock refuses.
   reconnect, not the product. `fs-eng/bridge` runs this pattern over JetStream,
   load-tested at 100 subscribers / 50 events/s, and `fs-eng/help-research-only` raised
   its `SseEmitter` from 5 to 10 minutes because real multi-task turns were cut.
+  **Done 2026-09-14 (`apps/server/proto/web/`, compose service `web` on :8085).**
+  `POST /api/sessions/{id}/messages` mints the `turn_id` UUID, writes the `turns` row and
+  a `user_msg` event in one transaction, then `SendMessage`s
+  `{turn_id, session_id, project_id, text, enqueued_at}` (a failed send marks the turn
+  `enqueue_failed` and answers 502). `GET …/events?after=N` is the poll read;
+  `GET …/events/stream` is the SSE — `id: <seq>` on every `session_events` frame,
+  `Last-Event-ID` beats `?after=`, `: ping` at 15 s idle, a 1 s Postgres poll. Open order
+  is replay → document snapshot → `status turn_active`, because `ChatPane` clears busy on
+  any `turn_done`. The row→wire contract the worker writes to is in the module docstring
+  and `web/README.md`: `kind` is the `map_message` kind, `payload` its fields;
+  `session_activity` and `documents` changes go out without an id and are never
+  replayed. No auth (the tier is localhost; identity stays out of the prototype). The
+  `session_events` frames are the only ones carrying an id, so a resume is always a
+  seq. 33 offline tests (`tests/test_proto_web.py`); `003_web.sql` adds the three
+  session columns the reused SPA renders, applied at tier start on an existing volume.
 - **D13** Reuse `apps/web` with the WebSocket swapped for SSE. Plus the **80-line
   headless driver** — POST a message, poll events, assert on turn completion.
   Without it the acceptance test cannot be run until day 17.
+  **Done 2026-09-14.** `SseSessionConnection` behind `VITE_SESSION_TRANSPORT=sse`
+  (`make web-proto`); the WS path is untouched and the SPA is otherwise verbatim — the
+  tier serves the SPA's REST paths. The one behaviour that is not a relay: the tier
+  streams the `user_msg` row it just wrote and `ChatPane` already drew that bubble, so
+  the connection holds live `user_msg` frames while its POST is in flight and drops the
+  one the 202's `seq` names. The driver (`proto/drive.py`, ~440 lines rather than 80 —
+  it carries the seeder that stands in for the worker, an embedded-Postgres mode, and an
+  SSE parser that sees comment lines) posts, streams, cuts the connection after eight
+  frames, reopens with `Last-Event-ID` and a contradicting `?after=0`, drains, and
+  compares A ∪ B against `GET /events` exactly. **Measured 2026-09-14, `make proto-drive`
+  (pgserver + the tier in-process, no Docker): 17/17 — 42 events dense, A ∩ B empty, B
+  resumed at 9, one ping, activity and document frames without ids, turn closed.** The
+  compose path (`web` service, `make proto-up`) was verified in review on a Docker machine
+  2026-09-14: the image builds and comes up healthy, `make proto-smoke` passes 14/14
+  through `proto-up-core`, `003_web.sql` applies to a pre-existing volume, and a turn
+  round-trips POST → queue → shim → worker → `turn_done` → SSE. No CI job runs any proto
+  compose target, so it stays a hand check. The SPA on that stack (`make web-proto`) was
+  driven in the same review: two turns round-tripped with exactly two user bubbles, the
+  spinner cleared on `turn_done`, and a reload halfway through a hand-seeded 25 s turn
+  replayed the transcript without duplicates and came back busy — the replay-then-
+  `turn_active` order doing its job. What no run has yet exercised is a real worker's turn
+  driving the SPA; that is D17, and the run where the driver's strong resume check
+  (`B resumed at A's last seq + 1`) binds again. `--worker` runs the same checks against a real
+  worker for D17.
 - **D14** Kill-resume test **against the mock agent**, not a real fixture. Twenty
   debug iterations on a real run is $147 and 18 hours; the mock is ~90 s and free,
   and needs ~30 lines to fake a delegation. **Redelivery comes from the shim's
@@ -1145,6 +1250,20 @@ without whichever Bedrock refuses.
   end of D15, and their receipt-time counterpart test, are cut (2026-09-10, P1:
   re-decide); the counterpart was the reject → repair → identical-retry regression
   replayed from the three corpus runs named in days 6–8, which needed no live agent.
+  **Done 2026-09-18 (PR #2668) as `make proto-kill` — the acceptance script's `--kill`
+  arm on a real turn, not the mock agent.** The D9–10 review's hand kill had already
+  shown the mechanism, P1 had already measured what a killed delegation does on resume
+  (re-run), and the real turn costs $0.12 — so the mock's thirty lines would have bought
+  a slower proof of a settled question. The arm posts a `place_search` question, polls
+  `tool_calls` for the call's PreToolUse row, then `docker kill` + `docker start` on the
+  worker (a kill counts as a manual stop, so `unless-stopped` does not bring it back;
+  the arm starts it). **Measured 2026-09-18, 9/9:** the shim saw `connection_reset` on
+  its in-flight POST and requeued with backoff 0; the redelivery (receive count 2)
+  resumed the same SDK session (`session_entries` 11 → 24), **re-ran `place_search`** —
+  the killed attempt's row has no duration, the resumed call's 1,310 ms — and answered
+  “Nauvoo, Hancock, Illinois, United States” 28 s after the kill, $0.117 for the turn.
+  The bearer was the desktop login's token refreshed through the engine
+  (`dev/fs-token.ts`): the first FamilySearch call through the worker.
 - **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
   Probed live with the five bodies then present: all register under **bare** names with
@@ -1189,6 +1308,25 @@ without whichever Bedrock refuses.
   duration) and read them in the run output. No automated ceiling assertion, no
   `ceiling_kills` table, no two-direction proof — see the step model for why that
   scaffolding was cut.
+  **Done 2026-09-18 with the D9–10 worker (the `agents=` item, the precondition and
+  the deny-and-log hook); `tool_calls.duration_ms` filled the same day (PR #2668): a
+  `PostToolUse` / `PostToolUseFailure` hook stamps the row the `PreToolUse` hook wrote,
+  keyed on `tool_use_id`, Postgres clock, first stamp wins; a call in flight at a kill
+  keeps NULL, which `make proto-audit` reports as its own count.** The worker parses
+  `plugin/agents/*.md` once at start (`proto/worker/plugin_agents.py`) and passes them
+  as `agents=`; `stage_plugin_agents` is not called. `check_registration`
+  (`proto/worker/options.py`) reads `get_server_info()` after `connect()` and before
+  `query()` — the six bare names of `worker.EXPECTED_AGENTS`, a **constant**, never
+  the set that happened to load (a plugin dir whose `agents/*.md` is not exactly that
+  set is refused at worker start, so a renamed agent file cannot narrow the check to
+  five), 28 `genealogy-research:` commands (`worker.EXPECTED_SKILLS`, a literal too —
+  a count of the directory the SDK loads from shrinks with a short image) — and a miss
+  is a 500 with the missing names, no token billed. The hook (`make_pretool_hook`, matcher
+  `None`, never raises) denies raw `Write`/`Edit` on the project files, denies
+  `Read`/`Grep`/`Glob` under the anchor with the MCP route in the reason, and writes
+  one `tool_calls` row per call — `turn_id`, `session_id`, `agent_id`/`agent_type`
+  when the CLI sends them, `tool_name`, `input_path`, `decision`. Measured 2026-09-18:
+  both rows of the acceptance turn `allow`, no deny fired on a two-tool turn.
   **Cut 2026-09-10 (P1: re-decide) — the closing half-day was the ledger exercise on
   the stdio configuration, gated on P1 coming back "re-issues byte-identically"; kept
   for the record:**
@@ -1224,6 +1362,20 @@ without whichever Bedrock refuses.
   on D15's harness — goes with the ledger. Then P3's quota/concurrency half. (The model
   pin sits at D9–10, with the worker loop, because that is where the first worker cost
   figures come from.)
+  **Done 2026-09-18 (PR #2659).** `src/http.ts` → `build/http.js` is the HTTP entrypoint:
+  stateless Streamable HTTP at `/mcp` (one `createServer(principal)` + transport per POST,
+  `/healthz` for the compose healthcheck), the `Authorization: Bearer` header becoming the
+  per-request principal and never `LOCAL`; non-POST on `/mcp` is a 405 from the entrypoint
+  because the SDK transport would otherwise hold a GET open as an SSE stream. `src/index.ts`
+  keeps stdio and every tool. The smoke, `dev/smoke-http.ts` (`make engine-smoke-http`, or
+  `BASE=http://127.0.0.1:8787 PROJECT_ROOT=/projects` against compose), calls every
+  advertised tool but the four named exclusions and fails if any tool is neither called nor
+  excluded; `dev/smoke-stdio.ts` runs the offline subset through the same
+  `dev/smoke-calls.ts` plan (and `make engine-smoke-stdio-pg` still drives it through
+  `build/hosted-stdio.js`). Compose gained the `tools` service (`apps/server/proto/tools/`,
+  `node:22-slim`, read-only, loopback `:8787`, no `depends_on`, file backend today —
+  per-request store scoping for a shared HTTP server is the D9–10 worker half's question);
+  `proto-up-core` does not gate on it. The `turn_id` header plumbing stayed cut.
 - **D17** Real run, driven **interactively** (not `--autonomous`), killed **while a delegated
   `extraction_append` is in flight inside `@plugin:record-extractor`** — which puts a
   delegation in flight, the only thing criterion 1 requires. Six skills name an agent, and `person-evidence` has delegated to its own since
@@ -1233,6 +1385,33 @@ without whichever Bedrock refuses.
   through `extraction_append`, so it still cannot time this kill. **Assert P1's `list_subkeys` criterion here too:** the
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
+  **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
+  1. `make proto-up` — builds the engine and the stack. `proto/env.sh` exports the model
+     key and writes the FamilySearch token, refreshed from the desktop login through
+     `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
+     turn**; its status line must say both are set. The token lives an hour: run
+     `make proto-token` before any turn past the fifty-minute mark (no restart, no lost
+     turn).
+  2. `make proto-seed FIXTURE=bagley-father-1884` — the fixture's `starting-research.json`
+     and tree into the Postgres/S3 store through `PgS3ProjectStore`, and a session on
+     that project; prints the session id and the research question (any e2e fixture or
+     unit scenario name works; this one is single-record, so the delegation comes early).
+  3. `make web-proto`, open http://127.0.0.1:5173, pick the session by title, post the
+     research question. Watch for `task_started` naming `record-extractor`, then a
+     `tool_use` chip for `extraction_append`; then `docker kill proto-worker && docker
+     start proto-worker`. The shim requeues within a second and the redelivery resumes.
+  4. `make proto-audit SESSION=<id>` — criteria 3 and 4 as one table.
+  **Reading the run.** Criterion 1 holds when the killed turn's `turns` row shows
+  `receive_count` ≥ 2 and `completed_at`. Criterion 2 when the reply continues the
+  conversation and `research_query` afterwards shows the extraction the delegation was
+  doing, **once** — the delegation is re-run (P1), so the killed attempt's partial write
+  must not appear beside the second's. Criterion 3 is the audit's PASS. Criterion 4 is
+  the audit's longest call under the ceiling, with **one** allowed call without a
+  duration expected (the one in flight at the kill). **What voids the run:** the kill
+  landing before `task_started` (a plain turn kill, D14 again — post the next prompt and
+  retry); a FamilySearch tool answering with the reconnect instruction (the token
+  expired — `make proto-token`, new session); `receive_count` 3 (the worker did not come
+  back before the second redelivery — `docker start` it); more than one worker kill.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
@@ -1315,8 +1494,26 @@ open. The E2B sandbox image is still built by no CI job.
 **New dependencies go in with npm, not pnpm** — the engine is negated out of the
 workspace and both artifacts install from its npm lockfile.
 
-**One interface, two backends, and the tools never branch.** Otherwise the desktop
-write path rots silently, because nothing in CI runs it.
+**One interface, two backends, and the tools never branch.** The worry this sentence
+first carried — that the desktop write path would rot silently because nothing in CI
+runs it — is backwards now (lead, 2026-09-18). The file backend is what every vitest
+file that touches the store, both harnesses and `make engine-smoke-stdio` exercise; it
+is the most-covered
+path in the repo. **The Postgres backend is the one nothing covers**: its proof is
+`tests/store/pg-s3-project-store.test.ts` — the 16 shared conformance cases plus 21 of
+its own, 37 when the compose stack is up — run by `make proto-store-test` (D6–8), the
+stdio smoke when it is pointed at the Postgres
+backend, the D16 transport smoke, and the prototype's own D17–18 runs — and the harness
+is explicitly not ported to it, so no skill or agent is ever validated against it. That
+is acceptable for a prototype whose job is to reduce uncertainty, and it is the **first
+thing to fix when the two-backend implementation goes real** — otherwise the Postgres
+path ships with one engineer's D17 run as its only proof. What the real build adds,
+sized then: the engine's tool suites (`tests/tools/*.test.ts`, 1,939 cases; the 25 files
+that write fixtures to disk hold 1,120 of them) run against the Postgres backend by
+writing their fixtures through `getProjectStore()` instead of
+`writeFile` (a test-helper refactor, one file at a time, with `PROTO_STORE=pg` selecting
+the backend), and the unit harness's engine gains the same switch so at least one paid
+run per skill has landed on Postgres before beta. Recorded as R14.
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the
@@ -1346,7 +1543,7 @@ overwrites patron A's token file and A then acts as B.
 
 **Expect the packaging tests to stop you eight times** (seven test files, one of which
 fires twice). `manifest.test.ts` AST-matches the `request.params.name === "…"` chain in
-`src/index.ts` to detect dispatch drift — the D6–8 dispatch extraction that would have
+`src/server.ts` (moved there from `src/index.ts` at D9–10) to detect dispatch drift — the D6–8 dispatch extraction that would have
 red-lined it went with the ledger on 2026-09-10 — and fails on the
 `sidecar_read` addition; `readme-catalog.test.ts` fires twice on it — every registered
 tool must appear in `README.md`, and the stated count must match reality; `README.md`
@@ -1641,6 +1838,13 @@ for image calls. *Owner: us.*
 Docker image and the GitOps end state is not live, so a route tweak is a rebuild and a
 deploy through their pipeline — days, not minutes. Plan any `ai.routes` change with
 that lead time. *Owner: APT.*
+
+**R14 — The Postgres path's only proof is the prototype's own runs.** The coverage
+inversion above: the file backend is the most-exercised code in the repo, the Postgres
+backend has the conformance suite, the smokes and D17–18. Fine for a prototype; before
+beta the engine's tool suites and one paid harness run per skill have to land on
+Postgres, or a skill can be green on every check and broken on the only backend
+production runs. *Owner: us; sized when the two-backend build goes real.*
 
 ### Real but ordinary
 

@@ -23,9 +23,10 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_init_project import (  # noqa: E402
-    _NARRATION_BY_LEVEL,
+    _DEFAULT_LEVEL,
+    _HOUSE_STYLE,
     test_every_fact_and_relationship_is_sourced as check_sourced,
-    test_narration_guidance_is_verbatim_for_the_level as check_narration,
+    test_narration_guidance_is_the_house_style as check_narration,
     test_person_read_passes_both_flags as check_flags,
     test_returned_sources_reach_the_tree_without_notes as check_notes,
     test_search_before_stubs as check_search,
@@ -466,31 +467,32 @@ def test_v6_skips_when_no_sources_were_returned():
         check_notes(_tree(), [_person_read_call()])
 
 
-# --- V5: narration_guidance verbatim ------------------------------------
+# --- V5: the fixed profile, verbatim ------------------------------------
 
-@pytest.mark.parametrize("level", sorted(_NARRATION_BY_LEVEL))
-def test_v5_passes_on_every_verbatim_level(level):
+def test_v5_passes_on_the_fixed_profile():
     after = {"research_json": {"researcher_profile": {
-        "experience_level": level,
-        "narration_guidance": _NARRATION_BY_LEVEL[level],
+        "experience_level": _DEFAULT_LEVEL,
+        "narration_guidance": _HOUSE_STYLE,
     }}}
     check_narration(after)
 
 
 def test_v5_fires_on_a_paraphrase():
     after = {"research_json": {"researcher_profile": {
-        "experience_level": "experienced",
-        "narration_guidance": "No preambles. Be concise.",
+        "experience_level": _DEFAULT_LEVEL,
+        "narration_guidance": "Plain language. No identifiers. One paragraph.",
     }}}
     assert "verbatim" in _fails(check_narration, after)
 
 
-def test_v5_fires_on_another_levels_text():
+def test_v5_fires_on_a_volunteered_level():
+    """The user said they were experienced; the skill must not persist it -- the
+    profile is fixed and a user setting owns the level later."""
     after = {"research_json": {"researcher_profile": {
-        "experience_level": "professional",
-        "narration_guidance": _NARRATION_BY_LEVEL["experienced"],
+        "experience_level": "experienced",
+        "narration_guidance": _HOUSE_STYLE,
     }}}
-    assert "professional" in _fails(check_narration, after)
+    assert "novice" in _fails(check_narration, after)
 
 
 def test_v5_fires_on_an_unknown_level():
@@ -498,7 +500,7 @@ def test_v5_fires_on_an_unknown_level():
         "experience_level": "expert",
         "narration_guidance": "anything",
     }}}
-    assert "not one of" in _fails(check_narration, after)
+    assert "novice" in _fails(check_narration, after)
 
 
 def test_v5_skips_when_no_profile_was_written():

@@ -18,7 +18,8 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**/*.ts"],
-      exclude: ["src/index.ts"],
+      // The two stdio entrypoints connect a transport at import; no test loads them.
+      exclude: ["src/index.ts", "src/hosted-stdio.ts", "src/http.ts"],
     },
   },
 });

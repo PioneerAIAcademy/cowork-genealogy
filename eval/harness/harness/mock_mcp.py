@@ -146,7 +146,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 
 # Tools whose returned `{"ok": false}` means the call could not do what was asked.
 #
-# The production dispatch (`src/index.ts`) marks these `isError` via
+# The production dispatch (`src/server.ts`, shared by the stdio and HTTP
+# entrypoints) marks these `isError` via
 # `writerToolResult`; this harness shells out to the compiled tools directly and
 # never goes through that dispatch, so without this mirror a failed write would
 # read as an error in production and a SUCCESS in every unit eval run.

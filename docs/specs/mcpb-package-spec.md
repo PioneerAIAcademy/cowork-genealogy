@@ -74,7 +74,7 @@ falsely blocking installs.
 
 ### Tool list (`tools`)
 
-Every tool registered in `src/index.ts`'s `ListTools` handler MUST appear
+Every tool registered in `src/server.ts`'s `ListTools` handler MUST appear
 in `manifest.tools`, and no extras.
 
 **This spec deliberately does not enumerate the set.** It used to, and the
@@ -86,7 +86,7 @@ snapshot of it:
 - `tests/packaging/manifest.test.ts` asserts `manifest.tools` == `allToolSchemas`
   (`src/tool-schemas.ts`), both directions.
 - The same file asserts every registered tool has a dispatch case in
-  `src/index.ts` — advertised-but-undispatchable is the failure the
+  `src/server.ts` — advertised-but-undispatchable is the failure the
   list-equality check alone cannot see.
 
 For the current set, read `allToolSchemas`, or `README.md`'s tables for the
@@ -102,7 +102,7 @@ The packed `.mcpb` MUST contain:
 |------|-----|
 | `manifest.json` | Install metadata + server config |
 | `package.json` | Node entry-point resolution |
-| `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point |
+| `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point. `build/hosted-stdio.js` and `build/http.js`, the prototype's two entrypoints, ride along and are inert here — nothing in the pack runs them |
 | `config/familysearch.json` | Bundled OAuth clientId — without it every authenticated tool breaks (guarded by `tests/auth/bundled-client-config.test.ts`) |
 | `config/given-name-variants.json` | Bundled given-name variant table for diminutive expansion in `fulltext_search` and `image_transcribe` |
 | `node_modules/` | **Production dependencies only** |
@@ -128,9 +128,14 @@ running `npm ci --omit=dev` against it — never by mutating the developer's
 1. `cd packages/engine/mcp-server && npm install && npm run build` — compile to `build/`.
 2. Stage a temp dir (`mktemp -d`): copy `manifest.json`, `package.json`,
    `package-lock.json`, `build/`, `config/`, `.mcpbignore`.
-3. `npm ci --omit=dev --ignore-scripts` inside the stage — production
-   `node_modules` only (`--ignore-scripts` skips dependency lifecycle
-   scripts for a deterministic, side-effect-free install).
+3. `npm ci --omit=dev --omit=optional --ignore-scripts` inside the stage —
+   production `node_modules` only: no devDependencies, and no
+   optionalDependencies either (`pg`, `@aws-sdk/client-s3` and
+   `@smithy/node-http-handler` are the hosted `PgS3ProjectStore`'s clients; the
+   desktop server never loads that module). `--ignore-scripts` skips dependency
+   lifecycle scripts for a deterministic, side-effect-free install.
+   `scripts/verify-mcpb.sh` forbids all three optional packages in the packed
+   bundle.
 4. `npx mcpb validate <stage>` — fails the build on a non-conformant
    manifest (`mcpb pack` also validates).
 5. `npx mcpb pack <stage> releases/genealogy-mcp.mcpb`.
@@ -162,7 +167,7 @@ end-user install (the GUI "Install extension" step is a manual layer in
 ## Versioning
 
 `manifest.json` `version`, `packages/engine/mcp-server/package.json` `version`, and the
-`new Server({ version })` literal in `src/index.ts` MUST stay in sync.
+`new Server({ version })` literal in `src/server.ts` MUST stay in sync.
 This spec's baseline is `0.1.0` (first real packaged release, replacing
 the `0.0.1` scaffold).
 

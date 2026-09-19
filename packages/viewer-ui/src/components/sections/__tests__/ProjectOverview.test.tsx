@@ -51,8 +51,7 @@ describe('ProjectOverview — researcher profile', () => {
     })
     render(<ProjectOverview />)
     expect(screen.getByText(/my cousins, none of them researchers/)).toBeTruthy()
-    // Labelled, so it does not read as a continuation of narration_guidance —
-    // both share the .profileGuidance styling.
+    // Labelled, so it never reads as a bare instruction.
     expect(screen.getByText(/written for/i)).toBeTruthy()
   })
 
@@ -62,10 +61,12 @@ describe('ProjectOverview — researcher profile', () => {
     })
     render(<ProjectOverview />)
     expect(screen.queryByText(/written for/i)).toBeNull()
-    expect(screen.getByText(/Be concise/)).toBeTruthy()
   })
 
-  it('renders it alongside narration_guidance without swallowing either', () => {
+  // narration_guidance is the instruction the agent reads for its narration
+  // style. It is never user content: the lay user must not see a model
+  // instruction on their Overview. The badge stays; the string does not.
+  it('never renders narration_guidance, with or without intended_audience', () => {
     mockResearch({
       researcher_profile: {
         experience_level: 'professional',
@@ -74,8 +75,9 @@ describe('ProjectOverview — researcher profile', () => {
       }
     })
     render(<ProjectOverview />)
-    expect(screen.getByText(/Skip the basics/)).toBeTruthy()
+    expect(screen.queryByText(/Skip the basics/)).toBeNull()
     expect(screen.getByText(/submission to NGSQ/)).toBeTruthy()
+    expect(screen.getByText('professional')).toBeTruthy()
   })
 })
 

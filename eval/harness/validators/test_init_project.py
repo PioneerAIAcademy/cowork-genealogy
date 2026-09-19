@@ -73,10 +73,10 @@ def test_objective_default_verbatim(after_state, test):
 
 def test_profile_defaults_when_all_default(after_state, test):
     """Tag-gated on `opening-turn-all-defaults`: when the test's premise is
-    that the user answered none of the opening-turn questions,
-    `researcher_profile.experience_level` must hold the documented default
-    exactly -- `intermediate` -- not be left absent (the pre-#1510
-    dead-edge-case behavior) and not hold anything else.
+    that the user answered nothing, `researcher_profile.experience_level` must
+    hold the fixed value -- `novice` (lead ruling 2026-09-18: the profile is
+    never asked) -- not be left absent (the pre-#1510 dead-edge-case behavior)
+    and not hold anything else.
 
     `subscriptions` is checked in the OPPOSITE direction to the deleted
     `== ["none"]` assertion: it must be absent, OR carry values the researcher
@@ -105,9 +105,9 @@ def test_profile_defaults_when_all_default(after_state, test):
         "proceeds, so this section should always be written, even when every "
         "answer defaults"
     )
-    assert profile.get("experience_level") == "intermediate", (
-        f"experience_level should default to 'intermediate', got: "
-        f"{profile.get('experience_level')!r}"
+    assert profile.get("experience_level") == _DEFAULT_LEVEL, (
+        f"experience_level is fixed at {_DEFAULT_LEVEL!r} (the profile is never "
+        f"asked), got: {profile.get('experience_level')!r}"
     )
     subs = profile.get("subscriptions")
     assert subs is None or (isinstance(subs, list) and subs and subs != ["none"]), (
@@ -245,27 +245,16 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
 
 _ARK_RE = re.compile(r"^ark:/61903/\d:\d:(.+)$")
 
-_NARRATION_BY_LEVEL = {
-    "novice": (
-        "Narrate the *why* before each action. Define genealogy terms inline "
-        "when first introduced. Explain which GPS step you are executing and "
-        "what it produces. Err on the side of more context \u2014 the user is "
-        "learning."
-    ),
-    "intermediate": (
-        "One-line preamble per skill invocation explaining what you're about to "
-        "do. Assume basic GPS vocabulary. Define unusual or specialized "
-        "terminology inline."
-    ),
-    "experienced": (
-        "No preambles. Do the work and report results concisely. Assume fluency "
-        "with GPS and standard genealogy terminology."
-    ),
-    "professional": (
-        "No preambles. Do the work and report results concisely. Assume fluency "
-        "with GPS, BCG standards, and standard genealogy terminology."
-    ),
-}
+# The profile is fixed (lead ruling 2026-09-18): init-project asks nothing
+# about the researcher and writes these two values on every project. The
+# house-style string is SKILL.md's, verbatim; every downstream skill reads it.
+_DEFAULT_LEVEL = "novice"
+_HOUSE_STYLE = (
+    "Plain language for someone who has never done genealogy. No identifiers, "
+    "file names, tool names or field names. Do not narrate between actions; "
+    "report once when the step is done: what was found, in one paragraph, and "
+    "what happens next in one sentence."
+)
 
 
 def _tool(call):
@@ -652,17 +641,19 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
     )
 
 
-# --- V5: narration_guidance verbatim ------------------------------------
+# --- V5: the fixed profile, verbatim ------------------------------------
 
-def test_narration_guidance_is_verbatim_for_the_level(after_state):
-    """A closed four-way mapping: `experience_level` keys one fixed string, and
-    SKILL.md calls it verbatim ("stored verbatim, not paraphrased").
+def test_narration_guidance_is_the_house_style(after_state):
+    """One fixed profile: `novice` plus the house-style string, stored verbatim
+    ("stored verbatim, not paraphrased"). Nothing about the researcher is asked
+    (lead ruling 2026-09-18), so any other level -- including one the user
+    volunteered -- is a defect: a user setting will own the level later.
 
     Its twin -- the objective's verbatim default -- already has a validator
     (`test_objective_default_verbatim`, issue #1510, added precisely so the
-    check lived in code rather than in judge interpretation). This one did not.
-    Every downstream SKILL.md reads this field as its narration style, so a
-    paraphrase degrades every later invocation in the project.
+    check lived in code rather than in judge interpretation). Every downstream
+    SKILL.md reads this field as its narration style, so a paraphrase degrades
+    every later invocation in the project.
     """
     research = after_state.get("research_json") or {}
     profile = research.get("researcher_profile") or {}
@@ -670,13 +661,13 @@ def test_narration_guidance_is_verbatim_for_the_level(after_state):
     guidance = profile.get("narration_guidance")
     if not level and not guidance:
         pytest.skip("no researcher_profile written")
-    assert level in _NARRATION_BY_LEVEL, (
-        f"experience_level {level!r} is not one of {sorted(_NARRATION_BY_LEVEL)}"
+    assert level == _DEFAULT_LEVEL, (
+        f"experience_level must be {_DEFAULT_LEVEL!r} -- the profile is fixed and "
+        f"never asked; got {level!r}"
     )
-    expected = _NARRATION_BY_LEVEL[level]
-    assert guidance == expected, (
-        f"narration_guidance for {level!r} must be the SKILL.md table text "
-        f"verbatim.\n  expected: {expected!r}\n  got:      {guidance!r}"
+    assert guidance == _HOUSE_STYLE, (
+        "narration_guidance must be the SKILL.md house-style text "
+        f"verbatim.\n  expected: {_HOUSE_STYLE!r}\n  got:      {guidance!r}"
     )
 
 

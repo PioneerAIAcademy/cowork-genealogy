@@ -48,9 +48,9 @@ rebuilding it.**
 10. The final summary must state **which** fields were defaulted.
 11. Repeating the questions is allowed only *after* both files are written, and
     never as a turn-ending prompt.
-12. Never persist a default profile when the opening message stated experience,
-    or volunteered access unprompted.
-13. `subscriptions` is not written by the interview at all. It is only ever
+12. The profile is fixed (`novice` plus the house-style narration string, lead
+    ruling 2026-09-18): never ask about the researcher, never map a stated level.
+13. `subscriptions` is not written by init-project at all. It is only ever
     populated from access the researcher volunteers unprompted, and any value
     stored must be on the closed enum (`other` for anything unrecognized). A
     bare FamilySearch account is the baseline everyone has and is never stored.

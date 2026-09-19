@@ -64,8 +64,23 @@ N_RANDOM = 1
 _NON_FAILING_OUTCOMES = frozenset({"pass", "xfail"})
 
 
-def _dimensions(entry: dict[str, Any]) -> list[dict[str, Any]]:
-    return entry.get("outcome_summary", {}).get("aggregated_dimensions") or []
+def review_dimensions(entry: dict[str, Any]) -> list[dict[str, Any]]:
+    """The dimension rows a human annotates for this test.
+
+    `outcome_summary.review_dimensions` where the harness wrote it — equal to
+    `aggregated_dimensions`, except on a test whose every judged run failed a
+    validator, where the aggregate is empty by ruling (#2057) and this holds
+    the modal over those runs instead. Falls back to `aggregated_dimensions`
+    on a run log written before the field existed, so every committed
+    annotation keeps the rule it was written under. The single accessor for
+    the sampler, CI rule 3 and the reports; the CRUD UI mirrors it in
+    `lib/types.ts::reviewDimensions`.
+    """
+    summary = entry.get("outcome_summary") or {}
+    dims = summary.get("review_dimensions")
+    if dims is None:
+        dims = summary.get("aggregated_dimensions")
+    return dims or []
 
 
 def _carries_warning(entry: dict[str, Any], kind: str) -> bool:
@@ -89,20 +104,24 @@ def is_gradeable(entry: dict[str, Any]) -> bool:
     must still be sampled, which is what the third `is_mandatory` trigger
     depends on. 44 of the 47 affected tests are that shape.
 
-    `aggregated_dimensions` is empty when a run aborts, when the judge
-    raised, or — since #2057, which grades such runs but keeps them out of
-    the modal — when a validator failed. Either way the array is empty, and
-    `rule3_completeness` iterates exactly
-    that array, so such a test demands zero corrections. Sampling one wastes a
+    `review_dimensions` is empty only when nothing was judged: the run
+    aborted, or the judge raised. `rule3_completeness` iterates exactly that
+    array, so such a test demands zero corrections. Sampling one wastes a
     slot: on `project-status` 3 of 11 tests are empty, and **76 of the 79** empty
     tests in the corpus failed or aborted — which is exactly what `is_mandatory`
     matches — so without this filter the mandatory slot would be biased *toward*
     tests with nothing to annotate.
 
+    A validator-failing test is NOT empty here. Its `aggregated_dimensions` is
+    empty by ruling (#2057), and while this predicate read that array every
+    such test — `outcome: fail`, judge-scored, mandatory by every trigger —
+    was filtered out before the mandatory slot ran. On one record-extraction
+    run that hid 4 of the 7 non-passing tests from review while CI passed.
+
     Excluded is not unnoticed: `rule3_completeness` warns about these
     separately, because an ungraded test is a signal, not an absence.
     """
-    return bool(_dimensions(entry))
+    return bool(review_dimensions(entry))
 
 
 def zero_dimension_test_ids(tests: list[dict[str, Any]]) -> list[str]:
@@ -114,7 +133,7 @@ def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
         return False
     return any(
         d.get("source") != "base" and d.get("score") is None
-        for d in _dimensions(entry)
+        for d in review_dimensions(entry)
     )
 
 
@@ -162,7 +181,7 @@ def is_mandatory(entry: dict[str, Any]) -> bool:
     """
     if entry.get("outcome") not in _NON_FAILING_OUTCOMES:
         return True
-    if any(d.get("score") in (1, 2) for d in _dimensions(entry)):
+    if any(d.get("score") in (1, 2) for d in review_dimensions(entry)):
         return True
     return _carries_warning(entry, "coerced_routing_negative_to_na")
 
