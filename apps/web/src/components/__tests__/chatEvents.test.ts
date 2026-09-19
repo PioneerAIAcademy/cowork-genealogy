@@ -237,3 +237,56 @@ describe('opening turn', () => {
     expect(stripOpeningTurn('Yes.')).toBe('Yes.')
   })
 })
+
+describe('auto_continue is a bubble boundary (issue #2653)', () => {
+  // The server answered the hand-back itself, so no user_msg separates the two
+  // turns. Without the boundary the second step's text and tool chips would
+  // fold onto the first bubble, and the first literal — which stripHandBack
+  // only removes at the END of a bubble — would render mid-bubble.
+  const step1 = 'Project set up.\n\nNext: choose the first research question. Continue?'
+  const step2 = 'Question chosen.\n\nNext: plan which records to search. Continue?'
+
+  function twoSteps(): ChatMessage[] {
+    let msgs: ChatMessage[] = [{ role: 'user', text: 'find the parents', tools: [] }]
+    msgs = foldChatEvent(msgs, 'tool_use', { kind: 'tool_use', tool: 'project_create', summary: 'a' })
+    msgs = foldChatEvent(msgs, 'text', { kind: 'text', text: step1 })
+    msgs = foldChatEvent(msgs, 'auto_continue', { kind: 'auto_continue', text: 'Yes.', step: 1, max_steps: 30 })
+    msgs = foldChatEvent(msgs, 'tool_use', { kind: 'tool_use', tool: 'research_append', summary: 'b' })
+    msgs = foldChatEvent(msgs, 'text', { kind: 'text', text: step2 })
+    return msgs
+  }
+
+  it('two turns joined by auto_continue are two assistant bubbles, no user bubble', () => {
+    const msgs = twoSteps()
+    expect(msgs.map((m) => m.role)).toEqual(['user', 'assistant', 'assistant'])
+    expect(msgs[1].text).toBe(step1)
+    expect(msgs[2].text).toBe(step2)
+    expect(msgs[1].handedBack).toBe(true)
+    expect(msgs[2].handedBack).toBeUndefined()
+  })
+
+  it('each bubble strips its own trailing literal, so no literal renders mid-bubble', () => {
+    const msgs = twoSteps()
+    expect(stripHandBack(msgs[1].text)).toBe('Project set up.')
+    expect(stripHandBack(msgs[2].text)).toBe('Question chosen.')
+    expect(stripHandBack(msgs[1].text)).not.toContain('Continue?')
+  })
+
+  it("the second turn's tool chips land on the second bubble", () => {
+    const msgs = twoSteps()
+    expect(msgs[1].tools.map((t) => t.tool)).toEqual(['project_create'])
+    expect(msgs[2].tools.map((t) => t.tool)).toEqual(['research_append'])
+  })
+
+  it('auto_continue with no assistant tail neither opens a bubble nor throws', () => {
+    const before: ChatMessage[] = [{ role: 'user', text: 'go', tools: [] }]
+    const after = foldChatEvent(before, 'auto_continue', { kind: 'auto_continue', text: 'Yes.' })
+    expect(after).toHaveLength(1)
+  })
+
+  it('a replayed transcript takes the same path and yields the same bubbles', () => {
+    // Replay is the same event list through the same fold; pin that the
+    // boundary does not depend on live-only state.
+    expect(twoSteps()).toEqual(twoSteps())
+  })
+})
