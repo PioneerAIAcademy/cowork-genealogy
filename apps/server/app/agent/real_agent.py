@@ -413,12 +413,12 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
 
 
 def current_api_key() -> str:
-    """The operator's Anthropic key for the next turn.
+    """The proxy token (or real key in legacy setups) for the next turn.
 
-    Prefers the per-connect secrets file so a rotated key reaches a long-lived
+    Prefers the per-connect secrets file so a rotated token reaches a long-lived
     sandbox whose create-time env is frozen (the whole point of the file
     channel). Falls back to the env var when the file is missing, unreadable, or
-    carries no key — local dev, and any sandbox created before this existed.
+    carries no value — local dev, and any sandbox created before this existed.
     """
     env_key = os.environ.get("ANTHROPIC_API_KEY", "")
     try:
@@ -427,6 +427,25 @@ def current_api_key() -> str:
         return env_key
     key = doc.get("anthropic_api_key") if isinstance(doc, dict) else None
     return key if isinstance(key, str) and key else env_key
+
+
+def _sdk_env(api_key: str | None = None) -> dict[str, str]:
+    """Build the env dict for the Claude Agent SDK subprocess.
+
+    When ``ANTHROPIC_BASE_URL`` is set in the sandbox env (by the control plane
+    to point at the credential proxy), it is forwarded so the SDK routes calls
+    through the proxy. ``ENABLE_TOOL_SEARCH=true`` is set unconditionally, which
+    keeps tool search on regardless of the base URL (measured: probe P3b,
+    2026-09-11, ``make probe-gateway-path``).
+    """
+    env: dict[str, str] = {
+        "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
+        "ENABLE_TOOL_SEARCH": "true",
+    }
+    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    if base_url:
+        env["ANTHROPIC_BASE_URL"] = base_url
+    return env
 
 
 def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None):
@@ -503,10 +522,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # to "false" is a separate, tracked decision that requires re-measuring
         # the tool mix, so the value is left as it has been running — and kept in
         # sync with the e2e orchestrator either way.
-        env={
-            "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
-            "ENABLE_TOOL_SEARCH": "true",
-        },
+        env=_sdk_env(api_key),
     )
     if resume:
         kwargs["resume"] = resume  # reload the prior conversation transcript
@@ -960,11 +976,11 @@ class RealAgent:
     async def _ensure_client(self):
         key = current_api_key()
         if self._client is not None and key != self._client_key:
-            # The operator rotated the key under a live client. Rebuild so the
-            # new one takes effect without waiting for the sandbox to be
-            # recreated. Conversation survives: the rebuild passes
-            # resume=<session id>, the same path a runner restart takes.
-            _log("[agent] Anthropic key rotated — rebuilding the SDK client")
+            # The proxy token (or legacy raw key) changed — rebuild. Under the
+            # credential proxy this fires only when anthropic_proxy_signing_key
+            # rotates; Anthropic API key rotation is transparent (the proxy reads
+            # the current key from config on every request).
+            _log("[agent] API credential rotated — rebuilding the SDK client")
             await self._close_client()
         if self._client is None:
             from claude_agent_sdk import ClaudeSDKClient
