@@ -1430,7 +1430,18 @@ without whichever Bedrock refuses.
   D17 interactive run own that. On a `docker-compose`-only machine pass
   `PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"`. Offline tests:
   `tests/test_proto_demo.py`, in `make proto-test` (which now also runs `test_proto_d17.py`).
-  Not yet run live — the first billed run is the D18 budget's.
+  **Run live 2026-09-18** on `bagley-father-1884` (`sess_352cf5166b624d00`): stack up from
+  cold with the `docker-compose` override, seeded, `turn_done` after **38 s**, `receive_count`
+  1, outcome ok, **$0.26**, 7 SDK turns, tokens 13 / 51,543 / 128,347 / 1,837 (input /
+  cache-creation / cache-read / output), 6 tool calls all with durations (longest
+  `person_read` 1,155 ms, p50 303 ms), criterion 3 PASS (0 / 0 / 0), no reauth hit, exit 0.
+  **What the run showed, for D18's quality eyeball rather than this command:** the agent
+  answered from FamilySearch's live tree — `person_read` on the unstripped `MJDL-Q8B` returned
+  David Bagley directly, two `record_search` calls confirmed it, no skill was invoked, no
+  delegation ran, and every `research.json` section is still 0 after the turn. The e2e harness
+  blocks tree reads for this fixture genre (`strip`); the prototype worker does not, so a
+  38-second answer here is the tree talking, not the research workflow. D17's kill must be
+  timed on a run that reaches `extraction_append`, which this one never did.
 - **D20** Write-up.
 
 **Runs ~22 days after the 2026-09-10 cut, and a few days over is acceptable (lead's
