@@ -395,7 +395,7 @@ Example:
 ```
 1850 U.S. Census, Schuylkill County, Pennsylvania, population
 schedule; digital index, Ancestry.com ("1850 United States
-Federal Census", https://www.ancestry.com/search/collections/NNNNN/),
+Federal Census", [COLLECTION URL AS ON FILE]),
 accessed 1 April 2026; Thomas Flynn entry.
 ```
 Say "digital index", not "digital image" — the index entry is a
