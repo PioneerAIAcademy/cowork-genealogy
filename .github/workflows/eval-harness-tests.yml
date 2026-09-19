@@ -90,12 +90,17 @@ jobs:
           # ^apps/server/ (not the broader ^apps/) is exact coverage -- apps/web and
           # apps/electron hold no .py.
           #
+          # `^\.claude/skills/merge-issues/` (issue #2621): the suite under
+          # .claude/skills/lib/tests/ covers merge-issues/slots.py, which lives
+          # outside every pattern above. A slots.py-only diff ran none of it and
+          # reported success -- the guard not guarding its own subject.
+          #
           # `^scripts/` (issue #1776): test_setup_feedback_case.py shells out to
           # scripts/setup-feedback-case.sh, and the encoding lint above AST-scans
           # scripts/claude-hooks/*.py — the only scanned .py outside the trees
           # already matched here. Without it a scripts/-only diff reported success
           # without running either check.
-          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.claude/skills/lib/|^\.github/workflows/eval-harness-tests\.yml$'
+          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.claude/skills/lib/|^\.claude/skills/merge-issues/|^\.github/workflows/eval-harness-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
