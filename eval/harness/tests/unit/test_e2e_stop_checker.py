@@ -261,7 +261,7 @@ def test_classify_hand_back_takes_no_research_argument():
 
 
 def test_a_truthful_completion_is_not_a_false_completion():
-    """The defect is claiming done while the project is NOT completed. 134 of the 180
+    """The defect is claiming done while the project is NOT completed. 134 of the 181
     committed run logs stop on `completed`; counting those would make the rate
     dominated by runs that did exactly the right thing."""
     key, reply = hand_back_outcome("completion_claim", project_is_completed=True)
@@ -305,3 +305,26 @@ def test_project_completed_still_short_circuits_should_continue_run():
         tool_count=5,
         tool_count_at_last_nudge=0,
     ) is False
+
+
+SKILL = Path(__file__).resolve().parents[4] / "packages/engine/plugin/skills/research/SKILL.md"
+
+
+def test_the_shipped_hand_back_line_classifies_as_step():
+    """Binds the classifier's literal to the prose #2292 lands.
+
+    Vacuous today -- research/SKILL.md emits no closing line, which is why `step`
+    reads 0 everywhere. It fires the moment a closing line appears with wording
+    classify_hand_back does not match: markdown emphasis alone
+    (`**Research complete.**`) already fails the literal. That is the case in which
+    `step: 0` looks correct on every surface while the classifier is silently broken,
+    and nothing else in the suite can tell the two apart.
+    """
+    if not SKILL.exists():
+        return
+    for ln in SKILL.read_text(encoding="utf-8").splitlines():
+        if "Continue?" in ln or "Research complete" in ln:
+            assert classify_hand_back(ln.strip()) in ("step", "completion_claim"), (
+                f"research/SKILL.md emits a closing line the classifier does not "
+                f"match, so `step` will stay 0 and read as expected: {ln!r}"
+            )

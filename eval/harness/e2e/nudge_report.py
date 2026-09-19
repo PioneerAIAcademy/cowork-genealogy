@@ -49,8 +49,8 @@ developer machines.
 
 ## Coverage is still sparse
 
-`narration` is not retained for most runs. `usage.continue_nudges` records **294
-nudges across 123 of the committed runs**; only **25** of those carry a narration
+`narration` is not retained for most runs. `usage.continue_nudges` records **297
+nudges across 124 of the committed runs**; only **26** of those carry a narration
 nudge entry, because `narration` started recently. So the seam and hand-back
 histograms are a sample and never a census. (Re-derive with
 `make e2e-nudges SINCE=all`; the corpus churns and a pasted-forward figure is the
@@ -117,7 +117,7 @@ SEAMS: list[tuple[str, re.Pattern[str]]] = [
 # The HAND-BACK axis. One predicate, defined once: `classify_hand_back` in
 # stop_checker.py is what the harness itself uses at the Stop hook, so the report
 # grades against the same rule the run was graded by. The former ANNOUNCE_RE lived
-# here and matched free prose — which called 31 of 71 yields "announced" where the
+# here and matched free prose — which called 32 of 74 yields "announced" where the
 # harness classifies every one of them `silent`. A report keyed on a predicate the
 # harness does not use is a report about nothing.
 #
@@ -177,7 +177,7 @@ def nudges_from_narration(doc: dict, run: str) -> list[Nudge]:
         # Mirror the orchestrator's selection EXACTLY (orchestrator.py stop_hook):
         # the nearest non-harness entry, and only when no tool call landed after it.
         # Sharing classify_hand_back does not by itself make the two agree — 2 of the
-        # 71 committed narration nudges have tool calls between the last assistant
+        # 74 committed narration nudges have tool calls between the last assistant
         # text and the nudge, and those must read `silent` on both sides.
         excerpt = ""
         full_text = ""
@@ -228,10 +228,11 @@ def nudges_from_transcript(path: Path, run: str) -> list[Nudge]:
             buf.append(prev)
             if len(" ".join(buf)) > EXCERPT_CHARS * 3:
                 break
-        excerpt = _tail(" ".join(reversed(buf)))
+        full_text = " ".join(reversed(buf))
+        excerpt = _tail(full_text)
         out.append(
             Nudge(run, int(m.group(1)), int(m.group(2)), "transcript",
-                  "", excerpt, *classify(excerpt, ""))
+                  "", excerpt, *classify(excerpt, "", full_text))
         )
     return out
 
@@ -258,7 +259,7 @@ def scan(paths: list[Path]) -> list[Nudge]:
     return found
 
 
-def tool_call_total(paths: list[Path]) -> int:
+def tool_call_total(paths: list[Path], attributed_runs: set[str] | None = None) -> int:
     """Total tool calls across the scanned runs — the denominator for a rate.
 
     A flat count of hand-backs is not comparable between a 40-call run and a
@@ -273,6 +274,14 @@ def tool_call_total(paths: list[Path]) -> int:
             doc = json.loads(p.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
+        if attributed_runs is not None:
+            recorded = (doc.get("usage") or {}).get("continue_nudges") or 0
+            if recorded and f"{p.parent.name}/{p.stem}" not in attributed_runs:
+                # Nudged but unattributable: its nudges can never reach the
+                # numerator, so counting its tool calls in the denominator makes
+                # the rate track narration COVERAGE rather than agent behaviour —
+                # the one thing a pre-registered baseline must not do.
+                continue
         total += len(doc.get("tool_calls") or [])
     return total
 
@@ -282,7 +291,7 @@ def counter_totals(paths: list[Path]) -> tuple[int, int]:
 
     Every nudge lands there whether or not a narration entry or a transcript
     survives to say WHERE it happened, and across the committed corpus most do
-    not: 98 of the 123 nudged runs carry neither source. That makes this the
+    not: 98 of the 124 nudged runs carry neither source. That makes this the
     denominator the seam histogram is a sample of. Without it an unreadable run
     is indistinguishable from a clean one, and the report says "every run
     completed its loop" over a fixture that nudged sixteen times.
@@ -350,7 +359,8 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
             if tool_calls_total
             else "  (no tool calls counted — rates omitted)"
         ),
-        "  (step is 0 until #2292 lands the hand-back prose — that is expected)",
+        "  (step is 0 for as long as research/SKILL.md emits no closing line —"
+        " check it before reading 0 as expected)",
         "",
         "By seam — which artifact had just been written:",
     ]
@@ -389,7 +399,7 @@ def main(argv: list[str] | None = None) -> int:
     nudges = scan(paths)
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_report(nudges, n_runs=len(paths), recorded=counter_totals(paths),
-                        tool_calls_total=tool_call_total(paths)))
+                        tool_calls_total=tool_call_total(paths, {n.run for n in nudges})))
     return 0
 
 

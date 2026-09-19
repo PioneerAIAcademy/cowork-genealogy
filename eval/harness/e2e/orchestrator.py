@@ -2056,7 +2056,7 @@ async def _run_agent(
             mcp_unavailable=mcp_state["unavailable"],
         ):
             # Terminal. Count the class only where the stop is a defect — `completed`
-            # is the successful path (134 of 180 committed runs) and `mcp_unavailable`
+            # is the successful path (134 of 181 committed runs) and `mcp_unavailable`
             # is infrastructure (#941); attributing either to the agent's hand-back
             # would make the rate dominated by runs that did the right thing.
             reason = terminal_reason(
