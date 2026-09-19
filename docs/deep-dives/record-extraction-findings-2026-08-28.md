@@ -164,7 +164,7 @@ All three are rules my scan found **zero** violations of across 2,416 assertions
 - **`ut_017` (obituary) — a validator I had not seen fire.** Run 1 tripped
   `test_relationship_type_agrees_with_its_value`: `a_037` carried
   `relationship_type: "child"` while its `value` read "Sister of Harold Dean Whitaker". The
-  message names the consequence — "materialisation reads `structured_value`, so this writes
+  message names the consequence — "nothing reads `structured_value.relationship_type` today, so this silently writes
   the wrong family edge (or the right one backwards) while the value still reads
   correctly". Passed in run 2, so 1 of 2.
 

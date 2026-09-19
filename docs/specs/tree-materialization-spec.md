@@ -691,6 +691,42 @@ rate, carries the argument below.
   at some headline rate, which fixture cloning inflates in either direction, but
   reliably and on shapes that recur. Measured before it was built, not after,
   and re-measured after a reviewer showed the first rate was inflated.
+
+  **Re-openable, with a residue.** The convention this
+  rejection needed was never stated, which is why the shapes looked
+  contradictory: `relationship_type` is the record subject's own role and
+  `related_person_role` is the other party's. That convention is now stated
+  (`research-schema-spec.md` §5.6.1) and enforces the `relationship_type`
+  half at the write boundary, refusing 22 of 2466 (0.9%) across the run
+  logs, fixtures and hosted seed, measured at 578048221 by
+  `eval/harness/scripts/measure_relationship_direction.py`.
+
+  **This cross-check's own rate, which is not the one above.** A
+  `related_person_role` cross-check would carry **14 of 1803 (0.8%)** — the
+  denominator being relationship and marriage assertions that actually carry
+  the field, since a guard cannot run where it is absent — across 6 recurring
+  `(record_role, fact_type)` shapes once `child_N` and `grantor_N` collapse:
+  father 4, mother 3, child 3, grantor 2, head_of_household 1, wife 1.
+  Measured 2026-09-19 over `eval/**/*final-research.json`, measured at
+  578048221, and emitted by `measure_relationship_direction.py
+  --self-referential` so it is re-derivable rather than pasted. The 0.9% recorded
+  beside the `relationship_type` guard is a **different guard's** number and
+  must not be read as this one's.
+
+  What is NOT settled, and why this stays rejected rather than becoming
+  buildable: those 14 are the failure the 2026-09-07 note describes, and they
+  are a **content** defect — the field populated with the persona's own role —
+  not a consequence of the unstated convention. Stating the convention does
+  not repair them. The spec's own worked example encoded the same shape
+  (`relationship_type: "father"` with `related_person_role: "deceased"` under
+  `record_role: "deceased"`), and it is cloned into 40 files: 38 scenario
+  fixtures, the hosted seed and the electron fixture. The example is corrected
+  and the clones left, because neither guard shipped alongside refuses any of
+  them — 0 refusals in `eval/fixtures/**` and 0 in the seed, asserted by the
+  script above rather than assumed. So the population this cross-check would
+  run over is mixed, and whether those rows get healed or tolerated is a
+  decision nobody has taken. Re-open when it is; the convention being stated
+  does not clear this.
 - **Rejected as the answer, though it is the smaller diff: teach `tree_edit`
   `add_person`/`add_name` a `sourceAssertionId`.** It leaves the omission path
   open — a caller who passes nothing still gets a ref-less name — so it makes
