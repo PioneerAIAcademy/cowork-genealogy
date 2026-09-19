@@ -90,6 +90,16 @@ describe("gcUnreferencedImages", () => {
     expect((await stat(join(dir, "images", "cited.jpg"))).isFile()).toBe(true);
   });
 
+  it("keeps an image cited with a non-canonical ref — `./images/x.jpg` protects `images/x.jpg` (#2457 r4 note 6)", async () => {
+    // The cap join normalizes a relayed image_filename; the GC must canonicalize
+    // the referenced set the same way, or a source citing `./images/cited.jpg`
+    // (or a backslash spelling) leaves the real file unprotected and it is swept.
+    const dir = await tmp();
+    await makeImage(dir, "cited.jpg", 25 * 60 * 60 * 1000);
+    await gcUnreferencedImages(dir, new Set(["./images/cited.jpg"]));
+    expect((await stat(join(dir, "images", "cited.jpg"))).isFile()).toBe(true);
+  });
+
   it("keeps a recent unreferenced image (TTL not elapsed)", async () => {
     const dir = await tmp();
     await makeImage(dir, "fresh.jpg", 60 * 1000); // 1 min old
@@ -115,21 +125,25 @@ describe("truncated-source-image cache (#2457)", () => {
     expect(wasSourceImageTruncated("/proj", "images/never-seen.jpg")).toBe(false);
   });
 
-  it("a later clean read retracts a stale cap (add-or-remove, not add-only)", () => {
+  it("is sticky-true: a later clean read does NOT retract a recorded cap (#2457 B1 ruling 2026-09-19)", () => {
+    // The cap bounds output tokens and the prompt varies with lookingFor, so a
+    // narrower second read of the same image can come back uncapped. That false
+    // must NOT overwrite the true, or read 1's partial text gets stamped whole.
     recordImageReadCap("/proj", "images/x.jpg", true);
     expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
-    recordImageReadCap("/proj", "images/x.jpg", false);
-    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(false);
+    recordImageReadCap("/proj", "images/x.jpg", false); // narrower, uncapped re-read
+    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true); // sticky — still partial
+    expect(sourceImageCapState("/proj", "images/x.jpg")).toBe(true);
   });
 
-  it("is tri-state: partial=true, whole=false, not-established=undefined (#2457 ruling amendment a)", () => {
-    // absent must be distinguishable from verified-whole — a Set collapses the two,
-    // and that is what leaves a stale true unclearable on an update.
+  it("records false only when no true stands for that key (partial=true, whole=false, unseen=undefined)", () => {
+    // The store is still tri-state in memory; sticky-true only blocks true → false
+    // for one key. A key whose first read is whole records false.
     expect(sourceImageCapState("/proj", "images/never.jpg")).toBeUndefined();
     recordImageReadCap("/proj", "images/partial.jpg", true);
     expect(sourceImageCapState("/proj", "images/partial.jpg")).toBe(true);
     recordImageReadCap("/proj", "images/whole.jpg", false);
-    expect(sourceImageCapState("/proj", "images/whole.jpg")).toBe(false); // NOT undefined
+    expect(sourceImageCapState("/proj", "images/whole.jpg")).toBe(false); // no prior true → records false
   });
 
   it("is keyed by project — one project's cap does not leak into another", () => {

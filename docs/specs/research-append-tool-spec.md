@@ -594,53 +594,58 @@ splintering into inconsistent labels, over a form the model added:
 
 On every `sources` op the tool **owns** `sources[].transcription_truncated` in
 the op payload, after the §3.4 reuse rewrite so it sees the final op shape. The
-field is **three-valued**, and absence means *unknown*, not *whole*:
+persisted marker is **`true` or absent** — `false` is never written to
+`research.json` — and absence means *unknown*, not *whole*:
 
 | value | meaning |
 |---|---|
 | `true` | verified **partial** — a read of the cited image hit the OCR output-token cap |
-| `false` | verified **whole** — a read of the cited image completed |
-| absent | **not established** — no read of this image reached the write boundary |
+| absent | **not established** — a verified-whole read, a non-image source, or a truncation state that never reached the write boundary |
+
+(`false` — verified whole — is a *cap-store* state only, read by the derivation
+below; it is never a persisted document value.)
 
 Derivation, per op:
 
 - Any caller-supplied value **in the op** is stripped first — including on a
   source with no `image_filename` to join. The truncation of an OCR read is known
   to `image_transcribe`, not to the agent relaying the text, so an agent-asserted
-  value is a guess and is dropped rather than persisted.
+  value is a guess and is dropped rather than persisted. On an `update` the
+  stripped key is then absent from the patch, so `applyOne` keeps whatever is
+  already persisted (below).
 - The op is then joined by `image_filename` against the image-store cap map
-  (`sourceImageCapState` — tri-state: `true` partial, `false` whole, `undefined`
-  not established). On `undefined` the op leaves the field absent.
-- On a **verified-partial** hit, the flag is set `true` **only** when the op also
-  carries a non-empty `transcription`. That guard is load-bearing: `true` beside
-  empty/null `transcription` is a state `validate_research_schema` rejects, so
-  deriving it would make the tool fail its own write (and, batched, discard every
-  good op with it). An update that attaches `image_filename` without carrying the
-  text — which lives in the persisted entry, unreadable pre-merge — is left as-is.
-- On a **verified-whole** hit the op sets the field `false` — but, symmetric to
-  the `true` branch, **only** when the op carries a non-empty `transcription`, so
-  a "verified whole" marker is never planted on a source with nothing read.
-  Writing `false` rather than deleting is what lets an `update` **retract a stale
-  `true`**: the merge (`applyOne`) keeps a persisted value the patch omits, so
-  only an overwrite clears it. This is why the cap store is a `Map`, not a `Set` —
-  a present/absent set can set the flag but never unset it. See
-  `image-transcribe-tool-spec.md` §8.6 for the record side and the
-  no-`projectPath` limitation.
+  (`sourceImageCapState` — `true` partial, `false` whole, `undefined` not
+  established).
+- The flag is set `true` **only** on a verified-partial hit that also carries a
+  non-empty `transcription`. That guard is load-bearing: `true` beside empty/null
+  `transcription` is a state `validate_research_schema` rejects, so deriving it
+  would make the tool fail its own write (and, batched, discard every good op with
+  it). Every other case — verified whole (`false`), not established (`undefined`),
+  or no text — leaves the key **deleted**; `false` is never persisted.
+- Because the non-`true` cases delete rather than write, an `update` merges to
+  keep the persisted value: a persisted `true` survives an update even after a
+  process restart emptied the store, and a whole-read image (`false` in the store)
+  permits an in-place `transcription` update, since nothing is written to block
+  it. An update that attaches `image_filename` to a partial image without carrying
+  the text is left as-is (the text lives in the persisted entry, unreadable
+  pre-merge).
 
-**Retraction is narrow, and a re-read is not a reliable way to do it.** A `false`
-only enters the cap store when a read of that image completes without hitting the
-cap, and a subsequent `sources` op must **carry the `image_filename`** to
-re-derive against; an update touching only other fields does not clear a stale
-`true`. Re-reading is not a dependable retraction: the cap bounds *output tokens*,
-and the OCR prompt varies with `lookingFor` (`buildOcrPrompt`), so a second read
-of the same image can return either a capped (`true`) or an uncapped (`false`)
-result depending on what it was asked for — the store keeps whichever landed
-last, per image. So do **not** re-read to "complete" a partial transcription — the
-remedy is to pivot to the indexed record (`record_read` / `record_search`) and
-cite that as the source (matching `research-schema-spec.md` and the item-2
-ruling). Treat a truncated source's `transcription` as partial for that read;
-supersede it with an indexed-record source rather than trying to null or rewrite
-it in place.
+**The invariant: nothing moves from "partial" to "whole"** — in memory
+(sticky-`true` in the cap store, `image-transcribe-tool-spec.md` §8.6) or in the
+document (`true`-or-absent here). This is what makes the agent-supplied
+`image_filename` join key acceptable: a wrong-but-resolvable key can only add an
+unneeded `true` badge, never a false "verified whole".
+
+**Retraction is dropped, and a re-read does not do it.** The cap store is
+sticky-`true`: once an image reads capped, a later read in the same process does
+not clear it, and the persisted `true` is never overwritten with `false`. The cap
+bounds *output tokens* and the OCR prompt varies with `lookingFor`
+(`buildOcrPrompt`), so a second, narrower read can come back uncapped — but that
+`false` is dropped, not applied, so a truncation is permanent for that image and
+cap. Do **not** re-read to "complete" a partial transcription and do **not** null
+or rewrite it in place; the remedy is to pivot to the indexed record
+(`record_read` / `record_search`) and cite that as a new source (matching
+`research-schema-spec.md` and the item-2 ruling).
 
 Unlike §3.6, this override **echoes nothing** — the response carries no signal
 that a caller-supplied value was dropped. The persisted-side invariant

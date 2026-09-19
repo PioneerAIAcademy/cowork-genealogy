@@ -25,6 +25,7 @@ import { researchAppend, countryConsistency } from "../../src/tools/research-app
 import { validateProject } from "../../src/validation/validator.js";
 import {
   recordImageReadCap,
+  sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
@@ -796,7 +797,7 @@ describe("research_append (Phase 1)", () => {
       expect("transcription_truncated" in persisted).toBe(false);
     });
 
-    it("clears a stale true on an update after the image is re-read whole — tri-state (#2457 ruling amendment a)", async () => {
+    it("keeps a persisted true on an update even after a clean re-read — nothing moves partial→whole (#2457 B1 ruling 2026-09-19)", async () => {
       await writeProject();
       recordImageReadCap(dir, "images/x.jpg", true);
       const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
@@ -804,9 +805,11 @@ describe("research_append (Phase 1)", () => {
       if (!app.ok) return;
       const id = singleOk(app).entryId;
       expect((await readResearch()).sources.find((s: any) => s.id === id).transcription_truncated).toBe(true);
-      // A later clean image_transcribe of the same image records it whole (false),
-      // not absent — that false is what lets the update clear the persisted true.
+      // A later clean re-read records false — but the store is sticky-true, so it
+      // stays true; and the derivation never persists false. The update keeps the
+      // marker true (the invariant: nothing moves from partial to whole).
       recordImageReadCap(dir, "images/x.jpg", false);
+      expect(sourceImageCapState(dir, "images/x.jpg")).toBe(true); // sticky
       const upd = await researchAppend({
         projectPath: dir,
         section: "sources",
@@ -816,22 +819,50 @@ describe("research_append (Phase 1)", () => {
       } as any);
       expect(upd.ok).toBe(true);
       const after = (await readResearch()).sources.find((s: any) => s.id === id);
-      expect(after.transcription_truncated).toBe(false); // pre-fix (Set): stayed true forever
+      expect(after.transcription_truncated).toBe(true); // stays partial; never flips to false/whole
     });
 
-    it("does not write false (verified-whole) on a source with no transcription text (#2457 r3 note 4)", async () => {
+    it("B1 regression: a narrower uncapped re-read does not flip a capped image to whole — append persists true (#2457 B1 ruling 2026-09-19)", async () => {
       await writeProject();
-      // Image read WHOLE (cap false), but the source carries no transcription — a
-      // "verified whole" marker would qualify text that is not there, so the false
-      // branch is guarded the same as the true branch: leave the field absent.
-      recordImageReadCap(dir, "images/x.jpg", false);
-      const entry = imageSource({});
-      delete (entry as Record<string, unknown>).transcription;
-      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      // Praise's reproduction, at the derivation+store level: read 1 caps, read 2
+      // (narrower lookingFor) comes back uncapped, then a source carrying read 1's
+      // partial text is appended. Pre-ruling this persisted `false` ("verified
+      // whole") on partial text; sticky-true + true-or-delete must persist `true`.
+      recordImageReadCap(dir, "images/x.jpg", true);  // read 1: capped
+      recordImageReadCap(dir, "images/x.jpg", false); // read 2: narrower, uncapped
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription: "Row 1: Anna … rtway down the pag" }),
+      });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
-      expect("transcription_truncated" in persisted).toBe(false); // pre-fix: false was written
+      expect(persisted.transcription_truncated).toBe(true); // pre-fix: false — a false "verified whole" on partial text
+    });
+
+    it("does not persist false — a whole-read source is left absent, and an in-place transcription update is permitted (#2457 B2 ruling 2026-09-19)", async () => {
+      await writeProject();
+      // First read in the process is WHOLE (cap false, no prior true). The marker
+      // is never persisted as false: an append leaves it absent, and a later
+      // in-place transcription update goes through (nothing is written to block it).
+      recordImageReadCap(dir, "images/x.jpg", false);
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg", transcription: "a corrected fuller reading" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false); // still absent, update permitted
     });
 
     it("does not discard a good op when a sibling capped op carries no transcription (#2457 review, blocker 1)", async () => {

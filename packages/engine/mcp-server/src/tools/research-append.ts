@@ -3133,12 +3133,16 @@ async function prepareOps(
   // The truncation of an image read is known to image_transcribe, not to
   // record-extractor (which only holds the relayed text). So research_append is
   // authoritative for it on any image-backed source — DERIVED here, never asserted
-  // by the agent. The cap store is tri-state (#2457 ruling amendment a): the cited
-  // image is verified partial (true), verified whole (false), or not established
-  // (undefined). Absent means UNKNOWN, not whole. A source with no image_filename
-  // has nothing to join and is left untouched; that no-persist gap is the §8.6
-  // limitation. Runs after the reuse rewrite above so it sees the final op shape
-  // (an append folded into an update carries its image_filename in `fields`).
+  // by the agent. Per the B1/B2 ruling (2026-09-19) the PERSISTED marker is
+  // `true` or ABSENT, never `false`: the invariant is that nothing moves from
+  // "partial" to "whole", in memory (sticky-`true` in the cap store) or in the
+  // document (here). `false` lives only in the cap store; it is read below (as
+  // "not true"), never written to research.json. So a wrong-but-resolvable
+  // image_filename can only add an unneeded `true` badge, never a false
+  // "verified whole" — which is why the agent-supplied join key is acceptable.
+  // Absent means UNKNOWN, not whole. Runs after the reuse rewrite above so it
+  // sees the final op shape (an append folded into an update carries its
+  // image_filename in `fields`).
   for (const op of ops) {
     if (op.section !== "sources") continue;
     const bag = (op.op === "append" ? op.entry : op.fields) as
@@ -3146,27 +3150,28 @@ async function prepareOps(
       | undefined;
     if (!bag || typeof bag !== "object") continue;
     // Strip any caller-supplied value FIRST — the field is derived, so an agent's
-    // guess never persists, even on a source with no joinable image_filename.
+    // guess never persists, even on a source with no joinable image_filename. On
+    // an `update` this also means: absent from the patch, so the merge keeps the
+    // persisted value — which is how a persisted `true` survives an update after a
+    // process restart emptied the store (the store, not the document, is what a
+    // restart clears).
     delete bag.transcription_truncated;
     const ref = bag.image_filename;
     if (typeof ref !== "string" || ref.length === 0) continue;
     const cap = sourceImageCapState(projectPath, ref);
-    if (cap === undefined) continue; // not established → leave absent (unknown)
-    // Both branches derive the marker ONLY beside a non-empty transcription — the
-    // marker qualifies text, so it is meaningless without any. `true` beside
-    // empty/null transcription is a state validate_research_schema rejects (its
-    // .trim()), so deriving it would make the tool fail its own write — and,
-    // batched, discard every good op with it. `false` on an empty source is not
-    // rejected but is equally meaningless — a "verified whole" marker planted on a
-    // source with nothing read — so it is guarded the same way (#2457 r3 note 4).
-    // An update attaching image_filename without carrying the text (it lives in
-    // the persisted entry, unreadable pre-merge) is left as-is either way.
+    // `true` (verified partial) is the only value persisted, and only beside a
+    // non-empty transcription — the marker qualifies text, so it is meaningless
+    // without any, and `true` beside empty/null transcription is a state
+    // validate_research_schema rejects (its .trim()), which batched would discard
+    // every good op with it. Anything else — verified whole (`false`), or not
+    // established (`undefined`), or no text — leaves the key deleted: `false` is
+    // never written to the document (#2457 B2 ruling). A whole-read image
+    // (`false`) therefore permits an in-place transcription update, since the
+    // patch omits the marker and the merge keeps the (absent) persisted value.
     const text = bag.transcription;
-    if (typeof text !== "string" || text.trim() === "") continue;
-    // cap === true → verified partial; cap === false → verified whole. Writing
-    // `false` rather than deleting is what lets a later `update` clear a stale
-    // `true` the merge would otherwise keep (a Set could set but never unset).
-    bag.transcription_truncated = cap === true;
+    if (cap === true && typeof text === "string" && text.trim() !== "") {
+      bag.transcription_truncated = true;
+    }
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);

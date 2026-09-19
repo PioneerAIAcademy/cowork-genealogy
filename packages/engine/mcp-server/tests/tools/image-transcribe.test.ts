@@ -398,7 +398,7 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
     }
   });
 
-  it("an uncapped read that persists an image records NO cap under its imageRef", async () => {
+  it("an uncapped read that persists an image records verified-whole (false), not absent", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
     const dir = await mkdtemp(join(tmpdir(), "imgt-nocap-"));
     try {
@@ -408,10 +408,30 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
       }, LOCAL);
       expect(result.truncated).toBeUndefined();
       expect(result.imageRef).toBe("images/004884748_02613.jpg");
-      // Records verified-whole (false), not absent — that distinction is what lets
-      // a later write clear a stale true (#2457 ruling amendment a).
+      // A first whole read records false in the cap store (not absent); the
+      // derivation reads it as "not true" and persists nothing — false never
+      // reaches research.json (#2457 B2 ruling).
       expect(wasSourceImageTruncated(dir, result.imageRef!)).toBe(false);
       expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("is sticky-true through the tool: a capped read then a narrower uncapped read of the same image stays partial (#2457 B1 ruling 2026-09-19)", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "imgt-sticky-"));
+    try {
+      // Read 1: capped.
+      mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
+      const r1 = await imageTranscribeTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+      expect(r1.truncated).toBe(true);
+      expect(sourceImageCapState(dir, r1.imageRef!)).toBe(true);
+      // Read 2: same image, narrower lookingFor, comes back uncapped — must NOT
+      // overwrite the true (that false is what stamped partial text "verified whole").
+      mockOpenRouterOk("Anna");
+      const r2 = await imageTranscribeTool({ imageId: "004884748_02613", lookingFor: "Anna", projectPath: dir }, LOCAL);
+      expect(r2.truncated).toBeUndefined();
+      expect(sourceImageCapState(dir, r2.imageRef!)).toBe(true); // sticky — still partial
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

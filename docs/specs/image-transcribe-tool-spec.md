@@ -913,36 +913,51 @@ guess from prose — and was observed to set it while saving no transcription at
 all. So the field is **derived at the write boundary, never
 asserted by the agent**:
 
+**The single invariant: nothing moves from
+"partial" to "whole", in memory or in the document.** Every remaining error is
+then an unneeded badge, never a false all-clear — which is what makes the
+agent-supplied `image_filename` join key acceptable (a wrong-but-resolvable key
+can add a `true` badge, never a false "verified whole").
+
 - **Record (write side).** On any read that persisted an image — capped or not —
   `image_transcribe` records the outcome against that image:
   `recordImageReadCap(projectPath, imageRef, truncated)` in
   `src/utils/image-store.ts`. It is a module-level `Map<string, boolean>` keyed
   `${projectPath}\0${imageRef}` — the same `images/<key>.jpg` string a source
-  cites as `image_filename` (§8.5). **Tri-state**: `true` = verified partial (the
-  read hit the cap), `false` = verified whole, absent = not established. Storing `false` rather than deleting on a clean read is what lets a
-  later write **clear** a stale `true` — a present/absent `Set` could set the flag
-  but never unset it, since `delete` on an update's patch only drops the key and
-  the merge then keeps the persisted `true`. Both key halves arrive from an LLM
-  relay, so the key normalizes a trailing separator on `projectPath` and a leading
-  `./` / backslash separators on `imageRef`. It lives in `image-store.ts`, not
-  `image-transcribe.ts`, because both the writer (`image_transcribe`) and the
-  reader (`research_append`) already import that module — the alternative is a
-  tool→tool import — and `image_filename` is exactly the `imageRef` this module
-  mints. Process-lifetime, never persisted, keyed by project for the same reason
-  `browseBudgetSeen` is (§5.8).
+  cites as `image_filename` (§8.5). `true` = verified partial (the read hit the
+  cap), `false` = verified whole, absent = not established — but the store is
+  **sticky-`true`**: once an image reads capped, a later `false` for that key is
+  dropped, so no read in the process moves it back to whole. This matters because
+  the cap bounds output tokens and the OCR prompt varies with `lookingFor`, so a
+  second, narrower read of the same image can come back uncapped; without
+  stickiness that `false` would overwrite the `true` and stamp read 1's partial
+  text "verified whole". A genuine "read it whole now" needs a bigger cap, which
+  needs a rebuild+restart, which empties this process-lifetime store — so nothing
+  legitimate is lost. Both key halves arrive from an LLM relay, so the key
+  normalizes backslashes and a trailing separator on `projectPath` and a leading
+  `./` on `imageRef`. It lives in `image-store.ts`, not `image-transcribe.ts`,
+  because both the writer (`image_transcribe`) and the reader (`research_append`)
+  already import that module — the alternative is a tool→tool import — and
+  `image_filename` is exactly the `imageRef` this module mints. Process-lifetime,
+  never persisted, keyed by project for the same reason `browseBudgetSeen` is
+  (§5.8).
 - **Derive (persist side).** In `research_append`'s `prepareOps`, after the
-  source-reuse rewrite, every `sources` op carrying an `image_filename` reads the
-  tri-state via `sourceImageCapState(projectPath, image_filename)` and sets the
-  field from it — **authoritative**, any agent-supplied value stripped first: on
-  `true` sets `transcription_truncated: true` (only beside a non-empty
-  `transcription` — see the invariant below), on `false` sets it `false` (whole),
-  on absent leaves it off (unknown).
-- **Invariant.** `validate_research_schema` rejects `transcription_truncated:
-  true` beside an empty or null `transcription` — the persisted-side mirror of
-  the tool's own guarantee that a zero-content capped read throws rather than
-  returning `truncated: true` (§6.2). The derivation honours it on both sides:
-  `true` is written only beside non-empty text, and `false` likewise, so a
-  "verified whole" marker is never planted on a source with nothing read.
+  source-reuse rewrite, every `sources` op carrying an `image_filename` reads
+  `sourceImageCapState(projectPath, image_filename)` and sets the field from it —
+  **authoritative**, any agent-supplied value stripped first. The persisted
+  marker is **`true` or absent, never `false`**: `true` (verified partial) is
+  written only beside a non-empty `transcription`; anything else — verified whole
+  (`false` in the store), not established (absent), or no text — leaves the key
+  deleted. `false` stays in the cap store and is never written to `research.json`.
+  On an `update` the deleted key is absent from the patch, so the merge keeps the
+  persisted value: a persisted `true` survives an update even after a restart
+  emptied the store, and a whole-read image (`false` in the store) permits an
+  in-place `transcription` update because nothing is written to block it.
+- **Invariant.** `validate_research_schema` rejects a persisted `false` (the
+  marker is `true` or absent) and rejects `transcription_truncated: true` beside
+  an empty or null `transcription` — the persisted-side mirror of the tool's own
+  guarantee that a zero-content capped read throws rather than returning
+  `truncated: true` (§6.2).
 
 **Known limitation — the join needs a persisted image.** Like the browse
 budget's ARK blind spot (§5.8), this derivation has a hole, but a *different*

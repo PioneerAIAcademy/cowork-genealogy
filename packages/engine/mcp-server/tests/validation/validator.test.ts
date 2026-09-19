@@ -766,7 +766,7 @@ describe("Project Validator", () => {
       expect(truncErr(result)).toBe(true);
     });
 
-    it("rejects a non-boolean transcription_truncated", async () => {
+    it("rejects a non-true transcription_truncated (e.g. a string)", async () => {
       const research = {
         ...minimalResearch,
         sources: [validSource({ transcription_truncated: "yes", transcription: "some text" })],
@@ -774,7 +774,18 @@ describe("Project Validator", () => {
       await writeProject(research, tree);
       const result = await validateProject(testDir);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.message.includes("transcription_truncated must be a boolean"))).toBe(true);
+      expect(result.errors.some((e) => e.message.includes("transcription_truncated must be true or absent"))).toBe(true);
+    });
+
+    it("rejects a persisted transcription_truncated: false — the marker is true-or-absent (#2457 B2 ruling 2026-09-19)", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: false, transcription: "full text", image_filename: "images/x.jpg" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false); // pre-ruling: false was accepted (verified-whole)
+      expect(result.errors.some((e) => e.message.includes("transcription_truncated must be true or absent"))).toBe(true);
     });
 
     it("accepts transcription_truncated: true beside real partial text", async () => {

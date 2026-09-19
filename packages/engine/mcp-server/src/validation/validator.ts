@@ -1012,18 +1012,26 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkAllowedKeys(cd, RESEARCH_SHAPES.citation_detail, "citation_detail objects", `${sp}/citation_detail`, report);
     }
 
-    // transcription_truncated marks the transcription it sits beside as partial,
-    // so it is only meaningful with real text to qualify. `true` on an empty or
-    // null transcription is exactly the state a model produces when it ASSERTS
-    // the flag rather than the tool deriving it (issue #2457) — reject it. The
-    // tool never emits that pair (a zero-content capped read throws instead of
-    // returning `truncated: true`, image-transcribe.ts), so the persisted writer
-    // must not accept it either.
+    // transcription_truncated marks the transcription it sits beside as partial.
+    // The PERSISTED marker is `true` or ABSENT — never `false` (#2457 B2 ruling
+    // 2026-09-19): the invariant is that nothing moves from "partial" to "whole"
+    // in the document, and `false` was the only value that could (by clearing a
+    // stale `true` through the field merge), which sticky-`true` in the cap store
+    // retires. `false` lives in the tool's in-process cap store, never here. And
+    // `true` is only meaningful with real text to qualify — `true` beside an
+    // empty/null transcription is the state a model produces when it ASSERTS the
+    // flag rather than the tool deriving it, and the tool never emits it (a
+    // zero-content capped read throws instead of returning `truncated: true`,
+    // image-transcribe.ts) — so the persisted writer rejects it too.
     if ("transcription_truncated" in src) {
       const flag = src.transcription_truncated;
-      if (typeof flag !== "boolean") {
-        addError(report, sp, "transcription_truncated must be a boolean");
-      } else if (flag === true) {
+      if (flag !== true) {
+        addError(
+          report,
+          sp,
+          "transcription_truncated must be true or absent — false is never persisted (it lives only in the tool's in-process cap store; absent means not established). transcription_truncated is derived by the tool, not set by you.",
+        );
+      } else {
         const t = src.transcription;
         if (typeof t !== "string" || t.trim() === "") {
           addError(

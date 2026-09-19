@@ -18,53 +18,73 @@ export const IMAGES_SUBDIR = "images";
 
 // What image_transcribe learned about each persisted source image's read, keyed
 // `${projectPath}\0${imageRef}` — the same `images/<key>.jpg` string a source
-// records as `image_filename`. TRI-STATE, deliberately (#2457 ruling amendment a):
+// records as `image_filename`. Values (#2457 B1/B2 ruling 2026-09-19):
 //   true    = verified PARTIAL (the read hit the OCR output-token cap)
-//   false   = verified WHOLE   (the read completed)
+//   false   = verified WHOLE   (the read completed) — MEMORY ONLY, never persisted
 //   absent  = NOT ESTABLISHED  (no read reached here for this image)
 // A capped read returns its partial transcription verbatim beside `truncated: true`,
 // so the fact is known at the read; but `record-extractor` relays that text across
 // a subagent boundary and never sees the flag, so `transcription_truncated` is
 // derived at the write boundary instead: research_append joins a source's
-// `image_filename` against this map (`sourceImageCapState`) and sets the field from
-// it. `false` matters as much as `true`: it is what lets the derivation CLEAR a
-// stale `true` on a later clean read — a `Set` (present/absent) could set the flag
-// but never unset it, since `delete` on an update's patch only drops the key and
-// the merge then keeps the persisted `true`. It lives here, not in
-// image-transcribe.ts, because both the writer (image_transcribe) and the reader
-// (research_append) already import this module. Process-lifetime, never persisted;
-// keyed by project (a global key would leak one project's cap into another) as
-// browseBudgetSeen is. Only reads that PERSISTED an image land here (an imageRef is
-// what a source cites); a read with no projectPath leaves no image_filename to
-// join, the known limitation in image-transcribe-tool-spec §8.6. image_filename,
-// not imageId, is the key because it is the only identifier both tools share — an
-// ARK read gets one too, so an ARK read is NOT the browse-budget imageId blind spot.
+// `image_filename` against this map (`sourceImageCapState`) and persists `true` or
+// nothing — never `false`. The single invariant is that nothing moves from
+// PARTIAL to WHOLE, in memory or in the document: this Map is STICKY-`true`
+// (recordImageReadCap drops a `false` when a `true` already stands for the key),
+// and the derivation writes `true` or deletes. `false` exists only so the
+// derivation reads it as "not true" and leaves the marker off; it is never a
+// document value. That is why a wrong-but-resolvable `image_filename` can add an
+// unneeded `true` badge but can never stamp a whole transcription "verified whole".
+// It lives here, not in image-transcribe.ts, because both the writer
+// (image_transcribe) and the reader (research_append) already import this module.
+// Process-lifetime, never persisted; keyed by project (a global key would leak one
+// project's cap into another) as browseBudgetSeen is. Only reads that PERSISTED an
+// image land here (an imageRef is what a source cites); a read with no projectPath
+// leaves no image_filename to join, the known limitation in
+// image-transcribe-tool-spec §8.6. image_filename, not imageId, is the key because
+// it is the only identifier both tools share — an ARK read gets one too, so an ARK
+// read is NOT the browse-budget imageId blind spot.
 const sourceImageCaps = new Map<string, boolean>();
+
+/** Canonicalize an image ref/filename that arrives raw from an LLM relay:
+ *  backslashes → forward slashes, drop a leading `./`. The write side mints a
+ *  canonical `images/<key>.jpg`, but a source's `image_filename` on the read side
+ *  (the cap join) and in the GC's referenced set can be spelled `./images/x.jpg`
+ *  or with backslashes, so both must canonicalize the same way or they miss. */
+function normalizeImageRef(ref: string): string {
+  return ref.replace(/\\/g, "/").replace(/^\.\//, "");
+}
 
 function truncatedImageKey(projectPath: string, imageRef: string): string {
   // Both halves arrive raw from an LLM relay, so a record and a query can spell the
   // same thing differently and must still join. Normalize backslashes to forward
   // slashes on both sides (a Windows caller can record under `C:\Users\…` and query
   // `C:/Users/…`), strip a trailing separator on projectPath (record `/p/`, query
-  // `/p`), and strip a leading `./` on imageRef — it is module-minted on the WRITE
-  // side but is a source's `image_filename` on the READ side, relayed by the agent,
-  // so `./images/x.jpg` must join the canonical `images/x.jpg`. Without any of these
-  // the record/query symmetry is lost and a capped read reads back clean (#2457).
+  // `/p`), and canonicalize imageRef (see normalizeImageRef) so `./images/x.jpg`
+  // joins `images/x.jpg`. Without any of these the record/query symmetry is lost
+  // and a capped read reads back clean (#2457).
   const proj = projectPath.replace(/\\/g, "/").replace(/\/+$/, "");
-  const ref = imageRef.replace(/\\/g, "/").replace(/^\.\//, "");
-  return `${proj}\0${ref}`;
+  return `${proj}\0${normalizeImageRef(imageRef)}`;
 }
 
 /** Record whether this project's persisted source image was read past the OCR
- *  output-token cap. Stores the outcome either way (`true` partial, `false` whole)
- *  rather than deleting on a clean read — the `false` is what lets a later write
- *  clear a stale `true` instead of leaving a whole read marked partial. */
+ *  output-token cap. STICKY-`true` (#2457 B1 ruling 2026-09-19): once an image
+ *  reads capped, no later read in this process clears it — a `false` is dropped
+ *  when a `true` already stands for that key. The cap bounds output tokens and
+ *  the OCR prompt varies with `lookingFor`, so a second, narrower read of the
+ *  same image can come back uncapped; without stickiness that later `false` would
+ *  overwrite the `true` and stamp read 1's partial text "verified whole". A
+ *  genuine "read it whole now" needs a bigger cap, which needs a rebuild+restart,
+ *  which empties this process-lifetime store — so nothing legitimate is lost.
+ *  Invariant: the cap store never moves an image from partial (`true`) to whole
+ *  (`false`). */
 export function recordImageReadCap(
   projectPath: string,
   imageRef: string,
   truncated: boolean,
 ): void {
-  sourceImageCaps.set(truncatedImageKey(projectPath, imageRef), truncated);
+  const key = truncatedImageKey(projectPath, imageRef);
+  if (!truncated && sourceImageCaps.get(key) === true) return; // sticky: never true → false
+  sourceImageCaps.set(key, truncated);
 }
 
 /** Tri-state read of what image_transcribe learned about the image a research.json
@@ -156,12 +176,17 @@ export async function gcUnreferencedImages(
     return; // an unusable projectPath — nothing to GC
   }
   const cutoff = Date.now() - IMAGE_GC_TTL_MS;
+  // Canonicalize the referenced set the same way the cap join does, so a source
+  // citing `./images/x.jpg` (or a backslash spelling) still protects the file
+  // `images/x.jpg` from the sweep. Without this the normalization the cap join
+  // relies on would let the GC delete a scan a source actually cites (#2457 r4 note 6).
+  const normalizedReferenced = new Set([...referenced].map(normalizeImageRef));
   await Promise.all(
     entries
       .filter((e) => e.name.endsWith(".jpg"))
       .map(async (e) => {
         const ref = `${IMAGES_SUBDIR}/${e.name}`;
-        if (referenced.has(ref)) return;
+        if (normalizedReferenced.has(ref)) return;
         if (e.mtimeMs < cutoff) await store.remove(projectPath, ref);
       }),
   );
