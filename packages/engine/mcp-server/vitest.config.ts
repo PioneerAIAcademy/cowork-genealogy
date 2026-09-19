@@ -18,7 +18,9 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**/*.ts"],
-      // The two stdio entrypoints connect a transport at import; no test loads them.
+      // The stdio entrypoints connect a transport at import; no test loads them.
+      // tests/http/http-entrypoint.test.ts loads http.ts with its listener mocked,
+      // for the process store it installs and nothing else, so it stays excluded too.
       exclude: ["src/index.ts", "src/hosted-stdio.ts", "src/http.ts"],
     },
   },
