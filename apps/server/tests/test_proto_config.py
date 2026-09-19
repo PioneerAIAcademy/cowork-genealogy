@@ -12,9 +12,11 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   maxReceiveCount would dead-letter a legitimately long turn;
 - the schema creates every table the plan names and not committed_batches
   (cut 2026-09-10);
-- the D16 tool server runs read-only with /projects on tmpfs, publishes on loopback
-  only, depends on nothing, and is waited on by proto-up but never by proto-up-core
-  (the D3 smoke must not gate on the engine image).
+- the D16 tool server runs read-only with /tmp its only tmpfs (no /projects: project
+  state is in Postgres/S3, bound per request from X-Genealogy-Project-Id), publishes on
+  loopback only, waits on postgres and minio being healthy, carries the worker's
+  GENEALOGY_* store block byte for byte (one store, two readers), and is waited on by
+  proto-up but never by proto-up-core (the D3 smoke must not gate on the engine image).
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -212,10 +214,12 @@ def test_shim_waits_for_a_healthy_worker():
 # ── tool server (D16) ───────────────────────────────────────────────────────────
 
 
-def test_tools_runs_read_only_with_projects_on_tmpfs():
+def test_tools_runs_read_only_with_no_project_root():
     tools = _service(_load(COMPOSE), "tools")
-    assert tools.get("read_only") is True, "the tool server writes only under the project root"
-    assert "/projects" in (tools.get("tmpfs") or []), "/projects must be a tmpfs on a read-only rootfs"
+    assert tools.get("read_only") is True, "project state is in Postgres/S3; nothing writes to the rootfs"
+    tmpfs = [str(t).split(":", 1)[0] for t in (tools.get("tmpfs") or [])]
+    assert "/projects" not in tmpfs, "no file root: a /projects tmpfs would mean the file backend is back"
+    assert "/tmp" in tmpfs, "/tmp stays writable on the read-only rootfs"
 
 
 def test_tools_is_published_on_loopback_only():
@@ -224,8 +228,24 @@ def test_tools_is_published_on_loopback_only():
     assert all(p.startswith("127.0.0.1:") for p in ports), "no auth beyond header -> principal: publish on loopback only"
 
 
-def test_tools_depends_on_nothing():
-    assert "depends_on" not in _service(_load(COMPOSE), "tools"), "file backend today; no store service to wait for"
+def test_tools_depends_on_the_store_services():
+    depends = _service(_load(COMPOSE), "tools").get("depends_on") or {}
+    assert depends.get("postgres") == {"condition": "service_healthy"}, "the per-request PgS3ProjectStore needs Postgres up"
+    assert depends.get("minio") == {"condition": "service_healthy"}, "and the blob side needs minio up"
+
+
+def test_tools_and_worker_read_one_store():
+    """The stdio fork (worker) and the shared HTTP server (tools) are two readers of one
+    store: their GENEALOGY_* blocks must be identical, or a TOOL_SERVER flip silently
+    moves the project tools onto a store the rest of the stack never reads."""
+    compose = _load(COMPOSE)
+    tools = {k: v for k, v in _env(_service(compose, "tools")).items() if k.startswith("GENEALOGY_")}
+    worker = {k: v for k, v in _env(_service(compose, "worker")).items() if k.startswith("GENEALOGY_")}
+    assert tools == worker, f"tools and worker GENEALOGY_* differ: {tools} vs {worker}"
+    assert set(tools) == {
+        "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
+        "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
+    }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
 
 
 def _wait_services(line: str) -> list[str]:
