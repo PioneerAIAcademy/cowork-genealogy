@@ -1,24 +1,32 @@
-"""Where `/research` yields mid-loop, over committed e2e runs.
+"""How `/research` hands back at a step boundary, over committed e2e runs.
 
-GitHub issue #1104. The `/research` skill must run until
-`project.status == "completed"`, but the agent periodically narrates a next step
-and ends its turn. A `Stop` hook vetoes the yield and re-instructs it, and every
-one of those nudges is a wasted turn on a seam that should not exist.
+GitHub issues #1104 and #2328. The `/research` skill must run until
+`project.status == "completed"`, and it is *meant* to yield at every step
+boundary — naming the next step and asking whether to do it (#2292). In an e2e
+run the harness IS the user, so a yield is not a defect: a well-formed hand-back
+gets answered "Yes." Two things at a yield still are defects — a **silent stop**
+(the turn ends naming no next step) and a **false completion claim** (it claims
+done while `project.status != "completed"`).
+
+So the question this report answers is not "how often does it yield" but "how
+does it hand back", via `classify_hand_back` — the same predicate the Stop hook
+grades with, so the report and the run cannot disagree.
 
 This report answers "where does it yield" from already-committed data: no live
 run, no model, no API spend — same posture as `corpus_report.py`,
 `latency_report.py` and `agent_tool_usage_report.py`.
 
-## Why the seam matters more than the count
+## Why the seam still matters
 
-`orchestrator.py` already records the count in `usage.continue_nudges`, so
-totals were always available. What was not available is *where*, and that is the
-part that decides the fix. `research/SKILL.md` already forbids the yield about
-as hard as prose can — "do **not** end your turn to announce, plan, or ask about
-a next step", plus a step titled "Iterate — without yielding" — and it is
-disobeyed anyway. So the live hypothesis is that the *sub-skills* close the turn
-from the other side, and that is a claim about which skill boundary each nudge
-follows.
+`orchestrator.py` records the count in `usage.continue_nudges`, so totals were
+always available. What was not available is *where* and *in what form*. The seam
+says which artifact had just been written, and therefore which skill's closing
+prose to look at; the hand-back class says whether that prose did its job.
+
+`step` reads 0 until #2292 lands the hand-back prose in `research/SKILL.md` —
+that is the correct result, not a broken classifier. Until then every yield is
+`silent`, and that figure is the pre-#2292 floor the post-#2292 `step` share is
+read against.
 
 ## Two sources
 
@@ -41,10 +49,12 @@ developer machines.
 
 ## Coverage is still sparse
 
-`narration` is not retained for most runs. `usage.continue_nudges` records **264
-nudges in 110 of the committed runs**; only **12** of those carry a narration
-nudge entry, because `narration` started recently. So the seam histogram is a
-sample and never a census.
+`narration` is not retained for most runs. `usage.continue_nudges` records **294
+nudges across 123 of the committed runs**; only **25** of those carry a narration
+nudge entry, because `narration` started recently. So the seam and hand-back
+histograms are a sample and never a census. (Re-derive with
+`make e2e-nudges SINCE=all`; the corpus churns and a pasted-forward figure is the
+defect this module exists to report on.)
 
 `counter_totals()` reads that counter so every report states the gap, and so the
 no-results branch cannot claim a clean loop over runs it simply could not read.
@@ -69,6 +79,7 @@ from e2e.runlog_selection import (
     filter_since,
     result_jsons_for,
 )
+from e2e.stop_checker import classify_hand_back
 
 # `**[HARNESS]** continue-nudge 1/20: agent yielded before …` in a transcript,
 # and the same text as a `narration` entry's `text`. The counter is captured so
@@ -103,17 +114,15 @@ SEAMS: list[tuple[str, re.Pattern[str]]] = [
     ("proof-written", re.compile(r"\bps_\d|\bproof[- ]conclusion\b|\bproof summary\b", re.I)),
 ]
 
-# The ANNOUNCEMENT axis is *the behaviour `research/SKILL.md` forbids* — "do
-# **not** end your turn to announce, plan, or ask about a next step." A nudge
-# whose last words name the next step is direct evidence the rule is being
-# disobeyed rather than merely not reached; one without is a plainer stall.
-# This is the number that argues for or against editing the sub-skills, so it
-# is counted separately rather than folded into the seam.
-ANNOUNCE_RE = re.compile(
-    r"\b(hand(ing)?\s*(off|back)|proceed(ing)?\s+to|routing\s+(back|to)|"
-    r"return(ing)?\s+to|next step|now invoking|invoking\b)",
-    re.I,
-)
+# The HAND-BACK axis. One predicate, defined once: `classify_hand_back` in
+# stop_checker.py is what the harness itself uses at the Stop hook, so the report
+# grades against the same rule the run was graded by. The former ANNOUNCE_RE lived
+# here and matched free prose — which called 31 of 71 yields "announced" where the
+# harness classifies every one of them `silent`. A report keyed on a predicate the
+# harness does not use is a report about nothing.
+#
+# `step` is structurally 0 until #2292 lands the hand-back prose. That is the correct
+# reading, not a broken classifier.
 
 
 class Nudge(NamedTuple):
@@ -126,18 +135,25 @@ class Nudge(NamedTuple):
     after_tool: str   # the tool call it yielded after, or "" when unknown
     excerpt: str      # the agent's last words before yielding
     seam: str
-    announced: bool   # did its last words name the next step (the forbidden move)
+    hand_back: str    # "step" | "silent" | "completion_claim" (classify_hand_back)
 
 
-def classify(excerpt: str, after_tool: str) -> tuple[str, bool]:
-    """(seam, announced) for one yield. Seam is `other` when nothing matches."""
+def classify(excerpt: str, after_tool: str, full_text: str | None = None) -> tuple[str, str]:
+    """(seam, hand_back_class) for one yield. Seam is `other` when nothing matches.
+
+    `full_text` is the UNTRUNCATED narration text. `excerpt` is cut to the last
+    EXCERPT_CHARS for printing, and `classify_hand_back`'s "Next: " containment test
+    does not survive a suffix cut — a hand-back whose step description sits more than
+    240 characters from the end would read `step` in the orchestrator and `silent`
+    here. Classify the whole text; print the tail.
+    """
     haystack = f"{excerpt} {after_tool}"
     seam = "other"
     for name, pattern in SEAMS:
         if pattern.search(haystack):
             seam = name
             break
-    return seam, bool(ANNOUNCE_RE.search(excerpt))
+    return seam, classify_hand_back(full_text if full_text is not None else excerpt)
 
 
 def _tail(text: str) -> str:
@@ -158,18 +174,28 @@ def nudges_from_narration(doc: dict, run: str) -> list[Nudge]:
         if not m:
             continue
         # The agent's own last words are the nearest preceding assistant entry.
+        # Mirror the orchestrator's selection EXACTLY (orchestrator.py stop_hook):
+        # the nearest non-harness entry, and only when no tool call landed after it.
+        # Sharing classify_hand_back does not by itself make the two agree — 2 of the
+        # 71 committed narration nudges have tool calls between the last assistant
+        # text and the nudge, and those must read `silent` on both sides.
         excerpt = ""
+        full_text = ""
+        before = entry.get("tool_calls_before")
         for prev in reversed(narration[:i]):
-            if (prev or {}).get("kind") == "assistant":
-                excerpt = _tail(prev.get("text") or "")
-                break
+            if (prev or {}).get("kind") in ("harness", "blocked"):
+                continue
+            if prev.get("tool_calls_before") == before:
+                full_text = prev.get("text") or ""
+                excerpt = _tail(full_text)
+            break
         before = entry.get("tool_calls_before")
         after_tool = ""
         if isinstance(before, int) and 0 < before <= len(tool_calls):
             after_tool = str((tool_calls[before - 1] or {}).get("tool") or "")
         out.append(
             Nudge(run, int(m.group(1)), int(m.group(2)), "narration",
-                  after_tool, excerpt, *classify(excerpt, after_tool))
+                  after_tool, excerpt, *classify(excerpt, after_tool, full_text))
         )
     return out
 
@@ -232,12 +258,31 @@ def scan(paths: list[Path]) -> list[Nudge]:
     return found
 
 
+def tool_call_total(paths: list[Path]) -> int:
+    """Total tool calls across the scanned runs — the denominator for a rate.
+
+    A flat count of hand-backs is not comparable between a 40-call run and a
+    400-call one, which is what the pre-registered baseline is read against.
+    Unreadable runs contribute 0 rather than aborting: the report already states
+    its attribution gap and a rate that silently skips runs is worse than one
+    whose denominator is honestly smaller.
+    """
+    total = 0
+    for p in paths:
+        try:
+            doc = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        total += len(doc.get("tool_calls") or [])
+    return total
+
+
 def counter_totals(paths: list[Path]) -> tuple[int, int]:
     """(events, runs) from `usage.continue_nudges` — the orchestrator's own tally.
 
     Every nudge lands there whether or not a narration entry or a transcript
     survives to say WHERE it happened, and across the committed corpus most do
-    not: 91 of the 98 nudged runs carry neither source. That makes this the
+    not: 98 of the 123 nudged runs carry neither source. That makes this the
     denominator the seam histogram is a sample of. Without it an unreadable run
     is indistinguishable from a clean one, and the report says "every run
     completed its loop" over a fixture that nudged sixteen times.
@@ -255,7 +300,8 @@ def counter_totals(paths: list[Path]) -> tuple[int, int]:
     return events, runs
 
 
-def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = (0, 0)) -> str:
+def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = (0, 0),
+                  tool_calls_total: int = 0) -> str:
     rec_events, rec_runs = recorded
     if not nudges:
         if rec_events:
@@ -287,8 +333,24 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
         f"worst single run reached nudge {worst}"
         + (f" against a cap of {sorted(caps)[0]}" if len(caps) == 1 else ""),
         "",
-        f"{sum(1 for n in nudges if n.announced)} of {len(nudges)} named the next"
-        " step in their last words — the move research/SKILL.md forbids outright.",
+        "By hand-back class — a well-formed `Next: <step>. Continue?` is the CORRECT"
+        " move (#2292); `silent` is a stall:",
+        *(
+            f"  {sum(1 for n in nudges if n.hand_back == k):>4}  {k}"
+            + (
+                f"   ({sum(1 for n in nudges if n.hand_back == k) * 100 / tool_calls_total:.2f}"
+                " per 100 tool calls)"
+                if tool_calls_total
+                else ""
+            )
+            for k in ("step", "silent", "completion_claim")
+        ),
+        (
+            f"  over {tool_calls_total} tool call(s) in the scanned runs"
+            if tool_calls_total
+            else "  (no tool calls counted — rates omitted)"
+        ),
+        "  (step is 0 until #2292 lands the hand-back prose — that is expected)",
         "",
         "By seam — which artifact had just been written:",
     ]
@@ -301,7 +363,7 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
     lines += ["", "Each nudge, with the agent's last words before it yielded:"]
     for n in sorted(nudges, key=lambda x: (x.run, x.index)):
         where = f" after {n.after_tool}" if n.after_tool else ""
-        flag = " announced-next-step" if n.announced else ""
+        flag = f" {n.hand_back}"
         lines.append(f"\n  {n.run}  #{n.index}/{n.cap}  [{n.seam}]{flag}{where}")
         lines.append(f"    {n.excerpt or '(no preceding narration captured)'}")
     return "\n".join(lines)
@@ -309,7 +371,7 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Where /research yields mid-loop, over committed e2e runs (issue #1104).",
+        description="How /research hands back at a step boundary, over committed e2e runs (issues #1104, #2328).",
     )
     parser.add_argument("--test", default=None, help="Only this fixture slug.")
     add_since_arg(parser)
@@ -326,7 +388,8 @@ def main(argv: list[str] | None = None) -> int:
 
     nudges = scan(paths)
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
-    print(format_report(nudges, n_runs=len(paths), recorded=counter_totals(paths)))
+    print(format_report(nudges, n_runs=len(paths), recorded=counter_totals(paths),
+                        tool_calls_total=tool_call_total(paths)))
     return 0
 
 

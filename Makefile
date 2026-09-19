@@ -962,10 +962,16 @@ e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue 
 	cd eval/harness && uv run python -m e2e.skill_episode_report $(if $(TEST),--test $(TEST),) $(if $(ALL_SKILLS),--all-skills,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-nudges
-e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #1104): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-nudges: ## How /research hands back at a step boundary, over committed e2e runs (issues #1104, #2328): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. Reports each
-	# continue-nudge with the seam it sits on and whether the agent named its
-	# next step before yielding -- the move research/SKILL.md forbids.
+	# continue-nudge with the seam it sits on and its hand-back class --
+	# step / silent / completion_claim, per classify_hand_back.
+	#
+	# A yield is NOT a defect: /research is meant to yield at every step
+	# boundary and in an e2e run the harness is the user, so a well-formed
+	# hand-back gets answered "Yes." A silent stop and a false completion claim
+	# are the defects. `step` reads 0 until issue #2292 lands the hand-back
+	# prose -- that is the correct result, not a broken classifier.
 	# `narration` replaced transcripts in #1238; committed .transcript.md files
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.
