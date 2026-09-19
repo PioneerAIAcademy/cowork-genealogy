@@ -75,6 +75,27 @@ STORE_ENV_KEYS = (
 # The per-user config the desktop reads from config.json; passed through when set.
 PER_USER_ENV_KEYS = ("WIKI_API_URL", "POP_STATS_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL")
 
+# The e2e harness's tree-read block (eval/harness/e2e/orchestrator.py BLOCKED_TREE_TOOLS):
+# every e2e fixture's answer still sits in the live FamilySearch tree, so a fixture run
+# that may read the tree is a lookup, not the research workflow. The worker takes the
+# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block.
+BLOCKED_DENY_REASON = (
+    "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
+    "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
+)
+
+
+def bare_tool_name(tool_name: str) -> str:
+    """``mcp__<server>__<name>`` -> ``<name>``, whatever the server spelling; a built-in
+    tool's name is returned as is."""
+    return tool_name.rsplit("__", 1)[-1] if tool_name.startswith("mcp__") else tool_name
+
+
+def parse_blocked_tools(value: str | None) -> frozenset[str]:
+    """``BLOCKED_TOOLS``: comma-separated bare MCP tool names; blanks ignored."""
+    return frozenset(part.strip() for part in (value or "").split(",") if part.strip())
+
+
 WRITE_DENY_REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json must "
     "go through the writer tools. To CREATE a new project use project_create, which "
@@ -230,6 +251,7 @@ def make_pretool_hook(
     config_root: str | Callable[[], str],
     record: Callable[[dict[str, Any]], None],
     log: Callable[..., None] | None = None,
+    blocked: frozenset[str] = frozenset(),
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -245,6 +267,8 @@ def make_pretool_hook(
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
+            elif tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked:
+                decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
                 root = config_root() if callable(config_root) else config_root
                 reason = project_read_denied(

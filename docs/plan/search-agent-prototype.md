@@ -1397,7 +1397,9 @@ without whichever Bedrock refuses.
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
   **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
-  1. `make proto-up` — builds the engine and the stack. `proto/env.sh` exports the model
+  1. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
+     make proto-up` — the harness's tree-read block (the fixture's answer sits in the live
+     tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
      key and writes the FamilySearch token, refreshed from the desktop login through
      `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
      turn**; its status line must say both are set. The token lives an hour: run
@@ -1440,6 +1442,21 @@ without whichever Bedrock refuses.
   D17 interactive run own that. On a `docker-compose`-only machine pass
   `PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"`. Offline tests:
   `tests/test_proto_demo.py`, in `make proto-test` (which now also runs `test_proto_d17.py`).
+  **Review round (2026-09-19):** the fixture prompt is now the harness's own message,
+  `/research --autonomous <question>` (`--prompt` stays verbatim), and the recipe exports
+  `BLOCKED_TOOLS` — the harness's five tree-read tools, denied by the worker's hook by bare
+  name under any server spelling (`BLOCKED_TOOLS= make proto-demo` lifts it) — because the
+  two runs below with the bare question and no block answered from the live tree in 38 s
+  and 24 s, no skill, no delegation, every section still 0: a lookup, not the workflow.
+  **Run live 2026-09-19 with the prompt and the block** (`sess_851fc1f8980d427a`): `/research`
+  resolved under plugin loading; `turn_done` after **232 s**, **$1.01**, 34 SDK turns, 31
+  tool calls all with durations (longest `wiki_search` 7.3 s, p50 61 ms), `question-selection`
+  then `locality-guide` ran (`research_append` ×2: `questions` 0 → 1, `localities` 0 → 1),
+  criterion 3 PASS (0 / 0 / 0), no tree tool attempted (0 denies), and the turn ended at
+  "handing off to `research-plan`" — **one queue message is one model turn**: the harness's
+  `--autonomous` runs keep going because its Stop hook vetoes the yield, which the worker
+  does not have, so a D18 comparison needs either that hook or a driver that posts
+  "continue" until the run stops on its own. The D17 browser run is turn-by-turn anyway.
   **Run live 2026-09-18** on `bagley-father-1884` (`sess_352cf5166b624d00`): stack up from
   cold with the `docker-compose` override, seeded, `turn_done` after **38 s**, `receive_count`
   1, outcome ok, **$0.26**, 7 SDK turns, tokens 13 / 51,543 / 128,347 / 1,837 (input /

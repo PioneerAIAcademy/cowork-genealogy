@@ -8,9 +8,11 @@ D14 arm). Billed: one research turn.
     uv run python proto/demo.py [--fixture bagley-father-1884] [--prompt ...] [--session <id>]
                                 [--deadline-s 3900] [--base ...] [--pg-dsn ...] [--s3-endpoint ...]
 
-``--fixture`` is anything ``proto/seed.py`` accepts; the opening prompt is the fixture's
-``researcher_question`` unless ``--prompt`` overrides it (a unit scenario has none, so it
-needs ``--prompt``). ``--session`` skips the seed and drives an existing seeded session.
+``--fixture`` is anything ``proto/seed.py`` accepts; the opening prompt is the e2e harness's
+own message for the fixture, ``/research --autonomous <researcher_question>``, unless
+``--prompt`` overrides it verbatim (a unit scenario has no question, so it needs
+``--prompt``). The recipe also exports ``BLOCKED_TOOLS`` -- the harness's tree-read block --
+so the run is the research workflow, not a lookup of the answer the live tree still holds. ``--session`` skips the seed and drives an existing seeded session.
 
 The deadline defaults to two shim ceilings plus slack (``READ_TIMEOUT_S`` is 1800 s per
 attempt, on which the shim kills the worker and requeues at once -- a turn past 1800 s is
@@ -56,13 +58,15 @@ Query = tuple[str, str, tuple]
 
 
 def opening_prompt(meta: dict, override: str | None) -> str:
-    """``--prompt`` wins; else the fixture's ``researcher_question``; else there is nothing to
-    post and the caller exits 2."""
+    """``--prompt`` wins, verbatim; else the harness's message for the fixture's
+    ``researcher_question`` (eval/harness/e2e/orchestrator.py: ``/research --autonomous …``,
+    which is what the corpus the run is compared to was driven with); else there is nothing
+    to post and the caller exits 2."""
     if override and override.strip():
         return override.strip()
     q = meta.get("researcher_question")
     if isinstance(q, str) and q.strip():
-        return q.strip()
+        return f"/research --autonomous {q.strip()}"
     raise ValueError("no opening prompt: the fixture has no researcher_question; pass --prompt")
 
 

@@ -19,9 +19,11 @@ IDS = ("turn_x", "sess_y", "proj_z")
 
 
 def test_opening_prompt_uses_the_fixture_question_unless_overridden():
+    # The harness's own message (orchestrator.py), so the run compares with the e2e corpus
+    # instead of answering the bare question off the live tree.
     meta = {"researcher_question": "Who was the father of William A. Bagley?"}
-    assert demo.opening_prompt(meta, None) == "Who was the father of William A. Bagley?"
-    assert demo.opening_prompt(meta, "  Find his mother.  ") == "Find his mother."
+    assert demo.opening_prompt(meta, None) == "/research --autonomous Who was the father of William A. Bagley?"
+    assert demo.opening_prompt(meta, "  Find his mother.  ") == "Find his mother.", "--prompt is verbatim"
 
 
 def test_opening_prompt_refuses_a_fixture_without_a_question():
@@ -162,6 +164,10 @@ def test_proto_demo_target_brings_the_stack_up_and_runs_the_script():
     # load the default fixture's question into someone else's session (the script defaults it)
     assert re.search(r"\$\(if \$\(FIXTURE\),\s*--fixture '\$\(FIXTURE\)',\s*\)", body), body
     assert "bagley-father-1884" not in body and demo.DEFAULT_FIXTURE == "bagley-father-1884"
+    # The harness's tree-read block reaches the worker, and an explicit empty value lifts it.
+    assert re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-', body), body  # raw make text: $$ is the shell's $
+    for tool in ("person_read", "person_search", "person_ancestors", "person_record_matches", "person_person_matches"):
+        assert tool in body, tool
 
 
 def test_proto_test_runs_the_d17_and_demo_suites():
