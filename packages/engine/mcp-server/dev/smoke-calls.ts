@@ -13,7 +13,6 @@
  * step in this plan or a named exclusion, and every named exclusion is advertised.
  */
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { existsSync, statSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join, posix } from "node:path";
@@ -45,7 +44,7 @@ export interface SmokeCtx {
   mode: SmokeMode;
   /** The project directory as the SERVER sees it. */
   projectPath: string;
-  /** Same directory on THIS host when the smoke can write fixtures into it; null in container mode. */
+  /** Same directory on THIS host when the smoke can write fixtures into it; null for a server-side anchor. */
   hostProjectDir: string | null;
   /** A path under projectPath that holds no project. */
   missingProjectPath: string;
@@ -67,7 +66,7 @@ export interface SmokeStep {
   /** Runnable with no network and no credentials (the stdio smoke's subset). */
   offline?: boolean;
   args: (ctx: SmokeCtx) => Record<string, unknown>;
-  /** Host-side fixture write before the call; skipped in container mode. */
+  /** Host-side fixture write before the call; skipped when `hostProjectDir` is null. */
   before?: (ctx: SmokeCtx) => Promise<void>;
   expect: (res: CallResult, ctx: SmokeCtx) => Expectation;
   /** Capture values for later steps. */
@@ -360,9 +359,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
-    // Reads the staged sidecar BEFORE the token: host mode stages one so the
-    // call reaches getValidToken; container mode cannot, so the missing-ref
-    // error is the achievable assertion.
+    // Reads the staged sidecar BEFORE the token: with a host project dir the
+    // smoke stages one so the call reaches getValidToken; against a server-side
+    // anchor it cannot, so the missing-ref error is the achievable assertion.
     tool: "rank_search_matches",
     args: (ctx) => ({ projectPath: ctx.projectPath, stagedResultsRef: STAGED_REF, subjectId: "P1" }),
     before: async (ctx) => {
@@ -374,7 +373,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: (res, ctx) => {
       if (!ctx.hostProjectDir) {
         const ok = res.isError && carries(res, "does not exist or is invalid JSON");
-        return { ok, detail: ok ? "container mode: missing staged ref refused" : brief(res) };
+        return { ok, detail: ok ? "no host fixtures: missing staged ref refused" : brief(res) };
       }
       if (ctx.mode === "bearer") {
         return { ok: !res.isError && res.body?.scoredCount === 0, detail: brief(res) };
@@ -562,7 +561,7 @@ export function report(name: string, ok: boolean, detail: string): void {
 
 /** Header both smokes print before the first call. */
 export function printHeader(smoke: string, ctx: SmokeCtx, extra: string[] = []): void {
-  console.log(`${smoke}: mode=${ctx.mode} project=${ctx.projectPath} (${ctx.hostProjectDir ? "host" : "container"} mode)${extra.length ? " " + extra.join(" ") : ""}`);
+  console.log(`${smoke}: mode=${ctx.mode} project=${ctx.projectPath} (${ctx.hostProjectDir ? "host fixtures" : "no host fixtures"})${extra.length ? " " + extra.join(" ") : ""}`);
   console.log(`excluded (${Object.keys(EXCLUDED_TOOLS).length}):`);
   for (const [name, reason] of Object.entries(EXCLUDED_TOOLS)) console.log(`  ${name} — ${reason}`);
 }
@@ -598,28 +597,29 @@ export interface PreparedProject {
 }
 
 /**
- * A fresh project directory under `projectRoot`. When the root is a directory
- * on this host, a mkdtemp inside it (host mode); otherwise the root is the
- * server's own filesystem (compose `/projects`) and only the path is composed.
- * No root → mkdtemp in the OS temp dir.
+ * A fresh mkdtemp in the OS temp dir, for a server whose file backend is THIS
+ * host's filesystem (build/index.js over stdio). Removed by `cleanup`.
  */
-export async function prepareProject(projectRoot?: string): Promise<PreparedProject> {
-  const root = projectRoot ?? tmpdir();
-  const onHost = existsSync(root) && statSync(root).isDirectory();
-  if (onHost) {
-    const dir = await mkdtemp(join(root, "smoke-"));
-    return {
-      projectPath: dir,
-      hostProjectDir: dir,
-      missingProjectPath: join(dir, "nope"),
-      cleanup: () => rm(dir, { recursive: true, force: true }),
-    };
-  }
-  const dir = posix.join(root, `smoke-${Date.now().toString(36)}`);
+export async function prepareProject(): Promise<PreparedProject> {
+  const dir = await mkdtemp(join(tmpdir(), "smoke-"));
   return {
     projectPath: dir,
+    hostProjectDir: dir,
+    missingProjectPath: join(dir, "nope"),
+    cleanup: () => rm(dir, { recursive: true, force: true }),
+  };
+}
+
+/**
+ * The server's own anchor path, passed verbatim as every call's projectPath
+ * (`/project` for a PgS3ProjectStore). Nothing exists on this host, so no
+ * fixture can be written and there is nothing to clean up.
+ */
+export function anchoredProject(projectPath: string): PreparedProject {
+  return {
+    projectPath,
     hostProjectDir: null,
-    missingProjectPath: posix.join(dir, "nope"),
+    missingProjectPath: posix.join(projectPath, "nope"),
     cleanup: async () => {},
   };
 }
@@ -644,9 +644,13 @@ export async function detectBearer(explicit?: string): Promise<string | null> {
   return null;
 }
 
-/** Whether a host-mode server's base config carries an OpenRouter key; false in container mode. */
-export async function hostOpenRouterKeyConfigured(hostMode: boolean): Promise<boolean> {
-  if (!hostMode) return false;
+/**
+ * Whether the server's base config carries an OpenRouter key. `hostConfig` says
+ * the server reads THIS host's ~/.familysearch-mcp/config.json; otherwise
+ * (the compose service, whose config.json is `{"hosted": true}`) false.
+ */
+export async function hostOpenRouterKeyConfigured(hostConfig: boolean): Promise<boolean> {
+  if (!hostConfig) return false;
   const config = await readHostJson("config.json");
   return typeof config?.openRouterApiKey === "string" && config.openRouterApiKey.length > 0;
 }

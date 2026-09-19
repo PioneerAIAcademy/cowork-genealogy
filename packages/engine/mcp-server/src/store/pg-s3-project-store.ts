@@ -54,6 +54,7 @@ import {
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { AsyncMutex } from "./async-mutex.js";
 import { assertRelativeRef } from "./paths.js";
+import { PROJECT_ID_RE } from "./project-id.js";
 import type {
   JsonWrite,
   ProjectDirState,
@@ -69,9 +70,6 @@ export const CONNECT_TIMEOUT_MS = 10_000;
 /** How long one S3 request (headers and body, a multi-MB scan included) may
  *  take end to end. */
 export const S3_REQUEST_TIMEOUT_MS = 90_000;
-
-/** The shape a project id must have to be an S3 key prefix on its own. */
-const PROJECT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 // ─── Backend: the shared connections ─────────────────────────────────────────
 
