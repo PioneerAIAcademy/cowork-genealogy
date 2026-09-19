@@ -902,6 +902,63 @@ method (absent → no scan shown). Both adapters implement it:
 **Sequencing.** The core text-returning tool (§5–§7) ships first and is useful
 on its own; image persistence + the Electron and hosted-web viewers followed.
 
+### 8.6 Deriving `sources[].transcription_truncated` at the write boundary
+
+The truncation of a read is known **here**, at `image_transcribe` (§6.2), but the
+consumer that persists a source is not: `record-extractor` does not hold
+`image_transcribe` (only `image-reader` does), so it receives the transcription
+*text* relayed across a subagent boundary, with the `truncated` flag gone. A
+model asked to set `transcription_truncated` from that relayed text can only
+guess from prose — and was observed to set it while saving no transcription at
+all. So the field is **derived at the write boundary, never
+asserted by the agent**:
+
+- **Record (write side).** On any read that persisted an image — capped or not —
+  `image_transcribe` records the outcome against that image:
+  `recordImageReadCap(projectPath, imageRef, truncated)` in
+  `src/utils/image-store.ts`. It is a module-level `Map<string, boolean>` keyed
+  `${projectPath}\0${imageRef}` — the same `images/<key>.jpg` string a source
+  cites as `image_filename` (§8.5). **Tri-state**: `true` = verified partial (the
+  read hit the cap), `false` = verified whole, absent = not established. Storing `false` rather than deleting on a clean read is what lets a
+  later write **clear** a stale `true` — a present/absent `Set` could set the flag
+  but never unset it, since `delete` on an update's patch only drops the key and
+  the merge then keeps the persisted `true`. Both key halves arrive from an LLM
+  relay, so the key normalizes a trailing separator on `projectPath` and a leading
+  `./` / backslash separators on `imageRef`. It lives in `image-store.ts`, not
+  `image-transcribe.ts`, because both the writer (`image_transcribe`) and the
+  reader (`research_append`) already import that module — the alternative is a
+  tool→tool import — and `image_filename` is exactly the `imageRef` this module
+  mints. Process-lifetime, never persisted, keyed by project for the same reason
+  `browseBudgetSeen` is (§5.8).
+- **Derive (persist side).** In `research_append`'s `prepareOps`, after the
+  source-reuse rewrite, every `sources` op carrying an `image_filename` reads the
+  tri-state via `sourceImageCapState(projectPath, image_filename)` and sets the
+  field from it — **authoritative**, any agent-supplied value stripped first: on
+  `true` sets `transcription_truncated: true` (only beside a non-empty
+  `transcription` — see the invariant below), on `false` sets it `false` (whole),
+  on absent leaves it off (unknown).
+- **Invariant.** `validate_research_schema` rejects `transcription_truncated:
+  true` beside an empty or null `transcription` — the persisted-side mirror of
+  the tool's own guarantee that a zero-content capped read throws rather than
+  returning `truncated: true` (§6.2). The derivation honours it on both sides:
+  `true` is written only beside non-empty text, and `false` likewise, so a
+  "verified whole" marker is never planted on a source with nothing read.
+
+**Known limitation — the join needs a persisted image.** Like the browse
+budget's ARK blind spot (§5.8), this derivation has a hole, but a *different*
+one, because the key is `image_filename`, not imageId:
+
+- A read with no `projectPath` persists no scan, so its source has no
+  `image_filename` to join on — its truncation is **not** marked. (A truncated
+  read is still visible in the tool response; only the persisted marker is lost.)
+- The cache is process-lifetime and never persisted, so a cap recorded in one
+  MCP-server process is lost if the process restarts before the `research_append`
+  that cites the image — the same boundedness the browse budget carries.
+- An **ARK** read is *not* a blind spot here: `saveSourceImage` mints an
+  `image_filename` for an ARK label just as for an imageId, so it joins. This is
+  the one place this mechanism reaches further than the imageId-keyed browse
+  budget it is modelled on.
+
 ## 9. Wiring (standard MCP-tool checklist)
 
 - `src/tools/image-transcribe.ts` — tool + `imageTranscribeToolSchema`.

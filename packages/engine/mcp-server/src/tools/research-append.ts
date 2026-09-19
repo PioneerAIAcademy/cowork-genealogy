@@ -41,7 +41,7 @@ import { compatiblePlace } from "../utils/date-comparison.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
-import { gcUnreferencedImages } from "../utils/image-store.js";
+import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
@@ -3127,6 +3127,46 @@ async function prepareOps(
         );
       }
     }
+  }
+
+  // ── Derive transcription_truncated at the write boundary (#2457) ──
+  // The truncation of an image read is known to image_transcribe, not to
+  // record-extractor (which only holds the relayed text). So research_append is
+  // authoritative for it on any image-backed source — DERIVED here, never asserted
+  // by the agent. The cap store is tri-state (#2457 ruling amendment a): the cited
+  // image is verified partial (true), verified whole (false), or not established
+  // (undefined). Absent means UNKNOWN, not whole. A source with no image_filename
+  // has nothing to join and is left untouched; that no-persist gap is the §8.6
+  // limitation. Runs after the reuse rewrite above so it sees the final op shape
+  // (an append folded into an update carries its image_filename in `fields`).
+  for (const op of ops) {
+    if (op.section !== "sources") continue;
+    const bag = (op.op === "append" ? op.entry : op.fields) as
+      | Record<string, unknown>
+      | undefined;
+    if (!bag || typeof bag !== "object") continue;
+    // Strip any caller-supplied value FIRST — the field is derived, so an agent's
+    // guess never persists, even on a source with no joinable image_filename.
+    delete bag.transcription_truncated;
+    const ref = bag.image_filename;
+    if (typeof ref !== "string" || ref.length === 0) continue;
+    const cap = sourceImageCapState(projectPath, ref);
+    if (cap === undefined) continue; // not established → leave absent (unknown)
+    // Both branches derive the marker ONLY beside a non-empty transcription — the
+    // marker qualifies text, so it is meaningless without any. `true` beside
+    // empty/null transcription is a state validate_research_schema rejects (its
+    // .trim()), so deriving it would make the tool fail its own write — and,
+    // batched, discard every good op with it. `false` on an empty source is not
+    // rejected but is equally meaningless — a "verified whole" marker planted on a
+    // source with nothing read — so it is guarded the same way (#2457 r3 note 4).
+    // An update attaching image_filename without carrying the text (it lives in
+    // the persisted entry, unreadable pre-merge) is left as-is either way.
+    const text = bag.transcription;
+    if (typeof text !== "string" || text.trim() === "") continue;
+    // cap === true → verified partial; cap === false → verified whole. Writing
+    // `false` rather than deleting is what lets a later `update` clear a stale
+    // `true` the merge would otherwise keep (a Set could set but never unset).
+    bag.transcription_truncated = cap === true;
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);

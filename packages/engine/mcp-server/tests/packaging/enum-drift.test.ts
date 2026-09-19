@@ -287,6 +287,21 @@ describe("enum-drift lint", () => {
     expect(a).toBe(b);
   });
 
+  it("both research.schema.json copies are byte-identical (#2457 review, blocker/note N4)", () => {
+    // The two mirrors were unguarded — a field or constraint could land in one
+    // and not the other with CI green. They are maintained as identical copies,
+    // so hold them byte-for-byte the way the enums copies are held.
+    const a = readFileSync(
+      join(projectRoot, "docs", "specs", "schemas", "research.schema.json"),
+      "utf8",
+    );
+    const b = readFileSync(
+      join(projectRoot, "packages", "schema", "schemas", "research.schema.json"),
+      "utf8",
+    );
+    expect(a).toBe(b);
+  });
+
   it("discovers at least the expected number of ∈ declarations", () => {
     const expectedCount = EXPECTED.reduce((n, e) => n + e.enums.length, 0);
     expect(allDecls.length).toBeGreaterThanOrEqual(expectedCount);

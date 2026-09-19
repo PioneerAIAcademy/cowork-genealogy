@@ -23,6 +23,10 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
+import {
+  recordImageReadCap,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
@@ -704,6 +708,150 @@ describe("research_append (Phase 1)", () => {
       const persisted = research.sources.find((s: any) => s.id === singleOk(r).entryId);
       expect(persisted.access_date, `${supplied} → ISO`).toBe(expected);
     }
+  });
+
+  describe("transcription_truncated is derived at the write boundary (#2457)", () => {
+    afterEach(() => __clearTruncatedSourceImagesForTests());
+    const imageSource = (over: Record<string, unknown>) => {
+      const { id: _omit, ...src } = validSource("x");
+      return { ...src, image_filename: "images/x.jpg", transcription: "first half of the page", ...over };
+    };
+
+    it("marks a source truncated when image_transcribe capped the cited image", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect(persisted.transcription_truncated).toBe(true);
+    });
+
+    it("leaves the field absent when no read of the cited image reached the write boundary (not established)", async () => {
+      await writeProject();
+      // No recordImageReadCap → the cap store has nothing for this image, so the
+      // state is "not established" (absent), distinct from a verified-whole read,
+      // which records false and would persist false, not absent (#2457 review r3, note 5).
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("is authoritative — strips an agent-asserted flag the tool did not record", async () => {
+      await writeProject();
+      // The image read was NOT capped, but the caller asserts it was. The field
+      // is derived from the tool's record, so the false assertion is dropped
+      // rather than persisted (the failure mode #2457 removes the agent from).
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription_truncated: true }),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("strips an agent-asserted flag even on a source with no image_filename to join", async () => {
+      await writeProject();
+      // No image_filename → nothing to join, but the field is still derived-only.
+      // Without stripping here the agent's guess persists verbatim, exactly where
+      // the join key that would override it is absent (#2457 review, blocker 4c).
+      const { id: _omit, ...src } = validSource("x");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: { ...src, transcription: "first half of the page", transcription_truncated: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("does not derive (and so does not self-reject) a capped image whose op carries no transcription text (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(r.ok).toBe(true); // pre-fix: false — true beside no transcription is rejected
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("clears a stale true on an update after the image is re-read whole — tri-state (#2457 ruling amendment a)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect((await readResearch()).sources.find((s: any) => s.id === id).transcription_truncated).toBe(true);
+      // A later clean image_transcribe of the same image records it whole (false),
+      // not absent — that false is what lets the update clear the persisted true.
+      recordImageReadCap(dir, "images/x.jpg", false);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg", transcription: "the complete page text now" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription_truncated).toBe(false); // pre-fix (Set): stayed true forever
+    });
+
+    it("does not write false (verified-whole) on a source with no transcription text (#2457 r3 note 4)", async () => {
+      await writeProject();
+      // Image read WHOLE (cap false), but the source carries no transcription — a
+      // "verified whole" marker would qualify text that is not there, so the false
+      // branch is guarded the same as the true branch: leave the field absent.
+      recordImageReadCap(dir, "images/x.jpg", false);
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false); // pre-fix: false was written
+    });
+
+    it("does not discard a good op when a sibling capped op carries no transcription (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const before = (await readResearch()).sources.length;
+      const good = imageSource({ image_filename: "images/other.jpg", transcription: "the complete page text" });
+      const bad = imageSource({});
+      delete (bad as Record<string, unknown>).transcription;
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: good },
+          { section: "sources", op: "append", entry: bad },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // pre-fix: false — the whole batch is discarded, losing `good` too
+      const after = (await readResearch()).sources.length;
+      expect(after - before).toBe(2);
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {

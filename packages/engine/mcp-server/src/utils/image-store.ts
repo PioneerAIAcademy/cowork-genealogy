@@ -16,6 +16,83 @@ import { getProjectStore } from "../store/project-store.js";
 /** Project-relative directory holding retained source scans. */
 export const IMAGES_SUBDIR = "images";
 
+// What image_transcribe learned about each persisted source image's read, keyed
+// `${projectPath}\0${imageRef}` — the same `images/<key>.jpg` string a source
+// records as `image_filename`. TRI-STATE, deliberately (#2457 ruling amendment a):
+//   true    = verified PARTIAL (the read hit the OCR output-token cap)
+//   false   = verified WHOLE   (the read completed)
+//   absent  = NOT ESTABLISHED  (no read reached here for this image)
+// A capped read returns its partial transcription verbatim beside `truncated: true`,
+// so the fact is known at the read; but `record-extractor` relays that text across
+// a subagent boundary and never sees the flag, so `transcription_truncated` is
+// derived at the write boundary instead: research_append joins a source's
+// `image_filename` against this map (`sourceImageCapState`) and sets the field from
+// it. `false` matters as much as `true`: it is what lets the derivation CLEAR a
+// stale `true` on a later clean read — a `Set` (present/absent) could set the flag
+// but never unset it, since `delete` on an update's patch only drops the key and
+// the merge then keeps the persisted `true`. It lives here, not in
+// image-transcribe.ts, because both the writer (image_transcribe) and the reader
+// (research_append) already import this module. Process-lifetime, never persisted;
+// keyed by project (a global key would leak one project's cap into another) as
+// browseBudgetSeen is. Only reads that PERSISTED an image land here (an imageRef is
+// what a source cites); a read with no projectPath leaves no image_filename to
+// join, the known limitation in image-transcribe-tool-spec §8.6. image_filename,
+// not imageId, is the key because it is the only identifier both tools share — an
+// ARK read gets one too, so an ARK read is NOT the browse-budget imageId blind spot.
+const sourceImageCaps = new Map<string, boolean>();
+
+function truncatedImageKey(projectPath: string, imageRef: string): string {
+  // Both halves arrive raw from an LLM relay, so a record and a query can spell the
+  // same thing differently and must still join. Normalize backslashes to forward
+  // slashes on both sides (a Windows caller can record under `C:\Users\…` and query
+  // `C:/Users/…`), strip a trailing separator on projectPath (record `/p/`, query
+  // `/p`), and strip a leading `./` on imageRef — it is module-minted on the WRITE
+  // side but is a source's `image_filename` on the READ side, relayed by the agent,
+  // so `./images/x.jpg` must join the canonical `images/x.jpg`. Without any of these
+  // the record/query symmetry is lost and a capped read reads back clean (#2457).
+  const proj = projectPath.replace(/\\/g, "/").replace(/\/+$/, "");
+  const ref = imageRef.replace(/\\/g, "/").replace(/^\.\//, "");
+  return `${proj}\0${ref}`;
+}
+
+/** Record whether this project's persisted source image was read past the OCR
+ *  output-token cap. Stores the outcome either way (`true` partial, `false` whole)
+ *  rather than deleting on a clean read — the `false` is what lets a later write
+ *  clear a stale `true` instead of leaving a whole read marked partial. */
+export function recordImageReadCap(
+  projectPath: string,
+  imageRef: string,
+  truncated: boolean,
+): void {
+  sourceImageCaps.set(truncatedImageKey(projectPath, imageRef), truncated);
+}
+
+/** Tri-state read of what image_transcribe learned about the image a research.json
+ *  source cites via `image_filename`: `true` verified partial, `false` verified
+ *  whole, `undefined` not established. The join research_append uses to derive
+ *  `transcription_truncated` at the write boundary. */
+export function sourceImageCapState(
+  projectPath: string,
+  imageFilename: string,
+): boolean | undefined {
+  return sourceImageCaps.get(truncatedImageKey(projectPath, imageFilename));
+}
+
+/** Whether the cited image was verified PARTIAL (`true` only — `false`/unknown both
+ *  read as "not partial"). The badge-side question, distinct from the tri-state the
+ *  derivation needs. */
+export function wasSourceImageTruncated(
+  projectPath: string,
+  imageFilename: string,
+): boolean {
+  return sourceImageCapState(projectPath, imageFilename) === true;
+}
+
+/** Test-only reset — the Map is module-level and persists across `it()` blocks. */
+export function __clearTruncatedSourceImagesForTests(): void {
+  sourceImageCaps.clear();
+}
+
 /** Unreferenced scans older than this are pruned opportunistically. Matches the
  *  results-staging TTL — long enough that a scan survives from transcription to
  *  the research_append that cites it, short enough to bound uncited bloat. */
