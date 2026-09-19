@@ -26,24 +26,17 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { bearerPrincipal } from "./auth/principal.js";
 import { createServer } from "./server.js";
 import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
+import { readPgS3Env } from "./store/pg-s3-env.js";
 import { setProjectStore } from "./store/project-store.js";
 import type { AppConfig } from "./types/auth.js";
 
-const REQUIRED = [
-  "GENEALOGY_PG_DSN",
-  "GENEALOGY_S3_ENDPOINT",
-  "GENEALOGY_S3_BUCKET",
-  "GENEALOGY_S3_ACCESS_KEY",
-  "GENEALOGY_S3_SECRET_KEY",
-  "GENEALOGY_PROJECT_ID",
-] as const;
-
-const missing = REQUIRED.filter((name) => !process.env[name]);
+const storeEnv = readPgS3Env(process.env);
+const missing = [...storeEnv.missing];
+if (!process.env.GENEALOGY_PROJECT_ID) missing.push("GENEALOGY_PROJECT_ID");
 if (missing.length > 0) {
   process.stderr.write(`hosted-stdio: required environment not set: ${missing.join(", ")}\n`);
   process.exit(2);
 }
-const env = (name: (typeof REQUIRED)[number]): string => process.env[name] as string;
 
 /** Only the keys that are set: an absent key must stay absent so each getter's
  *  own default applies, exactly as with a sparse config.json. */
@@ -53,20 +46,11 @@ if (process.env.POP_STATS_URL) config.popStatsUrl = process.env.POP_STATS_URL;
 if (process.env.OPENROUTER_API_KEY) config.openRouterApiKey = process.env.OPENROUTER_API_KEY;
 if (process.env.OPENROUTER_MODEL) config.openRouterModel = process.env.OPENROUTER_MODEL;
 
-const backend = createPgS3Backend({
-  dsn: env("GENEALOGY_PG_DSN"),
-  s3: {
-    endpoint: env("GENEALOGY_S3_ENDPOINT"),
-    bucket: env("GENEALOGY_S3_BUCKET"),
-    accessKeyId: env("GENEALOGY_S3_ACCESS_KEY"),
-    secretAccessKey: env("GENEALOGY_S3_SECRET_KEY"),
-    forcePathStyle: true,
-  },
-});
+const backend = createPgS3Backend(storeEnv.backendOptions);
 setProjectStore(
   new PgS3ProjectStore(backend, {
-    projectId: env("GENEALOGY_PROJECT_ID"),
-    anchorPath: process.env.GENEALOGY_ANCHOR_PATH || "/project",
+    projectId: process.env.GENEALOGY_PROJECT_ID as string,
+    anchorPath: storeEnv.anchorPath,
   }),
 );
 

@@ -599,3 +599,38 @@ def test_the_gate_still_clears_once_the_last_queued_turn_is_done():
     q.put_nowait(None)
     asyncio.run(hub._pump(q, FakeProc()))
     assert hub._turn_active is False
+
+
+def test_an_auto_continue_event_is_broadcast_and_replayed():
+    """Regression pin for issue #2653 (green today by construction: `_pump`
+    records every kind not in TRANSIENT_KINDS). Its red case is someone adding
+    `auto_continue` to TRANSIENT_KINDS: the web folds that event as the bubble
+    boundary between auto-continued steps, so a reconnect that did not replay
+    it would rebuild every step of a chain into one bubble."""
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return None
+
+    hub = ss.Hub()
+    hub._proc = FakeProc()
+    sent = _broadcasts(hub)
+
+    q: asyncio.Queue = asyncio.Queue()
+    for ev in (
+        {"kind": "text", "text": "Next: choose the first research question. Continue?"},
+        {"kind": "turn_done"},
+        {"kind": "auto_continue", "text": "Yes.", "step": 1, "max_steps": 30},
+        {"kind": "turn_start", "queued": True},
+        {"kind": "auto_continue_paused", "reason": "budget", "step": 30, "max_steps": 30},
+    ):
+        q.put_nowait(json.dumps({"type": "agent_event", "event": ev}))
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, hub._proc))
+
+    kinds = [m["event"]["kind"] for m in hub._history if m.get("type") == "agent_event"]
+    assert "auto_continue" in kinds and "auto_continue_paused" in kinds, kinds
+    assert any(m.get("type") == "agent_event" and m["event"].get("kind") == "auto_continue" for m in sent)
+    # And the synthetic turn re-arms the busy gate exactly as a queued user turn does.
+    assert {"type": "status", "state": "turn_active"} in sent

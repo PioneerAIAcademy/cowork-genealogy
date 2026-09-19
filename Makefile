@@ -434,22 +434,30 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 
 # ── Search-agent prototype: D3 compose skeleton (apps/server/proto/) ─────
 # postgres :5434 (5433 is the P1 probe's p1-postgres), minio :9000/:9001,
-# elasticmq :9324, plus the worker stub and the sqsd shim built from ./worker
-# and ./shim. Plan: docs/plan/search-agent-prototype.md, "Week 1" D3.
+# elasticmq :9324, plus the worker (D9–10; built from the repo root, see the compose
+# file) and the sqsd shim built from ./shim. Plan: docs/plan/search-agent-prototype.md,
+# "Week 1" D3 and "Week 2" D9–10.
 # proto-up waits in a second call that names the long-running services only:
 # `up --wait` on the whole stack exits 1 the moment the minio-init one-shot
 # exits 0 (Compose v5.1.4) and abandons the wait before the worker is healthy.
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
+# apps/server/proto/env.sh, sourced first, exports ANTHROPIC_API_KEY (the caller's, else
+# eval/.env) for the worker's environment and writes the FamilySearch token -- refreshed
+# from the desktop login through dev/fs-token.ts -- to apps/server/proto/.fs-token, which
+# the worker reads per turn. Neither value is ever echoed. A changed key recreates the
+# worker; a changed token does not.
 .PHONY: proto-up
-proto-up: ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web and wait for health
-	$(PROTO_COMPOSE) up -d --build
-	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web
+proto-up: $(ENGINE_BUILD) ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools with the model key and the FS token, and wait for health
+	. apps/server/proto/env.sh && $(PROTO_COMPOSE) up -d --build && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools
 
 # The D3 services only. proto-smoke never touches the web tier, so it must not be gated
-# on the web image building (a network pip install) or its healthcheck.
+# on the web image building (a network pip install) or its healthcheck. Both `up`s
+# build the worker image, which copies the engine's build/ -- hence $(ENGINE_BUILD).
 .PHONY: proto-up-core
-proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
+proto-up-core: $(ENGINE_BUILD) ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
+	@[ -f apps/server/proto/.fs-token ] || { rmdir apps/server/proto/.fs-token 2>/dev/null; : > apps/server/proto/.fs-token; }
 	$(PROTO_COMPOSE) up -d --build postgres minio minio-init elasticmq worker shim
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
@@ -470,16 +478,71 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 	cd apps/server && uv run python proto/smoke.py
 
 .PHONY: proto-test
-proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py
+proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py
+
+# D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
+# refuses to run without a model key.
+.PHONY: proto-turn
+proto-turn: $(ENGINE_BUILD) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)
+	. apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-turn: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) up -d --build && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
+	  cd apps/server && uv run python proto/turn.py $(ARGS)
+
+# The worker reads the FamilySearch token per turn from apps/server/proto/.fs-token;
+# a token lives an hour, so refresh it under the running worker before a long run's
+# later turns (no restart, no lost turn).
+.PHONY: proto-token
+proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker reads per turn (tokens live an hour)
+	@. apps/server/proto/env.sh
+
+# D14 kill-resume on a real turn: the worker container is killed as the turn's first
+# FamilySearch tool call starts, started again, and the shim's redelivery resumes the
+# SDK session. SESSION=<id> runs it on a seeded session (proto-seed). Billed, one turn.
+.PHONY: proto-kill
+proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session
+	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
+
+# D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
+# through PgS3ProjectStore, and a web-tier session on that project. Prints the
+# session id and the fixture's research question. Needs the stack up.
+.PHONY: proto-seed
+proto-seed: $(ENGINE_DEPS) ## D17 prep: load a fixture into the store and open a session on it — FIXTURE=<e2e name | scenario name | dir> [PROJECT=<id>] [TITLE=…]
+	@test -n "$(FIXTURE)" || { echo "proto-seed: FIXTURE=<e2e fixture name, scenario name, or a directory> is required" >&2; exit 2; }
+	cd apps/server && uv run python proto/seed.py --fixture '$(FIXTURE)' $(if $(PROJECT),--project-id '$(PROJECT)',) $(if $(TITLE),--title '$(TITLE)',)
+
+# Acceptance criteria 3 and 4 off tool_calls: Bash rows that executed, project-file
+# reads the hook allowed, denied attempts, and every completed call's duration against
+# the step ceiling. Exit 1 when criterion 3 fails.
+.PHONY: proto-audit
+proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows — SESSION=<id> (default: every session)
+	cd apps/server && uv run python proto/audit.py $(if $(SESSION),--session '$(SESSION)',)
+
+# D19: the D17 commands as one -- seed a fixture, post the harness's message for its
+# research question (`/research --autonomous …`), run to turn_done, print the acceptance
+# queries (SQL + rows) and the criterion 3/4 audit. No browser, no kill. Billed, one real
+# research turn. Same `up` as proto-turn; refuses without a model key. The worker gets
+# the harness's tree-read block (BLOCKED_TOOLS; `BLOCKED_TOOLS= make proto-demo` lifts it),
+# since every e2e fixture's answer still sits in the live tree. On a docker-compose-only
+# machine: make proto-demo PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"
+.PHONY: proto-demo
+proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
+	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches}"; \
+	  . apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) up -d --build && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
+	  cd apps/server && uv run python proto/demo.py $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
 
 # ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
 # The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
 # the compose postgres/elasticmq instead; proto-drive is the D13 acceptance driver,
 # self-contained by default (embedded Postgres via the `proto` dependency group, the
 # tier in-process, no queue, the seeder standing in for the worker). BASE=… points it
-# at a running stack in --worker mode — a stack has a worker (the D3 stub counts), and a
-# worker racing the seeder is exactly what --seed refuses. PG_DSN defaults to the
+# at a running stack in --worker mode — a stack has a worker (which since D9–10 runs a
+# real, billed turn), and a worker racing the seeder is exactly what --seed refuses. PG_DSN defaults to the
 # compose postgres. web-proto is the SPA on the SSE transport against :8085.
 PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 
@@ -511,7 +574,7 @@ proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) 
 proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
 	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
-	  npx vitest run tests/store/pg-s3-project-store.test.ts
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
 
 # D9–10: the same offline calls as engine-smoke-stdio, driven through the prototype's
 # per-turn entrypoint (build/hosted-stdio.js) as a bearer principal against the
@@ -544,6 +607,52 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 .PHONY: engine-smoke-stdio
 engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and call every offline tool once (no FamilySearch login needed)
 	cd $(ENGINE_DIR) && npx tsx dev/smoke-stdio.ts
+
+# D16 transport smoke: every advertised tool but the four auth exclusions, over Streamable
+# HTTP. build/http.js has no file root: it binds a PgS3ProjectStore per request from the
+# X-Genealogy-Project-Id header, so both arms need the compose postgres + minio and the
+# smoke passes one fresh project id (SMOKE_PROJECT_ID overrides it) with the anchor
+# /project as every call's projectPath. Default: build/http.js on a free loopback port for
+# the duration of the run, killed by the trap on every exit path, with the same GENEALOGY_*
+# values engine-smoke-stdio-pg uses; its base config is this host's config.json, hence
+# --host-config. BASE=http://127.0.0.1:8787 runs the same smoke against the compose `tools`
+# service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. Both
+# arms print the same per-table psql counts engine-smoke-stdio-pg prints, even when the
+# smoke fails; the target's exit status is the smoke's.
+SMOKE_PROJECT_ID ?=
+# One fresh id per run unless SMOKE_PROJECT_ID names one. Shell, not $(shell): a make-time
+# uuid would be fixed for the whole invocation, including `make -n`.
+smoke_http_id = id="$(SMOKE_PROJECT_ID)"; [ -n "$$id" ] || id="smoke-$$(node -e 'console.log(crypto.randomUUID())')"; echo "SMOKE_PROJECT_ID=$$id"
+smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
+	  docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"
+
+.PHONY: engine-smoke-http
+engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the four auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
+ifdef BASE
+	@$(smoke_http_id); status=0; \
+	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project ) || status=$$?; \
+	  $(smoke_http_pg_counts); \
+	  exit $$status
+else
+	@$(smoke_http_id); status=0; \
+	  cd $(ENGINE_DIR) || exit 1; \
+	  port=$$(node -e 'const s=require("net").createServer().listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})'); \
+	  GENEALOGY_PG_DSN=$(PROTO_PG_DSN) GENEALOGY_S3_ENDPOINT=http://localhost:9000 \
+	    GENEALOGY_S3_BUCKET=projects GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
+	    GENEALOGY_ANCHOR_PATH=/project \
+	    node build/http.js --host 127.0.0.1 --port $$port & pid=$$!; \
+	  trap 'kill $$pid 2>/dev/null; wait $$pid 2>/dev/null' EXIT; \
+	  for i in $$(seq 1 30); do kill -0 $$pid 2>/dev/null || break; curl -sf --max-time 0.5 "http://127.0.0.1:$$port/healthz" >/dev/null && break; sleep 0.5; done; \
+	  curl -sf --max-time 2 "http://127.0.0.1:$$port/healthz" >/dev/null || { echo "engine-smoke-http: build/http.js did not answer /healthz on :$$port within 30 s" >&2; exit 1; }; \
+	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config || status=$$?; \
+	  $(smoke_http_pg_counts); \
+	  exit $$status
+endif
 
 # $(ENGINE_BUILD) is a real prerequisite here, not a convenience. The mock MCP
 # server (eval/harness/harness/mock_mcp.py) shells out to the COMPILED build/
