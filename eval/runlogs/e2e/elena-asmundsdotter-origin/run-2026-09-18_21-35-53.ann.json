@@ -1,0 +1,19 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "partial",
+    "f3": "false",
+    "f4": "false",
+    "f5": "false",
+    "f6": "false"
+  },
+  "notes": {
+    "f1": "Tree records Elena born 1695-11-15 at Barsebäck, Harjager — expected c. 1681 at Henckelstorp, Västra Karaby. Wrong parish and ~14 years out; this is a different woman, not an imprecise version of the right one.",
+    "f2": "Partial rather than false: the run did name a father, Osmund Dugmundsson, off a real baptism record (S2, Barsebäck pre-1700 p. 98, 'Ellina daughter of Osmund Dugmundsson'). But he is not Asmund Torsson, he is in the wrong parish, and the two ParentChild relationships in the tree carry person1/person2 null, so no parentage is structurally expressed. Credit for reaching a sourced candidate, not for the identification.",
+    "f3": "No Pernilla Jönsdotter in the tree. 'Pernilla' does appear four times in research.json but as 'Pernilla Jeppe Pehrsons', record_role godparent_10 in the 1695 Barsebäck baptism — a name collision, not the mother.",
+    "f4": "A Couple relationship exists between Jöns Jönsson and Elena, but it carries no marriage fact, no date and no place. The expected 29 December 1712 at Västra Karaby is absent.",
+    "f5": "Absent. 'Torsson' appears 0 times anywhere in research.json, so the paternal line was never reached.",
+    "f6": "Absent. No burial fact for any candidate father."
+  },
+  "findings_hash": "05f4c5fb6c8b0043934780844711212f847ea46a12a4b0531c0cee55234e9e93"
+}
