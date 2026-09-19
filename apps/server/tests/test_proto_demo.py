@@ -7,8 +7,10 @@ import re
 
 import pytest
 
+import httpx
+
 from proto import demo, turn
-from tests.test_proto_config import _recipe
+from tests.test_proto_config import STEP_CEILING_S, _recipe
 
 IDS = ("turn_x", "sess_y", "proj_z")
 
@@ -67,6 +69,11 @@ def test_render_query_prints_label_pasteable_sql_and_rows():
     assert lines[2].strip() == "1  ok" and lines[3].strip() == "2  None"
 
 
+def test_render_query_substitutes_each_placeholder_once_even_when_a_param_contains_one():
+    out = demo.render_query("l", "WHERE id = %s AND s = %s", ("x%sy", "Z"), [])
+    assert out.splitlines()[1] == "WHERE id = 'x%sy' AND s = 'Z'"
+
+
 def test_render_query_says_no_rows_rather_than_nothing():
     out = demo.render_query("l", "SELECT 1 WHERE false", (), [])
     assert out.splitlines()[-1].strip() == "(no rows)"
@@ -86,8 +93,60 @@ def test_verdict(done, c3, reauth, code):
 
 
 def test_default_deadline_covers_one_shim_driven_resume():
-    # READ_TIMEOUT_S is 1800 per attempt; a one-ceiling deadline reports FAIL as attempt 2 begins
-    assert demo.DEFAULT_DEADLINE_S > 2 * 1800
+    # READ_TIMEOUT_S is one step ceiling per attempt; a one-ceiling deadline reports FAIL as attempt 2 begins
+    assert demo.DEFAULT_DEADLINE_S > 2 * STEP_CEILING_S
+
+
+# ── the reauth void check ───────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("summary", [
+    "User is not logged in to FamilySearch. Call the login tool to authenticate.",
+    "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate.",
+    'Click "Reconnect FamilySearch" at the top of the app to sign in again',
+    "Error: 401 Unauthorized",
+])
+def test_reauth_matches_what_the_auth_module_actually_says(summary):
+    assert demo.REAUTH.search(summary)
+
+
+@pytest.mark.parametrize("summary", [
+    "Authenticated copy of the will of David Bagley",   # record text turn.REAUTH would flag
+    "the Login family of Vermont",
+    "No login required for this collection",
+])
+def test_reauth_ignores_record_text_that_merely_mentions_logins(summary):
+    assert not demo.REAUTH.search(summary)
+    assert turn.REAUTH.search(summary)  # the D14 arm's regex, scoped to one tool there, does flag it
+
+
+# ── the poll rides out transient tier faults ────────────────────────────────────────
+
+
+def test_wait_turn_done_retries_a_transient_fault_then_returns(monkeypatch):
+    calls = []
+
+    def flaky(client, base, session_id, turn_id, deadline_s):
+        calls.append(deadline_s)
+        if len(calls) == 1:
+            raise httpx.ConnectError("tier restarting")
+        if len(calls) == 2:
+            raise KeyError("events")
+        return 7, 0.1
+
+    monkeypatch.setattr(demo.turn, "wait_turn_done", flaky)
+    monkeypatch.setattr(demo.time, "sleep", lambda s: None)
+    assert demo.wait_turn_done(None, "http://x", "s", "t", 60.0) >= 0
+    assert len(calls) == 3 and calls[0] <= 60.0
+
+
+def test_wait_turn_done_gives_up_at_the_deadline(monkeypatch):
+    monkeypatch.setattr(demo.turn, "wait_turn_done", lambda *a: (_ for _ in ()).throw(httpx.ConnectError("down")))
+    monkeypatch.setattr(demo.time, "sleep", lambda s: None)
+    clock = iter([0.0, 0.0, 1.0, 5.0, 5.0, 10.0])
+    monkeypatch.setattr(demo.time, "monotonic", lambda: next(clock))
+    with pytest.raises(TimeoutError):
+        demo.wait_turn_done(None, "http://x", "s", "t", 3.0)
 
 
 # ── the make targets ────────────────────────────────────────────────────────────────
@@ -99,7 +158,10 @@ def test_proto_demo_target_brings_the_stack_up_and_runs_the_script():
     assert "ANTHROPIC_API_KEY" in body, "refuse without a model key, as proto-turn does"
     assert re.search(r"up -d --wait .*\bworker\b.*\bshim\b.*\bweb\b", body), "wait for worker, shim and web"
     assert "proto/demo.py" in body
-    assert re.search(r"\$\(or \$\(FIXTURE\),\s*bagley-father-1884\)", body), "FIXTURE defaults to the D17 fixture"
+    # --fixture is passed only when FIXTURE is set: `make proto-demo ARGS="--session <id>"` must not
+    # load the default fixture's question into someone else's session (the script defaults it)
+    assert re.search(r"\$\(if \$\(FIXTURE\),\s*--fixture '\$\(FIXTURE\)',\s*\)", body), body
+    assert "bagley-father-1884" not in body and demo.DEFAULT_FIXTURE == "bagley-father-1884"
 
 
 def test_proto_test_runs_the_d17_and_demo_suites():

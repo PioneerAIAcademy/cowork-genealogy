@@ -1439,7 +1439,8 @@ without whichever Bedrock refuses.
   answered from FamilySearch's live tree — `person_read` on the unstripped `MJDL-Q8B` returned
   David Bagley directly, two `record_search` calls confirmed it, no skill was invoked, no
   delegation ran, and every `research.json` section is still 0 after the turn. The e2e harness
-  blocks tree reads for this fixture genre (`strip`); the prototype worker does not, so a
+  denies every tree-read tool on every fixture (the universal §6.1 block,
+  `BLOCKED_TREE_TOOLS` in `eval/harness/e2e/orchestrator.py`); the prototype worker does not, so a
   38-second answer here is the tree talking, not the research workflow. D17's kill must be
   timed on a run that reaches `extraction_append`, which this one never did.
 - **D20** Write-up.

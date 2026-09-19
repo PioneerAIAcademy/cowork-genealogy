@@ -525,12 +525,12 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 # browser, no kill. Billed, one real turn. Same `up` as proto-turn; refuses without a
 # model key. On a docker-compose-only machine: make proto-demo PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"
 .PHONY: proto-demo
-proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real turn to turn_done, print the acceptance queries; ARGS="--prompt … | --session <id>"
+proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real turn to turn_done, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
 	. apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
-	  cd apps/server && uv run python proto/demo.py --fixture '$(or $(FIXTURE),bagley-father-1884)' $(ARGS)
+	  cd apps/server && uv run python proto/demo.py $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
 
 # ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
 # The tier runs in compose as `web` (:8085). proto-web runs it from the venv against

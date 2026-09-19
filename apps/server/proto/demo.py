@@ -25,7 +25,9 @@ the stack is not up or there is no prompt.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +42,12 @@ from proto import audit, seed, turn  # noqa: E402
 
 DEFAULT_FIXTURE = "bagley-father-1884"
 DEFAULT_DEADLINE_S = 3900.0  # 2 x the shim's 1800 s per-attempt ceiling, plus slack
+# What the engine's auth module actually says when the bearer is missing, expired or rejected
+# (src/auth/refresh.ts, the hosted message) -- not turn.REAUTH, whose `log ?in|authenticat`
+# also matches "the Login family" and "Authenticated copy" in record text.
+REAUTH = re.compile(r"Call the login tool|Reconnect FamilySearch|unauthori[sz]ed|\b401\b", re.I)
+# Transient web-tier faults a 65-minute poll must ride out rather than die on.
+TRANSIENT = (httpx.HTTPError, ValueError, KeyError)
 
 Query = tuple[str, str, tuple]
 
@@ -80,7 +88,7 @@ def acceptance_queries(turn_id: str, session_id: str, project_id: str) -> list[Q
          "FROM turns WHERE turn_id = %s", (turn_id,)),
         ("criterion 2: research.json section sizes after the turn (compare with the baseline above)",
          section_counts_sql(), (project_id,)),
-        ("criterion 2: what the turn wrote to the session -- event kinds",
+        ("criterion 2: the session's event kinds (session-wide; equals the turn's on a fresh seed)",
          "SELECT kind, count(*) AS n FROM session_events WHERE session_id = %s GROUP BY kind ORDER BY n DESC, kind",
          (session_id,)),
         ("criterion 2: the turn's tool calls by tool and decision",
@@ -94,9 +102,8 @@ def acceptance_queries(turn_id: str, session_id: str, project_id: str) -> list[Q
 def render_query(label: str, sql: str, params: tuple, rows: list[tuple]) -> str:
     """The label, the SQL with its params substituted (quoted) so it pastes into psql, then one
     line per row -- or ``(no rows)``."""
-    shown = sql
-    for value in params:
-        shown = shown.replace("%s", "'" + str(value).replace("'", "''") + "'", 1)
+    values = iter(params)
+    shown = re.sub(r"%s", lambda _m: "'" + str(next(values)).replace("'", "''") + "'", sql)
     lines = [f"-- {label}", shown]
     if rows:
         lines.extend("   " + "  ".join(str(v) for v in row) for row in rows)
@@ -120,11 +127,11 @@ def rows(dsn: str, sql: str, params: tuple) -> list[tuple]:
 
 
 def reauth_hits(dsn: str, session_id: str, since_seq: int) -> list[str]:
-    """tool_result summaries after ``since_seq`` matching ``turn.REAUTH`` -- what a FamilySearch
-    tool answers when its bearer is empty or rejected."""
+    """tool_result summaries after ``since_seq`` matching ``REAUTH`` -- what a FamilySearch tool
+    answers when its bearer is empty or rejected."""
     found = rows(dsn, "SELECT payload->>'summary' FROM session_events WHERE session_id = %s AND seq > %s "
                       "AND kind = 'tool_result' ORDER BY seq", (session_id, since_seq))
-    return [s or "" for (s,) in found if turn.REAUTH.search(s or "")]
+    return [s or "" for (s,) in found if REAUTH.search(s or "")]
 
 
 def reply_text(dsn: str, session_id: str, turn_id: str) -> tuple[int, str]:
@@ -135,6 +142,22 @@ def reply_text(dsn: str, session_id: str, turn_id: str) -> tuple[int, str]:
     texts = rows(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s AND kind = 'text' "
                       "AND seq > %s ORDER BY seq", (session_id, since))
     return since, " ".join(t or "" for (t,) in texts)
+
+
+def wait_turn_done(client: httpx.Client, base: str, session_id: str, turn_id: str, deadline_s: float) -> float:
+    """``turn.wait_turn_done`` with transient web-tier faults retried until the deadline;
+    ``elapsed_s``. Raises ``TimeoutError`` at the deadline."""
+    t0 = time.monotonic()
+    while True:
+        remaining = deadline_s - (time.monotonic() - t0)
+        if remaining <= 0:
+            raise TimeoutError(f"no turn_done for {turn_id} within {deadline_s:.0f}s")
+        try:
+            _seq, _w = turn.wait_turn_done(client, base, session_id, turn_id, remaining)
+            return time.monotonic() - t0
+        except TRANSIENT as exc:
+            print(f"            transient {type(exc).__name__} from the tier; retrying", file=sys.stderr)
+            time.sleep(2.0)
 
 
 # -- the run ----------------------------------------------------------------------------------
@@ -198,10 +221,14 @@ def run(args: argparse.Namespace) -> int:
     print()
 
     with httpx.Client(timeout=30.0) as client:
-        turn_id = turn.post_message(client, args.base, session_id, prompt)
+        try:
+            turn_id = turn.post_message(client, args.base, session_id, prompt)
+        except httpx.HTTPError as exc:
+            print(f"demo: posting the prompt failed ({type(exc).__name__}: {exc}); is the queue up?", file=sys.stderr)
+            return 2
         print(f"turn_id     {turn_id}  (posted; waiting up to {args.deadline_s:.0f}s for turn_done)")
         try:
-            _seq, wall = turn.wait_turn_done(client, args.base, session_id, turn_id, args.deadline_s)
+            wall = wait_turn_done(client, args.base, session_id, turn_id, args.deadline_s)
             done = True
             print(f"turn_done   after {wall:.0f}s")
         except TimeoutError as exc:
@@ -218,9 +245,10 @@ def run(args: argparse.Namespace) -> int:
         print(render_query(label, sql, params, rows(args.pg_dsn, sql, params)))
         print()
 
-    a = audit.audit(audit.load(args.pg_dsn, session_id), anchor=args.anchor)
-    print("-- criteria 3 and 4: proto/audit.py over the session's tool_calls rows")
-    print(audit.report(a, ceiling_s=args.ceiling_s, session_id=session_id))
+    # This turn's rows only: on a reused --session a prior turn's Bash row must not fail this run.
+    a = audit.audit([r for r in audit.load(args.pg_dsn, session_id) if r["turn_id"] == turn_id], anchor=args.anchor)
+    print("-- criteria 3 and 4: proto/audit.py over this turn's tool_calls rows")
+    print(audit.report(a, ceiling_s=args.ceiling_s, session_id=f"{session_id}, turn {turn_id}"))
     print()
 
     hits = reauth_hits(args.pg_dsn, session_id, since)
