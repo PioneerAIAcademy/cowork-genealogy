@@ -1,4 +1,5 @@
-"""The worker's ``ClaudeAgentOptions`` and its one ``PreToolUse`` hook.
+"""The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log) and
+``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",
 D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
@@ -113,10 +114,20 @@ def tool_server_env(
 
 
 def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
-    """The patron's FamilySearch token for this turn: the message's, else the worker
-    env's ``FS_ACCESS_TOKEN``, else empty."""
-    token = fs_access_token if fs_access_token is not None else worker_env.get("FS_ACCESS_TOKEN", "")
-    return token or ""
+    """The patron's FamilySearch token for this turn: the message's; else the file
+    ``FS_ACCESS_TOKEN_FILE`` names, read now -- per turn -- so the operator can refresh
+    it under a running worker (FamilySearch access tokens live an hour; proto/env.sh
+    writes it); else the worker env's ``FS_ACCESS_TOKEN``; else empty."""
+    if fs_access_token is not None:
+        return fs_access_token or ""
+    path = worker_env.get("FS_ACCESS_TOKEN_FILE")
+    if path:
+        try:
+            with open(path, encoding="utf-8") as f:
+                return f.read().strip()
+        except OSError:
+            pass
+    return worker_env.get("FS_ACCESS_TOKEN", "") or ""
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
@@ -252,6 +263,7 @@ def make_pretool_hook(
                 "tool_name": tool_name or "unknown",
                 "input_path": input_path(tool_name, tool_input, cwd=cwd),
                 "decision": decision,
+                "tool_use_id": tool_use_id or data.get("tool_use_id"),
             })
         except Exception as exc:  # noqa: BLE001 - the log must not change the decision
             if log is not None:
@@ -264,6 +276,32 @@ def make_pretool_hook(
         return {}
 
     return _pretool
+
+
+def make_posttool_hook(
+    *,
+    turn_id: str,
+    finish: Callable[[str], None],
+    log: Callable[..., None] | None = None,
+):
+    """The worker's ``PostToolUse`` / ``PostToolUseFailure`` callback: ``finish(tool_use_id)``
+    stamps the row the PreToolUse hook wrote with the call's duration (acceptance
+    criterion 4). Never raises and never changes what the model sees; a failed stamp is
+    one log line. A call in flight when its worker is killed keeps a NULL duration."""
+
+    async def _posttool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
+        data = input_data if isinstance(input_data, dict) else {}
+        use_id = tool_use_id or data.get("tool_use_id")
+        try:
+            if use_id:
+                finish(str(use_id))
+        except Exception as exc:  # noqa: BLE001 - the stamp must not fail the call
+            if log is not None:
+                log(ev="tool_call_finish_failed", turn_id=turn_id, tool_name=str(data.get("tool_name") or ""),
+                    error=f"{type(exc).__name__}: {exc}")
+        return {}
+
+    return _posttool
 
 
 def check_registration(
@@ -299,6 +337,7 @@ def build_worker_options(
     store: Any,
     config_dir: str,
     pretool_hook: Callable[..., Any],
+    posttool_hook: Callable[..., Any],
     resume: str | None = None,
     session_id: str | None = None,
     fs_access_token: str | None = None,
@@ -344,7 +383,12 @@ def build_worker_options(
             },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),
-        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)]},
+        hooks={
+            "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
+            # Both outcomes stamp the duration: a tool that errored still ran for that long.
+            "PostToolUse": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
+            "PostToolUseFailure": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
+        },
         session_store=store,
         session_store_flush="eager",
         include_partial_messages=True,

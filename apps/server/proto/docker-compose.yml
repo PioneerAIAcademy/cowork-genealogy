@@ -105,6 +105,11 @@ services:
       # literal here; the stub arms run with it empty.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
+      # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
+      # this file (proto/env.sh writes it; FamilySearch access tokens live an hour, so
+      # `make proto-token` rewrites it under the running worker). Empty, and every
+      # FamilySearch tool answers with the reconnect instruction.
+      FS_ACCESS_TOKEN_FILE: /run/fs-token
       # stdio (default): hosted-stdio.js forked per turn on the Postgres store above.
       # http: the D16 `tools` service on the SAME store, one process for every turn --
       # bearer as Authorization, the turn's project id as X-Genealogy-Project-Id.
@@ -117,6 +122,8 @@ services:
     # writable-not-durable: a tmpfs, discarded with the container.
     tmpfs:
       - /tmp:size=1g,mode=1777
+    volumes:
+      - ./.fs-token:/run/fs-token:ro
     expose:
       - "8080"
     depends_on:
