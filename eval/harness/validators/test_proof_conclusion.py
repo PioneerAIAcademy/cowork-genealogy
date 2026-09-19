@@ -608,6 +608,13 @@ def test_per_claim_tree_encoding(before_state, after_state, test):
     )
 
 
+#: Tiers that are a final answer rather than a stalled one. A disproved
+#: conclusion is as settled as a proved one -- the evidence refutes the claim --
+#: so asking why it is not "higher" is a category error. `not_proved` is
+#: deliberately excluded: it is a non-answer, not a negative answer.
+CONCLUSIVE_TIERS = frozenset({"proved", "disproved"})
+
+
 def test_shortfall_matches_document_state(after_state, test):
     """`shortfall` must agree with the document it sits in.
 
@@ -621,8 +628,12 @@ def test_shortfall_matches_document_state(after_state, test):
 
     Three rules, each read off the document rather than off the tier alone:
 
-    1. ``proved`` <-> ``none``, both directions. Nothing holds back a proved
-       conclusion, and nothing else can honestly claim nothing holds it back.
+    1. The CONCLUSIVE tiers <-> ``none``, both directions. ``proved`` and
+       ``disproved`` are both terminal answers -- one establishes the claim,
+       the other affirmatively refutes it -- so neither has anything holding it
+       back, and nothing else may claim it does not. ``not_proved`` is NOT
+       conclusive: it means the evidence will not support a call either way,
+       which is itself a shortfall.
     2. An unresolved conflict naming this summary's question in its
        ``blocks_question_ids`` forces ``conflict``. Question-scoped, matching
        proof-conclusion's decision rules: a conflict open on another question
@@ -658,16 +669,18 @@ def test_shortfall_matches_document_state(after_state, test):
         tier = ps.get("tier")
         shortfall = ps.get("shortfall")
 
-        if tier == "proved":
+        if tier in CONCLUSIVE_TIERS:
             assert shortfall == "none", (
-                f"{sid}: tier 'proved' requires shortfall 'none' (nothing is "
-                f"holding a proved conclusion back); got {shortfall!r}"
+                f"{sid}: tier {tier!r} is a conclusive answer, so it requires "
+                f"shortfall 'none' — nothing is holding it back; got "
+                f"{shortfall!r}"
             )
         else:
             assert shortfall != "none", (
                 f"{sid}: shortfall 'none' says nothing is holding this "
-                f"conclusion back, but its tier is {tier!r} — below 'proved' "
-                f"something is, so name it: ceiling, gap or conflict"
+                f"conclusion back, but its tier is {tier!r}, which reached no "
+                f"conclusive answer — so something is. Name it: ceiling, gap "
+                f"or conflict"
             )
 
         blocking = [
@@ -701,7 +714,8 @@ def test_shortfall_matches_document_state(after_state, test):
                     f"is the stronger claim and the document does not support it"
                 )
 
-        _check_ceiling(shortfall, "")
+        if tier not in CONCLUSIVE_TIERS:
+            _check_ceiling(shortfall, "")
         for i, claim in enumerate(ps.get("claims") or []):
             if isinstance(claim, dict) and "shortfall" in claim:
                 _check_ceiling(claim["shortfall"], f" claims[{i}]")

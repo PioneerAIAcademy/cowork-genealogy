@@ -58,27 +58,49 @@ def _blocking(qid="q_001", status="unresolved"):
     return [{"id": "c_001", "status": status, "blocks_question_ids": [qid]}]
 
 
-# ── proved <-> none, both directions ─────────────────────────────────
+# ── the CONCLUSIVE tiers take `none`, both directions ────────────────
+#
+# `proved` and `disproved` are both terminal answers: one establishes the
+# claim, the other affirmatively refutes it. Neither has anything "holding it
+# back", so both take `none` and nothing else. `not_proved` is NOT conclusive
+# -- it means the evidence will not support a call either way, which is
+# exactly a shortfall -- so it is grouped with the rest.
+#
+# This distinction cost a paid run to learn: the first version of this rule
+# said `none` only on `proved`, and the agent correctly wrote `none` on a
+# disproved conclusion in ut_proof_conclusion_006 and _013. The agent was
+# right and the rule was wrong.
 
 
-def test_proved_with_none_passes():
-    check(_after(tier="proved", shortfall="none", declared=True), TEST)
+def test_conclusive_tiers_with_none_pass():
+    for tier in ("proved", "disproved"):
+        check(_after(tier=tier, shortfall="none", declared=True), TEST)
 
 
-def test_proved_with_anything_else_fails():
-    for bad in ("ceiling", "gap", "conflict"):
-        with pytest.raises(AssertionError, match="proved"):
-            check(_after(tier="proved", shortfall=bad, declared=True), TEST)
+def test_conclusive_tiers_with_anything_else_fail():
+    for tier in ("proved", "disproved"):
+        for bad in ("ceiling", "gap", "conflict"):
+            with pytest.raises(AssertionError, match="conclusive|none"):
+                check(_after(tier=tier, shortfall=bad, declared=True), TEST)
 
 
-def test_none_on_a_lower_tier_fails():
-    # `none` says "nothing is holding this back", which is false of anything
-    # below proved -- the tier itself is the shortfall.
-    with pytest.raises(AssertionError, match="none"):
-        check(_after(tier="probable", shortfall="none", declared=True), TEST)
+def test_none_on_an_inconclusive_tier_fails():
+    # `none` says "nothing is holding this back", which is false of every tier
+    # that did not reach an answer. `not_proved` is the one worth naming: it is
+    # a non-answer, not a negative answer, so it always has a shortfall.
+    for tier in ("probable", "possible", "not_proved"):
+        with pytest.raises(AssertionError, match="none"):
+            check(_after(tier=tier, shortfall="none", declared=True), TEST)
 
 
 # ── the GPS rule: no ceiling over a document that denies exhaustion ──
+
+
+def test_a_disproved_conclusion_is_not_forced_to_name_a_gap():
+    # Regression guard for the rule this file got wrong: an undeclared
+    # question does NOT drag a disproved conclusion into `gap`. A chronological
+    # impossibility refutes the claim whatever else went unsearched.
+    check(_after(tier="disproved", shortfall="none", declared=False), TEST)
 
 
 def test_ceiling_with_declared_exhaustive_passes():
