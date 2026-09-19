@@ -482,6 +482,28 @@ def test_the_config_root_may_be_a_callable_resolved_per_call(tmp_path):
     assert _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(spill)}}) == {}
 
 
+def test_blocked_tools_are_denied_by_bare_name_under_any_server_spelling(tmp_path):
+    assert options.parse_blocked_tools(" person_read, person_ancestors,,") == {"person_read", "person_ancestors"}
+    assert options.parse_blocked_tools(None) == frozenset() and options.parse_blocked_tools("") == frozenset()
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path / "cfg"),
+        record=rows.append, blocked=options.parse_blocked_tools("person_read,person_ancestors"),
+    )
+    for name in ("mcp__genealogy__person_read", "mcp__remote-devices__Genealogy_Research__person_ancestors"):
+        out = _call(hook, {"tool_name": name, "tool_input": {"personId": "MJDL-Q8B"}})
+        assert out["hookSpecificOutput"]["permissionDecision"] == "deny", name
+        assert "live FamilySearch tree" in out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}}) == {}
+    assert _call(hook, {"tool_name": "person_read", "tool_input": {}}) == {}, "only MCP tools are candidates"
+    assert [r["decision"] for r in rows] == ["deny", "deny", "allow", "allow"]
+    # No list: the same call is allowed, and logged as such.
+    open_rows: list[dict] = []
+    assert _call(_hook(open_rows, str(tmp_path), str(tmp_path / "cfg")),
+                 {"tool_name": "mcp__genealogy__person_read", "tool_input": {}}) == {}
+    assert open_rows[-1]["decision"] == "allow"
+
+
 def test_the_hook_never_raises(tmp_path):
     def exploding_record(row):
         raise RuntimeError("postgres is down")
@@ -757,6 +779,7 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
     # The FS token is a file read per turn (tokens live an hour), never a literal or a build arg.
     assert env["FS_ACCESS_TOKEN_FILE"] == "/run/fs-token" and "FS_ACCESS_TOKEN" not in env
+    assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
     assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
     assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert env["GENEALOGY_PG_DSN"].startswith("postgresql://") and "@postgres:5432" in env["GENEALOGY_PG_DSN"]

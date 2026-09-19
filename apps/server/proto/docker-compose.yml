@@ -114,6 +114,9 @@ services:
       # http: the D16 `tools` service on the SAME store, one process for every turn --
       # bearer as Authorization, the turn's project id as X-Genealogy-Project-Id.
       TOOL_SERVER: ${TOOL_SERVER:-stdio}
+      # The e2e harness's tree-read block for fixture runs (bare MCP tool names, comma-
+      # separated; proto-demo exports the harness's five). Empty: no block.
+      BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
       ENGINE_DIR: /opt/genealogy/engine
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project

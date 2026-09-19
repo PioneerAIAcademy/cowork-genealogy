@@ -15,7 +15,8 @@ Postgres, the six agents via `agents=`); D14 scripted and the D17 prep built 202
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); per-request store
 scoping over HTTP built 2026-09-18 (PR #2669; the `X-Genealogy-Project-Id` header,
-D16's open half); FamilySearch's
+D16's open half); D19 built 2026-09-18 (PR #2670; `make proto-demo`, the D17 commands as
+one, no browser); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -1396,7 +1397,9 @@ without whichever Bedrock refuses.
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
   **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
-  1. `make proto-up` — builds the engine and the stack. `proto/env.sh` exports the model
+  1. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
+     make proto-up` — the harness's tree-read block (the fixture's answer sits in the live
+     tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
      key and writes the FamilySearch token, refreshed from the desktop login through
      `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
      turn**; its status line must say both are set. The token lives an hour: run
@@ -1426,6 +1429,47 @@ without whichever Bedrock refuses.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
+  **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
+  [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as
+  `proto-turn`, the seed, the fixture's `researcher_question` posted over the REST API, a
+  poll to `turn_done` (deadline two shim ceilings, 3900 s, so a shim-driven resume is waited
+  out rather than reported as a FAIL), the reply, then each acceptance query printed as
+  pasteable SQL with its rows — the `turns` row (criterion 1), `research.json`'s array-section
+  sizes before and after plus the event-kind and tool histograms (criterion 2), the
+  `proto-audit` report (criteria 3–4), the token columns (D18) — and a **VOID** line when a
+  tool result carried the reconnect instruction (the expired-token case D17 names). Exit 0
+  only on `turn_done` ∧ criterion 3 ∧ no reauth hit. No kill: `proto-kill` (D14) and the
+  D17 interactive run own that. On a `docker-compose`-only machine pass
+  `PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"`. Offline tests:
+  `tests/test_proto_demo.py`, in `make proto-test` (which now also runs `test_proto_d17.py`).
+  **Review round (2026-09-19):** the fixture prompt is now the harness's own message,
+  `/research --autonomous <question>` (`--prompt` stays verbatim), and the recipe exports
+  `BLOCKED_TOOLS` — the harness's five tree-read tools, denied by the worker's hook by bare
+  name under any server spelling (`BLOCKED_TOOLS= make proto-demo` lifts it) — because the
+  two runs below with the bare question and no block answered from the live tree in 38 s
+  and 24 s, no skill, no delegation, every section still 0: a lookup, not the workflow.
+  **Run live 2026-09-19 with the prompt and the block** (`sess_851fc1f8980d427a`): `/research`
+  resolved under plugin loading; `turn_done` after **232 s**, **$1.01**, 34 SDK turns, 31
+  tool calls all with durations (longest `wiki_search` 7.3 s, p50 61 ms), `question-selection`
+  then `locality-guide` ran (`research_append` ×2: `questions` 0 → 1, `localities` 0 → 1),
+  criterion 3 PASS (0 / 0 / 0), no tree tool attempted (0 denies), and the turn ended at
+  "handing off to `research-plan`" — **one queue message is one model turn**: the harness's
+  `--autonomous` runs keep going because its Stop hook vetoes the yield, which the worker
+  does not have, so a D18 comparison needs either that hook or a driver that posts
+  "continue" until the run stops on its own. The D17 browser run is turn-by-turn anyway.
+  **Run live 2026-09-18** on `bagley-father-1884` (`sess_352cf5166b624d00`): stack up from
+  cold with the `docker-compose` override, seeded, `turn_done` after **38 s**, `receive_count`
+  1, outcome ok, **$0.26**, 7 SDK turns, tokens 13 / 51,543 / 128,347 / 1,837 (input /
+  cache-creation / cache-read / output), 6 tool calls all with durations (longest
+  `person_read` 1,155 ms, p50 303 ms), criterion 3 PASS (0 / 0 / 0), no reauth hit, exit 0.
+  **What the run showed, for D18's quality eyeball rather than this command:** the agent
+  answered from FamilySearch's live tree — `person_read` on the unstripped `MJDL-Q8B` returned
+  David Bagley directly, two `record_search` calls confirmed it, no skill was invoked, no
+  delegation ran, and every `research.json` section is still 0 after the turn. The e2e harness
+  denies every tree-read tool on every fixture (the universal §6.1 block,
+  `BLOCKED_TREE_TOOLS` in `eval/harness/e2e/orchestrator.py`); the prototype worker does not, so a
+  38-second answer here is the tree talking, not the research workflow. D17's kill must be
+  timed on a run that reaches `extraction_append`, which this one never did.
 - **D20** Write-up.
 
 **Runs ~22 days after the 2026-09-10 cut, and a few days over is acceptable (lead's
