@@ -378,8 +378,7 @@ reads the record.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side — `count` is what bounds the response, and `top` is the caller's opt-in to fewer. |
-| `top` | number | Forwarded to `rank_search_matches` as its `top`: a cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful alongside `subjectId` and `projectPath`, since ranking does not otherwise run. **There is ONE row list.** `results` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom: the rows it cuts are the worst-scoring ones, not a second hidden copy. |
+| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side, so `count` is what bounds the response. |
 
 ### The response is re-ordered; the staged sidecar is not
 
@@ -1869,7 +1868,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 61 | Read past other root fields (`FilmNumber`, `RecordGroup`, `UniqueId`) | Position independence within the array |
 | 62 | Survives the staged slim block, inline **and** in the sidecar | The staged case is the normal one; proven by sabotage |
 | 63 | Reaches `ranked[].batchNumber` on a `subjectId` search | The projection a subject-named search actually reads |
-| 64 | `results` is dropped when `ranked` replaces it, and survives every shape where it does not | The drop is conditional; a length-only condition silently fails the scoreable-no-match arm. The condition itself is unit-tested in `tests/utils/staged-compaction.test.ts`; this suite's `record-search-ranked-drop.test.ts` sibling pins that `record_search` wires it in and forwards `top`. |
+| 64 | `results` is dropped when `ranked` replaces it, and survives every shape where it does not | The drop is conditional; a length-only condition silently fails the scoreable-no-match arm. The condition itself is unit-tested in `tests/utils/staged-compaction.test.ts`; this suite's `record-search-ranked-drop.test.ts` sibling pins that `record_search` wires it in. |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63

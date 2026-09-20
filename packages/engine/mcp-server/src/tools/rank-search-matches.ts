@@ -586,7 +586,7 @@ export const rankSearchMatchesSchema = {
           "Optional cap on how many top-ranked stubs to return. Omit to get " +
           "every scored candidate, which is the default. A fixed count, not a " +
           "score threshold. " +
-          "There is ONE row list: `results` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom — the rows it cuts are the worst-scoring ones, not a second hidden copy.",
+          "There is ONE row list: `matches` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom — the rows it cuts are the worst-scoring ones, not a second hidden copy.",
       },
       checkAttachments: {
         type: "boolean",

@@ -225,10 +225,6 @@ export interface RecordSearchInput {
   // row is, so `count` is the only thing that bounds how much comes back.
   count?: number;
   offset?: number;
-  // Forwarded to rank_search_matches as its `top`. Caps how many ranked stubs
-  // come back; omit for every scored candidate. Only meaningful alongside
-  // `subjectId` and `projectPath`, since without those no ranking runs.
-  top?: number;
 }
 
 export interface RecordSearchEvent {
