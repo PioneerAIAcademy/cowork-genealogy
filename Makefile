@@ -479,7 +479,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key.
@@ -564,6 +564,26 @@ proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOU
 proto-export: $(ENGINE_DEPS) ## D18: export SESSION=<id>'s project (research.json, tree, results/, images/) to OUT/<project_id>/ (default apps/server/proto/exports)
 	@test -n "$(SESSION)" || { echo "proto-export: SESSION=<id> is required" >&2; exit 2; }
 	cd apps/server && uv run python proto/export.py --session '$(SESSION)' $(if $(OUT),--out '$(abspath $(OUT))',)
+
+# D18: grade a prototype session's exported project with the e2e harness's own judge --
+# export.py's export, then eval/harness/e2e/grade_files.py (run_judge + apply_avoid_guard,
+# the orchestrator's own order) in the HARNESS's venv, since apps/server and eval/harness
+# are separate environments. FIXTURE is derived from the project id (proto-seed names
+# projects proj_<fixture>_<6 hex>) unless given. Billed: one judge call. Needs the stack up.
+.PHONY: proto-grade
+proto-grade: $(ENGINE_DEPS) ## D18: grade SESSION=<id>'s exported project against its e2e fixture with the harness judge — [FIXTURE=<slug>] [OUT=<dir>]
+	@test -n "$(SESSION)" || { echo "proto-grade: SESSION=<id> is required" >&2; exit 2; }
+	cd apps/server && uv run python proto/grade.py --session '$(SESSION)' $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(if $(OUT),--out '$(abspath $(OUT))',)
+
+# D18's artifact: the fixture graded on both sides by one instrument, now. The harness
+# side is a COMMITTED run under eval/runlogs/e2e/<fixture>/ -- the latest by name unless
+# RUNLOG names one -- and its tree is re-graded here rather than read out of its log, so
+# both verdicts come from the same judge call conditions. Billed: two judge calls.
+.PHONY: proto-compare
+proto-compare: $(ENGINE_DEPS) ## D18: one table — FIXTURE=<slug> SESSION=<id> graded on both sides (harness committed run vs prototype), [RUNLOG=<path>] [OUT=<dir>]
+	@test -n "$(FIXTURE)" || { echo "proto-compare: FIXTURE=<e2e fixture slug> is required" >&2; exit 2; }
+	@test -n "$(SESSION)" || { echo "proto-compare: SESSION=<id> is required" >&2; exit 2; }
+	cd apps/server && uv run python proto/compare.py --fixture '$(FIXTURE)' --session '$(SESSION)' $(if $(RUNLOG),--runlog '$(abspath $(RUNLOG))',) $(if $(OUT),--out '$(abspath $(OUT))',)
 
 # ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
 # The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
