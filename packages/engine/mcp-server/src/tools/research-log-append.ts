@@ -31,6 +31,7 @@ import {
 } from "../utils/project-io.js";
 import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -395,19 +396,36 @@ async function applyLogAppendOp(
   //    emit `externalSite` / `query` as a JSON string instead of a nested
   //    object; without this they reach the checks below as strings and fail
   //    opaquely ("externalSite.site 'undefined' is not a valid site").
-  const externalSite = coerceObjectArg(op.externalSite, "externalSite") as
+  // 0b. Map the literal string "null" back to null on every nullable arg.
+  //     Some models emit `"null"` (the string) where they mean JSON null.
+  //     Stored verbatim on `planItemId` it becomes a bogus id reference
+  //     ("plan_item_id 'null' not found"); on the fields that carry a
+  //     validator it is worse, because it refuses the ENTIRE append:
+  //     `resultsAvailable: "null"` fails the non-negative-integer bound below,
+  //     `stagedResultsRef: "null"` fails the staging-path check, and
+  //     `externalSite: "null"` fails `coerceObjectArg`. One stringly-typed
+  //     argument then discards the log entry the caller actually wrote.
+  //
+  //     One helper over all of them rather than a mapping per field: handling
+  //     `planItemId` alone and not its siblings is the same class the integer
+  //     bound below already had to be widened for (review round 5), and
+  //     CLAUDE.md asks for one shared guard on the second instance.
+  //
+  //     Safe because `"null"` is never a legitimate value for any of these:
+  //     not a `pli_` id, not a number, not a `results/.staging/` path, not an
+  //     object. `notes` is deliberately NOT mapped — a note whose text is
+  //     "null" is odd but not invalid, and nulling a caller's prose would
+  //     discard information rather than recover it.
+  const asNull = <T,>(v: T): T | null => ((v as unknown) === "null" ? null : v);
+  const planItemId = asNull(op.planItemId);
+  const resultsAvailable = asNull(op.resultsAvailable);
+  const stagedResultsRef = asNull(op.stagedResultsRef);
+
+  const externalSite = coerceObjectArg(asNull(op.externalSite), "externalSite") as
     | ResearchLogAppendExternalSite
     | null
     | undefined;
   const query = coerceObjectArg(op.query, "query");
-
-  // 0b. Map the literal string "null" back to null for nullable scalar args.
-  //     Some models emit `planItemId: "null"` (the string) instead of JSON
-  //     null; stored verbatim it becomes a bogus id reference that fails
-  //     validation ("plan_item_id 'null' not found"). "null" is never a
-  //     valid pli_ id, so this coercion is safe.
-  let planItemId = op.planItemId;
-  if ((planItemId as unknown) === "null") planItemId = null;
 
   // 0c. planItemId must be a plan-item id (^pli_) from the active plan, or
   //     null for an opportunistic/ad-hoc search. Models sometimes stuff a
@@ -438,8 +456,55 @@ async function applyLogAppendOp(
   if (externalSite && !EXTERNAL_SITE_VALUES.has(externalSite.site)) {
     throw new LogAppendError(`externalSite.site '${externalSite.site}' is not a valid site`);
   }
+  // `urlGenerated` is the string the skill presents as the clickable link and
+  // persists into `research.json` — the same caller-composed, URL-shaped
+  // input `build_external_search_url` rejects as `invalid_base_url`. Trimmed
+  // before both the check and the write: `new URL()` strips padding itself,
+  // so a padded value would pass here and persist with its spaces.
+  const urlGenerated =
+    typeof externalSite?.urlGenerated === "string" ? externalSite.urlGenerated.trim() : externalSite?.urlGenerated;
+  if (externalSite && urlGenerated != null && !isHttpUrl(String(urlGenerated))) {
+    throw new LogAppendError(
+      `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
+    );
+  }
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
+  }
+  // Coerced the same way `resultsAvailable` is below (a model that
+  // stringifies numeric args sends `"5"`); a genuinely non-numeric string is
+  // left as-is and rejected by the check under it. That check runs before the
+  // `external_links_search` gate because the gate's `> 0` comparison is
+  // `false` for both `NaN` and a negative number. `validator.ts` enforces the
+  // same bound on the persisted `results_examined` for every writer of
+  // `log[]`; this is the fail-fast under the caller's own parameter name, the
+  // same split `planItemId` above uses.
+  const resultsExamined = coerceJsonArg(op.resultsExamined);
+  if (!isNonNegativeInteger(resultsExamined)) {
+    throw new LogAppendError(
+      `resultsExamined must be a non-negative integer; got ${JSON.stringify(op.resultsExamined)}`,
+    );
+  }
+  // This entry grades the curated-links FETCH, not the search: any links
+  // returned is a positive fetch, even when none fit the plan item's record
+  // type (that goes in notes instead). Enforced mechanically — rather than
+  // left to the model's own judgment call — because it was measured to be
+  // wrong often enough in practice to need a hard gate, not another
+  // reminder in prose. Measured 2026-09-10 against the five run logs this
+  // branch commits: 4 of 66 `external_links_search` entries, across three
+  // tests (ut_search_external_sites_002, _005, _006) and three of the five
+  // logs. (Issue #1950's census said 9 of 48; the corpus has turned over, so
+  // that figure is stale rather than wrong — re-derive rather than reword.)
+  // This gate replaced the eval validator that used to grade the same shape
+  // after the fact; refusing the write is what made that grader unfireable. Scoped to `external_links_search` only: no other
+  // tool value shares this fetch-vs-search distinction, and it is the only
+  // one search-external-sites (its sole caller) uses this way.
+  if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {
+    throw new LogAppendError(
+      `tool 'external_links_search' returned ${resultsExamined} result(s), so outcome must be ` +
+        `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
+        `results didn't fit the plan item's record type in 'notes' instead.`,
+    );
   }
 
   if (!Array.isArray(research.log)) {
@@ -457,21 +522,21 @@ async function applyLogAppendOp(
     tool: op.tool,
     query,
     outcome: op.outcome,
-    results_examined: op.resultsExamined,
+    results_examined: resultsExamined,
     external_site: externalSite
       ? {
           site: externalSite.site,
-          url_generated: externalSite.urlGenerated,
+          url_generated: urlGenerated,
           capture_received: externalSite.captureReceived,
           ...(externalSite.captureFilename !== undefined
-            ? { capture_filename: externalSite.captureFilename }
+            ? { capture_filename: asNull(externalSite.captureFilename) }
             : {}),
         }
       : null,
     results_ref: null,
   };
-  const resultsAvailableCoerced = coerceJsonArg(op.resultsAvailable);
-  if (op.resultsAvailable !== undefined && op.resultsAvailable !== null) {
+  const resultsAvailableCoerced = coerceJsonArg(resultsAvailable);
+  if (resultsAvailable !== undefined && resultsAvailable !== null) {
     // Coerced the same way `ops` is: a model sending `"5"` otherwise lands a string
     // in an integer-typed field that nothing rejects — `validator.ts` carries
     // `results_available` in field-name allow-lists with no type check. The staged-
@@ -484,6 +549,19 @@ async function applyLogAppendOp(
     // rebuilds the entry from arguments and does NOT coerce, by its own renames-only
     // contract, so a replayed entry differs from a live one for a stringly-typed
     // value. Left that way deliberately: the replay contract is a harness decision.
+    // Same bound as `results_examined` above, from the same shared predicate
+    // and for the same reason: the schema declares this `integer, minimum: 0`,
+    // and the comment above says `validator.ts` carries it in field-name
+    // allow-lists with no type check — so a NaN (which persists as `null`), a
+    // negative or a fraction reached the document unchallenged. Adding the
+    // bound to one of the two sibling fields and not the other was the second
+    // instance of one class; CLAUDE.md asks for one shared guard (review
+    // round 5).
+    if (!isNonNegativeInteger(resultsAvailableCoerced)) {
+      throw new LogAppendError(
+        `resultsAvailable must be a non-negative integer; got ${JSON.stringify(resultsAvailable)}`,
+      );
+    }
     entry.results_available = resultsAvailableCoerced as number;
   }
   if (op.notes !== undefined && op.notes !== null) {
@@ -496,12 +574,12 @@ async function applyLogAppendOp(
   //    skipping the final research.json write, so record it for cleanup.
   let resultsRef: string | null = null;
   let returnedCount: number | null = null;
-  if (op.stagedResultsRef !== undefined && op.stagedResultsRef !== null) {
+  if (stagedResultsRef !== undefined && stagedResultsRef !== null) {
     let fin: Awaited<ReturnType<typeof finalizeStagedResults>>;
     try {
       fin = await finalizeStagedResults({
         projectPath,
-        stagedResultsRef: op.stagedResultsRef,
+        stagedResultsRef: stagedResultsRef,
         logId,
         expectedTool: op.tool,
       });
@@ -538,7 +616,7 @@ async function applyLogAppendOp(
   //     projectPath, turning a lossy log into no log at all.
   if (
     STAGING_CAPABLE_TOOLS.has(op.tool) &&
-    (op.stagedResultsRef === undefined || op.stagedResultsRef === null) &&
+    (stagedResultsRef === undefined || stagedResultsRef === null) &&
     Number.isFinite(resultsAvailableCoerced) &&
     (resultsAvailableCoerced as number) > 0
   ) {

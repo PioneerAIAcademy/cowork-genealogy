@@ -574,7 +574,11 @@ measurement the signal exists to produce. A caller running a legitimate broad
 survey gets one extra short field; whether a given omission was legitimate is
 answered at analysis time from the args already in the run log. `make
 e2e-compaction` is the corpus-scale version of that analysis, split by
-compaction segment.
+compaction segment. `make e2e-ranked-reads` is the other half: it uses this
+field as the analysis-time **control** the paragraph above describes,
+excluding a `record_read` whose supplying search carried `rankingSkipped` —
+that search had no ranking to ignore — and reporting the exclusion count
+alongside the reads it did score.
 
 Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
 gate is itself `input.subjectId &&`. Matching it exactly is what stops the field

@@ -227,8 +227,9 @@ Translate `stop_reason` into something a researcher can act on:
 - `tool_cap` — agent hit the per-run tool-call cap (default 200).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
-- `cost_cap` — hit the per-run cost cap. Same diagnosis as `tool_cap`
-  but the cap caught it first.
+- `cost_cap` — spent past the cost threshold. **Not an interruption** — it
+  is a post-hoc label (e2e-test-spec.md:648), so read `usage.stop_reason`
+  to see how the run actually ended before calling it unfinished.
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
@@ -278,8 +279,10 @@ useful questions are about *this* run:
   `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
   Pointer: tool counts (no FS search tools) + the last `narration` entry.
 - **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
-  `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
+  `tool_cap`. It researched but didn't finish. Pointer: high
   turn/tool counts; check whether `proof-conclusion` was ever reached.
+  (`cost_cap` is deliberately not in this list — it is applied after the
+  run has already ended, so it never cut a run short.)
 - **The evidence wasn't recoverable** — it searched genuinely but the
   finding isn't findable from records (and isn't a `provided-documents/`
   case). The fixture may be unsolvable as authored — a fixture problem,

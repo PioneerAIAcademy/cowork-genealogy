@@ -78,12 +78,23 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   noting he had originally avoided the major because it broke something he no longer
   recalls, and asking that it be verified working. Verified on 2.1.1: production tree
   installs clean under `engine-strict=true`, `tsc` clean, 123 files / 2986 tests pass,
-  the real `build/index.js` boots over stdio and serves all 48 tools with empty stderr,
-  and `make mcpb` produces a working artifact. hono is unreachable regardless —
-  `src/index.ts` constructs only `StdioServerTransport`, and hono is imported solely by
-  the SDK's `streamableHttp` transport.
-  **Revisit when** the server grows an HTTP/SSE transport, which would make hono
-  reachable for the first time.
+  the real `build/index.js` boots over stdio and serves all 48 tools then advertised with empty stderr (re-measured 2026-09-16 on this branch merged with `main`: `make mcpb` + `scripts/verify-mcpb.sh` boot the packed server and `tools/list` returns all 50, `build_external_search_url` and `sidecar_read` included),
+  and `make mcpb` produces a working artifact. At the time hono was unreachable —
+  `src/index.ts` constructed only `StdioServerTransport`, and hono is imported solely by
+  the SDK's `streamableHttp` transport — and this entry said to revisit when the server
+  grew an HTTP transport.
+  **Revisited 2026-09-18 (search-agent prototype, D16):** it has one. `build/http.js`
+  (`src/http.ts` → `src/http-server.ts`) constructs the SDK's
+  `StreamableHTTPServerTransport`, so hono and `@hono/node-server` are reachable **via
+  that entrypoint only**. The `.mcpb`'s `build/index.js` still constructs only
+  `StdioServerTransport`, so the desktop path is as unreachable as before even though
+  `build/http.js` rides along inside the pack. Installed and locked on that date: `hono`
+  4.13.7 and `@hono/node-server` 2.1.1 (read from `node_modules/*/package.json`), both
+  outside their advisory ranges — the node-server range is `<1.19.15`, and 4.13.7 is the
+  version `npm audit fix` moved hono to (4.12.27 →) to clear its four — and
+  `npm audit --omit=dev` is still `found 0 vulnerabilities`. **Revisit when** a hono or
+  `@hono/node-server` advisory lands: today's exposure is one loopback-bound compose
+  service (`apps/server/proto/tools/`), not a public listener.
 
 - **electron** — `apps/electron`, 39.8.5. **Fixed 2026-09-08: 39.8.5 → 39.8.10.**
   **15 advisories, 3 HIGH / 10 MODERATE / 2 LOW**, all published 2026-08-05 and all
