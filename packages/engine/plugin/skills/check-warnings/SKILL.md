@@ -7,11 +7,12 @@ description: Genealogical data integrity guardrail — catches contradictions
   person's data, and retrieves FamilySearch's live quality score. Invoke
   whenever the user wants to check for warnings, spot data problems, verify
   consistency before closing research, or get a sanity check on any person's
-  dates and family relationships. Route source conflicts (two records
-  disagreeing about the same fact) to conflict-resolution; route schema
-  validation (malformed data, bad ids, broken references) to validate-schema;
-  route an audit of the sources attached to a profile — whether each belongs
-  there, whether anything was mis-indexed — to source-evaluation.
+  dates and family relationships. Do NOT use for a source conflict — two
+  records disagreeing about the same fact (use conflict-resolution); for
+  schema validation — malformed data, bad ids, broken references (use
+  validate-schema); or for an audit of the sources attached to a profile,
+  whether each belongs there and whether anything was mis-indexed (use
+  source-evaluation).
 allowed-tools:
   - person_warnings
   - person_quality
