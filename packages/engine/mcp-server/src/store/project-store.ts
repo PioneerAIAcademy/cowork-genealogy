@@ -11,11 +11,30 @@
 // (plus auth, which owns per-user files, and the bundled-data reader) may import
 // `fs`, so a tool cannot reach the filesystem around the store.
 //
+// Two bindings, resolved in this order by `getProjectStore()`:
+//   1. per request — `runWithProjectStore(store, fn)` binds `store` through an
+//      AsyncLocalStorage for every store call in `fn`'s async continuation
+//      (tool body, utils, validator, staging sweeps). A shared server that
+//      serves many projects binds one store per request this way.
+//   2. per process — `setProjectStore(store)`; the per-turn hosted fork and
+//      tests. Absent both, the first use constructs `FsProjectStore`.
+// Why an ALS here when auth/principal.ts refuses one for the credential: the
+// principal must be un-forgettable at the call site — a tool that never
+// received one fails to compile. The store is a hidden singleton already,
+// reached from ~30 sites in utils and the validator; threading a parameter
+// through them buys nothing the ALS does not, and `PgS3ProjectStore` already
+// binds its open transaction through one. The property the parameter buys
+// ("n=1 works, n=2 impersonates") is bought here by `unboundProjectStore`: a
+// shared server installs one as the process store, so a request that never
+// bound a store FAILS instead of falling through to another's or to the file
+// backend.
+//
 // Vocabulary: `projectPath` is the project's identity exactly as the tools
 // receive it — a directory on the file backend, an opaque key elsewhere. A `ref`
 // is a project-relative POSIX path (`results/log_001.json`, `images/x.jpg`);
 // a store rejects one that escapes the project.
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { FsProjectStore } from "./fs-project-store.js";
 
 /** What `projectPath` actually points at, decided WITHOUT reference to which
@@ -114,10 +133,14 @@ export interface ProjectStore {
 }
 
 let active: ProjectStore | null = null;
+const requestStore = new AsyncLocalStorage<ProjectStore>();
 
-/** The store every util and tool reads and writes through. Defaults to the
- *  file backend on first use. */
+/** The store every util and tool reads and writes through: the request-bound
+ *  store if one is bound, else the process store, else (first use) the file
+ *  backend. */
 export function getProjectStore(): ProjectStore {
+  const bound = requestStore.getStore();
+  if (bound) return bound;
   if (!active) active = new FsProjectStore();
   return active;
 }
@@ -126,4 +149,65 @@ export function getProjectStore(): ProjectStore {
  *  restores the default file backend on the next `getProjectStore()`. */
 export function setProjectStore(store: ProjectStore | null): void {
   active = store;
+}
+
+/** Bind `store` for every store call made in `fn`'s async continuation. Wins
+ *  over the process store; gone once `fn` settles. */
+export function runWithProjectStore<T>(store: ProjectStore, fn: () => Promise<T>): Promise<T> {
+  return requestStore.run(store, fn);
+}
+
+/** A store whose every method rejects with `new Error(message)`. A shared
+ *  server installs one as the process store so nothing runs against the file
+ *  backend outside a request binding, and binds one per request that names no
+ *  project, so the message reaches the model through the dispatcher's
+ *  `isError` path. Implementing the interface makes a forgotten method a tsc
+ *  error. */
+export function unboundProjectStore(message: string): ProjectStore {
+  return new UnboundProjectStore(message);
+}
+
+class UnboundProjectStore implements ProjectStore {
+  constructor(private readonly message: string) {}
+
+  private reject<T>(): Promise<T> {
+    return Promise.reject(new Error(this.message));
+  }
+
+  withTransaction<T>(): Promise<T> {
+    return this.reject();
+  }
+  classifyProject(): Promise<ProjectPathClass> {
+    return this.reject();
+  }
+  projectDirState(): Promise<ProjectDirState> {
+    return this.reject();
+  }
+  findNestingAncestor(): Promise<string | null> {
+    return this.reject();
+  }
+  exists(): Promise<boolean> {
+    return this.reject();
+  }
+  readText(): Promise<string> {
+    return this.reject();
+  }
+  list(): Promise<ProjectEntry[]> {
+    return this.reject();
+  }
+  writeJson(): Promise<void> {
+    return this.reject();
+  }
+  writeJsonBoth(): Promise<void> {
+    return this.reject();
+  }
+  writeBytes(): Promise<void> {
+    return this.reject();
+  }
+  appendText(): Promise<void> {
+    return this.reject();
+  }
+  remove(): Promise<void> {
+    return this.reject();
+  }
 }

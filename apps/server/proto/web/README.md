@@ -2,9 +2,9 @@
 
 The stateless tier between the browser and the queue for the search-agent prototype
 (`docs/plan/search-agent-prototype.md`, Week 3). It never runs the SDK: the worker
-(D9–10) writes `map_message` output into `session_events` / `session_activity`, and this
-tier reads those rows for the browser. Until the worker exists it is driven against rows
-`../drive.py` inserts.
+(`../worker/worker.py`, D9–10) writes `map_message` output into `session_events` /
+`session_activity`, and this tier reads those rows for the browser. `../drive.py` can
+also stand in for the worker with seeded rows (`make proto-drive`).
 
 It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
 `VITE_SESSION_TRANSPORT=sse` (`make web-proto`).
@@ -28,12 +28,12 @@ the hosted runner.
 |---|---|
 | `session_events` `kind='user_msg'`, `payload {text, turn_id}` | `id: <seq>` · `{"type":"user_msg","text","turn_id","seq"}` |
 | `session_events` `kind=<map_message kind>`, `payload` = the event's fields | `id: <seq>` · `{"type":"agent_event","event":{…payload,"kind":kind},"seq"}` |
-| `session_activity.payload` (on `updated_at` change) | `{"type":"agent_event","event":{…payload,"kind":"task_progress"}}` |
+| `session_activity.payload` (on `updated_at` change) — the whole transient event, `kind` included (`text_delta`, `thinking_delta`, `task_progress`) | `{"type":"agent_event","event":{"kind":"task_progress",…payload}}` — the payload's own `kind` wins |
 | `documents` row (once at open, then on `version` change) | `{"type":"research_updated"\|"gedcomx_updated","name","data":<doc>}` |
 | a `turns` row with `completed_at IS NULL` (at open, after the replay) | `{"type":"status","state":"turn_active"}` |
 
-The `kind` column wins over a `kind` key inside `payload`. The D3 stub worker's
-`turn_done {turn_id, receive_count}` row already fits.
+The `kind` column wins over a `kind` key inside `payload`. The worker's
+`turn_done {turn_id, receive_count}` row (and the D3 stub arms' identical one) fits.
 
 **Why `turn_active` comes after the replay.** `ChatPane` clears busy on every
 `turn_done`; a replayed one landing after the status would show idle while the agent
