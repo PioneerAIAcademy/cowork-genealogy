@@ -12,7 +12,7 @@ from pathlib import Path
 import psycopg
 import pytest
 
-from proto import compare, export, grade, seed
+from proto import compare, export, grade, seed, turn
 
 E2E_DIR = grade.E2E_DIR
 
@@ -207,7 +207,13 @@ def _runlog(d: Path, stamp: str, *, verdict: str = "pass", siblings: bool = True
         "verdict": verdict,
         "judge_output": {"verdict": verdict, "per_finding": []},
         "tool_calls": [{"tool": "x"}, {"tool": "y"}],
-        "usage": {"total_cost_usd": 5.29, "duration_ms": 2_146_667, "num_turns": 90, "continue_nudges": 2},
+        # The shape a real run log has: the token counts sit in a NESTED `usage`, under the
+        # harness's own key names, not the worker's column names.
+        "usage": {
+            "total_cost_usd": 5.29, "duration_ms": 2_146_667, "num_turns": 90, "continue_nudges": 2,
+            "usage": {"input_tokens": 124, "cache_creation_input_tokens": 275_964,
+                      "cache_read_input_tokens": 5_404_059, "output_tokens": 86_777},
+        },
     }), encoding="utf-8")
     if siblings:
         (d / f"run-{stamp}.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
@@ -384,15 +390,36 @@ def test_harness_record_reads_the_committed_logs_usage_block(tmp_path):
     text = compare.harness_record(data)
     assert "$5.29" in text and "2147 s" in text and "2 tool calls" in text
     assert "90 SDK turns" in text and "2 nudges" in text
+    assert "tokens 124/275,964/5,404,059/86,777" in text
+
+
+def test_harness_record_carries_the_tokens_too_under_the_run_logs_own_key_names(tmp_path):
+    """Both records print tokens or the comparison has nothing honest in common: on a resumed
+    turn the prototype's cost_usd is 0, and the tokens are the only spend figure both sides
+    carry. A run log spells them inside a NESTED `usage` and under the harness's own names
+    (`cache_creation_input_tokens`), not the worker's column names (`cache_creation_tokens`),
+    so reading them with the wrong spelling yields `?` on a log that has the numbers."""
+    data = json.loads(_runlog(tmp_path / "slug", "2026-07-31_18-06-28").read_text(encoding="utf-8"))
+    assert "tokens 124/275,964/5,404,059/86,777" in compare.harness_record(data)
+    # The worker's spelling finds nothing in that block, which is why the two lists differ.
+    assert set(compare.HARNESS_TOKEN_KEYS) & set(turn.TOKEN_COLUMNS) == {"input_tokens", "output_tokens"}
+    assert all(key in (data["usage"]["usage"]) for key in compare.HARNESS_TOKEN_KEYS)
 
 
 def test_harness_record_says_unknown_rather_than_guessing():
     text = compare.harness_record({})
     assert "$?" in text and "? s" in text and "0 tool calls" in text
+    assert "tokens ?/?/?/?" in text, "unknown tokens read as unknown on this side too"
+
+
+# A turns row as TURN_COLUMNS orders it: cost, SDK turns, duration, nudges, then the
+# four token columns (input / cache write / cache read / output).
+def _turn(cost, turns, ms, nudges, tokens=(0, 0, 0, 0)):
+    return (cost, turns, ms, nudges, *tokens)
 
 
 def test_proto_record_sums_the_sessions_turns_and_counts_its_tool_calls():
-    rows = [(1.0, 10, 200_000, 3), (0.25, 4, 32_000, 0)]
+    rows = [_turn(1.0, 10, 200_000, 3, (10, 200, 3_000, 40)), _turn(0.25, 4, 32_000, 0, (1, 20, 300, 4))]
     calls = [
         {"turn_id": "t", "agent_type": None, "tool_name": "mcp__genealogy__record_read",
          "input_path": None, "decision": "allow", "duration_ms": 120},
@@ -402,27 +429,33 @@ def test_proto_record_sums_the_sessions_turns_and_counts_its_tool_calls():
     text = compare.proto_record(rows, calls)
     assert "$1.25" in text and "232 s" in text and "2 tool calls" in text
     assert "14 SDK turns" in text and "3 nudges" in text
+    assert "tokens 11/220/3,300/44" in text, "the token columns sum over the session too"
 
 
 def test_proto_record_reports_unknown_when_a_resumed_turn_left_the_columns_null():
-    text = compare.proto_record([(None, None, None, None)], [])
+    text = compare.proto_record([_turn(None, None, None, None, (None,) * 4)], [])
     assert "$?" in text and "? s" in text and "0 tool calls" in text and "? SDK turns" in text
+    assert "tokens ?/?/?/?" in text, "unknown tokens read as unknown, not as zero"
     assert "under-reported" not in text, "a NULL already reads as unknown"
 
 
 def test_proto_record_marks_a_turn_that_ran_but_recorded_no_cost():
     """The real shape after a kill: the resumed turn records its COMPLETING attempt, so
     cost and SDK turns are 0 -- not NULL. `$0.00` beside the harness's `$5.29` reads as a
-    100% cost advantage unless the row says otherwise."""
-    text = compare.proto_record([(0.0, 0, 1_804_000, 0)], [])
+    100% cost advantage unless the row says otherwise -- and the tokens, which ARE every
+    attempt's, have to be on that row or the honest figure is nowhere."""
+    # The 2026-09-20 run: 0 / 0 / 1804 s, and the token counts the plan prices at ~$5.40.
+    text = compare.proto_record([_turn(0.0, 0, 1_804_000, 0, (126, 468_041, 4_006_664, 162_892))], [])
     assert "$0.00" in text and "1804 s" in text and "0 SDK turns" in text
     assert "cost/SDK turns under-reported" in text
+    assert "tokens 126/468,041/4,006,664/162,892" in text, "the spend that is true on a resumed turn"
 
-    mixed = compare.proto_record([(1.0, 10, 200_000, 0), (0.0, 0, 1_804_000, 0)], [])
+    mixed = compare.proto_record([_turn(1.0, 10, 200_000, 0), _turn(0.0, 0, 1_804_000, 0)], [])
     assert "cost/SDK turns under-reported" in mixed, "one silent turn is enough"
 
-    honest = compare.proto_record([(1.0, 10, 200_000, 0)], [])
+    honest = compare.proto_record([_turn(1.0, 10, 200_000, 0, (5, 6, 7, 8))], [])
     assert "under-reported" not in honest
+    assert "tokens 5/6/7/8" in honest, "both records carry them, marker or not"
 
 
 # ── when the fixture's expected findings last changed ─────────────────────────
@@ -540,7 +573,7 @@ def test_compare_main_grades_both_sides_with_one_instrument_and_names_the_runlog
     monkeypatch.setattr(compare, "RUNLOGS", tmp_path)
     monkeypatch.setattr(compare.export, "resolve_project", lambda dsn, sid: "proj_bagley-father-1884_a1b2c3")
     monkeypatch.setattr(compare.export, "export", lambda pid, **kw: 0)
-    monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [(1.01, 34, 232_000, 0)])
+    monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [_turn(1.01, 34, 232_000, 0, (9, 90, 900, 9_000))])
     monkeypatch.setattr(compare.audit, "load", lambda dsn, sid: [])
 
     graded = {
@@ -557,14 +590,21 @@ def test_compare_main_grades_both_sides_with_one_instrument_and_names_the_runlog
         return subprocess.CompletedProcess(argv, 0, "", "")
 
     monkeypatch.setattr(compare.grade, "run_grade_files", fake_grade)
+    # The date is stubbed because every other input here is fabricated and this one read
+    # would otherwise hit the real repository: CI checks out at depth 1, where the single
+    # commit appears to have created every file, so `git log -1 -- <path>` reports the
+    # date CI ran and the CAVEAT below always fires. The command itself is exercised
+    # unstubbed by test_findings_changed_reads_this_repos_own_git_history, which asserts
+    # only the SHAPE of what comes back and so survives either depth.
+    monkeypatch.setattr(compare, "findings_changed", lambda fixture, **kw: "2026-07-27")
     code = compare.main([
         "--fixture", "bagley-father-1884", "--session", "sess_x", "--out", str(tmp_path / "out"),
     ])
     assert code == 0
     out = capsys.readouterr().out
     assert runlog.name in out and "run 2026-07-31" in out and "committed, not re-run here" in out
-    assert "expected findings last changed" in out
-    assert "CAVEAT" not in out, "bagley's findings predate its latest run"
+    assert "expected findings last changed 2026-07-27" in out
+    assert "CAVEAT" not in out, "the stubbed findings date precedes this run"
     assert "Both sides were graded" in out
     assert len(argvs) == 2, "both sides graded by the same module"
     harness_tree, _ = compare.runlog_siblings(runlog)
@@ -601,7 +641,7 @@ def test_compare_main_warns_when_the_findings_were_amended_after_the_harness_run
     monkeypatch.setattr(compare, "findings_changed", lambda fixture, **kw: "2026-09-08")
     monkeypatch.setattr(compare.export, "resolve_project", lambda dsn, sid: "proj_bagley-father-1884_a1b2c3")
     monkeypatch.setattr(compare.export, "export", lambda pid, **kw: 0)
-    monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [(1.01, 34, 232_000, 0)])
+    monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [_turn(1.01, 34, 232_000, 0, (9, 90, 900, 9_000))])
     monkeypatch.setattr(compare.audit, "load", lambda dsn, sid: [])
 
     def fake_grade(argv, **kw):
