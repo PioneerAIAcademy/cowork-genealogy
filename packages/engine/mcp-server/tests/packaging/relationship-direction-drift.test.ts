@@ -2,7 +2,10 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { subjectRoleInValue } from "../../src/tools/research-append.js";
+import {
+  subjectRoleInValue,
+  RELATION_CATEGORY,
+} from "../../src/tools/research-append.js";
 
 /**
  * Cross-language drift lint for the relationship-direction rule (issue #2535).
@@ -52,6 +55,17 @@ describe("relationship-direction rule — cross-language drift (#2535)", () => {
       expect(subjectRoleInValue(value) ?? null).toBe(states);
     },
   );
+
+  it("the category table matches the shared one", () => {
+    // The value predicate is only half the rule. A spelling added to one
+    // language's table and not the other changes what the field MEANS on
+    // that side, and every case above would still pass.
+    const shared: Record<string, string> = JSON.parse(
+      readFileSync(CASES_PATH, "utf-8"),
+    ).categories;
+    expect(shared, "shared table has no 'categories'").toBeTruthy();
+    expect({ ...RELATION_CATEGORY }).toEqual(shared);
+  });
 
   it("every case carries a reason", () => {
     // The table is evidence, not a fixture dump: a case nobody can explain is

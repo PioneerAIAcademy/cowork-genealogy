@@ -568,7 +568,7 @@ _RELATION_CATEGORY = {
 
 # WHERE the relation word sits decides whose role it names, and a rule that
 # ignores position was wrong on 22 of the 37 it flagged over the e2e run
-# logs (27 of 48 over the full population that
+# logs (27 of 47 over the full population that
 # `scripts/measure_relationship_direction.py --counterfactual` reports). `child of Jim Neal` states the SUBJECT's own role.
 #
 # A value LABELS the other party in two shapes that need different patterns,

@@ -5522,7 +5522,7 @@ describe("research_append — relationship direction and the sibling value (#253
   // --- refuse ------------------------------------------------------------
 
   it("refuses a sibling typed as a child — the live, reproducing defect", async () => {
-    // 6 sightings across three of the four current record-extraction run logs, every
+    // 5 sightings across three of the four current record-extraction run logs, every
     // one `relationship_type: "child"` beside a `sibling of …` value. The
     // agent was never told `sibling` was legal, so it picked the nearest of
     // the three values it had been given.
@@ -5598,7 +5598,7 @@ describe("research_append — relationship direction and the sibling value (#253
   it("accepts an unknown spelling rather than guessing at it", async () => {
     // `_relationship_category` returning undefined is the designed fail-open.
     // 63 assertions across 16 spellings sit outside the four categories
-    // over the e2e run logs (76 across 19 over the full population)
+    // over the e2e run logs (73 across 18 over the full population)
     // (`grandparent`, `ParentChild`, `administrator`…) and every one must be
     // skipped, not refused.
     // The value must carry a relation word the table DOES know, or the
@@ -5843,7 +5843,7 @@ describe("research_append — relationship direction and the sibling value (#253
 
   it("does not reach past fact_type relationship", async () => {
     // The refusal-table row and the measurement script both scope to
-    // `fact_type: relationship`. 92 corpus assertions outside it carry a
+    // `fact_type: relationship`. 77 corpus assertions outside it carry a
     // categorised `relationship_type` — `marriage` most of them — and none
     // would be refused today, but a guard reaching a population nobody
     // measured is a rate nobody can trust.

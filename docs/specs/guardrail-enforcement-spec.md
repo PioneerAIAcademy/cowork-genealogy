@@ -144,7 +144,7 @@ depends on another shipping first.
 | # | Layer | Binds in | Catches | Status |
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
-| §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **22 of 2466 (0.9%)**, measured at 578048221 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
+| §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2481 (0.8%)**, measured at 0c1a393c0 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
@@ -969,8 +969,8 @@ subject's role and can be compared. `father named as Casper` and
 `Father of groom named as Tellef`, where the token after `of` is a role word
 rather than a name. Comparing relation words without regard to position refused
 22 of the 37 it flagged over the e2e run logs — correct data, refused. An
-unknown spelling (`grandparent`, `ParentChild`, `administrator` — 76
-assertions across 19 spellings) yields no category and is skipped, never
+unknown spelling (`grandparent`, `ParentChild`, `administrator` — 73
+assertions across 18 spellings) yields no category and is skipped, never
 refused.
 
 Implemented as `validateRelationshipDirection` in `research-append.ts`, scoped
@@ -986,9 +986,10 @@ applies the identical predicate over the corpus; the two are pinned to one
 another by `relationship_direction_cases.json` and a test on each side, because
 the harness and the engine share no runtime.
 
-Refuses **22 of 2466 (0.9%)**, measured at 578048221 by
-`eval/harness/scripts/measure_relationship_direction.py` — 15 distinct
-assertions, 0 in the scenario fixtures and 0 in the hosted seed. Every refusal
+Refuses **21 of 2481 (0.8%)**, measured at 0c1a393c0 by
+`eval/harness/scripts/measure_relationship_direction.py` — 19 distinct
+assertions, since a unit log carries the id-less write op and the persisted
+copy of one assertion; 0 in the scenario fixtures and 0 in the hosted seed. Every refusal
 was read individually per ADR-0011 limit 2 and every one is a true positive.
 The script's `--counterfactual`, `--axes`, `--domain` and `--self-referential`
 arms emit every other figure this rule is cited for, each over a named

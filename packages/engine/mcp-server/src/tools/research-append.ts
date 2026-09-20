@@ -2022,7 +2022,7 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
  *  value opening `<relation> of <name>` states the SUBJECT's role and can be
  *  compared. `father named as Casper` and `father: Jan Roelfs` LABEL the other
  *  party and say nothing about the subject — comparing those refused 22 of
- *  the 37 it flagged over the e2e run logs (27 of 48 over run logs plus the
+ *  the 37 it flagged over the e2e run logs (27 of 47 over run logs plus the
  *  unit logs, fixtures and seed), which is how the abandoned guards got
  *  their unacceptable rates. Re-derive with
  *  `measure_relationship_direction.py --counterfactual`.
@@ -2032,7 +2032,7 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
  *  tool; PR #2601 set that precedent for the same reason.
  *
  *  Skips rather than guesses on: an unknown spelling (`ward`, `godchild`,
- *  `grandparent` — 76 assertions across 19 spellings), a label form, a
+ *  `grandparent` — 73 assertions across 18 spellings), a label form, a
  *  value naming no relation, and a non-assertion entry. An unknown type is not evidence of disagreement. */
 // Prototype-less: the keys come from a model-supplied `relationship_type`,
 // and on a plain object literal `constructor`, `toString` and `__proto__`
@@ -2041,7 +2041,9 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
 // skip-never-refuse contract this rule documents. Fixed here rather than
 // at each index site so a third one cannot reintroduce it, and so the
 // lookup means what the Python mirror's `dict.get()` already meant.
-const RELATION_CATEGORY: Record<string, string> = Object.assign(
+// Exported only so the cross-language drift test can pin it against the
+// Python copy; nothing else outside this module reads it.
+export const RELATION_CATEGORY: Record<string, string> = Object.assign(
   Object.create(null) as Record<string, string>,
   {
     father: "parent", mother: "parent", parent: "parent",
@@ -2109,7 +2111,7 @@ function validateRelationshipDirection(entry: Record<string, unknown>): void {
   // append and the update arm, folding `parentage` and
   // `familycomposition` INTO `relationship`, so those are INSIDE this
   // scope, not outside it.
-  // Genuinely outside: 75 assertions across 10 fact types still carry a
+  // Genuinely outside: 77 assertions across 11 fact types still carry a
   // categorised `relationship_type` (`marriage` 50, `parentchild` 11,
   // `name` 4, …), re-derivable with
   // `measure_relationship_direction.py --domain`.

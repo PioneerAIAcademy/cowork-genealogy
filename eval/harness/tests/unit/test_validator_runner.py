@@ -1522,7 +1522,7 @@ def test_rel_agreement_reads_position_not_mere_presence(rel_type, value):
 @pytest.mark.parametrize(
     "rel_type,value,states",
     [
-        # The live, reproducing defect: 6 sightings across the three
+        # The live, reproducing defect: 5 sightings across the three
         # current record-extraction run logs (three of the four), every one typed `child`.
         ("child", "sibling of Grace (Whitaker) Tolman", "sibling"),
         # Its committed shape carries the `_inferred` suffix, which must be
@@ -1559,7 +1559,10 @@ def test_relationship_direction_cases_match_the_shared_table():
     # too or it passes only when a neighbour ran first.
     sys.path.insert(0, str(VALIDATORS_DIR))
     try:
-        from validators.test_record_extraction import _subject_role_in_value
+        from validators.test_record_extraction import (
+            _RELATION_CATEGORY,
+            _subject_role_in_value,
+        )
     finally:
         sys.path.remove(str(VALIDATORS_DIR))
 
@@ -1568,6 +1571,15 @@ def test_relationship_direction_cases_match_the_shared_table():
          / "validators" / "relationship_direction_cases.json")
         .read_text(encoding="utf-8")
     )
+    # The value predicate is only half the rule -- see the note in the
+    # shared file. Pin the category table too, or a spelling added to one
+    # language alone passes both suites.
+    assert table.get("categories"), "shared table has no 'categories'"
+    assert _RELATION_CATEGORY == table["categories"], (
+        "python's relation-word table differs from the shared one -- the "
+        "two implementations have drifted"
+    )
+
     cases = table["cases"]
     # A table that shrank to nothing would make every assertion below
     # vacuous while the suite stayed green.

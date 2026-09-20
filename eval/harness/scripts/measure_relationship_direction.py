@@ -334,8 +334,11 @@ def _self_referential():
         for a in doc.get("assertions") or []:
             if not isinstance(a, dict):
                 continue
-            if str(a.get("fact_type") or "").lower() not in (
-                    "relationship", "marriage"):
+            # Folded, like every other arm: an unfolded `parentage` write is
+            # inside the engine's notion of `relationship` and so inside this
+            # denominator.
+            if not (_is_relationship(a.get("fact_type"))
+                    or str(a.get("fact_type") or "").lower() == "marriage"):
                 continue
             sv = a.get("structured_value")
             if not isinstance(sv, dict) or sv.get("related_person_role") is None:
@@ -394,7 +397,12 @@ def _counterfactual():
             try:
                 with open(path, encoding="utf-8") as fh:
                     doc = json.load(fh)
-            except (OSError, ValueError):
+            except (OSError, ValueError) as exc:
+                # Every other arm records these. Swallowing one here made an
+                # unreadable file read as a zero, which is the failure the
+                # module comment says was fixed elsewhere.
+                SKIPPED.append("%s (%s)" % (os.path.relpath(path, REPO),
+                                            type(exc).__name__))
                 continue
             for a in _assertions_in(doc):
                 sv = a.get("structured_value") or {}
@@ -501,7 +509,23 @@ def main():
     # the write-op view is the one the deny actually sees, but "read every
     # refusal" means the DISTINCT count. Print both rather than let a reader
     # discover the difference.
-    distinct = len({(r[2], r[3]) for v in out.values() for r in v["rows"]})
+    # Two corrections, and only both together are right.
+    #
+    # Keying on (type, value) merged assertions that merely SHARE a value
+    # string: `brother of John Grice (inferred)` is three separate
+    # assertions (a_109, a_116, a_123) in one file, and the read-through
+    # owes a verdict on each.
+    #
+    # Keying on (file, id, value) instead splits the two views a unit log
+    # carries of ONE assertion: the write op under `tool_calls[].args`,
+    # where no id has been assigned yet, and the persisted copy. So an
+    # id-less row is folded into its id-bearing twin in the same file, and
+    # only counts alone when no twin exists.
+    all_rows = [r for v in out.values() for r in v["rows"]]
+    with_ids = {(r[0], r[2], r[3]) for r in all_rows if r[1] not in ("None", "")}
+    deduped = [r for r in all_rows
+               if not (r[1] in ("None", "") and (r[0], r[2], r[3]) in with_ids)]
+    distinct = len({(r[0], r[1], r[3]) for r in deduped})
     pct = (100.0 * total_r / total_c) if total_c else 0.0
 
     if args.json:
@@ -520,8 +544,8 @@ def main():
     print("  %-28s checkable %-5d refusals %d" % ("TOTAL", total_c, total_r))
     print("\n  refuses %d of %d (%.1f%%), measured at %s"
           % (total_r, total_c, pct, sha))
-    print("  %d distinct assertions (a unit log carries each one twice)"
-          % distinct)
+    print("  %d distinct assertions (an id-less write op folded into its"
+          " persisted twin)" % distinct)
     print("\nEvery refusal, for the ADR-0011 limit 2 read-through:")
     for name, v in out.items():
         for row in v["rows"]:

@@ -575,8 +575,8 @@ equal to his record role.
 
 Measured over `eval/**/*final-research.json`, `fact_type: relationship`, and
 emitted by `measure_relationship_direction.py --axes` so it is re-derivable
-rather than pasted: requiring the two to agree refuses **62 of 280**
-comparable assertions, of which **60 are correct data**; and **58 of 1140**
+rather than pasted, measured at 0c1a393c0: requiring the two to agree refuses **62 of 280**
+comparable assertions, of which **60 are correct data**; and **59 of 1146**
 personas carrying a relationship assertion carry more than one category. So no guard may require `relationship_type` to match
 `record_role`, and two earlier attempts to build one were abandoned without the
 reason being written down. That is what this paragraph exists to prevent a third
@@ -587,7 +587,7 @@ time.
 relationship assertions, so a `(record_role x related_person_role)` composition
 rule is constructible. It was not chosen because that vocabulary is open — 60+
 spellings in the corpus — so it needs a role table somebody maintains, and
-because the field carries the persona's own role on 14 of 1803 assertions
+because the field carries the persona's own role on 14 of 1841 assertions
 (`tree-materialization-spec.md`, the 2026-09-07 rejection). Comparing the prose
 needs no table and checks against the layer a human reads. Two further
 candidates do not reach: `record_persona_id` plus the sidecar GedcomX is null
