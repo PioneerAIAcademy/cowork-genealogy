@@ -568,6 +568,79 @@ def test_summarize_tool_response_honours_the_overall_cap():
     assert out.endswith("...")
 
 
+# --- per-key exemptions from truncation (issue #2561) -------------------------
+# Three tests, each broken before committing, per the issue's Verify section:
+#   1. A 6,000-char transcription survives whole (the _RUNLOG_MAX_CHARS arm).
+#   2. A 6,000-char string under a different key is still bounded at 500.
+#   3. A transcription under 500 chars passes through verbatim.
+
+
+def test_exempt_transcription_survives_past_backstop():
+    """A 6,000-char transcription must survive whole — both the per-string cap
+    (_RUNLOG_STRING_MAX, 500) and the backstop (_RUNLOG_MAX_CHARS, 4000).
+
+    This is the arm that fails today without the exemption: a >4000-char value
+    is silently head-cut with a bare "...", looking complete. 12 of the 121
+    truncated transcriptions in the Aug/Sep corpus exceed 4,000 chars.
+    """
+    transcription_text = "Á" * 6_000
+    content = [{"type": "text", "text": json.dumps({
+        "transcription": transcription_text,
+        "imageId": "test_image_001",
+    })}]
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # The output is a JSON array (the MCP unwrap preserves the list envelope),
+    # so parse → index into [0] to reach the response dict.
+    parsed = json.loads(out)
+    assert isinstance(parsed, list) and len(parsed) == 1
+    doc = parsed[0]
+    assert doc["transcription"] == transcription_text
+    assert len(doc["transcription"]) == 6_000
+    # The non-exempt key is still present (not lost by the exemption).
+    assert "imageId" in doc
+
+
+def test_non_exempt_key_still_bounded():
+    """A 6,000-char string under a key that is NOT exempted must still be
+    truncated at _RUNLOG_STRING_MAX with its marker — the exemption is per-key,
+    not "exempt everything".
+    """
+    content = [{"type": "text", "text": json.dumps({
+        "someOtherField": "x" * 6_000,
+        "imageId": "test_image_002",
+    })}]
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # The non-exempt key must be truncated.
+    assert "[truncated by harness" in out
+    assert "full length 6000 chars" in out
+    # Two-sided: the generic path's pin still holds — the x count is bounded.
+    assert out.count("x") <= 600
+
+
+def test_short_transcription_passes_through_verbatim():
+    """A transcription already under 500 chars must pass through unchanged —
+    the accept direction. A change that only ever widens must not reshape a
+    short payload.
+    """
+    short_text = "María García, nacida en 1845"
+    content = [{"type": "text", "text": json.dumps({
+        "transcription": short_text,
+        "imageId": "test_image_003",
+    })}]
+    raw = json.dumps(content)
+    assert len(raw) <= _RUNLOG_VERBATIM_MAX, "fixture must sit under the verbatim threshold"
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # Under the verbatim threshold the raw serialization is returned as-is,
+    # regardless of exemptions — this is the early exit.
+    assert out == raw
+
+
 # --- timeline tool labeling ---------------------------------------------------
 # Regression cover for the per-skill wall-clock gap: usage.timeline carried
 # elapsed time + message kind but no tool identity, so a Skill-phase
