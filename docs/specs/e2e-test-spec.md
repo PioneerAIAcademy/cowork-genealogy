@@ -702,11 +702,12 @@ the `max_cost_usd` note in §6 step 5.
    literally and nothing else. Free-prose matching was set aside: the predicate it
    replaced caught 15 of 41 real yields. `step` reads **0** for as long as no skill that
    closes the main thread's turn emits that closing line — `init-project` and
-   `question-selection` do since PR #2649, `research/SKILL.md` will with issue #2292 —
-   so a zero is the correct result, not a broken classifier, and a non-zero before
-   #2292 is a sub-skill's final line ending the turn, not a loosened pattern. Do not
-   loosen the pattern to make it non-zero, and note that markdown emphasis around
-   the line (`**Research complete.**`) does not match.
+   `question-selection` already emit it as their final line; `research/SKILL.md`
+   does not yet — so a zero is the correct result, not a broken classifier, and a
+   non-zero before `research/SKILL.md` carries the line is a sub-skill's final line
+   ending the turn, not a loosened pattern. Do not loosen the pattern to make it
+   non-zero, and note that markdown emphasis around the line
+   (`**Research complete.**`) does not match.
 
    **A declared blocker reads as `silent`.** `research/SKILL.md` names a genuine
    logged blocker as a third legitimate autonomous stop, but it names no next step,
