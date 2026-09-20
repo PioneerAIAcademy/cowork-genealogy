@@ -1010,8 +1010,10 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# A yield is NOT a defect: /research is meant to yield at every step
 	# boundary and in an e2e run the harness is the user, so a well-formed
 	# hand-back gets answered "Yes." A silent stop and a false completion claim
-	# are the defects. `step` reads 0 until issue #2292 lands the hand-back
-	# prose -- that is the correct result, not a broken classifier.
+	# are the defects. `step` reads 0 until a skill ends a turn on the hand-back
+	# line -- init-project and question-selection emit it since PR #2649,
+	# research/SKILL.md will with issue #2292 -- a zero is the correct result,
+	# not a broken classifier.
 	# `narration` replaced transcripts in #1238; committed .transcript.md files
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.
