@@ -203,8 +203,9 @@ camelCase convenience fields the same way `research_log_append` does.
   set-once — a researcher who picked the wrong experience level needs a route
   that is not starting the project over. It is also the one section created **on
   first write when absent**: the schema makes it optional, and an agent must
-  never fabricate a profile, so the object appears when a real interview answer
-  arrives rather than being seeded with assumed values.
+  never fabricate a profile, so the object appears when init-project writes the
+  fixed profile (or a caller corrects a field) rather than being seeded by any
+  other writer.
 
   Making another field settable later = extend that section's `allowedFields`.
 
@@ -666,14 +667,27 @@ Serialization needs no skill or agent edit. Prose-only ("delegate serially") was
 also rejected as unenforceable and leaves the gap on the `nothing-checks`
 register.
 
-**Two residuals, recorded rather than designed around:**
+**The Postgres backend locks in the database, not the process.** On
+`PgS3ProjectStore` (`src/store/pg-s3-project-store.ts`) `withTransaction` is
+one pool connection that runs `BEGIN`, takes `pg_advisory_xact_lock` on the
+project id, runs the whole tool body — reads, mutation, `validateParsed`, the
+writes — on that connection, and commits; a throw rolls the writes back (the
+index rows with the transaction; the S3 objects the body wrote are deleted after
+it, and the objects it replaced are deleted only after a commit, so a ref reads
+as committed either way). The lock is released with the transaction, so it binds across every process
+that shares the database, which is what the hosted path's many tool servers
+need. The "one process" residual below is therefore the **file backend's**
+residual, not this one's; the second residual (a queued call waits) holds on
+both.
+
+**Two residuals of the file backend, recorded rather than designed around:**
 
 - The mutex binds only **within one MCP server process**. Every deployment we
-  run is one server per session (hosted: one sandbox per session; harness: one
-  stdio server per run), so it holds there. Whether two Cowork desktop sessions
-  on the same project folder share one `.mcpb` process is **unverified**; if they
-  do not, the lock does not bind across them. The change is strictly better than
-  today either way.
+  run on the file backend is one server per session (harness: one stdio server
+  per run; the desktop `.mcpb`), so it holds there. Whether two Cowork desktop
+  sessions on the same project folder share one `.mcpb` process is
+  **unverified**; if they do not, the lock does not bind across them. The change
+  is strictly better than today either way.
 - Under contention the queued call now **waits** instead of losing its write. A
   bridged Cowork MCP call is killed at 60s (a limit imposed by the
   bridge, not settable from our side), so a call queued behind a slow composite

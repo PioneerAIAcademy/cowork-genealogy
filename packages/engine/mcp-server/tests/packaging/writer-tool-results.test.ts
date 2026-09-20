@@ -10,7 +10,7 @@ const mcpRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 /**
  * Pins the DISPATCH WIRING, not just the helper.
  *
- * Nothing else can: no other file under `tests/` imports `src/index.ts`, so a
+ * Nothing else can: no other file under `tests/` imports `src/server.ts`, so a
  * change that adds `writerToolResult` and wires three of the eleven arms passes
  * every other check in the suite — `tsc`, the unit test, and the manifest drift
  * test all stay green while eight tools keep reporting failures as successes.
@@ -23,7 +23,7 @@ const mcpRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
  * the enclosing `IfStatement` is what makes the assertion about the arm's body.
  */
 describe("writer-tool dispatch wiring", () => {
-  const indexPath = join(mcpRoot, "src", "index.ts");
+  const indexPath = join(mcpRoot, "src", "server.ts");
   const indexAst = ts.createSourceFile(
     indexPath,
     readFileSync(indexPath, "utf8"),
@@ -65,7 +65,7 @@ describe("writer-tool dispatch wiring", () => {
     // `if` statements, this fails rather than silently passing an empty check.
     expect(
       armBodies.size,
-      "no `if (request.params.name === \"…\") { … }` arms found in src/index.ts — " +
+      "no `if (request.params.name === \"…\") { … }` arms found in src/server.ts — " +
         "if dispatch was refactored, replace this test rather than deleting it",
     ).toBeGreaterThan(0);
   });
@@ -101,7 +101,7 @@ describe("writer-tool dispatch wiring", () => {
     expect(
       undispatched,
       "OK_FALSE_IS_FAILURE names a tool with no dispatch arm — the list has " +
-        "drifted from src/index.ts",
+        "drifted from src/server.ts",
     ).toEqual([]);
   });
 });

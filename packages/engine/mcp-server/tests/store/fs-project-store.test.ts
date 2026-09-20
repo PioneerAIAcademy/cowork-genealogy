@@ -19,6 +19,22 @@ runProjectStoreConformance("FsProjectStore", async () => {
 });
 
 describe("FsProjectStore specifics", () => {
+  it("writeJson stores pretty JSON that readText returns byte-for-byte", async () => {
+    // A file backend hands back exactly the bytes it wrote — key order and
+    // whitespace included — which the conformance suite cannot demand of a
+    // jsonb backend.
+    const root = await mkdtemp(join(tmpdir(), "fs-store-"));
+    try {
+      const store = new FsProjectStore();
+      await store.writeJson(root, "research.json", { b: [2, 3], a: 1 });
+      expect(await store.readText(root, "research.json")).toBe(
+        JSON.stringify({ b: [2, 3], a: 1 }, null, 2),
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("is the default store and can be swapped for the process", () => {
     setProjectStore(null);
     const first = getProjectStore();
