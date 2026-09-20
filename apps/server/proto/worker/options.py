@@ -159,6 +159,7 @@ def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> 
 # stdio fork gets from GENEALOGY_PROJECT_ID. Missing, the project tools answer an
 # instruction naming the header; malformed, the request is a 400. No turn header. The CLI
 # opens the MCP session once per process, once per turn.
+TOOL_SERVER_DEFAULT = "http"
 TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 
@@ -183,12 +184,17 @@ def tool_server_entry(
     project_id: str,
     fs_access_token: str | None,
 ) -> dict[str, Any]:
-    """The ``genealogy`` MCP server entry. ``TOOL_SERVER=stdio`` (the default):
+    """The ``genealogy`` MCP server entry. ``TOOL_SERVER=http`` (the default since
+    2026-09-20, and what compose sets): the shared Streamable HTTP tool server, one
+    process for every turn. ``TOOL_SERVER=stdio``:
     ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
-    of ``tool_server_env``. ``TOOL_SERVER=http``: the shared Streamable HTTP tool server at
-    ``TOOL_SERVER_URL`` with the bearer as ``Authorization`` and the turn's project id as
-    ``X-Genealogy-Project-Id``."""
-    mode = worker_env.get("TOOL_SERVER", "stdio")
+    of ``tool_server_env``. The http entry is ``TOOL_SERVER_URL`` with the bearer as
+    ``Authorization`` and the turn's project id as ``X-Genealogy-Project-Id``; its
+    per-user config is the ``tools`` service's own environment, not the request's."""
+    # One default, here and in compose, so a worker started without its environment does
+    # not quietly do something production never does. TOOL_SERVER_DEFAULT is the single
+    # source; test_proto_config reads compose against it.
+    mode = worker_env.get("TOOL_SERVER") or TOOL_SERVER_DEFAULT
     if mode == "http":
         return {
             "type": "http",

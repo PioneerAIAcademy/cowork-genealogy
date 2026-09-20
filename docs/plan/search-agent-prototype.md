@@ -1174,8 +1174,24 @@ without whichever Bedrock refuses.
   per request through an `AsyncLocalStorage` in `src/store/project-store.ts`, so a turn
   there runs the project tools against the same Postgres/S3 store as the worker; an
   unbound store that throws is installed as the process store, so nothing falls through
-  to the file backend. The default stays `stdio` pending the lead's call — flipping it
-  retires the per-turn fork the cost figures here were measured on.
+  to the file backend. **The default is `http` since 2026-09-20 (the lead's call), and
+  `TOOL_SERVER=stdio` is the opt-out.** The shared service is the shape production runs,
+  so it is the shape the remaining measurements should describe, and a per-turn fork
+  cannot exercise the risk that matters there — one process serving many patrons, which
+  is what the per-request store binding above exists to make safe. Two things went with
+  the flip. The `tools` service now receives the four per-user keys as environment
+  (`OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `WIKI_API_URL`, `POP_STATS_URL`) and
+  `src/http.ts` reads them over the mounted `config.json` exactly as `hosted-stdio.js`
+  reads them: the two headers carry no config, so without this `image_transcribe` would
+  have lost the key the per-turn fork used to pass it, silently, the moment the default
+  moved. And every recipe that runs a real turn must bring `tools` up — `proto-up`,
+  `proto-turn`, `proto-demo` do, `proto-kill` and `proto-demo-auto` delegate to one that
+  does, and `test_proto_config` walks that delegation; `proto-up-core` deliberately
+  leaves it down, which is safe only because the D3 smoke's stub arms never build worker
+  options. **Not re-measured on the new default:** every cost figure in this plan was
+  taken on the stdio fork, and the one http turn ever run was the `convert_calendar`
+  acceptance below — no research run with subagent delegations has gone through the
+  shared service, so the first D18 run is also its soak.
   **Re-measured 2026-09-18 after the second review, both modes 14/14:** stdio, turn 1
   $0.137 / turn 2 $0.058, `entries_seq_before` 0 → 16, output tokens 320 + 28 = the
   session's 348 (the check that replaced the tautology); http — the first turn through
@@ -1576,6 +1592,86 @@ without whichever Bedrock refuses.
   under D14 (a foreground delegation is re-run; the background-agent case is still open). The export ran on the stopped project: 15 files — `research.json` 67,890 B and
   `tree.gedcomx.json` 13,778 B (both pretty-printed by the export, not the bytes the tools
   wrote), 12 `results/log_*.json` sidecars and `results/match-scores.jsonl`, no `images/`.
+  **The grading instrument, built 2026-09-20.** The harness grades in-process at the end
+  of its own run (`e2e/orchestrator.py`), so until now the only gradeable tree was one it
+  had just produced — and "two fixtures run both sides for the quality eyeball" has no
+  instrument without one that grades either side's files. Three commands now do:
+  `uv run python -m e2e.grade_files --fixture <slug> --tree <path> [--research <path>]
+  [--json <out>] [--model <id>]` from `eval/harness` (`eval/harness/e2e/grade_files.py`)
+  grades any final tree against a fixture — the orchestrator's own `load_fixture`, then
+  `run_judge` and `apply_avoid_guard` in that order with the fixture's own
+  `subject_person_ids`, because a grading that skips the guard is not the same grading;
+  exit 0 whatever the verdict (a `fail` is a result), 2 on a missing fixture, tree or
+  key, 1 when the judge call itself fails. `make proto-grade SESSION=<id>
+  [FIXTURE=<slug>] [OUT=<dir>]` (`apps/server/proto/grade.py`) is the prototype side:
+  `export.py`'s own export, then that harness module as a subprocess **in the harness's
+  venv**, `apps/server` and `eval/harness` being separate environments — the same reason
+  `seed.py` shells to `npx tsx`. Without `FIXTURE` the slug is derived from the project id
+  (`proto-seed` names projects `proj_<fixture>_<6 hex>`); a project named any other way,
+  or one whose slug names no fixture, is refused by name with the `FIXTURE=` to pass
+  instead. **`make proto-compare FIXTURE=<slug> SESSION=<id> [RUNLOG=<path>]`**
+  (`apps/server/proto/compare.py`) is the D18 artifact. It prints a row per expected
+  finding carrying the harness's label and the prototype's, a verdict row, each side's own
+  record — the harness's cost, wall clock, tool calls, SDK turns and nudges off its
+  committed run log's `usage` block; the prototype's summed over the session's `turns` and
+  counted off its `tool_calls`, the reads `demo.py` and `audit.py` already do — and, in
+  words, which findings each side recovered that the other did not (`matched: "true"`
+  only; a `partial` shows in the table and is not a recovery). **The prototype's record
+  carries `(cost/SDK turns under-reported: a resumed turn records its completing attempt
+  only)` when a turn has a duration and no cost.** `cost_usd` and `num_turns` are the
+  completing attempt's, so a turn resumed after a kill records **0**, not NULL — which
+  renders as `$0.00` and `0 SDK turns` beside the harness's real `$5.29` and `90 SDK
+  turns` and reads as a 100% cost advantage. The 2026-09-20 run above is exactly that
+  shape (0 / 0 / 1804 s against about $5.40 of tokens), so on this arm the marker is the
+  common case, not an edge one — and a marker alone would have left the honest figure
+  nowhere on the page, so **both records also carry the token counts**, which ARE summed
+  over every attempt. They are the one spend figure the two sides can be compared on when
+  the marker fires; the harness's come from its run log's nested `usage` under that
+  block's own key names (`cache_creation_input_tokens`), not the worker's column names. **Both sides are graded by that one instrument in that
+  run, the harness's committed tree included.** Its committed verdict came from a judge
+  call at another time, on another judge build, so it is printed beside the fresh one and
+  flagged when the two disagree rather than read out of the log as though it were
+  comparable — and the flag says that a run log does not record which judge model graded
+  it, so a disagreement cannot be pinned on a changed judge pin rather than on judge
+  sampling. **Both sides are also graded against the fixture's CURRENT expected
+  findings**, so the header carries the date `expected-findings.json` was last committed
+  and a `CAVEAT` line prints when that is later than the run: 49 of the 105 fixtures with
+  a committed run have findings amended since their latest one (2026-09-20), and against
+  those a finding "only the prototype recovered" may be one the harness was never asked to
+  find. No committed run log carries the `findings_hash` that would settle it (0 of 182),
+  so the dates are what there is. A `RUNLOG` naming a run of a different fixture is refused
+  on its own `test_id` instead of being graded as this fixture's harness side.
+  **The caveat that does not go away: the harness side is a
+  COMMITTED run** under `eval/runlogs/e2e/<fixture>/` — the latest by name unless `RUNLOG`
+  names one, with its `.final-tree.gedcomx.json` / `.final-research.json` siblings — and
+  this command never re-runs it. Its date is printed for that reason; a same-week
+  comparison needs `make e2e-run TEST=<fixture>` first, which is the lead's call and a
+  billed research run. Nothing here writes under `eval/runlogs/`: a prototype run is not an
+  e2e run, and the comparison's own output goes to stdout and, with `OUT`, to the
+  gitignored export directory. Offline tests (no judge call, no stack, no model):
+  `eval/harness/tests/unit/test_e2e_grade_files.py` in `make harness-test`, and
+  `apps/server/tests/test_proto_d18.py` plus the two recipes' shape in
+  `tests/test_proto_config.py`, both in `make proto-test`. Forty guards were each shown red
+  with their code removed, several of them broken two ways rather than one: the
+  under-reporting marker is red both when it goes and when its `any` becomes an `all`, and
+  the project-id pattern is red both when its `$` alone goes and when the greediness goes
+  with it. Six legitimate variants stayed green — a reflowed call, two renamed locals, a
+  changed column width, a recipe continued across lines, and a project-id pattern that
+  drops `^` and its greediness but keeps the `$`. What each part of that pattern binds was
+  measured rather than read off it: greedy `.+` and `$` each cut the slug at the LAST
+  `_<6 hex>` on their own, `$` alone is what rejects a tail after the six hex, and `^` binds
+  nothing under `.match()`.
+  **The one live grading, 2026-09-20.** The latest committed `bagley-father-1884` run
+  (`run-2026-07-31_18-06-28`, the fixture's own judge `claude-haiku-4-5-20251001`,
+  cents) re-graded through `grade_files` came back **`pass`, f1 `true`, recall 1.00 /
+  1.00, proof quality 2** — the same on every axis as the grading committed in that run
+  log, so the instrument reproduces the corpus rather than re-scoring it. One caution for
+  whoever reads that log: its **top-level** `verdict` is `fail`, which is the pre-v1
+  compliance overwrite (`guardrail_bypass_violations` sitting inside `judge_output`,
+  `axes_from_runlog` in `e2e/result.py`), not the genealogical verdict. The comparable
+  number is the judge's, and it matched. One judge is sampled once, so this says the two
+  gradings agreed on this run, not that grading is stable; a disagreement on a later run
+  is a finding about the judge, not a bug in this command.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
   **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
   [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as

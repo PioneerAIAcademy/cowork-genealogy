@@ -33,6 +33,7 @@ from pathlib import Path
 
 import yaml
 
+ROOT = Path(__file__).resolve().parents[3]
 PROTO = Path(__file__).resolve().parents[1] / "proto"
 COMPOSE = PROTO / "docker-compose.yml"
 CEILING_OVERRIDE = PROTO / "docker-compose.ceiling.yml"
@@ -256,15 +257,6 @@ def _wait_services(line: str) -> list[str]:
     return line.split("#", 1)[0].split("--wait", 1)[1].split()
 
 
-def test_proto_up_waits_for_tools_but_proto_up_core_does_not():
-    core = _recipe("proto-up-core")
-    assert core, "proto-up-core has a recipe"
-    assert not any(re.search(r"\btools\b", line) for line in core), "the D3 smoke must not gate on the engine image"
-    wait_lines = [line for line in _recipe("proto-up") if "--wait" in line]
-    assert wait_lines, "proto-up has a --wait line"
-    assert any("tools" in _wait_services(line) for line in wait_lines), "proto-up must wait for the tool server's healthcheck"
-
-
 # ── step ceiling ────────────────────────────────────────────────────────────────
 
 
@@ -276,6 +268,61 @@ _INTERPOLATION = re.compile(r"^\$\{(\w+):?-([^}]*)\}$")
 def _compose_default(value: str) -> tuple[str | None, str]:
     match = _INTERPOLATION.match(value.strip())
     return (match.group(1), match.group(2)) if match else (None, value.strip())
+
+
+def test_tools_carries_the_per_user_config_the_stdio_fork_used_to_pass():
+    """With http the default, the shared service is where image_transcribe's key has to be:
+    the per-turn fork got it from the worker's env and the two headers the service reads
+    carry no config. Three copies of that list exist -- the worker's PER_USER_ENV_KEYS, the
+    engine's PER_USER_ENV, and this service's environment -- and a key added to one alone
+    makes a tool work on one arm and fail on the other, so they are held equal here rather
+    than spelled out a fourth time. Passed through, never a literal."""
+    from proto.worker import options
+
+    engine = re.search(r"export const PER_USER_ENV = \[([^\]]*)\]",
+                       (ROOT / "packages/engine/mcp-server/src/hosted-config-env.ts").read_text(encoding="utf-8"))
+    assert engine, "hosted-config-env.ts no longer exports PER_USER_ENV as a literal list"
+    assert tuple(re.findall(r'"(\w+)"', engine.group(1))) == options.PER_USER_ENV_KEYS, \
+        "the engine entrypoints and the worker must read the same per-user keys"
+    env = _env(_service(_load(COMPOSE), "tools"))
+    for name in options.PER_USER_ENV_KEYS:
+        var, default = _compose_default(env[name])
+        assert var == name and default == "", f"{name} must pass the caller's value through, empty when unset"
+
+
+def test_worker_tool_server_default_is_http_and_matches_the_workers_own_fallback():
+    """The lead's call, 2026-09-20: an unqualified `make proto-up` runs the shared `tools`
+    service, the shape production runs, and TOOL_SERVER=stdio is the opt-out. Compose and
+    options.py must agree, or a worker started outside compose quietly does the other thing."""
+    from proto.worker import options
+
+    var, default = _compose_default(_env(_service(_load(COMPOSE), "worker"))["TOOL_SERVER"])
+    assert var == "TOOL_SERVER", "the interpolation must read the name the recipes and the lead export"
+    assert default == options.TOOL_SERVER_DEFAULT == "http"
+
+
+def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn_on_the_default():
+    """With http as the default a worker reaches `tools` over the compose network, so every
+    recipe that runs a REAL turn has to bring it up. proto-up-core deliberately does not (the
+    D3 smoke's stub arms never build worker options, so they never reach a tool server)."""
+    def brings_tools_up(target: str, seen: frozenset = frozenset()) -> bool:
+        """The recipe waits for `tools` itself, or delegates to one that does."""
+        assert target not in seen, f"{target} delegates in a cycle"
+        body = _recipe(target)
+        assert body, f"{target} has a recipe"
+        if any("tools" in _wait_services(line) for line in body if "--wait" in line):
+            return True
+        return any(
+            brings_tools_up(other, seen | {target})
+            for other in ("proto-up", "proto-turn", "proto-demo")
+            if f"$(MAKE) {other} " in "\n".join(body)
+        )
+
+    for target in ("proto-up", "proto-turn", "proto-demo", "proto-kill", "proto-demo-auto"):
+        assert brings_tools_up(target), \
+            f"{target} runs a real turn on the http default: it must wait for `tools` or delegate to one that does"
+    # The exception, with its reason: the D3 smoke's stub arms never build worker options.
+    assert not any(re.search(r"\btools\b", line) for line in _recipe("proto-up-core"))
 
 
 def test_shim_read_timeout_is_the_step_ceiling():
@@ -346,3 +393,46 @@ def test_schema_creates_every_planned_table():
 
 def test_schema_has_no_committed_batches():
     assert "committed_batches" not in _created_tables()
+
+
+# ── D18 grading recipes ─────────────────────────────────────────────────────────
+
+
+def test_proto_grade_requires_a_session_and_runs_the_prototype_script():
+    recipe = _recipe("proto-grade")
+    assert any('test -n "$(SESSION)"' in line for line in recipe), "proto-grade must refuse without SESSION"
+    assert any("exit 2" in line for line in recipe if "SESSION" in line)
+    assert any("proto/grade.py" in line and "--session '$(SESSION)'" in line for line in recipe)
+    assert any("--fixture '$(FIXTURE)'" in line for line in recipe), "FIXTURE is optional but must reach the script"
+
+
+def test_proto_compare_requires_both_a_fixture_and_a_session():
+    recipe = _recipe("proto-compare")
+    guards = [line for line in recipe if "test -n" in line]
+    assert any('test -n "$(FIXTURE)"' in line for line in guards), "proto-compare must refuse without FIXTURE"
+    assert any('test -n "$(SESSION)"' in line for line in guards), "proto-compare must refuse without SESSION"
+    assert all("exit 2" in line for line in guards)
+    body = [line for line in recipe if "proto/compare.py" in line]
+    assert body, "proto-compare must run proto/compare.py"
+    assert "--fixture '$(FIXTURE)'" in body[0] and "--session '$(SESSION)'" in body[0]
+    assert "--runlog '$(abspath $(RUNLOG))'" in body[0], "RUNLOG is a path: make it absolute, the script cd's away"
+
+
+def test_the_grading_recipes_run_the_harness_module_in_the_harness_venv():
+    """`apps/server` and `eval/harness` are separate environments. Both recipes enter
+    apps/server; the harness module is reached only as a subprocess from eval/harness --
+    grade.py's HARNESS_DIR + `uv run` -- never imported across the two."""
+    for target in ("proto-grade", "proto-compare"):
+        recipe = "\n".join(_recipe(target))
+        assert "cd apps/server" in recipe, target
+        assert "e2e.grade_files" not in recipe, f"{target} must not call the harness module directly"
+    source = (PROTO / "grade.py").read_text(encoding="utf-8")
+    assert 'HARNESS_DIR = ROOT / "eval" / "harness"' in source
+    assert '"uv", "run", "python", "-m", "e2e.grade_files"' in source
+    assert "cwd=HARNESS_DIR" in source
+
+
+def test_proto_test_runs_the_d18_tests():
+    assert any(
+        "tests/test_proto_d18.py" in line for line in _recipe("proto-test")
+    ), "make proto-test must run the D18 tests, or they run nowhere"

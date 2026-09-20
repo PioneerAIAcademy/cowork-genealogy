@@ -104,8 +104,9 @@ services:
       # The model. Passed through from the host environment at `up` time, never a
       # literal here; the stub arms run with it empty.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      # image_transcribe's OCR provider, forwarded to the per-turn tool server (the
-      # hosted config bridges it the same way); env.sh exports it from eval/.env.
+      # image_transcribe's OCR provider on the TOOL_SERVER=stdio opt-out, forwarded to
+      # the per-turn fork; on the http default the `tools` service below has its own
+      # copy. env.sh exports it from eval/.env.
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
       # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
@@ -113,10 +114,19 @@ services:
       # `make proto-token` rewrites it under the running worker). Empty, and every
       # FamilySearch tool answers with the reconnect instruction.
       FS_ACCESS_TOKEN_FILE: /run/fs-token
-      # stdio (default): hosted-stdio.js forked per turn on the Postgres store above.
-      # http: the D16 `tools` service on the SAME store, one process for every turn --
-      # bearer as Authorization, the turn's project id as X-Genealogy-Project-Id.
-      TOOL_SERVER: ${TOOL_SERVER:-stdio}
+      # http (default since 2026-09-20, the lead's call): the D16 `tools` service on the
+      # SAME store, ONE process for every turn and every patron -- bearer as
+      # Authorization, the turn's project id as X-Genealogy-Project-Id, the store bound
+      # per request. That is the shape production runs, so it is the shape the remaining
+      # measurements describe; a per-turn fork cannot exercise the risk that matters
+      # there (one process serving many patrons). TOOL_SERVER=stdio is the opt-out:
+      # hosted-stdio.js forked per turn on the Postgres store above, which every cost
+      # figure before that date was measured on.
+      # Only the recipes that wait for `tools` can run a real turn on the default --
+      # proto-up, proto-turn, proto-kill, proto-demo, proto-demo-auto. proto-up-core
+      # deliberately leaves `tools` down for the D3 smoke, whose stub arms never build
+      # worker options, so they never reach a tool server either way.
+      TOOL_SERVER: ${TOOL_SERVER:-http}
       # The e2e harness's tree-read block for fixture runs (bare MCP tool names, comma-
       # separated; proto-demo exports the harness's five). Empty: no block.
       BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
@@ -188,6 +198,14 @@ services:
       GENEALOGY_S3_ACCESS_KEY: proto
       GENEALOGY_S3_SECRET_KEY: protoproto
       GENEALOGY_ANCHOR_PATH: /project
+      # The per-user config, the four keys hosted-stdio.js reads from its own env: one
+      # shared process, so these are per-STACK here rather than per patron, which is what
+      # a one-patron prototype wants. Without the OpenRouter key `image_transcribe`
+      # answers with its no-key error, which is what the stdio fork used to prevent.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      WIKI_API_URL: ${WIKI_API_URL:-}
+      POP_STATS_URL: ${POP_STATS_URL:-}
     # Project state lives in Postgres/S3, so nothing writes to the rootfs; /tmp is the
     # one rw path.
     read_only: true
