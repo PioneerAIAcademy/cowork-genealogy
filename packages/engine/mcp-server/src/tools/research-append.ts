@@ -2078,9 +2078,18 @@ const STATES_SUBJECT_ROLE = new RegExp(
   "i",
 );
 
-function relationshipCategory(value: unknown): string | undefined {
+/** Exported only so the cross-language drift test can pin it against the
+ *  Python `_relationship_category`: the table alone does not cover the
+ *  `_inferred` strip or the trim, and `String.replace` with a string
+ *  pattern replaces the FIRST occurrence here while Python's replaces
+ *  every one. */
+export function relationshipCategory(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
-  return RELATION_CATEGORY[value.toLowerCase().replace("_inferred", "").trim()];
+  // Anchored, and one suffix only. A bare `.replace("_inferred", "")`
+  // strips the FIRST occurrence here and EVERY occurrence in the Python
+  // mirror, so `child_inferred_inferred` was unknown to this side and
+  // `child` to that one.
+  return RELATION_CATEGORY[value.toLowerCase().trim().replace(/_inferred$/, "")];
 }
 
 /** The category the VALUE claims for the record subject, or undefined when it

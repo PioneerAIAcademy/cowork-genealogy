@@ -21,7 +21,17 @@
     "`categories` is the relation-word -> category table, which is the OTHER",
     "half of the rule. Both languages assert their own table equals this one,",
     "because pinning only the value predicate let a spelling added to one side",
-    "pass both suites while the engine and the validator disagreed."
+    "pass both suites while the engine and the validator disagreed.",
+    "",
+    "`category_cases` pins the relationship_type -> category LOOKUP, which is",
+    "the third part of the rule: the table says what maps, the value predicate",
+    "says what the value claims, and this says how a raw field value is",
+    "normalised before either is consulted.",
+    "",
+    "`category_cases` pins the LOOKUP -- the normalisation each language applies",
+    "before indexing the table. The table and the value predicate were pinned",
+    "first; the normalisation between them was not, and the two languages",
+    "disagreed there."
   ],
   "cases": [
     {
@@ -140,5 +150,47 @@
     "brother": "sibling",
     "sister": "sibling",
     "sibling": "sibling"
-  }
+  },
+  "category_cases": [
+    {
+      "relationship_type": "child",
+      "category": "child",
+      "why": "the plain spelling"
+    },
+    {
+      "relationship_type": "child_inferred",
+      "category": "child",
+      "why": "one trailing `_inferred` suffix is stripped before the lookup"
+    },
+    {
+      "relationship_type": "  Child_Inferred  ",
+      "category": "child",
+      "why": "lower-cased and trimmed on both sides before the suffix is stripped"
+    },
+    {
+      "relationship_type": "child_inferred_inferred",
+      "category": null,
+      "why": "a doubled suffix stays unknown. Python str.replace strips EVERY occurrence and a string-argument String.replace in JS strips only the FIRST, so an unanchored strip made this `child` to the eval validator and unknown to the engine -- the validator categorising a spelling the writer skips. Anchoring one trailing suffix on both sides makes them agree, and an unknown spelling is skipped, never guessed."
+    },
+    {
+      "relationship_type": "_inferredchild",
+      "category": null,
+      "why": "the strip must be ANCHORED. Unanchored this becomes `child` and yields a category; anchored to the end it stays unknown. This is the case that pins the TypeScript side -- for the doubled suffix above both TS spellings already return undefined, so that one constrains only Python."
+    },
+    {
+      "relationship_type": "grandparent",
+      "category": null,
+      "why": "an unknown spelling yields no category and is skipped, never refused"
+    },
+    {
+      "relationship_type": "constructor",
+      "category": null,
+      "why": "the table is indexed by a model-supplied string; on a plain object literal this returned the Object constructor, which is truthy"
+    },
+    {
+      "relationship_type": "__proto__",
+      "category": null,
+      "why": "same, via the prototype"
+    }
+  ]
 }

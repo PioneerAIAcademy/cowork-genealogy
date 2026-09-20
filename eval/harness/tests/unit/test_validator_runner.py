@@ -1580,6 +1580,24 @@ def test_relationship_direction_cases_match_the_shared_table():
         "two implementations have drifted"
     )
 
+    from validators.test_record_extraction import _relationship_category
+
+    cat_cases = table.get("category_cases") or []
+    assert len(cat_cases) >= 5, (
+        "the shared file carries no category cases -- a renamed key would "
+        "make the loop below vacuous while the suite stayed green"
+    )
+    for c in cat_cases:
+        assert c.get("why"), (
+            "category case %r has no reason" % c["relationship_type"]
+        )
+        got = _relationship_category(c["relationship_type"])
+        assert got == c["category"], (
+            "%r: python reads category %r, the shared table says %r -- the "
+            "two implementations have drifted"
+            % (c["relationship_type"], got, c["category"])
+        )
+
     cases = table["cases"]
     # A table that shrank to nothing would make every assertion below
     # vacuous while the suite stayed green.

@@ -695,8 +695,9 @@ rate, carries the argument below.
   **Re-openable, with a residue.** The convention this
   rejection needed was never stated, which is why the shapes looked
   contradictory: `relationship_type` is the record subject's own role and
-  `related_person_role` is the other party's. That convention is now stated
-  (`research-schema-spec.md` §5.6.1) and enforces the `relationship_type`
+  `related_person_role` is the other party's. That convention was pinned on
+  2026-09-20 and is now stated
+  (`research-schema-spec.md` §5.6.1); it enforces the `relationship_type`
   half at the write boundary, refusing 21 of 2577 (0.8%) across the run
   logs, fixtures and hosted seed, measured at 687264695 by
   `eval/harness/scripts/measure_relationship_direction.py`.

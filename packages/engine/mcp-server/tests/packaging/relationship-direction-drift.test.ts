@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   subjectRoleInValue,
   RELATION_CATEGORY,
+  relationshipCategory,
 } from "../../src/tools/research-append.js";
 
 /**
@@ -37,9 +38,16 @@ const CASES_PATH = join(
 );
 
 type Case = { value: string; states: string | null; why: string };
+type CategoryCase = {
+  relationship_type: string;
+  category: string | null;
+  why: string;
+};
 
 describe("relationship-direction rule — cross-language drift (#2535)", () => {
-  const cases: Case[] = JSON.parse(readFileSync(CASES_PATH, "utf-8")).cases;
+  const shared = JSON.parse(readFileSync(CASES_PATH, "utf-8"));
+  const cases: Case[] = shared.cases;
+  const categoryCases: CategoryCase[] = shared.category_cases ?? [];
 
   it("the shared table is present and non-trivial", () => {
     // A table that shrank to nothing would make every case below vacuous, and
@@ -55,6 +63,21 @@ describe("relationship-direction rule — cross-language drift (#2535)", () => {
       expect(subjectRoleInValue(value) ?? null).toBe(states);
     },
   );
+
+  it.each(
+    categoryCases.map((c) => [c.relationship_type, c.category, c.why] as const),
+  )("reads relationship_type %j as category %j — %s", (rt, category) => {
+    expect(relationshipCategory(rt) ?? null).toBe(category);
+  });
+
+  it("the category cases are present and non-vacuous", () => {
+    // `it.each([])` registers nothing and reports green, so the loop above
+    // cannot police its own input. This asserts the SAME array the loop
+    // consumes — a renamed key empties both and reds here.
+    expect(categoryCases.length).toBeGreaterThanOrEqual(5);
+    expect(categoryCases.filter((c) => c.category === null).length)
+      .toBeGreaterThanOrEqual(2);
+  });
 
   it("the category table matches the shared one", () => {
     // The value predicate is only half the rule. A spelling added to one

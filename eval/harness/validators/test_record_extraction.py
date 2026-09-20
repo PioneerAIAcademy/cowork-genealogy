@@ -605,7 +605,10 @@ def _relationship_category(relationship_type):
     `administrator` — the commonest in the corpus; `ward` and `grandchild`
     follow) so the check SKIPS
     rather than guesses: an unknown type is not evidence of disagreement."""
-    base = str(relationship_type or "").lower().replace("_inferred", "").strip()
+    # Anchored, and one suffix only -- see the note on the TypeScript
+    # mirror: `str.replace` strips every occurrence here and only the
+    # first there, so a doubled suffix used to mean different things.
+    base = re.sub(r"_inferred$", "", str(relationship_type or "").lower().strip())
     return _RELATION_CATEGORY.get(base)
 
 
