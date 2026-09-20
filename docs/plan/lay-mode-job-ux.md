@@ -1,7 +1,8 @@
 # Lay-mode job UX — the run is a job with a status feed
 
 > **Status:** NOT BUILT. Plan of 2026-09-20, written against HEAD `2fdaf32db`,
-> revised eight times the same day under adversarial critique; the eighth round came back clean.
+> revised eight times the same day under adversarial critique; the eighth round came back
+> clean. Decisions 5 and 6 ruled 2026-09-20; six remain open for the lead.
 > Supersedes the hand-back literal ruled on 2026-09-07 (recorded on issues #2292,
 > #1104 and #2328) and the regex auto-continue built for issue #2653 by PR #2667.
 > Nothing here is started; no issue has been edited and no board column moved.
@@ -302,7 +303,7 @@ trickle in one slot at a time**, with both signals accepted throughout.
 | PR | What | Slot | Blocked by | Docs it owns |
 |---|---|---|---|---|
 | A1 | The two tools, the envelope, dispatch, packaging, mock registration, the no-project test, smoke calls | none | nothing | new tool spec |
-| A2 | The lay-language module, its vocabulary table, the replay script, the measurement | none | decision 6 | two guardrail-register rows |
+| A2 | The lay-language module, its vocabulary table, the replay script, the measurement | none | nothing (decision 6 ruled 2026-09-20) | two guardrail-register rows |
 | B | Alpha server + web: arms 1–7, the injected text, event render, chips, bubble boundary, budget pause | none | A1 | hosted-web lay-mode paragraph; the REST opt-out paragraph |
 | C | e2e harness: classify on the result, keep the text fallback, relax the literal floor, fix the no-progress guard | none | A1 | e2e hand-back class table and form paragraph |
 | D | Prototype worker: replace the merged Stop-hook veto with per-step turns, per-session serialization, hold | none | A1 | prototype plan's step-model and D18–D19 entries |
@@ -391,7 +392,7 @@ The vocabulary, with the local-tree-id class that the issue #2493 tally actually
 | Class | Shape | Refuse | Pass |
 |---|---|---|---|
 | FamilySearch person id | `{4}-{3}`, word-bounded | `LCZ8-949` | `1850-1860` |
-| Schema id | validator's exported prefixes + digits | `loc_003`, `pli_002` | — |
+| Schema id, **except `q_` and `ps_`** | validator's exported prefixes + digits | `loc_003`, `pli_002` | `q_001`, `ps_003` |
 | **Local tree id** | `I`/`F`/`S` + 1–4 digits, word-bounded | `I2`, `S1`, `F15`, `F1` | `WWII`, `US 1`, `Class III` |
 | Image group, collection, batch | the elena-asmundsdotter narration's shapes | `004514823_00158`, `coll. 1974200`, `batch C41552-1` | — |
 | File names | the two project files, the sidecar shape | `research.json` | — |
@@ -418,9 +419,13 @@ to say "routing to person-evidence" forever. PR A2's replay decides; state the n
 either way. The single-word four remain a stated gap, and any later single-word skill
 joins them.
 
-**One site mandates text this vocabulary would refuse, and PR G owns it.**
-`question-selection/SKILL.md` requires the reply to say the question was saved as `q_001`
-with a gloss, under its Present section, so it is genuinely user-facing.
+**`q_` and `ps_` pass — lead ruling, 2026-09-20.** `question-selection/SKILL.md` requires
+the reply to say the question was saved as `q_001` with a gloss, and that mandate
+**stays**: it came from a tester's own rewrite on 2026-08-03, who hit a bare "q_001
+written." and asked to be taught what it meant rather than to have it removed. Three of
+122 feedback bundles ever name a schema id, and refusing the prefix would have moved 3.9%
+of paragraphs — not enough to reverse user-authored prose. The remaining thirteen
+prefixes are refused. No skill body changes for this class.
 
 The record-extractor is **not** a second such site, contrary to an earlier draft. Its
 `check-warnings on I5/I6` is one of three `e.g.` examples, not a mandated form, and it
@@ -430,11 +435,11 @@ identifiers, file names, tool names or field names" and a plain-language next se
 PR I maps those two paragraphs straight onto the tool's two arguments; the agent's
 caller-facing lines are out of the vocabulary's scope.
 
-**`q_` and `ps_` are a lead decision, and PR A2 cannot write the table until it lands.**
-Issue #2493 leaves them open as navigation aids because the viewer indexes by them. My
-recommendation is to refuse both in these two tools and delete the gloss mandate: the
-viewer is where an id belongs, and a paragraph that needs one has not been written for
-a lay reader. If the ruling goes the other way, drop them from the schema-id row.
+**The viewer cannot resolve an id, and that is the standing caveat on this carve-out.**
+Question cards are titled by question text, a proof-summary id is never printed, and
+there is no search box, anchor or deep link. So `q_001` reads as a label the user can
+repeat back, not one they can follow. If the viewer ever indexes by id, the gloss stops
+being a courtesy and starts being useful; until then it is a courtesy.
 
 Mechanics an earlier draft got wrong: the consonant alphabet used elsewhere in the repo
 **contains the digits**, so it does not exclude a year range; the fixed segment lengths
@@ -688,8 +693,8 @@ must survive verbatim:
   warns on every undeclared call in the run log the annotation pass reads. Bare names, no
   prefixes. If a paid run shows the schema was never fetched, add a bare-name ToolSearch
   line — never a qualified `select:`.
-- **PR G also deletes the `q_001` gloss mandate**, per the mandated-text site named in
-  PR A, if the lead's ruling refuses that prefix.
+- **PR G does not touch the `q_001` gloss mandate.** The 2026-09-20 ruling lets `q_` and
+  `ps_` pass, so that Present-section sentence stands as written.
 
 **PR I collides with issue #1998**, In Progress on the same slot: its subject is that 23
 minutes of silence inside an extraction batch looks like a hang, and this plan's
@@ -781,10 +786,14 @@ Proposed, not applied. Nothing is edited until you approve.
    reading is yours to carry to him.
 3. **Stop versus hold**, as in PR B.
 4. **One continue mechanism in the prototype**, as in PR D.
-5. **The chip row**: collapse it, relabel it, or accept it as a residual.
-6. **`q_` and `ps_` in a user-facing paragraph** — refuse them and delete
-   `question-selection`'s gloss mandate, or allow them as navigation aids. PR A2 cannot
-   write the vocabulary table until this lands. Recommendation in PR A.
+5. **The chip row — RESOLVED 2026-09-20: leave it, record the residual.** It is both the
+   product's worst lay-language leak and its only main-thread liveness signal, and the
+   complaint users actually file is the opposite one — "Are you still working? I don't
+   see any activity." Gating it behind the alpha flag that already exists is about twenty
+   lines and should follow PR K1's liveness line, not precede it.
+6. **`q_` and `ps_` in a user-facing paragraph — RESOLVED 2026-09-20: allow them.** The
+   gloss mandate stays; the evidence and the standing caveat are in the vocabulary table.
+   PR A2 is unblocked.
 7. **`AskUserQuestion` already exists** as a built-in and is named in the packaging
    tests' built-in vocabulary. It appears in 14 committed run logs, 40 occurrences, and
    in two of them the call was **denied** — "Claude Code is running in don't ask mode" —
