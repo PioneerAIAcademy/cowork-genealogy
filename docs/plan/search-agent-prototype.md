@@ -16,7 +16,9 @@ Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smo
 every tool but the four auth exclusions, the compose `tools` service); per-request store
 scoping over HTTP built 2026-09-18 (PR #2669; the `X-Genealogy-Project-Id` header,
 D16's open half); D19 built 2026-09-18 (PR #2670; `make proto-demo`, the D17 commands as
-one, no browser); FamilySearch's
+one, no browser); D18's autonomous arm and export built 2026-09-20 (PR #2695;
+`make proto-demo-auto`, `proto-export`, `turns.nudges`; the run's two findings under D18);
+FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
