@@ -1428,6 +1428,58 @@ without whichever Bedrock refuses.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
+  **The autonomous arm, built 2026-09-20.** `make proto-demo-auto [FIXTURE=…] [ARGS=…]`
+  is `proto-demo` with `AUTONOMOUS_MAX_NUDGES` exported — default 20, the harness's
+  `max_continue_nudges`; `AUTONOMOUS_MAX_NUDGES=5 make proto-demo-auto` lowers it, the
+  compose default is 0 (off), and `proto-demo` itself stays a one-turn run. With the cap
+  above 0 the worker binds a `Stop` hook (`apps/server/proto/worker/options.py`,
+  `make_stop_hook`) that vetoes the model's voluntary yield exactly as the harness's does:
+  the same predicate (`should_continue_run`, ported from
+  `eval/harness/e2e/stop_checker.py` — allow once `project.status == "completed"`, once
+  the cap is spent, or when the previous nudge produced no tool call, the no-progress
+  check), the same 20 cap, and the harness's reason text verbatim (`CONTINUE_REASON`, held
+  equal to the block dict in `orchestrator.py`'s `stop_hook` by an AST read in
+  `tests/test_proto_worker.py`). At each stop the hook reads `research.json` off the
+  `documents` row and the turn's `tool_calls` count on the turn's connection, logs
+  `ev=nudge`, and never raises (`ev=stop_hook_failed`, allow). The count lands on
+  `turns.nudges` (004, additive); `demo.py` prints `nudges  <n>  (cap …)` under the reply
+  and in the criterion 1 row. Without the variable there is no `Stop` key at all, so a
+  browser turn that yields to ask the user still ends. **The export, for the eyeball and
+  the judge:** `make proto-export SESSION=<id> [OUT=<dir>]` (`apps/server/proto/export.py`
+  and `dev/export-project.ts`, the mirror of `proto-seed`) resolves the session's project
+  in Postgres and writes `research.json`, `tree.gedcomx.json` and every file under
+  `results/` and `images/` through `PgS3ProjectStore` (`list` plus `readBytes`, new on the
+  `ProjectStore` interface and both backends, in the conformance suite) to
+  `<OUT>/<project_id>/`, default `apps/server/proto/exports/` (gitignored). Exit 1 on any
+  failure, 2 for an unknown session.
+  **Run live 2026-09-20** on `bagley-father-1884` (`sess_451b7cf2537e404a`, turn
+  `fd5a99ce-39fa-4c0d-8027-a63384426814`), `make proto-demo-auto` from cold (the first
+  `up --build` died on a Docker Hub metadata timeout before anything ran; pre-pulling the
+  three base images fixed it): `turn_done` after **1804 s**, `receive_count` **2**, demo
+  PASS — criterion 3 0 / 0 / 0 with no tree tool attempted, criterion 4 122 calls with a
+  duration (longest 4,870 ms `wiki_search`, p50 27 ms, one call in flight at the kill),
+  reauth hits 0. Sections written from an all-zero baseline: sources 4, assertions
+  39, log 16, plans 1, questions 1, localities 1; `project.status` still `active`. 123 tool
+  calls (29 `record_read`, 16 `record_search`, 8 `Agent`), 8 subagent tasks, session tokens
+  126 / 468,041 / 4,006,664 / 162,892 (input / cache write / cache read / output) — about
+  **$5.40** at Sonnet 4.6 list; the row's `cost_usd` and `num_turns` are **0** because both
+  are the completing attempt's. **`nudges` 0 (cap 20): the hook was never consulted.**
+  Attempt 1 never yielded — the shim's `read_timeout` fired at 1,800,092 ms with a call
+  still in flight, so the step ceiling killed a run that was still working, with two
+  background `record-extractor` agents mid-persist. Attempt 2 resumed the SDK session and
+  "completed" in 10 ms with 0 model turns: CLI 2.1.220 found the two orphaned agents,
+  queued a notification about them under a meta continue prompt, answered it with a
+  synthetic no-response reply and returned a ResultMessage (read off the attempt-2
+  `session_entries` rows at the time; those rows went with `proto-down -v` and are not
+  attached); the worker's prompt was never written to the transcript, no Stop event
+  fired, and `run_turn` took the 0-turn result as the turn's completion. So the arm is
+  wired and inert on this fixture, and two things gate the D18 comparison: the arm's
+  per-attempt ceiling (one message is now a whole run, and this fixture needs more than
+  1800 s), and the resume path's handling of a 0-turn synthetic result after a kill with
+  background agents in flight (D14's kill landed on a main-thread `place_search`, with no
+  agents). The export ran on the stopped project: 15 files — `research.json` 67,890 B and
+  `tree.gedcomx.json` 13,778 B (both pretty-printed by the export, not the bytes the tools
+  wrote), 12 `results/log_*.json` sidecars and `results/match-scores.jsonl`, no `images/`.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
   **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
   [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as
@@ -1455,8 +1507,8 @@ without whichever Bedrock refuses.
   criterion 3 PASS (0 / 0 / 0), no tree tool attempted (0 denies), and the turn ended at
   "handing off to `research-plan`" — **one queue message is one model turn**: the harness's
   `--autonomous` runs keep going because its Stop hook vetoes the yield, which the worker
-  does not have, so a D18 comparison needs either that hook or a driver that posts
-  "continue" until the run stops on its own. The D17 browser run is turn-by-turn anyway.
+  binds only on the D18 arm — `make proto-demo-auto`, the note under D18, is that hook
+  ported. The D17 browser run is turn-by-turn anyway.
   **Run live 2026-09-18** on `bagley-father-1884` (`sess_352cf5166b624d00`): stack up from
   cold with the `docker-compose` override, seeded, `turn_done` after **38 s**, `receive_count`
   1, outcome ok, **$0.26**, 7 SDK turns, tokens 13 / 51,543 / 128,347 / 1,837 (input /

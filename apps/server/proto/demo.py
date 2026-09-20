@@ -27,6 +27,7 @@ the stack is not up or there is no prompt.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 import time
@@ -88,7 +89,7 @@ def acceptance_queries(turn_id: str, session_id: str, project_id: str) -> list[Q
     ``reauth_hits``."""
     return [
         ("criterion 1: the turns row (receive_count >= 2 on a killed run; completed_at set)",
-         "SELECT receive_count, claimed_at, completed_at, outcome, cost_usd, num_turns, duration_ms "
+         "SELECT receive_count, claimed_at, completed_at, outcome, cost_usd, num_turns, duration_ms, nudges "
          "FROM turns WHERE turn_id = %s", (turn_id,)),
         ("criterion 2: research.json section sizes after the turn (compare with the baseline above)",
          section_counts_sql(), (project_id,)),
@@ -114,6 +115,14 @@ def render_query(label: str, sql: str, params: tuple, rows: list[tuple]) -> str:
     else:
         lines.append("   (no rows)")
     return "\n".join(lines)
+
+
+def nudges_line(nudges: int | None, cap: str | None) -> str:
+    """``nudges  <n>  (cap <AUTONOMOUS_MAX_NUDGES or "off">)`` -- whether the D18 arm's Stop
+    hook vetoed anything on this turn (``turns.nudges``) and the cap the worker ran under."""
+    cap_text = (cap or "").strip()
+    shown = cap_text if cap_text and cap_text != "0" else "off"
+    return f"nudges      {nudges if nudges is not None else '?'}  (cap {shown})"
 
 
 def verdict(turn_done: bool, criterion_3_ok: bool, reauth: bool) -> int:
@@ -243,6 +252,9 @@ def run(args: argparse.Namespace) -> int:
     print()
     print("reply:")
     print(reply or "   (no text events yet)")
+    print()
+    nudged = rows(args.pg_dsn, "SELECT nudges FROM turns WHERE turn_id = %s", (turn_id,))
+    print(nudges_line(nudged[0][0] if nudged else None, os.environ.get("AUTONOMOUS_MAX_NUDGES")))
     print()
 
     for label, sql, params in acceptance_queries(turn_id, session_id, project_id):
