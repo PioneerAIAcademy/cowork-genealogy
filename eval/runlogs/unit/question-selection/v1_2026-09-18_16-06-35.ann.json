@@ -1,0 +1,142 @@
+{
+  "run_log": "v1_2026-09-18_16-06-35.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the evidentiary weakness of the Thomas Flynn parentage claim and treated it as a verification task rather than an established fact. The proposed question appropriately targets confirmation or refutation through independent records, and the rationale accurately distinguishes the unsourced Ancestry Member Tree claim from original evidence. The dependency link and persisted question structure were appropriate, and no unsupported claims or tool errors were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the required workflow. It correctly identified the unsourced compiled evidence, recognized the active hypothesis requiring verification, and determined that original records had not yet been evaluated. The question was appropriately framed as a confirm-or-refute investigation rather than assuming the parentage claim was true. The rationale clearly explained why independent evidence was needed, and the question was successfully persisted to research.json with no missing required steps."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All seven calls used valid arguments, matched the expected workflow, and returned successful live responses. The skill appropriately used project context and research queries to gather the necessary state before appending the new question. The research_append operation included all required fields and successfully persisted the question. No fixture_not_found errors or argument issues occurred."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The proposed question is concrete, focused, and answerable. It clearly identifies the individuals involved, the specific genealogical relationship being investigated, and the need for independent evidence to verify the claim. The wording avoids assuming the parentage claim is true and is appropriately framed as a confirm-or-refute investigation. It is specific enough to guide a targeted research strategy."
+    },
+    {
+      "test_id": "ut_question_selection_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the negative-test behavior by declining to perform the question-selection task and routing the request to the appropriate research-plan skill. The user’s request was about planning the order and types of records to search, not selecting a new research question. The routing decision was accurate, and the skill avoided performing the wrong workflow."
+    },
+    {
+      "test_id": "ut_question_selection_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the negative-test requirement by declining to perform the question-selection workflow and routing the request to research-plan. It did not create, modify, or select a research question, which was the correct behavior. The response matched the expected skill boundary and produced no unnecessary output from the under-test skill."
+    },
+    {
+      "test_id": "ut_question_selection_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion does not apply because the skill correctly declined and routed the request to research-plan instead of executing the question-selection workflow. Since no MCP tool calls were expected or made by the skill under test, tool argument evaluation is not applicable."
+    },
+    {
+      "test_id": "ut_question_selection_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the negative-test requirement by declining to perform the question-selection workflow and routing the request to research-exhaustiveness. It accurately assessed that the task was about evaluating research completeness rather than creating a new question. The project-state details (q_001 status, proof tier, exhaustive declaration state, and remaining research gaps) were correctly identified and supported by the available tool responses. No unsupported claims or incorrect workflow actions occurred."
+    },
+    {
+      "test_id": "ut_question_selection_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully satisfied the negative-test requirement by declining to perform the question-selection task and routing the request to research-exhaustiveness. It provided appropriate context explaining why an exhaustiveness review was needed, including the current proof status, remaining research gaps, and lack of an exhaustive declaration. The routing decision was correct, and no unnecessary question-selection actions were performed."
+    },
+    {
+      "test_id": "ut_question_selection_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All three calls used valid arguments, matched the expected behavior, and returned successful live responses. The project context and research queries targeted the correct sections, and no fixture_not_found errors or argument mismatches occurred. The tool usage appropriately supported the routing decision."
+    },
+    {
+      "test_id": "ut_question_selection_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the negative-test requirement by declining to perform the question-selection task and routing the request to project-status. The project context tool call was valid and successful, and the response accurately summarized the project state based on the retrieved information. The identified next steps were appropriate and grounded in the available project data. No unsupported claims, fabricated details, or incorrect workflow actions were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the negative-test requirement by routing the request to project-status instead of performing question-selection. It fully addressed the user’s need for a project summary by covering the research questions, project persons, sources, conflicts, extraction status, and next steps. The response stayed within the correct workflow boundary and provided information grounded in the project state without unsupported additions."
+    },
+    {
+      "test_id": "ut_question_selection_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was correct and appropriate. The single project_context call used the correct project path, successfully returned a live response, and provided the necessary project data for the status summary. No fixture_not_found errors or argument issues occurred. The tool invocation matched the expected workflow."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the evidentiary issue and treated the parent assignment as an unverified hypothesis rather than an established fact. It appropriately recognized that the FamilySearch entry was the only supporting source and that the death record evidence created a reason to verify or refute the assignment. The proposed question followed the required confirm-or-refute approach, focused on independent evidence, and correctly positioned parent verification as the gatekeeper step before searching for alternative parents. No unsupported claims or fabricated evidence were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully satisfied the required workflow. It reviewed the project state, identified the disputed parent assignment, incorporated the user-provided evidence of doubt (the Luxembourg death record), and used the available birth information to formulate an appropriately scoped first research question. The question was correctly persisted with the required metadata, and no unnecessary clarification was requested because the user had already provided the necessary research anchors. No required elements were omitted, and no unsupported claims were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All five tool calls used valid arguments and matched the expected workflow. The project context and research queries targeted the correct sections, and the research_append operation included all required fields with a valid structure. All calls returned successful live responses, no fixture_not_found errors occurred, and the arguments were semantically appropriate throughout."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question is concrete, specific, and answerable. It identifies the individuals involved, the exact genealogical relationship being tested, and the relevant time and place context. The confirm-or-refute framing is appropriate because the existing parent assignment is a hypothesis requiring verification, not an established fact. The question is sufficiently focused to guide targeted research in relevant records and avoids vague or overly broad wording."
+    }
+  ]
+}

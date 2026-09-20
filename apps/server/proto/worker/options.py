@@ -75,6 +75,27 @@ STORE_ENV_KEYS = (
 # The per-user config the desktop reads from config.json; passed through when set.
 PER_USER_ENV_KEYS = ("WIKI_API_URL", "POP_STATS_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL")
 
+# The e2e harness's tree-read block (eval/harness/e2e/orchestrator.py BLOCKED_TREE_TOOLS):
+# every e2e fixture's answer still sits in the live FamilySearch tree, so a fixture run
+# that may read the tree is a lookup, not the research workflow. The worker takes the
+# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block.
+BLOCKED_DENY_REASON = (
+    "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
+    "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
+)
+
+
+def bare_tool_name(tool_name: str) -> str:
+    """``mcp__<server>__<name>`` -> ``<name>``, whatever the server spelling; a built-in
+    tool's name is returned as is."""
+    return tool_name.rsplit("__", 1)[-1] if tool_name.startswith("mcp__") else tool_name
+
+
+def parse_blocked_tools(value: str | None) -> frozenset[str]:
+    """``BLOCKED_TOOLS``: comma-separated bare MCP tool names; blanks ignored."""
+    return frozenset(part.strip() for part in (value or "").split(",") if part.strip())
+
+
 WRITE_DENY_REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json must "
     "go through the writer tools. To CREATE a new project use project_create, which "
@@ -131,18 +152,27 @@ def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> 
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
-# contract is the one header the entrypoint reads -- `Authorization: Bearer <patron token>`
-# becomes the request's principal -- and nothing else on the request: no project or turn
-# header, because per-request store scoping over HTTP does not exist yet (that service
-# runs the file backend). The CLI opens the MCP session once per process, once per turn.
+# contract is the two headers the entrypoint reads, both per request and never process
+# state: `Authorization: Bearer <patron token>` becomes the request's principal, and
+# `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore -- the same store the
+# stdio fork gets from GENEALOGY_PROJECT_ID. Missing, the project tools answer an
+# instruction naming the header; malformed, the request is a 400. No turn header. The CLI
+# opens the MCP session once per process, once per turn.
 TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
+PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 
 
-def tool_server_headers(worker_env: Mapping[str, str], *, fs_access_token: str | None) -> dict[str, str]:
-    """``Authorization: Bearer <token>`` when there is a token; no header at all when the
-    bearer is empty (the server reads a missing header as an empty bearer)."""
+def tool_server_headers(
+    worker_env: Mapping[str, str], *, fs_access_token: str | None, project_id: str
+) -> dict[str, str]:
+    """``X-Genealogy-Project-Id`` always; ``Authorization: Bearer <token>`` only when there
+    is a token (the server reads a missing header as an empty bearer, and a bare
+    ``Bearer `` would be malformed)."""
+    headers = {PROJECT_ID_HEADER: project_id}
     token = bearer_token(worker_env, fs_access_token)
-    return {"Authorization": f"Bearer {token}"} if token else {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 
 def tool_server_entry(
@@ -155,13 +185,14 @@ def tool_server_entry(
     """The ``genealogy`` MCP server entry. ``TOOL_SERVER=stdio`` (the default):
     ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
     of ``tool_server_env``. ``TOOL_SERVER=http``: the shared Streamable HTTP tool server at
-    ``TOOL_SERVER_URL`` with the bearer as ``Authorization``."""
+    ``TOOL_SERVER_URL`` with the bearer as ``Authorization`` and the turn's project id as
+    ``X-Genealogy-Project-Id``."""
     mode = worker_env.get("TOOL_SERVER", "stdio")
     if mode == "http":
         return {
             "type": "http",
             "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
-            "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token),
+            "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
         }
     if mode != "stdio":
         raise ValueError(f"TOOL_SERVER must be stdio or http, not {mode!r}")
@@ -220,6 +251,7 @@ def make_pretool_hook(
     config_root: str | Callable[[], str],
     record: Callable[[dict[str, Any]], None],
     log: Callable[..., None] | None = None,
+    blocked: frozenset[str] = frozenset(),
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -235,6 +267,8 @@ def make_pretool_hook(
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
+            elif tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked:
+                decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
                 root = config_root() if callable(config_root) else config_root
                 reason = project_read_denied(
