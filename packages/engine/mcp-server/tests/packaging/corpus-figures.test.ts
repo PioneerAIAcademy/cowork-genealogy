@@ -241,6 +241,28 @@ describe("the specs' corpus claims survive main moving", () => {
     ).toBeGreaterThan(15);
   });
 
+  it("the subagent-only tool set still matches the harness policy it mirrors", () => {
+    // SUBAGENT_ONLY_TOOLS is hand-copied from context_policy.py; bind the two so a
+    // tool added to the policy without updating this file reds here rather than
+    // letting the arm above under-count a new subagent-only fire silently.
+    const policy = readFileSync(
+      join(projectRoot, "eval", "harness", "harness", "context_policy.py"),
+      "utf8",
+    );
+    const m = policy.match(/SUBAGENT_ONLY_TOOLS\s*=\s*frozenset\(\{([^}]*)\}\)/);
+    expect(
+      m,
+      "SUBAGENT_ONLY_TOOLS = frozenset({...}) not found in context_policy.py — it " +
+        "moved or changed shape, so this file no longer tracks the policy it mirrors",
+    ).not.toBeNull();
+    const policyTools = [...m![1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort();
+    expect(
+      policyTools,
+      "the subagent-only tool set here has drifted from context_policy.py; the " +
+        "`blocked_context_calls` arm counts fires for the tools listed here only",
+    ).toEqual([...SUBAGENT_ONLY_TOOLS].sort());
+  });
+
   it("the documented call shape is still the norm the rule rests on", () => {
     // ADR-0011's satisfiability argument for the plan rules is that nearly every
     // real call already omits `items` and batches the item ops. A floor, not an
