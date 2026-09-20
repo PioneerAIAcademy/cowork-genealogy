@@ -196,7 +196,11 @@ def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
     cap = re.search(r'export AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-(\d+)\}"', body)
     assert cap, body
     harness = re.search(r"^\s*max_continue_nudges: int = (\d+)", ORCHESTRATOR.read_text(encoding="utf-8"), re.M)
-    assert harness and cap.group(1) == harness.group(1) == "20", "the default cap is the harness's max_continue_nudges"
+    # The literal is the tripwire, not the invariant: the arm's default IS the harness's
+    # cap, and pinning the number too means a harness change lands here for a person to
+    # read rather than silently widening the arm (it moved 20 -> 40 on 2026-09-20).
+    assert harness and cap.group(1) == harness.group(1) == "40", \
+        "the arm's default cap is the harness's max_continue_nudges: re-sync both, and the plan's D18 note"
     assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="[^"]*\$\(ARGS\)"', body), body
     assert "AUTONOMOUS_MAX_NUDGES" not in "\n".join(_recipe("proto-demo")), "proto-demo itself stays a one-turn run"
 

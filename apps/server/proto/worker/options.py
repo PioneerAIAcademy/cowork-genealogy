@@ -339,11 +339,19 @@ def make_posttool_hook(
 # deny.py's predicate -- the worker image carries no eval/ -- with the harness's reason
 # text verbatim, so the prototype's autonomous arm and the harness apply one rule.
 
+# The harness's own veto text for a SILENT stop, verbatim (its `stop_hook`'s fallback
+# block dict). Since 2026-09-20 the harness also answers a *well-formed* hand-back —
+# one that names its next step and asks — with the researcher's "Yes." instead
+# (`classify_hand_back` / `hand_back_outcome`, issues #2328 and #2292). The worker does
+# not mirror that branch: it classifies nothing, because the classifier reads the
+# harness's in-process narration list and the prose half of #2292 has not landed, so
+# copying a moving wording would drift the moment it does. Every stop the worker sees
+# therefore takes this text. `test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim`
+# reads it off the orchestrator and goes red when either side moves.
 CONTINUE_REASON = (
     "You are mid-run in an autonomous /research session and the "
     "project is not yet complete (project.status is not "
-    "'completed'). Do not stop to report progress or announce the "
-    "next step. Re-read research.json and invoke the next GPS "
+    "'completed'). Re-read research.json and invoke the next GPS "
     "sub-skill now; keep going until project.status is "
     "'completed' or you hit a genuine, logged blocker."
 )
