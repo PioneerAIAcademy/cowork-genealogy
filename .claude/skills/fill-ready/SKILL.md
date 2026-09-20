@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from four criteria it re-derives every run — a soft "take this first" for whoever picks from the menu, never a filing label. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and no pool target covers the lead. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior or by the lead), and logistics (unlabelled, anyone once cleared). Nothing on the board is ever pre-assigned: every item, multi-week structural bets included, is self-served from Ready. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from four criteria it re-derives every run — a soft "take this first" for whoever picks from the menu, never a filing label. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -157,9 +157,9 @@ developer's review." That is fine on PRs and slightly wrong on issues. Don't
 re-litigate it; just know the label is doing two jobs.
 
 **Label only. Never set an assignee — on anyone, including the lead.** People
-self-serve from Ready and the lead hands work out at standup. This skill adds no
-assignee at all; the only pre-assigned items on the board are `cross-cutting`
-ones, and `/find-big-wins` assigns those at filing time.
+self-serve from Ready. This skill adds no assignee at all, and **nothing on this
+board arrives pre-assigned** — every item, structural bets included, is picked up
+by whoever takes it.
 
 **And never remove one either — a role/label mismatch is not a mis-route.** The
 lead is deliberately teaching the developers to be simple genealogists and the
@@ -189,8 +189,7 @@ the ranking. Report the mix; do not swap a card out to hit a number.
 # The first of the two budgeted `item-list` passes (§ 0 "Board facts"). Everything
 # downstream reads this file; do not fetch the board again until the rebuild.
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
-jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0
-      and ((.labels|index("cross-cutting"))|not)) | .labels ]
+jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
                      senior: map(select((index("developer")) and index("senior")))|length,
                      high_priority: map(select((index("developer")) and index("high-priority")))|length },
@@ -210,13 +209,16 @@ against, and a pool at 16 while the other sits at 8 is invisible in a combined
 total. Assigned items do not count toward either target; someone is already on
 them.
 
-**There is no third pool for the lead.** He takes no issues — his job is coaching
-juniors into seniors — so nothing is ever assigned to `DallanQ` and no target
-covers him. Structural bets go to `/find-big-wins`; decisions get
-`needs-decision`, which `/make-decisions` drains daily.
+**There is no third pool for the lead.** His job is coaching juniors into
+seniors, so no target covers him — but he does take work, self-served from the
+`senior` pool like anyone else. Never assign to `DallanQ`, and never report a
+`senior` item as one he needs to pick up. Decisions get `needs-decision`, which
+`/make-decisions` drains daily.
 
-**`cross-cutting` items are outside both targets** — see "Cross-cutting items are
-the lead's direct assignments" below. Subtract them before you compute a pool.
+**A multi-week structural item is a pool member like any other.** It ranks in its
+lane against everything else and counts toward that lane's target while it sits
+unassigned; once someone takes it, the `(.assignees|length)==0` filter drops it
+out on its own. There is no separate class to subtract.
 
 **Do not size promotions to free people.** Busy people finish, and the menu has
 to be stocked when they do — how many people are idle right now is not the
@@ -348,39 +350,21 @@ pool is about to run dry, and the cheapest fix is usually the lead answering the
 Gate-2 questions that convert senior items into junior ones. Say that in the
 report — it is more actionable than the promotion list.
 
-### Cross-cutting items are the lead's direct assignments
+### Structural bets rank like everything else
 
-An issue labelled **`cross-cutting`** comes out of `/find-big-wins` — a
-structural bet the lead has already decided on and researched with Claude. It is
-the one thing on this board that arrives pre-assigned, because he hands it to a
-named person rather than leaving it on the menu for whoever gets there first.
+A structural bet out of `/find-big-wins` is a `senior` item with a long shape. It
+carries no special label and gets no special routing: it ranks in its lane's pool
+against the rest of the senior work, and a senior picks it up from Ready the same
+way they pick up anything.
 
-```sh
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 100 \
-  --label cross-cutting --json number,title,assignees,updatedAt \
-  -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.assignees[0].login // "UNASSIGNED")\t\(.title)"' | sort
-```
+**Nobody assigns work on this board, including the lead.** He self-serves like
+everyone else. Never report an item as needing an owner, and never propose an
+assignment.
 
-Four rules:
-
-- **Assigned `cross-cutting` items skip the seniority routing entirely.** The
-  lead chose the person, having done the research himself. Do not re-run the
-  junior-safe / senior-required test on one, and never move one into an
-  unassigned pool — an unassigned structural bet is the worst possible board
-  object, since it looks pickable and is not.
-- **They count toward no target.** Someone is already on it, and its multi-week
-  shape would distort a menu meant to be picked from daily.
-- **One active `cross-cutting` item per person, not one per week.** These are
-  multi-week structural projects. If a second is assigned to someone who already
-  holds an active one, that is a finding for the report, not a promotion
-  decision — name both and let the lead pick which is active.
-- **An *unassigned* `cross-cutting` item is a mis-file, not a pool member.**
-  Report it and leave it in Backlog. `/find-big-wins` assigns at filing time, so
-  an unassigned one means the assignment step was skipped.
-
-Report the active ones every run as their own line: who holds each, and how long
-since it last moved. Nothing else on the board makes a multi-week project
-visible, and an idle one is the most expensive stalled card there is.
+Report any **unassigned item older than ~30 days in Ready** as its own line, with
+its age. That is the shape a multi-week bet decays into when nobody takes it, and
+it is the most expensive stalled card on the board — but the signal is the age, not
+a label.
 
 ### Arrival vs. closure — the trend that outranks the day's move
 
@@ -1249,9 +1233,10 @@ list it does not appear in. Add state when it matters.
    bottleneck is answers, not people. You do not rank or assign from either.
 6. **Held back, and why** — the items that failed a gate, named with the gate.
    This is the section that stops the lead re-asking about them tomorrow.
-6a. **Cross-cutting** — one line per active `cross-cutting` item: who holds it,
-   days since it last moved, and any person holding two. Flag any unassigned one
-   as a mis-file. Skip the heading when there are none.
+6a. **Long-stalled in Ready** — one line per unassigned item that has sat in
+   Ready for ~30 days or more: its age and its lane. This is where a multi-week
+   structural bet nobody takes becomes visible. Skip the heading when there are
+   none.
 6b. **Skill slots** — one line per skill whose slot is held by an **open** issue
    in Ready, In Progress or Review: the holder, its idle days, and how many are
    queued behind it. Flag a holder idle ~10 days as a reclaim proposal, and a
