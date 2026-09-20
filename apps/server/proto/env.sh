@@ -2,7 +2,7 @@
 #
 #   . apps/server/proto/env.sh
 #
-# Two secrets, neither ever echoed:
+# Three secrets, none ever echoed:
 #
 #   ANTHROPIC_API_KEY  exported: the caller's, else the line in $PROTO_ENV_FILE (default
 #                      eval/.env; the test points it at a temp file). The worker
