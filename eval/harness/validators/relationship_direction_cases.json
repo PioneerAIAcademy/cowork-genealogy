@@ -15,7 +15,7 @@
     "callers supply.",
     "",
     "Measured counts refer to eval/**/*final-research.json plus",
-    "eval/runlogs/unit/** at 687264695; re-derive with",
+    "eval/runlogs/unit/** at c77548723; re-derive with",
     "eval/harness/scripts/measure_relationship_direction.py.",
     "",
     "`categories` is the relation-word -> category table, which is the OTHER",
