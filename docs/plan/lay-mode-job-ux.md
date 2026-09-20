@@ -5,7 +5,9 @@
 > clean. Decisions 5 and 6 ruled 2026-09-20; six remain open for the lead.
 > Supersedes the hand-back literal ruled on 2026-09-07 (recorded on issues #2292,
 > #1104 and #2328) and the regex auto-continue built for issue #2653 by PR #2667.
-> Nothing here is started; no issue has been edited and no board column moved.
+> No code is started. The board changes in "What happens to the open cards" WERE
+> applied on 2026-09-20: issue #1104 closed not planned, issue #2088 delabelled,
+> issue #2292 retitled, comments on issues #2493 and #1998, and issues #2703/#2704 filed.
 
 ## What changes, in one paragraph
 
@@ -777,7 +779,8 @@ are unreachable code.
 
 ## 6. What happens to the open cards
 
-Proposed, not applied. Nothing is edited until you approve.
+**Applied 2026-09-20**, after the lead's go. Each row below records what was done, not
+what is proposed; the one exception is issue #2660, whose comment waits for PR B.
 
 | Card | Proposal |
 |---|---|
