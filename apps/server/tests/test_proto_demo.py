@@ -3,6 +3,8 @@ rendering, the verdict, and the make target that runs it. No Postgres, no stack,
 
 from __future__ import annotations
 
+import argparse
+import contextlib
 import re
 from pathlib import Path
 
@@ -11,7 +13,7 @@ import pytest
 import httpx
 
 from proto import demo, turn
-from tests.test_proto_config import COMPOSE, STEP_CEILING_S, _env, _load, _recipe, _service
+from tests.test_proto_config import COMPOSE, MAKEFILE, STEP_CEILING_S, _env, _load, _recipe, _service
 
 IDS = ("turn_x", "sess_y", "proj_z")
 
@@ -103,6 +105,42 @@ def test_nudges_line_shows_the_rows_count_and_the_cap_or_off():
 ])
 def test_verdict(done, c3, reauth, code):
     assert demo.verdict(done, c3, reauth) == code
+
+
+@pytest.mark.parametrize("autonomous, completed, code", [
+    # The 2026-09-20 run: the Stop hook was never consulted, the project never completed,
+    # and the arm said PASS. On the autonomous arm an unfinished project is a FAIL.
+    (True, False, 1),
+    (True, True, 0),
+    # One turn of proto-demo is not expected to finish a project.
+    (False, False, 0),
+    (False, True, 0),
+])
+def test_verdict_requires_a_completed_project_on_the_autonomous_arm_only(autonomous, completed, code):
+    assert demo.verdict(True, True, False, autonomous=autonomous, completed=completed) == code
+    # The other three clauses still bind on either arm.
+    for done, c3, reauth in ((False, True, False), (True, False, False), (True, True, True)):
+        assert demo.verdict(done, c3, reauth, autonomous=autonomous, completed=completed) == 1
+
+
+def test_autonomous_arm_reads_the_cap_the_way_the_nudges_line_does():
+    for cap in ("40", "1", " 40 "):
+        assert demo.autonomous_arm(cap), cap
+    for cap in (None, "", " ", "0"):
+        assert not demo.autonomous_arm(cap), cap
+    # One definition: the verdict and the printed line cannot disagree about which arm ran.
+    assert demo.nudges_line(0, "0").endswith("(cap off)") and not demo.autonomous_arm("0")
+    assert demo.nudges_line(2, "40").endswith("(cap 40)") and demo.autonomous_arm("40")
+
+
+def test_project_status_is_read_by_the_same_sql_the_evidence_block_prints():
+    # section_counts_sql cannot carry it: `project` is an object, and that query filters to
+    # array-typed keys. The verdict's value must be the one the reader can re-run.
+    assert "jsonb_typeof" not in demo.PROJECT_STATUS_SQL
+    assert "doc->'project'->>'status'" in demo.PROJECT_STATUS_SQL
+    assert demo.PROJECT_STATUS_SQL.count("%s") == 1
+    printed = [sql for label, sql, _ in demo.acceptance_queries(*IDS) if "project.status" in label]
+    assert printed == [demo.PROJECT_STATUS_SQL], "the status the verdict reads must be printed with its SQL"
 
 
 def test_default_deadline_covers_one_shim_driven_resume():
@@ -201,6 +239,12 @@ def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
     # read rather than silently widening the arm (it moved 20 -> 40 on 2026-09-20).
     assert harness and cap.group(1) == harness.group(1) == "40", \
         "the arm's default cap is the harness's max_continue_nudges: re-sync both, and the plan's D18 note"
+    # `make help` prints the rule line's `##` text, which no recipe read reaches -- so it is
+    # where the number went stale when the harness moved 20 -> 40 on 2026-09-20.
+    rule = re.search(r"^proto-demo-auto:.*?##(.*)$", MAKEFILE.read_text(encoding="utf-8"), re.M)
+    assert rule, "proto-demo-auto lost its ## help text: `make help` would stop listing it"
+    assert f"default {cap.group(1)}" in rule.group(1), \
+        f"`make help` says {rule.group(1).strip()!r}, which no longer matches the exported cap"
     assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="[^"]*\$\(ARGS\)"', body), body
     assert "AUTONOMOUS_MAX_NUDGES" not in "\n".join(_recipe("proto-demo")), "proto-demo itself stays a one-turn run"
 
@@ -229,3 +273,54 @@ def test_proto_export_target_requires_a_session_and_runs_the_script():
     assert "proto/export.py" in body and "--session '$(SESSION)'" in body
     assert re.search(r"\$\(if \$\(OUT\),\s*--out '\$\(abspath \$\(OUT\)\)',\s*\)", body), \
         "OUT is resolved against the repo root before the cd into apps/server"
+
+
+# ── run(): the verdict is wired to the env and the row, not just correct in isolation ──
+
+
+def _fake_stack(monkeypatch, status: str | None, *, nudges: int = 0):
+    """Every side effect of demo.run() answered from memory: a seeded session, a posted turn
+    that reaches turn_done, a clean audit, no reauth hit, and `status` as the project's."""
+    monkeypatch.setattr(demo, "preflight", lambda base, dsn: None)
+    monkeypatch.setattr(demo, "seed_session", lambda args: ("sess_1", "proj_1", {"researcher_question": "Who?"}))
+    monkeypatch.setattr(demo.turn, "post_message", lambda client, base, session_id, text: "turn_1")
+    monkeypatch.setattr(demo, "wait_turn_done", lambda *a: 1.0)
+    monkeypatch.setattr(demo, "reply_text", lambda dsn, session_id, turn_id: (0, "done"))
+    monkeypatch.setattr(demo, "reauth_hits", lambda dsn, session_id, since: [])
+    monkeypatch.setattr(demo.audit, "load", lambda dsn, session_id: [])
+    monkeypatch.setattr(demo.httpx, "Client", lambda **kw: contextlib.nullcontext())
+
+    def rows(dsn, sql, params):
+        if sql == demo.PROJECT_STATUS_SQL:
+            return [(status,)] if status is not None else []
+        if "SELECT nudges FROM turns" in sql:
+            return [(nudges,)]
+        return []
+
+    monkeypatch.setattr(demo, "rows", rows)
+
+
+def _args(**over):
+    base = dict(base="http://x", pg_dsn="dsn", s3_endpoint="s3", deadline_s=1.0, anchor="/project",
+                ceiling_s=1800.0, session=None, prompt=None, fixture="fx", fixture_given=False,
+                project_id=None, title=None)
+    base.update(over)
+    return argparse.Namespace(**base)
+
+
+@pytest.mark.parametrize("cap, status, code", [
+    ("40", "active", 1),     # the 2026-09-20 run: the hook never bit, and the arm used to say PASS
+    ("40", "completed", 0),
+    ("40", None, 1),         # no research.json row at all
+    ("0", "active", 0),      # proto-demo: one turn, not expected to finish the project
+    (None, "active", 0),
+])
+def test_run_fails_the_autonomous_arm_on_an_unfinished_project(monkeypatch, capsys, cap, status, code):
+    _fake_stack(monkeypatch, status)
+    monkeypatch.delenv("AUTONOMOUS_MAX_NUDGES", raising=False)
+    if cap is not None:
+        monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", cap)
+    assert demo.run(_args()) == code
+    out = capsys.readouterr().out
+    assert f"project.status={status}" in out, "the value the verdict used must be printed"
+    assert ("PASS" if code == 0 else "FAIL") in out.splitlines()[-1]

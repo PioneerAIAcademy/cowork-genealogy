@@ -552,7 +552,7 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # elasticmq's visibility timeout (7500 s) must stay above this export, or an attempt at
 # the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
-proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 20) and a 7200 s per-attempt ceiling (READ_TIMEOUT_S) so one turn runs the fixture to completion; FIXTURE=… ARGS=…
+proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) and a 7200 s per-attempt ceiling (READ_TIMEOUT_S) so one turn runs the fixture to completion; FIXTURE=… ARGS=…
 	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
 	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-7200}"; \
 	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((2 * READ_TIMEOUT_S + 300)) $(ARGS)"
