@@ -104,8 +104,9 @@ services:
       # The model. Passed through from the host environment at `up` time, never a
       # literal here; the stub arms run with it empty.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      # image_transcribe's OCR provider, forwarded to the per-turn tool server (the
-      # hosted config bridges it the same way); env.sh exports it from eval/.env.
+      # image_transcribe's OCR provider on the TOOL_SERVER=stdio opt-out, forwarded to
+      # the per-turn fork; on the http default the `tools` service below has its own
+      # copy. env.sh exports it from eval/.env.
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
       # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from

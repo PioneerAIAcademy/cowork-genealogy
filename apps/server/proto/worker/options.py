@@ -188,9 +188,9 @@ def tool_server_entry(
     2026-09-20, and what compose sets): the shared Streamable HTTP tool server, one
     process for every turn. ``TOOL_SERVER=stdio``:
     ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
-    of ``tool_server_env``. ``TOOL_SERVER=http``: the shared Streamable HTTP tool server at
-    ``TOOL_SERVER_URL`` with the bearer as ``Authorization`` and the turn's project id as
-    ``X-Genealogy-Project-Id``."""
+    of ``tool_server_env``. The http entry is ``TOOL_SERVER_URL`` with the bearer as
+    ``Authorization`` and the turn's project id as ``X-Genealogy-Project-Id``; its
+    per-user config is the ``tools`` service's own environment, not the request's."""
     # One default, here and in compose, so a worker started without its environment does
     # not quietly do something production never does. TOOL_SERVER_DEFAULT is the single
     # source; test_proto_config reads compose against it.

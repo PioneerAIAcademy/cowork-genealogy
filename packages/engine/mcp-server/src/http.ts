@@ -19,7 +19,7 @@ import { startHttpServer, MCP_PATH } from "./http-server.js";
 import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
-import type { AppConfig } from "./types/auth.js";
+import { configFromEnv } from "./hosted-config-env.js";
 
 const { values } = parseArgs({
   options: {
@@ -50,18 +50,11 @@ setProjectStore(
 // (~/.familysearch-mcp/config.json — sidecar URLs, OpenRouter key, hosted
 // flag). Every tool call binds a per-request bearer instead (http-server.ts).
 //
-// The same four variables hosted-stdio.js reads override it, because a container
-// receives a secret as environment, not as a file baked into an image: without this
-// `image_transcribe` has no OpenRouter key here while the per-turn stdio fork has one,
-// so the tool would start failing the moment the worker's default moved to http
-// (2026-09-20). Only keys that are set override, so an absent one leaves the file's
-// value — and then each getter's own default — exactly as a sparse config.json does.
-const fileConfig = await loadConfig(LOCAL);
-const baseConfig: AppConfig = { ...fileConfig };
-if (process.env.WIKI_API_URL) baseConfig.wikiApiUrl = process.env.WIKI_API_URL;
-if (process.env.POP_STATS_URL) baseConfig.popStatsUrl = process.env.POP_STATS_URL;
-if (process.env.OPENROUTER_API_KEY) baseConfig.openRouterApiKey = process.env.OPENROUTER_API_KEY;
-if (process.env.OPENROUTER_MODEL) baseConfig.openRouterModel = process.env.OPENROUTER_MODEL;
+// The environment overlays it (hosted-config-env.ts, shared with hosted-stdio.js):
+// without that, `image_transcribe` has no OpenRouter key here while the per-turn stdio
+// fork has one, so the tool would start failing the moment the worker's default moved
+// to http (2026-09-20).
+const baseConfig = configFromEnv(process.env, await loadConfig(LOCAL));
 const server = await startHttpServer({
   host: values.host as string,
   port,

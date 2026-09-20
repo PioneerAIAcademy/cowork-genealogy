@@ -7,9 +7,10 @@
 #   ANTHROPIC_API_KEY  exported: the caller's, else the line in $PROTO_ENV_FILE (default
 #                      eval/.env; the test points it at a temp file). The worker
 #                      reads it from the environment of the `up` that creates it.
-#   OPENROUTER_API_KEY exported the same way (image_transcribe's OCR provider); the
-#                      per-turn tool server forwards it as the desktop's config.json
-#                      would. Absent, every image read answers with the no-key error.
+#   OPENROUTER_API_KEY exported the same way (image_transcribe's OCR provider). The
+#                      `tools` service reads it from its own environment on the http
+#                      default, and the TOOL_SERVER=stdio fork from the worker's.
+#                      Absent, every image read answers with the no-key error.
 #   the FS token       written to $PROTO_TOKEN_FILE (default apps/server/proto/.fs-token,
 #                      always mode 600), which compose mounts at /run/fs-token and the
 #                      worker reads PER TURN -- so `make proto-token` (this file again)
