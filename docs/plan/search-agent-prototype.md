@@ -1525,7 +1525,7 @@ without whichever Bedrock refuses.
   (`should_continue_run`, ported from
   `eval/harness/e2e/stop_checker.py` — allow once `project.status == "completed"`, once
   the cap is spent, or when the previous nudge produced no tool call, the no-progress
-  check), the same 20 cap, and the harness's reason text verbatim (`CONTINUE_REASON`, held
+  check), the same cap, and the harness's reason text verbatim (`CONTINUE_REASON`, held
   equal to the block dict in `orchestrator.py`'s `stop_hook` by an AST read in
   `tests/test_proto_worker.py`). At each stop the hook reads `research.json` off the
   `documents` row and the turn's `tool_calls` count on the turn's connection, logs

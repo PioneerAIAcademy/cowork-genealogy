@@ -490,7 +490,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--base", default="http://127.0.0.1:8085")
     p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
-    p.add_argument("--deadline-s", type=float, default=300.0, help="per-turn wall clock before a FAIL")
+    p.add_argument("--deadline-s", type=float, default=300.0,
+                   help="wall clock before a FAIL, per wait: on --kill the arm waits it out twice, "
+                        "once for the --kill-on row (an Agent can be minutes in) and again for turn_done")
     p.add_argument("--kill", action="store_true", help="D14: one turn killed at its first --kill-on call, redelivered and resumed")
     p.add_argument("--session", default=None, help="with --kill: run on this session (proto/seed.py) instead of a fresh one")
     p.add_argument("--worker-container", default="proto-worker")

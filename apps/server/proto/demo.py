@@ -21,9 +21,11 @@ D18 arm, ``make proto-demo-auto``, runs the shim at 7200 s and passes its own
 ``--deadline-s`` sized the same way). The printed ``receive_count`` says whether the shim
 intervened.
 
-Exit 0 when ``turn_done`` arrived, criterion 3 is PASS and no FamilySearch tool answered with
-the reconnect instruction (an expired token voids the run, as D17 says); 1 otherwise; 2 when
-the stack is not up or there is no prompt.
+Exit 0 when ``turn_done`` arrived, criterion 3 is PASS, no FamilySearch tool answered with
+the reconnect instruction (an expired token voids the run, as D17 says) and -- on the
+autonomous arm alone -- the project reached ``project.status == "completed"``, which is the
+thing that arm exists to reach; 1 otherwise; 2 when the stack is not up or there is no
+prompt.
 """
 
 from __future__ import annotations
@@ -89,6 +91,8 @@ def acceptance_queries(turn_id: str, session_id: str, project_id: str) -> list[Q
          "FROM turns WHERE turn_id = %s", (turn_id,)),
         ("criterion 2: research.json section sizes after the turn (compare with the baseline above)",
          section_counts_sql(), (project_id,)),
+        ("criterion 2: project.status — 'completed' is what the autonomous arm runs for",
+         PROJECT_STATUS_SQL, (project_id,)),
         ("criterion 2: the session's event kinds (session-wide; equals the turn's on a fresh seed)",
          "SELECT kind, count(*) AS n FROM session_events WHERE session_id = %s GROUP BY kind ORDER BY n DESC, kind",
          (session_id,)),
@@ -113,18 +117,41 @@ def render_query(label: str, sql: str, params: tuple, rows: list[tuple]) -> str:
     return "\n".join(lines)
 
 
+def autonomous_arm(cap: str | None) -> bool:
+    """Whether the D18 arm's Stop hook was on for this run -- ``AUTONOMOUS_MAX_NUDGES``
+    above 0, which is what ``proto-demo-auto`` exports and ``proto-demo`` does not. One
+    definition: the verdict and the nudges line must not disagree about which arm ran."""
+    text = (cap or "").strip()
+    return bool(text) and text != "0"
+
+
 def nudges_line(nudges: int | None, cap: str | None) -> str:
     """``nudges  <n>  (cap <AUTONOMOUS_MAX_NUDGES or "off">)`` -- whether the D18 arm's Stop
     hook vetoed anything on this turn (``turns.nudges``) and the cap the worker ran under."""
-    cap_text = (cap or "").strip()
-    shown = cap_text if cap_text and cap_text != "0" else "off"
+    shown = (cap or "").strip() if autonomous_arm(cap) else "off"
     return f"nudges      {nudges if nudges is not None else '?'}  (cap {shown})"
 
 
-def verdict(turn_done: bool, criterion_3_ok: bool, reauth: bool) -> int:
-    """0 only when the turn finished, criterion 3 held, and no tool answered with the reconnect
-    instruction."""
-    return 0 if (turn_done and criterion_3_ok and not reauth) else 1
+def verdict(turn_done: bool, criterion_3_ok: bool, reauth: bool, *,
+            autonomous: bool = False, completed: bool = False) -> int:
+    """0 only when the turn finished, criterion 3 held, no tool answered with the reconnect
+    instruction -- and, on the autonomous arm, the project reached
+    ``project.status == "completed"``. Without that last clause the arm passes a run whose
+    Stop hook was never consulted, which is exactly what the 2026-09-20 run was: nudges 0,
+    status still ``active``, the resumed attempt 10 ms and 0 model turns -- and PASS. One
+    turn of ``proto-demo`` is not expected to finish a project, so the clause binds only
+    where finishing is the point."""
+    return 0 if (turn_done and criterion_3_ok and not reauth
+                 and (not autonomous or completed)) else 1
+
+
+# ``project`` is an object, so ``section_counts_sql`` (array-typed keys only) cannot show
+# its status; the arm's completion signal needs its own read. One constant, so the value
+# the verdict uses is the value the evidence block prints.
+PROJECT_STATUS_SQL = (
+    "SELECT doc->'project'->>'status' FROM documents "
+    "WHERE project_id = %s AND name = 'research.json'"
+)
 
 
 # -- postgres ---------------------------------------------------------------------------------
@@ -133,6 +160,12 @@ def verdict(turn_done: bool, criterion_3_ok: bool, reauth: bool) -> int:
 def rows(dsn: str, sql: str, params: tuple) -> list[tuple]:
     with psycopg.connect(dsn) as conn:
         return conn.execute(sql, params).fetchall()
+
+
+def project_status(dsn: str, project_id: str) -> str | None:
+    """``research.json``'s ``project.status``, or None when the project has no row."""
+    found = rows(dsn, PROJECT_STATUS_SQL, (project_id,))
+    return found[0][0] if found else None
 
 
 def reauth_hits(dsn: str, session_id: str, since_seq: int) -> list[str]:
@@ -271,9 +304,13 @@ def run(args: argparse.Namespace) -> int:
             print(f"      {h[:160]!r}")
         print()
 
-    code = verdict(done, a.criterion_3_ok, bool(hits))
+    status = project_status(args.pg_dsn, project_id)
+    autonomous = autonomous_arm(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
+    code = verdict(done, a.criterion_3_ok, bool(hits), autonomous=autonomous, completed=status == "completed")
     print(f"demo: {'PASS' if code == 0 else 'FAIL'}  turn_done={done} criterion_3={'PASS' if a.criterion_3_ok else 'FAIL'} "
-          f"reauth_hits={len(hits)}  (make proto-audit SESSION={session_id} re-runs criteria 3 and 4)")
+          f"reauth_hits={len(hits)} project.status={status}"
+          + ("  (the autonomous arm runs to 'completed')" if autonomous else "")
+          + f"  (make proto-audit SESSION={session_id} re-runs criteria 3 and 4)")
     return code
 
 

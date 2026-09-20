@@ -804,7 +804,7 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     assert env["FS_ACCESS_TOKEN_FILE"] == "/run/fs-token" and "FS_ACCESS_TOKEN" not in env
     assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
     assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the nudge cap is the caller's (proto-demo-auto), off by default"
-    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means off, not the harness's 20"
+    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means off, not the arm's default"
     assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
     assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert env["GENEALOGY_PG_DSN"].startswith("postgresql://") and "@postgres:5432" in env["GENEALOGY_PG_DSN"]
