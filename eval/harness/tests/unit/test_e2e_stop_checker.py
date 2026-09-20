@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from e2e.stop_checker import (
@@ -307,24 +308,35 @@ def test_project_completed_still_short_circuits_should_continue_run():
     ) is False
 
 
-SKILL = Path(__file__).resolve().parents[4] / "packages/engine/plugin/skills/research/SKILL.md"
+SKILLS = Path(__file__).resolve().parents[4] / "packages/engine/plugin/skills"
+
+# A hand-back literal as a SKILL.md instructs the model to emit it: quoted in
+# backticks, starting with the lead-in. Anchored on the lead-in so a prose fragment
+# like "end with `Continue?`" is not read as a literal, while a malformed literal
+# (`Next: foo — continue?`) still is, and still has to classify.
+HAND_BACK_LITERAL_RE = re.compile(r"`((?:Next: |Research complete)[^`]*)`")
 
 
-def test_the_shipped_hand_back_line_classifies_as_step():
-    """Binds the classifier's literal to the prose #2292 lands.
+def test_every_shipped_hand_back_literal_classifies():
+    """Binds the classifier's literal to the prose the skills actually emit.
 
-    Vacuous today -- research/SKILL.md emits no closing line, which is why `step`
-    reads 0 everywhere. It fires the moment a closing line appears with wording
-    classify_hand_back does not match: markdown emphasis alone
-    (`**Research complete.**`) already fails the literal. That is the case in which
-    `step: 0` looks correct on every surface while the classifier is silently broken,
-    and nothing else in the suite can tell the two apart.
+    Any skill can close the main thread's turn, so every SKILL.md is scanned, not
+    only research/SKILL.md: init-project and question-selection carry the literal
+    since PR #2649, and #2292 adds it to research. It fires when a closing line
+    appears with wording classify_hand_back does not match — markdown emphasis
+    alone (`**Research complete.**`) already fails the literal. That is the case
+    in which `step: 0` looks correct on every surface while the classifier is
+    silently broken, and nothing else in the suite can tell the two apart.
     """
-    if not SKILL.exists():
-        return
-    for ln in SKILL.read_text(encoding="utf-8").splitlines():
-        if "Continue?" in ln or "Research complete" in ln:
-            assert classify_hand_back(ln.strip()) in ("step", "completion_claim"), (
-                f"research/SKILL.md emits a closing line the classifier does not "
-                f"match, so `step` will stay 0 and read as expected: {ln!r}"
-            )
+    assert SKILLS.is_dir(), SKILLS
+    seen = 0
+    for skill_md in sorted(SKILLS.glob("*/SKILL.md")):
+        for ln in skill_md.read_text(encoding="utf-8").splitlines():
+            for literal in HAND_BACK_LITERAL_RE.findall(ln):
+                seen += 1
+                assert classify_hand_back(literal) in ("step", "completion_claim"), (
+                    f"{skill_md.parent.name}/SKILL.md emits a closing line the "
+                    f"classifier does not match, so `step` will stay 0 and read as "
+                    f"expected: {ln!r}"
+                )
+    assert seen >= 2, "init-project and question-selection carry the literal today"
