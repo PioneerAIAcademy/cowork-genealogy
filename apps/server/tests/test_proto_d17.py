@@ -1,19 +1,22 @@
 """Offline tests for the D14/D17 prep: proto/audit.py's classification of tool_calls rows
-(acceptance criteria 3 and 4) and proto/seed.py's fixture resolution and file plan. No
+(acceptance criteria 3 and 4), proto/seed.py's fixture resolution and file plan, and
+proto/export.py's pure seams (D18: the manifest, the out-dir layout, the exit codes). No
 Postgres, no stack, no model."""
 
 from __future__ import annotations
 
 import json
 import re
+import shlex
 import shutil
 import stat
 import subprocess
 from pathlib import Path
 
+import psycopg
 import pytest
 
-from proto import audit, seed
+from proto import audit, export, seed
 
 
 def row(tool: str, decision: str = "allow", path: str | None = None, ms: int | None = None) -> dict:
@@ -137,28 +140,105 @@ def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previou
     token_file.write_text("", encoding="utf-8")
     token_file.chmod(0o644)  # what proto-up-core's empty-file arm leaves under the default umask
     # PATH without npx: the engine refresh fails the way a missing login or a blip would.
+    # A stand-in for eval/.env, so the test never reads the real one.
+    dotenv = tmp_path / "dotenv"
+    dotenv.write_text("ANTHROPIC_API_KEY=k-from-dotenv\nOPENROUTER_API_KEY=or-from-dotenv\n", encoding="utf-8")
     base_env = {"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), "PROTO_TOKEN_FILE": str(token_file),
-                "ANTHROPIC_API_KEY": "k"}
+                "PROTO_ENV_FILE": str(dotenv)}
 
-    def source(**extra: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["sh", "-c", ". apps/server/proto/env.sh"], cwd=ROOT, env={**base_env, **extra},
-                              capture_output=True, text=True, encoding="utf-8")
+    def source(**shell_vars: str) -> subprocess.CompletedProcess:
+        # The caller's values are UNEXPORTED shell variables, so only the script's own
+        # `export` makes them reach the worker's `up`; stdout is one printenv per key
+        # (exported values only; BSD printenv prints just its first argument), stderr is
+        # the script's own output, which must never carry a value.
+        prefix = "".join(f"{k}={shlex.quote(v)}; " for k, v in shell_vars.items())
+        cmd = prefix + ". apps/server/proto/env.sh; printenv ANTHROPIC_API_KEY; printenv OPENROUTER_API_KEY"
+        return subprocess.run(["sh", "-c", cmd], cwd=ROOT, env=base_env, capture_output=True, text=True,
+                              encoding="utf-8")
 
-    r = source(FS_ACCESS_TOKEN="tok-1")
+    r = source(FS_ACCESS_TOKEN="tok-1", ANTHROPIC_API_KEY="k", OPENROUTER_API_KEY="or-key-1")
     assert r.returncode == 0 and "FS token written" in r.stderr, r.stderr
+    assert r.stdout.split() == ["k", "or-key-1"], "the caller's keys, exported for the worker's up"
+    assert "OPENROUTER_API_KEY set" in r.stderr and "or-key-1" not in r.stderr and "k\n" not in r.stderr, "never echoed"
     assert token_file.read_text(encoding="utf-8") == "tok-1"
     assert stat.S_IMODE(token_file.stat().st_mode) == 0o600, "the mode is set on every run, not only at creation"
-    assert "tok-1" not in r.stdout + r.stderr, "never echoed"
-    # No caller token and no refresh: the previous token survives, and the status says so.
+    assert "tok-1" not in r.stderr, "never echoed"
+    # No caller values: the keys come from the dotenv file and are exported; no refresh:
+    # the previous token survives, and the status says so.
     r = source()
     assert r.returncode == 0 and "refresh FAILED" in r.stderr and "kept" in r.stderr, r.stderr
+    assert r.stdout.split() == ["k-from-dotenv", "or-from-dotenv"], "both keys read from the dotenv and exported"
+    assert "from-dotenv" not in r.stderr, "never echoed"
     assert token_file.read_text(encoding="utf-8") == "tok-1"
     # The empty directory an early compose `up` leaves in the file's place is replaced.
     token_file.unlink()
     token_file.mkdir()
-    r = source(FS_ACCESS_TOKEN="tok-2")
+    r = source(FS_ACCESS_TOKEN="tok-2", ANTHROPIC_API_KEY="k")
     assert token_file.is_file() and token_file.read_text(encoding="utf-8") == "tok-2", r.stderr
     assert stat.S_IMODE(token_file.stat().st_mode) == 0o600
     # Nothing to refresh and nothing kept: UNSET.
     token_file.write_text("", encoding="utf-8")
-    assert "UNSET" in source().stderr
+    assert "UNSET" in source(ANTHROPIC_API_KEY="k").stderr
+
+
+# ── export (D18): the mirror image of seed ────────────────────────────────────────
+
+
+def test_export_manifest_mirrors_the_seed_manifest_and_the_ts_side_reads_every_key(tmp_path):
+    m = export.manifest("proj_x", tmp_path)
+    assert m == {"projectId": "proj_x", "anchorPath": "/project", "outDir": str(tmp_path)}
+    assert export.ANCHOR == seed.ANCHOR and export.ENGINE_DIR == seed.ENGINE_DIR
+    ts = (export.ENGINE_DIR / "dev" / "export-project.ts").read_text(encoding="utf-8")
+    assert all(key in ts for key in m), "the TS side reads every key the manifest carries"
+    assert "readBytes" in ts, "images are bytes, never a text decode"
+    assert '"results"' in ts and '"images"' in ts and '"research.json"' in ts and '"tree.gedcomx.json"' in ts
+
+
+def test_export_dir_is_the_project_id_under_out_and_the_default_out_is_gitignored():
+    assert export.export_dir(Path("/x/exports"), "proj_y") == Path("/x/exports/proj_y")
+    assert export.DEFAULT_OUT == ROOT / "apps" / "server" / "proto" / "exports"
+    assert "apps/server/proto/exports/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+
+
+def test_export_main_exits_2_on_an_unknown_session_or_no_postgres_without_running_the_ts_side(monkeypatch, capsys):
+    def must_not_run(*a, **k):
+        raise AssertionError("the TS side must not run for an unknown session")
+
+    monkeypatch.setattr(export, "export", must_not_run)
+    monkeypatch.setattr(export, "resolve_project", lambda dsn, sid: None)
+    assert export.main(["--session", "nope"]) == 2
+    assert "no session 'nope'" in capsys.readouterr().err
+
+    def down(dsn, sid):
+        raise psycopg.OperationalError("connection refused")
+
+    monkeypatch.setattr(export, "resolve_project", down)
+    assert export.main(["--session", "s"]) == 2
+    assert "postgres unreachable" in capsys.readouterr().err
+
+
+def test_export_main_runs_the_ts_side_on_the_resolved_project_and_maps_its_exit(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(export, "resolve_project", lambda dsn, sid: "proj_z")
+    calls: list[tuple] = []
+    monkeypatch.setattr(export, "export", lambda pid, **kw: calls.append((pid, kw)) or 0)
+    assert export.main(["--session", "s", "--out", str(tmp_path)]) == 0
+    [(pid, kw)] = calls
+    assert pid == "proj_z" and kw["out_dir"] == tmp_path.resolve()
+    assert str(tmp_path.resolve() / "proj_z") in capsys.readouterr().out
+    monkeypatch.setattr(export, "export", lambda pid, **kw: 3)
+    assert export.main(["--session", "s"]) == 1, "any TS-side failure is exit 1"
+
+
+def test_export_runs_the_ts_side_from_the_engine_dir_with_the_store_env(monkeypatch, tmp_path):
+    runs: list[dict] = []
+
+    def fake_run(cmd, **kw):
+        runs.append({"cmd": cmd, **kw})
+        return subprocess.CompletedProcess(cmd, 0, stdout="exported 0 files\n", stderr="")
+
+    monkeypatch.setattr(export.subprocess, "run", fake_run)
+    assert export.export("proj_q", out_dir=tmp_path, pg_dsn="postgresql://x/y", s3_endpoint="http://s3:9000") == 0
+    [run] = runs
+    assert run["cmd"] == ["npx", "tsx", "dev/export-project.ts"] and run["cwd"] == export.ENGINE_DIR
+    assert run["env"]["PROTO_PG_DSN"] == "postgresql://x/y" and run["env"]["PROTO_S3_ENDPOINT"] == "http://s3:9000"
+    assert json.loads(run["input"]) == export.manifest("proj_q", tmp_path) and run["encoding"] == "utf-8"

@@ -479,7 +479,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key.
@@ -499,10 +499,13 @@ proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker
 	@. apps/server/proto/env.sh
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
-# FamilySearch tool call starts, started again, and the shim's redelivery resumes the
-# SDK session. SESSION=<id> runs it on a seeded session (proto-seed). Billed, one turn.
+# place_search call starts, started again, and the shim's redelivery resumes the SDK
+# session. SESSION=<id> runs it on a seeded session (proto-seed). ARGS reaches turn.py:
+# `--kill-on Agent --kill-after-s 15 --text-file <path>` times the kill inside a
+# delegation (the D18 resume probe); an evidence block follows turn_done either way.
+# Billed, one turn.
 .PHONY: proto-kill
-proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session
+proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
 	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
 # D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
@@ -535,6 +538,32 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/demo.py $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
+
+# D18: the autonomous arm of proto-demo. One queue message is one model turn, and an
+# autonomous /research run yields after each sub-skill step; the worker's Stop hook
+# (AUTONOMOUS_MAX_NUDGES > 0) vetoes that yield the way the e2e harness's does, bounded by
+# the harness's cap (max_continue_nudges, 40) and its no-progress check, so the fixture
+# runs to project.status == "completed" in one turn. `AUTONOMOUS_MAX_NUDGES=5 make
+# proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run. One message
+# is now a whole run, so this arm alone raises the shim's per-attempt ceiling to 7200 s
+# (READ_TIMEOUT_S; the compose default 1800 holds for every other target -- the lead's
+# call, 2026-09-20 -- though the shim this arm recreates stays at 7200 until the next
+# `up` recreates it again) and sizes the demo's wait to span one shim-driven resume.
+# elasticmq's visibility timeout (7500 s) must stay above this export, or an attempt at
+# the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
+.PHONY: proto-demo-auto
+proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) and a 7200 s per-attempt ceiling (READ_TIMEOUT_S) so one turn runs the fixture to completion; FIXTURE=… ARGS=…
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
+	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-7200}"; \
+	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((2 * READ_TIMEOUT_S + 300)) $(ARGS)"
+
+# D18: a session's project out of the store into files -- research.json, tree.gedcomx.json,
+# results/ and images/ under OUT/<project_id>/ (OUT default apps/server/proto/exports,
+# gitignored) -- for the quality eyeball and the e2e judge. Needs the stack up.
+.PHONY: proto-export
+proto-export: $(ENGINE_DEPS) ## D18: export SESSION=<id>'s project (research.json, tree, results/, images/) to OUT/<project_id>/ (default apps/server/proto/exports)
+	@test -n "$(SESSION)" || { echo "proto-export: SESSION=<id> is required" >&2; exit 2; }
+	cd apps/server && uv run python proto/export.py --session '$(SESSION)' $(if $(OUT),--out '$(abspath $(OUT))',)
 
 # ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
 # The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
@@ -1002,10 +1031,18 @@ e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue 
 	cd eval/harness && uv run python -m e2e.skill_episode_report $(if $(TEST),--test $(TEST),) $(if $(ALL_SKILLS),--all-skills,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-nudges
-e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #1104): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-nudges: ## How /research hands back at a step boundary, over committed e2e runs (issues #1104, #2328): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. Reports each
-	# continue-nudge with the seam it sits on and whether the agent named its
-	# next step before yielding -- the move research/SKILL.md forbids.
+	# continue-nudge with the seam it sits on and its hand-back class --
+	# step / silent / completion_claim, per classify_hand_back.
+	#
+	# A yield is NOT a defect: /research is meant to yield at every step
+	# boundary and in an e2e run the harness is the user, so a well-formed
+	# hand-back gets answered "Yes." A silent stop and a false completion claim
+	# are the defects. `step` reads 0 until a skill ends a turn on the hand-back
+	# line -- init-project and question-selection emit it since PR #2649,
+	# research/SKILL.md will with issue #2292 -- a zero is the correct result,
+	# not a broken classifier.
 	# `narration` replaced transcripts in #1238; committed .transcript.md files
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.

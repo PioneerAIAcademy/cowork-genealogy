@@ -16,7 +16,9 @@ Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smo
 every tool but the four auth exclusions, the compose `tools` service); per-request store
 scoping over HTTP built 2026-09-18 (PR #2669; the `X-Genealogy-Project-Id` header,
 D16's open half); D19 built 2026-09-18 (PR #2670; `make proto-demo`, the D17 commands as
-one, no browser); FamilySearch's
+one, no browser); D18's autonomous arm and export built 2026-09-20 (PR #2695;
+`make proto-demo-auto`, `proto-export`, `turns.nudges`; the run's two findings under D18);
+FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -1271,6 +1273,83 @@ without whichever Bedrock refuses.
   “Nauvoo, Hancock, Illinois, United States” 28 s after the kill, $0.117 for the turn.
   The bearer was the desktop login's token refreshed through the engine
   (`dev/fs-token.ts`): the first FamilySearch call through the worker.
+  **Probe 2026-09-20: a kill during a delegation** (`sess_c926c75018d44e57`, turn
+  `b92c4e70-e184-432e-8a41-16016e72f3e4`, SDK session `4abdeea0-412b-41bd-9d88-f25082f9b391`,
+  `proj_bagley-father-1884_6e0921` seeded from `bagley-father-1884`, the stack up with the
+  harness's tree-read block). The arm now takes `--kill-on <bare tool name>` (default
+  `place_search`; `Agent` lands the kill inside a delegation), `--kill-after-s <n>` and
+  `--text …` / `--text-file <path>`, and prints an evidence block after `turn_done` whatever
+  the checks say — the `turns` row; the `tool_calls` and `session_entries` rows written
+  after the kill, one line each; research.json's array sections before the kill and after;
+  the `text` events after the kill — so the CLI's own words on resume are in the run output
+  and not only in a volume `proto-down -v` drops; the two checks about the default text
+  (the bearer, Nauvoo) run only with the default text. The message was `/record-extraction
+  Find William A. Bagley's death entry of 31 May 1884, Topsham, Orange County, Vermont, in
+  Vermont, Town Clerk, Vital and Town Records, 1732-2005, and extract it.` The scripted run
+  (`make proto-kill SESSION=<id> ARGS="--kill-on Agent --kill-after-s 15 --text-file <path>
+  --deadline-s 2400"`) died one line before its `docker kill` on a lazy `from proto import
+  demo` — a `ModuleNotFoundError` under `python proto/turn.py`, whose sys.path holds
+  `proto/`, not `apps/server`; fixed the same day (`section_counts_sql` now lives in
+  `turn.py`, which imports nothing from `proto`; `tests/test_proto_kill.py` pins both) — so
+  the kill and its marks were issued by hand at 17:12:58Z on the same billed turn, 83 s
+  after the `Agent` row (17:11:35Z; the subagent had done `project_context` and
+  `record_read` and had not sent `extraction_append`), and the block below is the arm's own
+  `gather_evidence` / `render_evidence` over those marks. The arm has not been run end to
+  end live since the fix. **The delegation is re-run, once, and the turn completes on real
+  work — no zero-turn synthetic result.** Shim: `{"ev":"post",…,"receive_count":1,
+  "error":"connection_reset","elapsed_ms":171032,"action":"requeue","backoff_s":0}` then
+  `{…,"receive_count":2,"status":200,"elapsed_ms":280913,"action":"delete"}`. Worker:
+  `{"ev":"turn",…,"receive_count":2,"resumed":true,"num_turns":2,"cost_usd":0.63980115,
+  "duration_ms":279076,"events":14,"entries_appended":27,"tool_calls":4,"nudges":0}`.
+  `turns` row: `receive_count=2 num_turns=2 cost_usd=0.63980115 nudges=0 duration_ms=279076
+  outcome=ok`; tokens 26 / 159,123 / 309,799 / 23,376 (input / cache write / cache read /
+  output, both attempts; read once at the time, and the rows went with the volume).
+  `tool_calls` after the kill (4): `Agent` 241,732 ms (the killed
+  attempt's `Agent` row keeps NULL), then `project_context` 37 ms, `record_read` 29 ms and
+  `extraction_append` 68 ms, all `agent_type=record-extractor`; the re-run `Agent` input
+  carries `run_in_background: false`. `session_entries` 49 → 76, the 27 appended in order:
+  seq 50 `queue-operation` carrying the worker's prompt verbatim; 52 `user`
+  `<command-message>genealogy-research:record-extraction</command-message>
+  <command-name>/genealogy-research:record-extraction</command-name> <command-args>Find
+  William A. Bagley's death entry of 31 May …`; 53 the skill body; 54–55 `attachment`; 56–57
+  a NEW subagent `agent-a91492cf2fc50008e` with the same delegation (`recordId:
+  ark:/61903/1:1:QPQP-24HR logId: log_001 resultsRef: results/log_001.json`); 59 the main
+  thread, verbatim: "The search is already done and logged as `log_001` with `resultsRef:
+  results/log_001.json`. The MCP server is reconnecting — I'll wait for it, then delegate
+  immediately. 1 of 1: Vermont Town Clerk death entry — William A. Bagley, 31 May 1884,
+  Topsham, Orange County, Vermont (`ark:/61903/1:1:QPQP-24HR`)…"; 60 `tool_use:Agent`;
+  62–65 the subagent's `project_context` and `record_read`; 67 "The record is read from the
+  sidecar. There are three personas: William A. Bagley (deceased, p_104363376565), David
+  Bagley (father, p_104363376568), and Sarah A. Bagley (mother, p_104363376577)…"; 68–69
+  `extraction_append` → `{"ok":true,"results":[{"section":"sources","op":"append",
+  "entryId":"src_001"},{"section":"assertions","op":"append","entryId":"a_001"},…`; 71–72
+  its return "src_001 / S1, action: created Assertions: 10 total — deceased (a_001 name,
+  a_002 sex, a_003 birth year, a_004 death date+place, a_005 relationship to father, a_006
+  relationship to mother); father_of_d…"; 73 `last-prompt`, 74 `mode`; 76 the closing
+  narration "The record is a death entry in the Vermont town vital records, recording that
+  William A. Bagley died on 31 May 1884 in Topsham, Orange County, Vermont. He was born in
+  1815. The entry also names his parents as David Bagley and Sarah A. Bagley…". Sections
+  before the kill → after `turn_done`: assertions 0 → 10, sources 0 → 1, log 1 → 1 (the
+  killed attempt's `log_001` was reused, not duplicated, and its subagent never reached
+  `extraction_append`, so no partial write sits beside the second's — D17's criterion 2),
+  every other section 0 → 0. Two `text` events after the kill (seq 59 and 76 above). The
+  six checks the arm computes after `turn_done`, run by hand over the same rows: 6/6.
+  **What it settles and what it does not.** The lead's ruling of 2026-09-20 — a worker
+  rule that a resumed attempt with zero model turns re-queries instead of completing — was
+  gated on this probe confirming the autonomous run's synthetic result; it did not, so the
+  rule is not built. But this kill differs from that run's: the kill mechanism was the
+  shim's own (`docker kill` + `docker start`, what its `kill_worker` does at the
+  `read_timeout`), but this turn ran with the Stop hook off (`proto-kill` leaves
+  `AUTONOMOUS_MAX_NUDGES` at compose's 0), one foreground delegation
+  (`run_in_background: false`) and 11 tool calls at the kill, not the autonomous run's
+  hook at 20, two background `record-extractor` agents (whether their `Agent` inputs
+  carried `run_in_background: true` went with that volume) and 123 calls. A foreground
+  delegation resumes as P1 measured; the zero-turn synthetic result is still specific to
+  that case and unprobed. The probe for it is this arm on the autonomous arm's message
+  with the kill timed on an `Agent` whose input carries `run_in_background: true`, which
+  needs a switch the arm does not have: `--kill-on` fires on the first `Agent` row, by
+  name only (`tool_calls` carries no input; `session_entries` does), and on that message
+  the first `Agent` is whichever sub-skill delegates first.
 - **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
   Probed live with the five bodies then present: all register under **bare** names with
@@ -1428,6 +1507,75 @@ without whichever Bedrock refuses.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
+  **The autonomous arm, built 2026-09-20.** `make proto-demo-auto [FIXTURE=…] [ARGS=…]`
+  is `proto-demo` with `AUTONOMOUS_MAX_NUDGES` exported — default 40, the harness's
+  `max_continue_nudges` (20 when the arm was built; the harness raised it 2026-09-20
+  and the arm's parity test failed on the merge, which is what it is for); `AUTONOMOUS_MAX_NUDGES=5 make proto-demo-auto` lowers it, the
+  compose default is 0 (off), and `proto-demo` itself stays a one-turn run. With the cap
+  above 0 the worker binds a `Stop` hook (`apps/server/proto/worker/options.py`,
+  `make_stop_hook`) that vetoes the model's voluntary yield exactly as the harness's does:
+  the same predicate and the same veto text for a **silent** stop — with one delta,
+  recorded because it will grow: since 2026-09-20 the harness also answers a
+  *well-formed* hand-back (one that names its next step and asks) with the
+  researcher's "Yes." rather than the veto (`classify_hand_back` / `hand_back_outcome`,
+  issues #2328 and #2292). The worker mirrors the silent-stop fallback only: the
+  classifier reads the harness's in-process narration list, and #2292's prose half has
+  not landed, so copying a moving wording would drift the moment it does. Revisit when
+  #2292 lands. The rest is as the harness has it —
+  (`should_continue_run`, ported from
+  `eval/harness/e2e/stop_checker.py` — allow once `project.status == "completed"`, once
+  the cap is spent, or when the previous nudge produced no tool call, the no-progress
+  check), the same cap, and the harness's reason text verbatim (`CONTINUE_REASON`, held
+  equal to the block dict in `orchestrator.py`'s `stop_hook` by an AST read in
+  `tests/test_proto_worker.py`). At each stop the hook reads `research.json` off the
+  `documents` row and the turn's `tool_calls` count on the turn's connection, logs
+  `ev=nudge`, and never raises (`ev=stop_hook_failed`, allow). The count lands on
+  `turns.nudges` (004, additive); `demo.py` prints `nudges  <n>  (cap …)` under the reply
+  and in the criterion 1 row. Without the variable there is no `Stop` key at all, so a
+  browser turn that yields to ask the user still ends. **The export, for the eyeball and
+  the judge:** `make proto-export SESSION=<id> [OUT=<dir>]` (`apps/server/proto/export.py`
+  and `dev/export-project.ts`, the mirror of `proto-seed`) resolves the session's project
+  in Postgres and writes `research.json`, `tree.gedcomx.json` and every file under
+  `results/` and `images/` through `PgS3ProjectStore` (`list` plus `readBytes`, new on the
+  `ProjectStore` interface and both backends, in the conformance suite) to
+  `<OUT>/<project_id>/`, default `apps/server/proto/exports/` (gitignored). Exit 1 on any
+  failure, 2 for an unknown session.
+  **Run live 2026-09-20** on `bagley-father-1884` (`sess_451b7cf2537e404a`, turn
+  `fd5a99ce-39fa-4c0d-8027-a63384426814`), `make proto-demo-auto` from cold (the first
+  `up --build` died on a Docker Hub metadata timeout before anything ran; pre-pulling the
+  three base images fixed it): `turn_done` after **1804 s**, `receive_count` **2**, demo
+  PASS — criterion 3 0 / 0 / 0 with no tree tool attempted, criterion 4 122 calls with a
+  duration (longest 4,870 ms `wiki_search`, p50 27 ms, one call in flight at the kill),
+  reauth hits 0. Sections written from an all-zero baseline: sources 4, assertions
+  39, log 16, plans 1, questions 1, localities 1; `project.status` still `active`. 123 tool
+  calls (29 `record_read`, 16 `record_search`, 8 `Agent`), 8 subagent tasks, session tokens
+  126 / 468,041 / 4,006,664 / 162,892 (input / cache write / cache read / output) — about
+  **$5.40** at Sonnet 4.6 list; the row's `cost_usd` and `num_turns` are **0** because both
+  are the completing attempt's. **`nudges` 0 (cap 20): the hook was never consulted.**
+  Attempt 1 never yielded — the shim's `read_timeout` fired at 1,800,092 ms with a call
+  still in flight, so the step ceiling killed a run that was still working, with two
+  background `record-extractor` agents mid-persist. Attempt 2 resumed the SDK session and
+  "completed" in 10 ms with 0 model turns: CLI 2.1.220 found the two orphaned agents,
+  queued a notification about them under a meta continue prompt, answered it with a
+  synthetic no-response reply and returned a ResultMessage (read off the attempt-2
+  `session_entries` rows at the time; those rows went with `proto-down -v` and are not
+  attached); the worker's prompt was never written to the transcript, no Stop event
+  fired, and `run_turn` took the 0-turn result as the turn's completion. So the arm is
+  wired and inert on this fixture, and two things gate the D18 comparison: the arm's
+  per-attempt ceiling (one message is now a whole run, and this fixture needs more than
+  1800 s), and the resume path's handling of a 0-turn synthetic result after a kill with
+  background agents in flight (D14's kill landed on a main-thread `place_search`, with no
+  agents). The demo arm now runs at 7,200 s per attempt — `proto-demo-auto` exports
+  `READ_TIMEOUT_S`, which the compose file interpolates with a default of 1,800, and sizes
+  its `--deadline-s` to 2 × that + 300 — the lead's call, 2026-09-20, while `proto-demo`,
+  `proto-turn`, `proto-kill` and the D17 browser run keep the pinned 1,800 (a target's own
+  `up` recreates the shim at the default; after the arm exits its shim stays at 7,200
+  until the next `up`), and elasticmq's visibility timeout is 7,500 s (was 2,100, sized on
+  1,800 alone) because the shim never extends visibility mid-POST, so an attempt longer
+  than it is redelivered while still in flight; the second gate was probed the same day
+  under D14 (a foreground delegation is re-run; the background-agent case is still open). The export ran on the stopped project: 15 files — `research.json` 67,890 B and
+  `tree.gedcomx.json` 13,778 B (both pretty-printed by the export, not the bytes the tools
+  wrote), 12 `results/log_*.json` sidecars and `results/match-scores.jsonl`, no `images/`.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
   **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
   [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as
@@ -1455,8 +1603,8 @@ without whichever Bedrock refuses.
   criterion 3 PASS (0 / 0 / 0), no tree tool attempted (0 denies), and the turn ended at
   "handing off to `research-plan`" — **one queue message is one model turn**: the harness's
   `--autonomous` runs keep going because its Stop hook vetoes the yield, which the worker
-  does not have, so a D18 comparison needs either that hook or a driver that posts
-  "continue" until the run stops on its own. The D17 browser run is turn-by-turn anyway.
+  binds only on the D18 arm — `make proto-demo-auto`, the note under D18, is that hook
+  ported. The D17 browser run is turn-by-turn anyway.
   **Run live 2026-09-18** on `bagley-father-1884` (`sess_352cf5166b624d00`): stack up from
   cold with the `docker-compose` override, seeded, `turn_done` after **38 s**, `receive_count`
   1, outcome ok, **$0.26**, 7 SDK turns, tokens 13 / 51,543 / 128,347 / 1,837 (input /
