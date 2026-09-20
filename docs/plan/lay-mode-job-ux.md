@@ -1,7 +1,7 @@
 # Lay-mode job UX — the run is a job with a status feed
 
 > **Status:** NOT BUILT. Plan of 2026-09-20, written against HEAD `2fdaf32db`,
-> revised eight times the same day under adversarial critique; the eighth round came back
+> revised nine times the same day under adversarial critique; the eighth round came back
 > clean. Decisions 5 and 6 ruled 2026-09-20; six remain open for the lead.
 > Supersedes the hand-back literal ruled on 2026-09-07 (recorded on issues #2292,
 > #1104 and #2328) and the regex auto-continue built for issue #2653 by PR #2667.
@@ -68,7 +68,7 @@ ADR-0011's first question decides the placement: *can this be decided by reading
 documents alone?* A summary carrying `q_001`, `LCZ8-949` or `research.json` is
 decidable from the call's own arguments. Stated honestly: that ADR's writer-tool row
 scopes itself to "a value or a state transition in research.json / tree.gedcomx.json",
-and these two tools write nothing. The precondition test applies; the row does not
+and this tool writes nothing. The precondition test applies; the row does not
 name this case, so the plan cites the test, not the row.
 
 **What this does not fix, and the framing that has to stay honest.** Issue #2493's tally
@@ -77,15 +77,15 @@ all**: roughly ten schema ids and about forty-four local tree ids like `I2`, `S1
 `F15`. The vocabulary below catches the tree ids, which is the bulk of it. But its three
 verbatim examples are *inter-action narration* — "I can see I2 starting. Let me read the
 rest of Jennie's entry" — text the model emits between tool calls, which `hand_back` and
-`ask_user` never see, because they bind only the summary and the next-step line. So this
+`hand_back` never sees, because it binds only the summary and the next-step line. So this
 plan fixes the step summaries and leaves two residuals: inter-action narration, and the
 tool chips rendered above every paragraph. Do not claim the tools answer that issue's
 visible-chat half.
 
 ## 2. The mechanism
 
-Two MCP tools in the engine. Neither waits, neither blocks, neither holds a session
-open. Each validates, then returns the text the model must print.
+One MCP tool in the engine. It never waits, never blocks, never holds a session open.
+It validates, then returns the text the model must print.
 
 ```
 hand_back({ projectPath, summary_for_user, next_step, state? })
@@ -93,10 +93,27 @@ hand_back({ projectPath, summary_for_user, next_step, state? })
    | { ok: false, reason: "not_lay_language" | "not_completed" | "no_project",
        errors: string[] }
 
-ask_user({ projectPath, question })
-  -> { ok: true, state: "question", reply, instruction }
-   | { ok: false, reason: "not_lay_language" | "no_project", errors: string[] }
+  state: "working" (default) | "blocked" | "question" | "done"
 ```
+
+**One tool, not two.** An earlier draft split this into `hand_back` and a separate
+`ask_user`. They shared an envelope, a validator and a turn-ending semantic, which is
+what CLAUDE.md forbids twice over — "use generic tools with parameters to keep the tool
+count manageable". `research_append` is the precedent and it is a far harder case: one
+tool, a sixteen-value `section` enum, and a payload shape that depends on the section.
+Here nothing is conditional at all — both text slots are required in every state, and
+`next_step` carries the question when there is one, because what happens next *is* the
+user answering.
+
+The merge is also a correctness win under tool-search deferral. Cowork defers tool
+schemas above a size threshold, and a deferred tool the model never searches for produces
+the silent degradation this plan warns about elsewhere: the boundary simply never
+happens. One tool is loaded every step. A second tool would be one the model has to
+remember exists and go find, on exactly the rare turn it needs it — the worst possible
+distribution for a deferred schema. And the two states most likely to be confused,
+`blocked` and `question`, are the two the server already treats identically, so a wrong
+enum there costs nothing, where picking the wrong *tool* changed whether the run
+continued.
 
 **`state` is on the success envelope, not only on the call.** The server's arms branch
 on it, and the tool-result event cannot recover the call's arguments: it carries the
@@ -125,9 +142,9 @@ so a false completion claim cannot be made, rather than being detected afterward
 `blocked` is the third legitimate stop the router already has and the old three-class
 taxonomy had no slot for.
 
-`ask_user` carries no default answer. An earlier draft gave it one and nothing in the
-design applied it: the pause arm waits for a human, and the harness answers from its
-fixture, not from the argument.
+`state: "question"` carries no default answer. An earlier draft gave one to a separate
+ask tool and nothing in the design applied it: the pause arm waits for a human, and the
+harness answers from its fixture, not from the argument.
 
 ### How the paragraph reaches the user
 
@@ -142,7 +159,7 @@ printing the paragraphs and then a table of assertion ids. The observed failure 
 **addition, not omission**, which the control flow tolerates. But the plan does not
 rest on it. On the hosted web:
 
-- The two tools are **exempt from the event-stream summarisers**, so `reply` travels
+- The tool is **exempt from the event-stream summarisers**, so `reply` travels
   whole instead of truncated to 160 characters of `k=v`.
 - Their chips are **suppressed in the fold**.
 - If the turn produced **no main-thread assistant text at all**, the web renders
@@ -194,8 +211,9 @@ is deliberately unset for one refusal reason.
 2. The turn ended in an **error** → stop. The runner clears its continue signal on an
    error today for exactly this reason, and the web refuses Continue on an error bubble.
 3. The turn was **interrupted** → stop.
-4. **`ask_user` returned `ok: true`**, or `hand_back` returned `ok: true` with
-   `state: "blocked"` → pause.
+4. **`hand_back` returned `ok: true` with `state: "question"` or `state: "blocked"`**
+   → pause. The server does not distinguish the two, which is the clearest argument that
+   they never needed separate tools.
 5. **`hand_back` returned `ok: true` with `state: "done"`** → emit a job-done event and
    stop. The report and the notification are **PR K2's**, fired at most once per project.
    The once-per-project state cannot live in the runner: it runs inside the sandbox,
@@ -216,7 +234,7 @@ is deliberately unset for one refusal reason.
    implementer starts a thirty-step chain behind every REST reply and misattributes
    every caller's next answer. They gate **this arm only** — a waiting user message
    still runs.
-7. **No successful call to either tool** → **pause**. This is today's behaviour and it
+7. **No successful call to the tool** → **pause**. This is today's behaviour and it
    stays.
 
 Arms 2 through 5 and arm 7 end the turn without starting another; arm 1 starts the
@@ -255,15 +273,15 @@ spellings is already implemented three times in the repo. Two constraints:
 - **Main thread only, best-effort.** Delegated events are labelled by agent, and the
   runner already applies that guard to its text path. The labelling is keyed on a tool-use
   id the SDK types as optional, so a delegation without one goes unlabelled — the guard is
-  best-effort, not a guarantee. Neither tool is granted in any agent's `tools:`
+  best-effort, not a guarantee. The tool is granted in no agent's `tools:`
   frontmatter, which is the actual defence.
-- The prototype's `PreToolUse` hook already matches every tool, so once either tool has
+- The prototype's `PreToolUse` hook already matches every tool, so once `hand_back` has
   succeeded it denies every later call in that turn with "end your turn now". Arming
   happens in `PostToolUse` on a non-error result, so a refused call stays retryable.
   **The alpha gets no deny arm**: its matcher was deliberately narrowed after issue
   #1915 and three tests pin that narrowing. If the model keeps working after a hand-back
   there, the turn runs longer and the paragraph lands mid-turn; nothing breaks, because
-  the server keys on "did either tool succeed in this turn", not on it being last.
+  the server keys on "did the tool succeed in this turn", not on it being last.
 
 PR B's file list therefore includes the event emitter: the tool-result event must carry a
 **structured outcome** — the tool name, `ok`, and `state` read off the returned JSON —
@@ -302,7 +320,7 @@ trickle in one slot at a time**, with both signals accepted throughout.
 
 | PR | What | Slot | Blocked by | Docs it owns |
 |---|---|---|---|---|
-| A1 | The two tools, the envelope, dispatch, packaging, mock registration, the no-project test, smoke calls | none | nothing | new tool spec |
+| A1 | The tool, the envelope, dispatch, packaging, mock registration, the no-project test, smoke calls | none | nothing | new tool spec |
 | A2 | The lay-language module, its vocabulary table, the replay script, the measurement | none | nothing (decision 6 ruled 2026-09-20) | two guardrail-register rows |
 | B | Alpha server + web: arms 1–7, the injected text, event render, chips, bubble boundary, budget pause | none | A1 | hosted-web lay-mode paragraph; the REST opt-out paragraph |
 | C | e2e harness: classify on the result, keep the text fallback, relax the literal floor, fix the no-progress guard | none | A1 | e2e hand-back class table and form paragraph |
@@ -360,17 +378,17 @@ is gone. "Twelve after PR J" was a number this plan cannot make true.
 
 ### PRs A1 and A2 — the tools
 
-New: `src/tools/hand-back.ts`, `src/tools/ask-user.ts`, `src/utils/lay-language.ts`,
-`src/tool-names.ts`, `docs/specs/hand-back-tools-spec.md`, two test files,
+New: `src/tools/hand-back.ts`, `src/utils/lay-language.ts`, `src/tool-names.ts`,
+`docs/specs/hand-back-tool-spec.md`, `tests/tools/hand-back.test.ts`,
 `dev/try-hand-back.ts`, and a committed replay script under `eval/harness/scripts/`.
 
-Edit: `src/tool-schemas.ts`, `src/server.ts` (two dispatch arms through
-`writerToolResult`; these take `args` only, like every other project reader — a second
+Edit: `src/tool-schemas.ts`, `src/server.ts` (one dispatch arm through
+`writerToolResult`, taking `args` only, like every other project reader — a second
 parameter would take `undefined` in every unit run, because the mock calls the compiled
 export with one argument), `tests/tools/no-project.test.ts` (a mandatory site nothing
-derives), `src/tool-result.ts`, `manifest.json`,
+derives), `src/tool-result.ts`, `manifest.json` (50 tools becomes 51),
 `dev/smoke-calls.ts` (two offline steps, one accepting and one rejecting), `README.md`
-(two rows and both tool counts), and two rows in the guardrail register naming each
+(one row and both tool counts), and two rows in the guardrail register naming each
 precondition's binding environments and whether it ships enforcing or advisory.
 
 **The mock harness registration is not optional.** The unit harness registers a tool only
@@ -474,7 +492,7 @@ quoted file name, a next-step line naming a hyphenated skill, a local tree id, a
 
 The turn-end decision becomes arms 1 through 7 plus the transitional literal arm, keyed on tool **results** with per-turn
 flags set only on `ok: true`. Files: the runner and its hand-back module, the event
-emitter (structured outcome on the tool-result event, plus the two tools exempt from the
+emitter (structured outcome on the tool-result event, plus the tool exempt from the
 summarisers), the public REST module and the settings module for the two suppressors,
 and the web.
 
@@ -486,7 +504,7 @@ computes. The **web half is pinned in the same direction** — that test reads t
 module's source and asserts the exported regex is present with no flags, so deleting the
 now-unused export reds it on PR B's own commit. Both halves go in PR J.
 
-The web: delete the Continue button; suppress the two tools' chips; render `reply` as a
+The web: delete the Continue button; suppress the tool's chips; render `reply` as a
 new assistant message when a turn produced no main-thread text. **Keep the
 literal-stripper until PR J.** PR B already keeps the compiled regex, because the parity
 test reads the web module's source, so the stripper costs one call site — and deleting it
@@ -531,13 +549,14 @@ the agent to keep going until the status is completed, and its own comment says 
 flips when the prose lands. That is **PR E's edit, not C's** — C lands first, and the current
 wording is correct until a skill emits the tool.
 
-Two hazards. Both new tools must be excluded from the activity counter, or the no-progress
+Two hazards. The new tool must be excluded from the activity counter, or the no-progress
 guard is defeated by a bare hand-back loop for the full 40-nudge budget; and from the
 per-hundred-tool-calls denominator, or the pre-registered baseline on issue #1104 stops
 being comparable.
 
-The harness answers a `hand_back` with "Yes." as it does now, and an `ask_user` with the
-fixture's default, otherwise an instruction to decide and log the assumption. **"Yes." is
+The harness answers `state: "working"` with "Yes." as it does now, and a `question` or
+`blocked` with the fixture's default, otherwise an instruction to decide and log the
+assumption. **"Yes." is
 correct here and the server's injected text is not**, for a reason worth one sentence in
 the PR: the harness delivers its answer as a Stop-hook block reason to a model that never
 left the skill, so it resumes a live turn; the server injects a fresh user message, which
@@ -799,9 +818,9 @@ Proposed, not applied. Nothing is edited until you approve.
    in two of them the call was **denied** — "Claude Code is running in don't ask mode" —
    with the denial telling the model to route around it. Those runs were not under the
    hosted permission mode, so they bound the question rather than settle it: its
-   behaviour in a headless hosted turn is still unmeasured. The plan adds `ask_user`
-   anyway, for the precondition. The server should treat a turn ending on either as a
-   pause.
+   behaviour in a headless hosted turn is still unmeasured. The plan keeps its own
+   `state: "question"` anyway, for the precondition — the built-in validates nothing. The
+   server should treat a turn ending on either as a pause.
 8. **Five paid runs, one at a time.** The alternative is bundling prose edits into the
    PRs that already hold those slots, which mixes two reviews.
 
