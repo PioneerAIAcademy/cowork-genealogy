@@ -151,9 +151,11 @@ export async function getWikiApiUrl(principal: Principal): Promise<string> {
 }
 
 // OpenRouter key resolution is config-only (no env-var fallback, per the repo
-// rule): the server reads it here in every runtime. e2e and the hosted
-// sandbox bridge their env var into config.json at the orchestration layer —
-// see docs/specs/image-transcribe-tool-spec.md §6.5.
+// rule): the server reads it here in every runtime, and no tool reaches for it in
+// the environment. Each runtime fills the config before that: e2e and the hosted
+// sandbox write config.json at the orchestration layer, and the prototype's two
+// container entrypoints layer their own environment over it (hosted-config-env.ts) —
+// see docs/specs/image-transcribe-tool-spec.md, "Key provisioning across runtimes".
 export async function getOpenRouterApiKey(principal: Principal): Promise<string> {
   const config = await loadConfig(principal);
   const key = config.openRouterApiKey?.trim();

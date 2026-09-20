@@ -557,3 +557,143 @@ def test_disputed_parents_missing_info_handled(before_state, after_state, test, 
         "the skill wrote no question and said essentially nothing -- "
         f"neither honest branch was taken. Reply: {reply!r}"
     )
+
+
+# --- Tag-gated: a premise-verification question must name the fact (#1394) ---
+
+# Regression for issue #1394. When the objective's premise is an unverified
+# property of a name (here, whether a surname is a maiden or a married name),
+# question-selection must frame the verifying question so every branch names the
+# fact the objective needs -- "What was her maiden name?" -- not a bare yes/no
+# or either/or test of the name's property, whose "no" branch names nothing.
+#
+# This is a NEGATIVE guard: it rejects the prohibited property-test SHAPE only;
+# the judge (via judge_context) owns the positive "names the fact" class. The
+# signals are deliberately narrow and correctly grouped -- each marriage
+# alternative requires the adjacent word "marriage", and the bare yes/no form is
+# anchored to the start so a wh-question ("What was her maiden name?") does not
+# match. It must COEXIST with the #1471 confirm-or-refute framing, which tests a
+# disputed IDENTITY ASSERTION on the tree ("...parents of Z?") and names a fact:
+# that shape matches none of the signals below, and #1471's tests carry a
+# different tag (verifies-disputed-parents / disputed-parents-missing-info), so
+# this validator never runs on them.
+_PREMISE_PROPERTY_TEST_SIGNALS = (
+    r"\bmaiden or married\b",
+    r"\bmarried or maiden\b",
+    r"\bwhether\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
+    r"^\s*(?:was|is|did|does)\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
+    r"\bacquire\w*\b[^.?]*\bmarriage\b",
+    r"\b(?:through|by|upon)\s+marriage\b",
+)
+
+# A question that asks for the GATING FACT by value -- "what ... maiden name / maiden
+# surname / birth surname / birth name" -- names the fact even alongside a yes/no or a
+# marriage clause: a compound "Was X the birth surname, and if not, what was her maiden
+# name?" names the fact in its second branch, and "What maiden name did she use before her
+# marriage?" is a fact question, not a property test. Such a question escapes the guard.
+# An intervening parenthetical between the maiden/birth word and the name/surname word is
+# tolerated, so "birth (maiden) surname" escapes exactly as "birth surname" does -- the
+# parenthetical is a spelling of the same fact, not a different question (#1394 review).
+# Two deliberate narrowings keep the escape from rescuing a bad question:
+#   * the fact term must be the MAIDEN/BIRTH fact -- bare "surname" is NOT an escape term,
+#     because "what surname did she use after marriage?" / "what surname does the census
+#     list?" names the married or record surname, not the gating maiden fact, and must not
+#     let a "maiden or married name" clause in the same sentence off the hook;
+#   * a bare "Was 'Curtis' the maiden name of Caroline?" (no "what") is still caught.
+# The positive "names the fact" class beyond this escape stays the judge's job.
+_FACT_NAMING_ESCAPE = r"\bwhat\b[^.?]*\b(?:maiden|birth)\s+(?:\([^)]*\)\s+)?(?:name|surname)\b"
+
+
+def test_premise_question_names_fact(before_state, after_state, test):
+    """Tag-gated: when the objective's premise is an unverified surname origin,
+    the new question must name the fact sought, not test a property of the name
+    (maiden-vs-married) in a branch that names nothing (#1394)."""
+    if "premise-question-names-fact" not in test.get("tags", []):
+        pytest.skip("not a premise-question-names-fact scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question naming the fact the premise gates; none was added"
+    offenders = [
+        q.get("question")
+        for q in new
+        if not re.search(_FACT_NAMING_ESCAPE, (q.get("question") or "").lower())
+        and any(
+            re.search(sig, (q.get("question") or "").lower())
+            for sig in _PREMISE_PROPERTY_TEST_SIGNALS
+        )
+    ]
+    assert not offenders, (
+        "at least one written question is a bare property test of a name "
+        "(e.g. 'Was Curtis her maiden or married name?') whose branch names no "
+        "fact. A premise-verification question must be framed so every branch "
+        "names the fact the objective needs -- 'What was her maiden name?' -- "
+        "which subsumes the test. A disputed identity assertion already on the "
+        "tree may be tested directly (confirm-or-refute, #1471); a property test "
+        "of a name or date may not stand in for the fact. "
+        f"Offending question(s): {offenders!r}"
+    )
+
+
+# --- Tag-gated: a single-fact objective naming a paired fact must not be
+#     narrowed to one side (#1394 review -- ut_002 "parents" -> "father"). ----
+#
+# A "parents" objective is ONE fact, not two (SKILL.md Step 1c). Splitting it
+# into a father question or a mother question narrows the objective's scope.
+# Gated on `single-fact-objective` (only ut_002 carries it) and further
+# restricted to objectives that name a PAIRED fact ("parents"), so a non-paired
+# single-fact objective (a lone birth date) cannot trip it. It COEXISTS with
+# #1471 (verifies-disputed-parents) and the #1394 premise guard
+# (premise-question-names-fact): those carry different tags, so this never runs
+# on ut_014 or ut_016. The positive "restate the paired fact" class stays the
+# judge's job; this only rejects the one-side narrowing shape.
+_PAIRED_FACT_OBJECTIVE = r"\bparents\b"
+_SINGLE_PARENT_NARROWING = (
+    r"\bwho (?:was|were|is|are) the (?:father|mother)\b",
+    # possessive form: "Who was/is Patrick Flynn's father?" (name bounded to a
+    # single clause by [\w' -], so a comma/other clause can't be spanned).
+    r"\bwho (?:was|were|is|are) [\w' -]+'s (?:father|mother)\b",
+    r"\bthe (?:father|mother) of\b",
+    r"\b(?:father|mother)'s (?:identity|name)\b",
+    r"\bidentify the (?:father|mother)\b",
+)
+# A question that names BOTH sides (or "parents") is the correct restatement,
+# not a narrowing, so it escapes even if it also mentions one parent.
+_NAMES_PAIRED = r"\bparents\b|\bfather and mother\b|\bmother and father\b|\bboth parents\b"
+
+
+def test_single_fact_objective_not_narrowed(before_state, after_state, test):
+    """Tag-gated: a single-fact objective naming a PAIRED fact ("parents") must
+    be restated at that scope, not narrowed to one side -- two parents are one
+    fact (SKILL.md Step 1c). Gated on `single-fact-objective`; only fires when
+    the objective names a paired fact, so a non-paired single-fact objective
+    cannot trip it. Coexists with #1471 (verifies-disputed-parents) and the
+    #1394 premise guard (premise-question-names-fact) -- different tags, so it
+    never runs on ut_014 or ut_016. The positive case is the judge's; this
+    rejects only the one-side narrowing shape."""
+    if "single-fact-objective" not in test.get("tags", []):
+        pytest.skip("not a single-fact-objective scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    objective = ((after.get("project") or {}).get("objective") or "").lower()
+    if not re.search(_PAIRED_FACT_OBJECTIVE, objective):
+        pytest.skip("objective does not name a paired fact")
+    offenders = [
+        q.get("question")
+        for q in _new_questions(before, after)
+        if not re.search(_NAMES_PAIRED, (q.get("question") or "").lower())
+        and any(
+            re.search(sig, (q.get("question") or "").lower())
+            for sig in _SINGLE_PARENT_NARROWING
+        )
+    ]
+    assert not offenders, (
+        "a single-fact objective naming a paired fact (parents) was narrowed to "
+        "one side -- two parents are one fact; restate the objective ('Who were "
+        "the parents of X?') rather than asking only for the father or only the "
+        f"mother. Offending question(s): {offenders!r}"
+    )

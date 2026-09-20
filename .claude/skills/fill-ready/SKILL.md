@@ -568,8 +568,14 @@ designs without choosing, is **not Ready** regardless of its dependencies. A
 junior handed it either guesses at a decision that was the lead's, or stalls.
 
 These are not blocked on a task — they are blocked on a decision only the lead
-can make. **Label them `needs-decision`**: the work behind the fork is frequently
-junior, and reaching for `senior` on an item that is merely undecided sends a
+can make. **Label them `needs-decision` only when the fork passes `task-reviewer`'s
+four-way test**: one live option spends money the card does not budget, sets
+doctrine or precedent, adds hard-to-reverse surface, or touches a prior ruling.
+A fork whose every live option is $0, reversible, precedent-free and clear of any
+prior ruling is decided by the reviewer, not queued. Grep the comments for
+`Ruling` and `Decision` before labelling; a ruled question is applied, not
+re-asked. The work behind a real fork is frequently junior, and reaching for
+`senior` on an item that is merely undecided sends a
 sentence looking for a scarce person. Add `senior` **as well** when the work
 would still be hard after the answer — the two are orthogonal, and an item that
 is both carries both. Leave them in Backlog and name, in your report, the decision and the
