@@ -700,10 +700,13 @@ the `max_cost_usd` note in §6 step 5.
 
    **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
    literally and nothing else. Free-prose matching was set aside: the predicate it
-   replaced caught 15 of 41 real yields. `step` therefore reads **0** for as long as
-   `research/SKILL.md` does not emit that closing line — the correct result, not a
-   broken classifier. Do not loosen the pattern to make it non-zero, and note that markdown
-   emphasis around the line (`**Research complete.**`) does not match.
+   replaced caught 15 of 41 real yields. `step` reads **0** for as long as no skill that
+   closes the main thread's turn emits that closing line — `init-project` and
+   `question-selection` do since PR #2649, `research/SKILL.md` will with issue #2292 —
+   so a zero is the correct result, not a broken classifier, and a non-zero before
+   #2292 is a sub-skill's final line ending the turn, not a loosened pattern. Do not
+   loosen the pattern to make it non-zero, and note that markdown emphasis around
+   the line (`**Research complete.**`) does not match.
 
    **A declared blocker reads as `silent`.** `research/SKILL.md` names a genuine
    logged blocker as a third legitimate autonomous stop, but it names no next step,
@@ -1655,7 +1658,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
-| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume. A run that needed many pokes reads as weaker signal. |
+| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, including a well-formed `step` answered "Yes.". The weak-signal reading belongs to `silent` plus `false_completion` in `hand_back_classes`, not to this total. |
 | `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is 0 until the skill emits the hand-back line. See the Continue-nudge note in §6. |
 | `wall_clock_seconds` | Active/monotonic — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |

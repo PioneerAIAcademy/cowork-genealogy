@@ -23,10 +23,11 @@ always available. What was not available is *where* and *in what form*. The seam
 says which artifact had just been written, and therefore which skill's closing
 prose to look at; the hand-back class says whether that prose did its job.
 
-`step` reads 0 until #2292 lands the hand-back prose in `research/SKILL.md` —
-that is the correct result, not a broken classifier. Until then every yield is
-`silent`, and that figure is the pre-#2292 floor the post-#2292 `step` share is
-read against.
+`step` reads 0 for as long as no skill that closes the main thread's turn emits
+the hand-back line — `init-project` and `question-selection` do since PR #2649,
+`research/SKILL.md` will with #2292 — so a zero is the correct result, not a
+broken classifier. Every yield without that line is `silent`, and that figure is
+the pre-#2292 floor the post-#2292 `step` share is read against.
 
 ## Two sources
 
@@ -359,8 +360,9 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
             if tool_calls_total
             else "  (no tool calls counted — rates omitted)"
         ),
-        "  (step is 0 for as long as research/SKILL.md emits no closing line —"
-        " check it before reading 0 as expected)",
+        "  (step is 0 for as long as no skill emits the closing line at a turn end —"
+        " init-project and question-selection do, research/SKILL.md does not yet;"
+        " check them before reading 0 as expected)",
         "",
         "By seam — which artifact had just been written:",
     ]
