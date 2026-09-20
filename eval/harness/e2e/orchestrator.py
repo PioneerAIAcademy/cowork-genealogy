@@ -83,10 +83,15 @@ from e2e.mcp_health import (
 )
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
+    COUNTED_TERMINAL_REASONS,
+    classify_hand_back,
     derive_stop_reason,
+    hand_back_outcome,
+    project_completed,
     read_research_json,
     read_tree_json,
     should_continue_run,
+    terminal_reason,
 )
 from e2e.subagent_capture import collect_subagents, sdk_cache_dir
 from e2e import judge as judge_module
@@ -856,7 +861,7 @@ class FixtureCaps:
     # steps, so a stingy cap ends the loop before proof-conclusion. The
     # no-progress check (see should_continue_run) is the real backstop against
     # a genuinely idle agent; this cap only bounds the worst case.
-    max_continue_nudges: int = 20
+    max_continue_nudges: int = 40
 
 
 @dataclass
@@ -1560,6 +1565,9 @@ async def _run_agent(
     # bounded by max_continue_nudges + a no-progress check (see
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
+    # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING terminal ones,
+    # so it exceeds `continue_nudges`, which stays the nudge total.
+    hand_back_classes: dict[str, int] = {}
     last_nudge_activity_count = {"n": -1}
     # #941 — the genealogy MCP surface's health. `unavailable` latches True on
     # the first detector hit and is read by the Stop hook (so an in-flight
@@ -2019,6 +2027,26 @@ async def _run_agent(
         # known stall. Veto it (decision=block) and tell the agent to resume,
         # bounded by should_continue_run() so a stuck run still ends + fails.
         research = read_research_json(workspace)
+
+        # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
+        # is not invisible — it returns {} below and used to be counted nowhere.
+        # Only the agent's last words count, and only when no tool call landed after
+        # them: 2 of the 71 committed narration nudges have tool calls between the last
+        # TextBlock and the nudge, and post-#2292 a hand-back narrated before a batch of
+        # calls would otherwise read as `step` on a turn that ended silently.
+        last_text = None
+        for entry in reversed(narration):
+            # `blocked` is a hook-deny message, not the agent's words — and a
+            # denied call never lands in `tool_calls`, so it shares the same
+            # `tool_calls_before` and would otherwise read as the closing text.
+            if entry.get("kind") in ("harness", "blocked"):
+                continue
+            if entry.get("tool_calls_before") == len(tool_calls):
+                last_text = entry.get("text")
+            break
+        hand_back = classify_hand_back(last_text)
+        completed_now = project_completed(research)
+
         if not should_continue_run(
             research=research,
             nudges_used=continue_nudges["n"],
@@ -2027,7 +2055,26 @@ async def _run_agent(
             tool_count_at_last_nudge=last_nudge_activity_count["n"],
             mcp_unavailable=mcp_state["unavailable"],
         ):
+            # Terminal. Count the class only where the stop is a defect — `completed`
+            # is the successful path (134 of 181 committed runs) and `mcp_unavailable`
+            # is infrastructure (#941); attributing either to the agent's hand-back
+            # would make the rate dominated by runs that did the right thing.
+            reason = terminal_reason(
+                research=research,
+                nudges_used=continue_nudges["n"],
+                max_nudges=fixture.caps.max_continue_nudges,
+                mcp_unavailable=mcp_state["unavailable"],
+            )
+            if reason in COUNTED_TERMINAL_REASONS:
+                key, _ = hand_back_outcome(hand_back, project_is_completed=completed_now)
+                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
+            else:
+                key = f"terminal_{reason}"
+                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             return {}
+
+        counter_key, reply = hand_back_outcome(hand_back, project_is_completed=completed_now)
+        hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
         narration.append(
@@ -2036,22 +2083,35 @@ async def _run_agent(
                 "kind": "harness",
                 "text": (
                     f"continue-nudge {continue_nudges['n']}/"
-                    f"{fixture.caps.max_continue_nudges}: agent yielded before "
-                    "project.status=='completed'; instructing it to resume the loop."
+                    f"{fixture.caps.max_continue_nudges}: agent yielded "
+                    f"({counter_key}) before project.status=='completed'; "
+                    "instructing it to resume the loop."
                 ),
             }
         )
         _emit(
             f"[continue-nudge {continue_nudges['n']}/"
-            f"{fixture.caps.max_continue_nudges}] agent yielded; resuming"
+            f"{fixture.caps.max_continue_nudges}] agent yielded "
+            f"({counter_key}); resuming"
         )
+        # A well-formed hand-back is the skill doing what #2292 asks of it, and in an
+        # e2e run the harness IS the user — so it gets the researcher's answer, "Yes.",
+        # not a scolding. `reply` is None for a silent stop, which keeps the existing
+        # block-reason semantics below.
+        #
+        # This wording deliberately does NOT tell the agent to emit
+        # "Next: <step>. Continue?": research/SKILL.md:53-55 calls that a failure in
+        # autonomous mode, so instructing it here would recreate the harness-vs-skill
+        # contradiction this card's sequencing exists to prevent, with the sides
+        # swapped. #2292 flips this wording when it lands the prose.
+        if reply is not None:
+            return {"decision": "block", "reason": reply}
         return {
             "decision": "block",
             "reason": (
                 "You are mid-run in an autonomous /research session and the "
                 "project is not yet complete (project.status is not "
-                "'completed'). Do not stop to report progress or announce the "
-                "next step. Re-read research.json and invoke the next GPS "
+                "'completed'). Re-read research.json and invoke the next GPS "
                 "sub-skill now; keep going until project.status is "
                 "'completed' or you hit a genuine, logged blocker."
             ),
@@ -2590,6 +2650,12 @@ async def _run_agent(
         "message_usage": _message_usage,
         "thread_windows": _thread_windows,
         "continue_nudges": continue_nudges["n"],
+        # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING the
+        # terminal one, so a hook-terminated run carries one more than
+        # continue_nudges — but NOT universally: a run killed by the wall clock, the
+        # tool cap, inactivity or an error never reaches this hook and records no
+        # terminal class. Additive: branch on key presence, no schema bump.
+        "hand_back_classes": hand_back_classes,
         # Stall-resume + forensics (added with the progress watchdog). `timeline`
         # is [elapsed_seconds, kind] per SDK message — split structural vs stall
         # time and locate a no-progress gap without a session.jsonl. `caps` makes
