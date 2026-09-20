@@ -278,6 +278,51 @@ def _compose_default(value: str) -> tuple[str | None, str]:
     return (match.group(1), match.group(2)) if match else (None, value.strip())
 
 
+def test_tools_carries_the_per_user_config_the_stdio_fork_used_to_pass():
+    """With http the default, the shared service is where image_transcribe's key has to be:
+    the per-turn fork got it from the worker's env (PER_USER_ENV_KEYS) and the two headers
+    the service reads carry no config. Passed through, never a literal."""
+    env = _env(_service(_load(COMPOSE), "tools"))
+    for name in ("OPENROUTER_API_KEY", "OPENROUTER_MODEL", "WIKI_API_URL", "POP_STATS_URL"):
+        var, default = _compose_default(env[name])
+        assert var == name and default == "", f"{name} must pass the caller's value through, empty when unset"
+
+
+def test_worker_tool_server_default_is_http_and_matches_the_workers_own_fallback():
+    """The lead's call, 2026-09-20: an unqualified `make proto-up` runs the shared `tools`
+    service, the shape production runs, and TOOL_SERVER=stdio is the opt-out. Compose and
+    options.py must agree, or a worker started outside compose quietly does the other thing."""
+    from proto.worker import options
+
+    var, default = _compose_default(_env(_service(_load(COMPOSE), "worker"))["TOOL_SERVER"])
+    assert var == "TOOL_SERVER", "the interpolation must read the name the recipes and the lead export"
+    assert default == options.TOOL_SERVER_DEFAULT == "http"
+
+
+def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn_on_the_default():
+    """With http as the default a worker reaches `tools` over the compose network, so every
+    recipe that runs a REAL turn has to bring it up. proto-up-core deliberately does not (the
+    D3 smoke's stub arms never build worker options, so they never reach a tool server)."""
+    def brings_tools_up(target: str, seen: frozenset = frozenset()) -> bool:
+        """The recipe waits for `tools` itself, or delegates to one that does."""
+        assert target not in seen, f"{target} delegates in a cycle"
+        body = _recipe(target)
+        assert body, f"{target} has a recipe"
+        if any("tools" in _wait_services(line) for line in body if "--wait" in line):
+            return True
+        return any(
+            brings_tools_up(other, seen | {target})
+            for other in ("proto-up", "proto-turn", "proto-demo")
+            if f"$(MAKE) {other} " in "\n".join(body)
+        )
+
+    for target in ("proto-up", "proto-turn", "proto-demo", "proto-kill", "proto-demo-auto"):
+        assert brings_tools_up(target), \
+            f"{target} runs a real turn on the http default: it must wait for `tools` or delegate to one that does"
+    # The exception, with its reason: the D3 smoke's stub arms never build worker options.
+    assert not any(re.search(r"\btools\b", line) for line in _recipe("proto-up-core"))
+
+
 def test_shim_read_timeout_is_the_step_ceiling():
     """The compose default is the pinned 1800 s; the variable that overrides it is the one
     proto-demo-auto exports (7200 for the D18 arm), so a renamed interpolation would leave
