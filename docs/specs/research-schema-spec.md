@@ -575,7 +575,7 @@ equal to his record role.
 
 Measured over `eval/**/*final-research.json`, `fact_type: relationship`, and
 emitted by `measure_relationship_direction.py --axes` so it is re-derivable
-rather than pasted, measured at 0c1a393c0: requiring the two to agree refuses **62 of 280**
+rather than pasted, measured at 687264695: requiring the two to agree refuses **62 of 280**
 comparable assertions, of which **60 are correct data**; and **59 of 1146**
 personas carrying a relationship assertion carry more than one category. So no guard may require `relationship_type` to match
 `record_role`, and two earlier attempts to build one were abandoned without the
@@ -583,7 +583,7 @@ reason being written down. That is what this paragraph exists to prevent a third
 time.
 
 **Why the enforcement compares `value`'s prose, which is a choice.**
-`related_person_role` also names the other party and is present on 98.4% of
+`related_person_role` also names the other party and is present on 98.3% of
 relationship assertions, so a `(record_role x related_person_role)` composition
 rule is constructible. It was not chosen because that vocabulary is open — 60+
 spellings in the corpus — so it needs a role table somebody maintains, and

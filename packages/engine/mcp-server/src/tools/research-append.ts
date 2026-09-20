@@ -2111,8 +2111,8 @@ function validateRelationshipDirection(entry: Record<string, unknown>): void {
   // append and the update arm, folding `parentage` and
   // `familycomposition` INTO `relationship`, so those are INSIDE this
   // scope, not outside it.
-  // Genuinely outside: 77 assertions across 11 fact types still carry a
-  // categorised `relationship_type` (`marriage` 50, `parentchild` 11,
+  // Genuinely outside: 81 assertions across 11 fact types still carry a
+  // categorised `relationship_type` (`marriage` 54, `parentchild` 11,
   // `name` 4, …), re-derivable with
   // `measure_relationship_direction.py --domain`.
   // None would be refused today, so the measured rate is unchanged — but a

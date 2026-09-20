@@ -1523,7 +1523,7 @@ def test_rel_agreement_reads_position_not_mere_presence(rel_type, value):
     "rel_type,value,states",
     [
         # The live, reproducing defect: 5 sightings across the three
-        # current record-extraction run logs (three of the four), every one typed `child`.
+        # current record-extraction run logs (three of the five), every one typed `child`.
         ("child", "sibling of Grace (Whitaker) Tolman", "sibling"),
         # Its committed shape carries the `_inferred` suffix, which must be
         # stripped before the category lookup or all three are missed.

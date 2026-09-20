@@ -5522,7 +5522,7 @@ describe("research_append — relationship direction and the sibling value (#253
   // --- refuse ------------------------------------------------------------
 
   it("refuses a sibling typed as a child — the live, reproducing defect", async () => {
-    // 5 sightings across three of the four current record-extraction run logs, every
+    // 5 sightings across three of the five current record-extraction run logs, every
     // one `relationship_type: "child"` beside a `sibling of …` value. The
     // agent was never told `sibling` was legal, so it picked the nearest of
     // the three values it had been given.
@@ -5685,7 +5685,7 @@ describe("research_append — relationship direction and the sibling value (#253
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(errorsOf(r)[0]).toMatch(/states the subject is a child/);
+    expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a child/);
   });
 
   it("refuses a RETYPE into relationship that exposes a contradiction", async () => {
@@ -5721,7 +5721,7 @@ describe("research_append — relationship direction and the sibling value (#253
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(errorsOf(r)[0]).toMatch(/states the subject is a child/);
+    expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a child/);
   });
 
   it("skips an inherited Object key, rather than refusing it", async () => {
@@ -5746,7 +5746,7 @@ describe("research_append — relationship direction and the sibling value (#253
           },
         ],
       });
-      expect(r.ok, `${spelling}: ${r.ok ? "" : errorsOf(r)[0]}`).toBe(true);
+      expect(r.ok, `${spelling}: ${r.ok ? "" : errorsOf(r)?.join(" ")}`).toBe(true);
     }
   });
 
@@ -5775,10 +5775,10 @@ describe("research_append — relationship direction and the sibling value (#253
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(errorsOf(r)[0]).toMatch(/states the subject is a sibling/);
+    expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a sibling/);
   });
 
-  it("refuses a capitalised value — 2 of the 22 corpus refusals are spelled so", async () => {
+  it("refuses a capitalised value — the case-insensitive flag is load-bearing", async () => {
     const r = await appendRelationship("Sibling of Grace (Whitaker) Tolman", {
       relationship_type: "child",
       related_person_role: "sibling_1",
@@ -5843,7 +5843,7 @@ describe("research_append — relationship direction and the sibling value (#253
 
   it("does not reach past fact_type relationship", async () => {
     // The refusal-table row and the measurement script both scope to
-    // `fact_type: relationship`. 77 corpus assertions outside it carry a
+    // `fact_type: relationship`. 81 corpus assertions outside it carry a
     // categorised `relationship_type` — `marriage` most of them — and none
     // would be refused today, but a guard reaching a population nobody
     // measured is a rate nobody can trust.

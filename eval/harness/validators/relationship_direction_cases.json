@@ -15,7 +15,7 @@
     "callers supply.",
     "",
     "Measured counts refer to eval/**/*final-research.json plus",
-    "eval/runlogs/unit/** at 0c1a393c0; re-derive with",
+    "eval/runlogs/unit/** at 687264695; re-derive with",
     "eval/harness/scripts/measure_relationship_direction.py.",
     "",
     "`categories` is the relation-word -> category table, which is the OTHER",
@@ -47,7 +47,7 @@
     {
       "value": "sibling of Grace (Whitaker) Tolman",
       "states": "sibling",
-      "why": "the live defect, 6 sightings in the current unit run logs"
+      "why": "the live defect, 5 sightings in the current unit run logs"
     },
     {
       "value": "father named as Casper A. Battermiller on death certificate",
@@ -97,12 +97,12 @@
     {
       "value": "child of Hannah Grice (wife)",
       "states": "child",
-      "why": "a second party named in passing must not change the reading; a word-anywhere rule refuses 15 of these"
+      "why": "a second party named in passing must not change the reading. The pre-#2535 word-anywhere rule refused values of this shape, which is what `measure_relationship_direction.py --counterfactual` counts."
     },
     {
       "value": "Sibling of Grace (Whitaker) Tolman",
       "states": "sibling",
-      "why": "capitalised. Two of the 22 corpus refusals are spelled this way, and dropping the regexes' case-insensitive flag takes the measured rate 22 -> 20 silently. Python was pinned by an existing test; TypeScript was not, and the table could not see it because every other capitalised case here resolves to null."
+      "why": "capitalised, so the `i` flag is what lets the subject-role pattern match at all. No corpus refusal is capitalised today and dropping the flag moves the measured rate by zero, so this case is the ONLY thing that would notice -- and dropping it on either side reds that side of the pact. Python was pinned by an existing test; TypeScript was not, and the table could not see it because every other capitalised case here resolves to null."
     },
     {
       "value": "sibling of Lucas, named as one of Gerrit Witbeck's four children",
@@ -122,7 +122,7 @@
     {
       "value": "Father of groom Benjamin Christophersen",
       "states": "parent",
-      "why": "no `:` and no `named`, so this states the subject's own role -- the subject IS the father. Dropping the marker requirement to catch the role word here was measured and rejected: it lost 38 correct classifications, including `son of head of household Frank Ogletree`."
+      "why": "no `:` and no `named`, so this states the subject's own role -- the subject IS the father. Dropping the marker requirement to catch the role word here was measured and rejected: it lost 60 correct classifications over the four populations `measure_relationship_direction.py` scans, including `son of head of household Frank Ogletree`."
     }
   ],
   "categories": {
