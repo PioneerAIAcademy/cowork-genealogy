@@ -11,7 +11,7 @@ import pytest
 import httpx
 
 from proto import demo, turn
-from tests.test_proto_config import STEP_CEILING_S, _recipe
+from tests.test_proto_config import COMPOSE, STEP_CEILING_S, _env, _load, _recipe, _service
 
 IDS = ("turn_x", "sess_y", "proj_z")
 
@@ -183,7 +183,7 @@ def test_proto_demo_target_brings_the_stack_up_and_runs_the_script():
 
 def test_proto_test_runs_the_d17_and_demo_suites():
     body = "\n".join(_recipe("proto-test"))
-    for name in ("tests/test_proto_d17.py", "tests/test_proto_demo.py"):
+    for name in ("tests/test_proto_d17.py", "tests/test_proto_demo.py", "tests/test_proto_kill.py"):
         assert name in body, f"make proto-test does not run {name}"
 
 
@@ -197,8 +197,26 @@ def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
     assert cap, body
     harness = re.search(r"^\s*max_continue_nudges: int = (\d+)", ORCHESTRATOR.read_text(encoding="utf-8"), re.M)
     assert harness and cap.group(1) == harness.group(1) == "20", "the default cap is the harness's max_continue_nudges"
-    assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="\$\(ARGS\)"', body), body
+    assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="[^"]*\$\(ARGS\)"', body), body
     assert "AUTONOMOUS_MAX_NUDGES" not in "\n".join(_recipe("proto-demo")), "proto-demo itself stays a one-turn run"
+
+
+def test_proto_demo_auto_raises_the_per_attempt_ceiling_and_sizes_its_deadline_to_it():
+    """One message is a whole run on this arm, so it alone exports READ_TIMEOUT_S (7200, the
+    lead's call 2026-09-20) into the `up` that recreates the shim, and passes a deadline
+    spanning one shim-driven resume; every other target runs at the compose default."""
+    body = "\n".join(_recipe("proto-demo-auto"))
+    # `:-` on both sides: an explicitly empty READ_TIMEOUT_S means 7200 here as it means 1800
+    # in compose's fallback -- never sh arithmetic reading "" as 0 (`--deadline-s 300`)
+    # against a shim compose left at 1800.
+    ceiling = re.search(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:-(\d+)\}"', body)
+    assert ceiling, body
+    assert int(ceiling.group(1)) == 7200 > STEP_CEILING_S
+    assert _env(_service(_load(COMPOSE), "shim"))["READ_TIMEOUT_S"].startswith("${READ_TIMEOUT_S:-"), \
+        "compose must fall back on an empty READ_TIMEOUT_S too"
+    assert re.search(r'ARGS="--deadline-s \$\$\(\(2 \* READ_TIMEOUT_S \+ 300\)\) \$\(ARGS\)"', body), body
+    for target in ("proto-demo", "proto-turn", "proto-kill"):
+        assert "READ_TIMEOUT_S" not in "\n".join(_recipe(target)), f"{target} keeps the pinned 1800 s ceiling"
 
 
 def test_proto_export_target_requires_a_session_and_runs_the_script():

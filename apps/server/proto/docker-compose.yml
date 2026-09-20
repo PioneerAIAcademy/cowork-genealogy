@@ -224,9 +224,11 @@ services:
       WORKER_URL: http://worker:8080/turn
       WORKER_CONTAINER: proto-worker
       HTTP_CONNECTIONS: "2"
-      # The step ceiling, pinned. docker-compose.ceiling.yml lowers it for the
+      # The step ceiling: 1800 s unless the `up` environment sets READ_TIMEOUT_S
+      # (proto-demo-auto exports 7200 for the D18 arm; proto-demo, proto-turn and
+      # proto-kill run at the default). docker-compose.ceiling.yml lowers it for the
       # smoke's ceiling case and changes nothing else.
-      READ_TIMEOUT_S: "1800"
+      READ_TIMEOUT_S: "${READ_TIMEOUT_S:-1800}"
       BACKOFF_BASE_S: "5"
       BACKOFF_MAX_S: "300"
     depends_on:
