@@ -698,7 +698,9 @@ def test_options_pin_the_prototype_set(tmp_path):
 
 
 def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_argv(tmp_path):
-    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token")
+    # The stdio fork is the named opt-out since 2026-09-20; this is its shape.
+    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token",
+                    worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"})
     # A str is handed to the CLI as `--mcp-config <path>`; a dict would be json.dumps'd
     # onto argv, where the bearer and the S3 secret are visible in `ps`.
     assert isinstance(opts.mcp_servers, str) and opts.mcp_servers == str(tmp_path / "mcp.json")
@@ -739,8 +741,11 @@ def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
 
 
 def test_the_token_falls_back_to_the_worker_env_then_empty():
-    assert _server(_options())["env"]["FS_ACCESS_TOKEN"] == "env-token"
-    env = {k: v for k, v in WORKER_ENV.items() if k != "FS_ACCESS_TOKEN"}
+    """The stdio fork carries the token in its env; the http arm's same fallback is
+    asserted as `Authorization: Bearer env-token` in the http test below."""
+    stdio = {**WORKER_ENV, "TOOL_SERVER": "stdio"}
+    assert _server(_options(worker_env=stdio))["env"]["FS_ACCESS_TOKEN"] == "env-token"
+    env = {k: v for k, v in stdio.items() if k != "FS_ACCESS_TOKEN"}
     assert _server(_options(worker_env=env))["env"]["FS_ACCESS_TOKEN"] == ""
 
 
@@ -888,8 +893,15 @@ def test_tool_server_headers_require_a_project_id():
     assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
 
 
-def test_tool_server_defaults_to_stdio_and_refuses_an_unknown_mode(tmp_path):
-    assert _server(_options(config_dir=str(tmp_path)))["type"] == "stdio"
+def test_tool_server_defaults_to_http_and_refuses_an_unknown_mode(tmp_path):
+    # The lead's call, 2026-09-20: the shared `tools` service is what production runs, so
+    # it is what an unqualified worker runs. stdio is the named opt-out, and an empty
+    # value is "unset", not a third mode.
+    assert options.TOOL_SERVER_DEFAULT == "http"
+    assert _server(_options(config_dir=str(tmp_path)))["type"] == "http"
+    assert _server(_options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": ""}))["type"] == "http"
+    assert _server(_options(config_dir=str(tmp_path),
+                            worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"}))["type"] == "stdio"
     with pytest.raises(ValueError, match="stdio or http"):
         _options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "grpc"})
 

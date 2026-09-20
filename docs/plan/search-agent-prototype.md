@@ -1174,8 +1174,24 @@ without whichever Bedrock refuses.
   per request through an `AsyncLocalStorage` in `src/store/project-store.ts`, so a turn
   there runs the project tools against the same Postgres/S3 store as the worker; an
   unbound store that throws is installed as the process store, so nothing falls through
-  to the file backend. The default stays `stdio` pending the lead's call — flipping it
-  retires the per-turn fork the cost figures here were measured on.
+  to the file backend. **The default is `http` since 2026-09-20 (the lead's call), and
+  `TOOL_SERVER=stdio` is the opt-out.** The shared service is the shape production runs,
+  so it is the shape the remaining measurements should describe, and a per-turn fork
+  cannot exercise the risk that matters there — one process serving many patrons, which
+  is what the per-request store binding above exists to make safe. Two things went with
+  the flip. The `tools` service now receives the four per-user keys as environment
+  (`OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `WIKI_API_URL`, `POP_STATS_URL`) and
+  `src/http.ts` reads them over the mounted `config.json` exactly as `hosted-stdio.js`
+  reads them: the two headers carry no config, so without this `image_transcribe` would
+  have lost the key the per-turn fork used to pass it, silently, the moment the default
+  moved. And every recipe that runs a real turn must bring `tools` up — `proto-up`,
+  `proto-turn`, `proto-demo` do, `proto-kill` and `proto-demo-auto` delegate to one that
+  does, and `test_proto_config` walks that delegation; `proto-up-core` deliberately
+  leaves it down, which is safe only because the D3 smoke's stub arms never build worker
+  options. **Not re-measured on the new default:** every cost figure in this plan was
+  taken on the stdio fork, and the one http turn ever run was the `convert_calendar`
+  acceptance below — no research run with subagent delegations has gone through the
+  shared service, so the first D18 run is also its soak.
   **Re-measured 2026-09-18 after the second review, both modes 14/14:** stdio, turn 1
   $0.137 / turn 2 $0.058, `entries_seq_before` 0 → 16, output tokens 320 + 28 = the
   session's 348 (the check that replaced the tautology); http — the first turn through
