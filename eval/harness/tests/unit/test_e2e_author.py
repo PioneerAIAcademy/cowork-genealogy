@@ -844,6 +844,42 @@ def test_scaffold_writes_the_genre(fixtures_root):
     assert meta["genre"] == "strip"
 
 
+def test_validate_wires_the_genre_into_the_advice_it_prints(fixtures_root, tree, capsys):
+    """`author validate`'s own wiring, not just `format_suspect`'s branch.
+
+    `validate_fixture`'s call site is pinned by
+    `test_cli_wires_the_fixture_genre_into_the_advice_it_prints`; author.py's
+    two call sites were not. Dropping the third argument at both left the whole
+    unit suite green at 4110 passed while this CLI told record-hint reviewers
+    to edit `starting-tree.gedcomx.json` — the advice the genre forbids, and
+    the defect this PR exists to fix (#2306 review).
+    """
+    findings = {"findings": [_finding("f1", "Robert Smith")]}
+    _write_record_hint_fixture(fixtures_root, "rhgenre", tree, findings=findings)
+    assert author.main(["validate", "--slug", "rhgenre"]) == 0
+    err = capsys.readouterr().err
+    # Two record-hint phrasings exist ("**Do not edit either tree**" and
+    # "**Do not delete the person and do not edit either tree.**"); match the
+    # half both share.
+    assert "edit either tree" in err
+    assert "Remove it from starting-tree.gedcomx.json" not in err
+
+
+def test_validate_still_prints_strip_advice_for_a_strip_fixture(
+    fixtures_root, tree, capsys
+):
+    """The other direction: a call site hardcoding record-hint wording, or a
+    genre lookup that swallowed every fixture, passes the test above."""
+    findings = {"findings": [_finding("f1", "Robert Smith")]}
+    _write_record_hint_fixture(
+        fixtures_root, "stgenre", tree, findings=findings, genre="strip"
+    )
+    author.main(["validate", "--slug", "stgenre"])
+    err = capsys.readouterr().err
+    assert "starting-tree.gedcomx.json" in err
+    assert "edit either tree" not in err
+
+
 def test_validate_record_hint_skips_the_presence_mirror(fixtures_root, tree, capsys):
     # The finding names nobody in the snapshot — a hard error on a strip
     # fixture, the *design* of a record-hint one (the answer lives in a
