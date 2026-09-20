@@ -142,9 +142,12 @@ export async function rankSearchMatches(
   // ── 6+7. Build the stubs; fold in attachments if requested ────────────────
   // Every scored candidate, not a fixed top-N (#1212). `top` narrows only when
   // the caller asks for it: a host-side cap that discards rows the caller paid
-  // to search and score is the caller's decision, not this tool's. `ranked`
-  // replaces the inline `results` block on a subject-named search, so a row
-  // dropped here is a row the caller cannot see at all.
+  // to search and score is the caller's decision, not this tool's.
+  //
+  // On the STANDALONE tool this list IS the caller's view, so a row cut here is
+  // one they never see. Folded into `record_search` it is not: the rows are
+  // annotated onto `results`, which is never truncated, so a row beyond `top`
+  // still comes back — unscored, trailing the scored ones.
   const matches: RankedMatch[] =
     input.top === undefined
       ? scored.map((s, i) => toStub(s, i + 1))

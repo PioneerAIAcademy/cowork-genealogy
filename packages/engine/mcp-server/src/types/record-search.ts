@@ -354,12 +354,12 @@ export interface RecordSearchToolResponse {
   // handful of strings on every row (9.4% of inline row bytes, measured); hoisting
   // it here says the same thing once. The staged sidecar keeps the per-row copy.
   collections?: Record<string, string>;
-  // Present only when `subjectId` was supplied and ranking succeeded: the
-  // candidates re-ordered by FamilySearch match score against the subject,
-  // carrying `matchScore` / `matchRank` / `searchRank`. Every scored candidate,
-  // not a top-N (#1212) — and it carries the triage fields the inline row has
-  // (`events`, `collectionId`, `recordTitle`, `treeMatches`), which is what lets
-  // `results` be dropped rather than shipped alongside as a second copy.
+  // Present only when `subjectId` was supplied and ranking succeeded. Carries
+  // METADATA ONLY — `scoredCount`, `returnedCount`, the subject and the
+  // diagnostics — because the rows themselves are annotated in `results` above
+  // and ordered best first, not duplicated here. Every scored candidate is
+  // annotated, not a top-N (#1212). `annotateResultsWithRanking` deletes
+  // `matches` off this block once it has moved the scores onto the rows.
   ranked?: RankSearchMatchesResult;
   // Set only when ranking was requested and failed — the search itself
   // succeeded, and `results` is usable unranked. Ranking degrading must never

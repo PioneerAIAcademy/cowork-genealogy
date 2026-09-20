@@ -5,9 +5,6 @@
 // docs/specs/rank-search-matches-tool-spec.md.
 
 import type { RelativeTerms } from "./relative-terms.js";
-// Type-only, so the cycle with record-search.ts (which imports
-// RankSearchMatchesResult from here) is erased at compile time.
-import type { RecordSearchEvent, TreeMatch } from "./record-search.js";
 
 export interface RankSearchMatchesInput {
   /** Absolute path to the active project directory. */

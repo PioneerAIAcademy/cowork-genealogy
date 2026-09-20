@@ -146,13 +146,32 @@ class LogAppendError extends Error {}
  * xfail_reason): "not generalizable outside the US (post-1851 England & Wales
  * censuses do carry a relationship column)".
  *
- * MEASURED over the 3,392 distinct `notes` arguments of research_log_append in
+ * MEASURED over the 3,489 distinct `notes` arguments of research_log_append in
  * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
- * form): refusals fall 338 -> 196, and the 142 removed are 42.0% of every
- * refusal the rule made -- 128 of them the year, 14 the jurisdiction. Nothing
- * in that corpus is newly refused. Re-derive rather than quote these: the
- * corpus grows with every committed run, and an earlier pass of this same
- * docstring read 3,275/332/136 on a smaller one.
+ * form), measured at 772e67358: refusals fall 355 -> 202, and the 153 removed
+ * are 43.1% of every refusal the rule made -- 133 of them the year, 20 the
+ * jurisdiction. THE SPLIT RULE, because the figure is meaningless without it: a
+ * freed note counts as JURISDICTION when `censusMentions` bound it to a non-US
+ * threshold (a mention whose `columnFrom` is not 1880), and as YEAR otherwise.
+ * The obvious alternative -- counterfactual, "would it still be refused if every
+ * census were treated as US/1880?" -- splits the same 153 as 145 year and 8
+ * jurisdiction. The two rules disagree on exactly 12 notes, and all 12 are the
+ * same shape: a British census of 1881, 1891, 1901 or 1911, with a pre-1880
+ * BIRTH year elsewhere in the note ("1901 England census ... Robert Brierley
+ * b.1866"). None of them names a US census before 1880 -- such a note would be
+ * refused on both readings and never reach the freed set at all. What frees
+ * these is the year binding: `18[0-7]\d` matched the birth year under the old
+ * whole-note test, and bound to its own census (1901, past every threshold) it
+ * no longer does. The rule above files them under JURISDICTION because the
+ * census is non-US; the counterfactual files them under YEAR because that is
+ * what moved. That one shape is the whole 20-versus-8 gap. Neither rule is
+ * wrong; quoting a split without saying which is.
+ * Nothing in that corpus is newly refused. Re-derive rather than
+ * quote these: the corpus grows with every committed run, and two earlier
+ * passes of this same docstring read 3,275/332/136, 3,392/338/142 and
+ * 3,490/355/154 on other snapshots of it -- note the corpus can SHRINK as well
+ * as grow, because a re-run replaces a skill's run log rather than adding one. The stamp is there so a reader can tell what the number was
+ * true of, per tests/packaging/corpus-figures.test.ts's rule 3.
  *
  * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
  * leaning on it. `CENSUS_YEAR` spans 1600-1999 while the old gate was
@@ -168,9 +187,10 @@ class LogAppendError extends Error {}
  * The jurisdiction test is deliberately adjacency-bound and NOT a search of the
  * note, because most non-US words in this corpus are birthplaces on a US
  * schedule: "1850 US Census, Schuylkill County, PA ... born Ireland" is a US
- * census of Irish immigrants and must stay refused. 48 of the 196 surviving
- * refusals name a non-US place somewhere; read through, they are overwhelmingly
- * that shape, so a wider window would be a regression rather than a further fix.
+ * census of Irish immigrants and must stay refused. 52 of the 202 surviving
+ * refusals name a non-US place anywhere in the note (same corpus and stamp as
+ * above); read through, they are overwhelmingly that shape, so a wider window
+ * would be a regression rather than a further fix.
  *
  * Both are bound ADJACENTLY, never by scanning. The jurisdiction must sit in
  * the unbroken run of words touching the census token -- punctuation ends the
@@ -275,9 +295,14 @@ export function requirePre1880CensusHedge(notes: string): void {
   // Tie the year to the census it qualifies. When no year binds to a census
   // mention at all the note is undecidable on that axis, so fall back to the
   // old whole-note test rather than letting an unhedged 1870 household through
-  // on a phrasing the patterns above do not cover. On a fixed gate this branch
-  // only ever narrows: every note refused after this change was refused before
-  // it, so nothing that used to write can start failing.
+  // on a phrasing the patterns above do not cover. A note that reaches THIS
+  // branch gets its pre-change verdict, because the fallback below is the old
+  // gate verbatim and the `\bcensus\b` test above it is unchanged. That is a
+  // claim about this path and nothing wider: the rule as a whole does NOT only
+  // narrow -- a census named before 1800 is newly refused, and it is refused on
+  // the bound branch, never reaching this one. See the docstring's 1600-1799
+  // boundary, pinned by "refuses a census named before 1800, which the old
+  // whole-note test allowed".
   const bound = censusMentions(notes);
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
