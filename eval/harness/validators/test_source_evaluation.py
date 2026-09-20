@@ -296,3 +296,42 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
         "researcher; detaching a source is a tree-edit decision the "
         "researcher makes after reading the report."
     )
+
+
+def test_quality_detail_call_carries_detail_flag(tool_calls, test):
+    """D3 (#2225): the profile checklist rests on a call that asked for detail.
+
+    Tier 1, tag-gated on `quality-detail`. Deterministic half of
+    `ut_source_evaluation_q8p`: the judge grades how the checklist is
+    presented, which it cannot do honestly if the call never carried
+    `detail: true` -- without the flag the response has no `detail` block at
+    all (`PersonQualityDetail` is "present only when the caller passes
+    `detail: true`"), so `conflicts[]` is absent and the reply's checklist
+    could only have come from the summary `issues[]`.
+
+    Asserted here rather than in `judge_context` because it is a fact about
+    the call log, not a judgement about the prose -- unit-test-spec.md:707.
+
+    Two silent-wrong traps, both already paid for elsewhere in this repo:
+    - `tool_calls` is the run's resolved call log; reading `test["tool_calls"]`
+      returns [] and makes every run look compliant.
+    - tool names arrive fully qualified (`mcp__genealogy__person_quality`), so
+      equality-matching the bare name never fires -- use endswith().
+    """
+    if "quality-detail" not in (test.get("tags") or []):
+        pytest.skip("test does not declare quality-detail")
+
+    calls = [
+        c for c in (tool_calls or [])
+        if (c.get("tool") or "").endswith("person_quality")
+    ]
+    assert calls, (
+        "no person_quality call in the run -- the checklist this test grades "
+        "cannot have been sourced from the tool"
+    )
+    with_detail = [c for c in calls if (c.get("args") or {}).get("detail") is True]
+    assert with_detail, (
+        "person_quality was called without `detail: true`, so the response "
+        "carried no `detail` block: "
+        f"{[(c.get('args') or {}) for c in calls]}"
+    )

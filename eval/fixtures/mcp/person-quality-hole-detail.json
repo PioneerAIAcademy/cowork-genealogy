@@ -1,0 +1,49 @@
+{
+  "tool": "person_quality",
+  "description": "CONSTRUCTED for the christian-hole-quality scenario as source-evaluation sees it -- NOT the captured KD96-TV2 body (that is person-quality-hole-christian, 7 issues, used by check-warnings against the full tree). This one matches person-read-hole-attached-sources: four facts, Birth 1875 / Marriage 1898 / one Residence 1900 / Death 1945, no burial. Two issues, two D4 categories, so presentation order is gradeable. issues[] is ordered COMPLETENESS then VERIFIABILITY, matching CATEGORY_ORDER in person-quality.ts -- the REVERSE of the order the report must present -- so a reply that echoes the payload fails the ordering bar. The VERIFIABILITY issue hangs off the MARRIAGE, not the 1900 Residence: SD-HOLE-A is the 1900 Fairview census, which every positive Hole test reads and which bears on that residence, so claiming it has no tagged sources would contradict the skill's own sweep. detail.facts[] carries only the issue-bearing conclusions with sources: [] -- withholding FamilySearch's agrees verdict from nine tests graded on comparing records themselves. No entry emits agrees:false; that branch has never been observed upstream.",
+  "args": {
+    "personId": "KD96-TV2",
+    "detail": true
+  },
+  "response": {
+    "personId": "KD96-TV2",
+    "segment": "GREEN",
+    "overallScore": 0.97,
+    "issueCount": 2,
+    "categories": [
+      { "scoreType": "COMPLETENESS", "count": 1, "score": 0.96 },
+      { "scoreType": "VERIFIABILITY", "count": 1, "score": 0.95 },
+      { "scoreType": "CONSISTENCY", "count": 0, "score": 1.0 },
+      { "scoreType": "COHERENCE", "count": 0, "score": 1.0 }
+    ],
+    "issues": [
+      {
+        "sentence": "A marriage place is missing a city.",
+        "conclusionType": "MARRIAGE",
+        "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
+        "scoreType": "COMPLETENESS"
+      },
+      {
+        "sentence": "The marriage has no tagged sources.",
+        "conclusionType": "MARRIAGE",
+        "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
+        "scoreType": "VERIFIABILITY"
+      }
+    ],
+    "detail": {
+      "facts": [
+        {
+          "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
+          "conclusionType": "MARRIAGE",
+          "score": 0.91,
+          "issues": [
+            "A marriage place is missing a city.",
+            "The marriage has no tagged sources."
+          ],
+          "sources": []
+        }
+      ],
+      "conflicts": []
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_q8p",
+    "skill": "source-evaluation",
+    "name": "FamilySearch's profile checklist is reported after the findings, ordered by category and outside the count",
+    "type": "positive",
+    "description": "D3/D4/D5 of issue #2225. D3 as narrowed by the 2026-09-18 ruling grants this skill person_quality -- for its detail.conflicts[] source-conflict list, and its issues[] profile checklist. D4 fixes the presentation order COHERENCE, CONSISTENCY, VERIFIABILITY, COMPLETENESS and forbids inventing a score. D5 keeps backend artifacts out of the findings with one closing line giving the count omitted. The fixture's issues[] is deliberately ordered COMPLETENESS then VERIFIABILITY -- matching CATEGORY_ORDER in person-quality.ts, which is the REVERSE of D4 -- so a reply that echoes the payload in the order it arrived fails the ordering bar rather than passing it by accident.",
+    "tags": [
+      "index-discrepancy",
+      "doctrine",
+      "quality-detail",
+      "presentation-order"
+    ]
+  },
+  "input": {
+    "user_message": "Have a look at the sources attached to Christian P. Hole (KD96-TV2) — are they actually right, or is something mis-indexed?",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail"
+  ],
+  "judge_context": [
+    "Should call person_read with sourceDescriptions, record_read each source carrying a record ARK, and person_quality with detail: true for KD96-TV2.",
+    "Should report FamilySearch's profile checklist. The reply must contain both of the issues person_quality returned — the marriage place missing a city, and the marriage having no tagged sources — grouped under their scoreType. A reply that omits the checklist entirely, or never calls person_quality, fails this: the checklist is the capability under test, not an optional extra.",
+    "The two categories must appear in D4's order: VERIFIABILITY before COMPLETENESS. The tool returns them in the opposite order (COMPLETENESS first), so reproducing the payload's own order is a miss.",
+    "The checklist must sit AFTER the numbered findings and OUTSIDE the stated count. The count at the top refers to user-actionable findings only; a reply that counts the two checklist items among its findings, or numbers them alongside, has merged two things the skill keeps separate.",
+    "The checklist must read as suggestions rather than errors, and must carry no recommended action. FamilySearch's own framing is that these are improvements to the profile, not defects in a source.",
+    "No numeric score, band or percentage may be stated. overallScore is in the response and must not be surfaced — the thresholds behind it are unknown, so repeating it would pass a guess off as official.",
+    "The closing line about backend artifacts must give the number of KINDS omitted, not a count of occurrences. (D5 as ruled says 'the count omitted'; kinds is the reading that survives repeated internal ids recurring across records.)",
+    "The two real findings must still be reported as findings: the 1885 state census misattribution and the Minnesota death index discrepancy. The checklist is additive; it does not replace the audit.",
+    "Grade the reply against the four-fact profile person_read returned — Birth 1875, Marriage 1898, one Residence 1900, Death 1945, no burial — and its 2-issue checklist. The scenario README describes a 7-issue captured fixture used by a different suite; that is not what this test runs."
+  ]
+}
