@@ -2,15 +2,17 @@
   "project": {
     "id": "rp_001",
     "objective": "Sort out which of the conflicting vital records on Cornelius Brady's profile belong to him",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-09-19",
     "updated": "2026-09-19"
   },
   "researcher_profile": {
-    "experience_level": "intermediate",
+    "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "concise"
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [
     {
@@ -102,7 +104,10 @@
       "record_role": "child",
       "fact_type": "birth",
       "value": "baptised 4 June 1845",
-      "structured_value": { "year": "1845", "place": "Kilcormac, King's County, Ireland" },
+      "structured_value": {
+        "year": "1845",
+        "place": "Kilcormac, King's County, Ireland"
+      },
       "date": "1845-06-04",
       "date_certainty": "exact",
       "place": "Parish of Kilcormac, King's County, Ireland",
@@ -113,7 +118,9 @@
       "informant_bias_notes": null,
       "evidence_type": "direct",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_002",
@@ -132,7 +139,9 @@
       "informant_bias_notes": "If this is the same Owen Brady named as father in the 1845 baptism, he died more than two years before that child was born.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
   "person_evidence": [],

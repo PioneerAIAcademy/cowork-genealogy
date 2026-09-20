@@ -2,15 +2,17 @@
   "project": {
     "id": "rp_001",
     "objective": "Establish which of the two recorded deaths for Ambrose Keane is his, and recover a defensible birth year",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-09-19",
     "updated": "2026-09-19"
   },
   "researcher_profile": {
-    "experience_level": "intermediate",
+    "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "concise"
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [
     {
@@ -82,7 +84,10 @@
       "record_role": "head_of_household",
       "fact_type": "birth",
       "value": "born about 1785",
-      "structured_value": { "year": "1785", "place": "Ireland" },
+      "structured_value": {
+        "year": "1785",
+        "place": "Ireland"
+      },
       "date": "~1785",
       "date_certainty": "estimated",
       "place": "Ireland",
@@ -93,7 +98,9 @@
       "informant_bias_notes": "Derived from a stated age of 65, not from a birth record.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
   "person_evidence": [],
