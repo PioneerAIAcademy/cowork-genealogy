@@ -1607,7 +1607,11 @@ without whichever Bedrock refuses.
   renders as `$0.00` and `0 SDK turns` beside the harness's real `$5.29` and `90 SDK
   turns` and reads as a 100% cost advantage. The 2026-09-20 run above is exactly that
   shape (0 / 0 / 1804 s against about $5.40 of tokens), so on this arm the marker is the
-  common case, not an edge one. **Both sides are graded by that one instrument in that
+  common case, not an edge one — and a marker alone would have left the honest figure
+  nowhere on the page, so **both records also carry the token counts**, which ARE summed
+  over every attempt. They are the one spend figure the two sides can be compared on when
+  the marker fires; the harness's come from its run log's nested `usage` under that
+  block's own key names (`cache_creation_input_tokens`), not the worker's column names. **Both sides are graded by that one instrument in that
   run, the harness's committed tree included.** Its committed verdict came from a judge
   call at another time, on another judge build, so it is printed beside the fresh one and
   flagged when the two disagree rather than read out of the log as though it were

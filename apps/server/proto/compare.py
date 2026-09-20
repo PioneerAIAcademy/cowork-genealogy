@@ -42,7 +42,7 @@ SERVER_DIR = Path(__file__).resolve().parents[1]
 if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
-from proto import audit, export, grade  # noqa: E402
+from proto import audit, export, grade, turn  # noqa: E402
 
 ROOT = export.ROOT
 E2E_DIR = grade.E2E_DIR
@@ -55,7 +55,14 @@ RUN_DATE = re.compile(r"^run-(\d{4}-\d{2}-\d{2})_")
 
 #: The turn columns the prototype's record is built from. ``cost_usd`` and ``num_turns``
 #: are the COMPLETING attempt's, so a turn resumed after a kill reports 0 for both.
-TURN_COLUMNS = ("cost_usd", "num_turns", "duration_ms", "nudges")
+# The token columns come last so the four above keep their indices; `_at` reads any of
+# them by name rather than by a number that moves when this tuple does.
+TURN_COLUMNS = ("cost_usd", "num_turns", "duration_ms", "nudges", *turn.TOKEN_COLUMNS)
+
+#: The same four quantities as ``turn.TOKEN_COLUMNS``, under the names a harness run
+#: log's nested ``usage`` block uses. Both sides print them, because on a resumed turn
+#: they are the ONLY honest spend figure either side has in common.
+HARNESS_TOKEN_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
 TURNS_SQL = f"SELECT {', '.join(TURN_COLUMNS)} FROM turns WHERE session_id = %s ORDER BY enqueued_at"
 
 
@@ -231,20 +238,36 @@ def _total(rows: list[tuple], index: int) -> Any:
     return sum(values) if values else None
 
 
+def _tokens(values: list[Any]) -> str:
+    """``tokens in/cache-write/cache-read/out``, the four in ``turn.TOKEN_COLUMNS`` order.
+    Printed on BOTH records: a resumed turn reports ``cost_usd`` 0 (its completing
+    attempt's), while the tokens are summed over every attempt's assistant entries, so
+    they are what the two sides can honestly be compared on when the marker fires."""
+    return "tokens " + "/".join("?" if v is None else f"{int(v):,}" for v in values)
+
+
 def harness_record(data: dict[str, Any]) -> str:
-    """Cost, wall clock and tool calls, off a committed run log's own usage block."""
+    """Cost, wall clock, tool calls and tokens, off a committed run log's own usage
+    block; the tokens are in its nested ``usage``."""
     usage = data.get("usage") or {}
+    nested = usage.get("usage") or {}
     return (
         f"{_money(usage.get('total_cost_usd'))}  {_seconds(usage.get('duration_ms'))}  "
         f"{len(data.get('tool_calls') or [])} tool calls  "
-        f"{usage.get('num_turns', '?')} SDK turns  {usage.get('continue_nudges', '?')} nudges"
+        f"{usage.get('num_turns', '?')} SDK turns  {usage.get('continue_nudges', '?')} nudges  "
+        f"{_tokens([nested.get(name) for name in HARNESS_TOKEN_KEYS])}"
     )
 
 
 #: Appended to the prototype's record when a turn ran but recorded no cost. Without it
 #: the row prints ``$0.00`` / ``0 SDK turns`` beside the harness's real figures and reads
-#: as a 100% cost advantage, which is the one number the comparison exists to show.
-UNDER_REPORTED = "  (cost/SDK turns under-reported: a resumed turn records its completing attempt only)"
+#: as a 100% cost advantage, which is the one number the comparison exists to show. The
+#: tokens beside it are the figure that stays true on that turn, which is why both
+#: records carry them.
+UNDER_REPORTED = (
+    "  (cost/SDK turns under-reported: a resumed turn records its completing attempt "
+    "only -- the tokens are every attempt's)"
+)
 
 
 def proto_record(turn_rows: list[tuple], tool_call_rows: list[dict[str, Any]]) -> str:
@@ -254,14 +277,20 @@ def proto_record(turn_rows: list[tuple], tool_call_rows: list[dict[str, Any]]) -
     so they render as ``$0.00`` and ``0 SDK turns`` rather than ``$?``. A row with a
     duration and no cost is marked on the line itself."""
     a = audit.audit(tool_call_rows, anchor="/project")
-    cost = _total(turn_rows, 0)
-    turns = _total(turn_rows, 1)
+
+    def _at(name: str) -> Any:
+        return _total(turn_rows, TURN_COLUMNS.index(name))
+
+    cost, turns, nudges = _at("cost_usd"), _at("num_turns"), _at("nudges")
     line = (
-        f"{_money(cost)}  {_seconds(_total(turn_rows, 2))}  "
+        f"{_money(cost)}  {_seconds(_at('duration_ms'))}  "
         f"{a.rows} tool calls  {turns if turns is not None else '?'} SDK turns  "
-        f"{_total(turn_rows, 3) if _total(turn_rows, 3) is not None else '?'} nudges"
+        f"{nudges if nudges is not None else '?'} nudges  "
+        f"{_tokens([_at(name) for name in turn.TOKEN_COLUMNS])}"
     )
-    return line + UNDER_REPORTED if any(r[2] and not r[0] for r in turn_rows) else line
+    ran_without_cost = any(r[TURN_COLUMNS.index("duration_ms")] and not r[TURN_COLUMNS.index("cost_usd")]
+                           for r in turn_rows)
+    return line + UNDER_REPORTED if ran_without_cost else line
 
 
 #: A committed run log records ``agent_model`` but not which judge model graded it, so a
