@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_citation_020",
+    "skill": "citation",
+    "name": "Refine a Find A Grave memorial citation with the reliability half (src_002)",
+    "type": "positive",
+    "description": "src_002 is a Find A Grave memorial for Bridget Fallon. A memorial is a compiled, contributor-authored page, not an original record — its reliability depends on who made it and what they based it on. The extended FindAGrave template #2542 adds carries the contributor, the created/last-modified date, and the source of the source. The rough before-state citation names FindAGrave.com as creator; the contributor, the last-modified date, and a stated source of the source (an obituary) are all on file.",
+    "tags": ["findagrave", "memorial", "reliability", "src_002"]
+  },
+  "input": {
+    "user_message": "Refine the citation for src_002, Bridget Fallon's Find A Grave memorial.",
+    "scenario": "citation-authored-sources"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "The citation must follow the Find A Grave pattern — Find A Grave, memorial [number], [person] ([dates]), [cemetery], [location] — and then carry the reliability half: the contributor (Mark T. Steward), the created/last-modified date (last modified 3 February 2019), and the source of the source (the 1921 obituary in the Dubuque Telegraph-Herald). All three are on file in the before-state and must appear.",
+    "who should not be 'FindAGrave.com' (the repository/access point). A memorial is contributor-authored; the citation must make clear who created the page and what it was based on, which is the point of the reliability half.",
+    "A memorial cited with only its number, person, cemetery and access date — omitting the contributor, the date, and the stated source of the source — fails Mills's reliability test on exactly the shape this system most often produces.",
+    "Source fidelity: the contributor, the last-modified date, and the obituary source of the source are all on file, so grade them being carried. Do not invent a contributor, a date, or a source of the source not on file (in persisted fields or output.text_response); where a memorial does not state one, an unknown-marker is correct.",
+    "Must NOT change source_classification, must NOT create a new source entry (refine src_002 in place), and must call validate_research_schema after writing."
+  ]
+}
