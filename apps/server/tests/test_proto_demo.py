@@ -4,6 +4,7 @@ rendering, the verdict, and the make target that runs it. No Postgres, no stack,
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pytest
 
@@ -44,9 +45,11 @@ def test_acceptance_queries_cover_the_criteria_and_bind_only_their_ids():
         assert sql.lstrip().upper().startswith("SELECT"), label
         assert sql.count("%s") == len(params), label
         assert set(params) <= set(IDS), label
-    # criterion 1 reads the redelivery counter D17 judges receive_count >= 2 from
+    # criterion 1 reads the redelivery counter D17 judges receive_count >= 2 from, and the
+    # D18 arm's veto count
     c1 = next(sql for label, sql, _ in qs if label.startswith("criterion 1"))
     assert "receive_count" in c1 and "completed_at" in c1 and "FROM turns" in c1
+    assert re.search(r"\bnudges\b", c1), "the turns row shows whether the Stop hook vetoed anything"
     # the token query names every column turn.py sums
     tok = next(sql for label, sql, _ in qs if label.startswith("tokens"))
     assert all(c in tok for c in turn.TOKEN_COLUMNS)
@@ -79,6 +82,14 @@ def test_render_query_substitutes_each_placeholder_once_even_when_a_param_contai
 def test_render_query_says_no_rows_rather_than_nothing():
     out = demo.render_query("l", "SELECT 1 WHERE false", (), [])
     assert out.splitlines()[-1].strip() == "(no rows)"
+
+
+def test_nudges_line_shows_the_rows_count_and_the_cap_or_off():
+    assert demo.nudges_line(3, "20") == "nudges      3  (cap 20)"
+    assert demo.nudges_line(0, None) == "nudges      0  (cap off)"
+    assert demo.nudges_line(0, "0") == "nudges      0  (cap off)", "AUTONOMOUS_MAX_NUDGES=0 is off"
+    assert demo.nudges_line(0, " ") == "nudges      0  (cap off)"
+    assert demo.nudges_line(None, "20") == "nudges      ?  (cap 20)", "a row with no count (a turn that never completed)"
 
 
 # ── verdict ─────────────────────────────────────────────────────────────────────────
@@ -174,3 +185,25 @@ def test_proto_test_runs_the_d17_and_demo_suites():
     body = "\n".join(_recipe("proto-test"))
     for name in ("tests/test_proto_d17.py", "tests/test_proto_demo.py"):
         assert name in body, f"make proto-test does not run {name}"
+
+
+ORCHESTRATOR = Path(__file__).resolve().parents[3] / "eval" / "harness" / "e2e" / "orchestrator.py"
+
+
+def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
+    body = "\n".join(_recipe("proto-demo-auto"))
+    # raw make text: $$ is the shell's $; `-20` (not `:-20`) so an explicit empty value is honoured as given
+    cap = re.search(r'export AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-(\d+)\}"', body)
+    assert cap, body
+    harness = re.search(r"^\s*max_continue_nudges: int = (\d+)", ORCHESTRATOR.read_text(encoding="utf-8"), re.M)
+    assert harness and cap.group(1) == harness.group(1) == "20", "the default cap is the harness's max_continue_nudges"
+    assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="\$\(ARGS\)"', body), body
+    assert "AUTONOMOUS_MAX_NUDGES" not in "\n".join(_recipe("proto-demo")), "proto-demo itself stays a one-turn run"
+
+
+def test_proto_export_target_requires_a_session_and_runs_the_script():
+    body = "\n".join(_recipe("proto-export"))
+    assert re.search(r'test -n "\$\(SESSION\)"', body), "refuse without SESSION rather than export nothing"
+    assert "proto/export.py" in body and "--session '$(SESSION)'" in body
+    assert re.search(r"\$\(if \$\(OUT\),\s*--out '\$\(abspath \$\(OUT\)\)',\s*\)", body), \
+        "OUT is resolved against the repo root before the cd into apps/server"

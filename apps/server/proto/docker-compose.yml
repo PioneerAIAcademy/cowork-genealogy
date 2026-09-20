@@ -104,6 +104,9 @@ services:
       # The model. Passed through from the host environment at `up` time, never a
       # literal here; the stub arms run with it empty.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # image_transcribe's OCR provider, forwarded to the per-turn tool server (the
+      # hosted config bridges it the same way); env.sh exports it from eval/.env.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
       # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
       # this file (proto/env.sh writes it; FamilySearch access tokens live an hour, so
@@ -117,6 +120,9 @@ services:
       # The e2e harness's tree-read block for fixture runs (bare MCP tool names, comma-
       # separated; proto-demo exports the harness's five). Empty: no block.
       BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
+      # D18's autonomous arm: the worker's Stop hook vetoes the model's voluntary yield up
+      # to this many times per turn (proto-demo-auto exports the harness's 20). 0: off.
+      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
       ENGINE_DIR: /opt/genealogy/engine
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project

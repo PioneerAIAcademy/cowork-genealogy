@@ -536,6 +536,25 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/demo.py $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
 
+# D18: the autonomous arm of proto-demo. One queue message is one model turn, and an
+# autonomous /research run yields after each sub-skill step; the worker's Stop hook
+# (AUTONOMOUS_MAX_NUDGES > 0) vetoes that yield the way the e2e harness's does, bounded by
+# the harness's cap (max_continue_nudges, 20) and its no-progress check, so the fixture
+# runs to project.status == "completed" in one turn. `AUTONOMOUS_MAX_NUDGES=5 make
+# proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run.
+.PHONY: proto-demo-auto
+proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 20) so one turn runs the fixture to completion; FIXTURE=… ARGS=…
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-20}"; \
+	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="$(ARGS)"
+
+# D18: a session's project out of the store into files -- research.json, tree.gedcomx.json,
+# results/ and images/ under OUT/<project_id>/ (OUT default apps/server/proto/exports,
+# gitignored) -- for the quality eyeball and the e2e judge. Needs the stack up.
+.PHONY: proto-export
+proto-export: $(ENGINE_DEPS) ## D18: export SESSION=<id>'s project (research.json, tree, results/, images/) to OUT/<project_id>/ (default apps/server/proto/exports)
+	@test -n "$(SESSION)" || { echo "proto-export: SESSION=<id> is required" >&2; exit 2; }
+	cd apps/server && uv run python proto/export.py --session '$(SESSION)' $(if $(OUT),--out '$(abspath $(OUT))',)
+
 # ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
 # The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
 # the compose postgres/elasticmq instead; proto-drive is the D13 acceptance driver,
