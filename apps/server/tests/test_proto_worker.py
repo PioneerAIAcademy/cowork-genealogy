@@ -1121,20 +1121,31 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
     hook = _stop(state, nudged=nudged)
     assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
     assert nudged == [1]
-    # The reason is the orchestrator's, read off its source: the dict literal whose
-    # "decision" is "block" carries the same "reason" constant.
+    # The reason is the orchestrator's, read off its source: among the dict literals
+    # whose "decision" is "block", the one whose "reason" is a literal string is the
+    # silent-stop fallback the worker mirrors. Since 2026-09-20 a second such dict
+    # carries the "Yes." reply to a well-formed hand-back, whose reason is a NAME
+    # (`reply`) rather than a constant, so it is skipped here by shape and named in
+    # CONTINUE_REASON's comment — if that branch ever spells a literal too, this
+    # collects two and fails, which is the re-sync this test exists to force.
     tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
-    reasons = [
-        next(v.value for k, v in zip(node.keys, node.values)
-             if isinstance(k, ast.Constant) and k.value == "reason" and isinstance(v, ast.Constant))
-        for node in ast.walk(tree)
+    blocks = [
+        node for node in ast.walk(tree)
         if isinstance(node, ast.Dict) and any(
             isinstance(k, ast.Constant) and k.value == "decision"
             and isinstance(v, ast.Constant) and v.value == "block"
             for k, v in zip(node.keys, node.values)
         )
     ]
-    assert reasons == [options.CONTINUE_REASON], "the worker's reason text must stay the harness's, verbatim"
+    assert blocks, "the orchestrator no longer vetoes a stop with a block dict: re-read its stop_hook"
+    reasons = [
+        v.value
+        for node in blocks
+        for k, v in zip(node.keys, node.values)
+        if isinstance(k, ast.Constant) and k.value == "reason" and isinstance(v, ast.Constant)
+    ]
+    assert reasons == [options.CONTINUE_REASON], \
+        "the worker's reason text must stay the harness's silent-stop fallback, verbatim"
 
 
 def test_the_stop_hook_counts_nudges_and_allows_once_the_cap_is_spent():

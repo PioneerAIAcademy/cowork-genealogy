@@ -1508,12 +1508,21 @@ without whichever Bedrock refuses.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
   **The autonomous arm, built 2026-09-20.** `make proto-demo-auto [FIXTURE=…] [ARGS=…]`
-  is `proto-demo` with `AUTONOMOUS_MAX_NUDGES` exported — default 20, the harness's
-  `max_continue_nudges`; `AUTONOMOUS_MAX_NUDGES=5 make proto-demo-auto` lowers it, the
+  is `proto-demo` with `AUTONOMOUS_MAX_NUDGES` exported — default 40, the harness's
+  `max_continue_nudges` (20 when the arm was built; the harness raised it 2026-09-20
+  and the arm's parity test failed on the merge, which is what it is for); `AUTONOMOUS_MAX_NUDGES=5 make proto-demo-auto` lowers it, the
   compose default is 0 (off), and `proto-demo` itself stays a one-turn run. With the cap
   above 0 the worker binds a `Stop` hook (`apps/server/proto/worker/options.py`,
   `make_stop_hook`) that vetoes the model's voluntary yield exactly as the harness's does:
-  the same predicate (`should_continue_run`, ported from
+  the same predicate and the same veto text for a **silent** stop — with one delta,
+  recorded because it will grow: since 2026-09-20 the harness also answers a
+  *well-formed* hand-back (one that names its next step and asks) with the
+  researcher's "Yes." rather than the veto (`classify_hand_back` / `hand_back_outcome`,
+  issues #2328 and #2292). The worker mirrors the silent-stop fallback only: the
+  classifier reads the harness's in-process narration list, and #2292's prose half has
+  not landed, so copying a moving wording would drift the moment it does. Revisit when
+  #2292 lands. The rest is as the harness has it —
+  (`should_continue_run`, ported from
   `eval/harness/e2e/stop_checker.py` — allow once `project.status == "completed"`, once
   the cap is spent, or when the previous nudge produced no tool call, the no-progress
   check), the same 20 cap, and the harness's reason text verbatim (`CONTINUE_REASON`, held

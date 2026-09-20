@@ -542,7 +542,7 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # D18: the autonomous arm of proto-demo. One queue message is one model turn, and an
 # autonomous /research run yields after each sub-skill step; the worker's Stop hook
 # (AUTONOMOUS_MAX_NUDGES > 0) vetoes that yield the way the e2e harness's does, bounded by
-# the harness's cap (max_continue_nudges, 20) and its no-progress check, so the fixture
+# the harness's cap (max_continue_nudges, 40) and its no-progress check, so the fixture
 # runs to project.status == "completed" in one turn. `AUTONOMOUS_MAX_NUDGES=5 make
 # proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run. One message
 # is now a whole run, so this arm alone raises the shim's per-attempt ceiling to 7200 s
@@ -553,7 +553,7 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
 proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 20) and a 7200 s per-attempt ceiling (READ_TIMEOUT_S) so one turn runs the fixture to completion; FIXTURE=… ARGS=…
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-20}"; \
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
 	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-7200}"; \
 	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((2 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
