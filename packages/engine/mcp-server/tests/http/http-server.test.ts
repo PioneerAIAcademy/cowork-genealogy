@@ -1,12 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-// Acceptance check for D16 (PLAN.md, "Acceptance check" items 1-5): the tool
-// server over Streamable HTTP, started in-process on port 0 and driven with the
-// SDK's own client transport.
+// Acceptance check for D16 (items 1, 3, 4, 5) and for per-request store scoping
+// (item 2, split three ways): the tool server over Streamable HTTP, started
+// in-process on port 0 and driven with the SDK's own client transport. The
+// store behind each X-Genealogy-Project-Id is a ScopedFsStore under one temp
+// root, so no compose stack is needed; tests/http/http-server-pg.test.ts runs
+// the isolation case against the real PgS3ProjectStore.
 
 // Item 4 needs to see what reaches upstream. Every tool's external call goes
 // through utils/http.ts (tests/packaging/no-bare-fetch.test.ts), so mocking
@@ -32,10 +36,18 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { startHttpServer } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
+import type { ProjectStore } from "../../src/store/project-store.js";
+import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
+
+// The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
+const PROJECT_HEADER = "X-Genealogy-Project-Id";
 
 let server: HttpServer;
 let base: string;
-let projectPath: string;
+/** The double's root: one directory per project id underneath. */
+let root: string;
+// Every id the server bound a store for, in order — the store half's oracle.
+const bindStore = vi.fn((projectId: string): ProjectStore => new ScopedFsStore(root, projectId));
 const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
 const exchanges: Array<{ method: string; path: string; status: number }> = [];
@@ -67,8 +79,8 @@ function textOf(result: Awaited<ReturnType<Client["callTool"]>>): string {
 }
 
 beforeAll(async () => {
-  projectPath = await mkdtemp(join(tmpdir(), "http-server-test-"));
-  server = await startHttpServer({ host: "127.0.0.1", port: 0, baseConfig: {} });
+  root = await mkdtemp(join(tmpdir(), "http-server-test-"));
+  server = await startHttpServer({ host: "127.0.0.1", port: 0, baseConfig: {}, bindStore });
   const address = server.address();
   if (!address || typeof address !== "object") throw new Error("server did not bind a port");
   base = `http://127.0.0.1:${address.port}`;
@@ -78,8 +90,38 @@ afterAll(async () => {
   await Promise.all(clients.map((c) => c.close().catch(() => undefined)));
   server.closeAllConnections();
   await new Promise<void>((resolve) => server.close(() => resolve()));
-  await rm(projectPath, { recursive: true, force: true });
+  await rm(root, { recursive: true, force: true });
 });
+
+/** A `project_create` payload whose one tree person is given-named `given`. */
+function createArgs(given: string): Record<string, unknown> {
+  return {
+    projectPath: SCOPED_ANCHOR,
+    objective: "Does the HTTP transport bind a store per request?",
+    title: `http ${given}`,
+    subjectPersonIds: ["P1"],
+    tree: {
+      persons: [
+        {
+          id: "P1",
+          gender: "Male",
+          names: [{ id: "N1", preferred: true, given, surname: "Person", type: "BirthName" }],
+          facts: [{ id: "F1", type: "Birth", primary: true, date: "1850", place: "Nowhere" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    },
+  };
+}
+
+/** `persons[].name` from `project_context` under one client. */
+async function personNames(client: Client): Promise<string[]> {
+  const result = await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } });
+  expect(result.isError, textOf(result)).not.toBe(true);
+  const body = JSON.parse(textOf(result)) as { persons: Array<{ name: string | null }> };
+  return body.persons.map((p) => p.name ?? "");
+}
 
 describe("tool server over Streamable HTTP", () => {
   it("1. tools/list is exactly allToolSchemas, and still works after the post-initialize GET got 405", async () => {
@@ -99,38 +141,87 @@ describe("tool server over Streamable HTTP", () => {
     expect(again.tools.length).toBe(allToolSchemas.length);
   });
 
-  it("2. project_create and validate_research_schema work over HTTP against a temp dir", async () => {
-    const client = await connect();
-    const created = await client.callTool({
-      name: "project_create",
-      arguments: {
-        projectPath,
-        objective: "Does the HTTP transport reach the project store?",
-        title: "http smoke",
-        subjectPersonIds: ["P1"],
-        tree: {
-          persons: [
-            {
-              id: "P1",
-              gender: "Male",
-              names: [{ id: "N1", preferred: true, given: "Smoke", surname: "Person", type: "BirthName" }],
-              facts: [{ id: "F1", type: "Birth", primary: true, date: "1850", place: "Nowhere" }],
-            },
-          ],
-          relationships: [],
-          sources: [],
-        },
-      },
-    });
-    expect(created.isError, textOf(created)).not.toBe(true);
-    expect(JSON.parse(textOf(created)).ok).toBe(true);
+  it("2. two concurrent requests with different X-Genealogy-Project-Id headers cannot read each other's documents", async () => {
+    bindStore.mockClear();
+    const idA = `alpha-${randomUUID()}`;
+    const idB = `beta-${randomUUID()}`;
+    const [a, b] = await Promise.all([
+      connect({ [PROJECT_HEADER]: idA }),
+      connect({ [PROJECT_HEADER]: idB }),
+    ]);
+    const [createdA, createdB] = await Promise.all([
+      a.callTool({ name: "project_create", arguments: createArgs("Alpha") }),
+      b.callTool({ name: "project_create", arguments: createArgs("Beta") }),
+    ]);
+    expect(createdA.isError, textOf(createdA)).not.toBe(true);
+    expect(createdB.isError, textOf(createdB)).not.toBe(true);
+    expect(JSON.parse(textOf(createdA)).ok).toBe(true);
+    expect(JSON.parse(textOf(createdB)).ok).toBe(true);
 
-    const valid = await client.callTool({
-      name: "validate_research_schema",
-      arguments: { projectPath },
+    const [namesA, namesB] = await Promise.all([personNames(a), personNames(b)]);
+    expect(namesA.some((n) => n.includes("Alpha"))).toBe(true);
+    expect(namesA.some((n) => n.includes("Beta"))).toBe(false);
+    expect(namesB.some((n) => n.includes("Beta"))).toBe(true);
+    expect(namesB.some((n) => n.includes("Alpha"))).toBe(false);
+
+    // Every POST bound a store for exactly the id its header named — the
+    // initialize handshake included — and for no other id.
+    const bound = bindStore.mock.calls.map(([id]) => id);
+    expect(new Set(bound)).toEqual(new Set([idA, idB]));
+    for (const id of [idA, idB]) expect(bound.filter((b) => b === id).length).toBeGreaterThan(0);
+
+    // And the double put them in two directories, so the isolation was the
+    // header's doing rather than the same document read twice.
+    for (const id of [idA, idB]) {
+      const tree = JSON.parse(await readFile(join(root, id, "tree.gedcomx.json"), "utf-8"));
+      expect(tree.persons[0].names[0].given).toBe(id === idA ? "Alpha" : "Beta");
+    }
+  });
+
+  it("2b. a request with no project header gets an error naming the header from project_create, and convert_calendar still answers", async () => {
+    bindStore.mockClear();
+    const client = await connect();
+    const created = await client.callTool({ name: "project_create", arguments: createArgs("Nobody") });
+    expect(created.isError).toBe(true);
+    expect(textOf(created)).toContain(PROJECT_HEADER);
+
+    const converted = await client.callTool({
+      name: "convert_calendar",
+      arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
     });
-    expect(valid.isError, textOf(valid)).not.toBe(true);
-    expect(JSON.parse(textOf(valid)).valid).toBe(true);
+    expect(converted.isError, textOf(converted)).not.toBe(true);
+    expect(JSON.parse(textOf(converted))).toMatchObject({ ok: true, converted: { year: 1751 } });
+
+    expect(bindStore).not.toHaveBeenCalled();
+    // Nothing reached the file backend either: the root holds only the
+    // directories item 2 wrote.
+    const dirs = (await readdir(root)).filter((d) => d !== "__missing__");
+    expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
+  });
+
+  it("2c. a malformed project id is a 400 before any tool runs", async () => {
+    bindStore.mockClear();
+    const res = await fetch(`${base}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        [PROJECT_HEADER]: "p/q",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "project_create", arguments: createArgs("Malformed") },
+      }),
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      jsonrpc: "2.0",
+      error: { code: -32600, message: "Invalid X-Genealogy-Project-Id header." },
+      id: null,
+    });
+    expect(bindStore).not.toHaveBeenCalled();
   });
 
   it("3. a FamilySearch tool with no Authorization header gets the hosted reauth text, never the desktop one", async () => {
