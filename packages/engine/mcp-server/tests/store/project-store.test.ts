@@ -23,6 +23,7 @@ const METHODS = {
   findNestingAncestor: true,
   exists: true,
   readText: true,
+  readBytes: true,
   list: true,
   writeJson: true,
   writeJsonBoth: true,
