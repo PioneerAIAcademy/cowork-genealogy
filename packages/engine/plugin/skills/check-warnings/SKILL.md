@@ -7,12 +7,11 @@ description: Genealogical data integrity guardrail — catches contradictions
   person's data, and retrieves FamilySearch's live quality score. Invoke
   whenever the user wants to check for warnings, spot data problems, verify
   consistency before closing research, or get a sanity check on any person's
-  dates and family relationships. Do NOT use for a source conflict — two
-  records disagreeing about the same fact (use conflict-resolution); for
-  schema validation — malformed data, bad ids, broken references (use
-  validate-schema); or for an audit of the sources attached to a profile,
-  whether each belongs there and whether anything was mis-indexed (use
-  source-evaluation).
+  dates and family relationships. Route source conflicts (two records
+  disagreeing about the same fact) to conflict-resolution; route schema
+  validation (malformed data, bad ids, broken references) to validate-schema;
+  route an audit of the sources attached to a profile — whether each belongs
+  there, whether anything was mis-indexed — to source-evaluation.
 allowed-tools:
   - person_warnings
   - person_quality
@@ -20,7 +19,7 @@ allowed-tools:
 
 # Check Warnings
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. It governs the wording of your report only; it never authorizes a preamble before a tool call, and it is overridden wherever this skill requires silence.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 This skill runs two complementary checks and reports both, in separate sections:
 
@@ -68,7 +67,7 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
 1. Call `person_warnings({ projectPath, personId })` — the offline impossibility check that runs for every person you check. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
-2. **Additionally, when `personId` is a FamilySearch ID** -- four characters, a hyphen, three characters (e.g. `KWCJ-RN4`, `KD96-TV2`) -- also call `person_quality({ personId })`. In projects built from FamilySearch the tree id *is* the FS ID, so the same id feeds both tools. **When the id is synthetic (e.g. `I1`), skip this call silently** -- there is no FamilySearch profile to score, so do not call the tool, write no narration or preamble about the skip, and do not mention FamilySearch quality at all for that person. Proceed directly to reporting the offline warnings. **The silence begins with the very first word of your response and holds to the last** -- not as an opening line, not as a closing note, not as a parenthetical. Open directly with the warnings output -- never with a sentence about the id type, what you will or will not check, or why you skipped the quality call. The sentence "[name] is in the tree as `I1` -- a synthetic ID, so I'll run the offline warnings check only (no FamilySearch quality call applies here)" is the exact forbidden form, **and so is any paraphrase of it, in any position.**
+2. **Additionally, when `personId` is a FamilySearch ID** -- four characters, a hyphen, three characters (e.g. `KWCJ-RN4`, `KD96-TV2`) -- also call `person_quality({ personId })`. In projects built from FamilySearch the tree id *is* the FS ID, so the same id feeds both tools. **When the id is synthetic (e.g. `I1`), skip this call silently** -- there is no FamilySearch profile to score, so do not call the tool, write no narration or preamble about the skip, and do not mention FamilySearch quality at all for that person. Proceed directly to reporting the offline warnings. **The silence begins with the very first word of your response.** Open directly with the warnings output -- never with a sentence about the id type, what you will or will not check, or why you skipped the quality call. The sentence "[name] is in the tree as `I1` -- a synthetic ID, so I'll run the offline warnings check only (no FamilySearch quality call applies here)" is the exact forbidden form.
 
 `person_quality` needs the user logged in and calls FamilySearch's live quality service. Handle it gracefully -- it must **never** suppress the offline warnings, which are the guardrail and always appear:
 
