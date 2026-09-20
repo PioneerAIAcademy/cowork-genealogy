@@ -25,6 +25,7 @@
     "person-read-hole-wx7-otter-tail",
     "person-quality-hole-detail"
   ],
+  "index_error_source": "Minnesota Death Index",
   "judge_context": [
     "Should call person_read with sourceDescriptions, record_read each source carrying a record ARK, and person_quality with detail: true for KD96-TV2.",
     "Should report FamilySearch's profile checklist. The reply must contain both of the issues person_quality returned — the marriage place missing a city, and the marriage having no tagged sources — grouped under their scoreType. A reply that omits the checklist entirely, or never calls person_quality, fails this: the checklist is the capability under test, not an optional extra.",
