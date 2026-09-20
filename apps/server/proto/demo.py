@@ -16,8 +16,10 @@ so the run is the research workflow, not a lookup of the answer the live tree st
 
 The deadline defaults to two shim ceilings plus slack (``READ_TIMEOUT_S`` is 1800 s per
 attempt, on which the shim kills the worker and requeues at once -- a turn past 1800 s is
-resumed by design, and a one-ceiling deadline would report FAIL as attempt 2 began). The
-printed ``receive_count`` says whether the shim intervened.
+resumed by design, and a one-ceiling deadline would report FAIL as attempt 2 began; the
+D18 arm, ``make proto-demo-auto``, runs the shim at 7200 s and passes its own
+``--deadline-s`` sized the same way). The printed ``receive_count`` says whether the shim
+intervened.
 
 Exit 0 when ``turn_done`` arrived, criterion 3 is PASS and no FamilySearch tool answered with
 the reconnect instruction (an expired token voids the run, as D17 says); 1 otherwise; 2 when
@@ -71,16 +73,10 @@ def opening_prompt(meta: dict, override: str | None) -> str:
     raise ValueError("no opening prompt: the fixture has no researcher_question; pass --prompt")
 
 
-def section_counts_sql() -> str:
-    """Length of every array-typed top-level key of the project's research.json -- no section
-    list to maintain, so a delegation writing person_evidence shows up beside an extraction
-    writing sources and assertions."""
-    return (
-        "SELECT k AS section, jsonb_array_length(d.doc->k) AS n "
-        "FROM documents d, jsonb_object_keys(d.doc) AS k "
-        "WHERE d.project_id = %s AND d.name = 'research.json' AND jsonb_typeof(d.doc->k) = 'array' "
-        "ORDER BY k"
-    )
+# The array-section sizes of the project's research.json: defined in turn.py (the kill arm's
+# evidence block reads it before and after the kill; turn.py must not import this module)
+# and used here for the baseline and criterion 2.
+section_counts_sql = turn.section_counts_sql
 
 
 def acceptance_queries(turn_id: str, session_id: str, project_id: str) -> list[Query]:

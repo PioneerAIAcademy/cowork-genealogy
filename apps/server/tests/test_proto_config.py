@@ -6,8 +6,11 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
 - the shim is its own service and holds the docker socket -- that is what lets it
   kill the worker on a step-ceiling overrun without dying with it;
 - the worker restarts unless stopped -- a kill needs a fresh worker to redeliver to;
-- READ_TIMEOUT_S is the 1800 s step ceiling, and only the ceiling override lowers it;
-- elasticmq's visibility timeout sits above the ceiling and there is NO redrive
+- READ_TIMEOUT_S is the 1800 s step ceiling by default -- an `up` environment may set it
+  (proto-demo-auto's 7200), read here off the interpolation's default -- and only the
+  ceiling override lowers it;
+- elasticmq's visibility timeout sits above every ceiling the shim can run at -- the
+  compose default and the one proto-demo-auto exports -- and there is NO redrive
   policy -- ChangeMessageVisibility never resets the receive count, so any
   maxReceiveCount would dead-letter a legitimately long turn;
 - the schema creates every table the plan names and not committed_batches
@@ -265,9 +268,31 @@ def test_proto_up_waits_for_tools_but_proto_up_core_does_not():
 # ── step ceiling ────────────────────────────────────────────────────────────────
 
 
+# A compose interpolation: `${VAR:-default}` / `${VAR-default}` -> (VAR, default); a literal
+# -> (None, literal). The shim's ceiling is read off the default, not the literal.
+_INTERPOLATION = re.compile(r"^\$\{(\w+):?-([^}]*)\}$")
+
+
+def _compose_default(value: str) -> tuple[str | None, str]:
+    match = _INTERPOLATION.match(value.strip())
+    return (match.group(1), match.group(2)) if match else (None, value.strip())
+
+
 def test_shim_read_timeout_is_the_step_ceiling():
+    """The compose default is the pinned 1800 s; the variable that overrides it is the one
+    proto-demo-auto exports (7200 for the D18 arm), so a renamed interpolation would leave
+    that arm silently at 1800."""
     env = _env(_service(_load(COMPOSE), "shim"))
-    assert int(env["READ_TIMEOUT_S"]) == STEP_CEILING_S
+    var, default = _compose_default(env["READ_TIMEOUT_S"])
+    assert int(default) == STEP_CEILING_S
+    assert var == "READ_TIMEOUT_S", "proto-demo-auto exports READ_TIMEOUT_S; the interpolation must read that name"
+
+
+def test_compose_default_reads_the_interpolation_or_the_literal():
+    assert _compose_default("${READ_TIMEOUT_S:-1800}") == ("READ_TIMEOUT_S", "1800")
+    assert _compose_default("${READ_TIMEOUT_S-1800}") == ("READ_TIMEOUT_S", "1800")
+    assert _compose_default("1800") == (None, "1800")
+    assert _compose_default("${READ_TIMEOUT_S}") == (None, "${READ_TIMEOUT_S}"), "no default: not a pinned ceiling"
 
 
 def test_ceiling_override_lowers_read_timeout_and_nothing_else():
@@ -283,11 +308,28 @@ def test_ceiling_override_lowers_read_timeout_and_nothing_else():
 # ── queue ───────────────────────────────────────────────────────────────────────
 
 
+# proto-demo-auto's `export READ_TIMEOUT_S="${READ_TIMEOUT_S:-7200}"` in raw make text ($$
+# is the shell's $); either default form, since this reads the number only.
+_EXPORTED_CEILING = re.compile(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:?-(\d+)\}"')
+
+
+def _exported_ceiling_s() -> int:
+    match = _EXPORTED_CEILING.search("\n".join(_recipe("proto-demo-auto")))
+    assert match, "proto-demo-auto no longer exports READ_TIMEOUT_S; re-derive the largest ceiling here"
+    return int(match.group(1))
+
+
 def test_elasticmq_visibility_timeout_exceeds_the_ceiling():
+    """The shim never extends a message's visibility while its POST is in flight, so an
+    attempt longer than the visibility timeout is redelivered mid-flight and the worker
+    runs the same turn twice at once on one SDK session. The literal must therefore top
+    every ceiling the shim can run at -- the compose default and the one proto-demo-auto
+    exports (7200 s) -- not only the 1800 s this compared against until 2026-09-20."""
     match = _DURATION.search(_turns_block())
     assert match, "turns needs a defaultVisibilityTimeout with a seconds/minutes unit"
     seconds = int(match.group(1)) * _UNIT_S[match.group(2)]
-    assert seconds > STEP_CEILING_S, f"visibility timeout {seconds}s must exceed the {STEP_CEILING_S}s step ceiling"
+    ceiling = max(STEP_CEILING_S, _exported_ceiling_s())
+    assert seconds > ceiling, f"visibility timeout {seconds}s must exceed the largest step ceiling, {ceiling}s"
 
 
 def test_elasticmq_has_no_redrive_policy():
