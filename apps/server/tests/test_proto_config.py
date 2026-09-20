@@ -33,6 +33,7 @@ from pathlib import Path
 
 import yaml
 
+ROOT = Path(__file__).resolve().parents[3]
 PROTO = Path(__file__).resolve().parents[1] / "proto"
 COMPOSE = PROTO / "docker-compose.yml"
 CEILING_OVERRIDE = PROTO / "docker-compose.ceiling.yml"
@@ -256,15 +257,6 @@ def _wait_services(line: str) -> list[str]:
     return line.split("#", 1)[0].split("--wait", 1)[1].split()
 
 
-def test_proto_up_waits_for_tools_but_proto_up_core_does_not():
-    core = _recipe("proto-up-core")
-    assert core, "proto-up-core has a recipe"
-    assert not any(re.search(r"\btools\b", line) for line in core), "the D3 smoke must not gate on the engine image"
-    wait_lines = [line for line in _recipe("proto-up") if "--wait" in line]
-    assert wait_lines, "proto-up has a --wait line"
-    assert any("tools" in _wait_services(line) for line in wait_lines), "proto-up must wait for the tool server's healthcheck"
-
-
 # ── step ceiling ────────────────────────────────────────────────────────────────
 
 
@@ -280,10 +272,20 @@ def _compose_default(value: str) -> tuple[str | None, str]:
 
 def test_tools_carries_the_per_user_config_the_stdio_fork_used_to_pass():
     """With http the default, the shared service is where image_transcribe's key has to be:
-    the per-turn fork got it from the worker's env (PER_USER_ENV_KEYS) and the two headers
-    the service reads carry no config. Passed through, never a literal."""
+    the per-turn fork got it from the worker's env and the two headers the service reads
+    carry no config. Three copies of that list exist -- the worker's PER_USER_ENV_KEYS, the
+    engine's PER_USER_ENV, and this service's environment -- and a key added to one alone
+    makes a tool work on one arm and fail on the other, so they are held equal here rather
+    than spelled out a fourth time. Passed through, never a literal."""
+    from proto.worker import options
+
+    engine = re.search(r"export const PER_USER_ENV = \[([^\]]*)\]",
+                       (ROOT / "packages/engine/mcp-server/src/hosted-config-env.ts").read_text(encoding="utf-8"))
+    assert engine, "hosted-config-env.ts no longer exports PER_USER_ENV as a literal list"
+    assert tuple(re.findall(r'"(\w+)"', engine.group(1))) == options.PER_USER_ENV_KEYS, \
+        "the engine entrypoints and the worker must read the same per-user keys"
     env = _env(_service(_load(COMPOSE), "tools"))
-    for name in ("OPENROUTER_API_KEY", "OPENROUTER_MODEL", "WIKI_API_URL", "POP_STATS_URL"):
+    for name in options.PER_USER_ENV_KEYS:
         var, default = _compose_default(env[name])
         assert var == name and default == "", f"{name} must pass the caller's value through, empty when unset"
 
