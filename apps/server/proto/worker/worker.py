@@ -77,6 +77,7 @@ from proto.worker.options import (  # noqa: E402
     check_registration,
     make_posttool_hook,
     make_pretool_hook,
+    parse_blocked_tools,
 )
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
 from proto.worker.session_store import PgSessionStore  # noqa: E402
@@ -112,6 +113,7 @@ _stdout_lock = threading.Lock()
 # Parsed once at start (prepare); a real turn refuses to run without them.
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
+_BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
 
 
 class RegistrationError(RuntimeError):
@@ -386,7 +388,7 @@ def load_plugin_agents(plugin_dir: str) -> tuple[dict[str, Any] | None, str | No
 def prepare() -> None:
     """Everything a real turn needs, done once; a failure is logged and fails only the
     real turns (the stub arms keep working)."""
-    global _AGENTS, _AGENTS_ERROR
+    global _AGENTS, _AGENTS_ERROR, _BLOCKED
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
@@ -396,6 +398,7 @@ def prepare() -> None:
     except Exception as exc:  # noqa: BLE001 - reported, then the server still serves /healthz
         log(ev="prepare", step="schema", error=f"{type(exc).__name__}: {exc}")
     _AGENTS, _AGENTS_ERROR = load_plugin_agents(ENGINE_PLUGIN_DIR)
+    _BLOCKED = parse_blocked_tools(os.environ.get("BLOCKED_TOOLS"))
     try:
         from claude_agent_sdk._cli_version import __cli_version__ as cli_version
     except Exception:  # noqa: BLE001
@@ -403,6 +406,7 @@ def prepare() -> None:
     log(
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
+        blocked_tools=sorted(_BLOCKED),
         error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR, engine_dir=ENGINE_DIR,
         cli_version=cli_version,
     )
@@ -460,7 +464,7 @@ async def run_turn(
 
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
-            config_root=lambda: config_root["path"], record=record, log=log,
+            config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
         )
 
         def finish(tool_use_id: str) -> None:
