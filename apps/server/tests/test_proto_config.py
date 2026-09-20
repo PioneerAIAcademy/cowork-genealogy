@@ -346,3 +346,46 @@ def test_schema_creates_every_planned_table():
 
 def test_schema_has_no_committed_batches():
     assert "committed_batches" not in _created_tables()
+
+
+# ── D18 grading recipes ─────────────────────────────────────────────────────────
+
+
+def test_proto_grade_requires_a_session_and_runs_the_prototype_script():
+    recipe = _recipe("proto-grade")
+    assert any('test -n "$(SESSION)"' in line for line in recipe), "proto-grade must refuse without SESSION"
+    assert any("exit 2" in line for line in recipe if "SESSION" in line)
+    assert any("proto/grade.py" in line and "--session '$(SESSION)'" in line for line in recipe)
+    assert any("--fixture '$(FIXTURE)'" in line for line in recipe), "FIXTURE is optional but must reach the script"
+
+
+def test_proto_compare_requires_both_a_fixture_and_a_session():
+    recipe = _recipe("proto-compare")
+    guards = [line for line in recipe if "test -n" in line]
+    assert any('test -n "$(FIXTURE)"' in line for line in guards), "proto-compare must refuse without FIXTURE"
+    assert any('test -n "$(SESSION)"' in line for line in guards), "proto-compare must refuse without SESSION"
+    assert all("exit 2" in line for line in guards)
+    body = [line for line in recipe if "proto/compare.py" in line]
+    assert body, "proto-compare must run proto/compare.py"
+    assert "--fixture '$(FIXTURE)'" in body[0] and "--session '$(SESSION)'" in body[0]
+    assert "--runlog '$(abspath $(RUNLOG))'" in body[0], "RUNLOG is a path: make it absolute, the script cd's away"
+
+
+def test_the_grading_recipes_run_the_harness_module_in_the_harness_venv():
+    """`apps/server` and `eval/harness` are separate environments. Both recipes enter
+    apps/server; the harness module is reached only as a subprocess from eval/harness --
+    grade.py's HARNESS_DIR + `uv run` -- never imported across the two."""
+    for target in ("proto-grade", "proto-compare"):
+        recipe = "\n".join(_recipe(target))
+        assert "cd apps/server" in recipe, target
+        assert "e2e.grade_files" not in recipe, f"{target} must not call the harness module directly"
+    source = (PROTO / "grade.py").read_text(encoding="utf-8")
+    assert 'HARNESS_DIR = ROOT / "eval" / "harness"' in source
+    assert '"uv", "run", "python", "-m", "e2e.grade_files"' in source
+    assert "cwd=HARNESS_DIR" in source
+
+
+def test_proto_test_runs_the_d18_tests():
+    assert any(
+        "tests/test_proto_d18.py" in line for line in _recipe("proto-test")
+    ), "make proto-test must run the D18 tests, or they run nowhere"
