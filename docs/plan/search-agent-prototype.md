@@ -1534,7 +1534,7 @@ without whichever Bedrock refuses.
   list_subkeys`, the object whose `receive_count` is 2 — which carries `list_subkeys` and
   `subkeys_returned` beside `entries_appended`. That line is logged as `ev=turn`:
   `turn_done` is a `session_events` row kind and never a log line, so a grep for it
-  matches nothing. Both counts were collected from D9–10 and
+  matches nothing, and its own payload is `{turn_id, receive_count}` — no counters. Both counts were collected from D9–10 and
   surfaced nowhere until 2026-09-21: `PgSessionStore.counters()` had no caller, so the
   2026-09-21 run could not have asserted this criterion whatever else it did. **What voids the run:** the kill
   landing before `task_started` (a plain turn kill, D14 again — post the next prompt and
