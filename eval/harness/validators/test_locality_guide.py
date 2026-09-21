@@ -34,9 +34,19 @@ Two checks the deep dive proposed were dropped after review (PR #2579):
     `project_context` is live and re-emits persisted `collections[].id`, so a
     fabricated id, once written, is grounded by the next read-back. It also
     duplicated `test_research_plan`'s id-grounding and `provenance_report`.
-  - VR3 (digitization label requires a volume_search call) — SKILL.md Step 4
-    allows classifying from the FamilySearch Wiki when volume_search has no
-    match, so a wiki-grounded label with no volume_search call is legitimate.
+  - VR3 (digitization label requires a volume_search call) — dropped as
+    subsumed by VR4, and it would only ever false-fire. A wiki-grounded label
+    is NOT a legitimate substitute for the call: SKILL.md:82 makes
+    volume_search a required Step-3 call, and Step 4 derives every label from
+    its result — even the "No match in volume_search" branch presupposes the
+    call was made, with the wiki as a cross-check, not a substitute. VR4
+    already gates "a survey must call volume_search". In the acceptance run
+    (v1_2026-09-21_08-34-13) every survey with volume_search available called
+    it (VR4: 22 passed, 0 survey skipped it); the only two runs that assign a
+    digitization label without a volume_search call, ut_002 and ut_023, are the
+    ones whose fixtures don't register volume_search (it is fixture-backed and
+    absent from LIVE_TOOLS), so the tool was uncallable there — exactly where
+    VR3 would fire wrongly.
 
 See `test_universal.py` module docstring for the full validator
 function-signature contract. The `test` argument is the parsed test

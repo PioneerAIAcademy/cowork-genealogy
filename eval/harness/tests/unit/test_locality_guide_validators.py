@@ -12,12 +12,15 @@ variant, and STANDS DOWN when not applicable.
 Scope after PR #2579 review: VR1 checks only the two properties the shared
 schema validator does not (source + four-section coverage); VR2 and VR3 were
 dropped (VR2 was circular against project_context's read-back and duplicated
-test_research_plan/provenance_report; VR3's premise — a label needs
-volume_search — is false because SKILL.md Step 4 allows wiki-grounded
-classification). VR4 gates that a records survey called both Step-3 searches.
+test_research_plan/provenance_report; VR3 is subsumed by VR4 and would only
+false-fire — SKILL.md:82 makes volume_search a required Step-3 call and Step 4
+derives every label from its result, so the only acceptance runs assigning a
+label without a volume_search call are the two whose fixtures don't register
+volume_search). VR4 gates that a records survey called both Step-3 searches.
 """
 
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -93,11 +96,29 @@ def test_shape_stands_down_when_no_new_entry():
 def test_shape_validates_only_the_new_entry_not_a_pre_existing_seed():
     """A seed entry present in both before and after is out of scope; only the
     entry this run wrote is checked. A wrong-source seed left unchanged must SKIP
-    (nothing new written), while a new valid entry alongside it passes."""
+    (nothing new written), while a new valid entry alongside it passes.
+
+    The unchanged seed is a `deepcopy` in the after-state, not the same object:
+    the harness parses before/after from separate JSON, so they hold value-equal
+    but identity-distinct dicts. Reusing one object would let an identity check
+    (`prior[eid] is not e`) pass here while over-reporting every unchanged entry
+    in production — this mirrors the real shape so that mutation is caught."""
     seed = _entry(lid="loc_seed", source="research-plan")  # would fail VR1 if checked
     with pytest.raises(pytest.skip.Exception):
-        check_shape(_state([seed]), _state([seed]))  # unchanged seed → skip
-    check_shape(_state([seed]), _state([seed, _entry(lid="loc_new")]))  # new entry → passes
+        check_shape(_state([seed]), _state([deepcopy(seed)]))  # unchanged seed → skip
+    check_shape(_state([seed]), _state([deepcopy(seed), _entry(lid="loc_new")]))  # new → passes
+
+
+def test_shape_checks_every_new_entry_not_just_the_first():
+    """Two entries written in one run, the defective one SECOND. VR1's
+    `for loc in written` must check both — truncating to `written[:1]` would
+    validate only the first (valid) entry and skip the bad one, reading green."""
+    good = _entry(lid="loc_a")
+    bad = _entry(lid="loc_b", sections=("home", "getting_started", "online_records"))
+    with pytest.raises(AssertionError) as exc:
+        check_shape(_state([]), _state([good, bad]))
+    assert "loc_b" in str(exc.value)
+    assert "missing wiki sections" in str(exc.value)
 
 
 def test_shape_fires_on_an_in_place_update_that_drops_a_section():
