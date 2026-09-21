@@ -157,7 +157,9 @@ def row_to_wire(row: EventRow) -> dict[str, Any]:
 
 
 def activity_to_wire(activity: Activity) -> dict[str, Any]:
-    return {"type": "agent_event", "event": {**activity.payload, "kind": "task_progress"}}
+    """The payload's own ``kind`` wins (the worker writes the whole transient event --
+    text_delta, thinking_delta or task_progress); a payload without one is task_progress."""
+    return {"type": "agent_event", "event": {"kind": "task_progress", **activity.payload}}
 
 
 def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
@@ -304,12 +306,15 @@ class PgStore:
 
     _SELECT = "SELECT session_id, project_id, title, model, created_at, updated_at FROM sessions"
 
-    async def create_session(self, title: str, model: str) -> SessionRow:
+    async def create_session(self, title: str, model: str, project_id: str | None = None) -> SessionRow:
         session_id = "sess_" + uuid.uuid4().hex[:16]
-        project_id = "proj_" + uuid.uuid4().hex[:16]
+        project_id = project_id or "proj_" + uuid.uuid4().hex[:16]
         async with await self._connect() as conn:
             async with conn.transaction():
-                await conn.execute("INSERT INTO projects (project_id) VALUES (%s)", (project_id,))
+                await conn.execute(
+                    "INSERT INTO projects (project_id) VALUES (%s) ON CONFLICT (project_id) DO NOTHING",
+                    (project_id,),
+                )
                 await conn.execute(
                     "INSERT INTO sessions (session_id, project_id, title, model) VALUES (%s, %s, %s, %s)",
                     (session_id, project_id, title, model),
@@ -467,6 +472,9 @@ class NullQueue:
 class CreateSessionBody(BaseModel):
     title: str | None = None
     model: str | None = None
+    # A project already in the store (proto/seed.py); absent -> a fresh empty one. The
+    # pattern is the store's own project-id rule (an S3 key prefix on its own).
+    project_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
     sample: bool = False  # accepted for api.ts compatibility; no seed project on this backend
 
 
@@ -476,7 +484,9 @@ class PatchSessionBody(BaseModel):
 
 
 class MessageBody(BaseModel):
-    text: str = Field(min_length=1)
+    # Not blank: the worker would take a whitespace-only text for a stub message and
+    # complete the turn with no reply, and a 400 there would requeue it forever.
+    text: str = Field(min_length=1, pattern=r"\S")
 
 
 class DevLoginBody(BaseModel):
@@ -568,7 +578,9 @@ def create_app(
 
     @app.post("/api/sessions")
     async def create_session(body: CreateSessionBody, request: Request) -> dict:
-        row = await _store(request).create_session(body.title or DEFAULT_TITLE, body.model or DEFAULT_MODEL)
+        row = await _store(request).create_session(
+            body.title or DEFAULT_TITLE, body.model or DEFAULT_MODEL, body.project_id
+        )
         return session_out(row)
 
     @app.get("/api/sessions/{session_id}")

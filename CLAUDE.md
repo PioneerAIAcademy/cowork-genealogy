@@ -194,8 +194,14 @@ to make changes, not what each individual tool/skill does.
 
 Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their schemas are
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
-source of truth for the advertised tool list); `src/server.ts` imports that
-list and dispatches calls. Per-tool behavioral contracts are in
+source of truth for the advertised tool list); `src/server.ts`
+(`createServer(principal)`) imports that list and dispatches calls, and the
+entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`),
+`src/hosted-stdio.ts` (the prototype's per-turn stdio server) and `src/http.ts`
+(the prototype's Streamable HTTP server, compose service `tools`, binding each
+request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
+`X-Genealogy-Project-Id` header). Per-tool
+behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
@@ -385,11 +391,11 @@ workflow itself or building one of its skills.
 
 ## Researcher profile in `research.json`
 
-Per-project context about the researcher (experience level, paid
-subscriptions, derived narration guidance) lives in a
-`researcher_profile` section of `research.json`. `init-project` writes
-it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. 27 of the 28 skills
+Per-project context about the researcher lives in a `researcher_profile`
+section of `research.json`. `init-project` writes a fixed profile at
+project start (`experience_level: "novice"` and one house-style
+`narration_guidance` string) and asks nothing about the researcher; the
+only opening-turn question is the research objective, non-blocking. 27 of the 28 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
@@ -475,7 +481,7 @@ change, with different (and easy-to-undercount) site lists:
   healer (`tree-sanitize.ts`) reads the same sets; check whether the change
   needs a heal rule for pre-change trees.
 
-The interview lives in `init-project/SKILL.md`.
+The fixed profile and the objective question live in `init-project/SKILL.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
@@ -585,7 +591,12 @@ packaging drift test checks), add the call dispatch to `src/server.ts`,
 and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
 entrypoint binding `LOCAL`, `src/hosted-stdio.ts` the prototype's per-turn one
-binding a bearer, and a new tool's arm goes in `server.ts`, never in an entrypoint.
+binding a bearer, `src/http.ts` the prototype's Streamable HTTP one binding each
+request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
+`X-Genealogy-Project-Id` header, and a new tool's arm goes in
+`server.ts`, never in an entrypoint. A new tool also needs a row in
+`dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
+neither calls nor lists as an exclusion.
 
 Use generic tool names with provider parameters when scaling, not
 one tool per provider. For example, when we add real APIs, use
@@ -733,7 +744,10 @@ Where to look first:
   `results-staging.ts` and `image-store.ts`, or call `getProjectStore()` for a
   raw read; refs are project-relative, never absolute paths. The desktop and
   both harnesses run `FsProjectStore`; a hosted deployment installs another
-  backend with `setProjectStore()` and no tool changes. **No module outside
+  backend with `setProjectStore()` and no tool changes. A shared server binds a
+  store per request instead, with `runWithProjectStore` (`src/http.ts`), and
+  installs `unboundProjectStore` as the process store so nothing falls through
+  to the file backend. **No module outside
   `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
   reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
   also fails when an exemption stops being needed. A second backend runs

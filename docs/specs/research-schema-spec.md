@@ -55,9 +55,9 @@ empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 a shorthand for "empty". The other three are optional and may be absent
 entirely:
 
-- `researcher_profile` — written by `init-project` from a short interview
-  asked in the same non-blocking opening turn as the project's research
-  objective (Section 5.1.1).
+- `researcher_profile` — written by `init-project` as a fixed profile at
+  project creation, in the same non-blocking opening turn that asks the
+  project's research objective (Section 5.1.1).
 - `known_holdings` — written by `init-project` from the holdings survey: what
   the researcher already has (documents, prior research, living-relative
   knowledge) before any new research begins (Section 5.1.2).
@@ -226,7 +226,7 @@ four rows, until the manifest was promoted out of a pytest validator.
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
 | `project` | init-project (objective, title, subject_person_ids — **once, at creation**), proof-conclusion (status, updated) | all | Mutable (status, updated). Any skill may refresh `updated` alone — it is a per-session activity ping. The three creation fields are **set-once**: `research_append` refuses to rewrite one that already holds a value, because every later step plans against them. That constrains the system, not the researcher — a human edits the file directly |
-| `researcher_profile` | init-project (at creation, from the interview); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
+| `researcher_profile` | init-project (at creation, fixed values); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
 | `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
 | `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true` (checked from either side, on the post-merge entry), and `declared: true` is refused while an item on the question's **active** plan is `in_progress` (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared). Items still `planned` do not block |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, record-extraction (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search and extraction skills update only an item's `status` after executing or extracting from it |
@@ -324,9 +324,11 @@ Single object (not an array).
 
 Optional single object. Captures per-project context about the
 researcher. `experience_level` and `narration_guidance` are written once by
-`init-project` from a short interview asked alongside the project's research
-objective in the same non-blocking opening turn; `intended_audience` and
-`subscriptions` are not written by that interview (see their rows below). Read
+`init-project` as fixed values (`novice` and the house-style string, lead
+ruling 2026-09-18) in the same non-blocking opening turn that asks the
+project's research objective; nothing about the researcher is asked.
+`intended_audience` and `subscriptions` are not written by it (see their rows
+below). Read
 by every skill. Skills adapt their narration density to
 `narration_guidance`, and `search-external-sites` prioritizes URLs for
 sites listed in `subscriptions`. All fields optional — absence falls
@@ -335,10 +337,10 @@ directly.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
-| `subscriptions` | string[] | no | How the researcher can reach pay-walled sites. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`. **No longer written by `init-project`** — the interview question was dropped 2026-08-31 rather than the field, because removing the field would be a five-site schema change and buys nothing. Access is now assumed available for every site, and the field records it only when a researcher volunteers it unprompted; absent is the normal state, and `["none"]` is not written as a default because it asserts the researcher said they have nothing. Any value written is still normalized to the enum exactly. |
-| `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
-| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening-turn interview covers experience level and (separately, in `project.objective`) the research objective; it does not ask about audience. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
+| `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Always `novice` at creation; a later user setting owns changes. |
+| `subscriptions` | string[] | no | How the researcher can reach pay-walled sites. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`. **No longer written by `init-project`** — the question was dropped 2026-08-31 rather than the field, because removing the field would be a five-site schema change and buys nothing. Access is now assumed available for every site, and the field records it only when a researcher volunteers it unprompted; absent is the normal state, and `["none"]` is not written as a default because it asserts the researcher said they have nothing. Any value written is still normalized to the enum exactly. |
+| `narration_guidance` | string | no | The house-style instruction text, fixed at creation. Skills read and follow this text directly — the string lives only in `init-project`. |
+| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening turn asks only the research objective (stored in `project.objective`) and nothing about the researcher. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
 
 ### 5.1.2 `known_holdings`
 

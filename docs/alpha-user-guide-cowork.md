@@ -201,19 +201,9 @@ off the tree and you'll learn very little.
 
 ### Also tell it about you
 
-Whichever path you take, include these two up front:
-
-- **Your experience level** — just starting out / some research / experienced /
-  professional.
-- **Your subscriptions** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-  GenealogyBank, FindAGrave-Plus, or none. Free access counts, so say so if you
-  get partner subscriptions through your FamilySearch account or use a library
-  or family history centre — both are recorded, and neither is "none". A plain
-  FamilySearch account is the baseline, so there's no need to mention it.
-
-Skip them and it quietly assumes "intermediate" and "none", which changes how much
-it explains as it works. You can correct it later by just telling it, or by
-editing `researcher_profile` in the project's `research.json` directly.
+Whichever path you take, you don't need to say anything about yourself. Every
+project gets plain-language narration, and every subscription site is assumed
+reachable — mention a site you hold and it's recorded, but nothing is asked.
 
 ### Bringing in a document
 

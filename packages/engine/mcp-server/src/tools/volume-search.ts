@@ -69,7 +69,7 @@ function validate(input: VolumeSearchInput): void {
   // `fulltext_search` both take a singular `recordType`, so that is the name an
   // LLM reaches for here; `record_type` is the snake_case convention
   // `research.json` uses elsewhere. Nothing validates input against the
-  // advertised JSON Schema — `src/index.ts` casts `request.params.arguments`
+  // advertised JSON Schema — `src/server.ts` casts `request.params.arguments`
   // straight to the handler — so an unrecognised field is ignored and the search
   // silently runs unfiltered, returning everything with no signal.
   //
