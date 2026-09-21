@@ -289,8 +289,8 @@ card**: it says whose approval can unblock a code PR, and who picks one of these
 off Ready. It is not a promotion out of the junior work — a senior still takes
 that too, which is why both kinds sit in one pool.
 
-**The lead is not the fallback.** He takes no issues, so "route it to him" is no
-longer an option.
+**The lead is not the fallback.** He self-serves from the `senior` pool like
+anyone else, so "route it to him" is not a move this skill makes.
 
 **Then ask the second question, which is the one that decides who can start: is
 it hard, or is it merely undecided?** Most items that fail the junior test fail it
@@ -961,9 +961,10 @@ gate after promotion instead works, but pays for the same deep read twice.
 
 ## 6. Above the junior pools — three states, not one
 
-**The lead takes no issues.** His job is coaching juniors into seniors, so there
-is no pool assigned to him, nothing here ever adds `DallanQ` as an assignee, and
-"route it to the lead" is not an available move.
+**No pool target covers the lead.** His job is coaching juniors into seniors, so
+no target counts him — he takes work by self-serving from the `senior` pool.
+Nothing here ever adds `DallanQ` as an assignee, and "route it to the lead" is
+not an available move.
 
 Work above the junior pools is **three states that look alike in a Backlog list
 and behave completely differently**, and telling them apart decides who can start.
