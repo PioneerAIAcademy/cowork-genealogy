@@ -10,6 +10,7 @@ import { startWatching, stopWatching, getCurrentState, assertResearchProject } f
 import { readSidecar } from './sidecar'
 import { readSourceImage } from './image'
 import { walkProject, readSessionLog, buildFeedbackZip } from './feedback'
+import { viewerBuildInfo, viewerVersionString } from './build-info'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -109,7 +110,7 @@ function setupIPC(): void {
   })
 
   ipcMain.handle('get-version', () => {
-    return app.getVersion()
+    return viewerVersionString()
   })
 
   ipcMain.handle(
@@ -146,7 +147,11 @@ function setupIPC(): void {
           correctAnswer: payload.correctAnswer,
           notes: payload.notes
         },
-        viewerVersion: app.getVersion() + (app.isPackaged ? '' : '-dev')
+        viewerVersion: viewerVersionString(),
+        // Same two fields the hosted web producer emits, so a triager reads the
+        // build the same way from either surface (#2126).
+        buildDate: viewerBuildInfo().date,
+        gitSha: viewerBuildInfo().sha
       })
 
       const envelope = JSON.stringify({

@@ -6,14 +6,17 @@ import { srcFiles, srcSource, withoutComments } from "./src-files.js";
 // which works on the desktop and does nothing, or the wrong thing, under a
 // backend that is not a directory. So the import is banned everywhere but the
 // file backend itself, auth (per-user files under ~/.familysearch-mcp, which
-// are not project state) and the bundled-data reader. Porting every tool proves
-// forty-nine existentials; this proves the universal.
+// are not project state), the bundled-data reader, and the build-stamp reader
+// (build/build-info.json is compiler output written by `npm run build`, not
+// project state — the same class as the bundled data). Porting every tool
+// proves forty-nine existentials; this proves the universal.
 
 const EXEMPT = new Set([
   "store/fs-project-store.ts",
   "auth/config.ts",
   "auth/tokenManager.ts",
   "utils/name-variants.ts",
+  "utils/build-info.ts",
 ]);
 
 // Any way a module can bind the fs module: a static import with or without a

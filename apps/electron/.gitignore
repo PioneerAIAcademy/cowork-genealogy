@@ -1,6 +1,10 @@
 node_modules
 dist
 out
+# electron-vite bundles the TS config to a temp .mjs beside it while loading it;
+# untracked, that file made gitStamp() in electron.vite.config.ts report every
+# build as .dirty (#2126).
+electron.vite.config.*.mjs
 .DS_Store
 .eslintcache
 *.log*

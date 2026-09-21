@@ -2,6 +2,18 @@ import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { fetchWithRetry } from "../utils/http.js";
+import {
+  fetchMemories,
+  fetchPortraitId,
+  fetchStoryText,
+  filterSourceStyle,
+  isStoryText,
+  isTranscribable,
+  rankForTranscription,
+  type Memory,
+} from "../utils/memories.js";
+import { mapWithConcurrency } from "../utils/place-resolver.js";
+import { imageTranscribeTool } from "./image-transcribe.js";
 import type {
   GedcomX,
   GedcomXFact,
@@ -39,7 +51,10 @@ export const personReadToolSchema = {
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
     "Set relatives=true to include parents, spouses, and children. " +
-    "Set sourceDescriptions=true to include attached sources. " +
+    "Set sourceDescriptions=true to include attached sources — for a " +
+    "non-living subject this also returns source-style memories (scanned " +
+    "wills, certificates, obituaries, family stories), transcribed where the " +
+    "read's time budget allowed. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -56,6 +71,15 @@ export const personReadToolSchema = {
         type: "boolean",
         description: "Include attached source citations. Defaults to false.",
       },
+      projectPath: {
+        type: "string",
+        description:
+          "Optional absolute path to the project folder. When set, any memory " +
+          "scan transcribed during this read is saved under images/ and its " +
+          "project-relative path returned on that source as image_ref, so a " +
+          "retained source can cite it. Without it the scan is transcribed but " +
+          "not kept.",
+      },
     },
     required: ["personId"],
   },
@@ -64,29 +88,314 @@ export const personReadToolSchema = {
 // ─── Entry point ──────────────────────────────────────────────────────────
 
 export async function personReadTool(input: PersonReadToolInput, principal: Principal): Promise<PersonReadResult> {
-  const { personId, relatives = false, sourceDescriptions = false } = input;
+  const {
+    personId,
+    relatives = false,
+    sourceDescriptions = false,
+    projectPath,
+  } = input;
   if (typeof personId !== "string" || personId.trim() === "") {
     throw new Error(
       "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
   const token = await getValidToken(principal);
-  return fetchAndConvert(
+  // Anchored HERE, before the tree read, so the read and the memories paging
+  // are spent inside the same budget the 60s bridge abort measures.
+  const deadline = Date.now() + OCR_PHASE_BUDGET_MS;
+  const pid = personId.trim();
+  const { result, resolvedId } = await fetchAndConvert(
     token,
-    personId.trim(),
+    pid,
     relatives,
     sourceDescriptions,
     0,
   );
+
+  // Memories ride the EXISTING sourceDescriptions flag (lead, 2026-08-19): a
+  // third flag was declined because init-project already shipped a bug from
+  // omitting one of the two that exist (issue #1475).
+  //
+  // SUBJECT ONLY, never relatives. With Half 1's parent fan-out a per-relative
+  // memories fetch would be unbounded -- the 63-child subject in feedback issue
+  // #1795 is the case that makes it unaffordable. This is what acceptance 7
+  // forbids; it does NOT forbid paging the subject's own memories.
+  //
+  // A living person (204) has no memories to fetch and no sources array to
+  // merge into.
+  // `resolvedId`, never `pid`: for a merged person they differ, and comparing
+  // the pre-redirect id against the post-redirect person made this gate false
+  // for every merged subject -- no memories, no note, no error, indistinguishable
+  // from a person who simply has none.
+  if (
+    sourceDescriptions &&
+    result.persons.some((p) => p.id === resolvedId && !p.living)
+  ) {
+    result.sources = await mergeMemories(
+      resolvedId,
+      result.sources,
+      principal,
+      deadline,
+      projectPath,
+    );
+  }
+  return result;
 }
 
+/**
+ * Fetch, filter and merge this person's memories into the tree sources.
+ *
+ * FAIL-SOFT BY CONTRACT. A memories outage must never fail the read: project
+ * creation would be blocked entirely by a subsystem the caller did not ask
+ * about. Any throw here returns the tree sources untouched, logged to stderr.
+ * Recorded in the spec's error table as a deliberate silent degradation.
+ */
+/**
+ * The transcription phase's wall-clock budget, for the WHOLE phase rather than
+ * per memory.
+ *
+ * Sized under the Cowork device bridge's 60s abort on every MCP call
+ * (docs/architecture.md, "Other environment differences that bite"). An
+ * unbudgeted phase does not cost a transcription -- it costs the whole person
+ * read, which in Cowork is init-project's first real call.
+ *
+ * The deadline is anchored at `personReadTool` ENTRY, not at phase entry, so
+ * the tree read and the memories paging are spent INSIDE it. That is what the
+ * 60s abort actually measures. Anchored at phase entry the budget was 40s on
+ * top of whatever the read had already used -- a slow tree read plus sequential
+ * paging (each a `fetchWithRetry`: 30s timeout, 10s retry budget) could put the
+ * call past 60s and lose everything, which is the one outcome this exists to
+ * prevent. When little or no time is left the phase transcribes nothing and
+ * every memory comes back as a metadata entry with a note, which is the
+ * documented lossless fallback rather than a new failure mode.
+ *
+ * image_transcribe measures p50 18.7s / p90 40.6s / max 50.1s over 59 live
+ * reads (2026-09-08, current default model). So 40s clears a typical scan and
+ * abandons a pathological one, which is the intended trade. Do NOT re-size this
+ * from OCR_TIMEOUT_MS (180s), which is a hang-catcher, nor from the spec's old
+ * p90 79s figure, which came from run-log timelines measured per SDK message
+ * rather than per tool call.
+ */
+const OCR_PHASE_BUDGET_MS = 40_000;
+
+/**
+ * In-flight transcriptions. A bandwidth ceiling for simultaneous multi-MB
+ * downloads, NOT a limit on how much work gets done -- there is deliberately no
+ * count cap (ruled 2026-09-15 on probe item 10: the risk is artifact size, not
+ * count, and the 14.4MB outlier is audio, which the filter drops before OCR is
+ * ever reached).
+ */
+const OCR_CONCURRENCY = 5;
+
+/**
+ * Transcribe the kept memories in place, under one phase budget.
+ *
+ * Every failure degrades to a metadata-only entry and NOTHING here throws: no
+ * OpenRouter key, an OCR error, a per-image timeout, a 403 on the artifact --
+ * person_read must never fail for an OCR reason. That is acceptance 6's
+ * fail-soft rule extended to this leg.
+ *
+ * Whatever the budget did not reach comes back as metadata with a note saying
+ * so, rather than being dropped. The note goes on the source itself because
+ * decision 2 fixed the top level at {persons, relationships, sources} -- no new
+ * key, nothing for a consumer to switch on -- and `notes` is already carried and
+ * already excluded from the tree write.
+ */
+async function transcribeMemories(
+  kept: Memory[],
+  sources: TreeSource[],
+  principal: Principal,
+  projectPath: string | undefined,
+  deadline: number,
+): Promise<void> {
+  const byId = new Map(sources.map((s) => [s.id, s]));
+
+  /**
+   * Workers publish here rather than writing straight to the sources.
+   *
+   * The phase stops at the deadline whether or not every worker has finished,
+   * so a straggler can still settle after person_read has returned its result.
+   * Writing to the source objects directly would mutate a payload the caller
+   * already holds; writing here means a late finisher updates a map nobody
+   * reads again.
+   */
+  const finished = new Map<
+    string,
+    { text?: string; image_ref?: string; notes?: string[] }
+  >();
+
+  const work = mapWithConcurrency(kept, OCR_CONCURRENCY, async (m) => {
+    // Never START work the budget cannot pay for.
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return;
+    try {
+      if (isStoryText(m)) {
+        if (!m.artifactUrl) return void finished.set(m.id, {});
+        const text = await fetchStoryText(m);
+        finished.set(
+          m.id,
+          text ? { text } : { notes: ["Story text unavailable."] },
+        );
+        return;
+      }
+      // Nothing to transcribe is not a failure: no artifact URL, or media the
+      // OCR leg cannot read. Recorded as done-with-nothing so it does not
+      // later read as something the budget failed to reach.
+      if (!isTranscribable(m) || !m.artifactUrl) return void finished.set(m.id, {});
+      // Retention is for SCANS only. imageFilenameFor hardcodes `.jpg` and
+      // gcUnreferencedImages sweeps `images/*.jpg`, so retaining a PDF here
+      // would write a PDF under a .jpg name -- unreadable to the viewer and
+      // mis-swept by the GC. A PDF is still transcribed; its text is the point,
+      // and `url` always leads back to the artifact.
+      const retain = projectPath && m.mediaType.toLowerCase().startsWith("image/");
+      const out = await imageTranscribeTool(
+        {
+          memoryArtifactUrl: m.artifactUrl,
+          ...(retain ? { projectPath } : {}),
+        },
+        principal,
+        // Cap this call at what is left of the phase so a straggler aborts its
+        // own OCR fetch rather than running on after the phase gave up on it.
+        // This does NOT reach the artifact download leg, which carries its own
+        // 90s budget -- which is why the phase-level stop below exists too.
+        { ocrTimeoutMs: remaining, imageKey: m.id },
+      );
+      finished.set(m.id, {
+        ...(out.transcription.trim() ? { text: out.transcription } : {}),
+        ...(out.imageRef ? { image_ref: out.imageRef } : {}),
+        ...(out.truncated && out.truncationNotice
+          ? { notes: [out.truncationNotice] }
+          : {}),
+      });
+    } catch (err) {
+      // Deliberately swallowed, per memory. mapWithConcurrency runs its workers
+      // under Promise.all, so a rejection here would abandon the others mid-
+      // flight -- the same escape that made the portrait leg outlive the call.
+      process.stderr.write(
+        `person_read: transcription failed for memory ${m.id}: ${String(err)}\n`,
+      );
+      finished.set(m.id, {
+        notes: [
+          "Not transcribed: the transcription attempt failed. Retry with " +
+            "image_transcribe (memoryArtifactUrl).",
+        ],
+      });
+    }
+  });
+
+  // The phase-level stop. Checking the budget only before starting an item
+  // bounds nothing once several are already in flight, and the per-call cap
+  // above cannot reach the artifact download's own 90s timeout. This is what
+  // actually holds the read under the Cowork bridge's 60s abort.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expiry = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, Math.max(0, deadline - Date.now()));
+  });
+  try {
+    await Promise.race([work, expiry]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+
+  for (const m of kept) {
+    const source = byId.get(m.id);
+    if (!source) continue;
+    const result = finished.get(m.id);
+    if (!result) {
+      // Not reached before the budget expired. It still comes back -- as
+      // metadata, saying why, per decision 4.
+      source.notes = [
+        ...(source.notes ?? []),
+        "Not transcribed: the read's transcription budget ran out. Transcribe " +
+          "it directly with image_transcribe (memoryArtifactUrl).",
+      ];
+      continue;
+    }
+    if (result.text) source.text = result.text;
+    if (result.image_ref) source.image_ref = result.image_ref;
+    if (result.notes) source.notes = [...(source.notes ?? []), ...result.notes];
+  }
+}
+
+async function mergeMemories(
+  pid: string,
+  treeSources: TreeSource[],
+  principal: Principal,
+  deadline: number,
+  projectPath?: string,
+): Promise<TreeSource[]> {
+  try {
+    // allSettled, NOT all. Both of these go through fetchWithRetry, which
+    // retries a transient failure on a JITTERED TIMER under a 10s budget.
+    // Promise.all rejects the instant the memories leg fails and abandons the
+    // portrait leg mid-retry -- still running, no longer awaited, firing its
+    // next attempt after person_read has already returned. Measured: that
+    // escaped fetch made an unrelated test in person-read.test.ts fail 4 runs
+    // in 10 by consuming the response its own retry was queued to get.
+    // allSettled also stops a portrait failure from discarding every memory:
+    // the portrait id only suppresses the profile photo, so losing it costs
+    // one unwanted row, where the old shape lost the whole merge.
+    const [memoriesResult, portraitResult] = await Promise.allSettled([
+      fetchMemories(pid, principal),
+      fetchPortraitId(pid, principal),
+    ]);
+    if (memoriesResult.status === "rejected") throw memoriesResult.reason;
+    const portraitId =
+      portraitResult.status === "fulfilled" ? portraitResult.value : null;
+    const kept = rankForTranscription(
+      filterSourceStyle(memoriesResult.value, portraitId),
+    );
+    // No dedupe against tree sources: the two id spaces are DISJOINT, measured
+    // (tree `SD_PERSON_KWCJ-RN4` vs memory `3475`, 0 overlap on both persons
+    // sampled). An id-keyed dedupe could never fire, so it is not written.
+    const memorySources = kept.map(toTreeSource);
+    await transcribeMemories(kept, memorySources, principal, projectPath, deadline);
+    return [...treeSources, ...memorySources];
+  } catch (err) {
+    process.stderr.write(
+      `person_read: memories fetch failed for ${pid}, returning tree sources only: ${String(err)}\n`,
+    );
+    return treeSources;
+  }
+}
+
+/** A memory as an ordinary source row. No discriminator field and no new
+ *  top-level key: the response stays exactly {persons, relationships, sources}
+ *  so no downstream reader has to branch on memory-vs-source (lead, 2026-08-21). */
+function toTreeSource(m: Memory): TreeSource {
+  return {
+    id: m.id,
+    // Never empty: a tree source with an empty title fails the write
+    // downstream. `Memory.title` already falls back to filename, then to
+    // "FamilySearch memory <id>".
+    title: m.title,
+    ...(m.url !== undefined ? { url: m.url } : {}),
+    // `url` is the human /memories/<id> page; the artifact lives at a different
+    // host entirely. Without this the note telling the agent to retry with
+    // `image_transcribe(memoryArtifactUrl)` named a value the response did not
+    // contain, so following the instruction threw "Unrecognized
+    // memoryArtifactUrl". Response-only, exactly like `text` and `notes`:
+    // `TREE_SOURCE_FIELDS` does not list it, so it cannot reach the tree write.
+    ...(m.artifactUrl !== undefined ? { artifactUrl: m.artifactUrl } : {}),
+  };
+}
+
+/**
+ * Returns the converted person AND the id it actually resolved to.
+ *
+ * A merged person answers 301 and this function recurses on the new id, so for
+ * a merged subject the result's persons carry the POST-redirect id while the
+ * caller still holds the one it passed. Every later step keyed on the subject
+ * -- the memories gate, and the memories fetch itself -- has to use the
+ * resolved id or it silently addresses a person who is not in the response.
+ */
 async function fetchAndConvert(
   token: string,
   pid: string,
   relatives: boolean,
   sourceDescriptions: boolean,
   redirectsFollowed: number,
-): Promise<PersonReadResult> {
+): Promise<{ result: PersonReadResult; resolvedId: string }> {
   const url = buildUrl(pid, relatives, sourceDescriptions);
   const res = await fetchWithRetry(url, {
     headers: {
@@ -99,7 +408,7 @@ async function fetchAndConvert(
 
   // 204: living person, no body — return a stub.
   if (res.status === 204) {
-    return livingPersonStub(pid);
+    return { result: livingPersonStub(pid), resolvedId: pid };
   }
 
   // 301: merged. Follow the Location header to the new ID (capped).
@@ -152,7 +461,10 @@ async function fetchAndConvert(
   }
 
   const body = (await res.json()) as FSTreeResponse;
-  return await convertResponse(body, relatives, sourceDescriptions);
+  return {
+    result: await convertResponse(body, relatives, sourceDescriptions),
+    resolvedId: pid,
+  };
 }
 
 // ─── URL + helpers ────────────────────────────────────────────────────────
