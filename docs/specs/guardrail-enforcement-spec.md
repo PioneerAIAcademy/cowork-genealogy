@@ -842,9 +842,7 @@ and into a writer precondition.
 `plans.status` alone — its items keep whatever status they held — so an update
 is the only route left for moving an item that was stranded in a plan since
 retired. Denying it would make that item permanently unreachable, the
-unrecoverable false deny ADR-0011's first limit exists to prevent. The one real
-corpus use of that path is a run marking its own misrouted items `skipped` to
-clean up; denying updates would refuse the cleanup.
+unrecoverable false deny ADR-0011's first limit exists to prevent.
 
 **The parent is read live, not from a pre-call snapshot.** ADR-0011's
 snapshot-or-live rule turns on whose step the precondition is: a plan created —

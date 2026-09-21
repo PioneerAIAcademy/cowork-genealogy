@@ -3763,9 +3763,7 @@ describe("research_append (batch ops)", () => {
     // research-plan supersedes a plan by flipping `plans.status` alone; its items
     // keep whatever status they held. Denying updates would strand an
     // `in_progress` item in a terminal plan with no route to move it — the
-    // unrecoverable false deny ADR-0011's first limit exists to prevent. The one
-    // real corpus use of this path is a run marking its own misrouted items
-    // `skipped` to clean up.
+    // unrecoverable false deny ADR-0011's first limit exists to prevent.
     const research = baseResearch();
     research.questions = [validQuestion("q_001")];
     research.plans = [validPlan("pl_001", "q_001", "completed", [seededPlanItem("pli_001")])] as any;
