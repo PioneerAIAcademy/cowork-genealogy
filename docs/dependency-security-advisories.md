@@ -13,7 +13,7 @@ Last reviewed: **2026-09-21**.
 > re-running the audits after any dependency bump and updating this file the only thing
 > standing between a new advisory and a shipped artifact.
 
-**Reachability, once, up front.** The engine's production tree
+**Reachability, once, up front — across the three JS trees.** The engine's production tree
 (`packages/engine/mcp-server`) and `eval/app` both audit clean — `found 0
 vulnerabilities` on `npm audit --omit=dev`. The only production-reachable findings
 are `electron` and `extract-zip` in `apps/electron`, reached via
@@ -26,6 +26,11 @@ returns nothing for everything** (`pnpm why --prod react` is silent even though
 `apps/web` depends on it). The `.mcpb` is built with `npm ci --omit=dev`
 (`scripts/build-mcpb.mjs`), so dev-tree findings never reach **that** artifact.
 Weigh fix churn against that before treating a dev-only HIGH as urgent.
+
+**Scope widened 2026-09-21.** The Dependabot backlog at the end counts the two Python
+`uv.lock` trees (`apps/server`, `eval/harness`) as well, and their runtime findings are
+recorded under Deferred. The audits above do not reach them — Dependabot alerts are
+their only signal.
 
 **`electron` ships, and it is the exception to the paragraph above.** It reaches
 production two ways, and either alone is enough. It is in the production graph:
@@ -298,8 +303,12 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   `^7.2.6`, and nothing pinned vite to 7.3.5, so the same one-line refresh would have
   cleared it that day. **The check that catches this is the dependency's publish date
   against the entry's own commit date**, which is cheap and was never run. Applied
-  2026-09-21 (#2352): all three surviving Deferred entries (vitest, extract-zip,
-  tmp) checked out — no patched version existed before the entry was written.
+  2026-09-21 (#2352) to all five Deferred entries. `extract-zip` and `tmp` checked
+  out — no patched version existed when either was written. **`vitest` did not**:
+  4.1.11 was published 2026-08-18, three weeks before the 2026-09-09 deferral, and
+  the entry itself records the engine's half as a lockfile refresh. `cryptography`
+  says outright that a patch exists — it is deferred on coordination cost, not
+  availability. `h2` checked out.
 
 ## Automated dependency updates
 
@@ -359,7 +368,7 @@ Dependabot — they measure different things. The command to reconcile:
 
 | Manifest | Scope | Count | Packages |
 |---|---|---|---|
-| `pnpm-lock.yaml` | runtime | 4 | extract-zip ×2, vitest, @vitest/mocker |
+| `pnpm-lock.yaml` | runtime† | 4 | extract-zip ×2, vitest, @vitest/mocker |
 | `packages/engine/mcp-server/package-lock.json` | development | 4 | vitest, @vitest/mocker, tmp ×2 |
 | `packages/viewer-ui/package.json` | development | 1 | vitest |
 | `apps/web/package.json` | development | 1 | vitest |
@@ -367,10 +376,17 @@ Dependabot — they measure different things. The command to reconcile:
 | `apps/server/uv.lock` | runtime | 2 | cryptography (HIGH), h2 (MEDIUM) |
 | `eval/harness/uv.lock` | runtime | 1 | cryptography (HIGH) |
 
-All JS-side development alerts map to entries already recorded above under
-Deferred (vitest, tmp). The two `extract-zip` runtime alerts are also under
-Deferred (no patch exists). The Python alerts (`cryptography`, `h2`) are under
-Deferred as well — outside this doc's original three-JS-tree scope but recorded
-here because this backlog counts them and they have no other register.
+†Dependabot reports vitest and @vitest/mocker on `pnpm-lock.yaml` as `runtime`,
+but `pnpm why --prod -r vitest` returns nothing — all three workspace members
+declare it as a devDependency. Dependabot apparently cannot resolve dev scope
+through a pnpm workspace lockfile. The `extract-zip` rows are genuinely runtime.
 
-*Previous measurement: 53 open alerts on 2026-08-23 (issue #1036).*
+All JS-side development alerts (and the two misclassified vitest/mocker rows
+above) map to entries already recorded under Deferred (vitest, tmp). The two
+`extract-zip` runtime alerts are also under Deferred (no patch exists). The
+Python alerts (`cryptography`, `h2`) are under Deferred as well — outside this
+doc's original three-JS-tree scope but recorded here because this backlog counts
+them and they have no other register.
+
+*Previous measurement: 75 open alerts on 2026-09-10. Before that: 53 on 2026-08-23
+(issue #1036).*
