@@ -80,11 +80,22 @@ export function runProjectStoreConformance(
       expect(await f.store.exists(f.projectPath, "research.json")).toBe(false);
     });
 
-    it("writeBytes stores a blob that exists and lists", async () => {
-      await f.store.writeBytes(f.projectPath, "images/scan.jpg", new Uint8Array([0xff, 0xd8, 0xff]));
+    it("writeBytes stores a blob that exists, lists, and reads back byte for byte", async () => {
+      // 0xff/0xfe are not valid UTF-8, so a readBytes routed through a text
+      // decode would hand back U+FFFD replacements, not these bytes.
+      const bytes = new Uint8Array([0xff, 0xd8, 0xff, 0x00, 0xfe]);
+      await f.store.writeBytes(f.projectPath, "images/scan.jpg", bytes);
       expect(await f.store.exists(f.projectPath, "images/scan.jpg")).toBe(true);
       const names = (await f.store.list(f.projectPath, "images")).map((e) => e.name);
       expect(names).toEqual(["scan.jpg"]);
+      expect(Array.from(await f.store.readBytes(f.projectPath, "images/scan.jpg"))).toEqual(Array.from(bytes));
+    });
+
+    it("readBytes hands a document back as the UTF-8 of its text and throws for an absent ref", async () => {
+      await f.store.writeJson(f.projectPath, "research.json", { name: "Þóra Björnsdóttir" });
+      const bytes = await f.store.readBytes(f.projectPath, "research.json");
+      expect(JSON.parse(Buffer.from(bytes).toString("utf-8"))).toEqual({ name: "Þóra Björnsdóttir" });
+      await expect(f.store.readBytes(f.projectPath, "nope.json")).rejects.toThrow();
     });
 
     it("appendText creates the ref and appends in order", async () => {
@@ -126,6 +137,7 @@ export function runProjectStoreConformance(
       const escapes = ["../outside.json", "../../etc/passwd", "results/../../x"];
       for (const ref of escapes) {
         await expect(f.store.readText(f.projectPath, ref)).rejects.toThrow(/escapes the project/);
+        await expect(f.store.readBytes(f.projectPath, ref)).rejects.toThrow(/escapes the project/);
         await expect(f.store.writeJson(f.projectPath, ref, {})).rejects.toThrow(/escapes the project/);
         await expect(f.store.writeBytes(f.projectPath, ref, new Uint8Array())).rejects.toThrow(/escapes the project/);
         await expect(f.store.appendText(f.projectPath, ref, "x")).rejects.toThrow(/escapes the project/);
