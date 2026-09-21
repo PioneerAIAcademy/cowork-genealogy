@@ -6,12 +6,20 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
 - the shim is its own service and holds the docker socket -- that is what lets it
   kill the worker on a step-ceiling overrun without dying with it;
 - the worker restarts unless stopped -- a kill needs a fresh worker to redeliver to;
-- READ_TIMEOUT_S is the 1800 s step ceiling, and only the ceiling override lowers it;
-- elasticmq's visibility timeout sits above the ceiling and there is NO redrive
+- READ_TIMEOUT_S is the 1800 s step ceiling by default -- an `up` environment may set it
+  (proto-demo-auto's 7200), read here off the interpolation's default -- and only the
+  ceiling override lowers it;
+- elasticmq's visibility timeout sits above every ceiling the shim can run at -- the
+  compose default and the one proto-demo-auto exports -- and there is NO redrive
   policy -- ChangeMessageVisibility never resets the receive count, so any
   maxReceiveCount would dead-letter a legitimately long turn;
 - the schema creates every table the plan names and not committed_batches
-  (cut 2026-09-10).
+  (cut 2026-09-10);
+- the D16 tool server runs read-only with /tmp its only tmpfs (no /projects: project
+  state is in Postgres/S3, bound per request from X-Genealogy-Project-Id), publishes on
+  loopback only, waits on postgres and minio being healthy, carries the worker's
+  GENEALOGY_* store block byte for byte (one store, two readers), and is waited on by
+  proto-up but never by proto-up-core (the D3 smoke must not gate on the engine image).
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -25,11 +33,13 @@ from pathlib import Path
 
 import yaml
 
+ROOT = Path(__file__).resolve().parents[3]
 PROTO = Path(__file__).resolve().parents[1] / "proto"
 COMPOSE = PROTO / "docker-compose.yml"
 CEILING_OVERRIDE = PROTO / "docker-compose.ceiling.yml"
 ELASTICMQ_CONF = PROTO / "elasticmq.conf"
 SQL_DIR = PROTO / "sql"
+MAKEFILE = Path(__file__).resolve().parents[3] / "Makefile"
 
 STEP_CEILING_S = 1800
 
@@ -89,6 +99,41 @@ def _volumes(service: dict) -> list[str]:
         else:
             out.append(f"{entry.get('source')}:{entry.get('target')}")
     return out
+
+
+def _ports(service: dict) -> list[str]:
+    """Normalise short ("host:container") and long ({published, target}) port syntax to
+    the short string, so a loopback check can read the host side."""
+    out: list[str] = []
+    for entry in service.get("ports") or []:
+        if isinstance(entry, (str, int)):
+            out.append(str(entry))
+        else:
+            out.append(f"{entry.get('host_ip', '')}:{entry.get('published')}:{entry.get('target')}".lstrip(":"))
+    return out
+
+
+def _recipe(target: str) -> list[str]:
+    """The recipe of a root-Makefile target as make sees it: the tab-indented lines after
+    its rule line, up to the next non-indented line, with backslash-continued lines joined
+    into one logical line (so a reflowed `--wait` list is still one line)."""
+    lines = MAKEFILE.read_text(encoding="utf-8").splitlines()
+    rule = re.compile(rf"^{re.escape(target)}\s*:")
+    for i, line in enumerate(lines):
+        if rule.match(line):
+            body: list[str] = []
+            for follow in lines[i + 1:]:
+                if follow.startswith("\t"):
+                    if body and body[-1].endswith("\\"):
+                        body[-1] = body[-1][:-1] + " " + follow.strip()
+                    else:
+                        body.append(follow)
+                elif follow.strip() == "" or follow.startswith("#"):
+                    continue
+                else:
+                    break
+            return body
+    raise AssertionError(f"Makefile has no target {target!r}")
 
 
 def _strip_line_comments(text: str, markers: tuple[str, ...]) -> str:
@@ -170,12 +215,131 @@ def test_shim_waits_for_a_healthy_worker():
     assert _service(_load(COMPOSE), "shim")["depends_on"]["worker"] == {"condition": "service_healthy"}
 
 
+# ── tool server (D16) ───────────────────────────────────────────────────────────
+
+
+def test_tools_runs_read_only_with_no_project_root():
+    tools = _service(_load(COMPOSE), "tools")
+    assert tools.get("read_only") is True, "project state is in Postgres/S3; nothing writes to the rootfs"
+    tmpfs = [str(t).split(":", 1)[0] for t in (tools.get("tmpfs") or [])]
+    assert "/projects" not in tmpfs, "no file root: a /projects tmpfs would mean the file backend is back"
+    assert "/tmp" in tmpfs, "/tmp stays writable on the read-only rootfs"
+
+
+def test_tools_is_published_on_loopback_only():
+    ports = _ports(_service(_load(COMPOSE), "tools"))
+    assert ports, "the host smoke (make engine-smoke-http BASE=...) reaches the server from the host"
+    assert all(p.startswith("127.0.0.1:") for p in ports), "no auth beyond header -> principal: publish on loopback only"
+
+
+def test_tools_depends_on_the_store_services():
+    depends = _service(_load(COMPOSE), "tools").get("depends_on") or {}
+    assert depends.get("postgres") == {"condition": "service_healthy"}, "the per-request PgS3ProjectStore needs Postgres up"
+    assert depends.get("minio") == {"condition": "service_healthy"}, "and the blob side needs minio up"
+
+
+def test_tools_and_worker_read_one_store():
+    """The stdio fork (worker) and the shared HTTP server (tools) are two readers of one
+    store: their GENEALOGY_* blocks must be identical, or a TOOL_SERVER flip silently
+    moves the project tools onto a store the rest of the stack never reads."""
+    compose = _load(COMPOSE)
+    tools = {k: v for k, v in _env(_service(compose, "tools")).items() if k.startswith("GENEALOGY_")}
+    worker = {k: v for k, v in _env(_service(compose, "worker")).items() if k.startswith("GENEALOGY_")}
+    assert tools == worker, f"tools and worker GENEALOGY_* differ: {tools} vs {worker}"
+    assert set(tools) == {
+        "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
+        "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
+    }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
+
+
+def _wait_services(line: str) -> list[str]:
+    """The service names after `--wait` on one logical recipe line, a trailing comment stripped."""
+    return line.split("#", 1)[0].split("--wait", 1)[1].split()
+
+
 # ── step ceiling ────────────────────────────────────────────────────────────────
 
 
+# A compose interpolation: `${VAR:-default}` / `${VAR-default}` -> (VAR, default); a literal
+# -> (None, literal). The shim's ceiling is read off the default, not the literal.
+_INTERPOLATION = re.compile(r"^\$\{(\w+):?-([^}]*)\}$")
+
+
+def _compose_default(value: str) -> tuple[str | None, str]:
+    match = _INTERPOLATION.match(value.strip())
+    return (match.group(1), match.group(2)) if match else (None, value.strip())
+
+
+def test_tools_carries_the_per_user_config_the_stdio_fork_used_to_pass():
+    """With http the default, the shared service is where image_transcribe's key has to be:
+    the per-turn fork got it from the worker's env and the two headers the service reads
+    carry no config. Three copies of that list exist -- the worker's PER_USER_ENV_KEYS, the
+    engine's PER_USER_ENV, and this service's environment -- and a key added to one alone
+    makes a tool work on one arm and fail on the other, so they are held equal here rather
+    than spelled out a fourth time. Passed through, never a literal."""
+    from proto.worker import options
+
+    engine = re.search(r"export const PER_USER_ENV = \[([^\]]*)\]",
+                       (ROOT / "packages/engine/mcp-server/src/hosted-config-env.ts").read_text(encoding="utf-8"))
+    assert engine, "hosted-config-env.ts no longer exports PER_USER_ENV as a literal list"
+    assert tuple(re.findall(r'"(\w+)"', engine.group(1))) == options.PER_USER_ENV_KEYS, \
+        "the engine entrypoints and the worker must read the same per-user keys"
+    env = _env(_service(_load(COMPOSE), "tools"))
+    for name in options.PER_USER_ENV_KEYS:
+        var, default = _compose_default(env[name])
+        assert var == name and default == "", f"{name} must pass the caller's value through, empty when unset"
+
+
+def test_worker_tool_server_default_is_http_and_matches_the_workers_own_fallback():
+    """The lead's call, 2026-09-20: an unqualified `make proto-up` runs the shared `tools`
+    service, the shape production runs, and TOOL_SERVER=stdio is the opt-out. Compose and
+    options.py must agree, or a worker started outside compose quietly does the other thing."""
+    from proto.worker import options
+
+    var, default = _compose_default(_env(_service(_load(COMPOSE), "worker"))["TOOL_SERVER"])
+    assert var == "TOOL_SERVER", "the interpolation must read the name the recipes and the lead export"
+    assert default == options.TOOL_SERVER_DEFAULT == "http"
+
+
+def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn_on_the_default():
+    """With http as the default a worker reaches `tools` over the compose network, so every
+    recipe that runs a REAL turn has to bring it up. proto-up-core deliberately does not (the
+    D3 smoke's stub arms never build worker options, so they never reach a tool server)."""
+    def brings_tools_up(target: str, seen: frozenset = frozenset()) -> bool:
+        """The recipe waits for `tools` itself, or delegates to one that does."""
+        assert target not in seen, f"{target} delegates in a cycle"
+        body = _recipe(target)
+        assert body, f"{target} has a recipe"
+        if any("tools" in _wait_services(line) for line in body if "--wait" in line):
+            return True
+        return any(
+            brings_tools_up(other, seen | {target})
+            for other in ("proto-up", "proto-turn", "proto-demo")
+            if f"$(MAKE) {other} " in "\n".join(body)
+        )
+
+    for target in ("proto-up", "proto-turn", "proto-demo", "proto-kill", "proto-demo-auto"):
+        assert brings_tools_up(target), \
+            f"{target} runs a real turn on the http default: it must wait for `tools` or delegate to one that does"
+    # The exception, with its reason: the D3 smoke's stub arms never build worker options.
+    assert not any(re.search(r"\btools\b", line) for line in _recipe("proto-up-core"))
+
+
 def test_shim_read_timeout_is_the_step_ceiling():
+    """The compose default is the pinned 1800 s; the variable that overrides it is the one
+    proto-demo-auto exports (7200 for the D18 arm), so a renamed interpolation would leave
+    that arm silently at 1800."""
     env = _env(_service(_load(COMPOSE), "shim"))
-    assert int(env["READ_TIMEOUT_S"]) == STEP_CEILING_S
+    var, default = _compose_default(env["READ_TIMEOUT_S"])
+    assert int(default) == STEP_CEILING_S
+    assert var == "READ_TIMEOUT_S", "proto-demo-auto exports READ_TIMEOUT_S; the interpolation must read that name"
+
+
+def test_compose_default_reads_the_interpolation_or_the_literal():
+    assert _compose_default("${READ_TIMEOUT_S:-1800}") == ("READ_TIMEOUT_S", "1800")
+    assert _compose_default("${READ_TIMEOUT_S-1800}") == ("READ_TIMEOUT_S", "1800")
+    assert _compose_default("1800") == (None, "1800")
+    assert _compose_default("${READ_TIMEOUT_S}") == (None, "${READ_TIMEOUT_S}"), "no default: not a pinned ceiling"
 
 
 def test_ceiling_override_lowers_read_timeout_and_nothing_else():
@@ -191,11 +355,28 @@ def test_ceiling_override_lowers_read_timeout_and_nothing_else():
 # ── queue ───────────────────────────────────────────────────────────────────────
 
 
+# proto-demo-auto's `export READ_TIMEOUT_S="${READ_TIMEOUT_S:-7200}"` in raw make text ($$
+# is the shell's $); either default form, since this reads the number only.
+_EXPORTED_CEILING = re.compile(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:?-(\d+)\}"')
+
+
+def _exported_ceiling_s() -> int:
+    match = _EXPORTED_CEILING.search("\n".join(_recipe("proto-demo-auto")))
+    assert match, "proto-demo-auto no longer exports READ_TIMEOUT_S; re-derive the largest ceiling here"
+    return int(match.group(1))
+
+
 def test_elasticmq_visibility_timeout_exceeds_the_ceiling():
+    """The shim never extends a message's visibility while its POST is in flight, so an
+    attempt longer than the visibility timeout is redelivered mid-flight and the worker
+    runs the same turn twice at once on one SDK session. The literal must therefore top
+    every ceiling the shim can run at -- the compose default and the one proto-demo-auto
+    exports (7200 s) -- not only the 1800 s this compared against until 2026-09-20."""
     match = _DURATION.search(_turns_block())
     assert match, "turns needs a defaultVisibilityTimeout with a seconds/minutes unit"
     seconds = int(match.group(1)) * _UNIT_S[match.group(2)]
-    assert seconds > STEP_CEILING_S, f"visibility timeout {seconds}s must exceed the {STEP_CEILING_S}s step ceiling"
+    ceiling = max(STEP_CEILING_S, _exported_ceiling_s())
+    assert seconds > ceiling, f"visibility timeout {seconds}s must exceed the largest step ceiling, {ceiling}s"
 
 
 def test_elasticmq_has_no_redrive_policy():
@@ -212,3 +393,46 @@ def test_schema_creates_every_planned_table():
 
 def test_schema_has_no_committed_batches():
     assert "committed_batches" not in _created_tables()
+
+
+# ── D18 grading recipes ─────────────────────────────────────────────────────────
+
+
+def test_proto_grade_requires_a_session_and_runs_the_prototype_script():
+    recipe = _recipe("proto-grade")
+    assert any('test -n "$(SESSION)"' in line for line in recipe), "proto-grade must refuse without SESSION"
+    assert any("exit 2" in line for line in recipe if "SESSION" in line)
+    assert any("proto/grade.py" in line and "--session '$(SESSION)'" in line for line in recipe)
+    assert any("--fixture '$(FIXTURE)'" in line for line in recipe), "FIXTURE is optional but must reach the script"
+
+
+def test_proto_compare_requires_both_a_fixture_and_a_session():
+    recipe = _recipe("proto-compare")
+    guards = [line for line in recipe if "test -n" in line]
+    assert any('test -n "$(FIXTURE)"' in line for line in guards), "proto-compare must refuse without FIXTURE"
+    assert any('test -n "$(SESSION)"' in line for line in guards), "proto-compare must refuse without SESSION"
+    assert all("exit 2" in line for line in guards)
+    body = [line for line in recipe if "proto/compare.py" in line]
+    assert body, "proto-compare must run proto/compare.py"
+    assert "--fixture '$(FIXTURE)'" in body[0] and "--session '$(SESSION)'" in body[0]
+    assert "--runlog '$(abspath $(RUNLOG))'" in body[0], "RUNLOG is a path: make it absolute, the script cd's away"
+
+
+def test_the_grading_recipes_run_the_harness_module_in_the_harness_venv():
+    """`apps/server` and `eval/harness` are separate environments. Both recipes enter
+    apps/server; the harness module is reached only as a subprocess from eval/harness --
+    grade.py's HARNESS_DIR + `uv run` -- never imported across the two."""
+    for target in ("proto-grade", "proto-compare"):
+        recipe = "\n".join(_recipe(target))
+        assert "cd apps/server" in recipe, target
+        assert "e2e.grade_files" not in recipe, f"{target} must not call the harness module directly"
+    source = (PROTO / "grade.py").read_text(encoding="utf-8")
+    assert 'HARNESS_DIR = ROOT / "eval" / "harness"' in source
+    assert '"uv", "run", "python", "-m", "e2e.grade_files"' in source
+    assert "cwd=HARNESS_DIR" in source
+
+
+def test_proto_test_runs_the_d18_tests():
+    assert any(
+        "tests/test_proto_d18.py" in line for line in _recipe("proto-test")
+    ), "make proto-test must run the D18 tests, or they run nowhere"

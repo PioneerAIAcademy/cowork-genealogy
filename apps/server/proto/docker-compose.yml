@@ -81,18 +81,74 @@ services:
       timeout: 3s
       retries: 30
 
+  # D9-10 worker: one patron turn per message through the Agent SDK. Context is the
+  # repo root (the image carries packages/engine and apps/server); the root
+  # .dockerignore drops node_modules, .git, .venv and eval, and keeps the engine build/.
   worker:
-    build: ./worker
+    build:
+      context: ../../..
+      dockerfile: apps/server/proto/worker/Dockerfile
     container_name: proto-worker
     # D14 kills this container on a ceiling overrun (and the D3 `crash` turn exits it);
     # every subsequent redelivery needs a worker to POST to.
     restart: unless-stopped
     environment:
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      # The tool server's store (hosted-stdio.js), in-network hosts.
+      GENEALOGY_PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
+      GENEALOGY_ANCHOR_PATH: /project
+      # The model. Passed through from the host environment at `up` time, never a
+      # literal here; the stub arms run with it empty.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # image_transcribe's OCR provider on the TOOL_SERVER=stdio opt-out, forwarded to
+      # the per-turn fork; on the http default the `tools` service below has its own
+      # copy. env.sh exports it from eval/.env.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
+      # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
+      # this file (proto/env.sh writes it; FamilySearch access tokens live an hour, so
+      # `make proto-token` rewrites it under the running worker). Empty, and every
+      # FamilySearch tool answers with the reconnect instruction.
+      FS_ACCESS_TOKEN_FILE: /run/fs-token
+      # http (default since 2026-09-20, the lead's call): the D16 `tools` service on the
+      # SAME store, ONE process for every turn and every patron -- bearer as
+      # Authorization, the turn's project id as X-Genealogy-Project-Id, the store bound
+      # per request. That is the shape production runs, so it is the shape the remaining
+      # measurements describe; a per-turn fork cannot exercise the risk that matters
+      # there (one process serving many patrons). TOOL_SERVER=stdio is the opt-out:
+      # hosted-stdio.js forked per turn on the Postgres store above, which every cost
+      # figure before that date was measured on.
+      # Only the recipes that wait for `tools` can run a real turn on the default --
+      # proto-up, proto-turn, proto-kill, proto-demo, proto-demo-auto. proto-up-core
+      # deliberately leaves `tools` down for the D3 smoke, whose stub arms never build
+      # worker options, so they never reach a tool server either way.
+      TOOL_SERVER: ${TOOL_SERVER:-http}
+      # The e2e harness's tree-read block for fixture runs (bare MCP tool names, comma-
+      # separated; proto-demo exports the harness's five). Empty: no block.
+      BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
+      # D18's autonomous arm: the worker's Stop hook vetoes the model's voluntary yield up
+      # to this many times per turn (proto-demo-auto exports the harness's 40). 0: off.
+      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
+      ENGINE_DIR: /opt/genealogy/engine
+      ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
+      WORKER_CWD: /project
+      TMPDIR: /tmp
+    # The transcript, its per-turn CLAUDE_CONFIG_DIR and the oversized-result spill are
+    # writable-not-durable: a tmpfs, discarded with the container.
+    tmpfs:
+      - /tmp:size=1g,mode=1777
+    volumes:
+      - ./.fs-token:/run/fs-token:ro
     expose:
       - "8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
@@ -121,6 +177,52 @@ services:
       elasticmq:
         condition: service_healthy
 
+  # D16 tool server: the genealogy engine (build/http.js) on Streamable HTTP at /mcp,
+  # /healthz for the wait. Context is the repo root so the engine's src/ compiles inside
+  # the image (apps/server/proto/tools/Dockerfile). One long-lived process serves every
+  # patron's turns: each request binds a PgS3ProjectStore from its X-Genealogy-Project-Id
+  # header on the store below, and a request without one reaches no store at all (never
+  # the file backend). Stdio fork and HTTP server are two readers of one store.
+  tools:
+    build:
+      context: ../../..
+      dockerfile: apps/server/proto/tools/Dockerfile
+    container_name: proto-tools
+    restart: unless-stopped
+    environment:
+      # The store, in-network hosts -- byte-identical to the worker's block, which
+      # test_proto_config asserts. No GENEALOGY_PROJECT_ID: the id is per request.
+      GENEALOGY_PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
+      GENEALOGY_ANCHOR_PATH: /project
+      # The per-user config, the four keys hosted-stdio.js reads from its own env: one
+      # shared process, so these are per-STACK here rather than per patron, which is what
+      # a one-patron prototype wants. Without the OpenRouter key `image_transcribe`
+      # answers with its no-key error, which is what the stdio fork used to prevent.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      WIKI_API_URL: ${WIKI_API_URL:-}
+      POP_STATS_URL: ${POP_STATS_URL:-}
+    # Project state lives in Postgres/S3, so nothing writes to the rootfs; /tmp is the
+    # one rw path.
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      # {"hosted": true}: auth errors point at the web app's reconnect, not the login tool.
+      - ./tools/config.json:/root/.familysearch-mcp/config.json:ro
+    # Loopback only: the server has no auth beyond header -> principal (README).
+    ports:
+      - "127.0.0.1:8787:8787"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
   shim:
     build: ./shim
     container_name: proto-shim
@@ -140,9 +242,11 @@ services:
       WORKER_URL: http://worker:8080/turn
       WORKER_CONTAINER: proto-worker
       HTTP_CONNECTIONS: "2"
-      # The step ceiling, pinned. docker-compose.ceiling.yml lowers it for the
+      # The step ceiling: 1800 s unless the `up` environment sets READ_TIMEOUT_S
+      # (proto-demo-auto exports 7200 for the D18 arm; proto-demo, proto-turn and
+      # proto-kill run at the default). docker-compose.ceiling.yml lowers it for the
       # smoke's ceiling case and changes nothing else.
-      READ_TIMEOUT_S: "1800"
+      READ_TIMEOUT_S: "${READ_TIMEOUT_S:-1800}"
       BACKOFF_BASE_S: "5"
       BACKOFF_MAX_S: "300"
     depends_on:

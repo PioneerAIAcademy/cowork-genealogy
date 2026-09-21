@@ -313,15 +313,16 @@ Those two arguments do all of Step 4 for you:
 
 - `projectPath` stages the raw results host-side and returns a
   `staged.resultsRef` handle (pass it to `research_log_append` in Step 5), with
-  the inline results as **compact stubs** — the bulk per-result GedcomX lives in
-  the staged file.
+  the bulk per-result GedcomX left in the staged file. When you also pass
+  `subjectId`, those same rows come back **scored and ordered best first**
+  (Step 4) — one list, not two.
 - `subjectId` makes the tool **rank the candidates for you** against that subject
   and return them under `ranked` (see Step 4). You do not call
   `rank_search_matches` yourself in the normal flow.
 
 Leave `count` alone. It defaults to 50 when you pass `subjectId` — a deep pool is
-worth fetching precisely because the ranker cuts it back host-side — and to 20
-when you don't. Setting `count: 50` without a `subjectId` just hands you 50 raw
+worth fetching precisely because every row comes back scored and ordered — and to
+20 when you don't. Setting `count: 50` without a `subjectId` just hands you 50 raw
 stubs to read.
 
 Omit `subjectId` only when the search is genuinely not about a specific tree
@@ -386,11 +387,18 @@ by hand for that one search.
 Whichever path produced it, the ranking scores **every** staged candidate against
 the subject with FamilySearch's own matcher (the engine `same_person` uses),
 re-orders by real match quality — **not** FamilySearch's search rank, which is
-unreliable — and returns the **top 10** in `matches[]`. Each carries `matchRank`,
-`searchRank` (its original position — shows how far the ranker missed),
-`matchScore` (0–1), `matchConfidence` (1–10), the key facts, and `attachedToSubject` /
-`attachedToOther`. The bulk GedcomX stays host-side, and a per-result
-`same_person` loop plus a separate `source_attachments` call are both unnecessary.
+unreliable — and annotates **every scored candidate** in `results[]`, returned
+best first. There is one row list: the rows you already know, now carrying
+`matchRank`, `searchRank` (their original FamilySearch position — shows how far
+the ranker missed), `matchScore` (0–1), `matchConfidence` (1–10),
+`candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
+carries counts and diagnostics only. The bulk GedcomX stays host-side, and a
+per-result `same_person` loop plus a separate `source_attachments` call are both
+unnecessary.
+
+Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
+highest. A row the ranker could not score keeps its search position, has no
+`matchScore`, and sorts last — it is still there, not dropped.
 
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
@@ -523,7 +531,7 @@ candidates; you still confirm the top ones:
   answers the question asked — a 1870-census query returning an 1850 result is a
   near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
 
-**When nothing in the top 10 is a confident match** — or `rank_search_matches`
+**When nothing in `matches[]` is a confident match** — or `rank_search_matches`
 returns `subjectResolvable: false` — do **not** conclude the record is absent:
 
 - The pool caps at 50, and re-ranking only re-orders what was fetched — it can't

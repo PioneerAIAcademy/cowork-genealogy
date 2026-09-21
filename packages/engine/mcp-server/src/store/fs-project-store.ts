@@ -238,7 +238,9 @@ export class FsProjectStore implements ProjectStore {
     }
   }
 
-  async readText(projectPath: string, ref: string): Promise<string> {
+  /** The real path `readText` and `readBytes` read from, containment and node
+   *  type checked — the one place a model-supplied ref becomes a file read. */
+  private async readableReal(projectPath: string, ref: string): Promise<string> {
     const abs = this.abs(projectPath, ref);
     // `abs` reasons about the STRING: a symlink placed inside the project that
     // points outside it resolves "inside" and readFile would follow it. This is
@@ -260,7 +262,15 @@ export class FsProjectStore implements ProjectStore {
     if (!s.isFile() && !s.isDirectory()) {
       throw new Error(`path '${ref}' is not a regular file`);
     }
-    return readFile(real, "utf-8");
+    return real;
+  }
+
+  async readText(projectPath: string, ref: string): Promise<string> {
+    return readFile(await this.readableReal(projectPath, ref), "utf-8");
+  }
+
+  async readBytes(projectPath: string, ref: string): Promise<Uint8Array> {
+    return new Uint8Array(await readFile(await this.readableReal(projectPath, ref)));
   }
 
   async list(projectPath: string, dirRef: string): Promise<ProjectEntry[]> {

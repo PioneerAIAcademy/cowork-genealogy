@@ -42,10 +42,13 @@ Each item carries `id` (needed to move the card), `content.number`, `status`,
 `title` and `labels`. **The list truncates silently at `--limit`** — if the row
 count equals the limit you asked for, you lost rows.
 
-**The project API throttles separately from the GraphQL budget.** A burst of
-reads returns "API rate limit exceeded" while `gh api rate_limit` still shows
-5000/5000. Read the board once at the start of the run and work from that
-snapshot, re-reading only before a write.
+**This full-board read is the expensive call.** It pages every card with full
+issue bodies — about 30s, and a large share of the GraphQL points budget. Run it
+**once** per run and work from that snapshot. Repeating it returns "API rate
+limit exceeded" while `gh api rate_limit` still shows 5000/5000: that is the
+points budget, not the hourly window, and it clears in minutes, so do not wait
+for the `reset` timestamp. **Never re-read the board to check one card** — use
+the single-card query in Section 6.
 
 **Oldest first**, and **cap the run at about eight.** The column is the queue, so
 an item you did not reach is still there next run. Say how many are left when you
@@ -205,8 +208,23 @@ with a mechanical pass/fail — lints, CI, validators, harness, MCP tools, tooli
 bugs. `genealogist` for fixture adjudication, record research, doctrine prose.
 
 **Check the board write landed.** A `gh` token without the `project` scope fails
-it while still reporting success, which looks exactly like it worked. Re-read the
-item and confirm the column before you report the item done.
+it while still reporting success, which looks exactly like it worked. Confirm the
+column with this single-card query — never by re-reading the board:
+
+```sh
+gh api graphql -f owner=PioneerAIAcademy -f repo=cowork-genealogy -F number=<N> \
+  -f query='query($owner:String!,$repo:String!,$number:Int!){
+    repository(owner:$owner,name:$repo){issue(number:$number){
+      number state stateReason
+      projectItems(first:5){nodes{id project{number}
+        fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}' \
+| jq -r '.data.repository.issue
+    | "#\(.number) \(.state)/\(.stateReason // "-") column=\(.projectItems.nodes[0].fieldValueByName.name // "none") item=\(.projectItems.nodes[0].id)"'
+```
+
+0.5s against 30s, and it returns the `<ITEM_ID>` the `item-edit` above needs, so
+it replaces looking that up from the board snapshot too. Use the same query after
+a close, since `--reason "not planned"` intermittently lands the card in Done.
 
 **Never set an assignee.** People self-serve from Ready and the lead hands work
 out at standup.

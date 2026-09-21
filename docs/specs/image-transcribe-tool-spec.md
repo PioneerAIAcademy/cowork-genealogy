@@ -365,14 +365,38 @@ consistent across schema, manifest, and skill.)*
 {
   imageId?: string    // DGS Image Group Number "NUMBER_NUMBER", e.g. 004884748_02613
   ark?: string        // FamilySearch document-image ARK / resolver URL / dist URL
+  memoryArtifactUrl?: string // FamilySearch MEMORY artifact URL
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
   projectPath?: string // absolute project-folder path; supply to save the JPEG (§8.5)
 }
 ```
 
-- Exactly one of `imageId` / `ark`, resolved **identically to `image_read`**
-  (§8 shares the resolver). Accept the same shapes `image_read` accepts
-  today (`3:1:`/`3:2:` ARKs, resolver URLs, `/$dist`, `dgs:.../dist.jpg`).
+- Exactly one of `imageId` / `ark` / `memoryArtifactUrl`. The first two resolve
+  **identically to `image_read`** (§8 shares the resolver). Accept the same
+  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, resolver URLs,
+  `/$dist`, `dgs:.../dist.jpg`).
+- `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
+  `person_read` source that came from the memories API — a scanned will,
+  certificate, obituary clipping or compiled history uploaded by a relative. It
+  is the retry route for a memory the `person_read` transcription budget
+  skipped, the filter missed, or the OCR failed on; there is no other way to
+  read one, since a memory URL is neither an image-group `imageId` nor a
+  `3:1:`/`3:2:` ARK. Three things make it unlike the other two shapes:
+  - It is **already a direct bytes URL**, so it is passed through rather than
+    resolved, and carries no `fallbackUrl`.
+  - It is fetched with **no Authorization header and needs no FamilySearch
+    login**. Measured 2026-09-15 on one artifact with three header sets: no
+    headers at all → 200, UA only → 200, bearer+UA → 200. Sending a token would
+    also mean handing a credential to a URL that arrived inside a response
+    body, which is why the host is **validated, not trusted**: it must be
+    `sg30p0.familysearch.org` with a path ending `/dist.<ext>` (221 of 221 in
+    the probe corpus), and anything else is refused before any fetch.
+  - **`application/pdf` is accepted here**, unlike the image-only page-scan
+    shapes. PDFs are 29 of that 221 and carry the wills and certificates.
+    Measured the same day: the model transcribes a PDF handed to it as an
+    ordinary `image_url` data URL — 1222 chars off the smallest memory PDF — so
+    no file-parser plugin and no second request shape are needed. `audio/*` and
+    `video/*` are still refused.
 - `lookingFor` mirrors the `image-reader` subagent's parameter: a search key
   only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
   §6.2); it **never** shortens or slants the full transcription, and any
@@ -791,24 +815,35 @@ flow. Storage follows the existing per-user config convention exactly:
 
 ### 6.5 Key provisioning across runtimes
 
-The server reads the key **only** from `~/.familysearch-mcp/config.json`
-(`getOpenRouterApiKey`) — never from `process.env`, in any runtime. That is
-the same file channel the MCP server already uses for the FS token
-(`tokens.json`) and `wikiApiUrl`. Each runtime provisions that file with its
-own mechanism; the env var (where one exists) is read at the
-**orchestration layer**, never by the server:
+**`getOpenRouterApiKey` reads the key only from the config, never from `process.env`,
+in any runtime** — the same channel the MCP server uses for the FS token
+(`tokens.json`) and `wikiApiUrl`. What differs per runtime is who fills that config,
+and the answer splits on whether the server is a process a user installed or a process
+something else starts. Where a user installed it, the config is the file they own.
+Where an orchestrator starts it — the hosted sandbox, the e2e harness — that
+orchestrator writes the file before the server runs. Where the server is a **container**
+(the two search-agent prototype entrypoints), the entrypoint builds the config from its
+own environment before constructing the server, because a container receives a secret
+as environment and not as a file baked into an image — and `hosted-stdio.js` receives
+it per TURN, from the worker, which no file could do:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
 | **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly (the `configure_openrouter` tool sets only `openRouterModel`, not the key) |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
+| **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service; `build/hosted-stdio.js`, the worker's per-turn fork) | compose passes the stack's `OPENROUTER_API_KEY` to the service, and the worker passes it to each fork; both entrypoints layer it and the other three per-user keys over whatever config they start from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
 
-So the env var still does its job for e2e and the Fly control plane — both
-of which legitimately read env — but it is **bridged** into the server's one
-config channel rather than read by the server. This keeps the
-"no env-var fallback" rule intact (the server has zero `process.env` reads)
-while letting each runtime supply the key naturally. The hosted-path
+So in every runtime the env var is **bridged into the config** rather than consulted
+when the key is needed: no tool reads a credential from the environment, and
+`getOpenRouterApiKey` stays the single resolution point with a single source. That is
+what the "no env-var fallback" rule protects, and it holds. What does **not** hold, and
+was claimed here until 2026-09-20, is the stronger sentence that the server makes zero
+`process.env` reads: `hosted-stdio.ts` has read these four since the D9–10 engine half,
+`http.ts` since the tool-server default moved to it, and a shipped tool
+(`research-append.ts`) reads two debug-hold variables. The bridge is at the
+**entrypoint** for a container and at the **orchestrator** for a sandbox; both are
+outside the tool, which is the line that matters. The hosted-path
 `fs_oauth.write_tokens` (`TOKENS_PATH = {HOME}/.familysearch-mcp/tokens.json`,
 called from `sessions.py:create_project`) is the exact pattern the
 `write_config` sibling follows.
