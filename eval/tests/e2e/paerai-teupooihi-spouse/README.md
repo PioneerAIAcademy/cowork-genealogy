@@ -48,13 +48,13 @@ year matches the tree's Moe PARAUHIA (`97XW-7VN`, b. 1836, Papetoai, Moorea), so
 the principal is unambiguously this Moe. The finding attaches to the son, not to
 the subject.
 
-The spouse is corroborated independently, meeting both bars the card set:
+The spouse is corroborated, meeting both bars the card set:
 
 1. A **distinct index entry on a different register image and household from the
    hint** — `ark:/61903/1:1:D955-NRW2` ("Entry for Moe Parauhia and Aufaite
    Toehae", image `3:1:3Q9M-CSS4-PSVY`, household `1:2:48ZK-KGT2`) vs the hint's
    image `3:1:3Q9M-CSS4-P343`, household `1:2:46ZP-Y8ZM`. Being a separate index
-   record, it is independent of the hint for corroboration — not a re-serving of
+   record, it is distinct from the hint for corroboration — not a re-serving of
    the same index ARK — while also being the marriage record already attached to
    Moe in the live tree. The hint indexes this marriage at **Teaharoa** and
    `D955-NRW2` indexes it at **Teavaro** — two neighbouring Moorea communes; this
