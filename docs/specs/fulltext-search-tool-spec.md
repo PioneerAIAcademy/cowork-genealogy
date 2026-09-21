@@ -25,6 +25,38 @@ with different query syntax, different result shapes, and different
 use cases. A separate tool keeps the interface clean and the
 descriptions distinct so Claude picks the right one.
 
+## Coverage
+
+The shipped `fulltext_search` description states coverage as **behaviour** and
+carries no figures: it is a model-read surface, and a total there goes stale on
+every upstream re-run. The precise values live here, which is the evidence trail.
+
+| claim | value | as of |
+|---|---|---|
+| searchable auto-collections | ~6,665 | mid-2026 |
+| result-records | ~1.95 billion | mid-2026 |
+| growth rate | ~4-6 collections per week | mid-2026 |
+| FamilySearch's internal auto-collection definitions | "8,000+" | mid-2026 |
+
+The last two rows are the coverage mismatch: the internal definition count
+exceeds the user-searchable surface, so a collection existing upstream does not
+mean `fulltext_search` can reach it.
+
+**No probe measures any of these.** There is no full-text section in
+`dev/measured-figures.json` and `dev/try-fulltext-search.ts` is a smoke script,
+not a probe, so every figure above is asserted from upstream documentation rather
+than derived in this repo. The two comma-grouped values carry scoped `EXEMPT`
+entries in `tests/packaging/measured-figures.test.ts` saying exactly that; the
+exemptions are the durable record that no probe exists, and they red if anyone
+deletes them without landing one.
+
+Coverage is strongest on US deeds and wills 1750-1900, US Legal/Vitals/
+Migrations/Land/Probate/Military, UK Military and Legal, Latin American notarial
+protocols of the 17th to 19th centuries, Revolutionary War pension files,
+Australian and New Zealand probate, and Italian civil records. It is weak or
+absent on non-Latin scripts (German Kurrent, Cyrillic, Greek), East Asian,
+Arabic and Hebrew, and Eastern European records.
+
 ## Tool name
 
 `fulltext_search`

@@ -373,6 +373,10 @@ export const fulltextSearchToolSchema = {
     "(+ require, - exclude, \"...\" phrase, * wildcard). Finds people mentioned anywhere in a document " +
     "(witnesses, neighbors, heirs, appraisers), not just indexed principals. " +
     "No fuzzy matching — use + to require terms, otherwise default is OR. " +
+    "Coverage is an incomplete, continuously growing subset of FamilySearch's images — " +
+    "weighted toward English-language records from the Americas, the UK and Australasia, " +
+    "and weaker on non-Latin scripts and continental Europe. Verify coverage before reading " +
+    "a nil result as absence: the document may be unsearchable rather than missing. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
