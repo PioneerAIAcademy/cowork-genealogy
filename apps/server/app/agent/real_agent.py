@@ -429,12 +429,32 @@ def current_api_key() -> str:
     return key if isinstance(key, str) and key else env_key
 
 
+def _current_base_url() -> str | None:
+    """The proxy base URL for the next turn, if any.
+
+    Prefers the per-connect secrets file (same channel as the API key) so a
+    sandbox created before the proxy deploy still routes through it after
+    reconnect. Falls back to the env var for sandboxes whose secrets file
+    predates this field.
+    """
+    try:
+        doc = json.loads(Path(_SECRETS_PATH).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return os.environ.get("ANTHROPIC_BASE_URL")
+    url = doc.get("anthropic_base_url") if isinstance(doc, dict) else None
+    if isinstance(url, str) and url:
+        return url
+    return os.environ.get("ANTHROPIC_BASE_URL")
+
+
 def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     """Build the env dict for the Claude Agent SDK subprocess.
 
-    When ``ANTHROPIC_BASE_URL`` is set in the sandbox env (by the control plane
-    to point at the credential proxy), it is forwarded so the SDK routes calls
-    through the proxy. ``ENABLE_TOOL_SEARCH=true`` is set unconditionally, which
+    Both the API key and the base URL are read from the per-connect secrets
+    file (written by ``agent_secrets.write_secrets`` on every resume), with
+    env-var fallback for sandboxes whose file predates the field. This ensures
+    a sandbox created before the proxy deploy still routes through the proxy
+    after reconnect. ``ENABLE_TOOL_SEARCH=true`` is set unconditionally, which
     keeps tool search on regardless of the base URL (measured: probe P3b,
     2026-09-11, ``make probe-gateway-path``).
     """
@@ -442,7 +462,7 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
         "ENABLE_TOOL_SEARCH": "true",
     }
-    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    base_url = _current_base_url()
     if base_url:
         env["ANTHROPIC_BASE_URL"] = base_url
     return env

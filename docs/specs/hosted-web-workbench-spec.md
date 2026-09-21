@@ -941,7 +941,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   of user-readable space where feasible.
 - **Production preflight (shipped 2026-08-05):** the control plane refuses
   to boot when it is configured as production but still holds development defaults —
-  `session_secret`, `ws_signing_key`, `anthropic_proxy_signing_key`, or an unset `DATABASE_URL`
+  `session_secret`, `ws_signing_key`, `anthropic_proxy_signing_key`, `fs_token_enc_key`, or an unset `DATABASE_URL`
   (`config.assert_production_config`, first statement of `main.py`'s lifespan).
   - *Why an https `PUBLIC_URL` is the production discriminant:* it is the signal
     `auth.cookie_secure()` already uses, it lives in `deploy/fly.toml`'s `[env]` rather

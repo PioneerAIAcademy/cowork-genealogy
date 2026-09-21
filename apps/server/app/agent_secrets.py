@@ -36,17 +36,23 @@ from .config import get_settings
 from .sandbox.base import SECRETS_PATH
 
 
-def secrets_bytes(credential: str | None) -> bytes:
+def secrets_bytes(credential: str | None, base_url: str | None = None) -> bytes:
     """Serialize the secrets document the in-sandbox agent reads.
 
     ``credential`` is either a proxy token or the raw API key, depending on
-    whether the proxy is active. A missing value writes ``{}`` rather than a
-    null: the reader treats absent and empty alike (it falls back to env), and
-    this keeps the file's shape stable.
+    whether the proxy is active. ``base_url`` is the proxy endpoint URL when
+    the proxy is active, absent otherwise. Both travel together so a resumed
+    sandbox whose create-time env predates the proxy still routes through it.
+
+    A missing value writes ``{}`` rather than a null: the reader treats absent
+    and empty alike (it falls back to env), and this keeps the file's shape
+    stable.
     """
     payload: dict[str, str] = {}
     if credential:
         payload["anthropic_api_key"] = credential
+    if base_url:
+        payload["anthropic_base_url"] = base_url
     return json.dumps(payload, indent=2).encode()
 
 
@@ -62,6 +68,8 @@ async def write_secrets(sandbox) -> None:
     """
     if proxy_active():
         credential = proxy_token(sandbox.id)
+        base_url = f"{get_settings().public_url}/api/anthropic-proxy"
     else:
         credential = get_settings().anthropic_api_key
-    await sandbox.write_file(SECRETS_PATH, secrets_bytes(credential))
+        base_url = None
+    await sandbox.write_file(SECRETS_PATH, secrets_bytes(credential, base_url))
