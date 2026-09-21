@@ -292,10 +292,19 @@ async def _drain_replay(ws) -> None:
             in_flight -= 1
 
 
+def _user_msg(message: str) -> dict:
+    """The frame /v1 sends. `auto_continue: false` opts this turn — and any
+    chain it would have started — out of lay mode's auto-continue (issue #2653):
+    a /v1 caller reads the first `turn_done` as its reply, so a synthetic `Yes.`
+    turn behind it would be read as the answer to the caller's next message,
+    which is the misattribution the drain exists to rule out."""
+    return {"type": "user_msg", "text": message, "auto_continue": False}
+
+
 # ── sync path ────────────────────────────────────────────────────
 async def _collect_sync(ws, message: str, timeout_s: int) -> dict:
     await _drain_replay(ws)
-    await ws.send(json.dumps({"type": "user_msg", "text": message}))
+    await ws.send(json.dumps(_user_msg(message)))
     deadline = time.monotonic() + timeout_s
     text_parts: list[str] = []
     tool_calls: list[dict] = []
@@ -370,7 +379,7 @@ async def _handle_stream(provider, sandbox_id: str, message: str, session_id: st
         last_alive = time.monotonic()
         try:
             await _drain_replay(ws)
-            await ws.send(json.dumps({"type": "user_msg", "text": message}))
+            await ws.send(json.dumps(_user_msg(message)))
             while True:
                 # Checked at the TOP of the loop, not only on a recv timeout,
                 # because a recv timeout is not reached when the agent is silent

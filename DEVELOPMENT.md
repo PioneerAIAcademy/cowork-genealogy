@@ -118,7 +118,11 @@ Example: adding a "list providers" feature.
    - Create `packages/engine/mcp-server/src/tools/list-providers.ts`
    - Add its schema to `allToolSchemas` in `packages/engine/mcp-server/src/tool-schemas.ts`
      and its dispatch case to the `CallTool` handler in
-     `packages/engine/mcp-server/src/index.ts`
+     `packages/engine/mcp-server/src/server.ts` (`createServer`; the entrypoints
+     `src/index.ts`, `src/hosted-stdio.ts` and `src/http.ts` only bind a principal),
+     plus a row in `packages/engine/mcp-server/dev/smoke-calls.ts` — `make engine-smoke-http`
+     fails on an advertised tool it neither calls nor lists as an exclusion (it needs
+     the compose store up, `make proto-up-store`, so Docker)
    - Add its name to `tools` in `packages/engine/mcp-server/manifest.json` — the packaging
      test (`tests/packaging/manifest.test.ts`) fails if the manifest and
      the registry drift apart
@@ -304,6 +308,15 @@ since mid-2026 was verified without one. Verification is automated:
    natural language, and that the skills using it still pass. **Not `make
    test`**, which is `test-js` + `server-test` and reaches neither the
    harness nor the engine.
+4. **The transport smokes** — `make engine-smoke-stdio` drives the built
+   server over stdio and calls every offline tool once (`make engine-smoke-stdio-pg`
+   does the same through `build/hosted-stdio.js` on Postgres + minio);
+   `make engine-smoke-http` starts `build/http.js` on the compose Postgres + minio
+   store (`make proto-up-store`, so Docker), calls every advertised tool but the
+   four auth exclusions over Streamable HTTP under a fresh `smoke-<uuid>` project id
+   (`SMOKE_PROJECT_ID=` pins it), and fails if a tool is neither called nor excluded
+   (`BASE=http://127.0.0.1:8787` runs it against the compose `tools` service
+   instead). All read `dev/smoke-calls.ts`.
 
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a
