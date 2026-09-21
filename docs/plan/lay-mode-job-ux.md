@@ -1,423 +1,371 @@
 # Research as a job — the agent runs, you watch and steer
 
-> **Status:** NOT BUILT. Plan of 2026-09-21, written against `8039b23ed`. Replaces the
-> lay-mode job UX plan of 2026-09-20 (same path), which specified a `hand_back` MCP tool,
-> a seven-arm server turn router and a refusing lay-language validator. All three are
-> dropped — the mechanism they were building already exists in the prototype worker, and
-> the identifier problem is a rendering problem. The board changes that plan applied on
-> 2026-09-20 stand and are recorded at the end.
+> **Status:** NOT BUILT. Plan of 2026-09-21, for beta in Fall 2026. Written for one
+> developer taking it over several weeks. Every phase is independently takeable and carries
+> its own acceptance check.
 >
-> Supersedes the hand-back literal ruled 2026-09-07 (issues #2292, #1104 and #2328) and the
-> regex auto-continue of PR #2667.
+> Supersedes the hand-back literal ruled 2026-09-07 (issues #2292, #1104, #2328) and the
+> regex auto-continue of PR #2667. The board changes applied on 2026-09-20 are at the end.
 
-## What changes, in one paragraph
+## What you are building
 
-Today a `/research` run is a conversation with consent gates: the agent finishes a step,
-writes a fixed closing line, and waits for a click. Under this plan the agent works
-continuously until the job is done or it needs something only the user has — exactly what
-`research/SKILL.md`'s autonomous-mode section already tells it to do, and exactly what
-the prototype's D18 Stop hook already enforces. The user reads a feed, watches the plan
-tick over, can type at any time, and reviews what changed. The human is in the loop once,
-at the plan, rather than nine times at "Continue?".
+Today a `/research` run stops about nine times to ask "Continue?". After this, the agent
+works continuously until the job is done or it needs something only the user can supply.
+The user watches a feed, sees the plan tick over, can type at any time, and presses **Stop**
+if it is going the wrong way.
 
-## The shape, and why
+**Stop is the control surface.** Not an approval dialog, not a consent prompt. This is
+deliberate and it is the core of the design: a non-genealogist cannot meaningfully approve a
+list of record types and jurisdictions, and an experienced genealogist would rather see that
+item 3 is wrong while items 1 and 2 are still running than tick a box beforehand. So there
+is **no plan-approval gate**. Render the plan, start working, leave Stop available.
 
-**Model it on Claude Code, because that is the product both audiences already accept.**
-Claude Code's loop is: you state a goal, you approve a plan, the agent works in one
-continuous turn narrating as it goes, and you review the diff. Three of those four are
-missing here. This plan adds them and deletes the machinery that stands in for them.
+That serves both audiences at once. Someone who asks a question and comes back in an hour
+gets an answer. Someone who watches learns the craft by reading the reasoning as it happens,
+which is how a new developer learns from Claude Code.
 
-**One mode for everyone, and it has to be earned rather than declared.** The previous
-plan claimed one mode while hardcoding `experience_level: "novice"` and a
-`narration_guidance` string that forbids identifiers. That is lay mode with the dial
-welded. A single mode works the way Claude Code's does: identifiers are **additive, not
-forbidden**. `src/tools/foo.ts:42` next to "I made the tool check the status first" reads
-fine to both audiences — the novice reads the sentence, the engineer clicks the path. The
-rule is *every paragraph must make sense with the identifiers deleted*, which no regex can
-check. So the identifiers get **linked**, not refused.
+## Before you start — read these
+
+You are new to this repo. In order:
+
+1. `CLAUDE.md` — the agent operating manual. What binds here: "Architecture you must
+   understand", "Plugin hooks", "Code reuse".
+2. `docs/architecture.md` — "The hosted web workbench", "Orchestration", and the
+   "If you're asked to…" block for whatever you touch first.
+3. `docs/plan/search-agent-prototype.md` — the prototype's step model and its residual-risk
+   register. Phase 0 below is that document's open defects.
+4. `packages/engine/plugin/skills/research/SKILL.md` — the orchestrator whose behaviour you
+   are changing, even though you barely edit it.
+
+## The three planes
+
+| Plane | What it is | Stance |
+|---|---|---|
+| **Prototype** (`apps/server/proto/`) | Queue + worker + stateless web tier. **This becomes the production server** | Everything lands here first |
+| **Alpha** (`apps/server/app/`) | E2B sandbox per session, on Fly. What alpha testers use today | Backport one hook so the feedback loop keeps running |
+| **Cowork** | Desktop, for development and testing | Degraded is fine. Build nothing Cowork-specific |
+
+**Cowork needs nothing.** It should behave like any other long-running agent: work
+continuously, narrate, stop when done or when it needs you. That is its native behaviour and
+it is already good. The plugin's job there is to not get in the way.
 
 ---
 
-## 1. The agent already runs continuously — turn it on
+## Phase 0 — make continuous work sound (proto only, no UX)
 
-**The mechanism is built and live on `main`.** PR #2695 shipped the prototype's autonomous
-arm: `make_stop_hook` in `apps/server/proto/worker/options.py` binds a `Stop` hook that
-vetoes the model's voluntary yield, and `should_continue_run` allows the stop only when
-`project.status == "completed"`, the nudge cap is spent, or the previous nudge produced no
-tool call. It reads `research.json` off the `documents` row at each stop.
+Under one turn per step these were rare. Under continuous turns they are on every run.
+**Nothing else here can be trusted until 0a lands.**
 
-That is both halves of what the previous plan was going to build: continuous work, and a
-completion gate that reads real state instead of trusting a claim. No new MCP tool, no
-server-side arms, no injected "Continue the research…" message, no transitional literal
-arm, no per-turn bubble boundary.
+### 0a. A resumed attempt that runs zero model turns is a failure, not a completion
 
-**The prototype's unit of work is already the patron turn, not the step** — "one patron
-turn per queue message, not one model call," with SDK resume as the checkpoint. A
-per-step-turn design inverts that and makes every research step a fresh queue message,
-claim and resume. Do not build it.
+PR #2695's acceptance run on `bagley-father-1884`, 2026-09-20: attempt 1 was killed by the
+shim at 1,800,092 ms with two `record-extractor` agents mid-persist. Attempt 2 resumed and
+"completed" in 10 ms with **0 model turns** — the CLI answered the orphaned agents with a
+synthetic no-response reply and `run_turn` took that as the turn finishing. `worker.py`
+raises only on `result.is_error`, and a synthetic result is not an error. The fixture still
+had `project.status: active`.
 
-What is left is configuration and two exceptions:
+**Build:** in `apps/server/proto/worker/worker.py`, on a redelivered attempt
+(`receive_count > 1`), a `ResultMessage` with `num_turns == 0` is a resume failure. Retry it;
+do not mark the turn done.
 
-- **`AUTONOMOUS_MAX_NUDGES` defaults to 0 in compose** — with the variable unset there is
-  no `Stop` key at all. Default it on for the hosted browser path.
-- **A waiting user message must allow the stop** (below).
-- **A pending decision must allow the stop** (below).
+**Then probe the kill-with-background-agents case.** `make proto-kill` kills during a
+main-thread `place_search`; this failure needed a subagent mid-persist. Write that variant.
 
-### The two yield exceptions
+**Acceptance:** a kill during a delegation resumes and finishes, and no run records a
+`num_turns == 0` attempt as a completion. Break the guard and watch the test fail.
 
-`make_stop_hook` already takes injectable callables — `research()`, `tool_count()`,
-`on_nudge()` — all reading Postgres on the turn's connection. Both exceptions are one more
-callable and one more clause in `should_continue_run`:
+### 0b. Put the step ceiling back to 1,800 s
 
-1. **`pending_user_message()`** — a message the user has posted is waiting. Allow the stop;
-   their message becomes the next turn. This is the whole answer to typed-input latency:
-   it costs time-to-next-yield rather than time-to-job-end. The same row read by a `hold`
-   flag is the pause control, and it is what the interrupt endpoint (currently answering
-   501) should do.
-2. **`pending_decision()`** — the agent has written an unanswered decision record. Allow
-   the stop. See "The loop" below.
+It was overridden to 7,200 s for the D18 arm on 2026-09-20 because the run kept being cut,
+and elasticmq's `defaultVisibilityTimeout` went to 7,500 s to match. The cut was a symptom of
+0a, not a capacity finding.
 
-Both conditions are decidable by reading the documents alone, which is ADR-0011's first
-question, and both sit in a predicate that already does exactly this for completion.
+**Build:** drop the override; return visibility to ~2,100 s. The compose default is already
+`READ_TIMEOUT_S:-1800`.
 
-## 2. Making continuous work sound — three defects, and they are the real work
+**No exception for tests.** A test that never crosses the ceiling can never exercise resume,
+and resume is now load-bearing on every production run. The crossing *is* the test.
 
-Under per-step turns these are rare. Under one continuous turn they are on every run.
+### 0c. The `/v1` lock needs turn identity and a heartbeat
 
-**2a. Resume after a ceiling kill is unsound.** This is the blocker. PR #2695's own
-acceptance run on `bagley-father-1884`, 2026-09-20: attempt 1 was killed by the shim at
-1,800,092 ms with two `record-extractor` agents mid-persist; attempt 2 resumed and
-"completed" in 10 ms with **0 model turns**, because the CLI answered the orphaned agents
-with a synthetic no-response reply and `run_turn` took the result as the turn's
-completion. `worker.py` raises only on `result.is_error`, and a synthetic result is not an
-error.
+It claims a bare timestamp with no turn identity, a 600 s stale TTL and no heartbeat, against
+a measured p99 segment of 1,488 s — so a healthy long turn already has its lock reclaimed
+while it is still running. That was rare enough to defer when turns were short. Every turn is
+long now.
 
-So "progress is monotone, so the ceiling is a forced checkpoint, not a failure" is false in
-the case that matters, and continuous turns make that case routine — the measured fixture
-took 1,804 s and still had `project.status: active`.
+**Acceptance:** a turn longer than the stale TTL keeps its lock; a dead worker's lock is
+still reclaimable.
 
-- Minimum fix: on a redelivered attempt (`receive_count > 1`), a `ResultMessage` with
-  `num_turns == 0` is a **resume failure, not a completion**. Retry it; do not mark the
-  turn done.
-- Then probe the kill-with-background-agents case. D14's kill landed on a main-thread
-  `place_search`; this one did not, and the plan already records the gap.
-- Note what this says about completion gating: the one observed false completion happened
-  **below any tool**. A `hand_back(state: "done")` precondition would not have caught it.
-  The gate belongs where the hook already reads the document, plus this worker-level guard.
+---
 
-**2b. Do not raise the ceiling again.** It went to 7,200 s for the arm on 2026-09-20, with
-elasticmq visibility at 7,500 s. Either resume is sound and 1,800 s is a real checkpoint,
-or it is not and no ceiling is high enough. Fix 2a instead.
+## Phase 1 — turn continuous work on
 
-**2c. The `/v1` lock defect moves onto the critical path.** It claims a bare timestamp with
-no turn identity, a 600 s stale TTL and no heartbeat, against a measured p99 segment of
-1,488 s — so a healthy long turn already has its lock reclaimed while running. The
-prototype plan files this as someone else's `nothing-checks` issue because at p99 it is
-rare. Every turn is long now. It needs turn identity and a heartbeat.
+### 1a. Default the autonomous arm on (proto)
 
-## 3. Identifiers become links, not refusals
+`make_stop_hook` in `apps/server/proto/worker/options.py` already vetoes the model's
+voluntary yield, and `should_continue_run` allows the stop when `project.status ==
+"completed"`, the nudge cap is spent, or the last nudge produced no tool call. It reads
+`research.json` off the `documents` row at each stop. **This is the whole mechanism** — do
+not build an MCP tool, a server-side turn router, or an injected "continue" message.
 
-**Drop the lay-language validator entirely** — `lay-language.ts`, the vocabulary table, the
-`tool-names.ts` cycle-breaker, the replay script, the two-population corpus measurement,
-the guardrail register rows, the harness drift pin and the fails-six-ways lint. By its own
-numbers it would refuse 22% of paragraphs, catch none of the inter-action narration that
-supplies all three of issue #2493's verbatim examples, and catch none of the ~150 tool
-chips per run. It gated the smallest leak at the highest cost, and nobody measured what
-the model does when refused — the one adjacent measurement (issue #2683) found that
-applying the narration string verbatim made violations go **up**.
+`AUTONOMOUS_MAX_NUDGES` defaults to `0` in compose, and with it unset there is no `Stop` key
+at all. Default it on for the browser path.
 
-**The viewer already resolves ids.** `ResearchDataState.getById(id)` returns
-`{ item, section }`; `buildIndex` indexes every `research.json` section item by `id` plus
-GedcomX persons, relationships and sources. `CrossLink` already does
-`getById` → `setActiveSection` → `scrollIntoView` and takes a display label.
-`resolveFamilySearchTarget` resolves arks, bare prefixed ids and `/tree/person/<pid>`
-behind the constrained `openFamilySearch` channel (issue #1018). `Linkify` is already the
-component for agent-authored prose — its own docstring says so. `SessionView` puts
-`ChatPane` and the viewer side by side.
+### 1b. Two exceptions that allow the stop
 
-So the identifier work is three small pieces, and **the model emits nothing new**: it
-writes the id plainly, the renderer resolves it. Same regex the validator would have used,
-pointed at rendering instead of refusal — it costs nothing, fails soft (an unresolvable id
-renders as today's plain text), and cannot fabricate a target the way a model-authored
-link can.
+`make_stop_hook` takes injectable callables — `research()`, `tool_count()`, `on_nudge()` —
+all reading Postgres on the turn's connection. Add two more, each one clause in
+`should_continue_run`:
 
-### Three classes, three treatments
+1. **`pending_user_message()`** — the user has posted a message that is waiting. Allow the
+   stop; their message becomes the next turn. This is the entire answer to typed-input
+   latency: it costs time-to-next-yield, not time-to-job-end. The same row read as a `hold`
+   flag is the pause control, and it is what `POST …/interrupt` should do instead of
+   answering 501.
+2. **`pending_decision()`** — the agent has asked something and has no answer yet. See 3a.
 
-| Class | Examples | Treatment |
-|---|---|---|
-| Resolvable, useful | `I2`, `F15`, `S1`, `q_001`, `ps_003`, `LCZ8-949`, arks, image group ids | **Link**, rendering the referent's label with the id on hover |
-| No referent, no value | `research.json`, `tree.gedcomx.json`, `record_read`, `mcp__genealogy__…` | **Remove** — the user has no filesystem and no tool list. Narration guidance, not a gate |
-| No referent, wanted | skill names — `person-evidence`, `research-plan` | **Translate**: "linking the evidence to the people". Narration guidance for prose, the summariser for chips |
+### 1c. Backport the hook to the alpha
 
-The first class is essentially the whole of issue #2493's main-thread tally (~44 local tree
-ids plus ~10 schema ids). The third is the largest class in the corpus — 517 of 2,332
-paragraphs, led by `person-evidence` at 126 — and it was never a validator problem: a link
-cannot help and a ban leaves the sentence saying nothing.
+Alpha testers are the feedback loop and should not go quiet for weeks.
 
-### The work
+**Smaller than it looks, because the alpha has no step ceiling.** E2B runs
+`on_timeout: pause, auto_resume: true` with the filesystem preserved — a suspend, not a
+kill-and-redeliver. Phase 0 does not block this.
 
-- **`localities` is missing from `buildIndex`.** It is a real `research.json` section, so
-  `loc_003` is the one schema-id class that will not resolve. One line.
-- **A CrossLink-aware `Linkify` in the chat pane**, resolving the display label through
-  `getById`. Two mechanical prerequisites: neither `Linkify` nor `CrossLink` is on
-  `viewer-ui`'s public surface (`src/index.ts` exports `App`, the provider, the context
-  and the external-link helpers), and the chat pane must sit inside the data provider.
-  Both components stay in `viewer-ui` — shared workspace features live there, only chat
-  chrome in `apps/web`.
-- **The chips become useful rather than hidden.** `map_message()` already emits `tool_use`
-  with a human-readable summary. Give it a lay verb per tool and make the chip resolve
-  through the same path — a `record_read` chip opens the source card. This resolves the
-  chip-row decision by making the chips navigation instead of noise, and it keeps the only
-  main-thread liveness signal the product has.
+**Build:** `build_options` in `apps/server/app/agent/real_agent.py` already passes a `hooks=`
+dict carrying `PreToolUse`. Add a `Stop` entry whose callback reads `/project/research.json`
+(the runner already has `PROJECT_DIR`) and calls the same predicate.
 
-## 4. The loop: plan, watch, correct
+**Lift `should_continue_run` to one home while you are there.** It lives in
+`apps/server/proto/worker/options.py` and `eval/harness/e2e/stop_checker.py`; the alpha would
+make three. It is a pure function. One copy, imported by all three — this is the duplication
+shape issue #2476 exists to stop.
 
-This is the half of Claude Code the product does not have.
+**Acceptance:** an alpha session runs a multi-step objective to a proof conclusion on one
+user message. The e2e suite still passes against the shared predicate.
 
-### 4a. Plan mode — one gate, in the right place
+---
 
-`research-plan` already writes a structured plan: each `plan_item` carries `sequence`,
-`record_type`, `jurisdiction`, `date_range`, `repository`, `rationale` and `fallback_for`.
-That renders as a checklist a genealogist reads in ten seconds:
+## Phase 2 — the reading experience (renderer only; independent of 0 and 1)
 
-> 3. **1880 US Census** — Cook County, Illinois, 1875–1885, FamilySearch. *We need to place
->    the family before the move.* If she is not there → the parish register.
+### 2a. Identifiers become links, never refusals
 
-Show it, let them strike items, reorder, or add one, then run. One gate replaces nine.
+Do not build a validator. Identifiers are **additive**: `q_001` beside "the question about
+her parents" reads fine to a novice who ignores it and to a genealogist who clicks it. The
+rule is *every paragraph must make sense with the identifiers deleted*, which no regex can
+check.
 
-Two things fall out for free:
+The viewer already resolves ids. `ResearchDataState.getById(id)` returns `{ item, section }`;
+`buildIndex` indexes every `research.json` section by id plus GedcomX persons, relationships
+and sources; `CrossLink` does `getById` → `setActiveSection` → `scrollIntoView`;
+`resolveFamilySearchTarget` handles arks and person ids behind the constrained
+`openFamilySearch` channel; `Linkify` is already the component for agent-authored prose.
 
-- **`plan_item.status` ticking over is the progress bar.** Far better liveness than a
-  spinner, because it says what is happening and what is left. This is most of what the
-  old plan's liveness item was for.
-- **A plan of known length makes the forecast real** — "about 40 minutes, about $5" before
-  the run, "two items left" during it. The cost chip shows spend; nobody can see the end.
+**Build:**
 
-No enum change: approval is a decision record (below) referencing the plan id, so
-`plan_status` stays `active | completed | superseded`.
+- `localities` is missing from `buildIndex` — one line, and the one schema-id class that
+  will not resolve today.
+- A CrossLink-aware `Linkify` in the chat pane. Two prerequisites: neither component is on
+  `viewer-ui`'s public surface (`src/index.ts` exports `App`, the provider, the context and
+  the external-link helpers), and the chat pane must sit inside the data provider. Both
+  components stay in `viewer-ui` — shared workspace features live there, chat chrome in
+  `apps/web`.
+- **Lay verbs on the tool chips**, and make a chip resolve through the same path so a
+  `record_read` chip opens the source card. `map_message()` already emits `tool_use` with a
+  summary; `mcp__genealogy__record_read` is a wire format, not a name. Claude Code shows you
+  `Read(src/foo.ts)`.
 
-### 4b. Decision records — the pause, and the question card
+**File names, tool names and skill names are a writing-quality matter, not a defect.** Put
+them in the narration guidance as guidance. If the model says "person-evidence" instead of
+"linking the evidence to the people" the sentence is worse, not broken. Do not build a gate
+for it, and do not file it as a bug.
 
-The agent needs one structured way to say *I need you*. One new `research.json` section
-serves plan approval, person disambiguation and "which of these leads should I follow":
+### 2b. The feed and the research log are the same artifact
 
-- a prompt in plain language
-- optional structured options, each with a label, a rationale, and an optional `ref` id the
-  viewer resolves through `getById`
-- an answer field
+`research.json` has a `log` section; a research log is a GPS requirement and something
+genealogists already keep. Anchor each step's paragraph to the log entry it produced.
+Catching up after an hour becomes reading the log, the transcript becomes a deliverable, and
+durability solves itself — the log is project state in Postgres, not an event buffer.
 
-Unanswered record ⇒ the Stop hook allows the yield ⇒ the server renders a **card**, not a
-paragraph. The pause moments are where the user's unique knowledge enters the research —
-*which of these two John Smiths is yours* — and they are the highest-value interaction in
-the product. Rendering them as prose the user answers by typing wastes them. Build the card
-from the existing `PersonCard` and `SidecarResultCard`.
+### 2c. Negative results are first-class
 
-This also routes around the open question on `AskUserQuestion`: whether the built-in works
-in a headless hosted turn is unmeasured, and a decision record in our own envelope does not
-depend on finding out.
+"We searched the 1880 census for that parish and she is not there" is reasonably-exhaustive
+evidence and the thing that separates this from a search box. `log_outcome` already has a
+`negative` value. Show those entries as findings, not as absence.
 
-**Blast radius, per CLAUDE.md's new-section list:** `docs/specs/schemas/research.schema.json`,
-the prose table in `research-schema-spec.md`, `validate_research_schema`, the web mirror
-(`packages/schema/schemas/research.schema.json` + the `interface` in `packages/schema/src/index.ts`),
-a row in `docs/specs/schemas/ownership.json`, and — if it becomes a `research_append`
-section — the `section` enum. It is not `required`, so fixtures do not need backfilling.
+### 2d. Three small ones
 
-### 4c. Change review and reject
+- **Show the scans.** `getSourceImage` exists in the Electron transport and is absent in the
+  web client. Seeing the census page with the family's line is the credibility moment.
+- **Show a queued message as queued** — "picked up at the next step" answers the whole
+  typed-input latency complaint with a label.
+- **Provenance on hover.** `person_evidence` already links a fact to its source.
 
-The agent writes into `tree.gedcomx.json` and `research.json`; the viewer shows current
-state and never **what this session changed**. For genealogists a wrong person-link is the
-thing they care most about, and `tree_correct` and `tree_forget` exist as tools with no UI
-at all.
+---
+
+## Phase 3 — the loop
+
+### 3a. Decision records — the pause, and the question card
+
+The agent needs one structured way to say *I need you*: which of these two John Smiths is
+yours, or which lead to follow. These are the highest-value moments in the product, because
+they are where the user's unique knowledge enters the research. Rendering them as prose the
+user answers by typing wastes them.
+
+**Do not add a `research.json` section.** The Stop hook reads Postgres through injectable
+callables, so the pending question lives in a control-plane table and `pending_decision()`
+reads it — no schema pair, no validator edit, no TS mirror, no ownership row, no
+`research_append` enum, no fixture backfill.
+
+The *resolved outcome* already has a home in `research.json`: a disambiguation is a
+`hypotheses` or `conflicts` entry, a blocker is a `log` entry with a negative outcome. Only
+the transient "waiting for an answer" state is new, and that is control-plane by nature.
+
+**Build:** a prompt in plain language, optional structured options each with a label, a
+rationale and an optional `ref` id the viewer resolves through `getById`, and an answer
+field. Unanswered ⇒ the hook allows the yield ⇒ the web renders a **card**, built from the
+existing `PersonCard` and `SidecarResultCard`.
+
+This also routes around `AskUserQuestion`, whose behaviour in a headless hosted turn is
+unmeasured. Our own envelope does not depend on finding out.
+
+### 3b. Change review and reject
+
+The agent writes into `tree.gedcomx.json` and `research.json`; the viewer shows current state
+and never **what this session changed**. For a genealogist a wrong person-link is the thing
+they care most about, and `tree_correct` and `tree_forget` exist as tools with no UI at all.
 
 A "changes this session" view — persons added, facts attached, relationships made, sources
 cited — with a reject on each row routing to the correction tool. The diff comes from the
 session's turns and the store's document versions.
 
-Continuous work without a review surface is the part of Claude Code people would refuse to
-use. This ranks with plan mode, above everything in section 5.
+**Continuous work without a review surface is the part of Claude Code people would refuse to
+use.** This is the highest-value item after phase 0.
 
-### 4d. Dead ends become next actions
+### 3c. Show the plan, and let it tick
+
+`research-plan` already writes a structured plan: each `plan_item` carries `sequence`,
+`record_type`, `jurisdiction`, `date_range`, `repository`, `rationale` and `fallback_for`.
+Render it as a checklist:
+
+> 3. **1880 US Census** — Cook County, Illinois, 1875–1885, FamilySearch. *We need to place
+>    the family before the move.* If she is not there → the parish register.
+
+**No approval gate.** Show it, start work, let `plan_item.status` tick over. That ticking is
+the progress bar, and it is better liveness than a spinner because it says what is happening
+and what is left. A plan of known length also makes a forecast real — "about 40 minutes,
+about $5" before, "two items left" during.
+
+Add a **"review this plan"** affordance for users who want one. An action, not a checkpoint.
+
+### 3d. Dead ends become next actions
 
 A genuine blocker — "the parish registers for that town are not digitised" — is a real
 research finding and currently the moment a user churns. The locality-guide and wiki tools
-hold what makes it actionable: write to this archive, order this film, visit this
-repository. Render a blocker as a card with next actions, not as an apology.
+hold what makes it actionable: write to this archive, order this film, visit this repository.
+Render a blocker as a card with next actions, not as an apology.
 
-## 5. The reading experience
+---
 
-- **The feed and the research log are the same artifact.** `research.json` has a `log`
-  section; a research log is a GPS requirement and a thing genealogists already keep.
-  Anchor each step's paragraph to the log entry it produced. Catching up after an hour
-  becomes *reading the log*, the transcript becomes a deliverable rather than scrollback,
-  and durability solves itself — the log is project state in Postgres, not an event buffer.
-  (`session_events` is already append-only in Postgres, ~470 rows per run, so the alpha's
-  in-memory replay buffer is not a constraint here either.)
-- **Negative results are the differentiator and they are buried.** "We searched the 1880
-  census for that parish and she is not there" is reasonably-exhaustive evidence and the
-  thing that separates this from a search box. `log_outcome` already has a `negative`
-  value. Show those entries in the feed as first-class, not as absence.
-- **Show the scans.** Seeing the actual census page with the family's line is the
-  credibility moment and the reason forty minutes of watching is worth it. `getSourceImage`
-  exists in the Electron transport and is **absent in the web client** — that gap is on the
-  surface that matters.
-- **Show a queued message as queued.** "Queued — picked up at the next step" answers the
-  entire typed-input latency complaint with a label.
-- **Provenance on hover.** Every tree fact came from a source and `person_evidence` already
-  links them. A fact that shows its source on hover is the difference between a tree the
-  user believes and one they audit.
-
-## 6. The cold start
+## Phase 4 — the cold start
 
 `init-project` asks one open question — the research objective — and a novice does not know
 what one is. The highest-traffic screen in the product is a blank text box.
 
-Replace it: *who do you want to learn about?* → name and rough birth year → candidate
-person cards from `person_search` → pick one. Then **read the tree and offer the gaps you
-can see** — no parents, no death date, no marriage — as three concrete objectives with
-"something else" as the escape. The agent knows what is missing; asking the user to name it
-asks them for the one thing they cannot supply.
+Replace it: *who do you want to learn about?* → name and rough birth year → candidate person
+cards from `person_search` → pick one. Then read the tree and **offer the gaps you can see** —
+no parents, no death date, no marriage — as three concrete objectives, with "something else"
+as the escape. The agent knows what is missing; asking the user to name it asks them for the
+one thing they cannot supply.
 
-## 7. The prose changes
+---
 
-Each of these burns its skill's eval slot. Re-check slot holders at start — the table below
-was true on 2026-09-20.
+## Phase 5 — the prose (paid, one slot at a time)
 
-**The narration guidance is one line and it is the highest-leverage line in the product.**
-`init-project` writes this string verbatim, and 27 of 28 skills read it from
-`research.json` at runtime rather than carrying a copy — so one skill's slot changes
-narration plugin-wide. It currently says:
+Each consumes its skill's eval snapshot: one `make eval-skill` run plus a genealogist
+annotation pass. **Only one item per skill may sit in an active column at a time.** Re-check
+holders before starting; those below were true on 2026-09-20.
 
-> Plain language for someone who has never done genealogy. No identifiers, file names, tool
-> names or field names. **Do not narrate between actions**; report once when the step is
-> done…
-
-In this architecture the `text` events between tool calls **are** the feed. Delete that
-clause. Replace the blanket identifier ban with the three-class rule: name people and
-records in plain words, never name an internal step or a file, and let ids through where
-they denote something the reader can open.
-
-**`--autonomous` stops being a flag.** Production now runs the regime the e2e corpus
-already measures, which ends the mismatch the old plan accepted. Two cautions:
-
-- Injecting `--autonomous` into the session opening is the zero-slot transitional move,
-  **but it inherits `research/SKILL.md`'s rule to suppress per-entry preambles and "narrate
-  only at phase boundaries (or not at all)"** — the opposite of what the feed needs. So the
-  `research` slot PR lands *before* the arm is defaulted on, or the first window ships a
-  silent feed.
-- The router's three no-yield sites — the autonomous-mode section, step 3's "Iterate —
-  without yielding", and the closing paragraph of "When to stop" — are now **correct and
-  stay**. The old plan rewrote all three. Do not.
-
-| PR | Skill slot | What |
+| PR | Slot | What |
 |---|---|---|
-| S1 | `init-project` | The narration string; the cold-start flow |
-| S2 | `research` | Delete the `--autonomous` narration suppression; make the branches unconditional; apply the `proof-conclusion`-writes-status ruling |
-| S3 | `question-selection` | Drop the literal; the `q_001` gloss mandate stays (ruled 2026-09-20, and links now make the gloss useful rather than a courtesy) |
-| S4 | `research-plan` | The execution offer becomes the plan-approval decision record |
+| S1 | `init-project` | The narration guidance; the cold start (phase 4) |
+| S2 | `research` | Make the continuous-work branches unconditional; apply the `proof-conclusion`-writes-status ruling |
+| S3 | `question-selection` | Drop the literal. The `q_001` gloss mandate **stays** — ruled 2026-09-20, and links now make it useful |
+| S4 | `research-plan` | The execution offer becomes "render the plan and start" |
 | S5 | `record-extraction` | A batch is one step; re-key or retire the relay-leak validator |
 
-**The `proof-conclusion` status ruling still applies** (lead, 2026-09-01). The router's
-`allowed-tools` grants two read tools while a routing row mandates the write, so the file
-contradicts itself; three planes already encode the ruling. S2 deletes the router's claim.
-Grep `project.status` **and** `research_append` across the plugin and the architecture
-guide — two further live sites sit inside `research/SKILL.md` itself. The one path the
-ruling does not settle: `question-selection` returning "objective answered" on an
-already-resolved question. Raise it, do not invent a mechanism.
+**The narration guidance is one line and the highest-leverage line in the product.**
+`init-project` writes it and 27 of 28 skills read it from `research.json` at runtime, so one
+slot changes narration everywhere. It currently says *"Do not narrate between actions"* — but
+in this architecture the text between tool calls **is** the feed. Delete that clause.
 
-## 8. Sequencing
+**A sequencing trap.** Injecting `--autonomous` is the zero-slot way to switch production to
+continuous mode, but it inherits `research/SKILL.md`'s rule to suppress preambles and
+"narrate only at phase boundaries (or not at all)". **S2 lands before the arm is defaulted
+on**, or the first window ships a silent feed.
 
-Nothing here needs a new MCP tool, and only the last phase costs eval slots.
+**The router's three no-yield sites are now correct and stay** — the autonomous-mode section,
+step 3's "Iterate — without yielding", and the closing paragraph of "When to stop".
 
-**Phase 0 — soundness (no UX, no slots).** 2a the resume guard, then 2c the `/v1` lock,
-then the two yield exceptions and the hold flag. Nothing else can be trusted until 2a
-lands.
+**The literal retires with S1 and S3.** `test_every_shipped_hand_back_literal_classifies`
+ends on `assert seen >= 2` and exactly two skills carry it, so **the first of S1/S3 reds it**.
+Relax the floor to zero in phase 0; keep the per-literal assertion inside the loop.
 
-**Phase 1 — the reading experience (renderer only).** `localities` in `buildIndex`;
-CrossLink-aware `Linkify` in the chat pane; lay verbs and clickable chips in
-`map_message()`; feed-to-log anchoring; negative results; scans on web; the queued-message
-label. Independent of each other and of phase 0.
+---
 
-**Phase 2 — the loop.** The decision-record section, then plan mode, the question card, and
-change review. Change review is independent of the rest and can go first.
+## What this plan does not do
 
-**Phase 3 — the prose.** S1 through S5, one slot at a time. S2 before the arm is defaulted
-on.
+- **No proof export.** The proof goes to FamilySearch by upload, later.
+- **No confidence meter.** Tempting, and the same additive pattern as the links. Hold it
+  until change review exists: a score on conclusions the user cannot inspect or reject is
+  worse than none.
+- **No leaf-skill changes.** `translation` has a gating validator on two consent offers and
+  `search-external-sites` asks for repository access. Both are correct when invoked directly.
+- **No cost ceiling.** The nudge cap is the only bound on an unattended chain. The forecast
+  in 3c makes spend legible; it does not cap it.
+- **Nothing binds the reassigned status write.** After S2 `proof-conclusion` owns it by prose
+  alone — the plugin hook's owned-sections map has no `project` row. Worth a card.
+- **Nothing for Cowork.** Unlinked ids render there as plain text, exactly as today.
 
-**Phase 4 — the shell.** Notification on job end, latched once per project, fired from the
-turn-end state the server already computes rather than a poller. Project-first navigation:
-lead with "your research on Jennie Bagley" and a history of runs, which is probably why
-users start new sessions instead of resuming.
+## Decisions already made — do not re-open
 
-**Retire the Continue button and the literal** with S1 and S3; delete the regex, the parity
-test and the stripper once no shipped skill emits the literal.
-`test_every_shipped_hand_back_literal_classifies` ends on `assert seen >= 2`, and exactly
-two skills carry the literal, so **the first of S1/S3 to land reds it**. Relax the floor to
-zero in phase 0 and keep the per-literal assertion inside the loop — relaxing the floor
-does not save that, and it is the half that still has work to do while one skill is
-converted and the other is not.
+| | |
+|---|---|
+| Retiring the literal | Ruled. Prose is flaky; the Stop hook is the mechanism |
+| No plan-approval gate | Ruled 2026-09-21. Stop is the control surface |
+| `q_` and `ps_` in user-facing text | Allowed, ruled 2026-09-20. The gloss mandate stays |
+| The tool-chip row | Stays, and becomes navigation (2a) |
+| Binding the rule to `research_append` | **No.** Links, not refusals |
+| Proto is production | Alpha is backported; Cowork is degraded |
+| The step ceiling | 1,800 s, no test exception |
 
-## 9. What this plan does not do
+**Still open:** whether `question-selection` returning "objective answered" on an
+already-resolved question needs a mechanism — raise it, do not invent one.
 
-- **It does not build proof export.** The proof goes to FamilySearch by upload, later.
-- **It does not add a confidence meter.** Building one from the GPS evidence
-  classifications is the same additive pattern as the links and is tempting. Hold it until
-  change review exists: a confidence score on conclusions the user cannot inspect or reject
-  is worse than none.
-- **It does not touch leaf skills' own offers.** `translation` has a gating validator on
-  two literal consent offers and `search-external-sites` asks for repository access. Both
-  are correct when the skill is invoked directly, and the Stop hook only vetoes a yield
-  when the project is unfinished and progress is being made.
-- **It does not bind the reassigned status write.** After S2, `proof-conclusion` owns it by
-  prose alone — the plugin hook's owned-sections map has no `project` row. Worth a card.
-- **It does not build a cost ceiling.** The nudge cap is the only bound on an unattended
-  chain. The forecast in 4a makes the spend legible; it does not cap it.
-- **It changes nothing for Cowork, and that is the point.** Unlinked identifiers there
-  render as plain text — today's behaviour exactly. The validator this plan drops would
-  have fired in Cowork too, constraining what the model may say everywhere to buy a
-  rendering benefit only the web gets. Cowork keeps one turn per click, and under
-  continuous turns that turn is now the whole job, which is strictly better than today.
-
-## 10. The board, as of 2026-09-20
-
-Applied under the previous plan and still correct, except as noted.
+## The board, as of 2026-09-20
 
 | Card | State |
 |---|---|
-| issue #2292 | Retitled to "retire the literal from the router and the setup skills"; becomes S1/S3/S4's wording card. Its 2026-09-09 first-delegation ruling survives. |
-| issue #1104 | Closed not planned. The hosted stop is structural. |
-| issue #2328 | Closed completed by PR #2675. |
-| issue #2088 | `high-priority` and the UX framing dropped; the census survives for ADR-0003. |
-| issue #2493 | **Answer changes.** No longer the vocabulary source for a validator — it becomes the acceptance corpus for the linkifier. Its "should the rule bind the writer tools" question is answered **no**. |
-| issue #1998 | Merge with S5 or sequence it; the plan-item progress bar in 4a is what answers a silent extraction batch. |
-| issue #2660 | Its not-planned closure cited the Continue button, which phase 1 deletes. Comment when it lands. |
-| PR #2695 | Its mechanism is now this plan's mechanism, not a competing one. The two findings under D18 are phase 0's 2a. |
-| **new** | File the `/v1` lock defect (2c) as `nothing-checks`, and a second for emission: nothing on any plane can prove a paragraph reached the reader. |
+| issue #2292 | Retitled; it is S1/S3/S4's wording card. Its 2026-09-09 first-delegation ruling survives |
+| issue #1104 | Closed not planned. Cowork needs no Stop hook |
+| issue #2328 | Closed completed by PR #2675 |
+| issue #2088 | `high-priority` dropped; the census survives for ADR-0003 |
+| issue #2493 | Becomes the acceptance corpus for the linkifier. "Should the rule bind the writer tools" is answered **no** |
+| issue #1998 | Merge with S5, or sequence it. The plan-item progress bar in 3c answers a silent extraction batch |
+| issue #2660 | Its closure cited the Continue button, which phase 2 deletes. Comment when it lands |
+| PR #2695 | Its mechanism is this plan's mechanism. Its two D18 findings are phase 0 |
+| **new** | File the `/v1` lock (0c), and emission — nothing on any plane can prove a paragraph reached the reader |
 
-## 11. Decisions for the lead
-
-1. **This re-decides the 2026-09-07 literal ruling and the 2026-09-18 "every turn is
-   separate; no auto-continue" ruling**, as the previous plan also did. The other
-   2026-09-18 rulings survive: the relayed summary, per-step granularity, and the fixed
-   house style with no interview.
-2. **Brian asked for "a paragraph per step, then ask whether to continue."** This keeps the
-   paragraph and moves the ask to the plan. Cowork users keep one turn per click.
-3. **One new `research.json` section** for decision records, with the blast radius in 4b.
-   The alternative is three ad-hoc mechanisms for plan approval, disambiguation and
-   blockers.
-4. **Phase 2 versus phase 3 ordering.** Change review and plan mode are the two items that
-   change what the product *is*; the prose PRs are five paid slots. If slots are the
-   constraint, phase 2 first.
-
-## 12. What would show it worked
+## What would show it worked
 
 - A hosted session whose only input is one person and one chosen objective runs to a proof
-  conclusion with one approval click, and the chat shows one plain paragraph per step and
-  no consent prompts.
+  conclusion with **no further input**, and the chat shows one plain paragraph per step.
 - A run whose worker is killed at the ceiling resumes and finishes, and a `num_turns == 0`
   resume is never recorded as a completion.
-- A typed message is answered at the next step boundary, not at job end, and shows as
-  queued until then.
-- Every identifier in the feed is either a working link or absent; a paragraph naming an
-  internal step name is a bug with a named owner.
+- A typed message is answered at the next step boundary, not at job end, and shows as queued
+  until then.
+- Every identifier in the feed is either a working link or harmless prose.
 - A two-step run renders two log entries, two feed paragraphs, and two ticked plan items.
 - A wrong person-link can be rejected from the viewer in one click.
+- Stop halts a run mid-step, and the session resumes afterwards.
