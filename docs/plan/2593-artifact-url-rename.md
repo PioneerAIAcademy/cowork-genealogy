@@ -1,6 +1,6 @@
 # PLAN — #2593: rename `artifactUrl` to `artifact_url`
 
-**Status:** step 0 (catch-up merge) DONE at `36d76c285`; rename not started.
+**Status:** DONE. Rename implemented at `c1683a9d4`; final catch-up merge onto main (after #2586 squash-merged as `ed132798e`) at `93dda5fc0`. Delete this file before merge -- per CLAUDE.md a plan describes work not yet built. The paid `init-project` run is the one step outstanding: `check_runlogs` reports `v1.json` inactive because the rename touched 2 snapshot-tracked files (the flynn fixture and `SKILL.md`).
 Revised after plan-critic round 1, which found three blocking defects in the first draft.
 Every correction below was re-verified by hand before being written in. Governing instruction: @chesworthrm on PR #2586,
 2026-09-17, "Where this lands is my call, not yours: do it in #2593, not here."
