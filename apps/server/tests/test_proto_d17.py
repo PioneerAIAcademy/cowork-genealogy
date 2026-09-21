@@ -1,7 +1,9 @@
 """Offline tests for the D14/D17 prep: proto/audit.py's classification of tool_calls rows
 (acceptance criteria 3 and 4), proto/seed.py's fixture resolution and file plan, and
-proto/export.py's pure seams (D18: the manifest, the out-dir layout, the exit codes). No
-Postgres, no stack, no model."""
+proto/export.py's pure seams (D18: the manifest, the out-dir layout, the exit codes), and
+proto/env.sh's token handling (the file's mode, what a failed refresh leaves behind and
+says, and the `--min-life` window it asks dev/fs-token.ts for). No Postgres, no stack, no
+model, and no FamilySearch: the refresh is a stand-in on PATH."""
 
 from __future__ import annotations
 
@@ -170,6 +172,11 @@ def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previou
     assert r.stdout.split() == ["k-from-dotenv", "or-from-dotenv"], "both keys read from the dotenv and exported"
     assert "from-dotenv" not in r.stderr, "never echoed"
     assert token_file.read_text(encoding="utf-8") == "tok-1"
+    # WHY it failed reaches the operator: fs-token.ts reports every failure on stderr and
+    # exits 2 with nothing on stdout, so a 2>/dev/null here would swallow the one line that
+    # says what to do ("log in again with make e2e-login" when the refresh token is dead).
+    # Here the failure is the missing npx, and the shell's own reason is on the line.
+    assert "not found" in r.stderr, f"the refresh's own reason must join the status line: {r.stderr}"
     # The empty directory an early compose `up` leaves in the file's place is replaced.
     token_file.unlink()
     token_file.mkdir()
@@ -179,6 +186,46 @@ def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previou
     # Nothing to refresh and nothing kept: UNSET.
     token_file.write_text("", encoding="utf-8")
     assert "UNSET" in source(ANTHROPIC_API_KEY="k").stderr
+
+
+@pytest.mark.skipif(shutil.which("sh") is None, reason="env.sh needs a POSIX shell")
+def test_env_sh_asks_fs_token_for_a_window_that_outlives_a_full_length_turn(tmp_path):
+    """`make proto-token` sources env.sh and passes no arguments of its own, so whatever
+    window the refresh uses is the one env.sh asks for. It must be at least the step
+    ceiling (READ_TIMEOUT_S, 1800 s) in minutes -- a narrower one still hands over a token
+    a turn can outlive, which is how the D17 run died -- and an operator must be able to
+    widen it without editing the script."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    argv_log = tmp_path / "argv.log"
+    # A stand-in npx: records the argv and prints a stand-in token. The real script is
+    # never run here -- it would reach FamilySearch and rotate the operator's refresh token.
+    npx = bin_dir / "npx"
+    npx.write_text(
+        f'#!/bin/sh\necho "$*" >> {shlex.quote(str(argv_log))}\nprintf stub-token\n',
+        encoding="utf-8",
+    )
+    npx.chmod(0o755)
+    token_file = tmp_path / "fs-token"
+    token_file.write_text("", encoding="utf-8")
+    dotenv = tmp_path / "dotenv"
+    dotenv.write_text("ANTHROPIC_API_KEY=k\n", encoding="utf-8")
+    env = {"PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path),
+           "PROTO_TOKEN_FILE": str(token_file), "PROTO_ENV_FILE": str(dotenv)}
+
+    def source(**extra: str) -> str:
+        subprocess.run(["sh", "-c", ". apps/server/proto/env.sh"], cwd=ROOT, env={**env, **extra},
+                       capture_output=True, text=True, encoding="utf-8", check=True)
+        return argv_log.read_text(encoding="utf-8").splitlines()[-1]
+
+    ceiling_s = int(re.search(r"READ_TIMEOUT_S:-(\d+)", (ROOT / "apps" / "server" / "proto" /
+                                                         "docker-compose.yml").read_text(encoding="utf-8")).group(1))
+    default = source()
+    assert default.startswith("tsx dev/fs-token.ts "), default
+    minutes = int(default.split("--min-life")[1].split()[0])
+    assert minutes >= ceiling_s / 60, f"env.sh asks for {minutes} min against a {ceiling_s} s step ceiling"
+    assert source(PROTO_TOKEN_MIN_LIFE="55").endswith("--min-life 55"), "an operator can widen it"
+    assert token_file.read_text(encoding="utf-8") == "stub-token"
 
 
 # ── export (D18): the mirror image of seed ────────────────────────────────────────
