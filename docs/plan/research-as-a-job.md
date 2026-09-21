@@ -62,6 +62,11 @@ it is already good. The plugin's job there is to not get in the way.
 Under one turn per step these were rare. Under continuous turns they are on every run.
 **Nothing else here can be trusted until 0a lands.**
 
+An earlier draft carried a third item here, fixing the `/v1` lock's missing turn identity and
+heartbeat. **`/v1` is being removed from the repo** (lead, 2026-09-21) — the team it was built
+for never used it and will use the prototype instead — so that defect disappears with it. Do
+not re-add it.
+
 ### 0a. A resumed attempt that runs zero model turns is a failure, not a completion
 
 PR #2695's acceptance run on `bagley-father-1884`, 2026-09-20: attempt 1 was killed by the
@@ -171,22 +176,6 @@ help text and comment block, and `elasticmq.conf`'s header, which names 7,200 tw
 
 **No exception for tests.** A test that never crosses the ceiling can never exercise resume,
 and resume is now load-bearing on every production run. The crossing *is* the test.
-
-### 0c. The `/v1` lock needs turn identity and a heartbeat
-
-**In scope, ruled 2026-09-21**, alongside the wider goal of `/v1` being complete and locally
-testable under `docker compose`. Note where it lives: `/v1` is served by the **alpha**
-(`apps/server/app/v1.py`) and does not exist in the prototype web tier at all, so despite
-sitting under a phase headed "proto only" this is alpha work. Do it with 1d, or coordinate
-with whoever is completing `/v1`, because you will both be editing the same lock.
-
-It claims a bare timestamp with no turn identity, a 600 s stale TTL and no heartbeat, against
-a measured p99 segment of 1,488 s — so a healthy long turn already has its lock reclaimed
-while it is still running. That was rare enough to defer when turns were short. Every turn is
-long now.
-
-**Acceptance:** a turn longer than the stale TTL keeps its lock; a dead worker's lock is
-still reclaimable.
 
 ---
 
@@ -316,32 +305,6 @@ stop the run.
 **Acceptance:** Stop pressed mid-run halts within seconds, the session shows as stopped
 rather than completed or failed, and a later message resumes it.
 
-### 1e. A spend bound, because phase 1 is what creates the exposure
-
-**Ruled 2026-09-21: cap a job at $25.** Continuous work removes the human who used to stop a
-run by not clicking Continue, and nothing replaces them. The nudge cap does not: it is
-consulted only at a voluntary yield, 31% of runs never yield, and it resets on every attempt.
-
-Sized against the corpus — 155 runs with cost data, median $7.84, p90 $14.75, **max $25.24** —
-$25 is roughly a p99 bound. It will occasionally bite real work, which is why the terminal
-state below matters as much as the number.
-
-**Three things this needs:**
-
-- **Sum tokens, not `cost_usd`.** `turns.cost_usd` is the *completing attempt's*
-  `ResultMessage`, so it misses every killed attempt — and per 0b the median run has two.
-  `turns.input_tokens / cache_creation_tokens / cache_read_tokens / output_tokens` are summed
-  over assistant entries and **do** carry a killed attempt's spend, which is exactly why
-  `004_worker.sql` records them. Price those.
-- **Enforce it in the `PreToolUse` hook**, the same place 1c halts on Stop — it fires every
-  few seconds, where a yield-gated check fires about once a run.
-- **Terminal state and resumption.** A budget stop is a `turns.outcome` of `budget`, rendered
-  as what it is, with what was found so far and an explicit way to grant more. A run that
-  stops at $25 and looks finished is worse than no cap at all.
-
-**Acceptance:** a run that reaches the bound stops within seconds, is visibly distinguishable
-from a completed one, and can be resumed by an explicit user action.
-
 ### 1d. Backport the hook to the alpha
 
 Alpha testers are the feedback loop and should not go quiet for weeks.
@@ -383,6 +346,38 @@ problem.
 **Acceptance:** an alpha session runs a multi-step objective to a proof conclusion on one
 user message *without the sandbox pausing mid-turn*. The e2e suite still passes against the
 shared predicate.
+
+### 1e. A spend bound, because phase 1 is what creates the exposure
+
+**Ruled 2026-09-21: cap a session at $35.** Continuous work removes the human who used to
+stop a run by not clicking Continue, and nothing replaces them. The nudge cap does not: it is
+consulted only at a voluntary yield, 31% of runs never yield, and it resets on every attempt.
+
+**Per session, not per run or per project.** A `sessions` row carries a `project_id`, so a
+project spans many sessions — the bound caps one sitting, never the research. Sized against
+the corpus: 155 runs with cost data, median $7.84, p90 $14.75, max $25.24. So $35 is about
+four median runs in one sitting, and above the most expensive single run ever recorded.
+
+**No grant mechanism, deliberately.** When a session reaches the bound it stops, and the way
+to continue is to start a new session on the same project — which is what users already do by
+default. Building an in-session "spend more" flow is not beta work.
+
+**Three things this needs:**
+
+- **Sum tokens, not `cost_usd`.** `turns.cost_usd` is the *completing attempt's*
+  `ResultMessage`, so it misses every killed attempt — and per 0b the median run has two.
+  `turns.input_tokens / cache_creation_tokens / cache_read_tokens / output_tokens` are summed
+  over assistant entries and **do** carry a killed attempt's spend, which is exactly why
+  `004_worker.sql` records them. Price those.
+- **Enforce it in the `PreToolUse` hook**, the same place 1c halts on Stop — it fires every
+  few seconds, where a yield-gated check fires about once a run.
+- **Terminal state, and it has to say what to do next.** A budget stop is a `turns.outcome`
+  of `budget`, rendered as what it is, with what was found so far and the sentence that tells
+  the user to start a new session to carry on. A session that stops at $35 and looks finished
+  is worse than no cap at all — the user reads it as "nothing more was found".
+
+**Acceptance:** a session that reaches the bound stops within seconds, is visibly
+distinguishable from a completed one, and says how to continue.
 
 ---
 
@@ -430,7 +425,8 @@ on an already-resolved question. Raise it; do not invent a mechanism.
 | The E2B ceiling | Heartbeat, ruled 2026-09-21. Not a Pro upgrade, not accepting the pause |
 | S2 before 1a | Ruled 2026-09-21. Do not unblock by prefixing the flag from the web tier |
 | Eval-slot collisions | Avoid where visible, accept occasionally. Do not block on an empty queue |
-| A spend bound | $25 per job, ruled 2026-09-21 |
+| A spend bound | $35 per session, ruled 2026-09-21. No in-session grant flow |
+| `/v1` | Being removed from the repo. Not in scope, do not fix its lock |
 
 ## What would show phases 0 and 1 worked
 
@@ -444,7 +440,7 @@ on an already-resolved question. Raise it; do not invent a mechanism.
   as stopped rather than completed, and a later message resumes it.
 - A message typed mid-run is accepted, shown as queued, and answered at the next step
   boundary.
-- A capped or stalled run is visibly distinguishable from a finished one, and a run that
-  reaches the $25 bound says so and offers to continue.
+- A capped or stalled run is visibly distinguishable from a finished one, and a session that
+  reaches the $35 bound says so and says how to continue.
 - An alpha session runs a multi-step objective to a proof conclusion without the sandbox
   pausing mid-turn.

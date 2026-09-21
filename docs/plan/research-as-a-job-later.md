@@ -111,11 +111,10 @@ keep the per-literal assertion inside the loop.
   inspect or reject is worse than none.
 - **No leaf-skill changes.** `translation` and `search-external-sites` are correct when
   invoked directly.
-- **No effective cost ceiling, and the nudge cap is not one.** Of 181 corpus runs, 36 had to
-  be killed by harness caps production does not have, and the highest nudge count among them
-  was 5. The cap is consulted only at a voluntary yield and 31% of runs never yield. Either
-  carry the harness's caps on the queue body and enforce them in the `PreToolUse` hook, or say
-  in writing that an unattended run has no effective bound.
+- **No *further* cost work.** Phase 1e bounds a session at $35, enforced in the `PreToolUse`
+  hook and priced off token columns rather than `cost_usd`. The nudge cap remains not a bound —
+  it is consulted only at a voluntary yield, 31% of runs never yield, and of 36 corpus runs
+  killed by harness caps the highest nudge count was 5. Nothing further here.
 - **Nothing binds the reassigned status write.** After S2, `proof-conclusion` owns it by prose
   alone — the plugin hook's owned-sections map has no `project` row. Worth a card.
 - **Nothing for Cowork.** Unlinked ids render there as plain text, exactly as today.
@@ -132,4 +131,4 @@ keep the per-literal assertion inside the loop.
 | issue #1998 | Merge with S5, or sequence it. The plan-item progress bar answers a silent extraction batch |
 | issue #2660 | Its closure cited the Continue button, which phase 2 deletes. Comment when it lands |
 | PR #2695 | Its mechanism is this design's mechanism. Its two D18 findings are phase 0 |
-| **new** | File the `/v1` lock, and emission — nothing on any plane can prove a paragraph reached the reader |
+| **new** | File emission — nothing on any plane can prove a paragraph reached the reader. (The `/v1` lock is moot: `/v1` is being removed.) |
