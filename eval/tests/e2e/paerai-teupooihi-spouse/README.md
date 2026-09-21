@@ -63,9 +63,12 @@ The spouse is corroborated independently, meeting both bars the card set:
 2. The hint record itself carries the discriminators the card asked for: an 1860
    marriage date, a Moorea place, and parents matching `LCX2-L8S`/`LCX2-LKN`.
 
-A third line agrees: the live tree already carries the spouse as a distinct
-person, Aufait/Afaite Toehae (`L6RB-3B4`, b. 1834 Paea, d. 6 Dec 1887 Teaharoa,
-Moorea), married to Moe c. 1860 at Teavaro.
+This is not a further independent line. The live tree already carries the spouse
+as a distinct person, Aufait/Afaite Toehae (`L6RB-3B4`, b. 1834 Paea, d. 6 Dec
+1887 Teaharoa, Moorea, married to Moe c. 1860 at Teavaro) — but the record behind
+that tree relationship is `D955-NRW2` itself (the entry above, already attached
+to Moe), so the tree spouse is derived from the cited record rather than
+corroborating it a second time.
 
 **Correcting the draft's stated risk.** The draft flagged that "the entry
 carries no date for the marriage." Read on FamilySearch, both the hint and the
