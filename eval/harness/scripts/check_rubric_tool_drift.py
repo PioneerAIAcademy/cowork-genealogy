@@ -285,8 +285,8 @@ def agent_declared_tools(agent_md: Path) -> tuple[set[str], set[str]]:
 
 
 def agent_body_mentions(agent_md: Path, vocabulary: set[str]) -> set[str]:
-    """Tool names mentioned in an agent's body that are in neither its
-    tools: nor its disallowedTools: frontmatter."""
+    """Tool names mentioned in an agent's body that are not in its
+    tools: (or disallowedTools:, if re-added) frontmatter."""
     if not agent_md.exists():
         return set()
     text = agent_md.read_text(encoding="utf-8")
