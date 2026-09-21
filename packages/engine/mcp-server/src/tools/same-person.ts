@@ -31,7 +31,7 @@ import {
 } from "../utils/record-persona.js";
 import { recordMatchScore } from "../utils/match-scores.js";
 import { Mob } from "../utils/mob.js";
-import { arkToBareId } from "../utils/ark.js";
+import { arkToBareId, toArk } from "../utils/ark.js";
 
 /** Concurrency cap for the relatives-mode fan-out of per-pair FS calls. */
 const PAIR_CONCURRENCY = 5;
@@ -105,11 +105,15 @@ function cacheFor(): Map<string, SimplifiedGedcomX> {
   return m;
 }
 
-/** Same-record test that tolerates the three stored id forms (resolver URL,
- *  bare `ark:`, type-prefixed), which the corpus carries all of. */
+/** Same-record test that tolerates the stored id spellings (resolver URL, bare
+ *  `ark:`, type-prefixed), which the corpus carries all of.
+ *
+ *  Compares the CANONICAL ARK, not `arkToBareId`: dropping the `n:n:` type
+ *  segment would pool the assertions of `1:1:X` (a persona), `1:2:X` (a source)
+ *  and `3:1:X` (an image) into one projected record. See `scoresRef`. */
 function sameRecord(a: unknown, b: unknown): boolean {
   if (typeof a !== "string" || typeof b !== "string") return false;
-  return arkToBareId(a) === arkToBareId(b);
+  return toArk(a).toLowerCase() === toArk(b).toLowerCase();
 }
 
 function personNames(p: SimplifiedPerson): string[] {
@@ -348,7 +352,22 @@ async function resolveRecordSide(
           .join(", ")}).`,
     );
   }
-  const group = groups.find((g) => g.role === role);
+  // `recordPersonaId` selects the party here too, not only on the fetched
+  // route. `assertUnambiguous` below tells the agent to pass it when a role
+  // names two people, and the schema advertises it as the disambiguator, so a
+  // route that ignored it sent the agent round the same refusal for ever.
+  const group =
+    typeof input.recordPersonaId === "string" && input.recordPersonaId !== ""
+      ? groups.find((g) => g.key === input.recordPersonaId)
+      : groups.find((g) => g.role === role);
+  if (group === undefined && typeof input.recordPersonaId === "string") {
+    throw new SamePersonInputError(
+      `same_person: record '${recordId}' holds no persona with ` +
+        `record_persona_id '${input.recordPersonaId}'. Known persona ids: ` +
+        `${groups.map((g) => g.personaId).filter(Boolean).join(", ") || "(none recorded)"}. ` +
+        `Available roles: ${groups.map((g) => g.role).join(", ")}.`,
+    );
+  }
   if (group === undefined) {
     throw new SamePersonInputError(
       `same_person: record '${recordId}' holds no persona for role '${role}'. ` +
@@ -359,8 +378,8 @@ async function resolveRecordSide(
   assertUnambiguous(group, recordId);
 
   return {
-    gedcomx1: projectedRecordDocument(groups, role, recordId),
-    primaryId1: role,
+    gedcomx1: projectedRecordDocument(groups),
+    primaryId1: group.key,
     recordSource: "projection",
     personaId: group.personaId,
   };
@@ -371,15 +390,20 @@ async function resolveRecordSide(
  *
  * `record_role` is unique per party in the numbered vocabulary
  * (`child_1`, `witness_2`, …), but a transcribed register PAGE holds many
- * entries at one role each, and grouping by role would merge them into one
- * persona and score the merge. Measured over the corpus's 524 projection-route
- * groups, 9 are ambiguous this way, across two runs.
+ * entries at one role each, and a role-keyed group merges them into one persona.
+ * Scoring that merge is worse than refusing it.
  *
- * Deliberately NOT a general "two names means two people" rule: repo-wide, 18 of
- * the 22 role-level name collisions are ALIAS variants of a single persona
- * (maiden names, scribal variants, "also known as"). Those carry one
- * `record_persona_id`, so the guard exempts them explicitly rather than
- * false-firing on the commonest shape it would otherwise see.
+ * Deliberately NOT a general "two names means two people" rule. A group the
+ * record itself assigned ONE `record_persona_id` to is one person under several
+ * spellings (maiden name, scribal variant, "also known as"), and those are
+ * keyed on the persona id rather than the role, so they never reach this guard
+ * merged. Measured over 3,093 projected parties: 20 hold more than one distinct
+ * name, of which 14 are role-keyed and refused here and 6 are persona-keyed and
+ * exempt.
+ *
+ * The exemption trusts the extractor's persona id. 2 of those 6 look on
+ * inspection like two people sharing one id rather than one person under two
+ * spellings — an extraction defect this guard cannot see and does not try to.
  */
 function assertUnambiguous(group: RecordPersonaGroup, recordId: string): void {
   if (group.names.length <= 1) return;
@@ -388,7 +412,8 @@ function assertUnambiguous(group: RecordPersonaGroup, recordId: string): void {
     `same_person: role '${group.role}' in record '${recordId}' names more than one ` +
       `person (${group.names.map((n) => JSON.stringify(n)).join(", ")}), so scoring it ` +
       "would compare a merge of them. This is normal for a transcribed page holding " +
-      "several entries. Pass recordPersonaId, or give each entry its own record_role.",
+      "several entries. Pass recordPersonaId to name one of them, or re-extract " +
+      "so each entry carries its own record_role.",
   );
 }
 

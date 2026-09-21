@@ -149,27 +149,24 @@ describe("projectRecordPersonas", () => {
 });
 
 describe("projectedRecordDocument", () => {
-  it("anchors the focus persona on the record's ARK and carries no relationships", () => {
+  it("gives NO party the record's ARK, and carries no relationships", () => {
+    // A `1:1:` record id names ONE persona (normally the principal), but every
+    // assertion of the record carries it whatever its role. Stamping it on the
+    // focus party meant scoring the bride built a person wearing the
+    // principal's persona ARK, which buildRawWithAnchor writes into the
+    // Persistent identifier it POSTs. Nothing is lost by omitting it: two live
+    // probes show an ARK-less focus person scores normally.
     const groups = projectRecordPersonas([
       a({ id: "a_1", record_role: "principal", fact_type: "name", value: "Patrick Flynn" }),
       a({ id: "a_2", record_role: "wife", fact_type: "name", value: "Mary Flynn" }),
     ]);
-    const doc = projectedRecordDocument(groups, "principal", "ark:/61903/1:1:ABCD-123");
-    expect(doc.persons?.find((p) => p.id === "principal")?.ark).toBe(
-      "ark:/61903/1:1:ABCD-123",
-    );
-    // The non-focus party gets no ARK — it is not what the record id names.
-    expect(doc.persons?.find((p) => p.id === "wife")?.ark).toBeUndefined();
+    for (const focus of ["principal", "wife"]) {
+      const doc = projectedRecordDocument(groups);
+      expect(doc.persons?.every((p) => p.ark === undefined), focus).toBe(true);
+      expect(doc.persons?.map((p) => p.id)?.sort()).toEqual(["principal", "wife"]);
+    }
     // Deliberate: record_role is an open enum, so edges cannot be inferred from
     // role names, and a wrong edge scores worse than no edge.
-    expect(doc.relationships).toBeUndefined();
-  });
-
-  it("does not invent an ARK for a non-ARK record id", () => {
-    const groups = projectRecordPersonas([
-      a({ id: "a_1", record_id: "004516861_00304", fact_type: "name", value: "Anders" }),
-    ]);
-    const doc = projectedRecordDocument(groups, "principal", "004516861_00304");
-    expect(doc.persons?.[0]?.ark).toBeUndefined();
+    expect(projectedRecordDocument(groups).relationships).toBeUndefined();
   });
 });

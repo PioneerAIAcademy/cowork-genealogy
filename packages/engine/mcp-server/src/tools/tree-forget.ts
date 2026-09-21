@@ -88,7 +88,7 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
 // carrier when the relatives were never added as tree persons).
 //
 // `SWEPT_SPOUSE_FACT_TYPES` is the full set of couple-event types from
-// `COUPLE_EVENT_TYPES` in `materialize-facts.ts`, per the lead's 2026-08-24
+// `COUPLE_EVENT_TYPES` in `utils/record-persona.ts`, per the lead's 2026-08-24
 // ruling: sweep all couple events. `SWEPT_PARENT_FACT_TYPES` remains a
 // narrower, evidence-confirmed set (#1314).
 export const SWEPT_SPOUSE_FACT_TYPES: readonly string[] = [...COUPLE_EVENT_TYPES];

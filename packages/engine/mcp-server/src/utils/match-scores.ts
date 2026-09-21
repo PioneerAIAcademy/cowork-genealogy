@@ -39,7 +39,7 @@
 
 import { createHash } from "node:crypto";
 import { getProjectStore } from "../store/project-store.js";
-import { arkToBareId } from "./ark.js";
+import { toArk } from "./ark.js";
 
 /** The dot-directory attestations live in, relative to the project root. */
 export const SCORES_SUBDIR = "results/.scores";
@@ -77,12 +77,24 @@ export interface MatchScoreFile {
 /**
  * The project-relative ref for a record's attestation file.
  *
- * Hashes the NORMALISED id: `record_id` is stored as a resolver URL on part of
+ * Hashes the CANONICAL ARK: `record_id` is stored as a resolver URL on part of
  * the corpus and as a bare `ark:` on the rest, and those must not become two
- * files for one record.
+ * files for one record. `toArk` unifies those two spellings and returns
+ * anything it cannot parse unchanged, so a bare non-ARK id keys on itself.
+ *
+ * **Deliberately NOT `arkToBareId`**, which drops the `n:n:` type segment.
+ * `1:1:M8GR-TJY` (a record persona), `1:2:M8GR-TJY` (a record source) and
+ * `3:1:M8GR-TJY` (an image) are DIFFERENT entities that share an id tail;
+ * `record-read.ts` documents the case at length (#2061: "a real person, real
+ * census, wrong continent, returned as a clean success"). Collapsing the
+ * segment here would file their scores together, so an attestation for one
+ * would answer a lookup for another. `record_read`'s own sidecar join may use
+ * the lenient form because it compares within a single sidecar, where two
+ * entities sharing a tail cannot both be present; this key is project-wide,
+ * where they can. The corpus carries 542 `3:1:` and 65 `1:2:` record ids.
  */
 export function scoresRef(recordId: string): string {
-  const norm = arkToBareId(String(recordId ?? "")).trim().toLowerCase();
+  const norm = toArk(String(recordId ?? "")).trim().toLowerCase();
   return `${SCORES_SUBDIR}/${createHash("sha256").update(norm).digest("hex")}.json`;
 }
 
@@ -102,7 +114,19 @@ export async function readMatchScores(
   try {
     const text = await getProjectStore().readText(projectPath, scoresRef(recordId));
     const parsed = JSON.parse(text) as MatchScoreFile;
-    if (!parsed || typeof parsed !== "object" || typeof parsed.scores !== "object") {
+    // `typeof null === "object"`, so a file whose `scores` is literally null
+    // slips a bare typeof check and then throws inside `Object.values` in
+    // `findRecordedScore`. An attestation file is on disk and can be corrupt or
+    // hand-edited, and this function's whole contract is that an unusable file
+    // reads as "no attestation" rather than an exception.
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed) ||
+      parsed.scores === null ||
+      typeof parsed.scores !== "object" ||
+      Array.isArray(parsed.scores)
+    ) {
       return null;
     }
     return parsed;
@@ -126,7 +150,9 @@ export function findRecordedScore(
   treePersonId: string,
   opts: { personaId?: string | null; role?: string | null } = {},
 ): RecordedMatchScore | null {
-  if (!file) return null;
+  // Defensive on the same shape the reader above rejects, because callers may
+  // hand this a file object they built themselves rather than one it returned.
+  if (!file || file.scores === null || typeof file.scores !== "object") return null;
   for (const party of [opts.personaId, opts.role]) {
     if (typeof party === "string" && party !== "") {
       const hit = file.scores[scoreKey(party, treePersonId)];

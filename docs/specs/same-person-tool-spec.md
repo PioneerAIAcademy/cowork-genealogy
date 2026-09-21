@@ -56,9 +56,12 @@ same with or without parents.
 **Two arms.** The explicit form below came first and is unchanged. The
 project-relative form was added because the explicit one cost the
 model a hand-assembled pair of record-sized documents per link, and it was
-measurably not paying that cost: 7,526 `person_evidence` links across 151 corpus
-runs against **91** `same_person` calls in total. Identity was being asserted and
-never scored. The arm is selected by the presence of `projectPath`.
+measurably not paying that cost. The lead's 2026-09-07 ruling measured 7,526
+`person_evidence` links across 151 corpus runs against **91** `same_person`
+calls in total; that figure is quoted at its date and does not reproduce today,
+because the corpus has grown. The ratio is the durable part: re-measured on the
+committed e2e corpus, **8,791** links across 183 runs against **239** calls,
+about 37 links per call. Identity was being asserted and never scored. The arm is selected by the presence of `projectPath`.
 
 ### Arm A — project-relative (preferred)
 
@@ -175,6 +178,16 @@ stay a faithful slice of the tree, because the whole point of household
 membership is that both sides compare like-for-like relatives. Not
 `getRelativeMobs` either — that synthesizes one mini-document per relative for
 the warning loops, where this is a single union slice.
+
+#### Time budget
+
+Nothing caps the arm as a whole, and that is worth knowing before raising any
+piece of it. `scorePair` uses `fetchWithTimeout` at 30s (a CLAUDE.md-sanctioned
+exclusion from `fetchWithRetry`, since it manages its own fan-out), while
+`record_read` uses `fetchWithRetry` at 30s plus a 10s retry budget. So a fetched
+`matchRelatives` call is roughly 40s of retrieval followed by up to six waves of
+scoring at 30s each. The single-pair call, which is the common one, is bounded
+by 40s + 30s.
 
 #### Errors are answers
 
@@ -318,25 +331,30 @@ and lets a reader match on persona id, on role, **or** on `tree_person_id`
 alone, which is the only token both sides always have. Read-modify-write is safe
 under `withProjectLock`.
 
-**The party component prefers `record_persona_id`, falling back to
-`record_role`.** ADR-0009 constraint 3 says to key on
-(`record_id`, `record_persona_id`) and not on `record_id`, and the role is not
-always a persona identity. Measured over 3,092 projectable groups: 22 hold more
-than one distinct `name`, but **18 of those 22 are alias variants of a single
-persona** (maiden names, scribal variants, "also known as") carrying one
-`record_persona_id`; only 4 are genuinely several people, and all 4 carry
-non-null persona ids, so the role fallback never fires for them. 13 of the 22
-carry a `1:1:` ARK, so "these cluster on image ids" is false. On the population
-that actually reaches the fallback — 524 projection-route groups — **9 are
-ambiguous, across two runs**: `elena-asmundsdotter-origin`
-(`004516861_00304`/`_00307`, one register page holding many entries at one role
-each) and `stribling-father-1821` (`3:1:3QS7-L9QX-2CC4`, four roles).
+**The party key is `record_persona_id` when the record named one, else
+`record_role`** — and the PROJECTION groups on that same key, so the two cannot
+disagree about what identifies a party. ADR-0009 constraint 3 says to key on
+(`record_id`, `record_persona_id`) and not on `record_id`; the fallback exists
+because that field is null on thousands of corpus links, while `record_role` is
+required on every assertion.
 
-So an ambiguous **projected** group refuses rather than scoring a merge, naming
-the competing values. Because 18 of 22 collisions repo-wide are aliases, the
-refusal is scoped to groups that agree on no persona id, and the tests prove
-**both** directions: it fires on two people at one role, and does not fire on
-one persona with two name spellings.
+Grouping on the role alone was the first design and it was wrong twice over: it
+merges two personas sharing a role into one projected person (a transcribed
+register page holds many entries at one role each), and it makes
+`recordPersonaId` useless as a disambiguator, since the two people the caller is
+choosing between are already collapsed by the time it is read.
+
+Measured over **3,093** projected parties (1,330 persona-keyed, 1,763
+role-keyed): **20** hold more than one distinct `name`. **14 are role-keyed and
+refused** rather than scored as a merge, naming the competing values so the
+agent can re-call with an explicit `recordPersonaId`; **6 are persona-keyed and
+exempt**, because a group the record itself assigned one persona id to is one
+person under several spellings. The tests prove both directions.
+
+The exemption trusts the extractor's `record_persona_id`, and 2 of the 6 exempt
+groups look on inspection like two people sharing one id rather than one person
+under two spellings (`1:1:MPXD-MZC`: "Charlotte Spriggs" / "John W Spriggs").
+That is an extraction defect this guard cannot see and does not try to.
 
 **Why not extend `results/match-scores.jsonl`** (`rank-search-matches.ts`), which
 already persists host-side scores keyed on (subject, record) and already uses the

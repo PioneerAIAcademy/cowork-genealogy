@@ -321,11 +321,15 @@ export function projectsToRecordPersonaFact(assertion: any): boolean {
   );
 }
 
-/** One record party, projected from the assertions that share its `record_role`. */
+/** One record party, projected from the assertions that describe it. */
 export interface RecordPersonaGroup {
-  /** The `record_role` these assertions share — also the projected `persons[].id`. */
+  /** The projected `persons[].id`: the `record_persona_id` when the record
+   *  named one, else the `record_role`. Also the attestation's party key, so
+   *  the two cannot disagree about what identifies a party. */
+  key: string;
+  /** The `record_role` these assertions share. */
   role: string;
-  /** The single `record_persona_id` the group agrees on, or null. */
+  /** The `record_persona_id` they share, or null when the record named none. */
   personaId: string | null;
   /** Every distinct `name` assertion value in the group. More than one is how a
    *  role that names two different people is detected (`same_person` refuses
@@ -360,18 +364,27 @@ export function projectRecordPersonas(
   assertions: unknown,
   recordIdForArk?: string,
 ): RecordPersonaGroup[] {
-  const byRole = new Map<string, any[]>();
+  // Key on `record_persona_id` when the record named one, else on
+  // `record_role`. Grouping on the role ALONE merges two personas that share a
+  // role into one projected person — a transcribed register page holds many
+  // entries at one role each — and it also makes `recordPersonaId` unusable as
+  // a disambiguator, because the two people the caller is trying to choose
+  // between have already been collapsed by the time it is read.
+  const byKey = new Map<string, any[]>();
   for (const a of Array.isArray(assertions) ? assertions : []) {
     if (!projectable(a)) continue;
-    const role = (a as any).record_role as string;
-    const bucket = byRole.get(role);
+    const pid = (a as any).record_persona_id;
+    const key =
+      typeof pid === "string" && pid !== "" ? pid : ((a as any).record_role as string);
+    const bucket = byKey.get(key);
     if (bucket) bucket.push(a);
-    else byRole.set(role, [a]);
+    else byKey.set(key, [a]);
   }
 
   const out: RecordPersonaGroup[] = [];
-  for (const [role, group] of byRole) {
-    const person: SimplifiedPerson = { id: role };
+  for (const [key, group] of byKey) {
+    const role = String(group[0]?.record_role ?? key);
+    const person: SimplifiedPerson = { id: key };
     const names: string[] = [];
     const personaIds = new Set<string>();
     const facts: SimplifiedFact[] = [];
@@ -401,6 +414,7 @@ export function projectRecordPersonas(
     if (simpleNames.length > 0) person.names = simpleNames;
     if (facts.length > 0) person.facts = facts;
     out.push({
+      key,
       role,
       personaId: personaIds.size === 1 ? [...personaIds][0] : null,
       names,
@@ -411,25 +425,35 @@ export function projectRecordPersonas(
 }
 
 /**
- * The projected record document, anchored on `focusRole`.
+ * The projected record document. The caller anchors it with `primaryId1`,
+ * which is the chosen group's `key`.
  *
  * NO `relationships[]`, deliberately. `record_role` is an OPEN enum
  * (`^[a-z][a-z0-9_]*$` — `enums.schema.json`), so inferring edges from role
  * names is guesswork, and a wrong edge scores worse than no edge. This is why
  * `matchRelatives` has nothing to pair on the projected route and says so
  * rather than returning an empty `matches` array.
+ *
+ * **NO `ark` either, and that is a correction.** An earlier version stamped
+ * `toArk(record_id)` onto whichever party was the focus, to give `scorePair` a
+ * persistent id instead of a minted one. That is wrong: a `1:1:` record id
+ * names ONE persona (normally the searched/principal one), while every
+ * assertion of the record carries it whatever its role. So scoring the bride
+ * built a person wearing the principal's persona ARK, which
+ * `buildRawWithAnchor` then writes into the focus person's
+ * `http://gedcomx.org/Persistent` identifier before POSTing it — telling the
+ * API the document is a persona it is not, for exactly the second-party links
+ * this projection exists to serve.
+ *
+ * Nothing is lost by omitting it, which is why this is a correction rather
+ * than a trade: `match-engine` mints a conforming ARK for a local id, and both
+ * live probes show an ARK-less focus person scores normally
+ * (`dev/probe-same-person-local-id.ts`: 0.9999484 against a 0.999967 control;
+ * `dev/try-same-person-project.ts`: 0.9333059 on a projected persona whose
+ * record id is not an ARK at all, so no ARK was ever attached there).
  */
 export function projectedRecordDocument(
   groups: RecordPersonaGroup[],
-  focusRole: string,
-  recordId?: string,
 ): SimplifiedGedcomX {
-  const persons = groups.map((g) => {
-    if (g.role !== focusRole || recordId === undefined) return g.person;
-    // The focus persona carries the record's own ARK when it has one, so
-    // `scorePair` anchors on the persistent id instead of minting a local one.
-    const ark = toArk(recordId);
-    return ark.startsWith("ark:/") ? { ...g.person, ark } : g.person;
-  });
-  return { persons };
+  return { persons: groups.map((g) => g.person) };
 }

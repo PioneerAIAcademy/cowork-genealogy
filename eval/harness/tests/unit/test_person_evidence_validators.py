@@ -107,6 +107,63 @@ def test_scored_passes_when_every_persona_was_scored():
     )
 
 
+def test_scored_accepts_the_project_relative_call_shape():
+    """The cheap call (issue #1731) names its two sides by reference and carries
+    no `primaryId1`/`primaryId2`, so `_same_person_pairs` has to credit it from
+    `recordPersonaId`/`treePersonId`. Without that arm this check fails on every
+    call in the new shape, which judge-skips the whole run.
+
+    Pinned because the arm was added with nothing exercising it: setting
+    `p2 = args.get("treePersonId")` to `None` broke no test at all.
+    """
+    check_scored(
+        _state(_N7V_BEFORE, _tree("I1", "I2")),
+        _state(_N7V_AFTER, _tree("I1", "I2")),
+        [_call("same_person", projectPath="/p", assertionId="a_005",
+               recordPersonaId="F1", treePersonId="I2"),
+         _call("same_person", projectPath="/p", assertionId="a_008",
+               recordPersonaId="M1", treePersonId="I2"),
+         _call("research_append")],
+    )
+
+
+def test_scored_accepts_the_DEFAULT_project_relative_shape_with_no_record_party():
+    """The shape the agent actually sends, and the one that broke.
+
+    `{projectPath, assertionId, treePersonId}` carries no `recordPersonaId` and
+    no `recordRole`, so the record side has to be RESOLVED from the assertion.
+    An earlier arm fell back to `treePersonId` for both sides, recording the
+    pair `("I2","I2")`, which can never equal `(record_persona_id, person_id)`:
+    the check then reported "no same_person call scored that pairing" for every
+    link while the agent was scoring all of them. That shipped and failed six
+    tests in one run.
+
+    The sibling test above passes `recordPersonaId` explicitly, which is
+    precisely why it did not catch this.
+    """
+    check_scored(
+        _state(_N7V_BEFORE, _tree("I1", "I2")),
+        _state(_N7V_AFTER, _tree("I1", "I2")),
+        [_call("same_person", projectPath="/p", assertionId="a_005", treePersonId="I2"),
+         _call("same_person", projectPath="/p", assertionId="a_008", treePersonId="I2"),
+         _call("research_append")],
+    )
+
+
+def test_scored_still_fires_when_a_project_relative_call_covers_only_one_persona():
+    """The other direction: the new arm must not turn the check into a rubber
+    stamp. One cheap call attests one pairing, not both."""
+    with pytest.raises(AssertionError) as exc:
+        check_scored(
+            _state(_N7V_BEFORE, _tree("I1", "I2")),
+            _state(_N7V_AFTER, _tree("I1", "I2")),
+            [_call("same_person", projectPath="/p", assertionId="a_005",
+                   recordPersonaId="F1", treePersonId="I2")],
+        )
+    assert "pe_011" in str(exc.value)
+    assert "pe_010" not in str(exc.value)
+
+
 def test_scored_fires_when_only_one_of_two_personas_was_scored():
     """The half-attested shape, pinned as a failure."""
     with pytest.raises(AssertionError) as exc:
@@ -544,6 +601,94 @@ def test_chrono_fires_on_13yr_gap_at_probable():
     assert "pe_001" in str(exc.value)
     assert "1858" in str(exc.value)
     assert "1845" in str(exc.value)
+
+
+def test_chrono_still_fires_on_the_project_relative_call_shape():
+    """The same 13-year gap, scored with the cheap call (issue #1731).
+
+    That shape names its two sides by reference and carries no `gedcomx1`, so
+    reading facts out of the call args yields nothing and this check would go
+    permanently silent the moment the agent adopted it. The fallback rebuilds
+    the record party's facts from the project's own assertions, which is the
+    same grouping the engine's projection uses.
+    """
+    before = {
+        "assertions": [
+            {
+                "id": "a_001",
+                "record_id": "ark:/61903/1:1:KILR-B58",
+                "record_role": "child_1",
+                "record_persona_id": None,
+                "fact_type": "christening",
+                "date": "12 March 1858",
+            }
+        ],
+        "person_evidence": [],
+    }
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "probable",
+                "rationale": "Name and record match.",
+            }
+        ],
+    }
+    sp_call = {
+        "tool": "mcp__genealogy__same_person",
+        "args": {"projectPath": "/p", "assertionId": "a_001", "treePersonId": "I1"},
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(before, _CHRONO_TREE_1845),
+            _state(after, _CHRONO_TREE_1845),
+            [sp_call],
+        )
+    assert "pe_001" in str(exc.value)
+    assert "1858" in str(exc.value)
+    assert "1845" in str(exc.value)
+
+
+def test_chrono_ignores_an_absent_role_when_rebuilding_from_assertions():
+    """`record_role: "absent"` is negative evidence describing no persona, so it
+    must not supply a date the check then contradicts a tree person with."""
+    before = {
+        "assertions": [
+            {
+                "id": "a_001",
+                "record_id": "ark:/61903/1:1:KILR-B58",
+                "record_role": "absent",
+                "record_persona_id": None,
+                "fact_type": "christening",
+                "date": "12 March 1858",
+            }
+        ],
+        "person_evidence": [],
+    }
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "probable",
+                "rationale": "Name and record match.",
+            }
+        ],
+    }
+    sp_call = {
+        "tool": "mcp__genealogy__same_person",
+        "args": {"projectPath": "/p", "assertionId": "a_001", "treePersonId": "I1"},
+    }
+    check_chrono(
+        _state(before, _CHRONO_TREE_1845),
+        _state(after, _CHRONO_TREE_1845),
+        [sp_call],
+    )
 
 
 def test_chrono_fires_on_13yr_gap_at_confident():

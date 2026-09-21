@@ -239,17 +239,23 @@ def test_match_score_persisted(before_state, after_state, test):
     )
 
 
-def test_fts_assertion_no_score(before_state, after_state, test):
-    """Tag-gated (no-score-fallback): a full-text-sourced assertion has no
-    reachable record persona, so `same_person` cannot run — the new
-    person_evidence entry for a_004 must leave match_score null.
+def test_fts_assertion_no_score(before_state, after_state, test, tool_calls):
+    """Tag-gated (no-score-fallback): a full-text link's score, if it has one,
+    must come from a `same_person` call in THIS run rather than be invented.
 
-    The CAUSE matters, because the wrong one was load-bearing elsewhere: it is
-    not that `record_persona_id` is null. `same_person` never reads that field,
-    and a null value means only that no search sidecar was retained. A full-text
-    hit is unscoreable because its sidecar holds transcript text rather than
-    GedcomX — there is no indexed persona to compare against — and its ARK is a
-    `3:1:`/`3:2:` image entry `record_read` cannot open (#1429)."""
+    **This used to require `match_score: null`, and that requirement is now
+    refuted.** It rested on a full-text hit being unscoreable because its
+    sidecar holds transcript text rather than GedcomX. `same_person`'s
+    project-relative arm derives the record side from the record's own
+    extracted assertions when it cannot fetch a document (issue #1731), so a
+    full-text-sourced link IS scorable, and the agent is now told to call it
+    and let the tool answer. A validator demanding null would fail the agent
+    for following its own instructions.
+
+    What survives is the half that was never about retrieval: a score is only
+    meaningful if it was computed. So a non-null `match_score` here must have a
+    `same_person` call behind it for that pairing; a null one is still fine,
+    because the tool legitimately reports no persona for some parties."""
     if "no-score-fallback" not in test.get("tags", []):
         pytest.skip("not a no-score-fallback scenario")
     before = before_state.get("research_json")
@@ -258,10 +264,25 @@ def test_fts_assertion_no_score(before_state, after_state, test):
         pytest.skip("Missing research.json for diff")
     new = _new_pe_for_assertion(before, after, "a_004")
     assert new, "expected a new person_evidence entry linking a_004"
-    bad = [e for e in new if e.get("match_score") is not None]
-    assert not bad, (
-        "a full-text-sourced link must leave match_score null; offending "
-        f"entries: {[(e.get('id'), e.get('match_score')) for e in bad]}"
+    scored = [e for e in new if e.get("match_score") is not None]
+    if not scored:
+        return  # a null score is still a correct outcome here
+    pairs = _same_person_pairs(tool_calls, _assertions_by_id(after))
+    fabricated = sorted(
+        f"{e.get('id')} ({e.get('match_score')})"
+        for e in scored
+        if (
+            (_assertions_by_id(after).get(e.get("assertion_id")) or {}).get(
+                "record_persona_id"
+            ),
+            e.get("person_id"),
+        )
+        not in pairs
+        and e.get("person_id") not in {p for pair in pairs for p in pair}
+    )
+    assert not fabricated, (
+        "a full-text-sourced link carries a match_score with no same_person "
+        f"call behind it: {fabricated}. Score it or leave it null."
     )
 
 
@@ -601,7 +622,7 @@ def _persona_reachable(research: dict, assertion: dict | None) -> bool:
     return True
 
 
-def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
+def _same_person_pairs(tool_calls: list[dict], assertions: dict | None = None) -> set[tuple]:
     """Every (id, id) pair a `same_person` call actually scored, both orderings.
 
     The agent sends the record persona as `primaryId1` and the tree candidate
@@ -609,11 +630,22 @@ def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
     as having scored that pairing.
 
     The project-relative form (issue #1731) names the same two sides by
-    reference instead — the tool assembles the documents — so its pair is
-    (record party, `treePersonId`), where the record party is whichever of
-    `recordPersonaId`/`recordRole` the call carried. Without this arm the two
-    tests gated on these pairs fail on EVERY call in the cheap shape, which
-    judge-skips the whole run.
+    reference instead, because the tool assembles the documents. Its record
+    side therefore has to be RESOLVED, not read off the args: the consumer
+    below tests membership of `(assertion.record_persona_id, person_id)`, so
+    `assertionId` is looked up in `assertions` to recover that persona id.
+
+    Falling back to `treePersonId` for the record side (an earlier version of
+    this arm) is worse than not indexing the call at all: it records the pair
+    `("I1", "I1")`, which can never equal `(record_persona_id, person_id)`, so
+    every check silently reports "no same_person call scored that pairing"
+    while the agent is in fact scoring every one. That shipped once and failed
+    six tests in a single run before it was caught.
+
+    `assertions` is optional so the helper stays usable without a project
+    document; without it a call carrying no explicit `recordPersonaId`/
+    `recordRole` contributes no pair, which under-credits rather than
+    mis-credits.
     """
     pairs: set[tuple] = set()
     for tc in tool_calls:
@@ -623,7 +655,11 @@ def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
         p1, p2 = args.get("primaryId1"), args.get("primaryId2")
         if not (p1 and p2):
             p2 = args.get("treePersonId")
-            p1 = args.get("recordPersonaId") or args.get("recordRole") or p2
+            p1 = args.get("recordPersonaId")
+            if not p1:
+                # Resolve the record party the way the consumer names it.
+                a = (assertions or {}).get(args.get("assertionId")) or {}
+                p1 = a.get("record_persona_id") or args.get("recordRole")
         if p1 and p2:
             pairs.add((p1, p2))
             pairs.add((p2, p1))
@@ -691,7 +727,7 @@ def test_same_person_called_when_persona_meets_existing_candidate(
        the groom to be compared to his father. Replaying the broader version
        against the PASSING `v1_2026-08-12_17-18-54` n7v run fires on exactly
        those two entries, i.e. it would have flipped a passing test to fail.
-    2. **A household paired with `matchRelatives: true`** (§2.4): the relative
+    2. **A household paired with `matchRelatives: true`** (§2.3): the relative
        scores come back in the response's `matches` array, never as separate
        call args, and this tier records no tool responses (F4). Unverifiable
        here, so the check stands down rather than guessing.
@@ -716,7 +752,7 @@ def test_same_person_called_when_persona_meets_existing_candidate(
         if "same_person" in tc.get("tool", "")
     ):
         pytest.skip(
-            "a same_person call used matchRelatives=true — SKILL.md §2.4 pairs a "
+            "a same_person call used matchRelatives=true — the agent body §2.3 pairs a "
             "household's relatives in that one call and returns their scores in "
             "the RESPONSE's `matches` array, which this tier does not record. "
             "The pairings cannot be read from args, so demanding one call per "
@@ -738,7 +774,7 @@ def test_same_person_called_when_persona_meets_existing_candidate(
             "nothing to score"
         )
 
-    pairs = _same_person_pairs(tool_calls)
+    pairs = _same_person_pairs(tool_calls, assertions)
     offenders = sorted(
         f"{e.get('id')} ({e.get('assertion_id')}/"
         f"{(assertions.get(e.get('assertion_id')) or {}).get('record_persona_id')}"
@@ -844,12 +880,13 @@ def test_same_person_called_at_all_when_a_reachable_persona_was_linked(
     raise AssertionError(
         f"wrote {len(owed)} person_evidence link(s) with a REACHABLE record "
         f"persona and never called same_person anywhere in the run: {detail}. "
-        "A null record_persona_id is not a reason to skip — same_person takes "
-        "two gedcomx documents plus a focus id inside each and never reads that "
-        "field; a null value means only that no search sidecar was retained. "
-        "Take the persona from the log entry's sidecar when it has a "
-        "results_ref, or re-open the record with record_read when the assertion "
-        "came from one (SKILL.md §2, step 1)."
+        "A null record_persona_id is not a reason to skip, and neither is how "
+        "the assertion was retrieved: call "
+        "same_person({ projectPath, assertionId, treePersonId }) and the tool "
+        "resolves the record itself, deriving the persona from the record's own "
+        "extracted assertions when it cannot fetch a document. Add recordRole "
+        "(or recordPersonaId) only for the OTHER party a relationship or "
+        "marriage assertion names."
     )
 
 
@@ -1113,10 +1150,9 @@ def _record_persona_facts_from_sp(sp_args: dict, persona_id: str) -> list[dict]:
 
     Returns [] for a project-relative call (issue #1731) by construction: that
     form carries no documents at all, because the tool assembles them host-side.
-    The caller therefore reads "no facts to check" rather than a wrong answer,
-    and the chronology check it feeds goes quiet rather than firing on an empty
-    fact list. Recovering the facts for that form means reading the project's
-    own assertions, which is a different check from "what did the call send".
+    `_record_facts_from_assertions` below is the fallback the caller uses there,
+    so the chronology check keeps working rather than going silent once the
+    agent adopts the cheap call.
     """
     for side, pid_key in (("gedcomx1", "primaryId1"), ("gedcomx2", "primaryId2")):
         if sp_args.get(pid_key) == persona_id:
@@ -1136,6 +1172,44 @@ _BIRTH_CLASS_TYPES = frozenset({"birth", "christening", "baptism", "naturalbirth
 def _fact_type(fact: dict) -> str:
     """Bare name or full GedcomX URI — both appear in same_person args."""
     return str(fact.get("type") or "").strip().rsplit("/", 1)[-1].lower()
+
+
+def _record_facts_from_assertions(state: dict, assertion: dict) -> list[dict]:
+    """The record persona's facts, rebuilt from the project's own assertions.
+
+    The project-relative `same_person` call (issue #1731) names its two sides by
+    reference and lets the tool assemble the documents, so there is no
+    `gedcomx1` in the args to read a birth date out of. Without this the
+    chronology check below would go permanently silent the moment the agent
+    adopted that call shape — a check that stops firing while still reporting
+    success is worse than one that was never written.
+
+    Same grouping the engine's projection uses: the assertions sharing this
+    one's `record_id` and `record_role` are the same record party. `absent`
+    roles and negative evidence describe no persona and are excluded, matching
+    `src/utils/record-persona.ts`.
+    """
+    if not isinstance(assertion, dict):
+        return []
+    record_id = assertion.get("record_id")
+    record_role = assertion.get("record_role")
+    if not isinstance(record_id, str) or not isinstance(record_role, str):
+        return []
+    if record_role == "absent":
+        return []
+    out: list[dict] = []
+    for a in (state.get("assertions") or []):
+        if not isinstance(a, dict):
+            continue
+        if a.get("record_id") != record_id or a.get("record_role") != record_role:
+            continue
+        if a.get("evidence_type") == "negative":
+            continue
+        ft = a.get("fact_type")
+        if not isinstance(ft, str) or not ft:
+            continue
+        out.append({"type": ft, "date": a.get("date")})
+    return out
 
 
 def report_chronological_contradiction_not_speculative(
@@ -1177,6 +1251,16 @@ def report_chronological_contradiction_not_speculative(
             continue
         args = tc.get("args") or {}
         p1, p2 = args.get("primaryId1"), args.get("primaryId2")
+        if not (p1 and p2):
+            # The project-relative call shape (issue #1731) names its two sides
+            # by reference, so it carries neither primaryId. Indexing it under
+            # (record party, treePersonId) keeps this check alive; without it
+            # every such call is invisible here and the whole check goes silent
+            # the moment the agent adopts the cheap call. `_same_person_pairs`
+            # does the same thing for the §8 provenance checks, but this block
+            # builds its own index because it needs the ARGS, not just the pair.
+            p2 = args.get("treePersonId")
+            p1 = args.get("recordPersonaId") or args.get("recordRole") or p2
         if p1 and p2:
             sp_by_pair[(p1, p2)] = args
             sp_by_pair[(p2, p1)] = args  # accept transposed calls too
@@ -1225,6 +1309,10 @@ def report_chronological_contradiction_not_speculative(
             continue  # no same_person call found for this pairing — cannot verify
 
         record_facts = _record_persona_facts_from_sp(sp_args, record_persona_id)
+        if not record_facts:
+            # The project-relative call shape carries no documents, so fall back
+            # to the assertions the record itself produced (issue #1731).
+            record_facts = _record_facts_from_assertions(after, assertion)
         record_year: int | None = None
         for fact in record_facts:
             ft = _fact_type(fact)

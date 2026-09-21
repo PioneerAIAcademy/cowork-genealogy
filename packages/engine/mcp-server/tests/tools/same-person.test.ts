@@ -712,6 +712,42 @@ describe("samePerson — project-relative arm", () => {
   });
 
   describe("answers, not crashes", () => {
+    it("honours recordPersonaId on the PROJECTED route, not just the fetched one", async () => {
+      // The ambiguity refusal tells the agent to pass recordPersonaId, and the
+      // schema advertises it as the disambiguator. Route 2 selected purely by
+      // role, so following that instruction produced the identical refusal for
+      // ever, on the transcribed-register population the route exists for.
+      const r = research();
+      r.assertions[0].record_persona_id = "p_thomas";
+      r.assertions.push({
+        id: "a_007", record_id: RECORD, record_role: "principal",
+        fact_type: "name", value: "Somebody Else", record_persona_id: "p_other",
+        evidence_type: "direct", log_entry_id: "log_1",
+      });
+      await project(r);
+      okScore();
+      const result = notHaving(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "p_thomas" },
+          LOCAL,
+        ),
+        "matchRelatives",
+      );
+      expect(result.recorded).toBe(true);
+      const [file] = await scoresOnDisk();
+      expect(file.scores["p_thomas|I1"]).toBeTruthy();
+    });
+
+    it("says so when recordPersonaId names no persona in the record", async () => {
+      await project();
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "p_nope" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona with record_persona_id 'p_nope'/);
+    });
+
     it("refuses a projected role that names more than one person", async () => {
       const r = research();
       r.assertions.push({

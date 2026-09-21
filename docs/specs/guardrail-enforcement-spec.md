@@ -578,12 +578,22 @@ to understand before reading either:
 original reason said a brand-new identity "should be scored before it is
 asserted", which the agent believes it did. The cause is an **id mismatch**, not
 laziness: `tree_edit` mints local ids (`I1`) and rejects caller-supplied ones,
-while `same_person` scores `primaryId1`/`primaryId2` *inside the caller's own
-gedcomx documents*. The one satisfying shape is to pass the tree side as
-`gedcomx2` with `primaryId2: "I1"`, which agents produced in 3 of 103 corpus
-runs. The reason text now names that shape, says the **entire batch** is
-rejected (a `PreToolUse` deny is all-or-nothing, and these batches run to a
-median of 17 ops), and states the escape below.
+while `same_person`'s explicit arm scores `primaryId1`/`primaryId2` *inside the
+caller's own gedcomx documents*. Under that arm the one satisfying shape was to
+pass the tree side as `gedcomx2` with `primaryId2: "I1"`, which agents produced
+in 3 of 103 corpus runs.
+
+**The satisfying shape has since changed, and the reason text names the new
+one.** `same_person` gained a project-relative arm that takes
+`{ projectPath, assertionId, treePersonId }` and assembles both documents
+host-side, so the reason now names that call and deliberately stops teaching the
+hand-assembled recipe: naming it would steer the agent straight back to the cost
+that produced the skipped call this gate fires on. The reason still says the
+**entire batch** is rejected (a `PreToolUse` deny is all-or-nothing, and these
+batches run to a median of 17 ops), and states the escape below. The text lives
+in `eval/harness/e2e/orchestrator.py`, and
+`tests/unit/test_e2e_orchestrator.py::test_provenance_gap_reason_names_the_satisfiable_call_shape`
+pins that it names the new shape and not the old.
 
 **One class of write genuinely cannot satisfy the gate — but it is about a tenth
 the size it was long described as, and smaller again since the tool changed.**

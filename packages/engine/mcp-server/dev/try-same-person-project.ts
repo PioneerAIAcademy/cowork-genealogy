@@ -132,16 +132,12 @@ async function main(): Promise<void> {
     const token = await getValidToken(LOCAL);
     const withAge = projectedRecordDocument(
       projectRecordPersonas(ASSERTIONS, RECORD_ID),
-      "principal",
-      RECORD_ID,
     );
     const withoutAge = projectedRecordDocument(
       projectRecordPersonas(
         ASSERTIONS.filter((a) => a.fact_type !== "age"),
         RECORD_ID,
       ),
-      "principal",
-      RECORD_ID,
     );
     const treeSide = new Mob(TREE, "I1").matchSubset().gedcomx;
 
@@ -164,8 +160,6 @@ async function main(): Promise<void> {
         ASSERTIONS.map((a) => (a.fact_type === "age" ? { ...a, value: "999" } : a)),
         RECORD_ID,
       ),
-      "principal",
-      RECORD_ID,
     );
     const c = await scorePair(absurd, "principal", treeSide, "I1", token);
     console.log(`absurd Age=999: score=${c.score}  confidence=${c.confidence ?? "(none)"}`);
@@ -179,16 +173,12 @@ async function main(): Promise<void> {
         [...ASSERTIONS, assertion({ id: "a_005", fact_type: "marriage", value: "", date: "3 May 1782", place: "Biesenrode" })],
         RECORD_ID,
       ),
-      "principal",
-      RECORD_ID,
     );
     const withWrongMarriage = projectedRecordDocument(
       projectRecordPersonas(
         [...ASSERTIONS, assertion({ id: "a_005", fact_type: "marriage", value: "", date: "3 May 1899", place: "Nowhere, Nowhere" })],
         RECORD_ID,
       ),
-      "principal",
-      RECORD_ID,
     );
     const [m1, m2] = await Promise.all([
       scorePair(withMarriage, "principal", treeSide, "I1", token),

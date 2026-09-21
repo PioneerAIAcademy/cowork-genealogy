@@ -9,9 +9,11 @@ import type { SimplifiedGedcomX } from "./gedcomx.js";
  * assertions otherwise, the tree side as the candidate's matching mob.
  *
  * It exists because the explicit form below costs the model a hand-assembled
- * pair of record-sized documents per link, and it was measurably not paying it:
- * 7,526 `person_evidence` links across 151 corpus runs against 91 `same_person`
- * calls in total. Identity was asserted and never scored.
+ * pair of record-sized documents per link, and it was measurably not paying it.
+ * The lead's 2026-09-07 ruling measured 7,526 links across 151 runs against 91
+ * `same_person` calls; the corpus has grown since, so that figure is quoted at
+ * its date. The ratio endures: 8,791 links across 183 committed e2e runs
+ * against 239 calls, about 37 links per call.
  */
 export interface SamePersonProjectInput {
   /** The research project directory. */

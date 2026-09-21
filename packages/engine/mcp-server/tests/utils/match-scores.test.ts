@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readdir } from "fs/promises";
+import { mkdtemp, rm, readdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import {
@@ -65,6 +65,24 @@ describe("match-scores", () => {
     const topLevel = await readdir(join(dir, "results"));
     expect(topLevel.filter((n) => n.endsWith(".json"))).toEqual([]);
     expect(topLevel).toContain(".scores");
+  });
+
+  it("keeps DIFFERENT ARK type-spaces in different files", async () => {
+    // 1:1: is a record persona, 1:2: its source, 3:1: an image. record-read.ts
+    // documents them as different entities that share an id tail (#2061).
+    // Collapsing the type segment filed their scores together, so an
+    // attestation for one answered a lookup for another. The corpus carries
+    // 542 `3:1:` and 65 `1:2:` record ids alongside 9,945 `1:1:`.
+    const persona = "ark:/61903/1:1:ABCD-123";
+    expect(scoresRef(persona)).not.toBe(scoresRef("ark:/61903/1:2:ABCD-123"));
+    expect(scoresRef(persona)).not.toBe(scoresRef("ark:/61903/3:1:ABCD-123"));
+
+    await recordMatchScore(dir, score({ record_id: persona }));
+    await recordMatchScore(dir, score({ record_id: "ark:/61903/1:2:ABCD-123", score: 0.1 }));
+    expect(findRecordedScore(await readMatchScores(dir, persona), "I1", { role: "principal" })?.score).toBe(0.87);
+    expect(
+      findRecordedScore(await readMatchScores(dir, "ark:/61903/1:2:ABCD-123"), "I1", { role: "principal" })?.score,
+    ).toBe(0.1);
   });
 
   it("normalises the record id, so the URL and bare forms are one file", async () => {
@@ -139,5 +157,22 @@ describe("match-scores", () => {
   it("reads an absent or corrupt file as 'no attestation', never throwing", async () => {
     expect(await readMatchScores(dir, ARK)).toBeNull();
     expect(findRecordedScore(null, "I1", { role: "principal" })).toBeNull();
+  });
+
+  it("treats a `scores: null` file as no attestation rather than throwing", async () => {
+    // `typeof null === "object"`, so a bare typeof check passes this through
+    // and `Object.values(null)` then throws inside findRecordedScore. The file
+    // is on disk and can be corrupt or hand-edited, and an unusable one must
+    // read as "no attestation" — this function's stated contract.
+    await recordMatchScore(dir, score());
+    await writeFile(join(dir, scoresRef(ARK)), JSON.stringify({ record_id: ARK, scores: null }), "utf8");
+    expect(await readMatchScores(dir, ARK)).toBeNull();
+  });
+
+  it("findRecordedScore survives a hand-built file with a bad scores field", () => {
+    for (const bad of [{ scores: null }, { scores: [] }, { scores: "x" }] as any[]) {
+      expect(() => findRecordedScore(bad, "I1", { role: "principal" })).not.toThrow();
+      expect(findRecordedScore(bad, "I1", { role: "principal" })).toBeNull();
+    }
   });
 });
