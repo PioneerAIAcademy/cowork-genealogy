@@ -230,6 +230,9 @@ class LocalProvider(SandboxProvider):
             # the path is real inside the microVM.
             "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
         }
+        from ..anthropic_proxy import proxy_active
+        if proxy_active():
+            env["ANTHROPIC_BASE_URL"] = f"{settings.public_url}/api/anthropic-proxy"
         env.pop("ANTHROPIC_API_KEY", None)
         log = open(self._root(sandbox_id) / "ws.log", "ab")
         proc = subprocess.Popen(
