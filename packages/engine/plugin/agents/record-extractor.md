@@ -742,7 +742,7 @@ misreadings to avoid, in both directions:
   cover: a birth date or year you computed from the stated age is
   `indirect` however central the subject is.
 
-**Evidence independence (GPS Standard 4):** when two or more assertions
+**Evidence independence (GPS Standard 46):** when two or more assertions
 share the SAME informant — even across different sources — they form one
 evidence unit worth no more than the strongest single item (the same
 son-in-law on a death certificate and a pension affidavit; an index and

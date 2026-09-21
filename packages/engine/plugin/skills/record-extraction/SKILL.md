@@ -215,8 +215,8 @@ nothing. If the date is early enough that the question arises, ask.
 
 You hold the record content and the place at this point; the agent does
 not, and cannot get it — `record-extractor` grants neither `Skill` nor
-`Task`, and agents cannot nest — so a calendar question you do not
-resolve here is recorded as written and never revisited.
+`Task` — so a calendar question you do not resolve here is recorded as
+written and never revisited.
 
 What this prevents is a wrong **year**, not a wrong day. A January,
 February or March date in an English colony before 1752 sits inside the
