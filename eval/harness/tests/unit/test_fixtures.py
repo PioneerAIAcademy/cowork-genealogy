@@ -149,6 +149,9 @@ def test_load_multiple_fixtures_preserves_order():
 # `shapeRelationships`/`shapeSources`, which always assemble those three keys.
 
 _PERSON_READ_TOP_LEVEL = {"persons", "relationships", "sources"}
+# `notes[]` is emitted ONLY when endpoint closure dropped an edge, so it is
+# optional rather than part of the always-shape (#2593, @chesworthrm).
+_PERSON_READ_OPTIONAL = {"notes"}
 
 
 # Source keys on a `person_read` fixture are snake_case, because `person_read`
@@ -204,7 +207,7 @@ def test_person_read_fixtures_match_the_tool_contract():
             wrong.append(f"{name}: response is {type(response).__name__}, not an object")
             continue
         keys = set(response)
-        if keys != _PERSON_READ_TOP_LEVEL:
+        if keys - _PERSON_READ_OPTIONAL != _PERSON_READ_TOP_LEVEL:
             wrong.append(f"{name}: top-level keys {sorted(keys)}")
         elif not isinstance(response["persons"], list):
             wrong.append(f"{name}: persons is not a list")

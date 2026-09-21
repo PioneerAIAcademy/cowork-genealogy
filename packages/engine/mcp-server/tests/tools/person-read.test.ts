@@ -1222,6 +1222,50 @@ describe("personReadTool — sibling fan-out", () => {
     expect(edges.sort()).toEqual([`${DAD}->${sib}`, `${MUM}->${sib}`].sort());
   });
 
+  it("says so in notes[] when endpoint closure drops the subject's own parentage", async () => {
+    // @chesworthrm's merge condition on #2593: endpoint closure replaced a loud
+    // `project_create` refusal with a quiet partial loss, and "a quiet partial
+    // loss of the subject's own parentage is worse than the refusal it replaces
+    // if nobody can see it happened." COP is named as Patrick's parent in the
+    // CAPR and has no person record, so that edge cannot be emitted.
+    const COP = "COPARENT-900";
+    route({
+      [SUBJECT]: {
+        persons: [person(SUBJECT, "Subject Person"), person(DAD, "Dad")],
+        relationships: [],
+        childAndParentsRelationships: [capr(SUBJECT, DAD, COP)],
+      },
+      [DAD]: { persons: [person(DAD, "Dad")], relationships: [], childAndParentsRelationships: [] },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.notes).toBeDefined();
+    expect(out.notes!.join(" ")).toContain("1 ParentChild");
+    // the second line is the one that matters: it is the SUBJECT's parent, not
+    // some distant relative's, so the caller is told the parentage is missing
+    expect(out.notes!.join(" ")).toContain("parent of the requested person");
+    // and the dropped edge really is absent
+    expect(out.relationships.some((r) => r.parent === COP)).toBe(false);
+  });
+
+  it("omits notes[] entirely on a clean read", async () => {
+    // The key is absent, not empty: every caller that never triggers a drop
+    // sees the unchanged three-key shape.
+    route({
+      [SUBJECT]: subjectBody(),
+      [DAD]: { persons: [person(DAD, "Dad")], relationships: [], childAndParentsRelationships: [] },
+      [MUM]: { persons: [person(MUM, "Mum")], relationships: [], childAndParentsRelationships: [] },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.notes).toBeUndefined();
+    expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
+  });
+
   it("holds the fan-out at FOUR parent reads in flight, and still reads all five", async () => {
     // SIBLING_FANOUT_CONCURRENCY = 4 is justified by a corpus measurement (4
     // children with 3 parents, 3 with 4) and, as @aghadiayeamayanvboernest

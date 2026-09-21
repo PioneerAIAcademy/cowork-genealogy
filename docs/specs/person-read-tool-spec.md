@@ -68,6 +68,21 @@ The tool returns simplified GEDCOMX. The top-level shape is always:
 }
 ```
 
+plus one conditional key:
+
+```json
+{ "notes": ["Dropped 1 relationship(s) whose endpoints are not in persons[] (1 ParentChild). ..."] }
+```
+
+`notes[]` is present **only** when something was silently dropped, and is absent
+entirely otherwise — so a caller that never triggers one sees the three-key shape
+above unchanged. It exists because endpoint closure (below) replaced a loud
+`project_create` refusal with a quiet partial loss: a dropped edge to a distant
+relative costs a hint, but a dropped edge to the **subject's own parent** costs
+the answer to what the caller asked, and that case gets its own line. Counts and
+relationship types only — ids would name persons that by definition are not in
+`persons[]` and cannot be looked up.
+
 - `persons[]` is always present (at minimum, the requested person)
 - `relationships[]` is present when `relatives: true` (empty array otherwise)
 - `sources[]` is present when `sourceDescriptions: true` (empty array otherwise)

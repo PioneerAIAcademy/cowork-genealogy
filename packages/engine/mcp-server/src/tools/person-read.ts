@@ -479,7 +479,7 @@ async function fetchAndConvert(
   // three and mean re-implementing the shape functions by hand.
   const merged = relatives ? await mergeSiblings(token, pid, body) : body;
   return {
-    result: await convertResponse(merged, relatives, sourceDescriptions),
+    result: await convertResponse(merged, relatives, sourceDescriptions, pid),
     resolvedId: pid,
   };
 }
@@ -796,6 +796,9 @@ async function convertResponse(
   body: FSTreeResponse,
   relatives: boolean,
   sourceDescriptions: boolean,
+  /** The POST-redirect subject id, so a dropped edge can be recognised as the
+   *  subject's own parentage rather than a distant relative's. */
+  pid: string,
 ): Promise<PersonReadResult> {
   // Pre-process relationships:
   //
@@ -832,18 +835,63 @@ async function convertResponse(
   const personIds = new Set(
     persons.map((p) => p.id).filter((id): id is string => Boolean(id)),
   );
+  const shaped = relatives ? shapeRelationships(simplified.relationships ?? []) : [];
+  const kept = relatives ? dropDanglingEdges(shaped, personIds) : [];
   return {
     persons,
-    relationships: relatives
-      ? dropDanglingEdges(
-          shapeRelationships(simplified.relationships ?? []),
-          personIds,
-        )
-      : [],
+    relationships: kept,
     sources: sourceDescriptions
       ? shapeSources(simplified.sources ?? [], body.sourceDescriptions ?? [])
       : [],
+    ...droppedEdgeNotes(shaped, kept, pid),
   };
+}
+
+/**
+ * A `notes[]` entry when endpoint closure dropped something, and nothing at all
+ * when it did not.
+ *
+ * Counts and types only, per the ruling -- ids would name persons the caller
+ * never asked about and cannot look up, since the whole reason the edge went is
+ * that its far endpoint is not in `persons[]`.
+ *
+ * The subject's own parentage is called out separately because it is the case
+ * that actually costs the caller something: a dropped edge to a distant
+ * relative loses a hint, while a dropped edge to the SUBJECT'S parent loses the
+ * answer to what they asked. Before endpoint closure this surfaced as
+ * `project_create` refusing the entire write -- loud, and impossible to miss.
+ */
+function droppedEdgeNotes(
+  shaped: TreeRelationship[],
+  kept: TreeRelationship[],
+  pid: string,
+): { notes?: string[] } {
+  if (shaped.length === kept.length) return {};
+  const keptSet = new Set(kept);
+  const dropped = shaped.filter((r) => !keptSet.has(r));
+  const byType = new Map<string, number>();
+  for (const r of dropped) byType.set(r.type, (byType.get(r.type) ?? 0) + 1);
+  const breakdown = [...byType.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, n]) => `${n} ${type}`)
+    .join(", ");
+  const notes = [
+    `Dropped ${dropped.length} relationship(s) whose endpoints are not in ` +
+      `persons[] (${breakdown}). FamilySearch names kin one hop beyond the ` +
+      `persons it returns; such an edge fails the project_create write ` +
+      `outright, so it is not emitted.`,
+  ];
+  const ownParentage = dropped.filter(
+    (r) => r.type === "ParentChild" && r.child === pid,
+  ).length;
+  if (ownParentage > 0) {
+    notes.push(
+      `${ownParentage} of those is a parent of the requested person: this ` +
+        `person has a parent in FamilySearch whose record was not returned, ` +
+        `so the parentage is NOT represented in relationships[].`,
+    );
+  }
+  return { notes };
 }
 
 function isParentChildType(type: string | undefined): boolean {
