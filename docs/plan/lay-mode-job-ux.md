@@ -4,7 +4,7 @@
 > developer taking it over several weeks. Every phase carries its own acceptance check.
 >
 > **Dependencies, because the phases are not independent:** 1a needs S2 · 2a needs S1 and S3
-> · 3a needs 1b · 1d needs the E2B tier choice. **S1, S2 and S3 are the longest-lead items** —
+> · 3a needs 1b and S2 · 1d needs the E2B tier choice. **S1, S2 and S3 are the longest-lead items** —
 > each is a paid eval run plus a genealogist annotation pass, one per skill at a time — so
 > start them first even though they are numbered last.
 >
@@ -15,7 +15,8 @@
 
 Today a `/research` run stops about nine times to ask "Continue?". After this, the agent
 works continuously until the job is done or it needs something only the user can supply.
-The user watches a feed, sees the plan tick over, can type at any time, and presses **Stop**
+The user watches a feed, sees the plan tick over, can type at any time — which 1b has to
+build, because the shipped UI silently drops input while a turn runs — and presses **Stop**
 if it is going the wrong way.
 
 **Stop is the control surface.** Not an approval dialog, not a consent prompt. This is
@@ -201,9 +202,14 @@ do not leave it implied.
 
 - **The cap.** `AUTONOMOUS_MAX_NUDGES` is a module global read once at worker startup, and
   the same worker serves the browser and `make proto-demo`, which must stay a one-turn run.
-  There is no "browser path" the worker can see. Carry `max_nudges` on the queue message body
-  beside the access token — set by the web tier in `begin_turn`, read in `run_turn` — so the
-  demo keeps 0.
+  There is no "browser path" the worker can see. Add `AUTONOMOUS_MAX_NUDGES` to the **`web`**
+  service's environment in `docker-compose.yml` — today it carries only `PG_DSN`, `QUEUE_URL`,
+  `POLL_S` and `SSE_PING_S`. `begin_turn` reads it from its own environment and stamps
+  `max_nudges` on the queue body; `run_turn` prefers the body's value and falls back to the
+  module global. `make proto-demo` gets 0 and `make proto-demo-auto` gets 40 because each
+  recipe recreates the web container with its own export — **not** because the web tier can
+  tell who is calling. Do not put it on `MessageBody`: that tier has no auth, so a client
+  could set its own nudge budget.
 - **Size it on step count, at least 30, not on the nudge histogram.** The corpus figures
   below describe `--autonomous` runs under a harness that forbids yielding. Production
   between 1a and S2 is a regime nobody has measured.
@@ -214,8 +220,27 @@ do not leave it implied.
 all reading Postgres on the turn's connection. Add two more, each one clause in
 `should_continue_run`:
 
-1. **`pending_user_message()`** — the user has posted a message that is waiting. Allow the
-   stop; their message becomes the next turn.
+**First, make it possible to type at all.** `ChatPane` returns early on `if (!trimmed ||
+busy)`, and while a turn runs the Send button is *replaced* by Stop. `busy` clears on
+`turn_done`, which under continuous turns is the end of the whole job — a median of 53
+minutes. So the plan's promise that the user can type at any time is **false of the shipped
+UI**, and typing plus Enter does nothing, silently. Drop the `|| busy` guard, render Send
+*alongside* Stop during a turn, and give the sent message the "picked up at the next step"
+label from 2d. Without this, `pending_user_message()` is never true and 2d has nothing to
+label.
+
+**Second, nothing serializes two turns on one session.** `post_message` enqueues
+unconditionally; the `turn_active()` helper exists but only the SSE replay and
+`session_state` call it, never the POST. `choose_sdk_session_id` coalesces to one
+`sdk_session_id` per session, so two concurrent turns resume the *same* SDK session. Hold the
+POST while `turns.completed_at IS NULL` for that session, record the held text in a
+control-plane row, and enqueue it when the turn ends. Say whether that row is a `turns` row
+with a `queued` outcome or its own table, and name the SSE frame the browser renders for it.
+
+Then the two exceptions:
+
+1. **`pending_user_message()`** — reads the held row above. Allow the stop; that message
+   becomes the next turn.
 2. **`pending_decision()`** — the agent has asked something and has no answer yet. See 3a.
 
 **Know how rarely these fire before you rely on them.** Measured for this plan over the 181 committed e2e run logs carrying a nudge count: the model voluntarily yields a **median of once per run**, mean 1.65, and **31% of
@@ -257,9 +282,18 @@ that escape never fires.
 **Where the flag lives:** a control-plane row keyed by session, written by
 `POST /api/sessions/{id}/interrupt` (today 501), read by both hooks on the turn's connection.
 
-**Terminal state:** `complete()` hardcodes `outcome = 'ok'`. A stop needs its own
-`turns.outcome` of `stopped`, carried on the `turn_done` payload and through `row_to_wire`,
-or the browser renders a stop as a normal completion.
+**Terminal state, and it is bigger than Stop.** `complete()` hardcodes `outcome = 'ok'` and
+the `turn_done` payload carries only `{turn_id, receive_count}`, so **every** way a run ends
+looks like success — including the two ways an unattended run actually ends, budget spent and
+no progress. To a genealogist a half-finished run then reads as "nothing more was found".
+Port `terminal_reason` from the harness beside `should_continue_run`, carry it as
+`turns.outcome` — `completed | budget | no_progress | stopped | mcp_unavailable` — through
+`turn_done` and `row_to_wire`, and say what the browser renders for each.
+
+**And the nudge budget resets on every attempt.** `make_stop_hook`'s state is created inside
+`run_turn`, while the tool counter spans attempts. Since 0b makes resume the normal path —
+median two attempts, longest six — a cap of 30 is 30 *per attempt*. Either seed the state
+from a `turns.nudges` column on redelivery, or write down that the cap is per attempt.
 
 **Two things to measure before relying on this.** Whether `continue_: False` also suppresses
 the Stop hook dispatch — if it does, `stopped()` is belt and braces; if not, it is
@@ -372,8 +406,13 @@ evidence and the thing that separates this from a search box. `log_outcome` alre
 
 ### 2d. Three small ones
 
-- **Show the scans.** `getSourceImage` exists in the Electron transport and is absent in the
-  web client. Seeing the census page with the family's line is the credibility moment.
+- **Show the scans, and the gap is server-side.** `getSourceImage` is implemented end to end
+  in the web transport already. What is missing is on the plane this plan calls production:
+  the prototype web tier returns **501** for `/image`, 404 for `/sidecar/{log_id}`, and
+  hardcodes `session_state.sidecars` to empty. Serve both from `blobs` and `staging` — S3
+  plus the Postgres index the store already writes — and populate `sidecars`. **No client
+  change is needed.** Seeing the census page with the family's line is the credibility
+  moment.
 - **Show a queued message as queued** — "picked up at the next step" answers the whole
   typed-input latency complaint with a label.
 - **Provenance on hover.** `person_evidence` already links a fact to its source.
@@ -404,11 +443,17 @@ and `PgS3ProjectStore` writes `documents`, `blobs` and `staging` only — there 
 the agent to an arbitrary control-plane table, and 3a deliberately closes the
 `AskUserQuestion` route as well. Pick one:
 
-- **(a) The worker's `PreToolUse` hook writes the row** when it sees a designated tool call.
-  It already writes `tool_calls` rows on the turn's connection through its `record` callable,
-  so this costs nothing new and leaves the engine untouched. **Recommended.**
-- **(b) A `decision_ask` MCP tool** — which means `allToolSchemas`, a `server.ts` arm,
-  `manifest.json`, a `dev/smoke-calls.ts` row and a `ProjectStore` method. The expensive one.
+- **(a) The hook writes the row when it sees `AskUserQuestion`.** The `PreToolUse` hook
+  already writes `tool_calls` rows on the turn's connection, so intercepting a call costs
+  nothing new and leaves the engine untouched. But it can only observe a tool the agent
+  actually calls, and **no tool in `allToolSchemas` means "I need a decision"** — so the
+  built-in has to be the carrier. The envelope stays ours; only the transport is the built-in.
+  Taking this option means deleting the "routes around `AskUserQuestion`" claim below and
+  measuring whether the built-in is reachable under the hosted permission mode, which is
+  unmeasured. **Recommended, with that measurement first.**
+- **(b) A `decision_ask` MCP tool** — `allToolSchemas`, a `server.ts` arm, `manifest.json`, a
+  `dev/smoke-calls.ts` row and a `ProjectStore` method. More expensive, and it depends on
+  nothing unmeasured.
 
 **Build:** a prompt in plain language, optional structured options each with a label, a
 rationale and an optional `ref` id the viewer resolves through `getById`, and an answer
@@ -492,7 +537,7 @@ holders before starting; those below were true on 2026-09-20.
 | PR | Slot | What |
 |---|---|---|
 | S1 | `init-project` | The narration guidance; the cold start (phase 4) |
-| S2 | `research` | Make the continuous-work branches unconditional; apply the `proof-conclusion`-writes-status ruling |
+| S2 | `research` | Make the continuous-work branches unconditional; **add a fourth stop condition for 3a**; apply the `proof-conclusion`-writes-status ruling |
 | S3 | `question-selection` | Drop the literal. The `q_001` gloss mandate **stays** — ruled 2026-09-20, and links now make it useful |
 | S4 | `research-plan` | The execution offer becomes "render the plan and start" |
 | S5 | `record-extraction` | A batch is one step; re-key or retire the relay-leak validator |
@@ -519,7 +564,16 @@ suppress preambles and "narrate only at phase boundaries (or not at all)" — so
 arm on before S2 lands a silent feed. This is why S1, S2 and S3 start first despite being
 numbered last.
 
-**The router's three no-yield sites are now correct and stay** — the autonomous-mode section,
+**S2 must add a fourth stop condition, or 3a cannot work.** The shipped prose says "There is
+no human to approve a tool, answer a question, or prompt you onward", "In autonomous mode, do
+not stop just because a decision is hard. Make the call, log the rationale, and continue", and
+"These three are the *only* autonomous stop conditions." 3a's worked example — which of these
+two John Smiths is yours — is exactly a hard decision that prose orders the agent to make
+alone. Add: *you need something only the user can supply — emit the decision call, then
+yield*, with 3a's two shapes as the examples and the existing "do not stop because a decision
+is hard" kept, so "hard" does not become the excuse.
+
+**The router's three no-yield sites are otherwise correct and stay** — the autonomous-mode section,
 step 3's "Iterate — without yielding", and the closing paragraph of "When to stop".
 
 **The literal retires with S1 and S3, and it has more sites than the test.** Every one:
