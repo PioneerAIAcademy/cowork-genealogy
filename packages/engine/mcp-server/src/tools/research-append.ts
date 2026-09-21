@@ -1091,12 +1091,47 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   ];
 }
 
+/** The two tiers that are a final answer rather than a stalled one: `proved`
+ *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
+ *  deliberately absent — it is a non-answer, so something IS holding it back. */
+const CONCLUSIVE_TIERS = new Set(["proved", "disproved"]);
+
 function proofSummaryInvariants(
   entry: any,
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
 ): string[] {
   const tier = entry?.tier;
-  if (tier !== "proved" && tier !== "disproved") return [];
+
+  // `shortfall` answers "why is this conclusion not higher?", so a conclusive
+  // tier owes `none` and nothing else may claim it. Both fields sit on THIS
+  // object, so ADR-0011's first question — can it be decided from the documents
+  // alone? — answers yes, and the rule belongs here rather than only in the
+  // agent body and the eval validator, where it lived until 2026-09-21.
+  //
+  // Checked ahead of the conclusive-tier early return below, because the
+  // `none`-on-a-lower-tier half applies to every tier.
+  const shortfall = entry?.shortfall;
+  if (typeof shortfall === "string") {
+    if (CONCLUSIVE_TIERS.has(tier) && shortfall !== "none") {
+      return [
+        `tier '${tier}' is a conclusive answer — it reached a verdict, so nothing ` +
+          `is holding it back and shortfall must be 'none'; got '${shortfall}'. ` +
+          `Use 'ceiling', 'gap' or 'conflict' only on a tier that did NOT reach ` +
+          `one (probable, possible, not_proved).`,
+      ];
+    }
+    if (!CONCLUSIVE_TIERS.has(tier) && shortfall === "none") {
+      return [
+        `shortfall 'none' says nothing is holding this conclusion back, but tier ` +
+          `'${tier}' reached no conclusive answer — so something is. Name it: ` +
+          `'ceiling' (the reachable record is exhausted), 'gap' (a reachable ` +
+          `source is still unsearched), or 'conflict' (an unresolved conflict ` +
+          `names this question in its blocks_question_ids).`,
+      ];
+    }
+  }
+
+  if (!CONCLUSIVE_TIERS.has(tier)) return [];
   const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
   if (!declaredBeforeThisCall) {
     return [

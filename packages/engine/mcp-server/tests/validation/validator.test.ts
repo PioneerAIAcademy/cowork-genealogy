@@ -1109,6 +1109,37 @@ describe("Project Validator", () => {
       expect(mentions[0].message).not.toContain("must be an array");
     });
 
+    // `shortfall`'s two production arms — presence and enum membership — are
+    // the whole of what the engine enforces about the field, and neither had
+    // been watched failing. The sibling enum in this block has both.
+    it("rejects a proof_summary with an invalid shortfall value", async () => {
+      const research = withConflictAndSummary("resolved", []);
+      (research.proof_summaries[0] as Record<string, unknown>).shortfall = "nope";
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes("proof_shortfall")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a proof_summary missing shortfall", async () => {
+      const research = withConflictAndSummary("resolved", []);
+      delete (research.proof_summaries[0] as Record<string, unknown>).shortfall;
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes("missing required field 'shortfall'")
+        )
+      ).toBe(true);
+    });
+
     it("embeds the offending value in the container message", async () => {
       // `errorKey` is the normalized path PLUS the message, so a STATIC message
       // keys identically before and after — which demotes a change from one

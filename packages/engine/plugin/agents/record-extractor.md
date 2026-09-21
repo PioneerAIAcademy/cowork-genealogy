@@ -149,8 +149,9 @@ classification.
   **death certificate** (the record itself or its image) is ORIGINAL —
   it is the first recording of both the death and the informant's
   statements. The informant's secondhand knowledge is captured at the
-  information/evidence layers (`family_not_present`, `inferred`), never
-  by demoting the source layer.
+  informant and information layers (`family_not_present`, `secondary`),
+  never by demoting the source layer and never by marking `record_basis`
+  `inferred`.
 - **derivative** — created from another source — indexes, abstracts,
   transcripts, translations, including an index/abstract/transcript OF
   a death certificate. Each step from the original adds error risk.

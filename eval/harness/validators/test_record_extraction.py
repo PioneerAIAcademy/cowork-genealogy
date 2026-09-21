@@ -99,7 +99,7 @@ def test_new_assertions_have_required_classification(before_state, after_state):
     Per research-schema-spec.md §5.6, every assertion requires:
       - information_quality (primary | secondary | indeterminate)
       - informant_proximity (self, witness, household_member, ...)
-      - record_basis (direct | indirect | negative)
+      - record_basis (stated | inferred | absent)
 
     Missing these silently breaks downstream skills (conflict-resolution
     weighs by informant_proximity; proof-conclusion needs record_basis).
@@ -744,7 +744,7 @@ def test_negative_evidence_uses_absent_role(before_state, after_state):
     for a in after.get("assertions", []):
         if a.get("record_basis") == "absent" and a.get("record_role") != "absent":
             errors.append(
-                f"assertions[{a.get('id')}]: record_basis=negative but "
+                f"assertions[{a.get('id')}]: record_basis=absent but "
                 f"record_role='{a.get('record_role')}' (expected 'absent')"
             )
 
@@ -877,7 +877,7 @@ def test_negative_evidence_assertion_created(
     before_state, after_state, test
 ):
     """For negative-evidence scenarios, the skill must create at least
-    one NEW assertion with `record_basis: \"negative\"` and
+    one NEW assertion with `record_basis: \"absent\"` and
     `record_role: \"absent\"`. Otherwise the absence wasn't recorded.
 
     Tag-gated on `negative-evidence`.

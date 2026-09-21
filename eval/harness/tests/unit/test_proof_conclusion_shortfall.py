@@ -141,6 +141,25 @@ def test_a_resolved_conflict_does_not_require_conflict():
     check(_after(shortfall="gap", conflicts=_blocking(status="resolved")), TEST)
 
 
+def test_a_conclusive_tier_with_a_blocking_conflict_still_takes_none():
+    """Regression: this shape once satisfied no value at all.
+
+    Rule 1 demanded `none` for a conclusive tier and rule 2 demanded
+    `conflict` for a blocking one, so a disproved conclusion on a question
+    with an open conflict failed on all four values. proof-conclusion.md:211
+    blocks only Proved on an unresolved conflict, so the shape is legitimate:
+    the evidence still refutes the claim whatever else is disputed.
+    """
+    conflicted = _after(tier="disproved", shortfall="none", declared=True,
+                        conflicts=_blocking())
+    check(conflicted, TEST)
+    # and the conflicting demand is really gone, not merely reordered
+    for bad in ("conflict", "gap", "ceiling"):
+        with pytest.raises(AssertionError, match="conclusive"):
+            check(_after(tier="disproved", shortfall=bad, declared=True,
+                         conflicts=_blocking()), TEST)
+
+
 def test_a_conflict_blocking_another_question_does_not_require_conflict():
     # Question-scoped, per proof-conclusion's decision rules: a conflict open
     # on a different question does not bear on this conclusion.

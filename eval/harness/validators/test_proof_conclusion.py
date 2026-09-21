@@ -690,7 +690,11 @@ def test_shortfall_matches_document_state(after_state, test):
             and c.get("status") == "unresolved"
             and qid in (c.get("blocks_question_ids") or [])
         ]
-        if blocking:
+        # Guarded on the tier for the same reason _check_ceiling is: a
+        # conclusive tier already owes `none`, and proof-conclusion.md:211
+        # blocks only Proved on an open conflict, so `disproved` with one is
+        # legitimate. Without the guard that shape satisfies no value at all.
+        if blocking and tier not in CONCLUSIVE_TIERS:
             assert shortfall == "conflict", (
                 f"{sid}: conflict(s) {blocking} are unresolved and name {qid} in "
                 f"blocks_question_ids, so this conclusion is blocked by a dispute "

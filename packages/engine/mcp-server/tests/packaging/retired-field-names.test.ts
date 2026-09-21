@@ -99,6 +99,8 @@ const ALLOWED: Record<string, string> = {
     "reads the frozen run-log corpus, which still carries the retired spelling",
   "eval/harness/tests/unit/test_record_basis_compat.py":
     "tests the back-compat reader, so it must name the retired spelling",
+  "packages/engine/mcp-server/dev/probe_craftnotes_uptake.py":
+    "reads the frozen run-log corpus, which still carries the retired spelling",
   "packages/engine/mcp-server/src/utils/record-basis.ts":
     "the engine's back-compat reader for research.json documents written before the rename",
   "packages/engine/mcp-server/tests/utils/record-basis.test.ts":

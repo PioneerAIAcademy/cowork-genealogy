@@ -1407,6 +1407,155 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
+  // question puts it at the write boundary rather than in prose. Until
+  // 2026-09-21 it lived only in the agent body and the eval validator, and
+  // {tier: "probable", shortfall: "none"} validated clean in production.
+  describe("shortfall must match the tier's conclusiveness", () => {
+    const append = (tier: string, shortfall: string) =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier,
+          vehicle: "summary",
+          shortfall,
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "Searched census + vitals",
+          narrative_markdown: "## Conclusion\n...",
+        },
+      } as never);
+
+    // Both conclusive tiers, not just `proved`: dropping "disproved" from the
+    // set left a proved-only version of this block green, which is how the
+    // first version of this rule shipped wrong in the first place.
+    it.each([
+      ["proved", "ceiling"], ["proved", "gap"], ["proved", "conflict"],
+      ["disproved", "ceiling"], ["disproved", "gap"], ["disproved", "conflict"],
+    ])("refuses tier '%s' with shortfall '%s'", async (tier, shortfall) => {
+      await writeProject();
+      const r = await append(tier, shortfall);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("conclusive answer");
+    });
+
+    it.each(["proved", "disproved"])(
+      "accepts shortfall 'none' on conclusive tier '%s'",
+      async (tier) => {
+        // A conclusive tier ALSO needs the question already declared
+        // exhaustive — the sibling arm of this same function. Without that
+        // setup these refuse for the other reason and prove nothing about
+        // shortfall.
+        const research = baseResearch();
+        research.questions = [
+          {
+            ...validQuestion("q_001"),
+            status: "exhaustive_declared",
+            exhaustive_declaration: {
+              declared: true,
+              log_entry_ids: ["log_001"],
+              stop_criteria: {},
+            },
+          },
+        ];
+        research.log = [
+          {
+            id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+            tool: "record_search", query: {}, outcome: "negative",
+            results_examined: 0, external_site: null, results_ref: null,
+          },
+        ];
+        await writeProject(research);
+        expect((await append(tier, "none")).ok).toBe(true);
+      },
+    );
+
+    it.each(["probable", "possible", "not_proved"])(
+      "refuses shortfall 'none' on tier '%s', which reached no answer",
+      async (tier) => {
+        await writeProject();
+        const r = await append(tier, "none");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toContain("reached no conclusive answer");
+      },
+    );
+
+    it("accepts the pairings that do agree", async () => {
+      await writeProject();
+      expect((await append("probable", "gap")).ok).toBe(true);
+    });
+
+    it("says nothing when shortfall is a non-string — that is checkEnum's job", async () => {
+      // The `typeof === "string"` guard, which nothing tested: loosening it to
+      // `!== undefined` left this whole block green while a null shortfall
+      // collected BOTH this refusal and checkEnum's, for one defect.
+      // Must be a CONCLUSIVE tier: on a lower one neither arm reaches the
+      // comparison, so the loosened guard is indistinguishable there.
+      const research = baseResearch();
+      research.questions = [
+        {
+          ...validQuestion("q_001"),
+          status: "exhaustive_declared",
+          exhaustive_declaration: {
+            declared: true, log_entry_ids: ["log_001"], stop_criteria: {},
+          },
+        },
+      ];
+      research.log = [
+        {
+          id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+          tool: "record_search", query: {}, outcome: "negative",
+          results_examined: 0, external_site: null, results_ref: null,
+        },
+      ];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001", tier: "proved", vehicle: "summary",
+          shortfall: null, supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [], exhaustive_search_summary: "s",
+          narrative_markdown: "## C\n...",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).not.toContain("conclusive answer");
+    });
+
+    it("says nothing when shortfall is absent — that is checkRequired's job", async () => {
+      // Two diagnoses for one defect is what makes an agent repair the wrong
+      // thing; the same reason the resolved_conflict_ids guard exists.
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier: "probable",
+          vehicle: "summary",
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "s",
+          narrative_markdown: "## C\n...",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain("missing required field 'shortfall'");
+      expect(msg).not.toContain("reached no conclusive answer");
+    });
+  });
+
   it("appends a proof_summary referencing an existing question", async () => {
     await writeProject();
     const r = await researchAppend({
@@ -2263,7 +2412,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
-        shortfall: "gap",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2297,7 +2446,7 @@ describe("research_append (Phase 3)", () => {
             question_id: "q_001",
             tier: "proved",
             vehicle: "summary",
-            shortfall: "gap",
+            shortfall: "none",
             supporting_assertion_ids: ["a_001"],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Searched census + vitals",
@@ -2355,7 +2504,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
-        shortfall: "gap",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2381,7 +2530,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
-        shortfall: "gap",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2841,7 +2990,7 @@ describe("research_append (project singleton section)", () => {
     question_id: questionId,
     tier: "proved",
     vehicle: "summary",
-    shortfall: "gap",
+    shortfall: "none",
     supporting_assertion_ids: ["a_001"],
     resolved_conflict_ids: [],
     exhaustive_search_summary: "Every identified repository was searched.",
@@ -2940,7 +3089,13 @@ describe("research_append (project singleton section)", () => {
     // tier `possible` — a proved/probable summary additionally requires a prior
     // exhaustive declaration, which is a different invariant than the one under
     // test and would mask it.
-    const { id: _id, ...summaryEntry } = { ...summary(), tier: "possible" };
+    // `possible` reached no conclusive answer, so it owes a real shortfall —
+    // the helper's `none` belongs to its default `proved` tier.
+    const { id: _id, ...summaryEntry } = {
+      ...summary(),
+      tier: "possible",
+      shortfall: "gap",
+    };
     const r = await researchAppend({
       projectPath: dir,
       ops: [

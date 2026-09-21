@@ -122,8 +122,12 @@ def main(paths):
                             if str(note).startswith("["):
                                 notes_tagged += 1
                         # arm [1] — computed birth year
+                        # The committed baselines are frozen at the
+                        # pre-2026-09-18 spelling, so read both or the
+                        # denominator collapses to 0.
+                        basis = en.get("record_basis") or en.get("evidence_type")
                         if (en.get("fact_type") == "birth"
-                                and en.get("record_basis") == "inferred"
+                                and basis in ("inferred", "indirect")
                                 and en.get("date_certainty")):
                             if tid not in N_EXCLUDE:
                                 n_den[tid] += 1
