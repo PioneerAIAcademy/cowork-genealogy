@@ -1155,13 +1155,18 @@ def cmd_strip(args: argparse.Namespace) -> int:
         # `starting-tree.gedcomx.json` does not exist yet, and on a re-run the
         # file is the *previous* strip.
         suspects = check_stripping(findings, tree)
-        # fixture_genre() reads the committed fixture.json; on a first strip
-        # it may not exist yet, and it owns the unknown-genre error, so fall
-        # back to the strip wording rather than crashing the strip command.
-        try:
-            strip_genre = fixture_genre(fixture_dir)
-        except (AuthorError, OSError):
-            strip_genre = "record-hint" if args.none else "strip"
+        # --none IS the record-hint signal at strip time, and
+        # fixture_genre() returns "strip" WITHOUT raising when fixture.json is
+        # absent (scaffold can legitimately run after strip). So decide from
+        # --none first: routing through fixture_genre would hand a
+        # record-hint author the strip wording the genre forbids.
+        if args.none:
+            strip_genre = "record-hint"
+        else:
+            try:
+                strip_genre = fixture_genre(fixture_dir)
+            except (AuthorError, OSError):
+                strip_genre = "strip"
         for suspect in suspects:
             print(format_suspect(args.slug, suspect, strip_genre), file=sys.stderr)
 
