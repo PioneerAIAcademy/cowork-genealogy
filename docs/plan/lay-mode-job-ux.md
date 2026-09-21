@@ -1,8 +1,12 @@
 # Research as a job — the agent runs, you watch and steer
 
 > **Status:** NOT BUILT. Plan of 2026-09-21, for beta in Fall 2026. Written for one
-> developer taking it over several weeks. Every phase is independently takeable and carries
-> its own acceptance check.
+> developer taking it over several weeks. Every phase carries its own acceptance check.
+>
+> **Dependencies, because the phases are not independent:** 1a needs S2 · 2a needs S1 and S3
+> · 3a needs 1b · 1d needs the E2B tier choice. **S1, S2 and S3 are the longest-lead items** —
+> each is a paid eval run plus a genealogist annotation pass, one per skill at a time — so
+> start them first even though they are numbered last.
 >
 > Supersedes the hand-back literal ruled 2026-09-07 (issues #2292, #1104, #2328) and the
 > regex auto-continue of PR #2667. The board changes applied on 2026-09-20 are at the end.
@@ -67,11 +71,20 @@ had `project.status: active`.
 
 **Probe first — the guard is already gated on it.** `search-agent-prototype.md` records that
 the 2026-09-20 ruling for exactly this rule "was gated on this probe confirming the
-autonomous run's synthetic result; it did not, so the rule is not built." So the task is the
-probe: `make proto-kill` kills during a main-thread `place_search`, and this failure needed a
-subagent mid-persist. Write that variant and run it. The guard lands only if the probe
-reproduces a zero-turn synthetic result with background agents in flight. If it does not,
-report that and stop — the rest of phase 0 still stands.
+autonomous run's synthetic result; it did not, so the rule is not built."
+
+**Most of the probe already exists.** `--kill-on` and `--kill-after-s` are implemented in
+`turn.py` and documented in the Makefile as the D18 resume probe, and `--kill-on Agent` was
+already run on 2026-09-20 — it resumed cleanly, because it killed a *foreground* delegation.
+Three things are missing:
+
+1. **A selector that matches the `Agent` call's input**, `run_in_background: true`, read from
+   `session_entries.entry`. `tool_calls` carries no input column — `004_worker.sql` adds only
+   `tool_use_id` — so matching by tool name alone cannot find the case.
+2. **Run it with `AUTONOMOUS_MAX_NUDGES > 0`**, which `make proto-kill` leaves at 0, on the
+   autonomous arm's own message against `bagley-father-1884`.
+3. **Only then the guard.** If the probe does not reproduce a zero-turn synthetic result with
+   background agents in flight, report that and stop — the rest of phase 0 still stands.
 
 **Then build:** in `apps/server/proto/worker/worker.py`, on a redelivered attempt
 (`receive_count > 1`), a `ResultMessage` with `num_turns == 0` is a resume failure rather
@@ -98,8 +111,17 @@ It was overridden to 7,200 s for the D18 arm on 2026-09-20 because the run kept 
 and elasticmq's `defaultVisibilityTimeout` went to 7,500 s to match. The cut was a symptom of
 0a, not a capacity finding.
 
-**Build:** drop the override; return visibility to ~2,100 s. The compose default is already
-`READ_TIMEOUT_S:-1800`.
+**Build:** change the literal `7200` to `1800` in the `proto-demo-auto` recipe in the
+`Makefile`. **Do not delete the line** — the next line sizes `--deadline-s` off it as
+`2 * READ_TIMEOUT_S + 300`, and POSIX arithmetic reads an unset name as 0, so deleting it
+gives a five-minute deadline on an hour-long billed run. Then set `defaultVisibilityTimeout`
+to 2,100 s in `apps/server/proto/elasticmq.conf` and update its header comment.
+`test_proto_config.py` asserts the export is present and reads it for the visibility check;
+re-point `_exported_ceiling_s` now that the ruling is 1,800 with no exception.
+
+**What it costs, stated.** Four skill-or-agent segments in the corpus exceed 1,800 s, the
+longest at 3,147 s. Those cannot complete inside one attempt. 0a's attempt cap is what turns
+them into a reported failure rather than a paid loop.
 
 **No exception for tests.** A test that never crosses the ceiling can never exercise resume,
 and resume is now load-bearing on every production run. The crossing *is* the test.
@@ -126,8 +148,21 @@ voluntary yield, and `should_continue_run` allows the stop when `project.status 
 `research.json` off the `documents` row at each stop. **This is the whole mechanism** — do
 not build an MCP tool, a server-side turn router, or an injected "continue" message.
 
-`AUTONOMOUS_MAX_NUDGES` defaults to `0` in compose, and with it unset there is no `Stop` key
-at all. Default it on for the browser path.
+**Blocked on S2.** Until that lands, the skill's continuous-work branches are gated on the
+literal string `--autonomous` in the user message, and the browser posts raw text straight
+through `begin_turn`. So either S2 lands first, or the web tier prefixes the flag — decide,
+do not leave it implied.
+
+**Two carriers, both missing today.**
+
+- **The cap.** `AUTONOMOUS_MAX_NUDGES` is a module global read once at worker startup, and
+  the same worker serves the browser and `make proto-demo`, which must stay a one-turn run.
+  There is no "browser path" the worker can see. Carry `max_nudges` on the queue message body
+  beside the access token — set by the web tier in `begin_turn`, read in `run_turn` — so the
+  demo keeps 0.
+- **Size it on step count, at least 30, not on the nudge histogram.** The corpus figures
+  below describe `--autonomous` runs under a harness that forbids yielding. Production
+  between 1a and S2 is a regime nobody has measured.
 
 ### 1b. Two exceptions that allow the stop
 
@@ -139,13 +174,12 @@ all reading Postgres on the turn's connection. Add two more, each one clause in
    stop; their message becomes the next turn.
 2. **`pending_decision()`** — the agent has asked something and has no answer yet. See 3a.
 
-**Know how rarely these fire before you rely on them.** Measured over the 181 committed e2e
-runs: the model voluntarily yields a **median of once per run**, mean 1.65, and **31% of
+**Know how rarely these fire before you rely on them.** Measured for this plan over the 181 committed e2e run logs carrying a nudge count: the model voluntarily yields a **median of once per run**, mean 1.65, and **31% of
 runs yield zero times** — the hook fires only at job end. Against a 53.9-minute median run,
 anything gated on a yield is checked about once. That is fine for `pending_decision()`,
 which the agent itself triggers. It is not fine for Stop.
 
-### 1d. Build Stop — it is the control surface and it does not exist
+### 1c. Build Stop — it is the control surface and it does not exist
 
 `POST /api/sessions/{id}/interrupt` on the prototype returns **501**, "Interrupt is not
 available in the prototype: the worker owns the turn". The whole design rests on Stop, so
@@ -154,13 +188,33 @@ this is phase 1 work, not a later nicety.
 **Do not implement it as a yield-gated `hold` flag** — per the measurement above that is a
 median of one check per run. Use the `PreToolUse` hook `build_worker_options` already binds
 with `matcher=None`, which fires on **every** tool call; the corpus puts one model call plus
-its tool calls at a median of 2.6 s. A deny carrying a stop reason halts within one tool
-call and needs no new plane.
+its tool calls at a median of 2.6 s.
+
+**Return `{"continue_": False, "stopReason": …}`, not `_deny(...)`.** `_deny` returns a
+`permissionDecision: "deny"` — a tool result the model reads and argues with, not a halt.
+The SDK's halt fields are separate.
+
+**And the Stop hook must not undo it.** `should_continue_run` has exactly four paths that
+allow a stop — MCP unavailable, project completed, budget spent, no progress — and none of
+them is "the user stopped". Add a third injectable, `stopped()`, as the **first** clause,
+ahead of `project_completed`. Do not rely on the no-progress escape instead: a denied call
+still writes a `tool_calls` row and `count_tool_calls` counts rows, so the counter moves and
+that escape never fires.
+
+**Where the flag lives:** a control-plane row keyed by session, written by
+`POST /api/sessions/{id}/interrupt` (today 501), read by both hooks on the turn's connection.
+
+**Terminal state:** `complete()` hardcodes `outcome = 'ok'`. A stop needs its own
+`turns.outcome` of `stopped`, carried on the `turn_done` payload and through `row_to_wire`,
+or the browser renders a stop as a normal completion.
+
+**Measure whether `continue_: False` also suppresses the Stop hook dispatch.** If it does,
+`stopped()` is belt and braces; if it does not, `stopped()` is load-bearing.
 
 **Acceptance:** Stop pressed mid-run halts within seconds, the session shows as stopped
-rather than failed, and a later message resumes it.
+rather than completed or failed, and a later message resumes it.
 
-### 1c. Backport the hook to the alpha
+### 1d. Backport the hook to the alpha
 
 Alpha testers are the feedback loop and should not go quiet for weeks.
 
@@ -172,7 +226,7 @@ returns 204 and silently no-ops. It clocks **continuous runtime, not idleness**,
 of 53.9 minutes and p90 of 107.9, one continuous turn per job pauses mid-turn at or before
 p90, and around half of runs come within minutes of it.
 
-**Pick one before starting 1c and write it in the PR:**
+**Pick one before starting 1d and write it in the PR:**
 
 - **(a) Pro tier** — the same comment records 86,400 s on Pro. A billing decision, not an
   engineering one.
@@ -183,7 +237,7 @@ p90, and around half of runs come within minutes of it.
   The CLI subprocess, the SDK stream and the browser socket are all in-process, and nothing
   in the repo records the outcome of pausing across them.
 
-Until one is chosen, 1c is gated. What remains true: the alpha suspends rather than killing,
+Until one is chosen, 1d is gated. What remains true: the alpha suspends rather than killing,
 so this is a different failure from the prototype's kill-and-redeliver, and phase 0's resume
 guard does not apply to it.
 
@@ -191,10 +245,16 @@ guard does not apply to it.
 dict carrying `PreToolUse`. Add a `Stop` entry whose callback reads `/project/research.json`
 (the runner already has `PROJECT_DIR`) and calls the same predicate.
 
-**Lift `should_continue_run` to one home while you are there.** It lives in
-`apps/server/proto/worker/options.py` and `eval/harness/e2e/stop_checker.py`; the alpha would
-make three. It is a pure function. One copy, imported by all three — this is the duplication
-shape issue #2476 exists to stop.
+**You cannot make `should_continue_run` a shared import, so do not plan to.** The worker
+image copies only `apps/server/app`, `apps/server/proto/sql` and `apps/server/proto/worker` —
+no `eval/` — and `test_proto_config.py` asserts that `apps/server` and `eval/harness` never
+import each other. It already exists twice, in `apps/server/proto/worker/options.py` and
+`eval/harness/e2e/stop_checker.py`, and the alpha would make three.
+
+Pin them instead: an AST-lifting parity test, the pattern
+`eval/harness/tests/unit/test_write_lockdown_parity.py` already uses for exactly this
+problem. Three copies that cannot drift silently is the achievable version of issue #2476
+here.
 
 **Acceptance:** an alpha session runs a multi-step objective to a proof conclusion on one
 user message *without the sandbox pausing mid-turn*. The e2e suite still passes against the
@@ -205,6 +265,10 @@ shared predicate.
 ## Phase 2 — the reading experience (renderer only; independent of 0 and 1)
 
 ### 2a. Identifiers become links, never refusals
+
+**Blocked on S1 and S3.** The shipped narration guidance still bans identifiers, so until
+those land there is nothing in the prose for a linkifier to link, and issue #2493's
+acceptance corpus would be measured against text containing none.
 
 Do not build a validator. Identifiers are **additive**: `q_001` beside "the question about
 her parents" reads fine to a novice who ignores it and to a genealogist who clicks it. The
@@ -380,10 +444,11 @@ allowed and glossed, file, tool and skill names are discouraged as writing quali
 the first clause goes, the shipped guidance still bans identifiers, 2a's linkifier has
 nothing to link, and issue #2493's acceptance corpus lands against prose containing none.
 
-**A sequencing trap.** Injecting `--autonomous` is the zero-slot way to switch production to
-continuous mode, but it inherits `research/SKILL.md`'s rule to suppress preambles and
-"narrate only at phase boundaries (or not at all)". **S2 lands before the arm is defaulted
-on**, or the first window ships a silent feed.
+**S2 is the gate on 1a, not a follow-up to it.** Injecting `--autonomous` is the zero-slot
+way to switch production to continuous mode, but it inherits `research/SKILL.md`'s rule to
+suppress preambles and "narrate only at phase boundaries (or not at all)" — so defaulting the
+arm on before S2 lands a silent feed. This is why S1, S2 and S3 start first despite being
+numbered last.
 
 **The router's three no-yield sites are now correct and stay** — the autonomous-mode section,
 step 3's "Iterate — without yielding", and the closing paragraph of "When to stop".
@@ -397,7 +462,7 @@ predicate), `runner.py` (the auto-continue arm), `apps/server/app/config.py` —
 skill bodies.
 
 **Reconcile 1c with that default.** The alpha already auto-continues on the literal. Adding a
-Stop hook there without retiring the arm gives it two continuation mechanisms; decide in 1c's
+Stop hook there without retiring the arm gives it two continuation mechanisms; decide in 1d's
 PR whether the arm is disabled at the same time or left until S1 and S3 remove its trigger.
 
 `test_every_shipped_hand_back_literal_classifies` ends on `assert seen >= 2` and exactly two
