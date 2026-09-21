@@ -23,8 +23,8 @@ infrastructure paths.
 from the junior pool and works with Claude Code, so being on the list is not a
 promotion out of that pool.
 
-**It is also who a `senior`-labeled issue goes to.** The lead takes no issues at
-all, so senior-required work goes to a senior in its own lane — a
+**It is also who picks up a `senior`-labeled issue.** No pool target covers the
+lead, so senior-required work is picked up by a senior in its own lane — a
 `developer`+`senior` issue to a `senior-developers` member, a
 `genealogist`+`senior` issue to a `senior-genealogists` member. `fill-ready`
 labels those and promotes them into its lane's Ready pool alongside the junior
