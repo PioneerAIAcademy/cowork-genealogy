@@ -54,6 +54,7 @@ import {
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { AsyncMutex } from "./async-mutex.js";
 import { assertRelativeRef } from "./paths.js";
+import { PROJECT_ID_RE } from "./project-id.js";
 import type {
   JsonWrite,
   ProjectDirState,
@@ -69,9 +70,6 @@ export const CONNECT_TIMEOUT_MS = 10_000;
 /** How long one S3 request (headers and body, a multi-MB scan included) may
  *  take end to end. */
 export const S3_REQUEST_TIMEOUT_MS = 90_000;
-
-/** The shape a project id must have to be an S3 key prefix on its own. */
-const PROJECT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 // ─── Backend: the shared connections ─────────────────────────────────────────
 
@@ -400,6 +398,17 @@ export class PgS3ProjectStore implements ProjectStore {
   }
 
   async readText(projectPath: string, ref: string): Promise<string> {
+    const loaded = await this.load(projectPath, ref);
+    return typeof loaded === "string" ? loaded : Buffer.from(loaded).toString("utf-8");
+  }
+
+  async readBytes(projectPath: string, ref: string): Promise<Uint8Array> {
+    const loaded = await this.load(projectPath, ref);
+    return typeof loaded === "string" ? new Uint8Array(Buffer.from(loaded, "utf-8")) : loaded;
+  }
+
+  /** A document as its pretty text; a blob or staged object as its bytes. */
+  private async load(projectPath: string, ref: string): Promise<string | Uint8Array> {
     const rel = assertRelativeRef(ref);
     if (!this.isAnchor(projectPath)) throw enoent(this.projectId, rel);
     const route = routeRef(rel);
@@ -413,7 +422,7 @@ export class PgS3ProjectStore implements ProjectStore {
     }
     const row = await this.indexRow(rel);
     if (!row) throw enoent(this.projectId, rel);
-    return Buffer.from(await this.getObject(row.s3_key, rel)).toString("utf-8");
+    return this.getObject(row.s3_key, rel);
   }
 
   async list(projectPath: string, dirRef: string): Promise<ProjectEntry[]> {

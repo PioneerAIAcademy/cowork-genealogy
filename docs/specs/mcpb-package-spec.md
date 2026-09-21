@@ -102,7 +102,7 @@ The packed `.mcpb` MUST contain:
 |------|-----|
 | `manifest.json` | Install metadata + server config |
 | `package.json` | Node entry-point resolution |
-| `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point |
+| `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point. `build/hosted-stdio.js` and `build/http.js`, the prototype's two entrypoints, ride along and are inert here — nothing in the pack runs them |
 | `config/familysearch.json` | Bundled OAuth clientId — without it every authenticated tool breaks (guarded by `tests/auth/bundled-client-config.test.ts`) |
 | `config/given-name-variants.json` | Bundled given-name variant table for diminutive expansion in `fulltext_search` and `image_transcribe` |
 | `node_modules/` | **Production dependencies only** |
