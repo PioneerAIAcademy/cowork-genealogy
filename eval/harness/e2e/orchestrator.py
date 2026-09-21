@@ -1164,6 +1164,13 @@ _RUNLOG_MAX_CHARS = 4000
 # key in the unwrapped response dict. The full value is preserved verbatim,
 # bypassing both `_RUNLOG_STRING_MAX` and `_RUNLOG_MAX_CHARS`.
 #
+# Scope of the bypass: `if not saved` below skips the backstop for the WHOLE
+# response, not just the exempt key's bytes. Harmless for image_transcribe,
+# where the transcription IS the payload. But a future (tool, key) pair added
+# for a tool with a large non-exempt sibling field would take that sibling out
+# of the cap too — silently. If that arises, split the backstop to exempt only
+# the saved key's contribution and cap the rest.
+#
 # Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
 _RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
     ("image_transcribe", "transcription"),
