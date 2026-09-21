@@ -116,7 +116,11 @@ else — not restraint against an unqualified hint. Adjacent to issue #2478.
 
 **Encoding: both findings are `required: true`.** `f1` is the whole point of an
 outcome-(c) record-hint fixture — a fixture that cannot fail on the restraint it
-exists to measure measures nothing — so it gates.
+exists to measure measures nothing — so it gates. Had `f1` been encoded as
+`required: false`, the committed run — Claudine present, guard fires, `f1`
+labelled `false` — would have reported `pass` rather than `partial`. Un-gating
+does not merely soften the guard interaction; it makes it invisible in the
+verdict.
 
 **Why the committed run nevertheless reads `partial`, and why that is not a
 ceiling on the fixture.** `apply_avoid_guard` (`eval/harness/e2e/judge.py`)
