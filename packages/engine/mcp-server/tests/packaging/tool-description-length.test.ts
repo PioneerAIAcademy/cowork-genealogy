@@ -29,12 +29,13 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * #1212 then added a `top` clause to `record_search` alone (14,872 -> 15,344,
  * +472), combined 20,636. That clause described the REJECTED drop design, where
- * `top` decided whether rows were visible at all. Under the shipped shape it
- * does not: there is one row list, `results` is never truncated, and `top` caps
- * only how many rows are scored and annotated. Corrected here (15,347 ->
- * 15,486, +139) rather than left to read as a cap on what comes back — a model
- * that believes `top` hides rows will omit it to avoid losing evidence, which
- * is the opposite of what it does.
+ * `top` decided whether rows were visible at all, and was then corrected to the
+ * shipped shape (15,347 -> 15,486). Both figures are history: DallanQ's ruling
+ * on #2657 removed `top` from `record_search` outright — every candidate is
+ * scored either way, so the slice only cut what came BACK — and the clause went
+ * with it. (`top` survives on `rank_search_matches`, which this lint does not
+ * measure.) What #1212 leaves on this tool is +8 for a `count` reword: 14,939
+ * -> the 14,947 pinned below.
  *
  * The ruling on #1323 was to name
  * both roles and when each applies instead of recommending omission, and naming

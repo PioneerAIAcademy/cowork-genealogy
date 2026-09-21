@@ -968,8 +968,9 @@ describe("rank_search_matches", () => {
 
   // Carried over from the #1212 ruling: the standalone tool is advertised in the
   // manifest and dispatched with an unchecked cast, so it must range-check `top`
-  // itself rather than relying on record_search having done it.
-  describe("top — range checked on this tool, not only on record_search", () => {
+  // itself. Since #2657 removed `top` from record_search there is nowhere else
+  // it could be checked, which makes this the only guard rather than the second.
+  describe("top — range checked on this tool, the only tool that takes it", () => {
     it.each([-1, 0, 1.5, Number.NaN])("rejects top: %s", async (bad) => {
       await expect(
         rankSearchMatches(

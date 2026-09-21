@@ -39,7 +39,8 @@ export async function rankSearchMatches(
 ): Promise<RankSearchMatchesResult> {
   const { projectPath, stagedResultsRef, subjectId } = input;
 
-  // `top` is range-checked HERE, not only on record_search. This tool is
+  // `top` is range-checked HERE, which since #2657 dropped the parameter from
+  // `record_search` is the only place it is checked at all. This tool is
   // advertised in the manifest and dispatched with an unchecked cast, so a
   // caller reaches it directly. Unguarded, `scored.slice(0, input.top)` treats a
   // negative as an offset from the end: `top: -1` against 5 candidates returned
@@ -145,9 +146,9 @@ export async function rankSearchMatches(
   // to search and score is the caller's decision, not this tool's.
   //
   // On the STANDALONE tool this list IS the caller's view, so a row cut here is
-  // one they never see. Folded into `record_search` it is not: the rows are
-  // annotated onto `results`, which is never truncated, so a row beyond `top`
-  // still comes back — unscored, trailing the scored ones.
+  // one they never see. The folded `record_search` path passes no `top` at all
+  // (#2657 removed the parameter there), so every scored row is annotated onto
+  // `results`, which is never truncated.
   const matches: RankedMatch[] =
     input.top === undefined
       ? scored.map((s, i) => toStub(s, i + 1))
