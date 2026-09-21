@@ -1,6 +1,10 @@
 export interface ImageTranscribeInput {
   imageId?: string;
   ark?: string;
+  /** A FamilySearch memory artifact URL, as carried by a person_read source
+   *  that came from the memories API. Already a direct bytes URL, so it is
+   *  used as-is rather than resolved, and it is fetched WITHOUT a token. */
+  memoryArtifactUrl?: string;
   /**
    * Optional search key — who/what to locate on the page. On a complete read it
    * sets a FOUND / NOT FOUND pointer (`found`); the pointer is withheld on a
