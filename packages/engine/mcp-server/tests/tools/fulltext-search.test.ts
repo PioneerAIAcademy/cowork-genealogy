@@ -140,14 +140,88 @@ describe("fulltextSearchTool happy path", () => {
   });
 });
 
+// Issue #1988 fault 3: the agent ran fulltext_search against an image group
+// volume_search had already returned with `fulltextSearchable: false`, got the
+// only possible answer, and recorded the guaranteed zero as evidence of absence.
+describe("fulltextSearchTool not-full-text-searchable note", () => {
+  const GROUP = "005156041_012_M9V3-BYG";
+  // The searchability endpoint answers with the ids that ARE searchable.
+  const searchableIds = (ids: string[]) => makeOk({ ids } as never);
+
+  it("flags a nil on a group the endpoint omits from the searchable set", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce(searchableIds([]));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toContain("not full-text searchable");
+    expect(out.notFulltextSearchable).toContain("Do not record it as a negative finding");
+  });
+
+  it("stays silent on a nil when the group IS searchable", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce(searchableIds([GROUP]));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+  });
+
+  // `null` from the lookup is UNKNOWN. Treating it as false would label a
+  // perfectly good nil as a volume problem.
+  it("stays silent when the searchability lookup itself fails", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce({ ok: false, status: 503, statusText: "Unavailable", json: async () => ({}) });
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+  });
+
+  it("does not look searchability up at all when no imageGroupNumber was given", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+
+    const out = await fulltextSearchTool({ keywords: "+Dixon" }, LOCAL);
+    expect(out.notFulltextSearchable).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  // The extra upstream leg is bounded to the case the note is for.
+  it("does not look searchability up when the search returned rows", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
+    );
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Flynn", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("fulltextSearchTool param mapping", () => {
   async function urlFor(
     input: Parameters<typeof fulltextSearchTool>[0]
   ): Promise<string> {
+    // This invocation's OWN first call. Not the run's last, because a nil on an
+    // `imageGroupNumber` search makes a second request to the searchability
+    // endpoint; and not index 0, because the mock is not reset between the two
+    // urlFor calls some of these tests make.
+    const before = mockFetch.mock.calls.length;
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
     await fulltextSearchTool(input, LOCAL);
-    const calls = mockFetch.mock.calls;
-    return calls[calls.length - 1][0] as string;
+    return mockFetch.mock.calls[before][0] as string;
   }
 
   it("3. maps every q.* and f.* param", async () => {

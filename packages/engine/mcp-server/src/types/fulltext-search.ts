@@ -113,6 +113,10 @@ export interface FulltextSearchResponse {
   // an empty `results`, which is the post-`mapEntry` set. A nil search stages no
   // file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
+  // Set only on a nil search that named an `imageGroupNumber` FamilySearch
+  // reports as not full-text searchable. OPTIONAL, which is what keeps every
+  // committed eval fixture valid under mcp-fixture-shape.test.ts.
+  notFulltextSearchable?: string;
   /** Present when the name input contained a recognized given name and was
    *  expanded with historical diminutives/variants. */
   nameExpansion?: NameExpansionInfo;

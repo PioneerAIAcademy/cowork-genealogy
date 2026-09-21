@@ -261,6 +261,17 @@ export function formatUnloggedRefs(refs: string[]): string {
  * Mirrored byte-for-byte in `eval/harness/harness/mock_mcp.py` — grep
  * NIL_SEARCH_NEEDS_LOG_NOTE to find both copies when editing either.
  */
+/**
+ * Emitted on a nil `fulltext_search` against an `imageGroupNumber` FamilySearch
+ * reports as not full-text searchable. The zero was guaranteed before the query
+ * ran, so it says nothing about the person (issue #1988).
+ */
+export const NOT_FULLTEXT_SEARCHABLE_NOTE =
+  "This image group is not full-text searchable, so this nil was guaranteed " +
+  "before the query ran: it is a fact about the volume, not about the person. " +
+  "Do not record it as a negative finding. Browse the images instead — " +
+  "image_search / image_read — or search a different group.";
+
 export const NIL_SEARCH_NEEDS_LOG_NOTE =
   "Nothing returned, and nothing staged. A nil search is a finding and must be " +
   "recorded: log it with `research_log_append`, `outcome: \"negative\"` — which " +

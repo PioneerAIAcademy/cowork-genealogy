@@ -20,8 +20,10 @@ import {
   formatUnloggedRefs,
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
+  NOT_FULLTEXT_SEARCHABLE_NOTE,
 } from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
+import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
 
@@ -285,7 +287,31 @@ export async function fulltextSearchTool(
     return [...matched];
   }
 
-  const out: FulltextSearchResponse = {
+    // A nil on an image group the volume metadata reports as NOT full-text
+  // searchable is a fact about the volume, not about the person. The session
+  // behind issue #1988 ran exactly this search against a group already returned
+  // with `fulltextSearchable: false` and read the guaranteed zero as evidence of
+  // absence. Stated, not enforced: the endpoint can answer unknown, and refusing
+  // on unknown would block a legitimate search.
+  let notSearchableNote: string | undefined;
+  if (
+    input.imageGroupNumber !== undefined &&
+    results.length === 0 &&
+    (data.results ?? 0) === 0
+  ) {
+    // Bounded to the nil + imageGroupNumber case on purpose: this is an extra
+    // upstream leg, and it buys nothing on a search that returned rows.
+    const searchable = await fetchFulltextSearchable(
+      [input.imageGroupNumber],
+      token,
+    );
+    // `null` is UNKNOWN, not false — no note rather than a wrong one.
+    if (searchable !== null && !searchable.has(input.imageGroupNumber)) {
+      notSearchableNote = NOT_FULLTEXT_SEARCHABLE_NOTE;
+    }
+  }
+
+const out: FulltextSearchResponse = {
     query: echoQuery(input),
     totalResults: data.results ?? 0,
     returned: results.length,
@@ -310,6 +336,8 @@ export async function fulltextSearchTool(
     ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
       ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
       : {}),
+    // Precedes `results` with the other notes, for the same size-bound reason.
+    ...(notSearchableNote ? { notFulltextSearchable: notSearchableNote } : {}),
     // nameExpansion precedes results so it survives a size-bound trim —
     // the field after the largest payload is the first thing dropped.
     ...(expansion && input.name

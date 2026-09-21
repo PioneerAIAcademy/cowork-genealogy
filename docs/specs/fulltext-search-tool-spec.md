@@ -237,6 +237,26 @@ interface FulltextSearchResponse {
    *  non-zero. What distinguishes this tool from external_links_search is only
    *  that no host filter narrows the inline copy — the mapping path is shared. */
   nilSearchNeedsLog?: string;
+  /** Present only when the call named an `imageGroupNumber`, the search
+   *  returned nothing, AND the groupNumber endpoint reports that group as not
+   *  full-text searchable. The nil was then guaranteed before the query ran, so
+   *  it is a fact about the volume and not about the person. The misreading it
+   *  exists to stop was observed in a live session: `volume_search` returned a
+   *  1830 census volume carrying `fulltextSearchable: false`, the caller ran
+   *  `fulltext_search` against that same image group, and recorded the
+   *  guaranteed zero as evidence the person was absent.
+   *
+   *  Three-state on purpose. The lookup answers `null` for UNKNOWN (non-OK or
+   *  throw), and unknown emits NOTHING: labelling a good nil as a volume
+   *  problem is as wrong as missing a real one. A hard refusal was considered
+   *  and rejected for the same reason — the endpoint can answer unknown, and a
+   *  refusal would then block a legitimate search.
+   *
+   *  The lookup is bounded to nil + `imageGroupNumber`, because it is an extra
+   *  upstream leg and buys nothing on a search that returned rows. Shared with
+   *  `volume_search` via `src/utils/fulltext-searchable.ts`, not re-fetched and
+   *  not imported tool-to-tool. */
+  notFulltextSearchable?: string;
   /** Present when the name input contained a recognized given name and was
    *  expanded with historical diminutives/variants. Precedes `results` so
    *  it survives a size-bound trim. */
@@ -359,6 +379,12 @@ verify against the original image, not an inability to reach it.
 | 400 | Parse error body if available, throw with detail. Likely caused by invalid query syntax. |
 | Other | Throw with status code and text. |
 
+A nil result is **not** an error, and one case of it is answered rather than
+thrown: see `notFulltextSearchable` in the output schema. The searchability
+lookup has no failure path of its own — it returns `null` for unknown, and
+unknown emits no note, so a broken lookup degrades to today's behaviour instead
+of to a wrong claim.
+
 ## Auth
 
 Uses `getValidToken(principal)` from `src/auth/refresh.ts` — same as the
@@ -437,6 +463,8 @@ query shape.
 | `src/index.ts` | Modify — register tool |
 | `dev/try-fulltext-search.ts` | Create — smoke test |
 | `tests/tools/fulltext-search.test.ts` | Create — unit tests |
+| `src/utils/fulltext-searchable.ts` | Create — the group searchability lookup, shared with `volume_search` |
+| `src/utils/results-staging.ts` | Modify — `NOT_FULLTEXT_SEARCHABLE_NOTE`, beside the tool's other model-facing notes |
 
 ## Testing
 
