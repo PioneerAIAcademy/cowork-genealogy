@@ -24,11 +24,13 @@ test.describe('dimension card geometry at default 520px pane width', () => {
     const count = await cards.count();
     expect(count).toBeGreaterThan(0);
 
+    let measured = 0;
     for (let i = 0; i < count; i++) {
       const card = cards.nth(i);
       const picker = card.locator('.mantine-SegmentedControl-root');
       if (await picker.count() === 0) continue;
 
+      measured++;
       const cardBox = await card.boundingBox();
       const pickerBox = await picker.boundingBox();
       expect(cardBox).toBeTruthy();
@@ -40,21 +42,18 @@ test.describe('dimension card geometry at default 520px pane width', () => {
         cardRight + 1, // 1px tolerance for subpixel rounding
       );
     }
+    expect(measured).toBeGreaterThan(0);
   });
 
   test('long unbroken rationale does not overflow the card', async ({ page }) => {
     const overflowCard = page.locator('.mantine-Card-root').filter({ hasText: 'Overflow' });
     await expect(overflowCard).toBeVisible();
 
-    const cardBox = await overflowCard.boundingBox();
-    expect(cardBox).toBeTruthy();
-
     const rationale = overflowCard.locator('p').filter({ hasText: 'Abcdefghij' });
-    const rationaleBox = await rationale.boundingBox();
-    expect(rationaleBox).toBeTruthy();
-
-    const cardRight = cardBox!.x + cardBox!.width;
-    const rationaleRight = rationaleBox!.x + rationaleBox!.width;
-    expect(rationaleRight).toBeLessThanOrEqual(cardRight + 1);
+    const { scrollWidth, clientWidth } = await rationale.evaluate((el) => ({
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
   });
 });

@@ -1229,7 +1229,8 @@ eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 
 .PHONY: eval-ui-e2e
 eval-ui-e2e: $(EVAL_APP_DEPS) ## Eval CRUD UI e2e tests — eval/app (Playwright, boots Next.js)
-	cd eval/app && npx playwright test
+	cd eval/app && npx playwright install --with-deps chromium
+	cd eval/app && npm run test:e2e
 
 .PHONY: feedback-case
 feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]

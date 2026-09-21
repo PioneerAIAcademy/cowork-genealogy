@@ -238,7 +238,7 @@ Three testing layers, each covering a different failure class:
 
 1. **Vitest (unit, `npm test`)** runs in Node with no DOM. Covers data-layer logic, API route behavior, snapshot normalization, and schema validation. Cannot render a component or detect layout issues.
 
-2. **Playwright (e2e, `npm run test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created by `globalSetup` using `makeFixtureTree` + `buildRunLog` from `tests/helpers/fixtureTree.ts`, so tests never touch repository data.
+2. **Playwright (e2e, `npm run test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
 
 3. **Manual browser check** remains necessary for interaction flows (annotation save round-trip, keyboard shortcuts, drag-to-resize) that are not yet automated.
 
