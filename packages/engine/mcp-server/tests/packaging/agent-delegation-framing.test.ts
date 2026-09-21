@@ -401,7 +401,7 @@ const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
 // match `_AGENT_REF_RE` in eval/harness/harness/snapshot.py:42 and
 // `AGENT_REF_RE` in eval/app/lib/snapshot.ts:29 — both of which carry explicit
 // must-match comments and shared test vectors — plus
-// eval/harness/scripts/check_rubric_tool_drift.py:92 and
+// eval/harness/scripts/check_rubric_tool_drift.py:122 and
 // apps/server/tests/test_plugin_agents.py:106. This file was a fifth copy with
 // a divergent class (`[a-z][a-z0-9-]*`), which would disagree with the snapshot
 // scanners on any name the two classes read differently.
