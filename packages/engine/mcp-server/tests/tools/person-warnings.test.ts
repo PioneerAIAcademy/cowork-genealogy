@@ -525,7 +525,7 @@ describe("hasAgeRangeGreaterThan predicate", () => {
 // hasBurialAfterDeath — Java MobWarnings.hasBurialAfterDeath
 // ────────────────────────────────────────────────────────────────────
 
-describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days BEFORE death)", () => {
+describe("hasBurialAfterDeath predicate (fires when burial > N days BEFORE death under EVERY reading of the dates)", () => {
   it("fires when earliest Burial is more than 31 days before latest Death", () => {
     // Burial in 1890, Death in 1900 — burial 10 years BEFORE death.
     // Java's math: latest(Death) − earliest(Burial) = +days → fires.
@@ -588,6 +588,140 @@ describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days B
       ],
     };
     expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  // ── Issue #2681: the ported Java pairing fired on data that is not
+  // contradictory. These pin the narrowing in BOTH directions — the four
+  // below must stay silent, and the genuine violations above must keep
+  // firing. See the KNOWING DIVERGENCE note on hasBurialAfterDeath.
+
+  it("does NOT fire on two year-only dates in the SAME year", () => {
+    // The reported false positive. Java's pairing expands these to
+    // earliest(Burial) = 1938-01-01 and latest(Death) = 1938-12-31 and
+    // reports a 364-day violation from two identical recorded values.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Same", surname: "Year" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1938", standard_date: "1938" },
+            { id: "F2", type: "Death", date: "1938", standard_date: "1938" },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("does NOT fire on a year-only Burial with an exact Death later that year", () => {
+    // Also reported. Burial "1961" cannot be shown to precede a death of
+    // 28 Dec 1961: 31 Dec 1961 is inside the burial's own range.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Only" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1961", standard_date: "1961" },
+            {
+              id: "F2",
+              type: "Death",
+              date: "28 Dec 1961",
+              standard_date: "28 Dec 1961",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("does NOT fire when an imprecise Burial straddles an exact Death", () => {
+    // Month-precision burial containing the death day: the burial could be
+    // the 30th, after the death, so the contradiction is not established.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Straddle", surname: "Month" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Burial",
+              date: "Jun 1900",
+              standard_date: "Jun 1900",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "15 Jun 1900",
+              standard_date: "15 Jun 1900",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("STILL fires on an imprecise Burial that cannot reach the Death", () => {
+    // The other direction: even the last day of the burial year (1937-12-31)
+    // is 366 days before the death, so every reading is contradictory. A
+    // narrowing that swallowed this one would be too wide.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Real", surname: "Violation" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1937", standard_date: "1937" },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1 Jan 1939",
+              standard_date: "1 Jan 1939",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(true);
+  });
+
+  it("STILL fires on two exact dates 32 days apart, and not on 31", () => {
+    // Exact dates collapse both pairings to the same number, so the
+    // narrowing must not move the 31-day threshold by a single day.
+    const build = (burial: string): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Edge", surname: "Case" }],
+          facts: [
+            { id: "F1", type: "Burial", date: burial, standard_date: burial },
+            {
+              id: "F2",
+              type: "Death",
+              date: "2 Feb 1900",
+              standard_date: "2 Feb 1900",
+            },
+          ],
+        },
+      ],
+    });
+    // 1 Jan → 2 Feb 1900 = 32 days.
+    expect(
+      hasBurialAfterDeath(new Mob(build("1 Jan 1900"), "I1"), 31),
+    ).toBe(true);
+    // 2 Jan → 2 Feb 1900 = 31 days, not strictly greater.
+    expect(
+      hasBurialAfterDeath(new Mob(build("2 Jan 1900"), "I1"), 31),
+    ).toBe(false);
   });
 });
 

@@ -426,6 +426,38 @@ export function factDaysDiffEarliestLatest(
   return latest2 - earliest1;
 }
 
+/**
+ * = earliest(set 2) − latest(set 1). No Java counterpart: this is the
+ * CONSERVATIVE pairing, taking the bounds that make a gap look as SMALL as
+ * possible, so a warning built on it fires only when the violation holds under
+ * every reading the recorded dates permit. `factDaysDiffEarliestLatest` is the
+ * opposite pairing and is what the Java ports use. See
+ * `hasBurialAfterDeath` for why one check needed the conservative form.
+ */
+export function factDaysDiffLatestEarliest(
+  mob: Mob,
+  factTypes1: ReadonlySet<string> | null,
+  antiFactTypes1: ReadonlySet<string> | null,
+  factTypes2: ReadonlySet<string> | null,
+  antiFactTypes2: ReadonlySet<string> | null,
+  imperfectDateFudgeDays = 0,
+): number | null {
+  const latest1 = latestDayOfSelfFacts(
+    mob,
+    factTypes1,
+    antiFactTypes1,
+    imperfectDateFudgeDays,
+  );
+  const earliest2 = earliestDayOfSelfFacts(
+    mob,
+    factTypes2,
+    antiFactTypes2,
+    imperfectDateFudgeDays,
+  );
+  if (latest1 === null || earliest2 === null) return null;
+  return earliest2 - latest1;
+}
+
 /** = latest(set 2) − latest(set 1). Java warnings.java:993. Used by W3. */
 export function factDaysDiffLatestLatest(
   mob: Mob,

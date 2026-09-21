@@ -506,10 +506,37 @@ imprecise dates are widened per § Date Parsing Rules.
 | `tooManyBirthDates2` | implausible | Two or more distinct exact-DMY Birth dates spaced more than 30 days apart | Unreconciled conflicting sources, or two identities merged |
 | `tooManyDeathDates2` | implausible | Two or more distinct exact-DMY Death dates spaced more than 14 days apart | As above |
 | `deathRangeGreaterThan2` | implausible | Death-like dates span more than 2 years | Unreconciled conflicting death records |
-| `hasBurialAfterDeath31` | implausible | Earliest Burial is more than 31 days before the latest Death (despite the Java name, fires on burial-before-death outliers; preserved for parity) | Conflicting or mis-typed burial/death dates |
+| `hasBurialAfterDeath31` | implausible | The **latest possible** Burial is more than 31 days before the **earliest possible** Death (despite the Java name, fires on burial-before-death outliers) — see the divergence note below | Conflicting or mis-typed burial/death dates |
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
 | `hasCloseChildBirthsIgnoreSimilarChildren` | implausible | Two of this person's children (that are not already flagged as similar) have Birth dates suspiciously close together | Two records of one child attached as two children |
+
+**`hasBurialAfterDeath31` diverges from the Java port on purpose — do not
+"restore" the original math.** Java computes
+`latestDeath − earliestBurial > 31`, which pairs the two bounds that
+*maximise* the apparent gap. On a year-only date pair that is guaranteed to
+fire on data that is not contradictory at all: Burial `1938` and Death `1938`
+expand to 1938-01-01 and 1938-12-31, and the tool reports a 364-day
+"violation" from two identical recorded values. Every such warning was false,
+and the genealogist acting on one corrects a record that was right.
+
+The implementation instead compares `earliestDeath − latestBurial`, the
+*conservative* pairing, so the check fires only when the burial precedes the
+death under **every** reading the recorded dates permit:
+
+| Burial | Death | Java pairing | Conservative pairing | Fires now? |
+|---|---|---|---|---|
+| `1938` | `1938` | +364 | −364 | no (was a false positive) |
+| `1961` | `28 Dec 1961` | +361 | −3 | no (was a false positive) |
+| `Jun 1900` | `15 Jun 1900` | +14 | −15 | no |
+| `1937` | `1 Jan 1939` | +730 | +366 | **yes** |
+| `1 Jan 1900` | `2 Feb 1900` | +32 | +32 | **yes** |
+
+Exact dates collapse both pairings to the same number, so the narrowing costs
+no true positive that was expressed precisely; what it drops are exactly the
+cases where the recorded precision cannot support the claim. The helper it
+calls, `factDaysDiffLatestEarliest`, exists only for this and has no Java
+counterpart.
 | `hasCloseChildChristenings6_30` | implausible | Two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
 | `similarChildren` | implausible | Two children look like the same individual recorded twice (similar names and dates) | One child duplicated under two records |
 | `similarChildrenConflictingDates` | implausible | Two children have similar names but conflicting dates | Same child recorded twice with a date discrepancy |

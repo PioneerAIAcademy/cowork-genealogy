@@ -37,6 +37,7 @@ import {
   factDaysCount,
   warningFactsOfPerson,
   factDaysDiffEarliestLatest,
+  factDaysDiffLatestEarliest,
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
   factYearsDiffEarliestLatest,
@@ -351,15 +352,30 @@ export function hasAgeRangeGreaterThan(mob: Mob, years: number): boolean {
 /**
  * Java MobWarnings.hasBurialAfterDeath (warnings.java:970).
  *
- * Direct port. The Java math is `latestDeathDay − earliestBurialDay > days`,
- * which is positive (and triggers the warning) only when the earliest Burial
- * is more than `days` days BEFORE the latest Death. So despite the function
- * name, this fires for "burial before death" outliers, not "burial after
- * death." Java tag: `hasBurialAfterDeath31` (days = 31). Uses exact Burial
- * and exact Death types — not the death-like family.
+ * Detects a Burial recorded more than `days` days BEFORE the Death — so
+ * despite the function name, this is a "burial before death" outlier, not a
+ * "burial after death" one. Java tag: `hasBurialAfterDeath31` (days = 31).
+ * Uses exact Burial and exact Death types, not the death-like family.
+ *
+ * KNOWING DIVERGENCE FROM THE JAVA PORT — do not "restore" the Java math.
+ * Java computes `latestDeathDay − earliestBurialDay > days`, which takes the
+ * two bounds that MAXIMISE the apparent gap: the earliest day the burial
+ * could be against the latest day the death could be. On year-only dates
+ * that is guaranteed to fire on data that is not contradictory at all —
+ * Burial `1938` and Death `1938` expand to 1938-01-01 and 1938-12-31, a
+ * 364-day "violation" from two identical recorded values. Every warning it
+ * produced on such a person was false, and a genealogist acting on one
+ * corrects a record that was right (issue #2681).
+ *
+ * This uses the CONSERVATIVE pairing instead — `earliestDeath − latestBurial`
+ * — so the check fires only when the burial precedes the death under EVERY
+ * reading the recorded dates permit. Exact dates are unaffected (both
+ * pairings agree when each date has a single day), so the narrowing costs no
+ * true positive that was expressed precisely; what it drops are exactly the
+ * cases where the recorded precision cannot support the claim.
  */
 export function hasBurialAfterDeath(mob: Mob, days: number): boolean {
-  const diff = factDaysDiffEarliestLatest(mob, BURIAL, null, DEATH, null);
+  const diff = factDaysDiffLatestEarliest(mob, BURIAL, null, DEATH, null);
   return diff !== null && diff > days;
 }
 
@@ -1139,7 +1155,7 @@ function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
     personName: getPersonName(mob.getPerson()),
     facts: selfFactIds(mob, BURIAL, DEATH),
     message:
-      "The earliest Burial is more than 31 days before the latest Death, which is unusual.",
+      "The latest possible Burial is more than 31 days before the earliest possible Death, which is unusual.",
   };
 }
 
@@ -1923,7 +1939,7 @@ function checkRelativesHasBurialAfterDeath31(
     facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
-      "A relative of this person's earliest Burial is more than 31 days before their latest Death.",
+      "A relative's latest possible Burial is more than 31 days before their earliest possible Death.",
   };
 }
 
