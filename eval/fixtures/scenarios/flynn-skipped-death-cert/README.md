@@ -1,6 +1,6 @@
 # flynn-skipped-death-cert
 
-Fork of `flynn-exhaustive-ready` with three plan-item changes:
+Fork of `flynn-exhaustive-ready` with four plan-item changes:
 
 - **pli_005** (death certificate): `completed` -> `skipped` -- records
   destroyed in a 1920 courthouse fire, no duplicates available.
