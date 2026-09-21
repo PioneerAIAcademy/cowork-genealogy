@@ -1405,10 +1405,10 @@ Two things the site list alone won't tell you:
   validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror,
-  site 4), `test-js` (the TS-interface mirror, site 5) and `typecheck` (site 10)
-  — and no shorter target reaches all four. Naming them individually is how the
-  last one gets skipped.
+  `engine-test` (sites 1, 3, 6, 7, and site 4 via the `enum-drift` byte-identity
+  check), `harness-test` (the JSON-schema mirror, site 4 again), `test-js` (the
+  TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
+  reaches all four. Naming them individually is how the last one gets skipped.
 
 **Add a value to a closed enum** (e.g. `evidence_type`, `proof_tier`). The enum
 lives in `enums.schema.json` (`$defs`), **not** `research.schema.json` (which

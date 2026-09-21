@@ -11,6 +11,7 @@
 // All I/O goes through the active ProjectStore; this module owns the naming and
 // the retention rule only.
 
+import { posix } from "node:path";
 import { getProjectStore } from "../store/project-store.js";
 
 /** Project-relative directory holding retained source scans. */
@@ -38,8 +39,10 @@ export const IMAGES_SUBDIR = "images";
 // unneeded `true` badge but can never stamp a whole transcription "verified whole".
 // It lives here, not in image-transcribe.ts, because both the writer
 // (image_transcribe) and the reader (research_append) already import this module.
-// Process-lifetime, never persisted; keyed by project (a global key would leak one
-// project's cap into another) as browseBudgetSeen is. Only reads that PERSISTED an
+// Process-lifetime, never persisted (as browseBudgetSeen is); keyed by the bound
+// store's projectId when it has one — patron isolation under the shared-process
+// http.ts entrypoint, where every request presents the same anchor projectPath —
+// else by projectPath (see truncatedImageKey). Only reads that PERSISTED an
 // image land here (an imageRef is what a source cites); a read with no projectPath
 // leaves no image_filename to join, the known limitation in
 // image-transcribe-tool-spec §8.6. image_filename, not imageId, is the key because
@@ -47,13 +50,17 @@ export const IMAGES_SUBDIR = "images";
 // read is NOT the browse-budget imageId blind spot.
 const sourceImageCaps = new Map<string, boolean>();
 
-/** Canonicalize an image ref/filename that arrives raw from an LLM relay:
- *  backslashes → forward slashes, drop a leading `./`. The write side mints a
- *  canonical `images/<key>.jpg`, but a source's `image_filename` on the read side
- *  (the cap join) and in the GC's referenced set can be spelled `./images/x.jpg`
- *  or with backslashes, so both must canonicalize the same way or they miss. */
+/** Canonicalize an image ref/filename that arrives raw from an LLM relay. The
+ *  write side mints a canonical `images/<key>.jpg`, but a source's `image_filename`
+ *  on the read side (the cap join) and in the GC's referenced set can be spelled
+ *  `./images/x.jpg`, `images//x.jpg`, `images/./x.jpg`, or with backslashes, so
+ *  both must canonicalize the same way or they miss — the GC miss silently deletes
+ *  a *cited* scan past its TTL. `posix.normalize` folds backslash→`/` (after the
+ *  split-join), a leading `./`, doubled `//`, and interior `/./` the same way
+ *  `assertRelativeRef` does, without its throwing project-escape checks (this is a
+ *  cache/GC key, not a store write). */
 function normalizeImageRef(ref: string): string {
-  return ref.replace(/\\/g, "/").replace(/^\.\//, "");
+  return posix.normalize(ref.replace(/\\/g, "/"));
 }
 
 function truncatedImageKey(projectPath: string, imageRef: string): string {
@@ -61,11 +68,15 @@ function truncatedImageKey(projectPath: string, imageRef: string): string {
   // identity under the shared-process `http.ts` entrypoint, where every request
   // presents the SAME anchor `projectPath` (`/project`), so keying on projectPath
   // would collide two patrons reading the same image (#2457 B2). getProjectStore()
-  // returns the request-bound store here (every http tool call runs inside
-  // runWithProjectStore, and the unbound process store throws), so record and read
-  // resolve the same projectId for one project and distinct ids across patrons. On
-  // the file backend projectId is undefined — one process serves one project — so
-  // fall back to the normalized projectPath. Both halves arrive raw from an LLM
+  // returns the request-bound store here — every http tool call runs inside
+  // runWithProjectStore — so record and read resolve the same projectId for one
+  // project and distinct ids across patrons. A header-less request instead binds an
+  // *unbound* store, whose projectId is undefined (not a throw), so scope would
+  // fall back to the anchor projectPath — but that store's I/O throws before any
+  // cap is recorded (saveSourceImage) or read (research_append's readText), so the
+  // fallback is never exercised on the shared-process path. On the file backend
+  // projectId is undefined — one process serves one project — so fall back to the
+  // normalized projectPath. Both halves arrive raw from an LLM
   // relay, so canonicalize: backslashes → `/` and a trailing separator off
   // projectPath (a Windows caller may record `C:\p` and query `C:/p/`), and
   // backslashes / leading `./` off imageRef (so `./images/x.jpg` joins

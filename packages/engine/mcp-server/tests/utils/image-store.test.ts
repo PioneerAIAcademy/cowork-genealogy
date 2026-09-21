@@ -101,6 +101,16 @@ describe("gcUnreferencedImages", () => {
     expect((await stat(join(dir, "images", "cited.jpg"))).isFile()).toBe(true);
   });
 
+  it("keeps an image cited with a doubled or interior separator — `images//x.jpg`, `images/./x.jpg` (#2457 r9 note)", async () => {
+    // normalizeImageRef folds via posix.normalize, so an LLM-relayed ref with a
+    // doubled `//` or interior `/./` still canonicalizes to `images/cited.jpg` and
+    // protects the file. Without the full fold the GC would delete a cited scan.
+    const dir = await tmp();
+    await makeImage(dir, "cited.jpg", 25 * 60 * 60 * 1000);
+    await gcUnreferencedImages(dir, new Set(["images//cited.jpg", "images/./other.jpg"]));
+    expect((await stat(join(dir, "images", "cited.jpg"))).isFile()).toBe(true);
+  });
+
   it("keeps a recent unreferenced image (TTL not elapsed)", async () => {
     const dir = await tmp();
     await makeImage(dir, "fresh.jpg", 60 * 1000); // 1 min old

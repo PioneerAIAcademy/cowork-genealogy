@@ -934,8 +934,11 @@ can add a `true` badge, never a false "verified whole").
   `image_transcribe` records the outcome against that image:
   `recordImageReadCap(projectPath, imageRef, truncated)` in
   `src/utils/image-store.ts`. It is a module-level `Map<string, boolean>` keyed
-  `${projectPath}\0${imageRef}` — the same `images/<key>.jpg` string a source
-  cites as `image_filename` (§8.5). `true` = verified partial (the read hit the
+  `${projectId-or-projectPath}\0${imageRef}` — the imageRef being the same
+  `images/<key>.jpg` string a source cites as `image_filename` (§8.5), and the
+  scope being the bound store's `projectId` where it has one (patron isolation
+  under the shared-process `http.ts` entrypoint), else the `projectPath`. `true` =
+  verified partial (the read hit the
   cap), `false` = verified whole, absent = not established — but the store is
   **sticky-`true`**: once an image reads capped, a later `false` for that key is
   dropped, so no read in the process moves it back to whole. This matters because
@@ -945,13 +948,17 @@ can add a `true` badge, never a false "verified whole").
   text "verified whole". A genuine "read it whole now" needs a bigger cap, which
   needs a rebuild+restart, which empties this process-lifetime store — so nothing
   legitimate is lost. Both key halves arrive from an LLM relay, so the key
-  normalizes backslashes and a trailing separator on `projectPath` and a leading
-  `./` on `imageRef`. It lives in `image-store.ts`, not `image-transcribe.ts`,
+  canonicalizes each: backslashes and a trailing separator off `projectPath`, and
+  (via `posix.normalize`) backslashes, a leading `./`, doubled `//` and interior
+  `/./` off `imageRef` — the same folding the GC applies to its referenced set, so
+  a source cited as `./images//x.jpg` still both joins the cap and protects its
+  scan from the sweep. It lives in `image-store.ts`, not `image-transcribe.ts`,
   because both the writer (`image_transcribe`) and the reader (`research_append`)
   already import that module — the alternative is a tool→tool import — and
-  `image_filename` is exactly the `imageRef` this module mints. Process-lifetime,
-  never persisted, keyed by project for the same reason `browseBudgetSeen` is
-  (§5.8).
+  `image_filename` is exactly the `imageRef` this module mints. Process-lifetime
+  and never persisted (as `browseBudgetSeen` is, §5.8), but scoped by the store's
+  `projectId` rather than the `projectPath` `browseBudgetSeen` keys on, so it
+  isolates patrons on the shared-process entrypoint.
 - **Derive (persist side).** In `research_append`'s `prepareOps`, after the
   source-reuse rewrite, every `sources` op carrying an `image_filename` reads
   `sourceImageCapState(projectPath, image_filename)` and sets the field from it —
