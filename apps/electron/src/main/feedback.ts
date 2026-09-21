@@ -445,6 +445,9 @@ export type FeedbackOptions = {
   includeSessionLog: boolean
   report: FeedbackReport
   viewerVersion: string
+  /** Build stamp halves, mirroring the web producer's `build_date` / `git_sha` (#2126). */
+  buildDate?: string
+  gitSha?: string
 }
 
 export type FeedbackResult = {
@@ -528,7 +531,8 @@ export function redactApiKeys(serialized: string): string {
 }
 
 export async function buildFeedbackZip(options: FeedbackOptions): Promise<FeedbackResult> {
-  const { folderPath, includeMedia, includeSessionLog, report, viewerVersion } = options
+  const { folderPath, includeMedia, includeSessionLog, report, viewerVersion, buildDate, gitSha } =
+    options
   const folderResolved = path.resolve(folderPath)
   const folderPrefix = folderResolved + path.sep
 
@@ -637,6 +641,8 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
       workedAsExpected: report.workedAsExpected,
       submittedAt: timestamp,
       viewerVersion,
+      buildDate,
+      gitSha,
       projectFolderPath: folderResolved,
       droppedTranscripts
     })
@@ -665,6 +671,8 @@ function renderFeedbackJson(args: {
   workedAsExpected: boolean
   submittedAt: string
   viewerVersion: string
+  buildDate?: string
+  gitSha?: string
   projectFolderPath: string
   droppedTranscripts: string[]
 }): string {
@@ -672,6 +680,10 @@ function renderFeedbackJson(args: {
     schema_version: FEEDBACK_SCHEMA_VERSION,
     submitted_at: args.submittedAt,
     viewer_version: args.viewerVersion,
+    // Written by both producers since #2126 (web always did; the viewer's
+    // caller passes its build stamp). Omitted, not null, when a caller has none.
+    ...(args.buildDate !== undefined ? { build_date: args.buildDate } : {}),
+    ...(args.gitSha !== undefined ? { git_sha: args.gitSha } : {}),
     platform: process.platform,
     email: args.fields.email,
     project_folder_path: args.projectFolderPath,

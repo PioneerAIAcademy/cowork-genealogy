@@ -54,6 +54,20 @@ In Progress card and a Review card are someone's work: never merge one, in eithe
 direction. An *unassigned* Ready card is both in the pool and its slot's holder,
 which makes it the natural target — it is furthest along.
 
+**A slot can be held and show no block above.** `block()` runs only for a queue of
+2 or more, so a slot held by an In Progress card, a Review card or an open PR — with
+0 or 1 mergeable cards behind it — used to render nowhere at all. The last section,
+**held, queue below 2**, is where those now appear. Read the block, not the heading:
+a queue of 1 still lists a mergeable card under its holder.
+
+**Absence of a block is not evidence a slot is free.** It means the slot has no
+holder, no open PR against its snapshot, and nothing queued. The coverage block at
+the bottom is what names the pool issues no section reached.
+
+Only an **unassigned Ready** card is tagged `merge INTO this one`. An In Progress or
+Review card reads `held`, because it is someone's work and is never merged in either
+direction.
+
 **Re-check state at apply time, not just at compute time.** The pool is a snapshot
 and a pass takes hours; a card can be assigned while you are still proposing. On
 2026-09-16 issue #2535 was an unassigned Ready target when the queues were computed

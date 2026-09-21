@@ -93,8 +93,6 @@ def main(board_path, open_path, prs_path):
         # The merge pool: nobody is holding these. An unassigned Ready card is in
         # it *and* holds a slot -- it is the natural merge target, being furthest
         # along. An assigned one is someone's work and is never a merge candidate.
-        if "cross-cutting" in labs:
-            continue  # the lead's direct assignments; already consolidated
         if col == "Backlog" and "icebox" not in labs:
             pool.append(n)
         elif col == "Ready" and not issue.get("assignees"):
@@ -105,9 +103,18 @@ def main(board_path, open_path, prs_path):
         for s in slots_of(entries[n]):
             queues.setdefault(s, []).append(n)
     for n, col in holders.items():
+        # "merge INTO this one" names a merge TARGET, so it may only be said of a
+        # card the pool can actually merge into -- an unassigned Ready one. SKILL.md
+        # is explicit that an In Progress or Review card is someone's work and is
+        # never merged in either direction, so an unassigned card in one of those
+        # columns is held, not a target. Below a queue of 2 this line used to print
+        # nowhere, which is why the wrong tag went unnoticed.
+        if col == "Ready" and not issues[n].get("assignees"):
+            tag = "unassigned -- merge INTO this one"
+        else:
+            tag = "held"
         for s in slots_of(entries[n]):
-            unassigned = not issues[n].get("assignees")
-            held.setdefault(s, []).append((n, col, unassigned))
+            held.setdefault(s, []).append((n, col, tag))
 
     pr_slots = {}
     for p in prs:
@@ -124,8 +131,7 @@ def main(board_path, open_path, prs_path):
 
     def block(slot, members):
         print(f"  {slot}   queue {len(members)}")
-        for n, col, unassigned in sorted(held.get(slot, [])):
-            tag = "unassigned -- merge INTO this one" if unassigned else "held"
+        for n, col, tag in sorted(held.get(slot, [])):
             print(f"      holder: #{n} ({col}, {tag})")
         for p in sorted(pr_slots.get(slot, [])):
             print(f"      holder: PR #{p} (open, touches the snapshot)")
@@ -137,7 +143,7 @@ def main(board_path, open_path, prs_path):
     rest = {s: m for s, m in queues.items() if 2 <= len(m) < MUST_CLEAR}
 
     print(f"=== eval slot queues (pool: {len(pool)} issues -- non-icebox Backlog + "
-          "unassigned Ready; `cross-cutting` excluded) ===\n")
+          "unassigned Ready) ===\n")
     print(f"--- MUST CLEAR: queue >= {MUST_CLEAR} "
           f"({len(must)} slots) ---\n")
     for s, m in sorted(must.items(), key=lambda x: (-len(x[1]), x[0])):
@@ -149,6 +155,21 @@ def main(board_path, open_path, prs_path):
     for s, m in sorted(rest.items(), key=lambda x: (-len(x[1]), x[0])):
         block(s, m)
     if not rest:
+        print("  (none)\n")
+
+    # A slot can be held and carry no mergeable queue at all. `block()` runs only
+    # from the two loops above, and `queues` has no key for a slot with nothing
+    # queued -- so a slot held by an In Progress card or an open PR, with 0 or 1
+    # behind it, rendered nowhere. That is a slot that looks free and is not, which
+    # is the one thing this script exists to prevent an operator from believing.
+    # Keyed on the holders themselves rather than on the queue, and rendered by the
+    # same block(), so the holder and PR lines come with it.
+    held_short = {s: queues.get(s, [])
+                  for s in (set(held) | set(pr_slots)) - set(must) - set(rest)}
+    print(f"--- held, queue below 2 ({len(held_short)} slots) ---\n")
+    for s in sorted(held_short):
+        block(s, held_short[s])
+    if not held_short:
         print("  (none)\n")
 
     # Non-snapshot convergence. A merge here saves a reviewer and a rebase, never a
@@ -182,7 +203,13 @@ def main(board_path, open_path, prs_path):
     # of the three sections is invisible, and SKILL.md tells them this block is the
     # record of what the script could not see -- so it has to name them, not just
     # the ones missing a Touches: line.
-    shown = on_slot | set(blind) | {n for ns in conv.values() for n in ns}
+    #
+    # Derived from the sections that RENDERED, not from `queues`. `on_slot` means
+    # "queued", and a queue of 1 on an unheld slot reaches no section at all -- so
+    # folding `on_slot` in here reported those issues as shown and printed
+    # "in no section above -- READ BY HAND  0" while they appeared nowhere.
+    rendered = {n for sec in (must, rest, held_short) for m in sec.values() for n in m}
+    shown = rendered | set(blind) | {n for ns in conv.values() for n in ns}
     unshown = sorted(set(pool) - shown)
     print(f"\n=== coverage ===")
     print(f"  pool                                {len(pool)}")
