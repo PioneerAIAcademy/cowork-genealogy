@@ -44,7 +44,7 @@ console.log(
       totalMatches: search.totalMatches,
       staged: search.staged,
       stagingError: search.stagingError,
-      firstResultHasGedcomx: search.results[0]?.gedcomx !== undefined,
+      firstResultHasGedcomx: search.results?.[0]?.gedcomx !== undefined,
     },
     null,
     2,

@@ -9,15 +9,15 @@ worker (plan: "Session store keying, and why ``cwd`` is pinned").
 
 Only ``append`` / ``load`` / ``list_subkeys`` are defined; ``list_sessions``,
 ``list_session_summaries`` and ``delete`` inherit the Protocol defaults so the SDK skips
-them. Every method bumps ``calls`` -- the worker's per-turn log line reads
-``entries_appended`` from here, which is the "frames appended > 0" assertion the plan
-names for the two silent-loss modes (a read-only config dir, a mismatched
-``CLAUDE_CONFIG_DIR``). Connect-per-call, one transaction per ``append`` batch.
+them. Every method bumps ``calls``, and the worker's per-turn log line reads
+``entries_appended``, ``list_subkeys`` and ``subkeys_returned`` off it -- the "frames
+appended > 0" assertion the plan names for the two silent-loss modes (a read-only config
+dir, a mismatched ``CLAUDE_CONFIG_DIR``), and D17's fourth criterion. Connect-per-call,
+one transaction per ``append`` batch.
 """
 
 from __future__ import annotations
 
-from typing import Any
 
 import psycopg
 from psycopg.types.json import Jsonb
@@ -109,6 +109,3 @@ class PgSessionStore(SessionStore):
             async with conn.cursor() as cur:
                 await cur.execute(_EXISTS, (self.project_id, session_id))
                 return (await cur.fetchone()) is not None
-
-    def counters(self) -> dict[str, Any]:
-        return dict(self.calls)
