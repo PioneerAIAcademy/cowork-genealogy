@@ -319,13 +319,14 @@ def _warning_file_tool_pairs() -> set[tuple[str, str]]:
     """(file, tool) pairs extracted from the warnings main() emitted.
 
     Tool names are pulled from the message by looking for the first
-    backtick-quoted word after 'mentions `'.
+    backtick-quoted word after 'mentions `' or 'mentioning `' (rubric
+    warnings say "mentions", judge_context warnings say "mentioning").
     """
     pairs: set[tuple[str, str]] = set()
     for f, m in _recorded():
         if f is None:
             continue
-        match = re.search(r"mentions `(\w+)`", m)
+        match = re.search(r"mention(?:s|ing) `(\w+)`", m)
         if match:
             pairs.add((f, match.group(1)))
     return pairs
@@ -339,9 +340,15 @@ def test_suppression_is_selective_end_to_end(monkeypatch) -> None:
     warnings via recorded_warnings(). The suppressed pair must be absent
     and the same tool in different files must survive."""
     # Run main() once with no suppression to get the full hit set.
+    # Clear SUPPRESSIONS first so the baseline is unsuppressed — main()
+    # applies suppressions, so any populated entry would be invisible here
+    # and would cause the target lookup to skip.
+    real = list(check_rubric_tool_drift.SUPPRESSIONS)
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", [])
     check_rubric_tool_drift.main()
     all_pairs = _warning_file_tool_pairs()
     _reset()
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", real)
 
     # Pick a real (file, tool) pair that fires. validate_research_schema
     # in tree-edit's rubric is the most durable: the rubric documents a
@@ -379,7 +386,7 @@ def test_suppression_is_selective_end_to_end(monkeypatch) -> None:
         )
 
 
-def test_no_stale_suppressions() -> None:
+def test_no_stale_suppressions(monkeypatch) -> None:
     """Direction (b): every SUPPRESSIONS entry must match a (file, tool)
     main() would otherwise warn about. An entry that stopped matching means
     the drift it excused was fixed and the entry should be removed.
@@ -387,11 +394,15 @@ def test_no_stale_suppressions() -> None:
     Trivially passes while the list is empty; arms itself when PR 2
     populates it.
     """
+    # Collect the unsuppressed hit set: clear SUPPRESSIONS so main() emits
+    # every warning, including the ones that would normally be suppressed.
+    real = list(check_rubric_tool_drift.SUPPRESSIONS)
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", [])
     check_rubric_tool_drift.main()
     all_pairs = _warning_file_tool_pairs()
     stale = [
         s
-        for s in check_rubric_tool_drift.SUPPRESSIONS
+        for s in real
         if (s["file"], s["tool"]) not in all_pairs
     ]
     assert stale == [], (
