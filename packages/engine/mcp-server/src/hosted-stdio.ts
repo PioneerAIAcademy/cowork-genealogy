@@ -28,7 +28,7 @@ import { createServer } from "./server.js";
 import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { setProjectStore } from "./store/project-store.js";
-import type { AppConfig } from "./types/auth.js";
+import { configFromEnv } from "./hosted-config-env.js";
 
 const storeEnv = readPgS3Env(process.env);
 const missing = [...storeEnv.missing];
@@ -38,13 +38,9 @@ if (missing.length > 0) {
   process.exit(2);
 }
 
-/** Only the keys that are set: an absent key must stay absent so each getter's
- *  own default applies, exactly as with a sparse config.json. */
-const config: AppConfig = {};
-if (process.env.WIKI_API_URL) config.wikiApiUrl = process.env.WIKI_API_URL;
-if (process.env.POP_STATS_URL) config.popStatsUrl = process.env.POP_STATS_URL;
-if (process.env.OPENROUTER_API_KEY) config.openRouterApiKey = process.env.OPENROUTER_API_KEY;
-if (process.env.OPENROUTER_MODEL) config.openRouterModel = process.env.OPENROUTER_MODEL;
+// Nothing to layer over: this entrypoint has no config file, only the per-turn
+// environment the worker gives it (hosted-config-env.ts, shared with http.js).
+const config = configFromEnv(process.env);
 
 const backend = createPgS3Backend(storeEnv.backendOptions);
 setProjectStore(
