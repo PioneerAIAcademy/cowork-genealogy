@@ -20,7 +20,7 @@ export interface RankSearchMatchesInput {
    * to match every staged candidate against.
    */
   subjectId: string;
-  /** How many top-ranked stubs to return. Default 10. */
+  /** How many top-ranked stubs to return. Defaults to every scored candidate (#1212). */
   top?: number;
   /**
    * When true, fold one batch `source_attachments` call in host-side to set
@@ -76,7 +76,7 @@ export interface RankSearchMatchesResult {
   subjectId: string;
   /** Candidates scored (full staged set). */
   scoredCount: number;
-  /** min(top, scoredCount). */
+  /** scoredCount, or min(top, scoredCount) when `top` is given. */
   returnedCount: number;
   /** Pairs whose FS call kept failing (kept, matchScore null). */
   scoringErrors: number;

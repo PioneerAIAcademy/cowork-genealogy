@@ -20,6 +20,7 @@ from claude_agent_sdk import (
     TaskProgressMessage,
     TaskStartedMessage,
     TextBlock,
+    ThinkingBlock,
     ToolUseBlock,
 )
 
@@ -52,6 +53,25 @@ def test_subagent_blocks_are_attributed_to_the_running_task():
     )
     (ev,) = map_message(sub, {}, tasks)
     assert ev["kind"] == "tool_use" and ev["agent"] == "record-extractor"
+
+
+def test_subagent_text_and_thinking_blocks_carry_the_agent_label():
+    """The web fold drops labelled prose (chatEvents.ts: subagent text never
+    reaches the chat), so the label has to be on TextBlock and ThinkingBlock
+    too, not only on the tool chips the older tests cover."""
+    tasks: dict[str, str] = {}
+    map_message(_task_started(), {}, tasks)
+
+    sub = AssistantMessage(
+        content=[
+            TextBlock(text="Found 12 assertions in the household."),
+            ThinkingBlock(thinking="Now checking the ages.", signature="sig"),
+        ],
+        model="m", parent_tool_use_id="tu_1",
+    )
+    out = map_message(sub, {}, tasks)
+    assert [e["kind"] for e in out] == ["text", "thinking"]
+    assert all(e["agent"] == "record-extractor" for e in out)
 
 
 def test_main_agent_blocks_carry_no_agent_label():

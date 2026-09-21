@@ -88,8 +88,8 @@ rebuilding it.**
 
 ## D. Router — presentation and continuation (SKILL.md)
 
-24. Relay the agent's compact summary — source id, assertion counts, tree changes, key
-    findings, next step. **Do not re-print per-assertion detail** (:212–215).
+24. Print only the text after the final `---` in the agent's return, verbatim and
+    unlabeled. Source id, counts and flags never reach the user (:245–249).
 25. **Keep going in the same turn.** Presenting a summary and yielding with records
     still unextracted is a failure (:217–221).
 26. **Exception:** on a `record-extractor` spawn failure, report and stop — do not

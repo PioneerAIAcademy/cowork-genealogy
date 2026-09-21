@@ -51,6 +51,22 @@ research**. The skill is not a layer in front of the agent. It is a second,
 narrower doorway into the same agent, and the wide doorway does not pass through
 it.
 
+### A pair-conversion PR does not edit `research/SKILL.md`
+
+The Invoke cell flips to `@plugin:<agent>` in a **separate PR**, opened after
+the conversion merges. Two reasons, and either alone is sufficient: the
+conversion keeps its own acceptance check instead of sharing one with a routing
+change, and the paid `research` run is not split across two changes.
+
+If another open PR already carries a fresh `eval/runlogs/unit/research/` log,
+wait for it and rebase — the branch that has already paid lands first.
+
+The same ordering binds in the other direction once a cell names an agent:
+`check_runlogs.py` gates every skill whose `SKILL.md` references
+`@plugin:<name>` on any touched agent body, so a routing PR that adds the
+reference retroactively bills a paid `research` run to every open PR editing
+that agent. Check for one before landing.
+
 ### Everything load-bearing goes in the agent
 
 The agent is the only file on every route. Whatever the pair must get right —
@@ -65,7 +81,7 @@ The routing skill may contain **only** these, and nothing else:
 2. The narration line.
 3. Resolution of the user's words into the agent's arguments.
 4. The delegation call.
-5. Relay of what the agent returned, and the recommended next step.
+5. Relay of the agent's `summary_for_user` verbatim, and its `next_step`.
 
 No gates. No preconditions. No doctrine. No `Never` clause the agent does not
 also carry. If a sentence in a routing skill would change the outcome when
@@ -113,9 +129,17 @@ The runs are
 `eval/runlogs/e2e/hannah-earnest-children/run-2026-08-23_03-37-12.json` and
 `eval/runlogs/e2e/mary-mcandrew-son/run-2026-08-23_03-19-50.json`. **Two runs is
 a thin sample and the pair had been live for two days** — but it is the whole of
-the evidence, it is 2 of 2, and no committed run postdates the
-`research-exhaustiveness` conversion at all, so that pairing is unmeasured in
-both directions.
+the evidence and it is 2 of 2.
+
+Two committed runs **do** postdate the `research-exhaustiveness` conversion, one
+per route (measured 2026-09-07 by scanning `tool_calls[]` for `Skill`/`Agent`
+calls naming either pair; a new committed e2e run moves this):
+
+- `eval/runlogs/e2e/elena-asmundsdotter-origin/run-2026-08-25_23-41-49.json` —
+  skill-then-agent for both pairs (`Skill`→`Agent` `research-exhaustiveness` at
+  calls 92→93, `proof-conclusion` at 105→106).
+- `eval/runlogs/e2e/elena-asmundsdotter-origin/run-2026-09-01_22-19-45.json` —
+  `Agent research-exhaustiveness` at call 150, no `Skill` call.
 
 ### The agent bears the cost of a caller it cannot constrain
 
@@ -337,6 +361,19 @@ Two things this does NOT close:
    the agent". The delegation message now comes from the orchestrator, which the
    conversion does not own — so the agent must be correct under a delegation that
    names the artifact and pre-states the answer, not merely a well-phrased one.
+   **The agent's return ends with `summary_for_user` and `next_step`** (lead
+   ruling 2026-09-18): one paragraph for a researcher who has never done
+   genealogy — no identifiers, file names, tool names or field names — and one
+   plain sentence on what happens next, after the caller-facing lines and never
+   merged into them — as a `---` line followed by two unlabeled paragraphs, so
+   the router can copy "everything after the final `---`" without judging what
+   is researcher-facing. The router prints only that, verbatim, and appends the
+   hand-back literal issue #2292 rules; it never summarizes, and no label or
+   field name reaches the researcher. `agents/record-extractor.md`'s
+   "Return contract" is the worked form, and
+   `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
+   refuses an agent body without the heading once its name leaves that test's
+   pending list.
 8. Apply the delete-the-skill acceptance check — now mechanically. **Author a
    direct twin**: copy the gate-bearing positive test byte for byte, give it a
    new `test.id` and name, replace `input.user_message` with an

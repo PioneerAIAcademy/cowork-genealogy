@@ -74,7 +74,7 @@ falsely blocking installs.
 
 ### Tool list (`tools`)
 
-Every tool registered in `src/index.ts`'s `ListTools` handler MUST appear
+Every tool registered in `src/server.ts`'s `ListTools` handler MUST appear
 in `manifest.tools`, and no extras.
 
 **This spec deliberately does not enumerate the set.** It used to, and the
@@ -86,7 +86,7 @@ snapshot of it:
 - `tests/packaging/manifest.test.ts` asserts `manifest.tools` == `allToolSchemas`
   (`src/tool-schemas.ts`), both directions.
 - The same file asserts every registered tool has a dispatch case in
-  `src/index.ts` — advertised-but-undispatchable is the failure the
+  `src/server.ts` — advertised-but-undispatchable is the failure the
   list-equality check alone cannot see.
 
 For the current set, read `allToolSchemas`, or `README.md`'s tables for the
@@ -102,7 +102,7 @@ The packed `.mcpb` MUST contain:
 |------|-----|
 | `manifest.json` | Install metadata + server config |
 | `package.json` | Node entry-point resolution |
-| `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point |
+| `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point. `build/hosted-stdio.js` and `build/http.js`, the prototype's two entrypoints, ride along and are inert here — nothing in the pack runs them |
 | `config/familysearch.json` | Bundled OAuth clientId — without it every authenticated tool breaks (guarded by `tests/auth/bundled-client-config.test.ts`) |
 | `config/given-name-variants.json` | Bundled given-name variant table for diminutive expansion in `fulltext_search` and `image_transcribe` |
 | `node_modules/` | **Production dependencies only** |
@@ -128,9 +128,14 @@ running `npm ci --omit=dev` against it — never by mutating the developer's
 1. `cd packages/engine/mcp-server && npm install && npm run build` — compile to `build/`.
 2. Stage a temp dir (`mktemp -d`): copy `manifest.json`, `package.json`,
    `package-lock.json`, `build/`, `config/`, `.mcpbignore`.
-3. `npm ci --omit=dev --ignore-scripts` inside the stage — production
-   `node_modules` only (`--ignore-scripts` skips dependency lifecycle
-   scripts for a deterministic, side-effect-free install).
+3. `npm ci --omit=dev --omit=optional --ignore-scripts` inside the stage —
+   production `node_modules` only: no devDependencies, and no
+   optionalDependencies either (`pg`, `@aws-sdk/client-s3` and
+   `@smithy/node-http-handler` are the hosted `PgS3ProjectStore`'s clients; the
+   desktop server never loads that module). `--ignore-scripts` skips dependency
+   lifecycle scripts for a deterministic, side-effect-free install.
+   `scripts/verify-mcpb.sh` forbids all three optional packages in the packed
+   bundle.
 4. `npx mcpb validate <stage>` — fails the build on a non-conformant
    manifest (`mcpb pack` also validates).
 5. `npx mcpb pack <stage> releases/genealogy-mcp.mcpb`.
@@ -161,10 +166,36 @@ end-user install (the GUI "Install extension" step is a manual layer in
 
 ## Versioning
 
-`manifest.json` `version`, `packages/engine/mcp-server/package.json` `version`, and the
-`new Server({ version })` literal in `src/index.ts` MUST stay in sync.
-This spec's baseline is `0.1.0` (first real packaged release, replacing
-the `0.0.1` scaffold).
+Two layers, deliberately separate:
+
+- **The tracked base.** `manifest.json` `version` and `packages/engine/mcp-server/package.json`
+  `version` are the hand-maintained semver base, currently `0.1.0`, and MUST stay in sync
+  (`tests/packaging/manifest.test.ts`). They are never rewritten by a build: a build script that
+  wrote into tracked files would dirty the tree on every `make mcpb`, and the value would refreeze
+  the moment nobody re-ran it — which is exactly how every version field in the repo sat frozen for
+  months.
+- **The build stamp.** Every build carries `<base>+<YYYY-MM-DD>.<sha>[.dirty]` as semver build
+  metadata — e.g. `0.1.0+2026-09-17.abc12345`, `.dirty` appended when the tree had uncommitted
+  changes — or `<base>+dev` when git cannot answer (no git on PATH, no `.git`, no commits). The
+  helper is `scripts/build-stamp.mjs`; it never throws. `npm run build` writes the stamp to
+  `build/build-info.json` (`scripts/write-build-info.mjs`), the running server reads it back
+  (`src/utils/build-info.ts`, `dev` fallback when absent), advertises it as `serverInfo.version`
+  (`createServer` in `src/server.ts` — there is no version literal left to keep in sync)
+  and as `buildId` on every return branch of `project_context` and `auth_status`, and
+  `scripts/build-mcpb.mjs` rewrites the **staged** `manifest.json` and `package.json` to the same
+  string before `mcpb validate` (which accepts build metadata) and `mcpb pack`. So inside a packed
+  bundle the three agree by construction; `scripts/verify-mcpb.sh` asserts it on every PR.
+  `scripts/package-plugin.mjs` stamps the zipped `.claude-plugin/plugin.json` the same way (base
+  `0.0.1`), in memory.
+
+**Plugin/engine mismatch is not detected at runtime, on purpose.** The engine runs on the host and
+the plugin ships into the Cowork VM, so the running server cannot read `plugin.json` and has
+nothing to compare its own stamp against; an agent-side comparison would cost a `SKILL.md` edit and
+a paid eval re-run for a state that is normal whenever a user updates one artifact and not the
+other. The two stamps are for humans and the agent to *quote* — a feedback bundle or a chat that
+names both is what separates "stale install" from "stale advertised schemas over a current
+server". Runtime detection stays with the open Cowork tool-binding card
+(`gh issue list --state open --search "Cowork tool binding register gap"`).
 
 ---
 

@@ -10,6 +10,7 @@
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readBuildInfo } from "../utils/build-info.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -52,6 +53,8 @@ export interface ProjectContextLocality {
 export type ProjectContextResult =
   | {
       ok: true;
+      /** The engine build (`<base>+<date>.<sha>[.dirty]` or `<base>+dev`) — on every branch, #2126. */
+      buildId: string;
       projectStatus: string | null;
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
@@ -63,7 +66,7 @@ export type ProjectContextResult =
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[]; reason?: "no_project"; buildId: string };
 
 function truncateQuestion(text: string): string {
   if (text.length <= QUESTION_TRUNCATE_AT) return text;
@@ -99,6 +102,9 @@ function collectSourceRefs(person: any): string[] {
 }
 
 export async function projectContext(input: ProjectContextInput): Promise<ProjectContextResult> {
+  // Primary surface for "which build is this?" — 8 skills call project_context,
+  // 0 call auth_status — so it rides on every return branch, no-project included.
+  const buildId = readBuildInfo().version;
   let research: any;
   let tree: any;
   try {
@@ -108,8 +114,8 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     // The other READ issue #1695 calls out: a skill that looks at project state
     // before answering must not surface a path error to a user who simply is
     // not in a project.
-    if (e instanceof NoProjectError) return noProjectResult("read");
-    return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
+    if (e instanceof NoProjectError) return { ...noProjectResult("read"), buildId };
+    return { ok: false, errors: [e instanceof Error ? e.message : String(e)], buildId };
   }
 
   // Open questions: everything not yet resolved (open / in_progress /
@@ -207,7 +213,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   // research_append compute their own preconditions independently.
   const questionStatuses = questionStates(research);
 
-  return { ok: true, projectStatus, openQuestions, questionStatuses, persons, sources, localities };
+  return { ok: true, buildId, projectStatus, openQuestions, questionStatuses, persons, sources, localities };
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -232,8 +238,9 @@ export const projectContextSchema = {
     "question needs nothing further. One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
-    "record); the writer tools handle every mechanical lookup themselves. Writes " +
-    "nothing.",
+    "record); the writer tools handle every mechanical lookup themselves. Also " +
+    "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
+    "a problem. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {

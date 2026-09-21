@@ -201,19 +201,9 @@ off the tree and you'll learn very little.
 
 ### Also tell it about you
 
-Whichever path you take, include these two up front:
-
-- **Your experience level** — just starting out / some research / experienced /
-  professional.
-- **Your subscriptions** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-  GenealogyBank, FindAGrave-Plus, or none. Free access counts, so say so if you
-  get partner subscriptions through your FamilySearch account or use a library
-  or family history centre — both are recorded, and neither is "none". A plain
-  FamilySearch account is the baseline, so there's no need to mention it.
-
-Skip them and it quietly assumes "intermediate" and "none", which changes how much
-it explains as it works. You can correct it later by just telling it, or by
-editing `researcher_profile` in the project's `research.json` directly.
+Whichever path you take, you don't need to say anything about yourself. Every
+project gets plain-language narration, and every subscription site is assumed
+reachable — mention a site you hold and it's recorded, but nothing is asked.
 
 ### Bringing in a document
 
@@ -293,6 +283,12 @@ state, which is how we reproduce it.
 Small and specific beats broad. "The citation for the 1900 census had no page or
 line number, so I couldn't find the record again" is worth more than "citations
 are weak." One problem per submission.
+
+**Say which build you were on.** Ask the agent "what build is this?" — it calls
+`auth_status` (or `project_context`) and reads back a `buildId` such as
+`0.1.0+2026-09-17.abc12345`: the date and commit the MCP server was built from.
+Paste that line into the report. On desktop it is the only thing that tells us
+whether you were running the current build or one from before a fix.
 
 ---
 
