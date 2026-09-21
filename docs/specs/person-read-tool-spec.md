@@ -274,7 +274,10 @@ fetched for the id the redirect landed on, not the id the caller passed.
   description: "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
     "Set relatives=true to include parents, siblings, spouses, and children. " +
-    "Set sourceDescriptions=true to include attached sources. " +
+    "Set sourceDescriptions=true to include attached sources — for a " +
+    "non-living subject this also returns source-style memories (scanned " +
+    "wills, certificates, obituaries, family stories), transcribed where the " +
+    "read's time budget allowed. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -293,6 +296,15 @@ fetched for the id the redirect landed on, not the id the caller passed.
       sourceDescriptions: {
         type: "boolean",
         description: "Include attached source citations. Defaults to false."
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Optional absolute path to the project folder. When set, any memory " +
+          "scan transcribed during this read is saved under images/ and its " +
+          "project-relative path returned on that source as image_ref, so a " +
+          "retained source can cite it. Without it the scan is transcribed but " +
+          "not kept."
       }
     },
     required: ["personId"]
@@ -618,20 +630,50 @@ Dropping the edge loses nothing a caller could have used: the far endpoint is no
 in `persons[]`, so there is no person to link to. What is lost is the hint that
 some further relative exists.
 
+**One case where that hint is the datum, and is worth stating plainly.** When
+the omitted endpoint is a parent of the SUBJECT, the edge dropped is the
+subject's own parentage — not a distant relative's. The caller asked about this
+person, and "has a parent we cannot name" is information about them. It is still
+dropped, because an unresolvable endpoint costs the whole `project_create`
+write, but the loss is now SILENT where before it surfaced as a loud refusal.
+There is no warning channel on this tool's result to carry it, so a caller that
+needs to know a parent exists without a person record must read the raw
+FamilySearch response rather than this tool's output.
+
 A half-sibling consequently arrives linked to the shared parent only, and a CAPR
 naming a child whose person record the response omitted is skipped entirely —
-both for the same reason.
-`validate_research_schema` treats that as a hard error (`parent '…' not found in
-persons`, and the same for `child`, `person1` and `person2`), and
-`project_create` — alone among the tree writers, it never calls `sanitizeTree` —
-refuses the **entire write**. One leaked edge would cost the user their whole
-project, so the rule is enforced on the edge rather than left to a healer that
-does not run.
+both for the reason stated above.
 
 **A failing parent read degrades; it never throws.** 403, 404, 410, 429, a
 timeout, a transport error, or a 204 living-person stub each mean "no siblings
 from that parent" — the subject's own read still succeeds. Siblings are an
 enrichment and must never cost the caller the person they asked for.
+
+**The fan-out spends the same 40s budget the memories phase does.** The deadline
+is anchored at tool entry, so each parent read is on the clock the OCR phase
+later draws from. The effect is lossless — a memory the budget does not reach
+comes back as a metadata entry with a note saying so — but a subject with
+several slow parents will transcribe fewer memories than the same subject with
+none, and that is a real interaction rather than a theoretical one.
+
+**301 is not in that list: a merged parent is followed.** A merged person answers
+301 with the surviving id in `Location`, exactly as the subject's own read
+handles it, and the fan-out follows it under the same redirect cap. Treating 301
+as "no siblings from that parent" would silently lose every sibling behind a
+merge, and merges are routine. The merged body names the SURVIVING id in its
+CAPRs while the subject's read named the old one, so the parent endpoint is
+rewritten back to the id the subject used — the id every other edge and every
+`persons[]` entry is keyed on. Without that rewrite the siblings arrive with
+their edges pruned, which is to say as orphans.
+
+**A parent with no person record is not read at all.** The parent ids come from
+the subject's CAPRs, and FamilySearch names a parent there without always
+returning that parent's person record (see the endpoint-closure rule below).
+Reading such a parent cannot produce a usable sibling: every edge from them is
+dropped for want of the parent endpoint, while the children they contributed
+would remain in `persons[]` — unconnected persons in the user's tree, which
+`validate_research_schema` does not catch because it has no persons-to-edges
+rule. They are skipped, which also saves a request whose result cannot be used.
 
 #### 6. Sources (when `sourceDescriptions: true`)
 

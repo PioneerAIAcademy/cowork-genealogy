@@ -1222,6 +1222,171 @@ describe("personReadTool — sibling fan-out", () => {
     expect(edges.sort()).toEqual([`${DAD}->${sib}`, `${MUM}->${sib}`].sort());
   });
 
+  it("holds the fan-out at FOUR parent reads in flight, and still reads all five", async () => {
+    // SIBLING_FANOUT_CONCURRENCY = 4 is justified by a corpus measurement (4
+    // children with 3 parents, 3 with 4) and, as @aghadiayeamayanvboernest
+    // said on #2593 and the self-review restated, NOTHING drove it: 4 -> 2 and
+    // even 4 -> 1 passed the whole 3961-test suite. A cap cannot be caught by
+    // asserting on output -- lowering it serialises the same reads and returns
+    // the same tree -- so this measures the only thing a cap changes, which is
+    // PEAK CONCURRENCY. Five parents, so the cap has something to bite on.
+    const PARENTS = ["P-1", "P-2", "P-3", "P-4", "P-5"];
+    let inFlight = 0;
+    let peak = 0;
+    mockFetch.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes(`/${SUBJECT}`)) {
+        return Promise.resolve({
+          ok: true, status: 200, headers: new Headers(),
+          json: () => Promise.resolve({
+            persons: [person(SUBJECT, "Subject Person"), ...PARENTS.map((x) => person(x, `P ${x}`))],
+            relationships: [],
+            childAndParentsRelationships: [
+              capr(SUBJECT, PARENTS[0], PARENTS[1]),
+              capr(SUBJECT, PARENTS[2], PARENTS[3]),
+              capr(SUBJECT, PARENTS[4]),
+            ],
+          }),
+        });
+      }
+      const pid = PARENTS.find((x) => u.includes(`/${x}`));
+      if (!pid) {
+        return Promise.resolve({
+          ok: true, status: 200, headers: new Headers(),
+          json: () => Promise.resolve({ persons: [], relationships: [], childAndParentsRelationships: [] }),
+        });
+      }
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          inFlight -= 1;
+          resolve({
+            ok: true, status: 200, headers: new Headers(),
+            json: () => Promise.resolve({
+              persons: [person(pid, `P ${pid}`)],
+              relationships: [],
+              childAndParentsRelationships: [],
+            }),
+          });
+        }, 5);
+      });
+    });
+    await personReadTool({ personId: SUBJECT, relatives: true }, LOCAL);
+    for (const pid of PARENTS) {
+      expect(mockFetch.mock.calls.some(([u]) => String(u).includes(`/${pid}`))).toBe(true);
+    }
+    expect(peak).toBe(4);
+  });
+
+  it("adds NO person the fan-out cannot link — a co-parent with no person record", async () => {
+    // Reported on #2593 review, 2026-09-21, and reproduced before fixing.
+    // FamilySearch names a parent in a CAPR without returning their person
+    // record. The fan-out read that parent anyway, imported their OTHER
+    // children, and `pruneCaprs` then dropped every edge from them for want of
+    // the parent endpoint -- while the children STAYED. `dropDanglingEdges`
+    // filters relationships and never removes a person, and the validator has
+    // no persons->edges rule, so real half-siblings carrying real arks landed
+    // in the user's tree attached to nobody. Observed exactly:
+    //   persons  ["KNDX-MKG","DAD-001","HALF-100","HALF-101"]
+    //   edges    [DAD-001 -> KNDX-MKG]
+    //   orphans  ["HALF-100","HALF-101"]
+    const COP = "COPARENT-900";
+    route({
+      [SUBJECT]: {
+        // DAD has a person record; COP is named in the CAPR and has none.
+        persons: [person(SUBJECT, "Subject Person"), person(DAD, "Dad")],
+        relationships: [],
+        childAndParentsRelationships: [capr(SUBJECT, DAD, COP)],
+      },
+      [DAD]: { persons: [person(DAD, "Dad")], relationships: [], childAndParentsRelationships: [] },
+      [COP]: {
+        persons: [person(COP, "Co-parent"), person("HALF-100", "Half A"), person("HALF-101", "Half B")],
+        relationships: [],
+        childAndParentsRelationships: [capr("HALF-100", COP), capr("HALF-101", COP)],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    const linked = new Set<string>();
+    for (const r of out.relationships) {
+      for (const e of [r.parent, r.child, r.person1, r.person2]) if (e) linked.add(e);
+    }
+    const orphans = out.persons
+      .map((p) => p.id)
+      .filter((id) => id !== SUBJECT && !linked.has(id));
+    expect(orphans).toEqual([]);
+    // and the pointless request is not made at all
+    expect(mockFetch.mock.calls.some(([u]) => String(u).includes(`/${COP}`))).toBe(false);
+  });
+
+  it("follows a merged parent's 301 instead of losing every sibling behind it", async () => {
+    // The subject's own read follows 301 (`fetchAndConvert`); the fan-out
+    // treated `status !== 200` as "no siblings from this parent", so a merged
+    // parent -- routine, and absent from the spec's 403/404/410/429/204 list --
+    // silently yielded none. #2593 review, 2026-09-21.
+    const OLD_DAD = "DAD-001";
+    const NEW_DAD = "DAD-NEW-7";
+    const sib = "SIB-301";
+    mockFetch.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes(`/${SUBJECT}`)) {
+        return Promise.resolve({
+          ok: true, status: 200, headers: new Headers(),
+          json: () => Promise.resolve({
+            persons: [person(SUBJECT, "Subject Person"), person(OLD_DAD, "Dad")],
+            relationships: [],
+            childAndParentsRelationships: [capr(SUBJECT, OLD_DAD)],
+          }),
+        });
+      }
+      if (u.includes(`/${NEW_DAD}`)) {
+        return Promise.resolve({
+          ok: true, status: 200, headers: new Headers(),
+          json: () => Promise.resolve({
+            persons: [person(NEW_DAD, "Dad"), person(sib, "Sibling")],
+            relationships: [],
+            childAndParentsRelationships: [capr(sib, NEW_DAD), capr(SUBJECT, NEW_DAD)],
+          }),
+        });
+      }
+      if (u.includes(`/${OLD_DAD}`)) {
+        return Promise.resolve({
+          ok: false, status: 301,
+          headers: new Headers({ location: `https://api.familysearch.org/platform/tree/persons/${NEW_DAD}` }),
+          json: () => Promise.reject(new Error("no body on a 301")),
+        });
+      }
+      return Promise.resolve({
+        ok: true, status: 200, headers: new Headers(),
+        json: () => Promise.resolve({ persons: [], relationships: [], childAndParentsRelationships: [] }),
+      });
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    // Present is not enough: the merged body's CAPRs name the SURVIVING id
+    // while `known` is keyed on the id the subject's read used, so without the
+    // remap the sibling arrives with its edge pruned -- i.e. as exactly the
+    // orphan the test above forbids. Assert the LINK, not the person.
+    expect(out.persons.map((p) => p.id)).toContain(sib);
+    expect(
+      out.relationships.some(
+        (r) => r.type === "ParentChild" && r.parent === OLD_DAD && r.child === sib,
+      ),
+    ).toBe(true);
+    const linked = new Set<string>();
+    for (const r of out.relationships) {
+      for (const e of [r.parent, r.child, r.person1, r.person2]) if (e) linked.add(e);
+    }
+    expect(
+      out.persons.map((p) => p.id).filter((id) => id !== SUBJECT && !linked.has(id)),
+    ).toEqual([]);
+  });
+
   it("does not re-emit a SIBLING edge the subject's own read already carried", async () => {
     // `pruneCaprs` seeds its `seen` set from `edgeKeysOf(body)`. Nothing drove
     // that seeding: emptying it (`new Set<string>()`) left all 58 tests green.
