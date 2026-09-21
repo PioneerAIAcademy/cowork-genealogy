@@ -35,6 +35,7 @@ import { bearerPrincipal, LOCAL } from "../../src/auth/principal.js";
 import { logoutTool } from "../../src/tools/logout.js";
 import { authStatusTool } from "../../src/tools/auth-status.js";
 import { loginTool } from "../../src/tools/login.js";
+import { readBuildInfo } from "../../src/utils/build-info.js";
 
 const bearer = bearerPrincipal("tok-123", {
   wikiApiUrl: "https://wiki.example/",
@@ -87,8 +88,10 @@ describe("bearer principal", () => {
       success: false,
       message: HOSTED_SESSION_MANAGED_MESSAGE,
     });
-    expect(await authStatusTool({}, bearer)).toEqual({ loggedIn: true });
-    expect(await authStatusTool({}, bearerPrincipal(""))).toEqual({ loggedIn: false });
+    // buildId rides on every auth_status branch, the bearer one included (#2126).
+    const buildId = readBuildInfo().version;
+    expect(await authStatusTool({}, bearer)).toEqual({ loggedIn: true, buildId });
+    expect(await authStatusTool({}, bearerPrincipal(""))).toEqual({ loggedIn: false, buildId });
   });
 });
 
