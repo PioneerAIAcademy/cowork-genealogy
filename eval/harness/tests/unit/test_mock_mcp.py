@@ -279,7 +279,92 @@ def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
     assert body.get("staged"), "staging must still happen"
     assert "ranked" in body, "ranking should be folded into the search response"
     assert body["ranked"]["subjectId"] == "I1"
-    assert body["ranked"]["matches"], "the test's own rank fixture supplies the matches"
+    # Under the #1212 ruling the rank fixture's rows are annotated onto
+    # `results` and `ranked` keeps metadata only — one row list, never two.
+    assert "matches" not in body["ranked"]
+    assert body["results"], "the annotated rows are where the matches now live"
+    assert any(r.get("matchScore") is not None for r in body["results"])
+
+
+@pytest.mark.requires_engine_build
+def test_record_search_annotates_results_and_reorders_them(tmp_path):
+    """#1212 ruling (2026-09-15): one row list, never two.
+
+    The mock must serve production's shape — rows annotated with the match score
+    and returned best first — because the skill's triage is graded on what it
+    sees. Serving un-annotated rows grades triage on data production would
+    really have sent."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {
+                "surname": "Flynn",
+                "givenName": "Patrick",
+                "projectPath": str(tmp_path),
+                "subjectId": "I1",
+            },
+        )
+    )
+    rows = body["results"]
+    scored = [r for r in rows if r.get("matchScore") is not None]
+    assert scored, "the rank fixture's scores must reach the rows"
+    # Best first, and every scored row keeps its original search position so the
+    # re-ordering is auditable rather than lossy.
+    ranks = [r["matchRank"] for r in scored]
+    assert ranks == sorted(ranks), f"rows must be ordered by matchRank, got {ranks}"
+    assert all(r.get("searchRank") is not None for r in scored)
+    assert "matches" not in body["ranked"], "`ranked` carries metadata only"
+
+
+def test_record_search_never_drops_results(tmp_path):
+    """The drop conditional is gone with the ruling: rows always come back.
+
+    Previously three separate tests pinned the branches of a four-way
+    conditional deciding when `results` could be removed. There is no decision
+    now, so the property to hold is simply that it never disappears."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    for args in (
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path), "subjectId": "I1"},
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+    ):
+        body = _extract_response_dict(_invoke(tools_by_name, "record_search", args))
+        assert body.get("results"), f"results must survive for args={sorted(args)}"
+
+
+def test_record_search_keeps_inline_results_when_no_ranking_is_folded(tmp_path):
+    """No rank fixture -> no `ranked` -> `results` must survive untouched.
+
+    The complement of the test above, and the arm that fails if the drop is
+    ever made unconditional on a subject being named.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert "ranked" not in body
+    assert body.get("results"), "with no ranking, the inline rows are all there is"
 
 
 def test_record_search_omits_ranked_without_subject(tmp_path):
@@ -869,3 +954,39 @@ def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
     }
     warnings = _build_warnings([upstream])
     assert not any(w["kind"] == "harness_node_timeout" for w in warnings)
+
+
+def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
+    """The `except` arm must ABSORB a node failure, not become one.
+
+    HISTORY (2026-09-11): the arm returned six values while every other return,
+    and the caller's unpack, took five -- so any node timeout raised
+    `ValueError: too many values to unpack` from the very branch written to
+    survive it. It stayed green because nothing reached the arm: the node call
+    has to actually fail.
+
+    The arity has since dropped to FOUR, when the always-False drop flag was
+    removed. The number is deliberately not repeated in prose here beyond this
+    line: what the test pins is that the arm agrees with the caller's unpack,
+    whatever that count currently is, so it survives the next change to it.
+    """
+    from harness import mock_mcp
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    # Whatever the arm calls inside the try, make it raise.
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+
+    response = {"results": [{"id": "r1"}]}
+    ranked = {"matches": [{"recordId": "r1"}]}
+    out = mock_mcp._stage_and_compact_search_results(
+        tmp_path, "record_search", response, ranked
+    )
+
+    assert len(out) == 4, f"the degrade arm must return four values, got {len(out)}"
+    staged, resp, unlogged, rank = out                # the caller's unpack
+    assert staged is None
+    assert resp == response
+    assert unlogged == []
+    assert rank == ranked

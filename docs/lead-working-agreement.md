@@ -34,7 +34,6 @@ command:
 | Architecture, schema, tool boundaries, API shape | No change |
 | `icebox` vs. a real commitment | Icebox |
 | Close as *not planned* with no successor issue | Leave open |
-| `cross-cutting` assignment | Unassigned; does not start |
 | Overturning a previous ruling | Ruling stands |
 | Milestone gating | Not gating |
 | Overriding someone's work; security triage | No action |

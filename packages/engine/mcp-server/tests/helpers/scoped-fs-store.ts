@@ -76,6 +76,10 @@ export class ScopedFsStore implements ProjectStore {
     return this.inner.readText(this.map(projectPath), ref);
   }
 
+  readBytes(projectPath: string, ref: string): Promise<Uint8Array> {
+    return this.inner.readBytes(this.map(projectPath), ref);
+  }
+
   list(projectPath: string, dirRef: string): Promise<ProjectEntry[]> {
     return this.inner.list(this.map(projectPath), dirRef);
   }
