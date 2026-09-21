@@ -1,9 +1,13 @@
 // MCP tool: person_warnings
 // See `docs/specs/person-warnings-tool-spec.md`.
 //
-// Reads tree.gedcomx.json from a project directory and runs deterministic
-// data-quality checks from the point of view of a required anchor person.
-// No network, no auth — operates entirely on local file data.
+// Runs deterministic data-quality checks from the point of view of a required
+// anchor person. Two sources for that person's tree:
+//   - default: tree.gedcomx.json from a project directory. No network, no auth.
+//   - `live: true`: the person and their one-hop relatives fetched from
+//     FamilySearch via `personReadTool`, which authenticates through
+//     `getValidToken`. Opt-in by the flag only, never by omitting projectPath.
+// The checks themselves are identical; only where the tree comes from differs.
 
 import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
