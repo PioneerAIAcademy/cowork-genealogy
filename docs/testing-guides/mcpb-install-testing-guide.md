@@ -34,9 +34,12 @@ cd /home/gennesis/cowork-genealogy
 ### What success looks like
 
 - `Manifest schema validation passes!`
-- An `mcpb info` summary: `genealogy-mcp@0.1.0`, a package size of a few MB
-  (production deps only), and a non-trivial `ignored (.mcpbignore) files`
-  count.
+- A `Stamped version: 0.1.0+<date>.<sha>` line, then an `mcpb info` summary naming that
+  same stamped version (`genealogy-mcp@0.1.0+2026-09-17.abc12345`; `+dev` only if you built
+  outside a git checkout), a package size of a few MB (production deps only), and a
+  non-trivial `ignored (.mcpbignore) files` count. After installing, read the stamp back:
+  ask Claude Desktop to call `auth_status` and check the returned `buildId` is that same
+  version — that is the line to quote in any bug report.
 - `Done. Created .../releases/genealogy-mcp.mcpb`
 
 ### What failure looks like
