@@ -279,14 +279,14 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   runtime. **Deferred 2026-09-21 — outside the three JS trees this doc was scoped
   to, but recorded here because the Dependabot backlog below counts it.** The
   hosted control plane (`apps/server`) and the eval harness both depend on
-  `cryptography` via `anthropic` → `httpx` → (transitive). A patched version
-  exists upstream but requires a coordinated `uv lock --upgrade-package
-  cryptography` across both lockfiles.
+  `cryptography` via `pyjwt[crypto]` → `mcp[crypto]` → `claude-agent-sdk`
+  (and as a direct dependency in `apps/server`). A patched version exists
+  upstream but requires a coordinated `uv lock --upgrade-package cryptography`
+  across both lockfiles.
   **Revisit when** either lockfile is next refreshed for another reason.
 
 - **h2** (MEDIUM) — `apps/server/uv.lock` only, runtime. **Deferred 2026-09-21 —
-  same scope note as `cryptography` above.** Pulled transitively via `httpx` →
-  `httpcore[http2]`.
+  same scope note as `cryptography` above.** Pulled transitively via `e2b`.
   **Revisit when** the `apps/server` lockfile is next refreshed.
 
 - **esbuild** — **withdrawn 2026-09-09, see the Fixed entry above.** This entry said
