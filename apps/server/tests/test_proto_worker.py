@@ -19,6 +19,12 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
   figures; a wrong session id in system/init, no init at all, a MirrorErrorMessage, an
   errored ResultMessage and a stream with no ResultMessage each fail the turn without
   completing it; a short registration is refused before anything is sent to the model;
+- D17's resume rule: a REDELIVERY (``receive_count`` > 1) whose result carries no model
+  turn is re-queried ONCE with RESUME_CONTINUE_TEXT and completes on the SECOND result's
+  figures; a second zero-turn result completes as it stands (two queries, two log lines,
+  never a third); a FIRST delivery is never re-queried -- neither a fresh turn's nor one
+  whose session already holds entries, where the continue prompt would discard the
+  patron's new message; and every guard above binds on the re-query too;
 - the option set: cwd, setting_sources=[], agents=, the tool server's per-turn env in a
   0600 mcp.json (never argv) under ``env -u ANTHROPIC_API_KEY``, session_id/resume
   exactly one, the eager store flush, the model pin per provider; the ``TOOL_SERVER=http``
@@ -43,6 +49,7 @@ import stat
 import tempfile
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -954,10 +961,14 @@ def _text(text: str) -> AssistantMessage:
     return AssistantMessage(content=[TextBlock(text=text)], model="m")
 
 
-def _result(*, is_error: bool = False) -> ResultMessage:
+def _result(
+    *, is_error: bool = False, num_turns: int = 1, cost: float = 0.01,
+    duration_ms: int = 10, text: str | None = None,
+) -> ResultMessage:
     return ResultMessage(
-        subtype="error_during_execution" if is_error else "success", duration_ms=10, duration_api_ms=8,
-        is_error=is_error, num_turns=1, session_id=SID, total_cost_usd=0.01, result="boom" if is_error else None,
+        subtype="error_during_execution" if is_error else "success", duration_ms=duration_ms, duration_api_ms=8,
+        is_error=is_error, num_turns=num_turns, session_id=SID, total_cost_usd=cost,
+        result="boom" if is_error else text,
     )
 
 
@@ -1011,6 +1022,7 @@ def test_run_turn_resumes_when_the_store_already_holds_the_session(turn_env):
     turn_env["entries"] = True
     assert _run(turn_env, _good())["resumed"] is True
     assert turn_env["options"]["resume"] == SID and turn_env["options"]["session_id"] is None
+    assert turn_env["client"].queried == ["hello"], "a resumed turn that ran model turns is not re-queried"
 
 
 @pytest.mark.parametrize("messages, error, match", [
@@ -1032,6 +1044,143 @@ def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
         _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 28))
     assert turn_env["client"].queried == [], "nothing sent to the model"
     assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])
+
+
+# ── the resume rule: a redelivery that produced no model turn (D17) ───────────────
+
+
+class TwoPassClient(FakeClient):
+    """The CLI answering each query with its own stream: one list per receive_response().
+    A query past the last stream is the unbounded-re-query regression, and raises."""
+
+    def __init__(self, streams: list[list[Any]], info: dict | None) -> None:
+        super().__init__([], info)
+        self.streams = [list(s) for s in streams]
+        self.passes = 0
+
+    async def receive_response(self):
+        if self.passes >= len(self.streams):
+            raise AssertionError(f"query {self.passes + 1}: the one-re-query bound is gone")
+        stream = self.streams[self.passes]
+        self.passes += 1
+        for m in stream:
+            yield m
+
+
+SYNTHETIC = "No response requested."
+
+
+def _run_passes(
+    state: dict, streams: list[list[Any]], *, entries: bool = True, receive_count: int = 2
+) -> dict:
+    """run_turn against a client with one canned stream per query. What arms the rule is
+    BOTH ``entries`` True (the store already holds the session, so run_turn resumes) and
+    ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
+    shape, a second delivery of a resumed turn."""
+    state["entries"] = entries
+    state["client"] = TwoPassClient(streams, _info(AGENTS, 28))
+    return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
+
+
+@pytest.mark.parametrize("num_turns, resume, receive_count, expected", [
+    (0, SID, 2, True),
+    (1, SID, 2, False),
+    (0, SID, 1, False),
+    (0, None, 2, False),
+    (0, None, 1, False),
+    (1, None, 1, False),
+    (None, SID, 2, True),
+], ids=["redelivered-zero", "redelivered-worked", "first-delivery-zero", "fresh-redelivered-zero",
+        "fresh-zero", "fresh-worked", "redelivered-unknown"])
+def test_resume_produced_no_turn_is_a_redelivery_that_ran_no_model_turn(
+    num_turns, resume, receive_count, expected
+):
+    assert worker.resume_produced_no_turn(
+        SimpleNamespace(num_turns=num_turns), resume, receive_count
+    ) is expected
+
+
+def test_the_re_query_bound_is_the_length_of_the_prompt_tuple():
+    assert worker.attempt_prompts("hello", None, 2) == ("hello",)
+    assert worker.attempt_prompts("hello", SID, 1) == ("hello",), "a first delivery is never re-queried"
+    assert worker.attempt_prompts("hello", SID, 2) == ("hello", options.RESUME_CONTINUE_TEXT)
+    assert len(worker.attempt_prompts("hello", SID, 3)) == 2, "one re-query per attempt, whatever the results say"
+
+
+def test_a_resumed_zero_turn_result_is_re_queried_once_and_completes_on_the_second(turn_env, monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    # The second stream carries NO init: a connected client declares its session once.
+    summary = _run_passes(turn_env, [
+        [_init(), _result(num_turns=0, cost=0.0, duration_ms=47, text=SYNTHETIC)],
+        [_text("the extraction"), _result(num_turns=6, cost=0.42, duration_ms=91_000)],
+    ], receive_count=2)
+    assert turn_env["client"].queried == ["hello", options.RESUME_CONTINUE_TEXT]
+    assert summary["resumed"] is True
+    assert (summary["num_turns"], summary["cost_usd"], summary["duration_ms"]) == (6, 0.42, 91_000)
+    _, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
+    assert params[:3] == (0.42, 6, 91_000), "the row takes the completing attempt's figures"
+    lines = [f for f in logged if f.get("ev") == "resume_synthetic_result"]
+    assert [f["query"] for f in lines] == [1]
+    assert lines[0]["result"] == SYNTHETIC and lines[0]["turn_id"] == "turn-1"
+    assert lines[0]["receive_count"] == 2, "the log line carries the redelivery the rule armed on"
+
+
+def test_two_zero_turn_results_complete_after_exactly_two_queries(turn_env, monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    long_reply = "orphaned agent notice " * 20
+    summary = _run_passes(turn_env, [
+        [_init(), _result(num_turns=0, cost=0.0, duration_ms=47, text=long_reply)],
+        [_result(num_turns=0, cost=0.0, duration_ms=12, text=long_reply)],
+    ], receive_count=2)
+    assert turn_env["client"].queried == ["hello", options.RESUME_CONTINUE_TEXT]
+    assert turn_env["client"].passes == 2, "a third query would be an unbounded rule"
+    assert _turn_done_written(turn_env["conn"]), "a turn with nothing to add completes as it stands"
+    assert summary["num_turns"] == 0 and summary["duration_ms"] == 12
+    lines = [f for f in logged if f.get("ev") == "resume_synthetic_result"]
+    assert [f["query"] for f in lines] == [1, 2]
+    assert [len(f["result"]) for f in lines] == [200, 200], "the reply is logged, first 200 chars"
+
+
+def test_a_fresh_turn_that_ran_no_model_turn_completes_without_a_re_query(turn_env, monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    summary = _run_passes(
+        turn_env, [[_init(), _result(num_turns=0, cost=0.0)]], entries=False, receive_count=1
+    )
+    assert turn_env["client"].queried == ["hello"], "a zero-turn result is a resume artefact only on a redelivery"
+    assert _turn_done_written(turn_env["conn"]) and summary["num_turns"] == 0 and summary["resumed"] is False
+    assert not [f for f in logged if f.get("ev") == "resume_synthetic_result"], "nothing was interrupted"
+
+
+def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monkeypatch):
+    """Turn 2+ of an ordinary session resumes -- the store already holds entries -- and its
+    FIRST delivery can still answer with a zero-turn result, exactly when the previous turn
+    was killed mid-flight. Re-querying it bills a model turn nobody asked for and tells the
+    model to resume the previous task, discarding the message the patron just sent."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    summary = _run_passes(
+        turn_env, [[_init(), _result(num_turns=0, cost=0.0, text=SYNTHETIC)]], receive_count=1
+    )
+    assert turn_env["client"].queried == ["hello"], "receive_count 1 is a first delivery, not a redelivery"
+    assert turn_env["options"]["resume"] == SID, "it DID resume: only receive_count separates the two"
+    assert _turn_done_written(turn_env["conn"]) and summary["resumed"] is True
+    assert not [f for f in logged if f.get("ev") == "resume_synthetic_result"]
+
+
+@pytest.mark.parametrize("second, error, match", [
+    ([MirrorErrorMessage(subtype="mirror_error", data={}, error="disk gone")], worker.MirrorError, "disk gone"),
+    ([_text("x"), _result(is_error=True)], RuntimeError, "is_error"),
+    ([_text("x")], RuntimeError, "without a ResultMessage"),
+    ([_init("other"), _text("x"), _result()], RuntimeError, "not the chosen"),
+], ids=["mirror-error", "errored-result", "no-result", "wrong-session-id"])
+def test_every_guard_binds_on_the_re_query_too(turn_env, second, error, match):
+    with pytest.raises(error, match=match):
+        _run_passes(turn_env, [[_init(), _result(num_turns=0, cost=0.0)], second], receive_count=2)
+    assert not _turn_done_written(turn_env["conn"]), "a failed re-query leaves the turn open for the next redelivery"
+    assert turn_env["client"].disconnected, "the CLI is always released"
 
 
 # ── PostToolUse: the duration stamp (acceptance criterion 4) ──────────────────────
