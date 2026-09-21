@@ -104,6 +104,11 @@ export interface ProjectStore {
    *  caller owns the message, since every caller words it differently. */
   readText(projectPath: string, ref: string): Promise<string>;
 
+  /** Read `ref` as raw bytes — a retained scan as written, a JSON document as
+   *  the UTF-8 of its text. Throws when it is absent or unreadable, as
+   *  `readText` does. */
+  readBytes(projectPath: string, ref: string): Promise<Uint8Array>;
+
   /** List the entries directly under `dirRef`. An absent directory lists as
    *  empty. Entries that cannot be described are skipped, never fatal. */
   list(projectPath: string, dirRef: string): Promise<ProjectEntry[]>;
@@ -190,6 +195,9 @@ class UnboundProjectStore implements ProjectStore {
     return this.reject();
   }
   readText(): Promise<string> {
+    return this.reject();
+  }
+  readBytes(): Promise<Uint8Array> {
     return this.reject();
   }
   list(): Promise<ProjectEntry[]> {

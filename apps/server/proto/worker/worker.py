@@ -38,6 +38,20 @@ so a killed attempt's spend is on the row too -- land on the turns row in the sa
 commit as ``turn_done`` (``complete``). Any exception answers 500 with the error in the
 body and one JSON log line; the shim backs off and the redelivery resumes.
 
+The resume rule (D17): a REDELIVERY (``receive_count`` > 1) whose result carries
+``num_turns == 0`` has not redone the interrupted work -- the CLI answered its own meta
+prompt about the orphaned agents and returned -- so the attempt logs
+``resume_synthetic_result`` and sends ONE continue prompt (``RESUME_CONTINUE_TEXT``)
+before completing on that second result's figures. A FIRST delivery is never re-queried,
+whatever the SDK session already holds: the continue prompt orders the model to resume
+the interrupted task and not start over, which on a first delivery would discard the
+message the patron just sent. The bound is ``attempt_prompts``'s tuple, not a loop
+condition: a second zero-turn result logs the line again and completes as it stands. The
+row takes the COMPLETING pass's ``cost_usd`` and ``duration_ms`` (``complete``'s
+redelivery convention), while the token columns above sum every pass from
+``session_entries`` -- an asymmetry that costs nothing in the shape the rule exists for,
+since ``num_turns == 0`` means the discarded pass billed no model turn.
+
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
 written), ENGINE_DIR, ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under
 it), MODEL_PROVIDER + ANTHROPIC_API_KEY / the Bedrock variables, the GENEALOGY_* store
@@ -73,10 +87,12 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from proto.worker.options import (  # noqa: E402
+    RESUME_CONTINUE_TEXT,
     build_worker_options,
     check_registration,
     make_posttool_hook,
     make_pretool_hook,
+    make_stop_hook,
     parse_blocked_tools,
 )
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
@@ -114,6 +130,19 @@ _stdout_lock = threading.Lock()
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
 _BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
+# AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap per turn; 0 = no Stop hook.
+_AUTONOMOUS_MAX_NUDGES: int = 0
+
+
+def parse_max_nudges(value: str | None) -> int:
+    """``AUTONOMOUS_MAX_NUDGES``: a non-negative int; unset or blank is 0 (off)."""
+    text = (value or "").strip()
+    if not text:
+        return 0
+    n = int(text)
+    if n < 0:
+        raise ValueError(f"AUTONOMOUS_MAX_NUDGES must be >= 0, not {n}")
+    return n
 
 
 class RegistrationError(RuntimeError):
@@ -198,10 +227,12 @@ def complete(
     num_turns: int | None = None,
     duration_ms: int | None = None,
     sdk_session_id: str | None = None,
+    nudges: int | None = None,
 ) -> int:
     """Append the turn_done event (per-session seq via next_session_seq) and close the
-    turn -- with the ResultMessage's figures when there are any, and the token sum over
-    ``session_entries`` when ``sdk_session_id`` is given -- in ONE commit."""
+    turn -- with the ResultMessage's figures when there are any, the token sum over
+    ``session_entries`` when ``sdk_session_id`` is given, and the Stop hook's veto count
+    (``nudges``, the completing attempt's, like cost_usd) -- in ONE commit."""
     with conn.transaction():
         with conn.cursor() as cur:
             cur.execute("SELECT next_session_seq(%s)", (turn["session_id"],))
@@ -226,8 +257,9 @@ def complete(
                 "input_tokens = COALESCE(%s, input_tokens), "
                 "cache_creation_tokens = COALESCE(%s, cache_creation_tokens), "
                 "cache_read_tokens = COALESCE(%s, cache_read_tokens), "
-                "output_tokens = COALESCE(%s, output_tokens) WHERE turn_id = %s",
-                (cost_usd, num_turns, duration_ms, *tokens, turn["turn_id"]),
+                "output_tokens = COALESCE(%s, output_tokens), "
+                "nudges = COALESCE(%s, nudges) WHERE turn_id = %s",
+                (cost_usd, num_turns, duration_ms, *tokens, nudges, turn["turn_id"]),
             )
     conn.commit()
     return seq
@@ -268,6 +300,24 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
             ),
         )
     conn.commit()
+
+
+def read_research(conn: psycopg.Connection, project_id: str) -> dict[str, Any] | None:
+    """The project's research.json as the store holds it (a jsonb document), or None."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT doc FROM documents WHERE project_id = %s AND name = 'research.json'", (project_id,))
+        row = cur.fetchone()
+    doc = row[0] if row else None
+    return doc if isinstance(doc, dict) else None
+
+
+def count_tool_calls(conn: psycopg.Connection, turn_id: str) -> int:
+    """The turn's tool_calls rows so far -- every attempt's, which is what the Stop hook's
+    no-progress check compares between two stops."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tool_calls WHERE turn_id = %s", (turn_id,))
+        row = cur.fetchone()
+    return int(row[0]) if row and row[0] is not None else 0
 
 
 def finish_tool_call(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> None:
@@ -388,7 +438,7 @@ def load_plugin_agents(plugin_dir: str) -> tuple[dict[str, Any] | None, str | No
 def prepare() -> None:
     """Everything a real turn needs, done once; a failure is logged and fails only the
     real turns (the stub arms keep working)."""
-    global _AGENTS, _AGENTS_ERROR, _BLOCKED
+    global _AGENTS, _AGENTS_ERROR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
@@ -400,13 +450,18 @@ def prepare() -> None:
     _AGENTS, _AGENTS_ERROR = load_plugin_agents(ENGINE_PLUGIN_DIR)
     _BLOCKED = parse_blocked_tools(os.environ.get("BLOCKED_TOOLS"))
     try:
+        _AUTONOMOUS_MAX_NUDGES = parse_max_nudges(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
+    except ValueError as exc:
+        _AUTONOMOUS_MAX_NUDGES = 0
+        log(ev="prepare", step="nudges", error=f"{type(exc).__name__}: {exc}")
+    try:
         from claude_agent_sdk._cli_version import __cli_version__ as cli_version
     except Exception:  # noqa: BLE001
         cli_version = None
     log(
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
-        blocked_tools=sorted(_BLOCKED),
+        blocked_tools=sorted(_BLOCKED), autonomous_max_nudges=_AUTONOMOUS_MAX_NUDGES,
         error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR, engine_dir=ENGINE_DIR,
         cli_version=cli_version,
     )
@@ -427,6 +482,37 @@ def registration_problems(info: Any) -> list[str]:
 # -- the real turn -------------------------------------------------------------
 
 
+def attempt_prompts(text: str, resume: str | None) -> tuple[str, ...]:
+    """Every prompt this attempt MAY send, in order: the turn's own text, and -- on a
+    resumed session -- one continue prompt. WHETHER the second is sent is
+    ``resume_produced_no_turn``'s decision, checked between the two; this is the ceiling,
+    not the trigger, and the two are deliberately not both arming conditions.
+
+    The bound on re-queries is the LENGTH OF THIS TUPLE. run_turn iterates it and
+    breaks early; there is no loop whose condition a second zero-turn result could
+    extend, so the pathological case (a turn that genuinely has nothing to add, which
+    answers every continue prompt with another zero-turn result) logs
+    ``resume_synthetic_result`` twice and completes. A worker that bills money
+    unattended must not be able to spin.
+    """
+    return (text, RESUME_CONTINUE_TEXT) if resume else (text,)
+
+
+def resume_produced_no_turn(result: Any, resume: str | None, receive_count: int) -> bool:
+    """A REDELIVERED attempt (``receive_count`` > 1) that resumed an existing SDK session
+    and whose ResultMessage carries no model turn: the CLI answered its own meta prompt
+    about the interrupted work with a synthetic no-response reply and returned (D17, and
+    the D18 autonomous run), so the work the kill interrupted was never redone. On a
+    FIRST delivery -- of any turn, including one whose session already holds entries --
+    and on a fresh session, a zero-turn result is not this shape and completes as it
+    stands."""
+    return (
+        bool(resume)
+        and receive_count > 1
+        and int(getattr(result, "num_turns", 0) or 0) == 0
+    )
+
+
 async def run_turn(
     turn: dict,
     receive_count: int,
@@ -445,7 +531,7 @@ async def run_turn(
     ensure_cwd(WORKER_CWD)
 
     started = time.monotonic()
-    counters = {"events": 0, "activity": 0, "tool_calls": 0}
+    counters = {"events": 0, "activity": 0, "tool_calls": 0, "nudges": 0}
     store = PgSessionStore(PG_DSN, project_id)
     config_dir = tempfile.mkdtemp(prefix="worker-cfg-")
     # The directory the CLI really runs in: on a resumed turn the SDK repoints it to its
@@ -471,6 +557,20 @@ async def run_turn(
             finish_tool_call(conn, turn_id, tool_use_id)
 
         posttool = make_posttool_hook(turn_id=turn_id, finish=finish, log=log)
+
+        stop_hook = None
+        if _AUTONOMOUS_MAX_NUDGES > 0:
+
+            def on_nudge(n: int) -> None:
+                counters["nudges"] += 1
+                log(ev="nudge", turn_id=turn_id, n=n, max=_AUTONOMOUS_MAX_NUDGES)
+
+            stop_hook = make_stop_hook(
+                turn_id=turn_id, max_nudges=_AUTONOMOUS_MAX_NUDGES,
+                research=lambda: read_research(conn, project_id),
+                tool_count=lambda: count_tool_calls(conn, turn_id),
+                on_nudge=on_nudge, log=log,
+            )
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
@@ -485,6 +585,7 @@ async def run_turn(
             session_id=None if resume else sdk_session_id,
             fs_access_token=message.get("fs_access_token"),
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
+            stop_hook=stop_hook,
         )
         client = ClaudeSDKClient(options=options)
         await client.connect()
@@ -496,41 +597,57 @@ async def run_turn(
             if problems:
                 raise RegistrationError("; ".join(problems))
 
-            await client.query(text)
-            saw_init = False
             tool_names: dict[str, str] = {}
             tasks: dict[str, str] = {}
             live: set[str] = set()
-            async for msg in client.receive_response():
-                if is_init_message(msg):
-                    saw_init = True
-                    sid = message_session_id(msg)
-                    if sid != sdk_session_id:
-                        raise RuntimeError(
-                            f"the CLI is running session {sid}, not the chosen {sdk_session_id}"
-                        )
-                if isinstance(msg, MirrorErrorMessage):
-                    raise MirrorError(f"session store append failed: {msg.error or msg.data}")
-                for event in map_message(msg, tool_names, tasks, live):
-                    write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
-                if isinstance(msg, ResultMessage):
-                    result = msg
-            if not saw_init:
-                # Without this the session-id assertion above fails open: a CLI whose init
-                # message stopped matching would run unverified and pass.
-                raise RuntimeError("the CLI never declared its session (no system/init message)")
-            if result is None:
-                raise RuntimeError("message stream ended without a ResultMessage")
-            if result.is_error:
-                raise RuntimeError(
-                    f"ResultMessage is_error ({result.subtype}"
-                    f"{', api ' + str(result.api_error_status) if result.api_error_status else ''}): "
-                    f"{'; '.join(result.errors or []) or result.result or 'no detail'}"
-                )
+
+            async def receive(*, require_init: bool) -> Any:
+                """One query's message stream: every event written as it arrives, every
+                guard applied, the ResultMessage returned. ``require_init`` holds on the
+                attempt's FIRST query only -- a connected client declares no session
+                again, so requiring it on a re-query would fail every one of them."""
+                saw_init = False
+                pass_result: Any = None
+                async for msg in client.receive_response():
+                    if is_init_message(msg):
+                        saw_init = True
+                        sid = message_session_id(msg)
+                        if sid != sdk_session_id:
+                            raise RuntimeError(
+                                f"the CLI is running session {sid}, not the chosen {sdk_session_id}"
+                            )
+                    if isinstance(msg, MirrorErrorMessage):
+                        raise MirrorError(f"session store append failed: {msg.error or msg.data}")
+                    for event in map_message(msg, tool_names, tasks, live):
+                        write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
+                    if isinstance(msg, ResultMessage):
+                        pass_result = msg
+                if require_init and not saw_init:
+                    # Without this the session-id assertion above fails open: a CLI whose init
+                    # message stopped matching would run unverified and pass.
+                    raise RuntimeError("the CLI never declared its session (no system/init message)")
+                if pass_result is None:
+                    raise RuntimeError("message stream ended without a ResultMessage")
+                if pass_result.is_error:
+                    raise RuntimeError(
+                        f"ResultMessage is_error ({pass_result.subtype}"
+                        f"{', api ' + str(pass_result.api_error_status) if pass_result.api_error_status else ''}): "
+                        f"{'; '.join(pass_result.errors or []) or pass_result.result or 'no detail'}"
+                    )
+                return pass_result
+
+            for index, prompt in enumerate(attempt_prompts(text, resume)):
+                await client.query(prompt)
+                result = await receive(require_init=index == 0)
+                if not resume_produced_no_turn(result, resume, receive_count):
+                    break
+                log(ev="resume_synthetic_result", turn_id=turn_id, session_id=session_id,
+                    receive_count=receive_count, query=index + 1,
+                    result=str(result.result or "")[:200])
             seq = complete(
                 conn, turn, receive_count,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,
-                sdk_session_id=sdk_session_id,
+                sdk_session_id=sdk_session_id, nudges=counters["nudges"],
             )
         finally:
             await client.disconnect()
@@ -549,7 +666,14 @@ async def run_turn(
         "events": counters["events"],
         "activity": counters["activity"],
         "entries_appended": store.calls["entries_appended"],
+        # D17 criterion: a resumed turn that saw a delegation must show the SDK asking the
+        # store for the subagent transcripts and the store answering with at least one.
+        # Collected since D9-10 and surfaced nowhere until this line, so the run could not
+        # assert it.
+        "list_subkeys": store.calls["list_subkeys"],
+        "subkeys_returned": store.calls["subkeys_returned"],
         "tool_calls": counters["tool_calls"],
+        "nudges": counters["nudges"],
     }
     return summary
 

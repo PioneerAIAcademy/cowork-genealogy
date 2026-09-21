@@ -29,6 +29,9 @@ function storeReturning(text: string, calls: Array<[string, string]> = []): Proj
       calls.push([projectPath, ref]);
       return text;
     },
+    readBytes: async () => {
+      throw new Error("sidecar_read must not use readBytes()");
+    },
     list: async () => [],
     writeJson: async () => {},
     writeJsonBoth: async () => {},

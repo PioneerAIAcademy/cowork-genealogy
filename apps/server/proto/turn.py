@@ -27,6 +27,16 @@ the same SDK session (``sessions.sdk_session_id`` unchanged) with ``session_entr
 grown past the kill; a ``place_search`` call completed with a duration (criterion 4);
 its result carried no reconnect instruction (the bearer reached the tool server); the
 reply names Nauvoo. ``--session <id>`` runs it on a seeded session (proto/seed.py).
+
+The kill is generalised for the resume probes (D18): ``--kill-on <bare tool name>``
+(default ``place_search``; ``Agent`` lands it during a delegation), ``--kill-after-s
+<n>`` (default 0, the moment the row appears; ~15 s puts a subagent mid-work) and
+``--text ...`` / ``--text-file <path>`` for the message. The two checks that are about
+the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
+Whatever the checks say, an evidence block follows ``turn_done``: the ``turns`` row, the
+``tool_calls`` and ``session_entries`` rows written after the kill (the CLI's own words
+on resume, so they survive ``proto-down -v``), research.json's array-section sizes
+before the kill and after ``turn_done``, and the ``text`` events after the kill.
 """
 
 from __future__ import annotations
@@ -36,6 +46,8 @@ import re
 import subprocess
 import sys
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -165,81 +177,289 @@ def run(base: str, dsn: str, deadline_s: float) -> tuple[list[Check], dict[str, 
     return checks, figures
 
 
-# -- the kill arm (D14) ----------------------------------------------------------------
+# -- the kill arm (D14, generalised for the D18 resume probes) --------------------------
 
 
-def wait_for_tool_call(dsn: str, turn_id: str, tool: str, deadline_s: float) -> bool:
-    """True once the turn has a tool_calls row naming ``tool`` -- written by the PreToolUse
-    hook, i.e. as the call starts."""
+@dataclass(frozen=True)
+class KillSpec:
+    """What ``--kill`` does: which call's PreToolUse row triggers the kill (a bare tool
+    name -- ``place_search`` or ``Agent`` -- matched under any server spelling), how long
+    after that row to wait, and the message. ``default_text`` gates the two checks that
+    are about TEXT_KILL's answer."""
+
+    kill_on: str = KILL_TOOL
+    kill_after_s: float = 0.0
+    text: str = TEXT_KILL
+    session_id: str | None = None
+    container: str = "proto-worker"
+
+    @property
+    def default_text(self) -> bool:
+        return self.text == TEXT_KILL
+
+
+def bare_name(tool_name: str) -> str:
+    """``mcp__<server>__<name>`` -> ``<name>``; a built-in tool's name as is (the worker's
+    ``options.bare_tool_name``, repeated here so this script imports no SDK)."""
+    return tool_name.rsplit("__", 1)[-1] if tool_name.startswith("mcp__") else tool_name
+
+
+def matches_bare(tool_name: str, bare: str) -> bool:
+    """Whether a ``tool_calls.tool_name`` is ``bare`` under any spelling: exactly (a
+    built-in such as ``Agent``) or as an MCP tool's bare name. Never a suffix match --
+    ``place_search`` must not match ``place_search_all``, nor ``Agent`` a name that
+    merely ends in it."""
+    return tool_name == bare or (tool_name.startswith("mcp__") and bare_name(tool_name) == bare)
+
+
+def wait_for_tool_call(dsn: str, turn_id: str, tool: str, deadline_s: float) -> str:
+    """``"seen"`` once the turn has a tool_calls row whose name is ``tool`` (the
+    PreToolUse hook writes it as the call starts); ``"completed"`` if the turn finished
+    without one (a kill would then land on nothing); ``"timeout"`` at the deadline."""
     t0 = time.monotonic()
     while time.monotonic() - t0 < deadline_s:
-        if one(dsn, "SELECT count(*) FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s", (turn_id, f"%{tool}")):
-            return True
+        names = db(dsn, "SELECT tool_name FROM tool_calls WHERE turn_id = %s ORDER BY id", (turn_id,))
+        if any(matches_bare(n, tool) for (n,) in names):
+            return "seen"
+        if one(dsn, "SELECT completed_at FROM turns WHERE turn_id = %s", (turn_id,)) is not None:
+            return "completed"
         time.sleep(0.2)
-    return False
+    return "timeout"
 
 
 def docker(*args: str) -> None:
     subprocess.run(["docker", *args], check=True, capture_output=True, text=True, encoding="utf-8")
 
 
-def run_kill(base: str, dsn: str, deadline_s: float, session_id: str | None, container: str) -> tuple[list[Check], dict[str, Any]]:
-    """One real turn, the worker container killed as its first place_search call starts
-    and started again; the shim's redelivery must resume the SDK session and finish."""
+@dataclass
+class KillRows:
+    """What the checks read after ``turn_done``, gathered by ``run_kill`` so ``kill_checks``
+    is a pure function of rows."""
+
+    turn_row: tuple | None                 # (receive_count, completed_at, outcome, cost_usd)
+    sdk_before: str | None
+    sdk_after: str | None
+    entries_at_kill: int
+    entries_after: int
+    kill_calls: list[tuple]                # (decision, duration_ms) for the kill-on tool
+    summaries: list[str]                   # tool_result summaries of the kill-on tool
+    reply: str
+
+
+def kill_checks(rows: KillRows, spec: KillSpec) -> list[Check]:
+    receive_count, completed, outcome, cost = rows.turn_row if rows.turn_row else (None, None, None, None)
+    checks: list[Check] = [
+        ("kill: the turn was redelivered (receive_count >= 2)", (receive_count or 0) >= 2, f"receive_count={receive_count}"),
+        ("kill: completed with outcome ok and cost_usd > 0",
+         completed is not None and outcome == "ok" and cost is not None and float(cost) > 0, f"row={rows.turn_row}"),
+        ("kill: the same SDK session resumed, not a new one", bool(rows.sdk_before) and rows.sdk_after == rows.sdk_before,
+         f"{rows.sdk_before} -> {rows.sdk_after}"),
+        ("kill: session_entries grew past the kill", rows.entries_after > rows.entries_at_kill,
+         f"{rows.entries_at_kill} -> {rows.entries_after}"),
+        (f"kill: a {spec.kill_on} call completed with a duration (criterion 4)",
+         any(d == "allow" and ms is not None for d, ms in rows.kill_calls), f"calls={rows.kill_calls}"),
+    ]
+    if spec.default_text:
+        checks.append((f"kill: {spec.kill_on} answered with the bearer (no reconnect instruction)",
+                       bool(rows.summaries) and not any(REAUTH.search(s) for s in rows.summaries),
+                       f"summaries={rows.summaries[:2]}"))
+        checks.append(("kill: the reply names Nauvoo", "nauvoo" in rows.reply.lower(), f"reply={rows.reply[:200]!r}"))
+    return checks
+
+
+# -- the evidence block: what the resumed attempt actually did ---------------------------
+
+
+@dataclass
+class KillMarks:
+    """High-water marks taken at the kill: everything above them was written by the
+    resumed attempt."""
+
+    calls_id: int
+    entries_seq: int
+    events_seq: int
+    sections_before: list[tuple]
+
+
+@dataclass
+class KillEvidence:
+    turn_row: dict[str, Any] = field(default_factory=dict)
+    calls_after: list[tuple] = field(default_factory=list)      # (tool_name, agent_type, decision, duration_ms)
+    entries_after: list[tuple] = field(default_factory=list)    # (seq, subpath, type, brief)
+    sections_before: list[tuple] = field(default_factory=list)  # (section, n)
+    sections_after: list[tuple] = field(default_factory=list)
+    texts_after: list[str] = field(default_factory=list)
+
+
+def entry_brief(entry: Any, limit: int = 200) -> str:
+    """The first ``limit`` characters of what a transcript entry says: its message's text
+    blocks, ``tool_use:<name>`` per tool call, ``tool_result:<content>`` per result, the
+    ``result`` text of a result entry, or the entry's own ``summary``/``content``."""
+    if not isinstance(entry, dict):
+        return str(entry)[:limit]
+    parts: list[str] = []
+    message = entry.get("message")
+    content = message.get("content") if isinstance(message, dict) else None
+    if content is None:
+        content = entry.get("content")
+    if isinstance(content, str):
+        parts.append(content)
+    elif isinstance(content, list):
+        for block in content:
+            if not isinstance(block, dict):
+                parts.append(str(block))
+                continue
+            kind = block.get("type")
+            if kind == "text":
+                parts.append(str(block.get("text") or ""))
+            elif kind == "tool_use":
+                parts.append(f"tool_use:{block.get('name')}")
+            elif kind == "tool_result":
+                inner = block.get("content")
+                if isinstance(inner, list):
+                    inner = " ".join(str(b.get("text") or "") if isinstance(b, dict) else str(b) for b in inner)
+                parts.append(f"tool_result:{inner if inner is not None else ''}")
+            else:
+                parts.append(f"{kind}")
+    for key in ("result", "summary"):
+        if isinstance(entry.get(key), str):
+            parts.append(str(entry[key]))
+    text = " ".join(p for p in parts if p)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:limit]
+
+
+def section_counts_sql() -> str:
+    """Length of every array-typed top-level key of the project's research.json -- no section
+    list to maintain, so a delegation writing person_evidence shows up beside an extraction
+    writing sources and assertions. Shared with demo.py, which imports this module; nothing
+    here imports demo -- under ``python proto/turn.py`` sys.path holds proto/, not apps/server,
+    so a ``from proto import …`` in this file is a ModuleNotFoundError at run time."""
+    return (
+        "SELECT k AS section, jsonb_array_length(d.doc->k) AS n "
+        "FROM documents d, jsonb_object_keys(d.doc) AS k "
+        "WHERE d.project_id = %s AND d.name = 'research.json' AND jsonb_typeof(d.doc->k) = 'array' "
+        "ORDER BY k"
+    )
+
+
+def take_marks(dsn: str, session_id: str, turn_id: str, sdk_session_id: str | None, project_id: str | None) -> KillMarks:
+    return KillMarks(
+        calls_id=one(dsn, "SELECT COALESCE(max(id), 0) FROM tool_calls WHERE turn_id = %s", (turn_id,)) or 0,
+        entries_seq=one(dsn, "SELECT COALESCE(max(seq), 0) FROM session_entries WHERE session_id = %s", (sdk_session_id or "",)) or 0,
+        events_seq=one(dsn, "SELECT COALESCE(max(seq), 0) FROM session_events WHERE session_id = %s", (session_id,)) or 0,
+        sections_before=db(dsn, section_counts_sql(), (project_id or "",)),
+    )
+
+
+def gather_evidence(dsn: str, session_id: str, turn_id: str, sdk_session_id: str | None, project_id: str | None,
+                    marks: KillMarks) -> KillEvidence:
+    row = db(dsn, "SELECT receive_count, num_turns, cost_usd, nudges, duration_ms, outcome, completed_at "
+                  "FROM turns WHERE turn_id = %s", (turn_id,))
+    keys = ("receive_count", "num_turns", "cost_usd", "nudges", "duration_ms", "outcome", "completed_at")
+    entries = db(dsn, "SELECT seq, subpath, entry FROM session_entries WHERE session_id = %s AND seq > %s ORDER BY seq",
+                 (sdk_session_id or "", marks.entries_seq))
+    return KillEvidence(
+        turn_row=dict(zip(keys, row[0])) if row else {},
+        calls_after=db(dsn, "SELECT tool_name, agent_type, decision, duration_ms FROM tool_calls "
+                            "WHERE turn_id = %s AND id > %s ORDER BY id", (turn_id, marks.calls_id)),
+        entries_after=[(seq, subpath, (entry or {}).get("type") if isinstance(entry, dict) else None, entry_brief(entry))
+                       for seq, subpath, entry in entries],
+        sections_before=list(marks.sections_before),
+        sections_after=db(dsn, section_counts_sql(), (project_id or "",)),
+        texts_after=[t or "" for (t,) in db(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s "
+                                                 "AND kind = 'text' AND seq > %s ORDER BY seq", (session_id, marks.events_seq))],
+    )
+
+
+def render_evidence(ev: KillEvidence) -> str:
+    """The block printed after turn_done whatever the checks say."""
+    lines = ["-- evidence: the turns row",
+             "   " + "  ".join(f"{k}={v}" for k, v in ev.turn_row.items()) if ev.turn_row else "   (no row)"]
+    lines.append(f"-- evidence: tool_calls rows written after the kill ({len(ev.calls_after)})")
+    lines.extend(f"   {tool}  agent_type={agent}  {decision}  duration_ms={ms}" for tool, agent, decision, ms in ev.calls_after)
+    if not ev.calls_after:
+        lines.append("   (none)")
+    lines.append(f"-- evidence: session_entries rows appended after the kill ({len(ev.entries_after)})")
+    lines.extend(f"   seq={seq}  {(subpath + '  ') if subpath else ''}{kind}  {brief!r}"
+                 for seq, subpath, kind, brief in ev.entries_after)
+    if not ev.entries_after:
+        lines.append("   (none)")
+    before = dict(ev.sections_before)
+    after = dict(ev.sections_after)
+    lines.append("-- evidence: research.json array sections, before the kill -> after turn_done")
+    lines.extend(f"   {name}  {before.get(name, 0)} -> {after.get(name, 0)}"
+                 + ("  (%+d)" % (after.get(name, 0) - before.get(name, 0)) if after.get(name, 0) != before.get(name, 0) else "")
+                 for name in sorted(set(before) | set(after)))
+    if not before and not after:
+        lines.append("   (no research.json row)")
+    lines.append(f"-- evidence: text events after the kill ({len(ev.texts_after)})")
+    lines.extend(f"   {t[:300]!r}" for t in ev.texts_after)
+    if not ev.texts_after:
+        lines.append("   (none)")
+    return "\n".join(lines)
+
+
+def run_kill(base: str, dsn: str, deadline_s: float, spec: KillSpec) -> tuple[list[Check], dict[str, Any]]:
+    """One real turn, the worker container killed ``spec.kill_after_s`` after its first
+    ``spec.kill_on`` call starts and started again; the shim's redelivery must resume the
+    SDK session and finish. Prints the evidence block after turn_done."""
     checks: list[Check] = []
     figures: dict[str, Any] = {}
+    session_id = spec.session_id
     with httpx.Client(timeout=30.0) as client:
         if session_id is None:
             r = client.post(f"{base}/api/sessions", json={"title": "D14 kill-resume"})
             r.raise_for_status()
             session_id = r.json()["id"]
         figures["session_id"] = session_id
-        turn_id = post_message(client, base, session_id, TEXT_KILL)
+        project_id = one(dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
+        turn_id = post_message(client, base, session_id, spec.text)
         figures["turn_id"] = turn_id
-        seen = wait_for_tool_call(dsn, turn_id, KILL_TOOL, min(deadline_s, 120.0))
-        checks.append((f"kill: the turn reached its first {KILL_TOOL} call", seen, "no tool_calls row in time"))
-        if not seen:
+        outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
+        checks.append((f"kill: the turn reached its first {spec.kill_on} call", outcome == "seen",
+                       "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"))
+        if outcome != "seen":
             return checks, figures
+        if spec.kill_after_s > 0:
+            time.sleep(spec.kill_after_s)
         sdk_before = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
         entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
+        marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
         t_kill = time.monotonic()
-        docker("kill", container)  # counts as a manual stop: unless-stopped will not restart it
-        docker("start", container)
-        figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill})
+        docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
+        docker("start", spec.container)
+        figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.kill_on,
+                        "kill_after_s": spec.kill_after_s})
         try:
             _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
         except Exception as exc:  # noqa: BLE001
             checks.append(("kill: the redelivered turn reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+            print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
             return checks, figures
         figures["wall_after_kill_s"] = round(time.monotonic() - t_kill, 1)
         checks.append(("kill: the redelivered turn reached turn_done", True, ""))
         row = db(dsn, "SELECT receive_count, completed_at, outcome, cost_usd FROM turns WHERE turn_id = %s", (turn_id,))
-        receive_count, completed, outcome, cost = row[0] if row else (None, None, None, None)
-        checks.append(("kill: the turn was redelivered (receive_count >= 2)", (receive_count or 0) >= 2, f"receive_count={receive_count}"))
-        checks.append(("kill: completed with outcome ok and cost_usd > 0",
-                       completed is not None and outcome == "ok" and cost is not None and float(cost) > 0, f"row={row}"))
         sdk_after = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
-        checks.append(("kill: the same SDK session resumed, not a new one", bool(sdk_before) and sdk_after == sdk_before,
-                       f"{sdk_before} -> {sdk_after}"))
         entries_after = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
-        checks.append(("kill: session_entries grew past the kill", entries_after > entries_at_kill, f"{entries_at_kill} -> {entries_after}"))
-        calls = db(dsn, "SELECT decision, duration_ms FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s ORDER BY id",
-                   (turn_id, f"%{KILL_TOOL}"))
-        checks.append((f"kill: a {KILL_TOOL} call completed with a duration (criterion 4)",
-                       any(d == "allow" and ms is not None for d, ms in calls), f"calls={calls}"))
-        results = db(dsn, "SELECT payload->>'summary' FROM session_events WHERE session_id = %s AND kind = 'tool_result' "
-                          "AND payload->>'tool' LIKE %s ORDER BY seq", (session_id, f"%{KILL_TOOL}"))
-        summaries = [r[0] or "" for r in results]
-        checks.append((f"kill: {KILL_TOOL} answered with the bearer (no reconnect instruction)",
-                       bool(summaries) and not any(REAUTH.search(s) for s in summaries), f"summaries={summaries[:2]}"))
+        calls = [(d, ms) for n, d, ms in db(dsn, "SELECT tool_name, decision, duration_ms FROM tool_calls WHERE turn_id = %s ORDER BY id",
+                                            (turn_id,)) if matches_bare(n, spec.kill_on)]
+        results = db(dsn, "SELECT payload->>'tool', payload->>'summary' FROM session_events WHERE session_id = %s "
+                          "AND kind = 'tool_result' ORDER BY seq", (session_id,))
+        summaries = [s or "" for tool, s in results if matches_bare(tool or "", spec.kill_on)]
         user_seq = one(dsn, "SELECT max(seq) FROM session_events WHERE session_id = %s AND kind = 'user_msg' AND payload->>'turn_id' = %s",
                        (session_id, turn_id))
         texts = db(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s AND kind = 'text' AND seq > %s ORDER BY seq",
                    (session_id, user_seq or 0))
         reply = " ".join(t[0] or "" for t in texts)
-        checks.append(("kill: the reply names Nauvoo", "nauvoo" in reply.lower(), f"reply={reply[:200]!r}"))
+        rows = KillRows(turn_row=row[0] if row else None, sdk_before=sdk_before, sdk_after=sdk_after,
+                        entries_at_kill=entries_at_kill, entries_after=entries_after, kill_calls=calls,
+                        summaries=summaries, reply=reply)
+        checks.extend(kill_checks(rows, spec))
+        receive_count, _completed, _outcome, cost = rows.turn_row if rows.turn_row else (None, None, None, None)
         figures.update({"receive_count": receive_count, "cost_usd": float(cost) if cost is not None else None,
-                        "entries_after": entries_after, "place_search_calls": calls, "reply": reply[:200]})
+                        "entries_after": entries_after, "kill_on_calls": calls, "reply": reply[:200]})
+        print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
     return checks, figures
 
 
@@ -266,18 +486,56 @@ def tokens_filled(t: dict[str, int | None]) -> bool:
             and ((t["input_tokens"] or 0) + (t["cache_creation_tokens"] or 0) + (t["cache_read_tokens"] or 0)) > 0)
 
 
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("--base", default="http://127.0.0.1:8085")
+    p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
+    p.add_argument("--deadline-s", type=float, default=300.0,
+                   help="wall clock before a FAIL, per wait: on --kill the arm waits it out twice, "
+                        "once for the --kill-on row (an Agent can be minutes in) and again for turn_done")
+    p.add_argument("--kill", action="store_true", help="D14: one turn killed at its first --kill-on call, redelivered and resumed")
+    p.add_argument("--session", default=None, help="with --kill: run on this session (proto/seed.py) instead of a fresh one")
+    p.add_argument("--worker-container", default="proto-worker")
+    p.add_argument("--kill-on", default=KILL_TOOL,
+                   help=f"with --kill: the bare tool name whose PreToolUse row triggers the kill (default {KILL_TOOL}; "
+                        "Agent lands it during a delegation)")
+    p.add_argument("--kill-after-s", type=float, default=0.0,
+                   help="with --kill: seconds to wait after that row before the kill (default 0: at once)")
+    text = p.add_mutually_exclusive_group()
+    text.add_argument("--text", default=None, help="with --kill: the message to post (default: the place_search question)")
+    text.add_argument("--text-file", default=None, help="with --kill: read the message from this UTF-8 file")
+    return p
+
+
+def kill_spec(args: argparse.Namespace) -> KillSpec:
+    """The ``--kill`` arm's spec from the parsed arguments. The message is ``--text-file``'s
+    contents (UTF-8, stripped), else ``--text`` verbatim, else ``TEXT_KILL``; a blank
+    message is refused rather than posted."""
+    text = TEXT_KILL
+    if args.text_file:
+        text = Path(args.text_file).read_text(encoding="utf-8").strip()
+    elif args.text is not None:
+        text = args.text
+    if not text.strip():
+        raise ValueError("--text/--text-file gave an empty message")
+    if args.kill_after_s < 0:
+        raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
+    return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
+                    session_id=args.session, container=args.worker_container)
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
-    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--base", default="http://127.0.0.1:8085")
-    p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
-    p.add_argument("--deadline-s", type=float, default=300.0, help="per-turn wall clock before a FAIL")
-    p.add_argument("--kill", action="store_true", help="D14: one turn killed at its first place_search call, redelivered and resumed")
-    p.add_argument("--session", default=None, help="with --kill: run on this session (proto/seed.py) instead of a fresh one")
-    p.add_argument("--worker-container", default="proto-worker")
-    args = p.parse_args(argv)
+    args = build_parser().parse_args(argv)
+    spec: KillSpec | None = None
+    if args.kill:
+        try:
+            spec = kill_spec(args)
+        except (OSError, ValueError) as exc:
+            print(f"--kill: {exc}", file=sys.stderr)
+            return 2
 
     try:
         health = httpx.get(f"{args.base}/api/health", timeout=5.0).json()
@@ -289,8 +547,8 @@ def main(argv: list[str] | None = None) -> int:
         print("the tier has no queue (NullQueue): nothing would run the turn", file=sys.stderr)
         return 2
 
-    if args.kill:
-        checks, figures = run_kill(args.base, args.pg_dsn, args.deadline_s, args.session, args.worker_container)
+    if spec is not None:
+        checks, figures = run_kill(args.base, args.pg_dsn, args.deadline_s, spec)
     else:
         checks, figures = run(args.base, args.pg_dsn, args.deadline_s)
     width = max(len(c[0]) for c in checks)
