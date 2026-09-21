@@ -708,9 +708,12 @@ gh issue view <holder> --repo PioneerAIAcademy/cowork-genealogy \
 It is hard rather than soft because a skill's run log goes inactive the moment
 any file under its snapshot changes. Two such items cannot share a run however
 they are sequenced: each pays its own `make eval-skill` **plus a fresh
-`.ann.json` with a correction entry for every dimension of every test** — 27
-tests for `record-extraction` — and whichever lands first invalidates the
-other's run log. Promoting both produces rework, not parallelism.
+`.ann.json` covering every dimension of the tests its `review_sample` names** —
+3 rotation + 1 targeted + 1 random plus the uncapped mandatory slot, a median of
+5 tests and a maximum of 13, not every test in the suite — and whichever lands
+first invalidates the other's run log. That invalidation is what makes the gate
+hard; the annotation pass is the smaller half. Promoting both produces rework,
+not parallelism.
 
 **The snapshot set — an item takes the slot only if it changes one of these:**
 
