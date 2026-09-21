@@ -12,7 +12,8 @@ Only ``append`` / ``load`` / ``list_subkeys`` are defined; ``list_sessions``,
 them. Every method bumps ``calls``, and the worker's per-turn log line reads
 ``entries_appended``, ``list_subkeys`` and ``subkeys_returned`` off it -- the "frames
 appended > 0" assertion the plan names for the two silent-loss modes (a read-only config
-dir, a mismatched ``CLAUDE_CONFIG_DIR``), and D17's fourth criterion. Connect-per-call, one transaction per ``append`` batch.
+dir, a mismatched ``CLAUDE_CONFIG_DIR``), and D17's fourth criterion. Connect-per-call,
+one transaction per ``append`` batch.
 """
 
 from __future__ import annotations
