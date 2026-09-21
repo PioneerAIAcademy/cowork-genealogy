@@ -241,9 +241,9 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     },
   ],
   [
-    3489,
+    3522,
     {
-      reason: "the research_log_append notes corpus at 772e67358, derived from eval/runlogs rather than the qualifier probe. Carries its own `measured at <sha>` stamp in the spec, per corpus-figures.test.ts rule 3. Keyed by EXACT value, so this entry must be re-keyed whenever the corpus is re-derived — which is the intended friction: the figure cannot move in the spec without someone touching this line",
+      reason: "the research_log_append notes corpus at 414ee3c68, derived from eval/runlogs rather than the qualifier probe. Carries its own `measured at <sha>` stamp in the spec, per corpus-figures.test.ts rule 3. Keyed by EXACT value, so this entry must be re-keyed whenever the corpus is re-derived — which is the intended friction: the figure cannot move in the spec without someone touching this line",
       scope: ["docs/specs/research-log-editor-spec.md"],
     },
   ],

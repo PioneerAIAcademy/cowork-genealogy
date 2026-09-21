@@ -146,9 +146,9 @@ class LogAppendError extends Error {}
  * xfail_reason): "not generalizable outside the US (post-1851 England & Wales
  * censuses do carry a relationship column)".
  *
- * MEASURED over the 3,489 distinct `notes` arguments of research_log_append in
+ * MEASURED over the 3,522 distinct `notes` arguments of research_log_append in
  * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
- * form), measured at 772e67358: refusals fall 355 -> 202, and the 153 removed
+ * form), measured at 414ee3c68: refusals fall 355 -> 202, and the 153 removed
  * are 43.1% of every refusal the rule made -- 133 of them the year, 20 the
  * jurisdiction. THE SPLIT RULE, because the figure is meaningless without it: a
  * freed note counts as JURISDICTION when `censusMentions` bound it to a non-US
@@ -166,11 +166,13 @@ class LogAppendError extends Error {}
  * census is non-US; the counterfactual files them under YEAR because that is
  * what moved. That one shape is the whole 20-versus-8 gap. Neither rule is
  * wrong; quoting a split without saying which is.
- * Nothing in that corpus is newly refused. Re-derive rather than
- * quote these: the corpus grows with every committed run, and two earlier
- * passes of this same docstring read 3,275/332/136, 3,392/338/142 and
- * 3,490/355/154 on other snapshots of it -- note the corpus can SHRINK as well
- * as grow, because a re-run replaces a skill's run log rather than adding one. The stamp is there so a reader can tell what the number was
+ *
+ * Nothing in that corpus is newly refused. RE-DERIVE RATHER THAN QUOTE these:
+ * the corpus moves in both directions as run logs land, because a re-run
+ * REPLACES a skill's run log rather than adding one. Four earlier passes of
+ * this docstring read 3,275/332/136, 3,392/338/142, 3,490/355/154 and
+ * 3,489/355/153 -- it shrank by one between the last two of those and grew by
+ * 33 after them. The stamp is there so a reader can tell what the number was
  * true of, per tests/packaging/corpus-figures.test.ts's rule 3.
  *
  * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
