@@ -1101,10 +1101,12 @@ def test_resume_produced_no_turn_is_a_redelivery_that_ran_no_model_turn(
 
 
 def test_the_re_query_bound_is_the_length_of_the_prompt_tuple():
-    assert worker.attempt_prompts("hello", None, 2) == ("hello",)
-    assert worker.attempt_prompts("hello", SID, 1) == ("hello",), "a first delivery is never re-queried"
-    assert worker.attempt_prompts("hello", SID, 2) == ("hello", options.RESUME_CONTINUE_TEXT)
-    assert len(worker.attempt_prompts("hello", SID, 3)) == 2, "one re-query per attempt, whatever the results say"
+    # The ceiling, not the trigger: whether the second prompt is SENT is
+    # resume_produced_no_turn's single decision, which the tests below drive through
+    # run_turn. A fresh session cannot be re-queried at all.
+    assert worker.attempt_prompts("hello", None) == ("hello",)
+    assert worker.attempt_prompts("hello", SID) == ("hello", options.RESUME_CONTINUE_TEXT)
+    assert len(worker.attempt_prompts("hello", SID)) == 2, "one re-query per attempt, whatever the results say"
 
 
 def test_a_resumed_zero_turn_result_is_re_queried_once_and_completes_on_the_second(turn_env, monkeypatch):
