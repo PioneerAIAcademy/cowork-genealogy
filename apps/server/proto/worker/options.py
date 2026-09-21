@@ -1,5 +1,6 @@
-"""The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log) and
-``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration).
+"""The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log),
+``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration) and, on the D18
+autonomous arm only, ``Stop`` (veto the model's voluntary yield, ``make_stop_hook``).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",
 D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
@@ -75,6 +76,27 @@ STORE_ENV_KEYS = (
 # The per-user config the desktop reads from config.json; passed through when set.
 PER_USER_ENV_KEYS = ("WIKI_API_URL", "POP_STATS_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL")
 
+# The e2e harness's tree-read block (eval/harness/e2e/orchestrator.py BLOCKED_TREE_TOOLS):
+# every e2e fixture's answer still sits in the live FamilySearch tree, so a fixture run
+# that may read the tree is a lookup, not the research workflow. The worker takes the
+# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block.
+BLOCKED_DENY_REASON = (
+    "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
+    "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
+)
+
+
+def bare_tool_name(tool_name: str) -> str:
+    """``mcp__<server>__<name>`` -> ``<name>``, whatever the server spelling; a built-in
+    tool's name is returned as is."""
+    return tool_name.rsplit("__", 1)[-1] if tool_name.startswith("mcp__") else tool_name
+
+
+def parse_blocked_tools(value: str | None) -> frozenset[str]:
+    """``BLOCKED_TOOLS``: comma-separated bare MCP tool names; blanks ignored."""
+    return frozenset(part.strip() for part in (value or "").split(",") if part.strip())
+
+
 WRITE_DENY_REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json must "
     "go through the writer tools. To CREATE a new project use project_create, which "
@@ -131,18 +153,28 @@ def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> 
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
-# contract is the one header the entrypoint reads -- `Authorization: Bearer <patron token>`
-# becomes the request's principal -- and nothing else on the request: no project or turn
-# header, because per-request store scoping over HTTP does not exist yet (that service
-# runs the file backend). The CLI opens the MCP session once per process, once per turn.
+# contract is the two headers the entrypoint reads, both per request and never process
+# state: `Authorization: Bearer <patron token>` becomes the request's principal, and
+# `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore -- the same store the
+# stdio fork gets from GENEALOGY_PROJECT_ID. Missing, the project tools answer an
+# instruction naming the header; malformed, the request is a 400. No turn header. The CLI
+# opens the MCP session once per process, once per turn.
+TOOL_SERVER_DEFAULT = "http"
 TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
+PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 
 
-def tool_server_headers(worker_env: Mapping[str, str], *, fs_access_token: str | None) -> dict[str, str]:
-    """``Authorization: Bearer <token>`` when there is a token; no header at all when the
-    bearer is empty (the server reads a missing header as an empty bearer)."""
+def tool_server_headers(
+    worker_env: Mapping[str, str], *, fs_access_token: str | None, project_id: str
+) -> dict[str, str]:
+    """``X-Genealogy-Project-Id`` always; ``Authorization: Bearer <token>`` only when there
+    is a token (the server reads a missing header as an empty bearer, and a bare
+    ``Bearer `` would be malformed)."""
+    headers = {PROJECT_ID_HEADER: project_id}
     token = bearer_token(worker_env, fs_access_token)
-    return {"Authorization": f"Bearer {token}"} if token else {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 
 def tool_server_entry(
@@ -152,16 +184,22 @@ def tool_server_entry(
     project_id: str,
     fs_access_token: str | None,
 ) -> dict[str, Any]:
-    """The ``genealogy`` MCP server entry. ``TOOL_SERVER=stdio`` (the default):
+    """The ``genealogy`` MCP server entry. ``TOOL_SERVER=http`` (the default since
+    2026-09-20, and what compose sets): the shared Streamable HTTP tool server, one
+    process for every turn. ``TOOL_SERVER=stdio``:
     ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
-    of ``tool_server_env``. ``TOOL_SERVER=http``: the shared Streamable HTTP tool server at
-    ``TOOL_SERVER_URL`` with the bearer as ``Authorization``."""
-    mode = worker_env.get("TOOL_SERVER", "stdio")
+    of ``tool_server_env``. The http entry is ``TOOL_SERVER_URL`` with the bearer as
+    ``Authorization`` and the turn's project id as ``X-Genealogy-Project-Id``; its
+    per-user config is the ``tools`` service's own environment, not the request's."""
+    # One default, here and in compose, so a worker started without its environment does
+    # not quietly do something production never does. TOOL_SERVER_DEFAULT is the single
+    # source; test_proto_config reads compose against it.
+    mode = worker_env.get("TOOL_SERVER") or TOOL_SERVER_DEFAULT
     if mode == "http":
         return {
             "type": "http",
             "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
-            "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token),
+            "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
         }
     if mode != "stdio":
         raise ValueError(f"TOOL_SERVER must be stdio or http, not {mode!r}")
@@ -220,6 +258,7 @@ def make_pretool_hook(
     config_root: str | Callable[[], str],
     record: Callable[[dict[str, Any]], None],
     log: Callable[..., None] | None = None,
+    blocked: frozenset[str] = frozenset(),
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -235,6 +274,8 @@ def make_pretool_hook(
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
+            elif tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked:
+                decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
                 root = config_root() if callable(config_root) else config_root
                 reason = project_read_denied(
@@ -294,6 +335,108 @@ def make_posttool_hook(
     return _posttool
 
 
+# -- the Stop hook (D18) ----------------------------------------------------------
+#
+# One queue message is one model turn, and an autonomous /research run yields after
+# each sub-skill step ("handing off to research-plan"). The e2e harness keeps its
+# --autonomous runs going with a Stop hook that vetoes the voluntary yield
+# (eval/harness/e2e/orchestrator.py stop_hook), bounded by
+# eval/harness/e2e/stop_checker.py should_continue_run. Both are ported here like
+# deny.py's predicate -- the worker image carries no eval/ -- with the harness's reason
+# text verbatim, so the prototype's autonomous arm and the harness apply one rule.
+
+# The harness's own veto text for a SILENT stop, verbatim (its `stop_hook`'s fallback
+# block dict). Since 2026-09-20 the harness also answers a *well-formed* hand-back —
+# one that names its next step and asks — with the researcher's "Yes." instead
+# (`classify_hand_back` / `hand_back_outcome`, issues #2328 and #2292). The worker does
+# not mirror that branch: it classifies nothing, because the classifier reads the
+# harness's in-process narration list and the prose half of #2292 has not landed, so
+# copying a moving wording would drift the moment it does. Every stop the worker sees
+# therefore takes this text. `test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim`
+# reads it off the orchestrator and goes red when either side moves.
+CONTINUE_REASON = (
+    "You are mid-run in an autonomous /research session and the "
+    "project is not yet complete (project.status is not "
+    "'completed'). Re-read research.json and invoke the next GPS "
+    "sub-skill now; keep going until project.status is "
+    "'completed' or you hit a genuine, logged blocker."
+)
+
+
+def project_completed(research: Mapping[str, Any] | None) -> bool:
+    """Whether research.json says the project is done."""
+    if not research:
+        return False
+    return (research.get("project") or {}).get("status") == "completed"
+
+
+def should_continue_run(
+    *,
+    research: Mapping[str, Any] | None,
+    nudges_used: int,
+    max_nudges: int,
+    tool_count: int,
+    tool_count_at_last_nudge: int,
+    mcp_unavailable: bool = False,
+) -> bool:
+    """Whether to veto an agent's *voluntary* stop and nudge it onward.
+
+    True  -> block the Stop: the run is unfinished and a nudge may help.
+    False -> allow the Stop: the project is complete, the nudge budget is spent, the
+             previous nudge produced no tool call (the agent isn't making progress, so
+             another nudge won't either), or the genealogy MCP surface is gone -- which
+             the worker cannot observe, so its callers leave the default.
+    """
+    if mcp_unavailable:
+        return False
+    if project_completed(research):
+        return False
+    if nudges_used >= max_nudges:
+        return False
+    if nudges_used > 0 and tool_count == tool_count_at_last_nudge:
+        return False
+    return True
+
+
+def make_stop_hook(
+    *,
+    turn_id: str,
+    max_nudges: int,
+    research: Callable[[], Mapping[str, Any] | None],
+    tool_count: Callable[[], int],
+    on_nudge: Callable[[int], None],
+    log: Callable[..., None] | None = None,
+):
+    """The worker's ``Stop`` callback: ``research()`` is the project's research.json (or
+    None) and ``tool_count()`` the turn's tool-call count so far, both read at each stop;
+    ``on_nudge(n)`` is called on each veto. Never raises: any exception allows the stop.
+    Bound with ``PRETOOL_TIMEOUT_S``; the harness's matcher has no timeout -- a timed-out
+    hook allows the stop, like ``stop_hook_failed``."""
+    state = {"nudges_used": 0, "tool_count_at_last_nudge": -1}
+
+    async def _stop(_input_data: Any, _tool_use_id: str | None, _context: Any) -> dict[str, Any]:
+        try:
+            count = int(tool_count())
+            if not should_continue_run(
+                research=research(),
+                nudges_used=state["nudges_used"],
+                max_nudges=max_nudges,
+                tool_count=count,
+                tool_count_at_last_nudge=state["tool_count_at_last_nudge"],
+            ):
+                return {}
+            state["nudges_used"] += 1
+            state["tool_count_at_last_nudge"] = count
+            on_nudge(state["nudges_used"])
+        except Exception as exc:  # noqa: BLE001 - a hook that raises ends the turn in error
+            if log is not None:
+                log(ev="stop_hook_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
+            return {}
+        return {"decision": "block", "reason": CONTINUE_REASON}
+
+    return _stop
+
+
 def check_registration(
     info: Mapping[str, Any] | None, *, expected_agents: set[str], expected_skills: int
 ) -> list[str]:
@@ -333,7 +476,11 @@ def build_worker_options(
     fs_access_token: str | None = None,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
+    stop_hook: Callable[..., Any] | None = None,
 ):
+    """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given:
+    the interactive stack passes none, so a browser turn that yields to ask the user
+    still ends."""
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     if resume and session_id:
@@ -357,6 +504,14 @@ def build_worker_options(
     }
     if env_in.get("TMPDIR"):
         env["TMPDIR"] = env_in["TMPDIR"]
+    hooks: dict[str, Any] = {
+        "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
+        # Both outcomes stamp the duration: a tool that errored still ran for that long.
+        "PostToolUse": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
+        "PostToolUseFailure": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
+    }
+    if stop_hook is not None:
+        hooks["Stop"] = [HookMatcher(matcher=None, hooks=[stop_hook], timeout=PRETOOL_TIMEOUT_S)]
     kwargs: dict[str, Any] = dict(
         cwd=cwd,
         permission_mode="bypassPermissions",
@@ -373,12 +528,7 @@ def build_worker_options(
             },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),
-        hooks={
-            "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
-            # Both outcomes stamp the duration: a tool that errored still ran for that long.
-            "PostToolUse": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
-            "PostToolUseFailure": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
-        },
+        hooks=hooks,
         session_store=store,
         session_store_flush="eager",
         include_partial_messages=True,

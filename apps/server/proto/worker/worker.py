@@ -77,6 +77,8 @@ from proto.worker.options import (  # noqa: E402
     check_registration,
     make_posttool_hook,
     make_pretool_hook,
+    make_stop_hook,
+    parse_blocked_tools,
 )
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
 from proto.worker.session_store import PgSessionStore  # noqa: E402
@@ -112,6 +114,20 @@ _stdout_lock = threading.Lock()
 # Parsed once at start (prepare); a real turn refuses to run without them.
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
+_BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
+# AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap per turn; 0 = no Stop hook.
+_AUTONOMOUS_MAX_NUDGES: int = 0
+
+
+def parse_max_nudges(value: str | None) -> int:
+    """``AUTONOMOUS_MAX_NUDGES``: a non-negative int; unset or blank is 0 (off)."""
+    text = (value or "").strip()
+    if not text:
+        return 0
+    n = int(text)
+    if n < 0:
+        raise ValueError(f"AUTONOMOUS_MAX_NUDGES must be >= 0, not {n}")
+    return n
 
 
 class RegistrationError(RuntimeError):
@@ -196,10 +212,12 @@ def complete(
     num_turns: int | None = None,
     duration_ms: int | None = None,
     sdk_session_id: str | None = None,
+    nudges: int | None = None,
 ) -> int:
     """Append the turn_done event (per-session seq via next_session_seq) and close the
-    turn -- with the ResultMessage's figures when there are any, and the token sum over
-    ``session_entries`` when ``sdk_session_id`` is given -- in ONE commit."""
+    turn -- with the ResultMessage's figures when there are any, the token sum over
+    ``session_entries`` when ``sdk_session_id`` is given, and the Stop hook's veto count
+    (``nudges``, the completing attempt's, like cost_usd) -- in ONE commit."""
     with conn.transaction():
         with conn.cursor() as cur:
             cur.execute("SELECT next_session_seq(%s)", (turn["session_id"],))
@@ -224,8 +242,9 @@ def complete(
                 "input_tokens = COALESCE(%s, input_tokens), "
                 "cache_creation_tokens = COALESCE(%s, cache_creation_tokens), "
                 "cache_read_tokens = COALESCE(%s, cache_read_tokens), "
-                "output_tokens = COALESCE(%s, output_tokens) WHERE turn_id = %s",
-                (cost_usd, num_turns, duration_ms, *tokens, turn["turn_id"]),
+                "output_tokens = COALESCE(%s, output_tokens), "
+                "nudges = COALESCE(%s, nudges) WHERE turn_id = %s",
+                (cost_usd, num_turns, duration_ms, *tokens, nudges, turn["turn_id"]),
             )
     conn.commit()
     return seq
@@ -266,6 +285,24 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
             ),
         )
     conn.commit()
+
+
+def read_research(conn: psycopg.Connection, project_id: str) -> dict[str, Any] | None:
+    """The project's research.json as the store holds it (a jsonb document), or None."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT doc FROM documents WHERE project_id = %s AND name = 'research.json'", (project_id,))
+        row = cur.fetchone()
+    doc = row[0] if row else None
+    return doc if isinstance(doc, dict) else None
+
+
+def count_tool_calls(conn: psycopg.Connection, turn_id: str) -> int:
+    """The turn's tool_calls rows so far -- every attempt's, which is what the Stop hook's
+    no-progress check compares between two stops."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tool_calls WHERE turn_id = %s", (turn_id,))
+        row = cur.fetchone()
+    return int(row[0]) if row and row[0] is not None else 0
 
 
 def finish_tool_call(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> None:
@@ -386,7 +423,7 @@ def load_plugin_agents(plugin_dir: str) -> tuple[dict[str, Any] | None, str | No
 def prepare() -> None:
     """Everything a real turn needs, done once; a failure is logged and fails only the
     real turns (the stub arms keep working)."""
-    global _AGENTS, _AGENTS_ERROR
+    global _AGENTS, _AGENTS_ERROR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
@@ -396,6 +433,12 @@ def prepare() -> None:
     except Exception as exc:  # noqa: BLE001 - reported, then the server still serves /healthz
         log(ev="prepare", step="schema", error=f"{type(exc).__name__}: {exc}")
     _AGENTS, _AGENTS_ERROR = load_plugin_agents(ENGINE_PLUGIN_DIR)
+    _BLOCKED = parse_blocked_tools(os.environ.get("BLOCKED_TOOLS"))
+    try:
+        _AUTONOMOUS_MAX_NUDGES = parse_max_nudges(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
+    except ValueError as exc:
+        _AUTONOMOUS_MAX_NUDGES = 0
+        log(ev="prepare", step="nudges", error=f"{type(exc).__name__}: {exc}")
     try:
         from claude_agent_sdk._cli_version import __cli_version__ as cli_version
     except Exception:  # noqa: BLE001
@@ -403,6 +446,7 @@ def prepare() -> None:
     log(
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
+        blocked_tools=sorted(_BLOCKED), autonomous_max_nudges=_AUTONOMOUS_MAX_NUDGES,
         error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR, engine_dir=ENGINE_DIR,
         cli_version=cli_version,
     )
@@ -441,7 +485,7 @@ async def run_turn(
     ensure_cwd(WORKER_CWD)
 
     started = time.monotonic()
-    counters = {"events": 0, "activity": 0, "tool_calls": 0}
+    counters = {"events": 0, "activity": 0, "tool_calls": 0, "nudges": 0}
     store = PgSessionStore(PG_DSN, project_id)
     config_dir = tempfile.mkdtemp(prefix="worker-cfg-")
     # The directory the CLI really runs in: on a resumed turn the SDK repoints it to its
@@ -460,13 +504,27 @@ async def run_turn(
 
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
-            config_root=lambda: config_root["path"], record=record, log=log,
+            config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
         )
 
         def finish(tool_use_id: str) -> None:
             finish_tool_call(conn, turn_id, tool_use_id)
 
         posttool = make_posttool_hook(turn_id=turn_id, finish=finish, log=log)
+
+        stop_hook = None
+        if _AUTONOMOUS_MAX_NUDGES > 0:
+
+            def on_nudge(n: int) -> None:
+                counters["nudges"] += 1
+                log(ev="nudge", turn_id=turn_id, n=n, max=_AUTONOMOUS_MAX_NUDGES)
+
+            stop_hook = make_stop_hook(
+                turn_id=turn_id, max_nudges=_AUTONOMOUS_MAX_NUDGES,
+                research=lambda: read_research(conn, project_id),
+                tool_count=lambda: count_tool_calls(conn, turn_id),
+                on_nudge=on_nudge, log=log,
+            )
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
@@ -481,6 +539,7 @@ async def run_turn(
             session_id=None if resume else sdk_session_id,
             fs_access_token=message.get("fs_access_token"),
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
+            stop_hook=stop_hook,
         )
         client = ClaudeSDKClient(options=options)
         await client.connect()
@@ -526,7 +585,7 @@ async def run_turn(
             seq = complete(
                 conn, turn, receive_count,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,
-                sdk_session_id=sdk_session_id,
+                sdk_session_id=sdk_session_id, nudges=counters["nudges"],
             )
         finally:
             await client.disconnect()
@@ -546,6 +605,7 @@ async def run_turn(
         "activity": counters["activity"],
         "entries_appended": store.calls["entries_appended"],
         "tool_calls": counters["tool_calls"],
+        "nudges": counters["nudges"],
     }
     return summary
 
