@@ -275,6 +275,20 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   **Revisit when** `@anthropic-ai/mcpb` publishes a release that bumps the
   `@inquirer`/`tmp` chain.
 
+- **cryptography** (HIGH) — `apps/server/uv.lock` and `eval/harness/uv.lock`,
+  runtime. **Deferred 2026-09-21 — outside the three JS trees this doc was scoped
+  to, but recorded here because the Dependabot backlog below counts it.** The
+  hosted control plane (`apps/server`) and the eval harness both depend on
+  `cryptography` via `anthropic` → `httpx` → (transitive). A patched version
+  exists upstream but requires a coordinated `uv lock --upgrade-package
+  cryptography` across both lockfiles.
+  **Revisit when** either lockfile is next refreshed for another reason.
+
+- **h2** (MEDIUM) — `apps/server/uv.lock` only, runtime. **Deferred 2026-09-21 —
+  same scope note as `cryptography` above.** Pulled transitively via `httpx` →
+  `httpcore[http2]`.
+  **Revisit when** the `apps/server` lockfile is next refreshed.
+
 - **esbuild** — **withdrawn 2026-09-09, see the Fixed entry above.** This entry said
   clearing it needed a vite 7→8 migration across three packages. `vite@7.3.6` already
   admits the 0.28.1 patch inside the declared `^7.2.6`, so it was a lockfile refresh.
@@ -283,8 +297,9 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   (2026-06-25) both already existed, `apps/web` and `apps/electron` already declared
   `^7.2.6`, and nothing pinned vite to 7.3.5, so the same one-line refresh would have
   cleared it that day. **The check that catches this is the dependency's publish date
-  against the entry's own commit date**, which is cheap and was never run. #2352's
-  re-derive should apply it to every entry here.
+  against the entry's own commit date**, which is cheap and was never run. Applied
+  2026-09-21 (#2352): all three surviving Deferred entries (vitest, extract-zip,
+  tmp) checked out — no patched version existed before the entry was written.
 
 ## Automated dependency updates
 
@@ -354,8 +369,8 @@ Dependabot — they measure different things. The command to reconcile:
 
 All JS-side development alerts map to entries already recorded above under
 Deferred (vitest, tmp). The two `extract-zip` runtime alerts are also under
-Deferred (no patch exists). The Python alerts (`cryptography`, `h2`) are outside
-this doc's three-JS-tree scope; they are tracked by Dependabot but not by
-`pnpm`/`npm` audit.
+Deferred (no patch exists). The Python alerts (`cryptography`, `h2`) are under
+Deferred as well — outside this doc's original three-JS-tree scope but recorded
+here because this backlog counts them and they have no other register.
 
 *Previous measurement: 53 open alerts on 2026-08-23 (issue #1036).*
