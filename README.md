@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 49 tools.
+The MCP server exposes 50 tools.
 
 ### FamilySearch records and places
 
@@ -74,7 +74,7 @@ The MCP server exposes 49 tools.
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
-| `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
+| `person_read` | FamilySearch Family Tree person data — relatives and attached sources, and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries, family stories), transcribed inline where the read's time budget allowed | OAuth |
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
@@ -113,6 +113,7 @@ way project state changes.
 | `person_quality` | Evidence-quality summary for a tree person | None |
 | `rank_search_matches` | Rank search results against a named subject | None |
 | `convert_calendar` | Convert between Julian, Gregorian, and regnal/quaker dates | None |
+| `build_external_search_url` | Build a pre-filled search URL for a supported external genealogy site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, a state/regional digital newspaper archive, the National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, American Ancestors, or the Italian Genealogy forum) from structured search attributes, including each site's access classification (free, free-but-bot-protected, or subscription) | None |
 
 ### Reference and context
 
@@ -122,7 +123,7 @@ way project state changes.
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
-| `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Gemini Flash via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
+| `image_transcribe` | OCR a FamilySearch image by imageId, ark, or memory artifact URL (PDFs included) host-side (Gemini Flash via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
 | `configure_openrouter` | Save an optional OpenRouter model slug to the per-user config so `image_transcribe` uses a non-default OCR model. Does not accept an API key — the user sets `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
@@ -190,7 +191,7 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
 | **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages by delegating to the `image-reader` subagent. | "Browse the unindexed Schuylkill County probate films" |
-| **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com. Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
+| **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, and ten other genealogy sites (`build_external_search_url`'s full site list). Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
 
@@ -322,44 +323,26 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks two
-short questions in one opening turn:
+When you start a new project with `init-project`, the skill asks one
+thing in its opening turn: what you want to find out. It does not ask
+about you. Every project gets the same `researcher_profile` in
+`research.json`: `experience_level` is `novice`, and `narration_guidance`
+is one house-style string that every skill but one reads and follows
+verbatim:
 
-1. **Research objective** — what you are trying to find out.
-2. **Experience level** — *just starting out / some research under my
-   belt / experienced / professional or certified*.
+> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
 
-You are no longer asked which subscription sites you have. Access is
-assumed available, so nothing is recorded unless you mention it
-yourself — a project that says nothing about access is not a project
-that said it has none.
+Subscription sites are not asked about either. Access is assumed
+available, so nothing is recorded unless you mention a site yourself —
+a project that says nothing about access is not a project that said it
+has none.
 
-Neither question blocks. Answer what you like; anything you skip takes
-a documented default, and the summary at the end names what was
-defaulted so you can correct it.
-
-The answers are written to a `researcher_profile` section of
-`research.json` alongside the rest of your project state. Every skill
-but one reads from it:
-
-- **Experience level** drives narration density. A novice gets
-  step-by-step "why I'm doing this" narration; an experienced
-  researcher gets concise reporting. Internally the level maps to a
-  `narration_guidance` string that the skill reads and follows
-  verbatim — one place defines the mapping (`init-project`), one place
-  stores it (`research.json`), every skill but one reads it.
-- **Access** guides `search-external-sites` URL prioritization. Sites
-  you can reach land first; the rest are still searchable but flagged.
-
-The profile takes under a minute to capture. It lives in
-`research.json` because Cowork sessions are ephemeral but the project
-folder persists — embedding the profile in the project's own file is
-the only storage that survives across sessions.
+The question does not block. Skip it and the objective takes a
+documented generic default, and the summary at the end says so.
 
 ### Mid-session overrides
 
-You can adjust narration on the fly without re-running the interview.
-Natural-language phrases that work:
+You can adjust narration on the fly. Natural-language phrases that work:
 
 - "Be more verbose" / "explain that step in more detail"
 - "Skip the explanations" / "just do it"
@@ -371,12 +354,10 @@ These take effect for the rest of the session without modifying
 
 ### Updating the profile
 
-To change your experience level or subscriptions later, edit
-`researcher_profile` directly in `research.json`. The fields are
-straightforward — `experience_level` is one of the four enum values,
-`subscriptions` is an array of the canonical site names listed above.
-If you change `experience_level`, also update `narration_guidance` to
-match the mapping table in `packages/engine/plugin/skills/init-project/SKILL.md`.
+To record subscriptions later, edit `researcher_profile` directly in
+`research.json`: `subscriptions` is an array of the canonical site names.
+`experience_level` and `narration_guidance` are fixed today; a user
+setting will own the level later.
 
 ## Installation (for end users)
 
@@ -497,7 +478,7 @@ then narrows the search.
 
 What's shipped:
 
-- **49 MCP tools.** See the tables above for the full catalog, by category:
+- **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **28 shipped skills.** Full GPS research cycle from `init-project`
@@ -514,13 +495,9 @@ What's shipped:
   the only caller that may declare one exhaustive), `person-evidence` (identity
   resolution, and the only writer of `person_evidence`) and `image-reader`
   (page OCR).
-- **Researcher profile.** `init-project` asks the research objective,
-  experience level, and site access together in one non-blocking opening
-  turn; every skill adapts narration density to the answer.
-  the only caller that may declare one exhaustive) and `image-reader` (page OCR).
-- **Researcher profile.** `init-project` asks the research objective and
-  experience level together in one non-blocking opening turn; every skill
-  adapts narration density to the answer. Site access is not asked.
+- **Researcher profile.** `init-project` asks only the research objective, in
+  one non-blocking opening turn; the profile itself is fixed (`novice`, one
+  house-style narration string) and nothing about the researcher is asked.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs

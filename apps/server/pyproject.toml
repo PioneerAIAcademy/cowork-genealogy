@@ -34,6 +34,12 @@ dev = [
     # Already present transitively (uvicorn[standard]); declared because we import it.
     "pyyaml>=6.0",
 ]
+# proto/drive.py --embedded-pg: a pip-installed PostgreSQL 16 so the D11-13 acceptance
+# runs on a machine with neither Docker nor Postgres. Its own group, never installed by
+# `uv sync` or CI; `make proto-drive` runs `uv run --group proto`.
+proto = [
+    "pgserver>=0.1.4",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,0 +1,21 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Bridget", "surname": "Fallon", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "primary": true, "date": "~1849", "place": "Ireland" },
+        { "id": "F2", "type": "Death", "date": "1921-06-10", "place": "Dubuque County, Iowa", "sources": [ { "ref": "S3", "page": "death certificate no. 1921-4407" } ] }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    { "id": "S1", "title": "History of Dubuque County, Iowa", "author": "Alvina T. Rourke" },
+    { "id": "S2", "title": "Find A Grave memorial for Bridget Fallon", "author": "Mark T. Steward" },
+    { "id": "S3", "title": "Iowa Death Certificates", "author": "Iowa Bureau of Vital Statistics" }
+  ]
+}

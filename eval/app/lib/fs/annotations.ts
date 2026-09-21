@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { runlogsUnitDir } from '../paths';
 import { atomicWriteJson } from './atomic';
 import { resolveWithin, PathEscapeError } from './safe-path';
-import { sampledTestIds, uncommentedSampledCorrections } from '../types';
+import { reviewDimensions, sampledTestIds, uncommentedSampledCorrections } from '../types';
 import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types';
 
 /**
@@ -147,7 +147,7 @@ export function unreviewedDimensions(
   const out: Array<{ test_id: string; dimension_source: string; dimension_name: string }> = [];
   for (const t of log.tests) {
     if (sampled && !sampled.has(t.test_id)) continue;
-    for (const d of t.outcome_summary.aggregated_dimensions) {
+    for (const d of reviewDimensions(t)) {
       const key = `${t.test_id}|${d.source}|${d.name}`;
       if (!have.has(key)) {
         out.push({

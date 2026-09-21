@@ -5,6 +5,7 @@ import math
 from harness.review_sample import (
     is_gradeable,
     is_mandatory,
+    review_dimensions,
     select_review_sample,
     zero_dimension_test_ids,
 )
@@ -45,12 +46,11 @@ def _suite(n, **kw):
 
 
 def test_zero_dimension_tests_are_not_sampled():
-    """A test with no AGGREGATED dimensions -- aborted, judge raised, or a
-    validator failed and its scores excluded -- has rule 3 demand
-    zero corrections for it — sampling one wastes a slot. All such tests in the
-    corpus failed or aborted, which is what `is_mandatory` matches, so without
-    this filter the mandatory slot is biased toward tests with nothing to
-    annotate."""
+    """A test with no REVIEW dimensions -- aborted, or the judge raised -- has
+    rule 3 demand zero corrections for it — sampling one wastes a slot. All
+    such tests in the corpus failed or aborted, which is what `is_mandatory`
+    matches, so without this filter the mandatory slot is biased toward tests
+    with nothing to annotate."""
     tests = _suite(4)
     tests.append(
         _test_entry("ut_empty", dims=[], outcome="aborted", expected_outcome="pass")
@@ -59,6 +59,57 @@ def test_zero_dimension_tests_are_not_sampled():
     assert "ut_empty" not in out["tests"]
     assert not is_gradeable(tests[-1])
     assert zero_dimension_test_ids(tests) == ["ut_empty"]
+
+
+def _validator_failed_entry(test_id="ut_vf_001"):
+    """A test whose only judged run failed a validator, as the harness writes
+    it: `fail`, `aggregated_dimensions` empty by ruling (#2057), the judge's
+    scores in `review_dimensions`."""
+    entry = _test_entry(test_id, outcome="fail", dims=[])
+    entry["outcome_summary"]["review_dimensions"] = [
+        _dim("Correctness", score=2, rationale="graded for diagnosis"),
+        _dim("Completeness", score=3),
+    ]
+    return entry
+
+
+def test_review_dimensions_prefers_the_field_and_falls_back_to_the_aggregate():
+    written = _validator_failed_entry()
+    assert [d["score"] for d in review_dimensions(written)] == [2, 3]
+
+    # A run log written before the field existed: the aggregate is the rule it
+    # was annotated under, and must stay so — 11 tests in 6 committed logs are
+    # this shape and their annotations are complete as released.
+    legacy = _test_entry("ut_legacy", dims=[_dim(score=3)])
+    assert [d["score"] for d in review_dimensions(legacy)] == [3]
+    assert review_dimensions({"test_id": "ut_bare"}) == []
+
+
+def test_a_validator_failing_test_reaches_the_sample():
+    """The mandatory slot is 'every failing test', and a validator failure is
+    the one class it structurally missed: `outcome: fail`, judge-scored, and
+    filtered out by `is_gradeable` before the slot ran, because the aggregate
+    it read is empty for exactly this class. 4 of the 7 non-passing tests on
+    one record-extraction run were this shape.
+
+    30 clean tests, not 4, for the reason `test_a_coerced_test_still_reaches_
+    the_sample` gives: the chosen slots must be a minority of the pool, so
+    membership can only come from the mandatory slot."""
+    vf = _validator_failed_entry()
+    assert is_gradeable(vf) is True
+    assert is_mandatory(vf) is True
+    pool = [vf] + _suite(30)
+    sample = select_review_sample(tests=pool, seed=0)
+    assert len(sample["tests"]) < len(pool)
+    assert "ut_vf_001" in sample["tests"], sample["tests"]
+
+    # The control: the same test as an OLD harness wrote it — no
+    # `review_dimensions` — is still ungradeable, which is what keeps every
+    # committed annotation complete under the rule it was written to.
+    legacy = _validator_failed_entry()
+    del legacy["outcome_summary"]["review_dimensions"]
+    assert is_gradeable(legacy) is False
+    assert "ut_vf_001" not in select_review_sample(tests=[legacy] + _suite(30), seed=0)["tests"]
 
 
 def test_empty_suite_returns_empty_sample():
@@ -565,10 +616,9 @@ def test_a_coerced_test_still_reaches_the_sample():
     """The trigger is worthless if `is_gradeable` filters the test out first.
 
     Every slot in `select_review_sample` draws from `[t for t in tests if
-    is_gradeable(t)]`, and `is_gradeable` is `bool(aggregated_dimensions)`. A
+    is_gradeable(t)]`, and `is_gradeable` is `bool(review_dimensions(t))`. A
     coerced entry's dimensions are present with null scores, so the array is
-    non-empty and it survives the filter — unlike a validator-failing entry,
-    whose aggregate #2057 deliberately leaves empty.
+    non-empty and it survives the filter.
     """
     coerced = _coerced_entry("ut_c_010")
     assert is_gradeable(coerced) is True

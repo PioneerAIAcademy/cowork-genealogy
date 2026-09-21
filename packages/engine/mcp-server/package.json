@@ -10,7 +10,7 @@
     "npm": ">=11.12 <12"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node ../../../scripts/write-build-info.mjs",
     "start": "node build/index.js",
     "typecheck": "tsc --project tsconfig.typecheck.json",
     "pretest": "npm run build && npm run typecheck",
@@ -25,8 +25,14 @@
   "devDependencies": {
     "@anthropic-ai/mcpb": "^2.1.2",
     "@types/node": "^20.0.0",
+    "@types/pg": "^8.23.1",
     "@types/turndown": "^5.0.6",
     "typescript": "^5.0.0",
     "vitest": "^4.1.10"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-s3": "^3.1135.0",
+    "@smithy/node-http-handler": "^4.12.1",
+    "pg": "^8.23.0"
   }
 }

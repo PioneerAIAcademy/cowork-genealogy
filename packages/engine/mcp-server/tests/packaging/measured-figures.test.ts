@@ -69,6 +69,17 @@ const EVIDENCE_SURFACES = [
   // line 48; any future FIGURE-pattern match must trace to measured-figures.json.
   "docs/specs/fulltext-search-tool-spec.md",
   "docs/specs/gedcomx-convert-spec.md",
+  // The three specs PR #2473 edits. None were in any list, so every figure in
+  // them was unchecked — which is how that PR's own primary spec kept quoting
+  // `34,147 -> 32,585` for a design it had abandoned, with the suite green and
+  // its own test recording the figure as wrong. Being unlisted is the failure
+  // mode this file's header describes: coverage exists only where somebody
+  // remembered to add it.
+  "docs/specs/rank-search-matches-tool-spec.md",
+  "docs/specs/research-log-editor-spec.md",
+  // Carries no figure today. Listed anyway, because the cost of joining is zero
+  // while unlisted is how the other two rotted.
+  "docs/specs/source-attachments-tool-spec.md",
 ];
 
 /**
@@ -187,6 +198,55 @@ const ABSOLUTE_TOTAL = /\b\d{1,3}(?:,\d{3})+\b/g;
  * figure on the four surfaces and testing membership, not by reading the reasons.
  */
 const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
+  [
+    36956,
+    {
+      reason: "payload size of the REJECTED drop shape at 50 rows, computed live by tests/utils/staged-compaction.test.ts, which pins it to +/-1% — not a qualifier probe figure. The test recomputes it from the fixture, so this exemption grants a pass to a number another check can still fail.",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    35206,
+    {
+      reason: "payload size of the SHIPPED annotate-in-place shape at 50 rows, same test, same +/-1% pin",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    34147,
+    {
+      reason: "the RETRACTED drop-shape figure, quoted in the spec only as the thing being corrected. Measured on a fixture with no `collectionTitle` to duplicate, so it priced a saving the real shape never had",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    32585,
+    {
+      reason: "the RETRACTED Option-B-shape figure, its pair, quoted only as the correction's other half",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    315871,
+    {
+      reason: "char count of one rare-surname broad search that overflowed context, from docs/record-search-compaction-scope.md — the compaction investigation, not the qualifier probe",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    50,
+    {
+      reason: "the paging recall cliff (`offset: 50`) recorded in docs/record-search-compaction-scope.md; a page size, not a measured total",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    3522,
+    {
+      reason: "the research_log_append notes corpus at 414ee3c68, derived from eval/runlogs rather than the qualifier probe. Carries its own `measured at <sha>` stamp in the spec, per corpus-figures.test.ts rule 3. Keyed by EXACT value, so this entry must be re-keyed whenever the corpus is re-derived — which is the intended friction: the figure cannot move in the spec without someone touching this line",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
   [
     14095,
     {

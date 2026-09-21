@@ -34,12 +34,21 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
   imageData: string;
   metadata: ImageReadResult;
 }> {
-  const { url, label, fallbackUrl } = resolveFsImageInput(input, "image_read");
+  const { url, label, fallbackUrl, memoryShape } = resolveFsImageInput(
+    input,
+    "image_read",
+  );
 
+  // `memoryShape` must be forwarded, not defaulted. `ImageReadInput extends
+  // FsImageInput`, so `memoryArtifactUrl` is already accepted here and the
+  // schema has no `additionalProperties: false` -- dropping the flag sent the
+  // FamilySearch bearer to an artifact URL that needs no credential, and made a
+  // PDF artifact fail as "Expected an image response".
   const { bytes, contentType, sizeBytes, resolvedUrl } = await fetchFsImageBytes(
     url,
     fallbackUrl,
-    principal
+    principal,
+    memoryShape
   );
 
   // Refuse oversized images before encoding — returning them would overflow

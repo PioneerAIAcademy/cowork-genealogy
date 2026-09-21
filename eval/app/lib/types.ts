@@ -131,6 +131,20 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  * Lives here rather than in `lib/fs/` because the scoring page is a client
  * component and must not pull in `node:fs`.
  */
+/**
+ * The dimension rows a human annotates for one test — the single accessor
+ * for the annotation modal, the completeness rule and the sample guard.
+ * Mirrors `review_sample.py::review_dimensions`: the harness's
+ * `review_dimensions` where written, else the aggregate, so a run log
+ * written before the field existed keeps the rule it was annotated under.
+ * Baseline readers (weighted mean, histogram, compare) stay on
+ * `aggregated_dimensions` on purpose — a validator-failing run's scores are
+ * for review, not for the numbers `gate-skill` compares against.
+ */
+export function reviewDimensions(t: TestEntry): RunLogDimension[] {
+  return t.outcome_summary.review_dimensions ?? t.outcome_summary.aggregated_dimensions;
+}
+
 export function sampledTestIds(log: RunLogFile): Set<string> | null {
   const sample = log.review_sample;
   if (!sample) return null;
@@ -144,9 +158,9 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // three guards reopened it for the third case.
   const known = new Set(log.tests.map((t) => t.test_id));
   for (const id of ids) if (!known.has(id)) return null;
-  // A sample naming only tests with no aggregated dimensions would require
-  // nothing (aborted, judge raised, or a validator failed and its scores were
-  // excluded from the modal) —
+  // A sample naming only tests with no reviewable dimensions would require
+  // nothing (aborted, or the judge raised; a validator failure is not one of
+  // these — its rows are in `review_dimensions`) —
   // and this also covers an EMPTY sample, since `.some()` over no ids is false.
   // An explicit `ids.size === 0` guard was tried here and was unreachable: it
   // left its own test unable to fail, the same way three redundant guards did
@@ -154,7 +168,7 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // only because it emits a different warning message.
   const gradeable = new Set(
     log.tests
-      .filter((t) => t.outcome_summary.aggregated_dimensions.length > 0)
+      .filter((t) => reviewDimensions(t).length > 0)
       .map((t) => t.test_id),
   );
   if (![...ids].some((id) => gradeable.has(id))) return null;
@@ -339,6 +353,12 @@ export interface TestEntry {
   outcome_summary: {
     per_run_outcomes: Array<'pass' | 'partial' | 'fail' | 'aborted'>;
     aggregated_dimensions: RunLogDimension[];
+    /** The rows a human annotates. Equal to `aggregated_dimensions`, except on
+     *  a test whose every judged run failed a validator, where the aggregate is
+     *  empty by ruling (#2057) and this holds the modal over those runs. Optional:
+     *  absent on run logs written before it existed — read it through
+     *  `reviewDimensions()`, never directly. */
+    review_dimensions?: RunLogDimension[];
   };
   totals: RunLogTotals;
   runs: RunLogRun[];

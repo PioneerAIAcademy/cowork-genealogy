@@ -153,6 +153,7 @@ depends on another shipping first.
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
+| §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `direct` supporting assertion nor ≥2 `indirect` ones citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
 | §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
@@ -377,12 +378,13 @@ measured — the same split `find_protected_writes_by_unnamed_delegate`'s docstr
 records.
 
 The e2e `blocked_context_calls` array was considered for the compliance axis and
-declined on exactly this rule: the subagent-only arm is at 0 of 26 eligible runs,
-and all 6 observed fires belong to the owned-section arm, which the unit harness
-does not record in `blocked_context_calls` — it gates the same event separately,
-through `blocked_owned_section_writes` and `test_no_out_of_lane_section_writes`
+is not part of it today: the subagent-only arm is now at 2 of 41 eligible runs,
+both fires `image_read` on the main thread in `anders-monsen-ancestry`, while the
+owned-section fires the unit harness sees are gated separately, through
+`blocked_owned_section_writes` and `test_no_out_of_lane_section_writes`
 (see the §6 rows above). So the two planes differ in where they put this event,
-not in whether they enforce it — measured at 9524c1406.
+not in whether they enforce it — measured at 63f7a6f2e. Whether these two
+subagent-only fires now warrant folding the array into the compliance axis is open.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only
@@ -949,6 +951,137 @@ behavioural consequence — it is the writer of the tier, and it cannot see a
 derived blocker before writing a tier the disputed-source rule will refuse.
 `research_query`'s `conflicts.questionId` filter is narrower than this gate for
 the same reason and is an advertised contract.
+
+### The hypothesis `supported` evidence floor
+
+A `hypotheses` entry may not be **set to** `status: "supported"` unless it clears
+both mechanical halves of `research-schema-spec.md` §5.9:
+
+- **(a)** every `conflicts[]` entry whose `competing_assertion_ids` overlap that
+  hypothesis's `supporting_assertion_ids` or `contradicting_assertion_ids` is
+  `resolved` or `moot`;
+- **(b)** either at least one supporting assertion carries
+  `evidence_type: "direct"`, or at least two carry `evidence_type: "indirect"`
+  and cite at least two distinct `source_id` values.
+
+Implemented as `hypothesisSupportedInvariants` in `research-append.ts`, ported
+from the eval validator `test_supported_requires_evidence_floor`. Lead ruling 2026-09-07:
+the rule had been SKILL.md prose and an eval-only
+validator, and production is where prose did not bind.
+
+**Conflicts are matched by assertion overlap, never by shared `question_id`.**
+`eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that
+separates the two — its `h_001` is `supported` while `c_001` is unresolved and
+blocks the same `q_001`, but names entirely different assertions. A
+question-keyed predicate refuses that shipped, correct fixture.
+
+**Forward direction only.** A hypothesis that clears the floor and was left
+`active` is not touched, and the spec's third condition — evidence consistency,
+no logical or geographic impossibility — is a genealogist's judgment call the
+gate does not attempt.
+
+**Gated on any of the three coupled fields, not on `status` alone.** The arm runs
+on `append`, or on an `update` whose `fields` names `status`,
+`supporting_assertion_ids` **or** `contradicting_assertion_ids`. Gating on
+`status` alone left the mirror-image hole the `questions` arm had already found:
+the invariant couples the status to both id lists, so an op touching a list
+breaks it without naming the status. That is the skill's own documented
+re-invocation path — `hypothesis-tracking/SKILL.md` tells the agent that adding
+contradicting evidence "does not automatically require a status downgrade — only
+link the evidence and leave the status unchanged" — and three such calls were
+measured landing `ok: true` on exactly the state this refuses. Measured at
+587d3c98d: **11 corpus update ops** touch one of these lists without naming
+`status`, across 5 run logs, against 17 that set `status: "supported"` at all, so
+the ungated path was the size of the gated one; and **0 of those 11** stood at
+`supported` when the op arrived, so widening refuses nothing the corpus did. A
+narrative-only edit — naming none of the three — is still not refused.
+
+**An empty `supporting_assertion_ids` at `supported` is a refusal, not a pass.**
+An empty list carries no evidence and so fails half (b) with "only 0 distinct
+indirect source(s)". Worth stating because the card authorising this gate called it
+"unaffected, not treated as violations", which is wrong; the eval validator
+refuses it too. An id that resolves to no assertion counts as nothing, which is
+different: such an id neither adds to nor subtracts from the floor, so a
+hypothesis citing one dangling id beside one real `direct` assertion is
+accepted.
+
+**Both halves read the pre-call snapshot**, per ADR-0011's criterion — snapshot
+when the precondition must be satisfied by someone else. `ownership.json` gives
+`hypotheses.callers` as `["skill:hypothesis-tracking"]`, while `conflicts`
+belongs to `skill:conflict-resolution` and `assertions` to
+`skill:record-extraction`; neither satisfying write is this author's own prior
+step, and both those sections are `enforceableAt: ["unit"]` only — no hook arm,
+no tool arm. Under a live read, nothing in production would stop a session from
+writing the satisfying conflict or assertion in the same `research_append` batch
+as the promote, clearing the gate from inside the call it gates. A same-batch
+resolve-then-promote is therefore refused, and the refusal tells the agent to
+settle the conflict **in an earlier call** rather than retrying the batch.
+
+**Both halves' refusals carry that same-call clause, because both reads are
+snapshots.** Half (b) needs it as much as half (a): a batch that appends a valid
+`direct` assertion and promotes on it in the next op is refused saying there is
+no direct supporting assertion, one op after the agent supplied one. Without the
+clause the agent retries the identical batch, or mints further assertions to
+satisfy a floor it has already met, which is the ADR-0011 satisfiability limit
+this gate is otherwise careful about. The message therefore ends "Assertions
+appended in THIS call do not count — append them in an earlier call, then
+promote", and both directions are tested.
+
+**What the snapshot gives up, stated so the choice is between two known leaks.**
+The read is not cost-free coverage: it blinds half (a) to a conflict *appended*
+in the same batch, which a live read would refuse. The table under "What this
+gate does not close" below measures both directions on one fixture. Choosing
+snapshot buys refusal of the self-satisfying resolve-then-promote and pays with
+the conflict-first ordering; choosing live reverses that. One ordering leaks
+under both.
+
+**What this gate does not close.** A conflict written anywhere in the same batch
+is invisible to the shipped read, in **either** order, and no `conflicts` arm
+checks the reciprocal. It is **not** order-sensitive under the snapshot: both
+orderings persist the forbidden state.
+
+Measured 2026-09-17, on one fixture where `h_001` stands on `a_001` and the
+appended conflict names `a_001`:
+
+| batch | snapshot (shipped) | live read |
+|---|---|---|
+| `[append unresolved conflict, promote hypothesis]` | **`ok: true`** — persisted | refused |
+| `[promote hypothesis, append unresolved conflict]` | **`ok: true`** — persisted | **`ok: true`** — persisted |
+| `[settle the conflict to `resolved`, promote hypothesis]` | refused | accepted |
+
+Read the table as a **trade between two leaks, not a leak-free read against a
+leaking one.** The snapshot buys refusal of the same-batch resolve-then-promote
+(row 3) and pays for it with row 1, which a live read refuses. Row 2 —
+promote-then-append — leaks under **both** reads, because at the hypotheses op
+that conflict is in neither the snapshot nor the live document. **So no choice of
+read closes the conflicts side**; that needs a reciprocal `conflicts`-side arm,
+which widens the gate past the ruling's forward direction.
+
+**The committed corpus holds zero instances**:
+`victoriano-macatangay-parents` does batch `[hypotheses append supported,
+conflicts append unresolved]`, but that conflict's `competing_assertion_ids` is
+`[]`, so nothing overlaps and the gate would not fire under any read; both
+batches were refused anyway for an unrelated reason.
+
+**Measured cost: 0 of 9.** Across 13 calibration run logs, 17 ops set
+`status: "supported"`; 7 returned `ok: false` and 1 is capture-stripped, leaving
+**9 landed writes**, none of which fails either half — a refused call is not a
+write (`replay.py`). Corroborated by 0 of 44 `supported` hypotheses across 276
+committed final states and fixtures. The snapshot read adds no refusal: no
+calibration batch appends an assertion ahead of the promote, and neither of the
+two carrying a `conflicts` op ahead of it is affected (one has no overlap, the
+other's conflict is already `resolved`). The single batch it would refuse is the
+`ogletree-children` run in `_2491-exploratory-quarantine`, exploratory-only by
+lead ruling 2026-09-15 and itself crossing two ownership lanes in one call.
+**Measured at 587d3c98d**, 2026-09-17,
+`eval/harness/scripts/count_supported_floor.py` — re-derive before quoting.
+
+The corpus figure is a write-ledger scan, not a replay: it reads every op's own
+arguments and outcome, which is sufficient here because both halves' inputs move
+only through ops visible in `tool_calls[].args`. The one capture-stripped op
+(`sebastiana-sandoval-daughter`, 2026-07-27) is outside the 14-day
+`response_summary` window, so `replay.py` cannot recover it either; it is
+reported as unrecoverable rather than assumed.
 
 ### Exhaustiveness before a proved tier
 
