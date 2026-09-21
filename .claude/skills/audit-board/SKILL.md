@@ -405,9 +405,10 @@ run log goes stale the moment the *next* edit lands. Six issues landing as six
 sequential PRs is six runs, however carefully they are ordered.
 
 **The money is not the binding cost.** A run is $8–12, but rule 3 requires the
-`.ann.json` to carry a correction entry for **every dimension of every test** in
-the suite — 27 tests for `record-extraction` — and that pass is genealogist hours.
-Six runs means six full re-annotations of the same suite.
+`.ann.json` to carry a correction entry for **every dimension of the tests that
+run's `review_sample` names** — a median of 5 and a maximum of 13, not the whole
+suite — and that pass is genealogist hours. Six runs means six annotation passes
+over the same suite, each a sample rather than a full re-annotation.
 
 ### One active issue per skill
 
