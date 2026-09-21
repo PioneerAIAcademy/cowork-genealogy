@@ -54,21 +54,19 @@ In Progress card and a Review card are someone's work: never merge one, in eithe
 direction. An *unassigned* Ready card is both in the pool and its slot's holder,
 which makes it the natural target — it is furthest along.
 
-A `cross-cutting` card is **not** in the pool — the label takes it out, whoever
-ends up doing it — but it still sits in whatever slot its `**Touches:**` line
-names. A non-icebox Backlog one prints as `occupant: #N`; one already in an
-active column prints as a holder tagged `cross-cutting -- not a merge target`.
-**Neither is a merge target, and neither is part of queue depth.** Never propose
-merging into one or out of one. Depth stays "this many mergeable cards", which is
-what `MUST CLEAR` acts on and what `audit-board`'s tax table copies out of these
-blocks — so do not put an occupant in that column. Read them the other way: a
-slot with an occupant has its next paid run already spoken for, which is worth
-knowing before promoting a card into it.
+**A slot can be held and show no block above.** `block()` runs only for a queue of
+2 or more, so a slot held by an In Progress card, a Review card or an open PR — with
+0 or 1 mergeable cards behind it — used to render nowhere at all. The last section,
+**held, queue below 2**, is where those now appear. Read the block, not the heading:
+a queue of 1 still lists a mergeable card under its holder.
 
-The last section lists slots whose queue is too shallow to reach the sections
-above — 0 or 1. Read the block, not the heading: a queue of 1 still lists a
-mergeable card. It is the one place the script reports a slot that looks free and
-is not.
+**Absence of a block is not evidence a slot is free.** It means the slot has no
+holder, no open PR against its snapshot, and nothing queued. The coverage block at
+the bottom is what names the pool issues no section reached.
+
+Only an **unassigned Ready** card is tagged `merge INTO this one`. An In Progress or
+Review card reads `held`, because it is someone's work and is never merged in either
+direction.
 
 **Re-check state at apply time, not just at compute time.** The pool is a snapshot
 and a pass takes hours; a card can be assigned while you are still proposing. On

@@ -83,7 +83,7 @@ def main(board_path, open_path, prs_path):
               "re-pull with a higher one; gh truncates silently and every count below "
               "is then wrong.\n")
 
-    entries, pool, holders, cross_cutting = {}, [], {}, []
+    entries, pool, holders = {}, [], {}
     for n, issue in issues.items():
         col = status.get(n)
         labs = labels_of(issue)
@@ -93,63 +93,28 @@ def main(board_path, open_path, prs_path):
         # The merge pool: nobody is holding these. An unassigned Ready card is in
         # it *and* holds a slot -- it is the natural merge target, being furthest
         # along. An assigned one is someone's work and is never a merge candidate.
-        if "cross-cutting" in labs:
-            # The label takes it out of the pool: never a merge candidate, whoever
-            # ends up doing it. Not "already assigned" -- measured 2026-09-18, all
-            # 14 open cross-cutting cards are UNASSIGNED, which is what refuted the
-            # rationale this comment used to carry.
-            #
-            # But it still SITS in whatever slot its Touches line names, and
-            # that slot's next paid run is spoken for either way -- so collect it as
-            # an occupant rather than dropping it. Occupancy and pool membership are
-            # different questions; one list cannot answer both.
-            #
-            # Backlog only, matching the pool's own column test: a cross-cutting card
-            # in an active column is already in `holders` above. Icebox is excluded
-            # for the same reason the pool excludes it -- a deferred card does not
-            # reserve a slot.
-            if col == "Backlog" and "icebox" not in labs:
-                cross_cutting.append(n)
-            continue
         if col == "Backlog" and "icebox" not in labs:
             pool.append(n)
         elif col == "Ready" and not issue.get("assignees"):
             pool.append(n)
 
-    queues, held, occupants, cc_held = {}, {}, {}, set()
+    queues, held = {}, {}
     for n in pool:
         for s in slots_of(entries[n]):
             queues.setdefault(s, []).append(n)
-    # Deliberately NOT folded into `queues`. Depth means "this many mergeable cards",
-    # which is what MUST_CLEAR obliges the pass to act on and what
-    # audit-board/SKILL.md reads out of this block; counting a card the pass may not
-    # merge would force slots it can never discharge by merging.
-    for n in cross_cutting:
-        for s in slots_of(entries[n]):
-            occupants.setdefault(s, []).append(n)
     for n, col in holders.items():
-        # A cross-cutting holder is never a merge target either, in either direction.
-        # `holders` is built above without reading labels, so without this arm an
-        # unassigned cross-cutting card in an active column -- a state
-        # fill-ready/SKILL.md calls a mis-file rather than an impossibility -- would
-        # be nominated as the thing to merge INTO, which is the one instruction
-        # doctrine forbids outright.
-        cc = "cross-cutting" in labels_of(issues[n])
-        if cc:
-            tag = "cross-cutting -- not a merge target"
-        elif issues[n].get("assignees"):
-            tag = "held"
-        else:
+        # "merge INTO this one" names a merge TARGET, so it may only be said of a
+        # card the pool can actually merge into -- an unassigned Ready one. SKILL.md
+        # is explicit that an In Progress or Review card is someone's work and is
+        # never merged in either direction, so an unassigned card in one of those
+        # columns is held, not a target. Below a queue of 2 this line used to print
+        # nowhere, which is why the wrong tag went unnoticed.
+        if col == "Ready" and not issues[n].get("assignees"):
             tag = "unassigned -- merge INTO this one"
+        else:
+            tag = "held"
         for s in slots_of(entries[n]):
             held.setdefault(s, []).append((n, col, tag))
-            # Cross-cutting work claims a slot from an active column too, and that
-            # claim is stronger than a Backlog occupant's -- someone is doing it now.
-            # Tracked separately because `held` alone reaches no renderer below a
-            # queue of 2, which would drop the tag above in exactly the
-            # looks-free-and-is-not case this script exists to report.
-            if cc:
-                cc_held.add(s)
 
     pr_slots = {}
     for p in prs:
@@ -170,8 +135,6 @@ def main(board_path, open_path, prs_path):
             print(f"      holder: #{n} ({col}, {tag})")
         for p in sorted(pr_slots.get(slot, [])):
             print(f"      holder: PR #{p} (open, touches the snapshot)")
-        for n in sorted(occupants.get(slot, [])):
-            print(f"      occupant: #{n} (cross-cutting, Backlog -- not a merge target)")
         for n in sorted(members, key=lambda x: -age_days(issues[x]["createdAt"], now)):
             print(describe(n))
         print()
@@ -180,8 +143,7 @@ def main(board_path, open_path, prs_path):
     rest = {s: m for s, m in queues.items() if 2 <= len(m) < MUST_CLEAR}
 
     print(f"=== eval slot queues (pool: {len(pool)} issues -- non-icebox Backlog + "
-          "unassigned Ready; `cross-cutting` excluded from the pool, shown as "
-          "occupants) ===\n")
+          "unassigned Ready) ===\n")
     print(f"--- MUST CLEAR: queue >= {MUST_CLEAR} "
           f"({len(must)} slots) ---\n")
     for s, m in sorted(must.items(), key=lambda x: (-len(x[1]), x[0])):
@@ -195,18 +157,19 @@ def main(board_path, open_path, prs_path):
     if not rest:
         print("  (none)\n")
 
-    # A slot can be spoken for and carry no mergeable queue at all. Those slots reach
-    # neither loop above -- block() runs only at queue >= 2 -- so the thing this
-    # section exists to show, a slot that looks free and is not, would still be
-    # invisible. Same renderer, so its holders and PR holders come with it: the most
-    # contested slot here can be one with two active-column holders and a queue of 1.
-    spoken = {s: queues.get(s, [])
-              for s in (set(occupants) | cc_held) - set(must) - set(rest)}
-    print(f"--- occupied by cross-cutting work, not otherwise shown "
-          f"({len(spoken)} slots) ---\n")
-    for s in sorted(spoken):
-        block(s, spoken[s])
-    if not spoken:
+    # A slot can be held and carry no mergeable queue at all. `block()` runs only
+    # from the two loops above, and `queues` has no key for a slot with nothing
+    # queued -- so a slot held by an In Progress card or an open PR, with 0 or 1
+    # behind it, rendered nowhere. That is a slot that looks free and is not, which
+    # is the one thing this script exists to prevent an operator from believing.
+    # Keyed on the holders themselves rather than on the queue, and rendered by the
+    # same block(), so the holder and PR lines come with it.
+    held_short = {s: queues.get(s, [])
+                  for s in (set(held) | set(pr_slots)) - set(must) - set(rest)}
+    print(f"--- held, queue below 2 ({len(held_short)} slots) ---\n")
+    for s in sorted(held_short):
+        block(s, held_short[s])
+    if not held_short:
         print("  (none)\n")
 
     # Non-snapshot convergence. A merge here saves a reviewer and a rebase, never a
@@ -240,16 +203,19 @@ def main(board_path, open_path, prs_path):
     # of the three sections is invisible, and SKILL.md tells them this block is the
     # record of what the script could not see -- so it has to name them, not just
     # the ones missing a Touches: line.
-    shown = on_slot | set(blind) | {n for ns in conv.values() for n in ns}
+    #
+    # Derived from the sections that RENDERED, not from `queues`. `on_slot` means
+    # "queued", and a queue of 1 on an unheld slot reaches no section at all -- so
+    # folding `on_slot` in here reported those issues as shown and printed
+    # "in no section above -- READ BY HAND  0" while they appeared nowhere.
+    rendered = {n for sec in (must, rest, held_short) for m in sec.values() for n in m}
+    shown = rendered | set(blind) | {n for ns in conv.values() for n in ns}
     unshown = sorted(set(pool) - shown)
     print(f"\n=== coverage ===")
     print(f"  pool                                {len(pool)}")
     print(f"  on at least one eval slot           {len(on_slot)}")
     print(f"  queued runs (sum of queue depths)   {sum(len(m) for m in queues.values())}"
           "   <- >= the line above; an issue can hold several slots")
-    print(f"  cross-cutting occupants (not in pool) "
-          f"{len({n for ns in occupants.values() for n in ns})} issues / "
-          f"{len(occupants)} slots")
     print(f"  no **Touches:** line -- READ BY HAND {len(blind)}")
     if blind:
         for n in sorted(blind):

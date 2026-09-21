@@ -1,20 +1,25 @@
-"""Tests for eval-slot occupancy in `/merge-issues`' slots.py.
+"""Tests for slot rendering in `/merge-issues`' slots.py.
 
-The bug these exist for (issue #2621): `pool` answered two different questions —
-"may this be merged?" and "does this sit in a slot?" — so the `cross-cutting`
-`continue` that correctly kept those cards out of the merge pool also dropped them
-from slot occupancy, because `queues` is built by iterating `pool`. Ten live cards
-sat in 21 slots the merge pass could not see.
+The bug these exist for (issue #2621): `block()` is reached only from the MUST-CLEAR
+and report-only loops, and `queues` has no key for a slot with nothing queued — so a
+slot held by an In Progress card, a Review card or an open PR, with 0 or 1 mergeable
+cards behind it, rendered nothing at all. An operator reading no block for a slot
+concluded it was free when someone was already working it.
 
-The fix separates the two. An occupant appears in its slot's block and does NOT
-change queue depth, which keeps meaning "this many mergeable cards" — the number
-MUST_CLEAR obliges the pass to act on.
+A second, quieter half: the coverage block promises to name every pool issue no
+section reached, but derived that from `queues` ("queued") rather than from the
+sections that rendered, so a lone queue-1 card was counted as shown while appearing
+nowhere.
 
-Both directions are pinned, per CLAUDE.md's "a new lint must be proven to fail":
-the break cases (occupancy dropped again; occupancy folded into depth) and the
-legitimate variants that must keep working (a card naming no slot, an icebox card,
-an ordinary card whose numbers must not move, an active-column card that is a
-holder and not an occupant).
+Both directions are pinned, per CLAUDE.md's "a new lint must be proven to fail": the
+break cases (the section removed, either term of its keying dropped, its members
+emptied, the coverage derivation reverted, the tag gate widened) and the legitimate
+variants that must keep working (an icebox card, a card naming no slot, an empty
+unheld slot, a card already rendered).
+
+Originally written for the `cross-cutting` label, which was deleted repo-wide on
+2026-09-20; the rendering defect it exposed is label-independent and is what these
+now cover.
 
 Run: eval/harness/.venv/bin/pytest .claude/skills/lib/tests/test_slots.py -q
 CI runs it via eval/harness/pyproject.toml's `testpaths`.
@@ -23,6 +28,7 @@ CI runs it via eval/harness/pyproject.toml's `testpaths`.
 import json
 import os
 import sys
+from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -34,6 +40,8 @@ SKILL = "packages/engine/plugin/skills/timeline"
 SLOT = "skill:timeline"
 OTHER = "packages/engine/plugin/skills/citation"
 OTHER_SLOT = "skill:citation"
+
+Block = namedtuple("Block", "section lines")
 
 
 def _created(days_ago):
@@ -84,22 +92,26 @@ def depth(out, slot):
 
 
 def blocks(out):
-    """-> {slot: [indented lines under it]}, per rendered block.
+    """-> {slot: Block(section, lines)}, per rendered block.
 
-    Substring assertions over whole stdout cannot tell "occupant #N is on THIS
-    slot" from "occupant #N is on some slot", which is the single claim this
-    script makes. Everything about attribution has to be asserted per block.
-    A slot rendered twice raises rather than silently merging.
+    Substring assertions over whole stdout cannot tell "holder #N is on THIS slot"
+    from "holder #N is on some slot", which is the single claim this script makes,
+    and they cannot tell WHICH section rendered a block — so a test can pass while
+    a queue-1 slot is printed under a header reading "queue 2-3". Both are recorded
+    here. A slot rendered twice raises rather than silently merging.
     """
-    out_blocks, current = {}, None
+    out_blocks, current, section = {}, None, None
     for line in out.splitlines():
-        if line.startswith("  ") and not line.startswith("   ") and "   queue " in line:
+        if line.startswith("--- "):
+            section = line.strip().strip("- ").split(" (")[0]
+            current = None
+        elif line.startswith("  ") and not line.startswith("   ") and "   queue " in line:
             current = line.strip().rsplit("   queue ", 1)[0]
             if current in out_blocks:
                 raise AssertionError(f"slot {current} rendered more than once")
-            out_blocks[current] = []
+            out_blocks[current] = Block(section, [])
         elif current is not None and line.startswith("      "):
-            out_blocks[current].append(line.strip())
+            out_blocks[current].lines.append(line.strip())
         elif not line.strip():
             continue
         else:
@@ -107,10 +119,22 @@ def blocks(out):
     return out_blocks
 
 
-def occupants_of(out, slot):
-    """The issue numbers rendered as occupants inside `slot`'s own block."""
-    return {ln.split("occupant: #")[1].split(" ")[0]
-            for ln in blocks(out).get(slot, []) if ln.startswith("occupant: #")}
+def lines_of(out, slot):
+    """The indented lines inside `slot`'s own block."""
+    b = blocks(out).get(slot)
+    return b.lines if b else []
+
+
+def section_of(out, slot):
+    """Which `--- ... ---` section rendered `slot`, or None if it never rendered."""
+    b = blocks(out).get(slot)
+    return b.section if b else None
+
+
+def holders_of(out, slot):
+    """The issue numbers rendered as holders inside `slot`'s own block."""
+    return {ln.split("holder: #")[1].split(" ")[0]
+            for ln in lines_of(out, slot) if ln.startswith("holder: #")}
 
 
 # Two ordinary pool cards, so SLOT reaches `rest` and block() actually runs.
@@ -118,182 +142,143 @@ def _queued_pair():
     return [issue(11), issue(12)]
 
 
-# --- the fix itself -------------------------------------------------------------
+# --- the fix itself: a held slot with a short queue renders --------------------
 
-def test_cross_cutting_card_is_an_occupant_and_does_not_move_depth(tmp_path):
-    cc = issue(2475, labels=["cross-cutting"])
-    with_cc = run(_queued_pair() + [cc], tmp_path)
-    without = run(_queued_pair(), tmp_path)
+def test_in_progress_holder_at_queue_0_renders(tmp_path):
+    """The defect. `block()` runs only from the two queue loops and `queues` has no
+    key for an empty slot, so a slot someone is actively working rendered nowhere —
+    a slot that looks free and is not."""
+    out = run([issue(101, column="In Progress", assignees=[{"login": "x"}])], tmp_path)
 
-    assert "occupant: #2475 (cross-cutting, Backlog -- not a merge target)" in with_cc
-    # rendered once, as the occupant. A second "#2475" would be describe() offering
-    # it as a merge candidate in the same block.
-    assert with_cc.count("#2475") == 1
-    # depth is what it is with the card absent entirely
-    assert depth(with_cc, SLOT) == depth(without, SLOT) == 2
+    assert section_of(out, SLOT) == "held, queue below 2"
+    assert depth(out, SLOT) == 0
+    assert "holder: #101 (In Progress, held)" in lines_of(out, SLOT)
 
 
-def test_occupied_slot_with_no_queue_is_still_shown(tmp_path):
-    """The case the fix exists for: a slot that looks free and is not. With queue 0
-    this slot reaches neither the MUST-CLEAR nor the report-only loop."""
-    out = run([issue(2476, labels=["cross-cutting"])], tmp_path)
-
-    assert "--- occupied by cross-cutting work, not otherwise shown (1 slots) ---" in out
-    assert f"{SLOT}   queue 0" in out
-    assert "occupant: #2476" in out
-
-
-def test_occupant_section_carries_the_slots_real_holders(tmp_path):
-    """Rendered through block(), so a holder on an otherwise-unqueued slot is not
-    dropped — the section would otherwise show the most contested slot as the least."""
-    out = run([issue(2475, labels=["cross-cutting"]),
-               issue(2524, column="Ready", assignees=[{"login": "x"}])], tmp_path)
-
-    assert "holder: #2524 (Ready, held)" in out
-    assert "occupant: #2475" in out
-
-
-# --- the other direction ---------------------------------------------------------
-
-def test_cross_cutting_card_naming_no_slot_appears_nowhere(tmp_path):
-    """Modelled on #2480, whose Touches line names no snapshot path."""
-    out = run(_queued_pair() + [issue(2480, touches="docs/architecture.md",
-                                      labels=["cross-cutting"])], tmp_path)
-
-    assert "#2480" not in out
-    assert depth(out, SLOT) == 2
-
-
-def test_icebox_cross_cutting_card_does_not_reserve_a_slot(tmp_path):
-    out = run(_queued_pair() + [issue(2481, labels=["cross-cutting", "icebox"])],
-              tmp_path)
-
-    assert "occupant: #2481" not in out
-    assert depth(out, SLOT) == 2
-
-
-def test_active_column_cross_cutting_card_is_a_holder_not_an_occupant(tmp_path):
-    """HOLDER_COLUMNS already catches this one — it must render once, as a holder.
-    The pair seeds the slot so block() runs at all; with queue 1 there would be no
-    holder line either and the assertion would pass vacuously."""
-    out = run(_queued_pair() + [issue(2482, labels=["cross-cutting"],
-                                      column="In Progress")], tmp_path)
-
-    assert out.count("holder: #2482") == 1
-    assert "occupant: #2482" not in out
-
-
-def test_unassigned_cross_cutting_holder_is_never_a_merge_target(tmp_path):
-    """`holders` is built without reading labels, so an UNASSIGNED cross-cutting card
-    in an active column would otherwise be tagged "merge INTO this one" — nominating
-    the lead's pre-assigned work as the merge target, which doctrine forbids. An
-    ordinary unassigned Ready card must keep that tag."""
-    out = run(_queued_pair() + [issue(2484, labels=["cross-cutting"], column="Ready"),
-                                issue(14, column="Ready")], tmp_path)
-
-    assert "holder: #2484 (Ready, cross-cutting -- not a merge target)" in out
-    assert "#2484" not in out.replace(
-        "holder: #2484 (Ready, cross-cutting -- not a merge target)", "")
-    # the ordinary unassigned Ready card is still the natural target
-    assert "holder: #14 (Ready, unassigned -- merge INTO this one)" in out
-
-
-def test_cross_cutting_holder_reaches_a_renderer_on_an_unqueued_slot(tmp_path):
-    """The tag above is computed in `held`, and `held` is read only by block(), which
-    runs only at queue >= 2. Without `cc_held` widening the last section, an active
-    cross-cutting card alone on a slot renders NOWHERE — the exact looks-free-and-is-
-    not case this script exists to report, and the strongest claim on a slot there is
-    (someone is doing that work now)."""
-    out = run([issue(2485, labels=["cross-cutting"], column="In Progress")], tmp_path)
-
-    assert "--- occupied by cross-cutting work, not otherwise shown (1 slots) ---" in out
-    assert "holder: #2485 (In Progress, cross-cutting -- not a merge target)" in out
-
-
-def test_ordinary_card_is_untouched_by_a_cross_cutting_neighbour(tmp_path):
-    """An ordinary pool card's membership and its slot's depth must equal what they
-    are with the cross-cutting card removed entirely."""
-    ordinary = issue(13)
-    cc = issue(2483, labels=["cross-cutting"])
-    with_cc = run(_queued_pair() + [ordinary, cc], tmp_path)
-    without = run(_queued_pair() + [ordinary], tmp_path)
-
-    assert depth(with_cc, SLOT) == depth(without, SLOT) == 3
-    assert "#13 " in with_cc
-    # an ordinary mergeable card must never be labelled not-a-merge-target
-    assert "occupant: #13" not in with_cc
-    assert "pool                                3" in with_cc
-    assert "pool                                3" in without
-
-
-def test_each_occupant_is_attributed_to_its_own_slot(tmp_path):
-    """The claim the whole script makes. Two slots, different occupants, and one of
-    them carrying two — which is the live shape (10 cards over 21 slots), not an edge
-    case. Asserted per block: rendering every occupant under every slot passes any
-    whole-stdout substring check."""
-    out = run([issue(11), issue(12),                      # queue 2 on SKILL
-               issue(21, touches=OTHER), issue(22, touches=OTHER),   # queue 2 on OTHER
-               issue(2475, labels=["cross-cutting"]),                # SKILL only
-               issue(2476, labels=["cross-cutting"]),                # SKILL only
-               issue(2477, touches=OTHER, labels=["cross-cutting"])],  # OTHER only
-              tmp_path)
-
-    assert occupants_of(out, SLOT) == {"2475", "2476"}
-    assert occupants_of(out, OTHER_SLOT) == {"2477"}
-
-
-def test_a_queued_slot_in_the_last_section_keeps_its_depth_and_members(tmp_path):
-    """The section is reached at queue 0 AND queue 1. At queue 0 an empty member list
-    is indistinguishable from the real one, so the depth and the member line are only
-    really pinned here. Carries a PR holder too — the section's comment promises those
-    and no test passed a PR before."""
-    out = run([issue(11),                                  # one mergeable card
-               issue(2475, labels=["cross-cutting"])],     # keeps queue below 2
-              tmp_path,
+def test_pr_holder_at_queue_0_renders(tmp_path):
+    """A PR-held slot is in `pr_slots` and NOT in `held`, so that term of the union
+    is load-bearing on its own."""
+    out = run([], tmp_path,
               prs=[{"number": 900, "files": [{"path": f"{SKILL}/SKILL.md"}]}])
 
-    block = blocks(out)[SLOT]
-    assert depth(out, SLOT) == 1
-    assert any(ln.startswith("#11 ") for ln in block)
-    assert "occupant: #2475 (cross-cutting, Backlog -- not a merge target)" in block
-    assert "holder: PR #900 (open, touches the snapshot)" in block
+    assert section_of(out, SLOT) == "held, queue below 2"
+    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, SLOT)
 
 
-def test_a_must_clear_slot_with_an_occupant_renders_once(tmp_path):
-    """Queue >= 4 is the block that drives the merge obligation, and it is the one
-    threshold no other test builds. `blocks()` raises if the slot is rendered in both
-    MUST CLEAR and the last section."""
-    out = run([issue(n) for n in (11, 12, 13, 14)]
-              + [issue(2475, labels=["cross-cutting"])], tmp_path)
-
-    assert depth(out, SLOT) == 4
-    assert occupants_of(out, SLOT) == {"2475"}
-    assert "--- occupied by cross-cutting work, not otherwise shown (0 slots) ---" in out
-
-
-def test_an_agent_slot_occupies_like_a_skill_slot(tmp_path):
-    """touches.py resolves two slot shapes; every other fixture here uses `skill:`."""
-    agent = "packages/engine/plugin/agents/record-extractor.md"
-    out = run([issue(2479, touches=agent, labels=["cross-cutting"])], tmp_path)
-
-    assert occupants_of(out, "agent:record-extractor") == {"2479"}
-
-
-def test_no_cross_cutting_work_means_an_empty_last_section(tmp_path):
-    """The negative direction for `cc_held`: an ordinary holder must not drag its slot
-    into a section headed "occupied by cross-cutting work"."""
-    # The holder must sit on an UNQUEUED slot. On a queued one the slot is already
-    # excluded via `rest`, so an over-firing `cc_held` is invisible and this passes
-    # either way.
-    out = run([issue(2524, column="Review", assignees=[{"login": "x"}])], tmp_path)
-
-    assert "--- occupied by cross-cutting work, not otherwise shown (0 slots) ---" in out
-    assert "occupant:" not in out
-
-
-def test_coverage_line_counts_issues_and_slots(tmp_path):
-    """One card naming two slots is one issue over two slots."""
-    out = run([issue(2477, touches=f"{SKILL}, {OTHER}", labels=["cross-cutting"])],
+def test_held_slot_at_queue_1_shows_the_holder_and_the_queued_card(tmp_path):
+    """Queue 1 is the case that distinguishes a real member list from an empty one;
+    at queue 0 the two are indistinguishable."""
+    out = run([issue(11), issue(101, column="Review", assignees=[{"login": "x"}])],
               tmp_path)
 
-    assert "cross-cutting occupants (not in pool) 1 issues / 2 slots" in out
+    assert section_of(out, SLOT) == "held, queue below 2"
+    assert depth(out, SLOT) == 1
+    assert "holder: #101 (Review, held)" in lines_of(out, SLOT)
+    assert any(ln.startswith("#11 ") for ln in lines_of(out, SLOT))
+
+
+def test_each_holder_is_attributed_to_its_own_slot(tmp_path):
+    """The single claim the script makes. Rendering every holder under every slot
+    passes any whole-stdout substring check."""
+    out = run([issue(101, column="In Progress", assignees=[{"login": "x"}]),
+               issue(102, touches=OTHER, column="Review", assignees=[{"login": "y"}])],
+              tmp_path)
+
+    assert holders_of(out, SLOT) == {"101"}
+    assert holders_of(out, OTHER_SLOT) == {"102"}
+
+
+def test_a_held_slot_renders_once_at_every_depth(tmp_path):
+    """`blocks()` raises on a double render. Queue 4 belongs to MUST CLEAR and queue
+    2 to report-only; neither may also appear in the new section."""
+    held4 = [issue(n) for n in (11, 12, 13, 14)] + [
+        issue(101, column="In Progress", assignees=[{"login": "x"}])]
+    out4 = run(held4, tmp_path)
+    assert section_of(out4, SLOT) == "MUST CLEAR: queue >= 4"
+    assert depth(out4, SLOT) == 4
+
+    out2 = run(_queued_pair() + [issue(101, column="In Progress",
+                                       assignees=[{"login": "x"}])], tmp_path)
+    assert section_of(out2, SLOT) == "report only: queue 2-3"
+    assert depth(out2, SLOT) == 2
+
+
+def test_an_agent_slot_is_held_like_a_skill_slot(tmp_path):
+    """touches.py resolves two slot shapes; every other fixture here uses `skill:`."""
+    agent = "packages/engine/plugin/agents/record-extractor.md"
+    out = run([issue(101, touches=agent, column="In Progress",
+                     assignees=[{"login": "x"}])], tmp_path)
+
+    assert holders_of(out, "agent:record-extractor") == {"101"}
+
+
+# --- the merge-target tag --------------------------------------------------------
+
+def test_only_an_unassigned_ready_card_is_named_a_merge_target(tmp_path):
+    """SKILL.md: an In Progress or Review card is someone's work and is never merged
+    in either direction. Only an unassigned Ready card may be called a target — and
+    below a queue of 2 this line printed nowhere, which is how the wrong tag hid."""
+    out = run([issue(14, column="Ready"),
+               issue(102, touches=OTHER, column="In Progress")], tmp_path)
+
+    assert "holder: #14 (Ready, unassigned -- merge INTO this one)" in lines_of(out, SLOT)
+    assert "holder: #102 (In Progress, held)" in lines_of(out, OTHER_SLOT)
+
+
+def test_an_assigned_ready_card_is_held_not_a_target(tmp_path):
+    out = run([issue(14, column="Ready", assignees=[{"login": "x"}])], tmp_path)
+
+    assert "holder: #14 (Ready, held)" in lines_of(out, SLOT)
+
+
+# --- the coverage block tells the truth about what it could not show -------------
+
+def test_an_unheld_queue_1_card_is_reported_as_unshown(tmp_path):
+    """`on_slot` meant "queued", not "rendered". A lone queue-1 card on an unheld
+    slot reaches no section, and the block that exists to name what the script could
+    not see reported 0."""
+    out = run([issue(11)], tmp_path)
+
+    assert section_of(out, SLOT) is None
+    assert "in no section above -- READ BY HAND  1" in out
+    assert "#11 " in out.split("in no section above")[1]
+
+
+def test_a_rendered_card_is_not_reported_as_unshown(tmp_path):
+    """The other direction: no false positives once the derivation changed."""
+    out = run(_queued_pair(), tmp_path)
+
+    assert section_of(out, SLOT) == "report only: queue 2-3"
+    assert "in no section above -- READ BY HAND  0" in out
+
+
+def test_a_card_with_no_touches_line_stays_in_the_blind_bucket_only(tmp_path):
+    """It must be counted once, not in both buckets."""
+    out = run([issue(11, touches=None)], tmp_path)
+
+    assert "no **Touches:** line -- READ BY HAND 1" in out
+    assert "in no section above -- READ BY HAND  0" in out
+
+
+# --- the other direction: what must NOT move -------------------------------------
+
+def test_an_icebox_backlog_card_is_not_in_the_pool(tmp_path):
+    out = run(_queued_pair() + [issue(21, labels=["icebox"])], tmp_path)
+
+    assert depth(out, SLOT) == 2
+    assert "#21 " not in out
+
+
+def test_a_card_naming_no_slot_reaches_no_queue(tmp_path):
+    out = run(_queued_pair() + [issue(22, touches="docs/architecture.md")], tmp_path)
+
+    assert depth(out, SLOT) == 2
+    assert holders_of(out, SLOT) == set()
+
+
+def test_an_unqueued_unheld_slot_renders_in_no_section(tmp_path):
+    """The section is keyed on holders, not on depth — an empty, unheld slot must not
+    be conjured into it."""
+    out = run([], tmp_path)
+
+    assert "--- held, queue below 2 (0 slots) ---" in out
