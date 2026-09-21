@@ -65,15 +65,32 @@ synthetic no-response reply and `run_turn` took that as the turn finishing. `wor
 raises only on `result.is_error`, and a synthetic result is not an error. The fixture still
 had `project.status: active`.
 
-**Build:** in `apps/server/proto/worker/worker.py`, on a redelivered attempt
-(`receive_count > 1`), a `ResultMessage` with `num_turns == 0` is a resume failure. Retry it;
-do not mark the turn done.
+**Probe first — the guard is already gated on it.** `search-agent-prototype.md` records that
+the 2026-09-20 ruling for exactly this rule "was gated on this probe confirming the
+autonomous run's synthetic result; it did not, so the rule is not built." So the task is the
+probe: `make proto-kill` kills during a main-thread `place_search`, and this failure needed a
+subagent mid-persist. Write that variant and run it. The guard lands only if the probe
+reproduces a zero-turn synthetic result with background agents in flight. If it does not,
+report that and stop — the rest of phase 0 still stands.
 
-**Then probe the kill-with-background-agents case.** `make proto-kill` kills during a
-main-thread `place_search`; this failure needed a subagent mid-persist. Write that variant.
+**Then build:** in `apps/server/proto/worker/worker.py`, on a redelivered attempt
+(`receive_count > 1`), a `ResultMessage` with `num_turns == 0` is a resume failure rather
+than a completion.
 
-**Acceptance:** a kill during a delegation resumes and finishes, and no run records a
-`num_turns == 0` attempt as a completion. Break the guard and watch the test fail.
+**Bound the retry, and say what terminal looks like.** `elasticmq.conf` has **deliberately
+no redrive policy**: "a message that fails on every delivery retries forever with back-off",
+pinned by `test_proto_config.py`. The worker's failure path is a 500 → `requeue_backoff`,
+capped at 300 s. The cause 0a names is a property of the stored transcript and is re-fed on
+every resume, so if it is deterministic then a bare "retry" is an unbounded paid loop that
+satisfies the acceptance line while never surfacing. Cap the attempts — `turns.receive_count`
+already carries the number — and on exhaustion **fail the turn with an outcome the web tier
+renders**. Measure whether the transcript is repaired between attempts rather than assuming
+it.
+
+**Acceptance:** a kill during a delegation resumes and finishes; no run records a
+`num_turns == 0` attempt as a completion; and a deterministically failing turn stops after N
+attempts with a visible outcome instead of retrying forever. Break each guard and watch it
+fail.
 
 ### 0b. Put the step ceiling back to 1,800 s
 
@@ -119,19 +136,56 @@ all reading Postgres on the turn's connection. Add two more, each one clause in
 `should_continue_run`:
 
 1. **`pending_user_message()`** — the user has posted a message that is waiting. Allow the
-   stop; their message becomes the next turn. This is the entire answer to typed-input
-   latency: it costs time-to-next-yield, not time-to-job-end. The same row read as a `hold`
-   flag is the pause control, and it is what `POST …/interrupt` should do instead of
-   answering 501.
+   stop; their message becomes the next turn.
 2. **`pending_decision()`** — the agent has asked something and has no answer yet. See 3a.
+
+**Know how rarely these fire before you rely on them.** Measured over the 181 committed e2e
+runs: the model voluntarily yields a **median of once per run**, mean 1.65, and **31% of
+runs yield zero times** — the hook fires only at job end. Against a 53.9-minute median run,
+anything gated on a yield is checked about once. That is fine for `pending_decision()`,
+which the agent itself triggers. It is not fine for Stop.
+
+### 1d. Build Stop — it is the control surface and it does not exist
+
+`POST /api/sessions/{id}/interrupt` on the prototype returns **501**, "Interrupt is not
+available in the prototype: the worker owns the turn". The whole design rests on Stop, so
+this is phase 1 work, not a later nicety.
+
+**Do not implement it as a yield-gated `hold` flag** — per the measurement above that is a
+median of one check per run. Use the `PreToolUse` hook `build_worker_options` already binds
+with `matcher=None`, which fires on **every** tool call; the corpus puts one model call plus
+its tool calls at a median of 2.6 s. A deny carrying a stop reason halts within one tool
+call and needs no new plane.
+
+**Acceptance:** Stop pressed mid-run halts within seconds, the session shows as stopped
+rather than failed, and a later message resumes it.
 
 ### 1c. Backport the hook to the alpha
 
 Alpha testers are the feedback loop and should not go quiet for weeks.
 
-**Smaller than it looks, because the alpha has no step ceiling.** E2B runs
-`on_timeout: pause, auto_resume: true` with the filesystem preserved — a suspend, not a
-kill-and-redeliver. Phase 0 does not block this.
+**The alpha has its own ceiling and it is lower than the prototype's.**
+`_RUNNING_TIMEOUT_S = 3600` in `apps/server/app/sandbox/e2b.py` is E2B's Hobby-tier
+**maximum** — creating with 7,200 fails with a 400, and `set_timeout` past the ceiling
+returns 204 and silently no-ops. It clocks **continuous runtime, not idleness**, and today
+`set_timeout` has exactly one caller: `resume()`, on `/connect`. Against a corpus median run
+of 53.9 minutes and p90 of 107.9, one continuous turn per job pauses mid-turn at or before
+p90, and around half of runs come within minutes of it.
+
+**Pick one before starting 1c and write it in the PR:**
+
+- **(a) Pro tier** — the same comment records 86,400 s on Pro. A billing decision, not an
+  engineering one.
+- **(b) A heartbeat.** `set_timeout(_RUNNING_TIMEOUT_S)` from the control plane while a turn
+  is active restarts the clock; only values *past* the ceiling no-op. This is the cheapest
+  route and it is what `resume()` already does on every connect.
+- **(c) Accept the pause** — but then **measure what it does to an in-flight turn first**.
+  The CLI subprocess, the SDK stream and the browser socket are all in-process, and nothing
+  in the repo records the outcome of pausing across them.
+
+Until one is chosen, 1c is gated. What remains true: the alpha suspends rather than killing,
+so this is a different failure from the prototype's kill-and-redeliver, and phase 0's resume
+guard does not apply to it.
 
 **Build:** `build_options` in `apps/server/app/agent/real_agent.py` already passes a `hooks=`
 dict carrying `PreToolUse`. Add a `Stop` entry whose callback reads `/project/research.json`
@@ -143,7 +197,8 @@ make three. It is a pure function. One copy, imported by all three — this is t
 shape issue #2476 exists to stop.
 
 **Acceptance:** an alpha session runs a multi-step objective to a proof conclusion on one
-user message. The e2e suite still passes against the shared predicate.
+user message *without the sandbox pausing mid-turn*. The e2e suite still passes against the
+shared predicate.
 
 ---
 
@@ -237,8 +292,22 @@ and never **what this session changed**. For a genealogist a wrong person-link i
 they care most about, and `tree_correct` and `tree_forget` exist as tools with no UI at all.
 
 A "changes this session" view — persons added, facts attached, relationships made, sources
-cited — with a reject on each row routing to the correction tool. The diff comes from the
-session's turns and the store's document versions.
+cited — with a reject on each row routing to the correction tool.
+
+**Where the diff comes from is an open build decision, and it is not "document versions".**
+`documents` is `PRIMARY KEY (project_id, name)` — one row per document, overwritten on every
+write with `version = version + 1`. There is no history. `document_versions()` in the web
+tier returns `{name: version_int}`, change-detection counters for the SSE loop holding no
+prior bodies. Do not build a diff against a counter.
+
+Pick one and write it as a build step before starting:
+
+- **(a) Derive it from the turn's tool calls.** Check first whether `tool_calls` carries
+  enough — `004_worker.sql` adds only `tool_use_id`, and there is no column holding the
+  call's input.
+- **(b) Add an append-only history table** under `apps/server/proto/sql/`, naming its columns
+  and retention. That is a store PR landing before the UI, and it touches `ProjectStore`,
+  `FsProjectStore`, `tests/store/conformance.ts` and `make proto-store-test`.
 
 **Continuous work without a review surface is the part of Claude Code people would refuse to
 use.** This is the highest-value item after phase 0.
@@ -296,9 +365,20 @@ holders before starting; those below were true on 2026-09-20.
 | S5 | `record-extraction` | A batch is one step; re-key or retire the relay-leak validator |
 
 **The narration guidance is one line and the highest-leverage line in the product.**
-`init-project` writes it and 27 of 28 skills read it from `research.json` at runtime, so one
-slot changes narration everywhere. It currently says *"Do not narrate between actions"* — but
-in this architecture the text between tool calls **is** the feed. Delete that clause.
+`init-project` writes it verbatim into every project and 27 of 28 skills read it from
+`research.json` at runtime, so one slot changes narration everywhere. In full, at
+`init-project/SKILL.md:46`:
+
+> Plain language for someone who has never done genealogy. **No identifiers, file names, tool
+> names or field names.** Do not narrate between actions; report once when the step is done:
+> what was found, in one paragraph, and what happens next in one sentence.
+
+**Two clauses change, not one, and getting this wrong costs a second slot on the same skill.**
+Delete "Do not narrate between actions" — in this architecture the text between tool calls
+**is** the feed. And replace "No identifiers…" with the additive form: identifiers are
+allowed and glossed, file, tool and skill names are discouraged as writing quality. If only
+the first clause goes, the shipped guidance still bans identifiers, 2a's linkifier has
+nothing to link, and issue #2493's acceptance corpus lands against prose containing none.
 
 **A sequencing trap.** Injecting `--autonomous` is the zero-slot way to switch production to
 continuous mode, but it inherits `research/SKILL.md`'s rule to suppress preambles and
@@ -308,9 +388,21 @@ on**, or the first window ships a silent feed.
 **The router's three no-yield sites are now correct and stay** — the autonomous-mode section,
 step 3's "Iterate — without yielding", and the closing paragraph of "When to stop".
 
-**The literal retires with S1 and S3.** `test_every_shipped_hand_back_literal_classifies`
-ends on `assert seen >= 2` and exactly two skills carry it, so **the first of S1/S3 reds it**.
-Relax the floor to zero in phase 0; keep the per-literal assertion inside the loop.
+**The literal retires with S1 and S3, and it has more sites than the test.** Every one:
+`apps/server/app/agent/hand_back.py` (the pattern, the compiled regex, the ends-with
+predicate), `runner.py` (the auto-continue arm), `apps/server/app/config.py` — note
+`auto_continue` already defaults to **`True`** with a 30-step cap, and `sandbox/e2b.py` and
+`sandbox/local.py` carry it into the sandbox — `apps/server/tests/test_hand_back_parity.py`,
+`apps/web/src/components/chatEvents.ts`, `eval/harness/e2e/stop_checker.py`, and the two
+skill bodies.
+
+**Reconcile 1c with that default.** The alpha already auto-continues on the literal. Adding a
+Stop hook there without retiring the arm gives it two continuation mechanisms; decide in 1c's
+PR whether the arm is disabled at the same time or left until S1 and S3 remove its trigger.
+
+`test_every_shipped_hand_back_literal_classifies` ends on `assert seen >= 2` and exactly two
+skills carry the literal, so **the first of S1/S3 reds it**. Relax the floor to zero in phase
+0; keep the per-literal assertion inside the loop.
 
 ---
 
@@ -368,4 +460,5 @@ already-resolved question needs a mechanism — raise it, do not invent one.
 - Every identifier in the feed is either a working link or harmless prose.
 - A two-step run renders two log entries, two feed paragraphs, and two ticked plan items.
 - A wrong person-link can be rejected from the viewer in one click.
-- Stop halts a run mid-step, and the session resumes afterwards.
+- Stop halts a run within seconds of being pressed, not at the next yield, and the session
+  resumes afterwards.
