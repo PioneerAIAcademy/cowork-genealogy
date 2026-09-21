@@ -13,7 +13,7 @@ import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import {
   recordImageReadCap,
-  wasSourceImageTruncated,
+  sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
 
@@ -128,7 +128,7 @@ describe("imageReadTool — imageId input", () => {
       }, LOCAL);
       expect(result.metadata.imageRef).toBe("images/004884748_02613.jpg");
       // The cap the prior image_transcribe recorded still stands.
-      expect(wasSourceImageTruncated(dir, "images/004884748_02613.jpg")).toBe(true);
+      expect(sourceImageCapState(dir, "images/004884748_02613.jpg")).toBe(true);
     } finally {
       __clearTruncatedSourceImagesForTests();
       await rm(dir, { recursive: true, force: true });

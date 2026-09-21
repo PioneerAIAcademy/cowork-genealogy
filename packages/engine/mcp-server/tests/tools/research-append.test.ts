@@ -797,7 +797,7 @@ describe("research_append (Phase 1)", () => {
       expect("transcription_truncated" in persisted).toBe(false);
     });
 
-    it("rejects an in-place transcription change on a persisted-true source — must add a new indexed-record source (#2457 B1 ruling 2026-09-16 update guard)", async () => {
+    it("permits an in-place transcription refinement of a persisted-true source; the marker survives and over-reports by design (#2457 rulings, C 2026-09-21)", async () => {
       await writeProject();
       recordImageReadCap(dir, "images/x.jpg", true);
       const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
@@ -805,13 +805,11 @@ describe("research_append (Phase 1)", () => {
       if (!app.ok) return;
       const id = singleOk(app).entryId;
       expect((await readResearch()).sources.find((s: any) => s.id === id).transcription_truncated).toBe(true);
-      // A later "clean" re-read records false — but sticky-true keeps the store true,
-      // so the cited image's cap state is NOT false. Editing the truncated source's
-      // transcription in place is rejected: the agent must add a new indexed-record
-      // source instead. Pre-guard this succeeded and left the whole text under a
-      // stale "partial" badge (the failure Praise reproduced).
-      recordImageReadCap(dir, "images/x.jpg", false);
-      expect(sourceImageCapState(dir, "images/x.jpg")).toBe(true); // sticky
+      // Ruling C removed the update guard: an in-place refinement (e.g. replacing the
+      // partial text with the fuller indexed-record reading) SUCCEEDS. The derivation
+      // only ever deletes the marker from the patch, so the merge keeps the persisted
+      // `true` — the badge over-reports the now-fuller text, which the ruling accepts
+      // as an unneeded badge (never a false "verified whole"). Nothing moves partial→whole.
       const upd = await researchAppend({
         projectPath: dir,
         section: "sources",
@@ -819,13 +817,10 @@ describe("research_append (Phase 1)", () => {
         entryId: id,
         fields: { transcription: "the complete page text now" },
       } as any);
-      expect(upd.ok).toBe(false); // pre-guard: true (silently mis-badged)
-      if (upd.ok) return;
-      expect(JSON.stringify(upd)).toContain("in place");
-      // The persisted source is unchanged — still partial, still its original text.
+      expect(upd.ok).toBe(true);
       const after = (await readResearch()).sources.find((s: any) => s.id === id);
-      expect(after.transcription_truncated).toBe(true);
-      expect(after.transcription).toBe("first half of the page");
+      expect(after.transcription).toBe("the complete page text now"); // refinement took
+      expect(after.transcription_truncated).toBe(true); // marker survives (over-reports by design), never false
     });
 
     it("B1 regression: a narrower uncapped re-read does not flip a capped image to whole — append persists true (#2457 B1 ruling 2026-09-19)", async () => {

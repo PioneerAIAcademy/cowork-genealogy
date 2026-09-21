@@ -3129,43 +3129,6 @@ async function prepareOps(
     }
   }
 
-  // ── Update guard: a truncated source's transcription is not editable in place
-  // (#2457 B1 ruling 2026-09-16). Truncation is permanent for an image+cap, so an
-  // update that CHANGES `transcription` on a source persisted
-  // `transcription_truncated: true` is rejected unless the cited image's cap state
-  // is `false` — a genuinely whole re-read, only reachable after a cap change. The
-  // remedy is a NEW indexed-record source, not an in-place rewrite; otherwise the
-  // complete text would sit under a stale "partial" badge (the failure Praise
-  // reproduced). The persisted entry is readable here (research.sources), so the
-  // marker and the current transcription are read directly.
-  const persistedSourcesForGuard = Array.isArray(research.sources) ? research.sources : [];
-  for (let i = 0; i < ops.length; i++) {
-    const op = ops[i];
-    if (op.section !== "sources" || op.op !== "update") continue;
-    const patch = op.fields as Record<string, unknown> | undefined;
-    if (!patch || typeof patch !== "object" || !("transcription" in patch)) continue;
-    const entry = persistedSourcesForGuard.find(
-      (s: any) => s && s.id === op.entryId,
-    ) as Record<string, unknown> | undefined;
-    if (!entry || entry.transcription_truncated !== true) continue;
-    if (patch.transcription === entry.transcription) continue; // no real change — not an edit
-    const patchRef = patch.image_filename;
-    const ref =
-      typeof patchRef === "string" && patchRef.length > 0 ? patchRef : entry.image_filename;
-    const cap = typeof ref === "string" ? sourceImageCapState(projectPath, ref) : undefined;
-    if (cap === false) continue; // genuine whole re-read — retraction permitted
-    errors.push(
-      fmt(
-        i,
-        `cannot change 'transcription' on source '${op.entryId}' in place — it is marked ` +
-          "transcription_truncated (a capped OCR read), and a truncation is permanent for that " +
-          "image and cap, so re-reading cannot reliably complete it. To record the fuller text, add " +
-          "a NEW source from the indexed record (record_read / record_search) and cite that; leave " +
-          "this image source as the partial-scan evidence.",
-      ),
-    );
-  }
-
   // ── Derive transcription_truncated at the write boundary (#2457) ──
   // The truncation of an image read is known to image_transcribe, not to
   // record-extractor (which only holds the relayed text). So research_append is
@@ -3195,18 +3158,20 @@ async function prepareOps(
     delete bag.transcription_truncated;
     const ref = bag.image_filename;
     if (typeof ref !== "string" || ref.length === 0) continue;
-    const cap = sourceImageCapState(projectPath, ref);
+    const capped = sourceImageCapState(projectPath, ref);
     // `true` (verified partial) is the only value persisted, and only beside a
     // non-empty transcription — the marker qualifies text, so it is meaningless
     // without any, and `true` beside empty/null transcription is a state
     // validate_research_schema rejects (its .trim()), which batched would discard
-    // every good op with it. Anything else — verified whole (`false`), or not
-    // established (`undefined`), or no text — leaves the key deleted: `false` is
-    // never written to the document (#2457 B2 ruling). A whole-read image
-    // (`false`) therefore permits an in-place transcription update, since the
-    // patch omits the marker and the merge keeps the (absent) persisted value.
+    // every good op with it. Anything else — the image not in the cap set (a whole
+    // read, or no read here), or no text — leaves the key deleted: nothing but
+    // `true` is ever written (#2457 rulings, C 2026-09-21). So a non-partial image
+    // permits an in-place transcription update (the patch omits the marker and the
+    // merge keeps the persisted value); and a persisted `true` survives such an
+    // update — the marker may over-report a since-refined read, which the ruling
+    // accepts as an unneeded badge, never a false "verified whole".
     const text = bag.transcription;
-    if (cap === true && typeof text === "string" && text.trim() !== "") {
+    if (capped && typeof text === "string" && text.trim() !== "") {
       bag.transcription_truncated = true;
     }
   }

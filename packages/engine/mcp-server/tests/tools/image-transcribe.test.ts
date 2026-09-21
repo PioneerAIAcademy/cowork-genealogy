@@ -26,7 +26,6 @@ import {
   __clearBrowseBudgetForTests,
 } from "../../src/tools/image-transcribe.js";
 import {
-  wasSourceImageTruncated,
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
@@ -424,7 +423,7 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
       expect(result.truncated).toBe(true);
       expect(result.imageRef).toBe("images/004884748_02613.jpg");
       // The join research_append performs at the write boundary must now hit.
-      expect(wasSourceImageTruncated(dir, result.imageRef!)).toBe(true);
+      expect(sourceImageCapState(dir, result.imageRef!)).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -443,7 +442,7 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
       // A first whole read records false in the cap store (not absent); the
       // derivation reads it as "not true" and persists nothing — false never
       // reaches research.json (#2457 B2 ruling).
-      expect(wasSourceImageTruncated(dir, result.imageRef!)).toBe(false);
+      expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
       expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
     } finally {
       await rm(dir, { recursive: true, force: true });

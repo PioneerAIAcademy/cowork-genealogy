@@ -954,52 +954,45 @@ then an unneeded badge, never a false all-clear — which is what makes the
 agent-supplied `image_filename` join key acceptable (a wrong-but-resolvable key
 can add a `true` badge, never a false "verified whole").
 
-- **Record (write side).** On any read that persisted an image — capped or not —
-  `image_transcribe` records the outcome against that image:
-  `recordImageReadCap(projectPath, imageRef, truncated)` in
-  `src/utils/image-store.ts`. It is a module-level `Map<string, boolean>` keyed
-  `${projectId-or-projectPath}\0${imageRef}` — the imageRef being the same
-  `images/<key>.jpg` string a source cites as `image_filename` (§8.5), and the
-  scope being the bound store's `projectId` where it has one (patron isolation
-  under the shared-process `http.ts` entrypoint), else the `projectPath`. `true` =
-  verified partial (the read hit the
-  cap), `false` = verified whole, absent = not established — but the store is
-  **sticky-`true`**: once an image reads capped, a later `false` for that key is
-  dropped, so no read in the process moves it back to whole. This matters because
-  the cap bounds output tokens and the OCR prompt varies with `lookingFor`, so a
-  second, narrower read of the same image can come back uncapped; without
-  stickiness that `false` would overwrite the `true` and stamp read 1's partial
-  text "verified whole". A genuine "read it whole now" needs a bigger cap, which
-  needs a rebuild+restart, which empties this process-lifetime store — so nothing
-  legitimate is lost. Both key halves arrive from an LLM relay, so the key
-  canonicalizes each: backslashes and a trailing separator off `projectPath`, and
-  (via `posix.normalize`) backslashes, a leading `./`, doubled `//` and interior
-  `/./` off `imageRef` — the same folding the GC applies to its referenced set, so
-  a source cited as `./images//x.jpg` still both joins the cap and protects its
-  scan from the sweep. It lives in `image-store.ts`, not `image-transcribe.ts`,
-  because both the writer (`image_transcribe`) and the reader (`research_append`)
-  already import that module — the alternative is a tool→tool import — and
-  `image_filename` is exactly the `imageRef` this module mints. Process-lifetime
-  and never persisted (as `browseBudgetSeen` is, §5.8), but scoped by the store's
-  `projectId` rather than the `projectPath` `browseBudgetSeen` keys on, so it
-  isolates patrons on the shared-process entrypoint.
+- **Record (write side).** On a read that hit the cap and persisted the image,
+  `image_transcribe` records it: `recordImageReadCap(projectPath, imageRef,
+  truncated)` in `src/utils/image-store.ts`. It is a module-level, **add-only**
+  `Set<string>` keyed `${projectId-or-projectPath}\0${imageRef}` — the imageRef
+  being the same `images/<key>.jpg` string a source cites as `image_filename`
+  (§8.5), and the scope being the bound store's `projectId` where it has one
+  (patron isolation under the shared-process `http.ts` entrypoint), else the
+  `projectPath`. Membership means verified **partial**; absence means **not
+  established** (a whole read or no read). It is add-only — a whole read
+  (`!truncated`) records nothing — so once an image is in the set it stays: a later
+  narrower read that happens to come back uncapped cannot move it to whole, which is
+  stickiness expressed by construction rather than by a guard clause. Both key
+  halves arrive from an LLM relay, so the key canonicalizes each: backslashes and a
+  trailing separator off `projectPath`, and (via `posix.normalize`) backslashes, a
+  leading `./`, doubled `//` and interior `/./` off `imageRef` — the same folding
+  the GC applies to its referenced set, so a source cited as `./images//x.jpg` still
+  both joins the cap and protects its scan from the sweep. It lives in
+  `image-store.ts`, not `image-transcribe.ts`, because both the writer
+  (`image_transcribe`) and the reader (`research_append`) already import that
+  module. Process-lifetime and never persisted (as `browseBudgetSeen` is, §5.8), but
+  scoped by the store's `projectId` rather than the `projectPath` `browseBudgetSeen`
+  keys on, so it isolates patrons on the shared-process entrypoint.
 - **Derive (persist side).** In `research_append`'s `prepareOps`, after the
   source-reuse rewrite, every `sources` op carrying an `image_filename` reads
   `sourceImageCapState(projectPath, image_filename)` and sets the field from it —
-  **authoritative**, any agent-supplied value stripped first. The persisted
-  marker is **`true` or absent, never `false`**: `true` (verified partial) is
-  written only beside a non-empty `transcription`; anything else — verified whole
-  (`false` in the store), not established (absent), or no text — leaves the key
-  deleted. `false` stays in the cap store and is never written to `research.json`.
-  On an `update` the deleted key is absent from the patch, so the merge keeps the
-  persisted value: a persisted `true` survives an update even after a restart
-  emptied the store, and a whole-read image (`false` in the store) permits an
-  in-place `transcription` update because nothing is written to block it.
-- **Invariant.** `validate_research_schema` rejects a persisted `false` (the
-  marker is `true` or absent) and rejects `transcription_truncated: true` beside
-  an empty or null `transcription` — the persisted-side mirror of the tool's own
-  guarantee that a zero-content capped read throws rather than returning
-  `truncated: true` (§6.2).
+  **authoritative**, any agent-supplied value stripped first. The persisted marker
+  is **`true` or absent, never `false`**: `true` is written only when the image is
+  in the cap set *and* the op carries a non-empty `transcription`; every other case
+  (not in the set, or no text) leaves the key deleted. On an `update` the deleted
+  key is absent from the patch, so the merge keeps the persisted value: an image not
+  in the cap set permits an in-place `transcription` refinement, and a persisted
+  `true` **survives** such a refinement — it may then over-report (complete text
+  under a `true` badge), accepted as an unneeded badge and never a false "verified
+  whole" (ruling C 2026-09-21 removed the guard that had rejected the refinement).
+- **Invariant.** `validate_research_schema` rejects a persisted `false` (the marker
+  is `true` or absent) and rejects `transcription_truncated: true` beside an empty
+  or null `transcription` — the persisted-side mirror of the tool's own guarantee
+  that a zero-content capped read throws rather than returning `truncated: true`
+  (§6.2).
 
 **Known limitation — the join needs a persisted image.** Like the browse
 budget's ARK blind spot (§5.8), this derivation has a hole, but a *different*

@@ -603,8 +603,10 @@ persisted marker is **`true` or absent** — `false` is never written to
 | `true` | verified **partial** — a read of the cited image hit the OCR output-token cap |
 | absent | **not established** — a verified-whole read, a non-image source, or a truncation state that never reached the write boundary |
 
-(`false` — verified whole — is a *cap-store* state only, read by the derivation
-below; it is never a persisted document value.)
+(There is no `false` anywhere now — ruling C 2026-09-21 collapsed the cap store
+to the same shape as the persisted marker: a `true`-or-absent, add-only set.
+Absence, in the store or the document, means "not established" — a whole read or
+no read.)
 
 Derivation, per op:
 
@@ -614,50 +616,41 @@ Derivation, per op:
   value is a guess and is dropped rather than persisted. On an `update` the
   stripped key is then absent from the patch, so `applyOne` keeps whatever is
   already persisted (below).
-- The op is then joined by `image_filename` against the image-store cap map
-  (`sourceImageCapState` — `true` partial, `false` whole, `undefined` not
-  established).
-- The flag is set `true` **only** on a verified-partial hit that also carries a
-  non-empty `transcription`. That guard is load-bearing: `true` beside empty/null
+- The op is then joined by `image_filename` against the image-store cap set
+  (`sourceImageCapState` — `true` when the image was read past the cap, absent
+  otherwise).
+- The flag is set `true` **only** on a hit that also carries a non-empty
+  `transcription`. That guard is load-bearing: `true` beside empty/null
   `transcription` is a state `validate_research_schema` rejects, so deriving it
   would make the tool fail its own write (and, batched, discard every good op with
-  it). Every other case — verified whole (`false`), not established (`undefined`),
-  or no text — leaves the key **deleted**; `false` is never persisted.
+  it). Every other case — the image not in the cap set (a whole read or no read),
+  or no text — leaves the key **deleted**.
 - Because the non-`true` cases delete rather than write, an `update` merges to
-  keep the persisted value: a persisted `true` survives an update even after a
-  process restart emptied the store, and a whole-read image (`false` in the store)
-  permits an in-place `transcription` update, since nothing is written to block
-  it.
+  keep the persisted value. Two consequences: an image not in the cap set permits
+  an in-place `transcription` update (nothing is written to change the marker); and
+  a persisted `true` **survives** an in-place refinement of the text. The marker
+  may then **over-report** — complete text under a `true` badge. Ruling C
+  (2026-09-21) accepts that as an unneeded badge, never a false "verified whole",
+  and removed the guard that had rejected the refinement.
 
-**Update guard — a truncated source's `transcription` is not editable in place.**
-Before the derivation, `prepareOps` rejects a `sources` **update** whose patch
-changes `transcription` on an entry persisted `transcription_truncated: true`,
-**unless** the cited image's cap state is `false` (a genuinely whole re-read,
-only reachable after a cap change). The guard reads the persisted entry directly
-(`research.sources` is in scope here — the persisted text is *not* unreadable
-pre-merge), so it sees both the marker and the current text. Without it, an agent
-that pivots to the indexed record and overwrites the partial text with the whole
-text would leave the complete text under a stale "partial" badge; the guard sends
-it to add a **new** indexed-record source instead. This is the consumer that
-gives the cap store's `false` its purpose.
-
-**The invariant: nothing moves from "partial" to "whole"** — in memory
-(sticky-`true` in the cap store, `image-transcribe-tool-spec.md` §8.6) or in the
-document (`true`-or-absent here, and a `true` source's text is guard-frozen). This
-is what makes the agent-supplied `image_filename` join key acceptable: a
+**The invariant: nothing moves from "partial" to "whole"** — in memory (the cap
+store is add-only, so a whole re-read records nothing) and in the document (the
+marker is `true`-or-absent, and the derivation only ever writes `true` or deletes
+from the patch, so a persisted `true` is never cleared to whole). This is what
+makes the agent-supplied `image_filename` join key acceptable: a
 wrong-but-resolvable key can only add an unneeded `true` badge, never a false
 "verified whole".
 
-**Retraction is dropped, and a re-read does not do it.** The cap store is
-sticky-`true`: once an image reads capped, a later read in the same process does
-not clear it, and the persisted `true` is never overwritten with `false`. The cap
-bounds *output tokens* and the OCR prompt varies with `lookingFor`
-(`buildOcrPrompt`), so a second, narrower read can come back uncapped — but that
-`false` is dropped, not applied, so a truncation is permanent for that image and
-cap. Do **not** re-read to "complete" a partial transcription and do **not** null
-or rewrite it in place; the remedy is to pivot to the indexed record
-(`record_read` / `record_search`) and cite that as a new source (matching
-`research-schema-spec.md` and the item-2 ruling).
+**Retraction does not exist, and a re-read does not create one.** The cap store is
+add-only: a whole re-read of a capped image records nothing, so a truncation is
+permanent in the store, and the persisted `true` is likewise never cleared (the
+derivation cannot retract it, and a restart empties the store a recomputation would
+need). An in-place refinement of the text is *permitted* — it just leaves the
+`true` badge over-reporting. To avoid the stale badge, cite the fuller reading as a
+**new** indexed-record source (`record_read` / `record_search`) rather than editing
+the image source in place. Nulling a truncated source's `transcription` outright
+still fails loudly (`validate_research_schema` rejects `true` beside empty text,
+with the same pivot instruction).
 
 Unlike §3.6, this override **echoes nothing** — the response carries no signal
 that a caller-supplied value was dropped. The persisted-side invariant

@@ -15,7 +15,6 @@ import {
   gcUnreferencedImages,
   imageFilenameFor,
   recordImageReadCap,
-  wasSourceImageTruncated,
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
@@ -129,38 +128,36 @@ describe("truncated-source-image cache (#2457)", () => {
 
   it("records a capped read so a source citing that image_filename reads truncated", () => {
     recordImageReadCap("/proj", "images/004884748_02613.jpg", true);
-    expect(wasSourceImageTruncated("/proj", "images/004884748_02613.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj", "images/004884748_02613.jpg")).toBe(true);
   });
 
   it("reports false for an image never recorded", () => {
-    expect(wasSourceImageTruncated("/proj", "images/never-seen.jpg")).toBe(false);
+    expect(sourceImageCapState("/proj", "images/never-seen.jpg")).toBe(false);
   });
 
-  it("is sticky-true: a later clean read does NOT retract a recorded cap (#2457 B1 ruling 2026-09-19)", () => {
+  it("is sticky by construction: a later whole read does not clear a recorded cap (#2457 rulings, C 2026-09-21)", () => {
     // The cap bounds output tokens and the prompt varies with lookingFor, so a
-    // narrower second read of the same image can come back uncapped. That false
-    // must NOT overwrite the true, or read 1's partial text gets stamped whole.
+    // narrower second read of the same image can come back uncapped. The store is
+    // add-only, so that whole read records nothing and cannot overwrite the partial.
     recordImageReadCap("/proj", "images/x.jpg", true);
-    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
-    recordImageReadCap("/proj", "images/x.jpg", false); // narrower, uncapped re-read
-    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true); // sticky — still partial
     expect(sourceImageCapState("/proj", "images/x.jpg")).toBe(true);
+    recordImageReadCap("/proj", "images/x.jpg", false); // narrower, uncapped re-read
+    expect(sourceImageCapState("/proj", "images/x.jpg")).toBe(true); // still partial
   });
 
-  it("records false only when no true stands for that key (partial=true, whole=false, unseen=undefined)", () => {
-    // The store is still tri-state in memory; sticky-true only blocks true → false
-    // for one key. A key whose first read is whole records false.
-    expect(sourceImageCapState("/proj", "images/never.jpg")).toBeUndefined();
+  it("is true-or-absent: a capped read is recorded, a whole read records nothing (#2457 rulings, C 2026-09-21)", () => {
+    // Membership is the whole state — no `false` and no `undefined` are stored.
     recordImageReadCap("/proj", "images/partial.jpg", true);
     expect(sourceImageCapState("/proj", "images/partial.jpg")).toBe(true);
-    recordImageReadCap("/proj", "images/whole.jpg", false);
-    expect(sourceImageCapState("/proj", "images/whole.jpg")).toBe(false); // no prior true → records false
+    recordImageReadCap("/proj", "images/whole.jpg", false); // whole read → add-only no-op
+    expect(sourceImageCapState("/proj", "images/whole.jpg")).toBe(false);
+    expect(sourceImageCapState("/proj", "images/never.jpg")).toBe(false); // unseen
   });
 
   it("is keyed by project — one project's cap does not leak into another", () => {
     recordImageReadCap("/proj-a", "images/shared.jpg", true);
-    expect(wasSourceImageTruncated("/proj-a", "images/shared.jpg")).toBe(true);
-    expect(wasSourceImageTruncated("/proj-b", "images/shared.jpg")).toBe(false);
+    expect(sourceImageCapState("/proj-a", "images/shared.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj-b", "images/shared.jpg")).toBe(false);
   });
 
   it("an ARK read is joinable too — its imageRef is what a source cites", () => {
@@ -169,7 +166,7 @@ describe("truncated-source-image cache (#2457)", () => {
     // read is). Mirrors imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL").
     const ref = `images/${imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL")}`;
     recordImageReadCap("/proj", ref, true);
-    expect(wasSourceImageTruncated("/proj", ref)).toBe(true);
+    expect(sourceImageCapState("/proj", ref)).toBe(true);
   });
 
   it("joins across a trailing separator on projectPath — record `/p/`, query `/p` (#2457 review, blocker 4a)", () => {
@@ -177,11 +174,11 @@ describe("truncated-source-image cache (#2457)", () => {
     // the same project with and without a trailing slash. The key must normalize
     // both or a capped read reads back clean.
     recordImageReadCap("/proj/", "images/x.jpg", true);
-    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj", "images/x.jpg")).toBe(true);
     // …and the other direction.
     __clearTruncatedSourceImagesForTests();
     recordImageReadCap("/proj", "images/x.jpg", true);
-    expect(wasSourceImageTruncated("/proj/", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj/", "images/x.jpg")).toBe(true);
   });
 
   it("joins across image_filename spelling variants — `./images/x.jpg` and backslashes (#2457 review r3, note 8)", () => {
@@ -189,12 +186,12 @@ describe("truncated-source-image cache (#2457)", () => {
     // can carry a leading `./` or backslash separators the module-minted write-side
     // ref never has. Without normalizing both, a capped read reads back clean.
     recordImageReadCap("/proj", "images/x.jpg", true);
-    expect(wasSourceImageTruncated("/proj", "./images/x.jpg")).toBe(true);
-    expect(wasSourceImageTruncated("/proj", "images\\x.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj", "./images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj", "images\\x.jpg")).toBe(true);
     // …and the other direction: recorded with a variant, queried canonically.
     __clearTruncatedSourceImagesForTests();
     recordImageReadCap("/proj", "./images/y.jpg", true);
-    expect(wasSourceImageTruncated("/proj", "images/y.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj", "images/y.jpg")).toBe(true);
   });
 
   it("isolates patrons under a shared-process store binding — same anchor path, different projectId, no collision (#2457 r8 B2)", async () => {
@@ -205,15 +202,15 @@ describe("truncated-source-image cache (#2457)", () => {
     const store = (projectId: string) => ({ projectId }) as unknown as ProjectStore;
     await runWithProjectStore(store("proj-A"), async () => {
       recordImageReadCap("/project", "images/x.jpg", true);
-      expect(wasSourceImageTruncated("/project", "images/x.jpg")).toBe(true);
+      expect(sourceImageCapState("/project", "images/x.jpg")).toBe(true);
     });
     // Patron B: identical anchor path and image, must NOT see A's cap.
     await runWithProjectStore(store("proj-B"), async () => {
-      expect(wasSourceImageTruncated("/project", "images/x.jpg")).toBe(false);
+      expect(sourceImageCapState("/project", "images/x.jpg")).toBe(false);
     });
     // A still sees its own (record→read join survives across A's turns).
     await runWithProjectStore(store("proj-A"), async () => {
-      expect(wasSourceImageTruncated("/project", "images/x.jpg")).toBe(true);
+      expect(sourceImageCapState("/project", "images/x.jpg")).toBe(true);
     });
   });
 
@@ -222,9 +219,9 @@ describe("truncated-source-image cache (#2457)", () => {
     // query under `C:/Users/proj` must join, or the truncation marker is silently
     // lost. projectPath must normalize separators the same way imageRef does.
     recordImageReadCap("C:\\Users\\proj", "images/x.jpg", true);
-    expect(wasSourceImageTruncated("C:/Users/proj", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("C:/Users/proj", "images/x.jpg")).toBe(true);
     __clearTruncatedSourceImagesForTests();
     recordImageReadCap("C:/Users/proj/", "images/x.jpg", true);
-    expect(wasSourceImageTruncated("C:\\Users\\proj", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("C:\\Users\\proj", "images/x.jpg")).toBe(true);
   });
 });
