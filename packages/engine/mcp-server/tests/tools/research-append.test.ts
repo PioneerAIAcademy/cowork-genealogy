@@ -3480,14 +3480,14 @@ describe("research_append (batch ops)", () => {
     // The other unconditional clause: a superseded plan for the same question
     // was described as "another question's plan" in the same sentence that
     // correctly printed its question id.
-    // #2108: the misroute arm's SAME-QUESTION branch is now unreachable, and
-    // that is structural rather than an oversight. A same-question target must
-    // be non-active — a question may hold only one active plan, so seeding an
-    // active one and creating another reds `already has an active plan`. Every
-    // remaining input is therefore a terminal parent, which the deny refuses
-    // before the arm runs. The concern this test was written for still holds
-    // and is asserted against the new message: do not describe a plan for THIS
-    // question as another question's.
+    // #2108: this input now reaches the terminal-plan deny rather than the
+    // misroute arm. Seeding an ACTIVE same-question target and creating another
+    // active plan reds `already has an active plan` instead, so this case is
+    // stated with a terminal target. The arm's same-question branch is NOT dead
+    // — a created plan that is itself terminal escapes the one-active-plan rule
+    // and still reaches it; the SAME-question ACTIVE test above pins that. The
+    // concern this test was written for still holds and is asserted against the
+    // new message: do not describe a plan for THIS question as another's.
     const research = baseResearch();
     research.questions = [validQuestion("q_001")];
     research.plans = [
@@ -3540,11 +3540,10 @@ describe("research_append (batch ops)", () => {
     // printed a singular "it belongs to a different question" over both.
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
-    // #2108: same structural reason as the SAME-QUESTION test above — a mixed
-    // list needs a same-question target, which cannot be active, so the deny
-    // answers first. Asserted against the new message; `pl_002` is the
-    // same-question target and the refusal must name ITS question, not call it
-    // another question's.
+    // #2108: same reason as the SAME-QUESTION test above — stated with a
+    // terminal same-question target, so the deny answers first. Asserted against
+    // the new message; `pl_002` is the same-question target and the refusal must
+    // name ITS question, not call it another question's.
     research.plans = [
       { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
       { ...validPlan("pl_002", "q_001", "superseded", [seededPlanItem("pli_002")]) },
@@ -3704,6 +3703,37 @@ describe("research_append (batch ops)", () => {
   //
   // The accept-side cases are NOT optional. A guard fails two ways, and cases
   // (3), (4) and (5) are the ways this one would wrongly block legitimate work.
+
+  it("(d2-misroute) does not call a SAME-question ACTIVE plan another question's", async () => {
+    // The created plan is terminal, so `planActiveInvariants` no-ops (it returns
+    // early on a non-active entry) and the one-active-plan rule does not apply.
+    // That is the one input still reaching the misroute arm's same-question
+    // branch — the terminal-plan deny does not preempt it, because the target is
+    // active. `pl_001` is parked on another question so the hard-coded-pl_001
+    // tail does not take precedence.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_002", "q_001", "active", [seededPlanItem("pli_002")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "completed")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors[0];
+    expect(msg).toMatch(/wrote into 'pl_002' \(active plan for q_001\)/);
+    expect(msg).not.toMatch(/different question/);
+    expect(msg).not.toMatch(/another question/);
+  });
 
   it("(d3-terminal) refuses a plan_items append into a COMPLETED plan — writes nothing", async () => {
     const research = baseResearch();
