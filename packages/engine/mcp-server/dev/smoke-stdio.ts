@@ -78,6 +78,15 @@ try {
   if (!statusOk) failures.push("auth_status");
   calls++;
 
+  // #2126 — the build stamp is on the wire and on the tool return, and they agree.
+  const wireVersion = client.getServerVersion()?.version;
+  const stampOk =
+    typeof wireVersion === "string" &&
+    /^\d+\.\d+\.\d+\+/.test(wireVersion) &&
+    status.body.buildId === wireVersion;
+  report("build stamp", stampOk, `serverInfo.version=${wireVersion} auth_status.buildId=${status.body.buildId}`);
+  if (!stampOk) failures.push("build stamp");
+
   const run = await runPlan((tool, args) => callViaClient(client, tool, args), ctx, { offlineOnly: true });
   calls += run.calls;
   failures = failures.concat(run.failures);
