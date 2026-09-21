@@ -81,24 +81,44 @@ Three things are missing:
 1. **A selector that matches the `Agent` call's input**, `run_in_background: true`, read from
    `session_entries.entry`. `tool_calls` carries no input column — `004_worker.sql` adds only
    `tool_use_id` — so matching by tool name alone cannot find the case.
-2. **Run it with `AUTONOMOUS_MAX_NUDGES > 0`**, which `make proto-kill` leaves at 0, on the
-   autonomous arm's own message against `bagley-father-1884`.
-3. **Only then the guard.** If the probe does not reproduce a zero-turn synthetic result with
-   background agents in flight, report that and stop — the rest of phase 0 still stands.
+2. **Something that makes it fire.** `run_in_background` is model-chosen; nothing in the
+   plugin sets it. It appears in **19 of 714** committed runs and in **none of the eight**
+   `bagley-father-1884` runs. So a crafted message asking for two record extractions at once,
+   via `--text-file`, and `AUTONOMOUS_MAX_NUDGES > 0`, which `make proto-kill` leaves at 0.
+3. **The fallback, named here rather than left to the PR.** If it will not fire on demand
+   after a reasonable attempt — each try is a billed run of roughly an hour — the accepted
+   evidence is a unit test in `apps/server/tests/test_proto_worker.py` feeding `run_turn` a
+   synthetic `ResultMessage(num_turns=0, is_error=False)` on a `receive_count > 1` attempt.
+   Do not spend more than two billed attempts chasing the live case.
+4. **Only then the guard.**
 
 **Then build:** in `apps/server/proto/worker/worker.py`, on a redelivered attempt
 (`receive_count > 1`), a `ResultMessage` with `num_turns == 0` is a resume failure rather
 than a completion.
 
 **Bound the retry, and say what terminal looks like.** `elasticmq.conf` has **deliberately
-no redrive policy**: "a message that fails on every delivery retries forever with back-off",
-pinned by `test_proto_config.py`. The worker's failure path is a 500 → `requeue_backoff`,
-capped at 300 s. The cause 0a names is a property of the stored transcript and is re-fed on
-every resume, so if it is deterministic then a bare "retry" is an unbounded paid loop that
-satisfies the acceptance line while never surfacing. Cap the attempts — `turns.receive_count`
-already carries the number — and on exhaustion **fail the turn with an outcome the web tier
-renders**. Measure whether the transcript is repaired between attempts rather than assuming
-it.
+no redrive policy**: "a message that fails on every delivery retries forever with back-off".
+The worker's failure path is a 500 → `requeue_backoff`, capped at 300 s. The cause 0a names
+is a property of the stored transcript, re-fed on every resume, so if it is deterministic a
+bare "retry" is an unbounded paid loop that satisfies the acceptance line while never
+surfacing.
+
+**Do not cap on `receive_count`.** A read timeout requeues and SQS increments it, so it
+counts a legitimate ceiling crossing and a deterministic failure with the same number — and
+per 0b a healthy run crosses two to three times. Any cap safe at p90 is 4 or more and bounds
+nothing; any cap that bounds the loop kills the 39% of healthy runs that need three attempts.
+
+**Cap zero-progress attempts instead.** A redelivered attempt counts against the cap only
+when it did no work: `num_turns == 0`, or no new `tool_calls` rows above
+`turns.entries_seq_before`. Any attempt that did work resets the counter. **N = 2.** This
+needs a new `turns` column — `receive_count` cannot carry it, and `elasticmq.conf` already
+notes that `ChangeMessageVisibility` never resets it.
+
+**On exhaustion, answer 200 and write the outcome yourself.** `worker.py` raises on
+`result.is_error` *before* `complete()`, and `serve_real_turn` turns any raise into a 500,
+which `decide.py` maps to a requeue — with no redrive policy, forever. A terminal failure
+that surfaces as an error is redelivered and re-runs the model, which is the exact loop this
+guard exists to prevent.
 
 **Acceptance:** a kill during a delegation resumes and finishes; no run records a
 `num_turns == 0` attempt as a completion; and a deterministically failing turn stops after N
@@ -119,9 +139,33 @@ to 2,100 s in `apps/server/proto/elasticmq.conf` and update its header comment.
 `test_proto_config.py` asserts the export is present and reads it for the visibility check;
 re-point `_exported_ceiling_s` now that the ruling is 1,800 with no exception.
 
-**What it costs, stated.** Four skill-or-agent segments in the corpus exceed 1,800 s, the
-longest at 3,147 s. Those cannot complete inside one attempt. 0a's attempt cap is what turns
-them into a reported failure rather than a paid loop.
+**What it costs, and it is not what an earlier draft said.** The ceiling bounds one queue
+message, and under continuous turns one queue message is a whole run — so the number that
+matters is run length, not segment length. Measured over the 134 committed e2e runs that
+reached `completed`:
+
+| | |
+|---|---|
+| median | 53.5 min |
+| p90 | 83.3 min |
+| longest | 168.8 min |
+| exceed 1,800 s | **94.0%** |
+| exceed 3,600 s, so more than two attempts | 38.8% |
+| exceed 3,900 s, the demo's current deadline | 32.1% |
+
+**Resume is the normal path, not the exception** — the median run needs two attempts, p90
+three, the longest in the corpus six. That is why 0a gates this phase.
+
+**Re-size the demo's wait in the same edit.** `--deadline-s` is `2 * READ_TIMEOUT_S + 300`,
+which is 3,900 s at the new ceiling, and 32% of *successfully completed* runs exceed it —
+`demo.py` turns that into a hard `TimeoutError` and a FAIL. Make it `6 * READ_TIMEOUT_S + 300`
+and say why: the demo has to span six attempts, not one resume.
+
+**The test list:** `test_proto_config.py` needs **no edit** — its `_exported_ceiling_s()` is a
+regex reader over the recipe, so it tracks the Makefile, and hardcoding 1,800 into it would
+destroy the derivation. What reds is `test_proto_demo.py`, both the `== 7200 > STEP_CEILING_S`
+assertion, whose inequality is now false, and the deadline regex. Also stale: the Makefile
+help text and comment block, and `elasticmq.conf`'s header, which names 7,200 twice.
 
 **No exception for tests.** A test that never crosses the ceiling can never exercise resume,
 and resume is now load-bearing on every production run. The crossing *is* the test.
@@ -190,9 +234,18 @@ median of one check per run. Use the `PreToolUse` hook `build_worker_options` al
 with `matcher=None`, which fires on **every** tool call; the corpus puts one model call plus
 its tool calls at a median of 2.6 s.
 
-**Return `{"continue_": False, "stopReason": …}`, not `_deny(...)`.** `_deny` returns a
-`permissionDecision: "deny"` — a tool result the model reads and argues with, not a halt.
-The SDK's halt fields are separate.
+**On the alpha, Stop already exists — use it.** `RealAgent.interrupt()` calls the SDK
+control channel and is already wired to the Stop button through the runner. The work below is
+for the **prototype**, where the worker owns the turn and no control channel reaches it.
+
+**On the prototype, return `{"continue_": False, "stopReason": …}`, not `_deny(...)`.**
+`_deny` returns a `permissionDecision: "deny"` — a tool result the model reads and argues
+with, not a halt. The SDK's halt fields are separate.
+
+**The halted turn must answer 200.** Same trap as 0a: `worker.py` raises on `result.is_error`
+before `complete()`, `serve_real_turn` turns a raise into a 500, and `decide.py` requeues a
+non-2xx with no redrive policy. A stop that surfaces as an error is redelivered and re-runs
+the model forever.
 
 **And the Stop hook must not undo it.** `should_continue_run` has exactly four paths that
 allow a stop — MCP unavailable, project completed, budget spent, no progress — and none of
@@ -208,8 +261,12 @@ that escape never fires.
 `turns.outcome` of `stopped`, carried on the `turn_done` payload and through `row_to_wire`,
 or the browser renders a stop as a normal completion.
 
-**Measure whether `continue_: False` also suppresses the Stop hook dispatch.** If it does,
-`stopped()` is belt and braces; if it does not, `stopped()` is load-bearing.
+**Two things to measure before relying on this.** Whether `continue_: False` also suppresses
+the Stop hook dispatch — if it does, `stopped()` is belt and braces; if not, it is
+load-bearing. And whether a **subagent's** `continue_: False` halts the parent session or
+only that subagent: the hook binds with `matcher=None` so it fires on delegated calls too,
+and if only the subagent halts, Stop pressed during a `record-extractor` delegation does not
+stop the run.
 
 **Acceptance:** Stop pressed mid-run halts within seconds, the session shows as stopped
 rather than completed or failed, and a later message resumes it.
@@ -245,16 +302,16 @@ guard does not apply to it.
 dict carrying `PreToolUse`. Add a `Stop` entry whose callback reads `/project/research.json`
 (the runner already has `PROJECT_DIR`) and calls the same predicate.
 
-**You cannot make `should_continue_run` a shared import, so do not plan to.** The worker
-image copies only `apps/server/app`, `apps/server/proto/sql` and `apps/server/proto/worker` —
-no `eval/` — and `test_proto_config.py` asserts that `apps/server` and `eval/harness` never
-import each other. It already exists twice, in `apps/server/proto/worker/options.py` and
-`eval/harness/e2e/stop_checker.py`, and the alpha would make three.
+**Share it between the alpha and the prototype; keep the harness's copy separate.** The
+worker already imports from the alpha — `options.py` takes `direct_project_file_write` and
+`worker.py` takes `map_message`, both from `app.agent.real_agent` — so one copy under
+`apps/server/app` serves both planes. What is genuinely separate is `eval/harness`: the
+worker image does not copy `eval/`, and a test asserts those two trees never import each
+other.
 
-Pin them instead: an AST-lifting parity test, the pattern
+So: two copies, not three. Pin them with an AST-lifting parity test, the pattern
 `eval/harness/tests/unit/test_write_lockdown_parity.py` already uses for exactly this
-problem. Three copies that cannot drift silently is the achievable version of issue #2476
-here.
+problem.
 
 **Acceptance:** an alpha session runs a multi-step objective to a proof conclusion on one
 user message *without the sandbox pausing mid-turn*. The e2e suite still passes against the
@@ -340,6 +397,18 @@ reads it — no schema pair, no validator edit, no TS mirror, no ownership row, 
 The *resolved outcome* already has a home in `research.json`: a disambiguation is a
 `hypotheses` or `conflicts` entry, a blocker is a `log` entry with a negative outcome. Only
 the transient "waiting for an answer" state is new, and that is control-plane by nature.
+
+**Name the writer, or `pending_decision()` can never be true.** The Stop hook's callables
+are reads on the worker's connection. The agent's only writers are the genealogy MCP tools,
+and `PgS3ProjectStore` writes `documents`, `blobs` and `staging` only — there is no path from
+the agent to an arbitrary control-plane table, and 3a deliberately closes the
+`AskUserQuestion` route as well. Pick one:
+
+- **(a) The worker's `PreToolUse` hook writes the row** when it sees a designated tool call.
+  It already writes `tool_calls` rows on the turn's connection through its `record` callable,
+  so this costs nothing new and leaves the engine untouched. **Recommended.**
+- **(b) A `decision_ask` MCP tool** — which means `allToolSchemas`, a `server.ts` arm,
+  `manifest.json`, a `dev/smoke-calls.ts` row and a `ProjectStore` method. The expensive one.
 
 **Build:** a prompt in plain language, optional structured options each with a label, a
 rationale and an optional `ref` id the viewer resolves through `getById`, and an answer
@@ -479,8 +548,14 @@ skills carry the literal, so **the first of S1/S3 reds it**. Relax the floor to 
   worse than none.
 - **No leaf-skill changes.** `translation` has a gating validator on two consent offers and
   `search-external-sites` asks for repository access. Both are correct when invoked directly.
-- **No cost ceiling.** The nudge cap is the only bound on an unattended chain. The forecast
-  in 3c makes spend legible; it does not cap it.
+- **No effective cost ceiling, and the nudge cap is not one.** Of the 181 corpus runs, 36
+  had to be killed by a harness cap production does not have — 24 on wall clock, median 120
+  minutes, and 12 on cost, median $16.72 — and the **highest nudge count among all 36 was 5**.
+  A cap of 30 would have stopped none of them, because the cap is consulted only at a
+  voluntary yield and 31% of runs never yield. Either carry the harness's own caps (cost,
+  tool calls, model turns, progress stall) on the queue body and enforce them in the
+  `PreToolUse` hook, which fires every few seconds, or state in writing that an unattended run
+  has no effective bound. The forecast in 3c makes spend legible; it does not cap it.
 - **Nothing binds the reassigned status write.** After S2 `proof-conclusion` owns it by prose
   alone — the plugin hook's owned-sections map has no `project` row. Worth a card.
 - **Nothing for Cowork.** Unlinked ids render there as plain text, exactly as today.
