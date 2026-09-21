@@ -150,7 +150,7 @@ through the real `apply_avoid_guard`, with `f1` at `required: true`:
 So a plain run that declines the hint and documents the rejection reports `pass`.
 Only the supererogatory re-attachment is capped, and the cap is the guard's
 relationship-blindness — **issue #2640**, closed `NOT_PLANNED` with the substance
-unresolved, of which this fixture is a fourth instance. Do not read this run's
+unresolved, of which this fixture is an eighth instance. Do not read this run's
 `partial` as a finding about the agent; read the annotation's notes.
 
 **Do not edit the live FamilySearch tree from this fixture.** The duplicated 1773
