@@ -65,7 +65,13 @@ Under one turn per step these were rare. Under continuous turns they are on ever
 An earlier draft carried a third item here, fixing the `/v1` lock's missing turn identity and
 heartbeat. **`/v1` is being removed from the repo** (lead, 2026-09-21) — the team it was built
 for never used it and will use the prototype instead — so that defect disappears with it. Do
-not re-add it.
+not re-add it, and disregard the `/v1` lock entry in the prototype plan's residual-risk
+register.
+
+**That removal is coming while you work, and it lands in a tree you are editing.**
+`apps/server/app/v1.py` imports from the runner that 1c changes for Stop, so expect a
+conflict there rather than being surprised by one. The lead owns the removal; check with him
+before you start 1c so you are not both in that file on the same day.
 
 ### 0a. A resumed attempt that runs zero model turns is a failure, not a completion
 
