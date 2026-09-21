@@ -51,6 +51,8 @@ def test_does_not_modify_research_json(before_state, after_state, test):
 _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_historical_context_gsm": "wiki-search-guardianship-stepchildren",
     "ut_historical_context_hbt": "wiki-search-guardianship-own-children",
+    "ut_historical_context_005": "wiki-read-west-virginia-genealogy",
+    "ut_historical_context_007": "wiki-read-england-civil-registration",
 }
 
 

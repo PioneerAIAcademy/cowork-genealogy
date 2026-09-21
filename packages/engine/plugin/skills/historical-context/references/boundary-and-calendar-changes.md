@@ -26,16 +26,20 @@ records that appear to conflict:
 
 #### State and country formation
 
-- West Virginia from Virginia (1863)
-- Maine from Massachusetts (1820)
-- Kentucky from Virginia (1792)
-- Tennessee from North Carolina (1796)
-- Vermont from New York/New Hampshire disputed territory (1791)
+Formation dates for US states are confirmed from each state's
+genealogy wiki page — the skill fetches `{State},_United_States_Genealogy`
+(e.g. `West_Virginia,_United_States_Genealogy`,
+`Kentucky,_United_States_Genealogy`, `Maine,_United_States_Genealogy`,
+`Tennessee,_United_States_Genealogy`, `Vermont,_United_States_Genealogy`)
+live in Step 3. Do not restate these dates from memory; read them from
+the fetched page.
+
 - European boundary changes after WWI (dissolution of
   Austria-Hungary, Ottoman Empire; creation of new states)
 - European boundary changes after WWII (Poland shifted west,
   German territories reassigned, Baltic states absorbed into USSR)
-- Partition of Ireland (1922)
+- Partition of Ireland (1922) — confirmed from `Ireland_Genealogy`,
+  fetched live in Step 3.
 
 #### County formation
 
@@ -90,90 +94,29 @@ records predating the formation date.
 
 ## Calendar transitions
 
-### Julian to Gregorian transition
-
-Most of Western Europe transitioned from the Julian calendar to the
-Gregorian calendar at different times:
-
-| Region | Transition year |
-|--------|----------------|
-| Catholic Europe (Spain, Italy, Portugal, Poland) | 1582 |
-| France | 1582 |
-| German Catholic states | 1583 |
-| German Protestant states | 1700 |
-| England and British colonies (including America) | 1752 |
-| Sweden | 1753 |
-| Russia | 1918 |
-| Greece | 1923 |
-
-### What changed
-
-Two adjustments occurred simultaneously:
-
-1. **Days were skipped.** When England adopted the Gregorian
-   calendar in 1752, the day after September 2 became September 14
-   (11 days were dropped). For earlier transitions, fewer days were
-   dropped (10 days in 1582). This means a date recorded under the
-   Julian calendar does not correspond to the same day under the
-   Gregorian calendar.
-
-2. **New Year moved.** Under the Julian calendar used in England,
-   the legal new year was March 25 (Lady Day). Under the Gregorian
-   calendar, it moved to January 1. This means dates between
-   January 1 and March 24 in English records before 1752 may appear
-   to be in a different year depending on which convention the
-   recorder used.
-
-### Double dating
-
-Some recorders used "double dating" (also called "dual dating") for
-dates between January 1 and March 24 to avoid ambiguity. A date
-written as "February 10, 1731/32" means:
-
-- 1731 under the Julian calendar (where the year did not change
-  until March 25)
-- 1732 under the Gregorian calendar (where the year changed on
-  January 1)
-
-**Research implication:** When you see a date between January and
-March in a pre-1752 English or colonial American record, consider
-whether the year might be off by one depending on which calendar
-convention was in use.
-
-### Quaker dating
-
-Quakers avoided using month names derived from pagan gods. They
-used numerical designations instead: "1st month" for January (after
-1752) or for March (before 1752, when March was the first month of
-the year). This means:
-
-- Before 1752: "1st month" = March, "11th month" = January
-- After 1752: "1st month" = January, "11th month" = November
-
-Misinterpreting Quaker dates is a common error. Always check
-whether the record predates or postdates the 1752 calendar change.
-
 ### French Republican calendar
 
-France used the Republican calendar from 1793 to 1805. Records
-from this period use different month names (Vendemiaire, Brumaire,
-Frimaire, etc.) and a different year numbering system (Year I
-began September 22, 1792). French civil records from this period
-require conversion to the Gregorian calendar.
+France used the Republican calendar from 1793 to 1805. The month
+names and year numbering (Year I = September 22, 1792) are on the
+`French_Republican_Calendar` wiki page — the skill fetches it live
+in Step 3 when French civil records from this period require
+conversion to the Gregorian calendar. For Julian/Gregorian and
+Quaker calendar conversions, redirect to the convert-dates skill.
 
 ## How to apply this reference
 
 1. **Place conflicts:** When records disagree about a location,
    check for boundary changes at the relevant dates before
    concluding the records truly conflict.
-2. **Date conflicts:** When dates disagree by exactly 10-13 days,
-   consider the Julian/Gregorian transition. When dates disagree
-   by exactly one year in the January-March range, consider the
-   New Year change.
+2. **Date conflicts:** When dates disagree by exactly 10–13 days or
+   by one year in the January–March range, a calendar-system
+   difference is the most common cause. Redirect to convert-dates
+   for the conversion.
 3. **Missing records:** When records cannot be found in the expected
    jurisdiction, check whether a boundary change moved the
    location into a different jurisdiction. Search the predecessor
    or successor jurisdiction.
-4. **Calendar-specific records:** When working with Quaker records
-   or French Republican-era records, convert dates carefully and
-   note the calendar system used.
+4. **French Republican calendar records (1793–1805):** When working
+   with French civil records from this period, note that they use a
+   different month-name system. The skill fetches
+   `French_Republican_Calendar` live in Step 3 for the month names.

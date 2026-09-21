@@ -63,7 +63,7 @@ Load these before responding:
 |------|-------------|
 | `references/historical-broad-context.md` | Always — core framework for contextual analysis |
 | `references/historical-terminology.md` | When interpreting relationship terms, legal language, or record vocabulary |
-| `references/boundary-and-calendar-changes.md` | When place discrepancies or date conflicts arise |
+| `references/boundary-and-calendar-changes.md` | When place discrepancies arise or boundary changes need researching |
 
 The reference files contain the detailed content. Do NOT duplicate
 their content when responding — load and apply them.
@@ -124,6 +124,27 @@ about the specific person. Evidence comes from histories of the
 area, its population, and relevant time periods, and from works
 describing customs, governance, laws, and regulations (BCG
 standard 41).
+
+**Fetch jurisdiction-specific wiki pages by constructed URL — never restate their
+contents from memory.** When the question involves these topics, add the relevant
+`wiki_read` calls to the parallel batch in Step 3:
+
+- For US state formation questions: `{State},_United_States_Genealogy` (e.g.
+  `West_Virginia,_United_States_Genealogy`, `Kentucky,_United_States_Genealogy`,
+  `Maine,_United_States_Genealogy`, `Tennessee,_United_States_Genealogy`,
+  `Vermont,_United_States_Genealogy`)
+- For Ireland partition (1922): `Ireland_Genealogy`
+- For French Republican calendar records (1793–1805): `French_Republican_Calendar`
+- For civil registration start dates: `{Country}_Civil_Registration`
+  (e.g. `France_Civil_Registration`, `England_Civil_Registration`) or
+  `{State}_Vital_Records` (e.g. `Utah_Vital_Records`)
+- For US passenger manifest questions (1820 onward): `United_States_Emigration_and_Immigration`
+- For Canadian passenger list questions (pre-1865): `Canada_Emigration_and_Immigration`
+- For English parish and church records: `England_Church_Records`
+
+On a constructed URL that 404s or a page that returns only generic content, record
+and report the gap; do not fill it from memory. Do not drop any call — parallelize,
+don't prune.
 
 ### 4. Present the context
 
@@ -197,6 +218,8 @@ secondary informant) for birthplace."
   is what makes every source checkable regardless of how the prose reads.
   A claim you cannot trace to a returned URL is not a finding: say the
   wiki/Wikipedia does not cover it rather than asserting it from memory.
+  A constructed URL that 404s or a page that returns only generic content
+  is a gap to report, not a prompt to fill from memory.
   When a tool call returns no results or an error, do not continue
   elaborating that topic as if the search succeeded — either narrow the
   response to what the successful calls returned, or flag the gap
