@@ -1529,7 +1529,12 @@ without whichever Bedrock refuses.
   doing, **once** — the delegation is re-run (P1), so the killed attempt's partial write
   must not appear beside the second's. Criterion 3 is the audit's PASS. Criterion 4 is
   the audit's longest call under the ceiling, with **one** allowed call without a
-  duration expected (the one in flight at the kill). **What voids the run:** the kill
+  duration expected (the one in flight at the kill). The `list_subkeys` criterion is read
+  off the redelivered turn's own `turn_done` log line — `docker logs proto-worker | grep
+  turn_done`, the object whose `receive_count` is 2 — which carries `list_subkeys` and
+  `subkeys_returned` beside `entries_appended`. Both counts were collected from D9–10 and
+  surfaced nowhere until 2026-09-21: `PgSessionStore.counters()` had no caller, so the
+  2026-09-21 run could not have asserted this criterion whatever else it did. **What voids the run:** the kill
   landing before `task_started` (a plain turn kill, D14 again — post the next prompt and
   retry); a FamilySearch tool answering with the reconnect instruction (the token
   expired — `make e2e-login`, then `make proto-token`, new session); `receive_count` 3 (the worker did not come
