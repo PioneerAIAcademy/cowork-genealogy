@@ -53,7 +53,8 @@ Moravian parish.
 Sorting the collection's eight Gajdosch baptisms of 1714-1733 by mother splits
 them cleanly, with no overlap and no gap that wants explaining:
 
-- **Georg × Dorothea** — Joannes 1714. That is all.
+- **Georg × Dorothea** — Joannes 1714, and no other child *in the index*. The
+  register itself holds one more; see "Corroboration from the register" below.
 - **Georg × Catharina** — Martin 1714, **Anna 22 Apr 1718** (the hint),
   Catharina 1722, Joannes 1724, Zuzana 1729, Katerina 1731, Tomas 1733 — an
   unbroken run at normal spacing.
@@ -84,12 +85,44 @@ hint, and the agent should not replace her with Catharina.
 - **Other church books.** "Czech Republic, Church Books, 1552-1981" indexes
   Gajdosch entries no earlier than 1792, and the Northern Moravia Opava
   Archive collection returns none at all, so neither reaches 1714-1718.
-- **The parish register images.** Collection 1784129 is index-only ("Index to
-  selected Czech baptisms") with no images attached, so the Lidečko register —
-  the record that would settle one Georg or two from the original hand — was
-  not reachable by this path. **Everything above rests on a single derivative
-  index.** A reviewer with film-level access to the Lidečko books could
-  strengthen or overturn it, and that is the one open door left.
+- **The parish register images — reachable, and read.** Collection 1784129 is
+  index-only ("Index to selected Czech baptisms") with no images of its own,
+  and an earlier draft of this README wrongly concluded from that the register
+  was out of reach. It is not: the Lidečko books are browse-only under image
+  group **`005387300`** (baptisms 1707-1742, 142 images). Reading them
+  produced the 1720 entry above. So the bullets above describe the **index**;
+  the register is a second, richer layer, and anyone extending this work
+  should browse it rather than stop at the index.
+
+### Corroboration from the register
+
+The index is not the whole record set. Browsing the Lidečko parish register
+turned up a baptism the index does not carry, and it **strengthens** the
+false-match call rather than threatening it:
+
+> *Die 11 Ex pago Frantzowa Lhota a D: Joanne Manka Baptisata e Anna Parens
+> **Georgius Gajdosch** Mater **Dorothea** Patrini Nicolaus Jurastik et
+> Dorothea uxor ejus ex pago eadem.* — **11 February 1720**
+
+Georg is still with Dorothea in 1720. So he did not lose her and remarry
+between 1714 and 1718, which is the only way the 1718 Catharina entry could
+have been his. Set beside Joannes in October 1714, it brackets the 1718
+baptism on both sides with the same wife:
+
+| | Georg's wife |
+|---|---|
+| 26 Oct 1714, Lidečko — Joannes | **Dorothea** |
+| 22 Apr 1718, Lidečko — Anna *(the hint)* | Catharina |
+| 11 Feb 1720, Frantzowa Lhota — Anna | **Dorothea** |
+
+This entry has **no ark**: it is not in the index, and was read from the
+register image — image group `005387300`, image 41 (Lidečko baptisms
+1707-1742, browse-only). It is corroboration for the reader, not a citable
+index entry, which is why `f2`'s claim is scoped to the indexed collection.
+
+Note that the register covers several villages in one parish — Lidečko,
+Frantzowa Lhota, Luzna, Senicza, Strijelna, Pulczin — so residence differs
+between entries without implying a different family.
 
 ### Second read
 

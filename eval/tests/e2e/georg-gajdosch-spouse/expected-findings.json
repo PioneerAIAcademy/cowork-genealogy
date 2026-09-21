@@ -23,7 +23,7 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having searched the indexed Lidečko baptisms for a daughter of Georg Gajdosch and Dorothea, the agent should document a negative/exhausted-search conclusion: no record establishes a daughter Anna for the tree person, the 1718 Anna belongs to a second Georg Gajdosch of the same village whose wife was Catharina, and the tree's Dorothea stands unrefuted. Pass = a stated negative conclusion covering those three points. How far the agent's own search reached, and which collections it could or could not open, is not graded here — the supporting_sources below record the adjudicator's search path as context, not as claims the agent must reproduce.",
+      "description": "After reviewing the indexed baptisms for Lidečko in Czech Republic, Births and Baptisms, 1637-1889, the agent should conclude that the search is negative or exhausted: no indexed record for Lidečko across the full collection range, when searched under father Georg Gajdosch with mother Dorothea, identifies a daughter Anna for that couple. The Anna baptized in 1718 belongs to another Georg Gajdosch of the same village whose wife was Catharina, and the presence of Dorothea in the tree remains unchallenged. A pass requires the agent to state this negative conclusion clearly, covering all of these points. How far the agent's own search reached, and which collections it could or could not open, is not graded here — the supporting_sources below record the adjudicator's search path as context, not as claims the agent must reproduce.",
       "details": {
         "subject_person": "Georg Gajdosch (PID K69J-F7Y)",
         "relation": "research conclusion",
