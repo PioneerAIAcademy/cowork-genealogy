@@ -17,8 +17,10 @@ import { getProjectStore } from "../store/project-store.js";
 export const IMAGES_SUBDIR = "images";
 
 // What image_transcribe learned about each persisted source image's read, keyed
-// `${projectPath}\0${imageRef}` — the same `images/<key>.jpg` string a source
-// records as `image_filename`. Values (#2457 B1/B2 ruling 2026-09-19):
+// `${projectId-or-projectPath}\0${imageRef}` — the imageRef being the same
+// `images/<key>.jpg` string a source records as `image_filename`, and the scope
+// being the bound store's patron-isolating projectId where there is one, else the
+// projectPath (see truncatedImageKey). Values (#2457 B1/B2 ruling 2026-09-19):
 //   true    = verified PARTIAL (the read hit the OCR output-token cap)
 //   false   = verified WHOLE   (the read completed) — MEMORY ONLY, never persisted
 //   absent  = NOT ESTABLISHED  (no read reached here for this image)
@@ -55,15 +57,22 @@ function normalizeImageRef(ref: string): string {
 }
 
 function truncatedImageKey(projectPath: string, imageRef: string): string {
-  // Both halves arrive raw from an LLM relay, so a record and a query can spell the
-  // same thing differently and must still join. Normalize backslashes to forward
-  // slashes on both sides (a Windows caller can record under `C:\Users\…` and query
-  // `C:/Users/…`), strip a trailing separator on projectPath (record `/p/`, query
-  // `/p`), and canonicalize imageRef (see normalizeImageRef) so `./images/x.jpg`
-  // joins `images/x.jpg`. Without any of these the record/query symmetry is lost
-  // and a capped read reads back clean (#2457).
-  const proj = projectPath.replace(/\\/g, "/").replace(/\/+$/, "");
-  return `${proj}\0${normalizeImageRef(imageRef)}`;
+  // Scope by the bound store's projectId when there is one — the patron-isolating
+  // identity under the shared-process `http.ts` entrypoint, where every request
+  // presents the SAME anchor `projectPath` (`/project`), so keying on projectPath
+  // would collide two patrons reading the same image (#2457 B2). getProjectStore()
+  // returns the request-bound store here (every http tool call runs inside
+  // runWithProjectStore, and the unbound process store throws), so record and read
+  // resolve the same projectId for one project and distinct ids across patrons. On
+  // the file backend projectId is undefined — one process serves one project — so
+  // fall back to the normalized projectPath. Both halves arrive raw from an LLM
+  // relay, so canonicalize: backslashes → `/` and a trailing separator off
+  // projectPath (a Windows caller may record `C:\p` and query `C:/p/`), and
+  // backslashes / leading `./` off imageRef (so `./images/x.jpg` joins
+  // `images/x.jpg`). Without either the record/query symmetry is lost.
+  const scope =
+    getProjectStore().projectId ?? projectPath.replace(/\\/g, "/").replace(/\/+$/, "");
+  return `${scope}\0${normalizeImageRef(imageRef)}`;
 }
 
 /** Record whether this project's persisted source image was read past the OCR

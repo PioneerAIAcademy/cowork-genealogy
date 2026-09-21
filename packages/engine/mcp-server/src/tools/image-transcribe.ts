@@ -378,14 +378,15 @@ export async function imageTranscribeTool(
         imageKey: label,
         bytes,
       });
-      // Record the cap against the persisted image so research_append can derive
-      // transcription_truncated when a source cites it (#2457). Only reachable
-      // with a persisted image — an imageRef is exactly what a source's
-      // image_filename joins on.
-      recordImageReadCap(input.projectPath, imageRef, truncated);
     } catch {
       imageRef = undefined;
     }
+    // Record the cap against the persisted image so research_append can derive
+    // transcription_truncated when a source cites it (#2457). Outside the try above
+    // so a throw here cannot discard a scan already written to disk (#2457 r7 note);
+    // only reachable with a persisted image — an imageRef is exactly what a source's
+    // image_filename joins on.
+    if (imageRef) recordImageReadCap(input.projectPath, imageRef, truncated);
   }
 
   const browseBudget = recordBrowseAndCheckBudget(

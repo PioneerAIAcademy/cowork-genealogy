@@ -19,6 +19,7 @@ import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 
 const dirs: string[] = [];
 async function tmp(): Promise<string> {
@@ -184,6 +185,26 @@ describe("truncated-source-image cache (#2457)", () => {
     __clearTruncatedSourceImagesForTests();
     recordImageReadCap("/proj", "./images/y.jpg", true);
     expect(wasSourceImageTruncated("/proj", "images/y.jpg")).toBe(true);
+  });
+
+  it("isolates patrons under a shared-process store binding — same anchor path, different projectId, no collision (#2457 r8 B2)", async () => {
+    // Under http.ts every request presents the SAME anchor projectPath (`/project`);
+    // the bound store's projectId is the real identity. Keying the cap on projectId
+    // (not the anchor) keeps patron A's cap out of patron B's read, while still
+    // joining A's own record→read (same projectId across A's turns).
+    const store = (projectId: string) => ({ projectId }) as unknown as ProjectStore;
+    await runWithProjectStore(store("proj-A"), async () => {
+      recordImageReadCap("/project", "images/x.jpg", true);
+      expect(wasSourceImageTruncated("/project", "images/x.jpg")).toBe(true);
+    });
+    // Patron B: identical anchor path and image, must NOT see A's cap.
+    await runWithProjectStore(store("proj-B"), async () => {
+      expect(wasSourceImageTruncated("/project", "images/x.jpg")).toBe(false);
+    });
+    // A still sees its own (record→read join survives across A's turns).
+    await runWithProjectStore(store("proj-A"), async () => {
+      expect(wasSourceImageTruncated("/project", "images/x.jpg")).toBe(true);
+    });
   });
 
   it("joins across a Windows projectPath spelled with backslashes vs forward slashes (#2457 review r5)", () => {

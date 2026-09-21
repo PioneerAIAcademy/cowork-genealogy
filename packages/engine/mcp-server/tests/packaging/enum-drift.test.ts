@@ -288,9 +288,12 @@ describe("enum-drift lint", () => {
   });
 
   it("both research.schema.json copies are byte-identical (#2457 review, blocker/note N4)", () => {
-    // The two mirrors were unguarded — a field or constraint could land in one
-    // and not the other with CI green. They are maintained as identical copies,
-    // so hold them byte-for-byte the way the enums copies are held.
+    // The two mirrors had no ENGINE-side guard — a field or constraint could land
+    // in one and not the other and pass every vitest job. (The Python harness does
+    // load both via schema_validator.py, per docs/architecture.md's `make
+    // harness-test` row, so they were not wholly unchecked — this closes the
+    // engine-side gap.) They are maintained as identical copies, so hold them
+    // byte-for-byte the way the enums copies are held.
     const a = readFileSync(
       join(projectRoot, "docs", "specs", "schemas", "research.schema.json"),
       "utf8",

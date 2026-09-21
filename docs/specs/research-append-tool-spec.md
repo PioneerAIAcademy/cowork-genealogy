@@ -627,15 +627,26 @@ Derivation, per op:
   keep the persisted value: a persisted `true` survives an update even after a
   process restart emptied the store, and a whole-read image (`false` in the store)
   permits an in-place `transcription` update, since nothing is written to block
-  it. An update that attaches `image_filename` to a partial image without carrying
-  the text is left as-is (the text lives in the persisted entry, unreadable
-  pre-merge).
+  it.
+
+**Update guard — a truncated source's `transcription` is not editable in place.**
+Before the derivation, `prepareOps` rejects a `sources` **update** whose patch
+changes `transcription` on an entry persisted `transcription_truncated: true`,
+**unless** the cited image's cap state is `false` (a genuinely whole re-read,
+only reachable after a cap change). The guard reads the persisted entry directly
+(`research.sources` is in scope here — the persisted text is *not* unreadable
+pre-merge), so it sees both the marker and the current text. Without it, an agent
+that pivots to the indexed record and overwrites the partial text with the whole
+text would leave the complete text under a stale "partial" badge; the guard sends
+it to add a **new** indexed-record source instead. This is the consumer that
+gives the cap store's `false` its purpose.
 
 **The invariant: nothing moves from "partial" to "whole"** — in memory
 (sticky-`true` in the cap store, `image-transcribe-tool-spec.md` §8.6) or in the
-document (`true`-or-absent here). This is what makes the agent-supplied
-`image_filename` join key acceptable: a wrong-but-resolvable key can only add an
-unneeded `true` badge, never a false "verified whole".
+document (`true`-or-absent here, and a `true` source's text is guard-frozen). This
+is what makes the agent-supplied `image_filename` join key acceptable: a
+wrong-but-resolvable key can only add an unneeded `true` badge, never a false
+"verified whole".
 
 **Retraction is dropped, and a re-read does not do it.** The cap store is
 sticky-`true`: once an image reads capped, a later read in the same process does
