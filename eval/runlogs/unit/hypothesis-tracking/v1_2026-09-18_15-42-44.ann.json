@@ -1,0 +1,390 @@
+{
+  "run_log": "v1_2026-09-18_15-42-44.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "One unsupported filter caused a tool validation error, but recovery was immediate and clean"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response should have routed the request to the timeline skill instead of performing the side-by-side chronology and h_002 coherence analysis. Because it completed the wrong task, the correctness score of 1 is appropriate"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "he required behavior was to decline the hypothesis-tracking analysis and direct the request to the timeline skill. Since that routing did not happen, the response did not fulfill the expected task."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The two initial assertionId filter calls were invalid and produced validation errors. Although the response recovered successfully using questionId, the incorrect initial arguments are a genuine tool-use defect."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "This is a negative routing test, and the response handled the request as hypothesis-tracking instead of routing it to conflict-resolution. Because the user was asking to adjudicate competing birthplace values for the same person, the substantive evidence-weighing and conclusion were outside the skill’s intended scope. Accurate reasoning does not compensate for choosing the wrong task."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The required behavior was to decline the conflict-resolution task and route the user to the appropriate skill. Instead, the response fully completed the evidence comparison, including a conclusion and supporting reasoning. Therefore, it missed the required routing behavior rather than merely omitting a minor step."
+    }
+  ]
+}
