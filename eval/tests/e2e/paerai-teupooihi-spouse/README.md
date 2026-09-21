@@ -77,8 +77,8 @@ with another wife.
 
 **Re-index check.** The seven "French Polynesia, Civil Registration" sources in
 the starting tree are all subject-titled entries for Raitui and Teuratau
-Parauhia — none for Moe, none carrying a spouse — so the hint is not a re-index
-of them. `D955-NRW2` — the distinct index record above, already attached to Moe
+Parauhia — none for Moe, and the one that names a spouse is Raitui's 1863
+marriage to Tetuaereva Maiti — so the hint is not a re-index of them. `D955-NRW2` — the distinct index record above, already attached to Moe
 in the live tree — is why the live tree already reflects the spouse even though
 the subject-centric snapshot does not: the spouse is one relationship-hop beyond
 the subject, outside the snapshot's reach, so fixture integrity
@@ -88,5 +88,12 @@ the subject, outside the snapshot's reach, so fixture integrity
 (`D955-NRW2`) indexes only Moe and his spouse, not Moe's parents; the
 parent-anchor rests on the hint record and the live-tree parent links. This is
 the same shape the `susanna-szljacsan-spouse` true match accepted.
+
+### Provenance
+
+Record retrieval was tool-assisted — done in a Claude Code session using the
+genealogy MCP read tools (`record_read`, `person_read`, `source_attachments`)
+against live FamilySearch. The identity judgement was a human call, not a tool
+output.
 
 Reviewed and signed off by Solomon Baidoo, 2026-09-21.
