@@ -350,6 +350,28 @@ def test_scan_provenance_excludes_deny_mode_entries(tmp_path):
     assert "kind" not in prov[0]
 
 
+def test_scan_provenance_excludes_warnings_unchecked_entries(tmp_path):
+    """The fifth exclusion, and the last one in the tuple with no test.
+
+    `find_relationship_writes_without_warnings_check` entries carry `detail`, so
+    without their line in the tuple they are double counted in the issue-#963
+    provenance bucket -- the same defect this change fixed for
+    `TREE_ENCODING_KIND`. Deleting that one line left this file green, which is
+    the shape the repo's lint doctrine calls coverage that cannot fail.
+    """
+    warnings_entry = {
+        "index": -1,
+        "tool": "tree.gedcomx.json",
+        "required_skill": "check-warnings",
+        "kind": WARNINGS_UNCHECKED_KIND,
+        "detail": "new ParentChild/Couple relationship written with no person_warnings call",
+    }
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), warnings_entry])
+    prov = scan_provenance([p])
+    assert len(prov) == 1
+    assert prov[0]["required_skill"] == "person-evidence"
+
+
 # --- replay_provenance (issue #1231: a baseline over the pre-hook corpus) -----
 # The stored entries above only exist for runs made AFTER #1178 merged. Replay
 # recomputes the same check from `tool_calls` + the fixture's committed seed
@@ -590,9 +612,9 @@ def test_format_provenance_replay_reports_rate_against_the_denominator(tmp_path)
     assert "lower bound" in text  # the same-turn caveat is stated, not implied
 
 
-# --- replay_post_hoc: the three post-hoc checks, recomputed over history ------
+# --- replay_post_hoc: the six post-hoc checks, recomputed over history --------
 # The scan_* readers above report what a run STORED, so each check reads zero
-# over every run made before it shipped — all three landed in August against a
+# over every run made before it shipped — the first three landed in August against a
 # corpus that is 84% July. These tests are controls for the REPLAY PLUMBING
 # (sidecar resolution, seed-tree load, per-check skip discipline), not for the
 # detectors: those already have firing predicate controls in
@@ -1461,3 +1483,119 @@ def test_fact_assertion_lines_and_the_full_detail_loop_appear_in_main(
         "Replayed fact/assertion drift",
     ):
         assert label in out, f"--detail never printed {label}"
+
+
+def test_fact_agreement_scans_a_run_whose_log_is_unreadable(tmp_path):
+    """The deviation this arm ships, pinned in the direction that matters.
+
+    `missing_for_fact_agreement` deliberately does NOT inherit
+    `missing_for_tree_citation`'s `run_log is None` skip, because the predicate
+    reads two documents and never `tool_calls`. Nothing else can catch a
+    regression here: no committed run has an unreadable log alongside readable
+    sidecars, so a corpus replay would report the same number either way, and a
+    denominator that silently shrank is exactly what `PostHocReplay`'s docstring
+    exists to warn about. Re-adding the run-log requirement leaves the rest of
+    this file green; it reds this test.
+    """
+    stale = "Wellburn, Thames Centre, Middlesex, Ontario, Canada"
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        research=_research_with_corrected_assertion(),
+        tree=_tree_with_backlinked_fact(stale),
+    )
+    p.write_text("{ not a run log", encoding="utf-8")  # log unreadable, sidecars fine
+
+    rep = replay_post_hoc([p], fixtures_root=tmp_path / "no-fixtures")
+    assert rep.fact_agreement.runs_scanned == 1
+    assert rep.fact_agreement.skipped == []
+    assert len(rep.fact_agreement.violations) == 1
+    # Its run-log-reading neighbour skips the same run, which is the difference
+    # the deviation exists to create.
+    assert rep.tree_citation.runs_scanned == 0
+    assert rep.tree_citation.skipped == ["fx/run-1.json: unreadable run log"]
+
+
+def test_a_stored_scan_names_a_cp1252_run_log_instead_of_dying_on_it(tmp_path):
+    """`UnicodeDecodeError` is a ValueError, not an OSError, so before the shared
+    `UNREADABLE_FILE` tuple a single run log written in the Windows default
+    encoding raised out of every stored scan and took the whole report with it,
+    rather than being named and skipped.
+
+    Written as raw bytes because the point is a file this process would not have
+    produced. The clean run beside it is the positive control: the scan must
+    still find the entry it is looking for, not merely survive.
+    """
+    d = tmp_path / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    bad = d / "run-bad.json"
+    bad.write_bytes(
+        json.dumps(
+            {"guardrail_shadow_violations": [_fact_assertion_entry()], "note": "Odéssa"},
+            ensure_ascii=False,
+        ).encode("cp1252")
+    )
+    good = _write_result(d, "run-good.json", [_fact_assertion_entry()])
+
+    out = scan_tree_fact_assertion([bad, good])
+    assert len(out) == 1
+    assert out[0]["fixture"] == "fx"
+    # every other stored scan reads the same file through the same helper
+    assert scan_provenance([bad, good]) == []
+
+
+def test_replay_fact_assertion_names_a_run_with_no_research_sidecar(tmp_path):
+    """The other half of this arm's denominator, which nothing else pins.
+
+    Deleting the research row from `missing_for_fact_agreement` leaves every
+    other test in this file green, and a run with no `final-research.json` would
+    then be counted into `runs_scanned` as a clean scan instead of being named in
+    `skipped`. That is the "a denominator that quietly grew reads as a clean
+    corpus" failure `replay_post_hoc`'s own skip discipline exists to prevent,
+    and no corpus replay can catch it: every committed run has a readable
+    research sidecar today.
+    """
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tree=_tree_with_backlinked_fact("Wellburn")
+    )
+    rep = replay_post_hoc([p], fixtures_root=tmp_path / "no-fixtures")
+    assert rep.fact_agreement.runs_scanned == 0
+    assert rep.fact_agreement.skipped == [
+        "fx/run-1.json: no readable final-research.json sidecar"
+    ]
+
+
+def test_no_reader_in_the_report_module_narrows_the_unreadable_tuple():
+    """Makes `UNREADABLE_FILE`'s own comment true instead of aspirational.
+
+    That comment says the constant is kept in one place "so a seventh reader
+    cannot quietly narrow it" -- but nothing stopped a new reader writing
+    `except (json.JSONDecodeError, OSError)` inline, which is the shape that put
+    `UnicodeDecodeError` back into this module five times over. A claim in a
+    comment is not a guard; this is the guard.
+
+    Scoped to this module deliberately. The same class is open across the wider
+    harness (48 narrow clauses in 30 files, counted by AST), which is a repo-wide
+    lint rather than something to bolt on here.
+    """
+    import ast
+    from pathlib import Path
+
+    import e2e.guardrail_shadow_report as mod
+
+    source = Path(mod.__file__).read_text(encoding="utf-8")
+    offenders = []
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.ExceptHandler) or node.type is None:
+            continue
+        caught = [
+            n.attr if isinstance(n, ast.Attribute) else getattr(n, "id", "")
+            for n in ast.walk(node.type)
+        ]
+        if "JSONDecodeError" in caught and "UnicodeDecodeError" not in caught:
+            offenders.append(node.lineno)
+    assert offenders == [], (
+        "these except clauses spell the tuple out and omit UnicodeDecodeError; "
+        f"use UNREADABLE_FILE instead (lines {offenders})"
+    )

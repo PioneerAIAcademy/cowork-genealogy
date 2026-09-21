@@ -2119,6 +2119,15 @@ def find_tree_facts_disagreeing_with_assertions(
         *_owned_facts(tree.get("relationships")),
     ]:
         linked_id = fact.get("assertion_id")
+        # An EMPTY backlink names nothing, and is skipped before the lookup
+        # rather than by it: `_lookup_assertion` guards the type but not the
+        # emptiness, and `_provenance_index` will happily index an assertion
+        # whose own id is "", so a document carrying both would be compared and
+        # would render as "assertion  has ...". Schema-invalid on both sides, and
+        # skipped here so this function stays exactly as selective as the inline
+        # scan it replaced.
+        if not linked_id:
+            continue
         # `_lookup_assertion` is the module's guarded lookup: a non-string
         # backlink (a list, say) is unhashable and would raise TypeError out of a
         # bare dict lookup instead of producing a verdict. The schema check in

@@ -116,6 +116,15 @@ from harness.skill_invocation import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
+# The ways a committed run log or sidecar fails to read, as ONE tuple used by
+# every reader in this module. `UnicodeDecodeError` is the one that keeps being
+# forgotten: it is a ValueError, not an OSError, so `read_text` raises it before
+# `json` ever sees the bytes, and a single cp1252 file then takes down whichever
+# report scanned it instead of being named and skipped. That is the Windows
+# default encoding, and this team runs on Windows. Kept as a constant rather
+# than repeated so a seventh reader cannot quietly narrow it.
+UNREADABLE_FILE = (json.JSONDecodeError, UnicodeDecodeError, OSError)
+
 DEFAULT_WINDOWS = (10, 20, 40, 80, 150)
 
 # Committed fixture inputs, for --replay's seed trees. Defined locally rather
@@ -149,7 +158,7 @@ def scan_corpus(paths: list[Path], *, windows: list[int]) -> dict[int, list[dict
         try:
             for w in windows:
                 by_window[w].extend(scan_one(path, window=w))
-        except (json.JSONDecodeError, OSError) as e:
+        except UNREADABLE_FILE as e:
             print(f"  skip {path}: {e}", file=sys.stderr)
     return by_window
 
@@ -207,7 +216,12 @@ def _scan_stored(
     for path in paths:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as e:
+        except UNREADABLE_FILE as e:
+            # `UnicodeDecodeError` is a ValueError, not an OSError, so without it
+            # a single run log written in cp1252 raises out of EVERY stored scan
+            # and takes the whole report down instead of naming one file. The
+            # module's other reader (`_load_json`) has always caught it; this one
+            # is the last place in the module that did not.
             print(f"  skip {path}: {e}", file=sys.stderr)
             continue
         for v in data.get("guardrail_shadow_violations") or []:
@@ -361,7 +375,7 @@ def scan_unnamed_delegate(paths: list[Path], *, replay: bool) -> UnnamedDelegate
     for path in paths:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as e:
+        except UNREADABLE_FILE as e:
             print(f"  skip {path}: {e}", file=sys.stderr)
             continue
         out.runs_scanned += 1
@@ -531,7 +545,7 @@ def _load_json(path: Path) -> dict[str, Any] | None:
     """
     try:
         parsed = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+    except UNREADABLE_FILE:
         return None
     return parsed if isinstance(parsed, dict) else None
 
@@ -593,6 +607,15 @@ class CheckReplay:
     runs; it is 4 occurrences across a corpus of 157 that were readable. (That
     illustration is from an older, smaller corpus, which is the point: the
     denominator moves, so read the one the run prints.)
+
+    The gates differ enormously, so the same denominator means different things
+    per check. Both research-only checks need a non-empty `proof_summaries`,
+    warnings-unchecked needs a new relationship, tree-encoding needs a completed
+    project AND a tier->=-probable conclusion, and fact/assertion agreement has
+    the tightest gate in the set: it needs a tree fact carrying an `assertion_id`,
+    which only runs made since that backlink shipped can have. Its `of N scanned`
+    is therefore very far from an eligible population, and reading it as one
+    would turn a young check into a false clean bill.
     """
 
     violations: list[dict[str, Any]] = field(default_factory=list)
@@ -872,7 +895,7 @@ def replay_provenance(
         seed_path = fixtures_root / slug / "starting-tree.gedcomx.json"
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as e:
+        except UNREADABLE_FILE as e:
             # Recorded, not just warned. A stderr line vanishes from the printed
             # summary, which then reads as "covered everything" — the same
             # failure the missing-seed-tree branch below avoids.
@@ -881,7 +904,7 @@ def replay_provenance(
             continue
         try:
             seed = json.loads(seed_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        except UNREADABLE_FILE:
             out.skipped.append(f"{slug}/{path.name}: no readable {seed_path.name}")
             continue
 

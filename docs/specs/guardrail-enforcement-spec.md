@@ -339,10 +339,17 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
-| §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 183 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
+| §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped |
+| §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 184 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
 
-The last row is measured 2026-09-21 over 183 runs, not with the rest; its check
-did not exist at the 2026-08-23 sweep. Re-measure before quoting any row.
+The last two rows are measured 2026-09-21, not with the rest. The agreement
+check did not exist at the 2026-08-23 sweep; tree-encoding did, and had simply
+never been given a row. Their denominators differ because they read different
+inputs, not because one sample is larger: tree-encoding needs a fixture's seed
+tree and the corpus holds one run without one. Re-measure before quoting any
+row — the agreement row's denominator was 183 when it was written and 184 by the
+time it was reviewed, a single increment rather than a measured rate, and the
+reason no figure on this page is worth quoting second-hand.
 
 Reading the two columns: **stored** is what a run recorded when it ran;
 **replayed** is the same detector recomputed now from that run's committed final

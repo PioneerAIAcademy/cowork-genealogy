@@ -331,11 +331,11 @@ with no backlink is **warned about, never guessed at**.
 **What it knowingly does not fix.** A correction made on a *corroborating*
 assertion does not reach the fact: the fact carries the minting assertion's id,
 not the corroborator's. That is the narrower residue of the same bug and it is
-accepted. It bounds at **202 of 7603 person facts** in the committed e2e trees
+accepted. It bounds at **204 of 7635 person facts** in the committed e2e trees
 carrying more than one source ref (re-measured 2026-09-21 by the method this
 sentence already gave, over tracked files only; it read 175 of 7225 on
-2026-09-14, so treat the pair as a growth rate rather than a constant and
-recount by counting facts with `len(sources) > 1` across
+2026-09-14 and 202 of 7603 earlier the same day this was written, so treat the
+series as a growth rate rather than a constant and recount by counting facts with `len(sources) > 1` across
 `eval/runlogs/e2e/*/*final-tree.gedcomx.json`), and a multi-source fact is only
 *potentially* affected — the corroborators usually agree.
 
@@ -422,8 +422,10 @@ or CI job surfaced it. With `assertion_id` present it is a property, and
 asserts it: for every backlinked fact, where both the fact and its assertion
 hold a value for `place`/`standard_place`/`date`/`value`, the two must agree.
 
-Two limits on that check were stated here because the `nothing-checks` label
-turns on them. **The plane limit is now closed; the unit-corpus one stands.**
+Two limits on that check were stated here because a `nothing-checks` register
+entry turned on them. **The plane limit is now closed; the unit-corpus one
+stands** — and it stands as a property of the corpus rather than as a missing
+guard, which is why closing that entry leaves nothing unrecorded.
 
 **One predicate, three call sites, two behaviours.** The rule is
 `find_tree_facts_disagreeing_with_assertions`, a plain function over
@@ -449,11 +451,12 @@ direction is break-tested as hard as the fail direction.
 
 **Closed does not mean observed.** Replayed over every committed e2e run pair
 the check reads zero, and that zero is measured rather than structural: the
-population is real but young. Backlinked facts do exist in committed e2e final
-trees, most of them single-ref and so comparable at all, but they are
-concentrated in a run or two per week since the backlink itself shipped
-(2026-09-15), and the run the gap was filed off carries none — it can never
-reproduce the defect on replay. Read a zero here as "not yet seen", never as
+population is real but young rather than thin. Of the committed runs made since
+the backlink shipped (2026-09-15), most carry one: the facts are there, the
+large majority are single-ref and so comparable at all, and the check performs
+real attribute comparisons on them rather than skipping through. What it has not
+had is TIME. The run the gap was filed off predates the backlink and carries
+none, so it can never reproduce the defect on replay. Read a zero here as "not yet seen", never as
 "cannot happen".
 
 **The population SIZE is deliberately not pinned here**, though the zero is: the
