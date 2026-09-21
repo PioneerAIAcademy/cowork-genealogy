@@ -10,8 +10,8 @@ description: >-
   resultsRef) + logId + projectPath. Also handles re-invocation on a
   record already extracted — refining an existing source's assertions or
   their classifications in place. Do NOT use to search for records, to
-  read page-scan images (the caller delegates those to image-reader —
-  agents cannot nest agents), to acquire or triage input, or to format
+  read page-scan images (the caller delegates those to image-reader — this
+  agent holds no Task tool), to acquire or triage input, or to format
   citations.
 model: claude-sonnet-4-6
 tools:
@@ -405,8 +405,10 @@ never one deduced from who lived with whom (Step 2).
 **`structured_value`** — machine-readable companion: name
 (`given`/`surname`), birth/death (`year`/`place`), residence (`place`),
 relationship (`relationship_type`/`related_person_role`), occupation
-(`occupation`). One shape per fact type. `relationship_type` carries the
-relationship **the record states** — `"spouse"`, `"child"`, `"parent"`.
+(`occupation`). One shape per fact type. `relationship_type` is the **record
+subject's own** role — `"spouse"`, `"child"`, `"parent"`, `"sibling"`;
+`related_person_role` is the other party's. A death certificate naming the
+father is `"child"` on the deceased, not `"parent"`.
 **You never write an `_inferred` variant** (`"child_inferred"`,
 `"spouse_inferred"`): the suffix marks a link deduced from household
 position, and extraction does not deduce relationships at all. The schema
@@ -711,7 +713,7 @@ hypothesis to the correlation skills that own it.
 
 The 1880 census introduced an explicit relationship column, so from 1880
 on the relationship IS stated — those are `direct`, written with a bare
-`relationship_type` (`"child"`, `"spouse"`). **The dividing line is
+`relationship_type` (`"child"`, `"spouse"`, `"sibling"`). **The dividing line is
 whether the record states the relationship, not how confident you are.**
 
 **Subject-identifying name stays `direct` — hard rule.** The **record
@@ -885,16 +887,25 @@ Only when the absence is analytically significant — the person was
 expected there on the timeline and known facts — not for every nil
 result.
 
-**Negative evidence is about a PERSON expected-but-absent, never a blank
-FIELD on a person who is present.** A cell the record simply left blank —
-no middle name, no occupation listed, no cause given — is **silence, not
-negative evidence**: it produces NO assertion at all, neither positive nor
-negative (the "Blank columns produce no assertions" rule in Step 2).
-**Never** manufacture a `"No middle name recorded"` / `"No X on this
-certificate"` negative assertion for an unrecorded optional field — that
-is over-extraction, not thoroughness, and it is not the meaningful absence
-this section is for. A negative assertion always concerns a *person*
-(`record_role: "absent"`), never an absent attribute of a present person.
+**Negative evidence is about a PERSON expected-but-absent, never a blank FIELD
+on a person who is present.** Its `record_role` is the literal `"absent"`,
+which `research_append` enforces, so an absence you cannot attribute to a
+person has nowhere to go.
+
+**Which absences count turns on "was a PERSON expected HERE?"** A record type
+that systematically names someone makes that person expected, so a blank line
+is a real absence and the assertion is about *him*: a Catholic baptismal
+register always records the father, and a blank one is how illegitimacy
+appears in the record — `record_role: "absent"`, the father named in `value`.
+A record that never carried the person makes nothing expected: a FamilySearch
+index has no parent field, so its silence is not evidence. The same marriage
+can show both, so ask it of the record in front of you, not of the record type
+in general.
+
+A blank *field* on a present person — no middle name, no occupation, no cause
+given — is **silence** either way: NO assertion, positive or negative (the
+"Blank columns produce no assertions" rule in Step 2). **Never** manufacture a
+`"No middle name recorded"` / `"No X on this certificate"` assertion for one.
 
 **A second, equally common pattern: the person IS named in the source, but
 the finding is that they predeceased the subject.** An obituary saying "he
