@@ -22,15 +22,15 @@
  * VANTAGE POINT. Except where a line says otherwise, these were measured from
  * INSIDE the church network, which Imperva clears ahead of the checks it
  * applies to public traffic. Query semantics do not move with it: review
- * re-ran B and D in full from outside (B reproduces this header exactly; D's
- * sweep separates real from nonsense values for all ten parameters), confirmed
- * E's ignored-offset flag can fire, and spot-checked four figures the sections
- * do not regenerate. What an in-network run cannot see is anything gated on
- * network origin. Section A is the known instance and says so; the paging
- * limits in E are the other place worth re-measuring from outside before a
- * spec leans on them. C's place counts, F's field shapes and G were NOT re-run
- * from outside. Account privilege is not a factor — it was varied against
- * section A and changed nothing.
+ * re-ran A and B in full from outside (B reproduces this header exactly) and
+ * hand-probed the rest with about 40 targeted requests, which confirmed that
+ * D's 200/400 sweep means honoured for ten parameters, that E's ignored-offset
+ * flag can fire, and four figures the sections do not regenerate. Sections C
+ * through G were NOT re-run end to end from outside. What an in-network run
+ * cannot see is anything gated on network origin. Section A is the known
+ * instance and says so; the paging limits in E are the other place worth
+ * re-measuring from outside before a spec leans on them. Account privilege is
+ * not a factor — it was varied against section A and changed nothing.
  *
  * SEARCH  GET /service/search/catalog/v3/search
  *
@@ -136,6 +136,12 @@
  *      `offset` in the body against the one you asked for; this section
  *      prints both so a re-run shows which regime the service is in.
  *
+ *      The 4-11s above was measured through `fetchWithRetry`, which sleeps
+ *      and re-attempts on 429/5xx inside a 10s budget — so an unknown part of
+ *      it may be backoff rather than service latency. This section now runs
+ *      single-attempt, which separates the two; a re-run's figure supersedes
+ *      the recorded one.
+ *
  *   F. Hits are thin. Per hit the metadata carries only `title`, `creator`,
  *      `repositoryCalls`, `identifier` and a `coverage.temporal` that was
  *      empty on all 1,697 hits sampled — no dates, no format, no film, no
@@ -179,7 +185,11 @@
 import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
-import { fetchWithRetry } from "../src/utils/http.js";
+import {
+  DEFAULT_FETCH_TIMEOUT_MS,
+  fetchWithRetry,
+  type RetryBudgetOptions,
+} from "../src/utils/http.js";
 
 const SEARCH_URL =
   "https://www.familysearch.org/service/search/catalog/v3/search";
@@ -213,14 +223,21 @@ function headers(token: string): Record<string, string> {
   };
 }
 
+// `ms` spans everything fetchWithRetry does, including its backoff sleeps and
+// re-attempts on 429/5xx. Pass `{ attempts: 1 }` wherever the latency itself is
+// the measurement, or the number reports the wrapper rather than the service.
 async function search(
   token: string,
   query: string,
+  retryOpts: RetryBudgetOptions = {},
 ): Promise<{ status: number; body: SearchResponse | null; ms: number }> {
   const started = Date.now();
-  const res = await fetchWithRetry(`${SEARCH_URL}?${query}`, {
-    headers: headers(token),
-  });
+  const res = await fetchWithRetry(
+    `${SEARCH_URL}?${query}`,
+    { headers: headers(token) },
+    DEFAULT_FETCH_TIMEOUT_MS,
+    retryOpts,
+  );
   const ms = Date.now() - started;
   if (!res.ok) {
     await res.text();
@@ -433,9 +450,12 @@ async function sectionE(token: string): Promise<void> {
     "  echoed offset reset to 0 — the degraded regime, not the ceiling.\n",
   );
   for (const offset of [0, 100, 5000, 9900, 9990, 10000, 20000]) {
+    // One attempt: a retry here would hide a 429 behind a 200, add load to the
+    // regime being measured, and land its backoff in `ms`.
     const { status, body, ms } = await search(
       token,
       `count=3&offset=${offset}&${q}`,
+      { attempts: 1 },
     );
     const echoed = body?.offset;
     const ignored =
@@ -544,11 +564,17 @@ const SECTIONS: Record<string, (token: string) => Promise<void>> = {
 };
 
 async function main(): Promise<void> {
-  const idx = process.argv.indexOf("--section");
-  const requested = idx === -1 ? null : process.argv[idx + 1]?.toUpperCase();
-  if (requested && !SECTIONS[requested]) {
+  // Reject anything that is not exactly `--section <X>`. A near miss must not
+  // fall through to running all seven: that is what drives the service into
+  // section E's degraded regime, so `--section=C` silently doing the full run
+  // destroys the measurement the caller came for.
+  const argv = process.argv.slice(2);
+  const idx = argv.indexOf("--section");
+  const requested = idx === -1 ? null : (argv[idx + 1] ?? "").toUpperCase();
+  const extra = argv.filter((_, i) => idx === -1 || (i !== idx && i !== idx + 1));
+  if (extra.length > 0 || (requested !== null && !SECTIONS[requested])) {
     console.error(
-      `Unknown section ${requested}. Known: ${Object.keys(SECTIONS).join(", ")}`,
+      `Usage: probe-catalog.ts [--section ${Object.keys(SECTIONS).join("|")}]`,
     );
     process.exit(1);
   }
