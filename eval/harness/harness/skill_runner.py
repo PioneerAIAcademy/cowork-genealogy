@@ -824,6 +824,12 @@ async def run_skill(
     # in the orchestrator depends on it (`_is_zero_progress_timeout`).
     # A mutable holder because the nested consumer rebinds `usage` wholesale.
     turns_seen: dict[str, int] = {"n": 0}
+    # True once the AssistantMessage carrying the denied hand-off has been
+    # scanned. The stop needs it because `routing_resolved["v"]` alone does
+    # not say WHERE in the stream we are: under the early-hook ordering the
+    # flag is already up while messages that PRECEDE the hand-off are still
+    # arriving, and stopping on one of those drops the hand-off entirely.
+    handoff_seen: dict[str, bool] = {"v": False}
     # Set on the routing short-circuit path when no ResultMessage arrived, so
     # output_tokens: 0 there is legible as "no real count exists" rather than
     # "the skill used no tokens" (issue #2189). A mutable holder, not read
@@ -905,24 +911,70 @@ async def run_skill(
                 # that reaction as the skill's own turns and text (review of
                 # #2189, round 2).
                 routed_call_seen = False
+                # Held per-turn rather than appended straight through: a turn
+                # that turns out to be the model's reaction to the deny is not
+                # the skill's own work and must not reach the run log.
+                #
+                # This suppresses the ATTEMPT record, and the orchestrator's
+                # `unmatched_tool_call` abort reads that list — so in principle
+                # a hallucinated tool name issued in the reaction turn would go
+                # unseen. Measured rather than assumed: on both verification
+                # runs (ut_tree_edit_011 and _012, 2026-09-21) the stop lands
+                # before the SDK executes that turn, so `tool_calls` is empty
+                # and there is nothing for the abort to see either way. Keeping
+                # the attempts instead would fire an `uncovered_tool_call`
+                # advisory on every short-circuited negative test, which is
+                # precisely the noise the stop exists to remove.
+                turn_mcp_calls: list[dict[str, Any]] = []
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         turn_text_parts.append(block.text)
                     elif isinstance(block, ToolUseBlock):
-                        if block.id == routing_resolved["tool_use_id"] or (
-                            routing_resolved["v"]
-                            and routing_resolved["tool_use_id"] is None
-                            and block.name == "Skill"
+                        # Matched by NAME first, and by the hook's id only as a
+                        # fallback. An id-first match is what broke this stop:
+                        # under the ordering where the SDK delivers the message
+                        # before running PreToolUse for it, routing_resolved is
+                        # still empty here, so no id is available to match and
+                        # the hand-off message scans clean.
+                        if (
+                            block.name == "Skill"
                             and read_skill_tool_input(dict(block.input or {}))[0]
                             in _short_circuit
+                        ) or (
+                            routing_resolved["tool_use_id"] is not None
+                            and block.id == routing_resolved["tool_use_id"]
                         ):
                             routed_call_seen = True
                         if block.name.startswith("mcp__"):
-                            attempted_mcp_calls.append(
+                            turn_mcp_calls.append(
                                 {"tool": block.name, "args": dict(block.input or {})}
                             )
-                if turn_text_parts:
-                    text_chunks.append("".join(turn_text_parts))
+                # The hook fires either before or after the message carrying
+                # the call it denies, and the stop has to survive both. When
+                # the flag is already up and THIS message is not the hand-off,
+                # the message is the model reacting to the deny: it is not the
+                # skill's turn, so nothing from it is recorded and the turn it
+                # was already counted as is given back.
+                post_routing_reaction = (
+                    routing_resolved["v"] and handoff_seen["v"] and not routed_call_seen
+                )
+                if routed_call_seen:
+                    handoff_seen["v"] = True
+                if post_routing_reaction:
+                    turns_seen["n"] -= 1
+                    # Withheld from text_chunks — it is not the skill's own
+                    # utterance — but still handed to the quota classifier
+                    # below. A subscription rejection reaches us as PROSE as
+                    # often as as a RateLimitEvent, and this turn is exactly
+                    # where it lands when the model is cut off right after the
+                    # deny. Dropping it outright let #2192's suite breaker
+                    # miss a real quota and keep submitting.
+                    suppressed_text = "".join(turn_text_parts)
+                else:
+                    suppressed_text = ""
+                    attempted_mcp_calls.extend(turn_mcp_calls)
+                    if turn_text_parts:
+                        text_chunks.append("".join(turn_text_parts))
                 # Per-turn input-token cap, post-hoc: the SDK exposes usage
                 # on the AssistantMessage *after* the model returned, so
                 # the offending turn was already billed. This still catches
@@ -934,10 +986,15 @@ async def run_skill(
                     )
                     if turn_input > max_input_tokens_per_turn:
                         raise _LimitExceeded("max_input_tokens_per_turn")
-                if routed_call_seen:
+                if routing_resolved["v"] and (routed_call_seen or post_routing_reaction):
                     # Negative-test routing short-circuit: the hook denied the
-                    # correct-skill launch the instant it saw the ToolUseBlock
-                    # above and set routing_resolved. The SDK does NOT honor
+                    # correct-skill launch when it saw the ToolUseBlock and set
+                    # routing_resolved. Keyed on the flag, never on this message
+                    # carrying the call, so the stop is reached under either
+                    # hook/message ordering; `post_routing_reaction` above is
+                    # what keeps the stop point exact in the late-hook case.
+                    #
+                    # The SDK does NOT honor
                     # the hook's `continue_: False` to end the run (it just
                     # retries other tools), so we stop consuming here — the
                     # routing verdict is already captured in skills_invoked.
@@ -952,7 +1009,7 @@ async def run_skill(
                     # aborted_reason, so a quota that happens to coincide with
                     # a routing short-circuit must not go undetected.
                     if aborted_reason is None and _looks_like_quota(
-                        rate_limit_signals, None, "".join(text_chunks)
+                        rate_limit_signals, None, "".join(text_chunks) + suppressed_text
                     ):
                         aborted_reason = QUOTA_ABORT_REASON
                         error = _format_quota_evidence(rate_limit_signals, None)
@@ -1038,24 +1095,22 @@ async def run_skill(
             # The hook's tool_use_id is `str | None` on the SDK's own hook
             # request type (read with `.get()`), so there can in principle be
             # no id to key on. That case is covered inside the
-            # AssistantMessage branch above too — by matching the
-            # ToolUseBlock's own Skill name against `_short_circuit` when the
-            # id is absent, not by a second flag-only check after the message
-            # is processed. A flag-only check here, even gated on the id
-            # being absent, still fires on whichever message arrives first
-            # once the flag is set (e.g. an earlier RateLimitEvent), dropping
-            # the hand-off exactly like the bug this PR fixes — reproduced
-            # and removed during review (round 3).
+            # AssistantMessage branch above, which matches the ToolUseBlock's
+            # own Skill name against `_short_circuit` FIRST and falls back to
+            # the id — not by a second flag-only check after the message is
+            # processed. A flag-only check here still fires on whichever
+            # message arrives first once the flag is set (e.g. an earlier
+            # RateLimitEvent), dropping the hand-off exactly like the bug that
+            # match fixes — reproduced and removed during review (round 3).
             #
-            # The two remaining orderings — the hand-off consumed before the
-            # hook runs, or the routed ToolUseBlock never appearing on the
-            # stream at all — are accepted rather than closed: closing them
-            # with a flag check would bring back the dropped-hand-off bug
-            # this PR fixes, since the flag can be true before the hand-off
-            # message is ever processed. When routed_call_seen never fires,
-            # the loop keeps consuming until the stream ends naturally
-            # (StopAsyncIteration, a cap, or a timeout already handle that
-            # case).
+            # The ordering where the hand-off is consumed BEFORE the hook runs
+            # is closed, and closing it is what `handoff_seen` is for: the stop
+            # keys on the flag only once the hand-off has actually been
+            # scanned, so it cannot fire on a message that precedes it. What
+            # stays open is the routed ToolUseBlock never appearing on the
+            # stream at all; there the loop keeps consuming until the stream
+            # ends naturally (StopAsyncIteration, a cap, or a timeout already
+            # handle that case).
 
     start = time.perf_counter()
     try:
