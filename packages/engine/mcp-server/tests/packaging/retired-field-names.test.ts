@@ -42,7 +42,14 @@ import { fileURLToPath } from "node:url";
  * the schema and would be a permanent false positive.
  *
  * What remains unseen is a GITIGNORED file, which by construction ships
- * nothing.
+ * nothing — and that exclusion is load-bearing for a reason beyond build
+ * output. A linked git worktree parked inside the repo (`.claude/worktrees/`,
+ * ignored by `.gitignore`) holds a second full checkout, usually on some other
+ * branch. One sitting on a pre-rename branch during this rename carried the
+ * retired token in 33 markdown files alone. `--untracked` honours `.gitignore`
+ * and skipped every one; a plain `readdir` walk would have reported all 33 as
+ * leaks, on a machine where nothing was wrong. Do not "simplify" this into a
+ * filesystem walk.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
