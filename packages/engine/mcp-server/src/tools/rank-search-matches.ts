@@ -17,8 +17,6 @@ import type {
 /** Match-score fan-out concurrency (deliberately higher than same_person's
  *  conservative PAIR_CONCURRENCY=5; confirmed with the matchTwoExamples dev). */
 const SCORE_CONCURRENCY = 10;
-/** Default number of top-ranked stubs returned. */
-const DEFAULT_TOP = 10;
 /** A subject whose every score sits at or below this floor is unresolvable. */
 const DEGENERATE_FLOOR = 0.01;
 /** Append-only calibration log; a `.jsonl` name stays clear of the results
@@ -40,6 +38,19 @@ export async function rankSearchMatches(
   principal: Principal,
 ): Promise<RankSearchMatchesResult> {
   const { projectPath, stagedResultsRef, subjectId } = input;
+
+  // `top` is range-checked HERE, which since #2657 dropped the parameter from
+  // `record_search` is the only place it is checked at all. This tool is
+  // advertised in the manifest and dispatched with an unchecked cast, so a
+  // caller reaches it directly. Unguarded, `scored.slice(0, input.top)` treats a
+  // negative as an offset from the end: `top: -1` against 5 candidates returned
+  // 4 of them and reported `returnedCount: 4`, silently dropping the last and
+  // describing the truncation as the whole answer.
+  if (input.top !== undefined) {
+    if (!Number.isInteger(input.top) || input.top < 1) {
+      throw new Error("top must be a positive integer.");
+    }
+  }
 
   // ── 1. Read the staged (or finalized) results file (read-only) ─────────────
   const results = (await readStagedResults(
@@ -129,11 +140,19 @@ export async function rankSearchMatches(
   );
   const subjectTooThin = subject.discriminatingFacts === 0;
 
-  // ── 6+7. Build the top-`top` stubs; fold in attachments if requested ───────
-  const top = input.top ?? DEFAULT_TOP;
-  const matches: RankedMatch[] = scored
-    .slice(0, top)
-    .map((s, i) => toStub(s, i + 1));
+  // ── 6+7. Build the stubs; fold in attachments if requested ────────────────
+  // Every scored candidate, not a fixed top-N (#1212). `top` narrows only when
+  // the caller asks for it: a host-side cap that discards rows the caller paid
+  // to search and score is the caller's decision, not this tool's.
+  //
+  // On the STANDALONE tool this list IS the caller's view, so a row cut here is
+  // one they never see. The folded `record_search` path passes no `top` at all
+  // (#2657 removed the parameter there), so every scored row is annotated onto
+  // `results`, which is never truncated.
+  const matches: RankedMatch[] =
+    input.top === undefined
+      ? scored.map((s, i) => toStub(s, i + 1))
+      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1));
 
   if (input.checkAttachments && matches.length > 0) {
     await applyAttachments(matches, subjectId, principal);
@@ -441,6 +460,12 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   // nothing to add. Unlike `relativeTerms` this gets no advisory note — a batch
   // number is a lookup key for the next search, not a caveat on this score.
   if (r.batchNumber) stub.batchNumber = r.batchNumber;
+  // `events`, `collectionId`, `recordTitle` and `treeMatches` are NOT carried.
+  // They were added only so the stub could stand in for the search row while
+  // `ranked` replaced `results`. Under the #1212 ruling the row IS the row —
+  // annotated in place — so duplicating its fields onto the stub is the
+  // duplication the ruling removed. FamilySearch's `score`/`confidence` are
+  // likewise not carried: `matchScore` supersedes them.
   if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
   // Candidate-side thinness — reported alongside the score so a caller can see
   // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different
@@ -524,7 +549,7 @@ export const rankSearchMatchesSchema = {
     "subject, replacing FamilySearch's unreliable search ranker with its " +
     "authoritative person matcher. Reads the host-side staged results (from a " +
     "`record_search` that returned a `staged.resultsRef`), scores every " +
-    "candidate against the subject person, and returns the top-N compact stubs " +
+    "candidate against the subject person, and returns every scored candidate " +
     "sorted by match score — no bulk gedcomx crosses the wire. Treat the result " +
     "as a REVIEW SURFACE (confirm with role/age cross-checks), not an " +
     "accept/reject. When `subjectResolvable` is false, READ THE `diagnostic` " +
@@ -562,8 +587,10 @@ export const rankSearchMatchesSchema = {
       top: {
         type: "number",
         description:
-          "How many top-ranked stubs to return. Default 10. A fixed count, not " +
-          "a score threshold.",
+          "Optional cap on how many top-ranked stubs to return. Omit to get " +
+          "every scored candidate, which is the default. A fixed count, not a " +
+          "score threshold. " +
+          "There is ONE row list: `matches` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom — the rows it cuts are the worst-scoring ones, not a second hidden copy.",
       },
       checkAttachments: {
         type: "boolean",
