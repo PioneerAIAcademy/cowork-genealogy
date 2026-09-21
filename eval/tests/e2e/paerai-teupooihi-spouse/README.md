@@ -50,12 +50,16 @@ the subject.
 
 The spouse is corroborated independently, meeting both bars the card set:
 
-1. A **second, independent index entry on a different register image** —
-   `ark:/61903/1:1:D955-NRW2` ("Entry for Moe Parauhia and Aufaite Toehae",
-   image `3:1:3Q9M-CSS4-PSVY`, household `1:2:48ZK-KGT2`) — records the same 1860
-   marriage at Teavaro, Moorea. The hint sits on a different image
-   (`3:1:3Q9M-CSS4-P343`, household `1:2:46ZP-Y8ZM`), so this is not a re-serving
-   of the same index ARK.
+1. A **distinct index entry on a different register image and household from the
+   hint** — `ark:/61903/1:1:D955-NRW2` ("Entry for Moe Parauhia and Aufaite
+   Toehae", image `3:1:3Q9M-CSS4-PSVY`, household `1:2:48ZK-KGT2`) vs the hint's
+   image `3:1:3Q9M-CSS4-P343`, household `1:2:46ZP-Y8ZM`. Being a separate index
+   record, it is independent of the hint for corroboration — not a re-serving of
+   the same index ARK — while also being the marriage record already attached to
+   Moe in the live tree. The hint indexes this marriage at **Teaharoa** and
+   `D955-NRW2` indexes it at **Teavaro** — two neighbouring Moorea communes; this
+   place-index difference between the two registrations is left unreconciled and
+   does not affect the spouse identification (both entries agree on the bride).
 2. The hint record itself carries the discriminators the card asked for: an 1860
    marriage date, a Moorea place, and parents matching `LCX2-L8S`/`LCX2-LKN`.
 
@@ -74,11 +78,11 @@ with another wife.
 **Re-index check.** The seven "French Polynesia, Civil Registration" sources in
 the starting tree are all subject-titled entries for Raitui and Teuratau
 Parauhia — none for Moe, none carrying a spouse — so the hint is not a re-index
-of them. It is a sibling of Moe's own already-attached marriage source
-(`D955-NRW2`), the same 1860 event on a different image, which is why the live
-tree already reflects the spouse even though the subject-centric snapshot does
-not: the spouse is one relationship-hop beyond the subject, outside the
-snapshot's reach, so fixture integrity (`starting == unstripped`) is unaffected.
+of them. `D955-NRW2` — the distinct index record above, already attached to Moe
+in the live tree — is why the live tree already reflects the spouse even though
+the subject-centric snapshot does not: the spouse is one relationship-hop beyond
+the subject, outside the snapshot's reach, so fixture integrity
+(`starting == unstripped`) is unaffected.
 
 **One honest gap for the next reader.** The independent corroborating entry
 (`D955-NRW2`) indexes only Moe and his spouse, not Moe's parents; the
