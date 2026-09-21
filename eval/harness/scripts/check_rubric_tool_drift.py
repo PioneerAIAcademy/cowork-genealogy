@@ -13,9 +13,9 @@ standalone step): the judge kept failing correct runs for not making calls
 the architecture had retired.
 
 Does the same check for plugin agents: a tool name mentioned in an agent's
-body that is in neither its `tools:` nor its `disallowedTools:` frontmatter
-(the union, since naming a disallowed tool to explain why it's denied is a
-legitimate, expected mention, not drift).
+body that is not in its `tools:` frontmatter (nor in `disallowedTools:`, if
+one is ever re-added — no agent declares one today, but the code unions both
+as insurance for a re-added deny; CLAUDE.md § "Re-adding a deny").
 
 This is the exact inverse of check_tool_coverage.py's reverse check (a test
 fixture referencing a tool absent from allowed-tools): that check catches
@@ -39,16 +39,20 @@ Warn-only: this never fails the build (always exits 0). There is a third,
 NOT mechanically filterable, false-positive shape: grading prose naming a
 tool that belongs to a *different* skill (a routing test's judge_context
 naming the destination skill's tool, or "not this skill's job, that's
-$OTHER_SKILL's" prose). Distinguishing that from real drift would require
-either an allow-comment convention or fragile natural-language matching —
-left as an open decision (issue #1003) rather than guessed at here.
+$OTHER_SKILL's" prose). These are handled by the per-site SUPPRESSIONS list
+below (issue #1522). Inline comments were rejected: judge_context strings
+go verbatim into the judge prompt (eval/harness/judge/prompt.md), agent
+bodies forbid comments (CLAUDE.md § "Cowork plugin agents"), and touching
+~15 skill directories to add per-file markers would trigger ~15 blocking
+eval re-runs at $8–12 each. The list is shrink-only: a stale entry whose
+(file, tool) no longer fires fails the unit test
+(test_check_rubric_tool_drift.py), so removing entries is always safe and
+adding one requires that it still corresponds to a live hit.
 
-Together the two filters above took the first real-corpus run from 86 hits to
-68. Roughly 20% of the remaining 68 are genuine drift; the list needs triaging,
-not suppressing, before anyone makes this blocking.
-
-Run by .github/workflows/check-runlogs.yml. Self-contained: stdlib only
-(the workflow installs no dependencies).
+Run `python eval/harness/scripts/check_rubric_tool_drift.py` against a built
+manifest for the current hit count. Run by
+.github/workflows/check-runlogs.yml. Self-contained: stdlib only (the
+workflow installs no dependencies).
 """
 
 from __future__ import annotations
@@ -88,6 +92,36 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
     ),
     "logout": "same collision as login, for the same reason.",
 }
+
+# ── Per-site suppression list ──────────────────────────────────────────
+#
+# Each entry suppresses one (file, tool) warning. This is the ONLY
+# suppression mechanism for this check — inline comments were rejected
+# (issue #1522): judge_context strings go verbatim into the judge prompt,
+# agent bodies forbid comments, and touching ~15 skill dirs to add per-file
+# markers would trigger ~15 blocking eval re-runs at $8–12 each.
+#
+# Shrink-only: every entry must still match a hit the script would otherwise
+# emit. test_check_rubric_tool_drift.py asserts both directions — a stale
+# entry (one whose (file, tool) no longer fires) fails the test, and a
+# suppressed entry does not mask an unrelated genuine hit. Removing entries
+# is always safe; adding one requires a reason longer than 20 characters.
+#
+# Keys: "file" (repo-relative, matches the file= arg in gh_warning),
+#        "tool" (bare tool name), "reason" (why this is not drift).
+SUPPRESSIONS: list[dict[str, str]] = [
+    # Empty in PR 1 (mechanism only). PR 2 triages the corpus and populates.
+]
+
+_SUPPRESSED: frozenset[tuple[str, str]] = frozenset(
+    (s["file"], s["tool"]) for s in SUPPRESSIONS
+)
+
+
+def is_suppressed(file: str, tool: str) -> bool:
+    """True when (file, tool) is in the SUPPRESSIONS list."""
+    return (file, tool) in _SUPPRESSED
+
 
 _PLUGIN_DELEGATION_RE = re.compile(r"@plugin:([a-z0-9-]+)")
 
@@ -262,6 +296,57 @@ def agent_body_mentions(agent_md: Path, vocabulary: set[str]) -> set[str]:
     return find_mentions(body, vocabulary) - tools - disallowed
 
 
+def compute_all_hits(
+    skills_dir: Path,
+    tests_dir: Path,
+    agents_dir: Path,
+    manifest: Path,
+) -> set[tuple[str, str]]:
+    """Every (file, tool) pair the script would warn about, ignoring
+    suppressions. Used by main() and the staleness test.
+
+    Returned paths are always repo-relative (matching gh_warning's file=
+    convention), regardless of the input directory locations."""
+    manifest_tools = load_manifest_tools(manifest)
+    if manifest_tools is None:
+        return set()
+    vocabulary = usable_vocabulary(manifest_tools)
+    hits: set[tuple[str, str]] = set()
+
+    if skills_dir.is_dir():
+        for skill_dir in sorted(skills_dir.iterdir()):
+            if not skill_dir.is_dir():
+                continue
+            skill = skill_dir.name
+            skill_md = skill_dir / "SKILL.md"
+            declared = set(declared_tools(skill_md)) | delegated_tools(
+                skill_md, agents_dir
+            )
+            skill_tests = tests_dir / skill
+
+            rubric_md = skill_tests / "rubric.md"
+            for tool in rubric_mentions(rubric_md, vocabulary, declared=declared):
+                hits.add((f"eval/tests/unit/{skill}/rubric.md", tool))
+
+            if skill_tests.is_dir():
+                for test_path in sorted(skill_tests.glob("*.json")):
+                    for tool in judge_context_mentions(
+                        test_path, vocabulary, declared=declared
+                    ):
+                        hits.add(
+                            (f"eval/tests/unit/{skill}/{test_path.name}", tool)
+                        )
+
+    if agents_dir.is_dir():
+        for agent_md in sorted(agents_dir.glob("*.md")):
+            for tool in agent_body_mentions(agent_md, vocabulary):
+                hits.add(
+                    (f"packages/engine/plugin/agents/{agent_md.name}", tool)
+                )
+
+    return hits
+
+
 def main() -> int:
     manifest_tools = load_manifest_tools(MANIFEST)
     if manifest_tools is None:
@@ -270,6 +355,7 @@ def main() -> int:
     vocabulary = usable_vocabulary(manifest_tools)
 
     drift_hits = 0
+    suppressed_count = 0
 
     if SKILLS_DIR.is_dir():
         for skill_dir in sorted(SKILLS_DIR.iterdir()):
@@ -284,6 +370,10 @@ def main() -> int:
 
             rubric_md = skill_tests / "rubric.md"
             for tool in sorted(rubric_mentions(rubric_md, vocabulary, declared=declared)):
+                rel_file = f"eval/tests/unit/{skill}/rubric.md"
+                if is_suppressed(rel_file, tool):
+                    suppressed_count += 1
+                    continue
                 drift_hits += 1
                 gh_warning(
                     f"skill `{skill}`'s rubric.md mentions `{tool}`, which is "
@@ -291,7 +381,7 @@ def main() -> int:
                     f"If `{tool}` was folded into another tool, update the "
                     f"grading prose — don't fail runs for not calling a tool "
                     f"the skill can't call.",
-                    file=f"eval/tests/unit/{skill}/rubric.md",
+                    file=rel_file,
                 )
 
             if skill_tests.is_dir():
@@ -299,6 +389,10 @@ def main() -> int:
                     for tool in sorted(
                         judge_context_mentions(test_path, vocabulary, declared=declared)
                     ):
+                        rel_file = f"eval/tests/unit/{skill}/{test_path.name}"
+                        if is_suppressed(rel_file, tool):
+                            suppressed_count += 1
+                            continue
                         drift_hits += 1
                         gh_warning(
                             f"test `{test_path.name}` (skill `{skill}`) has a "
@@ -306,20 +400,24 @@ def main() -> int:
                             f"`{skill}`'s allowed-tools {sorted(declared) or '[]'}. "
                             f"The judge is being told to expect a call the skill "
                             f"can't make — update judge_context.",
-                            file=f"eval/tests/unit/{skill}/{test_path.name}",
+                            file=rel_file,
                         )
 
     if AGENTS_DIR.is_dir():
         for agent_md in sorted(AGENTS_DIR.glob("*.md")):
             agent = agent_md.stem
             for tool in sorted(agent_body_mentions(agent_md, vocabulary)):
+                rel_file = f"packages/engine/plugin/agents/{agent_md.name}"
+                if is_suppressed(rel_file, tool):
+                    suppressed_count += 1
+                    continue
                 drift_hits += 1
                 gh_warning(
                     f"agent `{agent}` mentions `{tool}` in its body, but "
-                    f"`{tool}` is in neither its `tools:` nor its "
-                    f"`disallowedTools:` frontmatter. Add it to whichever list "
-                    f"is correct, or update the body if the mention is stale.",
-                    file=f"packages/engine/plugin/agents/{agent_md.name}",
+                    f"`{tool}` is not in its `tools:` frontmatter (no agent "
+                    f"currently declares `disallowedTools:`). Add it to "
+                    f"`tools:` or update the body if the mention is stale.",
+                    file=rel_file,
                 )
 
     if drift_hits:
@@ -330,6 +428,12 @@ def main() -> int:
     else:
         print("No rubric/judge_context/agent tool-mention drift found.")
 
+    if suppressed_count:
+        print(
+            f"Suppressed {suppressed_count} known false positive(s) "
+            f"({len(SUPPRESSIONS)} entries in SUPPRESSIONS)."
+        )
+
     print("\nWord-collision exemptions (never scanned for, structurally noisy):")
     for tool, reason in sorted(COMMON_WORD_EXEMPTIONS.items()):
         print(f"  - {tool}: {reason}")
@@ -337,9 +441,9 @@ def main() -> int:
     write_step_summary(
         "Rubric / judge_context / agent tool-mention drift (warn-only)",
         footer=(
-            "Warn-only: this check does not block the build. Roughly 20% of these "
-            "are genuine drift — read them, do not assume noise (see eval/CLAUDE.md "
-            "and issue #1003). Never scanned for: "
+            "Warn-only: this check does not block the build. Unsuppressed "
+            "warnings need triage — read them, do not assume noise (see "
+            "eval/CLAUDE.md and issue #1522). Never scanned for: "
             f"{', '.join(sorted(COMMON_WORD_EXEMPTIONS))}."
         ),
     )

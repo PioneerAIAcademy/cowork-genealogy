@@ -4,6 +4,10 @@ Covers the pure Path-in/set-out helpers the script's main() composes:
 loading the tool vocabulary, finding whole-word tool mentions in prose,
 parsing a skill's/agent's declared tools, and scanning rubric.md /
 judge_context / agent bodies for mentions outside that declared set.
+
+Also covers the SUPPRESSIONS mechanism (issue #1522) in both directions:
+a suppressed entry does not mask an unrelated genuine hit, and a stale
+entry (one whose (file, tool) no longer fires) fails loudly.
 """
 
 from __future__ import annotations
@@ -282,3 +286,117 @@ def test_delegated_tools_no_delegation_returns_empty(tmp_path: Path) -> None:
     skill_md = tmp_path / "SKILL.md"
     skill_md.write_text("---\nname: search-records\n---\nNo delegation.\n", encoding="utf-8")
     assert check_rubric_tool_drift.delegated_tools(skill_md, tmp_path / "agents") == set()
+
+
+# ── SUPPRESSIONS mechanism tests (issue #1522) ───────────────────────
+
+
+def test_is_suppressed_is_selective(monkeypatch) -> None:
+    """Direction (a): suppressing (file_A, tool_X) must not suppress
+    (file_A, tool_Y) or (file_B, tool_X)."""
+    monkeypatch.setattr(
+        check_rubric_tool_drift,
+        "_SUPPRESSED",
+        frozenset({("eval/tests/unit/tree-edit/rubric.md", "same_person")}),
+    )
+    # Exact match is suppressed
+    assert check_rubric_tool_drift.is_suppressed(
+        "eval/tests/unit/tree-edit/rubric.md", "same_person"
+    ) is True
+    # Same file, different tool — NOT suppressed
+    assert check_rubric_tool_drift.is_suppressed(
+        "eval/tests/unit/tree-edit/rubric.md", "validate_research_schema"
+    ) is False
+    # Different file, same tool — NOT suppressed
+    assert check_rubric_tool_drift.is_suppressed(
+        "eval/tests/unit/init-project/rubric.md", "same_person"
+    ) is False
+
+
+def test_no_stale_suppressions() -> None:
+    """Direction (b): every SUPPRESSIONS entry must match a (file, tool) the
+    script would otherwise warn about. An entry that stopped matching means
+    the drift it excused was fixed and the entry should be removed.
+
+    Mirrors the shrink-only/stale-entry rule from
+    skill-reference-reachability.test.ts. Trivially passes while the list
+    is empty; arms itself when PR 2 populates it.
+    """
+    all_hits = check_rubric_tool_drift.compute_all_hits(
+        check_rubric_tool_drift.SKILLS_DIR,
+        check_rubric_tool_drift.TESTS_DIR,
+        check_rubric_tool_drift.AGENTS_DIR,
+        check_rubric_tool_drift.MANIFEST,
+    )
+    stale = [
+        s
+        for s in check_rubric_tool_drift.SUPPRESSIONS
+        if (s["file"], s["tool"]) not in all_hits
+    ]
+    assert stale == [], (
+        "SUPPRESSIONS has entries that no longer match a hit — the drift was "
+        "fixed and the entry should be removed:\n  "
+        + "\n  ".join(f'{s["file"]}:{s["tool"]}' for s in stale)
+    )
+
+
+def test_every_suppression_carries_a_reason() -> None:
+    """Same >20-char convention as UNREACHED_PENDING_ADJUDICATION in
+    skill-reference-reachability.test.ts."""
+    for s in check_rubric_tool_drift.SUPPRESSIONS:
+        assert len(s.get("reason", "").strip()) > 20, (
+            f'SUPPRESSIONS entry ({s["file"]}, {s["tool"]}) needs a reason '
+            f"longer than 20 characters — not a dumping ground"
+        )
+
+
+def test_compute_all_hits_with_synthetic_corpus(tmp_path: Path) -> None:
+    """compute_all_hits returns the expected (file, tool) pairs for a
+    synthetic skill+rubric+agent layout."""
+    # Manifest with two tools
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {"tools": [{"name": "same_person"}, {"name": "record_search"}]}
+        ),
+        encoding="utf-8",
+    )
+
+    # Skill with only record_search declared
+    skills_dir = tmp_path / "skills"
+    skill_dir = skills_dir / "tree-edit"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: tree-edit\nallowed-tools:\n  - record_search\n---\n# body\n",
+        encoding="utf-8",
+    )
+
+    # Rubric mentioning both tools — same_person is undeclared drift
+    tests_dir = tmp_path / "tests"
+    test_skill_dir = tests_dir / "tree-edit"
+    test_skill_dir.mkdir(parents=True)
+    (test_skill_dir / "rubric.md").write_text(
+        "Must call same_person after record_search.\n",
+        encoding="utf-8",
+    )
+
+    # Agent with record_search granted, mentioning same_person in body
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "test-agent.md").write_text(
+        "---\nname: test-agent\ntools:\n  - mcp__genealogy__record_search\n"
+        "---\nDo not call same_person directly.\n",
+        encoding="utf-8",
+    )
+
+    hits = check_rubric_tool_drift.compute_all_hits(
+        skills_dir, tests_dir, agents_dir, manifest
+    )
+    assert ("eval/tests/unit/tree-edit/rubric.md", "same_person") in hits
+    assert ("packages/engine/plugin/agents/test-agent.md", "same_person") in hits
+    # record_search is declared/granted — must NOT appear as a hit
+    assert ("eval/tests/unit/tree-edit/rubric.md", "record_search") not in hits
+    assert (
+        "packages/engine/plugin/agents/test-agent.md",
+        "record_search",
+    ) not in hits

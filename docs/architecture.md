@@ -961,9 +961,10 @@ is pinned synthetically because no agent ships a deny for it to fire on.
 **One cost, accepted.** `check_rubric_tool_drift.py` asks whether a tool named
 in an agent body appears in either list, and `disallowedTools:` was doubling as
 the marker for a deliberate "you do NOT have this tool" mention. Removing the
-denies took that marker away, so its agent-body warnings went 5 → 12. It is
-warn-only and does not block a build; the suppression mechanism it wants is
-`gh issue list --state open --search "check_rubric_tool_drift suppression"`.
+denies took that marker away, increasing its agent-body warnings (run
+`python eval/harness/scripts/check_rubric_tool_drift.py` for the current
+count). It is warn-only and does not block a build; known false positives
+are handled by the `SUPPRESSIONS` list in the script (issue #1522).
 
 **Two standing prohibitions:**
 
