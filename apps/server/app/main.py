@@ -25,7 +25,7 @@ import logging
 
 from sqlmodel import Session, select
 
-from . import auth, feedback, sessions, v1
+from . import anthropic_proxy, auth, feedback, sessions, v1
 from .config import assert_production_config, get_settings
 from .db import get_engine, init_db
 from .models import FamilySearchToken, Project, User, utcnow
@@ -102,10 +102,13 @@ async def lifespan(app: FastAPI):
     setup_logging()
     init_db()
     app.state.provider = make_provider()
+    app.state.anthropic_proxy_client = anthropic_proxy.make_upstream_client()
     await _revoke_sandboxes(app.state.provider)
     try:
         yield
     finally:
+        if hasattr(app.state.anthropic_proxy_client, "aclose"):
+            await app.state.anthropic_proxy_client.aclose()
         await app.state.provider.aclose()
 
 
@@ -125,6 +128,7 @@ app.include_router(auth.callback_router)  # top-level /callback (reuses the FS d
 app.include_router(sessions.router)
 app.include_router(feedback.router)
 app.include_router(v1.router)
+app.include_router(anthropic_proxy.router)
 
 
 # ── /v1 error envelope ───────────────────────────────────────────
