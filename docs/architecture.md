@@ -1574,11 +1574,12 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   Opus on the model picker
   (`gh issue list --state open --search "delete-janitor"`).
 
-- **Four settings are boot-enforced in production, and one of them can never be
+- **Five settings are boot-enforced in production, and one of them can never be
   rotated.** When `PUBLIC_URL` starts with `https` — the sole production
   discriminant — `config.assert_production_config` refuses to boot if
-  `session_secret`, `ws_signing_key`, or `fs_token_enc_key` is still at its
-  declared default, or if `DATABASE_URL` is unset or blank (which would put a Fly
+  `session_secret`, `ws_signing_key`, `fs_token_enc_key`, or
+  `anthropic_proxy_signing_key` is still at its declared default, or if
+  `DATABASE_URL` is unset or blank (which would put a Fly
   deploy on SQLite over an unmounted rootfs). It runs as the first statement of
   `main.py`'s lifespan and names every offender at once, so one deploy fixes all
   of them. **`ws_signing_key` is set-once in practice:** `E2BProvider.create`
@@ -1588,6 +1589,9 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   plane mints against the new key, the sandbox verifies against the old, and
   every handshake fails with no recovery but a new session
   (`gh issue list --state open --search "WS_TOKEN_SECRET rotation"`).
+  **`anthropic_proxy_signing_key` has the same caveat:**
+  `HMAC(anthropic_proxy_signing_key, sandbox_id)` is the per-sandbox proxy
+  token; rotating the key orphans existing sandboxes the same way.
 
 > **Read the two source docs for reasoning, not for current state — this guide is
 > the current-state reference.** `docs/realtime-architecture.md` carries the
