@@ -1267,8 +1267,10 @@ def _summarize_tool_response(
     `tool_name` (HARNESS_SCHEMA_VERSION 5): when the tool has keys listed in
     `_RUNLOG_EXEMPT_KEYS`, those keys bypass both `_RUNLOG_STRING_MAX` and
     `_RUNLOG_MAX_CHARS`. `image_transcribe`'s `transcription` is the first
-    exemption: 121 of 247 captures were truncated at 500 chars (median full
-    length 1,610, max 6,443), making extraction-accuracy audits impossible.
+    exemption: at v4 the field was truncated at 500 chars though the
+    transcriptions were often many times longer, making extraction-accuracy
+    audits impossible. `make e2e-transcription-join SINCE=all` reports the
+    current truncated-capture count over its window.
     """
     raw = _serialize_result(content)
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
@@ -1309,8 +1311,9 @@ def _summarize_tool_response(
 
     # The backstop cap is skipped when exempt keys contributed content — it
     # exists for git size on the long tail, and the whole point of an exemption
-    # is to preserve the full value (issue #2561 item 2: 12 of 121 truncated
-    # transcriptions exceed 4000 chars).
+    # is to preserve the full value (issue #2561 item 2: the largest
+    # transcriptions run past the 4000-char backstop, so it would truncate them
+    # without this bypass).
     if not saved and len(text) > _RUNLOG_MAX_CHARS:
         text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
 

@@ -121,8 +121,10 @@ from typing import Any
 #       `transcription` field instead of truncating at `_RUNLOG_STRING_MAX`
 #       (500 chars). Same shape as entries 2 and 4: the key keeps its name and
 #       type (string) while its CONTENT widens. A v4 log's `image_transcribe`
-#       summary is capped at 500 chars (121 of 247 captures truncated, median
-#       full length 1,610, max 6,443); a v5 log preserves the full value,
+#       summary is capped at 500 chars, though the transcription is often many
+#       times longer (run `make e2e-transcription-join SINCE=all` for the
+#       current count of truncated captures and its window); a v5 log preserves
+#       the full value,
 #       bypassing both the per-string cap and the `_RUNLOG_MAX_CHARS` backstop.
 #       This makes extraction-accuracy audits possible: the transcription-to-
 #       assertion join (482/482) was already working, but the truncated
