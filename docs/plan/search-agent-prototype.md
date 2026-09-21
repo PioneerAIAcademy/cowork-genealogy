@@ -19,8 +19,8 @@ D16's open half); D19 built 2026-09-18 (PR #2670; `make proto-demo`, the D17 com
 one, no browser); D18's autonomous arm and export built 2026-09-20 (PR #2695;
 `make proto-demo-auto`, `proto-export`, `turns.nudges`; the run's two findings under D18);
 D17 run live 2026-09-21 — criteria 3 and 4 pass, criterion 1 FAILS on background agents
-and has to be re-run — and the worker's resume rule plus the forced token refresh that
-run cost built the same day (PR #2719);
+and criterion 2 was never reached, so the run has to be repeated — and the worker's resume
+rule plus the forced token refresh that run cost built the same day (PR #2719);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under

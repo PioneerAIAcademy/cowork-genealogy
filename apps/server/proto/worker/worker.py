@@ -482,18 +482,11 @@ def registration_problems(info: Any) -> list[str]:
 # -- the real turn -------------------------------------------------------------
 
 
-def attempt_prompts(text: str, resume: str | None, receive_count: int) -> tuple[str, ...]:
-    """Every prompt this attempt may send, in order: the turn's own text, and -- on a
-    REDELIVERY of a resumed session only -- ONE continue prompt, sent when the first
-    result carried no model turn (``resume_produced_no_turn``).
-
-    ``resume`` alone is not "this message was redelivered": it is "the SDK session
-    already holds entries", which is true of EVERY turn after a session's first. Keying
-    on it alone re-queries the first delivery of an ordinary turn 2 -- one unattended
-    billed model turn, and a continue prompt ordering the model to resume the PREVIOUS
-    task and not start over, which discards the question the patron just asked.
-    ``receive_count`` is the shim's ``X-Aws-Sqsd-Receive-Count``, 1 on a first delivery,
-    and is what separates the two.
+def attempt_prompts(text: str, resume: str | None) -> tuple[str, ...]:
+    """Every prompt this attempt MAY send, in order: the turn's own text, and -- on a
+    resumed session -- one continue prompt. WHETHER the second is sent is
+    ``resume_produced_no_turn``'s decision, checked between the two; this is the ceiling,
+    not the trigger, and the two are deliberately not both arming conditions.
 
     The bound on re-queries is the LENGTH OF THIS TUPLE. run_turn iterates it and
     breaks early; there is no loop whose condition a second zero-turn result could
@@ -502,7 +495,7 @@ def attempt_prompts(text: str, resume: str | None, receive_count: int) -> tuple[
     ``resume_synthetic_result`` twice and completes. A worker that bills money
     unattended must not be able to spin.
     """
-    return (text, RESUME_CONTINUE_TEXT) if resume and receive_count > 1 else (text,)
+    return (text, RESUME_CONTINUE_TEXT) if resume else (text,)
 
 
 def resume_produced_no_turn(result: Any, resume: str | None, receive_count: int) -> bool:
@@ -643,7 +636,7 @@ async def run_turn(
                     )
                 return pass_result
 
-            for index, prompt in enumerate(attempt_prompts(text, resume, receive_count)):
+            for index, prompt in enumerate(attempt_prompts(text, resume)):
                 await client.query(prompt)
                 result = await receive(require_init=index == 0)
                 if not resume_produced_no_turn(result, resume, receive_count):
