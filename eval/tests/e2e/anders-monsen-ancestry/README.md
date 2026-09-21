@@ -24,7 +24,7 @@ Extended relatives not relevant to the marriage question (Mons's other marriages
 
 ## Expected difficulty
 
-Moderate — the marriage is indexed on FamilySearch in "Norway, Marriages, 1660-1926" (ark `1:1:NW44-PM2`), so the agent should find it via `record_search` rather than needing Digitalarkivet or other Norwegian-only archives. However, Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) makes both names extremely common, so disambiguation rests on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography.
+Moderate, and harder than originally scoped — the marriage record is real and readable directly by ark (`record_read ark:/61903/1:1:NW44-PM2`, collection 1468080), and this premise held when the fixture was authored: run 1 (2026-07-09) recovered it via `record_search` itself, ranked #2 of 58, `attachedToSubject: true`. As of 2026-09-16/17 the record is confirmed **not** retrievable through `record_search` under either persona's own indexed name, by any query tried across two independent checks a week apart (see "What the live runs revealed" below). Consistent with the run-8 probe's own finding, this is the search index drifting, not the original premise having been wrong — and per that same probe, the record "may revert." Until it does, Digitalarkivet or another Norwegian-only archive may be the only current route to `f2`. Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) also makes both names extremely common, so disambiguation would rest on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography if the record re-enters the search index.
 
 ## Notes for reviewers
 
@@ -162,3 +162,35 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   re-run run 1's `tool_calls[29]` query and the `Urna Halsteinsdr` probe above —
   if they still return 10 and 0, the record is out of the search index and no
   search strategy will find it.
+- **Run 9 (2026-09-16 10:16) confirms the drift has not reverted, and sharpens the diagnosis.**
+  `f1` false, `f2` false, `stop_reason: tool_cap`, proof quality 3 — the tree's
+  `Couple` relationship carries no marriage fact at all this time (worse than
+  run 8's partial). Before grading, re-ran the run-8 probe's own exact
+  re-verification: `record_read ark:/61903/1:1:NW44-PM2` still returns the
+  record in full (Anders Monsen + Urna Halsteinsdr, 25 Jun 1786, Hamre,
+  collection 1468080); a targeted `record_search` on that exact spelling +
+  collection + year (34 results, both pages) does not include it; widening to
+  1780-1790 with no spouse filter (19 results) does not either. **A second,
+  independent check the next day (2026-09-17) went further and settles it**:
+  `isPrincipal` + 1786 alone, `isPrincipal` + a 1780-1790 window at Hamre,
+  `isPrincipal` + the spouse name, and — the query that removes any doubt —
+  the bride alone under her own exact indexed spelling `Urna Halsteinsdr`, no
+  year, no collection filter, across all of Norway: **10 results, she is not
+  among them.** That is the fixture's own premise being tested directly (a
+  bare exact-name search for the record's own indexed persona), not a query
+  someone forgot to try.
+  **Sharper framing than "ranking gap":** both personas are retrievable by ark
+  through `record_read`; neither is retrievable through `record_search` by its
+  own indexed name, under any query shape tried across nine attempts spanning
+  two independent checks a week apart. Calling this "a ranking gap" invites the
+  next reader to go looking for better query terms — there are none to find.
+  The fixture's `Expected difficulty` text has been corrected above and in
+  `fixture.json`'s `notes` to say so plainly -- not that the premise was wrong
+  when authored (run 1 recovered this record via `record_search` itself, and
+  the run-8 probe already established this is index drift, which may
+  revert), but that it does not hold *today*, confirmed twice a week apart.
+  Whether this fixture's `f2` remains achievable at all — short of an
+  interactive Digitalarkivet/Ancestry search this harness's autonomous mode
+  cannot perform — is now an open question for whoever next reviews this
+  fixture's continued inclusion in the panel, not something a future run
+  should be expected to solve with a cleverer FamilySearch query.
