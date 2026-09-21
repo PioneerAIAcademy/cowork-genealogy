@@ -37,7 +37,7 @@
     "collection-read-by-id",
     "wiki-search-any",
     "wikipedia-search-any",
-    "volume-search-massachusetts"
+    "volume-search-massachusetts-colonial"
   ],
   "judge_context": [
     "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s."

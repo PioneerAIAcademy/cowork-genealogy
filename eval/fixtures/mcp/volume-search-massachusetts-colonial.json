@@ -1,0 +1,47 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering colonial Massachusetts (1600s Puritan era): early town and church records, mostly browse-only images. Period-matched for ut_locality_guide_019 (1620-1700).",
+  "args": {
+    "standardPlace": "~Massachusetts"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Massachusetts, United States",
+      "startYear": 1620,
+      "endYear": 1700
+    },
+    "totalResults": 2,
+    "results": [
+      {
+        "imageGroupNumber": "007612044",
+        "imageGroupPrefix": "007612044",
+        "imageCount": 188,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Massachusetts, United States",
+            "dateRange": "1620-1698",
+            "recordType": "Town meeting and proprietors' records (browse-only images)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007612045",
+        "imageGroupPrefix": "007612045",
+        "imageCount": 121,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Suffolk, Massachusetts, United States",
+            "dateRange": "1630-1700",
+            "recordType": "Congregational church admissions and baptisms (full-text searchable)"
+          }
+        ]
+      }
+    ]
+  }
+}

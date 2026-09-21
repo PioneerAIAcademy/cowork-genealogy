@@ -1,0 +1,47 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering Oklahoma Territory around the Land Run era (1889-1910): homestead/land-entry and tribal enrollment records, mixed indexing. Period-matched for ut_locality_guide_020 (1889-1910).",
+  "args": {
+    "standardPlace": "~Oklahoma"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Oklahoma, United States",
+      "startYear": 1889,
+      "endYear": 1910
+    },
+    "totalResults": 2,
+    "results": [
+      {
+        "imageGroupNumber": "005221388",
+        "imageGroupPrefix": "005221388",
+        "imageCount": 402,
+        "recordSearchablePercent": 74,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Oklahoma, United States",
+            "dateRange": "1889-1907",
+            "recordType": "Land-entry case files / homestead final proofs (name-indexed + images)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "005221389",
+        "imageGroupPrefix": "005221389",
+        "imageCount": 176,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Oklahoma, United States",
+            "dateRange": "1898-1910",
+            "recordType": "Dawes Commission enrollment jackets (browse-only images)"
+          }
+        ]
+      }
+    ]
+  }
+}
