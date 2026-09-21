@@ -1,0 +1,35 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Rosalind", "surname": "Hartwell" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1855", "place": "Ohio, United States", "standard_place": "Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Thomas", "surname": "Hartwell" }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I1",
+      "facts": [
+        { "id": "F2", "type": "Marriage", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "FamilySearch Family Tree, Rosalind Hartwell", "citation": "FamilySearch Family Tree — unverified compiled data; the surname 'Hartwell' is attached without a birth record establishing whether it is her maiden name or her married name." }
+  ]
+}

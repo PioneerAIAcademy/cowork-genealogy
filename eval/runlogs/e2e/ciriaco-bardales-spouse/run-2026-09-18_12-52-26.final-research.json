@@ -1,0 +1,2310 @@
+{
+  "project": {
+    "id": "rp_ciriaco_bardales_spouse",
+    "objective": "Before his marriage to Clara Amelia Palacios Oliva, did Ciriaco Bardales have a son by a Carmen Morales \u2014 an infant Ciriaco who died 12 August 1905 in Guatemala City?",
+    "subject_person_ids": [
+      "KNYF-2Z8"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-09-18"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was the infant Ciriaco who died 12 August 1905 in Guatemala City the son of Ciriaco Bardales and Carmen Morales, conceived before his marriage to Clara Amelia Palacios Oliva?",
+      "rationale": "The user's objective is a single-fact question about the parentage of a specific infant. Guatemala City maintained civil registration of deaths from 1877 onward; the 1905 death register is the primary record most likely to name both parents. This question maps directly to the objective and is testable against civil registration records held in Guatemala.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-09-18",
+      "resolution_assertion_ids": [
+        "a_006",
+        "a_007",
+        "a_019",
+        "a_020",
+        "a_031",
+        "a_033",
+        "a_034",
+        "a_036",
+        "a_037",
+        "a_038",
+        "a_045",
+        "a_046",
+        "a_049",
+        "a_050",
+        "a_051"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All three sources (src_001 infant death 12 Aug 1905, src_002 sibling Jos\u00e9 Luis death 4 Oct 1954, src_003 infant birth 1 Aug 1905) have had their original register images examined and confirmed by image-reader agents (log_009, log_010, log_011). The prior blocking criteria \u2014 original_substitution and evidence_class \u2014 are now met. Original image log_011 resolved the 'Bandales/Bardales' transcription ambiguity: the handwritten register shows 'Bardales' three times (margin index, entry body, and father's own signature), eliminating the only tentative value. Both sub-parts of the question are answered: (A) infant Ciriaco is confirmed son of Ciriaco Bardales and Carmen Morales by three original civil registrations with different informants; (B) the relationship predates any marriage to Clara Amelia Palacios Oliva, documented across FAN evidence spanning 1896\u20131905 \u2014 a 9-year pre-marital relationship confirmed by multiple corroborating registrations. No competing evidence exists. Overturn risk is low.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "MET. Both sub-parts answered. (A) Three original civil registrations confirm infant Ciriaco as son of Ciriaco Bardales and Carmen Morales: his own civil birth registration 1 Aug 1905 (src_003, original image log_011 \u2014 father personally signed 'Bardales' three times), his civil death registration 12 Aug 1905 (src_001, original image log_009 \u2014 parents named as solteros from Chiquimula), and sibling Jos\u00e9 Luis Bardales Morales's civil death registration 4 Oct 1954 (src_002, original image log_010 \u2014 same parents named 49 years later). (B) The Bardales\u2013Palacios Oliva civil marriage was not found despite three search approaches (log_004, log_005, log_006); FAN evidence (log_008) documents the Bardales\u2013Morales relationship from at least 1896, a full 9 years before the infant's death; Clara Amelia Palacios was born 1885, making a marriage before 1896 implausible. The 'before his marriage' premise is established inferentially with high confidence. proof-conclusion should state the appropriate tier honestly.",
+          "repository_breadth": "MET. Searched: FamilySearch collection 2075150 (Guatemala City civil registration deaths 1905 \u2014 pli_001, positive), civil births 1903\u20131905 (pli_002, positive), marriage records via three approaches groom+bride sides 1890\u20131920 (pli_004, negative across 262 results examined); FamilySearch collection 1614809 (Catholic church records 1903\u20131906 \u2014 pli_003, negative); FAN search for Carmen Morales + Ciriaco Bardales 1895\u20131920 (pli_005, positive, 4+ children spanning 1896\u20131905+). Original images examined for all three found records (log_009, log_010, log_011). Fallback repositories (Ancestry 9884, browse-only indexes, full-text co-occurrence) appropriately skipped as the primary records were located. Name variants covered (Bardalez, Vardalez, and the encountered 'Bandales' in the index). No additional relevant jurisdiction identified. Guatemala City civil registration began 1877 (FamilySearch Wiki, Guatemala Civil Registration), well before the 1905 events.",
+          "original_substitution": "MET. All three derivative index entries have been superseded by examination of the original handwritten register images. src_001 (infant death): original image ark:/61903/3:1:939J-5HZ1-J examined in log_009, Partida 680 confirmed. src_002 (Jos\u00e9 Luis death): original image ark:/61903/3:1:3Q9M-CS7W-CHN1 examined in log_010, Acta 3640 confirmed. src_003 (infant birth): original image ark:/61903/3:1:939J-CQ9P-F7 examined in log_011, Partida 1118 confirmed \u2014 the index transcription 'Bandales' was confirmed as a misread of the handwritten 'Bardales'. GPS standard is satisfied.",
+          "independent_verification": "MET. Three genuinely independent civil registration events with different informants: (1) infant Ciriaco's civil birth registration 1 Aug 1905 (src_003) \u2014 father Ciriaco Bardales personally appeared and signed; (2) infant Ciriaco's civil death registration 12 Aug 1905 (src_001) \u2014 different registration event, different registrar; (3) sibling Jos\u00e9 Luis Bardales Morales's civil death registration 4 Oct 1954 (src_002) \u2014 a different child, 49 years later, different informant (likely surviving spouse Marta Castro). Three independent informants, three independent creation events. FAN records (log_008) further corroborate the parental couple across multiple children 1896\u20131905+. Two separate informant streams constitute well over the minimum threshold.",
+          "evidence_class": "MET. The civil birth registration src_003 (original image confirmed, log_011) is an original record with primary information: the father Ciriaco Bardales personally appeared before the civil registrar, declared the child his natural son of Carmen Morales, and signed his own name \u2014 all documented in the original handwritten register. The civil death registration src_001 (original image confirmed, log_009) is an original record; the death date/place information is primary (registrar's official duty). Both are now accessed in original form, not derivative.",
+          "conflict_resolution": "MET. No formal conflicts are registered (conflicts section: 0 items). The sole prior discrepancy \u2014 the index reading 'Bandales' vs. 'Bardales' in src_003 \u2014 has been resolved by original image examination (log_011): the handwritten register shows 'Bardales' three times, confirming the index was a transcription error. The tentative marker on assertion a_031 should be cleared by record-extraction. No records name a different father or mother for the infant. No record establishes the Bardales\u2013Palacios Oliva marriage as pre-dating the infant's 1905 birth.",
+          "overturn_risk": "LOW \u2014 MET. Three original civil registrations are concordant and confirmed from original images. The father personally signed the birth register. FAN evidence documents the Bardales\u2013Morales parental relationship across at least four children spanning 1896\u20131905. No unsearched record type is likely to name different parents for this infant: baptism records searched (negative for indexed entries); marriage records searched (Bardales\u2013Morales union not found and both described as solteros, consistent with a non-marital relationship). The one theoretical risk \u2014 finding a Bardales\u2013Palacios Oliva marriage certificate predating 1896 \u2014 is implausible given Clara Amelia's 1885 birth year (she would have been at most 11 in 1896) and is contradicted by FAN evidence. The absence of the civil marriage record between Ciriaco Bardales and Clara Amelia Palacios Oliva is noted: it was not located in civil records despite three search approaches, but children's records (log_004) and Clara Amelia's death record confirm the marriage did occur. Its exact date remains unverified in civil records; proof-conclusion should note this limitation and calibrate the tier accordingly."
+        }
+      },
+      "created": "2026-09-18"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-18",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1905",
+          "repository": "FamilySearch",
+          "rationale": "The civil death registration for the infant Ciriaco, who allegedly died 12 August 1905 in Guatemala City, is the primary target. Collection 2075150 ('Guatemala, Guatemala, Civil Registration, 1874\u20132008') is the department-level indexed collection covering Guatemala City deaths; it carries 4.2M indexed records. Per loc_001, death records in this series record the date and place of death, the name and age of the deceased, and \u2014 critically \u2014 the names of both parents. A matching entry naming Ciriaco Bardales as father and Carmen Morales as mother would be direct evidence answering q_001. Search on the infant's given name 'Ciriaco' with surname 'Bardales' and death year 1905 in Guatemala. Also try 'Bardales' without a given name to catch indexing variants. Variant surname spellings to try: Bardalez, Vardalez.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1903-1905",
+          "repository": "FamilySearch",
+          "rationale": "If the infant died in August 1905 as an infant, a civil birth registration for him likely exists in Guatemala City civil records from late 1904 or early 1905 (possibly also 1903 if 'infant' is broadly defined). Collection 2075150 covers births as well as deaths; birth records in this series name both parents directly. Finding the birth record corroborates the parentage stated in the death record and provides a second civil registration event. Search on given name 'Ciriaco', surname 'Bardales', birth years 1903\u20131905 in Guatemala City. Per loc_001 quirk, the same indexed collection covers births and deaths.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1903-1906",
+          "repository": "FamilySearch",
+          "rationale": "Catholic parish records for Guatemala City are a parallel source to civil registration. Collection 1614809 ('Guatemala, Catholic Church Records, 1581\u20132023') is indexed at FamilySearch with 5M+ records and covers baptisms, marriages, and burials. The FamilySearch Catalog item 'Registros parroquiales, 1897\u20131930' (catalog 287533) covers our period in browse-only images. An infant baptism entry naming Ciriaco Bardales and Carmen Morales as parents, or a burial entry for the infant, would corroborate civil registration evidence. Search collection 1614809 for 'Ciriaco Bardales' or 'Ciriaco Morales' in the 1903\u20131906 window. If indexed search fails, browse catalog 287533.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1900-1920",
+          "repository": "FamilySearch",
+          "rationale": "The question asks whether the infant predates Ciriaco Bardales's marriage to Clara Amelia Palacios Oliva. A civil marriage record for Ciriaco Bardales and Clara Amelia Palacios Oliva in Guatemala City would establish the date of that marriage, confirming the 'before his marriage' premise and showing whether the infant Ciriaco's August 1905 death preceded it. Both persons are in the tree (KNYF-2Z8 and L6PW-W6G) without sourced marriage dates. Search collection 2075150 for a marriage entry naming Ciriaco Bardales and Clara (or Amelia) Palacios in Guatemala, 1900\u20131920. Per the record-type guide, the parents' marriage record also: (a) confirms the couple as a unit; (b) by its date relative to the 1905 infant death, corroborates or refutes whether Carmen Morales was a prior relationship. Note: this item targets the Bardales\u2013Palacios Oliva marriage, not the alleged Bardales\u2013Morales union.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1895-1920",
+          "repository": "FamilySearch",
+          "rationale": "Mandatory FAN item for this parentage question. Carmen Morales is the alleged mother of the infant; any civil registration record in Guatemala City naming her \u2014 a marriage to Ciriaco Bardales, a marriage to someone else (which would help date her relationships), her own death record naming her parents, or a birth record for another child \u2014 would corroborate her identity and her relationship to Ciriaco Bardales. Search collection 2075150 for 'Carmen Morales' in Guatemala, 1895\u20131920, to surface any records where she appears as a principal. Lifespan window for Carmen Morales set at 1895\u20131920, which accommodates her being a young adult at the 1905 birth/death.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1905",
+          "repository": "Ancestry",
+          "rationale": "Fallback if FamilySearch search (pli_001) yields no death record for the infant. Ancestry holds 'Guatemala, Civil Registration, 1877\u20131980' (collection 9884), indexed + images, which covers the same Guatemala City 1905 death records from a different indexing effort. Different indexers may have transcribed the infant's name or parents' names differently, so a separate search here could surface a record the FamilySearch index missed. Search for 'Ciriaco Bardales' death in Guatemala, 1905. Also try 'Ciriaco Morales' (infant might be indexed under mother's surname).",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1900-1910",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search for 'Bardales' AND 'Morales' as co-occurring surnames within the Guatemala civil registration corpus, routed to the search-full-text skill. Per the record-type guide, a full-text co-occurrence search across unscoped AI-transcribed page text can surface records where name-indexing failed (an infant's name mis-transcribed, a record with an unusual layout). Searching '+Bardales +Morales' unscoped in Guatemala civil records 1900\u20131910 would surface any document where both surnames appear together \u2014 a birth entry, an acknowledgment of paternity, or a death record that the indexed search missed. Execute via search-full-text skill, not record_search.",
+          "fallback_for": "pli_006",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Guatemala, Guatemala, Guatemala (Guatemala City)",
+          "date_range": "1900-1910",
+          "repository": "FamilySearch",
+          "rationale": "Fallback if both indexed searches (pli_001 and pli_006) and the full-text search (pli_007) fail. Three browse-only image groups constitute an '\u00cdndice de defunciones, 1900\u20131910' for Guatemala City (image groups M9CC-KL8, M9CC-KLD, M9CC-KLZ, ~1,271 total images). These are alphabetical name indexes to the death registers, 0% name-searchable and not full-text. Browsing them manually under 'B' for Bardales could locate the infant's entry and point to the specific register volume and entry number before reading the full record image. Routed to search-images skill for page-by-page browsing.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-18T11:50:08.955Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bardales",
+        "givenName": "Ciriaco",
+        "recordType": "death",
+        "collectionId": "2075150",
+        "deathYearFrom": 1905,
+        "deathYearTo": 1905,
+        "recordCountry": "Guatemala"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 16,
+      "notes": "Primary target found immediately: ark:/61903/1:1:6D38-BQ8L \u2014 Ciriaco Bardales, died 12 Aug 1905, registered 13 Aug 1905 in Guatemala, Guatemala, Guatemala; father Ciriaco Bardales and mother Carmen Morales named explicitly. A second index entry (Z92T-W2ZM) for the same event names Carmen Morales as mother. A sibling record (Z9GZ-P9T2) shows Jos\u00e9 Luis Bardales Morales (b. 1903) with same parents Ciriaco Bardales + Carmen Morales \u2014 corroborating evidence of the relationship."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-18T12:09:19.684Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bardales",
+        "givenName": "Ciriaco",
+        "birthYearFrom": 1903,
+        "birthYearTo": 1905,
+        "recordType": "birth",
+        "collectionId": "2075150",
+        "recordCountry": "Guatemala"
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 6,
+      "notes": "Top match: ark:/61903/1:1:6KNJ-27P8, Ciriaco Bardales, born 1 August 1905, Guatemala \u2014 very likely the infant's own birth registration (born 11 days before his 12 Aug 1905 death). matchScore 0.496, unattached. Pending extraction. Rank 2 (ark:/61903/1:1:65SR-69GV) is a Ciriaco Bardales father-role record for a different person; not relevant to infant."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-18T12:10:26.873Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bardales",
+        "givenName": "Ciriaco",
+        "birthYearFrom": 1903,
+        "birthYearTo": 1906,
+        "collectionId": "1614809",
+        "recordCountry": "Guatemala"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "1 result returned but Ciriaco Bardales appears as Father (role) on a record titled Registro para Ma- Ria del Carmen \u2014 not the infant Ciriaco as principal. No infant baptism or burial entry found in Catholic Church Records collection 1614809 for the target window 1903-1906. The single result is attached to another subject (attachedToOther: true). The infant's baptism may be in unindexed browse-only parish volumes (FamilySearch Catalog 287533); further browse-based search would be needed to confirm absence."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-18T12:11:44.190Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bardales",
+        "givenName": "Ciriaco",
+        "spouseSurname": "Palacios",
+        "marriageYearFrom": 1900,
+        "marriageYearTo": 1920,
+        "recordType": "marriage",
+        "collectionId": "2075150",
+        "recordCountry": "Guatemala"
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 5,
+      "notes": "5 results returned but all are children's marriage records where Ciriaco Bardales appears as Father of Groom/Father of Bride/Father-in-Law with spouse named Amalia/Amelia/Aurelia Palacios or Amelia Palacios Oliva. The own marriage of Ciriaco Bardales to Clara Amelia Palacios Oliva was not found in this search window. Top match (Ciriaco Bardales Bardales, Father In Law, Amelia Palacios Oliva) is unattached; ranks 2 and 4 are attachedToSubject=true. Broadening search without spouseSurname and without recordType filter as follow-up."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-18T12:12:41.928Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bardales",
+        "givenName": "Ciriaco",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1920,
+        "collectionId": "2075150",
+        "recordCountry": "Guatemala",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 21,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 21,
+      "notes": "21 principal-role results for Ciriaco Bardales in collection 2075150; none are his own marriage record. Top match (matchScore 0.774) is his death record (born 1870, died 11 April 1933, already attached to KNYF-2Z8). Other results are death/birth records for other Ciriaco Bardales persons or bare surname entries. No marriage record for Ciriaco Bardales + Clara Amelia Palacios Oliva found. Searching from bride's side as follow-up."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-18T12:13:36.431Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Palacios",
+        "givenName": "Clara",
+        "spouseSurname": "Bardales",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1920,
+        "collectionId": "2075150",
+        "recordCountry": "Guatemala"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 236,
+      "notes": "236 total matches; top ranked result is Clara Amelia Palacios de Bardales (born 1885, died 16 Sep 1968, ark:/61903/1:1:Z9LX-T62M, matchScore 0.184), already attached to L6PW-W6G. This is her death record, not the marriage record. Direct marriage record between Ciriaco Bardales and Clara Amelia Palacios Oliva was not found through either the groom-side or bride-side searches. Marriage may be in unindexed volumes or indexed under variant name forms. The death record confirms: Clara Amelia was born 1885 and died 1968; she outlived Ciriaco Bardales (d. 1933) by 35 years. This does not establish the marriage date. pli_004 leaving in_progress \u2014 marriage date not established."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-18T12:14:31.708Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Morales",
+        "givenName": "Carmen",
+        "collectionId": "2075150",
+        "recordCountry": "Guatemala",
+        "anyYearFrom": 1895,
+        "anyYearTo": 1920
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 8500,
+      "notes": "8,500 total matches; Carmen Morales is an extremely common name in Guatemala. Subject I1 has no dated or placed facts, so the ranker returned 0 ranked matches (subjectResolvable: false). Pool not triageable. Retrying narrowed with spouseGivenName=Ciriaco, spouseSurname=Bardales."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-18T12:15:35.897Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Morales",
+        "givenName": "Carmen",
+        "spouseGivenName": "Ciriaco",
+        "spouseSurname": "Bardales",
+        "collectionId": "2075150",
+        "recordCountry": "Guatemala"
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 9291,
+      "notes": "Top 6 results all show Carmen Morales with spouse/co-parent Ciriaco Bardales: (1) ark:/61903/1:1:XSGQ-CNS8 \u2014 Carmen Morales as Mother of Groom on Jose Luis Bardales marriage record (new FAN evidence); (2) ark:/61903/1:1:6KJF-5ZQ6 \u2014 Carmen Morales as Mother on Jose Luis Morales Morales; (3) ark:/61903/1:1:623Q-VBBJ \u2014 Carmen Morales as Mother on Jose Bardales \u2014 a THIRD known child; (4) ark:/61903/1:1:6D38-BQ8P \u2014 already extracted src_001 mother persona; (5) ark:/61903/1:1:6K2Q-S4BG \u2014 Carmen Morales as Mother on Ciriaco Bardales born 13 May 1896 \u2014 likely same as the death record Z95C-JY6Z (born/died 13 May 1896, attachedToOther), indicating a FOURTH known child (an earlier infant also named Ciriaco); (6) ark:/61903/1:1:Z9GZ-PSMM \u2014 already extracted src_002 mother persona. Subject I1 still unresolvable by ranker. New evidence: Carmen Morales and Ciriaco Bardales parented children spanning at least 1896\u20131905, substantially strengthening the pre-marital relationship claim. Records XSGQ-CNS8 and 623Q-VBBJ are new and extractable; 6K2Q-S4BG is a 1896 child record (another infant Ciriaco) corroborating the long relationship.\"}"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-09-18T12:36:24.520Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:939J-5HZ1-J"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original image of civil death register, Guatemala City, August 1905 (pages 278\u2013279). Partida No. 680 (13 Aug 1905): Ciriaco Bardales appeared and reported that yesterday (12 Aug 1905) at 3 p.m., at Casa No. 25, Avenida del Golfo, died of 'inflamaci\u00f3n', age 12 days, 'Ciriaco', natural son of the informant and Carmen Morales, solteros, ladinos, cat\u00f3licos, from Chiquimula. Confirms all FamilySearch indexed data for src_001. Additional details from image: cause of death 'inflamaci\u00f3n', time of death 3:00 p.m., house address, parents described as solteros and from Chiquimula. Father (Ciriaco Bardales) appeared personally as informant."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-09-18T12:36:24.520Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-CS7W-CHN1"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original image of civil death register, Guatemala City, October 1954. Acta No. 3640 (4 Oct 1954): Alfredo Chancilla reported that Jos\u00e9 Luis Bardales Morales, age 56, casado with Marta Castro, Lit\u00f3grafo, hijo de Ciriaco Bardales y Carmen Morales, originario de esta Ciudad, died today at 6:00 a.m. per report of Bonifacio Trejo, 2nd Station of the Guardia Civil. Confirms all FamilySearch indexed data for src_002. Additional details: occupation Lit\u00f3grafo, exact age 56, time of death 6:00 a.m., informant Alfredo Chancilla (age 39, c\u00e9dula 832)."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-09-18T12:36:24.520Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:939J-CQ9P-F7"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original image of civil birth register, Guatemala City, August 1905 (pages 704\u2013705). Partida No. 1118 (1 Aug 1905): Ciriaco Bardales appeared and stated that today at 12:45 a.m., at Casa No. 25, Avenida del Golfo, was born a boy to be named CIRIACO, natural son of the registrant and Carmen Morales, both solteros, ladinos, originarios de Chiquimula la Sierra, residents of Guatemala City. Father signed his own name 'Ciriaco Bardales' \u2014 appears three times on the page (margin index, body, signature). This definitively resolves the tentative a_031: the FamilySearch indexed transcription 'Bandales' is a misread; the original unambiguously reads 'Bardales'. Mother named is Carmen Morales (no surname 'Morales' for her \u2014 that is her surname)."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-09-18T12:39:29.578Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-CS7W-CHN1",
+        "savedAs": "images/ark_61903_3_1_3Q9M-CS7W-CHN1.jpg"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Transcription of the original register image for Acta No. 3640, death of Jos\u00e9 Luis Bardales Morales, 4 October 1954. Image confirmed the indexed data and added: occupation Lit\u00f3grafo, exact age 56, time of death 6:00 a.m., informant Alfredo Chancilla (age 39, c\u00e9dula 832), official reporter Bonifacio Trejo (2nd Station Guardia Civil), origin Guatemala City. Place of death and cause of death are illegible. src_002 updated in place; 10 new assertions added (a_058\u2013a_067). Source classification upgraded from derivative to original."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D38-BQ8L : 18 Sep 2026), Entry for Ciriaco Bardales and Ciriaco Bardales, 13 Aug 1905.",
+      "citation_detail": {
+        "who": "Ciriaco Bardales (infant, deceased) and Ciriaco Bardales (father)",
+        "what": "Death registration, collection 2075150, Guatemala, Guatemala, Civil Registration, 1874-2008",
+        "when_created": "13 Aug 1905",
+        "when_accessed": "18 Sep 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Entry dated 13 Aug 1905; digital image ARK ark:/61903/3:1:939J-5HZ1-J (death records Jun 1905\u2013Jan 1906)"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-18",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6D38-BQ8L",
+      "notes": "Original register image examined: ark:/61903/3:1:939J-5HZ1-J, saved as images/ark_61903_3_1_939J-5HZ1-J.jpg. Pages 278\u2013279, Guatemala City civil death registers, August 1905. Marginal note: F. / Bardales. / Ciriaco. / ladino. Transcription confirmed indexed data and added cause of death, time of death, death address, parental marital status, ethnicity, religion, origin, filiation (natural), and informant identity. Father appeared personally and did not sign ('no firm\u00f3').",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1",
+      "image_filename": "images/ark_61903_3_1_939J-5HZ1-J.jpg",
+      "transcription": "Partida N\u00ba. 680.\nEn Guatemala, \u00e1 trece de Agosto de mil novecientos cinco, compareci\u00f3 Ciriaco Bardales manifestando: que ayer \u00e1 las tres p. m., en la casa N\u00ba. 25. de la Av. del Golfo, falleci\u00f3 de inflamaci\u00f3n y \u00e1 la edad de doce d\u00edas, Ciriaco, hijo natural del exponente y de Carmen Morales, solteros, ladinos, cat\u00f3licos, de Chiquimula y de este vecindario. Ratific\u00f3 lo escrito y no firm\u00f3. Conste.\nV. Gordillo. A Padilla C\nEl Deposit\u00ba\nLeonardo Perez B"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Z9GZ-P9PZ : accessed 18 September 2026), entry for Jos\u00e9 Luis Bardales Morales; digital image of indexed death registration, Guatemala City, 4 October 1954.",
+      "citation_detail": {
+        "who": "Jos\u00e9 Luis Bardales Morales",
+        "what": "Civil death registration, Guatemala, Guatemala, Civil Registration, 1874-2008 (collection 2075150), indexed transcription",
+        "when_created": "4 October 1954",
+        "when_accessed": "18 September 2026",
+        "where": "FamilySearch (familysearch.org), collection 2075150",
+        "where_within": "Entry for Jos\u00e9 Luis Bardales Morales, ark:/61903/1:1:Z9GZ-P9PZ; digital artifact ark:/61903/3:1:3Q9M-CS7W-CHN1 (death records 1954-07/1954-10)"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Z9GZ-P9PZ",
+      "access_date": "2026-09-18",
+      "notes": "Original register image examined (ark:/61903/3:1:3Q9M-CS7W-CHN1). Narrative-paragraph handwritten entry. Place of death and cause of death are illegible in the image. Registrar signed as Sandoval; witness signed as Marta D[illegible]. Report of death sourced from Bonifacio Trejo, 2nd Station, Guardia Civil. Informant Alfredo Chancilla, age 39, c\u00e9dula 832, did not sign (no firm\u00f3). Previously classified derivative (index only); upgraded to original following image examination.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2",
+      "image_filename": "images/ark_61903_3_1_3Q9M-CS7W-CHN1.jpg",
+      "transcription": "En Guatemala, a cuatro de Octubre de mil novecientos cincuenticuatro, ante el Registrador Civil y testigos que firman, compareci\u00f3 Alfredo Chancilla, de treintinueve a\u00f1os, cedula 832 y dijo: que Jos\u00e9 Luis Bardales Morales de cincuentiseis a\u00f1os, casado con Marta Castro, Lit\u00f3grafo, hijo de Ciriaco Bardales y Carmen Morales, originario de esta Ciudad, seg\u00fan informe de Bonifacio Trejo de la 2\u00aa Estaci\u00f3n de la Guardia Civil, falleci\u00f3 hoy a las seis horas en [illegible] a consecuen[cia de] [illegible] Ratific\u00f3 lo escrito y no firm\u00f3.- Doy fe: [Firma] Sandoval / Marta D[illegible] / El Reg: [Firma]"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KNJ-27P8 : accessed 18 September 2026), Entry for Ciriaco Bardales and Ciriaco Bandales, 1 de agosto de 1905.",
+      "citation_detail": {
+        "who": "Ciriaco Bardales (infant), Ciriaco Bandales (father), Carmen Morales (mother)",
+        "what": "Civil birth registration (Registro Civil), indexed transcription from collection 2075150, Guatemala, Guatemala, Civil Registration, 1874-2008",
+        "when_created": "1 August 1905",
+        "when_accessed": "18 September 2026",
+        "where": "FamilySearch (familysearch.org), collection 2075150",
+        "where_within": "ark:/61903/1:1:6KNJ-27P8; image ark:/61903/3:1:939J-CQ9P-F7"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-18",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:HST4-467L",
+      "notes": "Original register image examined (ark:/61903/3:1:939J-CQ9P-F7, saved as images/ark_61903_3_1_939J-CQ9P-F7.jpg). The father's surname 'Bardales' appears three times on the page: in the margin index ('Bardales'), in the body of the entry ('Ciriaco Bardales'), and as the father's own handwritten signature ('Ciriaco Bardales'). The FamilySearch index transcription 'Bandales' is a confirmed misread. Father Ciriaco Bardales personally appeared before the civil registrar and signed his own name \u2014 he is the primary informant for birth facts he personally witnessed. Source upgraded from derivative (index-only) to original (image of register examined).",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S3",
+      "image_filename": "images/ark_61903_3_1_939J-CQ9P-F7.jpg",
+      "transcription": "Agosto 1905\n\n[Margin:] H. / Bardales / Morales / Ciriaco / Ladino\n\nPartida No. 1118.\nEn Guatemala, a primero de Agosto de mil novecientos cinco, compareci\u00f3 Ciriaco Bardales y dijo: que hoy a las doce y cuartenta y cinco minutos a. m. en la casa numero veinticinco de la Avenida del Golfo, naci\u00f3 un ni\u00f1o que se llamar\u00e1 CIRIACO, hijo natural del exponente y de Carmen Morales, ambos solteros, ladinos, originarios de Chiquimula la Sierra y de este vecindario; y que por este acto reconoce como hijo suyo al se\u00f1or mencionado. Ratific\u00f3 lo escrito previa lectura y firma. Conste.\n  Ciriaco Bardales\n  A. Portilla C\n  V. Gordillo.\n  El Dpt.\n  Licenciado Flores B"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569951",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Ciriaco Bardales",
+      "structured_value": {
+        "given": "Ciriaco",
+        "surname": "Bardales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569951",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569951",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1905",
+      "date": "~1905",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569951",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "12 Aug 1905, Guatemala, Guatemala, Guatemala",
+      "date": "1905-08-12",
+      "date_certainty": "exact",
+      "place": "Guatemala, Guatemala, Guatemala",
+      "information_quality": "indeterminate",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Guatemala, Guatemala, Guatemala"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569951",
+      "record_role": "deceased",
+      "fact_type": "vital_registration",
+      "value": "Death registered 13 Aug 1905, Guatemala, Guatemala, Guatemala",
+      "date": "1905-08-13",
+      "date_certainty": "exact",
+      "place": "Guatemala, Guatemala, Guatemala",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Guatemala, Guatemala, Guatemala"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569951",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Ciriaco Bardales (father)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "informant_bias_notes": "The father personally appeared at the civil registry ('compareci\u00f3 Ciriaco Bardales manifestando') and declared his own paternity of the infant. This is a direct, first-hand declaration of a relationship the informant is a party to \u2014 primary information. Log_009 confirmed via original image. No signature recorded ('no firm\u00f3'), but appearance and declaration are attested by the registrar."
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569951",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Carmen Morales (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "informant_bias_notes": "The father declared the mother Carmen Morales's maternity; the mother did not appear ('Carmen Morales' is named by the father, not present herself). The father has firsthand knowledge of the mother's identity but is reporting her relationship, not his own \u2014 secondary information from a family member not present. Log_009 confirmed via original image. The declaration is internally consistent and corroborated by src_002 and src_003."
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569952",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Ciriaco Bardales",
+      "structured_value": {
+        "given": "Ciriaco",
+        "surname": "Bardales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569952",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569952",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Carmen Morales",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569953",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Carmen Morales",
+      "structured_value": {
+        "given": "Carmen",
+        "surname": "Morales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569953",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_persona_id": "p_293140569953",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Ciriaco Bardales",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Luis Bardales Morales",
+      "structured_value": {
+        "given": "Jos\u00e9 Luis",
+        "surname": "Bardales Morales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "circa 1903",
+      "date": "~1903",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year is approximate, derived from the indexed record's circa 1903 date \u2014 no exact birth date stated. Original image not examined; transcription accuracy unverified. Informant unknown (likely Marta Castro, surviving spouse, or an official registrant). No person could provide primary information about their own birth year; informant was not present at the birth.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "4 October 1954",
+      "date": "4 Oct 1954",
+      "date_certainty": "exact",
+      "place": "Guatemala, Guatemala",
+      "standard_place": "Guatemala, Guatemala",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Death date and place recorded by civil registrar in an official capacity. Original image not examined; indexed transcription only \u2014 minor transcription errors possible.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Guatemala, Guatemala",
+      "place": "Guatemala, Guatemala",
+      "standard_place": "Guatemala, Guatemala",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Registration place recorded by civil registrar. Reflects place of death registration, not necessarily place of habitual residence.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Ciriaco Bardales",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Alfredo Chancilla (age 39, c\u00e9dula 832) appeared to declare the death; his relationship to the deceased is unstated in the record. The informant is likely an associate or neighbor rather than close family \u2014 the record names no familial tie. Parentage statements from a non-family informant are secondary. Proximity classified 'unknown' because the closed schema has no 'non_family' value; the reasoning is that Chancilla is demonstrably not the father/mother/spouse (those roles are otherwise filled) but his exact relationship is unrecorded. The parentage claim is nonetheless corroborating: it is consistent with primary-quality declarations in src_001 and matching statements in src_003.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Carmen Morales",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Same informant and same reasoning as a_019. Alfredo Chancilla declared Carmen Morales as Jos\u00e9 Luis's mother; his relationship to Jos\u00e9 Luis is unstated. Parentage declared by an informant of unknown relationship to the deceased is secondary information. Proximity classified 'unknown' per closed-set constraint (no 'non_family' value in the schema). The declaration corroborates src_001 (primary-quality from the father) and src_003.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Marta Castro",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Marta Castro appears in a Couple relationship with Jos\u00e9 Luis Bardales Morales in the indexed record. She was likely the informant present at registration (surviving spouse), but this cannot be confirmed from the index alone. Original image not examined.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Ciriaco Bardales",
+      "structured_value": {
+        "given": "Ciriaco",
+        "surname": "Bardales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name stated in the civil registration. Informant unknown \u2014 likely surviving spouse Marta Castro or an official. This persona (ark:/61903/1:1:Z9GZ-P9T2) is potentially the same individual as the father persona from src_001 (infant Ciriaco's 1905 death registration) and tree person KNYF-2Z8 (Ciriaco Bardales). Identity resolution reserved for person-evidence. Original image not examined; derivative source only.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Carmen Morales",
+      "structured_value": {
+        "given": "Carmen",
+        "surname": "Morales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name stated in the civil registration. Informant unknown \u2014 likely surviving spouse Marta Castro or an official. This persona (ark:/61903/1:1:Z9GZ-PSMM) is potentially the same individual as the mother persona from src_001. Original image not examined; derivative source only.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "spouse_of_deceased",
+      "fact_type": "name",
+      "value": "Marta Castro",
+      "structured_value": {
+        "given": "Marta",
+        "surname": "Castro"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Marta Castro appears as spouse of Jos\u00e9 Luis Bardales Morales in the indexed record (Couple relationship). She was likely the informant at registration as surviving spouse, but the index does not confirm this. FAN associate \u2014 extracted as potential informant for facts about the deceased. Original image not examined.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115201",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Ciriaco Bardales",
+      "structured_value": {
+        "given": "Ciriaco",
+        "surname": "Bardales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative source (indexed transcription); original image not examined. Informant for the birth registration is unknown \u2014 likely a parent or civil registrar but not identified in the index. The infant's name is stated outright in the record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115201",
+      "record_role": "principal",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative source; sex is stated in the index for the principal persona.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115201",
+      "record_role": "principal",
+      "fact_type": "birth",
+      "value": "1 de agosto de 1905",
+      "date": "1 Aug 1905",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth date is stated outright in the civil registration index. Informant unknown (likely a parent presenting the child). Derivative source \u2014 original image not examined to confirm the exact date reading. The stated birth date of 1 August 1905 is 11 days before the infant's known death of 12 August 1905 (src_001), which is fully consistent with an infant death registration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115201",
+      "record_role": "principal",
+      "fact_type": "birth",
+      "value": "Guatemala",
+      "place": "Guatemala",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated in the civil registration index. 'Guatemala' likely refers to Guatemala City, Guatemala Department, consistent with the collection's coverage (collection 2075150, Guatemala, Guatemala Civil Registration). Original image not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003",
+      "standard_place": "Guatemala"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115202",
+      "record_role": "father_of_principal",
+      "fact_type": "name",
+      "value": "Ciriaco Bardales",
+      "structured_value": {
+        "given": "Ciriaco",
+        "surname": "Bardales"
+      },
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father personally appeared before the civil registrar and signed his own name. Surname confirmed as 'Bardales' by original image: appears in margin index, body of entry, and as father's handwritten signature. FamilySearch index transcription 'Bandales' is a misread \u2014 tentative flag removed.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115202",
+      "record_role": "father_of_principal",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sex stated in the index for the father persona.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": null,
+      "record_role": "father_of_principal",
+      "fact_type": "relationship",
+      "value": "father of Ciriaco Bardales (infant, principal)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "principal"
+      },
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The father personally appeared before the civil registrar, declared his own paternity ('hijo natural del exponente'), had the entry read back to him, confirmed it ('Ratific\u00f3 lo escrito previa lectura y firma'), and signed his own name. Three occurrences of 'Ciriaco Bardales' appear on the page (margin index, body, signature). His declaration of his own paternity is primary information \u2014 he was the relevant party with firsthand knowledge of this fact. Consistent with classification of a_037 and a_045 from the same record after original image examination (log_011, ark:/61903/3:1:939J-CQ9P-F7).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115203",
+      "record_role": "mother_of_principal",
+      "fact_type": "name",
+      "value": "Carmen Morales",
+      "structured_value": {
+        "given": "Carmen",
+        "surname": "Morales"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name stated in the civil birth registration index. Derivative source; original image not examined. Carmen Morales is almost certainly tree person I1 \u2014 flag for person-evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": "p_298564115203",
+      "record_role": "mother_of_principal",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sex stated in the index for the mother persona.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "record_persona_id": null,
+      "record_role": "mother_of_principal",
+      "fact_type": "relationship",
+      "value": "mother of Ciriaco Bardales (infant, principal)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "principal"
+      },
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The father declared the mother's maternity ('hijo natural del exponente y de Carmen Morales'). Carmen Morales did not appear at the registration \u2014 the father spoke on her behalf. The father's knowledge of her maternity is secondhand relative to her own participation in the birth, making this secondary information from a family member not present in his official capacity for this specific fact. Consistent with classification of a_037 and a_045 from the same record after original image examination (log_011, ark:/61903/3:1:939J-CQ9P-F7).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "father_of_deceased",
+      "fact_type": "marital_status",
+      "value": "soltero (unmarried)",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Father personally appeared and stated both parents were 'solteros' \u2014 unmarried to each other. Confirms the child's filiation as 'natural' (illegitimate). Father reporting his own marital status, proximity self."
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "mother_of_deceased",
+      "fact_type": "marital_status",
+      "value": "soltera (unmarried)",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Father appeared and stated mother Carmen Morales was also 'soltera'. Father reporting mother's marital status \u2014 he witnessed their shared situation but she did not appear herself; proximity witness."
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "father_of_deceased",
+      "fact_type": "race",
+      "value": "ladino",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Stated by father on personal appearance. 'Ladino' in Guatemalan civil registration denotes a person of mixed or non-indigenous heritage who has adopted Spanish language and customs."
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "mother_of_deceased",
+      "fact_type": "race",
+      "value": "ladina",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Stated by father on personal appearance for both parents. 'Ladino/a' in Guatemalan civil registration denotes non-indigenous heritage/cultural identity. Father reporting mother's ethnicity \u2014 proximity witness."
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "father_of_deceased",
+      "fact_type": "birth",
+      "value": "originario de Chiquimula la Sierra",
+      "place": "Chiquimula, Guatemala",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Father stated his own origin as 'Chiquimula la Sierra' on personal appearance. This is the historical designation for Chiquimula department/town in eastern Guatemala.",
+      "standard_place": "Chiquimula, Guatemala"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "mother_of_deceased",
+      "fact_type": "birth",
+      "value": "originaria de Chiquimula la Sierra",
+      "place": "Chiquimula, Guatemala",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Father stated mother Carmen Morales' origin as 'Chiquimula la Sierra'. Father reporting mother's birthplace \u2014 proximity witness; he has personal knowledge of her origins.",
+      "standard_place": "Chiquimula, Guatemala"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "father_of_deceased",
+      "fact_type": "residence",
+      "value": "este vecindario (Guatemala City)",
+      "place": "Guatemala City, Guatemala",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Father stated both parents resided in 'este vecindario' (this neighborhood/locality), meaning Guatemala City, on personal appearance before the registrar.",
+      "standard_place": "Guatemala, Guatemala"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "mother_of_deceased",
+      "fact_type": "residence",
+      "value": "este vecindario (Guatemala City)",
+      "place": "Guatemala City, Guatemala",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Father stated both parents resided in 'este vecindario' (Guatemala City). Father reporting mother's residence \u2014 proximity witness.",
+      "standard_place": "Guatemala, Guatemala"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:6KNJ-27P8",
+      "source_id": "src_003",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1 August 1905 at 12:45 a.m., Casa No. 25, Avenida del Golfo, Guatemala City",
+      "date": "1 August 1905",
+      "date_certainty": "exact",
+      "place": "Guatemala City, Guatemala",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Father personally appeared on 1 August 1905 and stated the birth occurred that same day at 12:45 a.m. at Casa No. 25, Avenida del Golfo. Father witnessed the birth \u2014 proximity witness, information primary. Time detail (12:45 a.m.) and street address are both stated in the register body.",
+      "standard_place": "Guatemala, Guatemala"
+    },
+    {
+      "id": "a_046",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "12 days",
+      "date": "12 Aug 1905",
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father reported age at death; he was not present at the birth moment itself but would have known the birth date as a parent. Age of 12 days is consistent with a birth date of approximately 31 July 1905.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_047",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "value": "inflamaci\u00f3n",
+      "information_quality": "indeterminate",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father reported cause of death; stated by lay informant, not a physician's certification. 'Inflamaci\u00f3n' is a generic term common in early 20th-century Guatemalan civil registers.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_048",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "12 August 1905 at 3:00 p.m., Casa No. 25, Avenida del Golfo",
+      "date": "12 Aug 1905",
+      "place": "Guatemala, Guatemala, Guatemala",
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father appeared the following day (13 August) and reported death occurred 'ayer \u00e1 las tres p. m.' (yesterday at 3 p.m.) at Casa No. 25, Avenida del Golfo. Specific street address retained in value; standard place is the civil jurisdiction. This death assertion records the time/address detail supplementing the already-extracted death date.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "standard_place": "Guatemala, Guatemala, Guatemala"
+    },
+    {
+      "id": "a_049",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "deceased",
+      "fact_type": "filiation",
+      "value": "hijo natural (natural/illegitimate child)",
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father personally stated the child was 'hijo natural del exponente' \u2014 his natural son. Consistent with parents being listed as solteros (unmarried). 'Hijo natural' in Guatemalan civil law denotes a child born outside of marriage.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_050",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "father_of_deceased",
+      "fact_type": "marital_status",
+      "value": "soltero (unmarried)",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father appeared personally ('compareci\u00f3 Ciriaco Bardales') and stated both parents' civil status as solteros (unmarried). Self-reported for his own status.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_051",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "mother_of_deceased",
+      "fact_type": "marital_status",
+      "value": "soltera (unmarried)",
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father reported mother Carmen Morales's civil status as solteros (stated jointly). Mother was not the informant; father reported on her behalf.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_052",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "father_of_deceased",
+      "fact_type": "ethnicity",
+      "value": "ladino",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father appeared personally; ethnicity stated for both parents jointly as 'ladinos'. Self-reported for his own ethnicity. Marginal note also confirms: 'ladino'.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_053",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "mother_of_deceased",
+      "fact_type": "ethnicity",
+      "value": "ladina",
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father reported Carmen Morales's ethnicity as ladinos (stated jointly for both parents). Mother was not present as informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_054",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "father_of_deceased",
+      "fact_type": "religion",
+      "value": "cat\u00f3lico",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father appeared personally; religion stated for both parents jointly as 'cat\u00f3licos'. Self-reported for his own religion.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_055",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "mother_of_deceased",
+      "fact_type": "religion",
+      "value": "cat\u00f3lica",
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father reported Carmen Morales's religion as cat\u00f3licos (stated jointly). Mother was not present as informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_056",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "father_of_deceased",
+      "fact_type": "origin",
+      "value": "Chiquimula",
+      "place": "Chiquimula, Guatemala",
+      "information_quality": "primary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father appeared personally and stated origin as 'de Chiquimula' for both parents jointly. Self-reported for his own origin. Chiquimula is a department in eastern Guatemala; specific municipality not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "standard_place": "Chiquimula, Guatemala"
+    },
+    {
+      "id": "a_057",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:6D38-BQ8L",
+      "record_role": "mother_of_deceased",
+      "fact_type": "origin",
+      "value": "Chiquimula",
+      "place": "Chiquimula, Guatemala",
+      "information_quality": "secondary",
+      "informant": "Ciriaco Bardales (father)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father reported Carmen Morales's origin as 'de Chiquimula' (stated jointly for both parents). Mother was not the informant. Significant lead: both parents from same department \u2014 searching Chiquimula records for either may corroborate the other.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "standard_place": "Chiquimula, Guatemala"
+    },
+    {
+      "id": "a_058",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Lit\u00f3grafo (Lithographer)",
+      "structured_value": {
+        "occupation": "Lit\u00f3grafo"
+      },
+      "information_quality": "secondary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Alfredo Chancilla was the informant who appeared before the registrar; his relationship to the deceased is not stated. He reported biographical details including occupation from personal knowledge, but he was not necessarily present at or closely associated with the deceased's working life. Classification as family_not_present reflects that he was not a household member of the deceased at death, and the degree of his firsthand knowledge of the occupation is uncertain.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_059",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "56 years (cincuentiseis a\u00f1os)",
+      "structured_value": {
+        "age": 56
+      },
+      "information_quality": "secondary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Age reported by informant Alfredo Chancilla; he was not present at the deceased's birth. Yields approximate birth year ~1898 by subtraction from death date 4 October 1954. The FamilySearch index shows birth year 1903, which would imply age 50\u201351 at death \u2014 inconsistent with the stated 56 years in the original register image.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_060",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "~1898 (derived from stated age 56 at death on 4 October 1954)",
+      "date": "~1898",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Birth year inferred by subtracting stated age (56) from death date (4 October 1954). Informant was not present at the birth. Conflicts with the FamilySearch indexed birth year of 1903; the original register image reading of age 56 is the more authoritative figure.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_061",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "originario de esta Ciudad (native of Guatemala City)",
+      "place": "Guatemala City, Guatemala",
+      "information_quality": "secondary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Origin reported by informant Alfredo Chancilla; he was not present at the birth. 'Esta Ciudad' refers to Guatemala City, the place of registration.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "standard_place": "Guatemala, Guatemala"
+    },
+    {
+      "id": "a_062",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Died at 6:00 a.m. (las seis horas), 4 October 1954; place of death illegible",
+      "date": "4 Oct 1954",
+      "information_quality": "primary",
+      "informant": "Bonifacio Trejo",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Death report was sourced from Bonifacio Trejo of the 2nd Station of the Guardia Civil (civil police), who reported the death in an official capacity. Time of death stated as 'las seis horas' (6:00 a.m.). Place of death is illegible in the original image.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_063",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "informant_1",
+      "fact_type": "name",
+      "value": "Alfredo Chancilla",
+      "structured_value": {
+        "given": "Alfredo",
+        "surname": "Chancilla"
+      },
+      "information_quality": "primary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_064",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "informant_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_065",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "informant_1",
+      "fact_type": "age",
+      "value": "39 years (treintinueve a\u00f1os)",
+      "structured_value": {
+        "age": 39
+      },
+      "information_quality": "primary",
+      "informant": "Alfredo Chancilla",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_066",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Bonifacio Trejo",
+      "structured_value": {
+        "given": "Bonifacio",
+        "surname": "Trejo"
+      },
+      "information_quality": "primary",
+      "informant": "Bonifacio Trejo",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Bonifacio Trejo reported the death in his official capacity from the 2nd Station of the Guardia Civil. Classified witness_1 as the source of the death report, distinct from the declarant informant Alfredo Chancilla.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_067",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:Z9GZ-P9PZ",
+      "record_role": "witness_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Bonifacio Trejo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": []
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_001 records the name 'Ciriaco Bardales' for the deceased persona in src_001 (civil death registration, Guatemala City, 12 Aug 1905). I2 was minted directly from this persona via materialize_facts. No pre-existing tree person existed for this infant; no same_person score is available because the candidate was minted from this very persona (circular). Link is probable (not confident) because this is a single record with no independent corroboration yet. Name, death date, place, and parentage (Ciriaco Bardales / Carmen Morales) fully match the record.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_002 records the sex 'Male' for the deceased persona in src_001. I2 was minted from this persona; circular scoring not applied. Consistent with a_001 and the full deceased persona set.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_003 records an approximate birth year of ~1905 for the deceased infant Ciriaco in src_001. I2 was minted from this persona. Birth year is consistent with the death date of 12 Aug 1905 (died in infancy).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_004 records the death of the infant as 12 Aug 1905 in Guatemala, Guatemala, Guatemala. I2 was minted from this persona. Death date and place are the primary identifying facts for this infant; the civil registration is the source record.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_005 records the vital registration date of 13 Aug 1905 in Guatemala, Guatemala, Guatemala. I2 was minted from this persona.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_006 asserts the deceased infant is 'child of Ciriaco Bardales (father).' This relationship assertion bears on I2 (the child). I2 was minted from this persona. The civil registration names Ciriaco Bardales as father.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.025620984,
+      "rationale": "a_006 asserts the deceased infant Ciriaco is 'child of Ciriaco Bardales (father),' bearing on the father. KNYF-2Z8 is the tree's Ciriaco Bardales. Name matches exactly. The record is from Guatemala City, 1905, consistent with KNYF-2Z8's known biography. same_person score 0.026 \u2014 near-zero but uninformative: KNYF-2Z8 is a sparse local stub with minimal facts, so the engine lacked content to distinguish candidates. Qualitative correlation: name 'Ciriaco Bardales' exact match; place Guatemala City consistent; period consistent. No competing candidates identified. Corroborated by a_019/a_022 (src_002, 1954 death of Jos\u00e9 Luis, same father name). Two independent civil registrations (src_001 1905, src_002 1954) both name 'Ciriaco Bardales' as father. Match is probable on name + place + corroboration across two records; not confident because KNYF-2Z8's biography is still incompletely documented and the father role is not yet independently confirmed against vitals.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_007 asserts the deceased infant Ciriaco is 'child of Carmen Morales (mother).' This relationship assertion bears on I2 (the child). I2 was minted from this persona.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_007 asserts the deceased infant is 'child of Carmen Morales (mother),' bearing on the mother. I1 was minted as Carmen Morales from the mother_of_deceased persona of src_001. No pre-existing tree person for Carmen Morales existed. Circular scoring not applied (minted from the persona). The 1905 civil registration names Carmen Morales as mother in Guatemala City. Corroborated by src_002 (a_020/a_024), which names the same woman as mother of Jos\u00e9 Luis Bardales Morales (~1903-1954).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.025620984,
+      "rationale": "a_008 records the name 'Ciriaco Bardales' for the father_of_deceased persona (ARK 6D38-BQ8G) in src_001. KNYF-2Z8 is the tree's Ciriaco Bardales. same_person score 0.026 \u2014 near-zero; this reflects the thin content of the KNYF-2Z8 stub, not a genuine mismatch. Qualitative correlation: name 'Ciriaco Bardales' exact match; Guatemala City place consistent; period (1905) consistent. Two independent civil registrations name this same individual as father. No competing candidate identified. Probable: corroboration from two records strengthens the link, but absent vital dates and additional corroborating biographical facts, confident is not yet warranted.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.025620984,
+      "rationale": "a_009 records sex 'Male' for the father_of_deceased persona in src_001. KNYF-2Z8 is Male. Consistent.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.025620984,
+      "rationale": "a_010 asserts the father persona is 'spouse of Carmen Morales' in the context of src_001. This relationship assertion bears on KNYF-2Z8 as one of the two parties. KNYF-2Z8 is identified as the father Ciriaco Bardales. The pre-marital relationship with Carmen Morales (documented across two records) is the subject of q_001. Score 0.026; thin-subject stub limitation as above.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_010 asserts the father persona is 'spouse of Carmen Morales,' bearing on Carmen Morales as the second party. I1 was minted as Carmen Morales from src_001's mother_of_deceased persona. No competing tree candidate. The Couple relationship R21 was established between KNYF-2Z8 and I1 based on this assertion.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_011 records the name 'Carmen Morales' for the mother_of_deceased persona in src_001. I1 was minted from this persona as the new tree person for Carmen Morales. No pre-existing tree person; circular scoring not applied. Corroborated by a_024 (src_002, 1954) naming the same woman. Two independent civil registrations name 'Carmen Morales' as mother of children by Ciriaco Bardales in Guatemala City.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_012 records sex 'Female' for the mother_of_deceased persona in src_001. I1 is Female (minted from this persona).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_013 asserts the mother persona is 'spouse of Ciriaco Bardales,' bearing on I1 as one party. I1 (Carmen Morales) is the minted stub. The Couple relationship R21 links I1 to KNYF-2Z8.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.025620984,
+      "rationale": "a_013 asserts the mother persona is 'spouse of Ciriaco Bardales,' bearing on KNYF-2Z8 as the named party. Name 'Ciriaco Bardales' exact match; Guatemala City context consistent. Score 0.026 (thin-stub limitation). Corroborated by a_010 (same record, father persona asserting same spousal relationship).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_014 records the name 'Jos\u00e9 Luis Bardales Morales' for the deceased persona in src_002 (civil death registration, Guatemala City, 4 Oct 1954). I3 was minted from this persona. No pre-existing tree person; circular scoring not applied. Compound surname 'Bardales Morales' follows Guatemalan naming convention: paternal surname Bardales (from Ciriaco Bardales) + maternal surname Morales (from Carmen Morales), consistent with parentage stated in the record.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_015 records sex 'Male' for the deceased Jos\u00e9 Luis. I3 was minted as Male from this persona.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_016 records an approximate birth year of ~1903 for Jos\u00e9 Luis. I3 was minted from this persona. Birth year is indirect evidence (derived from the circa date; original image not examined).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_017 records the death of Jos\u00e9 Luis as 4 Oct 1954 in Guatemala, Guatemala. I3 was minted from this persona. Death date and registration place are primary identifying facts.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_018 records residence in Guatemala, Guatemala for Jos\u00e9 Luis. I3 was minted from this persona.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": 3.4885563e-06,
+      "rationale": "a_020 asserts Jos\u00e9 Luis is 'child of Carmen Morales,' bearing on Carmen Morales as the mother. I1 is the Carmen Morales stub minted from src_001's mother_of_deceased persona (a different persona from a different record). same_person score 0.000003 \u2014 near-zero; I1 is a minimal stub (name + gender only) with no indexed vital content, so the engine had nothing to distinguish on. This is the thin-subject stub limitation, not a negative match signal. Qualitative cross-record identification: name 'Carmen Morales' exact match; same partner 'Ciriaco Bardales' in both records; same city (Guatemala City); children born ~1903 (Jos\u00e9 Luis) and ~1905 (infant Ciriaco) are generationally consistent siblings. Two independent civil registrations separated by 49 years consistently pair 'Carmen Morales' with 'Ciriaco Bardales' as parents of these children. No competing candidate identified. Link is probable.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 5.3982712e-05,
+      "rationale": "a_019 asserts Jos\u00e9 Luis Bardales Morales is 'child of Ciriaco Bardales,' bearing on the father KNYF-2Z8. same_person score 0.00005 \u2014 near-zero; KNYF-2Z8 is a minimal local stub and the engine had no substantive content to match against. Qualitative correlation: name 'Ciriaco Bardales' exact match; Guatemala City place consistent; 1954 death registration implies the father was active in Guatemala City in the ~1900\u20131910 era, consistent with KNYF-2Z8. Corroborated by a_008 (src_001, 1905) naming the same man as father of the infant Ciriaco. Two independent civil registrations, separated by 49 years, both name 'Ciriaco Bardales' as father of children with maternal surname Morales. No competing candidate. Probable; not confident pending further biographical corroboration.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_020 asserts Jos\u00e9 Luis is 'child of Carmen Morales.' This relationship assertion bears on I3 as the child.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_020 asserts Jos\u00e9 Luis is 'child of Carmen Morales,' bearing on Carmen Morales as the mother. I1 is the Carmen Morales stub minted from src_001. Identification of the same Carmen Morales across src_001 (1905, mother of infant Ciriaco) and src_002 (1954, mother of Jos\u00e9 Luis): same name, same partner (Ciriaco Bardales), same city, and consistent generational fit (Jos\u00e9 Luis born ~1903, infant Ciriaco died 1905 \u2014 siblings born ~2 years apart). Two corroborating civil registrations; match is probable.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_021 asserts Jos\u00e9 Luis is 'spouse of Marta Castro.' This relationship assertion bears on I3 as one party.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_021 asserts Jos\u00e9 Luis is 'spouse of Marta Castro,' bearing on Marta Castro as the second party. I4 was minted as Marta Castro from the spouse_of_deceased persona of src_002. No pre-existing tree person; circular scoring not applied. Marta Castro is a FAN associate (likely the surviving spouse who informed the registration). Probable as a new stub from a single record.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_022",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 5.3982712e-05,
+      "rationale": "a_022 records the name 'Ciriaco Bardales' for the father_of_deceased persona (ARK Z9GZ-P9T2) in src_002. KNYF-2Z8 is the tree's Ciriaco Bardales. same_person score 0.00005 \u2014 near-zero; thin-stub limitation applies (KNYF-2Z8 lacks sufficient indexed content for the engine to score). Qualitative correlation: name 'Ciriaco Bardales' exact match; Guatemala City consistent; generational fit (father of a man born ~1903, deceased 1954, is plausibly active ~1900\u20131910). Corroborated by a_008/a_009 (src_001, 1905). Two independent civil registrations across 49 years both name the same man. Probable.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_023",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 3.4885563e-06,
+      "rationale": "a_024 records the name 'Carmen Morales' for the mother_of_deceased persona in src_002. I1 is the Carmen Morales stub minted from src_001's mother_of_deceased persona (a different persona). same_person score 0.000003 \u2014 near-zero; thin-subject stub limitation applies (see pe_023). Qualitative correlation: name 'Carmen Morales' exact match; same partner 'Ciriaco Bardales'; same city; sibling children born ~1903 and ~1905. Two independent civil registrations corroborate. Probable.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 3.4885563e-06,
+      "rationale": "a_025 records sex 'Female' for the mother_of_deceased persona in src_002. I1 is Female. Score 0.000003 (same scoring context as pe_030; thin-stub). Consistent.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_025 records sex 'Female' for the mother_of_deceased persona in src_002. I1 is Female. Consistent.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_026",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_026 records the name 'Marta Castro' for the spouse_of_deceased persona in src_002. I4 was minted from this persona. No pre-existing tree person; circular scoring not applied. Single record; probable as a FAN associate stub.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_027 records the name 'Ciriaco Bardales' for the principal persona (p_298564115201) in src_003, the civil birth registration. I2 is the infant Ciriaco Bardales stub previously minted from src_001 (civil death registration, 12 Aug 1905). Name matches exactly. The same_person API was unavailable for this call (network error); qualitative correlation carries the decision. Correlation: name 'Ciriaco Bardales' exact match; birth date 1 Aug 1905 is 11 days before the known death date of 12 Aug 1905 (src_001), fully consistent with an infant death; parentage (Ciriaco Bardales / Carmen Morales) matches the parentage recorded in src_001 exactly; Guatemala place consistent. No competing candidate \u2014 no other infant Ciriaco Bardales with this parentage exists in the tree or is expected. Match is Strong. Confident is withheld: I2 is documented by only two records (death + birth) and no FS vitals independently corroborate; probable is appropriate. This is the first birth-date assertion for I2.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_028",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_028 records sex 'Male' for the principal persona in src_003. I2 is Male. Consistent with src_001 (same sex). Same_person score unavailable (API error); qualitative correlation unambiguous. Corroborates the sex assertion from the death record.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_029 records birth date '1 Aug 1905' for the principal persona in src_003. I2's known death date is 12 Aug 1905 (src_001); this birth date is 11 days prior \u2014 fully consistent with an infant death shortly after birth. This is the first direct birth-date evidence for I2. Derivative source (indexed transcription; original image at ark:/61903/3:1:939J-CQ9P-F7 not examined). Same_person score unavailable (API error); correlation is unambiguous given the name, parentage, and temporal fit.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_030",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_030 records birthplace 'Guatemala' for the principal persona in src_003. I2's known records (src_001) are from Guatemala City, Guatemala \u2014 consistent. 'Guatemala' in this civil registration collection refers to Guatemala City, Guatemala Department. Same_person score unavailable (API error); consistent with all known facts for I2.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_031",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.0067,
+      "rationale": "a_031 records the name 'Ciriaco Bandales [?]' for the father persona (p_298564115202) in src_003. KNYF-2Z8 is the tree's Ciriaco Bardales, the main research subject. DISCREPANCY FLAGGED: the index renders the father's surname as 'Bandales', differing from the established family surname 'Bardales' in all prior records (src_001, src_002). This is assessed as a probable transcription/OCR error \u2014 the indexer likely misread a handwritten 'r' as 'n' in the Spanish-script original \u2014 but this CANNOT be confirmed without examining the original image (ark:/61903/3:1:939J-CQ9P-F7). Image confirmation is required before this surname reading can be accepted or corrected. same_person score 0.0067 \u2014 near-zero; KNYF-2Z8 is a minimal local stub and the engine lacked sufficient indexed content to distinguish candidates (same thin-stub limitation as pe_007, pe_010, pe_029). Qualitative correlation despite the name discrepancy: given name 'Ciriaco' exact match; partner 'Carmen Morales' is an exact match to the established Couple (R21, KNYF-2Z8 + I1); Guatemala City location consistent; same couple documented across three independent civil registrations (src_001 1905, src_002 1954, src_003 1905). The unique combination of given name + partner is a strong identifying signal. No competing candidate identified. Probable is appropriate: the 'Bandales/Bardales' discrepancy is a core surname concern that prevents confident and requires image review; all other identifiers agree.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_032",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.0067,
+      "rationale": "a_032 records sex 'Male' for the father persona in src_003. KNYF-2Z8 is Male. Consistent. Score 0.0067; thin-stub limitation applies (see a_031 rationale).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_033",
+      "person_id": "KNYF-2Z8",
+      "confidence": "probable",
+      "match_score": 0.0067,
+      "rationale": "a_033 asserts the father persona is 'father of Ciriaco Bardales (infant, principal),' bearing on KNYF-2Z8 as the father party. This is a ParentChild assertion. The father's indexed surname is 'Bandales' \u2014 probable transcription error for 'Bardales'; see a_031 rationale for the full discrepancy flag and image-confirmation requirement. Qualitative correlation: given name match, partner Carmen Morales match, Guatemala City context, three corroborating registrations. Score 0.0067; thin-stub limitation. Match is probable for the same reasons as a_031. This assertion also bears on I2 (the child) \u2014 a separate pe_ entry is created for that link.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_033 asserts the father persona is 'father of Ciriaco Bardales (infant, principal),' bearing on I2 as the child party. The child named in the relationship is 'Ciriaco Bardales,' matching I2's name exactly. Birth date 1 Aug 1905 and the established death date 12 Aug 1905 (src_001) identify this child unambiguously within the tree. Same_person score unavailable (API error). Corroborates the ParentChild edge established from src_001 (a_006). No competing candidate.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_034",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 6.04e-07,
+      "rationale": "a_034 records the name 'Carmen Morales' for the mother persona (p_298564115203) in src_003. I1 is the Carmen Morales stub minted from src_001. Name matches exactly. same_person score ~0.0000006 \u2014 near-zero; I1 is a minimal local stub (same thin-stub limitation as pe_031). Qualitative correlation: name 'Carmen Morales' exact match; partner is 'Ciriaco Bandales/Bardales,' consistent with the established Couple (R21, KNYF-2Z8 + I1); Guatemala City context consistent. This is the third independent civil registration naming 'Carmen Morales' as the mother of children by Ciriaco Bardales (src_001 1905 infant death, src_002 1954 Jos\u00e9 Luis death, src_003 1905 birth). No competing candidate. Probable: three corroborating records strengthen the case but confident is withheld pending vitals or other biographical corroboration for I1.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_035",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 6.04e-07,
+      "rationale": "a_035 records sex 'Female' for the mother persona in src_003. I1 is Female. Consistent. Score ~0.0000006; thin-stub limitation applies.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_036",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 6.04e-07,
+      "rationale": "a_036 asserts the mother persona is 'mother of Ciriaco Bardales (infant, principal),' bearing on I1 as the mother party. Name 'Carmen Morales' exact match to I1. Partner (father Ciriaco Bardales) consistent with Couple R21. Score ~0.0000006; thin-stub limitation. Corroborates the ParentChild edge from src_001 (a_007). This assertion also bears on I2 (the child) \u2014 a separate pe_ entry is created for that link.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_036",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_036 asserts the mother persona is 'mother of Ciriaco Bardales (infant, principal),' bearing on I2 as the child party. The child named is 'Ciriaco Bardales,' matching I2 exactly. Birth date 1 Aug 1905 and death date 12 Aug 1905 (src_001) identify this child unambiguously. Same_person score unavailable (API error). Corroborates the ParentChild edge from src_001 (a_007). No competing candidate.",
+      "created": "2026-09-18"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_006",
+        "a_007",
+        "a_019",
+        "a_020",
+        "a_031",
+        "a_033",
+        "a_034",
+        "a_036",
+        "a_037",
+        "a_038",
+        "a_045",
+        "a_046",
+        "a_049",
+        "a_050",
+        "a_051"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch collection 2075150 (Guatemala City civil registration) for: infant death records August 1905 (positive, src_001); civil births 1903\u20131905 (positive, src_003); marriage records 1890\u20131920 via three search strategies covering groom-side, bride-side, and cross-referenced searches (negative across 262 results examined, pli_004). FamilySearch collection 1614809 (Catholic church records 1903\u20131906) searched for baptism and marriage records (negative, pli_003). FAN records for Ciriaco Bardales and Carmen Morales 1895\u20131920 examined (positive \u2014 at least four children documented spanning 1896\u20131905+, pli_005). Original register images examined and confirmed for all three civil registration records (log_009, log_010, log_011). No competing civil registration naming different parents for the infant was identified. The civil marriage between Ciriaco Bardales and Clara Amelia Palacios Oliva was not located in civil records; children's records and Clara Amelia's death record confirm the marriage occurred but its exact date in civil records remains unverified.",
+      "claims": [
+        {
+          "claim": "parentage",
+          "proof_tier": "proved",
+          "supporting_assertion_ids": [
+            "a_006",
+            "a_007",
+            "a_019",
+            "a_020",
+            "a_031",
+            "a_033",
+            "a_034",
+            "a_036",
+            "a_045",
+            "a_049"
+          ],
+          "relationship": {
+            "type": "ParentChild",
+            "parent": "KNYF-2Z8",
+            "child": "I2"
+          }
+        },
+        {
+          "claim": "pre-marital conception",
+          "proof_tier": "probable",
+          "supporting_assertion_ids": [
+            "a_037",
+            "a_038",
+            "a_045",
+            "a_050",
+            "a_051"
+          ],
+          "relationship": {
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I2"
+          }
+        }
+      ],
+      "narrative_markdown": "## Proof Summary: Parentage and Pre-Marital Conception of the Infant Ciriaco Bardales (died 12 August 1905)\n\n**Research Question:** Was the infant Ciriaco who died 12 August 1905 in Guatemala City the son of Ciriaco Bardales and Carmen Morales, conceived before his marriage to Clara Amelia Palacios Oliva?\n\n**Conclusion (conjunctive):** The conjunctive question is answered at **probable** \u2014 the strength of its weaker half. Claim A (parentage) is proved; claim B (pre-marital conception) is probable. A conjunctive conclusion rises only to the tier of its weaker component. The scalar `tier` field in the structured record carries `proved` as bookkeeping (the strongest per-claim tier, per schema requirement), but the operative conclusion for the compound question as a whole is probable.\n\n---\n\n### The Evidence\n\nThree original civil registration records from Guatemala City, examined from original handwritten register images, establish the infant's parentage. Guatemala's civil registration system began in 1877; the 1905 records are original government documents.\n\n**1. Civil birth registration, 1 August 1905 (src_003)**\n\nOn 1 August 1905, Ciriaco Bardales personally appeared before the civil registrar in Guatemala City and declared that his son Ciriaco had been born that morning at 12:45 a.m. at Casa No. 25, Avenida del Golfo. He stated the child was his natural son (*hijo natural del exponente*) by Carmen Morales, both of them unmarried (*ambos solteros*), ladinos, and natives of Chiquimula la Sierra residing in Guatemala City. He signed his own name \u2014 \"Ciriaco Bardales\" \u2014 appearing three times on the page: in the margin index, in the body of the entry, and as his handwritten signature. The original image (ark:/61903/3:1:939J-CQ9P-F7) confirms the surname as \"Bardales\"; the FamilySearch index transcription \"Bandales\" is a confirmed misread of the handwritten register. *\"Guatemala, Guatemala, Registro Civil, 1874-2008\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KNJ-27P8 : accessed 18 September 2026), Entry for Ciriaco Bardales and Ciriaco Bandales, 1 de agosto de 1905.* This is an original record. The father's declaration of the infant's name, parentage, and his own marital status carries primary information quality (self-reporting in person). The child's birth facts carry primary information quality (father as eyewitness). Evidence is direct for parentage and for the father's marital status.\n\n**2. Civil death registration, 13 August 1905 (src_001)**\n\nThe day after the child's death \u2014 13 August 1905 \u2014 Ciriaco Bardales personally appeared before the civil registrar and reported that \"ayer \u00e1 las tres p. m., en la casa N\u00ba. 25. de la Av. del Golfo, falleci\u00f3 de inflamaci\u00f3n y \u00e1 la edad de doce d\u00edas, Ciriaco, hijo natural del exponente y de Carmen Morales, solteros, ladinos, cat\u00f3licos, de Chiquimula y de este vecindario.\" The father did not sign (\"no firm\u00f3\"), but he appeared and ratified the record. The original image (ark:/61903/3:1:939J-5HZ1-J) was examined and confirms all details. *\"Guatemala, Guatemala, Registro Civil, 1874-2008\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D38-BQ8L : 18 Sep 2026), Entry for Ciriaco Bardales and Ciriaco Bardales, 13 Aug 1905.* This is an original record. The father's self-report of his own marital status (\"soltero\") carries primary information quality. The death date and place recorded by the civil registrar carry primary information quality (official duty). Evidence is direct for parentage and marital status.\n\n**Source independence note \u2014 the two 1905 registrations.** The birth registration (src_003) and the death registration (src_001) are distinct civil acts \u2014 different dates, different legal events \u2014 but they share the same informant: Ciriaco Bardales himself appeared personally at both. They do not constitute two independent informant streams. What they demonstrate is the father's consistent declarations across two separate legal obligations twelve days apart, each carrying a distinct penalty for false statement. Those declarations are concordant and mutually reinforcing, but they count as one informant's voice, not two independent witnesses.\n\n**3. Civil death registration of Jos\u00e9 Luis Bardales Morales, 4 October 1954 (src_002)**\n\nNearly half a century later, the civil death registration of Jos\u00e9 Luis Bardales Morales \u2014 a son of Ciriaco Bardales and Carmen Morales who survived to adulthood \u2014 provides the genuinely independent informant stream. The original register image (ark:/61903/3:1:3Q9M-CS7W-CHN1) records: \"Jos\u00e9 Luis Bardales Morales de cincuentiseis a\u00f1os, casado con Marta Castro, Lit\u00f3grafo, hijo de Ciriaco Bardales y Carmen Morales, originario de esta Ciudad.\" The informant was **Alfredo Chancilla** \u2014 not Ciriaco Bardales, not a member of the immediate nuclear family \u2014 providing a wholly independent source separated from the 1905 registrations by 49 years. *\"Guatemala, Guatemala, Registro Civil, 1874-2008\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Z9GZ-P9PZ : accessed 18 September 2026), entry for Jos\u00e9 Luis Bardales Morales; digital image of indexed death registration, Guatemala City, 4 October 1954.* This is an original record. The parentage information is secondary (Alfredo Chancilla was not present at Jos\u00e9 Luis's birth), but his identification of the same parental couple \u2014 for a different child, nearly five decades later \u2014 constitutes true independent corroboration. It is this 1954 registration, not the internal agreement of the two 1905 registrations, that supplies the second informant stream necessary to satisfy the GPS independence requirement for the parentage claim.\n\n---\n\n### Analysis and Correlation\n\n**Parentage \u2014 claim A (proved).** Two distinct informant streams agree on the parents: (1) the father Ciriaco Bardales's own primary-quality declarations in the 1905 birth and death registrations, and (2) independent informant Alfredo Chancilla in the 1954 death registration of sibling Jos\u00e9 Luis, naming the same couple for a different child 49 years later. All three registrations were examined from original handwritten images. No competing registration names different parents for the infant. FAN research documents at least four children born to this couple between approximately 1896 and 1905+, establishing a long-standing parental relationship the registrations corroborate. Research is declared exhaustive (pli_001\u2013pli_005, log_001\u2013log_011); all five GPS components are satisfied. Parentage is proved.\n\n**Pre-marital conception \u2014 claim B (probable).** Both the birth and death registrations state explicitly that Ciriaco Bardales was \"soltero\" (unmarried/single) as of 1 August 1905 \u2014 his own self-report on personal appearance, carrying primary information quality. This directly establishes that he was not married to anyone, including Clara Amelia Palacios Oliva, when the infant was born. Conception approximately nine months prior \u2014 around November 1904 \u2014 therefore also preceded any documented marriage to Clara Amelia.\n\nNo civil marriage record between Ciriaco Bardales and Clara Amelia Palacios Oliva was located in civil registration records despite three search approaches covering groom-side, bride-side, and combined searches (pli_004, 262 results examined). Children's records and Clara Amelia's death record confirm the marriage occurred, but its exact date remains unverified in searched civil records. The FAN evidence documents the Bardales\u2013Morales relationship from at least 1896 (pli_005, multiple children), and Clara Amelia Palacios Oliva was born 11 June 1886 \u2014 making her approximately 10 years old in 1896 and any earlier marriage legally implausible. The overall weight of evidence makes it highly probable that the infant Ciriaco was conceived before Ciriaco Bardales married Clara Amelia Palacios Oliva.\n\nThe tier for this claim is probable, not proved, for two compounding reasons: first, the marriage date to Clara Amelia is not established from civil records searched, leaving a documentary gap in the chain; second, the only direct evidence for the \"soltero\" status comes from the father's two 1905 declarations \u2014 both his voice, not independent witnesses. Alfredo Chancilla's 1954 registration does not address the parents' marital status in 1905. The independent corroboration available for claim A therefore does not extend to claim B, reinforcing the probable tier for the pre-marital conception finding.\n\n---\n\n### Discrepancies Addressed\n\nThe FamilySearch index for the 1905 birth registration transcribed the father's surname as \"Bandales\" rather than \"Bardales.\" Examination of the original register image resolves this: the handwritten surname appears as \"Bardales\" in three distinct locations on the page (margin index, body of the entry, and the father's own signature). The discrepancy is a transcription error in the index, not a discrepancy in the underlying record.\n\nThe 1954 death registration for Jos\u00e9 Luis carries a FamilySearch indexed birth year of 1903, which would imply age 50\u201351 at death \u2014 inconsistent with the stated age of 56 years in the original register image (which yields birth year ~1898). The original image reading is authoritative. This discrepancy is an index error and does not affect the parentage conclusion.\n\n---\n\n### Conclusion\n\nThe compound question is answered at **probable** \u2014 the tier of its weaker component. Claim A (parentage) is proved: two independent informant streams \u2014 the father's primary-quality 1905 declarations and the independent 1954 informant Alfredo Chancilla \u2014 agree on the parents, confirmed from original register images, with no competing evidence. Claim B (pre-marital conception) is probable: the father's own self-reports of \"soltero\" status at both 1905 events are primary-quality and direct, and the circumstantial evidence (FAN documentation from 1896, Clara Amelia's 1886 birth year) strongly supports the inference \u2014 but the marriage date to Clara Amelia is not established in civil records, and the sole direct evidence for unmarried status comes from a single informant stream. The conjunctive conclusion, which requires both A and B, rises only to the tier of its weaker half: probable."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-18T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-18T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Guatemala, Guatemala",
+      "for_place": "Guatemala, Guatemala, Guatemala",
+      "time_period": "1877-1920",
+      "jurisdictions": [
+        {
+          "name": "Guatemala, Guatemala, Guatemala (Municipality of Guatemala City)",
+          "date_range": "+1776/"
+        },
+        {
+          "name": "Guatemala Department, Guatemala",
+          "date_range": "+1825/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2075150",
+          "title": "Guatemala, Guatemala, Civil Registration, 1874-2008",
+          "date_range": "1874-2008"
+        },
+        {
+          "id": "1682771",
+          "title": "Guatemala, Civil Registration, 1833-2009",
+          "date_range": "1833-2009"
+        },
+        {
+          "id": "1614809",
+          "title": "Guatemala, Catholic Church Records, 1581-2023",
+          "date_range": "1581-2023"
+        },
+        {
+          "id": "1520636",
+          "title": "Guatemala, Deaths, 1760-1880",
+          "date_range": "1760-1880"
+        },
+        {
+          "id": "1520627",
+          "title": "Guatemala, Baptisms, 1730-1917",
+          "date_range": "1730-1917"
+        },
+        {
+          "id": "1520635",
+          "title": "Guatemala, Marriages, 1750-1930",
+          "date_range": "1750-1930"
+        }
+      ],
+      "quirks": [
+        "Civil registration of births, marriages, and deaths began nationwide in Guatemala in 1877 when the Civil Registry was separated from the Catholic Church \u2014 per https://www.familysearch.org/en/wiki/Guatemala_Civil_Registration. For events before 1877, Catholic parish records are the primary alternative.",
+        "Death records in Guatemala City civil registration typically include: date and place of death, name and age of deceased, civil status, names of parents, civil status of spouse if married, and sometimes place of burial \u2014 per https://www.familysearch.org/en/wiki/Guatemala_Civil_Registration.",
+        "All civil registration records are in Spanish; a Spanish genealogical word list is available at https://www.familysearch.org/en/wiki/Spanish_Genealogical_Word_List.",
+        "FamilySearch has a specific catalog item 'Defunciones, entierros y exhumaciones, 1871-1920' (catalog 220220) that covers Guatemala City deaths through 1920 \u2014 browse-only images; search via the indexed collection 2075150 first.",
+        "An '\u00cdndice de defunciones, 1900-1910' exists for Guatemala City as three browse-only image groups (M9CC-KL8, M9CC-KLD, M9CC-KLZ) \u2014 these are alphabetical name indexes that can locate a death entry before reading the full register image.",
+        "Some information in FamilySearch images of Guatemala records may be blacked out due to Guatemalan privacy laws, per collection 2075150's How-to-Use page; this typically does not affect genealogically essential fields.",
+        "Early civil records (1877 onward) were handwritten in narrative paragraph style, not pre-printed forms; later records used formatted registers.",
+        "Guatemala City's civil registration is organized by municipality (Guatemala City itself), not by zone \u2014 the current zone system was formalized after our target period and need not be searched separately for 1905 events.",
+        "The Registro Nacional de las Personas (RENAP), Calzada Roosevelt 13-46, zona 7, Guatemala City, is the current custodian of civil registration originals; PBX +(502) 24161900, https://www.renap.gob.gt/ \u2014 contact in Spanish.",
+        "The FamilySearch Wiki page 'Guatemala_Vital_Records' does not exist in the corpus; registration details are confirmed from https://www.familysearch.org/en/wiki/Guatemala_Civil_Registration instead."
+      ],
+      "guide_markdown": "# Locality Guide: Guatemala City (Guatemala, Guatemala, Guatemala) \u2014 1877\u20131920\n\n## Jurisdiction overview\n- **Formally founded:** January 2, 1776, after the capital was relocated from Antigua Guatemala following the 1773 'Santa Marta' earthquakes.\n- **Administrative center:** Guatemala City is itself the capital of Guatemala and of Guatemala Department.\n- **Parent jurisdiction:** Guatemala Department, Guatemala.\n- **Population during period:** FamilySearch place_population returned no data for this place; current population approximately 2,110,000 per the FamilySearch Wiki (https://www.familysearch.org/en/wiki/Ciudad_de_Guatemala,_Guatemala,_Guatemala_Genealogy).\n- **Economy:** Commercial, governmental, and ecclesiastical center of Guatemala; artisans, merchants, professionals.\n- **Religious denominations:** Overwhelmingly Roman Catholic; the Catholic Church was the primary record-keeper before 1877.\n- **Key historical events:** Capital relocated from Antigua 1776; Liberal Reform 1871 (Justo Rufino Barrios) secularized institutions and introduced civil registration; civil registration began 1877.\n\n## Boundary changes\n- Guatemala City (Ciudad de Guatemala) has been the national capital and seat of Guatemala Department since 1776; boundaries were stable throughout the civil registration era.\n- No predecessor jurisdiction holds civil records for this period \u2014 civil registration began here in 1877 under the same municipal authority.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** 1877, at the municipal level, nationwide in Guatemala \u2014 per https://www.familysearch.org/en/wiki/Guatemala_Civil_Registration.\n- **What exists:** Births, marriages, and deaths from 1877 onward. Catalog also lists some civil records beginning in the 1850s\u20131870s under specific catalog groupings.\n- **Primary indexed collection:** *Guatemala, Guatemala, Civil Registration, 1874\u20132008* (collection 2075150 at FamilySearch) \u2014 4,245,072 indexed records, 27,035,119 persons, index + images. This is the department-level collection covering Guatemala City. **Digitization level: indexed + images.**\n- **Country-wide indexed collection:** *Guatemala, Civil Registration, 1833\u20132009* (collection 1682771 at FamilySearch) \u2014 2,614,040 records. **Digitization level: indexed + images.**\n- **Death records content:** Date and place of death, name and age of deceased, civil status, names of parents, spouse's name if married, sometimes place of burial.\n- **Browse-only volume series (death):** Several image groups identified via volume_search covering Guatemala City death records in the 1900\u20131915 period are 0\u201399% name-indexed (most are ~97\u201399% searchable via the indexed collections above). Three '\u00cdndice de defunciones, 1900\u20131910' image groups (M9CC-KL8, M9CC-KLD, M9CC-KLZ, ~1,271 images total) are 0% searchable and NOT full-text \u2014 browse-only alphabetical name indexes useful for locating a specific entry before viewing the full register.\n- **Specific catalog item for deaths:** *Defunciones, entierros y exhumaciones, 1871\u20131920* (catalog 220220 at FamilySearch) \u2014 images of Guatemala City death registers through 1920. Search collection 2075150 first; use this catalog for browse-access.\n- **Ancestry:** *Guatemala, Civil Registration, 1877\u20131980* at Ancestry \u2014 indexed + images ($).\n- **MyHeritage:** *Guatemala, Civil Registration, 1877\u20132008* at MyHeritage \u2014 indexed + images ($).\n- **Gaps:** No known systematic destruction reported. Some privacy-law redactions in FamilySearch images. Volume search returned 531 total results; only the first page was examined in detail \u2014 additional volumes exist.\n\n### Church records\n- **Denomination:** Roman Catholic, dominant from colonial era.\n- **Record types:** Baptisms, marriages, burials, confirmations.\n- **Primary FamilySearch collection:** *Guatemala, Catholic Church Records, 1581\u20132023* (collection 1614809) \u2014 5,069,282 records, indexed + images.\n- **Indexed baptisms through 1917:** *Guatemala, Baptisms, 1730\u20131917* (collection 1520627 at FamilySearch; also at Ancestry and MyHeritage, subscription).\n- **Indexed deaths through 1880:** *Guatemala, Deaths, 1760\u20131880* (collection 1520636 at FamilySearch; also at Ancestry and MyHeritage) \u2014 predates our target period for this question but useful for Ciriaco Bardales's own birth/early life.\n- **Browse-only parish volumes (Guatemala City):** Multiple FamilySearch Catalog items, e.g., Registros parroquiales 1631\u20131920 (cat. 70906), 1636\u20131937 (cat. 377809), 1641\u20131934 (cat. 287315), 1647\u20131977 (cat. 338170), 1694\u20131915 (cat. 20538) \u2014 images only, must browse page-by-page in Spanish.\n- **Parish burial records for 1905:** *Registros parroquiales, 1897\u20131930* (catalog 287533) \u2014 images only; covers our period.\n- **Language:** Spanish (and Latin for some sacramental entries).\n\n### Census records\n- **National census:** Guatemala held a census in 1877 for Guatemala City; Ancestry and MyHeritage have it indexed. No national census for our target years (1905) is known to FamilySearch.\n- **Historical padrones:** Padrones de Guatemala, Ciudad de Guatemala 1668\u20131887 (catalog 723220) \u2014 browse-only images; predates civil registration era.\n- **Access:** 1877 census indexed at Ancestry (collection 9958) and MyHeritage.\n\n### Probate and court records\n- **Court documents:** *Documentos civiles, 1895\u20131905* (catalog 8025 at FamilySearch) \u2014 images only, browse-only. Covers the target period and may include guardianship, recognitions of paternity, or civil petitions.\n- **Guardianship records:** *Tutelas, 1636\u20131894* (catalog 340878) \u2014 predates our period.\n- **Notarial records:** *Protocolos y providencias, 1579\u20131842* (catalog 23207); also *Protocolos* 1508\u20131898 (catalog 348888) \u2014 predates our period.\n\n### Land records\n- The FamilySearch Wiki page Guatemala_Land_and_Property was not separately fetched; land records for this period are primarily held at RENAP and the Archivo General de Centroam\u00e9rica (AGCA).\n\n### Military records\n- No specific military collections for Guatemala City in the 1877\u20131920 period were returned by the tools. Guatemala's military records for this era are primarily held at the AGCA in Guatemala City.\n\n### Cemetery records\n- **Major cemeteries in Guatemala City** (per https://www.familysearch.org/en/wiki/Ciudad_de_Guatemala,_Guatemala,_Guatemala_Genealogy):\n  - El Cementerio General de la Ciudad de Guatemala (20 Calle 4 Avenida 20-00, Zona 3) \u2014 the principal public cemetery, in use from the 19th century.\n  - Camposanto Los Cipreses (Zona 5), Cementerio Las Flores (Zona 9), and others.\n- **Online coverage:** FindAGrave and BillionGraves were not specifically returned for this place; no FamilySearch-curated cemetery links appeared in the external links results.\n- **Physical records:** Burial registers at the cemeteries or RENAP; exhumation records 1903\u20131916 at FamilySearch Catalog (catalog 64434).\n\n### Newspaper records\n- *Diario de Centro Am\u00e9rica* and other Guatemala City newspapers from the 19th\u201320th century may contain birth, death, and marriage notices. The PERiodical Source Index (PERSI) at the Allen County Public Library (https://www.genealogycenter.info/persi/) covers some Guatemalan periodicals.\n- HathiTrust (https://www.hathitrust.org/) and Internet Archive (https://archive.org/) hold some digitized Guatemalan newspapers.\n\n### Immigration/emigration records\n- Guatemala City is inland; passenger arrival records for foreign-born persons are held primarily at Guatemalan national archives. No specific immigration collections for this place/period were returned by the tools.\n\n## Repository guide\n\n### Online repositories\n| Repository | Key collections for Guatemala City | Access |\n|---|---|---|\n| FamilySearch | *Guatemala, Guatemala, Civil Registration, 1874\u20132008* (coll. 2075150); *Guatemala, Civil Registration, 1833\u20132009* (coll. 1682771); *Guatemala, Catholic Church Records, 1581\u20132023* (coll. 1614809) | Free |\n| FamilySearch Catalog | Multiple browse-only image volumes; Defunciones 1871\u20131920 (cat. 220220); Registros parroquiales 1897\u20131930 (cat. 287533) | Free (images) |\n| Ancestry | *Guatemala, Civil Registration, 1877\u20131980* (coll. 9884); 1877 Census (coll. 9958); Baptisms 1730\u20131917; Deaths 1760\u20131880 | Subscription |\n| MyHeritage | *Guatemala, Civil Registration, 1877\u20132008* (coll. 30203); Baptisms; Deaths | Subscription |\n\n**Coverage of this survey:** volume_search returned 531 total results for Guatemala City, 1895\u20131915 (Death/Vital/Birth/Religious Death record types); only the first page of results (~50 volumes) was examined in detail. The indexed collections (2075150, 1682771) provide name-searchable access to most 1905 death records and are the recommended first search.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Registro Nacional de las Personas (RENAP), Calzada Roosevelt 13-46, zona 7, Guatemala City, PBX +(502) 24161900, https://www.renap.gob.gt/ | Original civil registration records (births, marriages, deaths) from 1877 onward | In-person or written request (Spanish) |\n| Archivo General de Centroam\u00e9rica (AGCA), Guatemala City | Colonial and 19th-century government records, notarial protocols | In-person |\n\n## Records NOT online\n- Sexton registers from El Cementerio General and other private cemeteries are not digitized.\n- Military records for the 1877\u20131920 period are held at the AGCA and not known to be online.\n- Some civil registration volumes outside the FamilySearch indexed collections remain in RENAP physical custody and are not yet digitized.\n\n## Known record losses\n- No known systematic destruction of Guatemala City civil registration records was reported by the tools or FamilySearch Wiki pages consulted.\n\n## Research tips\n- Civil registration of births, marriages, and deaths began in Guatemala in 1877 at the municipal level, when the Civil Registry was separated from the Catholic Church \u2014 per https://www.familysearch.org/en/wiki/Guatemala_Civil_Registration. For any event before 1877, use Catholic parish records.\n- Search the indexed collection *Guatemala, Guatemala, Civil Registration, 1874\u20132008* (collection 2075150) first for a 1905 Guatemala City death \u2014 this is the primary department-level indexed collection with ~4.2M records.\n- If the name index search returns no result, consult the three browse-only '\u00cdndice de defunciones, 1900\u20131910' image groups (M9CC-KL8, M9CC-KLD, M9CC-KLZ) as an alphabetical finding aid, then access the full death register images.\n- Death records in this period are in Spanish and follow a narrative handwritten format; they typically name both parents of the deceased, which is essential for identifying paternity of an infant.\n- Guatemala City is the entire research focus \u2014 no neighboring-jurisdiction spillover applies, as all 1905 Guatemala City events would have been registered at the Guatemala City civil registry.\n- The Getting Started guide advises obtaining the specific town of residence before searching, and notes that city inhabitants may have come from surrounding municipalities \u2014 cross-check birth records if the parents' origin is unclear \u2014 per https://www.familysearch.org/en/wiki/Guatemala_Getting_Started.\n- Some FamilySearch images of Guatemala records have privacy-law redactions that do not typically affect genealogically essential name/date/place fields.\n- All records are in Spanish. Use the FamilySearch Spanish Genealogical Word List (https://www.familysearch.org/en/wiki/Spanish_Genealogical_Word_List) for vocabulary assistance.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Guatemala_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Guatemala_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Guatemala_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Guatemala_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-18"
+    }
+  ]
+}

@@ -22,9 +22,8 @@
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { existsSync } from "node:fs";
-import { posix } from "node:path";
 import {
+  anchoredProject,
   assertCoverage,
   callViaClient,
   prepareProject,
@@ -37,14 +36,7 @@ import {
 
 const entry = process.env.SMOKE_ENTRY ?? "build/index.js";
 const requestedPath = process.env.SMOKE_PROJECT_PATH;
-const project: PreparedProject = requestedPath
-  ? {
-      projectPath: requestedPath,
-      hostProjectDir: existsSync(requestedPath) ? requestedPath : null,
-      missingProjectPath: posix.join(requestedPath, "nope"),
-      cleanup: async () => {},
-    }
-  : await prepareProject();
+const project: PreparedProject = requestedPath ? anchoredProject(requestedPath) : await prepareProject();
 const ctx: SmokeCtx = {
   mode: "no-bearer",
   projectPath: project.projectPath,
@@ -85,6 +77,15 @@ try {
   report("auth_status", statusOk, JSON.stringify(status.body));
   if (!statusOk) failures.push("auth_status");
   calls++;
+
+  // #2126 — the build stamp is on the wire and on the tool return, and they agree.
+  const wireVersion = client.getServerVersion()?.version;
+  const stampOk =
+    typeof wireVersion === "string" &&
+    /^\d+\.\d+\.\d+\+/.test(wireVersion) &&
+    status.body.buildId === wireVersion;
+  report("build stamp", stampOk, `serverInfo.version=${wireVersion} auth_status.buildId=${status.body.buildId}`);
+  if (!stampOk) failures.push("build stamp");
 
   const run = await runPlan((tool, args) => callViaClient(client, tool, args), ctx, { offlineOnly: true });
   calls += run.calls;

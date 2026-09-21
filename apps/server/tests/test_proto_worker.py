@@ -19,16 +19,28 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
   figures; a wrong session id in system/init, no init at all, a MirrorErrorMessage, an
   errored ResultMessage and a stream with no ResultMessage each fail the turn without
   completing it; a short registration is refused before anything is sent to the model;
+- D17's resume rule: a REDELIVERY (``receive_count`` > 1) whose result carries no model
+  turn is re-queried ONCE with RESUME_CONTINUE_TEXT and completes on the SECOND result's
+  figures; a second zero-turn result completes as it stands (two queries, two log lines,
+  never a third); a FIRST delivery is never re-queried -- neither a fresh turn's nor one
+  whose session already holds entries, where the continue prompt would discard the
+  patron's new message; and every guard above binds on the re-query too;
 - the option set: cwd, setting_sources=[], agents=, the tool server's per-turn env in a
   0600 mcp.json (never argv) under ``env -u ANTHROPIC_API_KEY``, session_id/resume
-  exactly one, the eager store flush, the model pin per provider;
+  exactly one, the eager store flush, the model pin per provider; the ``TOOL_SERVER=http``
+  arm's two per-turn headers (project id always, bearer only when there is a token);
 - the container: tmpfs for TMPDIR, the key passed through (never a literal, never baked
   into the image), /project present, no tokens.json, optional deps kept, the SDK
-  pinned, 004 additive only.
+  pinned, 004 additive only;
+- D18's Stop hook: ``should_continue_run`` on the harness's own truth table, the hook's
+  block with the harness's reason text verbatim (read off orchestrator.py), its cap, its
+  no-progress arm, that it never raises; the ``Stop`` matcher bound only when a hook is
+  given; run_turn wiring it only when AUTONOMOUS_MAX_NUDGES > 0 and writing ``nudges``.
 """
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import json
 import re
@@ -37,6 +49,7 @@ import stat
 import tempfile
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -52,6 +65,7 @@ COMPOSE = PROTO / "docker-compose.yml"
 DOCKERFILE = PROTO / "worker" / "Dockerfile"
 SQL_WORKER = PROTO / "sql" / "004_worker.sql"
 PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
+ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
 AGENTS = {"gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness"}
@@ -87,6 +101,10 @@ class FakeCursor:
             return (self.conn.sdk_session_id,)
         if "sum((u->>'input_tokens')" in sql:
             return self.conn.usage
+        if "SELECT doc FROM documents" in sql:
+            return (self.conn.research,)
+        if "SELECT count(*) FROM tool_calls" in sql:
+            return (self.conn.tool_call_count,)
         return None
 
 
@@ -114,6 +132,8 @@ class FakeConn:
         self.completed_at = completed_at
         self.sdk_session_id = sdk_session_id
         self.usage = usage
+        self.research: dict | None = None  # the documents row the Stop hook reads
+        self.tool_call_count = 0
 
     def cursor(self) -> FakeCursor:
         return FakeCursor(self)
@@ -176,7 +196,7 @@ def test_complete_writes_turn_done_and_closes_the_turn_with_the_result_figures_i
     assert "next_session_seq" in sqls[0]
     assert sqls[1].startswith("INSERT INTO session_events") and "'turn_done'" in sqls[1]
     assert sqls[2].startswith("UPDATE turns SET completed_at = now(), outcome = 'ok'")
-    assert conn.executed[2][1] == (0.0123, 4, 9876, None, None, None, None, "turn-1")
+    assert conn.executed[2][1] == (0.0123, 4, 9876, None, None, None, None, None, "turn-1")
     assert conn.transactions == 1 and conn.transaction_exits == 1
 
 
@@ -194,7 +214,7 @@ def test_complete_sums_the_turns_tokens_from_session_entries_in_the_same_transac
     update_sql, update_params = conn.executed[3]
     assert update_sql.startswith("UPDATE turns SET completed_at = now(), outcome = 'ok'")
     assert "input_tokens = COALESCE(%s, input_tokens)" in update_sql and "output_tokens = COALESCE(%s, output_tokens)" in update_sql
-    assert update_params == (0.4592, 22, 74294, *TOKENS, "turn-1")
+    assert update_params == (0.4592, 22, 74294, *TOKENS, None, "turn-1")
     assert sqls[-1] is update_sql and conn.transactions == 1, "the sum and the close are one transaction"
 
 
@@ -202,8 +222,18 @@ def test_complete_without_figures_keeps_the_existing_columns():
     conn = FakeConn()
     worker.complete(conn, TURN, 1)
     sql, params = conn.executed[2]
-    assert "COALESCE(%s, cost_usd)" in sql and params[:7] == (None,) * 7
+    assert "COALESCE(%s, cost_usd)" in sql and params[:8] == (None,) * 8
     assert not any("sum(" in s for s, _ in conn.executed), "no SDK session, no usage query (the stub arms)"
+
+
+def test_complete_writes_the_nudge_count_with_coalesce_like_the_other_figures():
+    conn = FakeConn()
+    worker.complete(conn, TURN, 1, nudges=3)
+    sql, params = conn.executed[2]
+    assert "nudges = COALESCE(%s, nudges)" in sql and params[-2:] == (3, "turn-1")
+    conn = FakeConn()
+    worker.complete(conn, TURN, 1, nudges=0)
+    assert conn.executed[2][1][-2] == 0, "zero is a figure (the arm was off or never vetoed), not an absence"
 
 
 def test_turn_completed_reads_completed_at():
@@ -481,6 +511,28 @@ def test_the_config_root_may_be_a_callable_resolved_per_call(tmp_path):
     assert _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(spill)}}) == {}
 
 
+def test_blocked_tools_are_denied_by_bare_name_under_any_server_spelling(tmp_path):
+    assert options.parse_blocked_tools(" person_read, person_ancestors,,") == {"person_read", "person_ancestors"}
+    assert options.parse_blocked_tools(None) == frozenset() and options.parse_blocked_tools("") == frozenset()
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path / "cfg"),
+        record=rows.append, blocked=options.parse_blocked_tools("person_read,person_ancestors"),
+    )
+    for name in ("mcp__genealogy__person_read", "mcp__remote-devices__Genealogy_Research__person_ancestors"):
+        out = _call(hook, {"tool_name": name, "tool_input": {"personId": "MJDL-Q8B"}})
+        assert out["hookSpecificOutput"]["permissionDecision"] == "deny", name
+        assert "live FamilySearch tree" in out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}}) == {}
+    assert _call(hook, {"tool_name": "person_read", "tool_input": {}}) == {}, "only MCP tools are candidates"
+    assert [r["decision"] for r in rows] == ["deny", "deny", "allow", "allow"]
+    # No list: the same call is allowed, and logged as such.
+    open_rows: list[dict] = []
+    assert _call(_hook(open_rows, str(tmp_path), str(tmp_path / "cfg")),
+                 {"tool_name": "mcp__genealogy__person_read", "tool_input": {}}) == {}
+    assert open_rows[-1]["decision"] == "allow"
+
+
 def test_the_hook_never_raises(tmp_path):
     def exploding_record(row):
         raise RuntimeError("postgres is down")
@@ -653,7 +705,9 @@ def test_options_pin_the_prototype_set(tmp_path):
 
 
 def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_argv(tmp_path):
-    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token")
+    # The stdio fork is the named opt-out since 2026-09-20; this is its shape.
+    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token",
+                    worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"})
     # A str is handed to the CLI as `--mcp-config <path>`; a dict would be json.dumps'd
     # onto argv, where the bearer and the S3 secret are visible in `ps`.
     assert isinstance(opts.mcp_servers, str) and opts.mcp_servers == str(tmp_path / "mcp.json")
@@ -694,8 +748,11 @@ def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
 
 
 def test_the_token_falls_back_to_the_worker_env_then_empty():
-    assert _server(_options())["env"]["FS_ACCESS_TOKEN"] == "env-token"
-    env = {k: v for k, v in WORKER_ENV.items() if k != "FS_ACCESS_TOKEN"}
+    """The stdio fork carries the token in its env; the http arm's same fallback is
+    asserted as `Authorization: Bearer env-token` in the http test below."""
+    stdio = {**WORKER_ENV, "TOOL_SERVER": "stdio"}
+    assert _server(_options(worker_env=stdio))["env"]["FS_ACCESS_TOKEN"] == "env-token"
+    env = {k: v for k, v in stdio.items() if k != "FS_ACCESS_TOKEN"}
     assert _server(_options(worker_env=env))["env"]["FS_ACCESS_TOKEN"] == ""
 
 
@@ -753,9 +810,13 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     env = _env(svc)
     assert any(env["TMPDIR"] == m or env["TMPDIR"].startswith(m.rstrip("/") + "/") for m in mounts)
     assert env["ANTHROPIC_API_KEY"].startswith("${ANTHROPIC_API_KEY"), "never a literal in the compose file"
+    assert env["OPENROUTER_API_KEY"].startswith("${OPENROUTER_API_KEY"), "image_transcribe's key, passed through like the model key"
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
     # The FS token is a file read per turn (tokens live an hour), never a literal or a build arg.
     assert env["FS_ACCESS_TOKEN_FILE"] == "/run/fs-token" and "FS_ACCESS_TOKEN" not in env
+    assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
+    assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the nudge cap is the caller's (proto-demo-auto), off by default"
+    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means off, not the arm's default"
     assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
     assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert env["GENEALOGY_PG_DSN"].startswith("postgresql://") and "@postgres:5432" in env["GENEALOGY_PG_DSN"]
@@ -799,30 +860,55 @@ def test_004_worker_only_adds_nullable_columns():
     assert "ALTER TABLE tool_calls ADD COLUMN IF NOT EXISTS tool_use_id text" in statements
     assert {re.match(r"ALTER TABLE turns ADD COLUMN IF NOT EXISTS (\w+)", s).group(1)
             for s in statements if "ALTER TABLE turns" in s} == {
-        "cost_usd", "num_turns", "duration_ms",
+        "cost_usd", "num_turns", "duration_ms", "nudges",
         "entries_seq_before", "input_tokens", "cache_creation_tokens", "cache_read_tokens", "output_tokens",
     }
     assert all(s.endswith(" bigint") for s in statements if re.search(r"_tokens|entries_seq_before", s)), \
         "token counts and the seq mark are bigint"
 
 
-def test_tool_server_http_is_the_d16_service_with_the_bearer_as_authorization(tmp_path):
-    # PR #2659's contract: `Authorization: Bearer <patron token>` is the one header the
-    # entrypoint reads, and the default URL is the compose `tools` service.
+def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_path):
+    # The shared server's contract is two per-request headers: `Authorization: Bearer
+    # <patron token>` -> principal, `X-Genealogy-Project-Id` -> the request's store. The
+    # project header is always sent; the default URL is the compose `tools` service.
     env = {**WORKER_ENV, "TOOL_SERVER": "http"}
     server = _server(_options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env))
-    assert server == {"type": "http", "url": "http://tools:8787/mcp", "headers": {"Authorization": "Bearer turn-token"}}
+    assert server == {
+        "type": "http",
+        "url": "http://tools:8787/mcp",
+        "headers": {"Authorization": "Bearer turn-token", "X-Genealogy-Project-Id": "proj-1"},
+    }
     custom = _server(_options(
         config_dir=str(tmp_path), fs_access_token="", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
     assert custom["url"] == "http://127.0.0.1:8787/mcp"
-    assert custom["headers"] == {}, "an empty bearer sends no header, not a malformed `Bearer `"
+    assert custom["headers"] == {"X-Genealogy-Project-Id": "proj-1"}, \
+        "an empty bearer sends only the project header, not a malformed `Bearer `"
     fallback = _server(_options(config_dir=str(tmp_path), worker_env=env))
-    assert fallback["headers"] == {"Authorization": "Bearer env-token"}, "the worker env's token when the message has none"
+    assert fallback["headers"] == {"Authorization": "Bearer env-token", "X-Genealogy-Project-Id": "proj-1"}, \
+        "the worker env's token when the message has none"
+    other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", fs_access_token="t", worker_env=env))
+    assert other["headers"]["X-Genealogy-Project-Id"] == "proj-2", "the header is the turn's id, not a constant"
+    assert "GENEALOGY_PROJECT_ID" not in json.dumps(server), "over http the id travels as a header, never as env"
 
 
-def test_tool_server_defaults_to_stdio_and_refuses_an_unknown_mode(tmp_path):
-    assert _server(_options(config_dir=str(tmp_path)))["type"] == "stdio"
+def test_tool_server_headers_require_a_project_id():
+    # The keyword is required so no caller can build the http entry without the id and
+    # ship a request the server binds to no store.
+    with pytest.raises(TypeError):
+        options.tool_server_headers(WORKER_ENV, fs_access_token="t")  # type: ignore[call-arg]
+    assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
+
+
+def test_tool_server_defaults_to_http_and_refuses_an_unknown_mode(tmp_path):
+    # The lead's call, 2026-09-20: the shared `tools` service is what production runs, so
+    # it is what an unqualified worker runs. stdio is the named opt-out, and an empty
+    # value is "unset", not a third mode.
+    assert options.TOOL_SERVER_DEFAULT == "http"
+    assert _server(_options(config_dir=str(tmp_path)))["type"] == "http"
+    assert _server(_options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": ""}))["type"] == "http"
+    assert _server(_options(config_dir=str(tmp_path),
+                            worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"}))["type"] == "stdio"
     with pytest.raises(ValueError, match="stdio or http"):
         _options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "grpc"})
 
@@ -832,7 +918,9 @@ def test_tool_server_defaults_to_stdio_and_refuses_an_unknown_mode(tmp_path):
 
 class FakeSessionStore:
     def __init__(self, entries: bool) -> None:
-        self.calls = {"entries_appended": 0}
+        # The real PgSessionStore's counter names. The SDK drives these, not run_turn, so a
+        # test sets them the way a resume would and reads them back off the summary.
+        self.calls = {"entries_appended": 0, "list_subkeys": 0, "subkeys_returned": 0}
         self._entries = entries
 
     async def has_entries(self, sdk_session_id: str) -> bool:
@@ -875,10 +963,14 @@ def _text(text: str) -> AssistantMessage:
     return AssistantMessage(content=[TextBlock(text=text)], model="m")
 
 
-def _result(*, is_error: bool = False) -> ResultMessage:
+def _result(
+    *, is_error: bool = False, num_turns: int = 1, cost: float = 0.01,
+    duration_ms: int = 10, text: str | None = None,
+) -> ResultMessage:
     return ResultMessage(
-        subtype="error_during_execution" if is_error else "success", duration_ms=10, duration_api_ms=8,
-        is_error=is_error, num_turns=1, session_id=SID, total_cost_usd=0.01, result="boom" if is_error else None,
+        subtype="error_during_execution" if is_error else "success", duration_ms=duration_ms, duration_api_ms=8,
+        is_error=is_error, num_turns=num_turns, session_id=SID, total_cost_usd=cost,
+        result="boom" if is_error else text,
     )
 
 
@@ -932,6 +1024,7 @@ def test_run_turn_resumes_when_the_store_already_holds_the_session(turn_env):
     turn_env["entries"] = True
     assert _run(turn_env, _good())["resumed"] is True
     assert turn_env["options"]["resume"] == SID and turn_env["options"]["session_id"] is None
+    assert turn_env["client"].queried == ["hello"], "a resumed turn that ran model turns is not re-queried"
 
 
 @pytest.mark.parametrize("messages, error, match", [
@@ -948,11 +1041,163 @@ def test_run_turn_fails_the_turn_on_each_guard_without_completing_it(turn_env, m
     assert turn_env["client"].disconnected, "the CLI is always released"
 
 
+def test_the_turn_summary_carries_the_store_counters_the_d17_criterion_reads(turn_env, monkeypatch):
+    """D17 asserts P1's criterion: a resumed turn that saw a delegation must show
+    ``list_subkeys`` called and at least one subkey returned. Both counts are collected on
+    every turn and were surfaced nowhere -- ``PgSessionStore.counters()`` has no caller --
+    so the run could not assert it without reading them out of a dead attribute."""
+    store = FakeSessionStore(entries=True)
+    monkeypatch.setattr(worker, "PgSessionStore", lambda dsn, project_id: store)
+    store.calls.update(entries_appended=12, list_subkeys=1, subkeys_returned=3)
+    summary = _run(turn_env, _good())
+    assert (summary["list_subkeys"], summary["subkeys_returned"]) == (1, 3)
+    assert summary["entries_appended"] == 12
+
+
 def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
     with pytest.raises(worker.RegistrationError, match="gps-mentor"):
         _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 28))
     assert turn_env["client"].queried == [], "nothing sent to the model"
     assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])
+
+
+# ── the resume rule: a redelivery that produced no model turn (D17) ───────────────
+
+
+class TwoPassClient(FakeClient):
+    """The CLI answering each query with its own stream: one list per receive_response().
+    A query past the last stream is the unbounded-re-query regression, and raises."""
+
+    def __init__(self, streams: list[list[Any]], info: dict | None) -> None:
+        super().__init__([], info)
+        self.streams = [list(s) for s in streams]
+        self.passes = 0
+
+    async def receive_response(self):
+        if self.passes >= len(self.streams):
+            raise AssertionError(f"query {self.passes + 1}: the one-re-query bound is gone")
+        stream = self.streams[self.passes]
+        self.passes += 1
+        for m in stream:
+            yield m
+
+
+SYNTHETIC = "No response requested."
+
+
+def _run_passes(
+    state: dict, streams: list[list[Any]], *, entries: bool = True, receive_count: int = 2
+) -> dict:
+    """run_turn against a client with one canned stream per query. What arms the rule is
+    BOTH ``entries`` True (the store already holds the session, so run_turn resumes) and
+    ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
+    shape, a second delivery of a resumed turn."""
+    state["entries"] = entries
+    state["client"] = TwoPassClient(streams, _info(AGENTS, 28))
+    return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
+
+
+@pytest.mark.parametrize("num_turns, resume, receive_count, expected", [
+    (0, SID, 2, True),
+    (1, SID, 2, False),
+    (0, SID, 1, False),
+    (0, None, 2, False),
+    (0, None, 1, False),
+    (1, None, 1, False),
+    (None, SID, 2, True),
+], ids=["redelivered-zero", "redelivered-worked", "first-delivery-zero", "fresh-redelivered-zero",
+        "fresh-zero", "fresh-worked", "redelivered-unknown"])
+def test_resume_produced_no_turn_is_a_redelivery_that_ran_no_model_turn(
+    num_turns, resume, receive_count, expected
+):
+    assert worker.resume_produced_no_turn(
+        SimpleNamespace(num_turns=num_turns), resume, receive_count
+    ) is expected
+
+
+def test_the_re_query_bound_is_the_length_of_the_prompt_tuple():
+    # The ceiling, not the trigger: whether the second prompt is SENT is
+    # resume_produced_no_turn's single decision, which the tests below drive through
+    # run_turn. A fresh session cannot be re-queried at all.
+    assert worker.attempt_prompts("hello", None) == ("hello",)
+    assert worker.attempt_prompts("hello", SID) == ("hello", options.RESUME_CONTINUE_TEXT)
+    assert len(worker.attempt_prompts("hello", SID)) == 2, "one re-query per attempt, whatever the results say"
+
+
+def test_a_resumed_zero_turn_result_is_re_queried_once_and_completes_on_the_second(turn_env, monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    # The second stream carries NO init: a connected client declares its session once.
+    summary = _run_passes(turn_env, [
+        [_init(), _result(num_turns=0, cost=0.0, duration_ms=47, text=SYNTHETIC)],
+        [_text("the extraction"), _result(num_turns=6, cost=0.42, duration_ms=91_000)],
+    ], receive_count=2)
+    assert turn_env["client"].queried == ["hello", options.RESUME_CONTINUE_TEXT]
+    assert summary["resumed"] is True
+    assert (summary["num_turns"], summary["cost_usd"], summary["duration_ms"]) == (6, 0.42, 91_000)
+    _, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
+    assert params[:3] == (0.42, 6, 91_000), "the row takes the completing attempt's figures"
+    lines = [f for f in logged if f.get("ev") == "resume_synthetic_result"]
+    assert [f["query"] for f in lines] == [1]
+    assert lines[0]["result"] == SYNTHETIC and lines[0]["turn_id"] == "turn-1"
+    assert lines[0]["receive_count"] == 2, "the log line carries the redelivery the rule armed on"
+
+
+def test_two_zero_turn_results_complete_after_exactly_two_queries(turn_env, monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    long_reply = "orphaned agent notice " * 20
+    summary = _run_passes(turn_env, [
+        [_init(), _result(num_turns=0, cost=0.0, duration_ms=47, text=long_reply)],
+        [_result(num_turns=0, cost=0.0, duration_ms=12, text=long_reply)],
+    ], receive_count=2)
+    assert turn_env["client"].queried == ["hello", options.RESUME_CONTINUE_TEXT]
+    assert turn_env["client"].passes == 2, "a third query would be an unbounded rule"
+    assert _turn_done_written(turn_env["conn"]), "a turn with nothing to add completes as it stands"
+    assert summary["num_turns"] == 0 and summary["duration_ms"] == 12
+    lines = [f for f in logged if f.get("ev") == "resume_synthetic_result"]
+    assert [f["query"] for f in lines] == [1, 2]
+    assert [len(f["result"]) for f in lines] == [200, 200], "the reply is logged, first 200 chars"
+
+
+def test_a_fresh_turn_that_ran_no_model_turn_completes_without_a_re_query(turn_env, monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    summary = _run_passes(
+        turn_env, [[_init(), _result(num_turns=0, cost=0.0)]], entries=False, receive_count=1
+    )
+    assert turn_env["client"].queried == ["hello"], "a zero-turn result is a resume artefact only on a redelivery"
+    assert _turn_done_written(turn_env["conn"]) and summary["num_turns"] == 0 and summary["resumed"] is False
+    assert not [f for f in logged if f.get("ev") == "resume_synthetic_result"], "nothing was interrupted"
+
+
+def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monkeypatch):
+    """Turn 2+ of an ordinary session resumes -- the store already holds entries -- and its
+    FIRST delivery can still answer with a zero-turn result, exactly when the previous turn
+    was killed mid-flight. Re-querying it bills a model turn nobody asked for and tells the
+    model to resume the previous task, discarding the message the patron just sent."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    summary = _run_passes(
+        turn_env, [[_init(), _result(num_turns=0, cost=0.0, text=SYNTHETIC)]], receive_count=1
+    )
+    assert turn_env["client"].queried == ["hello"], "receive_count 1 is a first delivery, not a redelivery"
+    assert turn_env["options"]["resume"] == SID, "it DID resume: only receive_count separates the two"
+    assert _turn_done_written(turn_env["conn"]) and summary["resumed"] is True
+    assert not [f for f in logged if f.get("ev") == "resume_synthetic_result"]
+
+
+@pytest.mark.parametrize("second, error, match", [
+    ([MirrorErrorMessage(subtype="mirror_error", data={}, error="disk gone")], worker.MirrorError, "disk gone"),
+    ([_text("x"), _result(is_error=True)], RuntimeError, "is_error"),
+    ([_text("x")], RuntimeError, "without a ResultMessage"),
+    ([_init("other"), _text("x"), _result()], RuntimeError, "not the chosen"),
+], ids=["mirror-error", "errored-result", "no-result", "wrong-session-id"])
+def test_every_guard_binds_on_the_re_query_too(turn_env, second, error, match):
+    with pytest.raises(error, match=match):
+        _run_passes(turn_env, [[_init(), _result(num_turns=0, cost=0.0)], second], receive_count=2)
+    assert not _turn_done_written(turn_env["conn"]), "a failed re-query leaves the turn open for the next redelivery"
+    assert turn_env["client"].disconnected, "the CLI is always released"
 
 
 # ── PostToolUse: the duration stamp (acceptance criterion 4) ──────────────────────
@@ -1006,4 +1251,254 @@ def test_options_bind_the_post_hook_on_success_and_on_failure(tmp_path):
     opts = _options(config_dir=str(tmp_path), posttool_hook=post)
     assert set(opts.hooks) == {"PreToolUse", "PostToolUse", "PostToolUseFailure"}
     assert opts.hooks["PostToolUse"][0].hooks == [post] and opts.hooks["PostToolUseFailure"][0].hooks == [post]
+
+
+# ── D18: the Stop hook (the harness's continue-nudge, ported) ─────────────────────
+
+
+_INCOMPLETE = {"project": {"status": "in_progress"}}
+_DONE = {"project": {"status": "completed"}}
+
+
+@pytest.mark.parametrize("kw, expected", [
+    # The truth table eval/harness/tests/unit/test_e2e_stop_checker.py pins, case for case.
+    (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8), True),
+    (dict(research=_DONE, nudges_used=0, max_nudges=5, tool_count=20, tool_count_at_last_nudge=-1), False),
+    (dict(research=_INCOMPLETE, nudges_used=5, max_nudges=5, tool_count=30, tool_count_at_last_nudge=10), False),
+    (dict(research=_INCOMPLETE, nudges_used=2, max_nudges=5, tool_count=15, tool_count_at_last_nudge=15), False),
+    (dict(research=_INCOMPLETE, nudges_used=0, max_nudges=5, tool_count=5, tool_count_at_last_nudge=-1), True),
+    (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8,
+          mcp_unavailable=True), False),
+    (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8,
+          mcp_unavailable=False), True),
+    # The worker's own edge: no research.json at all is not "completed".
+    (dict(research=None, nudges_used=0, max_nudges=1, tool_count=0, tool_count_at_last_nudge=-1), True),
+], ids=["progressing", "completed", "budget-spent", "no-progress", "first-nudge-equal-counts",
+        "mcp-unavailable", "mcp-available-default", "no-research"])
+def test_should_continue_run_mirrors_the_harness_truth_table(kw, expected):
+    assert options.should_continue_run(**kw) is expected
+
+
+def test_project_completed_reads_project_status_only():
+    assert options.project_completed(_DONE) is True
+    assert options.project_completed(_INCOMPLETE) is False
+    assert options.project_completed(None) is False and options.project_completed({}) is False
+
+
+def _stop(state: dict, *, max_nudges: int = 3, nudged: list | None = None, log=None, on_nudge=None):
+    return options.make_stop_hook(
+        turn_id="turn-1", max_nudges=max_nudges,
+        research=lambda: state["research"], tool_count=lambda: state["count"],
+        on_nudge=on_nudge or (nudged if nudged is not None else []).append, log=log,
+    )
+
+
+def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim():
+    state = {"research": _INCOMPLETE, "count": 4}
+    nudged: list[int] = []
+    hook = _stop(state, nudged=nudged)
+    assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
+    assert nudged == [1]
+    # The reason is the orchestrator's, read off its source: among the dict literals
+    # whose "decision" is "block", the one whose "reason" is a literal string is the
+    # silent-stop fallback the worker mirrors. Since 2026-09-20 a second such dict
+    # carries the "Yes." reply to a well-formed hand-back, whose reason is a NAME
+    # (`reply`) rather than a constant, so it is skipped here by shape and named in
+    # CONTINUE_REASON's comment — if that branch ever spells a literal too, this
+    # collects two and fails, which is the re-sync this test exists to force.
+    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
+    blocks = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Dict) and any(
+            isinstance(k, ast.Constant) and k.value == "decision"
+            and isinstance(v, ast.Constant) and v.value == "block"
+            for k, v in zip(node.keys, node.values)
+        )
+    ]
+    assert blocks, "the orchestrator no longer vetoes a stop with a block dict: re-read its stop_hook"
+    reasons = [
+        v.value
+        for node in blocks
+        for k, v in zip(node.keys, node.values)
+        if isinstance(k, ast.Constant) and k.value == "reason" and isinstance(v, ast.Constant)
+    ]
+    assert reasons == [options.CONTINUE_REASON], \
+        "the worker's reason text must stay the harness's silent-stop fallback, verbatim"
+
+
+def test_the_stop_hook_counts_nudges_and_allows_once_the_cap_is_spent():
+    state = {"research": _INCOMPLETE, "count": 0}
+    nudged: list[int] = []
+    hook = _stop(state, max_nudges=2, nudged=nudged)
+    state["count"] = 1
+    assert _call(hook, {})["decision"] == "block"
+    state["count"] = 2
+    assert _call(hook, {})["decision"] == "block"
+    state["count"] = 3
+    assert _call(hook, {}) == {}, "the cap is spent: the stop is allowed"
+    assert nudged == [1, 2]
+
+
+def test_the_stop_hook_allows_a_completed_project_and_a_stop_with_no_new_tool_call():
+    state = {"research": _DONE, "count": 9}
+    nudged: list[int] = []
+    assert _call(_stop(state, nudged=nudged), {}) == {} and nudged == []
+    state = {"research": _INCOMPLETE, "count": 5}
+    hook = _stop(state, nudged=nudged)
+    assert _call(hook, {})["decision"] == "block"
+    assert _call(hook, {}) == {}, "no tool call since the nudge: another will not help"
+    state["count"] = 6
+    assert _call(hook, {})["decision"] == "block", "progress resumes the vetoes"
+    assert nudged == [1, 2]
+
+
+def test_the_stop_hook_never_raises():
+    logged: list[dict] = []
+
+    def exploding() -> dict:
+        raise RuntimeError("postgres is down")
+
+    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=exploding, tool_count=lambda: 1,
+                                  on_nudge=lambda n: None, log=lambda **f: logged.append(f))
+    assert _call(hook, {}) == {}
+    assert logged == [{"ev": "stop_hook_failed", "turn_id": "turn-1", "error": "RuntimeError: postgres is down"}]
+    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=lambda: _INCOMPLETE, tool_count=exploding,
+                                  on_nudge=lambda n: None, log=lambda **f: logged.append(f))
+    assert _call(hook, {}) == {} and logged[-1]["ev"] == "stop_hook_failed"
+
+    def exploding_nudge(n: int) -> None:
+        raise RuntimeError("log sink gone")
+
+    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=lambda: _INCOMPLETE, tool_count=lambda: 1,
+                                  on_nudge=exploding_nudge, log=lambda **f: logged.append(f))
+    assert _call(hook, {}) == {} and logged[-1]["error"] == "RuntimeError: log sink gone"
+    # No log sink at all: still {}.
+    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=exploding, tool_count=lambda: 1,
+                                  on_nudge=lambda n: None)
+    assert _call(hook, "garbage") == {}  # type: ignore[arg-type]
+
+
+def test_options_bind_a_stop_matcher_only_when_a_stop_hook_is_given(tmp_path):
+    async def stop(*a):
+        return {}
+
+    opts = _options(config_dir=str(tmp_path), stop_hook=stop)
+    [matcher] = opts.hooks["Stop"]
+    assert matcher.matcher is None and matcher.hooks == [stop] and matcher.timeout == options.PRETOOL_TIMEOUT_S
+    assert set(opts.hooks) == {"PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop"}
+    assert "Stop" not in _options(config_dir=str(tmp_path)).hooks, "the interactive stack: a yield to the user ends the turn"
+    assert "Stop" not in _options(config_dir=str(tmp_path), stop_hook=None).hooks
+
+
+def test_parse_max_nudges():
+    assert worker.parse_max_nudges(None) == 0 and worker.parse_max_nudges("") == 0 and worker.parse_max_nudges(" 0 ") == 0
+    assert worker.parse_max_nudges("20") == 20 and worker.parse_max_nudges(" 5\n") == 5
+    with pytest.raises(ValueError):
+        worker.parse_max_nudges("-1")
+    with pytest.raises(ValueError):
+        worker.parse_max_nudges("twenty")
+
+
+def test_prepare_logs_a_bad_cap_and_runs_with_the_hook_off_instead_of_dying(monkeypatch):
+    """A typo'd AUTONOMOUS_MAX_NUDGES must not crash-loop the worker (compose restarts it,
+    and a demo then waits its whole deadline): the cap falls to 0 and one prepare line says why."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "ensure_cwd", lambda cwd: None)
+    monkeypatch.setattr(worker, "apply_schema", lambda dsn: [])
+    monkeypatch.setattr(worker, "load_plugin_agents", lambda plugin_dir: ({}, None))
+    for name in ("_AGENTS", "_AGENTS_ERROR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
+        monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
+    monkeypatch.delenv("BLOCKED_TOOLS", raising=False)
+    monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "abc")
+    worker.prepare()
+    assert worker._AUTONOMOUS_MAX_NUDGES == 0
+    [bad] = [f for f in logged if f.get("ev") == "prepare" and f.get("step") == "nudges"]
+    assert bad["error"].startswith("ValueError") and "abc" in bad["error"]
+    assert next(f for f in logged if f.get("step") == "agents")["autonomous_max_nudges"] == 0
+    logged.clear()
+    monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "20")
+    worker.prepare()
+    assert worker._AUTONOMOUS_MAX_NUDGES == 20 and not any(f.get("step") == "nudges" for f in logged)
+    assert next(f for f in logged if f.get("step") == "agents")["autonomous_max_nudges"] == 20
+
+
+def test_run_turn_wires_the_stop_hook_only_on_the_autonomous_arm_and_records_nudges(turn_env, monkeypatch):
+    completed: list[dict] = []
+    original = worker.complete
+
+    def spy(conn, turn, rc, **kw):
+        completed.append(kw)
+        return original(conn, turn, rc, **kw)
+
+    monkeypatch.setattr(worker, "complete", spy)
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
+    summary = _run(turn_env, _good())
+    assert turn_env["options"]["stop_hook"] is None and summary["nudges"] == 0
+    assert completed[-1]["nudges"] == 0
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 20)
+    summary = _run(turn_env, _good())
+    assert callable(turn_env["options"]["stop_hook"]) and summary["nudges"] == 0
+    assert completed[-1]["nudges"] == 0
+    update = next(sql for sql, _ in turn_env["conn"].executed if sql.startswith("UPDATE turns SET completed_at"))
+    assert "nudges = COALESCE(%s, nudges)" in update
+
+
+def test_the_wired_stop_hook_reads_research_and_the_tool_count_off_the_turns_connection(turn_env, monkeypatch):
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 2)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    conn = turn_env["conn"]
+    conn.research, conn.tool_call_count = _INCOMPLETE, 3
+    _run(turn_env, _good())
+    hook = turn_env["options"]["stop_hook"]
+    assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
+    assert [f for f in logged if f.get("ev") == "nudge"] == [{"ev": "nudge", "turn_id": "turn-1", "n": 1, "max": 2}]
+    assert any("SELECT doc FROM documents" in s and p == ("proj-1",) for s, p in conn.executed), "research.json by project"
+    assert any("SELECT count(*) FROM tool_calls" in s and p == ("turn-1",) for s, p in conn.executed), "the turn's calls"
+    assert _call(hook, {}) == {}, "no new tool call: allowed"
+    conn.tool_call_count = 4
+    assert _call(hook, {})["decision"] == "block"
+    conn.research, conn.tool_call_count = _DONE, 9
+    assert _call(hook, {}) == {}, "completed: allowed"
+    assert [f["n"] for f in logged if f.get("ev") == "nudge"] == [1, 2]
+
+
+class NudgingClient(FakeClient):
+    """The CLI's stream with two voluntary yields the Stop hook vetoes before the result."""
+
+    def __init__(self, info, state) -> None:
+        super().__init__([], info)
+        self.state = state
+
+    async def receive_response(self):
+        yield _init()
+        hook, conn = self.state["options"]["stop_hook"], self.state["conn"]
+        conn.research, conn.tool_call_count = _INCOMPLETE, 1
+        assert (await hook({"stop_hook_active": False}, None, {}))["decision"] == "block"
+        conn.tool_call_count = 2
+        assert (await hook({"stop_hook_active": True}, None, {}))["decision"] == "block"
+        yield _text("done")
+        yield _result()
+
+
+def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
+    turn_env["client"] = NudgingClient(_info(AGENTS, 28), turn_env)
+    summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert summary["nudges"] == 2
+    sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
+    assert "nudges = COALESCE(%s, nudges)" in sql and params[-2] == 2, params
+
+
+def test_read_research_and_count_tool_calls_read_the_rows():
+    conn = FakeConn()
+    conn.research, conn.tool_call_count = {"project": {"status": "x"}}, 7
+    assert worker.read_research(conn, "proj-1") == {"project": {"status": "x"}}
+    assert conn.executed[-1][1] == ("proj-1",) and "name = 'research.json'" in conn.executed[-1][0]
+    assert worker.count_tool_calls(conn, "turn-1") == 7 and conn.executed[-1][1] == ("turn-1",)
+    conn.research = ["not", "a", "dict"]
+    assert worker.read_research(conn, "proj-1") is None
+    conn.research = None
+    assert worker.read_research(conn, "proj-1") is None
 
