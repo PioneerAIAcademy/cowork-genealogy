@@ -1222,6 +1222,40 @@ describe("personReadTool — sibling fan-out", () => {
     expect(edges.sort()).toEqual([`${DAD}->${sib}`, `${MUM}->${sib}`].sort());
   });
 
+  it("does not re-emit a SIBLING edge the subject's own read already carried", async () => {
+    // `pruneCaprs` seeds its `seen` set from `edgeKeysOf(body)`. Nothing drove
+    // that seeding: emptying it (`new Set<string>()`) left all 58 tests green.
+    // The sibling case below is what it is actually for, and it is reachable --
+    // `childAndParentsRelationships` reaches ONE HOP FURTHER than `persons[]`,
+    // so the subject's own read can already name a sibling's parentage, which
+    // the parent read then names again. The neighbouring test does not cover
+    // it: there the echoed CAPR has `child === pid`, which the merge loop
+    // skips outright, so the dedup never runs at all.
+    const sib = "SIB-200";
+    route({
+      [SUBJECT]: {
+        persons: [SUBJECT, DAD, MUM, sib].map((id) => person(id, `P ${id}`)),
+        relationships: [],
+        childAndParentsRelationships: [capr(SUBJECT, DAD, MUM), capr(sib, DAD, MUM)],
+      },
+      [DAD]: {
+        persons: [person(DAD, "Dad"), person(sib, "Sibling")],
+        relationships: [],
+        childAndParentsRelationships: [capr(sib, DAD, MUM)],
+      },
+      [MUM]: { persons: [person(MUM, "Mum")], relationships: [], childAndParentsRelationships: [] },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    const edges = out.relationships
+      .filter((r) => r.type === "ParentChild" && r.child === sib)
+      .map((r) => `${r.parent}->${r.child}`);
+    expect(edges.filter((e) => e === `${DAD}->${sib}`)).toHaveLength(1);
+    expect(edges.sort()).toEqual([`${DAD}->${sib}`, `${MUM}->${sib}`].sort());
+  });
+
   it("does not re-emit an edge the subject's own read already carried", async () => {
     route({
       [SUBJECT]: subjectBody([DAD]),
