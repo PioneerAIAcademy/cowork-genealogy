@@ -38,7 +38,7 @@ Thénot to Marie Badoux. The fixture therefore resolves to outcome (c): an
 `avoid` guard against attaching Claudine to Marie Badoux, paired with a
 `required` finding that the report documents the rejection.
 
-**Second opinion: Richard Chesworth (senior genealogist)**, who confirms the
+**Second opinion: Richard Chesworth (senior developer)**, who confirms the
 false match. The card required one — difficulty is `hard`, and roughly half the
 hints in this batch are false matches.
 
