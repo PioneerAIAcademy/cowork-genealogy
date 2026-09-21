@@ -492,10 +492,14 @@ proto-turn: $(ENGINE_BUILD) ## D9–10 acceptance: two real turns through web ti
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
 
 # The worker reads the FamilySearch token per turn from apps/server/proto/.fs-token;
-# a token lives an hour, so refresh it under the running worker before a long run's
-# later turns (no restart, no lost turn).
+# a token lives an hour, so run this between turns of a long run (no restart, no lost
+# turn). It FORCES a refresh when under 35 minutes are left (PROTO_TOKEN_MIN_LIFE, default
+# 30 -- the READ_TIMEOUT_S step ceiling in minutes, so the token outlives a full-length
+# turn -- plus the auth module's 5-minute expiry buffer); getValidToken hands back a token
+# that has not yet expired, so the same call at minute 52 was a no-op. Start the session
+# with `make e2e-login`: nothing here can renew a dead refresh token.
 .PHONY: proto-token
-proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker reads per turn (tokens live an hour)
+proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker reads per turn (forced when under 35 min of life is left)
 	@. apps/server/proto/env.sh
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
