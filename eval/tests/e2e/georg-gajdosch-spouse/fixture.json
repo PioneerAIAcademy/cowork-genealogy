@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 7, hint-samples.csv row 243, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a 1718 Moravian baptismal index entry; unverified. The hint conflicts with the tree's recorded wife (Dorothea vs Catharina)."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 7, hint-samples.csv row 243, flags adds_spouse/adds_daughter, confidence 3). Resolved 2026-09-16 (issue #2300): FALSE MATCH. Lidečko held two contemporaneous Georg Gajdosch couples — baptisms eight days apart in 1714 name Dorothea and Catharina as mothers, so they are neither one woman nor successive wives. The tree person rests solely on the Dorothea entry; the 1718 Anna baptism belongs to the Catharina couple. Findings are an avoid/required pair; no substitute daughter exists in the collection."
 }

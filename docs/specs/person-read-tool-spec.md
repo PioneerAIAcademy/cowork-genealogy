@@ -29,7 +29,8 @@ etc.) and is out of scope for v1.
 |-------|------|----------|-------------|
 | `personId` | string | **Yes** | FamilySearch person ID (e.g., `"KNDX-MKG"`). |
 | `relatives` | boolean | No | Include parents, spouses, and children. Defaults to `false`. |
-| `sourceDescriptions` | boolean | No | Include attached source citations. Defaults to `false`. |
+| `sourceDescriptions` | boolean | No | Include attached source citations — and, for a non-living subject, that person's source-style memories. Defaults to `false`. |
+| `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`. A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept. |
 
 Examples:
 
@@ -47,6 +48,10 @@ Examples:
 
 ```json
 { "personId": "KNDX-MKG", "relatives": true, "sourceDescriptions": true }
+```
+
+```json
+{ "personId": "KNDX-MKG", "sourceDescriptions": true, "projectPath": "/home/me/projects/clegg" }
 ```
 
 ---
@@ -136,7 +141,61 @@ Present when `sourceDescriptions: true`. Each source object:
 | `title` | string | yes | Source title |
 | `citation` | string | no | Formatted citation string |
 | `url` | string | no | URL to the source (ark URL or external URL) |
-| `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Omit when empty. |
+| `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Also carries the tool's own note when a memory was not transcribed (see below). Omit when empty. |
+| `text` | string | no | A memory's text: a story's own words, or OCR of a scan. Absent for an ordinary tree source, and absent for a memory that was not transcribed. |
+| `image_ref` | string | no | Project-relative path (`images/<key>.jpg`) of a retained memory scan. Present only when `projectPath` was supplied and the save succeeded. |
+| `artifactUrl` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe`/`image_read` accept as `memoryArtifactUrl`; `url` is the human `/memories/<id>` page and is refused. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
+
+#### Memories are merged into `sources[]`
+
+For a **non-living subject**, `sourceDescriptions: true` also returns that
+person's **source-style memories** as ordinary entries in `sources[]` — nothing
+else changes. The top level stays `{persons, relationships, sources}`: there is
+no new key and **no memory-vs-source discriminator**, so no downstream reader
+has to branch on where a source came from (lead, 2026-08-21). Memory ids and
+tree source-description ids are disjoint id spaces (`3475` vs
+`SD_PERSON_KWCJ-RN4`, measured 0 overlap), so the two never collide.
+
+**The filter is a proxy on media kind, not an exact test.** FamilySearch
+classifies a memory as photo / document / story / audio, **the uploader chooses
+it**, and it is not derived from content — no field in the payload answers "is
+this a source". So the tool returns *most* source-style memories and *only
+rarely* a non-source one, and **it will miss a record scan filed under Photos**.
+The one payload-verifiable non-source marker is the person's designated
+portrait, which is excluded. Audio and video are dropped.
+
+**Scope: the subject only.** Memories are never fetched for relatives, whatever
+`relatives` is set to.
+
+**Transcription (decisions 3 and 4).** Every memory the filter keeps is
+transcribed inside the read: a story's full text is fetched from its artifact,
+and a scan or PDF is OCR'd through the same `image_transcribe` path. Both land
+in `text`, so nothing downstream branches on how the text was obtained, and
+both reach `research.json` `sources[].transcription` by the same route. A
+story's payload text is a 200-character preview cut mid-word, so the artifact is
+the only route to the whole story; when that artifact is unavailable the field
+is left **absent rather than filled with the preview**, which would read as a
+complete short story.
+
+The phase runs under **one ~40s wall-clock budget for the whole phase**, about
+five transcriptions in flight, in record-language rank order, with **no count
+cap**. The budget exists for the Cowork device bridge's 60s abort on every MCP
+call: an unbudgeted phase does not cost a transcription, it costs the whole
+person read. **Anything the budget did not reach still comes back** — as a
+metadata entry whose `notes` says why, never dropped. **No OCR failure can fail
+the read**: a missing OpenRouter key, an OpenRouter error, a timeout, or a 403
+on the artifact all degrade to a metadata-only entry.
+
+A memory the budget skipped, the filter missed, or the OCR failed on can be read
+directly with `image_transcribe`'s `memoryArtifactUrl` input. **The value to pass
+is the source's `artifactUrl`, not its `url`** — `url` is the human
+`/memories/<id>` page and `memoryArtifactUrl` refuses it. Like `text` and
+`notes`, `artifactUrl` is response-only: it is absent from `TREE_SOURCE_FIELDS`,
+so a caller copying a memory source into `tree.gedcomx.json` must drop it, and
+the write fails loudly rather than silently persisting it.
+
+A **merged** person (301) is resolved before any of this runs: memories are
+fetched for the id the redirect landed on, not the id the caller passed.
 
 ### Example output
 
@@ -499,6 +558,37 @@ For each entry in `sourceDescriptions[]`:
 **Filter:** Skip entries where `id.startsWith("SD_")` — these are
 metadata, not real sources.
 
+##### Memories (same array, subject only, non-living only)
+
+A second call to `GET /platform/tree/persons/{pid}/memories` runs under the same
+flag. It **pages to completion** — the endpoint pages at 25 and the last page is
+a **204 with an empty body**, so a pager that calls `.json()` unconditionally
+throws on the final hop. Each kept memory converts to the same source shape:
+
+| Memories field | Simplified field | Conversion |
+|-------------------|-----------------|------------|
+| `id` | `id` | Copy directly. Memory ids and `sourceDescription` ids are disjoint id spaces (`3475` vs `SD_PERSON_KWCJ-RN4`, measured 0 overlap), so no dedupe is possible or needed. |
+| `titles[0].value` | `title` | Flatten; fall back to `artifactMetadata[0].filename`, then to `FamilySearch memory <id>`. Never empty — an empty title fails the downstream write. |
+| `links.memory.href` | `url` | The user-visible memory URL, **not** `about` (which is the bytes URL). |
+| story text / OCR | `text` | See the transcription paragraph above. Absent when not transcribed. |
+| — | `image_ref` | Set only when `projectPath` was given and the scan was retained. Retention covers `image/*` ONLY, and the file is keyed by the **memory id** (`images/<memory id>.jpg`). A PDF is transcribed but not retained: `imageFilenameFor` writes `.jpg` and `gcUnreferencedImages` sweeps `images/*.jpg`, so a retained PDF would sit under a name the viewer cannot render and the GC mis-handles. Its `url` always leads back to the artifact. |
+| — | `notes` | The tool's own note when a memory was not transcribed. |
+
+**Kept:** `application/pdf`; anything of media kind `Document` or `Story`; and
+anything whose title or description preview matches record-document language.
+**Dropped:** `audio/*` and `video/*` unconditionally, and the person's
+designated portrait (`/tree/persons/{pid}/portrait`). The media kind comes from
+`artifactMetadata[].qualifiers[].name`
+(`http://familysearch.org/v1/{Photo,Document,Story}`) and **the uploader chose
+it** — hence the proxy caveat above.
+
+**Scope:** the subject only, never per relative, whatever `relatives` is set to.
+Skipped entirely when the subject is living, and when `sourceDescriptions` is
+false.
+
+**Fail-soft:** any failure of the memories fetch returns the tree sources alone.
+`person_read` never fails because of memories or transcription.
+
 ---
 
 ## Error Handling
@@ -513,6 +603,11 @@ metadata, not real sources.
 | Living person (204) | Return result with the person having `living: true`, no facts |
 | Rate limited (429) | Throw: `"FamilySearch rate limit reached. Wait a moment and try again."` |
 | Non-OK status (other) | Throw: `"FamilySearch tree API error: {status}"` |
+| Memories fetch fails (any status, timeout, or throw) | **Never throws.** Return the tree sources alone and write one line to stderr. The person read is the contract; memories are an enrichment. |
+| Portrait fetch fails | **Never throws.** Treated as "no portrait", so the merge still runs — at worst one profile photo is not suppressed. Losing it must not cost the whole merge. |
+| Transcription fails for one memory (no `openRouterApiKey`, OpenRouter error, timeout, artifact 403) | **Never throws.** That memory degrades to a metadata-only entry carrying a `notes` line naming `image_transcribe` as the retry route. Other memories are unaffected. |
+| Transcription budget expires | **Never throws.** Memories not reached come back as metadata-only entries with a `notes` line saying the budget ran out. Nothing is dropped, and the budget is not extended. |
+| Story artifact unavailable | `text` is left **absent** rather than filled with the payload's 200-character preview, which is cut mid-word. A `notes` line records it. |
 
 ---
 

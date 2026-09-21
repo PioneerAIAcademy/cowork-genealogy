@@ -7,7 +7,8 @@ FamilySearch problem and went off debugging the wrong credential. The
 misdirection is the cost, not the wording.
 
 **There is no user-fault branch, by construction.** The only credential the SDK
-holds at this boundary is the control plane's own ``ANTHROPIC_API_KEY``. A
+holds at this boundary is the control plane's own ``ANTHROPIC_API_KEY`` (or its
+proxy token, which the credential proxy validates and replaces). A
 FamilySearch token expiry never reaches these handlers — it is raised inside the
 MCP server and comes back as a *tool result*, which the model reads and acts on.
 So an SDK auth failure here is always operator-side, and a "was it the user's

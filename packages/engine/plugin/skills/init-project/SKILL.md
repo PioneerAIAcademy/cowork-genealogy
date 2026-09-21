@@ -124,6 +124,8 @@ Present ranked candidates with `personId`, confidence, key facts. In single-turn
 
 Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true })`. **Both flags are required** — they default to `false`, and without them the call returns ONLY the subject's own facts (`relationships: []`, `sources: []`), which imports a subject-only tree with no spouse, children, or sources (issue #1475). With the flags it returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, and source descriptions. Auth error → tell user to log in.
 
+**Pass `projectPath` too.** For a non-living subject the `sources` array also carries that person's **memories** — scanned wills, certificates, obituaries, family stories — each with `text` when the read transcribed it, `image_ref` when a scan was retained, and a `notes` entry when it was not. `projectPath` is what retains those scans; without it they are transcribed but not kept.
+
 **User-stated facts vs. FamilySearch conflicts:**
 - **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)
 - **Research objective:** use user's stated facts (reflects user's understanding)
@@ -136,7 +138,7 @@ Build the simplified-GedcomX document in memory — you pass it to `project_crea
 
 **`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
 
-**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array — minus `notes`, which is not an allowed source field and fails the write. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
+**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifactUrl`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
 
 **ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), and rewrite every relationship endpoint to the new person IDs.
 
@@ -200,6 +202,24 @@ Then relay to the user that the project was created, naming the folder.
 
 Record it **only** when the researcher volunteers access unprompted — the question was dropped, not the field. The enum is closed, so normalize before writing: case-fold and map to `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner` (a partner subscription held through FamilySearch), `LibraryAccess` (public library, family history centre, or affiliate library), or `other` for anything unrecognized. A plain FamilySearch account is the baseline everyone has — never store it. If nothing survives normalization, omit the field; never write `["none"]` or `[]`.
 
+**Memory sources** — for each Step 3 source that arrived with `text`, one `{ section: "sources", op: "append", entry: {...} }`. Put the `text` verbatim in `transcription`, the source's `image_ref` in `image_filename` (omit if absent), and point `gedcomx_source_description_id` at that SAME source's id in the tree you just wrote — never a second, duplicate entry for it. `source_classification` is `original` for a scanned record, `derivative` when the memory is a transcription or abstract of one, `authored` for a family-written story. Fill the rest from the memory itself:
+
+```
+{ "section": "sources", "op": "append", "entry": {
+    "gedcomx_source_description_id": "S3",
+    "citation": "\"Last Will and Testament of Almon G. Clegg,\" digital image, FamilySearch Memories (https://www.familysearch.org/memories/228755097 : accessed 15 September 2026), memory 228755097, uploaded to the profile of Almon Giles Clegg (KWCJ-RN4).",
+    "citation_detail": { "who": "Almon G. Clegg (testator)", "what": "Last will and testament", "when_created": "1952", "when_accessed": "2026-09-15", "where": "FamilySearch Memories", "where_within": "memory 228755097" },
+    "source_classification": "original",
+    "repository": "FamilySearch Memories",
+    "access_date": "2026-09-15",
+    "url": "https://www.familysearch.org/memories/228755097",
+    "transcription": "<the source's text, verbatim>",
+    "image_filename": "images/228755097.jpg"
+} }
+```
+
+A memory whose `notes` says it was not transcribed gets **no** `sources` entry — never one with `transcription: null`. It is already in `tree.gedcomx.json` with its title and URL, which is the lead; a `sources` entry would assert it was examined. Name each one in the Step 5 report, which has a bullet for them. If no memory was transcribed, `sources` stays empty.
+
 **`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
 ### 5. Pedigree analysis and project summary
@@ -247,6 +267,8 @@ here, only the framing changes.
 - The two or three gaps that set the first research question — gaps on people the
   objective does not cover are context only, not proposed research
 - Known holdings recorded (if any) and what each contributes
+- Any scanned documents or photos on the profile that could not be read this
+  time — name each one and say they can be read later
 - One sentence on what comes next, defining "objective" and "research
   question" on first use — never "use question-selection to…": "Your objective
   is the overall goal — <restate it>. The next step is the first research

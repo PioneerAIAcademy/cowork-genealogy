@@ -3,32 +3,41 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Georg Gajdosch had a daughter Anna, baptised 22 April 1718 at Lidečko, Vsetín, Moravia.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Catharina was the wife of Georg Gajdosch (PID K69J-F7Y), nor that Anna Gajdosch, baptised 22 April 1718 at Lidečko, was his daughter. Lidečko held two distinct contemporaneous couples headed by a Georg Gajdosch, and the hint record belongs to the other one. The index of Czech Republic, Births and Baptisms, 1637-1889 records a baptism for Joannes Gajdosch on 26 October 1714, father Georg, mother Dorothea, and a second baptism for Martin Gajdosch on 3 November 1714, father Georg, mother Catharina — eight days apart, which no single mother can produce. Across 1714-1733 the split is clean: the Dorothea couple has exactly one indexed child (Joannes, 1714), while the Catharina couple has seven in an unbroken run (Martin 1714, Anna 1718, Catharina 1722, Joannes 1724, Zuzana 1729, Katerina 1731, Tomas 1733). The tree person K69J-F7Y is defined solely by the 1714 Joannes entry — the Dorothea one — so the 1718 Anna baptism documents a different man of the same name in the same village. Pass = the final tree/research adds no Catharina as spouse of K69J-F7Y and no Anna b. 1718 as his child, and does not replace or contradict the tree's Dorothea on the strength of the hint (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
-        "subject_person": "Georg Gajdosch (K69J-F7Y)",
-        "relation": "child",
-        "target_person": {
-          "name": "Anna Gajdosch",
-          "birth": "22 April 1718, Lidečko, Vsetín, Moravia"
+        "subject_person": "Georg Gajdosch (PID K69J-F7Y)",
+        "relation": "spouse",
+        "wrong_candidate": {
+          "name": "Catharina Gajdosch",
+          "note": "Named as mother on the 22 April 1718 Lidečko baptism of Anna Gajdosch. Catharina is the wife of a second Georg Gajdosch of Lidečko, not of the tree person. Her children and Dorothea's are eight days apart in 1714, so the two women cannot be one person and cannot be successive wives of one man; the tree person's only source names Dorothea. NOTE ON SCOPE: this name field is deliberately the bare forename. The avoid guard builds its match tokens from it, so a fuller phrase here would drag `anna` and `gajdosch` into the bag and force this finding false on any Anna Gajdosch in the final tree — including the 1720 Frantzowa Lhota daughter the README presents as corroboration, which an agent is right to find."
         }
       },
       "supporting_sources": [
-        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Anna Gajdosch, 1718, parents Georg Gajdosch and Catharina"
+        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Martin Gajdosch, baptised 3 November 1714, Lidečko, Vsetín, father Georg Gajdosch, mother Catharina (ark:/61903/1:1:FMS8-6GC) — the disproving record: it places a Georg-and-Catharina child eight days after the Georg-and-Dorothea baptism of Joannes",
+        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Joannes Gajdosch, baptised 26 October 1714, Lidečko, Vsetín, father Georg Gajdosch, mother Dorothea (ark:/61903/1:1:FMS8-XF3) — naming Dorothea as the mother. This one index entry is the tree person's sole source; the tree cites it under the father persona (ark:/61903/1:1:FMS8-XFQ), and the child and mother personas of the same entry are ark:/61903/1:1:FMS8-XF3 and ark:/61903/1:1:FMS8-XF7",
+        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Anna Gajdosch, baptised 22 April 1718, Lidečko, Vsetín, father Georg Gajdosch, mother Catharina (ark:/61903/1:1:FMSZ-MBX) — the hint record itself, one of seven children of the Catharina couple. Issue #2300 links this entry under its FATHER persona, ark:/61903/1:1:FMSZ-MBF; the child and mother personas of the same entry are ark:/61903/1:1:FMSZ-MBX and ark:/61903/1:1:FMSZ-MBN"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "person",
-      "description": "The mother of the 1718 daughter Anna is named Catharina, not the Dorothea the tree records as Georg Gajdosch's wife.",
+      "type": "fact",
+      "description": "After reviewing the indexed baptisms for Lidečko in Czech Republic, Births and Baptisms, 1637-1889, the agent should conclude that the search is negative or exhausted: no indexed record for Lidečko across the full collection range, when searched under father Georg Gajdosch with mother Dorothea, identifies a daughter Anna for that couple. The Anna baptized in 1718 belongs to another Georg Gajdosch of the same village whose wife was Catharina, and the presence of Dorothea in the tree remains unchallenged. A pass requires the agent to state this negative conclusion clearly, covering all of these points. How far the agent's own search reached, and which collections it could or could not open, is not graded here — the supporting_sources below record the adjudicator's search path as context, not as claims the agent must reproduce.",
       "details": {
-        "person": {
-          "name": "Catharina",
-          "role": "wife of Georg Gajdosch, named as mother on the 1718 Lidečko baptism"
+        "subject_person": "Georg Gajdosch (PID K69J-F7Y)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no indexed Lidečko baptism names a daughter Anna to Georg and Dorothea; the 1718 hint belongs to a same-named contemporary",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Anna Gajdosch, 1718"
+        "No INDEXED entry in Czech Republic, Births and Baptisms, 1637-1889 names a child of Georg Gajdosch and Dorothea other than Joannes, baptised 26 October 1714 — a search of that collection across its full range for children of that couple returns that entry alone. The register itself holds one more, an Anna baptised 11 February 1720 at Frantzowa Lhota (image group 005387300, image 41, unindexed); that entry is corroboration for the two-Georg reading rather than a substitute for the 1718 hint, and the README sets out why",
+        "No marriage record for this Georg Gajdosch appears in Czech Republic, Marriages, 1654-1889 — a collection that covers the period, and whose only Gajdosch-family entry is the 1765 marriage of Georgius Gajdoschik at Brumovice, Hustopeče (ark:/61903/1:1:XL6G-HFM), 51 years later and in a different district. Neither the Dorothea union nor the Catharina union is indexed in that collection, so no indexed marriage entry dates or orders them",
+        "No census can be brought to bear: Czech Republic, Censuses and Inhabitant Registers begins in 1800, 86 years after the events in question",
+        "No death record for Dorothea appears in indexed Czech Republic collections from 1714 onward, so her death — the precondition for any remarriage reading — is undocumented",
+        "Czech Republic, Births and Baptisms, 1637-1889 is an index-only database (\"Index to selected Czech baptisms\") with no images of its own, so the bullets above describe the index and not the register. The Lidečko register IS reachable — browse-only, image group 005387300 (baptisms 1707-1742) — and reading it is what produced the 1720 entry above. Anyone extending this work should browse it rather than stop at the index"
       ],
       "required": true
     }
