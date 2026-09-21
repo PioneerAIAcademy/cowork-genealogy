@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_citation_021",
+    "skill": "citation",
+    "name": "An original death certificate still cites as a record, not an authored work (src_003)",
+    "type": "positive",
+    "description": "Negative direction for #2542: src_003 is an original Iowa death certificate. Adding the authored-work template must not let it capture original records. The skill must cite src_003 with the vital-records (death certificate) template — the issuing state agency as creator, the certificate number, the death date and place, the archive, and the digital access path — and must NOT apply the authored-work template (no author, no publisher, no place of publication).",
+    "tags": ["original", "death-certificate", "negative-direction", "src_003"]
+  },
+  "input": {
+    "user_message": "Refine the citation for src_003, Bridget Fallon's Iowa death certificate.",
+    "scenario": "citation-authored-sources"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "The citation must follow the death-certificate (vital records) record template: the issuing state agency as creator (Iowa Bureau of Vital Statistics — on file, not 'FamilySearch' the repository), the certificate number, the death date and place, then the digital access path and access date.",
+    "The authored-work template must NOT fire on this source. There is no author, no title, no place of publication, no publisher, and no year-of-publication for a death certificate — writing any of those, or citing it as if it were a book, is the over-capture failure this test guards against.",
+    "This confirms the new authored-work template did not disturb the record templates: an original record still cites as a record.",
+    "Source fidelity: the certificate number, death date, place, and issuing agency are on file and must be carried; do not invent locators. where_within holds the certificate number. Do not fabricate values in persisted fields or output.text_response.",
+    "Must NOT change source_classification (stays 'original'), must NOT create a new source entry (refine src_003 in place), and must call validate_research_schema after writing."
+  ]
+}

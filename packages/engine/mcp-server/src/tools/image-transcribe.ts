@@ -382,7 +382,16 @@ export async function imageTranscribeTool(
   // research_append GCs images no source ends up citing.
   let imageRef: string | undefined;
   if (input.projectPath) {
+    // SCANS ONLY, and enforced here rather than only in person_read's caller.
+    // `imageFilenameFor` hardcodes `.jpg` and `gcUnreferencedImages` sweeps
+    // `images/*.jpg`, so retaining a PDF writes PDF bytes under a .jpg name --
+    // unreadable to the viewer and mis-swept by the GC. `memoryArtifactUrl`
+    // newly accepts application/pdf and `projectPath` is on this tool's own
+    // schema, so this path is reachable straight from the LLM; it is also
+    // exactly the call a budget-skipped memory's note invites, and PDFs carry
+    // the wills. The text is still returned -- only retention is refused.
     try {
+      if (!contentType.toLowerCase().startsWith("image/")) throw new Error("not an image");
       imageRef = await saveSourceImage({
         projectPath: input.projectPath,
         // `label` is the caller's input verbatim, which for a memory artifact

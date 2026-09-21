@@ -153,6 +153,35 @@ describe("imageTranscribeTool — request + happy path", () => {
     }
   });
 
+  it("transcribes a PDF memory artifact but REFUSES to retain it", async () => {
+    // person_read's caller already refuses this (person-read.ts, `retain`), but
+    // this tool is reachable straight from the LLM -- projectPath is on its own
+    // schema and application/pdf is newly accepted for memoryShape -- and it is
+    // exactly the call a budget-skipped memory's note invites. Retaining would
+    // write PDF bytes to images/<key>.jpg: unreadable to the viewer, and
+    // mis-swept by a GC that globs *.jpg. The TEXT is still the point, so it
+    // must still come back.
+    fetchFsImageBytesMock.mockResolvedValue({
+      bytes: new Uint8Array([0x25, 0x50, 0x44, 0x46]), // %PDF
+      contentType: "application/pdf",
+      sizeBytes: 4,
+      resolvedUrl: "https://sg30p0.familysearch.org/x/dist.pdf",
+    });
+    mockOpenRouterOk("Last will and testament of Almon Clegg");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-pdf-"));
+    try {
+      const result = await imageTranscribeTool({
+        memoryArtifactUrl: "https://sg30p0.familysearch.org/x/dist.pdf",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.transcription).toContain("Last will and testament");
+      expect(result.imageRef).toBeUndefined();
+      await expect(readFile(join(dir, "images", "x.jpg"))).rejects.toThrow();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("omits imageRef when projectPath is not given", async () => {
     mockOpenRouterOk("Johann Schreck");
     const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);

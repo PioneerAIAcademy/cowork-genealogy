@@ -134,6 +134,10 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
+    # Same rationale as convert_calendar: pure URL-templating, no workspace or
+    # network dependency, so a canned fixture would supply the exact URL string
+    # search-external-sites' eval exists to measure.
+    "build_external_search_url",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -142,7 +146,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 
 # Tools whose returned `{"ok": false}` means the call could not do what was asked.
 #
-# The production dispatch (`src/index.ts`) marks these `isError` via
+# The production dispatch (`src/server.ts`, shared by the stdio and HTTP
+# entrypoints) marks these `isError` via
 # `writerToolResult`; this harness shells out to the compiled tools directly and
 # never goes through that dispatch, so without this mirror a failed write would
 # read as an error in production and a SUCCESS in every unit eval run.
@@ -150,7 +155,7 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
 # LIVE_TOOLS — the two that are not live here (`merge_tree_persons`,
 # `tree_forget`) have no handler to mirror. The drift lint in
-# tests/unit/test_mock_mcp.py pins that intersection, so a fourteenth tool added
+# tests/unit/test_mock_mcp.py pins that intersection, so a fifteenth tool added
 # on the TypeScript side fails here rather than silently going unmirrored.
 #
 # `merge_warnings` is deliberately absent: its `ok: false` is a dry-run verdict
@@ -174,6 +179,10 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
     # failure the agent must see as one, not a verdict like merge_warnings' dry run.
     "convert_calendar",
+    # Its `ok: false` means the requested URL could not be built (an unsupported
+    # site, a missing baseUrl on digital_newspaper_archive, or no attributes at
+    # all) - a real failure, not a verdict about the search's subject.
+    "build_external_search_url",
 }
 
 
@@ -426,8 +435,16 @@ _STAGED_COMPACTORS: dict[str, str] = {
 
 
 def _stage_and_compact_search_results(
-    workspace: Path, tool_name: str, response: dict[str, Any]
-) -> tuple[dict[str, Any] | None, dict[str, Any], list[dict[str, Any]]]:
+    workspace: Path,
+    tool_name: str,
+    response: dict[str, Any],
+    ranked: dict[str, Any] | None = None,
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any] | None,
+]:
     """Stage a mocked search response and apply the tool's own post-staging
     compaction, both by calling the compiled build.
 
@@ -443,11 +460,23 @@ def _stage_and_compact_search_results(
     in the compacted shape passes through unchanged. The third element is the staged
     backlog read before this call staged anything — handles, not a count, because
     the note names the refs (empty when unavailable).
+
+    The fourth element is the `ranked` block as production leaves it. Under the
+    #1212 ruling (2026-09-15) the rows are ANNOTATED IN PLACE with the match
+    score and returned best first, and `ranked` keeps metadata only — one row
+    list, never two — so what comes back here is `ranked` with `matches` already
+    removed. There is no drop flag: the earlier shape returned one and it was
+    always False, which read as a decision the mock was still making.
+
+    `ranked` is passed IN so the annotation runs through the compiled
+    `annotateResultsWithRanking` inside the process already running: a second
+    node process per search is the cost #2025 warns about, and a Python
+    restatement of the shaping is what eval/CLAUDE.md forbids.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not stager_js.exists():
-        return None, response, []
+        return None, response, [], ranked
 
     def _url(p: Path) -> str:
         posix = str(p).replace("\\", "/").replace("'", "\\'")
@@ -461,10 +490,33 @@ def _stage_and_compact_search_results(
         compact_import = ""
         compact_call = ""
 
+    if ranked is not None and compactor_js.exists():
+        compact_import += (
+            "import { annotateResultsWithRanking }"
+            f" from '{_url(compactor_js)}';"
+        )
+        # Production annotates the search rows with the ranking and returns them
+        # best first (#1212 ruling, 2026-09-15). The mock runs the SAME compiled
+        # function so the agent sees production's shape — one row list, scored
+        # and ordered — rather than a hand-written approximation of it. There is
+        # no longer a drop decision to probe: `results` is always present.
+        annotate = (
+            " let rankedOut = input.ranked;"
+            " if (r && input.ranked) {"
+            "   const shaped = { ...input.response, ranked: input.ranked };"
+            "   annotateResultsWithRanking(shaped);"
+            "   input.response.results = shaped.results;"
+            "   rankedOut = shaped.ranked;"
+            " }"
+        )
+    else:
+        annotate = " const rankedOut = input.ranked;"
+
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
         "tool": tool_name,
         "response": response,
+        "ranked": ranked,
     }
     script = (
         f"import {{ stageSearchResults, unloggedStagedSearches }} from '{_url(stager_js)}';"
@@ -476,21 +528,37 @@ def _stage_and_compact_search_results(
         " const unlogged = await unloggedStagedSearches(input.projectPath);"
         " const r = await stageSearchResults(input);"
         f"{compact_call}"
-        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response }));"
+        # Production's own annotation, run on a throwaway copy carrying the
+        # `ranked` this call will fold in. The ANNOTATED ROWS cross back, which
+        # is the whole output now -- there is no drop verdict any more.
+        f"{annotate}"
+        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response, ranked: rankedOut }));"
     )
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
         out = proc.stdout.strip()
         if not out:
-            return None, response, []
+            return None, response, [], ranked
         parsed = json.loads(out)
         unlogged = parsed.get("unlogged") or []
         staged = parsed.get("staged")  # StagedHandle, or null -> None
         if staged is None:
-            return None, response, unlogged
-        return staged, parsed.get("response", response), unlogged
+            return None, response, unlogged, ranked
+        return (
+            staged,
+            parsed.get("response", response),
+            unlogged,
+            parsed.get("ranked", ranked),
+        )
     except Exception:
-        return None, response, []
+        # Four values, like every other return here and like the caller's unpack.
+        # This arm exists to ABSORB a node failure, and its own recorded failure
+        # was a MISCOUNT: it once returned six against an unpack of five, which
+        # turned every node timeout into `ValueError: too many values to unpack`
+        # and made the degrade path itself the crash. Flagged 2026-09-11 and
+        # unexercised until test_stage_and_compact_degrades_on_node_failure,
+        # which asserts the arity rather than trusting it.
+        return None, response, [], ranked
 
 
 def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
@@ -636,6 +704,17 @@ def create_mock_server(
             # calling the compiled build, so the agent is graded on the shape
             # production actually sends. Only when projectPath was passed and
             # results came back; nil searches retain nothing and compact nothing.
+            # Resolved BEFORE staging so the single node process below can run
+            # production's own `annotateResultsWithRanking` over the staged rows
+            # in the same process. Only the match depends on `args`, so moving it
+            # earlier changes nothing about which fixture is chosen.
+            _rank_resp: dict[str, Any] | None = None
+            if _name == "record_search" and args.get("subjectId") and "error" not in response:
+                for predicate, _candidate_rank, _src in _rank_predicated:
+                    if matches(predicate, args):
+                        _rank_resp = _candidate_rank
+                        break
+
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -644,8 +723,13 @@ def create_mock_server(
                 and isinstance(response.get("results"), list)
                 and response.get("results")
             ):
-                staged, response, _unlogged_staged = _stage_and_compact_search_results(
-                    _workspace, _name, response
+                (
+                    staged,
+                    response,
+                    _unlogged_staged,
+                    _rank_resp,
+                ) = _stage_and_compact_search_results(
+                    _workspace, _name, response, ranked=_rank_resp
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
@@ -672,11 +756,15 @@ def create_mock_server(
                 and args.get("subjectId")
                 and "error" not in response
                 and response.get("staged")
+                and _rank_resp is not None
             ):
-                for predicate, rank_resp, _src in _rank_predicated:
-                    if matches(predicate, args):
-                        response = {**response, "ranked": rank_resp}
-                        break
+                # `ranked` carries metadata only; the rows it was scored from
+                # are already ANNOTATED on `response["results"]` and ordered best
+                # first by the compiled `annotateResultsWithRanking` run above —
+                # not by a condition restated here, because a mock that shapes
+                # rows itself grades triage against a shape production never
+                # sends. `results` is never dropped: there is one row list.
+                response = {**response, "ranked": _rank_resp}
 
             # The complement of the block above: when the caller gave a
             # projectPath but named no subject, the real record_search says so
@@ -802,6 +890,28 @@ def create_mock_server(
     return server, call_log, tools_by_name
 
 
+#: Tools served by `_make_compiled_tool_handler`: tool name -> (compiled file
+#: under build/tools/, exported function). The generic handler injects the
+#: workspace as `projectPath`; a tool that reads no projectPath
+#: (convert_calendar, build_external_search_url) ignores the inert extra key.
+#: extraction_append's lane restriction (issue #695) lives inside its export,
+#: so calling it directly here — bypassing index.ts — still enforces the lane.
+_COMPILED_TOOLS: dict[str, tuple[str, str]] = {
+    "extraction_append": ("extraction-append.js", "extractionAppend"),
+    "tree_edit": ("tree-edit.js", "treeEdit"),
+    "tree_correct": ("tree-correct.js", "treeCorrect"),
+    "materialize_facts": ("materialize-facts.js", "materializeFacts"),
+    "merge_warnings": ("merge-warnings.js", "mergeWarnings"),
+    "person_warnings": ("person-warnings.js", "personWarningsTool"),
+    "project_context": ("project-context.js", "projectContext"),
+    "research_query": ("research-query.js", "researchQuery"),
+    "project_create": ("project-create.js", "projectCreate"),
+    "convert_calendar": ("convert-calendar.js", "convertCalendar"),
+    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrl"),
+    "sidecar_read": ("sidecar-read.js", "sidecarRead"),
+}
+
+
 def _make_live_handler(
     tool_name: str,
     workspace: Path | None,
@@ -814,52 +924,10 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
-    if tool_name == "extraction_append":
-        # The record-extraction lane's writer (issue #695). Uses the generic
-        # compiled-tool handler: the lane restriction lives inside the exported
-        # extractionAppend function, so calling it directly here — as this
-        # harness does, bypassing index.ts — still enforces the lane.
-        return _make_compiled_tool_handler(
-            "extraction_append", "extraction-append.js", "extractionAppend", workspace, call_log
-        )
-    if tool_name == "tree_edit":
-        return _make_compiled_tool_handler("tree_edit", "tree-edit.js", "treeEdit", workspace, call_log)
-    if tool_name == "tree_correct":
-        return _make_compiled_tool_handler("tree_correct", "tree-correct.js", "treeCorrect", workspace, call_log)
-    if tool_name == "materialize_facts":
-        return _make_compiled_tool_handler(
-            "materialize_facts", "materialize-facts.js", "materializeFacts", workspace, call_log
-        )
-    if tool_name == "merge_warnings":
-        return _make_compiled_tool_handler(
-            "merge_warnings", "merge-warnings.js", "mergeWarnings", workspace, call_log
-        )
-    if tool_name == "person_warnings":
-        return _make_compiled_tool_handler(
-            "person_warnings", "person-warnings.js", "personWarningsTool", workspace, call_log
-        )
-    if tool_name == "project_context":
-        return _make_compiled_tool_handler(
-            "project_context", "project-context.js", "projectContext", workspace, call_log
-        )
-    if tool_name == "research_query":
-        return _make_compiled_tool_handler(
-            "research_query", "research-query.js", "researchQuery", workspace, call_log
-        )
-    if tool_name == "sidecar_read":
-        return _make_compiled_tool_handler(
-            "sidecar_read", "sidecar-read.js", "sidecarRead", workspace, call_log
-        )
-    if tool_name == "project_create":
-        return _make_compiled_tool_handler(
-            "project_create", "project-create.js", "projectCreate", workspace, call_log
-        )
-    if tool_name == "convert_calendar":
-        # Takes no projectPath; the generic handler injects one and convertCalendar
-        # reads only `date` and `corrections`, so the extra key is inert.
-        return _make_compiled_tool_handler(
-            "convert_calendar", "convert-calendar.js", "convertCalendar", workspace, call_log
-        )
+    compiled = _COMPILED_TOOLS.get(tool_name)
+    if compiled is not None:
+        js_file, export_name = compiled
+        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 

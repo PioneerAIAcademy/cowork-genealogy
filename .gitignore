@@ -21,6 +21,11 @@ releases/*
 !releases/.gitkeep
 *.log
 .DS_Store
+# Editor-local state. Nothing here is tracked, and leaving it unignored made it
+# show up as untracked in `git status --porcelain`, which is what the E2B image's
+# provenance flag reads -- so an open editor marked every image build dirty.
+.vscode/
+.idea/
 .env
 .claude/*
 !.claude/commands/
@@ -107,8 +112,11 @@ __pycache__/
 *.pyc
 # LocalProvider mock sandbox project dirs + local viewer backup mirror
 .workbench-data/
-# Local marker for the last `make sandbox-image` build (deploy-preflight staleness check)
-apps/server/sandbox/.last-image-build
+# Build provenance written into the E2B build context by build-image.sh and baked
+# into the image as BUILD_INFO.json. Generated on every build, never committed:
+# a tracked copy would dirty the tree on each `make sandbox-image` and would go
+# stale the moment anyone read it instead of rebuilding.
+apps/server/sandbox/build-provenance.json
 
 # FamilySearch-internal warnings reference (do NOT commit — see match-merge plan Prerequisites)
 warnings.java
@@ -123,3 +131,7 @@ packages/engine/mcp-server/dev/ocr-spike-out/
 # A fixture folder holds no `results/` of its own — e2e runs seed their workspace
 # under eval/e2e-project/ or eval/e2e-view/ instead.
 eval/tests/e2e/*/results/
+# The prototype worker's per-turn FamilySearch token (apps/server/proto/env.sh)
+apps/server/proto/.fs-token
+# A session's project documents exported out of the prototype store (make proto-export)
+apps/server/proto/exports/

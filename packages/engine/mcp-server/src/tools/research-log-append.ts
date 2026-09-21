@@ -31,6 +31,7 @@ import {
 } from "../utils/project-io.js";
 import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -127,6 +128,224 @@ export type ResearchLogAppendResult =
 class LogAppendError extends Error {}
 
 /**
+ * Census mentions the note actually makes: a year BOUND to the word "census",
+ * with the jurisdiction that qualifies it.
+ *
+ * Two things used to be read off the whole note and both were wrong.
+ *
+ * THE YEAR. `/\b18[0-7]\d\b/` over the whole note meant any incidental pre-1880
+ * number tripped the rule, and a census note almost always carries birth years
+ * older than the census itself: "1880 US Census ... Henry Bottermiller (head,
+ * born 1828 Germany)" was refused on the 1828.
+ *
+ * THE JURISDICTION. The doctrine is US-federal: 1880 is the dividing line
+ * there. England & Wales and Scotland gained the relationship column in 1851,
+ * so an "1871 Scotland Census household" is fully documented and was still
+ * refused. This is the second of the three objections the lead raised against a
+ * tool-boundary gate on 2026-08-27 (recorded in whitfield-1850-household.json's
+ * xfail_reason): "not generalizable outside the US (post-1851 England & Wales
+ * censuses do carry a relationship column)".
+ *
+ * MEASURED over the 3,522 distinct `notes` arguments of research_log_append in
+ * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
+ * form), measured at 414ee3c68: refusals fall 355 -> 202, and the 153 removed
+ * are 43.1% of every refusal the rule made -- 133 of them the year, 20 the
+ * jurisdiction. THE SPLIT RULE, because the figure is meaningless without it: a
+ * freed note counts as JURISDICTION when `censusMentions` bound it to a non-US
+ * threshold (a mention whose `columnFrom` is not 1880), and as YEAR otherwise.
+ * The obvious alternative -- counterfactual, "would it still be refused if every
+ * census were treated as US/1880?" -- splits the same 153 as 145 year and 8
+ * jurisdiction. The two rules disagree on exactly 12 notes, and all 12 are the
+ * same shape: a British census of 1881, 1891, 1901 or 1911, with a pre-1880
+ * BIRTH year elsewhere in the note ("1901 England census ... Robert Brierley
+ * b.1866"). None of them names a US census before 1880 -- such a note would be
+ * refused on both readings and never reach the freed set at all. What frees
+ * these is the year binding: `18[0-7]\d` matched the birth year under the old
+ * whole-note test, and bound to its own census (1901, past every threshold) it
+ * no longer does. The rule above files them under JURISDICTION because the
+ * census is non-US; the counterfactual files them under YEAR because that is
+ * what moved. That one shape is the whole 20-versus-8 gap. Neither rule is
+ * wrong; quoting a split without saying which is.
+ *
+ * Nothing in that corpus is newly refused. RE-DERIVE RATHER THAN QUOTE these:
+ * the corpus moves in both directions as run logs land, because a re-run
+ * REPLACES a skill's run log rather than adding one. Four earlier passes of
+ * this docstring read 3,275/332/136, 3,392/338/142, 3,490/355/154 and
+ * 3,489/355/153 -- it shrank by one between the last two of those and grew by
+ * 33 after them. The stamp is there so a reader can tell what the number was
+ * true of, per tests/packaging/corpus-figures.test.ts's rule 3.
+ *
+ * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
+ * leaning on it. `CENSUS_YEAR` spans 1600-1999 while the old gate was
+ * `\b18[0-7]\d\b`, so a census named before 1800 is newly refused: "1790 US
+ * Census household: John Smith head, with wife Mary" was allowed before and is
+ * refused now (1800 itself was already refused -- `18[0-7]\d` matches it -- so
+ * the boundary is 1600-1799). That behaviour is right, because the 1790-1840
+ * schedules name only the head of household and tally everyone else by age
+ * band, so the structure is inferred even more completely than on an 1850. But
+ * the rule does not only narrow, and a maintainer who believes it does will
+ * mis-predict this shape.
+ *
+ * The jurisdiction test is deliberately adjacency-bound and NOT a search of the
+ * note, because most non-US words in this corpus are birthplaces on a US
+ * schedule: "1850 US Census, Schuylkill County, PA ... born Ireland" is a US
+ * census of Irish immigrants and must stay refused. 52 of the 202 surviving
+ * refusals name a non-US place anywhere in the note (same corpus and stamp as
+ * above); read through, they are overwhelmingly that shape, so a wider window
+ * would be a regression rather than a further fix.
+ *
+ * Both are bound ADJACENTLY, never by scanning. The jurisdiction must sit in
+ * the unbroken run of words touching the census token -- punctuation ends the
+ * run -- so "born 1821 Wales, 1860 census at Cosumnes Township, California"
+ * still reads as a US 1860 census (correctly refused) rather than a Welsh one.
+ */
+type CensusMention = { year: number; columnFrom: number };
+
+const CENSUS_YEAR = String.raw`1[6-9]\d\d`;
+/** A run of years sharing one census token: "1860 and 1870 censuses". */
+const CENSUS_YEAR_RUN = String.raw`(?:${CENSUS_YEAR})(?:\s*(?:,|and|&|\/|or|to|-|–|through)\s*(?:${CENSUS_YEAR}))*`;
+/** Words allowed between the year and the token: "1900 US federal census". */
+const CENSUS_QUALIFIER = String.raw`(?:u\.?\s?s\.?|united\s+states|federal|state|national|uk|united\s+kingdom|england|english|wales|welsh|scotland|scottish|ireland|irish|britain|british|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian|colonial|population|agricultural|mortality|slave|veterans?|school|and|&)`;
+const CENSUS_TOKEN = String.raw`census(?:es)?`;
+const CENSUS_BEFORE = new RegExp(
+  String.raw`\b(${CENSUS_YEAR_RUN})\s*((?:${CENSUS_QUALIFIER}\s+){0,4})${CENSUS_TOKEN}\b`,
+  "gi",
+);
+const CENSUS_AFTER = new RegExp(
+  // The connector may be a word ("census of 1870"), punctuation ("census, 1870")
+  // or nothing at all but a space ("US Census 1880", which is how FamilySearch
+  // titles its collections). Only whitespace and these connectors may sit
+  // between, never free text -- that is what keeps "census ... born 1828" out.
+  String.raw`((?:${CENSUS_QUALIFIER}\s+){0,4})${CENSUS_TOKEN}\b(?:\s*(?:of|for|in|from|year|taken\s+in|enumerated\s+in)\s+|\s*[,:(\[-]\s*|\s+)(${CENSUS_YEAR_RUN})`,
+  "gi",
+);
+
+/**
+ * The first census year whose schedule carries a relationship-to-head column.
+ * Sources: search-records/references/census-field-availability.md -- US "1880,
+ * the dividing line"; England & Wales "1851 onward -- relationships and exact
+ * ages", 1841 having none. Scotland follows E&W. A jurisdiction named but not
+ * listed here returns null, which SKIPS the rule rather than guessing: the
+ * doctrine is documented for these two only, and a wrong refusal blocks a
+ * researcher mid-write.
+ */
+function relationshipColumnFrom(qualifier: string): number | null {
+  const q = qualifier.toLowerCase();
+  if (/\b(?:england|english|wales|welsh|scotland|scottish|britain|british|uk|united\s+kingdom)\b/.test(q)) {
+    return 1851;
+  }
+  if (/\b(?:ireland|irish|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian)\b/.test(q)) {
+    return Number.NaN; // named, non-US, undocumented here -> skip
+  }
+  return 1880; // unqualified or explicitly US/federal
+}
+
+export function censusMentions(notes: string): CensusMention[] {
+  const out: CensusMention[] = [];
+  const push = (years: string, qualifier: string, post: string) => {
+    const from = relationshipColumnFrom(`${qualifier} ${post}`);
+    if (from === null || Number.isNaN(from)) return;
+    for (const y of years.match(new RegExp(CENSUS_YEAR, "g")) ?? []) {
+      out.push({ year: Number(y), columnFrom: from });
+    }
+  };
+  for (const m of notes.matchAll(CENSUS_BEFORE)) {
+    const post = notes.slice(m.index + m[0].length, m.index + m[0].length + 24);
+    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "");
+  }
+  for (const m of notes.matchAll(CENSUS_AFTER)) push(m[2], m[1] ?? "", "");
+  return out;
+}
+
+/**
+ * Refuse a pre-1880 US census note that states household structure as fact.
+ *
+ * 1850/1860/1870 carry NO "relationship to head" column. Every "head" / "wife" /
+ * "son" read off such a household -- and the record's own ParentChild/Couple
+ * edges, which are the indexer's inference from the same signals -- is an
+ * inference, not something the census stated. A note asserting it flat records a
+ * relationship the source cannot support, and a later reader has no way to tell
+ * it from a stated one.
+ *
+ * ENFORCED HERE RATHER THAN IN PROSE because it is decidable from the note
+ * alone, which is ADR-0011's test for a writer-tool precondition. The prose rule
+ * has been in search-records/SKILL.md since issue #1284 and adherence is
+ * measurably partial: across the five committed run logs the marker appears in
+ * 32 of 43 logged searches, and issue #1912's flat "plus sons Thos T McElwee and
+ * Stephen McElwee" is real production text.
+ *
+ * DELIBERATELY NARROWER THAN THE EVAL VALIDATOR, whose pattern sets have been
+ * re-tuned three times (#1284, #1642, #1912) for false positives and negatives.
+ * Porting them wholesale into a hard refusal would inherit that history, and a
+ * wrong refusal blocks a researcher mid-write. This fires only where all three
+ * parts are unambiguous, and a note that trips it can always be fixed by saying
+ * what is true -- so the refusal is always actionable.
+ */
+export function requirePre1880CensusHedge(notes: string): void {
+  const text = notes.toLowerCase();
+  // `\bcensus\b`, singular only, KNOWINGLY: a note saying just "censuses"
+  // bypasses the rule entirely ("Traced the family across the 1850 and 1860 US
+  // censuses ... head of household Thomas Flynn" writes clean today). Widening
+  // to `census(?:es)?` was measured and reverted -- it adds 4 refusals of which
+  // 2 are research PLANS rather than claims ("check 1850 and 1860 censuses for
+  // a woman named Margaret in the Thomas Flynn household"). The rule cannot
+  // tell a plan from a claim, which is a pre-existing weakness that fixing the
+  // gate merely exposes on more notes, and it is the real objection here. Do
+  // not widen this without solving that first.
+  if (!/\bcensus\b/.test(text)) return;
+
+  // Tie the year to the census it qualifies. When no year binds to a census
+  // mention at all the note is undecidable on that axis, so fall back to the
+  // old whole-note test rather than letting an unhedged 1870 household through
+  // on a phrasing the patterns above do not cover. A note that reaches THIS
+  // branch gets its pre-change verdict, because the fallback below is the old
+  // gate verbatim and the `\bcensus\b` test above it is unchanged. That is a
+  // claim about this path and nothing wider: the rule as a whole does NOT only
+  // narrow -- a census named before 1800 is newly refused, and it is refused on
+  // the bound branch, never reaching this one. See the docstring's 1600-1799
+  // boundary, pinned by "refuses a census named before 1800, which the old
+  // whole-note test allowed".
+  const bound = censusMentions(notes);
+  const namesColumnlessCensus = bound.length > 0
+    ? bound.some((m) => m.year < m.columnFrom)
+    : /\b18[0-7]\d\b/.test(text);
+  if (!namesColumnlessCensus) return;
+
+  const describesHousehold =
+    /\b(household|dwelling|co-?resident|enumerated with|living with)\b/.test(text);
+  // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
+  // and Stephen". The lookbehind excludes the possessive form -- "searched for
+  // his wife Catherine" names a TREE-side relative who may be absent from the
+  // return, which is a statement about the tree and not about what the census
+  // stated. That carve-out is the eval validator's too, and dropping it made
+  // this refuse a compliant note.
+  const assertsKinship =
+    /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/.test(notes) ||
+    /\bhead\s+of\s+household\b/.test(text);
+  if (!describesHousehold && !assertsKinship) return;
+
+  const hedged =
+    /infer/.test(text) ||
+    /\bnot\s+(?:a\s+)?stated\b/.test(text) ||
+    /\bunstated\b/.test(text) ||
+    /\bimplied\b/.test(text) ||
+    /\bpresum\w*/.test(text) ||
+    /no\s+relationship\s+(?:to\s+head\s+)?column/.test(text) ||
+    /relationship\s+column[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b/.test(text);
+  if (hedged) return;
+
+  throw new LogAppendError(
+    "This note describes a pre-1880 US census household but states the family " +
+      "structure as fact. 1850/1860/1870 censuses have NO relationship-to-head " +
+      "column, so the structure is an inference from surname, ages and listing " +
+      "order -- as are any ParentChild/Couple edges on the record, which the " +
+      "indexer inferred the same way. Say so in the note, e.g. \"...in one " +
+      "dwelling; family structure inferred from surname, ages and order, not " +
+      "stated.\" Then re-send.",
+  );
+}
+
+/**
  * Coerce an object-typed tool argument that a model emitted as a JSON string
  * back into an object. Some models stringify nested-object params (observed
  * with `externalSite`: the call arrives as `"{\"site\":...}"` rather than an
@@ -204,19 +423,36 @@ async function applyLogAppendOp(
   //    emit `externalSite` / `query` as a JSON string instead of a nested
   //    object; without this they reach the checks below as strings and fail
   //    opaquely ("externalSite.site 'undefined' is not a valid site").
-  const externalSite = coerceObjectArg(op.externalSite, "externalSite") as
+  // 0b. Map the literal string "null" back to null on every nullable arg.
+  //     Some models emit `"null"` (the string) where they mean JSON null.
+  //     Stored verbatim on `planItemId` it becomes a bogus id reference
+  //     ("plan_item_id 'null' not found"); on the fields that carry a
+  //     validator it is worse, because it refuses the ENTIRE append:
+  //     `resultsAvailable: "null"` fails the non-negative-integer bound below,
+  //     `stagedResultsRef: "null"` fails the staging-path check, and
+  //     `externalSite: "null"` fails `coerceObjectArg`. One stringly-typed
+  //     argument then discards the log entry the caller actually wrote.
+  //
+  //     One helper over all of them rather than a mapping per field: handling
+  //     `planItemId` alone and not its siblings is the same class the integer
+  //     bound below already had to be widened for (review round 5), and
+  //     CLAUDE.md asks for one shared guard on the second instance.
+  //
+  //     Safe because `"null"` is never a legitimate value for any of these:
+  //     not a `pli_` id, not a number, not a `results/.staging/` path, not an
+  //     object. `notes` is deliberately NOT mapped — a note whose text is
+  //     "null" is odd but not invalid, and nulling a caller's prose would
+  //     discard information rather than recover it.
+  const asNull = <T,>(v: T): T | null => ((v as unknown) === "null" ? null : v);
+  const planItemId = asNull(op.planItemId);
+  const resultsAvailable = asNull(op.resultsAvailable);
+  const stagedResultsRef = asNull(op.stagedResultsRef);
+
+  const externalSite = coerceObjectArg(asNull(op.externalSite), "externalSite") as
     | ResearchLogAppendExternalSite
     | null
     | undefined;
   const query = coerceObjectArg(op.query, "query");
-
-  // 0b. Map the literal string "null" back to null for nullable scalar args.
-  //     Some models emit `planItemId: "null"` (the string) instead of JSON
-  //     null; stored verbatim it becomes a bogus id reference that fails
-  //     validation ("plan_item_id 'null' not found"). "null" is never a
-  //     valid pli_ id, so this coercion is safe.
-  let planItemId = op.planItemId;
-  if ((planItemId as unknown) === "null") planItemId = null;
 
   // 0c. planItemId must be a plan-item id (^pli_) from the active plan, or
   //     null for an opportunistic/ad-hoc search. Models sometimes stuff a
@@ -247,8 +483,55 @@ async function applyLogAppendOp(
   if (externalSite && !EXTERNAL_SITE_VALUES.has(externalSite.site)) {
     throw new LogAppendError(`externalSite.site '${externalSite.site}' is not a valid site`);
   }
+  // `urlGenerated` is the string the skill presents as the clickable link and
+  // persists into `research.json` — the same caller-composed, URL-shaped
+  // input `build_external_search_url` rejects as `invalid_base_url`. Trimmed
+  // before both the check and the write: `new URL()` strips padding itself,
+  // so a padded value would pass here and persist with its spaces.
+  const urlGenerated =
+    typeof externalSite?.urlGenerated === "string" ? externalSite.urlGenerated.trim() : externalSite?.urlGenerated;
+  if (externalSite && urlGenerated != null && !isHttpUrl(String(urlGenerated))) {
+    throw new LogAppendError(
+      `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
+    );
+  }
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
+  }
+  // Coerced the same way `resultsAvailable` is below (a model that
+  // stringifies numeric args sends `"5"`); a genuinely non-numeric string is
+  // left as-is and rejected by the check under it. That check runs before the
+  // `external_links_search` gate because the gate's `> 0` comparison is
+  // `false` for both `NaN` and a negative number. `validator.ts` enforces the
+  // same bound on the persisted `results_examined` for every writer of
+  // `log[]`; this is the fail-fast under the caller's own parameter name, the
+  // same split `planItemId` above uses.
+  const resultsExamined = coerceJsonArg(op.resultsExamined);
+  if (!isNonNegativeInteger(resultsExamined)) {
+    throw new LogAppendError(
+      `resultsExamined must be a non-negative integer; got ${JSON.stringify(op.resultsExamined)}`,
+    );
+  }
+  // This entry grades the curated-links FETCH, not the search: any links
+  // returned is a positive fetch, even when none fit the plan item's record
+  // type (that goes in notes instead). Enforced mechanically — rather than
+  // left to the model's own judgment call — because it was measured to be
+  // wrong often enough in practice to need a hard gate, not another
+  // reminder in prose. Measured 2026-09-10 against the five run logs this
+  // branch commits: 4 of 66 `external_links_search` entries, across three
+  // tests (ut_search_external_sites_002, _005, _006) and three of the five
+  // logs. (Issue #1950's census said 9 of 48; the corpus has turned over, so
+  // that figure is stale rather than wrong — re-derive rather than reword.)
+  // This gate replaced the eval validator that used to grade the same shape
+  // after the fact; refusing the write is what made that grader unfireable. Scoped to `external_links_search` only: no other
+  // tool value shares this fetch-vs-search distinction, and it is the only
+  // one search-external-sites (its sole caller) uses this way.
+  if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {
+    throw new LogAppendError(
+      `tool 'external_links_search' returned ${resultsExamined} result(s), so outcome must be ` +
+        `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
+        `results didn't fit the plan item's record type in 'notes' instead.`,
+    );
   }
 
   if (!Array.isArray(research.log)) {
@@ -266,21 +549,21 @@ async function applyLogAppendOp(
     tool: op.tool,
     query,
     outcome: op.outcome,
-    results_examined: op.resultsExamined,
+    results_examined: resultsExamined,
     external_site: externalSite
       ? {
           site: externalSite.site,
-          url_generated: externalSite.urlGenerated,
+          url_generated: urlGenerated,
           capture_received: externalSite.captureReceived,
           ...(externalSite.captureFilename !== undefined
-            ? { capture_filename: externalSite.captureFilename }
+            ? { capture_filename: asNull(externalSite.captureFilename) }
             : {}),
         }
       : null,
     results_ref: null,
   };
-  const resultsAvailableCoerced = coerceJsonArg(op.resultsAvailable);
-  if (op.resultsAvailable !== undefined && op.resultsAvailable !== null) {
+  const resultsAvailableCoerced = coerceJsonArg(resultsAvailable);
+  if (resultsAvailable !== undefined && resultsAvailable !== null) {
     // Coerced the same way `ops` is: a model sending `"5"` otherwise lands a string
     // in an integer-typed field that nothing rejects — `validator.ts` carries
     // `results_available` in field-name allow-lists with no type check. The staged-
@@ -293,9 +576,23 @@ async function applyLogAppendOp(
     // rebuilds the entry from arguments and does NOT coerce, by its own renames-only
     // contract, so a replayed entry differs from a live one for a stringly-typed
     // value. Left that way deliberately: the replay contract is a harness decision.
+    // Same bound as `results_examined` above, from the same shared predicate
+    // and for the same reason: the schema declares this `integer, minimum: 0`,
+    // and the comment above says `validator.ts` carries it in field-name
+    // allow-lists with no type check — so a NaN (which persists as `null`), a
+    // negative or a fraction reached the document unchallenged. Adding the
+    // bound to one of the two sibling fields and not the other was the second
+    // instance of one class; CLAUDE.md asks for one shared guard (review
+    // round 5).
+    if (!isNonNegativeInteger(resultsAvailableCoerced)) {
+      throw new LogAppendError(
+        `resultsAvailable must be a non-negative integer; got ${JSON.stringify(resultsAvailable)}`,
+      );
+    }
     entry.results_available = resultsAvailableCoerced as number;
   }
   if (op.notes !== undefined && op.notes !== null) {
+    requirePre1880CensusHedge(op.notes);
     entry.notes = op.notes;
   }
 
@@ -304,12 +601,12 @@ async function applyLogAppendOp(
   //    skipping the final research.json write, so record it for cleanup.
   let resultsRef: string | null = null;
   let returnedCount: number | null = null;
-  if (op.stagedResultsRef !== undefined && op.stagedResultsRef !== null) {
+  if (stagedResultsRef !== undefined && stagedResultsRef !== null) {
     let fin: Awaited<ReturnType<typeof finalizeStagedResults>>;
     try {
       fin = await finalizeStagedResults({
         projectPath,
-        stagedResultsRef: op.stagedResultsRef,
+        stagedResultsRef: stagedResultsRef,
         logId,
         expectedTool: op.tool,
       });
@@ -346,7 +643,7 @@ async function applyLogAppendOp(
   //     projectPath, turning a lossy log into no log at all.
   if (
     STAGING_CAPABLE_TOOLS.has(op.tool) &&
-    (op.stagedResultsRef === undefined || op.stagedResultsRef === null) &&
+    (stagedResultsRef === undefined || stagedResultsRef === null) &&
     Number.isFinite(resultsAvailableCoerced) &&
     (resultsAvailableCoerced as number) > 0
   ) {

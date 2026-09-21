@@ -133,6 +133,13 @@ quiet can return *inside* a running turn, send its message behind it, and read
 that turn's `turn_done` as its own reply. That is exactly the mis-attribution
 this paragraph exists to rule out, and the queue introduced it.
 
+**Lay mode's auto-continue never runs behind a `/v1` turn.** The hosted web's
+runner answers the hand-back literal with `Yes.` itself, which
+would put a synthetic turn behind a `/v1` caller's reply and hand its text over
+as the answer to the caller's next message — the same mis-attribution. So every
+`user_msg` `/v1` sends carries `auto_continue: false` (`_user_msg`, `app/v1.py`),
+and the runner starts no chain from it.
+
 So the drain is turn-aware rather than idle-aware: `turn_start` marks a turn in
 flight, its `turn_done` clears it, and the quiet timer only ends the drain while
 nothing is running (`_drain_replay`, `app/v1.py`, bounded by `_DRAIN_MAX` so a

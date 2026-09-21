@@ -23,9 +23,10 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_init_project import (  # noqa: E402
-    _NARRATION_BY_LEVEL,
+    _DEFAULT_LEVEL,
+    _HOUSE_STYLE,
     test_every_fact_and_relationship_is_sourced as check_sourced,
-    test_narration_guidance_is_verbatim_for_the_level as check_narration,
+    test_narration_guidance_is_the_house_style as check_narration,
     test_person_read_passes_both_flags as check_flags,
     test_init_empty_sections as check_empty,
     test_returned_sources_reach_the_tree_without_notes as check_notes,
@@ -500,31 +501,32 @@ def test_v6_skips_when_no_sources_were_returned():
         check_notes(_tree(), [_person_read_call()])
 
 
-# --- V5: narration_guidance verbatim ------------------------------------
+# --- V5: the fixed profile, verbatim ------------------------------------
 
-@pytest.mark.parametrize("level", sorted(_NARRATION_BY_LEVEL))
-def test_v5_passes_on_every_verbatim_level(level):
+def test_v5_passes_on_the_fixed_profile():
     after = {"research_json": {"researcher_profile": {
-        "experience_level": level,
-        "narration_guidance": _NARRATION_BY_LEVEL[level],
+        "experience_level": _DEFAULT_LEVEL,
+        "narration_guidance": _HOUSE_STYLE,
     }}}
     check_narration(after)
 
 
 def test_v5_fires_on_a_paraphrase():
     after = {"research_json": {"researcher_profile": {
-        "experience_level": "experienced",
-        "narration_guidance": "No preambles. Be concise.",
+        "experience_level": _DEFAULT_LEVEL,
+        "narration_guidance": "Plain language. No identifiers. One paragraph.",
     }}}
     assert "verbatim" in _fails(check_narration, after)
 
 
-def test_v5_fires_on_another_levels_text():
+def test_v5_fires_on_a_volunteered_level():
+    """The user said they were experienced; the skill must not persist it -- the
+    profile is fixed and a user setting owns the level later."""
     after = {"research_json": {"researcher_profile": {
-        "experience_level": "professional",
-        "narration_guidance": _NARRATION_BY_LEVEL["experienced"],
+        "experience_level": "experienced",
+        "narration_guidance": _HOUSE_STYLE,
     }}}
-    assert "professional" in _fails(check_narration, after)
+    assert "novice" in _fails(check_narration, after)
 
 
 def test_v5_fires_on_an_unknown_level():
@@ -532,7 +534,7 @@ def test_v5_fires_on_an_unknown_level():
         "experience_level": "expert",
         "narration_guidance": "anything",
     }}}
-    assert "not one of" in _fails(check_narration, after)
+    assert "novice" in _fails(check_narration, after)
 
 
 def test_v5_skips_when_no_profile_was_written():
@@ -603,13 +605,64 @@ def test_empty_sections_allows_a_verbatim_memory_transcription():
     check_empty(after, _EMPTY_TAGGED, calls)
 
 
-def test_empty_sections_allows_the_untranscribed_memory_with_a_null():
-    """A memory the budget did not reach still gets its entry."""
+def test_empty_sections_now_FIRES_on_the_untranscribed_memory_null_entry():
+    """Decision 5, 2026-09-17: an untranscribed memory gets NO sources entry.
+    It is already a tree source carrying title and URL, so the lead survives;
+    what the sources entry adds is the assertion it was examined, which is the
+    one thing that is not true. This test asserted the opposite until the
+    ruling."""
     calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
                                          "text": _STORY}])]
     after = _after(_blank(sources=[{"gedcomx_source_description_id": "S4",
                                     "transcription": None}]))
-    check_empty(after, _EMPTY_TAGGED, calls)
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+_ALL_UNTRANSCRIBED = [
+    {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
+    {"id": "2", "title": "A deed", "artifactUrl": "https://sg30p0.familysearch.org/b/dist.jpg"},
+]
+
+
+def test_acceptance_14_all_untranscribed_leaves_sources_EMPTY():
+    """Acceptance 14: on a person whose kept memories all came back
+    untranscribed, `sources` is empty after init. Both memories are still in
+    tree.gedcomx.json, which is where the lead lives."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    check_empty(_after(_blank()), _EMPTY_TAGGED, calls)
+
+
+def test_acceptance_14_fires_when_an_untranscribed_memory_got_an_entry_anyway():
+    """The other direction, and the one that can actually regress: the skill
+    writing the entry the cap forbids. Text-gating made this invisible -- with
+    no text returned the exemption never engaged at all."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S1",
+                                    "transcription": None}]))
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+def test_empty_sections_fires_when_more_nulls_than_memories_came_back():
+    """The other direction, and the hole the text-only gate left wide open:
+    once ANY text was present the null branch was unbounded, so invented
+    entries rode in behind one real memory. Two memories cannot justify three
+    sources."""
+    calls = [_person_read_call(sources=[
+        {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
+        {"id": "2", "title": "A story", "text": _STORY},
+    ])]
+    after = _after(_blank(sources=[
+        {"gedcomx_source_description_id": "S1", "transcription": _STORY},
+        {"gedcomx_source_description_id": "S2", "transcription": _STORY},
+        {"gedcomx_source_description_id": "S3", "transcription": _STORY},
+    ]))
+    assert "cannot admit more entries than there were memories" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
 
 
 def test_empty_sections_still_fires_on_an_invented_transcription():

@@ -1,0 +1,158 @@
+{
+  "run_log": "v1_2026-09-18_13-37-04.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This was a negative test, and the skill followed the required behavior. It correctly declined to perform the question-selection task and routed the request to search-records, which is the appropriate workflow for carrying out record searches. The routing decision was accurate, and no unnecessary question creation or tool usage occurred."
+    },
+    {
+      "test_id": "ut_question_selection_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the negative-test requirement by declining to perform the question-selection workflow. It did not create or modify research questions and instead routed the request to search-records, which was the appropriate action. The behavior matched the expected routing logic, with no unnecessary execution of the wrong skill."
+    },
+    {
+      "test_id": "ut_question_selection_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion does not apply because the skill correctly declined to perform its own task and routed the request to another skill. No MCP tool calls were expected or required in this workflow, so the absence of tool usage should not be scored as a pass or fail."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated the completed research state and selected an appropriate next step. It accurately recognized that the planned direct searches were exhausted, the exhaustive declaration was completed, and FAN research was the logical progression. The new question was grounded in the project evidence, correctly referenced the Thomas Flynn hypothesis, proof tier, and remaining research gap. No unsupported claims or fabricated information were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the required workflow. It correctly recognized that direct searches were exhausted, selected the FAN research approach as the next priority, created a focused research question targeting Thomas Flynn’s associates and network, persisted the question with the correct dependencies and selection_basis, and explained why FAN analysis was appropriate. All required components were addressed, with no major omissions or unsupported claims."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All seven tool calls used valid arguments, matched the expected workflow, and successfully interacted with the project state. The research_append call included the required fields, correct dependencies, and proper selection_basis. No fixture_not_found errors occurred, and validation passed without recovery attempts."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The new question is concrete, focused, and researchable. It identifies the relevant individuals, location, timeframe, and the specific evidentiary goal of evaluating Thomas Flynn’s parentage connection to Patrick Flynn. It is appropriately scoped for FAN research and is specific enough to guide targeted searches of neighbors, witnesses, and associates. The question avoids vague wording and directly supports the unresolved parentage hypothesis."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly analyzed the project state and selected an appropriate next research question. It accurately identified the unresolved proof status, the 1860–1908 timeline gap, and the remaining unsearched records. The new question targeting the 1870 census was well-grounded in the existing research plan, with a clear rationale for prioritization and correct dependency handling. No unsupported claims or fabricated details were introduced."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully satisfied the research-question selection requirements. It reviewed the relevant project context, correctly identified the unresolved question and the highest-priority research gap, and used the timeline and proof status to justify the next step. The new question was appropriately specific, included a clear rationale, correct dependencies, and the proper selection basis. No required elements were omitted, and the reasoning was grounded in the project state."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All project_context and research_query calls used the expected arguments and targeted the appropriate project sections. The final research_append call successfully created the new question with all required fields, including selection_basis='timeline_gap', dependencies, unblocks, and exhaustive declaration. No validation issues occurred, and the append completed successfully on the first attempt."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question is concrete, specific, and answerable. It identifies the individual (Patrick Flynn), provides useful identifying details (birth, death, and location context), names the exact record type to investigate (1870 U.S. Census), and clearly states the fact being sought (his location and household placement). It is appropriately scoped for targeted genealogical research and avoids vague or overly broad wording."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified the research problem as a verification task rather than accepting an unsourced tree relationship. It appropriately framed the question as a confirm-or-refute investigation using independent records and avoided treating the FamilySearch tree assignment as evidence. The reasoning was grounded in the project state and user-provided information, with no unsupported claims or methodological errors."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the required workflow. It correctly reviewed the project state, identified the disputed parentage as the key research issue, and created an appropriately scoped first research question with supporting rationale and priority. It correctly recognized that the user had already provided sufficient anchors, so no clarification was needed. The question was properly persisted to research.json, and no required elements were missing."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All five tool calls used valid arguments and matched the expected patterns, including the project context retrieval, research queries, and final research_append operation. The appended question entry contained all required fields with a valid structure, and all operations succeeded with live responses. No fixture_not_found errors or argument mismatches occurred."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question is concrete, specific, and researchable. It clearly identifies the individuals involved, provides the relevant timeframe, and states the exact genealogical fact being investigated (whether Johann and Maria Vogt were Anton Vogt’s parents). The confirm-or-refute framing is appropriate because the existing parent assignment is disputed, and the question is sufficiently focused to guide targeted searches in relevant records."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated the evidence state and followed the appropriate research workflow. It recognized that the parent assignment was based only on an unverified FamilySearch source and that independent supporting evidence was missing. The decision to request clarification was appropriate because the disputed parent objective lacked sufficient alternative evidence or anchors. The response stayed grounded in the project state and avoided unsupported assumptions."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully satisfied the required workflow. It reviewed the project state, confirmed the absence of prior research and supporting evidence, and correctly identified that the parent assignment required clarification before proceeding. Asking for both the evidence behind the doubt and the missing birth details followed the required Step 3 behavior and was appropriate, not a failure to advance the research. The response remained grounded in the available project information and did not introduce unsupported assumptions."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All four tool calls used valid arguments and matched the expected workflow. The project context and research queries targeted the appropriate sections, returned successful live responses, and no fixture_not_found errors or argument issues occurred. The tool usage supported the research-state assessment properly."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion does not apply because the skill did not create a research question. The skill correctly followed the required clarification step by requesting the missing evidence and birth details before formulating a question. Since no new question was generated, question specificity cannot be evaluated."
+    }
+  ]
+}

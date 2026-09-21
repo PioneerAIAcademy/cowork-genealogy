@@ -103,6 +103,9 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
     );
   }
   const token = await getValidToken(principal);
+  // Anchored HERE, before the tree read, so the read and the memories paging
+  // are spent inside the same budget the 60s bridge abort measures.
+  const deadline = Date.now() + OCR_PHASE_BUDGET_MS;
   const pid = personId.trim();
   const { result, resolvedId } = await fetchAndConvert(
     token,
@@ -135,6 +138,7 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       resolvedId,
       result.sources,
       principal,
+      deadline,
       projectPath,
     );
   }
@@ -154,10 +158,19 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
  * per memory.
  *
  * Sized under the Cowork device bridge's 60s abort on every MCP call
- * (docs/architecture.md, "Other environment differences that bite"), with the
- * tree read and the memories fetch already spent inside the same call. An
+ * (docs/architecture.md, "Other environment differences that bite"). An
  * unbudgeted phase does not cost a transcription -- it costs the whole person
  * read, which in Cowork is init-project's first real call.
+ *
+ * The deadline is anchored at `personReadTool` ENTRY, not at phase entry, so
+ * the tree read and the memories paging are spent INSIDE it. That is what the
+ * 60s abort actually measures. Anchored at phase entry the budget was 40s on
+ * top of whatever the read had already used -- a slow tree read plus sequential
+ * paging (each a `fetchWithRetry`: 30s timeout, 10s retry budget) could put the
+ * call past 60s and lose everything, which is the one outcome this exists to
+ * prevent. When little or no time is left the phase transcribes nothing and
+ * every memory comes back as a metadata entry with a note, which is the
+ * documented lossless fallback rather than a new failure mode.
  *
  * image_transcribe measures p50 18.7s / p90 40.6s / max 50.1s over 59 live
  * reads (2026-09-08, current default model). So 40s clears a typical scan and
@@ -196,9 +209,9 @@ async function transcribeMemories(
   sources: TreeSource[],
   principal: Principal,
   projectPath: string | undefined,
+  deadline: number,
 ): Promise<void> {
   const byId = new Map(sources.map((s) => [s.id, s]));
-  const deadline = Date.now() + OCR_PHASE_BUDGET_MS;
 
   /**
    * Workers publish here rather than writing straight to the sources.
@@ -311,6 +324,7 @@ async function mergeMemories(
   pid: string,
   treeSources: TreeSource[],
   principal: Principal,
+  deadline: number,
   projectPath?: string,
 ): Promise<TreeSource[]> {
   try {
@@ -338,7 +352,7 @@ async function mergeMemories(
     // (tree `SD_PERSON_KWCJ-RN4` vs memory `3475`, 0 overlap on both persons
     // sampled). An id-keyed dedupe could never fire, so it is not written.
     const memorySources = kept.map(toTreeSource);
-    await transcribeMemories(kept, memorySources, principal, projectPath);
+    await transcribeMemories(kept, memorySources, principal, projectPath, deadline);
     return [...treeSources, ...memorySources];
   } catch (err) {
     process.stderr.write(
