@@ -38,6 +38,52 @@ import pytest
 # while an unrelated substring does not.
 _DETACH_TERMS = ("detach", "detaching", "detached", "unlink", "unlinking", "unlinked")
 
+# A detach term that is being FORBIDDEN is doctrine, not a violation of it.
+# "Do not detach -- the source is good evidence for this person with one wrong
+# field" is the rule stated correctly, and the guard flagged it (run
+# v1_2026-09-20_13-40-15, ut_source_evaluation_p2v). Matched against the window
+# immediately before each occurrence rather than anywhere in the passage: a
+# blanket "passage contains a negation" skip would wave through "do not detach
+# the death index, but detach the 1885 census" -- one negation and one real
+# recommendation in one breath, which is the failure direction that fails
+# SILENTLY and is therefore worse than the false positive it fixes.
+_NEGATORS = (
+    "do not", "don't", "do n't", "never", "not ", "no need to", "rather than",
+    "instead of", "without", "avoid", "stop short of", "nothing to",
+)
+_NEG_WINDOW = 40
+
+
+# A negation binds only within its own clause. Without this, "do not detach the
+# death index, but detach the 1885 census" reads the leading "do not" as
+# covering BOTH terms and the real recommendation escapes -- the silent-failure
+# direction. Caught by this module's own both-directions check before commit.
+_CLAUSE_BREAKS = (",", ";", ":", ".", "!", "?", " but ", " however ", " though ")
+
+
+def _is_negated(text: str, at: int) -> bool:
+    """True when the detach term at `at` is being ruled out rather than urged.
+
+    Scoped to the term's OWN clause: the window is cut at the nearest preceding
+    clause break, so a negation belonging to an earlier clause cannot license a
+    recommendation in this one.
+    """
+    before = text[max(0, at - _NEG_WINDOW):at].lower()
+    cut = max((before.rfind(b) + len(b) for b in _CLAUSE_BREAKS if b in before), default=0)
+    return any(n in before[cut:] for n in _NEGATORS)
+
+
+def _recommends_detach(block: str) -> bool:
+    """A detach term in `block` that is not negated."""
+    low = block.lower()
+    for term in _DETACH_TERMS:
+        start = 0
+        while (i := low.find(term, start)) != -1:
+            if not _is_negated(low, i):
+                return True
+            start = i + len(term)
+    return False
+
 # Phrases that recommend going back to the original image. "re-read",
 # "reread" and "read the original" are all live in the skill body and in
 # a genealogist's own vocabulary.
@@ -245,7 +291,7 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
         block
         for block in _passages(text_response)
         if protected.lower() in block.lower()
-        and any(term in block.lower() for term in _DETACH_TERMS)
+        and _recommends_detach(block)
     ]
     assert not hits, (
         f"source-evaluation recommended detaching or unlinking in the same "
