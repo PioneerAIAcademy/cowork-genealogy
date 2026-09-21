@@ -2,9 +2,9 @@
   "per_finding": {
     "f1": "true"
   },
-  "proof_quality_score": 3,
+  "proof_quality_score": 2,
   "notes": {
-    "f1": "Recovered the required spouse relationship (Moe Parauhia 97XW-7VN married Aufait/Aufaite Toehae) from two independent civil-registration marriage acts on different Moorea communes (D955-NRW2, Teavaro 1860; QTBT-LJMM, Teaharoa 1860) plus a birth registration (D71K-HMT2) — not from the hint's own marriage persona. The Aufait/Aufaite naming variation matches the fixture's documented index variation. Proof quality 3: sound reasoning on independent indexed acts; the only limitation is that no original page image was examined (full-text is non-functional for this collection)."
+    "f1": "True match: Moe Parauhia (97XW-7VN), son of Parauhia Paura and Paerai Teupooihi, married Aufait/Aufaite Toehae (the Aufait/Aufaite spelling is the documented index variation). The spouse relationship is supported by the record evidence the run actually captured — two distinct indexed civil-registration marriage entries (src_001 = ark:/61903/1:1:D955-NRW2, Teavaro; src_002 = ark:/61903/1:1:QTBT-LJMM, Teaharoa), each naming Moe and Aufaite Toehae in 1860 — together with a birth registration (ark:/61903/1:1:D71K-HMT2) and the parents matching the tree couple (LCX2-L8S / LCX2-LKN). The two marriage entries are separate index records on two Moorea communes (Teavaro vs Teaharoa); that place difference is not reconciled by any extracted assertion. No extracted assertion carries a witness, registrar, or officiant, so the two acts are not established as independently produced records, and I do not treat them as independent corroboration on that basis. No original page image was examined (full-text is non-functional for this collection). Proof quality = 2 (thin) under the current rubric: the evidence is useful and corroborative and the identification is well-anchored, but the \"proved\"-tier reasoning rests on an independence claim the extracted evidence does not establish, and the Teavaro/Teaharoa difference is an unreconciled place discrepancy not captured as a resolved conflict — so the soundness is thin rather than sound."
   },
   "annotator": "solomonbaidoo54@gmail.com",
   "findings_hash": "82266cb43b7df02427856e492255c44cc2df26e6afbe2342340b263a8500edc5"
