@@ -4,8 +4,7 @@ Tracking note for `pnpm audit` / `npm audit` findings across the repo's three JS
 dependency trees (root pnpm workspace, `packages/engine/mcp-server` npm,
 `eval/app` npm). Re-run the audits after any dependency bump and update this file.
 
-Last reviewed: **2026-09-09** (root pnpm workspace and `eval/app`). The engine tree
-was last reviewed 2026-09-08 and is unchanged since; see #2352.
+Last reviewed: **2026-09-21**.
 
 > **This file is the mechanism, by decision.** @DallanQ ruled on 2026-09-09 (#2352)
 > that no CI job will audit any dependency tree: failing the build, warning without
@@ -13,21 +12,20 @@ was last reviewed 2026-09-08 and is unchanged since; see #2352.
 > The gap stays on the `nothing-checks` register as an **accepted** one, which makes
 > re-running the audits after any dependency bump and updating this file the only thing
 > standing between a new advisory and a shipped artifact.
->
-> **The paragraph below is known to be partly wrong and is #2352's to re-derive.** Its
-> "every finding below except `fast-uri` lives in a devDependency" half no longer holds
-> — see the `electron` note underneath it — and #2352 owns the refresh rather than this
-> PR patching around it.
 
-**Reachability, once, up front.** Every finding below except `fast-uri` lives in a
-**devDependency** — dev tooling (eslint, vite/vitest, electron-builder,
-`@anthropic-ai/mcpb`) or the internal-only Eval CRUD UI. Check reachability with
-`pnpm why --prod -r <pkg>` — **without `-r` the command inspects only the root
-package, which declares no dependencies, so it returns nothing for everything**
-(`pnpm why --prod react` is silent even though `apps/web` depends on it). The
-`.mcpb` is built with
-`npm ci --omit=dev` (`scripts/build-mcpb.mjs`), so dev-tree findings never reach
-**that** artifact. Weigh fix churn against that before treating a HIGH as urgent.
+**Reachability, once, up front.** The engine's production tree
+(`packages/engine/mcp-server`) and `eval/app` both audit clean — `found 0
+vulnerabilities` on `npm audit --omit=dev`. The only production-reachable findings
+are `electron` and `extract-zip` in `apps/electron`, reached via
+`@electron-toolkit/utils` → `electron` (peer) → `extract-zip` (see the two
+paragraphs below). Everything else lives in **devDependencies** — dev tooling
+(eslint, vite/vitest, electron-builder, `@anthropic-ai/mcpb`) or the internal-only
+Eval CRUD UI. Check reachability with `pnpm why --prod -r <pkg>` — **without `-r`
+the command inspects only the root package, which declares no dependencies, so it
+returns nothing for everything** (`pnpm why --prod react` is silent even though
+`apps/web` depends on it). The `.mcpb` is built with `npm ci --omit=dev`
+(`scripts/build-mcpb.mjs`), so dev-tree findings never reach **that** artifact.
+Weigh fix churn against that before treating a dev-only HIGH as urgent.
 
 **`electron` ships, and it is the exception to the paragraph above.** It reaches
 production two ways, and either alone is enough. It is in the production graph:
@@ -219,6 +217,18 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   (`"form-data@<4.0.6": "^4.0.6"`), bumping 4.0.5 → 4.0.6. The lockfile change is
   scoped to form-data only.
 
+- **brace-expansion** (HIGH, GHSA-mh99-v99m-4gvg, unbounded-expansion OOM DoS) —
+  root pnpm workspace, dev-only. **Fixed by upstream.** The advisory originally
+  published a single range `<= 5.0.7` patched only at `5.0.8`, which swallowed
+  the entire 1.x and 2.x lines — the 2026-07-31 deferral was correct when written.
+  The advisory's ranges changed at 19:37 UTC on 2026-07-31 (two and a half hours
+  after that entry was committed), adding per-line patches: 1.1.17 / 2.1.3 / 3.0.3 /
+  5.0.8. The existing lockfile pins (1.1.18 / 2.1.4 / 5.0.9, from the
+  GHSA-3jxr-9vmj-r5cp refresh on 2026-07-31) are all above the new patch lines.
+  `pnpm audit` reports zero `brace-expansion` rows. Its sibling advisory
+  GHSA-3jxr-9vmj-r5cp was already fixed 2026-07-31 (see above). Confirmed
+  2026-09-21.
+
 ## Deferred / no clean fix
 
 - **vitest** and **@vitest/mocker** (MODERATE ×2) — root pnpm workspace, dev-only,
@@ -248,28 +258,6 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   **Revisit when** a fixed `extract-zip` is published, or when `electron` drops the
   dependency.
 
-- **brace-expansion** (HIGH, GHSA-mh99-v99m-4gvg, unbounded-expansion OOM DoS) —
-  root pnpm workspace, dev-only (eslint's `minimatch@3.1.5`, electron-builder's
-  `minimatch@9`). **Partially unfixable — read the range carefully.** Unlike the
-  sibling advisory GHSA-3jxr-9vmj-r5cp, which was backported to each release line
-  (1.1.16 / 2.1.2 / 5.0.7), this one publishes a **single** range `<= 5.0.7`
-  patched **only** at `5.0.8`. By plain semver that range swallows the entire 1.x
-  and 2.x lines, so `brace-expansion@1.1.18` and `@2.1.4` stay flagged forever and
-  the refresh above cannot clear the alert. Closing it would mean overriding
-  `minimatch@3.x`/`@9.x` consumers onto `brace-expansion@5` — three majors, a
-  changed `balanced-match` peer and a narrowed `engines` field — for a DoS in a
-  glob expander that only ever sees our own hardcoded patterns (EPSS 0.0034).
-  **Not worth it.**
-  **Revisit when** a 1.x/2.x backport is published, or when eslint/electron-builder
-  move to a minimatch that depends on `brace-expansion@^5`.
-
-
-  **Stale as of 2026-09-09 — no longer flagged.** GHSA-mh99-v99m-4gvg now carries four
-  ranges with per-line patches (1.1.17 / 2.1.3 / 3.0.3 / 5.0.8), so the "single range,
-  stays flagged forever" reading no longer holds. The advisory's ranges changed at
-  19:37 UTC on 2026-07-31, two and a half hours after this entry was committed, so it
-  was accurate when written. `pnpm audit` reports zero `brace-expansion` rows today.
-  Left in place for #2352 to fold into Fixed rather than half-rewritten here.
 - **tmp** (HIGH GHSA-ph9p-34f9-6g65 + LOW GHSA-52f5-9888-hmc6, symlink /
   path-traversal write) — `packages/engine/mcp-server` only, via
   `@anthropic-ai/mcpb` → `@inquirer/prompts` → `@inquirer/editor` →
@@ -307,7 +295,7 @@ of them a plain lockfile refresh that no upstream constraint was blocking. The
 config covers **four ecosystems in five update blocks** — `npm` (the three
 package.json trees), `github-actions` (`.github/workflows`), `docker` (both
 Dockerfiles), and `uv` twice (`apps/server` and `eval/harness`, split so the
-harness can carry its own `ignore` rules). Weekly, with minor/patch grouped into
+harness can carry its own `ignore` rules). Monthly, with minor/patch grouped into
 one PR per ecosystem so majors are the ones that arrive individually.
 
 That grouping *is* the safety mechanism, and it is worth stating why. Dependabot
@@ -339,3 +327,35 @@ rewrite. Dependabot resolves with its own npm, so an engine PR can trip the gate
 through no fault of the bump — check the branch out, run `npm install` under
 11.12.1, commit the re-normalized lockfile. See the header comment in
 `dependabot.yml`.
+
+### Dependabot alert backlog
+
+**`npm audit --omit=dev` and the Dependabot alert count answer different
+questions, and this doc reconciles against the audits, with `.dependency.scope` as
+the bridge.** `npm audit --omit=dev` reports zero for the engine because all four
+of its Dependabot alerts are `scope: development`; the audit is correct and so is
+Dependabot — they measure different things. The command to reconcile:
+
+    gh api "/repos/PioneerAIAcademy/cowork-genealogy/dependabot/alerts?state=open&per_page=100" \
+      --paginate -q '.[] | [.security_advisory.severity, .dependency.scope, .dependency.manifest_path, .dependency.package.name] | @tsv'
+
+**Measured 2026-09-21 — 14 open alerts** (down from 75 on 2026-09-10, 53 on
+2026-08-23, and 24 before PR #1030):
+
+| Manifest | Scope | Count | Packages |
+|---|---|---|---|
+| `pnpm-lock.yaml` | runtime | 4 | extract-zip ×2, vitest, @vitest/mocker |
+| `packages/engine/mcp-server/package-lock.json` | development | 4 | vitest, @vitest/mocker, tmp ×2 |
+| `packages/viewer-ui/package.json` | development | 1 | vitest |
+| `apps/web/package.json` | development | 1 | vitest |
+| `apps/electron/package.json` | development | 1 | vitest |
+| `apps/server/uv.lock` | runtime | 2 | cryptography (HIGH), h2 (MEDIUM) |
+| `eval/harness/uv.lock` | runtime | 1 | cryptography (HIGH) |
+
+All JS-side development alerts map to entries already recorded above under
+Deferred (vitest, tmp). The two `extract-zip` runtime alerts are also under
+Deferred (no patch exists). The Python alerts (`cryptography`, `h2`) are outside
+this doc's three-JS-tree scope; they are tracked by Dependabot but not by
+`pnpm`/`npm` audit.
+
+*Previous measurement: 53 open alerts on 2026-08-23 (issue #1036).*

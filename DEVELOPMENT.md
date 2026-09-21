@@ -291,6 +291,20 @@ four-step order, the exemptions that let you reach step 4, and the three rules
 whose failure is silent — never write to the board yourself, never start a queue
 file, and label a missing guard `nothing-checks`. It points here for the rest.
 
+## Dependency audits
+
+After any dependency bump, re-run the three audits and update
+[`docs/dependency-security-advisories.md`](./docs/dependency-security-advisories.md):
+
+```bash
+(cd packages/engine/mcp-server && npm audit --omit=dev)
+(cd eval/app && npm audit --omit=dev)
+pnpm audit --prod
+```
+
+That file is the sole mechanism for tracking dependency vulnerabilities —
+no CI job audits any dependency tree (lead ruling, 2026-09-09).
+
 ## How to test a new tool end-to-end
 
 **Do not write a per-tool testing guide.** That convention is retired —
