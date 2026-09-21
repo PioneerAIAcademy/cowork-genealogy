@@ -180,3 +180,96 @@ describe("fetchFsImageBytes — fallback retry", () => {
     expect(result.contentType).toBe("image/jpeg");
   });
 });
+
+/**
+ * Memory-artifact shape — issue #1689.
+ *
+ * Measured 2026-09-15 over the 221-memory probe corpus: every `about` URL is on
+ * sg30p0.familysearch.org ending /dist.<ext>, the bytes serve with no auth at
+ * all, and 29 of the 221 are application/pdf — which the OCR model reads
+ * directly, so the fetcher must carry them rather than reject on content-type.
+ */
+describe("fs-image-fetch — memory artifacts", () => {
+  const ARTIFACT =
+    "https://sg30p0.familysearch.org/ark:/61903/3:1:ABCD/v2/12345/dist.jpg?ctx=x";
+
+  function mockTypedResponse(contentType: string) {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === "content-type" ? contentType : null,
+      },
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    });
+  }
+
+  it("resolves a memory artifact URL as-is and flags the shape", () => {
+    const out = resolveFsImageInput({ memoryArtifactUrl: ARTIFACT }, "t");
+    expect(out.url).toBe(ARTIFACT);
+    expect(out.memoryShape).toBe(true);
+    expect(out.fallbackUrl).toBeUndefined();
+  });
+
+  it("refuses an artifact URL on any other host", () => {
+    for (const bad of [
+      "https://evil.example.com/a/v2/1/dist.jpg",
+      "https://sg30p0.familysearch.org.evil.com/v2/1/dist.jpg",
+      "http://sg30p0.familysearch.org/v2/1/dist.jpg",
+      "https://sg30p0.familysearch.org/v2/1/notdist.exe",
+    ]) {
+      expect(() =>
+        resolveFsImageInput({ memoryArtifactUrl: bad }, "t"),
+      ).toThrow(/Unrecognized memoryArtifactUrl/);
+    }
+  });
+
+  it("sends NO Authorization header for a memory artifact", async () => {
+    mockTypedResponse("image/jpeg");
+    await fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true);
+    const headers = mockFetch.mock.calls[0][1].headers;
+    expect(headers.Authorization).toBeUndefined();
+    // and it never even asks for a token, so an unauthenticated caller works
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("still sends Authorization for a page scan", async () => {
+    mockedGetValidToken.mockResolvedValue("tok");
+    mockTypedResponse("image/jpeg");
+    await fetchFsImageBytes("https://example.org/x", undefined, LOCAL);
+    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe("Bearer tok");
+  });
+
+  it("accepts application/pdf for a memory artifact", async () => {
+    mockTypedResponse("application/pdf");
+    const out = await fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true);
+    expect(out.contentType).toBe("application/pdf");
+  });
+
+  it("still rejects application/pdf for a page scan", async () => {
+    mockedGetValidToken.mockResolvedValue("tok");
+    mockTypedResponse("application/pdf");
+    await expect(
+      fetchFsImageBytes("https://example.org/x", undefined, LOCAL),
+    ).rejects.toThrow(/Expected an image response/);
+  });
+
+  it("rejects an audio artifact even in the memory shape", async () => {
+    mockTypedResponse("audio/mpeg");
+    await expect(
+      fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true),
+    ).rejects.toThrow(/Expected an image or PDF response/);
+  });
+
+  it("refuses more than one input shape", () => {
+    expect(() =>
+      resolveFsImageInput(
+        { imageId: "1_2", memoryArtifactUrl: ARTIFACT },
+        "t",
+      ),
+    ).toThrow(/exactly one of/);
+  });
+});
+
