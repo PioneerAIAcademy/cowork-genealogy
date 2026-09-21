@@ -603,7 +603,7 @@ def load_seed_person_ids(starting_tree_path: Path) -> set[str] | None:
     """
     try:
         seed = json.loads(starting_tree_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
         print(
             f"  [warn] could not read seed tree {starting_tree_path} "
             f"({type(e).__name__}: {e}) — issue #963 same_person check DISABLED "
@@ -907,7 +907,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         )
         for sid in (starting_research.get("project") or {}).get("subject_person_ids") or []:
             subject_ids.add(str(sid))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         pass
     src = fixture_json.get("source_pid")
     if src and "TODO" not in str(src):

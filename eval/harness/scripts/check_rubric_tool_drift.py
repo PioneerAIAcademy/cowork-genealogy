@@ -100,7 +100,7 @@ def load_manifest_tools(manifest: Path) -> set[str] | None:
         return None
     try:
         data = json.loads(manifest.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return None
     names = {t.get("name") for t in data.get("tools", []) if isinstance(t, dict)}
     return {n for n in names if isinstance(n, str)}
@@ -196,7 +196,7 @@ def judge_context_mentions(
     """Tool names mentioned in a test's judge_context that aren't declared."""
     try:
         test = json.loads(test_json.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return set()
     context = test.get("judge_context")
     if not isinstance(context, list):
