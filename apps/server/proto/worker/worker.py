@@ -38,6 +38,20 @@ so a killed attempt's spend is on the row too -- land on the turns row in the sa
 commit as ``turn_done`` (``complete``). Any exception answers 500 with the error in the
 body and one JSON log line; the shim backs off and the redelivery resumes.
 
+The resume rule (D17): a REDELIVERY (``receive_count`` > 1) whose result carries
+``num_turns == 0`` has not redone the interrupted work -- the CLI answered its own meta
+prompt about the orphaned agents and returned -- so the attempt logs
+``resume_synthetic_result`` and sends ONE continue prompt (``RESUME_CONTINUE_TEXT``)
+before completing on that second result's figures. A FIRST delivery is never re-queried,
+whatever the SDK session already holds: the continue prompt orders the model to resume
+the interrupted task and not start over, which on a first delivery would discard the
+message the patron just sent. The bound is ``attempt_prompts``'s tuple, not a loop
+condition: a second zero-turn result logs the line again and completes as it stands. The
+row takes the COMPLETING pass's ``cost_usd`` and ``duration_ms`` (``complete``'s
+redelivery convention), while the token columns above sum every pass from
+``session_entries`` -- an asymmetry that costs nothing in the shape the rule exists for,
+since ``num_turns == 0`` means the discarded pass billed no model turn.
+
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
 written), ENGINE_DIR, ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under
 it), MODEL_PROVIDER + ANTHROPIC_API_KEY / the Bedrock variables, the GENEALOGY_* store
@@ -73,6 +87,7 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from proto.worker.options import (  # noqa: E402
+    RESUME_CONTINUE_TEXT,
     build_worker_options,
     check_registration,
     make_posttool_hook,
@@ -467,6 +482,37 @@ def registration_problems(info: Any) -> list[str]:
 # -- the real turn -------------------------------------------------------------
 
 
+def attempt_prompts(text: str, resume: str | None) -> tuple[str, ...]:
+    """Every prompt this attempt MAY send, in order: the turn's own text, and -- on a
+    resumed session -- one continue prompt. WHETHER the second is sent is
+    ``resume_produced_no_turn``'s decision, checked between the two; this is the ceiling,
+    not the trigger, and the two are deliberately not both arming conditions.
+
+    The bound on re-queries is the LENGTH OF THIS TUPLE. run_turn iterates it and
+    breaks early; there is no loop whose condition a second zero-turn result could
+    extend, so the pathological case (a turn that genuinely has nothing to add, which
+    answers every continue prompt with another zero-turn result) logs
+    ``resume_synthetic_result`` twice and completes. A worker that bills money
+    unattended must not be able to spin.
+    """
+    return (text, RESUME_CONTINUE_TEXT) if resume else (text,)
+
+
+def resume_produced_no_turn(result: Any, resume: str | None, receive_count: int) -> bool:
+    """A REDELIVERED attempt (``receive_count`` > 1) that resumed an existing SDK session
+    and whose ResultMessage carries no model turn: the CLI answered its own meta prompt
+    about the interrupted work with a synthetic no-response reply and returned (D17, and
+    the D18 autonomous run), so the work the kill interrupted was never redone. On a
+    FIRST delivery -- of any turn, including one whose session already holds entries --
+    and on a fresh session, a zero-turn result is not this shape and completes as it
+    stands."""
+    return (
+        bool(resume)
+        and receive_count > 1
+        and int(getattr(result, "num_turns", 0) or 0) == 0
+    )
+
+
 async def run_turn(
     turn: dict,
     receive_count: int,
@@ -551,37 +597,53 @@ async def run_turn(
             if problems:
                 raise RegistrationError("; ".join(problems))
 
-            await client.query(text)
-            saw_init = False
             tool_names: dict[str, str] = {}
             tasks: dict[str, str] = {}
             live: set[str] = set()
-            async for msg in client.receive_response():
-                if is_init_message(msg):
-                    saw_init = True
-                    sid = message_session_id(msg)
-                    if sid != sdk_session_id:
-                        raise RuntimeError(
-                            f"the CLI is running session {sid}, not the chosen {sdk_session_id}"
-                        )
-                if isinstance(msg, MirrorErrorMessage):
-                    raise MirrorError(f"session store append failed: {msg.error or msg.data}")
-                for event in map_message(msg, tool_names, tasks, live):
-                    write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
-                if isinstance(msg, ResultMessage):
-                    result = msg
-            if not saw_init:
-                # Without this the session-id assertion above fails open: a CLI whose init
-                # message stopped matching would run unverified and pass.
-                raise RuntimeError("the CLI never declared its session (no system/init message)")
-            if result is None:
-                raise RuntimeError("message stream ended without a ResultMessage")
-            if result.is_error:
-                raise RuntimeError(
-                    f"ResultMessage is_error ({result.subtype}"
-                    f"{', api ' + str(result.api_error_status) if result.api_error_status else ''}): "
-                    f"{'; '.join(result.errors or []) or result.result or 'no detail'}"
-                )
+
+            async def receive(*, require_init: bool) -> Any:
+                """One query's message stream: every event written as it arrives, every
+                guard applied, the ResultMessage returned. ``require_init`` holds on the
+                attempt's FIRST query only -- a connected client declares no session
+                again, so requiring it on a re-query would fail every one of them."""
+                saw_init = False
+                pass_result: Any = None
+                async for msg in client.receive_response():
+                    if is_init_message(msg):
+                        saw_init = True
+                        sid = message_session_id(msg)
+                        if sid != sdk_session_id:
+                            raise RuntimeError(
+                                f"the CLI is running session {sid}, not the chosen {sdk_session_id}"
+                            )
+                    if isinstance(msg, MirrorErrorMessage):
+                        raise MirrorError(f"session store append failed: {msg.error or msg.data}")
+                    for event in map_message(msg, tool_names, tasks, live):
+                        write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
+                    if isinstance(msg, ResultMessage):
+                        pass_result = msg
+                if require_init and not saw_init:
+                    # Without this the session-id assertion above fails open: a CLI whose init
+                    # message stopped matching would run unverified and pass.
+                    raise RuntimeError("the CLI never declared its session (no system/init message)")
+                if pass_result is None:
+                    raise RuntimeError("message stream ended without a ResultMessage")
+                if pass_result.is_error:
+                    raise RuntimeError(
+                        f"ResultMessage is_error ({pass_result.subtype}"
+                        f"{', api ' + str(pass_result.api_error_status) if pass_result.api_error_status else ''}): "
+                        f"{'; '.join(pass_result.errors or []) or pass_result.result or 'no detail'}"
+                    )
+                return pass_result
+
+            for index, prompt in enumerate(attempt_prompts(text, resume)):
+                await client.query(prompt)
+                result = await receive(require_init=index == 0)
+                if not resume_produced_no_turn(result, resume, receive_count):
+                    break
+                log(ev="resume_synthetic_result", turn_id=turn_id, session_id=session_id,
+                    receive_count=receive_count, query=index + 1,
+                    result=str(result.result or "")[:200])
             seq = complete(
                 conn, turn, receive_count,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,

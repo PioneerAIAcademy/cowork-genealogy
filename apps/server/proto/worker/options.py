@@ -363,6 +363,19 @@ CONTINUE_REASON = (
 )
 
 
+# The one continue prompt a redelivered attempt sends when its first result carried no
+# model turn (worker.run_turn's resume rule, D17). Not the Stop hook's veto: that one
+# answers a model that yielded voluntarily mid-run, this one answers a CLI that returned
+# a synthetic result without ever reading the worker's prompt. It names the interruption
+# so the model does not re-plan from scratch, and forbids a question because nobody is
+# watching an autonomous run.
+RESUME_CONTINUE_TEXT = (
+    "Your previous attempt at this message was interrupted while work was in "
+    "progress (the worker restarted). Re-read research.json and continue the same "
+    "task from where it stopped; do not start over, and do not ask the user anything."
+)
+
+
 def project_completed(research: Mapping[str, Any] | None) -> bool:
     """Whether research.json says the project is done."""
     if not research:
