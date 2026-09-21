@@ -144,7 +144,7 @@ Present when `sourceDescriptions: true`. Each source object:
 | `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Also carries the tool's own note when a memory was not transcribed (see below). Omit when empty. |
 | `text` | string | no | A memory's text: a story's own words, or OCR of a scan. Absent for an ordinary tree source, and absent for a memory that was not transcribed. |
 | `image_ref` | string | no | Project-relative path (`images/<key>.jpg`) of a retained memory scan. Present only when `projectPath` was supplied and the save succeeded. |
-| `artifactUrl` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe`/`image_read` accept as `memoryArtifactUrl`; `url` is the human `/memories/<id>` page and is refused. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
+| `artifact_url` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe`/`image_read` accept as `memoryArtifactUrl`; `url` is the human `/memories/<id>` page and is refused. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
 
 #### Memories are merged into `sources[]`
 
@@ -188,9 +188,9 @@ on the artifact all degrade to a metadata-only entry.
 
 A memory the budget skipped, the filter missed, or the OCR failed on can be read
 directly with `image_transcribe`'s `memoryArtifactUrl` input. **The value to pass
-is the source's `artifactUrl`, not its `url`** — `url` is the human
+is the source's `artifact_url`, not its `url`** — `url` is the human
 `/memories/<id>` page and `memoryArtifactUrl` refuses it. Like `text` and
-`notes`, `artifactUrl` is response-only: it is absent from `TREE_SOURCE_FIELDS`,
+`notes`, `artifact_url` is response-only: it is absent from `TREE_SOURCE_FIELDS`,
 so a caller copying a memory source into `tree.gedcomx.json` must drop it, and
 the write fails loudly rather than silently persisting it.
 

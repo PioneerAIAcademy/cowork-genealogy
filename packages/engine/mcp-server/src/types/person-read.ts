@@ -85,7 +85,7 @@ export interface TreeSource {
    * the response. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
    * `TREE_SOURCE_FIELDS`, which is what strips it on the write.
    */
-  artifactUrl?: string;
+  artifact_url?: string;
   notes?: string[];
   /**
    * A memory's text: a story's own words, or OCR of a scan the filter kept.

@@ -379,7 +379,7 @@ function toTreeSource(m: Memory): TreeSource {
     // contain, so following the instruction threw "Unrecognized
     // memoryArtifactUrl". Response-only, exactly like `text` and `notes`:
     // `TREE_SOURCE_FIELDS` does not list it, so it cannot reach the tree write.
-    ...(m.artifactUrl !== undefined ? { artifactUrl: m.artifactUrl } : {}),
+    ...(m.artifactUrl !== undefined ? { artifact_url: m.artifactUrl } : {}),
   };
 }
 

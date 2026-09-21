@@ -1,6 +1,7 @@
 """Tests for harness.fixtures — manifest building and predicate matching."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -148,6 +149,17 @@ def test_load_multiple_fixtures_preserves_order():
 # `shapeRelationships`/`shapeSources`, which always assemble those three keys.
 
 _PERSON_READ_TOP_LEVEL = {"persons", "relationships", "sources"}
+
+
+# Source keys on a `person_read` fixture are snake_case, because `person_read`
+# returns the simplified-GedcomX shape and the skills read these fixtures as the
+# contract. Nothing else ties the Python plane to the engine's actual emitted key:
+# the validators here supply their own fixtures, and the engine suite never reads
+# these files -- so renaming the field on one side and not the other leaves BOTH
+# suites green and surfaces first as a false red inside a paid run. That is how
+# `artifactUrl` reached five files before anyone noticed it was the only camelCase
+# key on the object (#2593, chesworthrm 2026-09-17).
+_CAMEL_CASE_KEY = re.compile(r"^[a-z]+[A-Z]")
 
 
 def _person_read_fixtures():
@@ -387,3 +399,26 @@ def test_an_exemption_does_not_suppress_the_other_sidecar():
     problems = _problems(data)
     assert any("has date, no standard_date" in p for p in problems), problems
     assert not any("standard_place" in p for p in problems), problems
+
+
+def test_person_read_fixture_source_keys_are_snake_case():
+    """No source key on a person_read fixture may be camelCase.
+
+    Proven to fail two ways before it was committed, per CLAUDE.md's rule that one
+    break is not a proof: putting `artifactUrl` back on a flynn row reds it, and so
+    does an unrelated camelCase key (`imageRef`) on a different row. The other
+    direction holds too -- the shipped corpus, whose source keys are `id`, `title`,
+    `citation`, `url`, `notes`, `text` and `artifact_url`, passes.
+    """
+    offenders = []
+    for name, data in _person_read_fixtures():
+        for src in (data.get("response") or {}).get("sources") or []:
+            if not isinstance(src, dict):
+                continue
+            for key in src:
+                if _CAMEL_CASE_KEY.match(key):
+                    offenders.append(f"{name}: sources[].{key}")
+    assert not offenders, (
+        "person_read fixture source keys must be snake_case -- the tool returns a "
+        f"simplified-GedcomX shape: {offenders}"
+    )
