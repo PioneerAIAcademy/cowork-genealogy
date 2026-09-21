@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_citation_019",
+    "skill": "citation",
+    "name": "Refine a compiled county-history citation into authored-work form (src_001)",
+    "type": "positive",
+    "description": "src_001 is a compiled county history that mentions the Fallon family. Its rough working citation names FamilySearch as creator and lacks Evidence Explained structure. A published/authored work must cite by its publication facts — author, full title, place of publication, publisher, year, page — not as a record, and must carry the 'citing ...' source-of-the-source tail because the book states its source. This is the authored-work template #2542 adds. All publication facts are on file in the before-state.",
+    "tags": ["authored", "county-history", "publication", "1880", "src_001"]
+  },
+  "input": {
+    "user_message": "Refine the citation for src_001, the county history that mentions the Fallon family.",
+    "scenario": "citation-authored-sources"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "who must be the AUTHOR of the work (Alvina T. Rourke, on file in the before-state citation and in the tree source's author field), not 'FamilySearch' (the repository) and not the publisher. A published work is cited by its author, not by where it was viewed.",
+    "what must be the full title of the book (History of Dubuque County, Iowa — on file in the source's notes), not a vague 'Dubuque County history'.",
+    "The formatted citation string must read as a PUBLICATION, following the authored-work pattern: author, the title (a reader must be able to tell it is a book title), then the place of publication, publisher, and year together, then the specific page. All of author / title / place of publication (Chicago) / publisher (Western Historical Society) / year (1880) / page (512) are on file in the before-state and must appear; none may be dropped and none may be invented.",
+    "In citation_detail, `where` stays the repository or access point where the work was viewed (FamilySearch, per the before-state), NOT the place of publication; the place of publication (Chicago), publisher, and year belong in the citation string's (Place: Publisher, Year) element.",
+    "The reliability half: because the book states its own source for the Fallon entry (Dubuque County marriage register B, page 140 — on file), the citation must carry that source of the source, e.g. a 'citing ...' tail. A published work whose citation omits a stated source of the source fails Mills's reliability test.",
+    "The result must be distinguishable from an original record — an authored work cited as if it were an original document (no author, no publication facts) is the exact failure #2542 targets.",
+    "Source fidelity: every value must come from the before-state (citation, citation_detail, notes, or the tree source). The before-state carries author, title, place, publisher, year, page, and the stated source of the source, so this test grades those being carried, not unknown-markers. Do not invent any publication fact not on file, in the persisted fields OR in output.text_response.",
+    "Must NOT change source_classification — it stays 'authored' and is record-extraction's field. Citation only sets the citation string and citation_detail.",
+    "Must NOT create a new source entry — refine src_001 in place.",
+    "Must call validate_research_schema after writing."
+  ]
+}
