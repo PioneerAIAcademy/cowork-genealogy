@@ -3143,6 +3143,7 @@ async function prepareOps(
   // Absent means UNKNOWN, not whole. Runs after the reuse rewrite above so it
   // sees the final op shape (an append folded into an update carries its
   // image_filename in `fields`).
+  const persistedSourcesForDerive = Array.isArray(research.sources) ? research.sources : [];
   for (const op of ops) {
     if (op.section !== "sources") continue;
     const bag = (op.op === "append" ? op.entry : op.fields) as
@@ -3156,7 +3157,17 @@ async function prepareOps(
     // process restart emptied the store (the store, not the document, is what a
     // restart clears).
     delete bag.transcription_truncated;
-    const ref = bag.image_filename;
+    // The join key is the op's `image_filename`, or — on an `update` whose patch
+    // does not re-send it — the persisted source's own, since the tool already
+    // holds that entry. Without the fallback a routine two-op sequence loses the
+    // marker: `append {image_filename}` then `update {transcription}` would derive
+    // nothing while `update {image_filename, transcription}` derives `true`, on the
+    // same final document (#2457 r10 [0]).
+    let ref = bag.image_filename;
+    if ((typeof ref !== "string" || ref.length === 0) && op.op === "update") {
+      const entry = persistedSourcesForDerive.find((s: any) => s && s.id === op.entryId);
+      ref = entry?.image_filename;
+    }
     if (typeof ref !== "string" || ref.length === 0) continue;
     const capped = sourceImageCapState(projectPath, ref);
     // `true` (verified partial) is the only value persisted, and only beside a

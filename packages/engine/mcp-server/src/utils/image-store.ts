@@ -77,7 +77,8 @@ function truncatedImageKey(projectPath: string, imageRef: string): string {
   // backslashes / leading `./` off imageRef (so `./images/x.jpg` joins
   // `images/x.jpg`). Without either the record/query symmetry is lost.
   const scope =
-    getProjectStore().projectId ?? projectPath.replace(/\\/g, "/").replace(/\/+$/, "");
+    getProjectStore().projectId ??
+    posix.normalize(projectPath.replace(/\\/g, "/")).replace(/\/+$/, "");
   return `${scope}\0${normalizeImageRef(imageRef)}`;
 }
 

@@ -646,11 +646,13 @@ add-only: a whole re-read of a capped image records nothing, so a truncation is
 permanent in the store, and the persisted `true` is likewise never cleared (the
 derivation cannot retract it, and a restart empties the store a recomputation would
 need). An in-place refinement of the text is *permitted* — it just leaves the
-`true` badge over-reporting. To avoid the stale badge, cite the fuller reading as a
-**new** indexed-record source (`record_read` / `record_search`) rather than editing
-the image source in place. Nulling a truncated source's `transcription` outright
-still fails loudly (`validate_research_schema` rejects `true` beside empty text,
-with the same pivot instruction).
+`true` badge over-reporting. For a **record-backed** source, avoid the stale badge
+by citing the fuller reading as a **new** indexed-record source (`record_read` /
+`record_search`) rather than editing the image source in place. A **FamilySearch
+memory** scan has no indexed record, so a truncated memory transcription just stays
+partial with its marker — there is nothing to pivot to. Nulling a truncated
+source's `transcription` outright still fails loudly (`validate_research_schema`
+rejects `true` beside empty text).
 
 Unlike §3.6, this override **echoes nothing** — the response carries no signal
 that a caller-supplied value was dropped. The persisted-side invariant

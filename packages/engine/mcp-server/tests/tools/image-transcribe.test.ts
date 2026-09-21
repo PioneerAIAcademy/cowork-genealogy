@@ -429,7 +429,7 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
     }
   });
 
-  it("an uncapped read that persists an image records verified-whole (false), not absent", async () => {
+  it("an uncapped read records nothing — the image is absent from the add-only cap set (#2457 rulings, C 2026-09-21)", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
     const dir = await mkdtemp(join(tmpdir(), "imgt-nocap-"));
     try {
@@ -439,10 +439,8 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
       }, LOCAL);
       expect(result.truncated).toBeUndefined();
       expect(result.imageRef).toBe("images/004884748_02613.jpg");
-      // A first whole read records false in the cap store (not absent); the
-      // derivation reads it as "not true" and persists nothing — false never
-      // reaches research.json (#2457 B2 ruling).
-      expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
+      // Add-only: a whole read adds nothing, so the image is not in the set and
+      // sourceImageCapState reads false; the derivation persists no marker.
       expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -457,8 +455,8 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
       const r1 = await imageTranscribeTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
       expect(r1.truncated).toBe(true);
       expect(sourceImageCapState(dir, r1.imageRef!)).toBe(true);
-      // Read 2: same image, narrower lookingFor, comes back uncapped — must NOT
-      // overwrite the true (that false is what stamped partial text "verified whole").
+      // Read 2: same image, narrower lookingFor, comes back uncapped — being add-only
+      // it records nothing, so it cannot clear read 1's partial.
       mockOpenRouterOk("Anna");
       const r2 = await imageTranscribeTool({ imageId: "004884748_02613", lookingFor: "Anna", projectPath: dir }, LOCAL);
       expect(r2.truncated).toBeUndefined();

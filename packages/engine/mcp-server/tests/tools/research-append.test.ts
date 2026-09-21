@@ -735,9 +735,8 @@ describe("research_append (Phase 1)", () => {
 
     it("leaves the field absent when no read of the cited image reached the write boundary (not established)", async () => {
       await writeProject();
-      // No recordImageReadCap → the cap store has nothing for this image, so the
-      // state is "not established" (absent), distinct from a verified-whole read,
-      // which records false and would persist false, not absent (#2457 review r3, note 5).
+      // No recordImageReadCap → the image is not in the add-only cap set, so its
+      // state is "not established" and the marker is left absent.
       const r = await researchAppend({
         projectPath: dir,
         section: "sources",
@@ -797,6 +796,33 @@ describe("research_append (Phase 1)", () => {
       expect("transcription_truncated" in persisted).toBe(false);
     });
 
+    it("marks the source on a two-op sequence — append {image_filename}, then a later update {transcription} that omits it (#2457 r10 [0])", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // Op 1: the source arrives with its image_filename but no transcription yet.
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      // Op 2 (a later call): the transcription arrives, WITHOUT re-sending image_filename —
+      // the shape research/SKILL.md encourages. The derivation must fall back to the
+      // persisted source's image_filename and mark it. Pre-fix: no marker, silently.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "Row 1: Anna … rtway down the pag" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("Row 1: Anna … rtway down the pag");
+      expect(after.transcription_truncated).toBe(true); // pre-fix: marker missing
+    });
+
     it("permits an in-place transcription refinement of a persisted-true source; the marker survives and over-reports by design (#2457 rulings, C 2026-09-21)", async () => {
       await writeProject();
       recordImageReadCap(dir, "images/x.jpg", true);
@@ -843,12 +869,11 @@ describe("research_append (Phase 1)", () => {
       expect(persisted.transcription_truncated).toBe(true); // pre-fix: false — a false "verified whole" on partial text
     });
 
-    it("does not persist false — a whole-read source is left absent, and an in-place transcription update is permitted (#2457 B2 ruling 2026-09-19)", async () => {
+    it("an image not in the cap set: append leaves the marker absent, and a later in-place transcription update is permitted (#2457 rulings, C 2026-09-21)", async () => {
       await writeProject();
-      // First read in the process is WHOLE (cap false, no prior true). The marker
-      // is never persisted as false: an append leaves it absent, and a later
-      // in-place transcription update goes through (nothing is written to block it).
-      recordImageReadCap(dir, "images/x.jpg", false);
+      // The image was never recorded as capped (a whole read records nothing —
+      // add-only). The marker stays absent on append, and a later in-place
+      // transcription update goes through (nothing is written to block it).
       const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
       expect(app.ok).toBe(true);
       if (!app.ok) return;

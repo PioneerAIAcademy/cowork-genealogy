@@ -224,4 +224,13 @@ describe("truncated-source-image cache (#2457)", () => {
     recordImageReadCap("C:/Users/proj/", "images/x.jpg", true);
     expect(sourceImageCapState("C:\\Users\\proj", "images/x.jpg")).toBe(true);
   });
+
+  it("folds a projectPath's doubled `//`, interior `/./` and `/../` the same way it folds imageRef (#2457 r10)", () => {
+    // The projectPath side was normalized asymmetrically — only a trailing separator
+    // — so `/p//q`, `/p/./q`, `/p/sub/../q` missed and the marker was lost, fail-open.
+    recordImageReadCap("/p/q", "images/x.jpg", true);
+    expect(sourceImageCapState("/p//q", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/p/./q", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/p/sub/../q", "images/x.jpg")).toBe(true);
+  });
 });

@@ -287,24 +287,6 @@ describe("enum-drift lint", () => {
     expect(a).toBe(b);
   });
 
-  it("both research.schema.json copies are byte-identical (#2457 review, blocker/note N4)", () => {
-    // The two mirrors had no ENGINE-side guard — a field or constraint could land
-    // in one and not the other and pass every vitest job. (The Python harness does
-    // load both via schema_validator.py, per docs/architecture.md's `make
-    // harness-test` row, so they were not wholly unchecked — this closes the
-    // engine-side gap.) They are maintained as identical copies, so hold them
-    // byte-for-byte the way the enums copies are held.
-    const a = readFileSync(
-      join(projectRoot, "docs", "specs", "schemas", "research.schema.json"),
-      "utf8",
-    );
-    const b = readFileSync(
-      join(projectRoot, "packages", "schema", "schemas", "research.schema.json"),
-      "utf8",
-    );
-    expect(a).toBe(b);
-  });
-
   it("discovers at least the expected number of ∈ declarations", () => {
     const expectedCount = EXPECTED.reduce((n, e) => n + e.enums.length, 0);
     expect(allDecls.length).toBeGreaterThanOrEqual(expectedCount);

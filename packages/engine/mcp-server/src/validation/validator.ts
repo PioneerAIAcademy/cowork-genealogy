@@ -1037,7 +1037,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           addError(
             report,
             sp,
-            "transcription_truncated: true requires a non-empty transcription — a capped read still has the text it did read, so a truncation marker beside empty or null transcription is not a valid state. transcription_truncated is derived by the tool, not set by you: do not null the partial transcription of a truncated source to clear it. Re-reading is not a reliable way to complete a capped read — the cap bounds output tokens and the OCR prompt varies with what was asked for; to supersede it, add a new source from the indexed record (record_read / record_search) instead of editing this one in place.",
+            "transcription_truncated: true requires a non-empty transcription — a capped read still has the text it did read, so a truncation marker beside empty or null transcription is not a valid state. transcription_truncated is derived by the tool, not set by you: do not null the partial transcription of a truncated source to clear it. Re-reading is not a reliable way to complete a capped read — the cap bounds output tokens and the OCR prompt varies with what was asked for; to supersede a record-backed source, add a new source from the indexed record (record_read / record_search) instead of editing this one in place. A FamilySearch memory has no indexed record; there the partial transcription simply stays with its marker.",
           );
         }
       }
