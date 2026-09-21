@@ -127,6 +127,36 @@ def test_scored_accepts_the_project_relative_call_shape():
     )
 
 
+def test_fts_accepts_a_score_backed_by_a_project_relative_call():
+    """The live false-positive this replaced.
+
+    `ut_person_evidence_011` called
+    `{assertionId: "a_004", treePersonId: "I1"}`, recorded 0.005, and was
+    flagged as fabricating the score. A full-text assertion has
+    `record_persona_id: null` by definition, so the persona-pair helper could
+    resolve no record party and contributed no pair, making the call invisible.
+    """
+    from validators.test_person_evidence import test_fts_assertion_no_score as check_fts
+
+    before = {"assertions": [{"id": "a_004", "record_persona_id": None}], "person_evidence": []}
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {"id": "pe_001", "assertion_id": "a_004", "person_id": "I1",
+             "confidence": "probable", "match_score": 0.005},
+        ],
+    }
+    call = {"tool": "mcp__genealogy__same_person",
+            "args": {"projectPath": "/p", "assertionId": "a_004", "treePersonId": "I1"}}
+    # Backed by a real call: must NOT fire.
+    check_fts(_state(before), _state(after), {"tags": ["no-score-fallback"]}, [call])
+
+    # The other direction: a score with no call anywhere still fires.
+    with pytest.raises(AssertionError) as exc:
+        check_fts(_state(before), _state(after), {"tags": ["no-score-fallback"]}, [])
+    assert "pe_001" in str(exc.value)
+
+
 def test_scored_accepts_the_DEFAULT_project_relative_shape_with_no_record_party():
     """The shape the agent actually sends, and the one that broke.
 

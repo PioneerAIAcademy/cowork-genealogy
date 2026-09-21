@@ -267,18 +267,33 @@ def test_fts_assertion_no_score(before_state, after_state, test, tool_calls):
     scored = [e for e in new if e.get("match_score") is not None]
     if not scored:
         return  # a null score is still a correct outcome here
-    pairs = _same_person_pairs(tool_calls, _assertions_by_id(after))
+
+    # Deliberately NOT `_same_person_pairs`. That helper answers "which
+    # (record persona, tree person) pairing was scored", and a full-text
+    # assertion has `record_persona_id: null` by definition, so on the
+    # project-relative call shape it can resolve no record party and
+    # contributes NO pair — making every such call invisible and this check
+    # fire on a score the agent had in fact computed. Observed live on
+    # ut_person_evidence_011, whose agent called
+    # `{assertionId: "a_004", treePersonId: "I1"}` and was still flagged.
+    #
+    # The question here is narrower and needs no persona: was there a
+    # successful same_person call naming THIS tree person at all.
+    scored_tree_persons: set[str] = set()
+    for tc in (tool_calls or []):
+        if "same_person" not in (tc.get("tool") or ""):
+            continue
+        if tc.get("is_error") is True:
+            continue
+        args = tc.get("args") or {}
+        for key in ("treePersonId", "primaryId1", "primaryId2"):
+            v = args.get(key)
+            if isinstance(v, str) and v:
+                scored_tree_persons.add(v)
     fabricated = sorted(
         f"{e.get('id')} ({e.get('match_score')})"
         for e in scored
-        if (
-            (_assertions_by_id(after).get(e.get("assertion_id")) or {}).get(
-                "record_persona_id"
-            ),
-            e.get("person_id"),
-        )
-        not in pairs
-        and e.get("person_id") not in {p for pair in pairs for p in pair}
+        if e.get("person_id") not in scored_tree_persons
     )
     assert not fabricated, (
         "a full-text-sourced link carries a match_score with no same_person "
