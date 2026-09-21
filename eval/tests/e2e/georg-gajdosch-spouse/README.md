@@ -66,11 +66,17 @@ hint, and the agent should not replace her with Catharina.
 
 ### What was searched and came up empty
 
-- **A substitute daughter.** Collection 1784129 (Czech Republic, Births and
-  Baptisms, 1637-1889), children of Georg Gajdosch and Dorothea, full
-  collection range: returns Joannes 1714 and nothing else. There is no other
-  Anna to put in the hint's place, which is what makes this outcome (c) rather
-  than (b).
+- **A substitute daughter, in the index.** Collection 1784129 (Czech Republic,
+  Births and Baptisms, 1637-1889), children of Georg Gajdosch and Dorothea,
+  full collection range: returns Joannes 1714 and nothing else.
+
+  The register holds one more — the 1720 Frantzowa Lhota Anna below — but that
+  is **not** a substitute for the hint, which is why this stays outcome (c)
+  and not (b). The hint asks whether a daughter Anna was baptised at Lidečko
+  on 22 April 1718 to a mother named Catharina. The 1720 entry answers a
+  different question: it is a different child, two years later, in a different
+  village, to Dorothea. It corroborates that the 1718 couple is a different
+  Georg; it does not supply the daughter the hint claims.
 - **A marriage record.** "Czech Republic, Marriages, 1654-1889" covers the
   period and holds exactly one Gajdosch-family entry: Georgius Gajdoschik,
   married at Brumovice, Hustopeče, 29 October 1765

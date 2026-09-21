@@ -9,8 +9,8 @@
         "subject_person": "Georg Gajdosch (PID K69J-F7Y)",
         "relation": "spouse",
         "wrong_candidate": {
-          "name": "Catharina, named as mother on the 22 April 1718 Lidečko baptism of Anna Gajdosch",
-          "note": "Catharina is the wife of a second Georg Gajdosch of Lidečko, not of the tree person. Her children and Dorothea's are eight days apart in 1714, so the two women cannot be one person and cannot be successive wives of one man; the tree person's only source names Dorothea."
+          "name": "Catharina Gajdosch",
+          "note": "Named as mother on the 22 April 1718 Lidečko baptism of Anna Gajdosch. Catharina is the wife of a second Georg Gajdosch of Lidečko, not of the tree person. Her children and Dorothea's are eight days apart in 1714, so the two women cannot be one person and cannot be successive wives of one man; the tree person's only source names Dorothea. NOTE ON SCOPE: this name field is deliberately the bare forename. The avoid guard builds its match tokens from it, so a fuller phrase here would drag `anna` and `gajdosch` into the bag and force this finding false on any Anna Gajdosch in the final tree — including the 1720 Frantzowa Lhota daughter the README presents as corroboration, which an agent is right to find."
         }
       },
       "supporting_sources": [
@@ -28,16 +28,16 @@
         "subject_person": "Georg Gajdosch (PID K69J-F7Y)",
         "relation": "research conclusion",
         "target_person": {
-          "name": "documented negative conclusion: no daughter Anna found for this Georg Gajdosch; the hint belongs to a same-named contemporary",
+          "name": "documented negative conclusion: no indexed Lidečko baptism names a daughter Anna to Georg and Dorothea; the 1718 hint belongs to a same-named contemporary",
           "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "No entry in Czech Republic, Births and Baptisms, 1637-1889 names a child of Georg Gajdosch and Dorothea other than Joannes, baptised 26 October 1714 — a search of that collection across its full range for children of that couple returns that entry alone, so no substitute daughter exists to put in Anna's place",
-        "No marriage record for this Georg Gajdosch appears in Czech Republic, Marriages, 1654-1889 — a collection that covers the period, and whose only Gajdosch-family entry is the 1765 marriage of Georgius Gajdoschik at Brumovice, Hustopeče (ark:/61903/1:1:XL6G-HFM), 51 years later and in a different district. Neither the Dorothea union nor the Catharina union is indexed, so no marriage entry can date or order them, and no record establishes a remarriage",
+        "No INDEXED entry in Czech Republic, Births and Baptisms, 1637-1889 names a child of Georg Gajdosch and Dorothea other than Joannes, baptised 26 October 1714 — a search of that collection across its full range for children of that couple returns that entry alone. The register itself holds one more, an Anna baptised 11 February 1720 at Frantzowa Lhota (image group 005387300, image 41, unindexed); that entry is corroboration for the two-Georg reading rather than a substitute for the 1718 hint, and the README sets out why",
+        "No marriage record for this Georg Gajdosch appears in Czech Republic, Marriages, 1654-1889 — a collection that covers the period, and whose only Gajdosch-family entry is the 1765 marriage of Georgius Gajdoschik at Brumovice, Hustopeče (ark:/61903/1:1:XL6G-HFM), 51 years later and in a different district. Neither the Dorothea union nor the Catharina union is indexed in that collection, so no indexed marriage entry dates or orders them",
         "No census can be brought to bear: Czech Republic, Censuses and Inhabitant Registers begins in 1800, 86 years after the events in question",
         "No death record for Dorothea appears in indexed Czech Republic collections from 1714 onward, so her death — the precondition for any remarriage reading — is undocumented",
-        "Czech Republic, Births and Baptisms, 1637-1889 is an index-only database (\"Index to selected Czech baptisms\") with no attached images, so the Lidečko parish register itself — the record that would settle one Georg or two from the original hand — could not be reached by this path"
+        "Czech Republic, Births and Baptisms, 1637-1889 is an index-only database (\"Index to selected Czech baptisms\") with no images of its own, so the bullets above describe the index and not the register. The Lidečko register IS reachable — browse-only, image group 005387300 (baptisms 1707-1742) — and reading it is what produced the 1720 entry above. Anyone extending this work should browse it rather than stop at the index"
       ],
       "required": true
     }

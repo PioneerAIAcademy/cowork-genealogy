@@ -43,7 +43,8 @@ neither.
 
 Give them the two URLs from the issue and tell them to work in this order,
 on **familysearch.org** or with the `packages/engine/mcp-server/dev/try-*.ts`
-scripts against live FamilySearch (`e2e-login` first) — collections search,
+scripts against live FamilySearch (`make e2e-login` first, or `eval\Login.bat`
+on Windows) — collections search,
 record search, record read, image read are all permitted for **retrieval**
 (spec §3.6):
 
