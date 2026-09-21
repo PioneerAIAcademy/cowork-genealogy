@@ -529,12 +529,6 @@ def check_stripping(
     the fact type to be present on that person, since a person
     legitimately remains when only one of their facts was stripped.
 
-    A tree person carrying **no surname at all** is matched on the given
-    name alone, and only for non-`fact` findings. Requiring both halves
-    of a name from someone who has one half is requiring the impossible,
-    and it made the matcher silently unable to see any mononymous person
-    — the shape most early-modern parish records give a woman.
-
     Polarity-agnostic on purpose: a `polarity: "avoid"` claim must be
     just as absent from the starting tree as a `recover` answer (a
     pre-asserted wrong claim breaks the fixture the other way), and the
@@ -555,26 +549,8 @@ def check_stripping(
         for person in people:
             shared_given = person.given_tokens & name_bag
             shared_surname = person.surname_tokens & name_bag
-            if person.surname_tokens:
-                if not (shared_given and shared_surname):
-                    continue
-            else:
-                # Mononymous tree person. Demanding a surname token demands
-                # one that cannot exist, so the both-halves test could never
-                # fire — the matcher was structurally blind to every
-                # given-name-only person, which in early-modern parish
-                # records is most of the women. Match on the given name,
-                # which is all the name there is.
-                #
-                # Not for `fact` findings: there the person legitimately
-                # stays and only the fact must be gone, so a bare given-name
-                # hit carries no signal. That exclusion is what keeps the
-                # rule clean — measured across all 136 committed fixtures,
-                # it yields zero new suspects on starting trees, while
-                # without it `heinrich-zinsmeister-death` flags the
-                # subject's own wife Elisabetha.
-                if ftype == "fact" or not shared_given:
-                    continue
+            if not (shared_given and shared_surname):
+                continue
 
             if ftype == "fact":
                 # The person staying is fine; the *fact* must be gone.

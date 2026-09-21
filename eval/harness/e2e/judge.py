@@ -418,9 +418,8 @@ def apply_avoid_guard(
     person — is exactly the one a model grader is most likely to excuse. So
     the objective half is re-checked mechanically: when an avoided claim's
     target is present in the agent's final tree (``check_stripping``'s
-    matcher — given+surname token overlap, or the given name alone for a
-    mononymous person on a non-``fact`` finding, plus fact type for
-    ``fact`` findings), that finding is forced to ``matched: "false"``, the recall
+    matcher — given+surname token overlap, plus fact type for ``fact``
+    findings), that finding is forced to ``matched: "false"``, the recall
     fractions are recomputed, and the verdict is recomputed downgrade-only.
     Non-``avoid`` findings are untouched, and the guard never upgrades
     anything. What it forced is recorded under ``judge_output["avoid_guard"]``
