@@ -2280,3 +2280,69 @@ def test_deterministic_deference_reaches_a_validator_failing_run(tmp_path, monke
         "[deterministic-deference]"
     )
     assert entry["outcome"] == "fail", "the validator failure still decides the outcome"
+
+
+# --- the unmatched_tool_call gate counts the suppressed calls (issue #2740) ---
+
+
+def _gate_result(attempted, suppressed, tool_calls, registered):
+    """A SkillRunResult carrying only what the Type-1 gate reads."""
+    from harness.skill_runner import SkillRunResult
+
+    return SkillRunResult(
+        text_response="",
+        skills_invoked=[],
+        tool_calls=tool_calls,
+        duration_ms=1.0,
+        usage={},
+        attempted_mcp_calls=attempted,
+        suppressed_post_deny_calls=suppressed,
+        registered_mcp_tools=set(registered),
+    )
+
+
+def test_an_unregistered_tool_in_the_suppressed_turn_still_aborts():
+    """A hallucinated tool name in the post-deny turn must not be invisible.
+
+    It is withheld from `attempted_mcp_calls` so it cannot raise an advisory;
+    that must not also make it un-abortable.
+    """
+    from harness import orchestrator as orch
+
+    result = _gate_result(
+        attempted=[],
+        suppressed=[{"tool": "mcp__genealogy__no_such_tool", "args": {}}],
+        tool_calls=[],
+        registered={"research_append"},
+    )
+    orch._apply_unmatched_tool_call_abort(result)
+
+    assert result.aborted_reason == "unmatched_tool_call", (
+        "an unregistered tool named in the suppressed turn went unseen; "
+        f"aborted_reason={result.aborted_reason!r}"
+    )
+
+
+def test_a_matched_suppressed_call_cannot_mask_an_earlier_uncovered_one():
+    """`covered` counts what EXECUTED; the left side must count the same set.
+
+    A post-deny call that executes and matches a fixture raises `covered`. If
+    the left side excludes it, `len(attempted) > covered` goes false and an
+    unregistered call from an EARLIER turn is never scanned for.
+    """
+    from harness import orchestrator as orch
+
+    result = _gate_result(
+        attempted=[{"tool": "mcp__genealogy__no_such_tool", "args": {}}],
+        suppressed=[{"tool": "mcp__genealogy__research_append", "args": {}}],
+        tool_calls=[
+            {"tool": "mcp__genealogy__research_append", "matched": {"kind": "predicate"}}
+        ],
+        registered={"research_append"},
+    )
+    orch._apply_unmatched_tool_call_abort(result)
+
+    assert result.aborted_reason == "unmatched_tool_call", (
+        "an executed, fixture-matching reaction call raised `covered` and "
+        "masked the earlier unregistered call"
+    )

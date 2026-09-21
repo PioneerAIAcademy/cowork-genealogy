@@ -556,6 +556,15 @@ class SkillRunResult:
     # no partial token count exists before a ResultMessage. This says so
     # instead of leaving 0 indistinguishable from "the skill used no tokens."
     no_result_message: bool = False
+    # MCP calls the routing short-circuit discarded: attempts made in the turn
+    # AFTER the hook denied the hand-off, which is the model reacting to the
+    # deny rather than the skill working. They are kept out of
+    # `attempted_mcp_calls` so they cannot raise an `uncovered_tool_call`
+    # advisory on a run that was deliberately stopped — but they are recorded,
+    # because dropping them outright made two claims uncheckable from any run
+    # log (issue #2740): whether a reaction call ever executes, and whether one
+    # ever names a tool the mock server does not register.
+    suppressed_post_deny_calls: list[dict[str, Any]] = field(default_factory=list)
 
 
 async def run_skill(
@@ -830,6 +839,8 @@ async def run_skill(
     # flag is already up while messages that PRECEDE the hand-off are still
     # arriving, and stopping on one of those drops the hand-off entirely.
     handoff_seen: dict[str, bool] = {"v": False}
+    # See SkillRunResult.suppressed_post_deny_calls.
+    suppressed_post_deny_calls: list[dict[str, Any]] = []
     # Set on the routing short-circuit path when no ResultMessage arrived, so
     # output_tokens: 0 there is legible as "no real count exists" rather than
     # "the skill used no tokens" (issue #2189). A mutable holder, not read
@@ -918,13 +929,23 @@ async def run_skill(
                 # This suppresses the ATTEMPT record, and the orchestrator's
                 # `unmatched_tool_call` abort reads that list — so in principle
                 # a hallucinated tool name issued in the reaction turn would go
-                # unseen. Measured rather than assumed: on both verification
-                # runs (ut_tree_edit_011 and _012, 2026-09-21) the stop lands
-                # before the SDK executes that turn, so `tool_calls` is empty
-                # and there is nothing for the abort to see either way. Keeping
-                # the attempts instead would fire an `uncovered_tool_call`
-                # advisory on every short-circuited negative test, which is
-                # precisely the noise the stop exists to remove.
+                # unseen. NOT settled by the two verification runs: both had
+                # `tool_calls` empty, which a reaction turn that made no call at
+                # all explains just as well, and the suppressed attempts are in
+                # no field of the run log to tell the two apart. Accepted for
+                # now because keeping them would fire an `uncovered_tool_call`
+                # advisory on any short-circuited negative test whose reaction
+                # turn does call a tool, and a reaction call to an unregistered
+                # name would trip the Type-1 `unmatched_tool_call` ABORT. The
+                # reverse would be real too -- a reaction call that executes
+                # and matches a fixture raises `covered` while `attempted`
+                # stays suppressed, so `len(attempted) > covered` could mask an
+                # uncovered call from an EARLIER turn. Both are closed by
+                # RECORDING what is suppressed rather than dropping it: the
+                # orchestrator's gate counts these on the attempted side and
+                # scans them for unregistered names, while `_build_warnings`
+                # still reads `attempted_mcp_calls` alone so no advisory fires
+                # on a deliberately stopped run (issue #2740).
                 turn_mcp_calls: list[dict[str, Any]] = []
                 for block in message.content:
                     if isinstance(block, TextBlock):
@@ -962,6 +983,7 @@ async def run_skill(
                     handoff_seen["v"] = True
                 if post_routing_reaction:
                     turns_seen["n"] -= 1
+                    suppressed_post_deny_calls.extend(turn_mcp_calls)
                     # Withheld from text_chunks — it is not the skill's own
                     # utterance — but still handed to the quota classifier
                     # below. A subscription rejection reaches us as PROSE as
@@ -1012,7 +1034,9 @@ async def run_skill(
                         rate_limit_signals, None, "".join(text_chunks) + suppressed_text
                     ):
                         aborted_reason = QUOTA_ABORT_REASON
-                        error = _format_quota_evidence(rate_limit_signals, None)
+                        error = _format_quota_evidence(
+                            rate_limit_signals, suppressed_text or None
+                        )
                     # No ResultMessage will arrive on this path in the common
                     # case (the downstream skill never launched), so `usage`
                     # never gets its SDK-reported fields — UNLESS one already
@@ -1172,7 +1196,17 @@ async def run_skill(
     # see it and stop submitting. A real quota rejection is real regardless of
     # whether routing also happened to resolve on the same run — clearing it
     # here would silently discard the one signal that decision is made from.
-    if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON:
+    #
+    # Only the SDK-surfaced "error" bucket is cleared. A harness-imposed cap --
+    # max_turns, max_wall_clock_seconds, max_tool_calls, sdk_stream_silence,
+    # max_input_tokens_per_turn -- cannot be fabricated by the hook's stop, and
+    # clearing one is what hid the 2026-09-14 break for a week: ut_citation_003
+    # (citation/v1_2026-09-18_21-06-39) ran the full 305.1s wall clock over 38
+    # turns and was still logged `aborted_reason: null, outcome: pass`. Across
+    # the 168 committed post-2026-09-14 negative runs, not one carries an abort
+    # reason. The single alarm that would have caught this was being switched
+    # off by the same flag the broken stop was keyed to.
+    if routing_resolved["v"] and aborted_reason in (None, "error"):
         aborted_reason = None
         error = None
 
@@ -1198,4 +1232,5 @@ async def run_skill(
         unread_skill_calls=unread_skill_calls,
         builtin_tool_calls=builtin_tool_calls,
         no_result_message=no_result_message_flag["v"],
+        suppressed_post_deny_calls=suppressed_post_deny_calls,
     )

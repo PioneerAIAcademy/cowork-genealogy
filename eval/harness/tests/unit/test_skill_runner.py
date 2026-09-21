@@ -1525,3 +1525,127 @@ def test_a_quota_in_the_suppressed_reaction_turn_still_aborts(tmp_path, monkeypa
     assert "usage limit reached" not in result.text_response, (
         "the reaction turn must still be withheld from the skill's own text"
     )
+    assert "usage limit reached" in (result.error or ""), (
+        "the quota was classified from prose that then appears in NO field of "
+        "the run log — withheld from text_response and absent from error, so "
+        "the operator has nothing to read and the next occurrence cannot be "
+        f"settled without another paid suite; error={result.error!r}"
+    )
+
+
+# --- the short-circuit's abort clearing is scoped, and nothing pinned it ------
+#
+# `if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON: clear`
+# cleared EVERY reason but the quota one, including harness-imposed caps the
+# hook's stop cannot fabricate. With the stop broken from 2026-09-14, negative
+# runs that then blew a cap were logged clean: ut_citation_003
+# (citation/v1_2026-09-18_21-06-39) ran 305.1s over 38 turns against a 300s
+# default and carries `aborted_reason: null, outcome: "pass"`, and none of the
+# 168 committed post-cut negative runs carries an abort reason at all. The
+# clause was pinned in NEITHER direction, so both go in here.
+
+
+async def _run_short_circuit_with_cap(monkeypatch, tmp_path):
+    """Trip `max_tool_calls` and THEN resolve routing, in one run."""
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    _, handoff_message = _routing_short_circuit_stream()
+    hook_inputs = [
+        {"tool_name": "mcp__genealogy__research_query", "tool_input": {}},
+        {"tool_name": "Skill", "tool_input": {"skill": "record-extraction"}},
+    ]
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(hook, hook_inputs, [handoff_message])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        routing_short_circuit_skills={"record-extraction"},
+        max_tool_calls=0,
+    )
+
+
+def test_a_harness_cap_survives_the_routing_short_circuit(tmp_path, monkeypatch):
+    """A cap the hook's stop cannot have fabricated must not be cleared.
+
+    This is the alarm that would have caught the 2026-09-14 break in its first
+    week and did not, because the clause keyed on the same flag the broken stop
+    keyed on.
+    """
+    import asyncio
+
+    result = asyncio.run(_run_short_circuit_with_cap(monkeypatch, tmp_path))
+
+    assert result.aborted_reason == "max_tool_calls", (
+        "a deterministic harness cap was cleared as short-circuit noise; "
+        f"aborted_reason={result.aborted_reason!r}"
+    )
+    assert "max_tool_calls" in (result.error or "")
+
+
+def test_an_sdk_error_is_still_cleared_by_the_routing_short_circuit(
+    tmp_path, monkeypatch
+):
+    """The other direction: the clearing this clause exists for still happens.
+
+    The SDK may surface the hook-initiated stop as an error on a trailing
+    ResultMessage. That is noise from a deliberate, successful early stop and
+    must still be cleared — narrowing the clause to caps-only would make every
+    short-circuited run look aborted, which is worse than the bug above.
+    """
+    import asyncio
+
+    result = asyncio.run(
+        _run_short_circuit_with_prefix(
+            monkeypatch, tmp_path, [_result_message(api_error_status=500)]
+        )
+    )
+
+    assert result.aborted_reason is None, (
+        "the SDK's own error on a deliberate stop should still be cleared; "
+        f"aborted_reason={result.aborted_reason!r}"
+    )
+    assert result.error is None
+
+
+def test_the_suppressed_reaction_calls_are_recorded_not_dropped(tmp_path, monkeypatch):
+    """Withheld from the skill's own record, but kept on the result.
+
+    Dropping them left two things unanswerable from any run log — whether a
+    reaction call ever executes, and whether one ever names an unregistered
+    tool — which is what made the earlier "measured" claim about this
+    unfalsifiable (issue #2740).
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock, ToolUseBlock
+
+    reaction = AssistantMessage(
+        content=[
+            TextBlock(text="Denied, so I will do it myself."),
+            ToolUseBlock(
+                id="reaction-call",
+                name="mcp__genealogy__research_append",
+                input={"section": "person_evidence"},
+            ),
+        ],
+        model="stub",
+    )
+
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(monkeypatch, tmp_path, [reaction])
+    )
+
+    assert [c["tool"] for c in result.suppressed_post_deny_calls] == [
+        "mcp__genealogy__research_append"
+    ], f"the discarded attempt was not recorded: {result.suppressed_post_deny_calls}"
+    assert not result.attempted_mcp_calls, (
+        "a post-deny call must still stay OUT of attempted_mcp_calls, or the "
+        "uncovered_tool_call advisory fires on a deliberately stopped run"
+    )
