@@ -1,6 +1,6 @@
 ---
 name: find-big-wins
-description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the `nothing-checks` register, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Reads the `needs-decision` queue as evidence of missing doctrine, but never drains it — `/make-decisions` does that daily. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
+description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the `nothing-checks` register, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Reads the `needs-decision` queue as evidence of missing doctrine, but never drains it — `/make-decisions` does that daily. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `senior` issue that whoever takes it self-assigns. Never starts the work and never writes the plan.
 allowed-tools:
   - Read
   - Edit
@@ -497,7 +497,7 @@ when he asks.** Nobody starts the work in any of them.
 |---|---|---|
 | **1. PROPOSE** | this skill | breadth, pre-verified claims, ranked |
 | **2. RESEARCH** | the lead and Claude together | the probe run or the design worked through — **and a finished issue body** |
-| **3. ISSUE** | the lead | a `gh` issue labelled `cross-cutting`, assigned to a named person |
+| **3. ISSUE** | the lead | a `gh` issue labelled `senior`, unassigned like everything else |
 
 ### The boundary that matters: he writes the issue, they write the plan
 
@@ -554,7 +554,7 @@ success.
 
 ```sh
 gh issue create --repo PioneerAIAcademy/cowork-genealogy \
-  --label cross-cutting --label developer \
+  --label senior --label developer \
   --title "…" --body-file <file>
 ```
 
@@ -562,11 +562,11 @@ Use `--body-file`, not an inline `--body`: these bodies are long, and the shell
 mangles the ones written inline. Open the body with a `**Touches:**` line naming
 the files the work would change, per `CLAUDE.md`.
 
-Keep the `developer` or `genealogist` label alongside `cross-cutting` so the lane
-stays visible. The lead assigns it; `/fill-ready` exempts assigned
-`cross-cutting` items from its seniority routing and its Ready depth targets, and
-holds each person to **one active `cross-cutting` item at a time** — these are
-multi-week structural projects, not weekly items.
+Keep the `developer` or `genealogist` label alongside `senior` so the lane stays
+visible. **Do not assign it** — nobody assigns work on this board, the lead
+included. `/fill-ready` ranks it in its lane's pool with the rest of the senior
+work and a senior (or the lead) picks it up from Ready. Its multi-week shape is
+carried by the body, not by a label.
 
 ### Writing the ledger
 

@@ -89,9 +89,12 @@ says *what* is blocking it now. What you must not do is reach for `senior` on an
 item that is merely undecided — that sends a sentence looking for a scarce
 person.
 
-**Never answer a fork yourself.** Every open fork gets its `## Decision needed`
-block and the `needs-decision` label. `/make-decisions` is the only place a
-ruling is taken and applied.
+**Decide the forks that fail the four-way test yourself.** A fork is the lead's
+only if one live option spends money the card does not budget, sets doctrine or
+precedent, adds hard-to-reverse surface, or touches a prior ruling. Those get the
+`## Decision needed` block and the `needs-decision` label; the rest go into the
+body as `**Decided (review-ready, <date>): A, <consequence>.**`.
+`/make-decisions` is the only place a lead ruling is taken and applied.
 
 ## Step 5 — Do not move the board
 
