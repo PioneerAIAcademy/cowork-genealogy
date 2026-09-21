@@ -331,9 +331,11 @@ with no backlink is **warned about, never guessed at**.
 **What it knowingly does not fix.** A correction made on a *corroborating*
 assertion does not reach the fact: the fact carries the minting assertion's id,
 not the corroborator's. That is the narrower residue of the same bug and it is
-accepted. It bounds at **175 of 7225 person facts** in the committed e2e trees
-carrying more than one source ref (measured 2026-09-14; recount by counting
-facts with `len(sources) > 1` across
+accepted. It bounds at **202 of 7603 person facts** in the committed e2e trees
+carrying more than one source ref (re-measured 2026-09-21 by the method this
+sentence already gave, over tracked files only; it read 175 of 7225 on
+2026-09-14, so treat the pair as a growth rate rather than a constant and
+recount by counting facts with `len(sources) > 1` across
 `eval/runlogs/e2e/*/*final-tree.gedcomx.json`), and a multi-source fact is only
 *potentially* affected — the corroborators usually agree.
 
@@ -420,17 +422,74 @@ or CI job surfaced it. With `assertion_id` present it is a property, and
 asserts it: for every backlinked fact, where both the fact and its assertion
 hold a value for `place`/`standard_place`/`date`/`value`, the two must agree.
 
-Two limits on that check, stated because the `nothing-checks` label turns on
-them. It runs on the **unit** plane only — `run_validators` has one caller, the
-unit orchestrator, and the e2e harness runs no universal validators — while the
-card was filed off an e2e run. And it is **green by construction on today's unit
-corpus**, where the two populations are disjoint: all 51 `materialize_facts`
-calls are `person-evidence`'s and every four-field assertion `update` is
-`record-extraction`'s, so no unit run both mints a backlinked fact and later
-corrects its assertion. Its falsifiable half is the direct unit test at
+Two limits on that check were stated here because the `nothing-checks` label
+turns on them. **The plane limit is now closed; the unit-corpus one stands.**
+
+**One predicate, three call sites, two behaviours.** The rule is
+`find_tree_facts_disagreeing_with_assertions`, a plain function over
+(research, tree) returning one finding per diverging attribute. The unit plane
+ASSERTS on it — `test_tree_facts_agree_with_linked_assertions` fails a test when
+the returned list is non-empty. The e2e plane REPORTS it twice over, both in
+shadow mode: `collect_post_hoc_shadow` emits into `guardrail_shadow_violations`
+under the tree-fact/assertion kind while a run happens, and `replay_post_hoc`
+recomputes the same findings from committed sidecars, which is the only thing
+that reaches runs made before this shipped. Do not write a second copy of the
+rule for a fourth. Two copies of a rule agree only
+until the first correction to either, and the correction that matters here is a
+false-positive exemption: there are five, each admitting a legitimate operation,
+and a copy that loses one turns red forever on correct work.
+
+**Reported on e2e, not gated.** That is what every other post-hoc detector in
+that bucket does, and promoting one to something that fails a run is a separate
+step with its own evidence bar in `guardrail-enforcement-spec.md`'s
+shadow-to-graduate pipeline. It matters more for this check than for its
+neighbours: in shadow mode an over-firing predicate never reds a run, so it
+surfaces only as a number somebody later quotes — which is why the accept
+direction is break-tested as hard as the fail direction.
+
+**Closed does not mean observed.** Replayed over every committed e2e run pair
+the check reads zero, and that zero is measured rather than structural: the
+population is real but young. Backlinked facts do exist in committed e2e final
+trees, most of them single-ref and so comparable at all, but they are
+concentrated in a run or two per week since the backlink itself shipped
+(2026-09-15), and the run the gap was filed off carries none — it can never
+reproduce the defect on replay. Read a zero here as "not yet seen", never as
+"cannot happen".
+
+**The population SIZE is deliberately not pinned here**, though the zero is: the
+fire count is what `make e2e-guardrail-shadow REPLAY=1 SINCE=all` prints, with
+its denominator, and it will still read zero long after any population figure
+written on this page has gone stale. To size the population, count facts
+carrying an `assertion_id` across `eval/runlogs/e2e/*/*final-tree.gedcomx.json`
+and take those with at most one `sources` ref; that is the comparable subset,
+and it is the same shape the multi-ref bound above is measured with.
+
+**The unit-corpus limit stands: green by construction.** No unit run both mints
+a backlinked fact and later corrects the assertion it was minted from, so the
+two populations remain disjoint and nothing on that plane can make the check
+fire. The minting is overwhelmingly `person-evidence`'s and every four-field
+assertion `update` is `record-extraction`'s, through `extraction_append`.
+
+An earlier form of this paragraph pinned that with an exact call count and the
+claim that **all** of those calls were `person-evidence`'s. Both had drifted
+within weeks, the all-clause outright, while the conclusion they were offered as
+evidence for stayed true — so the shape is stated here and the counts are not.
+To recount, walk `tests[].runs[].output.tool_calls[]` in the tracked run logs
+under `eval/runlogs/unit/`, count the calls whose tool name ends in
+`materialize_facts`, and separately the `research_append`/`extraction_append`
+ops with `section: "assertions"` and `op: "update"` touching any of
+`place`/`standard_place`/`date`/`value`; the claim is that no single run does
+both. Count tracked files only: a working tree also holds `scratch_` and
+`.partial_` logs, and including them is how the superseded figures were got
+wrong in the first place.
+
+The unit-corpus limit's
+falsifiable half is still the direct unit test at
 `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py`;
 `validators/` is outside the harness's own `testpaths`, so without that file the
-check would ship unexecuted.
+check would ship unexecuted. The live-path twin at
+`eval/harness/tests/unit/test_post_hoc_shadow.py` does the same job for the e2e
+caller, whose own zero is likewise green by construction until a run fires.
 
 **Who may perform this write.** `record-extraction` is deliberately **not** added
 to the `tree.gedcomx.json`/`persons` row's `callers`: a skill-granular grant

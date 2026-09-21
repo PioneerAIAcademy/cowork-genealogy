@@ -58,6 +58,7 @@ from harness.skill_invocation import (
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
     find_conclusions_without_tree_encoding,
+    find_tree_facts_disagreeing_with_assertions,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -2744,8 +2745,8 @@ async def _run_agent(
 def collect_post_hoc_shadow(
     workspace: Path, *, emit: Callable[[str], None] | None = None
 ) -> list[dict[str, Any]]:
-    """The two SHADOW-MODE post-hoc checks that read the FINAL research.json,
-    rather than scanning `tool_calls`. Returns entries for
+    """The three SHADOW-MODE post-hoc checks that read the FINAL project
+    documents, rather than scanning `tool_calls`. Returns entries for
     `guardrail_shadow_violations`; never fails a run.
 
     - **citation-nulling** (issue #1133): a source that BACKS A WRITTEN CONCLUSION
@@ -2755,21 +2756,31 @@ def collect_post_hoc_shadow(
       resolved conflict that no structured `conflicts[]` entry backs, so the
       resolution lives only in prose and the viewer's Conflicts section stays
       blank.
+    - **tree-fact/assertion disagreement** (issues #2472, #2558): a materialized
+      tree fact holds a value the assertion it was minted from no longer holds,
+      so a correction never reached the fact. The one check here that reads the
+      tree as well as research.json.
 
-    Both share `guardrail_shadow_violations`, discriminated by `kind` so the
+    All three share `guardrail_shadow_violations`, discriminated by `kind` so the
     shadow report counts each in its own bucket.
 
     **Extracted from `_run_agent` so it can be tested at all.** Inline, this ran
     only inside a coroutine that needs the Claude Agent SDK and a live model, so
-    nothing offline could reach it — and `read_research_json` returns None on a
-    missing or unparseable file while both detectors return `[]` on None, which
-    means a broken workspace read is indistinguishable from a clean project. That
+    nothing offline could reach it — and both workspace readers return None on a
+    missing or unparseable file while every detector here returns `[]` on None,
+    which means a broken workspace read is indistinguishable from a clean
+    project. That
     is exactly the "is the behaviour absent or is the detector broken" ambiguity
     this phase exists to remove, sitting in the one path no test covered. The
     citation-nulling check has never fired on the corpus, so this is its only
     positive control.
     """
     research = read_research_json(workspace)
+    # The tree is read here too, for the agreement check below. Both reads
+    # return None on a missing or unparseable file and every detector answers
+    # [] on None, so a broken workspace read stays indistinguishable from a
+    # clean project — the ambiguity this function's own tests pin.
+    tree = read_tree_json(workspace)
     out: list[dict[str, Any]] = []
 
     citation_nulling = find_citation_nulling_in_conclusions(research)
@@ -2789,6 +2800,16 @@ def collect_post_hoc_shadow(
                 f"[guardrail-shadow] {len(conflict_unpersisted)} concluded "
                 "question(s) relying on an unpersisted conflict resolution "
                 "(shadow mode — not failed)"
+            )
+
+    fact_disagreements = find_tree_facts_disagreeing_with_assertions(research, tree)
+    if fact_disagreements:
+        out.extend(fact_disagreements)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(fact_disagreements)} tree fact "
+                "attribute(s) disagreeing with the assertion they were "
+                "materialized from (shadow mode — not failed)"
             )
     return out
 
@@ -3010,10 +3031,14 @@ async def run_e2e_test(
                 guardrail_shadow_violations + warnings_unchecked_shadow
             )
 
-        # The TREE-side citation-nulling arm (issue #1358). Wired here, not beside
-        # the research-side call above, because that site has no tree in scope —
-        # this one has `final_research`, `final_tree` and `starting_tree`
-        # together, which is what the gate needs.
+        # The TREE-side citation-nulling arm (issue #1358). This arm reads
+        # `final_research` and `final_tree` and no seed, so since issue #2558 gave
+        # `collect_post_hoc_shadow` a tree read it could equally sit there; the
+        # original reason recorded here, that the other site had no tree in scope,
+        # has stopped being true. It stays beside the two arms below, which DO
+        # diff against `starting_tree` and can only live at this site: moving one
+        # of the three alone would split the tree-reading arms across two call
+        # sites and buy nothing.
         #
         # Shadow only, and deliberately not graduated by this card. Its sibling
         # measures ZERO across the corpus (1,884 concluded sources, all cited),

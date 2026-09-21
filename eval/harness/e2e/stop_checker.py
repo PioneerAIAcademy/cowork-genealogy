@@ -37,14 +37,25 @@ def read_research_json(workspace: Path) -> dict[str, Any] | None:
 
 
 def read_tree_json(workspace: Path) -> dict[str, Any] | None:
-    """Return parsed tree.gedcomx.json or None if missing/invalid."""
+    """Return parsed tree.gedcomx.json, or None if missing or unusable.
+
+    The same two guards `read_research_json` above documents, and for the same
+    reasons: `UnicodeDecodeError` is a `ValueError` rather than an `OSError`, so
+    a tree written in cp1252 (the Windows default, and this team runs on Windows)
+    propagated out of every caller instead of degrading; and a tree parsing to a
+    JSON *array* is not None, so it passed every `is None` test and then raised
+    `AttributeError` on `.get(...)`. Both now matter on the paid e2e path, where
+    `collect_post_hoc_shadow` reads this file and a raise there aborts the run
+    before any result file is written.
+    """
     path = Path(workspace) / "tree.gedcomx.json"
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
         return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def project_completed(research: dict[str, Any] | None) -> bool:

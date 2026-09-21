@@ -1987,3 +1987,180 @@ def find_conclusions_without_tree_encoding(
             }
         )
     return out
+
+
+# ─── tree-fact/assertion agreement measurement (issues #2472, #2558) ─────────
+
+# Shares the guardrail_shadow_violations bucket, keyed on this kind.
+TREE_FACT_ASSERTION_KIND = "tree_fact_assertion_disagreement"
+
+# The attributes a materialized fact copies from the assertion it was minted
+# from, and the only ones compared. A fact's `type` is not among them: a type
+# that no longer matches is a NON-COMPARABILITY signal, handled below, not a
+# disagreement.
+_AGREEMENT_FIELDS = ("place", "standard_place", "date", "value")
+
+
+def _agreement_text(value: Any) -> str | None:
+    """The comparable form of a field, or None when there is nothing to compare.
+
+    Whitespace-only collapses to None, so a blank on either side is skipped
+    rather than reported: a fact carrying "   " asserts nothing about the
+    assertion's value.
+    """
+    return value.strip() if isinstance(value, str) and value.strip() else None
+
+
+def _owned_facts(container: Any):
+    """(owner id, fact) for every fact on every dict in `container`.
+
+    Reads `.facts`, so it serves persons and relationships alike. Every level is
+    `isinstance`-guarded rather than `or []`-guarded: `or []` keeps a non-list
+    truthy value (a stray `9`) and then raises `TypeError` iterating it, and this
+    module never raises -- the e2e caller reads these documents off disk on the
+    paid path, where a raise aborts the run before any result file is written.
+    """
+    for item in container if isinstance(container, list) else []:
+        if not isinstance(item, dict):
+            continue
+        facts = item.get("facts")
+        for fact in facts if isinstance(facts, list) else []:
+            if isinstance(fact, dict):
+                yield item.get("id"), fact
+
+
+def find_tree_facts_disagreeing_with_assertions(
+    research: dict[str, Any] | None,
+    tree: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """A materialized tree fact that disagrees with the assertion it came from.
+
+    Issue #2472: a place corrected on a `research.json` assertion did not reach
+    the tree fact already materialised from the earlier reading. The stale value
+    stayed on the fact and nothing reported the divergence -- in the run that
+    produced the card, person I1's Immigration fact kept "Wellburn, Thames
+    Centre, Middlesex, Ontario, Canada" and a `standard_place` of "Thames Centre
+    Township, Middlesex, Ontario, Canada" while the assertion already held the
+    corrected "Odessa, Francis No. 127, Saskatchewan, Canada". A wrong reading
+    reached a place-AUTHORITY value, not only a display string, so anything
+    joining on `standard_place` put her in the wrong province.
+
+    That was uncheckable until the fact carried a backlink. With `assertion_id`
+    on it, "this fact disagrees with its own source assertion" is a computable
+    property, and this is it.
+
+    **One predicate, three call sites, two behaviours** (issue #2558).
+    `test_universal.py`'s `test_tree_facts_agree_with_linked_assertions` ASSERTS
+    the returned list is empty on the unit plane. The other two REPORT, both on
+    the e2e side and both shadow-mode, failing nothing: `e2e/orchestrator.py`'s
+    `collect_post_hoc_shadow` emits into `guardrail_shadow_violations` under
+    `TREE_FACT_ASSERTION_KIND` as a run happens, and
+    `e2e/guardrail_shadow_report.py`'s `replay_post_hoc` recomputes the same
+    findings offline from committed sidecars, which is what covers runs made
+    before this shipped. The rule lives here once because a rule stated twice
+    diverges at the first correction to either copy.
+
+    Compared only where BOTH sides hold a non-empty string, only on a fact
+    citing a SINGLE source, and only while the fact's type still matches its
+    assertion's. Five false-positive directions, all legitimate:
+
+      - assertion side absent: the corroboration branch can fill an attribute on
+        a backlinked fact from a DIFFERENT assertion, so "fact has it, linked
+        assertion does not" is not drift.
+      - fact side absent: an event fact never carries the assertion's `value`
+        (#711, `factCandidate`), so comparing it would fail every event fact --
+        and skipping means this needs no copy of `EVENT_TREE_TYPES` in Python.
+      - `assertion_id` naming nothing: there is no assertion to compare against,
+        so it is skipped rather than failed. Referential integrity for this field
+        is not this check's job.
+      - MORE THAN ONE SOURCE REF: the corroboration branch can fill an attribute
+        from another assertion, and `research_append`'s rewrite then refuses to
+        overwrite it (that would destroy the other source's evidence). The fact
+        legitimately holds a value its own backlink never asserted, and there is
+        no tool that can reconcile the two without destroying one of them, so
+        firing here would be red forever on correct work. That is the population
+        `tree-materialization-spec.md` section 4.4 already bounds and accepts; it
+        owns the count and the method for recounting it, so this docstring does
+        not carry a second copy to go stale (the one it used to carry had, by a
+        sixth). A single-ref fact holds exactly what its own assertion said, which
+        is where the reported defect lives (the run that produced the card has
+        one ref on the diverging fact).
+      - fact type no longer matching its assertion's: the rewrite refuses such a
+        fact precisely because the two no longer describe the same thing, so
+        firing here would report the refusal as drift.
+
+    Facts corrected by hand (`tree_correct`) and facts merged from differently
+    backlinked members carry no `assertion_id` by then -- both writers drop it --
+    so neither reads as drift here.
+
+    Scans relationship facts as well as person facts. Nothing can stamp a
+    relationship fact today, so that arm cannot fire; a detector with a blind
+    spot is worse than one that is silent where nothing happens, and a backlink
+    appearing there is exactly the thing worth being told about.
+
+    Returns violation records shaped like the other shadow sources (int `index`,
+    string `tool`, `kind`), each carrying the owner, fact and assertion ids and
+    the field that diverged. A malformed or absent document yields `[]` rather
+    than raising: the e2e caller reads both files off disk, where either can be
+    missing or unparseable, and a crash there would abort a paid run. The unit
+    caller skips on those shapes before it ever calls this.
+    """
+    if not isinstance(research, dict) or not isinstance(tree, dict):
+        return []
+
+    # Reuses the module's own assertion index rather than rebuilding one: it
+    # already keys only on STRING ids, which a bare `.get(id)` cannot survive
+    # when a document carries an unhashable one. The log half is discarded.
+    by_id, _ = _provenance_index(research)
+
+    out: list[dict[str, Any]] = []
+    for owner_id, fact in [
+        *_owned_facts(tree.get("persons")),
+        *_owned_facts(tree.get("relationships")),
+    ]:
+        linked_id = fact.get("assertion_id")
+        # `_lookup_assertion` is the module's guarded lookup: a non-string
+        # backlink (a list, say) is unhashable and would raise TypeError out of a
+        # bare dict lookup instead of producing a verdict. The schema check in
+        # test_universal.py already rejects that shape; this one must not crash
+        # on the way.
+        assertion = _lookup_assertion(by_id, linked_id)
+        if assertion is None:
+            continue
+        sources = fact.get("sources")
+        refs = [r for r in (sources if isinstance(sources, list) else []) if isinstance(r, dict)]
+        if len(refs) > 1:
+            continue
+        # PascalCase the assertion's snake_case fact_type the way `toTreeFactType`
+        # does, so `fact_type: "immigration"` and `type: "Immigration"` match.
+        fact_type = fact.get("type")
+        want_type = "".join(
+            w[:1].upper() + w[1:]
+            for w in re.split(r"[_\s]+", str(assertion.get("fact_type") or ""))
+            if w
+        )
+        if want_type and isinstance(fact_type, str) and fact_type != want_type:
+            continue
+        for field in _AGREEMENT_FIELDS:
+            on_fact = _agreement_text(fact.get(field))
+            on_assertion = _agreement_text(assertion.get(field))
+            if on_fact is None or on_assertion is None:
+                continue
+            if on_fact != on_assertion:
+                out.append(
+                    {
+                        "index": -1,
+                        "tool": "tree.gedcomx.json",
+                        "kind": TREE_FACT_ASSERTION_KIND,
+                        "owner_id": owner_id,
+                        "fact_id": fact.get("id"),
+                        "assertion_id": linked_id,
+                        "field": field,
+                        "detail": (
+                            f"{owner_id}/{fact.get('id')} {field}: fact has "
+                            f"'{on_fact}' but assertion {linked_id} has "
+                            f"'{on_assertion}'"
+                        ),
+                    }
+                )
+    return out

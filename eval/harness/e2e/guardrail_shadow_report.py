@@ -100,6 +100,7 @@ from harness.skill_invocation import (
     find_missing_mentor_verdicts,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
+    find_tree_facts_disagreeing_with_assertions,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
     owning_skills,
@@ -108,6 +109,7 @@ from harness.skill_invocation import (
     same_person_scored_ids,
     skill_name_if_skill_call,
     TREE_ENCODING_KIND,
+    TREE_FACT_ASSERTION_KIND,
     unguarded_new_person_evidence_links,
     WARNINGS_UNCHECKED_KIND,
 )
@@ -185,7 +187,7 @@ def _scan_stored(
     This is the STORED read. It reports what a run recorded when it ran, so a
     check reads 0 over every run made before it shipped — on today's corpus that
     is most of it. **It is not evidence that a check never fires**; for that, read
-    `replay_post_hoc` (the three post-hoc families) or `replay_provenance` (#963),
+    `replay_post_hoc` (the six post-hoc families) or `replay_provenance` (#963),
     which recompute from committed state.
 
     This docstring used to say the stored families could not be replayed at all,
@@ -225,8 +227,16 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
     prior `same_person`). Identified by the `detail` key, which the stored
     sources set — but EXCLUDING the other `detail`-carrying kinds counted in
     their own buckets: #1133 citation-nulling (`scan_citation_nulling`), #1317
-    conflict-unpersisted (`scan_conflict_unpersisted`), and deny-mode provenance
-    (`PERSON_EVIDENCE_DENY_KIND`).
+    conflict-unpersisted (`scan_conflict_unpersisted`), deny-mode provenance
+    (`PERSON_EVIDENCE_DENY_KIND`), #1193 warnings-unchecked, #1490 tree-encoding
+    and #2472 tree-fact/assertion disagreement.
+
+    **Every kind with its own bucket belongs in that tuple.** `TREE_ENCODING_KIND`
+    was missing from it: its entries carry `detail`, so each would have been
+    counted a second time here as a #963 provenance gap. No committed run stores
+    one today, so no published number moves — which is exactly why only a test
+    can hold this, and `test_the_provenance_scan_excludes_the_tree_encoding_arm`
+    does.
     """
     return _scan_stored(
         paths,
@@ -238,6 +248,8 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
             CONFLICT_UNPERSISTED_KIND,
             PERSON_EVIDENCE_DENY_KIND,
             WARNINGS_UNCHECKED_KIND,
+            TREE_ENCODING_KIND,
+            TREE_FACT_ASSERTION_KIND,
         ),
     )
 
@@ -292,6 +304,18 @@ def scan_tree_encoding(paths: list[Path]) -> list[dict[str, Any]]:
     older runs.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == TREE_ENCODING_KIND)
+
+
+def scan_tree_fact_assertion(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#2472 tree-fact/assertion disagreement entries STORED in each
+    run's `guardrail_shadow_violations` (a materialized fact holding a value its
+    own assertion no longer holds). Identified by
+    `kind == TREE_FACT_ASSERTION_KIND`. Reads 0 over every run captured before
+    the detector was wired into the live orchestrator; runs made after it store
+    the check live, so this line accumulates the fire rate. REPLAY still covers
+    the older runs.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == TREE_FACT_ASSERTION_KIND)
 
 
 @dataclass
@@ -374,11 +398,14 @@ def scan_unnamed_delegate(paths: list[Path], *, replay: bool) -> UnnamedDelegate
 class RunInputs:
     """Everything a replay may need for ONE committed run, loaded once.
 
-    Each check asks for ITSELF whether this run is scannable, via the two
-    `missing_for_*` methods below — the research-only checks need
-    `final_research` and nothing else, while the warnings check additionally
-    needs `final_tree` and `seed_tree`. A single shared skip list would drop a run
-    from all three denominators because one check's input was absent (see
+    Each check asks for ITSELF whether this run is scannable, via the
+    `missing_for_*` methods below — five of them, one per distinct requirement
+    tuple rather than one per check. They are NOT a ladder of supersets, and
+    writing them as one is the error the next paragraph exists to warn about:
+    `missing_for_warnings` reads the run log, the final tree and the seed and
+    never `final_research`, while `missing_for_tree_encoding` reads the research,
+    the tree and the seed and never the run log. A single shared skip list would
+    drop a run from every denominator because one check's input was absent (see
     `PostHocReplay`).
 
     The requirements are expressed as **field reads, not as string matching on a
@@ -464,6 +491,33 @@ class RunInputs:
         ]
         return ", ".join(absent) or None
 
+    def missing_for_fact_agreement(self) -> str | None:
+        """Why `find_tree_facts_disagreeing_with_assertions` cannot read this
+        run, or None.
+
+        The final research (for the assertions) and the final tree (for the
+        backlinked facts) — the same pair `missing_for_tree_citation` needs, and
+        deliberately NOT `missing_for_tree_encoding`'s, which additionally
+        demands a seed tree this check never reads and would drop every run with
+        no fixture directory from the denominator.
+
+        It does not require a readable run log either, for the reason
+        `missing_for_tree_encoding` gives: this predicate reads two documents and
+        never `tool_calls`, so an unreadable log tells it nothing. Measured over
+        the committed corpus the two choices are identical — no run has an
+        unreadable log alongside readable sidecars — so this states the
+        requirement the check actually has rather than inheriting a stricter one.
+        """
+        absent = [
+            name
+            for name, value in (
+                ("no readable final-research.json sidecar", self.final_research),
+                ("no readable final-tree.gedcomx.json sidecar", self.final_tree),
+            )
+            if value is None
+        ]
+        return ", ".join(absent) or None
+
 
 def _load_json(path: Path) -> dict[str, Any] | None:
     """Parse one JSON file, or None if it cannot be read as a JSON OBJECT.
@@ -535,8 +589,10 @@ class CheckReplay:
     behaviour-PRESENCE numbers ("does this shape occur at all"), not conditional
     rates. Both research-only checks are gated on a non-empty `proof_summaries`
     and warnings-unchecked on a new relationship, so some scanned runs could
-    never have fired. Do not read `4 of 157` as a rate over eligible runs; it is
-    4 occurrences across a corpus of 157 that were readable.
+    never have fired. Do not read a count like `4 of 157` as a rate over eligible
+    runs; it is 4 occurrences across a corpus of 157 that were readable. (That
+    illustration is from an older, smaller corpus, which is the point: the
+    denominator moves, so read the one the run prints.)
     """
 
     violations: list[dict[str, Any]] = field(default_factory=list)
@@ -548,14 +604,20 @@ class CheckReplay:
 class PostHocReplay:
     """`replay_post_hoc`'s result: one `CheckReplay` per check, never a shared one.
 
-    The three checks read different inputs — `find_citation_nulling_in_conclusions`
-    and `find_unpersisted_conflict_resolutions` take only the final research.json,
-    while `find_relationship_writes_without_warnings_check` also needs the final
-    tree and the fixture's seed tree. On today's corpus exactly one run
-    (`william-ferber-ancestry`, a committed run log with no fixture directory)
-    has no seed tree, so a shared denominator would report the two research-only
-    checks over 156 runs when they can be computed over 157, and would discard
-    any violation that run held in them.
+    The six checks do not share an input set, which is why each keeps its own
+    denominator. `find_citation_nulling_in_conclusions` and
+    `find_unpersisted_conflict_resolutions` take only the final research.json;
+    `find_citation_nulling_in_tree_sources` and
+    `find_tree_facts_disagreeing_with_assertions` take the final research and the
+    final tree; `find_conclusions_without_tree_encoding` takes those two plus the
+    fixture's seed tree; and `find_relationship_writes_without_warnings_check`
+    takes the run log's tool_calls, the final tree and the seed, but no research
+    at all. Four distinct combinations across six checks, and five
+    `missing_for_*` methods once the run-log requirement is counted. On today's corpus one run (`william-ferber-ancestry`, a committed run
+    log with no fixture directory) has no seed tree, so a shared denominator
+    would report the four seedless checks over one run fewer than they can
+    actually be computed over, and would discard any violation that run held in
+    them.
     """
 
     citation: CheckReplay = field(default_factory=CheckReplay)
@@ -563,6 +625,7 @@ class PostHocReplay:
     warnings: CheckReplay = field(default_factory=CheckReplay)
     tree_citation: CheckReplay = field(default_factory=CheckReplay)
     tree_encoding: CheckReplay = field(default_factory=CheckReplay)
+    fact_agreement: CheckReplay = field(default_factory=CheckReplay)
 
 
 def _record(
@@ -582,7 +645,7 @@ def _record(
 def replay_post_hoc(
     paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES
 ) -> PostHocReplay:
-    """Recompute the three post-hoc shadow checks from each run's COMMITTED final
+    """Recompute the six post-hoc shadow checks from each run's COMMITTED final
     state, instead of reading what a run stored.
 
     Why this exists. `scan_citation_nulling`, `scan_conflict_unpersisted` and
@@ -682,6 +745,19 @@ def replay_post_hoc(
                 out.tree_encoding,
                 find_conclusions_without_tree_encoding(
                     inputs.final_research, inputs.final_tree, starting_tree=inputs.seed_tree
+                ),
+                inputs,
+            )
+
+        # The tree-fact/assertion agreement arm (#2472): research + tree, no seed.
+        fact_agreement_skip = inputs.missing_for_fact_agreement()
+        if fact_agreement_skip:
+            out.fact_agreement.skipped.append(f"{where}: {fact_agreement_skip}")
+        else:
+            _record(
+                out.fact_agreement,
+                find_tree_facts_disagreeing_with_assertions(
+                    inputs.final_research, inputs.final_tree
                 ),
                 inputs,
             )
@@ -913,7 +989,7 @@ def format_provenance_replay(replay: ProvenanceReplay) -> str:
 
 
 def format_post_hoc_replay(replay: PostHocReplay) -> str:
-    """The three post-hoc checks REPLAYED, each against its own denominator.
+    """The six post-hoc checks REPLAYED, each against its own denominator.
 
     Prints per-check denominators rather than one corpus size because the checks
     read different inputs and therefore cover different numbers of runs. Counts,
@@ -933,6 +1009,7 @@ def format_post_hoc_replay(replay: PostHocReplay) -> str:
         ("conflict-unpersisted", "concluded question(s) relying on an unpersisted conflict resolution", False, replay.conflict),
         ("warnings-unchecked", "run(s) that wrote a new ParentChild/Couple relationship without calling person_warnings", True, replay.warnings),
         ("tree-encoding", "tier->=-probable conclusion(s) that added no new tree structure — a gate would refuse/warn", False, replay.tree_encoding),
+        ("fact/assertion drift", "backlinked tree fact attribute(s) disagreeing with the assertion they were materialized from", False, replay.fact_agreement),
     ):
         affected = len({v["file"] for v in check.violations})
         headline = affected if per_run else len(check.violations)
@@ -1037,6 +1114,24 @@ def format_tree_encoding(violations: list[dict[str, Any]]) -> str:
         f"{len(violations)} tier->=-probable conclusion(s) that added no new tree "
         f"structure for any evidence person — what a completion gate would refuse "
         f"or warn on — across {affected} run(s). By question type: {breakdown}."
+    )
+
+
+def format_tree_fact_assertion(violations: list[dict[str, Any]]) -> str:
+    """One flat count, like its post-hoc siblings — a fact about the final tree
+    and research.json together, not a windowed recency scan.
+
+    Counts diverging ATTRIBUTES, not facts: one fact can carry a stale `place`
+    and a stale `standard_place`, and the pair is the finding — a display string
+    and a place-AUTHORITY value going stale are different harms. The run count
+    beside it is what keeps a multi-attribute single fact from reading as a
+    corpus-wide class.
+    """
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7.5 tree-fact/assertion agreement check (issue #2472, shadow): "
+        f"{len(violations)} backlinked tree fact attribute(s) disagreeing with "
+        f"the assertion they were materialized from, across {affected} run(s)."
     )
 
 
@@ -1644,10 +1739,10 @@ def main(argv: list[str] | None = None) -> int:
         "--replay",
         action="store_true",
         help=(
-            "additionally RECOMPUTE the four post-hoc families and the §11 "
+            "additionally RECOMPUTE the seven post-hoc families and the §11 "
             "unnamed-delegate check instead of only reading what runs stored: the "
             "#963 provenance check from tool_calls + each fixture's committed seed "
-            "tree, the three §7/§7.5 checks from each run's committed final-research "
+            "tree, the six §7/§7.5 checks from each run's committed final-research "
             "/ final-tree sidecars, and §11 from each run's tool_calls. The stored "
             "path sees only runs made after each check shipped, which on today's "
             "corpus is a small minority; this reads the whole historical corpus."
@@ -1769,6 +1864,9 @@ def main(argv: list[str] | None = None) -> int:
     tree_encoding = scan_tree_encoding(paths)
     print(format_tree_encoding(tree_encoding))
 
+    tree_fact_assertion = scan_tree_fact_assertion(paths)
+    print(format_tree_fact_assertion(tree_fact_assertion))
+
     unnamed_delegate = scan_unnamed_delegate(paths, replay=args.replay)
     print(format_unnamed_delegate(unnamed_delegate, replay=args.replay))
 
@@ -1810,6 +1908,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nTree encoding (issue #1490), {len(tree_encoding)}:")
         for v in tree_encoding:
             print(f"  {v['fixture']:<35} {v['detail']}")
+        print(
+            f"\nTree fact/assertion drift (issue #2472), {len(tree_fact_assertion)}:"
+        )
+        for v in tree_fact_assertion:
+            print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nUnnamed delegate (issue #980), {len(unnamed_delegate.stored)}:")
         for v in unnamed_delegate.stored:
             print(f"  {v['fixture']:<35} {v['detail']}")
@@ -1822,10 +1925,17 @@ def main(argv: list[str] | None = None) -> int:
             for v in replay.violations:
                 print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         if post_hoc is not None:
+            # Every family `format_post_hoc_replay` prints, in its order. This
+            # loop listed three of the five and so printed nothing for the two
+            # tree-side arms, which is indistinguishable from their having found
+            # nothing — the inference this module refuses everywhere else.
             for label, check in (
                 ("citation-nulling", post_hoc.citation),
+                ("tree citation-nulling", post_hoc.tree_citation),
                 ("conflict-unpersisted", post_hoc.conflict),
                 ("warnings-unchecked", post_hoc.warnings),
+                ("tree-encoding", post_hoc.tree_encoding),
+                ("fact/assertion drift", post_hoc.fact_agreement),
             ):
                 print(f"\nReplayed {label}, {len(check.violations)}:")
                 for v in check.violations:

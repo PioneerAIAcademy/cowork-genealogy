@@ -1537,6 +1537,14 @@ check, or to a mandatory `person_warnings` call in the `/research` orchestrator 
 an inlined write is still gated — is gated on reading this fire rate across the
 corpus first**; not decided here.
 
+**This numbered list stopped at six and the check set did not.** Later shadow
+kinds — the tree-side citation arm, tree-encoding, and tree-fact/assertion
+agreement — ship with their own `kind` and their own bucket without a block
+here. Read the shadow-to-graduate table in
+`docs/specs/guardrail-enforcement-spec.md` as the roster, and this section as
+the six that were written up first; the ordinals are their filing order, not a
+census.
+
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
