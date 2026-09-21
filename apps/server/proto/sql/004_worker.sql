@@ -13,11 +13,14 @@
 -- message -- so a killed attempt's spend is on the row, which cost_usd is not.
 -- tool_calls.tool_use_id: the CLI's id for the call, so the PostToolUse hook can stamp
 -- the row the PreToolUse hook wrote with its duration (acceptance criterion 4).
+-- turns.nudges (D18): how many times the worker's Stop hook vetoed the model's voluntary
+-- yield on the completing attempt (AUTONOMOUS_MAX_NUDGES); 0 when the arm is off.
 
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS sdk_session_id        text;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS cost_usd              numeric;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS num_turns             int;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS duration_ms           int;
+ALTER TABLE turns    ADD COLUMN IF NOT EXISTS nudges                int;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS entries_seq_before    bigint;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS input_tokens          bigint;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS cache_creation_tokens bigint;

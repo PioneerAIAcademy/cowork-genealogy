@@ -582,7 +582,7 @@ print('high-priority without a `> **High priority (` body line:',
       [n for n in hp if '> **High priority (' not in (issues[n]['body'] or '')])
 for lane in ('developer','genealogist'):
     pool=[n for n,s in onboard.items() if s=='Ready' and n in issues
-          and not issues[n]['assignees'] and _lane(n,lane) and not _lane(n,'cross-cutting')]
+          and not issues[n]['assignees'] and _lane(n,lane)]
     marked=[n for n in pool if _hp(n)]
     if pool and 2*len(marked) > len(pool):
         print(f'{lane}: high-priority on {len(marked)}/{len(pool)} unassigned Ready — the ordering says nothing')

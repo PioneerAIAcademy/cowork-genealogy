@@ -19,6 +19,7 @@ import { startHttpServer, MCP_PATH } from "./http-server.js";
 import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
+import { configFromEnv } from "./hosted-config-env.js";
 
 const { values } = parseArgs({
   options: {
@@ -48,7 +49,12 @@ setProjectStore(
 // The one LOCAL read in this entrypoint: the process-wide config file
 // (~/.familysearch-mcp/config.json — sidecar URLs, OpenRouter key, hosted
 // flag). Every tool call binds a per-request bearer instead (http-server.ts).
-const baseConfig = await loadConfig(LOCAL);
+//
+// The environment overlays it (hosted-config-env.ts, shared with hosted-stdio.js):
+// without that, `image_transcribe` has no OpenRouter key here while the per-turn stdio
+// fork has one, so the tool would start failing the moment the worker's default moved
+// to http (2026-09-20).
+const baseConfig = configFromEnv(process.env, await loadConfig(LOCAL));
 const server = await startHttpServer({
   host: values.host as string,
   port,

@@ -133,3 +133,5 @@ packages/engine/mcp-server/dev/ocr-spike-out/
 eval/tests/e2e/*/results/
 # The prototype worker's per-turn FamilySearch token (apps/server/proto/env.sh)
 apps/server/proto/.fs-token
+# A session's project documents exported out of the prototype store (make proto-export)
+apps/server/proto/exports/
