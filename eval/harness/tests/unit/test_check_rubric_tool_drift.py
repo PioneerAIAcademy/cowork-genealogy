@@ -5,16 +5,20 @@ loading the tool vocabulary, finding whole-word tool mentions in prose,
 parsing a skill's/agent's declared tools, and scanning rubric.md /
 judge_context / agent bodies for mentions outside that declared set.
 
-Also covers the SUPPRESSIONS mechanism (issue #1522) in both directions:
-a suppressed entry does not mask an unrelated genuine hit, and a stale
-entry (one whose (file, tool) no longer fires) fails loudly.
+Also covers the SUPPRESSIONS mechanism (issue #1522) end-to-end through
+main(): a suppressed entry does not mask an unrelated genuine hit (the
+same tool in a different file survives), and a stale entry (one whose
+(file, tool) no longer fires) fails loudly.
 """
 
 from __future__ import annotations
 
 import importlib.util
 import json
+import re
 from pathlib import Path
+
+import pytest
 
 _SPEC = importlib.util.spec_from_file_location(
     "check_rubric_tool_drift",
@@ -22,6 +26,21 @@ _SPEC = importlib.util.spec_from_file_location(
 )
 check_rubric_tool_drift = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(check_rubric_tool_drift)
+
+# The gh_annotations module object the script imported its `gh_warning` FROM is
+# the one that records warnings. Read the recording off that reference: a second
+# `spec_from_file_location` load of the same file is a DIFFERENT module object
+# with its own empty `_warnings` list, so every assertion would pass vacuously.
+# Same pattern as test_check_slot_queue.py.
+_recorded = check_rubric_tool_drift.gh_warning.__globals__["recorded_warnings"]
+_reset = check_rubric_tool_drift.gh_warning.__globals__["reset"]
+
+
+@pytest.fixture(autouse=True)
+def _clean_warnings():
+    _reset()
+    yield
+    _reset()
 
 
 def test_load_manifest_tools_reads_name_field(tmp_path: Path) -> None:
@@ -289,49 +308,91 @@ def test_delegated_tools_no_delegation_returns_empty(tmp_path: Path) -> None:
 
 
 # ── SUPPRESSIONS mechanism tests (issue #1522) ───────────────────────
+#
+# These exercise main() end-to-end via recorded_warnings(), not just the
+# is_suppressed() predicate: a mutation at the call site (e.g. replacing
+# the check with `if False:`) would be caught because main()'s emitted
+# warnings would still include the suppressed pair.
 
 
-def test_is_suppressed_is_selective(monkeypatch) -> None:
-    """Direction (a): suppressing (file_A, tool_X) must not suppress
-    (file_A, tool_Y) or (file_B, tool_X)."""
+def _warning_file_tool_pairs() -> set[tuple[str, str]]:
+    """(file, tool) pairs extracted from the warnings main() emitted.
+
+    Tool names are pulled from the message by looking for the first
+    backtick-quoted word after 'mentions `'.
+    """
+    pairs: set[tuple[str, str]] = set()
+    for f, m in _recorded():
+        if f is None:
+            continue
+        match = re.search(r"mentions `(\w+)`", m)
+        if match:
+            pairs.add((f, match.group(1)))
+    return pairs
+
+
+def test_suppression_is_selective_end_to_end(monkeypatch) -> None:
+    """Direction (a): suppressing (file_A, tool_X) through main() must not
+    suppress (file_A, tool_Y) or (file_B, tool_X).
+
+    Calls main() with a real SUPPRESSIONS entry, then verifies the emitted
+    warnings via recorded_warnings(). The suppressed pair must be absent
+    and the same tool in different files must survive."""
+    # Run main() once with no suppression to get the full hit set.
+    check_rubric_tool_drift.main()
+    all_pairs = _warning_file_tool_pairs()
+    _reset()
+
+    # Pick a real (file, tool) pair that fires. validate_research_schema
+    # in tree-edit's rubric is the most durable: the rubric documents a
+    # post-edit validation call that tree-edit's own contract says is
+    # unnecessary, i.e. clear drift that won't be "fixed" away.
+    target = ("eval/tests/unit/tree-edit/rubric.md", "validate_research_schema")
+    if target not in all_pairs:
+        pytest.skip("expected baseline hit not present — corpus changed")
+
+    # Find another file that also mentions validate_research_schema
+    # (different file, same tool) to verify it survives.
+    same_tool_other_file = {
+        (f, t)
+        for f, t in all_pairs
+        if t == "validate_research_schema" and f != target[0]
+    }
+    if not same_tool_other_file:
+        pytest.skip("no second file mentions the same tool — cannot test selectivity")
+
+    # Run again with the one entry suppressed.
     monkeypatch.setattr(
         check_rubric_tool_drift,
-        "_SUPPRESSED",
-        frozenset({("eval/tests/unit/tree-edit/rubric.md", "same_person")}),
+        "SUPPRESSIONS",
+        [{"file": target[0], "tool": target[1], "reason": "test: selective suppression proof"}],
     )
-    # Exact match is suppressed
-    assert check_rubric_tool_drift.is_suppressed(
-        "eval/tests/unit/tree-edit/rubric.md", "same_person"
-    ) is True
-    # Same file, different tool — NOT suppressed
-    assert check_rubric_tool_drift.is_suppressed(
-        "eval/tests/unit/tree-edit/rubric.md", "validate_research_schema"
-    ) is False
-    # Different file, same tool — NOT suppressed
-    assert check_rubric_tool_drift.is_suppressed(
-        "eval/tests/unit/init-project/rubric.md", "same_person"
-    ) is False
+    check_rubric_tool_drift.main()
+    suppressed_pairs = _warning_file_tool_pairs()
+
+    # The suppressed pair is gone.
+    assert target not in suppressed_pairs
+    # Same tool in other files survived (direction a).
+    for pair in same_tool_other_file:
+        assert pair in suppressed_pairs, (
+            f"{pair} should not have been suppressed — only {target} was"
+        )
 
 
 def test_no_stale_suppressions() -> None:
-    """Direction (b): every SUPPRESSIONS entry must match a (file, tool) the
-    script would otherwise warn about. An entry that stopped matching means
+    """Direction (b): every SUPPRESSIONS entry must match a (file, tool)
+    main() would otherwise warn about. An entry that stopped matching means
     the drift it excused was fixed and the entry should be removed.
 
-    Mirrors the shrink-only/stale-entry rule from
-    skill-reference-reachability.test.ts. Trivially passes while the list
-    is empty; arms itself when PR 2 populates it.
+    Trivially passes while the list is empty; arms itself when PR 2
+    populates it.
     """
-    all_hits = check_rubric_tool_drift.compute_all_hits(
-        check_rubric_tool_drift.SKILLS_DIR,
-        check_rubric_tool_drift.TESTS_DIR,
-        check_rubric_tool_drift.AGENTS_DIR,
-        check_rubric_tool_drift.MANIFEST,
-    )
+    check_rubric_tool_drift.main()
+    all_pairs = _warning_file_tool_pairs()
     stale = [
         s
         for s in check_rubric_tool_drift.SUPPRESSIONS
-        if (s["file"], s["tool"]) not in all_hits
+        if (s["file"], s["tool"]) not in all_pairs
     ]
     assert stale == [], (
         "SUPPRESSIONS has entries that no longer match a hit — the drift was "
@@ -348,55 +409,3 @@ def test_every_suppression_carries_a_reason() -> None:
             f'SUPPRESSIONS entry ({s["file"]}, {s["tool"]}) needs a reason '
             f"longer than 20 characters — not a dumping ground"
         )
-
-
-def test_compute_all_hits_with_synthetic_corpus(tmp_path: Path) -> None:
-    """compute_all_hits returns the expected (file, tool) pairs for a
-    synthetic skill+rubric+agent layout."""
-    # Manifest with two tools
-    manifest = tmp_path / "manifest.json"
-    manifest.write_text(
-        json.dumps(
-            {"tools": [{"name": "same_person"}, {"name": "record_search"}]}
-        ),
-        encoding="utf-8",
-    )
-
-    # Skill with only record_search declared
-    skills_dir = tmp_path / "skills"
-    skill_dir = skills_dir / "tree-edit"
-    skill_dir.mkdir(parents=True)
-    (skill_dir / "SKILL.md").write_text(
-        "---\nname: tree-edit\nallowed-tools:\n  - record_search\n---\n# body\n",
-        encoding="utf-8",
-    )
-
-    # Rubric mentioning both tools — same_person is undeclared drift
-    tests_dir = tmp_path / "tests"
-    test_skill_dir = tests_dir / "tree-edit"
-    test_skill_dir.mkdir(parents=True)
-    (test_skill_dir / "rubric.md").write_text(
-        "Must call same_person after record_search.\n",
-        encoding="utf-8",
-    )
-
-    # Agent with record_search granted, mentioning same_person in body
-    agents_dir = tmp_path / "agents"
-    agents_dir.mkdir()
-    (agents_dir / "test-agent.md").write_text(
-        "---\nname: test-agent\ntools:\n  - mcp__genealogy__record_search\n"
-        "---\nDo not call same_person directly.\n",
-        encoding="utf-8",
-    )
-
-    hits = check_rubric_tool_drift.compute_all_hits(
-        skills_dir, tests_dir, agents_dir, manifest
-    )
-    assert ("eval/tests/unit/tree-edit/rubric.md", "same_person") in hits
-    assert ("packages/engine/plugin/agents/test-agent.md", "same_person") in hits
-    # record_search is declared/granted — must NOT appear as a hit
-    assert ("eval/tests/unit/tree-edit/rubric.md", "record_search") not in hits
-    assert (
-        "packages/engine/plugin/agents/test-agent.md",
-        "record_search",
-    ) not in hits

@@ -113,14 +113,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     # Empty in PR 1 (mechanism only). PR 2 triages the corpus and populates.
 ]
 
-_SUPPRESSED: frozenset[tuple[str, str]] = frozenset(
-    (s["file"], s["tool"]) for s in SUPPRESSIONS
-)
-
 
 def is_suppressed(file: str, tool: str) -> bool:
     """True when (file, tool) is in the SUPPRESSIONS list."""
-    return (file, tool) in _SUPPRESSED
+    return any(s["file"] == file and s["tool"] == tool for s in SUPPRESSIONS)
 
 
 _PLUGIN_DELEGATION_RE = re.compile(r"@plugin:([a-z0-9-]+)")
@@ -294,57 +290,6 @@ def agent_body_mentions(agent_md: Path, vocabulary: set[str]) -> set[str]:
     body = parts[2] if text.startswith("---") and len(parts) >= 3 else text
     tools, disallowed = agent_declared_tools(agent_md)
     return find_mentions(body, vocabulary) - tools - disallowed
-
-
-def compute_all_hits(
-    skills_dir: Path,
-    tests_dir: Path,
-    agents_dir: Path,
-    manifest: Path,
-) -> set[tuple[str, str]]:
-    """Every (file, tool) pair the script would warn about, ignoring
-    suppressions. Used by main() and the staleness test.
-
-    Returned paths are always repo-relative (matching gh_warning's file=
-    convention), regardless of the input directory locations."""
-    manifest_tools = load_manifest_tools(manifest)
-    if manifest_tools is None:
-        return set()
-    vocabulary = usable_vocabulary(manifest_tools)
-    hits: set[tuple[str, str]] = set()
-
-    if skills_dir.is_dir():
-        for skill_dir in sorted(skills_dir.iterdir()):
-            if not skill_dir.is_dir():
-                continue
-            skill = skill_dir.name
-            skill_md = skill_dir / "SKILL.md"
-            declared = set(declared_tools(skill_md)) | delegated_tools(
-                skill_md, agents_dir
-            )
-            skill_tests = tests_dir / skill
-
-            rubric_md = skill_tests / "rubric.md"
-            for tool in rubric_mentions(rubric_md, vocabulary, declared=declared):
-                hits.add((f"eval/tests/unit/{skill}/rubric.md", tool))
-
-            if skill_tests.is_dir():
-                for test_path in sorted(skill_tests.glob("*.json")):
-                    for tool in judge_context_mentions(
-                        test_path, vocabulary, declared=declared
-                    ):
-                        hits.add(
-                            (f"eval/tests/unit/{skill}/{test_path.name}", tool)
-                        )
-
-    if agents_dir.is_dir():
-        for agent_md in sorted(agents_dir.glob("*.md")):
-            for tool in agent_body_mentions(agent_md, vocabulary):
-                hits.add(
-                    (f"packages/engine/plugin/agents/{agent_md.name}", tool)
-                )
-
-    return hits
 
 
 def main() -> int:
