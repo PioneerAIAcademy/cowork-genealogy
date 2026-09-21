@@ -3246,20 +3246,24 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    // Read the ERROR, not the joined list: the worked example is appended to it
-    // and legitimately contains the id-prediction rule, so a negative
-    // assertion over the join would be satisfied by the hint.
     const msg = r.errors[0];
-    // The distinctive half is the CAUSE. "is empty" alone is what sent the
-    // model round the loop, so a refusal that only says that fails this test.
-    expect(msg).toMatch(/plan 'pl_002' was created for question 'q_001' and ends this call with no items/);
-    expect(msg).toMatch(/the items went to a plan this call did not create/);
-    expect(msg).toMatch(/'pl_001' \(completed plan for q_002\)/);
-    expect(msg).toMatch(/which is 'pl_002' for this one/);
-    expect(msg).toMatch(/Never a hard-coded 'pl_001'/);
-    // Blamed on the plans append op, and the hint teaches the batched shape.
-    expect(msg).toMatch(/^ops\[0\]:/);
-    expect(r.errors.join(" ")).toContain("worked example for 'plans'");
+    // #2108 CHANGED WHICH GUARD ANSWERS THIS. The terminal-plan deny throws in
+    // applyOne, which returns the batch at once, so emptyCreatedPlanErrors —
+    // a post-pass over the applied ops — never runs on a COMPLETED parent. This
+    // is the exact corpus shape (54 appends, 6 calls, 4 run logs, all
+    // flynn-first-plan-surveyed/pl_001), so the deny now owns the corpus case
+    // and the misroute arm keeps the ACTIVE-parent and same-call-sibling cases
+    // the sibling tests below cover.
+    //
+    // The distinctive half is still the CAUSE plus the prescription: "is empty"
+    // or "is completed" ALONE is what sent the model round the loop, so a
+    // refusal that names only the status fails this test.
+    expect(msg).toMatch(/plans entry 'pl_001' is 'completed' \(question 'q_002'\)/);
+    expect(msg).toMatch(/settled audit trail and takes no new items/);
+    // Inherited from the arm it preempts: name the plan THIS call created.
+    expect(msg).toMatch(/This call created plan 'pl_002' — re-issue these items with planId 'pl_002'/);
+    // Blamed on the offending plan_items op, not the plans append.
+    expect(msg).toMatch(/^ops\[1\]:/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -3415,10 +3419,14 @@ describe("research_append (batch ops)", () => {
     // following either emptied the other and reproduced the loop with the two
     // plans swapped. With more than one created plan ending empty there is no
     // single id to add, and the message must say that instead of naming one.
+    // #2108: the misroute target is seeded ACTIVE so the arm still answers, and
+    // parked on q_003 — a question this batch creates no plan for. An active
+    // plan on q_002 would collide with the q_002 plan created below, since a
+    // question may hold only one active plan.
     const research = baseResearch();
-    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_003", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
 
@@ -3447,8 +3455,8 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
-      { ...validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_002", "q_002", "active", [seededPlanItem("pli_002")]) },
     ] as any;
     await writeProject(research);
 
@@ -3463,7 +3471,7 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const msg = r.errors[0];
-    expect(msg).toMatch(/wrote into 'pl_002' \(completed plan for q_002\)/);
+    expect(msg).toMatch(/wrote into 'pl_002' \(active plan for q_002\)/);
     expect(msg).not.toMatch(/pl_001/); // never named a plan the caller did not write
     expect(msg).toMatch(/belongs to a different question/);
   });
@@ -3472,6 +3480,14 @@ describe("research_append (batch ops)", () => {
     // The other unconditional clause: a superseded plan for the same question
     // was described as "another question's plan" in the same sentence that
     // correctly printed its question id.
+    // #2108: the misroute arm's SAME-QUESTION branch is now unreachable, and
+    // that is structural rather than an oversight. A same-question target must
+    // be non-active — a question may hold only one active plan, so seeding an
+    // active one and creating another reds `already has an active plan`. Every
+    // remaining input is therefore a terminal parent, which the deny refuses
+    // before the arm runs. The concern this test was written for still holds
+    // and is asserted against the new message: do not describe a plan for THIS
+    // question as another question's.
     const research = baseResearch();
     research.questions = [validQuestion("q_001")];
     research.plans = [
@@ -3490,7 +3506,7 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const msg = r.errors[0];
-    expect(msg).toMatch(/wrote into 'pl_001' \(superseded plan for q_001\)/);
+    expect(msg).toMatch(/plans entry 'pl_001' is 'superseded' \(question 'q_001'\)/);
     expect(msg).not.toMatch(/different question/);
     expect(msg).not.toMatch(/another question/);
   });
@@ -3524,8 +3540,13 @@ describe("research_append (batch ops)", () => {
     // printed a singular "it belongs to a different question" over both.
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    // #2108: same structural reason as the SAME-QUESTION test above — a mixed
+    // list needs a same-question target, which cannot be active, so the deny
+    // answers first. Asserted against the new message; `pl_002` is the
+    // same-question target and the refusal must name ITS question, not call it
+    // another question's.
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
       { ...validPlan("pl_002", "q_001", "superseded", [seededPlanItem("pli_002")]) },
     ] as any;
     await writeProject(research);
@@ -3534,16 +3555,17 @@ describe("research_append (batch ops)", () => {
       projectPath: dir,
       ops: [
         { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_003 for q_001
-        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // q_002
-        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" }, // q_001, SAME question
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // q_002, active — allowed
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" }, // q_001, SAME question, terminal
       ],
     });
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const msg = r.errors[0];
-    expect(msg).toMatch(/wrote into 'pl_001' \(completed plan for q_002\), 'pl_002' \(superseded plan for q_001\)/);
-    expect(msg).not.toMatch(/different question/); // not all of them are
+    expect(msg).toMatch(/^ops\[2\]:/); // the terminal target, not the active one
+    expect(msg).toMatch(/plans entry 'pl_002' is 'superseded' \(question 'q_001'\)/);
+    expect(msg).not.toMatch(/different question/); // it is not a different one
     expect(msg).not.toMatch(/None of them belongs to this question/);
   });
 
@@ -3556,7 +3578,7 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
     const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -3604,7 +3626,7 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
     const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -3631,7 +3653,7 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
 
@@ -3671,6 +3693,139 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(true);
     const out = await readResearch();
     expect(out.plans[1].id).toBe("pl_001");
+  });
+
+  // ── (d3-terminal) plan_items append into a terminal plan is refused (#2108) ──
+  // A completed or superseded plan is a settled audit trail. research-plan's own
+  // prose forbade writing into one in two places and did not bind: the corpus
+  // holds 54 such appends over 6 calls in 4 run logs, all the same misroute.
+  // Decidable from research.json alone, so it is a writer-tool precondition
+  // rather than a line of SKILL.md prose (ADR-0011's first question).
+  //
+  // The accept-side cases are NOT optional. A guard fails two ways, and cases
+  // (3), (4) and (5) are the ways this one would wrongly block legitimate work.
+
+  it("(d3-terminal) refuses a plan_items append into a COMPLETED plan — writes nothing", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }],
+    });
+
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/plans entry 'pl_001' is 'completed'/);
+    expect(msg).toMatch(/question 'q_002'/);
+    expect(msg).toMatch(/settled audit trail and takes no new items/);
+    // op-indexed, like the adjacent throws in this block
+    expect(msg).toMatch(/^ops\[0\]:/m);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d3-terminal) refuses a plan_items append into a SUPERSEDED plan", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "superseded", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }],
+    });
+
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/plans entry 'pl_001' is 'superseded'/);
+  });
+
+  it("(d3-terminal) ACCEPTS a plan_items append into an ACTIVE plan", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items.map((i: any) => i.id)).toEqual(["pli_001", "pli_002"]);
+  });
+
+  it("(d3-terminal) ACCEPTS a plan_items UPDATE inside a completed plan — the cleanup route stays open", async () => {
+    // research-plan supersedes a plan by flipping `plans.status` alone; its items
+    // keep whatever status they held. Denying updates would strand an
+    // `in_progress` item in a terminal plan with no route to move it — the
+    // unrecoverable false deny ADR-0011's first limit exists to prevent. The one
+    // real corpus use of this path is a run marking its own misrouted items
+    // `skipped` to clean up.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "completed", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "skipped" }, planId: "pl_001" },
+      ],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("skipped");
+  });
+
+  it("(d3-terminal) ACCEPTS items appended to a plan CREATED earlier in the same batch", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[1].id).toBe("pl_002");
+    expect(out.plans[1].items.map((i: any) => i.id)).toEqual(["pli_002"]);
+  });
+
+  it("(d3-terminal) refuses an append into a plan THIS batch flipped to completed", async () => {
+    // The ONLY case that falsifies the live read. Under a pre-call snapshot the
+    // plan still reads `active`, so the append is wrongly accepted. Appending to
+    // a plan created in the same batch (the case above) cannot falsify it: a
+    // snapshot simply lacks the plan, the status lookup yields undefined, and
+    // the append is accepted under both readings.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "update", entryId: "pl_001", fields: { status: "completed" } },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/plans entry 'pl_001' is 'completed'/);
   });
 
   it("(b) rolls back the whole batch on a mid-batch validation failure — writes nothing", async () => {
