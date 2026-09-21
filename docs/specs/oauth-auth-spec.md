@@ -299,14 +299,14 @@ npm test               # All 57 tests pass
 ```bash
 npx @modelcontextprotocol/inspector node build/index.js
 ```
-- `auth_status` -> `{ loggedIn: false }`
+- `auth_status` -> `{ loggedIn: false, buildId: "0.1.0+<date>.<sha>" }` (`buildId` is the engine build stamp, on every branch — `mcpb-package-spec.md` § Versioning)
 - `logout` -> success message
 - `login` (no arguments) -> browser opens to the FS consent screen using the bundled client ID
 
 ### Integration (no manual key setup)
 1. Call `login()` — browser opens; user authorizes
 2. Browser -> FS login -> redirect -> "Login Successful"
-3. `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440 }`
+3. `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440, buildId }`
 4. `logout` -> success, `auth_status` -> `{ loggedIn: false }`
 
 ---
