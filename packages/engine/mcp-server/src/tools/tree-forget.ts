@@ -45,7 +45,7 @@ import {
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
-import { COUPLE_EVENT_TYPES } from "./materialize-facts.js";
+import { COUPLE_EVENT_TYPES } from "../utils/record-persona.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip

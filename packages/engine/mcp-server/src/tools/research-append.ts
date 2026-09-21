@@ -61,7 +61,7 @@ import {
   factText,
   materializesToPersonFact,
   type AssertionFactAttr,
-} from "./materialize-facts.js";
+} from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
@@ -604,34 +604,32 @@ function personaReachable(entry: any, research: any): boolean {
   return false;
 }
 
-/** The retrieval route for a reachable persona, named so the warning tells the
- *  agent what to DO rather than only what is missing. */
+/** The call that would produce the missing score, named so the warning tells the
+ *  agent what to DO rather than only what is missing.
+ *
+ *  Since #1731 that is one call in every case: `same_person`'s project-relative
+ *  arm takes references and assembles both documents host-side, so there is no
+ *  longer a retrieval route for the agent to pick between. The branch this
+ *  replaced named three (record_persona_id / record_read / sidecar) and each
+ *  told the agent to hand-build a `primaryId1` — which is the expensive shape
+ *  the measured skip rate was a symptom of. */
 function personaRoute(entry: any, research: any): string {
   const assertions: any[] = research.assertions ?? [];
   const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
-  if (assertion?.record_persona_id) {
-    return (
-      `assertion '${entry.assertion_id}' carries record_persona_id ` +
-      `'${assertion.record_persona_id}' — use it as primaryId1 with that record's gedcomx`
-    );
-  }
-  const log: any[] = research.log ?? [];
-  const logEntry = log.find((l: any) => l?.id === assertion?.log_entry_id);
-  if (logEntry?.tool === "record_read") {
-    return (
-      `assertion '${entry.assertion_id}' came from record_read — call ` +
-      `record_read({ recordId: '${assertion?.record_id}' }) again; it returns simplified ` +
-      `GedcomX, and primaryId1 is the persons[].id for the party this link is about`
-    );
-  }
-  if (logEntry?.results_ref) {
-    return (
-      `log entry '${logEntry.id}' retained a sidecar — take the persona from ` +
-      `'${logEntry.results_ref}'; primaryId1 is the persons[].id for the party this link ` +
-      `is about, not the result's top-level primaryId`
-    );
-  }
-  return `resolve the persona for assertion '${entry.assertion_id}' before linking`;
+  const route =
+    `call same_person({ projectPath, assertionId: '${entry.assertion_id}', ` +
+    `treePersonId: '${entry.person_id}' }) — it resolves the record and builds the ` +
+    `tree-side matching mob itself, and records the score`;
+  // A relationship or marriage assertion names two parties and gets a link for
+  // each; only the second one needs to say which party it is about.
+  const twoParty = ["relationship", "marriage", "parentage", "parentchild"].includes(
+    String(assertion?.fact_type ?? "").toLowerCase(),
+  );
+  return twoParty
+    ? `${route}. This assertion names two parties, so add recordRole (or ` +
+        `recordPersonaId) when this link is about the party other than ` +
+        `'${assertion?.record_role}'`
+    : route;
 }
 
 /** Warn — NOT reject — a person_evidence link that records no numeric
@@ -689,10 +687,10 @@ function personEvidenceScoreWarnings(entry: any, research: any): string[] {
     `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
       `records no usable match_score (got ${JSON.stringify(entry.match_score)} — expected a ` +
       `number 0–1), but a record persona IS reachable for it: ${personaRoute(entry, research)}. ` +
-      `Score the pairing with same_person and record its score. A null record_persona_id is ` +
-      `NOT a reason to skip — same_person takes two gedcomx documents plus a focus id inside ` +
-      `each and never reads that field; a null value means only that no search sidecar was ` +
-      `retained. A locally-minted tree id is not a reason either: it scores on document ` +
+      `A null record_persona_id is NOT a reason to skip, and neither is how the assertion was ` +
+      `retrieved: the tool resolves the record itself, deriving the persona from the record's ` +
+      `own extracted assertions when it cannot fetch a document. A locally-minted tree id is ` +
+      `not a reason either: it scores on document ` +
       // The one legitimate null this warning must NOT badger the agent out of.
       // Scoring a persona against a person minted FROM that persona is circular
       // — it can only confirm itself. The tool cannot detect the case: by the

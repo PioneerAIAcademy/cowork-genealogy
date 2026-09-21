@@ -6097,30 +6097,51 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
   });
 
-  it("warns and names the record_read route when the assertion came from record_read", async () => {
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
+  // Since #1731 the warning names ONE call whatever the provenance, because
+  // `same_person`'s project-relative arm resolves the record itself. The three
+  // tests these replace pinned a per-route retrieval recipe (record_read /
+  // sidecar / record_persona_id), and each told the agent to hand-build a
+  // `primaryId1` — the expensive shape the 94% skip rate was a symptom of.
+  // Still pinned: the warning names the CALL, not just the absence. A warning
+  // that only says "missing" is what the agent talked its way past.
+  for (const [name, entry] of [
+    ["record_read", { id: "log_001", tool: "record_read", results_ref: null }],
+    ["a retained sidecar", { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" }],
+  ] as const) {
+    it(`names the project-relative call when the assertion came from ${name}`, async () => {
+      await writeProjectWithProvenance(entry as any);
+      const r = await researchAppend(link({ match_score: null }));
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const w = r.validation.warnings.join(" ");
+      expect(w).toMatch(/records no usable match_score/);
+      expect(w).toMatch(/call same_person\(/);
+      expect(w).toMatch(/assertionId: 'a_010'/);
+      expect(w).toMatch(/treePersonId: 'I1'/);
+      // The retired shape must not come back: naming it steers the agent
+      // straight back to the cost this card exists to remove.
+      expect(w).not.toMatch(/primaryId1/);
+      expect(w).not.toMatch(/gedcomx1/);
+    });
+  }
+
+  it("tells a two-party assertion to name which party the link is about", async () => {
+    await writeProjectWithProvenance(
+      { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
+      { record_persona_id: "p_293161675629", fact_type: "relationship", record_role: "groom" },
+    );
     const r = await researchAppend(link({ match_score: null }));
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/records no usable match_score/);
-    // The route, not just the absence — a warning that only says "missing" is
-    // what the agent talked its way past.
-    expect(w).toMatch(/came from record_read/);
-    expect(w).toMatch(/1:1:MXHY-TP4/);
+    expect(w).toMatch(/recordRole/);
+    expect(w).toMatch(/'groom'/);
   });
 
-  it("warns and names the sidecar route when a record_search retained its results", async () => {
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_search", results_ref: "results/log_001.json" });
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/records no usable match_score/);
-    expect(w).toMatch(/results\/log_001\.json/);
-  });
-
-  it("warns when the assertion carries a record_persona_id, and names it", async () => {
+  it("does NOT ask a single-party assertion to name a party", async () => {
+    // The other direction: the recordRole sentence is noise on an assertion
+    // that names only one person, and noise in a warning is how the whole
+    // warning stops being read.
     await writeProjectWithProvenance(
       { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
       { record_persona_id: "p_293161675629" },
@@ -6128,7 +6149,7 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     const r = await researchAppend(link({ match_score: null }));
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/p_293161675629/);
+    expect(r.validation.warnings.join(" ")).not.toMatch(/recordRole/);
   });
 
   it("warns on unresolvable provenance — an absent log_entry_id is not an exemption", async () => {

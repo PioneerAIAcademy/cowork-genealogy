@@ -803,7 +803,18 @@ It is not an escape hatch: a link that genuinely cannot be scored keeps
 `match_score: null` and the confidence its correlation analysis supports
 (person-evidence/SKILL.md §3), and the warning stays silent there. Two nulls are
 legitimate and the warning names both — no reachable persona, and a candidate
-minted from the very persona being scored, which is circular. Downgrading
+minted from the very persona being scored, which is circular.
+
+**The reachability predicate is now conservative rather than true**, and the
+route the warning names has changed under it. `same_person` gained a
+project-relative arm that resolves the record itself — retained sidecar, fresh
+read, or a persona projected from the record's own extracted assertions — so
+provenance no longer decides scorability and the per-route retrieval recipe this
+warning used to spell out is gone. What it names instead is the single call that
+would produce the score. The predicate itself was left narrow deliberately:
+widening it in the same change that told the agent to adopt the new call would
+make the measurement unreadable, and the widening belongs with the writer-side
+requirement it exists to serve. Downgrading
 confidence no longer silences this warning, though it still slips the link past
 the confident-gated epistemic reject above. `personEvidenceScoreWarnings` in
 `research-append.ts`.
@@ -1261,6 +1272,19 @@ supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
 not tooling" — #1006 explicitly concedes that a present `match_score` does not
 prove `same_person` ran, and takes the presence check anyway rather than
 over-engineering past it.
+
+**"Do not over-engineer past this" was overturned by the lead on 2026-09-07,
+and half the replacement has shipped.** `same_person` now records every score
+it computes to `results/.scores/`, host-side, keyed by (record, party, tree
+person) — so an attestation that a call happened does exist, and it is not
+caller-fabricable, because the payload never round-trips through the model
+(`same-person-tool-spec.md`, "The recorded score"). What has **not** shipped is
+this tool requiring it: that step is gated on re-measuring once agents are
+calling the cheap form, and on an unanswered question about whether a score
+from an earlier session still counts. So the sentence above still describes
+`research_append` today — `match_score` remains fabricable here — but it no
+longer describes the design, and it must not be cited as a reason not to build
+the check.
 
 ### 11.5 Debug holds — a probe seam, not a feature
 

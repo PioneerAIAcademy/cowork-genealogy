@@ -586,13 +586,28 @@ rejected (a `PreToolUse` deny is all-or-nothing, and these batches run to a
 median of 17 ops), and states the escape below.
 
 **One class of write genuinely cannot satisfy the gate — but it is about a tenth
-the size it was long described as.** The check now narrows on whether a **record
-persona is reachable**, not on whether `record_persona_id` is null.
+the size it was long described as, and smaller again since the tool changed.**
+The check narrows on whether a **record persona is reachable**, not on whether
+`record_persona_id` is null.
 
-`same_person` takes two GedcomX documents plus a focus id inside each. It never
-reads `record_persona_id`; that field is a pointer into a retained search
-sidecar, so a null value proves only that no sidecar was kept. What decides
-reachability is the tool that produced the assertion:
+`same_person` never reads `record_persona_id`; that field is a pointer into a
+retained search sidecar, so a null value proves only that no sidecar was kept.
+
+**Read the table below as what the DETECTOR still assumes, not as what is
+true.** `same_person`'s project-relative arm resolves the record itself —
+retained sidecar, fresh read, or, failing both, a persona projected from the
+record's own extracted assertions — so the bottom three rows are scorable in
+practice and only two exemptions survive in the tool: the record holds no
+persona for the party this link is about, and the candidate is a stub minted
+from the very persona being scored. The detector was deliberately not widened in
+the same change that told the agent to adopt the new call, because a rise in
+flagged links would then be unreadable: the agent failing to adopt it and the
+predicate getting stricter look identical from the count, which is the error
+constraint 6 of ADR-0009 exists to prevent. Widening belongs with the
+writer-side requirement, whose own evidence is a recorded run at the new shape.
+Until then the table over-exempts, which is the safe direction.
+
+What the detector currently treats as deciding reachability:
 
 | provenance | reachable? | why |
 |---|---|---|
@@ -1916,6 +1931,10 @@ this section before reopening one.
   either way, and the lead accepted the line-count figure on 2026-08-25.
   Unlike the first two, **no rule moved into the writer tool first**: the
   candidate precondition — that a link cite a computed `same_person` score — is satisfiable by 437 of 6,550 reachable links — 6.7%
+  (measured against the hand-assembled call shape, which is the cost that
+  produced the skip; the tool has since gained a project-relative arm that
+  resolves both documents itself, and the satisfiability of the NEW shape is
+  unmeasured until agents have run against it)
   — so it ships as a warning on the `opWarnings` channel
   `personEvidenceScoreWarnings` already rides, and the conversion guide's step 3
   covers that case explicitly rather than inventing a gate to satisfy the shape.

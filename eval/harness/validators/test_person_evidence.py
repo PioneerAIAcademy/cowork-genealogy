@@ -604,9 +604,16 @@ def _persona_reachable(research: dict, assertion: dict | None) -> bool:
 def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
     """Every (id, id) pair a `same_person` call actually scored, both orderings.
 
-    SKILL.md §2 sends the record persona as `primaryId1` and the tree candidate
+    The agent sends the record persona as `primaryId1` and the tree candidate
     as `primaryId2`; both orderings are stored so a transposed call still counts
     as having scored that pairing.
+
+    The project-relative form (issue #1731) names the same two sides by
+    reference instead — the tool assembles the documents — so its pair is
+    (record party, `treePersonId`), where the record party is whichever of
+    `recordPersonaId`/`recordRole` the call carried. Without this arm the two
+    tests gated on these pairs fail on EVERY call in the cheap shape, which
+    judge-skips the whole run.
     """
     pairs: set[tuple] = set()
     for tc in tool_calls:
@@ -614,6 +621,9 @@ def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
             continue
         args = tc.get("args") or {}
         p1, p2 = args.get("primaryId1"), args.get("primaryId2")
+        if not (p1 and p2):
+            p2 = args.get("treePersonId")
+            p1 = args.get("recordPersonaId") or args.get("recordRole") or p2
         if p1 and p2:
             pairs.add((p1, p2))
             pairs.add((p2, p1))
@@ -1100,6 +1110,13 @@ def _record_persona_facts_from_sp(sp_args: dict, persona_id: str) -> list[dict]:
     Checks whichever of gedcomx1/gedcomx2 the call places `persona_id` in as
     its primary person and returns that person's `facts` array. Returns [] when
     the persona is absent from both sides.
+
+    Returns [] for a project-relative call (issue #1731) by construction: that
+    form carries no documents at all, because the tool assembles them host-side.
+    The caller therefore reads "no facts to check" rather than a wrong answer,
+    and the chronology check it feeds goes quiet rather than firing on an empty
+    fact list. Recovering the facts for that form means reading the project's
+    own assertions, which is a different check from "what did the call send".
     """
     for side, pid_key in (("gedcomx1", "primaryId1"), ("gedcomx2", "primaryId2")):
         if sp_args.get(pid_key) == persona_id:

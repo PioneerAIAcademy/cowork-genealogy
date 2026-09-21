@@ -155,18 +155,46 @@ a graduation, must satisfy all six:
    `materialize_facts` time, and gate there too — the tree write is where the
    violation lands, so a `person_evidence`-append gate alone cannot be the
    enforcement point.
-2. **An attestation — but note the owner has already decided against holding out
-   for a non-fabricable one.** Nothing today persists `same_person` output.
-   `docs/specs/research-append-tool-spec.md` records the 2026-08-01 decision
-   (#1006): validate `match_score`'s **presence** on the
-   `personEvidenceInvariants` path, explicitly conceding that presence does not
-   prove the call happened, and *"do not over-engineer past this."* The stronger
-   counter-design — `same_person` persisting a (person, record, persona)-keyed
-   attestation the writer tools check — is not what was decided; propose it
-   *against* that decision, not into a vacuum.
+2. **An attestation — SUPERSEDED 2026-09-07; the counter-design was adopted.**
+   This constraint told you to propose the attestation *against* the 2026-08-01
+   "do not over-engineer past this" decision (#1006) rather than into a vacuum.
+   The lead then decided the other way: the 2026-09-07 ruling on #1731 is that
+   `same_person` **does** persist what it computed and `research_append` **will**
+   require it. So the argument this constraint asked for has been made and won,
+   and the constraint is kept only as the record of what it displaced.
+
+   What shipped for it (PR A, #1731 steps 1-2): `same_person` gained a
+   project-relative arm and writes every score it computes to
+   `results/.scores/`, host-side, so the record never round-trips through the
+   model. What has NOT shipped is the writer-side requirement (step 3), which is
+   gated on re-measuring after PR A and on the score-TTL question. Until it
+   does, `match_score` remains caller-fabricable — the attestation exists but
+   nothing yet checks a link against it.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.
+
+   **As implemented (#1731 PR A), with a documented deviation.** The attestation
+   keys on (`record_id`, party, `tree_person_id`), where party is
+   `record_persona_id` when non-null and `record_role` otherwise. The fallback
+   exists because `record_persona_id` is null on thousands of corpus links, so
+   it cannot key anything on its own, while `record_role` is required on every
+   assertion and is the field the record-side projection groups by — key and
+   grouping must agree or two calls about one persona land under two keys.
+
+   The fallback is not free, and the measurement is worth keeping because the
+   obvious reading of it is wrong. Over 3,092 projectable groups, 22 hold more
+   than one distinct `name` — but **18 of those 22 are alias variants of a
+   single persona** (maiden name, scribal variant, "also known as"), carrying
+   one `record_persona_id` between them; only 4 are genuinely several people,
+   and all 4 carry non-null persona ids, so the fallback never fires for them.
+   13 of the 22 carry a `1:1:` ARK, so they do not "cluster on image ids". On
+   the population that actually reaches the fallback — 524 groups with no
+   `1:1:` ARK and no retained sidecar — **9 are ambiguous, across two runs**
+   (`elena-asmundsdotter-origin`, one register page holding many entries at one
+   role each; `stribling-father-1821`). Those 9 are refused rather than scored
+   as a merge, and the guard is scoped to groups agreeing on no persona id so it
+   does not fire on the 18 alias cases. Both directions are tested.
 4. **Batch semantics.** Keep `proofSummaryInvariants`' pre-call-state discipline
    (`docs/specs/guardrail-enforcement-spec.md` §5, "Prefer this shape") with
    defined handling for an assertion and its link arriving in one batch.

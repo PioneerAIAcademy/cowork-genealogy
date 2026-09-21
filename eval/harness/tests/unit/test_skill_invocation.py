@@ -1173,6 +1173,42 @@ def test_scored_ids_ignores_non_same_person_tools():
     assert same_person_scored_ids(calls) == set()
 
 
+# The project-relative call shape (issue #1731). It carries no
+# `primaryId1`/`primaryId2` at all -- the tool assembles both documents from
+# project references -- so without these arms every call in the cheap shape is
+# invisible and `find_person_evidence_missing_same_person` flags 100% of newly
+# linked persons the moment the agent adopts it.
+
+
+def _project_same_person_call(tree_person_id, persona_id=None, role=None, is_error=False):
+    args = {"projectPath": "/p", "assertionId": "a_005", "treePersonId": tree_person_id}
+    if persona_id is not None:
+        args["recordPersonaId"] = persona_id
+    if role is not None:
+        args["recordRole"] = role
+    entry = {"tool": "mcp__genealogy__same_person", "args": args}
+    if is_error:
+        entry["is_error"] = True
+    return entry
+
+
+def test_scored_ids_credits_the_project_relative_tree_person():
+    calls = [_project_same_person_call("I1")]
+    assert same_person_scored_ids(calls) == {"I1"}
+
+
+def test_scored_ids_credits_the_project_relative_record_party():
+    calls = [_project_same_person_call("I1", persona_id="p_999")]
+    assert same_person_scored_ids(calls) == {"I1", "p_999"}
+    calls = [_project_same_person_call("I2", role="head_of_household")]
+    assert same_person_scored_ids(calls) == {"I2", "head_of_household"}
+
+
+def test_scored_ids_still_ignores_an_errored_project_relative_call():
+    calls = [_project_same_person_call("I1", persona_id="p_999", is_error=True)]
+    assert same_person_scored_ids(calls) == set()
+
+
 # --- unguarded_new_person_evidence_links (issue #963 pre-write check) ---------
 
 
