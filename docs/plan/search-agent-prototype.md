@@ -1353,19 +1353,23 @@ without whichever Bedrock refuses.
   **What it settles and what it does not.** The lead's ruling of 2026-09-20 — a worker
   rule that a resumed attempt with zero model turns re-queries instead of completing — was
   gated on this probe confirming the autonomous run's synthetic result; it did not, so the
-  rule is not built. But this kill differs from that run's: the kill mechanism was the
+  rule was not built then. **The D17 run of 2026-09-21 confirmed it on background agents,
+  which makes foreground-versus-background the settled difference — a foreground
+  delegation is re-run, background agents are lost to a zero-turn synthetic result — and
+  the rule is built (see D17).** But this kill differs from that run's: the kill mechanism was the
   shim's own (`docker kill` + `docker start`, what its `kill_worker` does at the
   `read_timeout`), but this turn ran with the Stop hook off (`proto-kill` leaves
   `AUTONOMOUS_MAX_NUDGES` at compose's 0), one foreground delegation
   (`run_in_background: false`) and 11 tool calls at the kill, not the autonomous run's
   hook at 20, two background `record-extractor` agents (whether their `Agent` inputs
   carried `run_in_background: true` went with that volume) and 123 calls. A foreground
-  delegation resumes as P1 measured; the zero-turn synthetic result is still specific to
-  that case and unprobed. The probe for it is this arm on the autonomous arm's message
-  with the kill timed on an `Agent` whose input carries `run_in_background: true`, which
-  needs a switch the arm does not have: `--kill-on` fires on the first `Agent` row, by
-  name only (`tool_calls` carries no input; `session_entries` does), and on that message
-  the first `Agent` is whichever sub-skill delegates first.
+  delegation resumes as P1 measured; the zero-turn synthetic result was, on this probe,
+  still specific to the background case — and the D17 run of 2026-09-21 then observed it
+  there for the second time, with the main thread's own narration naming the two agents as
+  running in the background, which is what settled it and built the rule. A scripted probe
+  of the same shape still needs a switch this arm does not have: `--kill-on` fires on the
+  first `Agent` row, by name only (`tool_calls` carries no input; `session_entries` does),
+  and on the autonomous message the first `Agent` is whichever sub-skill delegates first.
 - **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
   Probed live with the five bodies then present: all register under **bare** names with
@@ -1497,9 +1501,16 @@ without whichever Bedrock refuses.
      tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
      key and writes the FamilySearch token, refreshed from the desktop login through
      `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
-     turn**; its status line must say both are set. The token lives an hour: run
-     `make proto-token` before any turn past the fifty-minute mark (no restart, no lost
-     turn).
+     turn**; its status line must say both are set. **The token protocol: `make e2e-login`
+     FIRST** — a fresh login, refresh token ~24 h — and then `make proto-token` between
+     turns, which since 2026-09-21 forces a refresh when the stored token has under
+     **thirty-five** minutes of life left (`dev/fs-token.ts --min-life`, default 30 —
+     `READ_TIMEOUT_S` in minutes, so the token outlives a full-length turn — plus the auth
+     module's own five-minute expiry buffer; widen it with `PROTO_TOKEN_MIN_LIFE`). The
+     line this replaces — run `make proto-token` before the fifty-minute mark — was a no-op by
+     construction: `getValidToken` returns the stored access token unchanged unless it has
+     **already** expired, so a refresh at minute 52 handed the stack the same eight
+     minutes, which is how the 2026-09-21 run below died mid-delegation.
   2. `make proto-seed FIXTURE=bagley-father-1884` — the fixture's `starting-research.json`
      and tree into the Postgres/S3 store through `PgS3ProjectStore`, and a session on
      that project; prints the session id and the research question (any e2e fixture or
@@ -1518,8 +1529,37 @@ without whichever Bedrock refuses.
   duration expected (the one in flight at the kill). **What voids the run:** the kill
   landing before `task_started` (a plain turn kill, D14 again — post the next prompt and
   retry); a FamilySearch tool answering with the reconnect instruction (the token
-  expired — `make proto-token`, new session); `receive_count` 3 (the worker did not come
+  expired — `make e2e-login`, then `make proto-token`, new session); `receive_count` 3 (the worker did not come
   back before the second redelivery — `docker start` it); more than one worker kill.
+  **Run live 2026-09-21** (`sess_25297de9b15b4ef5`, turn
+  `6f22712a-1c91-4272-8f7f-24dabc6cd9a7`) on `bagley-father-1884`, driven from the
+  browser. **Criteria 3 and 4 PASS:** 108 `tool_calls` rows, 107 with a duration (the one
+  in flight at the kill is the expected exception), longest `Agent` 133,376 ms against the
+  1,800 s ceiling, p50 264 ms, zero Bash, zero allowed project reads, zero denies.
+  **Criterion 1 FAILS.** The kill landed while two `record-extractor` agents were running
+  **in the background** — the main thread's own narration, "Two record-extractor agents
+  are running in the background — I'll be notified when they finish", and the two `Agent`
+  calls returned in 3 ms and 22 ms, which are launches, not blocking calls. The
+  redelivery (**`receive_count` 2**, the figure that says it was a redelivery at all, and
+  the one the rule below keys on) resumed the SDK session and the turn "completed" with
+  **`num_turns` 0, `cost_usd` 0, `duration_ms` 47, wall 6.9 s**: no new `Agent`, no `extraction_append`,
+  `assertions` and `sources` still 0. **Criterion 2 was never reached** — the extraction
+  never landed, so there is nothing to have been written once. This is the **second
+  observation of the same shape** (the first is under D18, the autonomous run's ceiling
+  kill), and with the 2026-09-20 probe under D14 killing a FOREGROUND delegation, which
+  WAS re-run, the variable is isolated: **a foreground delegation resumes; background
+  agents are lost, and `run_turn` took the CLI's zero-turn synthetic result as the turn's
+  completion.** That is what the resume rule built on 2026-09-21 answers
+  (`attempt_prompts` / `RESUME_CONTINUE_TEXT` in `apps/server/proto/worker/`): an attempt
+  that both resumed an SDK session **and** carries `receive_count` > 1 — a redelivery, as
+  this run's 2 was — and whose result carries no model turn is re-queried **once**, and
+  the row takes the completing attempt's figures. A first delivery is left alone whatever
+  the session holds: the continue prompt says to resume the interrupted task and not start
+  over, which on turn 2 of an ordinary session would discard the patron's new question.
+  The run **also** hit the expired-token defect — the
+  refresh before it was a no-op and the token had eight minutes left, which is why the
+  protocol above now starts with `make e2e-login` — so it carries **nothing** about
+  research quality, and criterion 1 has to be re-run.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
@@ -1589,7 +1629,10 @@ without whichever Bedrock refuses.
   until the next `up`), and elasticmq's visibility timeout is 7,500 s (was 2,100, sized on
   1,800 alone) because the shim never extends visibility mid-POST, so an attempt longer
   than it is redelivered while still in flight; the second gate was probed the same day
-  under D14 (a foreground delegation is re-run; the background-agent case is still open). The export ran on the stopped project: 15 files — `research.json` 67,890 B and
+  under D14 (a foreground delegation is re-run) and closed on 2026-09-21, when the D17 run
+  observed the background case a second time and the worker gained the resume rule: a
+  redelivery (`receive_count` > 1) whose result carries no model turn is re-queried once
+  (D17). The export ran on the stopped project: 15 files — `research.json` 67,890 B and
   `tree.gedcomx.json` 13,778 B (both pretty-printed by the export, not the bytes the tools
   wrote), 12 `results/log_*.json` sidecars and `results/match-scores.jsonl`, no `images/`.
   **The grading instrument, built 2026-09-20.** The harness grades in-process at the end
