@@ -918,7 +918,9 @@ def test_tool_server_defaults_to_http_and_refuses_an_unknown_mode(tmp_path):
 
 class FakeSessionStore:
     def __init__(self, entries: bool) -> None:
-        self.calls = {"entries_appended": 0}
+        # The real PgSessionStore's counter names. The SDK drives these, not run_turn, so a
+        # test sets them the way a resume would and reads them back off the summary.
+        self.calls = {"entries_appended": 0, "list_subkeys": 0, "subkeys_returned": 0}
         self._entries = entries
 
     async def has_entries(self, sdk_session_id: str) -> bool:
@@ -1037,6 +1039,19 @@ def test_run_turn_fails_the_turn_on_each_guard_without_completing_it(turn_env, m
         _run(turn_env, messages)
     assert not _turn_done_written(turn_env["conn"]), "a failed turn stays open for the redelivery"
     assert turn_env["client"].disconnected, "the CLI is always released"
+
+
+def test_the_turn_summary_carries_the_store_counters_the_d17_criterion_reads(turn_env, monkeypatch):
+    """D17 asserts P1's criterion: a resumed turn that saw a delegation must show
+    ``list_subkeys`` called and at least one subkey returned. Both counts are collected on
+    every turn and were surfaced nowhere -- ``PgSessionStore.counters()`` has no caller --
+    so the run could not assert it without reading them out of a dead attribute."""
+    store = FakeSessionStore(entries=True)
+    monkeypatch.setattr(worker, "PgSessionStore", lambda dsn, project_id: store)
+    store.calls.update(entries_appended=12, list_subkeys=1, subkeys_returned=3)
+    summary = _run(turn_env, _good())
+    assert (summary["list_subkeys"], summary["subkeys_returned"]) == (1, 3)
+    assert summary["entries_appended"] == 12
 
 
 def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):

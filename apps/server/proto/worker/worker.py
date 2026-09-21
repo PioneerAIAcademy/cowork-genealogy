@@ -666,6 +666,12 @@ async def run_turn(
         "events": counters["events"],
         "activity": counters["activity"],
         "entries_appended": store.calls["entries_appended"],
+        # D17 criterion: a resumed turn that saw a delegation must show the SDK asking the
+        # store for the subagent transcripts and the store answering with at least one.
+        # Collected since D9-10 and surfaced nowhere until this line, so the run could not
+        # assert it.
+        "list_subkeys": store.calls["list_subkeys"],
+        "subkeys_returned": store.calls["subkeys_returned"],
         "tool_calls": counters["tool_calls"],
         "nudges": counters["nudges"],
     }
