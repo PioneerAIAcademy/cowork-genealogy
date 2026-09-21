@@ -144,6 +144,7 @@ depends on another shipping first.
 | # | Layer | Binds in | Catches | Status |
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
+| §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
@@ -378,12 +379,13 @@ measured — the same split `find_protected_writes_by_unnamed_delegate`'s docstr
 records.
 
 The e2e `blocked_context_calls` array was considered for the compliance axis and
-declined on exactly this rule: the subagent-only arm is at 0 of 26 eligible runs,
-and all 6 observed fires belong to the owned-section arm, which the unit harness
-does not record in `blocked_context_calls` — it gates the same event separately,
-through `blocked_owned_section_writes` and `test_no_out_of_lane_section_writes`
+is not part of it today: the subagent-only arm is now at 2 of 41 eligible runs,
+both fires `image_read` on the main thread in `anders-monsen-ancestry`, while the
+owned-section fires the unit harness sees are gated separately, through
+`blocked_owned_section_writes` and `test_no_out_of_lane_section_writes`
 (see the §6 rows above). So the two planes differ in where they put this event,
-not in whether they enforce it — measured at 9524c1406.
+not in whether they enforce it — measured at 63f7a6f2e. Whether these two
+subagent-only fires now warrant folding the array into the compliance axis is open.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only
@@ -975,6 +977,49 @@ behavioural consequence — it is the writer of the tier, and it cannot see a
 derived blocker before writing a tier the disputed-source rule will refuse.
 `research_query`'s `conflicts.questionId` filter is narrower than this gate for
 the same reason and is an advertised contract.
+
+### `relationship_type` must not contradict its own `value`
+
+A `fact_type: relationship` assertion may not carry a
+`structured_value.relationship_type` whose category contradicts what its own
+`value` says about the record **subject**. `relationship_type` is the subject's
+own role; `related_person_role` is the other party's
+(`research-schema-spec.md` §5.6.1). A death certificate naming the father is
+`"child"` on the deceased, not `"parent"`; and a sister is `"sibling"`, a value
+earlier guidance never named, which is the live defect the rule was built for.
+
+**Position decides whose role the value names, and that is why two earlier
+guards here were abandoned.** A value opening `<relation> of <name>` states the
+subject's role and can be compared. `father named as Casper` and
+`father: Jan Roelfs` label the *other* party; so does
+`Father of groom named as Tellef`, where the token after `of` is a role word
+rather than a name. Comparing relation words without regard to position refused
+22 of the 37 it flagged over the e2e run logs — correct data, refused. An
+unknown spelling (`grandparent`, `ParentChild`, `administrator` — 73
+assertions across 18 spellings) yields no category and is skipped, never
+refused.
+
+Implemented as `validateRelationshipDirection` in `research-append.ts`, scoped
+to `fact_type: relationship` and to ops that set `value`, `structured_value`
+or `fact_type` — the third because it is what decides whether the guard
+applies at all, so a retype INTO `relationship` cannot carry a standing
+contradiction in past it. An unrelated edit to an assertion written before the
+rule existed is still not refused — the same scoping the place-containment row
+uses, and for the same reason. `extraction_append` delegates to the same writer, so one check binds
+both. The eval validator
+`test_record_extraction.py::test_relationship_type_agrees_with_its_value`
+applies the identical predicate over the corpus; the two are pinned to one
+another by `relationship_direction_cases.json` and a test on each side, because
+the harness and the engine share no runtime.
+
+Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by
+`eval/harness/scripts/measure_relationship_direction.py` — 19 distinct
+assertions, since a unit log carries the id-less write op and the persisted
+copy of one assertion; 0 in the scenario fixtures and 0 in the hosted seed. Every refusal
+was read individually per ADR-0011 limit 2 and every one is a true positive.
+The script's `--counterfactual`, `--axes`, `--domain` and `--self-referential`
+arms emit every other figure this rule is cited for, each over a named
+population.
 
 ### The hypothesis `supported` evidence floor
 

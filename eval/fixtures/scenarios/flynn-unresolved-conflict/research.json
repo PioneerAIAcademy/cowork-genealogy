@@ -156,7 +156,7 @@
           "jurisdiction": "Schuylkill County, Pennsylvania",
           "date_range": "1845-1850",
           "repository": "FamilySearch",
-          "rationale": "Catholic baptism record could provide primary direct evidence of parentage, but pre-1850 Irish Catholic parish records for Schuylkill County are fragmentary and largely unavailable on FamilySearch. Three converging sources make the father identification defensible without this record type.",
+          "rationale": "Patrick's Catholic baptism at St. John the Baptist, Pottsville (est. 1827) would carry primary, direct evidence of his father, and the registers cover a birth of ca. 1845 — this is a real search still open, not an unavailable record. Deferred rather than dismissed: the birthplace conflict c_001 decides which parish and which years to read, so searching before it is resolved risks reading the wrong register.",
           "fallback_for": null,
           "status": "skipped"
         },

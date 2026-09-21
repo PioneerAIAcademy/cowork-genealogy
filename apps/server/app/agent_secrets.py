@@ -1,56 +1,75 @@
-"""Per-connect agent secrets — the SOLE channel carrying the operator's
-Anthropic key into a sandbox.
+"""Per-connect agent secrets — the SOLE channel carrying credentials into a
+sandbox.
 
-**Why a file and not env.** Neither sandbox SDK can mutate the environment of a
-sandbox that has already been created, so a key injected via `envs=` at
-`create()` is frozen for that sandbox's entire life. Rotating
-`ANTHROPIC_API_KEY` on the control plane therefore fixed only *new* sessions
-while every existing one kept failing with `401 authentication_error` — the
-2026-07-20 alpha outage. Rewriting the current value on every connect makes a
-rotation take effect for every session at its next reconnect.
+When the credential proxy is active (production, ``proxy_active()``), the
+Anthropic API key never enters the sandbox. Instead, this module writes a
+per-sandbox **proxy token** into the secrets file. The sandbox uses the token
+as its ``ANTHROPIC_API_KEY``; the credential proxy on the control plane
+(``anthropic_proxy.py``) validates the token and injects the real key before
+forwarding to ``api.anthropic.com``. A compromised sandbox can use the proxy
+but never learns the real key. Rate-limiting and revocation are follow-on
+work (issue #1018 items 2–3).
 
-The Anthropic key is no longer injected into the sandbox env at all (#1018 Task
-3): the file channel is the designed path, and removing the env copy reduces the
-API key's exposure surface from "every process in the sandbox" to "the agent
-runner that reads this file." `current_api_key()` in `real_agent.py` still falls
-back to the env var for backward compatibility with sandboxes created before this
-change, but new sandboxes will not have it set.
+When the proxy is NOT active (local dev, ``make server-e2b``), the raw
+Anthropic API key is written directly — same as before this module existed.
 
-Scope is deliberately just the Anthropic key: the FamilySearch token and the
-OpenRouter key already have their own file channels (`fs_oauth.write_tokens` /
-`write_config`) and so already survive rotation. This module is their sibling —
-the control plane owns provisioning these files, the agent only reads them.
+The proxy token is HMAC-derived from the sandbox_id (same pattern as
+``ws_token.sandbox_secret``), so it is stable across connects — a reconnect to
+the same sandbox gets the same token, which means the SDK client does not need
+to be rebuilt on reconnect.
 
-The reader is `app/agent/real_agent.py` (`current_api_key()`), which prefers this
-file and falls back to the env var when it is absent.
+The reader is ``app/agent/real_agent.py`` (``current_api_key()``), which prefers
+this file and falls back to the env var when it is absent.
+
+History: 2026-07-20 alpha outage — a deploy changed the secrets-write path
+without gating both halves (env and file) together. Sandboxes created before
+the deploy had no file, and ``current_api_key()`` returned None. The entire
+alpha fleet was down until a manual backfill. That is why ``write_secrets``
+and the provider env must always agree on which credential the sandbox holds.
 """
 from __future__ import annotations
 
 import json
 
+from .anthropic_proxy import proxy_active, proxy_token
 from .config import get_settings
 from .sandbox.base import SECRETS_PATH
 
 
-def secrets_bytes(anthropic_api_key: str | None) -> bytes:
+def secrets_bytes(credential: str | None, base_url: str | None = None) -> bytes:
     """Serialize the secrets document the in-sandbox agent reads.
 
-    A missing key writes `{}` rather than a null: the reader treats absent and
-    empty alike (it falls back to env), and this keeps the file's shape stable.
+    ``credential`` is either a proxy token or the raw API key, depending on
+    whether the proxy is active. ``base_url`` is the proxy endpoint URL when
+    the proxy is active, absent otherwise. Both travel together so a resumed
+    sandbox whose create-time env predates the proxy still routes through it.
+
+    A missing value writes ``{}`` rather than a null: the reader treats absent
+    and empty alike (it falls back to env), and this keeps the file's shape
+    stable.
     """
     payload: dict[str, str] = {}
-    if anthropic_api_key:
-        payload["anthropic_api_key"] = anthropic_api_key
+    if credential:
+        payload["anthropic_api_key"] = credential
+    if base_url:
+        payload["anthropic_base_url"] = base_url
     return json.dumps(payload, indent=2).encode()
 
 
 async def write_secrets(sandbox) -> None:
-    """Write the current operator secrets into `sandbox` at SECRETS_PATH.
+    """Write the current credential into ``sandbox`` at SECRETS_PATH.
 
     Call on every path that is about to run a turn — session create and each
-    reconnect. Cheap (one small file write) and idempotent, so callers do not
-    need to track whether the value actually changed.
+    reconnect.
+
+    When ``proxy_active()``, writes the HMAC-derived proxy token (stable
+    across connects, never the real key). Otherwise writes the raw
+    Anthropic API key from the control-plane config.
     """
-    await sandbox.write_file(
-        SECRETS_PATH, secrets_bytes(get_settings().anthropic_api_key)
-    )
+    if proxy_active():
+        credential = proxy_token(sandbox.id)
+        base_url = f"{get_settings().public_url}/api/anthropic-proxy"
+    else:
+        credential = get_settings().anthropic_api_key
+        base_url = None
+    await sandbox.write_file(SECRETS_PATH, secrets_bytes(credential, base_url))

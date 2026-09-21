@@ -58,6 +58,12 @@ jobs:
       - name: Install workspace
         run: pnpm install --frozen-lockfile
 
+      # Build stamp (#2126): `pnpm build` runs electron-vite, whose config reads
+      # `git rev-parse` / `git status` from this checkout and bakes
+      # `<version>+<date>.<sha>` into the main process (src/main/build-info.ts),
+      # so the feedback bundle's viewer_version names the commit. Nothing to
+      # pass here — a shallow actions/checkout still answers rev-parse.
+      #
       # `--publish always` only on a real tag push; the manual dry run builds the
       # same artifacts but publishes nothing. CSC_IDENTITY_AUTO_DISCOVERY=false
       # forces a clean unsigned (ad-hoc) build instead of picking up a stray cert.
