@@ -93,6 +93,25 @@ const NOT_SKILL_NAMES = new Set([
 const KEBAB_IN_BACKTICKS =
   /`(?:@plugin:([a-z0-9-]+)|([a-z][a-z0-9]*(?:-[a-z0-9]+)+))`/g;
 
+/**
+ * The matcher above extracts only a WELL-FORMED `@plugin:` tail, so a malformed
+ * one is invisible to it rather than caught by it: `[a-z0-9-]+` stops at the
+ * first out-of-class character and the alternative then fails for want of a
+ * closing backtick. `@plugin:proof_conclusion` — an underscore, the habit every
+ * MCP tool name teaches (`research_append`, `record_read`) — matched nothing,
+ * passed this file green, and would refuse to spawn at runtime. So would a
+ * capital or an embedded space.
+ *
+ * Widening the class above is the wrong fix: it must stay identical to the five
+ * scanners named in the comment on it. Instead this second pattern takes EVERY
+ * backticked `@plugin:` token and the name check below rejects any tail that is
+ * neither a valid agent name nor the documented prose placeholder.
+ */
+const ANY_PLUGIN_REF = /`@plugin:([^`]*)`/g;
+const VALID_AGENT_NAME = /^[a-z0-9-]+$/;
+/** `@plugin:<name>` / `@plugin:{agent}` — prose and f-string templates, not refs. */
+const PLUGIN_PLACEHOLDER = /^(<[a-z-]+>|\{[a-z_]+\})$/;
+
 function shippedNames(): { agents: Set<string>; all: Set<string> } {
   const skills = readdirSync(join(pluginRoot, "skills")).filter((n) =>
     statSync(join(pluginRoot, "skills", n)).isDirectory(),
@@ -179,6 +198,27 @@ describe("plugin prose names only skills and agents that ship", () => {
     expect(resolve("spawn `@plugin:proof-critique`")).toEqual(["@plugin:proof-critique"]);
   });
 
+  // The arm the extractor could not reach. Proven by mutation 2026-09-21: an
+  // `@plugin:` cell whose name carries an underscore, a capital or a space
+  // matched NOTHING above and shipped green.
+  it("flags a malformed @plugin: name, and still accepts the prose placeholder", () => {
+    const bad = (text: string): string[] =>
+      [...text.matchAll(ANY_PLUGIN_REF)]
+        .map(([, t]) => t)
+        .filter((t) => !VALID_AGENT_NAME.test(t) && !PLUGIN_PLACEHOLDER.test(t));
+
+    // Rejected — each of these is invisible to KEBAB_IN_BACKTICKS.
+    expect(bad("spawn `@plugin:proof_conclusion`")).toEqual(["proof_conclusion"]);
+    expect(bad("spawn `@plugin:Proof-conclusion`")).toEqual(["Proof-conclusion"]);
+    expect(bad("spawn `@plugin:proof conclusion`")).toEqual(["proof conclusion"]);
+    expect(bad("spawn `@plugin:`")).toEqual([""]);
+
+    // Accepted — a real name, and the two placeholder spellings the tree uses.
+    expect(bad("spawn `@plugin:proof-conclusion`")).toEqual([]);
+    expect(bad("an entry spelled `@plugin:<name>` is an Agent spawn")).toEqual([]);
+    expect(bad("invoke `@plugin:{agent}` and let it write")).toEqual([]);
+  });
+
   it("resolves every backticked kebab-case token", () => {
     const { agents, all } = shippedNames();
     const offenders: string[] = [];
@@ -187,6 +227,13 @@ describe("plugin prose names only skills and agents that ship", () => {
       const body = readFileSync(file, "utf-8");
       const rel = relative(projectRoot, file).split(sep).join("/");
       const seen = new Set<string>();
+      for (const [, tail] of body.matchAll(ANY_PLUGIN_REF)) {
+        if (VALID_AGENT_NAME.test(tail) || PLUGIN_PLACEHOLDER.test(tail)) continue;
+        const key = `@plugin:${tail}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        offenders.push(`${rel}: \`${key}\` — malformed agent name`);
+      }
       for (const [, pluginTail, bareToken] of body.matchAll(KEBAB_IN_BACKTICKS)) {
         // A `@plugin:` token must name an AGENT. The bare form may name either.
         const token = pluginTail ?? bareToken;
