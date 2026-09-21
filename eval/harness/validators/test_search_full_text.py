@@ -142,6 +142,40 @@ POST_SEARCH_FILTER_KEYS = (
 )
 
 
+def test_wiki_prework_fetch_runs_when_required(tool_calls, test):
+    """A test tagged `wiki-prework` must actually issue the wiki_read calls
+    SKILL.md step 3 declares REQUIRED for it (ADR-0012, "Name the fetch so
+    it runs").
+
+    Tag-gated, not corpus-wide, because the block is CONDITIONAL by design:
+    the triggers are a non-English record, a compound or patronymic surname,
+    a pre-1850 or non-Latin script, and an era place-name. A plain US deed
+    search fires none of them, and asserting a wiki fetch on every
+    search-full-text test would demand an upstream leg that buys nothing and
+    would red the whole suite.
+
+    This asserts only that the call HAPPENED. That is deliberately the weaker
+    half: a call whose page was then ignored passes here. Whether the page's
+    content reached the answer is the judge's, against a fixture marker no
+    model can produce from memory -- the split the locality-guide pair
+    (ut_locality_guide_022/_023) established, and the reason this docstring
+    says so rather than leaving the gap implicit.
+    """
+    if "wiki-prework" not in (test.get("tags") or []):
+        pytest.skip("not a wiki-prework test")
+
+    reads = [
+        tc for tc in (tool_calls or [])
+        if (tc.get("tool") or "").endswith("wiki_read")
+    ]
+    assert reads, (
+        "SKILL.md step 3 declares wiki_read fetches as unconditional members of "
+        "the pre-work block for this search, and none was issued. The query was "
+        "therefore built from memory rather than from the page: a variant that "
+        "was not fetched is a variant that cannot be searched."
+    )
+
+
 def _fts_tool_calls(tool_calls):
     return [tc for tc in (tool_calls or []) if (tc.get("tool") or "").endswith("fulltext_search")]
 

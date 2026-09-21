@@ -20,6 +20,8 @@ allowed-tools:
   - source_attachments
   - research_log_append
   - research_append
+  - wiki_search
+  - wiki_read
 ---
 
 # Search Full-Text
@@ -28,8 +30,8 @@ allowed-tools:
 
 Executes full-text searches against FamilySearch's AI-transcribed
 historical document images. FTS searches the raw transcript text of
-~1.95 billion document images — a fundamentally different search
-surface than indexed Records search. FTS finds people mentioned
+those images — a fundamentally different search surface than indexed
+Records search. FTS finds people mentioned
 anywhere in a document (witnesses, neighbors, heirs, appraisers),
 not just indexed principals.
 
@@ -71,8 +73,11 @@ an ad-hoc search (with `plan_item_id: null` in the log).
 
 Before constructing any query, verify FTS covers the target.
 Read `references/online-search-literacy.md` for the evaluation
-checklist (~6,665 searchable collections; ~10% transcription error
-rate). **Default to "less is more"** — no fuzzy matching means every
+checklist. Coverage is an incomplete and continuously growing subset,
+strongest on English-language records from the Americas, the UK and
+Australasia — the `fulltext_search` tool description states the current
+shape, and a nil proves nothing until you have checked it. Transcription
+error runs about 10%. **Default to "less is more"** — no fuzzy matching means every
 extra required term risks missing transcription variants:
 
 - **Uncommon surname or given name** → `+Name` only, filter after
@@ -82,6 +87,37 @@ extra required term risks missing transcription variants:
 ### 3. Determine the search strategy
 
 Read `references/search-strategies.md` for the full strategy catalog.
+
+**Pre-work — fetch the pages this query depends on, before building it.**
+A `{Jurisdiction}_{Topic}` page needs no `wiki_search` first, so issue
+these as PARALLEL calls in a single turn alongside the rest of step 3. They
+are members of this block, not options: a variant you did not fetch is a
+variant you will not search, and the query is built once.
+
+- **The record is not in English** → `{Language}_Genealogical_Word_List`.
+  REQUIRED. The `keywords` and `place` fields expand nothing, so every
+  cross-language equivalent has to be run as its own query and you cannot
+  run one you have not read.
+- **The subject carries a compound or patronymic surname** →
+  `{Country}_Naming_Customs`. REQUIRED. Which word is the father's decides
+  what the co-occurrence requires.
+- **The place carried a different name in the record's era** →
+  `{Country}_Genealogy`, for the historical jurisdiction names to search as
+  variants.
+- Anything the constructed URL cannot reach — a record-type or topic page
+  you cannot name — goes through `wiki_search` first; only a `wiki_read` on
+  a URL `wiki_search` returned waits for that call.
+
+```
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Spanish_Genealogical_Word_List" })
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Spain_Naming_Customs" })
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Spain_Handwriting" })
+```
+
+On `No wiki page found`, or a page that returns only generic content,
+report the gap and search the variants you do have. **Do not fill it from
+memory** — a spelling you invented is not a variant, and a nil on it tells
+you nothing. Do not drop an instruction that does not depend on the page.
 
 | Research goal | Query approach |
 |---|---|

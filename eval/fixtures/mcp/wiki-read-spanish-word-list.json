@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Spanish_Genealogical_Word_List for the search-full-text wiki move (#2253). Carries a distinctive marker — the relationship vocabulary block, including the abbreviated 'h.l.' (hijo legítimo) and 'v.o' (vecino) forms — so a test can assert the skill USED the page rather than recalling a handful of equivalents. The `keywords` and `place` fields expand nothing, so each term taken from here has to be run as its own query.",
+  "args": {
+    "url": "~Genealogical_Word_List"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Spanish_Genealogical_Word_List",
+    "content": "# Spanish Genealogical Word List\n\n## Relationship terms as they appear in parish and notarial acts\n\n| Spanish | English | Abbreviated in the record as |\n| --- | --- | --- |\n| hijo legítimo | legitimate son | **h.l.** |\n| hija legítima | legitimate daughter | **h.l.** |\n| hijo natural | son born outside marriage | h.n. |\n| vecino | resident of the parish | **v.o** |\n| difunto | deceased | d.to |\n| abuelos paternos | paternal grandparents | ab.s pat.s |\n| padrinos | godparents | pad.s |\n\nThe abbreviated forms in the right-hand column are what the clerk actually wrote, and the transcription preserves them. A search for the expanded phrase will not match an act that carries only the contraction, so run both.\n\n## Given-name equivalents\n\n| Spanish | Latin | English |\n| --- | --- | --- |\n| Diego, Santiago | Iacobus | James |\n| Catalina | Catharina | Catherine |\n| Guillermo | Guillelmus | William |\n| Juan | Joannes | John |\n| Francisco | Franciscus | Francis |\n\nLatin forms predominate in pre-19th-century parish registers even where the vernacular is Spanish, so the Latin column is the one to search for baptisms of that era.\n"
+  }
+}
