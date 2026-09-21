@@ -93,7 +93,7 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
     "logout": "same collision as login, for the same reason.",
 }
 
-# ── Per-site suppression list ──────────────────────────────────────────
+# -- Per-site suppression list ------------------------------------------
 #
 # Each entry suppresses one (file, tool) warning. This is the ONLY
 # suppression mechanism for this check — inline comments were rejected

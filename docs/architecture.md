@@ -964,7 +964,7 @@ the marker for a deliberate "you do NOT have this tool" mention. Removing the
 denies took that marker away, increasing its agent-body warnings (run
 `python eval/harness/scripts/check_rubric_tool_drift.py` for the current
 count). It is warn-only and does not block a build; known false positives
-are handled by the `SUPPRESSIONS` list in the script (issue #1522).
+are handled by the `SUPPRESSIONS` list in the script.
 
 **Two standing prohibitions:**
 
