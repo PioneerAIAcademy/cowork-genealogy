@@ -11,11 +11,12 @@ import { test, expect } from '@playwright/test';
 const RUN_LOG_PATH = 'layout-check/v1_2025-01-01_00-00-00';
 
 test.describe('dimension card geometry at default 520px pane width', () => {
+  // The first navigation triggers Next.js compilation on CI; 60s covers it.
+  test.setTimeout(60_000);
+
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.goto(`/results/${RUN_LOG_PATH}`);
-    await page.locator('.mantine-Card-root').first().waitFor({ state: 'visible', timeout: 30_000 });
+    await page.goto(`/results/${RUN_LOG_PATH}`, { waitUntil: 'networkidle' });
+    await page.locator('.mantine-Card-root').first().waitFor({ state: 'visible', timeout: 45_000 });
   });
 
   test('score picker stays within the dimension card clip rect', async ({ page }) => {
