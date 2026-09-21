@@ -129,18 +129,22 @@ standard 41).
 contents from memory.** When the question involves these topics, add the relevant
 `wiki_read` calls to the parallel batch in Step 3:
 
-- For US state formation questions: `{State},_United_States_Genealogy` (e.g.
-  `West_Virginia,_United_States_Genealogy`, `Kentucky,_United_States_Genealogy`,
-  `Maine,_United_States_Genealogy`, `Tennessee,_United_States_Genealogy`,
-  `Vermont,_United_States_Genealogy`)
-- For Ireland partition (1922): `Ireland_Genealogy`
-- For French Republican calendar records (1793–1805): `French_Republican_Calendar`
-- For civil registration start dates: `{Country}_Civil_Registration`
-  (e.g. `France_Civil_Registration`, `England_Civil_Registration`) or
-  `{State}_Vital_Records` (e.g. `Utah_Vital_Records`)
-- For US passenger manifest questions (1820 onward): `United_States_Emigration_and_Immigration`
-- For Canadian passenger list questions (pre-1865): `Canada_Emigration_and_Immigration`
-- For English parish and church records: `England_Church_Records`
+- For US state formation questions: `https://www.familysearch.org/en/wiki/{State},_United_States_Genealogy`
+  (e.g. `https://www.familysearch.org/en/wiki/West_Virginia,_United_States_Genealogy`,
+  `https://www.familysearch.org/en/wiki/Kentucky,_United_States_Genealogy`,
+  `https://www.familysearch.org/en/wiki/Maine,_United_States_Genealogy`,
+  `https://www.familysearch.org/en/wiki/Tennessee,_United_States_Genealogy`,
+  `https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy`)
+- For Ireland partition (1922): `https://www.familysearch.org/en/wiki/Ireland_Genealogy`
+- For French Republican calendar records (1793–1805): `https://www.familysearch.org/en/wiki/French_Republican_Calendar`
+- For civil registration start dates: `https://www.familysearch.org/en/wiki/{Country}_Civil_Registration`
+  (e.g. `https://www.familysearch.org/en/wiki/France_Civil_Registration`,
+  `https://www.familysearch.org/en/wiki/England_Civil_Registration`) or
+  `https://www.familysearch.org/en/wiki/{State}_Vital_Records`
+  (e.g. `https://www.familysearch.org/en/wiki/Utah_Vital_Records`)
+- For US passenger manifest questions (1820 onward): `https://www.familysearch.org/en/wiki/United_States_Emigration_and_Immigration`
+- For Canadian passenger list questions (pre-1865): `https://www.familysearch.org/en/wiki/Canada_Emigration_and_Immigration`
+- For English parish and church records: `https://www.familysearch.org/en/wiki/England_Church_Records`
 
 On a constructed URL that 404s or a page that returns only generic content, record
 and report the gap; do not fill it from memory. Do not drop any call — parallelize,
