@@ -698,8 +698,8 @@ rate, carries the argument below.
   `related_person_role` is the other party's. That convention was pinned on
   2026-09-20 and is now stated
   (`research-schema-spec.md` §5.6.1); it enforces the `relationship_type`
-  half at the write boundary, refusing 21 of 2580 (0.8%) across the run
-  logs, fixtures and hosted seed, measured at c77548723 by
+  half at the write boundary, refusing 21 of 2586 (0.8%) across the run
+  logs, fixtures and hosted seed, measured at 1d5656fe3 by
   `eval/harness/scripts/measure_relationship_direction.py`.
 
   **This cross-check's own rate, which is not the one above.** A
@@ -709,7 +709,7 @@ rate, carries the argument below.
   `(record_role, fact_type)` shapes once `child_N` and `grantor_N` collapse:
   father 4, mother 3, child 3, grantor 2, head_of_household 1, wife 1.
   Measured 2026-09-19 over `eval/**/*final-research.json`, measured at
-  c77548723, and emitted by `measure_relationship_direction.py
+  1d5656fe3, and emitted by `measure_relationship_direction.py
   --self-referential` so it is re-derivable rather than pasted. The rate
   recorded beside the `relationship_type` guard is a **different guard's**
   number over a **different denominator** — both round to 0.8%, which is

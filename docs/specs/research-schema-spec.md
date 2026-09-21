@@ -575,7 +575,7 @@ equal to his record role.
 
 Measured over `eval/**/*final-research.json`, `fact_type: relationship`, and
 emitted by `measure_relationship_direction.py --axes` so it is re-derivable
-rather than pasted, measured at c77548723: requiring the two to agree refuses **62 of 281**
+rather than pasted, measured at 1d5656fe3: requiring the two to agree refuses **62 of 281**
 comparable assertions, of which **60 are correct data**; and **59 of 1149**
 personas carrying a relationship assertion carry more than one category. So no guard may require `relationship_type` to match
 `record_role`, and two earlier attempts to build one were abandoned without the
