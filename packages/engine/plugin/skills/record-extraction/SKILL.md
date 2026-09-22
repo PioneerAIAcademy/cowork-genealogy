@@ -246,8 +246,10 @@ Print to the user exactly the text after the final `---` in the agent's
 return — its two closing paragraphs — verbatim. Add nothing after them:
 your reply for this record ends with the agent's second paragraph.
 Everything above that line is yours to act on and must not appear in your
-reply, in any wording, at any point: no identifier of any kind (`src_`,
-`S1`, `a_`, `q_`, `log_`), no counts, no tables, no tool or skill names.
+reply, in any wording, at any point: no identifier of any kind — for a
+source, assertion, question, log, tree person or anything else — and no
+counts, tables, tool names or skill names. If you are weighing whether
+something is an identifier, it is.
 
 Then **keep going in the same turn**: if more records are queued,
 delegate the next one now; if this was the last record, hand off to
