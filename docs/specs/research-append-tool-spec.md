@@ -591,6 +591,92 @@ splintering into inconsistent labels, over a form the model added:
   is `indirect` — distinguished by field population (`place` set = the
   place-claim, `date` set = the date-claim) rather than by the type name.
 
+### 3.8 `transcription_truncated` — derived, never asserted
+
+On every `sources` op the tool **owns** `sources[].transcription_truncated` in
+the op payload, after the §3.4 reuse rewrite so it sees the final op shape. The
+persisted marker is **`true` or absent** — `false` is never written to
+`research.json` — and absence means *unknown*, not *whole*:
+
+| value | meaning |
+|---|---|
+| `true` | verified **partial** — a read of the cited image hit the OCR output-token cap |
+| absent | **not established** — a verified-whole read, a non-image source, or a truncation state that never reached the write boundary |
+
+(There is no `false` anywhere now — ruling C 2026-09-21 collapsed the cap store
+to the same shape as the persisted marker: a `true`-or-absent, add-only set.
+Absence, in the store or the document, means "not established" — a whole read or
+no read.)
+
+Derivation, per op:
+
+- Any caller-supplied value **in the op** is stripped first — including on a
+  source with no `image_filename` to join. The truncation of an OCR read is known
+  to `image_transcribe`, not to the agent relaying the text, so an agent-asserted
+  value is a guess and is dropped rather than persisted. On an `update` the
+  stripped key is then absent from the patch, so `applyOne` keeps whatever is
+  already persisted (below).
+- **The join reads the batch's FINAL state per source, not the single op.** Both
+  `image_filename` and `transcription` are folded across the whole batch onto the
+  entry already persisted, in op order, and the marker is set on the last op that
+  writes that source. So it does not matter which op carries which field, an
+  `update` need not re-send a field it is not changing, and a field a later op in
+  the same batch removes is gone before the join runs. Presence decides, not
+  truthiness: an explicit `image_filename: null` or `""` is the caller **removing**
+  the reference, which is the opposite of omitting it, and a source that ends the
+  batch citing no scan is never marked.
+- **A consequence, stated because it is a real behaviour change:** since the fold
+  starts from the persisted entry, ANY update to an image-backed source can now
+  set the marker, including one that touches neither field (say a `notes` edit)
+  when the image was capped after the source was first written. Before the fold
+  such an op derived nothing. This is inside the class ruling C (2026-09-21)
+  accepts — an unneeded badge, never a false "verified whole" — and it cannot
+  move a source from partial to whole, but it is not merely a bug fix.
+- The result is then joined by `image_filename` against the image-store cap set
+  (`sourceImageCapState` — `true` when the image was read past the cap, `false`
+  otherwise; it returns a plain boolean, never `undefined`).
+- The flag is set `true` **only** on a hit that also carries a non-empty
+  `transcription`. That guard is load-bearing: `true` beside empty/null
+  `transcription` is a state `validate_research_schema` rejects, so deriving it
+  would make the tool fail its own write (and, batched, discard every good op with
+  it). Every other case — the image not in the cap set (a whole read or no read),
+  or no text — leaves the key **deleted**.
+- Because the non-`true` cases delete rather than write, an `update` merges to
+  keep the persisted value. Two consequences: an image not in the cap set permits
+  an in-place `transcription` update (nothing is written to change the marker); and
+  a persisted `true` **survives** an in-place refinement of the text. The marker
+  may then **over-report** — complete text under a `true` badge. Ruling C
+  (2026-09-21) accepts that as an unneeded badge, never a false "verified whole",
+  and removed the guard that had rejected the refinement.
+
+**The invariant: nothing moves from "partial" to "whole"** — in memory (the cap
+store is add-only, so a whole re-read records nothing) and in the document (the
+marker is `true`-or-absent, and the derivation only ever writes `true` or deletes
+from the patch, so a persisted `true` is never cleared to whole). This is what
+makes the agent-supplied `image_filename` join key acceptable: a
+wrong-but-resolvable key can only add an unneeded `true` badge, never a false
+"verified whole".
+
+**Retraction does not exist, and a re-read does not create one.** The cap store is
+add-only: a whole re-read of a capped image records nothing, so a truncation is
+permanent in the store, and the persisted `true` is likewise never cleared (the
+derivation cannot retract it, and a restart empties the store a recomputation would
+need). An in-place refinement of the text is *permitted* — it just leaves the
+`true` badge over-reporting. For a **record-backed** source, avoid the stale badge
+by citing the fuller reading as a **new** indexed-record source (`record_read` /
+`record_search`) rather than editing the image source in place. A **FamilySearch
+memory** scan has no indexed record, so a truncated memory transcription just stays
+partial with its marker — there is nothing to pivot to. Nulling a truncated
+source's `transcription` outright still fails loudly (`validate_research_schema`
+rejects `true` beside empty text).
+
+Unlike §3.6, this override **echoes nothing** — the response carries no signal
+that a caller-supplied value was dropped. The persisted-side invariant
+(`transcription_truncated: true` requires a `transcription` with a non-whitespace
+character) is enforced by both `validate_research_schema` (via `.trim()`) and the
+two `research.schema.json` mirrors (an `if`/`then` whose `then` requires
+`transcription` match `\S`).
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic
