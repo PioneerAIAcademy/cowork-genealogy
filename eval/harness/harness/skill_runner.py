@@ -801,6 +801,15 @@ async def run_skill(
         # that. The spec was updated to match.
         setting_sources=["project"],
         mcp_servers={"genealogy": mock_server},
+        # Only the genealogy mock — ignore every other MCP source the CLI would
+        # otherwise load. Without this, a run under subscription auth inherits the
+        # developer's claude.ai account connectors (`mcp__claude_ai_Claude_Docs__*`,
+        # Google_Drive, Slack, …); the model reaches for one, the genealogy mock
+        # can't match it, and the run aborts with `unmatched_tool_call` — a spurious
+        # failure that has nothing to do with the skill (locality-guide ut_003).
+        # `setting_sources=["project"]` does not cover these; account connectors
+        # arrive through the login, not settings.json.
+        strict_mcp_config=True,
         allowed_tools=allowed_tools,
         disallowed_tools=disallowed_tools,
         # bypassPermissions auto-approves all path-level permission checks.
