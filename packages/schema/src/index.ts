@@ -19,10 +19,10 @@
 // entry is a compile error, not silent drift.
 export * from './enums.generated.js'
 import type {
-  ConflictStatus, ConflictType, DateCertainty, EvidenceType, HoldingConfidence,
+  ConflictStatus, ConflictType, DateCertainty, RecordBasis, HoldingConfidence,
   HoldingType, HypothesisStatus, InformantProximity, InformationQuality,
   LogOutcome, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
-  ProjectStatus, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
+  ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
   Subscription, LocalityPageSection,
@@ -176,7 +176,7 @@ export interface Assertion {
   informant: string
   informant_proximity: InformantProximity
   informant_bias_notes?: string | null
-  evidence_type: EvidenceType
+  record_basis: RecordBasis
   log_entry_id?: string | null
   record_persona_id?: string | null
   extracted_for_question_ids: string[]
@@ -261,6 +261,11 @@ export interface ProofClaimRelationship {
 export interface ProofClaim {
   claim: string
   proof_tier: ProofTier
+  // Optional here but required on ProofSummary below: `claims` is itself an
+  // optional object, and a required field inside one is a second thing to get
+  // wrong for no gain. Optionality follows the schema's `required` list, and a
+  // drift test asserts the `?` in both directions.
+  shortfall?: ProofShortfall
   supporting_assertion_ids: string[]
   relationship: ProofClaimRelationship
 }
@@ -270,6 +275,7 @@ export interface ProofSummary {
   question_id: string
   tier: ProofTier
   vehicle: ProofVehicle
+  shortfall: ProofShortfall
   supporting_assertion_ids: string[]
   resolved_conflict_ids: string[]
   exhaustive_search_summary: string

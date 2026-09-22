@@ -239,7 +239,7 @@
       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Candidate household A. Whether this child is the subject is exactly what is in question.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -258,7 +258,7 @@
       "informant": "Unknown — most likely a household member, possibly a neighbor",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Age 5 in 1850 implies birth ~1845, consistent with the subject.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -277,7 +277,7 @@
       "informant": "Inferred from household structure — 1850 census does not state relationships",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Candidate-father A evidence: IF this child is the subject, Thomas is a candidate father. The relationship is inferred, not stated.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -295,7 +295,7 @@
       "informant": "Unknown informant (likely Thomas Flynn himself)",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Head of candidate household A.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -314,7 +314,7 @@
       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Candidate household B. Equally plausible as the subject's childhood record.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -333,7 +333,7 @@
       "informant": "Unknown — most likely a household member, possibly a neighbor",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Age 6 in 1850 implies birth ~1844 — within the margin of census age error for a subject born ~1845.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -352,7 +352,7 @@
       "informant": "Inferred from household structure — 1850 census does not state relationships",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Candidate-father B evidence: IF this child is the subject, Michael is a candidate father. The relationship is inferred, not stated.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -370,7 +370,7 @@
       "informant": "Unknown informant (likely Michael Flynn himself)",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Head of candidate household B.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -388,7 +388,7 @@
       "informant": "Unknown informant in the Donnelly household",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Adult Patrick (age 15), boarding and working as a coal laborer.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -406,7 +406,7 @@
       "informant": "Census enumerator (witness to residence)",
       "informant_proximity": "witness",
       "informant_bias_notes": "Key negative-bridging evidence: in 1860 Patrick lives with no Flynn, so the record cannot tie him back to either 1850 candidate household.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -424,7 +424,7 @@
       "informant": "Attending physician (signature on certificate)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -443,7 +443,7 @@
       "informant": "the researcher",
       "informant_proximity": "researcher",
       "informant_bias_notes": "Negative evidence: the one record that should name the father leaves it blank. The son-in-law did not know Patrick's father's name.",
-      "evidence_type": "negative",
+      "record_basis": "absent",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": ["q_001"]
     }

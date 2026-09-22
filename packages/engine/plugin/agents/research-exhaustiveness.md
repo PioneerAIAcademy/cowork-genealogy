@@ -102,7 +102,7 @@ criteria, run two checks over the assertions tied to this question
 (via `extracted_for_question_ids`):
 
 - **Classification (hard block, all assertions).** Every assertion must have
-  a real, reasoned `information_quality` and `evidence_type` — not a
+  a real, reasoned `information_quality` and `record_basis` — not a
   placeholder. `information_quality: "indeterminate"` is a reasoned value and
   passes this check: it is the correct classification when a record does not
   state how its informant knew, and it is not a missing one. Block only on an

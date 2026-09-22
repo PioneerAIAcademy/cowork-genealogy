@@ -27,7 +27,7 @@ rebuilding it.**
    `sources`, or `tree.gedcomx.json` (:451).
 2. Never modify `proof_summaries` — including `resolved_conflict_ids`. Recommend
    `proof-conclusion` instead (:444).
-3. Do not re-classify assertions inline. Trust `evidence_type`, directness and
+3. Do not re-classify assertions inline. Trust `record_basis`, directness and
    `informant` **as recorded**; if a classification looks wrong, note it, recommend
    `record-extraction`, and proceed with what is on file (:78–83).
 4. Do not invoke `record-extraction` or `check-warnings` from here (:80).

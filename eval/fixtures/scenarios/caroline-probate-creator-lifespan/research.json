@@ -94,7 +94,7 @@
       "informant": "unknown",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -113,7 +113,7 @@
       "informant": "county clerk / officiant",
       "informant_proximity": "official_duty",
       "informant_bias_notes": "No parents' names given on this marriage record — a common gap for this era/jurisdiction.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }
