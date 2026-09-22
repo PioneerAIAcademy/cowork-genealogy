@@ -1,29 +1,44 @@
-"""Join each `image_transcribe` call to the assertions extracted from it.
+"""Join each `image_transcribe` transcription to the assertions extracted from it.
 
 Issue #2561's audit axis. The transcription-to-assertion join is what answers
 "did the model read the record right": a transcription linked to the assertions
 the extractor derived from it, so a reviewer can see what was read and what was
-concluded side by side. The join itself already worked (482/482 measured
-2026-09-15); what was broken was the transcription being truncated at 500 chars
-in the committed run log, making the joined data useless.
+concluded side by side. What was broken was the transcription being truncated at
+500 chars in the committed run log, making the joined data useless.
 
 No live run, no model, no API spend — same posture as `image_transcribe_report.py`
 and the other corpus readers. Reads committed run JSONs only.
 
-## The join
+## The join (issue #2561's decided reproduce script)
 
-Walk `tool_calls[]` in order. An `image_transcribe` call becomes the "current
-transcription". Every subsequent `extraction_append` call is joined to it, until
-the next `image_transcribe` (which starts a new group) or the end of the list.
-An `extraction_append` before any `image_transcribe` is unjoined (possible if
-the extractor writes assertions from a record it read via `record_read` rather
-than from a transcription).
+The link is a chain, NOT positional adjacency in `tool_calls[]`. `image_transcribe`
+and `extraction_append` are granted to different agents (`image-reader` vs
+`record-extractor`), so no thread calls both and their order in `tool_calls[]`
+carries no relationship. The real chain is:
+
+    assertions[].log_entry_id
+      -> log[].id            (where log[].tool is a transcribe entry and
+                              log[].query carries `imageArk` or `imageIds`)
+      -> tool_calls[].args.ark | tool_calls[].args.imageId
+
+The `assertions[]` and `log[]` live in the `run-<ts>.final-research.json` sibling,
+which the 14-day capture strip never touches, so the join still works on stripped
+runs (only the transcription's *completeness* is then unknown).
+
+We match the image key by EXACT string, not the card's `norm()` regex: `args.ark`
+is byte-equal to `log[].query.imageArk`, while `norm()`'s two patterns silently
+drop every call whose ark/imageId matches neither (e.g. `ark:/61903/1:2:...`,
+`004514824_001_00001`). Exact match never joins fewer assertions than `norm()`
+over the committed corpus. Do not reintroduce `norm()` to "match the card".
 
 ## The denominator
 
-The report prints the denominator and labels it a floor, not a rate: a stripped
-run's transcriptions are invisible, and a v4 log's are truncated, so the corpus
-this can answer for is smaller than the corpus that exists.
+We count real persisted `assertions[]` chained to a transcription, NOT
+`extraction_append` calls (one call carries many assertion ops, and an errored
+call persists none). The report prints the denominator and labels it a floor, not
+a rate: a stripped run's transcriptions have unknown completeness and a pre-v5
+log's are truncated, so the corpus this can answer completely for is smaller than
+the corpus that exists.
 """
 
 from __future__ import annotations
@@ -31,7 +46,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from e2e.runlog_selection import all_result_jsons, result_jsons_for
@@ -43,59 +58,24 @@ from harness.since_window import (
 )
 
 TRANSCRIBE_SUFFIX = "image_transcribe"
-EXTRACTION_SUFFIX = "extraction_append"
-
-
-@dataclass
-class TranscriptionGroup:
-    """One `image_transcribe` call and the `extraction_append` calls that follow it."""
-
-    run: str
-    transcribe_index: int
-    transcription_chars: int
-    is_complete: bool  # not truncated by the harness
-    is_error: bool
-    assertion_count: int = 0
 
 
 @dataclass
 class ScanResult:
-    groups: list[TranscriptionGroup] = field(default_factory=list)
-    unjoined_extractions: int = 0  # extraction_append before any image_transcribe
-    unreadable: int = 0
+    total_captures: int = 0  # image_transcribe calls across all runs
+    complete: int = 0  # measurable, non-error, non-truncated
+    truncated: int = 0  # measurable, harness-truncated
+    error: int = 0  # measurable, is_error
+    no_summary: int = 0  # measurable, empty response_summary (pre-#1182)
+    stripped_captures: int = 0  # captures in stripped runs (completeness unknown)
     stripped_runs: int = 0
-    stripped_transcriptions: int = 0
+    joined_assertions: int = 0  # assertions chained to a transcription
+    complete_joined_assertions: int = 0  # ...to a COMPLETE transcription
+    unreadable: int = 0
 
     @property
-    def total_transcriptions(self) -> int:
-        return len(self.groups)
-
-    @property
-    def complete_transcriptions(self) -> int:
-        return sum(1 for g in self.groups if g.is_complete and not g.is_error)
-
-    @property
-    def error_transcriptions(self) -> int:
-        return sum(1 for g in self.groups if g.is_error)
-
-    @property
-    def truncated_transcriptions(self) -> int:
-        return sum(
-            1 for g in self.groups if not g.is_complete and not g.is_error
-        )
-
-    @property
-    def joined_assertions(self) -> int:
-        return sum(g.assertion_count for g in self.groups)
-
-    @property
-    def complete_joined_assertions(self) -> int:
-        """Assertions joined to a complete (untruncated, non-error) transcription."""
-        return sum(
-            g.assertion_count
-            for g in self.groups
-            if g.is_complete and not g.is_error
-        )
+    def measurable_captures(self) -> int:
+        return self.complete + self.truncated + self.error + self.no_summary
 
 
 def _is_truncated_summary(summary: str) -> bool:
@@ -105,85 +85,114 @@ def _is_truncated_summary(summary: str) -> bool:
     "[truncated by harness for prompt size; full length N chars]", and the
     backstop cap leaves "..." at the end after slicing at _RUNLOG_MAX_CHARS.
     A verbatim passthrough (under _RUNLOG_VERBATIM_MAX) has neither.
+
+    The `>= 500` bound is deliberate: the pre-v2 head cut and the "never
+    shorter" floor both emit exactly `497 + "..." == 500` chars with no marker,
+    and every such capture in the corpus is genuinely truncated (none parses as
+    a complete JSON document). A `> 500` bound files those 34 as complete.
     """
-    return (
-        "[truncated by harness" in summary
-        or (summary.endswith("...") and len(summary) > 500)
+    return "[truncated by harness" in summary or (
+        summary.endswith("...") and len(summary) >= 500
     )
 
 
+def _summary_text(rs: object) -> str:
+    if isinstance(rs, str):
+        return rs
+    if rs is None:
+        return ""
+    return json.dumps(rs)
+
+
+def _flat_str_values(node: object) -> set[str]:
+    """Every string leaf under a `log[].query` value (imageArk scalar or
+    imageIds list), so both call shapes surface their image key."""
+    out: set[str] = set()
+    if isinstance(node, str):
+        out.add(node)
+    elif isinstance(node, list):
+        for v in node:
+            out |= _flat_str_values(v)
+    elif isinstance(node, dict):
+        for v in node.values():
+            out |= _flat_str_values(v)
+    return out
+
+
+def _final_research_path(run_path: Path) -> Path:
+    return run_path.with_name(run_path.stem + ".final-research.json")
+
+
+def _scan_one(run_path: Path, result: ScanResult) -> None:
+    doc = json.loads(run_path.read_text(encoding="utf-8"))
+    if not isinstance(doc, dict):
+        raise ValueError("run log is not a JSON object")
+    tool_calls = doc.get("tool_calls") or []
+    if not isinstance(tool_calls, list):
+        raise ValueError("tool_calls is not a list")
+    stripped = bool(doc.get("captures_stripped"))
+
+    # Capture-side: classify each image_transcribe call and collect its image key.
+    tc_keys: set[str] = set()  # every key seen in this run's transcribe calls
+    complete_keys: set[str] = set()  # keys whose call is a COMPLETE transcription
+    run_has_transcribe = False
+    for tc in tool_calls:
+        if not (isinstance(tc, dict) and str(tc.get("tool") or "").endswith(TRANSCRIBE_SUFFIX)):
+            continue
+        run_has_transcribe = True
+        result.total_captures += 1
+        args = tc.get("args") or {}
+        key = args.get("ark") or args.get("imageId") if isinstance(args, dict) else None
+        if key:
+            tc_keys.add(key)
+
+        if stripped:
+            result.stripped_captures += 1
+            continue  # completeness unknown; the join below still runs
+        if bool(tc.get("is_error")):
+            result.error += 1
+            continue
+        text = _summary_text(tc.get("response_summary"))
+        if not text:
+            result.no_summary += 1
+        elif _is_truncated_summary(text):
+            result.truncated += 1
+        else:
+            result.complete += 1
+            if key:
+                complete_keys.add(key)
+
+    if stripped and run_has_transcribe:
+        result.stripped_runs += 1
+
+    # Join-side: assertions chained to a transcribe log entry whose image key
+    # matches one of this run's transcribe calls. Reads the final-research sibling.
+    fr = _final_research_path(run_path)
+    if not tc_keys or not fr.exists():
+        return
+    research = json.loads(fr.read_text(encoding="utf-8"))
+    if not isinstance(research, dict):
+        return
+    logkeys: dict[str, set[str]] = {}
+    for entry in research.get("log") or []:
+        if isinstance(entry, dict) and "transcribe" in str(entry.get("tool") or ""):
+            logkeys[entry.get("id")] = _flat_str_values(entry.get("query"))
+    for assertion in research.get("assertions") or []:
+        if not isinstance(assertion, dict):
+            continue
+        keys = logkeys.get(assertion.get("log_entry_id"))
+        if keys and (keys & tc_keys):
+            result.joined_assertions += 1
+            if keys & complete_keys:
+                result.complete_joined_assertions += 1
+
+
 def scan(paths: list[Path]) -> ScanResult:
-    """Walk every run log and build transcription-to-assertion groups."""
+    """Walk every run log and chain-join transcriptions to their assertions."""
     result = ScanResult()
     for p in paths:
-        run = f"{p.parent.name}/{p.stem}"
         try:
-            doc = json.loads(p.read_text(encoding="utf-8"))
-            if not isinstance(doc, dict):
-                raise ValueError("run log is not a JSON object")
-
-            stripped = bool(doc.get("captures_stripped"))
-            tool_calls = doc.get("tool_calls") or []
-            if not isinstance(tool_calls, list):
-                raise ValueError("tool_calls is not a list")
-
-            if stripped:
-                # Count stripped transcriptions but don't try to classify them.
-                for tc in tool_calls:
-                    if isinstance(tc, dict) and str(
-                        tc.get("tool") or ""
-                    ).endswith(TRANSCRIBE_SUFFIX):
-                        result.stripped_transcriptions += 1
-                if any(
-                    isinstance(tc, dict)
-                    and str(tc.get("tool") or "").endswith(TRANSCRIBE_SUFFIX)
-                    for tc in tool_calls
-                ):
-                    result.stripped_runs += 1
-                continue
-
-            current_group: TranscriptionGroup | None = None
-            for i, tc in enumerate(tool_calls):
-                if not isinstance(tc, dict):
-                    continue
-                tool = str(tc.get("tool") or "")
-
-                if tool.endswith(TRANSCRIBE_SUFFIX):
-                    # Commit previous group, start a new one.
-                    if current_group is not None:
-                        result.groups.append(current_group)
-
-                    rs = tc.get("response_summary")
-                    rs_str = (
-                        rs
-                        if isinstance(rs, str)
-                        else json.dumps(rs) if rs is not None else ""
-                    )
-                    is_error = bool(tc.get("is_error"))
-                    is_complete = (
-                        not is_error
-                        and bool(rs_str)
-                        and not _is_truncated_summary(rs_str)
-                    )
-
-                    current_group = TranscriptionGroup(
-                        run=run,
-                        transcribe_index=i,
-                        transcription_chars=len(rs_str),
-                        is_complete=is_complete,
-                        is_error=is_error,
-                    )
-
-                elif tool.endswith(EXTRACTION_SUFFIX):
-                    if current_group is not None:
-                        current_group.assertion_count += 1
-                    else:
-                        result.unjoined_extractions += 1
-
-            # Commit last group.
-            if current_group is not None:
-                result.groups.append(current_group)
-
+            _scan_one(p, result)
         except (
             OSError,
             UnicodeDecodeError,
@@ -194,73 +203,69 @@ def scan(paths: list[Path]) -> ScanResult:
         ):
             result.unreadable += 1
             continue
-
     return result
 
 
 def format_report(result: ScanResult) -> str:
     out: list[str] = []
-    total = result.total_transcriptions
-    total_with_stripped = total + result.stripped_transcriptions
+    total = result.total_captures
+    measurable = result.measurable_captures
 
     out.append(
         "Transcription-to-assertion join over committed e2e runs (issue #2561)"
     )
     out.append("")
-    out.append(f"  image_transcribe calls found: {total_with_stripped}")
-    if result.stripped_transcriptions:
+    out.append(f"  image_transcribe calls found: {total}")
+    if result.stripped_captures:
         out.append(
-            f"  captures STRIPPED (>14d):     {result.stripped_transcriptions} "
-            f"in {result.stripped_runs} run(s) — excluded below"
+            f"  captures STRIPPED (>14d):     {result.stripped_captures} "
+            f"in {result.stripped_runs} run(s) — completeness unknown, still joined below"
         )
-    out.append(f"  measurable:                   {total}")
+    out.append(f"  measurable for completeness:  {measurable}")
     if result.unreadable:
         out.append(f"  UNREADABLE run logs:          {result.unreadable}")
     out.append("")
 
     if total == 0:
         out.append(
-            "  NO MEASURABLE CALLS. Every capture in range has been stripped "
-            "or is unreadable."
+            "  NO image_transcribe CALLS in range."
         )
         return "\n".join(out)
 
-    complete = result.complete_transcriptions
-    errors = result.error_transcriptions
-    truncated = result.truncated_transcriptions
-    out.append(f"  complete transcriptions:      {complete} of {total}")
-    out.append(f"  error payloads:               {errors}")
-    out.append(f"  truncated by harness:         {truncated}")
+    out.append(f"  complete transcriptions:      {result.complete} of {measurable}")
+    out.append(f"  truncated by harness:         {result.truncated}")
+    out.append(f"  error payloads:               {result.error}")
+    if result.no_summary:
+        out.append(f"  no response_summary:          {result.no_summary}")
     out.append("")
 
-    joined = result.joined_assertions
-    complete_joined = result.complete_joined_assertions
-    out.append(f"  assertions joined to a transcription:           {joined}")
     out.append(
-        f"  assertions joined to a COMPLETE transcription:  {complete_joined}"
+        f"  assertions joined to a transcription:           {result.joined_assertions}"
     )
-    if result.unjoined_extractions:
-        out.append(
-            f"  extraction_append before any image_transcribe:  "
-            f"{result.unjoined_extractions}"
-        )
+    out.append(
+        f"  assertions joined to a COMPLETE transcription:  {result.complete_joined_assertions}"
+    )
     out.append("")
 
     # The denominator statement the acceptance criteria require.
     out.append("Denominator (floor, not a rate):")
     out.append(
-        f"  {complete} complete transcriptions of {total} captures, "
-        f"{complete_joined} joined assertions."
+        f"  {result.complete} complete transcriptions of {measurable} measurable "
+        f"captures, {result.joined_assertions} joined assertions."
     )
-    if result.stripped_transcriptions:
-        out.append(
-            f"  {result.stripped_transcriptions} further captures stripped — "
-            "their completeness is unknown, so this is a floor."
+    floors = []
+    if result.stripped_captures:
+        floors.append(
+            f"{result.stripped_captures} captures are in stripped runs "
+            "(completeness unknown)"
         )
-    elif truncated:
+    if result.truncated:
+        floors.append(
+            f"{result.truncated} were truncated by the harness (pre-v5)"
+        )
+    if floors:
         out.append(
-            f"  {truncated} captures truncated by the harness (pre-v5 run logs) "
-            "— their full text is lost, so this is a floor."
+            f"  {' and '.join(floors)}, so complete-joined is a floor, not a rate."
         )
     else:
         out.append("  No captures stripped or truncated — this is exact.")
@@ -272,8 +277,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="transcription-join-report",
         description=(
-            "Join image_transcribe calls to extraction_append assertions "
-            "over committed e2e run logs (issue #2561)."
+            "Chain-join image_transcribe transcriptions to the assertions "
+            "extracted from them over committed e2e run logs (issue #2561)."
         ),
     )
     parser.add_argument("--test", default=None, help="Only this fixture slug.")
@@ -294,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
     result = scan(paths)
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_report(result))
-    return 1 if result.total_transcriptions == 0 else 0
+    return 1 if result.total_captures == 0 else 0
 
 
 if __name__ == "__main__":  # pragma: no cover

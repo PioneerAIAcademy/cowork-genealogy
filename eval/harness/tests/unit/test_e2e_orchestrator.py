@@ -580,8 +580,8 @@ def test_exempt_transcription_survives_past_backstop():
     (_RUNLOG_STRING_MAX, 500) and the backstop (_RUNLOG_MAX_CHARS, 4000).
 
     This is the arm that fails today without the exemption: a >4000-char value
-    is silently head-cut with a bare "...", looking complete. 12 of the 121
-    truncated transcriptions in the Aug/Sep corpus exceed 4,000 chars.
+    is silently head-cut with a bare "...", looking complete. The longest
+    transcriptions in the corpus run past the 4,000-char backstop.
     """
     transcription_text = "Á" * 6_000
     content = [{"type": "text", "text": json.dumps({
@@ -639,6 +639,39 @@ def test_short_transcription_passes_through_verbatim():
     # Under the verbatim threshold the raw serialization is returned as-is,
     # regardless of exemptions — this is the early exit.
     assert out == raw
+
+
+def test_exempt_key_and_large_non_exempt_sibling_together():
+    """The combination the shipped backstop-bypass comment warns about, which
+    neither neighbour covers: an exempt `transcription` makes `saved` non-empty
+    so the whole-response backstop (`if not saved …`) is skipped, WHILE a large
+    NON-exempt sibling in the same response is still per-string capped at 500.
+
+    `test_exempt_transcription_survives_past_backstop` has the exempt key but no
+    large sibling; `test_non_exempt_key_still_bounded` has the sibling but no
+    exempt key (so `saved` is empty and the bypass never fires). This exercises
+    the `if not saved` branch with both present.
+    """
+    transcription_text = "Á" * 6_000
+    content = [{"type": "text", "text": json.dumps({
+        "transcription": transcription_text,
+        "bigSibling": "x" * 6_000,
+        "imageId": "test_image_004",
+    })}]
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # The bypass fired: output exceeds the backstop rather than being cut to it.
+    assert len(out) > _RUNLOG_MAX_CHARS
+    parsed = json.loads(out)
+    doc = parsed[0]
+    # Exempt key preserved whole.
+    assert doc["transcription"] == transcription_text
+    # Non-exempt sibling still per-string capped with its marker — the bypass
+    # widens the backstop, it does not disable the per-string cap.
+    assert "[truncated by harness" in out
+    assert "full length 6000 chars" in out
+    assert out.count("x") <= 600
 
 
 # --- timeline tool labeling ---------------------------------------------------
