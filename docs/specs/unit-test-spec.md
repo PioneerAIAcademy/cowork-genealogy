@@ -668,7 +668,7 @@ single green one is not yet a proof.
 
 Two consequences worth inheriting rather than rediscovering:
 
-- **`xfail_reason` is snapshot-tracked** (only `name`, `description` and `tags`
+- **`xfail_reason` is snapshot-tracked** (only `name` and `description`
   are stripped), so a measured rate written into it is falsified by the very run
   log that ships beside it, and correcting it buys a fresh full-skill run. Cite a
   dated scratch measurement that later runs cannot move, say plainly that the

@@ -48,9 +48,61 @@ def test_normalize_json_strips_cosmetic_test_fields():
     # Cosmetic stripped; grading-relevant kept.
     assert "name" not in parsed["test"]
     assert "description" not in parsed["test"]
-    assert "tags" not in parsed["test"]
+    # tags is NOT cosmetic — it selects validators (issue #2694).
+    assert parsed["test"]["tags"] == ["foo"]
     assert parsed["test"]["id"] == "ut_001"
     assert parsed["test"]["skill"] == "search-familysearch-wiki"
+
+
+def test_tag_edit_changes_normalized_output():
+    """A tag edit is substantive — it selects validators (issue #2694)."""
+    base = {
+        "test": {"id": "ut_001", "skill": "s", "name": "n",
+                 "description": "d", "tags": ["grade:trigger"], "type": "positive"},
+        "input": {"user_message": "m"},
+    }
+    path = "eval/tests/unit/s/ut_001.json"
+    out_a = normalize(path, json.dumps(base).encode())
+
+    edited = {**base, "test": {**base["test"], "tags": ["1850-census"]}}
+    out_b = normalize(path, json.dumps(edited).encode())
+
+    assert out_a != out_b, "tag edit must change normalized output"
+
+
+def test_name_description_edit_does_not_change_normalized_output():
+    """Name and description edits remain cosmetic — no hash change."""
+    base = {
+        "test": {"id": "ut_001", "skill": "s", "name": "original",
+                 "description": "original desc", "tags": ["a"], "type": "positive"},
+        "input": {"user_message": "m"},
+    }
+    path = "eval/tests/unit/s/ut_001.json"
+    out_a = normalize(path, json.dumps(base).encode())
+
+    edited = {**base, "test": {**base["test"], "name": "RENAMED", "description": "NEW desc"}}
+    out_b = normalize(path, json.dumps(edited).encode())
+
+    assert out_a == out_b, "name/description edit must NOT change normalized output"
+
+
+def test_shared_digest_vector():
+    """Both Python and TypeScript must produce this exact hash for the same input.
+
+    The TypeScript twin of this vector is in snapshot.test.ts —
+    test_shared_digest_vector / 'produces the shared digest vector'.
+    """
+    raw = json.dumps({
+        "test": {"id": "ut_001", "skill": "s", "name": "ignored",
+                 "description": "also ignored", "tags": ["grade:trigger"],
+                 "type": "positive"},
+        "input": {"user_message": "hello"},
+    }).encode()
+    normalized = normalize("eval/tests/unit/s/ut_001.json", raw)
+    digest = hash_content(normalized)
+    # Pinned: the TS twin asserts the same digest for the same input JSON.
+    # If this value changes, update snapshot.test.ts too.
+    assert digest == "a96c04ecadb2576600c24d749c867052596e518f780685017a6b1b4193178150"
 
 
 def test_normalize_json_outside_tests_keeps_all_fields():

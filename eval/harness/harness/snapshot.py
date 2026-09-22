@@ -45,7 +45,9 @@ _AGENT_REF_RE = re.compile(r"@plugin:([a-z0-9-]+)")
 # `HASH_RE` in eval/app/lib/snapshot.ts.
 _HASH_RE = re.compile(r"^[a-f0-9]{64}$")
 
-_COSMETIC_TEST_FIELDS = ("name", "description", "tags")
+# tags is deliberately NOT cosmetic: it selects validators and changes
+# outcome computation. See issue #2694.
+_COSMETIC_TEST_FIELDS = ("name", "description")
 _JSON_EXTS = {".json"}
 _TEXT_EXTS = {
     ".md",
@@ -70,7 +72,7 @@ def normalize(repo_relative_path: str, content: bytes) -> str:
     Rules:
       - `.json`: parse and re-emit with `sort_keys=True, indent=2`, trailing
         newline. Test JSONs (under `eval/tests/unit/`) also strip the
-        cosmetic top-level `test.{name,description,tags}` fields so typo
+        cosmetic top-level `test.{name,description}` fields so typo
         fixes there don't invalidate the active-state check.
       - Text-ish extensions: CRLF -> LF, ensure trailing newline.
       - Other extensions: best-effort UTF-8 decode; falls back to hex.

@@ -32,7 +32,9 @@ const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
 // `_HASH_RE` in eval/harness/harness/snapshot.py.
 const HASH_RE = /^[a-f0-9]{64}$/;
 
-const COSMETIC_TEST_FIELDS = ['name', 'description', 'tags'] as const;
+// tags is deliberately NOT cosmetic: it selects validators and changes
+// outcome computation. See issue #2694.
+const COSMETIC_TEST_FIELDS = ['name', 'description'] as const;
 const JSON_EXTS = new Set(['.json']);
 const TEXT_EXTS = new Set([
   '.md',
