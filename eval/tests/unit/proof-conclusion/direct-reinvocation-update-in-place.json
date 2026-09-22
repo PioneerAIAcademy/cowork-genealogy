@@ -11,7 +11,9 @@
       "reinvocation-dedup",
       "no-new-proof-expected",
       "direct-arm"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The direct arm narrates a refinement it never persists. Routed (`ut_proof_conclusion_012`) the agent issues the `op: \"update\"` on ps_001; under a delegation that invites a read-out rather than a rewrite it describes changes and writes nothing, which `judge_context[3]` charges. Measured 2026-09-22: 0 of 4 scratch runs persisted, including 2 runs with an explicit 'the reply describes only what you persisted' rule in the agent body — that rule was reverted for having no measurable effect. Prose was tried and measured; do not simply reword it. REMOVE THIS when the refinement is persisted on three consecutive runs, or when a mechanism outside the prompt enforces it."
   },
   "input": {
     "delegation": "Give me a refined read of the parentage conclusion for q_001 — walk me through what you'd change in the narrative. No need to rewrite the stored entry unless something is actually wrong.\n\nquestionId: q_001\nprojectPath: <workspace>",
