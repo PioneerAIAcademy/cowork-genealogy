@@ -922,7 +922,7 @@ def test_matched_persona_is_materialized_onto_its_person(
 
 
 def test_check_warnings_runs_after_a_write(
-    before_state, after_state, skills_invoked, tool_calls, test
+    before_state, after_state, skills_invoked, tool_calls, test, builtin_tool_calls=None
 ):
     """SKILL.md §8: "After creating links and any stub persons, invoke
     `check-warnings` on the affected persons to catch genealogical
@@ -1016,7 +1016,9 @@ def test_check_warnings_runs_after_a_write(
         str(c.get("tool") or "").split("__")[-1] == "person_warnings"
         for c in (tool_calls or [])
     )
-    invoked_skill = "check-warnings" in (skills_invoked or [])
+    from harness.skill_runner import handoffs
+
+    invoked_skill = "check-warnings" in handoffs(skills_invoked, builtin_tool_calls)
     assert called_tool or invoked_skill, (
         f"wrote to the project ({'; '.join(what)}) but ran no impossibility "
         f"check — §8 requires one after creating links and any stub persons, to "
