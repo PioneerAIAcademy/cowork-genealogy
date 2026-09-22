@@ -222,4 +222,31 @@ describe("project_context", () => {
       expect(none.buildId).toBe(expected);
     });
   });
+
+  // #2108 / #2031: proves the field reaches the payload, not just the helper.
+  it("questionStatuses carries storedStatus, including where it disagrees with state", async () => {
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        questions: [
+          { id: "q_001", question: "Has a summary but is still in progress", status: "in_progress" },
+          { id: "q_002", question: "No status key at all" },
+        ],
+        proof_summaries: [{ id: "ps_001", question_id: "q_001" }],
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    const q1 = r.questionStatuses.find((q) => q.id === "q_001");
+    // Derived from the proof summary, while the question still says otherwise.
+    expect(q1?.state).toBe("concluded");
+    expect(q1?.storedStatus).toBe("in_progress");
+
+    const q2 = r.questionStatuses.find((q) => q.id === "q_002");
+    expect(q2?.storedStatus).toBeNull();
+  });
 });
