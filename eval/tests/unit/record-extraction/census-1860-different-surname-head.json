@@ -25,7 +25,7 @@
   },
   "judge_context": [
     "Should produce atomic assertions — separate `a_` entries per person for name, age/birth year, and birthplace; occupation assertions only for Silas (laborer) and Thomas (miner), never for Mary or Patrick, whose occupation columns are not stated.",
-    "The 1860 census has no relationship column. NO relationship assertions — this census has no relationship column (that begins in 1880), so the record establishes only that these people shared a dwelling. Extract every person's stated facts and their residence, and write NO parent-child or spousal assertion in any form, including `indirect` / `_inferred` ones. Omitting them is CORRECT and is NOT a Completeness gap; emitting them is the error this test guards against. Noting the apparent family in the summary is good practice — that hypothesis belongs to downstream correlation, not to extraction (decided 2026-08-15, #1626)",
+    "The 1860 census has no relationship column. NO relationship assertions — this census has no relationship column (that begins in 1880), so the record establishes only that these people shared a dwelling. Extract every person's stated facts and their residence, and write NO parent-child or spousal assertion in any form, including `inferred` / `_inferred` ones. Omitting them is CORRECT and is NOT a Completeness gap; emitting them is the error this test guards against. Noting the apparent family in the summary is good practice — that hypothesis belongs to downstream correlation, not to extraction (decided 2026-08-15, #1626)",
     "Must treat the differently-surnamed head as a FAN lead: note that Silas Kerrigan (b. ~1798) heading a household that contains the Flynn family could be kin of some kind — the ~24-year age gap to Mary Flynn (b. ~1822) makes a parent-child relationship plausible and 'Kerrigan' a candidate maiden name worth investigating, though the record alone can't confirm the specific relationship. This possibility should be surfaced in the presentation as a lead for hypothesis-tracking, not asserted as fact.",
     "Must NOT silently dismiss the arrangement as a boardinghouse or unrelated lodging. Acknowledging the boardinghouse possibility alongside the kinship lead is good practice (the record alone cannot distinguish them); assuming it without noting the kin possibility is the failure this test guards against.",
     "The kinship possibility is a hypothesis lead, not record content — the skill should NOT fabricate a relationship assertion (e.g., Silas as Mary's father) from this record; assertions record only what the census states.",
@@ -36,26 +36,26 @@
     {
       "record_role": "head_of_household",
       "fact_type": "age",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "occupation",
       "value": "laborer",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "optional": true
     },
     {
@@ -63,7 +63,7 @@
       "fact_type": "birth",
       "attribute": "place",
       "value": "Pennsylvania",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "optional": true
     }
   ]

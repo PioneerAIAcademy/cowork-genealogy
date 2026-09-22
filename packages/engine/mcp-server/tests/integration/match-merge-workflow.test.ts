@@ -153,7 +153,7 @@ const censusAssertion = (id: string, role: string) => ({
   information_quality: "primary",
   informant: "unknown",
   informant_proximity: "official_duty",
-  evidence_type: "direct",
+  record_basis: "stated",
   extracted_for_question_ids: [] as string[],
 });
 
