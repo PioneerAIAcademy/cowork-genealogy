@@ -444,7 +444,7 @@ plan that was too narrow to begin with.
 
 0. **Binary precondition check (run first).**
    (a) **Classification —** for every assertion linked to this question,
-   confirm `information_quality` and `evidence_type` are populated with
+   confirm `information_quality` and `record_basis` are populated with
    reasoned values, not left at record-extraction's best-effort default.
    (b) **Identity —** confirm each person the conclusion depends on (the
    subject and any candidate parent/relative) is identified by at least one

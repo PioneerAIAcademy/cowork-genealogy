@@ -267,7 +267,7 @@ def scan(paths: list[Path]) -> UsageScan:
                     continue
                 toolcall_attr = True
                 file_used.setdefault(agent, set()).add(name)
-        except (OSError, json.JSONDecodeError, TypeError, AttributeError) as e:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, TypeError, AttributeError) as e:
             problems.append(f"{path}: {e}")
             continue
 

@@ -243,7 +243,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
             information_quality: "primary",
             informant: "self",
             informant_proximity: "self",
-            evidence_type: "direct",
+            record_basis: "stated",
             extracted_for_question_ids: [],
           },
         },

@@ -250,7 +250,7 @@ def scan(paths: list[Path]) -> list[Nudge]:
         run = f"{p.parent.name}/{p.stem}"
         try:
             doc = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             continue
         from_narration = nudges_from_narration(doc, run)
         if from_narration:
@@ -273,7 +273,7 @@ def tool_call_total(paths: list[Path], attributed_runs: set[str] | None = None) 
     for p in paths:
         try:
             doc = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             continue
         if attributed_runs is not None:
             recorded = (doc.get("usage") or {}).get("continue_nudges") or 0
@@ -301,7 +301,7 @@ def counter_totals(paths: list[Path]) -> tuple[int, int]:
     for p in paths:
         try:
             doc = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             continue
         n = (doc.get("usage") or {}).get("continue_nudges") or 0
         if n:

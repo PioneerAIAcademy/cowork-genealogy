@@ -148,7 +148,7 @@
       "informant": "the bride (Mattie Landham) or officiant",
       "informant_proximity": "self",
       "informant_bias_notes": "'Mattie' is a known nickname for Martha. 'Landham' is a widow's styling from a prior marriage that has not itself been found or dated.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -170,7 +170,7 @@
       "informant": "county clerk / officiant",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -192,7 +192,7 @@
       "informant": "the bride (M J Wood) or officiant",
       "informant_proximity": "self",
       "informant_bias_notes": "Bride surname on a marriage record is the birth surname only if this was her first marriage — not yet established for a woman later known under at least two further married surnames (Neal, Hamby).",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -214,7 +214,7 @@
       "informant": "county clerk / officiant",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     }
