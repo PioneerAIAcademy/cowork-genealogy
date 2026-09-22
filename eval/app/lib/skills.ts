@@ -202,8 +202,18 @@ async function readSkillMd(skillName: string): Promise<{ frontmatter: SkillFront
   for (const filePath of candidates) {
     try {
       return parseFrontmatter(await fs.readFile(filePath, 'utf8'));
-    } catch {
-      continue;
+    } catch (err) {
+      // Absent is the supported answer, and the only one: an agent-keyed suite
+      // has no SKILL.md, and an ordinary skill has no same-named agent file.
+      // ENOTDIR is the same answer reached differently — a path component that
+      // exists but is not a directory. Anything else (EACCES, EISDIR, EMFILE)
+      // is a broken checkout rather than absent content, and still throws,
+      // matching `readRubricFor` below. Swallowing those would report a skill
+      // as description-less and tool-less — which reads in the picker exactly
+      // like a skill that declares nothing.
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT' || code === 'ENOTDIR') continue;
+      throw err;
     }
   }
   return null;

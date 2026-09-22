@@ -323,3 +323,41 @@ describe('skills — a tests/unit directory that is not a suite is not listed', 
     expect((await listSkills()).map((s) => s.name)).toContain('brand-new-suite');
   });
 });
+
+describe('skills — readSkillMd distinguishes absent from unreadable', () => {
+  let handle: FixtureTreeHandle;
+
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      skills: [{ name: 'locality-guide', skillMd: SKILL_MD_LOCALITY, rubricMd: RUBRIC_LOCALITY }],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('a skill with no SKILL.md at all is listed, not an error', async () => {
+    // Absent is the supported opt-out — the same contract `readRubricFor` has
+    // for a missing rubric.md.
+    const bare = path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', 'no-skill-md');
+    await fs.mkdir(bare, { recursive: true });
+
+    const found = (await listSkills()).find((s) => s.name === 'no-skill-md');
+    expect(found).toBeDefined();
+    expect(found!.description).toBeNull();
+  });
+
+  it('an unreadable SKILL.md throws rather than reading as a skill declaring nothing', async () => {
+    // A directory where the file should be yields EISDIR. Swallowing it would
+    // surface the skill with a null description and an empty tool list —
+    // indistinguishable in the picker from a skill that genuinely declares
+    // nothing, which is the failure this guard exists to prevent.
+    const broken = path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', 'broken-skill');
+    await fs.mkdir(path.join(broken, 'SKILL.md'), { recursive: true });
+
+    await expect(listSkills()).rejects.toThrow();
+  });
+});
