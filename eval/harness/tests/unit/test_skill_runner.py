@@ -1,5 +1,7 @@
 """Smoke tests for harness.skill_runner. The real-API integration is in e2e."""
 
+import pytest
+
 from harness import skill_runner
 
 
@@ -476,7 +478,7 @@ def _ownership_payload(section):
     }
 
 
-def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None):
+def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None, **run_kwargs):
     """Run run_skill with the given PreToolUse inputs; return (result, returns)."""
     import asyncio
 
@@ -515,7 +517,35 @@ def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None):
     )
     if max_tool_calls is not None:
         kwargs["max_tool_calls"] = max_tool_calls
+    kwargs.update(run_kwargs)
     return asyncio.run(sr.run_skill(**kwargs)), returns
+
+
+def _spawn_input(name, **extra):
+    return {"tool_name": "Agent", "tool_input": {"subagent_type": name, "prompt": "p"}, **extra}
+
+
+def test_the_hook_denies_a_spawn_of_a_stubbed_agent(tmp_path, monkeypatch):
+    """The wiring, not just `spawn_stub_denial`: `run_skill` must hand
+    `stub_agents` to its real hook closure (issue #2825)."""
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input("locality-guide")],
+        stub_agents={"locality-guide": None},
+    )
+    assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "continue_" not in returns[0]
+
+
+@pytest.mark.parametrize(
+    "hook_input",
+    [_spawn_input("research-plan"), _spawn_input("locality-guide", agent_id="a1")],
+    ids=["unstubbed_agent", "nested_spawn"],
+)
+def test_the_hook_leaves_other_spawns_alone(tmp_path, monkeypatch, hook_input):
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [hook_input], stub_agents={"locality-guide": None},
+    )
+    assert "hookSpecificOutput" not in (returns[0] or {})
 
 
 def test_an_out_of_lane_append_is_denied_and_recorded(tmp_path, monkeypatch):
