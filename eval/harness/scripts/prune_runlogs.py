@@ -230,7 +230,7 @@ def cmd_rehash_tags(root: Path, *, repo_root: Path, dry_run: bool) -> int:
             if not (key.startswith("eval/tests/unit/") and key.endswith(".json")):
                 continue
 
-            disk_path = repo_root / key
+            disk_path = repo_root / key.replace("/", "\\") if sys.platform == "win32" else repo_root / key
             if not disk_path.is_file():
                 print(
                     f"  SKIP {log_path.name}: {key} — file missing on disk"
