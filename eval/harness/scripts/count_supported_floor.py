@@ -55,6 +55,10 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve()
+sys.path.insert(0, str(HERE.parents[1]))  # eval/harness, for `harness.*`
+
+from harness.record_basis import record_basis_of  # noqa: E402
+
 REPO_ROOT = HERE.parents[3]
 RUNLOGS = REPO_ROOT / "eval" / "runlogs"
 
@@ -102,20 +106,26 @@ def floor_violations(hypothesis: dict, research: dict) -> list[str]:
     by_id = {
         a.get("id"): a for a in (research.get("assertions") or []) if isinstance(a, dict)
     }
-    direct = 0
-    indirect_sources: set[str] = set()
+    # `record_basis_of` reads BOTH spellings on purpose. This walks the frozen
+    # run-log corpus, which is never migrated, so most of the population it
+    # counts still carries the pre-2026-09-18 spelling of the field. Reading
+    # only the current spelling would drop the figure this script exists to
+    # keep reproducible toward zero, and that reads as a finding.
+    stated = 0
+    inferred_sources: set[str] = set()
     for aid in supporting:
         a = by_id.get(aid)
         if not isinstance(a, dict):
             continue  # an id resolving to no assertion counts as nothing
-        if a.get("evidence_type") == "direct":
-            direct += 1
-        elif a.get("evidence_type") == "indirect" and isinstance(a.get("source_id"), str):
-            indirect_sources.add(a["source_id"])
-    if direct < 1 and len(indirect_sources) < 2:
+        basis = record_basis_of(a)
+        if basis == "stated":
+            stated += 1
+        elif basis == "inferred" and isinstance(a.get("source_id"), str):
+            inferred_sources.add(a["source_id"])
+    if stated < 1 and len(inferred_sources) < 2:
         return [
-            f"hypotheses[{hid}]: no direct supporting assertion and only "
-            f"{len(indirect_sources)} distinct indirect source(s)"
+            f"hypotheses[{hid}]: no stated supporting assertion and only "
+            f"{len(inferred_sources)} distinct inferred source(s)"
         ]
     return []
 

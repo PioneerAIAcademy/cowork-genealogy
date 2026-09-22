@@ -30,8 +30,8 @@ Does the summary accurately reflect the current state of research.json? Are coun
 - **partial:** Most facts are right but one count is off by one or a status is mis-reported.
 - **fail:** Multiple counts wrong, or a major status reported incorrectly (claiming a question is resolved when it's in_progress).
 
-**`evidence_type` and `information_quality` are independent enums — do not conflate them.**
-An assertion can be `evidence_type: direct` (the source states the fact outright, no
+**`record_basis` and `information_quality` are independent enums — do not conflate them.**
+An assertion can be `record_basis: stated` (the source states the fact outright, no
 inference needed) while also `information_quality: secondary` (the informant lacked
 firsthand knowledge) — e.g. a death certificate naming a father, reported by a
 son-in-law. Calling such an assertion "direct evidence" is correct; it is not a
