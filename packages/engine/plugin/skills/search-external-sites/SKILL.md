@@ -73,8 +73,10 @@ References to load when the moment arrives:
 2. **Click** — the user opens it in their authenticated browser.
 3. **Capture** — the user saves the page as PDF and uploads it. If the
    page content for that URL is **already present in this conversation**,
-   read it and go straight to triage (`### 5. Triage the results`): don't
-   ask for a PDF, and don't tell the user a capture is outstanding.
+   steps 1 and 2 still run — build the URL with `build_external_search_url`
+   and log it — and then read that content and go straight to triage
+   (`### 5. Triage the results`): don't ask for a PDF, and don't tell the
+   user a capture is outstanding.
 4. **Analyze** — you read the results, triage them, and hand promising
    records to record-extraction.
 
