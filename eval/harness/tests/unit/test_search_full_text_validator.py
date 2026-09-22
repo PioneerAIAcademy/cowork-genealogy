@@ -1,6 +1,7 @@
-"""Direct tests for the four search-full-text validators added in the #1651
-deep dive (log-fidelity, first-call scoping, collection-id absoluteness,
-plan-item completion congruence).
+"""Direct tests for the search-full-text validators: the four added in the
+#1651 deep dive (log-fidelity, first-call scoping, collection-id
+absoluteness, plan-item completion congruence), plus the wiki pre-work
+fetch check added with the #2253 wiki move.
 
 Same reason as `test_init_project_validator.py`: `pyproject.toml` sets
 `testpaths = ["tests"]`, so nothing under `validators/` is collected by
@@ -24,6 +25,7 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_search_full_text import (  # noqa: E402
+    test_wiki_prework_fetch_runs_when_required as check_wiki_prework,
     test_log_query_traces_to_fulltext_search_call as check_log_fidelity,
     test_first_fulltext_search_call_is_unscoped as check_first_call_unscoped,
     test_fulltext_search_never_scopes_to_collection_id as check_never_scopes_to_collection_id,
@@ -379,3 +381,80 @@ def test_collection_id_check_passes_when_never_sent():
 def test_collection_id_check_skips_when_no_fulltext_search_was_called():
     with pytest.raises(pytest.skip.Exception):
         check_never_scopes_to_collection_id([])
+
+
+# --- test_wiki_prework_fetch_runs_when_required ------------------------
+# Added with the #2253 wiki move. Tag-gated on `wiki-prework`; the two
+# tests carrying that tag today are latin-american-notarial.json and
+# parentage-compound-surname-cooccurrence.json. No committed run log
+# exercises the firing branch yet (the tag and the validator land in the
+# same PR), so every case here is hand-built.
+#
+# The spelling cases are not decoration: agent `tools:` lists an MCP tool
+# under three server spellings (CLAUDE.md, "Dual-spelled tool names") and
+# which one a session exposes has been observed to move, so a check that
+# matched only `mcp__genealogy__` would pass in the harness and be blind
+# in Cowork. `.endswith("wiki_read")` is what makes all three work, and
+# this is what holds it to that.
+
+TAGGED = {"tags": ["wiki-prework", "latin-american"]}
+UNTAGGED = {"tags": ["transcription-quirk"]}
+
+WIKI_READ_SPELLINGS = [
+    "wiki_read",
+    "mcp__genealogy__wiki_read",
+    "mcp__remote-devices__Genealogy_Research__wiki_read",
+    "mcp__Genealogy_Research__wiki_read",
+]
+
+
+def test_wiki_prework_fires_when_the_tagged_test_never_fetched():
+    with pytest.raises(AssertionError) as e:
+        check_wiki_prework([call("fulltext_search", keywords="+Naveda +Somarriba")], TAGGED)
+    assert "pre-work block" in str(e.value)
+
+
+@pytest.mark.parametrize("spelling", WIKI_READ_SPELLINGS)
+def test_wiki_prework_passes_on_every_server_spelling(spelling):
+    """One qualified spelling binding is not the same as the check working:
+    see the module comment above."""
+    check_wiki_prework(
+        [call("fulltext_search", keywords="+Naveda"), {"tool": spelling, "args": {}}],
+        TAGGED,
+    )
+
+
+def test_wiki_prework_skips_on_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_wiki_prework([call("fulltext_search", keywords="+Flynn")], UNTAGGED)
+
+
+def test_wiki_prework_skips_when_the_test_declares_no_tags_at_all():
+    with pytest.raises(pytest.skip.Exception):
+        check_wiki_prework([], {})
+
+
+def test_wiki_prework_fires_rather_than_raising_on_empty_and_none_tool_calls():
+    """A tagged test that issued no calls at all did not fetch, so this is a
+    firing case and not an error one. `None` reaches here whenever the
+    runner captured no calls, and must not become a TypeError that reads as
+    a harness bug."""
+    for empty in ([], None):
+        with pytest.raises(AssertionError):
+            check_wiki_prework(empty, TAGGED)
+
+
+def test_wiki_prework_fires_rather_than_raising_on_a_malformed_call_entry():
+    """A call entry with a null or absent `tool` is not a wiki_read, and is
+    not a crash either."""
+    for entry in ({"tool": None}, {}):
+        with pytest.raises(AssertionError):
+            check_wiki_prework([entry], TAGGED)
+
+
+def test_wiki_prework_is_not_satisfied_by_a_different_wiki_tool():
+    """`wiki_search` is a search, not the page fetch SKILL.md step 3 names.
+    A skill that searched and never opened the page built its query from a
+    snippet list, which is the failure this check exists to catch."""
+    with pytest.raises(AssertionError):
+        check_wiki_prework([call("wiki_search", query="Spanish naming customs")], TAGGED)
