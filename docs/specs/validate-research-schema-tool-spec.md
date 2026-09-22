@@ -1,7 +1,7 @@
 # `validate_research_schema` — project file validation — Spec
 
-> **Status:** New (2026-09-22, issue #1119). Covers the tool's I/O
-> contract at the MCP boundary. The validation rule set is owned by
+> **Status:** New (2026-09-22). Covers the tool's I/O contract at the
+> MCP boundary. The validation rule set is owned by
 > `research-schema-spec.md`; this spec does not restate it.
 
 ```

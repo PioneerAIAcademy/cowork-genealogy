@@ -1,7 +1,7 @@
 # `place_distance` — great-circle distance between two places — Spec
 
-> **Status:** New (2026-09-22, issue #1119). First behavioral contract for
-> this tool; previously documented only by consumer-side mentions.
+> **Status:** New (2026-09-22). First behavioral contract for this tool;
+> previously documented only by consumer-side mentions.
 
 ```
 place_distance({ standardPlace1, standardPlace2 }) -> { standardPlace1, standardPlace2, miles, kilometers }
@@ -60,11 +60,12 @@ model sees.
 | First place cannot be resolved | `Could not resolve coordinates for "<standardPlace1>". Use place_search to get a standard place name first.` |
 | Second place cannot be resolved | `Could not resolve coordinates for "<standardPlace2>". Use place_search to get a standard place name first.` |
 
-The first-place guard runs before the second (`distance.ts:51-62`), so
-when both names fail only the first error appears.
+The first-place guard runs before the second (sequential `if` blocks in
+`placeDistanceTool`), so when both names fail only the first error
+appears.
 
 **What the error does not distinguish.** `standardPlaceToCoords` swallows
-every upstream failure and returns `null` (`place-resolver.ts:669-673`),
+every upstream failure and returns `null` (its `catch` block),
 so one message covers three cases: an unknown place name, a Places API
 outage, and a `fetchWithTimeout` timeout. The error text says "could not
 resolve," not "is not a standard place."
