@@ -1,6 +1,9 @@
 {
   "per_finding": {
-    "f1": "true"
+    "f1": "partial"
+  },
+  "notes": {
+    "f1": "Agent found the correct record (1878 Staffordshire church christening) and identified Lydia as an additional child of Edwin and Hannah Grice, but person-evidence linked her to stub persons I2/I3 rather than merging to existing FS persons 9DJ7-2BY/9DJ7-219. The relationship edge 9DJ7-219→Lydia is absent from the final tree."
   },
   "annotator": "mercyokum",
   "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145"
