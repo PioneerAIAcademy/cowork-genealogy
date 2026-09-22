@@ -133,7 +133,7 @@
       "informant": "County court clerk recording the administration grant",
       "informant_proximity": "unknown",
       "informant_bias_notes": "The administration record establishes the subject was dead by the 1885 term but does not state a death date; the death is bracketed, not dated. Indirect evidence of death timing.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": [
         "q_001"
@@ -157,7 +157,7 @@
       "informant": "County court clerk",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Name of the decedent as recorded in the administration grant.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": [
         "q_001"
@@ -181,7 +181,7 @@
       "informant": "County court clerk",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Jesse Wilkins (the subject's documented son) served as administrator — the kin relationship anchors the decedent's identity to the subject.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": [
         "q_001"

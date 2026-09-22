@@ -296,7 +296,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'Unknown household member reporting to census enumerator',
       informant_proximity: 'unknown',
       informant_bias_notes: null,
-      evidence_type: 'direct',
+      record_basis: 'stated',
       log_entry_id: 'log_001',
       record_persona_id: 'P1',
       extracted_for_question_ids: ['q_002']
@@ -316,7 +316,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'Unknown household member (likely Thomas Flynn or wife)',
       informant_proximity: 'household_member',
       informant_bias_notes: null,
-      evidence_type: 'indirect',
+      record_basis: 'inferred',
       log_entry_id: 'log_001',
       extracted_for_question_ids: ['q_002']
     },
@@ -338,7 +338,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'Inferred from household structure',
       informant_proximity: 'unknown',
       informant_bias_notes: null,
-      evidence_type: 'indirect',
+      record_basis: 'inferred',
       log_entry_id: 'log_001',
       extracted_for_question_ids: ['q_001']
     },
@@ -358,7 +358,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant_proximity: 'unknown',
       informant_bias_notes:
         '1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.',
-      evidence_type: 'indirect',
+      record_basis: 'inferred',
       log_entry_id: null,
       extracted_for_question_ids: ['q_001']
     },
@@ -378,7 +378,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant_proximity: 'family_not_present',
       informant_bias_notes:
         'Son-in-law reporting birth facts decades after the event. Death cert says Pennsylvania, but census records say Ireland.',
-      evidence_type: 'direct',
+      record_basis: 'stated',
       log_entry_id: 'log_005',
       extracted_for_question_ids: ['q_001']
     },
@@ -397,7 +397,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'James Brown (son-in-law)',
       informant_proximity: 'family_not_present',
       informant_bias_notes: 'Secondary information — son-in-law reporting parentage',
-      evidence_type: 'direct',
+      record_basis: 'stated',
       log_entry_id: 'log_005',
       extracted_for_question_ids: ['q_001']
     }
@@ -524,6 +524,7 @@ export const patrickFlynnResearch: ResearchData = {
       question_id: 'q_001',
       tier: 'probable',
       vehicle: 'summary',
+      shortfall: 'gap',
       supporting_assertion_ids: ['a_004', 'a_010', 'a_013'],
       resolved_conflict_ids: ['c_001'],
       exhaustive_search_summary:

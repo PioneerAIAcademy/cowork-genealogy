@@ -120,6 +120,21 @@ explicit `&&` — a `prebuild` hook would silently never fire.
 
 ## Consequences
 
+> **2026-09-18 — the "revisit if a first value removal ever happens" condition
+> fired.** The options table above rejected a retired-values list plus a lint on
+> dead mentions, on the measured grounds that no closed-enum value had ever been
+> removed or renamed. `evidence_type` (`direct | indirect | negative`) was then
+> renamed to `record_basis` (`stated | inferred | absent`). Both halves of what
+> this ADR prescribed were built: the retired-identifier registry now lives in
+> `enums.schema.json`'s `$comment`, enforced by
+> `packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts`; and
+> because that lint can only bind the identifier — the retired *values* stay
+> live English and live values of other enums, exactly as the table predicted a
+> value scan could not be made clean — the reviewed repo-wide grep this ADR
+> names as the governing mitigation was run and recorded on that PR. The table's
+> rows are left as they were written; this note records the outcome, not a
+> revision.
+
 **Gains.** The copy that had measurably drifted stops existing. Nothing in the
 sync path asks a human to run a command. The engine keeps its hand-written
 validator and its LLM-actionable error text, and gains no build step. Adding a
