@@ -291,6 +291,29 @@ four-step order, the exemptions that let you reach step 4, and the three rules
 whose failure is silent — never write to the board yourself, never start a queue
 file, and label a missing guard `nothing-checks`. It points here for the rest.
 
+## Dependency audits
+
+After any dependency bump, re-run the audits and update
+[`docs/dependency-security-advisories.md`](./docs/dependency-security-advisories.md):
+
+```bash
+(cd packages/engine/mcp-server && npm audit)
+(cd eval/app && npm audit)
+pnpm audit
+```
+
+Run these **without** `--omit=dev` / `--prod` — most of what the register tracks is
+dev-only, and the omitting forms report zero for trees that have open advisories.
+Re-run with `--omit=dev` / `--prod` afterwards to sort what ships from what does not;
+the "Reachability" paragraph in the register does that triage.
+
+These cover the three JS trees only. The two Python trees (`apps/server/uv.lock`,
+`eval/harness/uv.lock`) have no audit command here — Dependabot alerts are their only
+signal, and the register's backlog section carries the query.
+
+That file is the sole mechanism for tracking dependency vulnerabilities —
+no CI job audits any dependency tree (lead ruling, 2026-09-09).
+
 ## How to test a new tool end-to-end
 
 **Do not write a per-tool testing guide.** That convention is retired —
