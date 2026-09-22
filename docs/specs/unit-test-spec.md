@@ -760,8 +760,10 @@ Optional object overriding the harness's default execution limits. All fields ar
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
 and wall-clock budget. If the callee has its own unit suite, that spends budget
 on coverage which already exists. Naming it here makes the PreToolUse hook
-record the delegation in `skills_invoked`, deny the launch, and let the run
-**continue** — so the caller still finishes its own logging and summary. (This
+deny the launch and let the run **continue** — so the caller still finishes its
+own logging and summary. A `Skill` call is also recorded in `skills_invoked`; a
+stubbed agent's spawn is recorded in `builtin_tool_calls` only, so assert either
+with `handoffs`. (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
 test still has work left.)
@@ -832,10 +834,17 @@ callee, `stub_skills` to deny it.
 > no per-skill allowlist (`permission_mode="bypassPermissions"` with no
 > `allowed_tools`), so a real session holds every tool and the callee works.
 
-Assert the hand-off with a deterministic `skills_invoked` validator, not the
-judge, which reads a transcript and can misread it. Note the limit: the harness
-records the skill **name** only, not the `args` string the caller composed, so
-no validator can currently assert *what* crossed the seam.
+Assert the hand-off with a deterministic validator reading `handoffs`
+(`skill_runner.py`), not the judge, which reads a transcript and can misread it.
+`handoffs` counts a `Skill` call and a main-thread agent spawn alike, so the
+assertion survives the callee's conversion from a skill to an agent. Note the
+limit: for a `Skill` call the harness records the skill **name** only, not the
+`args` string the caller composed, so no validator can currently assert *what*
+crossed a `Skill` seam.
+
+A `stub_skills` entry may name an agent with no skill directory; the hook then
+denies that agent's main-thread spawn the same way it denies a `Skill` call. A
+name that is still a skill is stubbed at its `Skill` call only.
 
 ### 5.8 `intentionally_invalid`
 
@@ -974,9 +983,11 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
 
+**Xfail narrowing.** A negative test with `expected_outcome: "xfail"` still declares its own edge (the script counts it), but it does **not** satisfy the reverse direction's reciprocal check. An xfail asserts the routing is known-broken, so it pins nothing — accepting it as a reciprocal would mask a gap.
+
 **Why both directions, and what enforces it.** Routing is a graph, and a negative test pins one edge of it in one direction. The DO-NOT clause that stops A over-triggering is exactly the edit that can start B under-triggering, so a one-directional pair lets a routing fix ship a routing regression with the whole suite green. That has happened: after DO-NOT clauses separated `search-familysearch-wiki` from `locality-guide`, Pennsylvania Quaker questions began routing to the wrong skill, and it was found by hand rather than by the corpus. The reciprocal test that closed it, `ut_locality_guide_025`, asserts that a generic how-to question routes *to* `search-familysearch-wiki` — note that it pins the opposite direction from the request that regressed, which is the whole point of a reciprocal.
 
-`eval/harness/scripts/check_negative_reciprocity.py` reports every edge that is still pinned from one side only. It is **warn-only, with no baseline file and no count threshold** — 49 of the corpus's 89 routing edges are one-directional and the check exits 0 anyway. That is deliberate, and both alternatives were rejected rather than deferred:
+`eval/harness/scripts/check_negative_reciprocity.py` reports every edge that is still pinned from one side only. It is **warn-only, with no baseline file and no count threshold** — run `python3 eval/harness/scripts/check_negative_reciprocity.py` to see the current totals. That is deliberate, and both alternatives were rejected rather than deferred:
 
 - An **allowlist** would tax the behaviour the rule exists to encourage. Backfilling a reciprocal touches a second skill's test directory, which invalidates that skill's run-log snapshot and so costs a full re-run plus a fresh annotation. Requiring it of every description-widening PR prices routine routing work out of reach.
 - A **count threshold** — "the number may only fall" — is silently wrong. Remove one edge and add another and the total is unchanged, so the graph can rot while CI stays green. Any future promotion to blocking must therefore compare the edge **set**, never its size, and should follow a triage of which unbacked edges are deliberate one-directional near-misses rather than precede one.
@@ -1433,6 +1444,7 @@ def report_example_pattern(text_response):
 - `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort. See `no_result_message` below for the one case where this 0 is not a real count.
 - `no_result_message` (bool) — true when the run ended before a `ResultMessage` ever arrived even though it is not an abort (currently only the negative-test routing short-circuit). `num_turns` above has a real answer on this path (it is not read off the `ResultMessage` — see its own entry); `output_tokens` does not, since no partial token count exists before a `ResultMessage`. This field is what distinguishes that 0 from a skill that genuinely used no output tokens. Shape choice: the alternative considered was making `num_turns`/`output_tokens` nullable instead of adding this flag, and rejected — neither field has a null branch today, so nullable would be a schema change in both mirrors, would break every `int(...)` summation site, and would silently disable `test_universal.py`'s V8 guard (`num_turns != 0 or output_tokens != 0`, which becomes vacuously true against `None`). The sibling-flag shape keeps both fields real integers everywhere, so no consumer arithmetic and no existing validator needed to change.
 - `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
+- `suppressed_post_deny_calls` (array of objects, optional) — MCP calls made in the turn AFTER the negative-test routing short-circuit's hook denied the hand-off. That turn is the model reacting to the deny, not the skill working, so its text, its turn count and these calls are all withheld from the run's own record. They are still written here rather than dropped, because dropping them made two things uncheckable from any run log: whether a reaction call ever executes at all, and whether one ever names a tool the mock server does not register. Read asymmetrically on purpose — the orchestrator's `unmatched_tool_call` gate counts them on the attempted side (so an executed, fixture-matching reaction call cannot raise `covered` while the left side stays flat and mask an uncovered call from an earlier turn) and scans them for unregistered names; `_build_warnings`' `uncovered_tool_call` advisory does **not**, so a deliberately stopped run collects no advisory for a turn it never owned. Absent when the run suppressed nothing.
 - `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate). On a routing short-circuit that also detects a genuine subscription-quota rejection, `aborted_reason`/`error` survive rather than being cleared with the rest of the short-circuit's abort state — see `skill_runner.run_skill`'s routing-short-circuit branch.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.

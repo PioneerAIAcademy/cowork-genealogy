@@ -162,7 +162,7 @@ def test_init_empty_sections(after_state, test, tool_calls):
     validator red-flagged a skill doing exactly what SKILL.md tells it to --
     acceptance 11 is precisely that case. And with one text present the null
     branch was unbounded, so any number of invented `transcription: null`
-    entries passed. `artifactUrl` is the discriminator because `person_read`
+    entries passed. `artifact_url` is the discriminator because `person_read`
     puts it on every memory source and on nothing else; the count of them is
     also the ceiling, since research.json cannot hold more memory-derived
     sources than there were memories.
@@ -179,7 +179,7 @@ def test_init_empty_sections(after_state, test, tool_calls):
         for s in (response.get("sources") or [])
         if isinstance(s, dict)
         and (
-            s.get("artifactUrl")
+            s.get("artifact_url")
             or (isinstance(s.get("text"), str) and s["text"].strip())
         )
     ]
@@ -684,13 +684,13 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
 
 def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
     """`person_read` emits fields a tree source may not carry -- `notes`, and now
-    `text`, `image_ref` and `artifactUrl` on a memory; `TREE_SOURCE_FIELDS`
+    `text`, `image_ref` and `artifact_url` on a memory; `TREE_SOURCE_FIELDS`
     rejects them, so a verbatim copy fails the `project_create` write. The plausible wrong fix is to
     drop the whole source -- silently losing evidence the survey found. Drop the
     extra field, keep the source.
 
     Checked against the ALLOW-LIST rather than against a list of known-bad names:
-    `notes` was the first field to do this and `text`/`image_ref`/`artifactUrl`
+    `notes` was the first field to do this and `text`/`image_ref`/`artifact_url`
     followed, so a name-by-name check would go stale the next time person_read
     grows a field -- as it just did, and this check needed no edit to cover it. Mirrors TREE_SOURCE_FIELDS in
     packages/engine/mcp-server/src/validation/tree-shape.ts.
