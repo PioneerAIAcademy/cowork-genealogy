@@ -8,11 +8,13 @@ It returns data in **simplified GEDCOMX format** (`persons[]`,
 `docs/specs/simplified-gedcomx-spec.md`.
 
 The tool accepts a FamilySearch person ID (required) and two optional boolean
-flags that bundle additional data into a single API call:
+flags that bundle additional data into the response. `sourceDescriptions` costs
+no extra tree call; `relatives` is no longer a single one, because siblings are a
+second hop costing one read per parent (see "The sibling fan-out" below):
 
 | Flag | What it adds to the response |
 |------|------------------------------|
-| `relatives: true` | Parents, spouses, and children in `persons[]` + `relationships[]` |
+| `relatives: true` | Parents, **siblings**, spouses, and children in `persons[]` + `relationships[]` |
 | `sourceDescriptions: true` | Attached source citations in `sources[]` |
 
 Requires authentication (OAuth tokens obtained via the `login` tool).
@@ -165,9 +167,14 @@ Present when `sourceDescriptions: true`. Each source object:
 
 For a **non-living subject**, `sourceDescriptions: true` also returns that
 person's **source-style memories** as ordinary entries in `sources[]` — nothing
-else changes. The top level stays `{persons, relationships, sources}`: there is
-no new key and **no memory-vs-source discriminator**, so no downstream reader
-has to branch on where a source came from (lead, 2026-08-21). Memory ids and
+else changes. Memories add **no new key and no memory-vs-source discriminator**, so no
+downstream reader has to branch on where a source came from (lead,
+2026-08-21). That decision was worded as "the top level stays `{persons,
+relationships, sources}`", and the 2026-09-21 endpoint-closure ruling adds a
+conditional `notes[]` (above). They agree on what decision 2 protects -- nothing
+to switch on, no discriminator -- but the card carries both wordings, and rule 4
+was edited when superseded while this was not. The later ruling governs, and the
+card still carries the earlier wording unedited. Memory ids and
 tree source-description ids are disjoint id spaces (`3475` vs
 `SD_PERSON_KWCJ-RN4`, measured 0 overlap), so the two never collide.
 
@@ -592,7 +599,11 @@ For each entry, create:
 }
 ```
 
-**Keep all couple relationships.** Do not filter to the focal person.
+**Keep all couple relationships whose partners are both returned persons.** Do
+not filter to the focal person: that purpose is unchanged, and a `Couple`
+between two people who are not the subject is kept. What is dropped is a
+`Couple` naming a partner the response never returned, under the
+endpoint-closure rule below, because that edge fails the `project_create` write.
 
 #### 5a. The sibling fan-out (when `relatives: true`)
 
@@ -651,9 +662,11 @@ subject's own parentage — not a distant relative's. The caller asked about thi
 person, and "has a parent we cannot name" is information about them. It is still
 dropped, because an unresolvable endpoint costs the whole `project_create`
 write, but the loss is now SILENT where before it surfaced as a loud refusal.
-There is no warning channel on this tool's result to carry it, so a caller that
-needs to know a parent exists without a person record must read the raw
-FamilySearch response rather than this tool's output.
+This is what the conditional `notes[]` key above exists for: the drop is
+reported, with a line naming the subject's own parentage specifically, so a
+caller learns that a parent exists whose record was not returned. What `notes[]`
+does not carry is WHICH person -- by definition they are not in `persons[]` --
+so a caller needing the id must read the raw FamilySearch response.
 
 A half-sibling consequently arrives linked to the shared parent only, and a CAPR
 naming a child whose person record the response omitted is skipped entirely —
@@ -664,12 +677,19 @@ timeout, a transport error, or a 204 living-person stub each mean "no siblings
 from that parent" — the subject's own read still succeeds. Siblings are an
 enrichment and must never cost the caller the person they asked for.
 
-**The fan-out spends the same 40s budget the memories phase does.** The deadline
-is anchored at tool entry, so each parent read is on the clock the OCR phase
-later draws from. The effect is lossless — a memory the budget does not reach
-comes back as a metadata entry with a note saying so — but a subject with
-several slow parents will transcribe fewer memories than the same subject with
-none, and that is a real interaction rather than a theoretical one.
+**The fan-out spends the same 40s budget the memories phase does, and is now
+bounded by it.** The deadline is anchored at tool entry, so each parent read is
+on the clock the OCR phase later draws from. Each read times out at the lesser
+of 30s and what remains, and a parent whose turn arrives with nothing left
+yields no siblings, the same outcome a 403 gives. Unbounded, a slow fan-out
+could add a whole second fetch wave on a path where a 60s bridge abort discards
+the entire call, subject included: losing the siblings is the better of those
+two losses.
+
+The interaction runs the other way too. A subject with several slow parents
+transcribes fewer memories than the same subject with none. That half is
+lossless, because a memory the budget does not reach comes back as a metadata
+entry with a note saying so.
 
 **301 is not in that list: a merged parent is followed.** A merged person answers
 301 with the surviving id in `Location`, exactly as the subject's own read

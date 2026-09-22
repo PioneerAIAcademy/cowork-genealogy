@@ -113,6 +113,7 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
     relatives,
     sourceDescriptions,
     0,
+    deadline,
   );
 
   // Memories ride the EXISTING sourceDescriptions flag (lead, 2026-08-19): a
@@ -206,9 +207,13 @@ const OCR_CONCURRENCY = 5;
  *
  * Whatever the budget did not reach comes back as metadata with a note saying
  * so, rather than being dropped. The note goes on the source itself because
- * decision 2 fixed the top level at {persons, relationships, sources} -- no new
- * key, nothing for a consumer to switch on -- and `notes` is already carried and
- * already excluded from the tree write.
+ * decision 2 fixed the top level at {persons, relationships, sources} with
+ * nothing for a consumer to switch on, and `notes` is already carried here and
+ * already excluded from the tree write. (Decision 2 was worded as "no new key";
+ * the 2026-09-21 endpoint-closure ruling since added a conditional top-level
+ * `notes[]`. It carries no discriminator either, so what decision 2 protects is
+ * intact -- but do not read this comment as saying the top level can never gain
+ * a key.)
  */
 async function transcribeMemories(
   kept: Memory[],
@@ -404,6 +409,8 @@ async function fetchAndConvert(
   relatives: boolean,
   sourceDescriptions: boolean,
   redirectsFollowed: number,
+  /** Shared with the memories phase; the fan-out is bounded by it too. */
+  deadline: number,
 ): Promise<{ result: PersonReadResult; resolvedId: string }> {
   const url = buildUrl(pid, relatives, sourceDescriptions);
   const res = await fetchWithRetry(url, {
@@ -440,6 +447,7 @@ async function fetchAndConvert(
       relatives,
       sourceDescriptions,
       redirectsFollowed + 1,
+      deadline,
     );
   }
 
@@ -477,7 +485,9 @@ async function fetchAndConvert(
   // standardization runs once inside toSimplifiedStandardized, and `living` is
   // read back off the raw persons. Merging after conversion would lose all
   // three and mean re-implementing the shape functions by hand.
-  const merged = relatives ? await mergeSiblings(token, pid, body) : body;
+  const merged = relatives
+    ? await mergeSiblings(token, pid, body, deadline)
+    : body;
   return {
     result: await convertResponse(merged, relatives, sourceDescriptions, pid),
     resolvedId: pid,
@@ -493,6 +503,21 @@ async function fetchAndConvert(
  * concurrency ceiling over N, not a two-element assumption.
  */
 const SIBLING_FANOUT_CONCURRENCY = 4;
+
+/** Ceiling on one parent read. The effective timeout is the lesser of this and
+ *  what is left of the shared deadline, so a slow fan-out cannot push the call
+ *  past the 60s bridge abort that would discard the subject as well.
+ *
+ *  NOT DRIVEN BY A TEST, and said plainly rather than left to be discovered:
+ *  no suite here can observe it. The narrowing shows up only as an earlier
+ *  AbortSignal inside `fetchWithRetry`, which the `fetch` mock cannot see, and
+ *  the `left <= 0` branch is close to unreachable anyway because the subject's
+ *  own read is itself capped at 30s plus a 10s retry budget. A fake-timer test
+ *  for it was written and deleted: it passed for reasons unrelated to the bound.
+ *  What justifies keeping the code is that the unbounded form could add a whole
+ *  second fetch wave on a path with a 60s abort that discards everything, and
+ *  bounding it is strictly safer than not. */
+const PARENT_READ_TIMEOUT_MS = 30_000;
 
 /** The subject's own parents, from the subject's CAPRs, RESTRICTED to those the
  *  subject's read actually returned a person record for. `resourceId` is the
@@ -617,6 +642,7 @@ async function mergeSiblings(
   token: string,
   pid: string,
   body: FSTreeResponse,
+  deadline: number,
 ): Promise<FSTreeResponse> {
   const parentIds = parentIdsOf(body, pid);
   // No parents => ZERO extra calls. This is what keeps the isolated-person
@@ -627,6 +653,12 @@ async function mergeSiblings(
     parentIds,
     SIBLING_FANOUT_CONCURRENCY,
     async (parentId) => {
+      const left = deadline - Date.now();
+      // Nothing left on the shared clock: this parent yields no siblings, the
+      // same outcome a 403 or a timeout gives. Better than starting a read that
+      // can only push the whole call past the 60s bridge abort, which discards
+      // the subject too.
+      if (left <= 0) return null;
       try {
         const res = await fetchWithRetry(buildUrl(parentId, true, false), {
           headers: {
@@ -635,7 +667,7 @@ async function mergeSiblings(
             "Accept-Language": "en",
           },
           redirect: "manual",
-        });
+        }, Math.min(PARENT_READ_TIMEOUT_MS, left));
         // 301 = merged, which is routine and not an error. The subject's own
         // read follows it (`fetchAndConvert`); a parent read that treated it as
         // "no siblings" lost every sibling behind a merge, silently.
@@ -838,13 +870,51 @@ async function convertResponse(
   const shaped = relatives ? shapeRelationships(simplified.relationships ?? []) : [];
   const kept = relatives ? dropDanglingEdges(shaped, personIds) : [];
   return {
-    persons,
+    persons: relatives ? dropStrandedPersons(persons, kept, pid) : persons,
     relationships: kept,
     sources: sourceDescriptions
       ? shapeSources(simplified.sources ?? [], body.sourceDescriptions ?? [])
       : [],
     ...droppedEdgeNotes(shaped, kept, pid),
   };
+}
+
+/**
+ * Drop a person left attached to nothing once endpoint closure has run.
+ *
+ * `dropDanglingEdges` filters relationships and never removes a person, so when
+ * the dropped edge was a person's ONLY edge, that person stays in `persons[]`
+ * with no stated relation to anybody. `parentIdsOf` already stops the fan-out
+ * producing this, but the fan-out is not the only source: the same shape
+ * arrives from the SUBJECT'S own read, where nothing filters it.
+ *
+ * `validate_research_schema` will not catch it -- it checks edges against
+ * persons and has no persons-to-edges rule (the only `orphan` rule in the repo
+ * is for `results/` sidecars) -- so a stranded person reaches the user's tree
+ * silently. On the merge base the same input emitted the edge and
+ * `project_create` refused the whole write, loudly; the drop is what strands
+ * them, so the drop owns the cleanup.
+ *
+ * Unevidenced rather than observed: across all 95 tracked unstripped e2e trees
+ * the count of persons named by no relationship is zero, and `author.py` runs
+ * the identical drop-edges-keep-persons step on real captured data without ever
+ * stranding one. This closes the guarantee rather than fixing a sighting.
+ *
+ * The SUBJECT is never dropped: a genuinely isolated person is a valid read and
+ * returning nothing for them would be the worse bug.
+ */
+function dropStrandedPersons(
+  persons: TreePerson[],
+  relationships: TreeRelationship[],
+  pid: string,
+): TreePerson[] {
+  const linked = new Set<string>();
+  for (const r of relationships) {
+    for (const endpoint of [r.parent, r.child, r.person1, r.person2]) {
+      if (endpoint) linked.add(endpoint);
+    }
+  }
+  return persons.filter((p) => !p.id || p.id === pid || linked.has(p.id));
 }
 
 /**

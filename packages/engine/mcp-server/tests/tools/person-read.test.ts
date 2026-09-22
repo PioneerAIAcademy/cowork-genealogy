@@ -1222,6 +1222,44 @@ describe("personReadTool — sibling fan-out", () => {
     expect(edges.sort()).toEqual([`${DAD}->${sib}`, `${MUM}->${sib}`].sort());
   });
 
+  it("strands NO person when the dropped edge came from the subject's own read", async () => {
+    // @clack391 on #2593: `parentIdsOf` stops the FAN-OUT producing an
+    // unattached person, but the fan-out is not the only source. Here the
+    // subject's own read carries a Couple to a partner it never returned. The
+    // edge is dropped by endpoint closure, and before `dropStrandedPersons` the
+    // partner's spouse stayed in persons[] attached to nothing --
+    // `validate_research_schema` checks edges against persons and has no
+    // persons-to-edges rule, so nothing downstream objected.
+    const SPOUSE = "SPOUSE-500";
+    const GHOST = "NEVER-RETURNED-9";
+    mockFetch.mockImplementation((url: string) =>
+      Promise.resolve({
+        ok: true, status: 200, headers: new Headers(),
+        json: () => Promise.resolve({
+          persons: [person(SUBJECT, "Subject Person"), person(SPOUSE, "Spouse")],
+          relationships: [
+            { type: "http://gedcomx.org/Couple", person1: { resourceId: SPOUSE }, person2: { resourceId: GHOST } },
+          ],
+          childAndParentsRelationships: [],
+        }),
+      }),
+    );
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    const linked = new Set<string>();
+    for (const r of out.relationships) {
+      for (const e of [r.parent, r.child, r.person1, r.person2]) if (e) linked.add(e);
+    }
+    expect(
+      out.persons.map((p) => p.id).filter((id) => id !== SUBJECT && !linked.has(id)),
+    ).toEqual([]);
+    // the SUBJECT survives even with no relationships at all: an isolated
+    // person is a valid read and returning nothing for them is the worse bug
+    expect(out.persons.map((p) => p.id)).toContain(SUBJECT);
+  });
+
   it("says so in notes[] when endpoint closure drops the subject's own parentage", async () => {
     // @chesworthrm's merge condition on #2593: endpoint closure replaced a loud
     // `project_create` refusal with a quiet partial loss, and "a quiet partial

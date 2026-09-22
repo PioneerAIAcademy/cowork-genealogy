@@ -580,7 +580,7 @@ Rules that follow from this:
   other reason persisted documents are snake_case.
 - **A camelCase field on a flat tool response is correct and stays.**
   `imageRef` on `image_read` and `image_transcribe` is on the right side of
-  this line and must not be "fixed" — ruled 2026-09-21 (#2593 §3). What made
+  this line and must not be "fixed" — ruled 2026-09-21. What made
   `person_read`'s `artifactUrl` a slip was that it sat **inside** `TreeSource`,
   whose every other field is snake_case; a lone camelCase key among snake_case
   neighbours reads as an error. A flat response with no snake_case neighbours
