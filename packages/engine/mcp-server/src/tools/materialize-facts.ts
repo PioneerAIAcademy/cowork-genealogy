@@ -70,6 +70,7 @@ import {
   resolveSourceRef as resolveSourceRefShared,
   isRelationshipEstablishing,
 } from "../utils/source-ref-resolver.js";
+import { recordBasisOf } from "../utils/record-basis.js";
 
 class MaterializeFactsError extends Error {}
 
@@ -366,7 +367,7 @@ export function materializesToPersonFact(assertion: any): boolean {
   // Mirrors the materialize loop's own four skips, in its order: negative
   // evidence stays an argument and never becomes a positive fact; `gender`/`sex`
   // set the scalar; `name` becomes a tree name; SKIP_TYPES are two-party links.
-  if (assertion?.evidence_type === "negative") return false;
+  if (recordBasisOf(assertion) === "absent") return false;
   const t = String(assertion?.fact_type ?? "").toLowerCase();
   return t !== "" && !NAME_TYPES.has(t) && !GENDER_TYPES.has(t) && !SKIP_TYPES.has(t);
 }
@@ -479,7 +480,7 @@ function applyMaterializeOp(
     // Purely-argumentative / negative evidence is not a positive tree fact
     // (spec §7.1 (4)) — it stays a research.json assertion feeding the argument;
     // only its conclusion materializes, via proof-conclusion.
-    if (a.evidence_type === "negative") continue;
+    if (recordBasisOf(a) === "absent") continue;
 
     if (GENDER_TYPES.has(rawType)) {
       // Gender sets the scalar, not a fact/name (no ref); never overwrite a
@@ -710,7 +711,7 @@ function applyNamedPartyOp(
   // idempotency (the first call mints the person, so the second refuses itself).
   const siblingCanMint = siblings.some(
     (a: any) =>
-      a.evidence_type !== "negative" && NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()),
+      recordBasisOf(a) !== "absent" && NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()),
   );
   if (siblings.length > 0 && siblingCanMint) {
     const personIdHint = str(op.personId) !== undefined ? `personId: '${str(op.personId)}', ` : "";
@@ -726,7 +727,7 @@ function applyNamedPartyOp(
   // rule the persona arm applies per assertion. "Father: not recorded" must not
   // mint a father; the assertion stays in research.json feeding the argument,
   // and only its conclusion materializes, via proof-conclusion.
-  if (assertion.evidence_type === "negative") {
+  if (recordBasisOf(assertion) === "absent") {
     throw new MaterializeFactsError(
       `assertion '${assertionId}' is negative evidence — it records what the source does NOT ` +
         "say, so it cannot mint a person. Negative evidence feeds the argument in research.json; " +
