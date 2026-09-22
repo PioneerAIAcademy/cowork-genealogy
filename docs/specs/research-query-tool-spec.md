@@ -175,7 +175,7 @@ whole section, one 50-item page at a time.
     `offset` with a fixed page keeps that decision intact.
   - **A `fields` projection** (return only some keys per item) is more elegant
     but does not close the gate alone: proof-conclusion's Step 2 needs
-    `information_quality`, `evidence_type`, `informant`, and
+    `information_quality`, `record_basis`, `informant`, and
     `informant_proximity` per assertion — most of the body — so trimming fields
     would not shrink the payload enough to fit 57 in one call.
   - **A staged-to-disk fallback** (as `fulltext_search` / `external_links_search`

@@ -341,10 +341,22 @@ def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     canned-response form — see harness/skill_stubs.py for which to pick and why
     (it turns on whether the CALLER reads the result, not on the callee).
 
-    Assert the hand-off with a `skills_invoked` validator; do not leave it to
-    the judge, which reads a transcript and can misread it.
+    Assert the hand-off with a `handoffs` validator; do not leave it to the
+    judge, which reads a transcript and can misread it.
     """
     return parse_stub_skills(spec.execution) or None
+
+
+def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | None:
+    """The `stub_skills` entries to deny when reached by an agent spawn.
+
+    Exactly the entries with no skill directory: a callee converted from a skill
+    to an agent (issue #2825), which the router now spawns rather than loads. A
+    name that is still a skill keeps its `Skill`-call stub only — the paired
+    agents in `route-shortcut-guard.json` rely on their spawn running.
+    """
+    stubbed = parse_stub_skills(spec.execution)
+    return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
 
 
 # Field names inside one `modelUsage` entry, as the CLI emits them.
@@ -411,6 +423,40 @@ def _skill_tokens(usage: dict[str, Any]) -> tuple[int, int, int, int, dict[str, 
     )
 
 
+def _apply_unmatched_tool_call_abort(result: Any) -> None:
+    """Type-1 half of the uncovered tool-call gate, in place on `result`.
+
+    Extracted from `_execute_single_run` so it can be tested without driving a
+    whole run — the two behaviours below had no test at all before issue #2740.
+    """
+    if result.aborted_reason is None:
+        covered = _predicate_matched_count(result.tool_calls)
+        # Calls the routing short-circuit discarded count on the ATTEMPTED side
+        # here, and only here. `covered` is computed from `tool_calls`, which is
+        # what actually executed — so if a post-deny reaction call executes and
+        # matches a fixture it raises `covered`, and leaving it out of the left
+        # side would let the comparison go false and mask an uncovered call from
+        # an earlier turn. Counting both sides the same way removes that.
+        # `_build_warnings` deliberately does NOT do this: the advisory reads
+        # `attempted_mcp_calls` alone, so a deliberately stopped run does not
+        # collect an `uncovered_tool_call` note for a turn it never owned
+        # (issue #2740).
+        gated_calls = [*result.attempted_mcp_calls, *result.suppressed_post_deny_calls]
+        if len(gated_calls) > covered:
+            # At least one call didn't match a fixture. Check if any attempted
+            # call is to a tool that doesn't exist in the mock server.
+            # If a tool doesn't exist in registered_mcp_tools, there's no
+            # handler for it, so the call can't possibly have reached the mock.
+            for call in gated_calls:
+                tool_name = call["tool"].removeprefix("mcp__genealogy__")
+                if tool_name not in result.registered_mcp_tools:
+                    # Type 1: tool doesn't exist at all — abort
+                    result.aborted_reason = "unmatched_tool_call"
+                    break
+            # Type 2 calls (wrong args to existing tools, or denied by allowlist)
+            # fall through without aborting. Warnings are added by _build_warnings.
+
+
 async def _execute_single_run(
     *,
     run_index: int,
@@ -446,6 +492,7 @@ async def _execute_single_run(
         model=model,
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
+        stub_agents=_stub_agents(spec, paths.skills_dir),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -465,21 +512,7 @@ async def _execute_single_run(
     #         which fixtures need to be added or corrected.
     #
     # Phase 2 filters out Type 2 from the abort — only Type 1 stops the run.
-    if result.aborted_reason is None:
-        covered = _predicate_matched_count(result.tool_calls)
-        if len(result.attempted_mcp_calls) > covered:
-            # At least one call didn't match a fixture. Check if any attempted
-            # call is to a tool that doesn't exist in the mock server.
-            # If a tool doesn't exist in registered_mcp_tools, there's no
-            # handler for it, so the call can't possibly have reached the mock.
-            for call in result.attempted_mcp_calls:
-                tool_name = call["tool"].removeprefix("mcp__genealogy__")
-                if tool_name not in result.registered_mcp_tools:
-                    # Type 1: tool doesn't exist at all — abort
-                    result.aborted_reason = "unmatched_tool_call"
-                    break
-            # Type 2 calls (wrong args to existing tools, or denied by allowlist)
-            # fall through without aborting. Warnings are added by _build_warnings.
+    _apply_unmatched_tool_call_abort(result)
 
     # --- Diffs ----------------------------------------------------------
     research_diff = diff_research_json(
@@ -761,6 +794,7 @@ async def _execute_single_run(
         output_tokens=skill_output,
         model_usage=per_model,
         no_result_message=result.no_result_message,
+        suppressed_post_deny_calls=result.suppressed_post_deny_calls,
         skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
@@ -858,6 +892,7 @@ async def _execute_skill_with_retry(
     model: str,
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
+    stub_agents: dict[str, str | None] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -946,6 +981,7 @@ async def _execute_skill_with_retry(
                         allowed_tools_override=skill_baseline,
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
+                        stub_agents=stub_agents,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.
@@ -1168,7 +1204,7 @@ def _response_hit_node_timeout(response: Any) -> bool:
 
 
 # Judge dimensions whose subject is checked deterministically by the
-# `test_expected_classifications` validator (it verifies evidence_type,
+# `test_expected_classifications` validator (it verifies record_basis,
 # informant_proximity, and information_quality on the declared
 # (record_role, fact_type) pairs). When that validator PASSES, the LLM judge
 # must not FAIL these dimensions on the same classifications — a fail there is

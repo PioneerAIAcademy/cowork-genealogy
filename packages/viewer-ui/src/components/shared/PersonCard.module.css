@@ -10,6 +10,13 @@
   border-color: var(--border-color-strong);
 }
 
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
 .name {
   font-family: var(--font-display);
   font-weight: 600;
@@ -48,19 +55,17 @@
 }
 
 .ark {
-  color: var(--accent-gold-strong);
-  text-decoration: none;
-  /* Button reset. This was an <a> until the middle-click bypass was closed
-     (#1018); without the reset a <button> renders with default browser chrome
-     in a 0.72rem meta row. Same reset `.externalLink` carries in
-     SidecarResultCard.module.css. */
+  color: var(--text-link);
+  text-decoration: underline;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
-  font: inherit;
+  font-size: 0.87rem;
+  font-family: inherit;
+  white-space: nowrap;
 }
 
 .ark:hover {
-  text-decoration: underline;
+  color: var(--accent-gold-strong);
 }
