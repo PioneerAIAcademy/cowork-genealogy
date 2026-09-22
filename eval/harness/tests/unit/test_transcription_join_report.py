@@ -156,3 +156,58 @@ def test_unreadable_run_is_counted_not_raised(tmp_path):
     r = scan([run])
     assert r.unreadable == 1
     assert isinstance(r, ScanResult)
+
+
+def test_chained_but_uncaptured_call_counts_chained_not_joined(tmp_path):
+    """An assertion on a transcribe log entry whose image key matches no
+    captured tool call is `chained` but not `joined` — its transcription text
+    isn't on file (e.g. a subagent capture gap)."""
+    tool_calls = [_transcribe(ark="ark:/61903/3:1:CALLED", response_summary="full")]
+    research = {
+        "log": [
+            # A transcribe entry for a DIFFERENT image than the captured call.
+            {"id": "log_1", "tool": "image_transcribe",
+             "query": {"imageArk": "ark:/61903/3:1:UNCAPTURED"}}
+        ],
+        "assertions": [{"id": "a1", "log_entry_id": "log_1"}],
+    }
+    r = scan([_write_run(tmp_path, tool_calls, research)])
+    assert r.chained_assertions == 1
+    assert r.joined_assertions == 0
+
+
+def test_none_id_entry_does_not_spuriously_join(tmp_path):
+    """A transcribe log entry missing `id` must not collect id-less assertions
+    under a `None` bucket (would mis-join every assertion with no
+    log_entry_id)."""
+    ark = "ark:/61903/3:1:KKKK-LLLL"
+    tool_calls = [_transcribe(ark=ark, response_summary="full")]
+    research = {
+        "log": [{"tool": "image_transcribe", "query": {"imageArk": ark}}],  # no id
+        "assertions": [
+            {"id": "a1"},  # no log_entry_id
+            {"id": "a2", "log_entry_id": None},
+        ],
+    }
+    r = scan([_write_run(tmp_path, tool_calls, research)])
+    assert r.chained_assertions == 0
+    assert r.joined_assertions == 0
+
+
+def test_corrupt_sibling_counts_captures_not_unreadable(tmp_path):
+    """A valid run log with a corrupt final-research sibling counts its captures
+    (they are valid) and marks the JOIN unreadable — it must NOT mark the whole
+    run `unreadable` (which would also keep the already-counted captures, an
+    invariant break)."""
+    stem = "run-2026-09-20_00-00-00"
+    run = tmp_path / f"{stem}.json"
+    run.write_text(json.dumps({"tool_calls": [
+        _transcribe(ark="ark:/61903/3:1:MMMM", response_summary="full")
+    ]}), encoding="utf-8")
+    (tmp_path / f"{stem}.final-research.json").write_text("{not json", encoding="utf-8")
+    r = scan([run])
+    assert r.total_captures == 1
+    assert r.complete == 1
+    assert r.unreadable == 0
+    assert r.sibling_unreadable == 1
+    assert r.joined_assertions == 0

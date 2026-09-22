@@ -127,8 +127,8 @@ from typing import Any
 #       the full value,
 #       bypassing both the per-string cap and the `_RUNLOG_MAX_CHARS` backstop.
 #       This makes extraction-accuracy audits possible: the transcription-to-
-#       assertion join (482/482) was already working, but the truncated
-#       transcription made the joined data useless (issue #2561).
+#       assertion join (via each assertion's `log_entry_id`) works, but the
+#       truncated transcription made the joined data useless (issue #2561).
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass

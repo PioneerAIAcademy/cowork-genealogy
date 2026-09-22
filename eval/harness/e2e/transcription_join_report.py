@@ -69,9 +69,11 @@ class ScanResult:
     no_summary: int = 0  # measurable, empty response_summary (pre-#1182)
     stripped_captures: int = 0  # captures in stripped runs (completeness unknown)
     stripped_runs: int = 0
-    joined_assertions: int = 0  # assertions chained to a transcription
+    chained_assertions: int = 0  # assertions on a transcribe log entry
+    joined_assertions: int = 0  # ...whose key also matches a captured call
     complete_joined_assertions: int = 0  # ...to a COMPLETE transcription
-    unreadable: int = 0
+    unreadable: int = 0  # run log itself unreadable
+    sibling_unreadable: int = 0  # final-research sibling unreadable (join skipped)
 
     @property
     def measurable_captures(self) -> int:
@@ -165,26 +167,44 @@ def _scan_one(run_path: Path, result: ScanResult) -> None:
     if stripped and run_has_transcribe:
         result.stripped_runs += 1
 
-    # Join-side: assertions chained to a transcribe log entry whose image key
-    # matches one of this run's transcribe calls. Reads the final-research sibling.
+    # Join-side: assertions whose `log_entry_id` chains to a transcribe log
+    # entry in this run. `chained_assertions` counts every such assertion;
+    # `joined_assertions` narrows to those whose log-entry image key also matches
+    # a captured `tool_calls[]` transcription (the only ones whose transcription
+    # TEXT is on file). Isolated in its own try so a corrupt sibling marks the
+    # JOIN unreadable, not the whole run — its captures above are valid.
     fr = _final_research_path(run_path)
     if not tc_keys or not fr.exists():
         return
-    research = json.loads(fr.read_text(encoding="utf-8"))
-    if not isinstance(research, dict):
+    try:
+        research = json.loads(fr.read_text(encoding="utf-8"))
+        if not isinstance(research, dict):
+            return
+        logkeys: dict[str, set[str]] = {}
+        for entry in research.get("log") or []:
+            # Skip id-less entries: a `None` id would collect every id-less
+            # assertion under one bucket and mis-join them.
+            if (
+                isinstance(entry, dict)
+                and entry.get("id") is not None
+                and "transcribe" in str(entry.get("tool") or "")
+            ):
+                logkeys[entry["id"]] = _flat_str_values(entry.get("query"))
+        for assertion in research.get("assertions") or []:
+            if not isinstance(assertion, dict):
+                continue
+            le = assertion.get("log_entry_id")
+            if le is None or le not in logkeys:
+                continue
+            result.chained_assertions += 1
+            keys = logkeys[le]
+            if keys & tc_keys:
+                result.joined_assertions += 1
+                if keys & complete_keys:
+                    result.complete_joined_assertions += 1
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, AttributeError):
+        result.sibling_unreadable += 1
         return
-    logkeys: dict[str, set[str]] = {}
-    for entry in research.get("log") or []:
-        if isinstance(entry, dict) and "transcribe" in str(entry.get("tool") or ""):
-            logkeys[entry.get("id")] = _flat_str_values(entry.get("query"))
-    for assertion in research.get("assertions") or []:
-        if not isinstance(assertion, dict):
-            continue
-        keys = logkeys.get(assertion.get("log_entry_id"))
-        if keys and (keys & tc_keys):
-            result.joined_assertions += 1
-            if keys & complete_keys:
-                result.complete_joined_assertions += 1
 
 
 def scan(paths: list[Path]) -> ScanResult:
@@ -224,6 +244,11 @@ def format_report(result: ScanResult) -> str:
     out.append(f"  measurable for completeness:  {measurable}")
     if result.unreadable:
         out.append(f"  UNREADABLE run logs:          {result.unreadable}")
+    if result.sibling_unreadable:
+        out.append(
+            f"  UNREADABLE final-research:    {result.sibling_unreadable} "
+            "(captures counted, join skipped)"
+        )
     out.append("")
 
     if total == 0:
@@ -240,11 +265,20 @@ def format_report(result: ScanResult) -> str:
     out.append("")
 
     out.append(
-        f"  assertions joined to a transcription:           {result.joined_assertions}"
+        f"  assertions on a transcribe log entry:           {result.chained_assertions}"
     )
     out.append(
-        f"  assertions joined to a COMPLETE transcription:  {result.complete_joined_assertions}"
+        f"  ...matched to a captured transcription call:    {result.joined_assertions}"
     )
+    out.append(
+        f"  ...to a COMPLETE transcription:                 {result.complete_joined_assertions}"
+    )
+    unmatched = result.chained_assertions - result.joined_assertions
+    if unmatched:
+        out.append(
+            f"  ({unmatched} chained assertion(s) whose transcription call was not "
+            "captured in this run's tool_calls — subagent capture gap)"
+        )
     out.append("")
 
     # The denominator statement the acceptance criteria require.
