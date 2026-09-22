@@ -4,7 +4,7 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Patrick Hoban (PID KK3W-WLT, b. 1836, Halifax, Nova Scotia) had a wife named Ellen, or a son Thomas Dee who married Bessie Butler at Halifax in 1895. The hinted 1895 marriage names the groom's parents only by the bare forenames 'Patrick' and 'Ellen', with the groom carrying the surname Dee — not Hoban/Hobin. That groom's own birth record identifies him as Thomas A. Dee, born 8 October 1874 at Halifax to Patrick Dee and Ellen Callahan, a distinct Halifax family. Patrick Hoban's documented wife is Catherine Donovan (married 18 November 1867), and his son Thomas Patrick Hobin was born 11 February 1873, not 1874, and never carried the surname Dee. Pass = the final tree/research adds no wife named Ellen for Patrick Hoban, no son Thomas Dee, and no 1895 Dee marriage fact tied to him (or such a candidate appears only as an explicitly rejected hypothesis).",
+      "description": "The agent must NOT assert that Patrick Hoban (PID KK3W-WLT, b. 1836, Halifax, Nova Scotia) had a wife named Ellen, or a son Thomas Dee who married Bessie Butler at Halifax in 1895. The hinted 1895 marriage names the groom's parents only by the bare forenames 'Patrick' and 'Ellen', with the groom carrying the surname Dee — not Hoban/Hobin. That groom's own birth record identifies him as Thomas A. Dee, born 8 October 1874 at Halifax to Patrick Dee and Ellen Callahan, a distinct Halifax family. Patrick Hoban's documented wife is Catherine Donovan (married 18 November 1867), and his son Thomas Patrick Hobin was born 11 February 1873, not 1874, and never carried the surname Dee. Pass = tree.gedcomx.json adds no wife named Ellen for Patrick Hoban, no son Thomas Dee, and no 1895 Dee marriage fact tied to him. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss.",
       "details": {
         "subject_person": "Patrick Hoban (PID KK3W-WLT)",
         "relation": "spouse",
@@ -23,7 +23,7 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having compared the hinted 1895 Thomas Dee-Bessie Butler marriage against Patrick Hoban's own attached records, the agent should document a negative conclusion: the hint is a false match. The marriage belongs to the distinct Patrick Dee x Ellen Callahan/Callaghan family of Halifax (whose son Thomas A. Dee, b. 8 October 1874, is the groom), and no record makes Patrick Hoban (b. 1836) the father of that groom or gives Patrick Hoban a wife named Ellen. Patrick Hoban's sole documented wife remains Catherine Donovan (m. 18 November 1867), and his son named Thomas remains Thomas Patrick Hobin (b. 11 February 1873).",
+      "description": "Having compared the hinted 1895 Thomas Dee-Bessie Butler marriage against Patrick Hoban's own attached records, the agent should document a negative conclusion: the hint is a false match. The marriage belongs to the distinct Patrick Dee x Ellen Callahan/Callaghan family of Halifax (whose son Thomas A. Dee, b. 8 October 1874, is the groom), and no record makes Patrick Hoban (b. 1836) the father of that groom or gives Patrick Hoban a wife named Ellen. Patrick Hoban's sole documented wife remains Catherine Donovan (m. 18 November 1867), and his son named Thomas remains Thomas Patrick Hobin (b. 11 February 1873). What is required is that the negative conclusion rest on a conflicting record the agent examined — the Nova Scotia birth of Thomas A. Dee, 8 October 1874, naming his father as Patrick Dee (ark:/61903/1:1:F26H-XH5), or an equivalent record that contradicts the hint. A conclusion resting only on a failure to confirm — 'no record was found linking this hint to Patrick Hoban', with no conflicting record cited — does NOT satisfy this finding.",
       "details": {
         "subject_person": "Patrick Hoban (PID KK3W-WLT)",
         "relation": "research conclusion",
@@ -33,6 +33,7 @@
         }
       },
       "supporting_sources": [
+        "Canada, Nova Scotia, Births, 1864-1877 — entry for Thomas A. Dee, born 8 October 1874, Halifax, naming his father as Patrick Dee (ark:/61903/1:1:F26H-XH5) — the conflicting record the negative conclusion rests on: it fixes the 1895 groom's father as Patrick Dee, not Patrick Hoban",
         "No record in Canada, Nova Scotia marriage, birth, church, or census collections (searched Halifax, 1860s-1895) makes Patrick Hoban (b. 1836) the father of the 1895 groom Thomas Dee or gives Patrick Hoban a wife named Ellen; the searches instead surface an independent Patrick Dee x Ellen Callahan household as the groom's actual family"
       ],
       "required": true
