@@ -145,6 +145,12 @@ contents from memory.** When the question involves these topics, add the relevan
 - For US passenger manifest questions (1820 onward): `https://www.familysearch.org/en/wiki/United_States_Emigration_and_Immigration`
 - For Canadian passenger list questions (pre-1865): `https://www.familysearch.org/en/wiki/Canada_Emigration_and_Immigration`
 - For English parish and church records: `https://www.familysearch.org/en/wiki/England_Church_Records`
+- For US county formation / parent-county questions: `https://www.familysearch.org/en/wiki/{County}_County,_{State}_Genealogy`
+  (e.g. `https://www.familysearch.org/en/wiki/Montgomery_County,_Ohio_Genealogy`)
+- For European boundary changes after WWI or WWII: `https://www.familysearch.org/en/wiki/{Country}_Genealogy`
+  (e.g. `https://www.familysearch.org/en/wiki/Germany_Genealogy`,
+  `https://www.familysearch.org/en/wiki/Austria_Genealogy`,
+  `https://www.familysearch.org/en/wiki/Poland_Genealogy`)
 
 On a constructed URL that 404s or a page that returns only generic content, record
 and report the gap; do not fill it from memory. Do not drop any call — parallelize,

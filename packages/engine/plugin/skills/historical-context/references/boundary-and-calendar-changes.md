@@ -35,13 +35,24 @@ live in Step 3. Do not restate these dates from memory; read them from
 the fetched page.
 
 - European boundary changes after WWI (dissolution of
-  Austria-Hungary, Ottoman Empire; creation of new states)
-- European boundary changes after WWII (Poland shifted west,
-  German territories reassigned, Baltic states absorbed into USSR)
+  Austria-Hungary, Ottoman Empire; creation of new states) and
+  after WWII (Poland shifted west, German territories reassigned,
+  Baltic states absorbed into USSR) — confirmed from the country's
+  genealogy wiki page (`{Country}_Genealogy`, e.g.
+  `Germany_Genealogy`, `Austria_Genealogy`, `Poland_Genealogy`),
+  fetched live in Step 3. Do not restate boundary shifts from
+  memory; read them from the fetched page.
 - Partition of Ireland (1922) — confirmed from `Ireland_Genealogy`,
   fetched live in Step 3.
 
 #### County formation
+
+Formation dates and parent counties are confirmed from each county's
+genealogy wiki page — the skill fetches
+`{County}_County,_{State}_Genealogy` (e.g.
+`Montgomery_County,_Ohio_Genealogy`) live in Step 3. Do not restate
+formation dates or parent-county names from memory; read them from
+the fetched page.
 
 New counties are created from existing ones throughout American
 history. This is extremely common and affects where records are
