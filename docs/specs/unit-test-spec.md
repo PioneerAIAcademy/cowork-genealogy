@@ -760,8 +760,10 @@ Optional object overriding the harness's default execution limits. All fields ar
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
 and wall-clock budget. If the callee has its own unit suite, that spends budget
 on coverage which already exists. Naming it here makes the PreToolUse hook
-record the delegation in `skills_invoked`, deny the launch, and let the run
-**continue** — so the caller still finishes its own logging and summary. (This
+deny the launch and let the run **continue** — so the caller still finishes its
+own logging and summary. A `Skill` call is also recorded in `skills_invoked`; a
+stubbed agent's spawn is recorded in `builtin_tool_calls` only, so assert either
+with `handoffs`. (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
 test still has work left.)

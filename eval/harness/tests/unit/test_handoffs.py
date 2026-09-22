@@ -122,6 +122,90 @@ def test_live_callee_hand_off_passes_on_a_spawn_and_fails_without_one():
         mod.test_live_callee_used_its_own_tools(tools, [], [], live)
 
 
+# --- the four other hand-off readers: Skill route, Agent route, wrong name ------
+
+_TREE_BEFORE = {"tree_gedcomx_json": {"persons": [{"id": "I1"}]}}
+_TREE_AFTER = {"tree_gedcomx_json": {"persons": [{"id": "I1"}, {"id": "I2"}]}}
+ROUTES = {
+    "skill": ([_skill("check-warnings")], True),
+    "agent": ([_spawn("check-warnings")], True),
+    "wrong_name": ([_spawn("conflict-resolution")], False),
+}
+
+
+@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
+def test_tree_edit_check_warnings_after_a_write(route):
+    calls, ok = ROUTES[route]
+    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
+    check = lambda: _validators("test_tree_edit").test_check_warnings_runs_after_any_tree_write(  # noqa: E731
+        _TREE_BEFORE, _TREE_AFTER, skills, calls
+    )
+    if ok:
+        check()
+    else:
+        with pytest.raises(AssertionError):
+            check()
+
+
+@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
+def test_person_evidence_check_warnings_after_a_write(route):
+    calls, ok = ROUTES[route]
+    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
+    before = {"research_json": {"person_evidence": []}, **_TREE_BEFORE}
+    after = {"research_json": {"person_evidence": [{"id": "pe_001"}]}, **_TREE_BEFORE}
+    check = lambda: _validators("test_person_evidence").test_check_warnings_runs_after_a_write(  # noqa: E731
+        before, after, skills, [], {"tags": ["check-warnings-required"]}, calls
+    )
+    if ok:
+        check()
+    else:
+        with pytest.raises(AssertionError):
+            check()
+
+
+@pytest.mark.parametrize(
+    "skills,calls,ok",
+    [
+        ([], [], True),
+        (["locality-guide"], [_skill("locality-guide")], False),
+        ([], [_spawn("locality-guide")], False),
+        ([], [_spawn("gps-mentor")], True),
+    ],
+    ids=["no_hand_off", "skill_route", "agent_route", "other_agent"],
+)
+def test_research_plan_never_reaches_locality_guide(skills, calls, ok):
+    """Asserts a hand-off did NOT happen, so before issue #2825 a spawn of the
+    converted callee passed it: it failed open."""
+    check = lambda: _validators("test_research_plan").test_research_plan_no_out_of_lane_tools(  # noqa: E731
+        [], [], skills, calls
+    )
+    if ok:
+        check()
+    else:
+        with pytest.raises(AssertionError):
+            check()
+
+
+@pytest.mark.parametrize(
+    "skills,calls,ok",
+    [
+        ([], [], False),
+        (["research-plan"], [_skill("research-plan")], True),
+        ([], [_spawn("research-plan")], True),
+    ],
+    ids=["no_hand_off", "skill_route", "agent_route"],
+)
+def test_a_run_that_only_handed_off_is_not_dead(skills, calls, ok):
+    check = lambda: _validators("test_universal").test_activated_run_produces_response(  # noqa: E731
+        True, None, 0, 0, "", {"skill": "research"}, skills, calls
+    )
+    if ok:
+        check()
+    else:
+        with pytest.raises(AssertionError):
+            check()
+
+
 def _stub_spec(entries):
     return load_test_from_dict(
         {

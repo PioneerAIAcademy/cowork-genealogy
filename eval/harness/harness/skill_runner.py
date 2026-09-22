@@ -345,10 +345,14 @@ def handoffs(
 
     One walk over `builtin_tool_calls`, which records `Skill` calls and spawns
     alike in hook order, so the interleaving is real rather than reconstructed.
-    Spawns are main-thread only, as in `spawned_agents`; `Skill` calls are not
-    filtered by `agent_id`, matching how `skills_invoked` is collected. A caller
-    with no `Skill` record in `builtin_tool_calls` — a fixture that sets only
-    `skills_invoked` — gets `skills_invoked` followed by the spawns.
+    Main-thread calls only, the rule `spawned_agents` uses: a hand-off is the
+    caller's, not one made inside a subagent. A caller with no `Skill` record in
+    `builtin_tool_calls` — a fixture that sets only `skills_invoked` — gets
+    `skills_invoked` followed by the spawns.
+
+    Every named spawn counts, advisory ones included: a `/research` router that
+    spawns `gps-mentor` before the callee a routing test expects took a different
+    first route, and that is what a `routes-to:` test asserts.
     """
     calls = builtin_tool_calls or []
     if not any(call.get("tool") == "Skill" for call in calls):
@@ -356,9 +360,11 @@ def handoffs(
     out: list[str] = []
     for call in calls:
         tool = call.get("tool")
+        if "agent_id" in call:
+            continue
         if tool == "Skill":
             name, _ = read_skill_tool_input(call.get("args") or {})
-        elif tool in SPAWN_TOOL_NAMES and "agent_id" not in call:
+        elif tool in SPAWN_TOOL_NAMES:
             name = (call.get("args") or {}).get("subagent_type")
         else:
             continue
