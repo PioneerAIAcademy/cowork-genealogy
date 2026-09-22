@@ -14,7 +14,7 @@ function AssertionCard({ assertion }: { assertion: Assertion }): React.JSX.Eleme
       badges={
         <>
           <StatusBadge value={assertion.information_quality} />
-          <StatusBadge value={assertion.evidence_type} />
+          <StatusBadge value={assertion.record_basis} />
         </>
       }
       summary={`${assertion.informant} (${assertion.informant_proximity.replace(/_/g, ' ')})`}
@@ -98,7 +98,7 @@ export default function AssertionsSection(): React.JSX.Element {
   )
 
   const evidenceTypes = useMemo(
-    () => Array.from(new Set(assertions.map((a) => a.evidence_type))).sort(),
+    () => Array.from(new Set(assertions.map((a) => a.record_basis))).sort(),
     [assertions]
   )
 
@@ -106,7 +106,7 @@ export default function AssertionsSection(): React.JSX.Element {
     () =>
       assertions.filter((a) => {
         if (factTypeFilter !== 'all' && a.fact_type !== factTypeFilter) return false
-        if (evidenceTypeFilter !== 'all' && a.evidence_type !== evidenceTypeFilter) return false
+        if (evidenceTypeFilter !== 'all' && a.record_basis !== evidenceTypeFilter) return false
         return true
       }),
     [assertions, factTypeFilter, evidenceTypeFilter]

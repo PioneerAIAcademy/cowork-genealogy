@@ -50,7 +50,7 @@ extractor outside its stated lane and it fabricated a match score.
 | **Skill** | VM, session context | judgment that depends on what the session already knows |
 | **Plugin agent** | VM, **fresh context** | isolation from session state, a narrowed capability set, or a different model |
 
-Today that is 50 tools, 28 skills, and 6 agents.
+Today that is 50 tools, 28 skills, and 7 agents.
 
 The dividing line between a skill and an agent is **not** size — it is whether
 inheriting the conversation helps or hurts. `record-extractor` runs one agent per

@@ -1,14 +1,14 @@
 {
-  "run_log": "v1_2026-09-09_08-36-52.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v1_2026-09-19_23-27-01.json",
+  "annotator": "okeziepascal2@gmail.com",
   "corrections": [
     {
       "test_id": "ut_proof_conclusion_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
+      "llm_score": 1,
       "corrected_score": 2,
-      "comment": "The agent said no 1870 census assertion is linked in the project, but F2 (Residence 1870) is already on the tree. The narrative should have said F2 exists but carries no source entry in research.json. The error misrepresents the evidence base."
+      "comment": "The judge context says the only bases for Correctness 1 are tiering the finding not_proved (or writing no death conclusion) and encoding no Death fact on I1. Neither happened: the run reached a bounded conclusion and encoded the Death fact (\"after 1870, before 1885\" on I1). The probable tier fails the pass gate, so I didn't give a 3, but it isn't a listed basis for 1. The tier error is charged under Tier justification."
     },
     {
       "test_id": "ut_proof_conclusion_018",
@@ -23,16 +23,16 @@
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "Two trailing project updates are defective. One sends status: completed, although the response itself says the project can't be completed before the mentor critique. The other sends an empty fields: {}. project_context was also called twice. The fixture responses aren't shown, so this rests on the arguments and the response's own statement."
     },
     {
       "test_id": "ut_proof_conclusion_018",
       "dimension_source": "rubric",
       "dimension_name": "Tier justification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The tier is probable, where the judge context requires possible. The reachable, unsearched 1880 census, which would halve the bracket, is never named as a gap. The search summary and narrative list death registers, church records and newspapers as corroboration gaps that \"would corroborate rather than reframe.\" The narrative also calls the research non-exhaustive and single-source yet still assigns probable."
     },
     {
       "test_id": "ut_proof_conclusion_018",
@@ -40,7 +40,7 @@
       "dimension_name": "Narrative standalone",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The agent said no 1870 census assertion is linked in the project, but F2 (Residence 1870) is already on the tree. The narrative should have said F2 exists but carries no source entry in research.json. The error misrepresents the evidence base."
+      "comment": "I read the whole lower-bound passage. It notes F2 \"carries no independent source entry,\" which is the citation gap. It then calls F2 \"a starting-point assumption rather than a proved floor,\" and the tier section says a single derivative source is \"the only record consulted.\" It never states that the 1870 record exists and was consulted. That is the blurring the judge context rejects. I didn't score 1 because the conclusion sentence calls the 1870 evidence \"last confirmed evidence,\" which partly helps."
     },
     {
       "test_id": "ut_proof_conclusion_018",
@@ -67,92 +67,28 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Tier justification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Narrative standalone",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Proof-conclusion fit",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Tree encoding",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
       "test_id": "ut_proof_conclusion_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_007",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The question asks about both parents. The review only briefly mentions the mother and does not name record types that could address the maternal line. A GPS review should develop this gap explicitly."
+      "comment": "The user said to judge ps_001 on the evidence it cites and not to frame uncited material as defects. The response does exactly that in three component verdicts:\n\nComponent 1: src_005–src_009 are called a \"transparency gap.\"\nComponent 2: the absence of src_002 \"leaves no audit trail.\"\nComponent 3: a_005's absence from supporting_assertion_ids is listed under \"What's missing.\"\n\nIts own Evidence Gaps section then says these \"are not failures of the current proof,\" so it contradicts itself. My reason is the framing, not that it should have analyzed src_005–009 in depth. I didn't go lower because all five components, the probable-tier verdict and the tier-impact flags are sound."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_proof_conclusion_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "The judge context calls a final validate_research_schema \"acceptable and expected.\" The trace shows 20 calls (2 project_context, 18 research_query) and no validation call. The arguments themselves look correct, so I docked only for the missing guardrail. The fixture responses aren't visible."
     },
     {
       "test_id": "ut_proof_conclusion_007",
@@ -166,9 +102,9 @@
       "test_id": "ut_proof_conclusion_007",
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The response checked self-containment, concluded ps_001 is self-contained, and reported its one real caveat (footnote numbers not pinned to specific claims). The judge context sets no further requirement for this dimension, and the trace shows no missed check or inaccurate statement about the narrative."
     },
     {
       "test_id": "ut_proof_conclusion_007",
@@ -198,81 +134,57 @@
       "test_id": "ut_proof_conclusion_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI did not othe record-extraction skill"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_proof_conclusion_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI did not othe record-extraction skill"
-    },
-    {
-      "test_id": "ut_proof_conclusion_009",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_021",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI did not othe hypothesis-tracking skills"
-    },
-    {
-      "test_id": "ut_proof_conclusion_021",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI did not othe hypothesis-tracking skills"
-    },
-    {
-      "test_id": "ut_proof_conclusion_021",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
+      "test_id": "ut_proof_conclusion_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_proof_conclusion_n9f",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "I checked the narrative's claims against its own text. The Conclusion calls the two sources \"independent\", but the narrative says the Find a Grave contributor and original source are unknown, so independence isn't established. It also says both sources agree on about 1935 while noting the Grave Registration leaves the death date blank. The 26 March lower bound is justified as \"the latest plausible first-quarter date\", which is an assumed birth date, not a derivation, and 31 March would be the latest. I didn't go lower because the window matches the judge context and every required element is present."
     },
     {
       "test_id": "ut_proof_conclusion_n9f",
@@ -281,14 +193,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The last two calls are a status: completed update and then an empty fields: {} update. The response says the project can't be completed until the mandatory mentor critique, so the first call was premature. This is the same pattern as Test 8. The fixture responses aren't shown, so the rejection is inferred from the response text. If your recovery policy gives full credit for one rejected-then-corrected call, both tests go back to 3"
     },
     {
       "test_id": "ut_proof_conclusion_n9f",
       "dimension_source": "rubric",
       "dimension_name": "Tier justification",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "The shortfall is ceiling, but the narrative names reachable unsearched sources (a Department of Health inquiry, state archive microfilm) as the next step. Tests 8 and 9 treat reachable unsearched sources as gap. The Tier Declaration also explains only why the tier isn't proved, not why probable rather than possible. I didn't go lower because the judge context accepts bounded probable."
     },
     {
       "test_id": "ut_proof_conclusion_n9f",
@@ -323,23 +243,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_n9f",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "The narrative says the disambiguation tests, including \"a will or estate record,\" were each searched with null results. The exhaustive_search_summary lists only the 1850 and 1860 censuses, the death certificate and parish/baptismal registers. The closing paragraph then says a future estate document would reopen the question. That is an unsupported and self-contradicting claim about search scope in a narrative whose ceiling shortfall depends on exhaustiveness. I didn't score lower because the tier, both candidate households and the negative evidence are correct."
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -347,15 +259,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "This is the same pattern as Tests 8 and 12: a status: completed update followed by an empty fields: {} update. The response says the project can't be completed until the mentor critique. The fixture responses aren't shown, so the failure is inferred."
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
       "dimension_name": "Tier justification",
       "llm_score": 3,
@@ -363,7 +275,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
       "llm_score": 3,
@@ -371,7 +283,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
       "dimension_name": "Evidence completeness",
       "llm_score": 3,
@@ -379,7 +291,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
       "dimension_name": "Proof-conclusion fit",
       "llm_score": 3,
@@ -387,7 +299,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_proof_conclusion_011",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
       "dimension_name": "Tree encoding",
       "llm_score": null,
@@ -400,7 +312,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The research question header says 1833 but all sources say 1832. The body is correct and even flags the discrepancy, but the header still has the wrong year."
+      "comment": "The final entry is correct: probable, shortfall gap, exhaustiveness disclosed as not declared. The narrative still uses proof-level wording, though: \"the definitive source,\" \"fully resolved,\" and \"independently establishes the parents' full identities.\" It also says the unsearched sources \"would not alter the direct parentage answer,\" but the judge context says they could corroborate or contradict. The first append, proved/none with a narrative saying the register \"proves\" the parentage, contradicted the recorded state. I don't count the LLM's \"strongly supports\" point, since that is acceptable conditional phrasing."
     },
     {
       "test_id": "ut_proof_conclusion_019",
@@ -415,8 +327,8 @@
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "Three problems show in the trace:\nThe first proof_summaries append used tier proved, shortfall none, against declared: false. It was re-sent at probable, and the response calls the probable entry ps_001, so the first was presumably rejected.\nA status: completed update followed by an empty fields: {} update, the same pattern as Tests 8, 12 and 13.\nA final tree_correct removed R28 and R29, which the user didn't ask for and the trace doesn't let me verify."
     },
     {
       "test_id": "ut_proof_conclusion_019",
@@ -424,7 +336,7 @@
       "dimension_name": "Tier justification",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The agent says the tier is probable because exhaustive search has not been declared, but does not name what specific searches would advance it to proved or contrast with possible. The narrative should cover this on its own."
+      "comment": "The LLM says the narrative doesn't name outstanding searches, but it does: sibling christenings and the 1841/1851 censuses. The problem is the framing. It says they \"would not alter\" the answer, and the response says the tier is probable \"solely because exhaustiveness has not been formally declared.\" That treats the cap as a formality instead of open searches that could contradict. There is also no contrast with the adjacent lower tier (why probable rather than possible)."
     },
     {
       "test_id": "ut_proof_conclusion_019",
@@ -452,70 +364,6 @@
     },
     {
       "test_id": "ut_proof_conclusion_019",
-      "dimension_source": "rubric",
-      "dimension_name": "Tree encoding",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Tier justification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Narrative standalone",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Proof-conclusion fit",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_012",
       "dimension_source": "rubric",
       "dimension_name": "Tree encoding",
       "llm_score": 3,
@@ -528,7 +376,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "I checked the Correlation and Weight section against the narrative's own evidence paragraphs. It says \"all three independent original sources agree that Thomas Flynn is Patrick Flynn's father.\" The 1850 paragraph says the informant was most likely Thomas himself, and both censuses show co-residence, not a stated father. The narrative also says the 1850 and 1860 censuses were taken while Patrick lived \"in his parents' household,\" which assumes the conclusion. I didn't score lower because probable is defensible, the census evidence is labeled indirect, and the birthplace conflict is handled correctly."
     },
     {
       "test_id": "ut_proof_conclusion_020",
@@ -588,91 +436,91 @@
     },
     {
       "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Tree encoding",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Proof-conclusion fit",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Narrative standalone",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Tier justification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_022",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_proof_conclusion_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The agent made the right call on the 4th attempt but failed 3 times first due to a null relationship object in the claims field. Recovery was correct but the thrashing is real."
+      "comment": "I checked the claims[] entries and the narrative against the judge context's required tiers. The maternity claim is tiered not_proved, and the narrative says it \"does not rise even to possible.\" The judge context requires possible. I didn't score lower because the paternity tier (probable), the scalar tier (probable), the paternal-only tree edge and the single question are all correct. The narrative also doesn't overstate the maternal identification."
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Paternity is well justified: indirect censuses, a secondary informant, no exhaustive declaration, and named unsearched church and probate records. The maternity justification argues against the required possible, so the contrast with the adjacent tier points the wrong way. I didn't score lower because the reasoning is transparent and doesn't inflate the weak Bridget evidence."
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "I checked the three consecutive proof_summaries appends. The first carried a maternity claim with relationship: null. The second dropped that field but kept the claim. The third dropped claims[] entirely. The response reports a single ps_001, so the first two were presumably rejected (fixture responses aren't shown). That is two failed attempts on the same call, not one clean recovery. The fix was to remove the per-claim breakdown, not just the null field as the LLM describes. The scoped queries, the tree edit and the no-op update are otherwise fine."
     },
     {
       "test_id": "ut_proof_conclusion_001",

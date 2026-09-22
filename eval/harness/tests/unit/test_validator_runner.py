@@ -271,7 +271,7 @@ def test_expected_classifications_pass_when_matchers_satisfied():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "age",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
             "informant_proximity": "family_not_present",
             "information_quality": "secondary",
         },
@@ -279,7 +279,7 @@ def test_expected_classifications_pass_when_matchers_satisfied():
             "id": "a_2",
             "record_role": "deceased",
             "fact_type": "death",
-            "evidence_type": "direct",
+            "record_basis": "stated",
             "informant_proximity": "official_duty",
         },
     ]
@@ -289,13 +289,13 @@ def test_expected_classifications_pass_when_matchers_satisfied():
             {
                 "record_role": "deceased",
                 "fact_type": "age",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             },
             {
                 "record_role": "deceased",
                 "fact_type": "death",
-                "evidence_type": "direct",
+                "record_basis": "stated",
                 "informant_proximity": "official_duty",
             },
         ],
@@ -312,7 +312,7 @@ def test_expected_classifications_fail_names_assertion_field_got_expected():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "age",
-            "evidence_type": "direct",  # doctrine says indirect
+            "record_basis": "stated",  # doctrine says indirect
             "informant_proximity": "family_not_present",
         },
     ]
@@ -322,13 +322,13 @@ def test_expected_classifications_fail_names_assertion_field_got_expected():
             {
                 "record_role": "deceased",
                 "fact_type": "age",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
     )
     assert result.passed is False
-    for fragment in ("a_1", "evidence_type", "direct", "indirect"):
+    for fragment in ("a_1", "record_basis", "stated", "inferred"):
         assert fragment in (result.error or ""), (
             f"failure message missing {fragment!r}: {result.error}"
         )
@@ -339,7 +339,7 @@ def test_expected_classifications_fail_when_pair_missing_and_skip_when_absent():
     carries fails the existence half; a test without the block skips."""
     result = _run_expected_classifications(
         [],
-        [{"record_role": "deceased", "fact_type": "age", "evidence_type": "indirect"}],
+        [{"record_role": "deceased", "fact_type": "age", "record_basis": "inferred"}],
     )
     assert result.passed is False
     assert "no assertion carried" in (result.error or "")
@@ -363,7 +363,7 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "CauseOfDeath",
-            "evidence_type": "direct",
+            "record_basis": "stated",
             "informant_proximity": "official_duty",
         },
         {
@@ -371,7 +371,7 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
             "record_role": "Deceased",
             "fact_type": "Birth",
             "place": "Ireland",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
             "informant_proximity": "family_not_present",
         },
     ]
@@ -381,14 +381,14 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
             {
                 "record_role": "deceased",
                 "fact_type": "cause_of_death",
-                "evidence_type": "direct",
+                "record_basis": "stated",
                 "informant_proximity": "official_duty",
             },
             {
                 "record_role": "deceased",
                 "fact_type": "birth",
                 "attribute": "place",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             },
         ],
@@ -403,28 +403,28 @@ def test_expected_classifications_optional_skips_existence_but_checks_classifica
     # Absent + optional → passes (no existence requirement).
     absent = _run_expected_classifications(
         [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
         [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert absent.passed is True, f"unexpected failure: {absent.error}"
 
     # Present + optional + WRONG classification → still fails (teeth on classification).
     wrong = _run_expected_classifications(
         [{"id": "a_1", "record_role": "father_of_deceased", "fact_type": "name",
-          "evidence_type": "direct"}],  # doctrine says indirect
+          "record_basis": "stated"}],  # doctrine says indirect
         [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert wrong.passed is False
-    assert "evidence_type" in (wrong.error or "")
+    assert "record_basis" in (wrong.error or "")
 
     # Absent WITHOUT optional → fails existence (the default, unchanged).
     required = _run_expected_classifications(
         [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
         [{"record_role": "father_of_deceased", "fact_type": "name",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert required.passed is False
     assert "no assertion carried" in (required.error or "")
@@ -433,24 +433,24 @@ def test_expected_classifications_optional_skips_existence_but_checks_classifica
 def test_expected_classifications_value_pins_the_fact_value():
     """`value` (#1108) checks the fact VALUE, not a layer. The ut_013 leak —
     Patrick's birthplace persisted 'Pennsylvania' where the record says
-    'Ireland' — is `direct` either way, so only a value matcher catches it.
+    'Ireland' — is `stated` either way, so only a value matcher catches it.
     Substring + case-insensitive, read from the attribute-relevant field."""
     # Correct value → passes.
     ok = _run_expected_classifications(
         [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
-          "place": "Ireland", "evidence_type": "direct"}],
+          "place": "Ireland", "record_basis": "stated"}],
         [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
-          "value": "Ireland", "evidence_type": "direct"}],
+          "value": "Ireland", "record_basis": "stated"}],
     )
     assert ok.passed is True, f"unexpected failure: {ok.error}"
 
-    # The ut_013 leak: wrong birthplace value, still classified `direct` → the
-    # value matcher fails where the evidence_type facet alone would pass.
+    # The ut_013 leak: wrong birthplace value, still classified `stated` → the
+    # value matcher fails where the record_basis facet alone would pass.
     leak = _run_expected_classifications(
         [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
-          "place": "Pennsylvania", "evidence_type": "direct"}],
+          "place": "Pennsylvania", "record_basis": "stated"}],
         [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
-          "value": "Ireland", "evidence_type": "direct"}],
+          "value": "Ireland", "record_basis": "stated"}],
     )
     assert leak.passed is False
     for frag in ("a_1", "Ireland", "Pennsylvania"):
@@ -460,16 +460,16 @@ def test_expected_classifications_value_pins_the_fact_value():
     std = _run_expected_classifications(
         [{"id": "a_1", "record_role": "child_3", "fact_type": "birth",
           "place": "Pennsylvania", "standard_place": "Pennsylvania, United States",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
         [{"record_role": "child_3", "fact_type": "birth", "attribute": "place",
-          "value": "Pennsylvania", "evidence_type": "direct"}],
+          "value": "Pennsylvania", "record_basis": "stated"}],
     )
     assert std.passed is True, f"unexpected failure: {std.error}"
 
 
 def test_expected_classifications_attribute_facet_separates_birth_claims():
-    """A `birth` place-claim (place set, `direct`) and a `birth` date-claim
-    (date set, `indirect`) share the `birth` fact_type but are independently
+    """A `birth` place-claim (place set, `stated`) and a `birth` date-claim
+    (date set, `inferred`) share the `birth` fact_type but are independently
     checkable via `attribute`: the place matcher grades only the place-claim,
     the date matcher only the date-claim — even though a naive fact_type-only
     match would conflate them and fail the census direct/indirect split."""
@@ -479,23 +479,23 @@ def test_expected_classifications_attribute_facet_separates_birth_claims():
             "record_role": "head_of_household",
             "fact_type": "birth",
             "place": "Ireland",
-            "evidence_type": "direct",
+            "record_basis": "stated",
         },
         {
             "id": "a_date",
             "record_role": "head_of_household",
             "fact_type": "birth",
             "date": "~1818",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [
             {"record_role": "head_of_household", "fact_type": "birth",
-             "attribute": "place", "evidence_type": "direct"},
+             "attribute": "place", "record_basis": "stated"},
             {"record_role": "head_of_household", "fact_type": "birth",
-             "attribute": "date", "evidence_type": "indirect"},
+             "attribute": "date", "record_basis": "inferred"},
         ],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
@@ -510,7 +510,7 @@ def test_expected_classifications_role_prefix_matches_of_form():
             "id": "a_1",
             "record_role": "father",
             "fact_type": "Name",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
             "informant_proximity": "family_not_present",
         },
     ]
@@ -520,7 +520,7 @@ def test_expected_classifications_role_prefix_matches_of_form():
             {
                 "record_role": "father_of_deceased",
                 "fact_type": "name",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
@@ -541,12 +541,12 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
                 "id": "a_1",
                 "record_role": "witness",
                 "fact_type": "name",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
         [{"record_role": "father_of_deceased", "fact_type": "name",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert wrong_role.passed is False
     assert "record_role='father_of_deceased'" in (wrong_role.error or "")
@@ -560,12 +560,12 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
                 "record_role": "deceased",
                 "fact_type": "Birth",
                 "date": "~1845",  # a date-claim, no place
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
         [{"record_role": "deceased", "fact_type": "birth", "attribute": "place",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert wrong_facet.passed is False
     assert "attribute='place'" in (wrong_facet.error or "")
@@ -579,15 +579,15 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
                 "record_role": "father",
                 "fact_type": "Birth",
                 "place": "Ireland",
-                "evidence_type": "direct",  # doctrine says indirect
+                "record_basis": "stated",  # doctrine says indirect
                 "informant_proximity": "family_not_present",
             }
         ],
         [{"record_role": "father_of_deceased", "fact_type": "birth",
-          "attribute": "place", "evidence_type": "indirect"}],
+          "attribute": "place", "record_basis": "inferred"}],
     )
     assert wrong_value.passed is False
-    for fragment in ("a_1", "evidence_type", "direct", "indirect"):
+    for fragment in ("a_1", "record_basis", "stated", "inferred"):
         assert fragment in (wrong_value.error or ""), (
             f"failure message missing {fragment!r}: {wrong_value.error}"
         )
@@ -603,14 +603,14 @@ def test_expected_classifications_record_role_as_list():
             "id": "a_1",
             "record_role": "head_of_household",
             "fact_type": "name",
-            "evidence_type": "direct",
+            "record_basis": "stated",
             "informant_proximity": "self",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": ["head_of_household", "head"], "fact_type": "name",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
 
@@ -623,13 +623,13 @@ def test_expected_classifications_record_role_list_fails_when_no_role_matches():
             "id": "a_1",
             "record_role": "witness",
             "fact_type": "name",
-            "evidence_type": "direct",
+            "record_basis": "stated",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": ["head", "deceased"], "fact_type": "name",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
     )
     assert result.passed is False
     assert "no assertion carried" in (result.error or "")
@@ -643,35 +643,35 @@ def test_expected_classifications_record_role_list_prefix_of_still_works():
             "id": "a_1",
             "record_role": "father_of_deceased",
             "fact_type": "name",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": ["father", "mother"], "fact_type": "name",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
 
 
 def test_expected_classifications_record_role_list_wrong_classification_still_fails():
-    """Role matches via list but wrong evidence_type still fails (teeth)."""
+    """Role matches via list but wrong record_basis still fails (teeth)."""
     assertions = [
         {
             "id": "a_1",
             "record_role": "child_1",
             "fact_type": "name",
-            "evidence_type": "direct",  # matcher says indirect
+            "record_basis": "stated",  # matcher says indirect
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": ["child_1", "child_2", "daughter_1"], "fact_type": "name",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert result.passed is False
-    assert "evidence_type" in (result.error or "")
-    assert "direct" in (result.error or "")
+    assert "record_basis" in (result.error or "")
+    assert "stated" in (result.error or "")
 
 
 def test_expected_classifications_record_role_list_fact_type_mismatch():
@@ -682,13 +682,13 @@ def test_expected_classifications_record_role_list_fact_type_mismatch():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "age",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": ["deceased"], "fact_type": "death",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
     )
     assert result.passed is False
     assert "but none matched" in (result.error or "")
@@ -703,12 +703,12 @@ def test_expected_classifications_record_role_empty_list_does_not_crash():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "age",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     result = _run_expected_classifications(
         assertions,
-        [{"record_role": [], "fact_type": "age", "evidence_type": "indirect"}],
+        [{"record_role": [], "fact_type": "age", "record_basis": "inferred"}],
     )
     assert result.passed is False
     assert "no assertion carried" in (result.error or "")
@@ -719,8 +719,8 @@ def test_expected_classifications_record_role_null_does_not_crash():
     existence gracefully, not crash."""
     result = _run_expected_classifications(
         [{"id": "a_1", "record_role": "deceased", "fact_type": "age",
-          "evidence_type": "indirect"}],
-        [{"record_role": None, "fact_type": "age", "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
+        [{"record_role": None, "fact_type": "age", "record_basis": "inferred"}],
     )
     assert result.passed is False
     assert "no assertion carried" in (result.error or "")
@@ -739,7 +739,7 @@ def test_expected_classifications_relationship_type_facet_filters_by_category():
             "fact_type": "relationship",
             "value": "daughter of Thomas Flynn",
             "structured_value": {"relationship_type": "daughter"},
-            "evidence_type": "direct",
+            "record_basis": "stated",
         },
         {
             "id": "a_spouse",
@@ -747,14 +747,14 @@ def test_expected_classifications_relationship_type_facet_filters_by_category():
             "fact_type": "relationship",
             "value": "wife of Thomas Flynn",
             "structured_value": {"relationship_type": "wife"},
-            "evidence_type": "direct",
+            "record_basis": "stated",
         },
     ]
     # Child-category matcher → matches only a_child (daughter maps to child).
     result = _run_expected_classifications(
         assertions,
         [{"record_role": "child_1", "fact_type": "relationship",
-          "relationship_type": "child", "evidence_type": "direct"}],
+          "relationship_type": "child", "record_basis": "stated"}],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
 
@@ -769,13 +769,13 @@ def test_expected_classifications_relationship_type_facet_inferred_suffix():
             "fact_type": "relationship",
             "value": "child of Thomas Flynn (inferred)",
             "structured_value": {"relationship_type": "child_inferred"},
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": "child_1", "fact_type": "relationship",
-          "relationship_type": "child", "evidence_type": "indirect"}],
+          "relationship_type": "child", "record_basis": "inferred"}],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
 
@@ -790,13 +790,13 @@ def test_expected_classifications_relationship_type_facet_rejects_wrong_category
             "fact_type": "relationship",
             "value": "son of Thomas Flynn",
             "structured_value": {"relationship_type": "son"},
-            "evidence_type": "direct",
+            "record_basis": "stated",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": "child_1", "fact_type": "relationship",
-          "relationship_type": "spouse", "evidence_type": "direct"}],
+          "relationship_type": "spouse", "record_basis": "stated"}],
     )
     assert result.passed is False
     assert "but none matched" in (result.error or "")
@@ -813,13 +813,13 @@ def test_expected_classifications_relationship_type_facet_absent_means_no_filter
             "fact_type": "relationship",
             "value": "daughter of Thomas Flynn",
             "structured_value": {"relationship_type": "daughter"},
-            "evidence_type": "direct",
+            "record_basis": "stated",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": "child_1", "fact_type": "relationship",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
 
@@ -834,14 +834,14 @@ def test_expected_classifications_relationship_type_facet_unknown_category_liter
             "fact_type": "relationship",
             "value": "stepfather of Charles",
             "structured_value": {"relationship_type": "stepfather_inferred"},
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     # stepfather matches stepfather_inferred (both bases equal after strip).
     result = _run_expected_classifications(
         assertions,
         [{"record_role": "head", "fact_type": "relationship",
-          "relationship_type": "stepfather", "evidence_type": "indirect"}],
+          "relationship_type": "stepfather", "record_basis": "inferred"}],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
 
@@ -855,13 +855,13 @@ def test_expected_classifications_relationship_type_facet_unknown_category_liter
             "fact_type": "relationship",
             "value": "uncle of Charles",
             "structured_value": {"relationship_type": "uncle"},
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": "head", "fact_type": "relationship",
-          "relationship_type": "stepfather", "evidence_type": "indirect"}],
+          "relationship_type": "stepfather", "record_basis": "inferred"}],
     )
     assert result.passed is False
     assert "but none matched" in (result.error or "")
@@ -876,14 +876,14 @@ def test_expected_classifications_relationship_type_facet_no_structured_value():
             "record_role": "child_1",
             "fact_type": "relationship",
             "value": "daughter of Thomas Flynn",
-            "evidence_type": "direct",
+            "record_basis": "stated",
             # no structured_value key at all
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [{"record_role": "child_1", "fact_type": "relationship",
-          "relationship_type": "child", "evidence_type": "direct"}],
+          "relationship_type": "child", "record_basis": "stated"}],
     )
     assert result.passed is False
     assert "but none matched" in (result.error or "")
@@ -925,14 +925,14 @@ def _birth_assertion(**overrides):
         "value": "Ohio",
         "place": "Ohio, United States",
         "date": None,
-        "evidence_type": "direct",
+        "record_basis": "stated",
     }
     base.update(overrides)
     return base
 
 
 def test_birth_year_rule_flags_dateless_compound_value():
-    """The defect (#1407): a place-keyed `direct` birth assertion carrying a
+    """The defect (#1407): a place-keyed `stated` birth assertion carrying a
     year in `value` and NO structured `date` — two facts in one assertion,
     invisible to every structured matcher."""
     result = _run_birth_year_rule(
@@ -990,7 +990,7 @@ def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
     that adds only the birthplace — it smuggled nothing."""
     seeded = _birth_assertion(
         id="seed_1", value="about 1845", place=None, date="~1845",
-        evidence_type="indirect",
+        record_basis="inferred",
     )
     before = _empty_research_state()
     before["files"] = {}
@@ -1022,8 +1022,8 @@ def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
 
 def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
     """The ut_028 shape, from the 2026-08-14 paid run. The party gets TWO
-    atomic birth assertions — a `direct` place-claim whose label redundantly
-    repeats the year, beside an `indirect` date-claim that states it
+    atomic birth assertions — a `stated` place-claim whose label redundantly
+    repeats the year, beside an `inferred` date-claim that states it
     structurally. Atomicity is correct and nothing is lost, so this must not
     fail; the pre-fix rule reddened it."""
     result = _run_birth_year_rule(
@@ -1034,7 +1034,7 @@ def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
                 value="about 1887, Cincinnati, Ohio",
                 place="Cincinnati, Ohio",
                 date=None,
-                evidence_type="direct",
+                record_basis="stated",
             ),
             _birth_assertion(
                 id="a_2",
@@ -1042,7 +1042,7 @@ def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
                 value="about 1887",
                 place=None,
                 date="~1887",
-                evidence_type="indirect",
+                record_basis="inferred",
             ),
         ]
     )
@@ -1060,7 +1060,7 @@ def test_birth_year_rule_exemption_is_scoped_to_the_same_role():
             ),
             _birth_assertion(
                 id="a_2", record_role="bride", value="about 1845",
-                place=None, date="~1845", evidence_type="indirect",
+                place=None, date="~1845", record_basis="inferred",
             ),
         ]
     )
@@ -1078,7 +1078,7 @@ def test_birth_year_rule_exemption_is_scoped_to_the_same_record():
     smuggled["record_id"] = "recB"
     other = _birth_assertion(
         id="a_2", value="about 1845", place=None, date="~1845",
-        evidence_type="indirect",
+        record_basis="inferred",
     )
     other["record_id"] = "recA"
     result = _run_birth_year_rule([smuggled, other])
@@ -1100,7 +1100,7 @@ def test_birth_year_rule_tolerates_a_second_year_in_the_label():
             ),
             _birth_assertion(
                 id="a_2", value="about 1845", place=None, date="~1845",
-                evidence_type="indirect",
+                record_basis="inferred",
             ),
         ]
     )
@@ -1118,10 +1118,10 @@ def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
     assert _run_birth_year_rule(
         [_birth_assertion(value="born about 1845", place=None, date=None)]
     ).passed is True
-    # indirect: place-keyed and dateless, spared only by evidence_type.
+    # indirect: place-keyed and dateless, spared only by record_basis.
     assert _run_birth_year_rule(
         [_birth_assertion(value="born about 1845, Ohio", date=None,
-                          evidence_type="indirect")]
+                          record_basis="inferred")]
     ).passed is True
     # non-birth fact_type, likewise place-keyed, dateless and direct.
     assert _run_birth_year_rule(
@@ -1156,31 +1156,31 @@ def _run_pre1880_rule(assertions, tags):
     return result
 
 
-def _relationship(rel_type, evidence_type="indirect"):
+def _relationship(rel_type, record_basis="inferred"):
     return {
         "id": "a_1",
         "record_role": "child_1",
         "fact_type": "relationship",
         "value": "child of Thomas Flynn",
         "structured_value": {"relationship_type": rel_type},
-        "evidence_type": evidence_type,
+        "record_basis": record_basis,
     }
 
 
 @pytest.mark.parametrize(
-    "rel_type,evidence_type",
+    "rel_type,record_basis",
     [
-        ("child_inferred", "indirect"),  # the OLD policy's correct output
-        ("spouse_inferred", "indirect"),
-        ("child", "direct"),  # and the plainly-wrong one
+        ("child_inferred", "inferred"),  # the OLD policy's correct output
+        ("spouse_inferred", "inferred"),
+        ("child", "stated"),  # and the plainly-wrong one
     ],
 )
-def test_pre_1880_rule_rejects_any_relationship_assertion(rel_type, evidence_type):
-    """The `_inferred`/`indirect` form is rejected too — that is the whole
+def test_pre_1880_rule_rejects_any_relationship_assertion(rel_type, record_basis):
+    """The `_inferred`/`inferred` form is rejected too — that is the whole
     reversal (#1626, decided 2026-08-15). Labelling the doubt is still
     asserting the relationship."""
     result = _run_pre1880_rule(
-        [_relationship(rel_type, evidence_type)], ["census", "1870"]
+        [_relationship(rel_type, record_basis)], ["census", "1870"]
     )
     assert result.passed is False
     assert "no relationship column" in (result.error or ""), result.error
@@ -1195,14 +1195,14 @@ def test_pre_1880_rule_passes_when_only_stated_facts_are_written():
                 "record_role": "child_1",
                 "fact_type": "name",
                 "value": "John Baker",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             },
             {
                 "id": "a_2",
                 "record_role": "head_of_household",
                 "fact_type": "residence",
                 "place": "Cincinnati, Hamilton, Ohio",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             },
         ],
         ["census", "1870"],
@@ -1227,9 +1227,9 @@ def test_pre_1880_rule_gate_derives_the_year_from_tags(tags):
     ],
 )
 def test_pre_1880_rule_skips_everything_it_should_not_gate(tags):
-    """1880+ census relationships are STATED and stay `direct`; a
+    """1880+ census relationships are STATED and stay `stated`; a
     non-census record is out of scope entirely."""
-    result = _run_pre1880_rule([_relationship("child", "direct")], tags)
+    result = _run_pre1880_rule([_relationship("child", "stated")], tags)
     assert result.passed is True, result.error
 
 
@@ -1266,7 +1266,7 @@ def test_bare_name_rule_flags_the_persona_collapse_shape():
                 "record_role": "groom",
                 "fact_type": "name",
                 "value": "John Becker (father of Frank Becker)",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -1286,7 +1286,7 @@ def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
                 "record_role": "daughter_in_law_1",
                 "fact_type": "name",
                 "value": "Linda (given name only; spouse of Robert Whitaker)",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -1320,7 +1320,7 @@ def test_bare_name_rule_leaves_legitimate_name_values_alone(value):
                 "record_role": "bride",
                 "fact_type": "name",
                 "value": value,
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -1351,7 +1351,7 @@ def test_bare_name_rule_catches_the_wider_relation_vocabulary(value, expected):
                 "record_role": "groom",
                 "fact_type": "name",
                 "value": value,
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -1372,7 +1372,7 @@ def test_bare_name_rule_exempts_negative_evidence():
                 # the exemption it names (which is what it did before #1631's
                 # review — deleting the exemption left all 16 tests green).
                 "value": "not recorded (father of the bride)",
-                "evidence_type": "negative",
+                "record_basis": "absent",
             }
         ]
     )
@@ -1423,7 +1423,7 @@ def _rel(rel_type, value):
     return [{
         "id": "a_1", "record_role": "child_1", "fact_type": "relationship",
         "value": value, "structured_value": {"relationship_type": rel_type},
-        "evidence_type": "direct",
+        "record_basis": "stated",
     }]
 
 
@@ -1486,8 +1486,137 @@ def test_rel_agreement_skips_what_it_cannot_compare(rel_type, value):
     assert result.passed is True, result.error
 
 
+@pytest.mark.parametrize(
+    "rel_type,value",
+    [
+        # The value LABELS the other party rather than stating the
+        # subject's role. Comparing relation words without regard to
+        # position refused 22 of the 37 it flagged over the e2e run logs,
+        # which is how two earlier guards here got their refusal rates.
+        ("child", "father named as Casper A. Battermiller on death cert"),
+        ("child", "mother named as Mary Mehlman on death certificate"),
+        ("child", "father: Jan Roelfs Harkema"),
+        # Carries " of ", so the role guard keeps it out: `groom` is a
+        # role word, not a name.
+        ("child", "Father of groom named as Tellef Aadnesen in 1840"),
+        # Carries " of " AND a label marker: only the label guard catches
+        # this one. No corpus assertion has the shape today, so without
+        # this case that guard is a branch no test can reach.
+        ("child", "father of the bride: Jan Roelfs Harkema"),
+        # The relation word is not the value's opening claim.
+        ("child", "named in the will of his brother John Grice"),
+    ],
+)
+def test_rel_agreement_reads_position_not_mere_presence(rel_type, value):
+    """Only a leading `<relation> of <name>` states the SUBJECT's own role.
+
+    `relationship_type` is the record subject's own role and
+    `related_person_role` is the other party's (research-schema-spec 5.6.1),
+    so a value that names the other party says nothing to disagree with.
+    Every case here was flagged by the previous word-anywhere rule and is
+    correct data."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is True, f"false positive on {rel_type}/{value}: {result.error}"
+
+
+@pytest.mark.parametrize(
+    "rel_type,value,states",
+    [
+        # The live, reproducing defect: 5 sightings across the three
+        # current record-extraction run logs (three of the five), every one typed `child`.
+        ("child", "sibling of Grace (Whitaker) Tolman", "sibling"),
+        # Its committed shape carries the `_inferred` suffix, which must be
+        # stripped before the category lookup or all three are missed.
+        ("child_inferred", "brother of John Grice (inferred)", "sibling"),
+    ],
+)
+def test_rel_agreement_catches_the_sibling_typed_as_a_child(rel_type, value, states):
+    """The half of issue #2535 that reproduces today. `sibling` was never
+    named as a legal `relationship_type` in the agent body, so the extractor
+    picked the nearest of the three values it had been given."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is False
+    assert states in (result.error or ""), result.error
+
+
+def test_relationship_direction_cases_match_the_shared_table():
+    """The Python half of a cross-language pact (issue #2535).
+
+    The rule exists twice -- here and in TypeScript at
+    `src/tools/research-append.ts` -- because the harness and the engine
+    share no runtime (CLAUDE.md, "Don't try to share code at runtime").
+    Duplication is forced; unpinned duplication is not. Both sides assert
+    against one table, so either drifting reds its own suite. The TS half is
+    `tests/packaging/relationship-direction-drift.test.ts`."""
+    import json
+    import sys
+    from pathlib import Path
+
+    # `test_record_extraction` imports `validators_lib` as a sibling, which
+    # resolves only with the validators dir itself on the path. Every other
+    # test in this block reaches the module through `run_validators`, which
+    # arranges that; this one imports it directly, so it must arrange it
+    # too or it passes only when a neighbour ran first.
+    sys.path.insert(0, str(VALIDATORS_DIR))
+    try:
+        from validators.test_record_extraction import (
+            _RELATION_CATEGORY,
+            _subject_role_in_value,
+        )
+    finally:
+        sys.path.remove(str(VALIDATORS_DIR))
+
+    table = json.loads(
+        (Path(__file__).resolve().parents[2]
+         / "validators" / "relationship_direction_cases.json")
+        .read_text(encoding="utf-8")
+    )
+    # The value predicate is only half the rule -- see the note in the
+    # shared file. Pin the category table too, or a spelling added to one
+    # language alone passes both suites.
+    assert table.get("categories"), "shared table has no 'categories'"
+    assert _RELATION_CATEGORY == table["categories"], (
+        "python's relation-word table differs from the shared one -- the "
+        "two implementations have drifted"
+    )
+
+    from validators.test_record_extraction import _relationship_category
+
+    cat_cases = table.get("category_cases") or []
+    assert len(cat_cases) >= 5, (
+        "the shared file carries no category cases -- a renamed key would "
+        "make the loop below vacuous while the suite stayed green"
+    )
+    for c in cat_cases:
+        assert c.get("why"), (
+            "category case %r has no reason" % c["relationship_type"]
+        )
+        got = _relationship_category(c["relationship_type"])
+        assert got == c["category"], (
+            "%r: python reads category %r, the shared table says %r -- the "
+            "two implementations have drifted"
+            % (c["relationship_type"], got, c["category"])
+        )
+
+    cases = table["cases"]
+    # A table that shrank to nothing would make every assertion below
+    # vacuous while the suite stayed green.
+    assert len(cases) >= 15
+    assert sum(1 for c in cases if c["states"] is not None) >= 5
+    assert sum(1 for c in cases if c["states"] is None) >= 5
+    for c in cases:
+        assert c.get("why"), "case %r has no reason" % c["value"]
+        assert _subject_role_in_value(c["value"]) == c["states"], (
+            "%r: python reads %r, the shared table says %r -- the two "
+            "implementations have drifted"
+            % (c["value"], _subject_role_in_value(c["value"]), c["states"])
+        )
+
+
 def test_rel_agreement_accepts_a_value_naming_several_relations():
-    """`want in found` — the type only has to match one of them."""
+    """Only the value's OPENING claim is compared, so a second relation
+    named later does not contradict it. The rule this replaced compared
+    every relation word in the value and accepted when any matched."""
     result = _run_rel_agreement(
         _rel("child", "child of Thomas Flynn and brother of Mary Flynn")
     )
