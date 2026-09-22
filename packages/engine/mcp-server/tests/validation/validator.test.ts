@@ -517,7 +517,7 @@ describe("Project Validator", () => {
       information_quality: "primary",
       informant: "self",
       informant_proximity: "self",
-      evidence_type: "direct",
+      record_basis: "stated",
       extracted_for_question_ids: [],
     });
     const isoTree = {
@@ -720,6 +720,97 @@ describe("Project Validator", () => {
     });
   });
 
+  describe("transcription_truncated invariant (#2457)", () => {
+    const validSource = (over: Record<string, unknown> = {}) => ({
+      id: "src_001",
+      gedcomx_source_description_id: "SD-001",
+      citation: "Test",
+      citation_detail: {
+        who: "Test", what: "Test", when_created: "2020",
+        when_accessed: "2026-01-01", where: "Test", where_within: "Test",
+      },
+      source_classification: "original",
+      repository: "Test",
+      access_date: "2026-01-01",
+      ...over,
+    });
+    const tree = {
+      persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+      relationships: [],
+      sources: [{ id: "SD-001", title: "Test Source" }],
+    };
+    const truncErr = (result: { errors: { path: string; message: string }[] }) =>
+      result.errors.some(
+        (e) => e.path.includes("sources[0]") && e.message.includes("transcription_truncated"),
+      );
+
+    it("rejects transcription_truncated: true beside an empty transcription", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: true, transcription: "", image_filename: "images/x.jpg" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(truncErr(result)).toBe(true);
+    });
+
+    it("rejects transcription_truncated: true beside a null transcription", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: true, transcription: null })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(truncErr(result)).toBe(true);
+    });
+
+    it("rejects a non-true transcription_truncated (e.g. a string)", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: "yes", transcription: "some text" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("transcription_truncated must be true or absent"))).toBe(true);
+    });
+
+    it("rejects a persisted transcription_truncated: false — the marker is true-or-absent (#2457 B2 ruling 2026-09-19)", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: false, transcription: "full text", image_filename: "images/x.jpg" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false); // pre-ruling: false was accepted (verified-whole)
+      expect(result.errors.some((e) => e.message.includes("transcription_truncated must be true or absent"))).toBe(true);
+    });
+
+    it("accepts transcription_truncated: true beside real partial text", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: true, transcription: "first half of the page", image_filename: "images/x.jpg" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts the field absent (absent means not established, not whole)", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription: "full text" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe("Cross-file reference validation", () => {
     it("reports source referencing non-existent gedcomx source", async () => {
       const research = {
@@ -767,7 +858,7 @@ describe("Project Validator", () => {
             information_quality: "primary",
             informant: "self",
             informant_proximity: "self",
-            evidence_type: "direct",
+            record_basis: "stated",
             extracted_for_question_ids: [],
           },
         ],
@@ -827,6 +918,7 @@ describe("Project Validator", () => {
             question_id: "q_001",
             tier: "probable",
             vehicle: "summary",
+            shortfall: "gap",
             supporting_assertion_ids: [],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Test",
@@ -835,6 +927,7 @@ describe("Project Validator", () => {
               {
                 claim: "paternity",
                 proof_tier: "probable",
+                shortfall: "gap",
                 supporting_assertion_ids: [],
                 relationship: { type: "ParentChild", parent: "NONEXISTENT", child: "I1" },
               },
@@ -884,6 +977,7 @@ describe("Project Validator", () => {
             question_id: "q_001",
             tier: "probable",
             vehicle: "summary",
+            shortfall: "gap",
             supporting_assertion_ids: [],
             resolved_conflict_ids: refs,
             exhaustive_search_summary: "Test",
@@ -1106,6 +1200,37 @@ describe("Project Validator", () => {
       expect(mentions[0].message).not.toContain("must be an array");
     });
 
+    // `shortfall`'s two production arms — presence and enum membership — are
+    // the whole of what the engine enforces about the field, and neither had
+    // been watched failing. The sibling enum in this block has both.
+    it("rejects a proof_summary with an invalid shortfall value", async () => {
+      const research = withConflictAndSummary("resolved", []);
+      (research.proof_summaries[0] as Record<string, unknown>).shortfall = "nope";
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes("proof_shortfall")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a proof_summary missing shortfall", async () => {
+      const research = withConflictAndSummary("resolved", []);
+      delete (research.proof_summaries[0] as Record<string, unknown>).shortfall;
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes("missing required field 'shortfall'")
+        )
+      ).toBe(true);
+    });
+
     it("embeds the offending value in the container message", async () => {
       // `errorKey` is the normalized path PLUS the message, so a STATIC message
       // keys identically before and after — which demotes a change from one
@@ -1172,7 +1297,7 @@ describe("Project Validator", () => {
           information_quality: "primary",
           informant: "self",
           informant_proximity: "self",
-          evidence_type: "direct",
+          record_basis: "stated",
           extracted_for_question_ids: [],
         },
       ];
@@ -1281,8 +1406,8 @@ describe("Project Validator", () => {
       const research = {
         ...minimalResearch,
         assertions: [
-          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [] },
-          { id: "a_002", source_id: "src_001", record_id: "2", record_role: "principal", fact_type: "birth", value: "1851", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [] },
+          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
+          { id: "a_002", source_id: "src_001", record_id: "2", record_role: "principal", fact_type: "birth", value: "1851", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
         ],
         sources: [
           { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
@@ -1317,7 +1442,7 @@ describe("Project Validator", () => {
       const research = {
         ...minimalResearch,
         assertions: [
-          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [] },
+          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
         ],
         sources: [
           { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
@@ -1352,7 +1477,7 @@ describe("Project Validator", () => {
       const research = {
         ...minimalResearch,
         assertions: [
-          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [] },
+          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
         ],
         sources: [
           { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
@@ -1853,7 +1978,7 @@ describe("Project Validator", () => {
             information_quality: "primary",
             informant: "self",
             informant_proximity: "self",
-            evidence_type: "direct",
+            record_basis: "stated",
             extracted_for_question_ids: [],
             log_entry_id: "log_001",
           },
@@ -1920,7 +2045,7 @@ describe("Project Validator", () => {
             information_quality: "primary",
             informant: "self",
             informant_proximity: "self",
-            evidence_type: "direct",
+            record_basis: "stated",
             extracted_for_question_ids: [],
             log_entry_id: "log_001",
           },
@@ -1951,7 +2076,7 @@ describe("Project Validator", () => {
           { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
         ],
         assertions: [
-          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:DIFFERENT", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [], log_entry_id: "log_001" },
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:DIFFERENT", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [], log_entry_id: "log_001" },
         ],
       };
       const sidecar = {
@@ -1977,7 +2102,7 @@ describe("Project Validator", () => {
           { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
         ],
         assertions: [
-          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/3:1:S3HT-XYZ", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [], log_entry_id: "log_001" },
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/3:1:S3HT-XYZ", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [], log_entry_id: "log_001" },
         ],
       };
       // A fulltext result: `id`-keyed, no recordId, no gedcomx.
@@ -2452,7 +2577,7 @@ describe("Research closed shapes", () => {
           informant: "head of household",
           informant_proximity: "self",
           informant_bias_notes: null,
-          evidence_type: "direct",
+          record_basis: "stated",
           log_entry_id: "log_001",
           extracted_for_question_ids: ["q_001"],
         },
@@ -2466,7 +2591,7 @@ describe("Research closed shapes", () => {
           information_quality: "secondary",
           informant: "head of household",
           informant_proximity: "self",
-          evidence_type: "direct",
+          record_basis: "stated",
           extracted_for_question_ids: ["q_001"],
         },
       ],
@@ -2549,6 +2674,7 @@ describe("Research closed shapes", () => {
           question_id: "q_001",
           tier: "probable",
           vehicle: "summary",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_001"],
           resolved_conflict_ids: [],
           exhaustive_search_summary: "Census and vital records searched",
@@ -2557,6 +2683,7 @@ describe("Research closed shapes", () => {
             {
               claim: "paternity",
               proof_tier: "probable",
+              shortfall: "gap",
               supporting_assertion_ids: ["a_001"],
               relationship: { type: "ParentChild", parent: "I2", child: "I1" },
             },
@@ -2730,12 +2857,14 @@ describe("Research closed shapes", () => {
         {
           claim: "paternity",
           proof_tier: "probable",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_001"],
           relationship: { type: "ParentChild", parent: "I2", child: "I1" },
         },
         {
           claim: "maternity",
           proof_tier: "possible",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_001"],
           relationship: { type: "ParentChild", parent: "I3", child: "I1" },
         },
@@ -2794,6 +2923,7 @@ describe("Research closed shapes", () => {
         {
           claim: "paternity",
           proof_tier: "probable",
+          shortfall: "gap",
           supporting_assertion_ids: [],
           relationship: { type: "ParentChild", parent: "I2", child: "I1" },
         },
@@ -2828,6 +2958,7 @@ describe("Research closed shapes", () => {
         {
           claim: "paternity",
           proof_tier: "probable",
+          shortfall: "gap",
           supporting_assertion_ids: [],
           relationship: { type: "ParentChild", parent: "I3", child: "I1" },
         },
@@ -2898,12 +3029,14 @@ describe("Research closed shapes", () => {
         {
           claim: "paternity",
           proof_tier: "probable",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_001"],
           relationship: { type: "ParentChild", parent: "I2", child: "I1" },
         },
         {
           claim: "paternity",
           proof_tier: "possible",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_001"],
           relationship: { type: "ParentChild", parent: "I3", child: "I1" },
         },
@@ -2943,12 +3076,14 @@ describe("Research closed shapes", () => {
         {
           claim: "paternity",
           proof_tier: "probable",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_001"],
           relationship: { type: "ParentChild", parent: "I2", child: "I1" },
         },
         {
           claim: "maternity",
           proof_tier: "possible",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_001"],
           relationship: { type: "ParentChild", parent: "I3", child: "I1" },
         },
@@ -3480,7 +3615,7 @@ describe("stop_criteria type guard (#1834)", () => {
   });
 });
 
-// ── #986: evidence_type "negative" implies record_role "absent" AND
+// ── #986: record_basis "absent" implies record_role "absent" AND
 // informant_proximity "researcher", at the document tier.
 //
 // This tier is what catches a research.json that was never assembled op-by-op
@@ -3534,7 +3669,7 @@ describe("negative evidence implies absent + researcher (#986)", () => {
           information_quality: "primary",
           informant: "the researcher",
           informant_proximity: "researcher",
-          evidence_type: "negative",
+          record_basis: "absent",
           extracted_for_question_ids: [],
           ...overrides,
         },
@@ -3545,7 +3680,7 @@ describe("negative evidence implies absent + researcher (#986)", () => {
   }
 
   const negativeErrors = (r: any) =>
-    r.errors.filter((e: any) => /evidence_type 'negative' requires/.test(e.message));
+    r.errors.filter((e: any) => /record_basis 'absent' requires/.test(e.message));
 
   it("accepts the correct pairing — absent + researcher", async () => {
     const result = await validateParsed(researchWithAssertion({}), tree);
@@ -3621,7 +3756,7 @@ describe("negative evidence implies absent + researcher (#986)", () => {
       await validateParsed(researchWithAssertion({ informant_proximity: "self" }), tree),
     )[0].message;
     expect(proxMsg).toMatch(/holds even when the record names the person/);
-    // Must not prescribe flipping evidence_type alone — research_append's
+    // Must not prescribe flipping record_basis alone — research_append's
     // converse arm refuses that edit.
     expect(proxMsg).toMatch(/record_role must change with it/);
   });
@@ -3631,7 +3766,7 @@ describe("negative evidence implies absent + researcher (#986)", () => {
   it("accepts a plain direct assertion carrying a non-absent role and proximity", async () => {
     const result = await validateParsed(
       researchWithAssertion({
-        evidence_type: "direct", record_role: "deceased",
+        record_basis: "stated", record_role: "deceased",
         informant: "James Brown", informant_proximity: "official_duty",
       }),
       tree,
@@ -3640,14 +3775,14 @@ describe("negative evidence implies absent + researcher (#986)", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("accepts the converse — record_role absent with a non-negative evidence_type", async () => {
+  it("accepts the converse — record_role absent with a non-negative record_basis", async () => {
     // Forward direction only at this tier. research_append's own precondition
     // refuses this; a writer-tool precondition may be stricter than the
     // integrity tier, and every `absent` assertion in the corpus is already
     // negative, so the converse here would be an unexercised branch.
     const result = await validateParsed(
       researchWithAssertion({
-        evidence_type: "direct", informant: "James Brown",
+        record_basis: "stated", informant: "James Brown",
         informant_proximity: "official_duty",
       }),
       tree,
@@ -3659,7 +3794,7 @@ describe("negative evidence implies absent + researcher (#986)", () => {
   it("accepts an indirect assertion — the rule keys on 'negative' alone", async () => {
     const result = await validateParsed(
       researchWithAssertion({
-        evidence_type: "indirect", record_role: "head_of_household",
+        record_basis: "inferred", record_role: "head_of_household",
         informant: "unknown household member", informant_proximity: "household_member",
       }),
       tree,

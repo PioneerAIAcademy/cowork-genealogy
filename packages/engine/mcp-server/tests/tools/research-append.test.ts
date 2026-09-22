@@ -23,6 +23,11 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
+import {
+  recordImageReadCap,
+  sourceImageCapState,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
@@ -54,7 +59,7 @@ const validAssertion = (id: string, sourceId = "src_001") => ({
   information_quality: "primary",
   informant: "self",
   informant_proximity: "self",
-  evidence_type: "direct",
+  record_basis: "stated",
   extracted_for_question_ids: [],
 });
 
@@ -137,7 +142,7 @@ describe("research_append (Phase 1)", () => {
       information_quality: "primary",
       informant: "self",
       informant_proximity: "self",
-      evidence_type: "direct",
+      record_basis: "stated",
       extracted_for_question_ids: [],
       ...over,
     });
@@ -704,6 +709,391 @@ describe("research_append (Phase 1)", () => {
       const persisted = research.sources.find((s: any) => s.id === singleOk(r).entryId);
       expect(persisted.access_date, `${supplied} → ISO`).toBe(expected);
     }
+  });
+
+  describe("transcription_truncated is derived at the write boundary (#2457)", () => {
+    afterEach(() => __clearTruncatedSourceImagesForTests());
+    const imageSource = (over: Record<string, unknown>) => {
+      const { id: _omit, ...src } = validSource("x");
+      return { ...src, image_filename: "images/x.jpg", transcription: "first half of the page", ...over };
+    };
+
+    it("marks a source truncated when image_transcribe capped the cited image", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect(persisted.transcription_truncated).toBe(true);
+    });
+
+    it("leaves the field absent when no read of the cited image reached the write boundary (not established)", async () => {
+      await writeProject();
+      // No recordImageReadCap → the image is not in the add-only cap set, so its
+      // state is "not established" and the marker is left absent.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("is authoritative — strips an agent-asserted flag the tool did not record", async () => {
+      await writeProject();
+      // The image read was NOT capped, but the caller asserts it was. The field
+      // is derived from the tool's record, so the false assertion is dropped
+      // rather than persisted (the failure mode #2457 removes the agent from).
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription_truncated: true }),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("strips an agent-asserted flag even on a source with no image_filename to join", async () => {
+      await writeProject();
+      // No image_filename → nothing to join, but the field is still derived-only.
+      // Without stripping here the agent's guess persists verbatim, exactly where
+      // the join key that would override it is absent (#2457 review, blocker 4c).
+      const { id: _omit, ...src } = validSource("x");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: { ...src, transcription: "first half of the page", transcription_truncated: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("does not derive (and so does not self-reject) a capped image whose op carries no transcription text (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(r.ok).toBe(true); // pre-fix: false — true beside no transcription is rejected
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("marks the source on a two-op sequence — append {image_filename}, then a later update {transcription} that omits it (#2457 r10 [0])", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // Op 1: the source arrives with its image_filename but no transcription yet.
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      // Op 2 (a later call): the transcription arrives, WITHOUT re-sending image_filename —
+      // the shape research/SKILL.md encourages. The derivation must fall back to the
+      // persisted source's image_filename and mark it. Pre-fix: no marker, silently.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "Row 1: Anna … rtway down the pag" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("Row 1: Anna … rtway down the pag");
+      expect(after.transcription_truncated).toBe(true); // pre-fix: marker missing
+    });
+
+    it("permits an in-place transcription refinement of a persisted-true source; the marker survives and over-reports by design (#2457 rulings, C 2026-09-21)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect((await readResearch()).sources.find((s: any) => s.id === id).transcription_truncated).toBe(true);
+      // Ruling C removed the update guard: an in-place refinement (e.g. replacing the
+      // partial text with the fuller indexed-record reading) SUCCEEDS. The derivation
+      // only ever deletes the marker from the patch, so the merge keeps the persisted
+      // `true` — the badge over-reports the now-fuller text, which the ruling accepts
+      // as an unneeded badge (never a false "verified whole"). Nothing moves partial→whole.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "the complete page text now" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("the complete page text now"); // refinement took
+      expect(after.transcription_truncated).toBe(true); // marker survives (over-reports by design), never false
+    });
+
+    it("B1 regression: a narrower uncapped re-read does not flip a capped image to whole — append persists true (#2457 B1 ruling 2026-09-19)", async () => {
+      await writeProject();
+      // Praise's reproduction, at the derivation+store level: read 1 caps, read 2
+      // (narrower lookingFor) comes back uncapped, then a source carrying read 1's
+      // partial text is appended. Pre-ruling this persisted `false` ("verified
+      // whole") on partial text; sticky-true + true-or-delete must persist `true`.
+      recordImageReadCap(dir, "images/x.jpg", true);  // read 1: capped
+      recordImageReadCap(dir, "images/x.jpg", false); // read 2: narrower, uncapped
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription: "Row 1: Anna … rtway down the pag" }),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect(persisted.transcription_truncated).toBe(true); // pre-fix: false — a false "verified whole" on partial text
+    });
+
+    it("an image not in the cap set: append leaves the marker absent, and a later in-place transcription update is permitted (#2457 rulings, C 2026-09-21)", async () => {
+      await writeProject();
+      // The image was never recorded as capped (a whole read records nothing —
+      // add-only). The marker stays absent on append, and a later in-place
+      // transcription update goes through (nothing is written to block it).
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg", transcription: "a corrected fuller reading" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false); // still absent, update permitted
+    });
+
+    it("does not discard a good op when a sibling capped op carries no transcription (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const before = (await readResearch()).sources.length;
+      const good = imageSource({ image_filename: "images/other.jpg", transcription: "the complete page text" });
+      const bad = imageSource({});
+      delete (bad as Record<string, unknown>).transcription;
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: good },
+          { section: "sources", op: "append", entry: bad },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // pre-fix: false — the whole batch is discarded, losing `good` too
+      const after = (await readResearch()).sources.length;
+      expect(after - before).toBe(2);
+    });
+
+    it("marks the source on the MIRROR two-op sequence — append {transcription}, then a later update {image_filename} that omits it (#2457 r11 [0])", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // r10 gave `image_filename` a persisted fallback and `transcription` none, so
+      // this order derived nothing while its mirror derived `true`, on the SAME final
+      // document. Both fields now fall back, so op order cannot decide the marker.
+      const noRef = imageSource({});
+      delete (noRef as Record<string, unknown>).image_filename;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noRef });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("first half of the page");
+      expect(after.transcription_truncated).toBe(true); // pre-fix: absent — a partial read reading as whole
+    });
+
+    it("an update that REMOVES the image does not stamp the badge — an explicit null is not an omission (#2457 r11 [0b])", async () => {
+      await writeProject();
+      // Cap recorded AFTER the append, so the source carries NO persisted marker and
+      // the only thing that could stamp it is this update's own derivation.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // The r10 fallback keyed on truthiness, so an explicit `null` — the caller
+      // REMOVING the reference — looked identical to not re-sending it, and the badge
+      // was derived from the very scan this op deletes. Keyed on presence now.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: null, transcription: "text with no scan behind it" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.image_filename).toBeNull();
+      expect("transcription_truncated" in after).toBe(false); // pre-fix: true — badged a source citing no scan
+    });
+
+    it("does not stamp a source a later op in the same batch empties, and so does not refuse its own write (#2457 r11 [0c])", async () => {
+      await writeProject();
+      // Cap recorded AFTER the append: the document holds NO marker, so any `true` the
+      // batch trips over is one this loop put there. (Nulling the text of a source that
+      // genuinely carries a persisted `true` is a DIFFERENT case and is correctly
+      // refused — ruling C keeps that loud failure.)
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // Per-op derivation stamped `true` from op[0] and then the validator refused the
+      // batch — "do not null the partial transcription of a truncated source" — for a
+      // value only the tool had set. The fold reads what the batch actually leaves.
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { transcription: null } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // pre-fix: false — the tool rejected a write only it had made
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBeNull();
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("is authoritative on an UPDATE too — strips an agent-asserted flag on a never-capped source (#2457 r11 mutation 1)", async () => {
+      await writeProject();
+      // Both pre-existing authority tests use `append`, so restricting the strip to
+      // appends survived the whole suite while an asserted flag rode an update
+      // through onto a source whose image was never capped. That defeats "derived
+      // here, never asserted by the agent" on the very path this PR is about.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "still partial", transcription_truncated: true },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false); // the image was never capped
+    });
+
+    it("an EMPTY-STRING image_filename is a removal too, not an omission (#2457 r11 mutation 2)", async () => {
+      await writeProject();
+      // The spec sentence this PR added says "an explicit `image_filename: null` or
+      // `\"\"`". Testing only `null` left the other spelling of the same removal
+      // uncovered, and `""` is schema-legal for this field.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "", transcription: "text with no scan behind it" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("an EMPTY-STRING transcription empties the source too — the batch is not refused (#2457 r11 mutation 3)", async () => {
+      await writeProject();
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "" } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // folding the persisted text back in would stamp, then self-reject
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("whitespace-only transcription is no text — the .trim() is load-bearing (#2457 r11 mutation 4)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // validate_research_schema rejects `true` beside a .trim()-empty transcription,
+      // so dropping the .trim() here makes the tool stamp a state its own validator
+      // refuses. Nothing supplied whitespace-only text before.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription: "   \n\t " }),
+      });
+      expect(r.ok).toBe(true); // pre-fix mutant: false — the tool self-rejects
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("the fold ACCUMULATES across a source's ops — a later unrelated op does not reset it (#2457 r11 mutation 5)", async () => {
+      await writeProject();
+      // The only other two-op test asserts the ABSENCE of a stamp, so a fold that
+      // re-seeds from the persisted entry on every op — gutting the accumulation this
+      // change exists for — passed the whole suite. Here the badge MUST land: the text
+      // arrives in op[0] and the last op touching the source carries neither field.
+      const noText = imageSource({});
+      delete (noText as Record<string, unknown>).transcription;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noText });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { notes: ["unrelated bookkeeping"] } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription_truncated).toBe(true); // mutant re-seeding per op: absent
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {
@@ -1407,6 +1797,155 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
+  // question puts it at the write boundary rather than in prose. Until
+  // 2026-09-21 it lived only in the agent body and the eval validator, and
+  // {tier: "probable", shortfall: "none"} validated clean in production.
+  describe("shortfall must match the tier's conclusiveness", () => {
+    const append = (tier: string, shortfall: string) =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier,
+          vehicle: "summary",
+          shortfall,
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "Searched census + vitals",
+          narrative_markdown: "## Conclusion\n...",
+        },
+      } as never);
+
+    // Both conclusive tiers, not just `proved`: dropping "disproved" from the
+    // set left a proved-only version of this block green, which is how the
+    // first version of this rule shipped wrong in the first place.
+    it.each([
+      ["proved", "ceiling"], ["proved", "gap"], ["proved", "conflict"],
+      ["disproved", "ceiling"], ["disproved", "gap"], ["disproved", "conflict"],
+    ])("refuses tier '%s' with shortfall '%s'", async (tier, shortfall) => {
+      await writeProject();
+      const r = await append(tier, shortfall);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("conclusive answer");
+    });
+
+    it.each(["proved", "disproved"])(
+      "accepts shortfall 'none' on conclusive tier '%s'",
+      async (tier) => {
+        // A conclusive tier ALSO needs the question already declared
+        // exhaustive — the sibling arm of this same function. Without that
+        // setup these refuse for the other reason and prove nothing about
+        // shortfall.
+        const research = baseResearch();
+        research.questions = [
+          {
+            ...validQuestion("q_001"),
+            status: "exhaustive_declared",
+            exhaustive_declaration: {
+              declared: true,
+              log_entry_ids: ["log_001"],
+              stop_criteria: {},
+            },
+          },
+        ];
+        research.log = [
+          {
+            id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+            tool: "record_search", query: {}, outcome: "negative",
+            results_examined: 0, external_site: null, results_ref: null,
+          },
+        ];
+        await writeProject(research);
+        expect((await append(tier, "none")).ok).toBe(true);
+      },
+    );
+
+    it.each(["probable", "possible", "not_proved"])(
+      "refuses shortfall 'none' on tier '%s', which reached no answer",
+      async (tier) => {
+        await writeProject();
+        const r = await append(tier, "none");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toContain("reached no conclusive answer");
+      },
+    );
+
+    it("accepts the pairings that do agree", async () => {
+      await writeProject();
+      expect((await append("probable", "gap")).ok).toBe(true);
+    });
+
+    it("says nothing when shortfall is a non-string — that is checkEnum's job", async () => {
+      // The `typeof === "string"` guard, which nothing tested: loosening it to
+      // `!== undefined` left this whole block green while a null shortfall
+      // collected BOTH this refusal and checkEnum's, for one defect.
+      // Must be a CONCLUSIVE tier: on a lower one neither arm reaches the
+      // comparison, so the loosened guard is indistinguishable there.
+      const research = baseResearch();
+      research.questions = [
+        {
+          ...validQuestion("q_001"),
+          status: "exhaustive_declared",
+          exhaustive_declaration: {
+            declared: true, log_entry_ids: ["log_001"], stop_criteria: {},
+          },
+        },
+      ];
+      research.log = [
+        {
+          id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+          tool: "record_search", query: {}, outcome: "negative",
+          results_examined: 0, external_site: null, results_ref: null,
+        },
+      ];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001", tier: "proved", vehicle: "summary",
+          shortfall: null, supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [], exhaustive_search_summary: "s",
+          narrative_markdown: "## C\n...",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).not.toContain("conclusive answer");
+    });
+
+    it("says nothing when shortfall is absent — that is checkRequired's job", async () => {
+      // Two diagnoses for one defect is what makes an agent repair the wrong
+      // thing; the same reason the resolved_conflict_ids guard exists.
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier: "probable",
+          vehicle: "summary",
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "s",
+          narrative_markdown: "## C\n...",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain("missing required field 'shortfall'");
+      expect(msg).not.toContain("reached no conclusive answer");
+    });
+  });
+
   it("appends a proof_summary referencing an existing question", async () => {
     await writeProject();
     const r = await researchAppend({
@@ -1417,6 +1956,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "probable",
         vehicle: "summary",
+        shortfall: "gap",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -1447,6 +1987,7 @@ describe("research_append (Phase 3)", () => {
             question_id: "q_001",
             tier: "probable",
             vehicle: "summary",
+            shortfall: "gap",
             supporting_assertion_ids: ["a_001"],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Searched census + vitals",
@@ -1486,6 +2027,7 @@ describe("research_append (Phase 3)", () => {
             question_id: "q_001",
             tier: "probable",
             vehicle: "summary",
+            shortfall: "gap",
             supporting_assertion_ids: ["a_001"],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Searched census + vitals",
@@ -1907,6 +2449,7 @@ describe("research_append (Phase 3)", () => {
       question_id: "q_001",
       tier,
       vehicle: "summary",
+      shortfall: "gap",
       supporting_assertion_ids: supporting,
       resolved_conflict_ids: [],
       exhaustive_search_summary: "census + vitals",
@@ -2136,6 +2679,7 @@ describe("research_append (Phase 3)", () => {
           question_id: "q_001",
           tier: "probable",
           vehicle: "summary",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_004"],
           resolved_conflict_ids: [],
           exhaustive_search_summary: "census",
@@ -2148,6 +2692,7 @@ describe("research_append (Phase 3)", () => {
       question_id: "q_001",
       tier,
       vehicle: "summary",
+      shortfall: "gap",
       supporting_assertion_ids: ["a_004"],
       resolved_conflict_ids: [],
       exhaustive_search_summary: "census",
@@ -2257,6 +2802,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2290,6 +2836,7 @@ describe("research_append (Phase 3)", () => {
             question_id: "q_001",
             tier: "proved",
             vehicle: "summary",
+            shortfall: "none",
             supporting_assertion_ids: ["a_001"],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Searched census + vitals",
@@ -2347,6 +2894,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2372,6 +2920,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2831,6 +3380,7 @@ describe("research_append (project singleton section)", () => {
     question_id: questionId,
     tier: "proved",
     vehicle: "summary",
+    shortfall: "none",
     supporting_assertion_ids: ["a_001"],
     resolved_conflict_ids: [],
     exhaustive_search_summary: "Every identified repository was searched.",
@@ -2929,7 +3479,13 @@ describe("research_append (project singleton section)", () => {
     // tier `possible` — a proved/probable summary additionally requires a prior
     // exhaustive declaration, which is a different invariant than the one under
     // test and would mask it.
-    const { id: _id, ...summaryEntry } = { ...summary(), tier: "possible" };
+    // `possible` reached no conclusive answer, so it owes a real shortfall —
+    // the helper's `none` belongs to its default `proved` tier.
+    const { id: _id, ...summaryEntry } = {
+      ...summary(),
+      tier: "possible",
+      shortfall: "gap",
+    };
     const r = await researchAppend({
       projectPath: dir,
       ops: [
@@ -4373,7 +4929,7 @@ describe("research_append (composite persist + enforcement)", () => {
             record_id: "1850-census-schuylkill",
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
             log_entry_id: "log_001",
           },
         },
@@ -4473,7 +5029,7 @@ describe("research_append (composite persist + enforcement)", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
             log_entry_id: "log_001",
           },
         },
@@ -4806,6 +5362,36 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(research.assertions[1].source_id).toBe("src_001"); // stamped with the existing src
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("derives transcription_truncated THROUGH a §3.4.1 reuse fold — pins the derivation after the rewrite (#2457 r11 [0e])", async () => {
+    await writeProject();
+    // The derivation must run AFTER the reuse rewrite, and since r10 that is
+    // load-bearing rather than decorative: before the fold this op is an `append`
+    // carrying no entryId, so the persisted-entry fallback cannot resolve it; after
+    // the fold it is an `update` on src_001 and it can. Moving the block earlier in
+    // prepareOps leaves the whole suite green EXCEPT this test.
+    await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "update",
+      entryId: "src_001",
+      fields: { image_filename: "images/x.jpg" },
+    } as any);
+    recordImageReadCap(dir, "images/x.jpg", true);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("NARA", { transcription: "first half of the page" }) },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse?.action).toBe("updated_existing"); // the fold happened
+    const folded = (await readResearch()).sources.find((s: any) => s.id === "src_001");
+    expect(folded.transcription_truncated).toBe(true); // reds if the derivation runs before the rewrite
+    __clearTruncatedSourceImagesForTests();
   });
 
   it("updated_existing: repository matches on normalized form (case + whitespace)", async () => {
@@ -5902,7 +6488,7 @@ describe("research_append — negative evidence role invariant", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
 
-  it("rejects evidence_type: negative with a non-absent record_role", async () => {
+  it("rejects record_basis: absent with a non-absent record_role", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -5913,7 +6499,7 @@ describe("research_append — negative evidence role invariant", () => {
           entry: {
             ...noId(validAssertion("x", "src_001")),
             record_role: "father_of_deceased",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -5923,7 +6509,7 @@ describe("research_append — negative evidence role invariant", () => {
     expect(r.errors[0]).toMatch(/negative evidence always uses the literal record_role "absent"/);
   });
 
-  it("rejects record_role: absent paired with a non-negative evidence_type", async () => {
+  it("rejects record_role: absent paired with a non-negative record_basis", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -5934,17 +6520,17 @@ describe("research_append — negative evidence role invariant", () => {
           entry: {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
-            evidence_type: "direct",
+            record_basis: "stated",
           },
         },
       ],
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+    expect(r.errors[0]).toMatch(/record_role "absent" \(the PERSON was not in the record\) is reserved for/);
   });
 
-  it("accepts evidence_type: negative paired with record_role: absent", async () => {
+  it("accepts record_basis: absent paired with record_role: absent", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -5956,7 +6542,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -5976,7 +6562,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -5985,18 +6571,18 @@ describe("research_append — negative evidence role invariant", () => {
     if (!created.ok) return;
     const entryId = (created as any).results[0].entryId as string;
 
-    // Flips evidence_type back to direct without also fixing record_role —
+    // Flips record_basis back to direct without also fixing record_role —
     // the merged result violates the invariant even though this one update
     // only names one field.
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "assertions", op: "update", entryId, fields: { evidence_type: "direct" } },
+        { section: "assertions", op: "update", entryId, fields: { record_basis: "stated" } },
       ],
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+    expect(r.errors[0]).toMatch(/record_role "absent" \(the PERSON was not in the record\) is reserved for/);
   });
 
   it("the role message names the predeceased case and the two-field fix", async () => {
@@ -6016,7 +6602,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "spouse_1",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6032,7 +6618,7 @@ describe("research_append — negative evidence role invariant", () => {
   });
 
   it("no message prescribes a fix another arm refuses", async () => {
-    // Regression guard. The first proximity message said "it is evidence_type
+    // Regression guard. The first proximity message said "it is record_basis
     // \"direct\", not \"negative\" — change that rather than the proximity",
     // and following that instruction on an absent-role assertion was refused
     // by the converse role arm. A message that buys the wrong relabel
@@ -6042,7 +6628,7 @@ describe("research_append — negative evidence role invariant", () => {
       ...noId(validAssertion("x", "src_001")),
       record_role: "absent",
       informant_proximity: "official_duty",
-      evidence_type: "negative",
+      record_basis: "absent",
     };
     const first = await researchAppend({
       projectPath: dir,
@@ -6061,14 +6647,14 @@ describe("research_append — negative evidence role invariant", () => {
     });
     expect(prescribed.ok).toBe(true);
 
-    // And it must not tell the caller to flip evidence_type on its own, which
+    // And it must not tell the caller to flip record_basis on its own, which
     // the converse role arm refuses.
     expect(first.errors[0]).not.toMatch(/change that rather than the proximity/);
     const evidenceTypeOnly = await researchAppend({
       projectPath: dir,
       ops: [{
         section: "assertions", op: "append",
-        entry: { ...violating, evidence_type: "direct" },
+        entry: { ...violating, record_basis: "stated" },
       }],
     });
     expect(evidenceTypeOnly.ok).toBe(false);
@@ -6081,7 +6667,7 @@ describe("research_append — negative evidence role invariant", () => {
   // validator.ts refuses the same append through validateIntroduced, so a bare
   // `ok === false` passes with this whole clause reverted and proves nothing.
 
-  it("rejects evidence_type: negative with a non-researcher informant_proximity", async () => {
+  it("rejects record_basis: absent with a non-researcher informant_proximity", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -6093,7 +6679,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "self",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6106,7 +6692,7 @@ describe("research_append — negative evidence role invariant", () => {
     // evidence is the researcher's own conclusion", then again on "no record
     // informant reported an absence" after the validator message was reworded
     // to include it. Check both messages before changing this regex.
-    expect(r.errors[0]).toMatch(/changing evidence_type alone is refused/);
+    expect(r.errors[0]).toMatch(/changing record_basis alone is refused/);
   });
 
   it("names the absence test as the discriminator, not just the field to change", async () => {
@@ -6129,7 +6715,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "self",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6150,7 +6736,7 @@ describe("research_append — negative evidence role invariant", () => {
     const research = baseResearch();
     research.assertions = [
       { ...validAssertion("a_001", "src_001"), record_role: "absent",
-        informant_proximity: "self", evidence_type: "negative" },
+        informant_proximity: "self", record_basis: "absent" },
     ] as any;
     await writeProject(research);
     const r = await researchAppend({
@@ -6161,7 +6747,7 @@ describe("research_append — negative evidence role invariant", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/changing evidence_type alone is refused/);
+    expect(r.errors[0]).toMatch(/changing record_basis alone is refused/);
   });
 
   it("accepts the update once the same call also fixes the proximity (self-healing)", async () => {
@@ -6170,7 +6756,7 @@ describe("research_append — negative evidence role invariant", () => {
     const research = baseResearch();
     research.assertions = [
       { ...validAssertion("a_001", "src_001"), record_role: "absent",
-        informant_proximity: "self", evidence_type: "negative" },
+        informant_proximity: "self", record_basis: "absent" },
     ] as any;
     await writeProject(research);
     const r = await researchAppend({
@@ -6196,7 +6782,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "deceased",
             informant_proximity: "official_duty",
-            evidence_type: "direct",
+            record_basis: "stated",
           },
         },
       ],
@@ -6219,7 +6805,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "deceased",
             informant_proximity: "family_not_present",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6230,7 +6816,7 @@ describe("research_append — negative evidence role invariant", () => {
     // because each one spells out the conforming shape — so matching it counts
     // two and proves nothing about which arms fired.
     expect(r.errors.filter((e) => /always uses the literal record_role/.test(e))).toHaveLength(1);
-    expect(r.errors.filter((e) => /changing evidence_type alone is refused/.test(e))).toHaveLength(1);
+    expect(r.errors.filter((e) => /changing record_basis alone is refused/.test(e))).toHaveLength(1);
   });
 
   // ── The field-ABSENT shape. Both arms decide it deliberately (no presence
@@ -6243,7 +6829,7 @@ describe("research_append — negative evidence role invariant", () => {
     const entry: Record<string, unknown> = {
       ...noId(validAssertion("x", "src_001")),
       informant_proximity: "researcher",
-      evidence_type: "negative",
+      record_basis: "absent",
     };
     delete entry.record_role;
     const r = await researchAppend({
@@ -6264,7 +6850,7 @@ describe("research_append — negative evidence role invariant", () => {
     const entry: Record<string, unknown> = {
       ...noId(validAssertion("x", "src_001")),
       record_role: "absent",
-      evidence_type: "negative",
+      record_basis: "absent",
     };
     delete entry.informant_proximity;
     const r = await researchAppend({
@@ -6273,10 +6859,10 @@ describe("research_append — negative evidence role invariant", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.some((e) => /changing evidence_type alone is refused/.test(e))).toBe(true);
+    expect(r.errors.some((e) => /changing record_basis alone is refused/.test(e))).toBe(true);
   });
 
-  it("does not fire for non-assertion sections (no evidence_type field)", async () => {
+  it("does not fire for non-assertion sections (no record_basis field)", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -6875,10 +7461,10 @@ describe("supported evidence floor (#2086)", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2), "utf-8");
   }
 
-  /** An assertion with an explicit evidence_type/source_id, everything else valid. */
-  const ev = (id: string, evidenceType: string, sourceId = "src_001") => ({
+  /** An assertion with an explicit record_basis/source_id, everything else valid. */
+  const ev = (id: string, recordBasis: string, sourceId = "src_001") => ({
     ...validAssertion(id, sourceId),
-    evidence_type: evidenceType,
+    record_basis: recordBasis,
   });
 
   const hyp = (over: Record<string, unknown> = {}) => ({
@@ -6892,7 +7478,7 @@ describe("supported evidence floor (#2086)", () => {
   it("rejects promoting a hypothesis to supported on a single indirect assertion", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "indirect", "src_001")];
+    research.assertions = [ev("a_001", "inferred", "src_001")];
     await writeProject(research);
 
     const { id: _omit, ...entry } = hyp({
@@ -6908,15 +7494,15 @@ describe("supported evidence floor (#2086)", () => {
 
     expect(r.ok).toBe(false);
     const joined = failure(r).errors.join("\n");
-    expect(joined).toMatch(/no direct supporting assertion/);
-    expect(joined).toMatch(/only 1 distinct indirect source/);
-    expect(joined).toMatch(/needs >=1 direct or >=2 distinct indirect sources/);
+    expect(joined).toMatch(/no stated supporting assertion/);
+    expect(joined).toMatch(/only 1 distinct inferred source/);
+    expect(joined).toMatch(/needs >=1 record_basis "stated" or >=2 distinct sources at record_basis "inferred"/);
   });
 
   it("rejects an update to supported when two indirect assertions share one source", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "indirect", "src_001"), ev("a_002", "indirect", "src_001")];
+    research.assertions = [ev("a_001", "inferred", "src_001"), ev("a_002", "inferred", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001", "a_002"] })];
     await writeProject(research);
 
@@ -6932,13 +7518,13 @@ describe("supported evidence floor (#2086)", () => {
     const joined = failure(r).errors.join("\n");
     // Two assertions, one source ⇒ 1 distinct indirect source, not 2.
     expect(joined).toMatch(/hypotheses\[h_001\]/);
-    expect(joined).toMatch(/only 1 distinct indirect source/);
+    expect(joined).toMatch(/only 1 distinct inferred source/);
   });
 
   it("rejects an update to supported while a conflict naming its assertions is unresolved", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001"), ev("a_002", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001"] })];
     research.conflicts = [
       { ...validConflict(), id: "c_001", competing_assertion_ids: ["a_001", "a_002"], status: "unresolved" },
@@ -6960,7 +7546,7 @@ describe("supported evidence floor (#2086)", () => {
     // The ruling requires the refusal to say what to do, not only what is wrong.
     expect(joined).toMatch(/settle each as "resolved".*or "moot"/s);
     // Half (a) short-circuits: the evidence floor is moot once this already fails.
-    expect(joined).not.toMatch(/no direct supporting assertion/);
+    expect(joined).not.toMatch(/no stated supporting assertion/);
   });
 
   // ── Accept: the direction a replay cannot test ──
@@ -6971,10 +7557,10 @@ describe("supported evidence floor (#2086)", () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
     research.assertions = [
-      ev("a_004", "indirect", "src_001"),
-      ev("a_013", "direct", "src_001"),
-      ev("a_002", "indirect", "src_001"),
-      ev("a_009", "indirect", "src_001"),
+      ev("a_004", "inferred", "src_001"),
+      ev("a_013", "stated", "src_001"),
+      ev("a_002", "inferred", "src_001"),
+      ev("a_009", "inferred", "src_001"),
     ];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_004", "a_013"] })];
     research.conflicts = [
@@ -7005,7 +7591,7 @@ describe("supported evidence floor (#2086)", () => {
     // the floor, never one that clears it and was left active.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001"] })];
     await writeProject(research);
 
@@ -7024,7 +7610,7 @@ describe("supported evidence floor (#2086)", () => {
   it("allows supported on a single direct supporting assertion", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     await writeProject(research);
 
     const { id: _omit, ...entry } = hyp({
@@ -7047,7 +7633,7 @@ describe("supported evidence floor (#2086)", () => {
     // in an earlier call — legitimately or not — stays editable.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "indirect", "src_001")];
+    research.assertions = [ev("a_001", "inferred", "src_001")];
     research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
     await writeProject(research);
 
@@ -7071,11 +7657,11 @@ describe("supported evidence floor (#2086)", () => {
     //
     // Nothing cross-references `supporting_assertion_ids` against `assertions`,
     // so a dangling id reaches the floor. Without the guard this call throws
-    // `TypeError: Cannot read properties of undefined (reading 'evidence_type')`
+    // `TypeError: Cannot read properties of undefined (reading 'record_basis')`
     // instead of returning a refusal.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_999", "a_001"] })];
     await writeProject(research);
 
@@ -7099,7 +7685,7 @@ describe("supported evidence floor (#2086)", () => {
     // assumed; the PR body records that the card's wording is wrong here.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: [] })];
     await writeProject(research);
 
@@ -7112,7 +7698,7 @@ describe("supported evidence floor (#2086)", () => {
     } as never);
 
     expect(r.ok).toBe(false);
-    expect(failure(r).errors.join("\n")).toMatch(/only 0 distinct indirect source/);
+    expect(failure(r).errors.join("\n")).toMatch(/only 0 distinct inferred source/);
   });
 
   it("refuses resolving a conflict and promoting on it in the same batch", async () => {
@@ -7126,7 +7712,7 @@ describe("supported evidence floor (#2086)", () => {
     // The satisfying shape is the same two ops in two calls; the refusal says so.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_133", "direct", "src_001"), ev("a_135", "direct", "src_001")];
+    research.assertions = [ev("a_133", "stated", "src_001"), ev("a_135", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_133", "a_135"] })];
     research.conflicts = [
       {
@@ -7186,7 +7772,7 @@ describe("supported evidence floor (#2086)", () => {
   it("refuses narrowing supporting_assertion_ids below the floor without naming status", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001"), validSource("src_003")];
-    research.assertions = [ev("a_001", "indirect", "src_001"), ev("a_002", "indirect", "src_003")];
+    research.assertions = [ev("a_001", "inferred", "src_001"), ev("a_002", "inferred", "src_003")];
     // Stands legitimately at `supported`: two indirect, two distinct sources.
     research.hypotheses = [
       hyp({ status: "supported", supporting_assertion_ids: ["a_001", "a_002"] }),
@@ -7203,13 +7789,13 @@ describe("supported evidence floor (#2086)", () => {
     } as never);
 
     expect(r.ok).toBe(false);
-    expect(failure(r).errors.join("\n")).toMatch(/only 1 distinct indirect source/);
+    expect(failure(r).errors.join("\n")).toMatch(/only 1 distinct inferred source/);
   });
 
   it("refuses adding a supporting assertion an unresolved conflict names, without naming status", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001"), ev("a_002", "stated", "src_001")];
     research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
     research.conflicts = [
       {
@@ -7240,7 +7826,7 @@ describe("supported evidence floor (#2086)", () => {
     // it reached no precondition under the narrow gate.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001"), ev("a_002", "stated", "src_001")];
     research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
     research.conflicts = [
       {
@@ -7270,9 +7856,9 @@ describe("supported evidence floor (#2086)", () => {
     const research = baseResearch();
     research.sources = [validSource("src_001"), validSource("src_003")];
     research.assertions = [
-      ev("a_001", "indirect", "src_001"),
-      ev("a_002", "indirect", "src_003"),
-      ev("a_003", "indirect", "src_003"),
+      ev("a_001", "inferred", "src_001"),
+      ev("a_002", "inferred", "src_003"),
+      ev("a_003", "inferred", "src_003"),
     ];
     research.hypotheses = [
       hyp({ status: "supported", supporting_assertion_ids: ["a_001", "a_002"] }),
@@ -7320,7 +7906,7 @@ describe("supported evidence floor (#2086)", () => {
             information_quality: "primary",
             informant: "self",
             informant_proximity: "self",
-            evidence_type: "direct",
+            record_basis: "stated",
             extracted_for_question_ids: [],
           },
         },
@@ -7335,7 +7921,7 @@ describe("supported evidence floor (#2086)", () => {
 
     expect(r.ok).toBe(false);
     const joined = failure(r).errors.join("\n");
-    expect(joined).toMatch(/no direct supporting assertion/);
+    expect(joined).toMatch(/no stated supporting assertion/);
     // Satisfiability: without this the agent is told there is no direct
     // assertion one op after appending one, and retries the same batch.
     expect(joined).toMatch(/appended in THIS call do not count/);
@@ -7364,7 +7950,7 @@ describe("supported evidence floor (#2086)", () => {
         information_quality: "primary",
         informant: "self",
         informant_proximity: "self",
-        evidence_type: "direct",
+        record_basis: "stated",
         extracted_for_question_ids: [],
       },
     } as never);

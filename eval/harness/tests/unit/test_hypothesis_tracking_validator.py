@@ -36,8 +36,8 @@ def _hyp(status="supported", supporting=None, contradicting=None):
     }
 
 
-def _assertion(aid, evidence_type, source_id="src_001"):
-    return {"id": aid, "evidence_type": evidence_type, "source_id": source_id}
+def _assertion(aid, record_basis, source_id="src_001"):
+    return {"id": aid, "record_basis": record_basis, "source_id": source_id}
 
 
 def _after(hypotheses, assertions=None, conflicts=None):
@@ -52,15 +52,15 @@ def _after(hypotheses, assertions=None, conflicts=None):
 
 def test_accepts_one_direct_supporting_assertion():
     h = _hyp(supporting=["a_001"])
-    assertions = [_assertion("a_001", "direct")]
+    assertions = [_assertion("a_001", "stated")]
     check({}, _after([h], assertions))
 
 
 def test_accepts_two_indirect_from_two_distinct_sources():
     h = _hyp(supporting=["a_001", "a_002"])
     assertions = [
-        _assertion("a_001", "indirect", source_id="src_001"),
-        _assertion("a_002", "indirect", source_id="src_002"),
+        _assertion("a_001", "inferred", source_id="src_001"),
+        _assertion("a_002", "inferred", source_id="src_002"),
     ]
     check({}, _after([h], assertions))
 
@@ -68,8 +68,8 @@ def test_accepts_two_indirect_from_two_distinct_sources():
 def test_rejects_two_indirect_from_the_same_source():
     h = _hyp(supporting=["a_001", "a_002"])
     assertions = [
-        _assertion("a_001", "indirect", source_id="src_001"),
-        _assertion("a_002", "indirect", source_id="src_001"),
+        _assertion("a_001", "inferred", source_id="src_001"),
+        _assertion("a_002", "inferred", source_id="src_001"),
     ]
     with pytest.raises(AssertionError, match="1 distinct"):
         check({}, _after([h], assertions))
@@ -77,7 +77,7 @@ def test_rejects_two_indirect_from_the_same_source():
 
 def test_rejects_a_single_indirect_assertion():
     h = _hyp(supporting=["a_001"])
-    assertions = [_assertion("a_001", "indirect")]
+    assertions = [_assertion("a_001", "inferred")]
     with pytest.raises(AssertionError, match="1 distinct"):
         check({}, _after([h], assertions))
 
@@ -90,7 +90,7 @@ def test_rejects_no_supporting_evidence_at_all():
 
 def test_rejects_an_unresolved_conflict_naming_a_supporting_assertion():
     h = _hyp(supporting=["a_001"])
-    assertions = [_assertion("a_001", "direct")]
+    assertions = [_assertion("a_001", "stated")]
     conflicts = [
         {
             "id": "c_001",
@@ -109,8 +109,8 @@ def test_rejects_an_unresolved_conflict_naming_a_contradicting_assertion():
     is an undetected mutation."""
     h = _hyp(supporting=["a_001"], contradicting=["a_002"])
     assertions = [
-        _assertion("a_001", "direct"),
-        _assertion("a_002", "direct", source_id="src_002"),
+        _assertion("a_001", "stated"),
+        _assertion("a_002", "stated", source_id="src_002"),
     ]
     conflicts = [
         {
@@ -126,9 +126,9 @@ def test_rejects_an_unresolved_conflict_naming_a_contradicting_assertion():
 def test_contradicting_assertions_do_not_count_toward_the_floor():
     h = _hyp(supporting=["a_001"], contradicting=["a_002", "a_003"])
     assertions = [
-        _assertion("a_001", "indirect", source_id="src_001"),
-        _assertion("a_002", "indirect", source_id="src_002"),
-        _assertion("a_003", "indirect", source_id="src_003"),
+        _assertion("a_001", "inferred", source_id="src_001"),
+        _assertion("a_002", "inferred", source_id="src_002"),
+        _assertion("a_003", "inferred", source_id="src_003"),
     ]
     with pytest.raises(AssertionError, match="1 distinct"):
         check({}, _after([h], assertions))
@@ -137,7 +137,7 @@ def test_contradicting_assertions_do_not_count_toward_the_floor():
 @pytest.mark.parametrize("status", ["resolved", "moot"])
 def test_accepts_a_resolved_or_moot_conflict_naming_an_assertion(status):
     h = _hyp(supporting=["a_001"])
-    assertions = [_assertion("a_001", "direct")]
+    assertions = [_assertion("a_001", "stated")]
     conflicts = [
         {"id": "c_001", "status": status, "competing_assertion_ids": ["a_001"]}
     ]
@@ -151,9 +151,9 @@ def test_ignores_a_conflict_that_only_shares_a_question():
     flag this fixture — it must not."""
     h = _hyp(supporting=["a_004", "a_010", "a_013"])
     assertions = [
-        _assertion("a_004", "indirect", source_id="src_001"),
-        _assertion("a_010", "indirect", source_id="src_003"),
-        _assertion("a_013", "direct", source_id="src_004"),
+        _assertion("a_004", "inferred", source_id="src_001"),
+        _assertion("a_010", "inferred", source_id="src_003"),
+        _assertion("a_013", "stated", source_id="src_004"),
     ]
     conflicts = [
         {

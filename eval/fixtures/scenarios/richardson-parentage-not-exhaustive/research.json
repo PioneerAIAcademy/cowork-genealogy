@@ -347,7 +347,7 @@
       "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
       "informant_proximity": "researcher",
       "informant_bias_notes": "Indexed from original microfilm; transcription error in year is possible (1832 vs. 1833)",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -370,7 +370,7 @@
       "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -393,7 +393,7 @@
       "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -416,7 +416,7 @@
       "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
       "informant_proximity": "researcher",
       "informant_bias_notes": "Maiden surname not recorded in this index entry",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -439,7 +439,7 @@
       "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -462,7 +462,7 @@
       "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -485,7 +485,7 @@
       "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -508,7 +508,7 @@
       "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -531,7 +531,7 @@
       "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -554,7 +554,7 @@
       "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
       "informant_proximity": "researcher",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -577,7 +577,7 @@
       "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
       "informant_proximity": "researcher",
       "informant_bias_notes": "Maiden surname recorded in marriage register",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -600,7 +600,7 @@
       "informant": "Rev. Henry Fielden, Sub Curate, who recorded the entry at the time of the marriage",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": [
         "q_001"
@@ -623,7 +623,7 @@
       "informant": "Rev. Henry Fielden, Sub Curate, who recorded the entry at the time of the marriage",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": [
         "q_001"
@@ -646,7 +646,7 @@
       "informant": "J. Hardman, officiating curate",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_006",
       "extracted_for_question_ids": [
         "q_001"
@@ -669,7 +669,7 @@
       "informant": "J. Hardman, officiating curate",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_006",
       "extracted_for_question_ids": [
         "q_001"
@@ -692,7 +692,7 @@
       "informant": "J. Hardman, officiating curate",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_006",
       "extracted_for_question_ids": [
         "q_001"

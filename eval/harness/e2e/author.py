@@ -148,7 +148,7 @@ def _read_json(path: Path) -> dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         raise AuthorError(f"missing required file: {path}") from e
-    except json.JSONDecodeError as e:
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise AuthorError(f"{path.name} did not parse: {e}") from e
 
 

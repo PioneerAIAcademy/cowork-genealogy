@@ -448,7 +448,7 @@ change, with different (and easy-to-undercount) site lists:
   `docs/specs/schemas/ownership.json` saying who may write it — declare it
   `owner: null` with a reason rather than guessing; a packaging test fails until
   the row exists.
-- **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
+- **New value on a closed enum** (e.g. `record_basis`): the enum lives in
   `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
   `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`
   and `packages/schema/schemas/`), the `CLOSED_ENUMS` set in `validator.ts`, and the

@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 11, hint-samples.csv row 377, flag adds_daughter, confidence 3). Draft transcribed from a 1781 Saône-et-Loire baptismal entry; unverified. The tree's own duplicate marriage facts suggest the child may belong to a second wife."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 11, hint-samples.csv row 377, flag adds_daughter, confidence 3). Resolved 2026-09-17: false match, no substitute found. Decisive evidence is Marie Badoux's burial 22 Mar 1780 recording death 21 Mar 1780 (ark:/61903/1:1:W5XV-6XPZ), nineteen months before the hinted 12 Oct 1781 baptism (ark:/61903/1:1:W5XL-MP3Z), which independently names the mother as Marie Joly. Encoded as an avoid guard plus a negative-conclusion finding, both required:true. apply_avoid_guard is relationship-blind and so force-fails f1 on a run that re-attaches Claudine to her actual parents, which is why the committed run reads partial; a run that simply declines the hint reports pass (issue #2640) -- see the README's Encoding note. Second opinion: Richard Chesworth."
 }

@@ -591,6 +591,92 @@ splintering into inconsistent labels, over a form the model added:
   is `indirect` — distinguished by field population (`place` set = the
   place-claim, `date` set = the date-claim) rather than by the type name.
 
+### 3.8 `transcription_truncated` — derived, never asserted
+
+On every `sources` op the tool **owns** `sources[].transcription_truncated` in
+the op payload, after the §3.4 reuse rewrite so it sees the final op shape. The
+persisted marker is **`true` or absent** — `false` is never written to
+`research.json` — and absence means *unknown*, not *whole*:
+
+| value | meaning |
+|---|---|
+| `true` | verified **partial** — a read of the cited image hit the OCR output-token cap |
+| absent | **not established** — a verified-whole read, a non-image source, or a truncation state that never reached the write boundary |
+
+(There is no `false` anywhere now — ruling C 2026-09-21 collapsed the cap store
+to the same shape as the persisted marker: a `true`-or-absent, add-only set.
+Absence, in the store or the document, means "not established" — a whole read or
+no read.)
+
+Derivation, per op:
+
+- Any caller-supplied value **in the op** is stripped first — including on a
+  source with no `image_filename` to join. The truncation of an OCR read is known
+  to `image_transcribe`, not to the agent relaying the text, so an agent-asserted
+  value is a guess and is dropped rather than persisted. On an `update` the
+  stripped key is then absent from the patch, so `applyOne` keeps whatever is
+  already persisted (below).
+- **The join reads the batch's FINAL state per source, not the single op.** Both
+  `image_filename` and `transcription` are folded across the whole batch onto the
+  entry already persisted, in op order, and the marker is set on the last op that
+  writes that source. So it does not matter which op carries which field, an
+  `update` need not re-send a field it is not changing, and a field a later op in
+  the same batch removes is gone before the join runs. Presence decides, not
+  truthiness: an explicit `image_filename: null` or `""` is the caller **removing**
+  the reference, which is the opposite of omitting it, and a source that ends the
+  batch citing no scan is never marked.
+- **A consequence, stated because it is a real behaviour change:** since the fold
+  starts from the persisted entry, ANY update to an image-backed source can now
+  set the marker, including one that touches neither field (say a `notes` edit)
+  when the image was capped after the source was first written. Before the fold
+  such an op derived nothing. This is inside the class ruling C (2026-09-21)
+  accepts — an unneeded badge, never a false "verified whole" — and it cannot
+  move a source from partial to whole, but it is not merely a bug fix.
+- The result is then joined by `image_filename` against the image-store cap set
+  (`sourceImageCapState` — `true` when the image was read past the cap, `false`
+  otherwise; it returns a plain boolean, never `undefined`).
+- The flag is set `true` **only** on a hit that also carries a non-empty
+  `transcription`. That guard is load-bearing: `true` beside empty/null
+  `transcription` is a state `validate_research_schema` rejects, so deriving it
+  would make the tool fail its own write (and, batched, discard every good op with
+  it). Every other case — the image not in the cap set (a whole read or no read),
+  or no text — leaves the key **deleted**.
+- Because the non-`true` cases delete rather than write, an `update` merges to
+  keep the persisted value. Two consequences: an image not in the cap set permits
+  an in-place `transcription` update (nothing is written to change the marker); and
+  a persisted `true` **survives** an in-place refinement of the text. The marker
+  may then **over-report** — complete text under a `true` badge. Ruling C
+  (2026-09-21) accepts that as an unneeded badge, never a false "verified whole",
+  and removed the guard that had rejected the refinement.
+
+**The invariant: nothing moves from "partial" to "whole"** — in memory (the cap
+store is add-only, so a whole re-read records nothing) and in the document (the
+marker is `true`-or-absent, and the derivation only ever writes `true` or deletes
+from the patch, so a persisted `true` is never cleared to whole). This is what
+makes the agent-supplied `image_filename` join key acceptable: a
+wrong-but-resolvable key can only add an unneeded `true` badge, never a false
+"verified whole".
+
+**Retraction does not exist, and a re-read does not create one.** The cap store is
+add-only: a whole re-read of a capped image records nothing, so a truncation is
+permanent in the store, and the persisted `true` is likewise never cleared (the
+derivation cannot retract it, and a restart empties the store a recomputation would
+need). An in-place refinement of the text is *permitted* — it just leaves the
+`true` badge over-reporting. For a **record-backed** source, avoid the stale badge
+by citing the fuller reading as a **new** indexed-record source (`record_read` /
+`record_search`) rather than editing the image source in place. A **FamilySearch
+memory** scan has no indexed record, so a truncated memory transcription just stays
+partial with its marker — there is nothing to pivot to. Nulling a truncated
+source's `transcription` outright still fails loudly (`validate_research_schema`
+rejects `true` beside empty text).
+
+Unlike §3.6, this override **echoes nothing** — the response carries no signal
+that a caller-supplied value was dropped. The persisted-side invariant
+(`transcription_truncated: true` requires a `transcription` with a non-whitespace
+character) is enforced by both `validate_research_schema` (via `.trim()`) and the
+two `research.schema.json` mirrors (an `if`/`then` whose `then` requires
+`transcription` match `\S`).
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic
@@ -710,7 +796,7 @@ audit's recommendation #5):
 | `conflicts` update → `resolved` | `independence_analysis`, `weighing_analysis`, `resolution_rationale` all set — each a **non-blank string**, trimmed, since a whitespace-only value satisfies the field and states nothing and a non-string satisfies no emptiness comparison at all; `preferred_assertion_id` ∈ `competing_assertion_ids` **when non-null**. Null is legal and load-bearing: a conflict the researcher weighed and honestly could not settle is recorded `resolved` with the three analyses, `resolution_rationale` saying why it cannot be settled and what would settle it, and no preferred assertion — a deferral is a finding (`gps-research-flow.md`, "A conflict that can't be resolved yet is written down as a finding"), and it is not `moot`, which asserts the conflict no longer matters. The completion gate below refuses on such a conflict while it stays `unresolved`, so this is the shape that clears it | audit; `validator.ts` NULLABLE set; `conflictInvariants` checks membership only under `preferred_assertion_id != null` |
 | `conflicts` update → `moot` | `resolution_rationale` set to a **non-blank string**, trimmed, on the same reading as the `resolved` row above — say why the conflict no longer bears on the question. Only that one field: there is nothing to weigh or to declare independent once the conflict has stopped bearing on the question, which is what separates `moot` from `resolved`. `moot` settles a conflict for every gate that reads `status`, the completion gate below included, and was the one settling write with no precondition at all — so a bare `{status: "moot"}` cleared that gate while asserting nothing | Found reviewing the completion gate's derived arm, which raised the population reaching this escape from 5 conflicts to 14. Measured cost: **0 of 1** — the corpus holds one moot conflict (`ogletree-children` c_006) and it carries a rationale. Trimming both rows is free on the same scan: **0 of 85** resolved conflicts and **0 of 1** moot carry a blank or non-string analysis field, across the e2e final states, the unit run logs, the scenario fixtures and the e2e starting documents; measured at 07f1fd31d. ADR-0011 |
 | `hypotheses` update → `ruled_out`/`status: ruled_out` | `ruled_out_reason` non-empty | `validator.ts:637–638` |
-| `hypotheses` append/update setting **`status: "supported"`** | the mechanical evidence floor of `research-schema-spec.md` §5.9, both halves: **(a)** no `conflicts[]` entry whose `competing_assertion_ids` overlap this hypothesis's `supporting_assertion_ids` **or** `contradicting_assertion_ids` is still unresolved (`resolved` and `moot` both settle it), and **(b)** either ≥1 supporting assertion carries `evidence_type: "direct"`, or ≥2 carry `evidence_type: "indirect"` and cite ≥2 distinct `source_id` values. **Conflicts are matched by assertion overlap, never by shared `question_id`** — `eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that separates the two: its `h_001` is `supported` while `c_001` is unresolved and blocks the same `q_001`, but names entirely different assertions, so a question-keyed predicate refuses a shipped, correct fixture. **Forward direction only** (lead ruling 2026-09-07): a hypothesis that clears the floor and was left `active` is untouched, and the spec's third condition — evidence consistency, no logical or geographic impossibility — is a genealogist's judgment call and is not attempted. Gated on **any of the three coupled fields** — `status`, `supporting_assertion_ids` or `contradicting_assertion_ids` — not on `status` alone: the invariant couples the status to both id lists, so an op touching a list breaks it without naming the status, which is the skill's own documented re-invocation path ("only link the evidence and leave the status unchanged"). A narrative-only update naming none of the three is not refused. An empty `supporting_assertion_ids` at `supported` is **refused** (it carries no evidence), contrary to the issue's accept-list wording; a dangling id that resolves to no assertion simply counts as nothing. Read from the **pre-call snapshot**, both halves, per ADR-0011's criterion: `conflicts` belongs to `skill:conflict-resolution` and `assertions` to `skill:record-extraction`, neither of them this author's own prior step, and both are `enforceableAt: ["unit"]` only — so a live read would let a session satisfy this gate with a write made inside the very call it gates. A same-batch resolve-then-promote is therefore refused, and the refusal says to settle the conflict in an earlier call. **Both halves' refusals say so**, since both read the snapshot: a batch that appends a valid `direct` assertion and promotes on it is refused saying there is no direct assertion, so half (b)'s message ends "Assertions appended in THIS call do not count — append them in an earlier call, then promote". The refusal names which half failed and the ids involved; the same wording as the eval validator, with ids bracketed and comma-joined, plus a remedy clause the pytest-facing Python text does not carry | The rule shipped as SKILL.md prose and an eval validator (`test_supported_requires_evidence_floor`) and bound in neither Cowork nor hosted. **Measured cost: 0 of 9.** 17 ops set `status: "supported"` across 13 calibration run logs, of which **9 landed** (7 returned `ok: false`, 1 capture stripped) — a refused call is not a write (`replay.py`) — and none of the 9 fails either half. Corroborated by 0 of 44 `supported` hypotheses over 276 committed final states and fixtures. The snapshot read costs 0 further refusals: no calibration batch appends an assertion ahead of the promote, and neither batch carrying a `conflicts` op ahead of it is affected. The one batch it would refuse is in `_2491-exploratory-quarantine`, exploratory-only by lead ruling 2026-09-15. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`; re-derive before quoting. ADR-0011 |
+| `hypotheses` append/update setting **`status: "supported"`** | the mechanical evidence floor of `research-schema-spec.md` §5.9, both halves: **(a)** no `conflicts[]` entry whose `competing_assertion_ids` overlap this hypothesis's `supporting_assertion_ids` **or** `contradicting_assertion_ids` is still unresolved (`resolved` and `moot` both settle it), and **(b)** either ≥1 supporting assertion carries `record_basis: "stated"`, or ≥2 carry `record_basis: "inferred"` and cite ≥2 distinct `source_id` values. **Conflicts are matched by assertion overlap, never by shared `question_id`** — `eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that separates the two: its `h_001` is `supported` while `c_001` is unresolved and blocks the same `q_001`, but names entirely different assertions, so a question-keyed predicate refuses a shipped, correct fixture. **Forward direction only** (lead ruling 2026-09-07): a hypothesis that clears the floor and was left `active` is untouched, and the spec's third condition — evidence consistency, no logical or geographic impossibility — is a genealogist's judgment call and is not attempted. Gated on **any of the three coupled fields** — `status`, `supporting_assertion_ids` or `contradicting_assertion_ids` — not on `status` alone: the invariant couples the status to both id lists, so an op touching a list breaks it without naming the status, which is the skill's own documented re-invocation path ("only link the evidence and leave the status unchanged"). A narrative-only update naming none of the three is not refused. An empty `supporting_assertion_ids` at `supported` is **refused** (it carries no evidence), contrary to the issue's accept-list wording; a dangling id that resolves to no assertion simply counts as nothing. Read from the **pre-call snapshot**, both halves, per ADR-0011's criterion: `conflicts` belongs to `skill:conflict-resolution` and `assertions` to `skill:record-extraction`, neither of them this author's own prior step, and both are `enforceableAt: ["unit"]` only — so a live read would let a session satisfy this gate with a write made inside the very call it gates. A same-batch resolve-then-promote is therefore refused, and the refusal says to settle the conflict in an earlier call. **Both halves' refusals say so**, since both read the snapshot: a batch that appends a valid `direct` assertion and promotes on it is refused saying there is no direct assertion, so half (b)'s message ends "Assertions appended in THIS call do not count — append them in an earlier call, then promote". The refusal names which half failed and the ids involved; the same wording as the eval validator, with ids bracketed and comma-joined, plus a remedy clause the pytest-facing Python text does not carry | The rule shipped as SKILL.md prose and an eval validator (`test_supported_requires_evidence_floor`) and bound in neither Cowork nor hosted. **Measured cost: 0 of 9.** 17 ops set `status: "supported"` across 13 calibration run logs, of which **9 landed** (7 returned `ok: false`, 1 capture stripped) — a refused call is not a write (`replay.py`) — and none of the 9 fails either half. Corroborated by 0 of 44 `supported` hypotheses over 276 committed final states and fixtures. The snapshot read costs 0 further refusals: no calibration batch appends an assertion ahead of the promote, and neither batch carrying a `conflicts` op ahead of it is affected. The one batch it would refuse is in `_2491-exploratory-quarantine`, exploratory-only by lead ruling 2026-09-15. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`; re-derive before quoting. ADR-0011 |
 | `questions` update → `exhaustive_declared` | `exhaustive_declaration.declared` true ⇒ `log_entry_ids` non-empty and `stop_criteria` non-null; a re-declare on an already-declared question is a **no-op short-circuit** (don't overwrite a settled GPS Component-1 record) | `validator.ts:417–424` + audit |
 | `questions` append/update marking the question **resolved** | a `proof_summaries[]` entry must already carry this question's id in `question_id`. **Both spellings of resolved are gated** — `status: "resolved"` and a truthy `resolved` date — because they are one transition, and gating only the enum leaves the date as an ungated synonym an agent refused on one can reach through the other. Read **live**, not snapshotted: the summary and the resolve are two halves of one author's conclusion, so a batch that appends the summary first satisfies it. Concluding is the only way to close a question; one closed with nothing found still gets a `not_proved` summary saying so | `status: "resolved"` is the orchestrator's stop condition and was a free write — 150 questions reached it across 154 runs from **11 different skill contexts**, neither owning skill claiming it. Measured cost: **0 of 146** corpus writes refused (142 status, 4 date-only). ADR-0011 |
 | `plans` append | at most **one active plan per question** — a second `active` plan for the same `question_id` is rejected | audit; `research-schema-spec.md:265` |
@@ -995,7 +1081,7 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | `op: update` `fields` attempting to change `id` | input error |
 | `section: plan_items` without a resolvable `planId` | input error |
 | A §5 invariant violated | input error with the specific rule; write nothing |
-| Assertion `evidence_type: "negative"` paired with `record_role` other than the literal `"absent"` (or vice versa), **or with `informant_proximity` other than `"researcher"`** | input error naming the mismatch and the fix; write nothing. Both `record_role: "absent"` and `informant_proximity: "researcher"` are mechanical corollaries of `evidence_type: "negative"` (research-schema-spec.md, "Negative evidence"), not second judgment calls — checked on both `append` and `update` (re-validated against the merged entry, not just the patched fields). **The `record_role` arm is bidirectional; the `informant_proximity` arm is forward-only** (`absent` + a non-negative `evidence_type` is refused; `researcher` proximity on a non-negative assertion is not). Each message gives the caller a way to decide whether the assertion is negative evidence at all — the test is whether the finding is an **absence**, not whether the record states the fact, since a person the record NAMES can still be absent from among the living (the "preceded in death by" shape) — because a field-naming refusal is observed to buy a relabel rather than a fix. No message prescribes an edit another arm refuses: flipping `evidence_type` alone on an `absent`-role assertion is rejected by the converse, so the messages name the two-field change instead (`eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`, `ut_record_extraction_028`, calls 2-3) |
+| Assertion `record_basis: "absent"` paired with `record_role` other than the literal `"absent"` (or vice versa), **or with `informant_proximity` other than `"researcher"`** | input error naming the mismatch and the fix; write nothing. Both `record_role: "absent"` and `informant_proximity: "researcher"` are mechanical corollaries of `record_basis: "absent"` (research-schema-spec.md, "Negative evidence"), not second judgment calls — checked on both `append` and `update` (re-validated against the merged entry, not just the patched fields). **The `record_role` arm is bidirectional; the `informant_proximity` arm is forward-only** (`absent` + a non-negative `record_basis` is refused; `researcher` proximity on a non-negative assertion is not). Each message gives the caller a way to decide whether the assertion is negative evidence at all — the test is whether the finding is an **absence**, not whether the record states the fact, since a person the record NAMES can still be absent from among the living (the "preceded in death by" shape) — because a field-naming refusal is observed to buy a relabel rather than a fix. No message prescribes an edit another arm refuses: flipping `record_basis` alone on an `absent`-role assertion is rejected by the converse, so the messages name the two-field change instead (`eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`, `ut_record_extraction_028`, calls 2-3) |
 | `sourceDescription` malformed (missing `title`, unknown keys) or without exactly one sources append op | input error; write nothing |
 | sources append with neither `sourceDescription` nor an existing `gedcomx_source_description_id` (or with both) | op-indexed input error; write nothing |
 | sources append referencing a dangling `S` id | op-indexed precondition error naming the existing S ids; write nothing |
