@@ -4412,6 +4412,460 @@ describe("research_append (batch ops)", () => {
     expect((errorsOf(r) ?? []).join("\n")).toMatch(/plans entry 'pl_001' is 'completed'/);
   });
 
+  // ── (d4-logattr) completing a plan item needs a log entry naming it ────────
+  // Completing an item asserts its search was done; log[] is where a search is
+  // recorded. Both halves live in research.json, so this is a writer
+  // precondition rather than SKILL.md prose (ADR-0011's first question).
+  //
+  // Read LIVE and provably free: `log` is not a research_append section, so no
+  // op in a batch can change log[] and the live document and the pre-call
+  // snapshot carry an identical log.
+  //
+  // The accept-side cases are NOT optional — a guard fails two ways, and a
+  // replay can only test the blocking half.
+
+  /** A log entry naming `planItemId` (or nothing, when null). */
+  const logNaming = (id: string, planItemId: string | null) => ({
+    id,
+    plan_item_id: planItemId,
+    performed: "2026-05-01T10:15:00Z",
+    tool: "record_search",
+    query: { surname: "Test" },
+    outcome: "positive",
+    results_examined: 1,
+    external_site: null,
+  });
+  /** One question, one active plan, one item at `status`, and whatever log the
+   *  case needs. */
+  const attrResearch = (status: string, log: any[]) => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status }]),
+    ] as any;
+    research.log = log as any;
+    return research;
+  };
+  const completeIt = () => ({
+    projectPath: dir,
+    ops: [
+      { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "completed" }, planId: "pl_001" },
+    ],
+  });
+
+  it("(d4-logattr) refuses completing an item no log entry names — writes nothing", async () => {
+    await writeProject(attrResearch("in_progress", [logNaming("log_001", "pli_002")]));
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend(completeIt() as any);
+
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/^ops\[0\]:/);
+    expect(msg).toMatch(/no log\[\] entry names pli_001/);
+    // The remedy must be executable: research_log_append only appends, so
+    // "fix the log entry" would be an instruction the agent cannot follow.
+    expect(msg).toMatch(/research_log_append\(\{ planItemId: "pli_001"/);
+    expect(msg).toMatch(/leave this item 'in_progress'/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
+  // names it", and each reaches the helper down a different path.
+  it("(d4-logattr) refuses when log[] is empty", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) refuses when the log key is absent entirely", async () => {
+    const research = attrResearch("in_progress", []);
+    delete (research as any).log;
+    await writeProject(research);
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) refuses when every entry carries plan_item_id: null", async () => {
+    // The ut_search_images_011 shape exactly: two entries written from an
+    // image_search with plan_item_id null, then the item marked completed.
+    await writeProject(
+      attrResearch("in_progress", [logNaming("log_001", null), logNaming("log_002", null)]),
+    );
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/no log\[\] entry names pli_001/);
+    // planItemId: null is a legitimate documented shape for an ad-hoc browse,
+    // so the message must say which of the two the agent got wrong.
+    expect(msg).toMatch(/planItemId: null is only for an ad-hoc search/);
+  });
+
+  it("(d4-logattr) survives a legacy `log: [null]` rather than crashing the writer", async () => {
+    await writeProject(attrResearch("in_progress", [null]));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    // The refusal, not `Cannot read properties of null`.
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  // This helper runs BEFORE document validation, so a hand-edited research.json
+  // reaches it with any shape at all. Each of these would throw, not refuse, if
+  // a guard were dropped.
+  it("(d4-logattr) treats a non-array log as empty rather than throwing", async () => {
+    for (const bad of [{}, "not-a-list", 7]) {
+      const research = attrResearch("in_progress", []);
+      (research as any).log = bad;
+      await writeProject(research);
+      const r = await researchAppend(completeIt() as any);
+      expect(r.ok, `log=${JSON.stringify(bad)}`).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+    }
+  });
+
+  it("(d4-logattr) steps over log entries that are not objects", async () => {
+    await writeProject(attrResearch("in_progress", ["log_001", 3] as any));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) does not match a plan_item_id of the wrong type", async () => {
+    // `["pli_001"]`, not `1`: a numeric value can never equal the id under ANY
+    // comparison, so it cannot tell `===` from a coercing `==`. A one-element
+    // array can — `String(["pli_001"]) === "pli_001"` — so this reds if the
+    // comparison is ever loosened, which is what the title claims to pin.
+    await writeProject(
+      attrResearch("in_progress", [{ ...logNaming("log_001", null), plan_item_id: ["pli_001"] } as any]),
+    );
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) skips an item with no id rather than refusing it as 'undefined'", async () => {
+    // An id-less item is the document validator's problem, not this rule's, so
+    // the shape guard skips it. Drop the guard and `pid` is `undefined`, which
+    // matches no real entry — the call is refused naming "undefined", an error
+    // about the wrong thing that sends the agent hunting a log entry rather
+    // than the missing id. The log entry below MUST name something, or the
+    // dropped guard would instead match `undefined === undefined` and the case
+    // could not tell the two apart.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...validPlanItem(), status: "completed" }], // no id
+          },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).not.toMatch(/names undefined/);
+    expect(msg).not.toMatch(/no log\[\] entry names/);
+  });
+
+  it("(d4-logattr) tolerates a non-array `items` on a plans op — the §5 rule owns that", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: { ...noId(validPlan("x", "q_001", "active")), items: "nope" } },
+      ],
+    } as any);
+    // Refused for its shape by the plans `items` rule, never a TypeError from
+    // this arm iterating a string.
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/must be an array of plan items/);
+  });
+
+  it("(d4-logattr) refuses an APPEND carrying status: completed — the id is tool-assigned", async () => {
+    // No log entry can already name an id this call is about to mint, so the
+    // append form is refused unconditionally. Same defect, different shape.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "completed" }, planId: "pl_001" },
+      ],
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_002/);
+  });
+
+  it("(d4-logattr) refuses a batch that appends an item and completes it in the same call", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+        { section: "plan_items", op: "update", entryId: "pli_002", fields: { status: "completed" }, planId: "pl_001" },
+      ],
+    } as any);
+
+    expect(r.ok).toBe(false);
+    // Refused by the pre-existing §3.3 same-batch rule, BEFORE this arm — an
+    // id minted in this call may not be updated in it. Asserted so the test
+    // records why the arm is unreachable here rather than implying it fired.
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/appended earlier in this batch/);
+  });
+
+  it("(d4-logattr) a stringified `fields` is caught by the shape guard before this arm runs", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", entryId: "pli_001", fields: '{"status":"completed"}', planId: "pl_001" },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    // The pre-existing guard, not this rule: `fields` must be an object.
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/update requires a `fields` object/);
+  });
+
+  // ── the second direction: what it must still ACCEPT ───────────────────────
+
+  it("(d4-logattr) ACCEPTS completing an item a log entry names", async () => {
+    await writeProject(attrResearch("in_progress", [logNaming("log_001", "pli_001")]));
+    const r = await researchAppend(completeIt() as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) ACCEPTS it when the naming entry was already in the starting document", async () => {
+    // Same as above stated from the other end: the entry need not be recent,
+    // only present. This is the shape every satisfying corpus run produces.
+    await writeProject(
+      attrResearch("planned", [logNaming("log_001", "pli_001"), logNaming("log_002", null)]),
+    );
+    const r = await researchAppend(completeIt() as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) NEVER refuses an in_progress or a skipped move", async () => {
+    for (const status of ["in_progress", "skipped"]) {
+      await writeProject(attrResearch("planned", []));
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "plan_items", op: "update", entryId: "pli_001", fields: { status }, planId: "pl_001" },
+        ],
+      } as any);
+      expect(errorsOf(r) ?? [], `status ${status}`).toEqual([]);
+      expect(r.ok, `status ${status}`).toBe(true);
+    }
+  });
+
+  it("(d4-logattr) ACCEPTS an unrelated edit to an item ALREADY completed with no log", async () => {
+    // Forward direction only. An item seeded `completed` in a document with an
+    // empty log is not this call's doing, and refusing every later edit to it
+    // would freeze hand-authored and legacy fixtures — the false deny
+    // ADR-0011's first limit exists to prevent.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", entryId: "pli_001", fields: { rationale: "Reworded" }, planId: "pl_001" },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  // ── the inline-items bypass, closed on the `plans` section ─────────────────
+  // `plans` append spreads the caller's entry wholesale and `plans` update
+  // copies arbitrary keys, so `items` reaches the array without any plan_items
+  // op existing. research-append-tool-spec.md §5 names inline non-empty `items`
+  // as a shape "already in use", so this is a documented route, not a corner.
+
+  it("(d4-logattr) refuses a plans APPEND whose inline items carry an unnamed completed item", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...seededPlanItem("pli_001"), status: "completed" }],
+          },
+        },
+      ],
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d4-logattr) refuses a plans UPDATE that rewrites items[] with an unnamed completed item", async () => {
+    await writeProject(attrResearch("planned", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: { items: [{ ...seededPlanItem("pli_001"), status: "completed" }] },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) ACCEPTS the corpus's own inline-items shape — every item planned", async () => {
+    // All 6 tracked `plans` appends carrying non-empty inline items carry only
+    // `planned` items, so this arm refuses nothing the corpus contains. This is
+    // the case that would break if the arm checked the wrong thing.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [seededPlanItem("pli_001"), seededPlanItem("pli_002")],
+          },
+        },
+      ],
+    } as any);
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("(d4-logattr) ACCEPTS a plans UPDATE whose completed inline item IS log-named", async () => {
+    // Without this the `plans` arm never proves it reads `log[]` at all: both
+    // its refusal tests seed an empty log, and its accept test uses only
+    // `planned` items, so the helper returns before touching `research`.
+    // Passing the arm a hard-coded `{ log: [] }` leaves every one of them
+    // green. This is the vector that reds it — and the false deny it forbids
+    // (refusing a correctly-attributed rewrite) is the ADR-0011 limit-1 shape.
+    await writeProject(attrResearch("planned", [logNaming("log_001", "pli_001")]));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: { items: [{ ...seededPlanItem("pli_001"), status: "completed" }] },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) ACCEPTS a plans APPEND whose completed inline item IS log-named", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...seededPlanItem("pli_001"), status: "completed" }],
+          },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) reports one error per failing item in a single plans op", async () => {
+    await writeProject(attrResearch("planned", [logNaming("log_001", "pli_001")]));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: {
+            items: [
+              { ...seededPlanItem("pli_001"), status: "completed" }, // named — ok
+              { ...seededPlanItem("pli_002"), status: "completed" }, // not named
+              { ...seededPlanItem("pli_003"), status: "completed" }, // not named
+            ],
+          },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/names pli_002/);
+    expect(msg).toMatch(/names pli_003/);
+    expect(msg).not.toMatch(/names pli_001/);
+  });
+
+  it("(d4-logattr) ACCEPTS a plans update that leaves items[] alone", async () => {
+    // Gated on the ops that can SET an item's status. A plan whose items were
+    // completed in an earlier call must stay editable.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "update", entryId: "pl_001", fields: { status: "completed" } },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
   it("(b) rolls back the whole batch on a mid-batch validation failure — writes nothing", async () => {
     await writeProject();
     const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -7942,6 +8396,23 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       status,
     }));
     r.plans = [plan];
+    // Every item carries a log entry naming it. Without this the
+    // log-attribution precondition preempts the gates THIS block is about: a
+    // batch that flips an item to `completed` is refused on its FIRST op and
+    // the declaration op is never applied, so the snapshot-read vector below
+    // stops being exercised while its assertion still passes off the other
+    // refusal's text. Seeding the log is also the realistic shape — a
+    // completed plan item is one whose search was logged.
+    r.log = plan.items.map((it: any, i: number) => ({
+      id: `log_00${i + 1}`,
+      plan_item_id: it.id,
+      performed: "2026-05-01T10:15:00Z",
+      tool: "record_search",
+      query: { surname: "Test" },
+      outcome: "positive",
+      results_examined: 1,
+      external_site: null,
+    }));
     return r;
   }
   async function writeProject(research: any) {
@@ -7977,6 +8448,11 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     const errs = failure(r).errors.join(" ");
     expect(errs).toMatch(/pli_002/);
     expect(errs).toMatch(/in_progress/);
+    // `in_progress` now has two producers — the log-attribution refusal ends
+    // "leave this item 'in_progress'". Safe here only because this call carries
+    // a single `questions` op the other arm cannot reach; pinned so it stays
+    // safe if this test ever gains one.
+    expect(errs).toMatch(/cannot be declared exhaustive/);
   });
 
   it("refuses the antonio-lucas-spouse shape: the item flips are BATCHED ahead of the declaration", async () => {
@@ -7994,7 +8470,13 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
         { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
       ],
     } as any);
-    expect(failure(r).errors.join(" ")).toMatch(/pli_001/);
+    const errs2 = failure(r).errors.join(" ");
+    expect(errs2).toMatch(/pli_001/);
+    // The G2 WORDING, not just the id. Both this rule and the log-attribution
+    // rule below name `pli_001`, and the latter throws on op #1 — so an
+    // id-only assertion passes off the wrong refusal and stops exercising the
+    // snapshot-read vector this test exists for.
+    expect(errs2).toMatch(/cannot be declared exhaustive/);
   });
 
   it("allows a declaration when every item is completed or skipped", async () => {

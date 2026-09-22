@@ -59,7 +59,7 @@ sys.path.insert(0, str(_HARNESS))
 sys.path.insert(0, str(_HARNESS / "validators"))  # validators_lib, the module
 
 from test_search_external_sites import (  # noqa: E402
-    report_no_plan_item_status_written_when_no_entry_names_one as check_v6,
+    test_no_plan_item_status_written_when_no_entry_names_one as check_v6,
     test_log_entries_do_not_carry_each_others_fields as check_v2,
     test_plan_items_are_updated_never_appended as check_v7,
     test_the_log_is_append_only as check_v8,
@@ -338,18 +338,24 @@ def test_v8_quiet_when_entries_are_only_appended():
     expect_passes(lambda: check_v8(before, after, POSITIVE))
 
 
-def test_v6_is_tier_2_and_cannot_gate_a_run():
-    """V6's demotion is a property of the NAME, and nothing else asserted it.
+def test_v6_is_tier_1_and_gates_the_run():
+    """V6's tier is a property of the NAME, and nothing else asserts it.
 
     `validator_runner` decides the tier from the `report_` prefix alone
     (`is_report = attr_name.startswith("report_")`), and the V6 cases above call
-    the function directly, so they pin its logic but never its tier. Re-promoting
-    it to `test_` would make it gate every run on a rule `SKILL.md` does not
-    state - the #2345 review finding that demoted it - and the only thing
-    standing in the way is that this module imports it by name.
+    the function directly, so they pin its logic but never its tier. Demoting it
+    back to `report_` would stop it gating, and nothing else here would notice:
+    the module-level import by name fails with an ImportError about an import,
+    not about a tier.
 
-    So assert the property the review asked for rather than the spelling: run it
-    through the harness and require `reporting_only`.
+    The 2026-09-22 ruling (ADR-0011, "Rulings that generalize") promoted it. "No
+    SKILL.md states it" - the earlier review finding that kept it reporting-only
+    - does not settle the question, because the rule is decidable from the
+    project documents alone. V6 is now the complement of the `research_append`
+    log-attribution precondition: coarser on attribution, broader on status.
+
+    So assert the property the ruling asked for rather than the spelling: run it
+    through the harness and require that it is NOT `reporting_only`.
     """
     from harness.validator_runner import run_validators
 
@@ -369,11 +375,13 @@ def test_v6_is_tier_2_and_cannot_gate_a_run():
     )
     v6 = next(
         (r for r in results
-         if r.name == "report_no_plan_item_status_written_when_no_entry_names_one"),
+         if r.name == "test_no_plan_item_status_written_when_no_entry_names_one"),
         None,
     )
     assert v6 is not None, "V6 did not run; the harness did not collect it"
-    assert v6.reporting_only is True, (
-        "V6 is gating the run. It reports on a rule SKILL.md does not state "
-        "(#2345 review) — it must stay `report_`-prefixed."
+    assert v6.reporting_only is False, (
+        "V6 is only reporting. The 2026-09-22 ruling (ADR-0011, 'Rulings that "
+        "generalize') promoted it to gating — it must stay `test_`-prefixed. "
+        "It is the complement of the research_append log-attribution "
+        "precondition: coarser on attribution, broader on status."
     )
