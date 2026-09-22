@@ -7,7 +7,7 @@ adds be replayed over the committed corpus and read individually before it
 ships. This script is that replay, committed so the figure in the spec stays
 reproducible after `PLAN.md` is deleted on merge.
 
-The rule: an assertion with `evidence_type: "negative"` must carry
+The rule: an assertion whose basis is a recorded ABSENCE must carry
 `record_role: "absent"` and `informant_proximity: "researcher"`.
 
 Two details make the count reproducible, and both were wrong in earlier
@@ -40,6 +40,12 @@ from __future__ import annotations
 import collections
 import json
 import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # eval/harness
+
+from harness.record_basis import record_basis_of  # noqa: E402
 
 # The closed enum from docs/specs/schemas/enums.schema.json. A value outside
 # it is already refused by the validator's own enum check, so a violation
@@ -62,7 +68,13 @@ SKIPPED: list[tuple[str, str]] = []
 
 
 def find_negatives(path: str) -> list[tuple[str, dict]]:
-    """Every object with evidence_type == "negative", however deeply nested.
+    """Every object whose basis is a recorded absence, however deeply nested.
+
+    Matched through `record_basis_of`, which reads BOTH spellings on purpose:
+    this walks the frozen run-log corpus, which is never migrated, so most of
+    the population still carries the pre-2026-09-18 field name. Reading only
+    the current spelling would collapse the figure toward zero, and a broken
+    instrument is indistinguishable from a real finding.
 
     A file that cannot be parsed is RECORDED, not silently dropped. This script
     is the durable evidence for an `enforcing` row, so a file that contributed
@@ -76,14 +88,18 @@ def find_negatives(path: str) -> list[tuple[str, dict]]:
         if depth > 60:
             return
         if isinstance(node, dict):
-            if node.get("evidence_type") == "negative":
+            if record_basis_of(node) == "absent":
                 found.append((where, node))
             for key, value in node.items():
                 walk(value, f"{where}/{key}", depth + 1)
         elif isinstance(node, list):
             for i, value in enumerate(node):
                 walk(value, f"{where}[{i}]", depth + 1)
-        elif isinstance(node, str) and "evidence_type" in node and len(node) < 4_000_000:
+        elif (
+            isinstance(node, str)
+            and ("record_basis" in node or "evidence_type" in node)
+            and len(node) < 4_000_000
+        ):
             try:
                 walk(json.loads(node), f"{where}(str)", depth + 1)
             except ValueError:

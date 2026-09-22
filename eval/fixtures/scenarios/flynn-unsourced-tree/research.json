@@ -90,7 +90,7 @@
       "informant": "Unknown tree owner (compiled source)",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Compiled online tree with no original sources cited. The basis for this claim is unknown — it may derive from another unsourced tree, a misidentification, or an unrecorded family tradition. Cannot be treated as evidence until verified against original records.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }
