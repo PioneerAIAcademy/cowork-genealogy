@@ -65,18 +65,23 @@ The first-place guard runs before the second (sequential `if` blocks in
 appears.
 
 **What the error does not distinguish.** `standardPlaceToCoords` swallows
-every upstream failure and returns `null` (its `catch` block),
-so one message covers three cases: an unknown place name, a Places API
-outage, and a `fetchWithTimeout` timeout. The error text says "could not
+every upstream failure and returns `null` (its `catch` block), once §5's
+retries are exhausted, so one message covers three cases: an unknown
+place name, a Places API outage, and a `fetchWithTimeout` timeout. The error text says "could not
 resolve," not "is not a standard place."
 
 ## 5. Authentication and network
 
 - **No FamilySearch token required.** `src/utils/place-api.ts` sends no
   `Authorization` header, so `place_distance` works before `login`.
-- **No retry.** Uses `fetchWithTimeout` (not `fetchWithRetry`);
-  `place-api.ts` is one of the named retry exclusions. A transient
-  upstream failure is not retried.
+- **Retried above the HTTP layer, not inside it.** `place-api.ts` calls
+  `fetchWithTimeout`, not `fetchWithRetry`, because it is one of
+  CLAUDE.md's named retry exclusions — the resolver retries instead.
+  `standardPlaceToCoords` reaches the API through `getSearchEntries` and
+  `getRepInfo`, and both wrap their fetch in `place-resolver.ts`'s
+  `withRetry`: 3 attempts, 200 ms backoff doubling, plus jitter. A
+  transient upstream failure is retried up to three times before the
+  resolver gives up and returns `null`.
 - Both places are resolved concurrently (`Promise.all`).
 
 ## 6. Consumers

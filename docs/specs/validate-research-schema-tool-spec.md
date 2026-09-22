@@ -18,8 +18,10 @@ enums, and broken cross-references. Intended to be called after writing
 to either file.
 
 The tool is a thin wrapper around `validateProject` — it formats results
-for the MCP boundary and catches every throw so the caller always
-receives a structured result, never an MCP-level error.
+for the MCP boundary and catches every throw from it, so a caller that
+supplies `arguments` receives a structured result rather than an
+MCP-level error. A call that omits `arguments` entirely is the one
+exception (§3.4).
 
 ## 2. Input
 
@@ -92,8 +94,16 @@ arm returns:
 ```
 
 This is the only path where `errors[]` carries the `"Validation error: "`
-prefix. The tool never sets `isError: true` — every outcome is a
-structured result, so it has no error modes at the MCP boundary.
+prefix.
+
+One case escapes the structured result. `validateResearchSchema`
+destructures `input` before it enters its `try`, so a `tools/call` that
+omits `arguments` altogether — the MCP protocol marks `arguments`
+optional, and `server.ts` does not validate it against `inputSchema` —
+throws `Cannot destructure property 'projectPath' of 'input' as it is
+undefined`. `server.ts` catches that and returns `{ error: "<message>" }`
+with `isError: true`. Whenever `arguments` is present, every outcome is a
+structured result and `isError` is never set.
 
 ## 4. Validation rules
 
@@ -102,8 +112,10 @@ The rule set lives in `validateProject`
 specified by `docs/specs/research-schema-spec.md`. This spec does not
 restate them.
 
-The rule set is exercised by 133 cases in
-`tests/validation/validator.test.ts`.
+The rule set is exercised by 209 cases in
+`tests/validation/validator.test.ts` — the count `vitest` reports, not
+the `it(` line count, since the file builds many of its cases in `for`
+loops and `it.each` blocks.
 
 ## 5. Consumers
 
