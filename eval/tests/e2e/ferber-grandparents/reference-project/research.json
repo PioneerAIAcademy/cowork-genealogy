@@ -426,7 +426,7 @@
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Birthplace requires active reporting by a household member; the census does not name the informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_002"
@@ -450,7 +450,7 @@
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Birthplace requires active reporting by a household member; the census does not name the informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_002"
@@ -474,7 +474,7 @@
       "informant": "Census enumerator, witness to household composition",
       "informant_proximity": "witness",
       "informant_bias_notes": "Enumerator directly recorded household membership by visiting the dwelling.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_002"
@@ -498,7 +498,7 @@
       "informant": "Unknown (likely a family member or undertaker reporting to the county recorder)",
       "informant_proximity": "official_duty",
       "informant_bias_notes": "County death record; the specific informant is not named in the index. No cause-of-death field is present in this index-level source.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -522,7 +522,7 @@
       "informant": "Unknown informant reporting on the decedent's parentage",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Death-record informants are typically family and are secondary (not eyewitness) informants for the decedent's own parentage.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_002"
@@ -545,7 +545,7 @@
       "informant": "Unknown (family-supplied obituary information, typical for newspaper obituaries)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Newspaper obituaries are usually compiled from family-supplied information after death; treated as secondary for facts about the deceased's early life (e.g. birth year implied by age).",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "extracted_for_question_ids": [
         "q_002"
       ]
@@ -567,7 +567,7 @@
       "informant": "Client's own transcription of the same 1900 census clipping (known_holding kh_002)",
       "informant_proximity": "self",
       "informant_bias_notes": "This is a conflicting reading of the identical 1900 census record already captured as a_001 (FamilySearch index says Ohio). The client's clipping is a firsthand image of the same document, but neither reading has been checked against the actual census image via the tools available here — this is a transcription discrepancy on ONE record, not corroboration between independent sources.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "extracted_for_question_ids": [
         "q_002"
       ]
@@ -590,7 +590,7 @@
       "informant": "Client's own transcription of the same 1900 census clipping (known_holding kh_002)",
       "informant_proximity": "self",
       "informant_bias_notes": "Conflicting reading of the identical record already captured as a_002 (FamilySearch index says Ohio). Same caveat as a_007 — an image-level check is needed to adjudicate.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "extracted_for_question_ids": [
         "q_002"
       ]
@@ -726,6 +726,7 @@
       "question_id": "q_001",
       "tier": "not_proved",
       "vehicle": "summary",
+      "shortfall": "gap",
       "supporting_assertion_ids": [
         "a_005"
       ],
@@ -738,6 +739,7 @@
       "question_id": "q_002",
       "tier": "probable",
       "vehicle": "summary",
+      "shortfall": "conflict",
       "supporting_assertion_ids": [
         "a_001",
         "a_002",

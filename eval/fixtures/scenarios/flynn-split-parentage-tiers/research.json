@@ -351,7 +351,7 @@
       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -370,7 +370,7 @@
       "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -388,7 +388,7 @@
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
       "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -407,7 +407,7 @@
       "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
       "informant_proximity": "unknown",
       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -425,7 +425,7 @@
       "informant": "Unknown informant (likely Thomas Flynn himself) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -443,7 +443,7 @@
       "informant": "Ancestry transcriber (derivative of census enumerator)",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Derivative index — transcription errors possible",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -461,7 +461,7 @@
       "informant": "Ancestry transcriber (derivative)",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -479,7 +479,7 @@
       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -497,7 +497,7 @@
       "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -516,7 +516,7 @@
       "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
       "informant_proximity": "unknown",
       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -534,7 +534,7 @@
       "informant": "Attending physician (signature on certificate)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": []
     },
@@ -553,7 +553,7 @@
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -572,7 +572,7 @@
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -590,7 +590,7 @@
       "informant": "Unknown informant (likely Bridget herself, as head of household) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. 'Flynn' is a common surname in this county; nothing in the record ties this Bridget to Thomas Flynn (I2) beyond the surname and her stated widowhood.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_006",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -609,7 +609,7 @@
       "informant": "Inferred from household structure and stated marital status — no informant identifies a deceased husband by name",
       "informant_proximity": "unknown",
       "informant_bias_notes": "The 1870 census does not name Bridget's late husband. Treating her as Thomas Flynn's widow, and therefore as Patrick's mother, rests on the unsound assumption that any same-surname widow in the county was necessarily married to this specific Thomas Flynn — a common surname in Schuylkill County. No record directly connects her to Thomas (I2) or to Patrick (I1).",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_006",
       "extracted_for_question_ids": ["q_001"]
     }

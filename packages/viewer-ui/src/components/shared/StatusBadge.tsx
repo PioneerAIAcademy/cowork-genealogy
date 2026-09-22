@@ -35,9 +35,19 @@ const statusColorMap: Record<string, BadgeColor> = {
   primary: 'green',
   secondary: 'amber',
   indeterminate: 'gray',
-  // Evidence type
-  direct: 'green',
-  indirect: 'amber',
+  // Record basis. The map is keyed on the VALUE, not the field, so `absent`
+  // needs its own entry: before the rename `negative` only rendered red by
+  // colliding with log_outcome's `negative` above, and nothing would have
+  // caught all three evidence badges silently turning gray.
+  stated: 'green',
+  inferred: 'amber',
+  absent: 'gray',
+  // Proof shortfall — why a conclusion is not higher. `gap` and `conflict` are
+  // the two a researcher can act on, so they carry the warning colours.
+  ceiling: 'blue',
+  gap: 'amber',
+  conflict: 'red',
+  none: 'gray',
   // Conflict status
   unresolved: 'red',
   moot: 'gray',

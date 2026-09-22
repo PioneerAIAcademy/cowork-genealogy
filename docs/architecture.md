@@ -222,10 +222,11 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **28** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **7** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`proof-conclusion`, `research-exhaustiveness` and `person-evidence`.
+The seven agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`proof-conclusion`, `research-exhaustiveness`, `person-evidence` and
+`search-images`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -990,9 +991,10 @@ is pinned synthetically because no agent ships a deny for it to fire on.
 **One cost, accepted.** `check_rubric_tool_drift.py` asks whether a tool named
 in an agent body appears in either list, and `disallowedTools:` was doubling as
 the marker for a deliberate "you do NOT have this tool" mention. Removing the
-denies took that marker away, so its agent-body warnings went 5 → 12. It is
-warn-only and does not block a build; the suppression mechanism it wants is
-`gh issue list --state open --search "check_rubric_tool_drift suppression"`.
+denies took that marker away, increasing its agent-body warnings (run
+`python eval/harness/scripts/check_rubric_tool_drift.py` for the current
+count). It is warn-only and does not block a build; known false positives
+are handled by the `SUPPRESSIONS` list in the script.
 
 **Two standing prohibitions:**
 
@@ -1410,7 +1412,7 @@ Two things the site list alone won't tell you:
   — and no shorter target reaches all four. Naming them individually is how the
   last one gets skipped.
 
-**Add a value to a closed enum** (e.g. `evidence_type`, `proof_tier`). The enum
+**Add a value to a closed enum** (e.g. `record_basis`, `proof_tier`). The enum
 lives in `enums.schema.json` (`$defs`), **not** `research.schema.json` (which
 only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 `CLOSED_ENUMS` in `validator.ts`, and the prose tables.
@@ -1573,11 +1575,12 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   Opus on the model picker
   (`gh issue list --state open --search "delete-janitor"`).
 
-- **Four settings are boot-enforced in production, and one of them can never be
+- **Five settings are boot-enforced in production, and one of them can never be
   rotated.** When `PUBLIC_URL` starts with `https` — the sole production
   discriminant — `config.assert_production_config` refuses to boot if
-  `session_secret`, `ws_signing_key`, or `fs_token_enc_key` is still at its
-  declared default, or if `DATABASE_URL` is unset or blank (which would put a Fly
+  `session_secret`, `ws_signing_key`, `fs_token_enc_key`, or
+  `anthropic_proxy_signing_key` is still at its declared default, or if
+  `DATABASE_URL` is unset or blank (which would put a Fly
   deploy on SQLite over an unmounted rootfs). It runs as the first statement of
   `main.py`'s lifespan and names every offender at once, so one deploy fixes all
   of them. **`ws_signing_key` is set-once in practice:** `E2BProvider.create`
@@ -1587,6 +1590,9 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   plane mints against the new key, the sandbox verifies against the old, and
   every handshake fails with no recovery but a new session
   (`gh issue list --state open --search "WS_TOKEN_SECRET rotation"`).
+  **`anthropic_proxy_signing_key` has the same caveat:**
+  `HMAC(anthropic_proxy_signing_key, sandbox_id)` is the per-sandbox proxy
+  token; rotating the key orphans existing sandboxes the same way.
 
 > **Read the two source docs for reasoning, not for current state — this guide is
 > the current-state reference.** `docs/realtime-architecture.md` carries the

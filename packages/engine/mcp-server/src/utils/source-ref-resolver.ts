@@ -13,6 +13,7 @@
 // TreeEditError) to keep its existing error-handling contract.
 
 import type { SimplifiedGedcomX, SimplifiedSourceReference } from "../types/gedcomx.js";
+import { recordBasisOf } from "./record-basis.js";
 
 /** The assertion `fact_type`s that establish a link between TWO parties, and
  *  so can source a two-party write: `tree_edit add_relationship`'s edge, and
@@ -95,10 +96,12 @@ export function resolveSourceRef(
     );
   }
   const ref: SimplifiedSourceReference = { ref: sdid };
-  // Ref quality reflects the evidence class (tree-materialization-spec §7.1/§8:
-  // indirect evidence — e.g. a pre-1880 census parent-child edge — rides a
-  // lower quality). Direct → 3, indirect → 2; anything else left unset.
-  if (assertion.evidence_type === "direct") ref.quality = 3;
-  else if (assertion.evidence_type === "indirect") ref.quality = 2;
+  // Ref quality reflects how the record carried the value
+  // (tree-materialization-spec §7.1/§8): a value the record STATED rides higher
+  // than one we inferred — e.g. a pre-1880 census parent-child edge, which is
+  // a headship inference. stated → 3, inferred → 2; anything else left unset.
+  const basis = recordBasisOf(assertion);
+  if (basis === "stated") ref.quality = 3;
+  else if (basis === "inferred") ref.quality = 2;
   return ref;
 }

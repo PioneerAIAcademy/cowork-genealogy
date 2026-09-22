@@ -55,8 +55,8 @@ of rebuilding it.**
 12. `supported` requires ALL of: every `conflicts[]` entry whose
     `competing_assertion_ids` overlap this hypothesis's `supporting_assertion_ids`
     or `contradicting_assertion_ids` has `status` of `resolved` or `moot`; either
-    one supporting assertion carries `evidence_type: "direct"` or at least two
-    carry `evidence_type: "indirect"` citing at least two distinct `source_id`
+    one supporting assertion carries `record_basis: "stated"` or at least two
+    carry `record_basis: "inferred"` citing at least two distinct `source_id`
     values; and no logical/geographic impossibility.
 13. Never downgrade `supported` → `active` for a minor discrepancy (e.g., a
     census age-rounding gap of a few years). Adding a new contradicting
