@@ -1168,7 +1168,7 @@ def _response_hit_node_timeout(response: Any) -> bool:
 
 
 # Judge dimensions whose subject is checked deterministically by the
-# `test_expected_classifications` validator (it verifies evidence_type,
+# `test_expected_classifications` validator (it verifies record_basis,
 # informant_proximity, and information_quality on the declared
 # (record_role, fact_type) pairs). When that validator PASSES, the LLM judge
 # must not FAIL these dimensions on the same classifications — a fail there is

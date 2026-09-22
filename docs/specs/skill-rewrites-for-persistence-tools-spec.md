@@ -141,7 +141,7 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ### 4.6 `assertion-classification` — Wave 2
 - **Step 6:** `research_append({ section: "assertions", op: "update", entryId,
-  fields: { information_quality, informant, informant_proximity, evidence_type, … } })`
+  fields: { information_quality, informant, informant_proximity, record_basis, … } })`
   — never `append` (this skill only refines). The immutable-field list becomes
   structural (you only pass classification fields). **Keep** `references/three-layer-model.md`
   in full (pure classification judgment).
