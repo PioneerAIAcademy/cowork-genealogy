@@ -198,6 +198,12 @@ async def _run_one_test_async(
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
         validators_dir=paths.validators_dir,
+        # Passed explicitly though it is also the default: the gate's
+        # direct-agent fallback and `_prompt_for` must resolve `test.skill` to
+        # the SAME agent file, or a direct test passes the gate and then dies in
+        # `_prompt_for` (or worse, the reverse). Keeping the constant visible at
+        # both sites is what makes that agreement reviewable.
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     if not gate.runnable:
         return _aborted_entry(

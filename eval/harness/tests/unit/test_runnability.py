@@ -570,3 +570,89 @@ def test_intentionally_invalid_flag_bypasses_schema_gate(tmp_path):
     )
     assert result.runnable is True
     assert result.reason is None
+
+
+# ---- direct-agent tests key `test.skill` to an agent file (issue #1253) ----
+#
+# A direct test has no routing skill by construction — `stage_skills=not
+# spec.is_direct` never stages one — and an agent-keyed suite (`gps-mentor`)
+# has no skill directory at all. Before the fallback these tests aborted at
+# "skill not found" before any delegation branch ran, which is what left
+# `gps-mentor` with no way to be a test's subject.
+
+AGENTS = REPO_ROOT / "packages/engine/plugin/agents"
+
+
+def _direct_test_dict(skill="gps-mentor"):
+    return {
+        "test": {
+            "id": "ut_runnability_direct_001",
+            "skill": skill,
+            "name": "rn",
+            "type": "positive",
+            "description": "x",
+            "tags": [],
+        },
+        "input": {"delegation": "Critique ps_001.", "scenario": None},
+        "mcp_fixtures": [],
+        "judge_context": [],
+    }
+
+
+def test_direct_test_runnable_when_only_the_agent_file_exists():
+    """The case the fallback exists for: an agent with no routing skill.
+
+    Asserts the two preconditions inline so this reds loudly (rather than
+    passing vacuously) if someone later creates a `gps-mentor` skill directory
+    — which `scripts/package-plugin.mjs` would then ship as a user-triggerable
+    skill competing with the agent's own description.
+    """
+    spec = load_test_from_dict(_direct_test_dict())
+    assert spec.is_direct is True
+    assert not (SKILLS / "gps-mentor").is_dir()
+    assert (AGENTS / "gps-mentor.md").is_file()
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is True
+    assert result.reason is None
+
+
+def test_direct_test_blocked_when_neither_skill_nor_agent_exists():
+    spec = load_test_from_dict(_direct_test_dict(skill="not-a-real-pair"))
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is False
+    assert "not-a-real-pair.md" in result.reason
+
+
+def test_routed_test_still_blocked_by_a_missing_skill_directory():
+    """The fallback is gated on `is_direct` deliberately.
+
+    On a ROUTED test a missing skill directory is still a typo worth catching,
+    and falling through to a same-named agent would grade the test by a route
+    it never asked for. `gps-mentor` is the sharpest case: the agent file
+    exists, so only the `is_direct` gate keeps this red.
+    """
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "gps-mentor"
+    spec = load_test_from_dict(d)
+    assert spec.is_direct is False
+    assert (AGENTS / "gps-mentor.md").is_file()
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is False
+    assert "skill not found" in result.reason
+
+
+def test_direct_gate_resolves_the_same_agent_file_as_prompt_for():
+    """Gate-time and run-time must name one artifact.
+
+    If these drift, a direct test clears the gate and then dies in
+    `_prompt_for` ~20 turns into a paid run, which is the failure the gate
+    exists to move forward to load time.
+    """
+    from harness.orchestrator import _prompt_for
+
+    spec = load_test_from_dict(_direct_test_dict())
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is True
+    prompt = _prompt_for(spec)
+    assert "gps-mentor" in prompt
+    assert "Critique ps_001." in prompt
