@@ -233,6 +233,25 @@ It returns `{ ok: true, url, notes, access }` or `{ ok: false, reason, errors }`
 `ok: false`, surface the errors and fix the inputs rather than retrying
 blindly or hand-writing a URL.
 
+**Settle every place and date before you pass it — do this first, on the
+first call.** For each place or date attribute you are about to pass, look in
+`conflicts[]` for a `conflict_type: "fact"` entry whose `disputed_attribute`
+names that field:
+
+- **`status: "resolved"`** → pass the value of the assertion named by
+  `preferred_assertion_id`, and only that value — it is the project's
+  recorded answer, and the tree person's fact carries it once `tree-edit`
+  has run. Any other value for that field is wrong, however it reaches you.
+- **`status: "moot"`** → pass the tree person's fact for that field, and only
+  a value still asserted for the focus person.
+- **`status: "unresolved"`, or the entry names no surviving value** → do not
+  pass the field at all; say in one line that it is contested and name the
+  candidates. A tree fact is never evidence that a dispute is settled.
+
+Never take a place or date from the research objective, an `assertions[]`
+entry, or a record without running this check first — any of them may still
+echo a value the project has rejected.
+
 **Case A — a curated URL exists for the target site.**
 
 First, confirm the curated link actually fits the plan item. Compare its
@@ -300,23 +319,9 @@ value it rejected, a site's standing caution — comes back in the response's
 - Unusual name → start broad (surname + place only).
 - Common name → start narrow (add dates, relatives, a specific collection).
 - Include only parameters you're confident about; omit uncertain ones.
-- **A place or date that `conflicts[]` disputes comes from the tree
-  person's facts** — never from `assertions[]`, a record, or the research
-  objective's own text, any of which may still echo a value the project
-  has since rejected. The conflict entry says *whether* to encode the
-  field; the tree says *what* to encode.
-  - **`status: "resolved"` or `"moot"`** → encode the tree person's fact
-    for that field, and only that value. Where the tree and
-    `preferred_assertion_id` disagree, the recorded resolution wins.
-  - **`status: "unresolved"`, or the entry names no surviving value** →
-    **omit the field**, and say in one line that the value is contested,
-    naming the candidates so the researcher can filter by eye. A tree
-    fact is never evidence that a dispute is settled. These sites
-    *filter* on the field, so a guessed side returns nothing and the nil
-    gets logged as evidence of absence for a record that exists.
-
-  This governs only the fields a conflict names. Every other parameter
-  still comes from the plan item's event, as above.
+- **Disputed places and dates were settled at the top of this step.** That
+  rule governs only the fields a conflict names; every other parameter
+  comes from the plan item's event, as above.
 - Add relative names when you have them (Ancestry weights them heavily).
 - Widen with spelling variants or wildcards when a search returns little.
 
