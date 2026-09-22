@@ -187,6 +187,41 @@ describe("fulltextSearchTool not-full-text-searchable note", () => {
     expect(out.notFulltextSearchable).toBeUndefined();
   });
 
+  // An EMPTY imageGroupNumber is not a scoped search: `buildUrl` gates the
+  // `q.groupName` filter on truthiness, so "" searches the whole corpus. Gated
+  // on `!== undefined` the note fired anyway, telling the caller a full-corpus
+  // nil was a fact about a volume that was never in the query.
+  it("treats an empty imageGroupNumber as unscoped: no lookup, no note", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: "" },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(String(mockFetch.mock.calls[0][0])).not.toContain("q.groupName");
+  });
+
+  // The compounding failure: with projectPath, both notes fire and contradict.
+  // `nilSearchNeedsLog` says record the negative; `notFulltextSearchable` says
+  // do not. The more specific one wins and a real finding is discarded.
+  it("does not contradict nilSearchNeedsLog on an unscoped projectPath nil", async () => {
+    // The searchability response IS mocked, so that under the old `!== undefined`
+    // gate the lookup succeeds and the note really does fire. Without it the
+    // lookup would fail, return UNKNOWN, and this test would pass on the bug.
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce(makeOk({ ids: [] } as never));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: "", projectPath: "/p" },
+      LOCAL
+    );
+    expect(out.nilSearchNeedsLog).toBeDefined();
+    expect(out.notFulltextSearchable).toBeUndefined();
+  });
+
   it("does not look searchability up at all when no imageGroupNumber was given", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
 

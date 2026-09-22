@@ -164,9 +164,9 @@ def test_supported_requires_evidence_floor(before_state, after_state):
             a = assertions_by_id.get(aid)
             if a is None:
                 continue
-            if a.get("evidence_type") == "direct":
+            if a.get("record_basis") == "stated":
                 direct_count += 1
-            elif a.get("evidence_type") == "indirect":
+            elif a.get("record_basis") == "inferred":
                 indirect_sources.add(a.get("source_id"))
 
         if direct_count < 1 and len(indirect_sources) < 2:

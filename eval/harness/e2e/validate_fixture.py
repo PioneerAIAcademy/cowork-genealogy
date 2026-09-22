@@ -579,20 +579,67 @@ def check_stripping(
     return suspects
 
 
-def format_suspect(fixture_name: str, s: Suspect) -> str:
+def suspect_genre(fixture_dir: Path) -> str:
+    """The fixture's genre, for advice text only — defaults to "strip".
+
+    Deliberately permissive where `e2e.author`'s `fixture_genre` is strict:
+    that one owns validating the value and raises on an unknown genre. This
+    one only decides which sentence to print, so a missing, unreadable or
+    unrecognized `fixture.json` must not crash the linter — the worst case
+    is the strip-genre wording, which is what callers got before this
+    parameter existed. Kept here rather than imported from `e2e.author`,
+    which already imports from this module.
+    """
+    try:
+        raw = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return "strip"
+    return str(raw.get("genre") or "strip") if isinstance(raw, dict) else "strip"
+
+
+def format_suspect(fixture_name: str, s: Suspect, genre: str = "strip") -> str:
     """The WARN line for one suspect.
 
     Lives here rather than in `main()` so `e2e.author` can lint an
     *in-memory* candidate tree — on a dry run, or before the first write —
     and still print the same advice as the standalone linter.
+
+    `genre` selects the advice, not the detection. Every branch below used to
+    tell the reader to edit `starting-tree.gedcomx.json`, which is correct
+    for a `strip` fixture and forbidden on a `record-hint` one: nothing was
+    stripped there, the two trees are committed byte-identical (enforced by
+    `e2e.author validate`), and `resolve-record-hint`'s SKILL.md lists all
+    three tree files under "Never touch". Issue #2306 had to spend a
+    paragraph pre-emptively disarming this text; the fix is for the tool to
+    stop giving advice the genre forbids.
     """
     shared = ", ".join(sorted(s.shared))
-    if s.polarity == "avoid":
+    record_hint = genre == "record-hint"
+    if s.polarity == "avoid" and record_hint:
+        fix = (
+            f"this is an `avoid` finding on a record-hint fixture — the claim "
+            f"the agent must NOT assert overlaps a person the starting tree "
+            f"legitimately contains. **Do not edit either tree**: nothing was "
+            f"stripped in this genre and the two are committed identical. "
+            f"Either rewrite the finding so its name tokens no longer match "
+            f"{s.person_id}, or accept this line — and note that the same "
+            f"matcher runs against the agent's FINAL tree at grading time, so "
+            f"a finding left this way is force-failed on every run."
+        )
+    elif s.polarity == "avoid":
         fix = (
             f"this is an `avoid` finding — the claim the agent must NOT "
             f"assert appears to be pre-asserted by the starting tree. Remove "
             f"it from starting-tree.gedcomx.json (and the identical snapshot "
             f"on a record-hint fixture), or rewrite the finding."
+        )
+    elif record_hint:
+        fix = (
+            f"this is a record-hint fixture — nothing was stripped, so "
+            f"{s.person_id} staying in the tree is expected, not a defect. "
+            f"**Do not delete the person and do not edit either tree.** If "
+            f"{s.person_id} really is what this finding describes, rewrite "
+            f"the finding; otherwise ignore this line."
         )
     elif s.finding_type == "fact":
         fix = (
@@ -758,8 +805,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"OK     [{name}] schema valid, all findings appear stripped")
             continue
         total_suspects += len(suspects)
+        genre = suspect_genre(fixture_dir)
         for s in suspects:
-            print(format_suspect(name, s))
+            print(format_suspect(name, s, genre))
 
     if any_hard_error:
         return 2  # structural problem — fix the fixture files
