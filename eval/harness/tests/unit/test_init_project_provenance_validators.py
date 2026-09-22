@@ -621,8 +621,8 @@ def test_empty_sections_now_FIRES_on_the_untranscribed_memory_null_entry():
 
 
 _ALL_UNTRANSCRIBED = [
-    {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
-    {"id": "2", "title": "A deed", "artifactUrl": "https://sg30p0.familysearch.org/b/dist.jpg"},
+    {"id": "1", "title": "A will", "artifact_url": "https://sg30p0.familysearch.org/a/dist.pdf"},
+    {"id": "2", "title": "A deed", "artifact_url": "https://sg30p0.familysearch.org/b/dist.jpg"},
 ]
 
 
@@ -652,7 +652,7 @@ def test_empty_sections_fires_when_more_nulls_than_memories_came_back():
     entries rode in behind one real memory. Two memories cannot justify three
     sources."""
     calls = [_person_read_call(sources=[
-        {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
+        {"id": "1", "title": "A will", "artifact_url": "https://sg30p0.familysearch.org/a/dist.pdf"},
         {"id": "2", "title": "A story", "text": _STORY},
     ])]
     after = _after(_blank(sources=[

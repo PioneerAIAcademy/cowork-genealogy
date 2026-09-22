@@ -115,7 +115,7 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
     newest = max(dated, key=lambda pair: pair[0])[1]
     try:
         return json.loads(newest.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         # A corrupt predecessor must not take down the run that is writing a
         # new one — the sample simply starts a fresh sweep.
         return None
@@ -523,7 +523,7 @@ def _print_summary(rows: list[dict]) -> None:
 # Every outcome the harness can record, per unit-test-spec.md §7 and
 # `harness/runlog.py`. Enumerated rather than spot-checked: a four-value tally
 # (pass/partial/fail/aborted) silently under-sums a suite containing an
-# xfail/xpass test, and two live proof-conclusion tests declare exactly that.
+# xfail/xpass test.
 _OUTCOMES = ("pass", "partial", "fail", "aborted", "xfail", "xpass")
 
 

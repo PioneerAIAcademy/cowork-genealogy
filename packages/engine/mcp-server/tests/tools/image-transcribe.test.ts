@@ -25,6 +25,10 @@ import {
   imageTranscribeTool,
   __clearBrowseBudgetForTests,
 } from "../../src/tools/image-transcribe.js";
+import {
+  sourceImageCapState,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -86,6 +90,7 @@ beforeEach(() => {
   // vi mock reset does not clear it, so reset it explicitly or the budget tests
   // become order-dependent.
   __clearBrowseBudgetForTests();
+  __clearTruncatedSourceImagesForTests();
   mockFetch.mockReset();
   getOpenRouterApiKeyMock.mockReset();
   getOpenRouterModelMock.mockReset();
@@ -397,6 +402,67 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
       const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
       expect(result.truncated).toBeUndefined();
       expect(result.transcription).toBe("Row 1: Anna");
+    }
+  });
+});
+
+describe("imageTranscribeTool — records the truncation cap at the call site (#2457)", () => {
+  // Pins the cross-tool link the feature rests on: image_transcribe must record
+  // the cap against the persisted image so research_append can derive
+  // transcription_truncated. Every other test of this feature calls
+  // recordImageReadCap directly; this one drives it through the tool, so deleting
+  // or inverting the call at image-transcribe.ts fails here rather than nowhere.
+  it("a capped read that persists an image records the cap under its imageRef", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-cap-"));
+    try {
+      const result = await imageTranscribeTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.truncated).toBe(true);
+      expect(result.imageRef).toBe("images/004884748_02613.jpg");
+      // The join research_append performs at the write boundary must now hit.
+      expect(sourceImageCapState(dir, result.imageRef!)).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("an uncapped read records nothing — the image is absent from the add-only cap set (#2457 rulings, C 2026-09-21)", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-nocap-"));
+    try {
+      const result = await imageTranscribeTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.truncated).toBeUndefined();
+      expect(result.imageRef).toBe("images/004884748_02613.jpg");
+      // Add-only: a whole read adds nothing, so the image is not in the set and
+      // sourceImageCapState reads false; the derivation persists no marker.
+      expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("is sticky-true through the tool: a capped read then a narrower uncapped read of the same image stays partial (#2457 B1 ruling 2026-09-19)", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "imgt-sticky-"));
+    try {
+      // Read 1: capped.
+      mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
+      const r1 = await imageTranscribeTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+      expect(r1.truncated).toBe(true);
+      expect(sourceImageCapState(dir, r1.imageRef!)).toBe(true);
+      // Read 2: same image, narrower lookingFor, comes back uncapped — being add-only
+      // it records nothing, so it cannot clear read 1's partial.
+      mockOpenRouterOk("Anna");
+      const r2 = await imageTranscribeTool({ imageId: "004884748_02613", lookingFor: "Anna", projectPath: dir }, LOCAL);
+      expect(r2.truncated).toBeUndefined();
+      expect(sourceImageCapState(dir, r2.imageRef!)).toBe(true); // sticky — still partial
+    } finally {
+      await rm(dir, { recursive: true, force: true });
     }
   });
 });
