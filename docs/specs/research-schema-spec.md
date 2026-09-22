@@ -88,7 +88,7 @@ flagged. (One row below is the exception, and says so.)
 | `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
-| `evidence_type` | `direct`, `indirect`, `negative` | assertions |
+| `record_basis` | `stated`, `inferred`, `absent` | assertions |
 | `conflict_type` | `fact`, `identity` | conflicts |
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
@@ -121,15 +121,17 @@ which catches an addition, but a renamed or dropped value can leave a stale
 single-value mention in prose that no lint sees. The blast radius of a
 closed-enum change is in CLAUDE.md's schema-change site list.
 
-> **`no_evidence` was considered and rejected as an `evidence_type` value
-> (2026-06-21).** The model reaches for it when a record simply does not speak
+> **`no_evidence` was considered and rejected as a value of this enum
+> (2026-06-21, under the field's previous name — see the retired-identifier
+> registry in `enums.schema.json`; renamed to `record_basis` 2026-09-18, and
+> the decision below is unchanged, only the field's name is).** The model reaches for it when a record simply does not speak
 > to the question, and the instinct is GPS-correct — but a *scalar*
-> `evidence_type` cannot represent "no evidence" honestly, and a bare enum add
+> `record_basis` cannot represent "no evidence" honestly, and a bare enum add
 > buys that honesty at the cost of new exclusion logic in four consumers, none
 > of it validator-caught, plus an under-specified value. The retry loop it was
 > meant to fix was closed instead by a lower-blast-radius prose pin (issue #433:
-> state the valid values inline, plus "there is no `no_evidence`; keep
-> best-effort `indirect`"). If the honesty is ever judged worth it, do it
+> state the valid values inline, plus "there is no `no_evidence`" and keep the
+> best-effort stated-vs-inferred value). If the honesty is ever judged worth it, do it
 > deliberately, not as a quick fix: settle the scalar-vs-structural mismatch
 > first, define the structural convention + eval invariant + re-classification
 > trigger, then land all ~6 definition sites, both skills, and the eval
@@ -146,7 +148,7 @@ The following are **open enums** — recommended values that skills should prefe
 | `record_role` | See naming convention below | assertions |
 | `repository` | `FamilySearch`, `Ancestry`, `MyHeritage`, `FindMyPast`, `NARA`, `state_archives`, `county_courthouse`, `other` | plan items, sources. Use the same spelling between plans and sources so searches can match plan items to their resulting sources. |
 
-**`record_role` naming convention:** Use lowercase_with_underscores. Numbered roles use the pattern `{role}_{n}` (e.g., `child_1`, `child_2`, `heir_1`). Standard roles: `head_of_household`, `wife`, `child_{n}`, `deceased`, `informant`, `father_of_bride`, `mother_of_bride`, `father_of_groom`, `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_{n}`, `witness_{n}`, `godparent_{n}`, `absent` (for negative evidence — a person expected but not found in the record). **Enforced:** `evidence_type: "negative"` requires exactly `absent` here (validator, both schema trees, and `research_append`); the converse, `absent` reserved for negative evidence, is enforced **by `research_append` only** (see "Negative evidence" below).
+**`record_role` naming convention:** Use lowercase_with_underscores. Numbered roles use the pattern `{role}_{n}` (e.g., `child_1`, `child_2`, `heir_1`). Standard roles: `head_of_household`, `wife`, `child_{n}`, `deceased`, `informant`, `father_of_bride`, `mother_of_bride`, `father_of_groom`, `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_{n}`, `witness_{n}`, `godparent_{n}`, `absent` (for negative evidence — a person expected but not found in the record). **Enforced:** `record_basis: "absent"` requires exactly `absent` here (validator, both schema trees, and `research_append`); the converse, `absent` reserved for negative evidence, is enforced **by `research_append` only** (see "Negative evidence" below).
 
 ---
 
@@ -497,8 +499,8 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `url` | string or null | no | URL to the digital source |
 | `url_archived` | string or null | no | Web archive URL |
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
-| `transcription` | string or null | no | Full verbatim transcription of a page-scan record, when it was read via the `image-reader` subagent (`image_transcribe` OCR). The transcription is the model's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
-| `image_filename` | string or null | no | Project-relative path (`images/<key>.jpg`) of the saved page scan, when `image_transcribe` persisted it (a `projectPath` was supplied). Lets the viewer show the scan beside its `transcription`. Only retained-source images survive: a best-effort TTL sweep in `research_append` GCs `images/*.jpg` that no source's `image_filename` cites (§8.5). Null when the source is not image-backed or the image was not persisted. |
+| `transcription` | string or null | no | Full verbatim transcription of a page-scan record, when it was read via the `image-reader` subagent (`image_transcribe` OCR). **Also the destination for a FamilySearch memory's text** — either a story's own words or OCR of a scan the `person_read` memories filter kept, both arriving as that source's `text`. The field is named `transcription` on both routes even though **a story told by a family member is not a transcription of anything**; it is the researcher's own words being recorded, so treat it as source text rather than as a verbatim reading of a document. The transcription is the model's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. **Not for an untranscribed memory** — such a memory gets no `sources` entry at all: it stays in `tree.gedcomx.json` with its title and URL, which is the lead, and a `sources` entry would assert it was examined. `person_read` still returns it with a note saying the budget did not reach it, and it can be transcribed later with `image_transcribe`'s `memoryArtifactUrl`. |
+| `image_filename` | string or null | no | Project-relative path (`images/<key>.jpg`) of the saved page scan, when `image_transcribe` persisted it (a `projectPath` was supplied) — or when `person_read` retained a memory scan, which needs its own `projectPath` for the same reason and returns the ref as that source's `image_ref`. Lets the viewer show the scan beside its `transcription`. Only retained-source images survive: a best-effort TTL sweep in `research_append` GCs `images/*.jpg` that no source's `image_filename` cites (§8.5). Null when the source is not image-backed or the image was not persisted. |
 | `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
 **`citation_detail`** — Enforces the Who/What/When/Where/Where-within framework from Evidence Explained.
@@ -518,20 +520,33 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 
 **Extraction policy:** Extract all facts that are relevant to any open research question, plus identifying facts (name, age, birthplace) for every person in the record who might be the subject or a FAN associate. Do not extract every field from every household member — e.g., the occupation or school attendance of an unrelated neighbor is not useful unless a question specifically targets it. The `extracted_for_question_ids` field tracks relevance; assertions extracted opportunistically (bearing on questions not yet asked) use an empty array and will be linked to questions later.
 
-**Negative evidence (the "dog not barking"):** When the absence of information is itself a finding — e.g., "Patrick is absent from the 1870 census where he should appear" — this is an analytical inference drawn from a negative log entry. It is recorded as an assertion with `evidence_type: "negative"`. The `record_id` references the record that was searched (e.g., the 1870 census for Schuylkill County), `record_role` is `"absent"`, `informant_proximity` is `"researcher"`, and `value` describes the expected-but-missing information. The `source_id` references the source that was searched. This distinguishes a negative log entry (just "nil results") from a negative assertion (the analytical conclusion that the absence is meaningful).
+**Negative evidence (the "dog not barking"):** When the absence of information is itself a finding — e.g., "Patrick is absent from the 1870 census where he should appear" — this is an analytical inference drawn from a negative log entry. It is recorded as an assertion with `record_basis: "absent"`. The `record_id` references the record that was searched (e.g., the 1870 census for Schuylkill County), `record_role` is `"absent"`, `informant_proximity` is `"researcher"`, and `value` describes the expected-but-missing information. The `source_id` references the source that was searched. This distinguishes a negative log entry (just "nil results") from a negative assertion (the analytical conclusion that the absence is meaningful).
 
-**Two fields follow mechanically from `evidence_type: "negative"`, and both are enforced.** `record_role` is the literal `"absent"`, *and* `informant_proximity` is `"researcher"` — the absence is the researcher's own conclusion; no record informant reported one, whatever the record type, so the `witness`/`household_member` proximities never apply to a negative. Neither is a second judgment call, so the validator, both JSON Schema trees and `research_append` reject the pairing rather than coercing it. Two corollaries worth stating because both are observed mistakes: a fact the record **states** is `direct`, not `negative` (a groom recorded as "single" is a stated marital status, not an absence); and a blank field on a person who **is** present is silence, producing no assertion at all. `informant` is deliberately left unconstrained — it is free text.
+**What `record_basis` is not.** It is not the GPS evidence layer. Under the
+Genealogical Proof Standard, evidence is *direct*, *indirect* or *negative*
+**relative to the research question being asked** — a stated age is direct
+evidence of age and indirect evidence of a birth year, from the same field of
+the same record. `record_basis` is decided once, at extraction, with no question
+attached, so it cannot carry that judgment and never did; it records only what
+the record mechanically did with the value. The 2026-09-18 rename (registry in
+`enums.schema.json`) removed a name that promised the GPS judgment. The consequence is
+worth stating plainly: **this project persists no field holding the GPS evidence
+classification.** Where that judgment is needed — choosing a proof vehicle,
+weighing a conclusion — it is made in the narrative, per question, by
+`proof-conclusion`.
 
-The rule is enforced in the forward direction only. `record_role: "absent"` paired with a non-negative `evidence_type` is rejected by `research_append` but not by the validator or the schema, because every `absent` assertion in the corpus is already negative and the converse is an unexercised branch; a writer-tool precondition may be stricter than the integrity tier.
+**Two fields follow mechanically from `record_basis: "absent"`, and both are enforced.** `record_role` is the literal `"absent"`, *and* `informant_proximity` is `"researcher"` — the absence is the researcher's own conclusion; no record informant reported one, whatever the record type, so the `witness`/`household_member` proximities never apply to a negative. Neither is a second judgment call, so the validator, both JSON Schema trees and `research_append` reject the pairing rather than coercing it. Two corollaries worth stating because both are observed mistakes: a fact the record **states** is `stated`, not `absent` (a groom recorded as "single" is a stated marital status, not an absence); and a blank field on a person who **is** present is silence, producing no assertion at all. `informant` is deliberately left unconstrained — it is free text.
+
+The rule is enforced in the forward direction only. `record_role: "absent"` paired with a `record_basis` other than `"absent"` is rejected by `research_append` but not by the validator or the schema, because every `absent` assertion in the corpus is already negative and the converse is an unexercised branch; a writer-tool precondition may be stricter than the integrity tier.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Assertion ID (`a_` prefix) |
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
-| `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`). **Enforced:** `evidence_type: "negative"` requires exactly `absent` (validator, both schema trees, and `research_append`); the converse is enforced by `research_append` only. See "Negative evidence" below |
+| `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`). **Enforced:** `record_basis: "absent"` requires exactly `absent` (validator, both schema trees, and `research_append`); the converse is enforced by `research_append` only. See "Negative evidence" below |
 | `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
-| `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `direct`, computed birth year `indirect`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
+| `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `stated`, computed birth year `inferred`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
 | `date` | string or null | no | Date of the event/fact |
@@ -540,9 +555,9 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. On assertion appends `research_append` resolves an omitted value itself — sidecar copy first, else geocoding, with a country-contradiction guard (research-append spec §3.6); null if unresolvable or `place` is null; supply `null` explicitly to opt out. |
 | `information_quality` | `information_quality` | yes | Primary, Secondary, or Indeterminate — classified at the assertion level |
 | `informant` | string | yes | Who provided this specific information (e.g., "census enumerator", "attending physician", "son-in-law James Brown", "unknown household member") |
-| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified. **Enforced for negative evidence:** `evidence_type: "negative"` requires exactly `researcher` here (see "Negative evidence" above) |
+| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified. **Enforced for negative evidence:** `record_basis: "absent"` requires exactly `researcher` here (see "Negative evidence" above) |
 | `informant_bias_notes` | string or null | no | Notes on potential bias (e.g., "may have misreported age for military eligibility") |
-| `evidence_type` | `evidence_type` | yes | Direct, Indirect, or Negative. **`negative` constrains two sibling fields:** it requires `record_role: "absent"` and `informant_proximity: "researcher"`. See "Negative evidence" below |
+| `record_basis` | `record_basis` | yes | `stated`, `inferred`, or `absent` — what the record mechanically did with this value, NOT the GPS direct/indirect/negative evidence judgment (see "What `record_basis` is not" below). **`absent` constrains two sibling fields:** it requires `record_role: "absent"` (a different field with the same value — the PERSON was not in the record) and `informant_proximity: "researcher"`. See "Negative evidence" below |
 | `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
 
@@ -562,11 +577,46 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 | `occupation` | `{ "occupation" }` | `{ "occupation": "coal miner" }` |
 | `immigration` | `{ "year", "origin", "destination", "port" }` | `{ "year": 1848, "origin": "Ireland", "destination": "Philadelphia" }` |
 
+**Direction, for `relationship`:** `relationship_type` is the record **subject's own** role; `related_person_role` is the **other party's**. The row above reads that way and so does every consumer: a census child enumerated under a head of household is `{ "relationship_type": "son", "related_person_role": "head_of_household" }`, and a death certificate naming the father is `"child"` on the deceased, never `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, so a brother or sister is `sibling` and never `child`. Enforced at the write boundary by `research_append` and over the corpus by `test_relationship_type_agrees_with_its_value`; the refusal rate is recorded in `guardrail-enforcement-spec.md` §4.
+
+**It is a per-ASSERTION role, not the persona's record role.** `record_role`
+is what the persona is in the *record* — one value per persona.
+`relationship_type` is what they are in *this one relationship*, and a persona
+carries several. The census example above makes the two look identical because
+there they coincide; a baptism separates them. A man recorded as
+`record_role: "father"` carries one assertion typed `parent` (of the baptised
+child) and another typed `spouse` (of the mother), both correct, and neither
+equal to his record role.
+
+Measured over `eval/**/*final-research.json`, `fact_type: relationship`, and
+emitted by `measure_relationship_direction.py --axes` so it is re-derivable
+rather than pasted, measured at 1d5656fe3: requiring the two to agree refuses **62 of 281**
+comparable assertions, of which **60 are correct data**; and **59 of 1149**
+personas carrying a relationship assertion carry more than one category. So no guard may require `relationship_type` to match
+`record_role`, and two earlier attempts to build one were abandoned without the
+reason being written down. That is what this paragraph exists to prevent a third
+time.
+
+**Why the enforcement compares `value`'s prose, which is a choice.**
+`related_person_role` also names the other party and is present on 98.3% of
+relationship assertions, so a `(record_role x related_person_role)` composition
+rule is constructible. It was not chosen because that vocabulary is open — 60+
+spellings in the corpus — so it needs a role table somebody maintains, and
+because the field carries the persona's own role on 14 of 1844 assertions
+(`tree-materialization-spec.md`, the 2026-09-07 rejection). Comparing the prose
+needs no table and checks against the layer a human reads. Two further
+candidates do not reach: `record_persona_id` plus the sidecar GedcomX is null
+for full-text-, image-, PDF- and `record_read`-sourced assertions, and the tree
+does not exist at extraction time. Revisit with a measurement of both, not with
+an assumption that one is impossible.
+
+Do not confuse this field with the closed `relationship_type` enum in `enums.schema.json`, which is the simplified-GedcomX **tree** relationship type (`ParentChild` / `Couple`) and has no `sibling` member at all — siblings are carried there by shared `ParentChild` edges.
+
 **Authority:** `structured_value` is derived from `value`, `date`, and `place` — not the other way around. If they disagree, the human-readable fields (`value`, `date`, `place`) govern. This follows the same authority pattern as `narrative_markdown` vs. structured fields in proof summaries.
 
-**`_inferred` suffix convention:** Use the `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record — the 1790–1870 censuses, which have no relationship column (introduced in 1880). This convention is specific to `relationship_type`; other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
+**`_inferred` suffix convention:** Use the `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record — the 1790–1870 censuses, which have no relationship column (introduced in 1880). This convention is specific to `relationship_type`; other fact types handle uncertainty through the assertion's `record_basis` (`inferred`) and `informant_bias_notes` rather than through the structured value itself.
 
-**Who may write one — not extraction (2026-08-15).** A deduced household link is a *hypothesis*, and record extraction does not form hypotheses: on a pre-1880 census it extracts each person's stated facts and their co-residence and writes **no** parent-child or spousal assertion, in any form. The suffix therefore belongs to the downstream correlation skills that weigh evidence across records. Nothing in this schema requires an `_inferred` relationship to exist for a pre-1880 record, and the record-extraction validator asserts their absence. The distinction is worth stating explicitly because "never assert a relationship without evidence" admits two readings — omit the link, or assert it labelled `indirect` — and a prompt carrying both produced either output unpredictably across runs of the same record.
+**Who may write one — not extraction (2026-08-15).** A deduced household link is a *hypothesis*, and record extraction does not form hypotheses: on a pre-1880 census it extracts each person's stated facts and their co-residence and writes **no** parent-child or spousal assertion, in any form. The suffix therefore belongs to the downstream correlation skills that weigh evidence across records. Nothing in this schema requires an `_inferred` relationship to exist for a pre-1880 record, and the record-extraction validator asserts their absence. The distinction is worth stating explicitly because "never assert a relationship without evidence" admits two readings — omit the link, or assert it labelled `inferred` — and a prompt carrying both produced either output unpredictably across runs of the same record.
 
 ### 5.7 `person_evidence`
 
@@ -626,7 +676,7 @@ Array of hypothesis objects.
 
 FAN findings are regular assertions about the subject's associates. There is no separate `fan_evidence_ids` field — hypothesis support links to FAN assertions via `supporting_assertion_ids`.
 
-**Status transitions:** A hypothesis moves to `supported` when every `conflicts[]` entry whose `competing_assertion_ids` overlap its `supporting_assertion_ids` or `contradicting_assertion_ids` is `resolved` or `moot`, and either at least one supporting assertion carries `evidence_type: "direct"` or at least two carry `evidence_type: "indirect"` and cite at least two distinct `source_id` values. It moves to `ruled_out` when evidence affirmatively refutes the claim, exhaustive elimination logic excludes the candidate, or a chronological impossibility makes the hypothesis untenable. A hypothesis at `active` has supporting or contradicting evidence accumulating but has not yet crossed either threshold. **The two mechanical halves of the `supported` transition — (a) no overlapping conflict left unresolved, (b) the direct-or-two-indirect-sources floor — are refused at the `research_append` write boundary** (`hypothesisSupportedInvariants`; lead ruling 2026-09-07), in the forward direction only: a hypothesis set to `supported` that fails either half is rejected, one left `active` that clears the floor is never touched. Both halves read the pre-call snapshot, so settling the conflict in the same call does not clear the gate. The third condition — evidence consistency, no logical or geographic impossibility — is a judgment call and is **not** enforced there. See `guardrail-enforcement-spec.md` §5.
+**Status transitions:** A hypothesis moves to `supported` when every `conflicts[]` entry whose `competing_assertion_ids` overlap its `supporting_assertion_ids` or `contradicting_assertion_ids` is `resolved` or `moot`, and either at least one supporting assertion carries `record_basis: "stated"` or at least two carry `record_basis: "inferred"` and cite at least two distinct `source_id` values. It moves to `ruled_out` when evidence affirmatively refutes the claim, exhaustive elimination logic excludes the candidate, or a chronological impossibility makes the hypothesis untenable. A hypothesis at `active` has supporting or contradicting evidence accumulating but has not yet crossed either threshold. **The two mechanical halves of the `supported` transition — (a) no overlapping conflict left unresolved, (b) the one-stated-or-two-inferred-sources floor — are refused at the `research_append` write boundary** (`hypothesisSupportedInvariants`; lead ruling 2026-09-07), in the forward direction only: a hypothesis set to `supported` that fails either half is rejected, one left `active` that clears the floor is never touched. Both halves read the pre-call snapshot, so settling the conflict in the same call does not clear the gate. The third condition — evidence consistency, no logical or geographic impossibility — is a judgment call and is **not** enforced there. **The floor is a mechanical proxy, and since 2026-09-18 its wording says so.** The GPS rule it descends from is about *evidence*: a claim resting only on indirect evidence needs corroboration from independent sources. What the floor actually tests is `record_basis`, which is question-independent — so a single `stated` assertion can clear it while being, for the question at hand, indirect evidence (a stated age clearing a floor about a birth year). That gap predates the rename and is unchanged by it; what changed is that the rule can no longer borrow the GPS's authority by reusing its word. Narrowing the floor to be question-relative was considered and not taken: extraction has no question in hand. See `guardrail-enforcement-spec.md` §5.
 
 **Why the indirect route exists.** Until 2026-08-31 `supported` required direct
 evidence, so a proof argument resting entirely on correlated indirect
@@ -703,6 +753,7 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 | `supporting_assertion_ids` | string[] | yes | `a_` references forming the body of evidence |
 | `resolved_conflict_ids` | string[] | yes | `c_` references to the conflicts this conclusion **accounts for** (may be empty) — it does not settle them; per `ownership.json` only `conflict-resolution` writes `conflicts[]`. Each ID must reference an existing `conflicts[]` entry whose `status` is `resolved` or `moot` — enforced by `validator.ts`. Same pair as the hypothesis transition in § Status transitions above, but stricter in effect: an `unresolved` conflict cannot be cited here at all. `proof-conclusion` is the only skill permitted to write this field. **Re-opening a cited conflict is order-dependent, on the hook plane.** Two separate calls must remove the citation first and re-open the conflict second: re-opening while the citation stands is refused by `validator.ts`, and `conflict-resolution` cannot remove the citation itself because `ownership.json` bars it from writing `proof_summaries`. A SINGLE call carrying both edits validates — `research_append` checks the end state — so what forbids the combined form is the plugin's `PreToolUse` hook, which routes `research_append` by caller and denies a batch op-by-op. That hook ships in the plugin zip (`package-plugin.mjs`'s `INCLUDE`) and **not** in the desktop `.mcpb`, so on a `.mcpb` install the combined call is the one-step route |
 | `exhaustive_search_summary` | string | yes | Brief summary of search scope, referencing log entries |
+| `shortfall` | `proof_shortfall` | yes | Why this conclusion is not at a higher tier — **remediability, orthogonal to the confidence `tier` carries**, and it never changes the tier. `none` only on a **conclusive** tier — `proved` or `disproved`, both final answers with nothing holding them back (`not_proved` is a non-answer, not a negative answer, so it always carries one of the other three); `conflict` when an unresolved `conflicts[]` entry names this summary's `question_id` in its `blocks_question_ids`; `ceiling` when the reachable record is exhausted so no further search would raise the tier (reachable = retrievable by an MCP tool or constructible as a subscription-site handoff — never the offline world); `gap` when a reachable source remains unsearched. `ceiling` and `gap` are not interchangeable: `ceiling` asserts the search is finished, so anything `exhaustive_search_summary` still names as outstanding makes it `gap`. **Not a writer-tool precondition:** tying `shortfall: "conflict"` to a matching open conflict is a cross-object join, which the write boundary cannot do — it is a rubric dimension |
 | `narrative_markdown` | string | yes | Self-contained GPS conclusion narrative |
 | `claims` | `proof_claim[]` | no | Optional per-claim tier breakdown — see below |
 
@@ -1306,7 +1357,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. Everything on this line came from whoever answered the door, so proximity is 'household_member'; which member is unrecorded, and the 1850 census names no informant.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -1325,7 +1376,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Unknown household member (likely Thomas Flynn or wife)",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Age and birthplace require active reporting by a household member — someone had to tell the enumerator these facts. Proximity is 'household_member' rather than 'unknown' because these facts could only come from someone in the household.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -1343,7 +1394,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
       "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where the household member is the true informant.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -1362,7 +1413,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
       "informant_proximity": "researcher",
       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1380,7 +1431,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1398,7 +1449,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Ancestry transcriber (derivative of census enumerator)",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Derivative index — transcription errors possible",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -1416,7 +1467,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Ancestry transcriber (derivative)",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -1434,7 +1485,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'household_member' (same reasoning as a_001).",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1452,7 +1503,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Unknown household member (likely Thomas Flynn or wife)",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Age and birthplace require active reporting by a household member (same reasoning as a_002).",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1471,7 +1522,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
       "informant_proximity": "researcher",
       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname, so the researcher is the source of the claim rather than any record informant. The relationship column was not introduced until the 1880 census.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1489,7 +1540,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "Attending physician (signature on certificate)",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": []
     },
@@ -1508,7 +1559,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1519,7 +1570,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "record_role": "deceased",
       "fact_type": "relationship",
       "value": "Father: Thomas Flynn",
-      "structured_value": { "relationship_type": "father", "related_person_role": "deceased" },
+      "structured_value": { "relationship_type": "child", "related_person_role": "father_of_deceased" },
       "date": null,
       "date_certainty": null,
       "place": null,
@@ -1527,7 +1578,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     }

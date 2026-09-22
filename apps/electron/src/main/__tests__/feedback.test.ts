@@ -170,6 +170,25 @@ describe('buildFeedbackZip — feedback.json', () => {
     expect(payload.viewer_version).toBe('0.4.2-dev')
   })
 
+  // #2126 — the same two fields the web producer emits, so a triager reads the
+  // build the same way from either surface. Omitted (not null) when absent.
+  it('emits build_date and git_sha when the caller passes its build stamp, and omits them otherwise', async () => {
+    const stamped = await buildFeedbackZip({
+      ...makeOptions(folder),
+      viewerVersion: '1.0.0+2026-09-18.abc12345',
+      buildDate: '2026-09-18',
+      gitSha: 'abc12345'
+    })
+    const withStamp = await readFeedbackJson(stamped.zipBase64)
+    expect(withStamp.viewer_version).toBe('1.0.0+2026-09-18.abc12345')
+    expect(withStamp.build_date).toBe('2026-09-18')
+    expect(withStamp.git_sha).toBe('abc12345')
+
+    const plain = await readFeedbackJson((await buildFeedbackZip(makeOptions(folder))).zipBase64)
+    expect('build_date' in plain).toBe(false)
+    expect('git_sha' in plain).toBe(false)
+  })
+
   it('uses an absolute project_folder_path', async () => {
     const result = await buildFeedbackZip(makeOptions(folder))
     const payload = await readFeedbackJson(result.zipBase64)

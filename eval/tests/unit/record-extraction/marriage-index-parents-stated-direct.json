@@ -34,13 +34,13 @@
     {
       "record_role": "groom",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self"
     },
     {
       "record_role": "bride",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self"
     },
     {
@@ -48,32 +48,32 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "father_of_groom",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "primary"
     },
     {
       "record_role": "mother_of_groom",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "primary"
     },
     {
       "record_role": "father_of_bride",
       "fact_type": "name",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "primary"
     },
     {
       "record_role": "mother_of_bride",
       "fact_type": "name",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "primary"
     }
   ]
