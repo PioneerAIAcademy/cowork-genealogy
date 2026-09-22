@@ -564,7 +564,8 @@ export const RESEARCH_SHAPES = {
   source: new Set([
     "id", "gedcomx_source_description_id", "citation", "citation_detail",
     "source_classification", "repository", "access_date", "url",
-    "url_archived", "notes", "transcription", "image_filename", "log_entry_id",
+    "url_archived", "notes", "transcription", "transcription_truncated",
+    "image_filename", "log_entry_id",
   ]),
   citation_detail: new Set([
     "who", "what", "when_created", "when_accessed", "where", "where_within",
@@ -1012,6 +1013,37 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkRequired(cd, ["who", "what", "when_created", "when_accessed", "where", "where_within"],
                    `${sp}/citation_detail`, report, NULLABLE_FIELDS);
       checkAllowedKeys(cd, RESEARCH_SHAPES.citation_detail, "citation_detail objects", `${sp}/citation_detail`, report);
+    }
+
+    // transcription_truncated marks the transcription it sits beside as partial.
+    // The PERSISTED marker is `true` or ABSENT — never `false` (#2457 B2 ruling
+    // 2026-09-19): the invariant is that nothing moves from "partial" to "whole"
+    // in the document, and `false` was the only value that could (by clearing a
+    // stale `true` through the field merge), which sticky-`true` in the cap store
+    // retires. `false` lives in the tool's in-process cap store, never here. And
+    // `true` is only meaningful with real text to qualify — `true` beside an
+    // empty/null transcription is the state a model produces when it ASSERTS the
+    // flag rather than the tool deriving it, and the tool never emits it (a
+    // zero-content capped read throws instead of returning `truncated: true`,
+    // image-transcribe.ts) — so the persisted writer rejects it too.
+    if ("transcription_truncated" in src) {
+      const flag = src.transcription_truncated;
+      if (flag !== true) {
+        addError(
+          report,
+          sp,
+          "transcription_truncated must be true or absent — false is never persisted (it lives only in the tool's in-process cap store; absent means not established). transcription_truncated is derived by the tool, not set by you.",
+        );
+      } else {
+        const t = src.transcription;
+        if (typeof t !== "string" || t.trim() === "") {
+          addError(
+            report,
+            sp,
+            "transcription_truncated: true requires a non-empty transcription — a capped read still has the text it did read, so a truncation marker beside empty or null transcription is not a valid state. transcription_truncated is derived by the tool, not set by you: do not null the partial transcription of a truncated source to clear it. Re-reading is not a reliable way to complete a capped read — the cap bounds output tokens and the OCR prompt varies with what was asked for; to supersede a record-backed source, add a new source from the indexed record (record_read / record_search) instead of editing this one in place. A FamilySearch memory has no indexed record; there the partial transcription simply stays with its marker.",
+          );
+        }
+      }
     }
   }
 
