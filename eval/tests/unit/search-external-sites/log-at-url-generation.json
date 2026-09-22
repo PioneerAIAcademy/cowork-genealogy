@@ -25,7 +25,7 @@
     "collections-search-schuylkill",
     "place-search-united-states",
     "place-search-pennsylvania",
-    "collections-search-pennsylvania-state"
+    "collections-search-pennsylvania"
   ],
   "judge_context": [
     "The same turn that presents the Ancestry URL must also append the research-log entry — outcome partial, capture_received false, results_examined 0, with the generated URL recorded in external_site.url_generated",
