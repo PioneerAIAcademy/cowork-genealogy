@@ -23,16 +23,33 @@ export const STAGING_SUBDIR = "results/.staging";
 const STAGING_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
- * The tools that stage, and therefore the only tools whose log entries can carry
- * a `results_ref`. Lives here rather than in `research-log-append.ts` because
- * `unloggedStagedSearches` below needs the same predicate, and a
- * `utils/` → `tools/` import is against CLAUDE.md's no-util→tool rule. The log
- * appender imports it from here; a second copy would drift.
+ * The SEARCH-shaped staging producers: their payload is a page of results with
+ * an upstream total, so the nil-search and unlogged-search notes apply to them
+ * and the eval mock stages their canned fixtures. Mirrored byte-for-byte as
+ * `STAGING_SEARCH_TOOLS` in `eval/harness/harness/mock_mcp.py` and pinned by
+ * `test_mock_mcp.py::test_staging_tool_sets_agree_across_the_two_copies`.
  */
-export const STAGING_CAPABLE_TOOLS = new Set([
+export const STAGING_SEARCH_TOOLS = new Set([
   "record_search",
   "fulltext_search",
   "external_links_search",
+]);
+
+/**
+ * Every tool that stages, and therefore the only tools whose log entries can
+ * carry a `results_ref`: the search producers above plus the two acquisition
+ * producers (issue #2048 / #2489 — a transcription and a record fetched by ARK
+ * are retained the same way a search page is, as a ONE-element `results[]`
+ * envelope, so finalize and the pairing rule below need no second shape). Lives
+ * here rather than in `research-log-append.ts` because `unloggedStagedSearches`
+ * below needs the same predicate, and a `utils/` → `tools/` import is against
+ * CLAUDE.md's no-util→tool rule. The log appender imports it from here; a
+ * second copy would drift.
+ */
+export const STAGING_CAPABLE_TOOLS = new Set([
+  ...STAGING_SEARCH_TOOLS,
+  "image_transcribe",
+  "record_read",
 ]);
 
 /**

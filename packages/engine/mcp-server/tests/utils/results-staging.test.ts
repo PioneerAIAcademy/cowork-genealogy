@@ -9,7 +9,20 @@ import {
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
+import { STAGING_CAPABLE_TOOLS, STAGING_SEARCH_TOOLS } from "../../src/utils/results-staging.js";
+
 describe("results-staging", () => {
+  describe("the two producer sets (#2048)", () => {
+    it("every search producer is a capable producer, and the two acquisition producers are capable too", () => {
+      for (const t of STAGING_SEARCH_TOOLS) expect(STAGING_CAPABLE_TOOLS.has(t)).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("image_transcribe")).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("record_read")).toBe(true);
+      // The notes stay search semantics: the acquisition producers are NOT search-shaped.
+      expect(STAGING_SEARCH_TOOLS.has("image_transcribe")).toBe(false);
+      expect(STAGING_SEARCH_TOOLS.has("record_read")).toBe(false);
+    });
+  });
+
   let dir: string;
 
   beforeEach(async () => {

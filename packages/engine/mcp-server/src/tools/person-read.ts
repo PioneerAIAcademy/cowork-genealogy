@@ -260,6 +260,9 @@ async function transcribeMemories(
         // 90s budget -- which is why the phase-level stop below exists too.
         { ocrTimeoutMs: remaining, imageKey: m.id },
       );
+      // The widened return (issue #2048) carries a no-project answer only on
+      // the `file` input, which this leg never sends; narrow so tsc can see it.
+      if ("ok" in out) throw new Error(out.errors.join(" "));
       finished.set(m.id, {
         ...(out.transcription.trim() ? { text: out.transcription } : {}),
         ...(out.imageRef ? { image_ref: out.imageRef } : {}),

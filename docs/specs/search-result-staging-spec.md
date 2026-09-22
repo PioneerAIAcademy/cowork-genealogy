@@ -45,6 +45,23 @@ payloads become `results/` sidecars per `research-log-protocol.md`. The staging
 logic is a shared util so adding a producer is a one-line opt-in
 (`external_links_search` was added as the third, 2026-07 — GitHub #696).
 
+**Two acquisition producers joined them:** **`image_transcribe`**
+and **`record_read`** (a live read given a `projectPath`). Acquisition has the same problem
+search had — a page transcription or an ARK-fetched record crossed the conversation as text and
+was retained nowhere until extraction wrote `sources[].transcription` — and ADR-0002's seam rule
+("whatever a step acquires, the host fetches and stages") puts it in this channel. They stage a
+**single document**, so the envelope is a **one-element `results[]`** (§5) rather than a second
+shape: `returned_count` is 1, finalize recomputes it as usual, and the pairing rule in §7 needs no
+change. The engine exports the two sets separately — `STAGING_SEARCH_TOOLS` (the three above:
+their payload is a page with an upstream total, so the nil-search and unlogged-search *notes* are
+theirs) and `STAGING_CAPABLE_TOOLS` (every producer; what `research_log_append` finalizes) — and
+the eval mock mirrors the SEARCH set (`eval/CLAUDE.md`, "Eval vs production parity").
+
+**The inline-strip rule below has one exemption:** `image_transcribe` keeps returning its
+`transcription` inline. The shipped `image-reader` agent and `person_read`'s memories leg read it
+today, and the consumer that reads the sidecar instead is the `document-capture` agent; the
+strip belongs to the PR that lands that consumer.
+
 The change is **purely additive and back-compatible**: no `projectPath` → the tools
 behave exactly as today.
 
@@ -140,6 +157,17 @@ both producers call one code path.
 The handle returned to the model is just `{ resultsRef, returnedCount }` (enough
 for narration like "retained 12 results"); the payload itself is not echoed back as
 part of `staged`.
+
+**Single-document producers** use the same envelope with a one-element
+`results[]`:
+
+- `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
+  results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found? } ] }`,
+  where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
+  record-extraction id convention). The tool also returns a `digest` beside the handle.
+- `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx } ] }`: the same
+  element shape `record_search` stages, so `record_read({ recordId, resultsRef })` reads it back
+  unchanged.
 
 ---
 
@@ -282,3 +310,8 @@ output change.
   guidance entirely.
 - `validate-project-refactor-spec.md` — unaffected; the staged file is not a sidecar
   until finalized, and the orphan check already ignores the subdir.
+- `image-transcribe-tool-spec.md` §5.4/§5.5 and `record_read` — the two acquisition producers. **Ownership boundary:** this spec and those tools own the writer, the envelope
+  and finalize. *Reading a staged transcription's full text back* is the consumer's design —
+  the `document-capture` agent returns `{ recordId, logId, resultsRef, digest }` and decides
+  whether extraction reads the text host-side or through a paged reader; `sidecar_read`
+  deliberately does not serve `results/` (its spec §7), so no reader was added here.
