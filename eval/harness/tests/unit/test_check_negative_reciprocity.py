@@ -154,6 +154,18 @@ def test_xfail_edge_still_declares_its_own_edge(tmp_path: Path) -> None:
     assert ("alpha", "beta") in check_negative_reciprocity.routing_edges(tmp_path)
 
 
+def test_xfail_own_edge_is_still_flagged(tmp_path: Path) -> None:
+    """The xfail declares beta->alpha and nothing backs it, so the edge must
+    still be reported — an xfail does not get to satisfy itself either."""
+    write_test(
+        tmp_path, "beta", "ut_beta_001",
+        correct_skill=["alpha"], expected_outcome="xfail",
+    )
+    make_suite(tmp_path, "alpha")
+    assert ("beta", "alpha") in check_negative_reciprocity.routing_edges(tmp_path)
+    assert flagged_pairs(tmp_path) == {("beta", "alpha")}
+
+
 def test_xfail_edge_does_not_satisfy_reciprocal(tmp_path: Path) -> None:
     """An xfail negative cannot satisfy the reverse direction's reciprocal
     check. Here alpha->beta is declared by a normal test, beta->alpha by an
@@ -176,6 +188,30 @@ def test_xfail_reciprocal_is_excluded_non_xfail_is_kept(tmp_path: Path) -> None:
     )
     write_test(tmp_path, "beta", "ut_beta_002", correct_skill=["alpha"])
     assert flagged_pairs(tmp_path) == set()
+
+
+def test_explicit_pass_outcome_still_satisfies(tmp_path: Path) -> None:
+    """An explicit expected_outcome: pass satisfies the reciprocal check the
+    same way an absent expected_outcome does."""
+    write_test(tmp_path, "alpha", "ut_alpha_001", correct_skill=["beta"])
+    write_test(
+        tmp_path, "beta", "ut_beta_001",
+        correct_skill=["alpha"], expected_outcome="pass",
+    )
+    assert flagged_pairs(tmp_path) == set()
+
+
+def test_xfail_with_no_suite_dir_is_skipped_not_flagged(tmp_path: Path) -> None:
+    """runnability.py exempts xfail negatives from the correct_skill-exists
+    check, so an xfail naming a suite-less skill is legal and must be skipped."""
+    write_test(
+        tmp_path, "alpha", "ut_alpha_001",
+        correct_skill=["forget-and-rederive"], expected_outcome="xfail",
+    )
+    assert flagged_pairs(tmp_path) == set()
+    assert check_negative_reciprocity.skipped_edges(tmp_path) == [
+        ("alpha", "forget-and-rederive")
+    ]
 
 
 def test_xfail_excluded_from_exclude_xfail_routing_edges(tmp_path: Path) -> None:

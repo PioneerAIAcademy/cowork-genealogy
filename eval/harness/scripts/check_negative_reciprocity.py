@@ -238,9 +238,11 @@ def main(tests_dir: Path = TESTS_DIR) -> int:
             f"negative routing edge `{source} -> {target}` is one-directional: "
             f"no non-xfail negative test declares `test.skill: {target}` with "
             f"`{source}` in its `negative.correct_skill`, so the pair is pinned "
-            f"from one side only. A description edit that fixes routing one way "
-            f"can break it the other way without reddening anything. Write the "
-            f"reciprocal under `eval/tests/unit/{target}/`. Declared by: "
+            f"from one side only. An `expected_outcome: \"xfail\"` negative "
+            f"declares its own edge but does not satisfy this one — it asserts "
+            f"the routing is known-broken. A description edit that fixes routing "
+            f"one way can break it the other way without reddening anything. "
+            f"Write the reciprocal under `eval/tests/unit/{target}/`. Declared by: "
             f"{', '.join(test_ids)}. Rule: {RULE_CITATION}"
         )
 
