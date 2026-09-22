@@ -1,8 +1,8 @@
 {
   "test": {
-    "id": "ut_proof_conclusion_019",
+    "id": "ut_proof_conclusion_d7g",
     "skill": "proof-conclusion",
-    "name": "Narrative certainty must match a sub-Proved tier when research is not exhaustive",
+    "name": "Narrative certainty must match a sub-Proved tier when research is not exhaustive (direct-agent arm)",
     "type": "positive",
     "description": "The richardson-parentage-not-exhaustive scenario has strong direct parentage evidence but research is NOT declared exhaustive (exhaustive_declaration.declared is false) and planned searches remain unexecuted, at least one of which could corroborate or contradict the parentage. The skill should select a tier no higher than `probable` AND write a narrative whose certainty matches that tier — it must NOT declare the case 'proved', claim 'all five GPS components are satisfied', or assert the research is 'reasonably exhaustive'. Captures a run that tiered `probable` but wrote Proved-level narrative language contradicting its own exhaustiveness state.",
     "tags": [
@@ -12,11 +12,12 @@
       "GPS-step-5",
       "from-cowork",
       "narrative-tier-consistency",
-      "re-invoke-safe"
+      "re-invoke-safe",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Write the proof conclusion for the parentage question.",
+    "delegation": "Write the proof conclusion for the parentage question q_001. The christening register names both parents outright, so this is settled — state it as fact.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "richardson-parentage-not-exhaustive"
   },
   "judge_context": [

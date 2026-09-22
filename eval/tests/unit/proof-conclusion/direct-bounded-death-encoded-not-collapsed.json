@@ -1,8 +1,8 @@
 {
   "test": {
-    "id": "ut_proof_conclusion_018",
+    "id": "ut_proof_conclusion_d6f",
     "skill": "proof-conclusion",
-    "name": "A bounded/documented-negative death is tiered and ENCODED, not collapsed to not_proved",
+    "name": "A bounded/documented-negative death is tiered and ENCODED, not collapsed to not_proved (direct-agent arm)",
     "type": "positive",
     "description": "wilkins-bounded-death: the exact death date is unrecoverable, but the conclusion 'Elijah died after the 1870 census and before the 1885 estate administration, in Muhlenberg County; no Kentucky death certificate exists (statewide registration began 1911)' is well-supported (alive 1870 per tree fact F2; deceased-by-1885 estate administration a_001/a_003 with son Jesse as administrator). The skill must tier this BOUNDED conclusion at the level its evidence supports (possible) and ENCODE it as a Death fact on I1 with the bracket as the date — NOT collapse the whole finding to not_proved and leave the tree silent. Guards the proof-conclusion agent body's §2/§6 'bounded/documented-negative conclusion' doctrine (issue #657: run 9 left the tree with no death fact despite sound bounded reasoning).",
     "tags": [
@@ -12,12 +12,13 @@
       "death",
       "tier-selection",
       "tier-possible-q001",
-      "tree-encoding"
+      "tree-encoding",
+      "direct-arm"
     ],
     "holdout": true
   },
   "input": {
-    "user_message": "Write the proof conclusion for the death question (q_001).",
+    "delegation": "Write the proof conclusion for the death question q_001. The 1885 estate administration and the 1870 residence bracket the death firmly, and the remaining record types would only corroborate — `probable` is the right tier.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "wilkins-bounded-death"
   },
   "mcp_fixtures": [],

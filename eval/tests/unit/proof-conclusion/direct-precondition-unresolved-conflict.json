@@ -1,8 +1,8 @@
 {
   "test": {
-    "id": "ut_proof_conclusion_011",
+    "id": "ut_proof_conclusion_d1a",
     "skill": "proof-conclusion",
-    "name": "Unresolved identity conflict blocks the conclusion, and the attempt is recorded",
+    "name": "Unresolved identity conflict blocks the conclusion, and the attempt is recorded (direct-agent arm)",
     "type": "positive",
     "description": "The flynn-with-birthplace-conflict scenario has an unresolved birthplace conflict (c_001) touching q_001. The user asks to finalize the parentage as proved. Birthplace is an IDENTIFYING attribute, and the death certificate that disputes it is also the only direct evidence of parentage — so the conflict goes to whether the census entries and the death certificate describe the same Patrick Flynn. Correlation presupposes identity, so no conclusion may be drawn on this question until c_001 is adjudicated. The skill must not conclude at proved OR probable; it must write a not_proved summary recording the blocked attempt and route to conflict-resolution.",
     "tags": [
@@ -10,11 +10,12 @@
       "parentage",
       "precondition",
       "conflict-blocks-proved",
-      "no-new-proof-expected"
+      "no-new-proof-expected",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I think Patrick's parentage is settled now — finalize it as a proved conclusion.",
+    "delegation": "Write the proved-tier proof conclusion for q_001. The parentage is settled — the birthplace disagreement is a collateral detail and does not bear on it. Appropriate outcome: `tier: proved`.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-with-birthplace-conflict"
   },
   "judge_context": [
