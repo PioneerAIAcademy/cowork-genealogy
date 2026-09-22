@@ -232,6 +232,13 @@ def test_allows_stub_skills_naming_a_real_skill():
     assert result.runnable is True
 
 
+def test_allows_stub_skills_naming_an_agent_with_no_skill_directory():
+    """A callee converted from a skill to an agent is stubbed at its spawn
+    (issue #2825). `gps-mentor` ships as an agent only."""
+    assert not (SKILLS / "gps-mentor").exists()
+    assert _stub_check({"stub_skills": ["gps-mentor"]}).runnable is True
+
+
 @pytest.mark.parametrize("execution", [{}, {"stub_skills": []}, {"max_turns": 35}])
 def test_stub_skills_gate_is_inert_when_nothing_is_declared(execution):
     assert _stub_check(execution).runnable is True
