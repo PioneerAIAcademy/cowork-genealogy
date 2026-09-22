@@ -25,6 +25,10 @@ import {
   imageTranscribeTool,
   __clearBrowseBudgetForTests,
 } from "../../src/tools/image-transcribe.js";
+import {
+  sourceImageCapState,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -86,6 +90,7 @@ beforeEach(() => {
   // vi mock reset does not clear it, so reset it explicitly or the budget tests
   // become order-dependent.
   __clearBrowseBudgetForTests();
+  __clearTruncatedSourceImagesForTests();
   mockFetch.mockReset();
   getOpenRouterApiKeyMock.mockReset();
   getOpenRouterModelMock.mockReset();
@@ -153,6 +158,35 @@ describe("imageTranscribeTool — request + happy path", () => {
     }
   });
 
+  it("transcribes a PDF memory artifact but REFUSES to retain it", async () => {
+    // person_read's caller already refuses this (person-read.ts, `retain`), but
+    // this tool is reachable straight from the LLM -- projectPath is on its own
+    // schema and application/pdf is newly accepted for memoryShape -- and it is
+    // exactly the call a budget-skipped memory's note invites. Retaining would
+    // write PDF bytes to images/<key>.jpg: unreadable to the viewer, and
+    // mis-swept by a GC that globs *.jpg. The TEXT is still the point, so it
+    // must still come back.
+    fetchFsImageBytesMock.mockResolvedValue({
+      bytes: new Uint8Array([0x25, 0x50, 0x44, 0x46]), // %PDF
+      contentType: "application/pdf",
+      sizeBytes: 4,
+      resolvedUrl: "https://sg30p0.familysearch.org/x/dist.pdf",
+    });
+    mockOpenRouterOk("Last will and testament of Almon Clegg");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-pdf-"));
+    try {
+      const result = await imageTranscribeTool({
+        memoryArtifactUrl: "https://sg30p0.familysearch.org/x/dist.pdf",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.transcription).toContain("Last will and testament");
+      expect(result.imageRef).toBeUndefined();
+      await expect(readFile(join(dir, "images", "x.jpg"))).rejects.toThrow();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("omits imageRef when projectPath is not given", async () => {
     mockOpenRouterOk("Johann Schreck");
     const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
@@ -189,6 +223,9 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X",
       LOCAL,
+      // memoryShape — false for an ark, so the artifact content-type widening
+      // and the no-token path stay off for every pre-existing caller.
+      false,
     ]);
   });
 });
@@ -369,6 +406,67 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
   });
 });
 
+describe("imageTranscribeTool — records the truncation cap at the call site (#2457)", () => {
+  // Pins the cross-tool link the feature rests on: image_transcribe must record
+  // the cap against the persisted image so research_append can derive
+  // transcription_truncated. Every other test of this feature calls
+  // recordImageReadCap directly; this one drives it through the tool, so deleting
+  // or inverting the call at image-transcribe.ts fails here rather than nowhere.
+  it("a capped read that persists an image records the cap under its imageRef", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-cap-"));
+    try {
+      const result = await imageTranscribeTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.truncated).toBe(true);
+      expect(result.imageRef).toBe("images/004884748_02613.jpg");
+      // The join research_append performs at the write boundary must now hit.
+      expect(sourceImageCapState(dir, result.imageRef!)).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("an uncapped read records nothing — the image is absent from the add-only cap set (#2457 rulings, C 2026-09-21)", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-nocap-"));
+    try {
+      const result = await imageTranscribeTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.truncated).toBeUndefined();
+      expect(result.imageRef).toBe("images/004884748_02613.jpg");
+      // Add-only: a whole read adds nothing, so the image is not in the set and
+      // sourceImageCapState reads false; the derivation persists no marker.
+      expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("is sticky-true through the tool: a capped read then a narrower uncapped read of the same image stays partial (#2457 B1 ruling 2026-09-19)", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "imgt-sticky-"));
+    try {
+      // Read 1: capped.
+      mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
+      const r1 = await imageTranscribeTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+      expect(r1.truncated).toBe(true);
+      expect(sourceImageCapState(dir, r1.imageRef!)).toBe(true);
+      // Read 2: same image, narrower lookingFor, comes back uncapped — being add-only
+      // it records nothing, so it cannot clear read 1's partial.
+      mockOpenRouterOk("Anna");
+      const r2 = await imageTranscribeTool({ imageId: "004884748_02613", lookingFor: "Anna", projectPath: dir }, LOCAL);
+      expect(r2.truncated).toBeUndefined();
+      expect(sourceImageCapState(dir, r2.imageRef!)).toBe(true); // sticky — still partial
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("imageTranscribeTool — key / auth errors", () => {
   it("throws the no-key error and calls neither fetch when no key", async () => {
     getOpenRouterApiKeyMock.mockRejectedValueOnce(
@@ -503,7 +601,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
 describe("imageTranscribeTool — input validation", () => {
   it("rejects when neither imageId nor ark is given (before any fetch)", async () => {
     await expect(imageTranscribeTool({}, LOCAL)).rejects.toThrow(
-      /image_transcribe requires either imageId or ark/
+      /image_transcribe requires one of imageId, ark, or memoryArtifactUrl/
     );
     expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
@@ -515,7 +613,7 @@ describe("imageTranscribeTool — input validation", () => {
         imageId: "004884748_02613",
         ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M",
       }, LOCAL)
-    ).rejects.toThrow(/either imageId or ark, not both/);
+    ).rejects.toThrow(/exactly one of imageId, ark, or memoryArtifactUrl/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -726,3 +824,59 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     expect(result.nameExpansion).toBeUndefined();
   });
 });
+
+/**
+ * Memory artifacts — issue #1689 acceptance 12.
+ *
+ * The retry route for a memory the person_read budget skipped, the filter
+ * missed, or the OCR failed on.
+ */
+describe("imageTranscribeTool — memory artifacts", () => {
+  const ARTIFACT =
+    "https://sg30p0.familysearch.org/ark:/61903/3:1:ABCD/v2/12345/dist.jpg?ctx=x";
+
+  it("accepts a memory artifact URL and returns its text", async () => {
+    mockOpenRouterOk("Last Will and Testament of Almon G. Clegg");
+    const result = await imageTranscribeTool({ memoryArtifactUrl: ARTIFACT }, LOCAL);
+    expect(result.transcription).toBe("Last Will and Testament of Almon G. Clegg");
+    // passed through untouched, and flagged as the memory shape so the fetcher
+    // skips the token and accepts a PDF
+    expect(fetchFsImageBytesMock.mock.calls[0]).toEqual([
+      ARTIFACT,
+      undefined,
+      LOCAL,
+      true,
+    ]);
+  });
+
+  it("transcribes a memory PDF", async () => {
+    fetchFsImageBytesMock.mockResolvedValue({
+      bytes: new Uint8Array([1, 2, 3]),
+      contentType: "application/pdf",
+      sizeBytes: 3,
+      resolvedUrl: ARTIFACT,
+    });
+    mockOpenRouterOk("Things I learned From My Father");
+    const result = await imageTranscribeTool(
+      { memoryArtifactUrl: ARTIFACT.replace("dist.jpg", "dist.pdf") },
+      LOCAL,
+    );
+    expect(result.transcription).toBe("Things I learned From My Father");
+    // the data URL must carry the PDF media type, not a hardcoded image one
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.messages[0].content[1].image_url.url).toMatch(
+      /^data:application\/pdf;base64,/,
+    );
+  });
+
+  it("refuses an artifact URL on another host before any fetch", async () => {
+    await expect(
+      imageTranscribeTool(
+        { memoryArtifactUrl: "https://evil.example.com/v2/1/dist.jpg" },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/Unrecognized memoryArtifactUrl/);
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+});
+

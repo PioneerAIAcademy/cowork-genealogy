@@ -118,6 +118,7 @@ EXPECTED_AGENTS = frozenset({
     "proof-conclusion",
     "record-extractor",
     "research-exhaustiveness",
+    "search-images",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
 # the directory the SDK loads the plugin from shrinks with it -- an image shipping 27

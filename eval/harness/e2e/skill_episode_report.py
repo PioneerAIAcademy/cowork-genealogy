@@ -243,7 +243,7 @@ def scan_corpus(paths: list[Path]) -> EpisodeStats:
     for path in paths:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as e:
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
             print(f"  skip {path}: {e}", file=sys.stderr)
             continue
         tool_calls = data.get("tool_calls")

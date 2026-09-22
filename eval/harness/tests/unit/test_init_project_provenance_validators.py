@@ -28,6 +28,7 @@ from test_init_project import (  # noqa: E402
     test_every_fact_and_relationship_is_sourced as check_sourced,
     test_narration_guidance_is_the_house_style as check_narration,
     test_person_read_passes_both_flags as check_flags,
+    test_init_empty_sections as check_empty,
     test_returned_sources_reach_the_tree_without_notes as check_notes,
     test_search_before_stubs as check_search,
     test_standard_date_survives_from_the_tool as check_std_date,
@@ -448,9 +449,42 @@ def test_v6_passes_when_the_note_is_dropped_and_the_source_kept():
 def test_v6_fires_when_the_note_is_copied_through():
     after = _tree(sources=[{"id": "S2", "title": _NOTED_SOURCE["title"],
                             "notes": _NOTED_SOURCE["notes"]}])
-    assert "has notes" in _fails(
+    assert "carries ['notes']" in _fails(
         check_notes, after, [_person_read_call(sources=[_NOTED_SOURCE])]
     )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("text", "Patrick came over from County Mayo in 1867..."),
+        ("image_ref", "images/228755097.jpg"),
+    ],
+)
+def test_v6_fires_on_a_memory_field_copied_through(field, value):
+    """`notes` was the first field person_read emitted that a tree source may not
+    carry; a memory's `text` and `image_ref` are the second and third. The
+    validator checks the ALLOW-LIST, so it catches these without being taught
+    their names -- this is what proves that, rather than assuming it."""
+    source = {"id": "228755097", "title": "A family story", field: value}
+    after = _tree(sources=[{"id": "S3", "title": source["title"], field: value}])
+    assert f"carries ['{field}']" in _fails(
+        check_notes, after, [_person_read_call(sources=[source])]
+    )
+
+
+def test_v6_passes_when_the_memory_is_written_with_only_allowed_fields():
+    """The other direction: stripping the extra field and keeping the source is
+    exactly the right behaviour and must not be flagged."""
+    source = {
+        "id": "228755097",
+        "title": "A family story",
+        "url": "https://www.familysearch.org/memories/228755097",
+        "text": "Patrick came over from County Mayo in 1867...",
+    }
+    after = _tree(sources=[{"id": "S3", "title": source["title"],
+                            "url": source["url"]}])
+    check_notes(after, [_person_read_call(sources=[source])])
 
 
 def test_v6_fires_when_the_whole_source_is_dropped_to_dodge_the_rejection():
@@ -540,3 +574,122 @@ def test_v7_fires_when_a_tagged_test_stubs_without_searching():
 def test_v7_skips_when_no_tree_person_was_written():
     with pytest.raises(pytest.skip.Exception):
         check_search([], _tree(), SEARCH_TAGGED)
+
+
+# --- init-empty-sections: the memory-transcription exemption --------------
+
+_STORY = "Patrick came over from County Mayo in 1867, a boy of nineteen."
+_EMPTY_TAGGED = {"type": "positive", "tags": ["init-empty-sections"]}
+
+
+def _after(research):
+    return {"research_json": research}
+
+
+def _blank(**over):
+    r = {s: [] for s in (
+        "questions", "plans", "log", "sources", "assertions",
+        "person_evidence", "conflicts", "hypotheses", "timelines",
+        "proof_summaries",
+    )}
+    r.update(over)
+    return r
+
+
+def test_empty_sections_allows_a_verbatim_memory_transcription():
+    """The ruled behaviour: a memory's text is persisted at init."""
+    calls = [_person_read_call(sources=[{"id": "228755097", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S3",
+                                    "transcription": _STORY}]))
+    check_empty(after, _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_now_FIRES_on_the_untranscribed_memory_null_entry():
+    """Decision 5, 2026-09-17: an untranscribed memory gets NO sources entry.
+    It is already a tree source carrying title and URL, so the lead survives;
+    what the sources entry adds is the assertion it was examined, which is the
+    one thing that is not true. This test asserted the opposite until the
+    ruling."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S4",
+                                    "transcription": None}]))
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+_ALL_UNTRANSCRIBED = [
+    {"id": "1", "title": "A will", "artifact_url": "https://sg30p0.familysearch.org/a/dist.pdf"},
+    {"id": "2", "title": "A deed", "artifact_url": "https://sg30p0.familysearch.org/b/dist.jpg"},
+]
+
+
+def test_acceptance_14_all_untranscribed_leaves_sources_EMPTY():
+    """Acceptance 14: on a person whose kept memories all came back
+    untranscribed, `sources` is empty after init. Both memories are still in
+    tree.gedcomx.json, which is where the lead lives."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    check_empty(_after(_blank()), _EMPTY_TAGGED, calls)
+
+
+def test_acceptance_14_fires_when_an_untranscribed_memory_got_an_entry_anyway():
+    """The other direction, and the one that can actually regress: the skill
+    writing the entry the cap forbids. Text-gating made this invisible -- with
+    no text returned the exemption never engaged at all."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S1",
+                                    "transcription": None}]))
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+def test_empty_sections_fires_when_more_nulls_than_memories_came_back():
+    """The other direction, and the hole the text-only gate left wide open:
+    once ANY text was present the null branch was unbounded, so invented
+    entries rode in behind one real memory. Two memories cannot justify three
+    sources."""
+    calls = [_person_read_call(sources=[
+        {"id": "1", "title": "A will", "artifact_url": "https://sg30p0.familysearch.org/a/dist.pdf"},
+        {"id": "2", "title": "A story", "text": _STORY},
+    ])]
+    after = _after(_blank(sources=[
+        {"gedcomx_source_description_id": "S1", "transcription": _STORY},
+        {"gedcomx_source_description_id": "S2", "transcription": _STORY},
+        {"gedcomx_source_description_id": "S3", "transcription": _STORY},
+    ]))
+    assert "cannot admit more entries than there were memories" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+def test_empty_sections_still_fires_on_an_invented_transcription():
+    """The exemption must not become a hole: a transcription person_read never
+    returned is exactly the fabrication the empty-sections rule exists to stop."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S3",
+                                    "transcription": "I made this up."}]))
+    assert "not verbatim from person_read" in _fails(check_empty, after,
+                                                     _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_unchanged_when_no_memories_came_back():
+    """Every pre-existing test takes this path: no memory text, so `sources`
+    must still be empty and the original message still fires."""
+    calls = [_person_read_call(sources=[{"id": "S1", "title": "A census"}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S1"}]))
+    assert "sources (1 entries)" in _fails(check_empty, after,
+                                           _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_still_fires_on_the_other_sections():
+    """The exemption is scoped to `sources` alone."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(questions=[{"id": "Q1"}]))
+    assert "questions (1 entries)" in _fails(check_empty, after,
+                                             _EMPTY_TAGGED, calls)
+

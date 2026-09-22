@@ -28,6 +28,8 @@ Did the skill synthesise only from what the FamilySearch Wiki returned, without 
 - **partial:** The summary is mostly faithful but contains at least one claim that goes beyond what the tool returned — plausible but unverified addition.
 - **fail:** The summary contains fabricated guidance, specific dates, record names, or repositories not present in the tool response.
 
+**Grading note — binds fixture authors, not this dimension's scoring.** Grade the summary against the `chunk_text` as served. For authors: a hand-authored mock `chunk_text` may not contradict the real page at its `source_url`, and may not draw a coverage or access boundary that page does not draw.
+
 ## No-result handling (negative path)
 
 When the FamilySearch Wiki returns an empty results list, did the skill correctly tell the user and write no file?

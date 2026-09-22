@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { makeFixtureTree, type FixtureTreeHandle } from '../helpers/fixtureTree';
 import { listSkills, parseRubric } from '../../lib/skills';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 const SKILL_MD_LOCALITY = `---
 name: locality-guide
@@ -215,5 +217,147 @@ Description.
     } catch (err) {
       expect((err as Error).message).toContain('/this/specific/path/rubric.md');
     }
+  });
+});
+
+const AGENT_MD_GPS_MENTOR = `---
+name: gps-mentor
+description: BCG-style senior genealogist who reviews research work.
+tools:
+  - mcp__genealogy__research_query
+  - mcp__genealogy__sidecar_read
+---
+
+# GPS Mentor
+
+Agent body.
+`;
+
+const RUBRIC_GPS_MENTOR = `# GPS Mentor Rubric
+
+## Verdict accuracy
+
+Did the agent reach the right verdict?
+
+- **pass:** Verdict matches the evidence.
+- **partial:** Right direction, wrong tier.
+- **fail:** Verdict contradicts the evidence.
+`;
+
+describe('skills — an agent-keyed suite reaches the picker (issue #1253)', () => {
+  let handle: FixtureTreeHandle;
+
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      skills: [{ name: 'locality-guide', skillMd: SKILL_MD_LOCALITY, rubricMd: RUBRIC_LOCALITY }],
+      agents: [{ name: 'gps-mentor', agentMd: AGENT_MD_GPS_MENTOR, rubricMd: RUBRIC_GPS_MENTOR }],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('lists a suite that has tests but no skill directory', async () => {
+    const skills = await listSkills();
+    expect(skills.map((s) => s.name)).toEqual(['gps-mentor', 'locality-guide']);
+  });
+
+  it('reads its description and tools from the agent file, not a SKILL.md', async () => {
+    const mentor = (await listSkills()).find((s) => s.name === 'gps-mentor')!;
+    expect(mentor.description).toBe('BCG-style senior genealogist who reviews research work.');
+    expect(mentor.allowedTools).toEqual([
+      'mcp__genealogy__research_query',
+      'mcp__genealogy__sidecar_read',
+    ]);
+    // An agent declares `tools:`, not `allowed-tools:`. Reading only the latter
+    // would leave this empty and so mislabel the suite `stateless` — the flag
+    // that tells an author their tests need no MCP fixtures.
+    expect(mentor.stateless).toBe(false);
+  });
+
+  it('exposes the rubric genealogists annotate against', async () => {
+    const mentor = (await listSkills()).find((s) => s.name === 'gps-mentor')!;
+    expect(mentor.rubricError).toBeNull();
+    expect(mentor.rubricDimensions.map((d) => d.name)).toEqual(['Verdict accuracy']);
+  });
+});
+
+describe('skills — a tests/unit directory that is not a suite is not listed', () => {
+  let handle: FixtureTreeHandle;
+
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      skills: [{ name: 'locality-guide', skillMd: SKILL_MD_LOCALITY, rubricMd: RUBRIC_LOCALITY }],
+      agents: [{ name: 'gps-mentor', agentMd: AGENT_MD_GPS_MENTOR, rubricMd: RUBRIC_GPS_MENTOR }],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('drops a directory holding neither a rubric nor any .json', async () => {
+    const stray = path.join(handle.root, 'tests', 'unit', '__pycache__');
+    await fs.mkdir(stray, { recursive: true });
+    await fs.writeFile(path.join(stray, 'skills.cpython-312.pyc'), 'not a suite', 'utf8');
+
+    const names = (await listSkills()).map((s) => s.name);
+    expect(names).not.toContain('__pycache__');
+    // The real suites are untouched by the guard.
+    expect(names).toEqual(['gps-mentor', 'locality-guide']);
+  });
+
+  it('keeps a suite that has only a rubric and no tests yet', async () => {
+    // The authoring case the harness deliberately excludes: `_list_skills`
+    // needs a runnable test JSON, the picker needs the rubric visible before
+    // the first test is written.
+    const fresh = path.join(handle.root, 'tests', 'unit', 'brand-new-suite');
+    await fs.mkdir(fresh, { recursive: true });
+    await fs.writeFile(path.join(fresh, 'rubric.md'), RUBRIC_GPS_MENTOR, 'utf8');
+
+    expect((await listSkills()).map((s) => s.name)).toContain('brand-new-suite');
+  });
+});
+
+describe('skills — readSkillMd distinguishes absent from unreadable', () => {
+  let handle: FixtureTreeHandle;
+
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      skills: [{ name: 'locality-guide', skillMd: SKILL_MD_LOCALITY, rubricMd: RUBRIC_LOCALITY }],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('a skill with no SKILL.md at all is listed, not an error', async () => {
+    // Absent is the supported opt-out — the same contract `readRubricFor` has
+    // for a missing rubric.md.
+    const bare = path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', 'no-skill-md');
+    await fs.mkdir(bare, { recursive: true });
+
+    const found = (await listSkills()).find((s) => s.name === 'no-skill-md');
+    expect(found).toBeDefined();
+    expect(found!.description).toBeNull();
+  });
+
+  it('an unreadable SKILL.md throws rather than reading as a skill declaring nothing', async () => {
+    // A directory where the file should be yields EISDIR. Swallowing it would
+    // surface the skill with a null description and an empty tool list —
+    // indistinguishable in the picker from a skill that genuinely declares
+    // nothing, which is the failure this guard exists to prevent.
+    const broken = path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', 'broken-skill');
+    await fs.mkdir(path.join(broken, 'SKILL.md'), { recursive: true });
+
+    await expect(listSkills()).rejects.toThrow();
   });
 });

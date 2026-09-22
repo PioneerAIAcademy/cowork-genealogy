@@ -166,7 +166,8 @@ All three are rules my scan found **zero** violations of across 2,416 assertions
   `relationship_type: "child"` while its `value` read "Sister of Harold Dean Whitaker". The
   message names the consequence — "materialisation reads `structured_value`, so this writes
   the wrong family edge (or the right one backwards) while the value still reads
-  correctly". Passed in run 2, so 1 of 2.
+  correctly" (the wording has since changed; this is what the run of 2026-08-28
+  emitted). Passed in run 2, so 1 of 2.
 
 ### Correction to §What I did not find
 
