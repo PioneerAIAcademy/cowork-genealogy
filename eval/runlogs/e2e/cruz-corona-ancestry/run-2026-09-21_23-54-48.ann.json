@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "false"
+  },
+  "notes": {
+    "f1": "Not recovered -- the subject's (PID-TODO) Birth fact in the final tree is byte-identical to the starting tree (\"about 1910... near Nueva Italia, Michoacan\", a pre-existing, unverified fact). The run never searched Guerrero civil registration at all -- the locality-guide anchored the whole search in Michoacan/Paracuaro, matching the family's later 1930 residence rather than the birthplace, even though three already-in-tree siblings (Miguel, Liborio, Facundo) all have birth places in Guerrero, a strong hint the run never acted on. The one birth date it did find, on an unmerged stub (I1, \"~1912\"), is wrong on both year and state.",
+    "f2": "Not recovered on the subject. The agent found the correct father's name -- Sostenes Cruz -- via a genuine 1941 Paracuaro marriage investigation file (record_search hit, then record_read, then extraction_append), and wrote a ParentChild relationship. But that relationship (R1) connects I2 (Sostenes Cruz) to I1, a brand-new stub person, not to PID-TODO (the actual research subject). PID-TODO has zero relationships in the final tree, identical to the starting tree. same_person and merge_warnings were both called before the tree_edit, so the agent ran the identity-check machinery, but no merge of I1 into PID-TODO ever happened -- either an unresolved identity call (the stub's ~1912 birth year and a later 1930-census ~1914 hit both diverge from the subject's existing ~1910) or a skipped merge step. Escalated to the lead given the right name was found but never attached to the subject; ruling: false, since the required relationship does not exist on the tree's own subject regardless of the underlying evidence quality.",
+    "f3": "Not recovered on the subject, same root cause and same lead ruling as f2. The mother's name (Ma Apolinar Corona / Apolinar Corona) was correctly found in the same marriage file and independently corroborated by a 1930 census household match -- stronger corroboration than f2 had. But the ParentChild edge (R2) again connects I3 to the unmerged stub I1, not to PID-TODO. Same identity-link gap as f2: real, well-corroborated research, never attached to the subject."
+  },
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140"
+}
