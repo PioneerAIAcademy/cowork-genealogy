@@ -369,7 +369,7 @@ def test_cache_dir_found_when_the_cli_keyed_on_an_unresolved_spelling(
 
 
 def test_an_exact_key_wins_over_a_decoy_that_also_ends_with_the_leaf(
-    tmp_path: Path, monkeypatch
+    shortspace: Path, monkeypatch
 ):
     """Resolution is by key; the leaf is only the backstop.
 
@@ -380,9 +380,9 @@ def test_an_exact_key_wins_over_a_decoy_that_also_ends_with_the_leaf(
     lookup returns. Without this, dropping both whole-path candidates leaves the
     suite green and the harness silently back on leaf matching (#2468).
     """
-    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    workspace = shortspace / "e2e-frederick-8fu_3bbk"
     workspace.mkdir()
-    config = tmp_path / "cfg"
+    config = shortspace / "cfg"
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
     projects = config / "projects"
 
