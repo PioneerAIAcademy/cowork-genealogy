@@ -1030,6 +1030,14 @@ DEDICATED_AGENT_NAMES = frozenset(
         # the hook routes the whole `person_evidence` section to this agent, so
         # every legitimate link now arrives from it.
         "person-evidence",
+        # NOT the same shape (issue #2121). This pair is cost-motivated, not
+        # attribution-motivated: no hook routes anything to it, and it writes no
+        # protected section — only `log` entries and a plan item's `status`. It
+        # is listed because the set is asserted equal to the shipped agent files,
+        # and because a browse log arriving from it is legitimate rather than an
+        # unnamed-delegate bypass. Do not read its presence here as evidence that
+        # a hook route exists.
+        "search-images",
     }
 )
 

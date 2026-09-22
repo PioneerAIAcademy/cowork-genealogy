@@ -127,9 +127,15 @@ def test_no_browse_or_writes_on_planning_request(
     deterministic gate for the grade_on_invariant negative
     ut_search_images_009: which skill wins the route is a known-unstable
     model prior (the router picks research-plan directly on some runs,
-    search-images — which then correctly redirects per SKILL.md's ROUTING
-    section — on others, project-status on others), but the state-harm
+    search-images on others, project-status on others), but the state-harm
     invariant holds under every one of those routes and is what we assert.
+
+    Since the pair conversion (issue #2121) the redirect lives in
+    agents/search-images.md's ROUTING section, not in SKILL.md: the routing
+    skill delegates first and the AGENT holds volume_search and image_search,
+    so the redirect must fire before the agent's first tool call or this
+    invariant fails. That is the intended reading of a red here — a gate that
+    moved into the agent but did not stay ahead of the tools.
     See docs/specs/unit-test-spec.md.
 
     Fails iff the run:
