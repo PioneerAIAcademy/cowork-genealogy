@@ -29,11 +29,20 @@ guard the structural properties a validator can settle without judgment
   - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
     a records survey that called one Step-3 search must have called both.
 
-Two checks the deep dive proposed were dropped after review (PR #2579):
-  - VR2 (persisted collection id must trace to a tool response) — circular:
-    `project_context` is live and re-emits persisted `collections[].id`, so a
-    fabricated id, once written, is grounded by the next read-back. It also
-    duplicated `test_research_plan`'s id-grounding and `provenance_report`.
+Of the two other checks the deep dive proposed, VR3 was dropped and VR2 is held
+(NOT shipped here, and NOT dropped on the reasons first given — those don't hold):
+  - VR2 (persisted collection id must trace to a same-run collections_search /
+    volume_search response) — held pending the locality-guide skill->agent
+    conversion, which may relocate where such a validator lives (#1886). Its
+    earlier "drop" rationale was wrong and is corrected here so it is not carried
+    as fact: it is NOT circular — #1886 scopes grounding to the run's own cs/vs
+    responses, read via `tc.get("response")` (`mock_mcp.py`), not project_context;
+    it does NOT duplicate `test_research_plan` — `validator_runner` loads only
+    test_universal + test_<skill>, so that never runs on locality-guide; and it
+    does NOT duplicate `provenance_report` — that is non-gating and reads fixtures
+    at rest, not live responses. VR2 is genuinely class-closing (#1886 measures 58
+    persisted ids / 0 untraceable, and no other gating guard catches a fabricated
+    collections[].id here), so there is no valid ground to drop it — only to defer.
   - VR3 (digitization label requires a volume_search call) — dropped as
     subsumed by VR4, and it would only ever false-fire. A wiki-grounded label
     is NOT a legitimate substitute for the call: SKILL.md:82 makes
@@ -118,7 +127,11 @@ def test_persisted_localities_entry_shape(before_state, after_state):
     The nested key-sets (jurisdictions/collections/pages_read) are enforced by
     `test_universal.py::test_research_json_validates_schema` against
     `research.schema.json` ($defs.locality, additionalProperties:false + required
-    keys), so VR1 does not duplicate them. Presence-gated rather than tag-gated:
+    keys), so VR1 does not duplicate them. (That enforcement is the EVAL plane:
+    the production runtime validator `validator.ts` deliberately does NOT
+    deep-check those nested items — see its `checkLocalities` note — so the guard
+    VR1 leans on is the schema check in this suite, not a production guarantee.)
+    Presence-gated rather than tag-gated:
     the ~20 `empty-project-just-created` survey tests carry that scenario
     without the `localities-persist` tag, so on any that DO persist this catches
     source/section defects the tag-gated test above never sees. (How many
@@ -157,7 +170,7 @@ def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
     from a tool with NO fixture at all: collections_search and volume_search are
     fixture-backed and absent from LIVE_TOOLS, so a test that declares no fixture
     for one never registers it and the skill cannot call it — which is why ut_002
-    (no volume_search fixture) shows up as a one-search run, not a
+    (which declares NEITHER search fixture) is a no-search run VR4 skips, not a
     `fixture_not_found`. Grounding of a result is not this validator's concern.
 
     LIMIT (documented, not a bug): a run that called NEITHER search is skipped —

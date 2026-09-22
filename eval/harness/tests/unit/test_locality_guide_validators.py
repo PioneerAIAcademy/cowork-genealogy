@@ -10,13 +10,16 @@ Each check is exercised so it FIRES on a bad state, ACCEPTS a legitimate
 variant, and STANDS DOWN when not applicable.
 
 Scope after PR #2579 review: VR1 checks only the two properties the shared
-schema validator does not (source + four-section coverage); VR2 and VR3 were
-dropped (VR2 was circular against project_context's read-back and duplicated
-test_research_plan/provenance_report; VR3 is subsumed by VR4 and would only
-false-fire — SKILL.md:82 makes volume_search a required Step-3 call and Step 4
-derives every label from its result, so the one acceptance run assigning a
-label without a volume_search call is ut_002, whose fixtures don't register
-volume_search). VR4 gates that a records survey called both Step-3 searches.
+schema validator does not (source + four-section coverage). VR3 was dropped as
+subsumed by VR4 and would only false-fire — SKILL.md:82 makes volume_search a
+required Step-3 call and Step 4 derives every label from its result, so the one
+acceptance run assigning a label without a volume_search call is ut_002, whose
+fixtures don't register volume_search. VR2 is HELD, not dropped: its earlier
+"circular / duplicates test_research_plan / provenance_report" rationale does not
+hold (it grounds against same-run cs/vs responses not project_context;
+test_research_plan doesn't run on locality-guide; provenance_report is
+non-gating), so VR2 is deferred pending the skill->agent conversion, not rejected
+(#1886). VR4 gates that a records survey called both Step-3 searches.
 """
 
 import json
@@ -62,8 +65,16 @@ _VR4_SURVEY_TEST_IDS = [
 
 
 def _declared_fixtures(test_id):
-    path = _LOCALITY_TESTS / f"{test_id}.json"
-    return json.loads(path.read_text(encoding="utf-8")).get("mcp_fixtures", [])
+    """Resolve a test by its `test.id`, not by assuming the filename matches it:
+    6 of the locality tests are stored under prose filenames (e.g.
+    different-jurisdiction-ireland.json), so `f"{test_id}.json"` would
+    FileNotFoundError instead of failing with this pin's message if one of those
+    ids were ever added to the list below."""
+    for path in sorted(_LOCALITY_TESTS.glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if (data.get("test") or {}).get("id") == test_id:
+            return data.get("mcp_fixtures", [])
+    raise AssertionError(f"no locality-guide test file declares id {test_id!r}")
 
 
 # --- helpers ------------------------------------------------------------
@@ -230,10 +241,12 @@ def test_vr4_recognizes_collections_search_in_every_server_spelling(prefix):
 
 def test_vr4_survey_tests_register_both_step3_searches():
     """The other half: `mcp_fixtures` is what makes collections_search and
-    volume_search callable (both are fixture-backed, absent from LIVE_TOOLS), so
-    dropping either reference silently disarms VR4 for that test. Reads each
-    survey test's OWN declaration and asserts the mock arms both — removing a
-    fixture reds this. The empty-declaration case documents the disarmed state."""
+    volume_search callable (both are fixture-backed, absent from LIVE_TOOLS).
+    Dropping BOTH silently disarms VR4 (it sees neither call and skips); dropping
+    one makes VR4 redden at run time on that test instead — this pin catches
+    either at unit-test time, before a paid run. Reads each survey test's OWN
+    declaration and asserts the mock arms both — removing a fixture reds this.
+    The empty-declaration case documents the both-dropped disarmed state."""
     for test_id in _VR4_SURVEY_TEST_IDS:
         declared = _declared_fixtures(test_id)
         _, _, armed = create_mock_server(declared, _FIXTURES_DIR)
