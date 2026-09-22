@@ -164,6 +164,18 @@ range, record type) matches the target, preferring the one that is
 **not** already record- or full-text-searchable (browsing a searchable
 volume wastes effort — route those to search-records / search-full-text).
 
+**If the matched volume is already searchable, decline and log nothing.** A
+high `recordSearchablePercent` (or `fulltextSearchable: true`) means browsing is
+the wrong tool, even when the delegation instructed a browse and even when it
+asserted the films are unindexed — the number the tool returned governs, not the
+caller's framing. Say the volume is indexed, name search-records (or
+search-full-text) as the right route, and stop. **No browse happened, so there
+is nothing to log**: do not call `research_log_append`, and never record a
+`negative` entry with `resultsExamined: 0` to show willingness. A log entry
+describing a browse you correctly refused to perform is a false audit trail, and
+it is worse than no entry because a later exhaustiveness audit reads it as a
+search that came back empty. Declining IS completing the delegation here.
+
 ```
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 ```
@@ -267,7 +279,11 @@ examine in detail. Never fabricate the contents of a page — report only what
 ### 6. Log the browse
 
 **Every browse gets a log entry — no exceptions.** Call
-`research_log_append` once per browse. The tool assigns the log id and
+`research_log_append` once per browse. "No exceptions" governs browses you
+*ran*, including a nil one: a `volume_search` that returned nothing, and an
+empty image group, are both completed browses and both get logged. It does not
+reach a browse you correctly declined because the volume was already searchable
+(step 2) — there was no browse to record. The tool assigns the log id and
 `performed` timestamp and validates-before-persist; you supply the judgment.
 `image_search` does not stage results, so **omit `stagedResultsRef`** (no
 sidecar is written, exactly like a nil full-text search):
