@@ -63,11 +63,11 @@ different farms. The argument also leaned on the tree's marriage to Guðríður,
 `ABT 1857`; no marriage record for this man exists anywhere in *Iceland, Marriages, 1770-1920*,
 so that date is an estimate that excludes nothing, and both 1856 children precede it.
 
-**No second Ísleifur Ísleifsson exists.** Every Iceland baptism 1845-1875 naming a father of
+**No second Ísleifur Ísleifsson appears in the Kross baptism index — with one untested gap.** Every Iceland baptism 1845-1875 naming a father of
 that name was retrieved and grouped by parent couple. Four are at Kross — Steinunn 1856,
 Einar 1856, Guðmundur 1859, Jóhann 1861. The only others in Rangárvallasýsla are at
 Stóriólfshvoll to Katrín Jónsdóttir in 1845 and 1850, an older man since ours was born 1832;
-the rest are at Staður í Aðalvík in the Westfjords.
+the rest are at Staður í Aðalvík in the Westfjords. **The untested gap:** whether the Stóriólfshvoll man was still in the county in 1856, and whether his partner Katrín Jónsdóttir is the Katrín Jónsdóttir b. 1823 who is Bjarni Bjarnason's wife at Kirkjuland in 1873. The timing argues against it — she would have borne children to both men in 1850 — and the name pair is among the commonest of the era, but neither was checked and a reviewer should know that.
 
 **On the mother's name — and a reversal in my own reporting.** An earlier comment on issue #2308 stated that *the register* writes `Guðrún`. That came from the low-resolution machine reads which were subsequently shown to be unusable, and it is withdrawn: on the full-resolution scan the register writes `Guðríðr`. **f2's argument does not depend on which of the two it is.** The discriminator between this woman and Þórunn Einarsdóttir is the **patronymic** — Gunnlaugsdóttir versus Einarsdóttir — which is stable across every reading anyone has produced, and the residence, Litluhildisey versus Kyrkjuland.
 
