@@ -203,9 +203,15 @@ the fixture files, and validates the result. The three outcomes:
 Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't apply
 here (nothing was stripped, and the skill already validated).
 
-> No fixture of this genre has been resolved and run end to end yet, so there's
-> no finished one to copy. You are working an unexercised path: if a step doesn't
-> behave the way this page says, that's worth reporting, not working around.
+> Worked examples of this genre already resolved and run end to end:
+> `eval/tests/e2e/creszentia-haas-birth/` (false hint, real answer found),
+> `eval/tests/e2e/antonio-lucas-spouse/` (false match, `avoid` + `required`
+> pair) and `eval/tests/e2e/chresten-nielsen-daughter/` (re-adjudicated
+> after a graded run). To re-derive the resolved set, normalise both greps to
+> directories first — one prints `<dir>/fixture.json` and the other
+> `<dir>/README.md`, so comparing them as-is reports every fixture as differing:
+>
+>     comm -23 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | xargs -n1 dirname | sort)
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 

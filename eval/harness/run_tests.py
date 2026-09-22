@@ -523,7 +523,7 @@ def _print_summary(rows: list[dict]) -> None:
 # Every outcome the harness can record, per unit-test-spec.md §7 and
 # `harness/runlog.py`. Enumerated rather than spot-checked: a four-value tally
 # (pass/partial/fail/aborted) silently under-sums a suite containing an
-# xfail/xpass test, and two live proof-conclusion tests declare exactly that.
+# xfail/xpass test.
 _OUTCOMES = ("pass", "partial", "fail", "aborted", "xfail", "xpass")
 
 

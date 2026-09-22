@@ -362,6 +362,7 @@
         "url_archived": { "type": ["string", "null"] },
         "notes": { "type": ["string", "null"] },
         "transcription": { "type": ["string", "null"] },
+        "transcription_truncated": { "const": true },
         "image_filename": { "type": ["string", "null"] },
         "log_entry_id": {
           "anyOf": [
@@ -369,6 +370,14 @@
             { "type": "null" }
           ]
         }
+      },
+      "if": {
+        "properties": { "transcription_truncated": { "const": true } },
+        "required": ["transcription_truncated"]
+      },
+      "then": {
+        "properties": { "transcription": { "type": "string", "pattern": "\\S" } },
+        "required": ["transcription"]
       }
     },
     "citation_detail": {
