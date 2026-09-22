@@ -497,8 +497,8 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `url` | string or null | no | URL to the digital source |
 | `url_archived` | string or null | no | Web archive URL |
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
-| `transcription` | string or null | no | Full verbatim transcription of a page-scan record, when it was read via the `image-reader` subagent (`image_transcribe` OCR). The transcription is the model's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
-| `image_filename` | string or null | no | Project-relative path (`images/<key>.jpg`) of the saved page scan, when `image_transcribe` persisted it (a `projectPath` was supplied). Lets the viewer show the scan beside its `transcription`. Only retained-source images survive: a best-effort TTL sweep in `research_append` GCs `images/*.jpg` that no source's `image_filename` cites (§8.5). Null when the source is not image-backed or the image was not persisted. |
+| `transcription` | string or null | no | Full verbatim transcription of a page-scan record, when it was read via the `image-reader` subagent (`image_transcribe` OCR). **Also the destination for a FamilySearch memory's text** — either a story's own words or OCR of a scan the `person_read` memories filter kept, both arriving as that source's `text`. The field is named `transcription` on both routes even though **a story told by a family member is not a transcription of anything**; it is the researcher's own words being recorded, so treat it as source text rather than as a verbatim reading of a document. The transcription is the model's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. **Not for an untranscribed memory** — such a memory gets no `sources` entry at all: it stays in `tree.gedcomx.json` with its title and URL, which is the lead, and a `sources` entry would assert it was examined. `person_read` still returns it with a note saying the budget did not reach it, and it can be transcribed later with `image_transcribe`'s `memoryArtifactUrl`. |
+| `image_filename` | string or null | no | Project-relative path (`images/<key>.jpg`) of the saved page scan, when `image_transcribe` persisted it (a `projectPath` was supplied) — or when `person_read` retained a memory scan, which needs its own `projectPath` for the same reason and returns the ref as that source's `image_ref`. Lets the viewer show the scan beside its `transcription`. Only retained-source images survive: a best-effort TTL sweep in `research_append` GCs `images/*.jpg` that no source's `image_filename` cites (§8.5). Null when the source is not image-backed or the image was not persisted. |
 | `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
 **`citation_detail`** — Enforces the Who/What/When/Where/Where-within framework from Evidence Explained.
@@ -561,6 +561,41 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 | `relationship` | `{ "relationship_type", "related_person_role" }` | `{ "relationship_type": "son", "related_person_role": "head_of_household" }` |
 | `occupation` | `{ "occupation" }` | `{ "occupation": "coal miner" }` |
 | `immigration` | `{ "year", "origin", "destination", "port" }` | `{ "year": 1848, "origin": "Ireland", "destination": "Philadelphia" }` |
+
+**Direction, for `relationship`:** `relationship_type` is the record **subject's own** role; `related_person_role` is the **other party's**. The row above reads that way and so does every consumer: a census child enumerated under a head of household is `{ "relationship_type": "son", "related_person_role": "head_of_household" }`, and a death certificate naming the father is `"child"` on the deceased, never `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, so a brother or sister is `sibling` and never `child`. Enforced at the write boundary by `research_append` and over the corpus by `test_relationship_type_agrees_with_its_value`; the refusal rate is recorded in `guardrail-enforcement-spec.md` §4.
+
+**It is a per-ASSERTION role, not the persona's record role.** `record_role`
+is what the persona is in the *record* — one value per persona.
+`relationship_type` is what they are in *this one relationship*, and a persona
+carries several. The census example above makes the two look identical because
+there they coincide; a baptism separates them. A man recorded as
+`record_role: "father"` carries one assertion typed `parent` (of the baptised
+child) and another typed `spouse` (of the mother), both correct, and neither
+equal to his record role.
+
+Measured over `eval/**/*final-research.json`, `fact_type: relationship`, and
+emitted by `measure_relationship_direction.py --axes` so it is re-derivable
+rather than pasted, measured at 1d5656fe3: requiring the two to agree refuses **62 of 281**
+comparable assertions, of which **60 are correct data**; and **59 of 1149**
+personas carrying a relationship assertion carry more than one category. So no guard may require `relationship_type` to match
+`record_role`, and two earlier attempts to build one were abandoned without the
+reason being written down. That is what this paragraph exists to prevent a third
+time.
+
+**Why the enforcement compares `value`'s prose, which is a choice.**
+`related_person_role` also names the other party and is present on 98.3% of
+relationship assertions, so a `(record_role x related_person_role)` composition
+rule is constructible. It was not chosen because that vocabulary is open — 60+
+spellings in the corpus — so it needs a role table somebody maintains, and
+because the field carries the persona's own role on 14 of 1844 assertions
+(`tree-materialization-spec.md`, the 2026-09-07 rejection). Comparing the prose
+needs no table and checks against the layer a human reads. Two further
+candidates do not reach: `record_persona_id` plus the sidecar GedcomX is null
+for full-text-, image-, PDF- and `record_read`-sourced assertions, and the tree
+does not exist at extraction time. Revisit with a measurement of both, not with
+an assumption that one is impossible.
+
+Do not confuse this field with the closed `relationship_type` enum in `enums.schema.json`, which is the simplified-GedcomX **tree** relationship type (`ParentChild` / `Couple`) and has no `sibling` member at all — siblings are carried there by shared `ParentChild` edges.
 
 **Authority:** `structured_value` is derived from `value`, `date`, and `place` — not the other way around. If they disagree, the human-readable fields (`value`, `date`, `place`) govern. This follows the same authority pattern as `narrative_markdown` vs. structured fields in proof summaries.
 
@@ -1519,7 +1554,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "record_role": "deceased",
       "fact_type": "relationship",
       "value": "Father: Thomas Flynn",
-      "structured_value": { "relationship_type": "father", "related_person_role": "deceased" },
+      "structured_value": { "relationship_type": "child", "related_person_role": "father_of_deceased" },
       "date": null,
       "date_certainty": null,
       "place": null,

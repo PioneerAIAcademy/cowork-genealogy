@@ -726,7 +726,7 @@ harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv
 
 .PHONY: harness-lint
 harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
-	cd eval/harness && uv run ruff check .
+	cd eval/harness && uv run ruff check . ../../.claude/skills
 
 .PHONY: replay-check
 replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar

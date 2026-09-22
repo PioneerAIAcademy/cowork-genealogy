@@ -1,0 +1,802 @@
+{
+  "persons": [
+    {
+      "id": "K69J-F7Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Georg",
+          "surname": "Gajdosch"
+        },
+        {
+          "id": "N6",
+          "given": "Georgius",
+          "surname": "Gajdosch",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N19",
+          "given": "Jura [Georgius / Ji\u0159\u00ed]",
+          "surname": "Gagdosse [Gajdo\u0161]",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "about 1690",
+          "standard_date": "Abt 1690",
+          "place": "Lide\u010dko, Vset\u00edn, Gottwaldovsk\u00fd kraj, Czechoslovakia",
+          "standard_place": "Lide\u010dko, Vset\u00edn, Czechoslovakia"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6",
+          "type": "Death"
+        },
+        {
+          "id": "68edbf44-45bd-4a81-b01f-c86bda829d69",
+          "type": "TitleOfNobility",
+          "value": "rf"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "place": "Luzna, Ungarisch Brod, Moravia",
+          "standard_place": "Lu\u017ena, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "KZYF-GBJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Dorothea",
+          "surname": ""
+        },
+        {
+          "id": "N7",
+          "given": "Dorothea",
+          "surname": "Gajdosch",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "about 1690",
+          "standard_date": "Abt 1690",
+          "place": "Lide\u010dko, Vset\u00edn, Gottwaldovsk\u00fd kraj, Czechoslovakia",
+          "standard_place": "Lide\u010dko, Vset\u00edn, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "68edbf44-45bd-4a81-b01f-c86bda829d69",
+          "type": "TitleOfNobility",
+          "value": "rf"
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "place": "Franzowa Lhota, Lide\u010dko, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "KDB1-TLM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "",
+          "surname": "Gajdosch",
+          "prefix": "Mr."
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1665",
+          "standard_date": "Abt 1665",
+          "place": "of Vsetin, Czechoslovakia",
+          "standard_place": "Vset\u00edn, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "DEAD"
+        }
+      ]
+    },
+    {
+      "id": "K8GQ-C6M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Joannes",
+          "surname": "Gajdosch"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "26 Oct 1714",
+          "standard_date": "26 Oct 1714",
+          "place": "Lide\u010dko, Vset\u00edn, Gottwaldovsk\u00fd kraj, Czechoslovakia",
+          "standard_place": "Lide\u010dko, Vset\u00edn, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "68edbf44-45bd-4a81-b01f-c86bda829d69",
+          "type": "TitleOfNobility",
+          "value": "rf"
+        }
+      ]
+    },
+    {
+      "id": "K6SX-6ZX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "",
+          "surname": "Gajdosch",
+          "prefix": "Mrs."
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1667",
+          "standard_date": "Abt 1667",
+          "place": "of Vsetin, Czechoslovakia",
+          "standard_place": "Vset\u00edn, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "DEAD"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Anna",
+          "surname": "Gajdosch",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Christening",
+          "date": "22 April 1718",
+          "place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N9",
+          "given": "Catharina",
+          "surname": "Gajdosch",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N20",
+          "given": "Kateryna [Catharina]",
+          "surname": "Man",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Residence",
+          "place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N10",
+          "given": "Anna",
+          "surname": "Gajdosch",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F8",
+          "type": "Christening",
+          "date": "1720-02-11",
+          "place": "Franzowa Lhota, Lide\u010dko, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "place": "Franzowa Lhota, Lide\u010dko, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N11",
+          "given": "Marina",
+          "surname": "Gajdosch",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F10",
+          "type": "Christening",
+          "date": "October ~1720",
+          "place": "Luzna, Ungarisch Brod, Moravia",
+          "standard_place": "Lu\u017ena, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Residence",
+          "place": "Luzna, Ungarisch Brod, Moravia",
+          "standard_place": "Lu\u017ena, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N12",
+          "given": "Anna",
+          "surname": "Gajdosch",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Residence",
+          "place": "Luzna, Ungarisch Brod, Moravia",
+          "standard_place": "Lu\u017ena, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N13",
+          "given": "Nicolas",
+          "surname": "Janku",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F13",
+          "type": "Residence",
+          "place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N14",
+          "given": "Justina",
+          "surname": "Janku",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F14",
+          "type": "Residence",
+          "place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N15",
+          "given": "Nicolaus",
+          "surname": "Jurastik",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Residence",
+          "place": "Franzowa Lhota, Lide\u010dko, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N16",
+          "given": "Dorothea",
+          "surname": "Jurastik",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F16",
+          "type": "Residence",
+          "place": "Franzowa Lhota, Lide\u010dko, Moravia",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N17",
+          "given": "Joannes",
+          "surname": "Machowsky",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Residence",
+          "place": "Pozdiechow, Moravia",
+          "standard_place": "Moravia, Czechoslovakia",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N18",
+          "given": "Anna",
+          "surname": "Machowsky",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F18",
+          "type": "Residence",
+          "place": "Pozdiechow, Moravia",
+          "standard_place": "Moravia, Czechoslovakia",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N21",
+          "given": "Tom\u00e1\u0161 [Thomas]",
+          "surname": "Gajdo\u0161 [Gagdosse]",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F19",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N22",
+          "given": "Martin [Martina]",
+          "surname": "Man [Manu]",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F20",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KDB1-TLM",
+      "person2": "K6SX-6ZX",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "ABT 1685",
+          "standard_date": "Abt 1685",
+          "place": "of Vsetin, Czechoslovakia",
+          "standard_place": "Vset\u00edn, Czechoslovakia"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KDB1-TLM",
+      "child": "K69J-F7Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K6SX-6ZX",
+      "child": "K69J-F7Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K69J-F7Y",
+      "child": "K8GQ-C6M",
+      "subtype": "Biological"
+    },
+    {
+      "type": "Couple",
+      "person1": "K69J-F7Y",
+      "person2": "I2",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "24 January 1714",
+          "place": "Lide\u010dko, Moravia",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "id": "F21",
+          "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia"
+        }
+      ],
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "MR3V-CMR",
+      "title": "Georg Gajdosch in entry for Joannes Gajdosch, \"Czech Republic, Births and Baptisms, 1637-1889\"",
+      "citation": "\"Czech Republic, Births and Baptisms, 1637-1889\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FMS8-XFQ : 17 December 2019), Georg Gajdosch in entry for Joannes Gajdosch, 1714.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMS8-XFQ"
+    },
+    {
+      "id": "S1",
+      "title": "Lide\u010dko Catholic baptismal register, 1707\u20131742, image 005387300_00034",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSQG-99Q7"
+    },
+    {
+      "id": "S2",
+      "title": "Lide\u010dko Catholic Baptismal Register, 1707\u20131742, image 005387300_00041",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:005387300_00041"
+    },
+    {
+      "id": "S3",
+      "title": "Lide\u010dko Catholic Baptismal Register, 1707\u20131742, image 005387300_00044 \u2014 baptism of Marina Gajdosch, October [~1720\u20131721]",
+      "url": "https://www.familysearch.org/search/image/index?owc=005387300_00044"
+    },
+    {
+      "id": "S4",
+      "title": "Lide\u010dko (Lydeczka) Catholic Marriage Register, 1709\u20131779, image 005387302_00008",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:005387302_00008"
+    }
+  ]
+}
