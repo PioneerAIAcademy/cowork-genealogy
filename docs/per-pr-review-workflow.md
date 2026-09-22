@@ -126,7 +126,7 @@ The histogram is what makes bimodality visible — a skill with 5 fails + 5 pass
 
 **Decision:** Junior genealogists may update existing tests freely. The harness writes a `test_content_hash` field per test in every run log — SHA-256 over **the resolved test**, computed as:
 
-- the test JSON minus the cosmetic fields `name`, `description`
+- the test JSON minus the cosmetic fields `name`, `description`, `tags`
 - plus the contents of the referenced scenario directory (`research.json` + `tree.gedcomx.json`)
 - plus the contents of each referenced MCP fixture file
 

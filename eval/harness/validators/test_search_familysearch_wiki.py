@@ -92,9 +92,11 @@ def _expected_file(test) -> str | None:
     Two tags with this prefix is an authoring error, not a precedence
     question — fail loudly rather than silently picking the first.
 
-    Fixed by issue #2694: `tags` is no longer in
-    `snapshot._COSMETIC_TEST_FIELDS`, so retagging a test now correctly
-    invalidates its run log's snapshot hash.
+    Known wart, tracked as its own issue: `tags` is in
+    `snapshot._COSMETIC_TEST_FIELDS`, so retagging a test does not
+    invalidate its run log even though it changes what is asserted here.
+    Migrating to a snapshot-hashed field is queued for the next change that
+    already buys a run.
     """
     prefix = "expects-file-"
     found = [t[len(prefix):] for t in (test.get("tags") or []) if t.startswith(prefix)]

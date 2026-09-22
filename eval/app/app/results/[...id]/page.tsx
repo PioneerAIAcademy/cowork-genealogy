@@ -1113,7 +1113,7 @@ function TestsPane({
   selectedTestId: string | null;
   onSelect: (test_id: string) => void;
 }) {
-  // The run-log snapshot strips test.name/description (they're
+  // The run-log snapshot strips test.name/description/tags (they're
   // "cosmetic" per eval/CLAUDE.md). Fetch current names from /api/tests
   // so the sidebar shows something a genealogist can read at a glance.
   const namesQuery = useQuery<{ tests: Array<{ id: string; name: string }> }>({
