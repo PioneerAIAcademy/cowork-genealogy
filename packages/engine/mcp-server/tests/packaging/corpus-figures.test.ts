@@ -371,7 +371,7 @@ describe("the specs' corpus claims survive main moving", () => {
     // for THIS shape only, widening reach without loosening proximity for the
     // figures already guarded.
     const FIGURE =
-      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plans append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)|\bover (?:the )?[\d,]{1,7} committed e2e runs\b|\b[\d,]{1,7} of [\d,]{1,7} eligible runs\b/gi;
+      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plan(?:s|items) append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)|\bover (?:the )?[\d,]{1,7} committed e2e runs\b|\b[\d,]{1,7} of [\d,]{1,7} eligible runs\b/gi;
     const STAMP = /measured at [0-9a-f]{7,40}\b/i;
     const missing: string[] = [];
     for (const [rel, text] of Object.entries(specText)) {
