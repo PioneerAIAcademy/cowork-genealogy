@@ -988,6 +988,112 @@ describe("research_append (Phase 1)", () => {
       expect(after.transcription).toBeNull();
       expect("transcription_truncated" in after).toBe(false);
     });
+
+    it("is authoritative on an UPDATE too — strips an agent-asserted flag on a never-capped source (#2457 r11 mutation 1)", async () => {
+      await writeProject();
+      // Both pre-existing authority tests use `append`, so restricting the strip to
+      // appends survived the whole suite while an asserted flag rode an update
+      // through onto a source whose image was never capped. That defeats "derived
+      // here, never asserted by the agent" on the very path this PR is about.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "still partial", transcription_truncated: true },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false); // the image was never capped
+    });
+
+    it("an EMPTY-STRING image_filename is a removal too, not an omission (#2457 r11 mutation 2)", async () => {
+      await writeProject();
+      // The spec sentence this PR added says "an explicit `image_filename: null` or
+      // `\"\"`". Testing only `null` left the other spelling of the same removal
+      // uncovered, and `""` is schema-legal for this field.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "", transcription: "text with no scan behind it" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("an EMPTY-STRING transcription empties the source too — the batch is not refused (#2457 r11 mutation 3)", async () => {
+      await writeProject();
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "" } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // folding the persisted text back in would stamp, then self-reject
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("whitespace-only transcription is no text — the .trim() is load-bearing (#2457 r11 mutation 4)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // validate_research_schema rejects `true` beside a .trim()-empty transcription,
+      // so dropping the .trim() here makes the tool stamp a state its own validator
+      // refuses. Nothing supplied whitespace-only text before.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription: "   \n\t " }),
+      });
+      expect(r.ok).toBe(true); // pre-fix mutant: false — the tool self-rejects
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("the fold ACCUMULATES across a source's ops — a later unrelated op does not reset it (#2457 r11 mutation 5)", async () => {
+      await writeProject();
+      // The only other two-op test asserts the ABSENCE of a stamp, so a fold that
+      // re-seeds from the persisted entry on every op — gutting the accumulation this
+      // change exists for — passed the whole suite. Here the badge MUST land: the text
+      // arrives in op[0] and the last op touching the source carries neither field.
+      const noText = imageSource({});
+      delete (noText as Record<string, unknown>).transcription;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noText });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { notes: ["unrelated bookkeeping"] } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription_truncated).toBe(true); // mutant re-seeding per op: absent
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {

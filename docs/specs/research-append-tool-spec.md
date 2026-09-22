@@ -625,6 +625,13 @@ Derivation, per op:
   truthiness: an explicit `image_filename: null` or `""` is the caller **removing**
   the reference, which is the opposite of omitting it, and a source that ends the
   batch citing no scan is never marked.
+- **A consequence, stated because it is a real behaviour change:** since the fold
+  starts from the persisted entry, ANY update to an image-backed source can now
+  set the marker, including one that touches neither field (say a `notes` edit)
+  when the image was capped after the source was first written. Before the fold
+  such an op derived nothing. This is inside the class ruling C (2026-09-21)
+  accepts — an unneeded badge, never a false "verified whole" — and it cannot
+  move a source from partial to whole, but it is not merely a bug fix.
 - The result is then joined by `image_filename` against the image-store cap set
   (`sourceImageCapState` — `true` when the image was read past the cap, `false`
   otherwise; it returns a plain boolean, never `undefined`).

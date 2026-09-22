@@ -3391,8 +3391,12 @@ async function prepareOps(
   // the marker and the merge keeps the persisted value); and a persisted `true`
   // survives such an update — the marker may over-report a since-refined read,
   // which the ruling accepts as an unneeded badge, never a false "verified whole".
-  // The stamp lands on the LAST op touching that source, so it survives the
-  // shallow merge of every op after it.
+  // The stamp lands on the last op touching that source. That is DEFENSIVE, not a
+  // guarded invariant, and the comment says so rather than overclaiming: `applyOne`
+  // merges an update key by key and pass 1 strips the key from every bag, so no
+  // later op can carry a competing value and which bag holds the stamp is currently
+  // unobservable (measured — stamping the FIRST op instead passes the whole suite).
+  // It is kept so this block does not silently depend on that merge staying key-wise.
   for (const state of deriveBySource.values()) {
     const ref = state.ref;
     const text = state.text;
