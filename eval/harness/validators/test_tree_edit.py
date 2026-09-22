@@ -19,6 +19,8 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 
@@ -138,4 +140,86 @@ def test_check_warnings_runs_after_any_tree_write(before_state, after_state, ski
     assert "check-warnings" in (skills_invoked or []), (
         "tree.gedcomx.json changed but check-warnings was never invoked -- "
         "SKILL.md § Validation requires it after ANY edit or merge"
+    )
+
+
+# --- Guardianship: which kin reading leads (issue #2449) --------------
+
+_LEAD_MARKER = re.compile(
+    r"favou?red|favou?r\b|leading|\bleads\b|stronger|more likely|"
+    r"most likely|primary|preferred",
+    re.I,
+)
+_UNCLE = re.compile(r"uncle", re.I)
+_STEP = re.compile(r"step", re.I)
+
+
+def _weighting_units(text: str):
+    """Sentences, with table rows and list items kept whole.
+
+    The observed violation weighted the readings twice, once in a
+    comparison table and once in prose. A row keeps its own cells together:
+    sentence-splitting inside a row can cut "not favoured" away from the
+    "the step reading leads" that qualifies it, leaving a fragment that
+    names uncle beside a lead marker with no step in sight. That is a
+    spurious fire on a correct row, not a missed one -- the row is held
+    whole to prevent it.
+    """
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line[:1] in "|-*":
+            yield line
+            continue
+        for sentence in re.split(r"(?<=[.;:!?])\s+", line):
+            if sentence.strip():
+                yield sentence.strip()
+
+
+def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
+    """`references/relationship-accuracy.md`, "Guardianship shortly after a
+    remarriage": when the record does not say whether the wife's shared
+    surname is her maiden or a prior married name, the STEP reading leads
+    and uncle-by-marriage is named as unresolved.
+
+    Observed violation: `ut_tree_edit_014`, run `v1_2026-09-15_05-34-57`.
+    The run decided the surname was a maiden name on no evidence and
+    inverted the weighting -- "**Uncle by marriage** (favoured)" in a
+    comparison table, then "That makes the **uncle-by-marriage reading the
+    favoured one**". The human annotation upheld Correctness 1 and
+    Completeness 1: "That reverses the required determination."
+
+    That run was following the reference, which branched on maiden-vs-
+    married and gave no default for the unresolved case the record actually
+    presents. The reference now states the default and the reason -- the
+    step reading explains the timing of the appointment, the uncle reading
+    has to treat the bond and the marriage as coincidental. This is the
+    deterministic half of that fix; issue #2449 records why the judge could
+    not be relied on for it (`Tool Arguments` alone was scored 1, null and 3
+    on identical behaviour across five runs).
+
+    Asserted narrowly: no unit of text may mark the UNCLE reading as the
+    favoured one WITHOUT naming the step reading in the same breath. A run
+    that weighs both together, or that names uncle with no lead marker at
+    all, passes. Measured over every captured `_014` response -- the five
+    committed runs plus three scratch runs of 2026-09-22 -- this fires on
+    exactly the one inverted run and is clean on the other seven, including
+    the two that failed for the unrelated `Tool Arguments` reason.
+    """
+    if "guardianship" not in (test.get("tags") or []):
+        pytest.skip("only applies to guardianship tests")
+    if not (text_response or "").strip():
+        pytest.skip("no reply to weigh")
+    offenders = [
+        u for u in _weighting_units(text_response)
+        if _LEAD_MARKER.search(u) and _UNCLE.search(u) and not _STEP.search(u)
+    ]
+    assert not offenders, (
+        "the uncle-by-marriage reading is marked as the favoured one without "
+        "the step reading weighed alongside it. When the record does not "
+        "settle whose surname it is, the step reading leads and uncle is "
+        "named as unresolved (references/relationship-accuracy.md, "
+        "\"Guardianship shortly after a remarriage\"). Offending text: "
+        + " || ".join(u[:160] for u in offenders)
     )
