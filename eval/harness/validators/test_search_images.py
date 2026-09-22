@@ -1,10 +1,12 @@
 """Skill-specific validators for the search-images skill.
 
 search-images browses FamilySearch digitized image volumes page-by-page
-(volume_search → image_search → delegate each page to the image-reader
-subagent) when a record set is digitized but not indexed and not full-text
-searchable, and logs every browse via research_log_append. image_search does not stage results, so no results/
-sidecar is written — the log entry stands alone.
+(volume_search → image_search → image_transcribe, one call per page) when a
+record set is digitized but not indexed and not full-text searchable, and logs
+every browse via research_log_append. Since the pair conversion (issue #2121)
+the agent reads pages itself rather than delegating to the image-reader
+subagent — agents cannot reach another agent. image_search does not stage
+results, so no results/ sidecar is written — the log entry stands alone.
 
 Narrative-quality dimensions (volume selection, browse procedure,
 negative-result detail) live in the rubric and are graded by the LLM judge.
@@ -174,4 +176,62 @@ def test_no_browse_or_writes_on_planning_request(
     sidecars = _new_result_sidecars(before_state, after_state)
     assert not sidecars, (
         f"planning request must not write a results/ sidecar; got: {sidecars}"
+    )
+
+
+def test_no_browse_executed_on_indexed_search(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (no-browse-on-indexed): the search-images no-harm invariant
+    for an INDEXED name/date/place search that should route to search-records.
+
+    A sibling of test_no_browse_or_writes_on_planning_request, not a copy, and
+    the difference is the point. That one forbids ANY new `log` entry because
+    its acceptable route (research-plan) never writes `log`. Here the
+    acceptable route is search-records, which logs every search it runs — so a
+    blanket no-log assertion would fail the correct behaviour, which is the
+    second direction CLAUDE.md requires a guard be proven against. This asserts
+    only what cannot be legitimate: that no browse was EXECUTED, and that
+    nothing claimed one in the audit trail.
+
+    The gate this backstops moved into agents/search-images.md's ROUTING
+    section with the pair conversion (issue #2121). Measured on run
+    v1_2026-09-22_01-41-09: the agent treated an indexed 1850-census request as
+    a browse, and when the browse tools were not available appended a `log`
+    entry with `tool: image_search` and told the user the browse "could not be
+    conducted" because the tools were "unavailable in this session" — blaming
+    the environment for a request it should have redirected. The judge scored
+    that a fail on one run and a pass on five others; this makes it a one-line
+    deterministic verdict instead of an opinion that moves between runs.
+
+    Fails iff the run:
+      - made a `volume_search` or `image_search` MCP call (a browse was
+        executed), or
+      - appended a new `log` entry whose `tool` names one of those (a browse
+        was claimed in the audit trail, whether or not one ran).
+
+    Deliberately does NOT flag a new `log` entry from search-records itself
+    (`tool: record_search`), nor a `results/` sidecar: both are what the
+    correct route legitimately produces.
+    """
+    if "no-browse-on-indexed" not in test.get("tags", []):
+        pytest.skip("not a no-browse-on-indexed scenario")
+
+    browsed = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] in ("volume_search", "image_search")
+    ]
+    assert not browsed, (
+        "an indexed search must not execute a browse; got "
+        f"{[(c.get('tool', '').split('__')[-1], c.get('args')) for c in browsed]}"
+    )
+
+    claimed = [
+        e for e in _new_log_entries(before_state, after_state)
+        if ("image_search" in (e.get("tool") or ""))
+        or ("volume_search" in (e.get("tool") or ""))
+    ]
+    assert not claimed, (
+        "an indexed search must not append a browse log entry; got "
+        f"{[(e.get('id'), e.get('tool')) for e in claimed]}"
     )

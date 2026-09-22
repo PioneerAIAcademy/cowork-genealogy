@@ -1,11 +1,11 @@
 {
   "tool": "image_transcribe",
-  "description": "image_transcribe response for image 007936749_00058 — the Thomas Flynn will page in the unindexed Schuylkill County probate volume. The `imageId` predicate is a substring match on the trailing page number so it matches the full id the agent passes through from image_search. Added with the search-images pair conversion (issue #2121): the agent now OCRs pages itself rather than delegating to @plugin:image-reader, and a call to a tool with no loaded fixture ABORTS the run (unmatched_tool_call, unit-test-spec §5.3) — so the browse is unrunnable without this. Pair it with image-transcribe-any, ordered LAST, so stepping to a neighbouring page degrades gracefully instead of aborting.",
-  "args": { "imageId": "~00058" },
+  "description": "image_transcribe response for image 007936749_00008 — the Thomas Flynn will page in the unindexed Schuylkill County probate volume. The `imageId` predicate is a substring match on the trailing page number (a real page in image-search-schuylkill-probate's 15-image list) so it matches the full id the agent passes through from image_search. Added with the search-images pair conversion (issue #2121): the agent now OCRs pages itself rather than delegating to @plugin:image-reader, and a call to a tool with no loaded fixture ABORTS the run (unmatched_tool_call, unit-test-spec §5.3) — so the browse is unrunnable without this. Pair it with image-transcribe-any, ordered LAST, so stepping to a neighbouring page degrades gracefully instead of aborting.",
+  "args": { "imageId": "~00008" },
   "response": {
     "transcription": "Will Book G, page 112. Schuylkill County, Pennsylvania.\n\nIn the name of God, Amen. I, THOMAS FLYNN, of the Borough of Minersville in the County of Schuylkill and State of Pennsylvania, being weak in body but of sound mind, memory and understanding, do make and publish this my last Will and Testament.\n\nItem. I give and bequeath unto my beloved wife MARGARET FLYNN the dwelling house and lot whereon I now reside, for and during the term of her natural life.\n\nItem. I give unto my son JOHN FLYNN the sum of one hundred dollars.\n\nItem. I give unto my daughter MARY ANN DOUGHERTY, wife of Patrick Dougherty, the sum of one hundred dollars.\n\nItem. The residue of my estate I direct to be sold and divided equally among my children aforesaid.\n\nI appoint my wife Margaret Flynn and my friend JAMES CONNELL executors of this my last Will.\n\nIn witness whereof I have hereunto set my hand and seal this fourteenth day of March, A.D. 1889.\n\n                                        Thomas [his X mark] Flynn  (seal)\n\nSigned, sealed and published in presence of:\n  Bernard McGinley\n  Owen Brennan\n\nProved and letters testamentary granted 2nd April 1889.",
     "metadata": {
-      "imageId": "007936749_00058",
+      "imageId": "007936749_00008",
       "model": "google/gemini-3.7-flash",
       "sizeBytes": 1841204
     }
