@@ -1,0 +1,294 @@
+{
+  "run_log": "v1_2026-09-19_23-27-01.json",
+  "annotator": "okeziepascal2@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "I checked the six linked IDs against the judge context's line between parentage evidence and birth, identity or residence facts, and against Claude's own skip table. a_009 is a birth-year fact, the kind the judge context says doesn't bear on parentage. Claude skipped the same fact from the 1850 census (a_002) but linked it from 1860, so the filter wasn't applied consistently. That makes \"no tangential assertions were linked\" inaccurate. I didn't score lower because a_005, a_008 and a_013 are correct links and a_009 is a weak link, not a wrong one."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "I checked the linked IDs against the judge context and Claude's own notes. a_013 is listed as contradicting h_003, but Claude's notes call that contradiction conditional on household 197's head, which is unknown, so it isn't established. The judge context also names a_001 and a_008 as expected links. Neither was linked, and Claude gave no reason. I didn't score lower because a_004, a_010 and a_013 correctly support h_002 and nothing tangential was linked."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I checked the response against the three judge-context items. It cites a_004, a_010 and a_013 with their evidence types and states that contradicting_assertion_ids is empty. It does not identify probate as the most likely next source. Probate appears only as a \"potential additional confirmation\" that isn't \"required to proceed,\" pli_006 isn't mentioned, and the response recommends proceeding to proof-conclusion. I didn't score 1 because two of the three items are fully met."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "I checked all seven calls in the trace (the LLM says six). Each has a correct projectPath and a valid section, and the last call is validate_research_schema as the judge context requires. The trace shows no errors, rejections or retries. The fixture response is collapsed, and the assertionId calls carry the same \"extra, not declared\" marker as every other extra arg in these tests. Nothing visible supports penalizing them. The three single-assertion lookups followed by a questionId query are somewhat redundant, but redundancy isn't an argument error. If the collapsed fixture response shows those calls were rejected, I'd revise to 2."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "hypothesis-tracking activated and built the chronology and coherence verdict itself (the side-by-side table, the age progression, \"Do They Fit One Life? Yes\"). The judge context says that work belongs to timeline. Unlike Test 6, this wasn't a correct routing, so the 1 isn't a harness artifact. No file was changed (there was no research_append), but the wrong-skill output is the failure this test pins. The response also proposes linking a_014–a_019 to h_002."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The required behavior was to decline and point at timeline. The response never mentions timeline. It ends by offering to link evidence to h_002 instead."
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

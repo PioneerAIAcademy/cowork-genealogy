@@ -549,3 +549,128 @@ def test_lint_fixture_passes_a_resolved_record_hint_fixture_with_an_ark(tmp_path
     _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
+
+
+# --- genre-aware WARN advice (issue #2306 / PR #2634) ------------------
+#
+# Every branch of `format_suspect` used to tell the reader to edit
+# `starting-tree.gedcomx.json`. That is right for a `strip` fixture and
+# forbidden on a `record-hint` one, where nothing was stripped and the two
+# trees are committed byte-identical. These pin BOTH directions: the
+# record-hint wording appears when it should, and the strip wording is
+# unchanged when it should be. A one-directional test here would pass
+# happily if the genre branch swallowed every fixture.
+
+_EDIT_TREE_PHRASES = (
+    "delete that person and its relationship from starting-tree.gedcomx.json",
+    "Remove it from starting-tree.gedcomx.json",
+)
+
+
+def _suspect(polarity="recover", finding_type="relationship"):
+    return vf.Suspect(
+        finding_id="f1",
+        finding_type=finding_type,
+        person_id="ABCD-123",
+        shared={"smith"},
+        reason="",
+        polarity=polarity,
+    )
+
+
+def test_record_hint_advice_never_tells_you_to_edit_a_tree():
+    for polarity in ("recover", "avoid"):
+        warn = vf.format_suspect("fx", _suspect(polarity), "record-hint")
+        assert "Do not" in warn
+        for phrase in _EDIT_TREE_PHRASES:
+            assert phrase not in warn, f"{polarity}: still says {phrase!r}"
+
+
+def test_strip_genre_advice_is_unchanged():
+    # The other direction. If this ever starts failing because the strip
+    # wording drifted toward the record-hint wording, the genre branch has
+    # stopped discriminating and the test above proves nothing.
+    assert _EDIT_TREE_PHRASES[0] in vf.format_suspect("fx", _suspect("recover"), "strip")
+    assert _EDIT_TREE_PHRASES[1] in vf.format_suspect("fx", _suspect("avoid"), "strip")
+
+
+def test_genre_defaults_to_strip_when_omitted():
+    # Three call sites pass it; a fourth added later must not silently get
+    # record-hint wording.
+    assert vf.format_suspect("fx", _suspect("recover")) == vf.format_suspect(
+        "fx", _suspect("recover"), "strip"
+    )
+
+
+def test_fact_findings_keep_their_own_advice_on_a_strip_fixture():
+    warn = vf.format_suspect("fx", _suspect("recover", "fact"), "strip")
+    assert "only a problem if the stripped fact is still on" in warn
+
+
+# The tests above all call `format_suspect` directly, so they prove the
+# advice *branches* correctly and nothing about whether `main()` reaches it.
+# Deleting `genre = suspect_genre(fixture_dir)` and the third argument at the
+# CLI call site left the whole suite green while the command-line linter went
+# back to telling record-hint reviewers to edit a tree the genre forbids
+# (senior review, PR #2634). These two run the CLI end to end, both
+# directions.
+
+
+def _genre_fixture(path: Path, genre: str) -> None:
+    """A fixture that lints clean but raises one suspect, at `genre`."""
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    _write_fixture(
+        path,
+        _valid_tree(
+            _valid_person("I1", "John", "Smith"),
+            _valid_person("I9", "Robert", "Smith"),  # the suspect
+        ),
+        {"findings": [finding]},
+    )
+    (path / "fixture.json").write_text(
+        json.dumps({"id": path.name, "genre": genre}), encoding="utf-8"
+    )
+
+
+def test_cli_wires_the_fixture_genre_into_the_advice_it_prints(tmp_path, capsys):
+    _genre_fixture(tmp_path, "record-hint")
+    assert vf.main([str(tmp_path)]) == 0  # suspects are warn-only
+    out = capsys.readouterr().out
+    assert "Do not" in out
+    for phrase in _EDIT_TREE_PHRASES:
+        assert phrase not in out, f"CLI still says {phrase!r} on a record-hint fixture"
+
+
+def test_cli_still_prints_strip_advice_for_a_strip_fixture(tmp_path, capsys):
+    # The other direction: a CLI that hardcoded record-hint wording, or a
+    # `suspect_genre` that swallowed every fixture, passes the test above.
+    _genre_fixture(tmp_path, "strip")
+    assert vf.main([str(tmp_path)]) == 0
+    out = capsys.readouterr().out
+    assert _EDIT_TREE_PHRASES[1] in out
+
+
+def test_suspect_genre_reads_fixture_json(tmp_path: Path):
+    (tmp_path / "fixture.json").write_text(
+        json.dumps({"genre": "record-hint"}), encoding="utf-8"
+    )
+    assert vf.suspect_genre(tmp_path) == "record-hint"
+
+
+def test_suspect_genre_falls_back_to_strip_rather_than_crashing(tmp_path: Path):
+    # Advice text must never be the thing that takes the linter down. Four
+    # broken shapes, since "it returns a string" is easy to satisfy by
+    # accident: missing file, unparseable, not an object, and genre null.
+    assert vf.suspect_genre(tmp_path) == "strip"  # no fixture.json at all
+
+    (tmp_path / "fixture.json").write_text("{not json", encoding="utf-8")
+    assert vf.suspect_genre(tmp_path) == "strip"
+
+    (tmp_path / "fixture.json").write_text("[]", encoding="utf-8")
+    assert vf.suspect_genre(tmp_path) == "strip"
+
+    (tmp_path / "fixture.json").write_text(
+        json.dumps({"genre": None}), encoding="utf-8"
+    )
+    assert vf.suspect_genre(tmp_path) == "strip"

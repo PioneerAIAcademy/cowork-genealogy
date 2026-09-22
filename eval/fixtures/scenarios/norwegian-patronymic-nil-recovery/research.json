@@ -111,7 +111,7 @@
       "informant": "Household member reporting to the census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Census month/year of birth is self/household-reported; approximate.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -134,7 +134,7 @@
       "informant": "Household member reporting to the census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Father's given name reported in the US household; no surname/patronymic given.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -157,7 +157,7 @@
       "informant": "Household member reporting to the census enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Mother's given name reported in the US household; no surname/patronymic given.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"

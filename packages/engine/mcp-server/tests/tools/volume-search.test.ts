@@ -7,9 +7,11 @@ vi.mock("../../src/auth/refresh.js", () => ({
 
 // The places-API conversion now lives in the shared resolver; mock it so the
 // tool no longer fetches the places API (the fetch sequence is search,fulltext).
+const mockResolveStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
 const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
 const mockPlaceIdToRepIds = vi.hoisted(() => vi.fn());
 vi.mock("../../src/utils/place-resolver.js", () => ({
+  resolveStandardPlaceToPlaceId: mockResolveStandardPlaceToPlaceId,
   standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
   placeIdToRepIds: mockPlaceIdToRepIds,
 }));
@@ -33,6 +35,11 @@ beforeEach(() => {
   mockedGetValidToken.mockResolvedValue("test-token");
   mockStandardPlaceToPlaceId.mockReset();
   mockStandardPlaceToPlaceId.mockResolvedValue("6137147");
+  mockResolveStandardPlaceToPlaceId.mockReset();
+  mockResolveStandardPlaceToPlaceId.mockResolvedValue({
+    kind: "resolved",
+    placeId: "6137147",
+  });
   mockPlaceIdToRepIds.mockReset();
   mockPlaceIdToRepIds.mockResolvedValue(["2968392"]);
 });
@@ -79,8 +86,17 @@ function makeOkResponse(body: unknown) {
   return { ok: true, status: 200, json: async () => body };
 }
 
-function makeErrorResponse(status: number, statusText: string) {
-  return { ok: false, status, statusText, json: async () => ({}) };
+function makeErrorResponse(status: number, statusText: string, body = "") {
+  // `text` is what the non-OK arm reads. A real upstream 409 arrives with an
+  // EMPTY body and an empty statusText, which is the shape that produced the
+  // uninterpretable "409 ." the caller could do nothing with.
+  return {
+    ok: false,
+    status,
+    statusText,
+    json: async () => ({}),
+    text: async () => body,
+  };
 }
 
 function makeFulltextResponse(ids: string[]) {
@@ -186,7 +202,7 @@ describe("volumeSearchTool", () => {
 
     await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
-    expect(mockStandardPlaceToPlaceId).toHaveBeenCalledWith(
+    expect(mockResolveStandardPlaceToPlaceId).toHaveBeenCalledWith(
       "Edensor, Derbyshire, England, United Kingdom"
     );
     const searchCall = mockFetch.mock.calls[0];
@@ -706,13 +722,120 @@ describe("volumeSearchTool", () => {
   });
 
   // Bonus: unresolvable place
+  // The bodyless 409 from the session behind issue #1988 rendered as
+  // "FamilySearch volume search API error: 409 ." -- status, space, full stop.
+  // No cause is asserted here: no 409 in this path is reproducible, and a
+  // guessed upstream diagnosis is worse than none.
+  it("gives a bodyless 409 a recovery instruction instead of a bare status", async () => {
+    mockFetch.mockResolvedValueOnce(makeErrorResponse(409, "", ""));
+
+    const err = await volumeSearchTool(
+      { standardPlace: "Pittsylvania, Virginia, United States", pageToken: "tok" },
+      LOCAL
+    ).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+    expect(err).toBeInstanceOf(Error);
+    expect(err?.message).toContain("re-issue this search from the first page");
+    expect(err?.message).toContain("omitting pageToken");
+    // The defect itself: a status followed by nothing actionable.
+    expect(err?.message).not.toMatch(/409 \./);
+  });
+
+  it("includes the upstream body on a 409 that has one", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeErrorResponse(409, "Conflict", "pageToken no longer valid")
+    );
+
+    const err = await volumeSearchTool(
+      { standardPlace: "Pittsylvania, Virginia, United States", pageToken: "tok" },
+      LOCAL
+    ).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+    expect(err?.message).toContain("pageToken no longer valid");
+    expect(err?.message).toContain("re-issue this search from the first page");
+  });
+
+  // The generic arm was reached by no test before this one. 400 rather than
+  // 500 deliberately: fetchWithRetry retries 5xx and the caller then sees its
+  // exhaustion message, not this one.
+  it("keeps the status/statusText shape on a non-409 non-OK, plus any body", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeErrorResponse(400, "Bad Request", "upstream exploded")
+    );
+
+    const err = await volumeSearchTool(
+      { standardPlace: "Pittsylvania, Virginia, United States" },
+      LOCAL
+    ).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+    expect(err?.message).toContain(
+      "FamilySearch volume search API error: 400 Bad Request."
+    );
+    expect(err?.message).toContain("upstream exploded");
+    // A 500 is not a paging problem; the pageToken advice must not leak into it.
+    expect(err?.message).not.toContain("omitting pageToken");
+  });
+
   it("throws when the standard place cannot be resolved", async () => {
-    mockStandardPlaceToPlaceId.mockResolvedValueOnce(null);
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "unresolved" });
 
     await expect(
       volumeSearchTool({ standardPlace: "Nowhere" }, LOCAL)
     ).rejects.toThrow(/Could not resolve "Nowhere"/);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // An ambiguous place used to raise the SAME "could not resolve" error as a
+  // place that matches nothing, and the caller could not tell them apart. The
+  // session behind issue #1988 dropped Franklin County from the research on
+  // exactly that, then reported having searched it.
+  it("names the candidates when the standard place is ambiguous", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: [
+        "Franklin, Virginia, United States (County)",
+        "Franklin, Virginia, United States (Independent City)",
+      ],
+    });
+
+    await expect(
+      volumeSearchTool(
+        { standardPlace: "Franklin, Virginia, United States" },
+        LOCAL
+      )
+    ).rejects.toThrow(
+      /matches more than one place: Franklin, Virginia, United States \(County\); Franklin, Virginia, United States \(Independent City\)\./
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // The two arms must not converge on one string: an ambiguity that reads as
+  // "could not resolve" is the bug, not the fix.
+  it("does not reuse the unresolvable wording for an ambiguous place", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: ["A (County)", "B (City)"],
+    });
+
+    // Captured rather than `.rejects.not.toThrow`, which passes vacuously when
+    // the promise RESOLVES -- i.e. it would still be green if the ambiguity
+    // check were deleted entirely.
+    const err = await volumeSearchTool(
+      { standardPlace: "Franklin" },
+      LOCAL
+    ).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+    expect(err, "an ambiguous place must still throw").toBeInstanceOf(Error);
+    expect(err?.message).not.toMatch(/Could not resolve/);
+    expect(err?.message).toContain("A (County)");
   });
 
   // Bonus: resolved place has no representations
