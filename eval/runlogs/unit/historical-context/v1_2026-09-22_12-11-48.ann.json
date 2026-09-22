@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-09-11_04-21-56.json",
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "run_log": "v1_2026-09-22_12-11-48.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_historical_context_003",
@@ -20,14 +20,6 @@
     },
     {
       "test_id": "ut_historical_context_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_003",
       "dimension_source": "rubric",
       "dimension_name": "Relevance to research",
       "llm_score": 3,
@@ -59,57 +51,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_007",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_007",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_007",
+      "test_id": "ut_historical_context_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Source quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Citation completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -171,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_historical_context_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -179,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_historical_context_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_historical_context_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_historical_context_014",
       "dimension_source": "rubric",
       "dimension_name": "Relevance to research",
       "llm_score": 3,
@@ -203,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_historical_context_014",
       "dimension_source": "rubric",
       "dimension_name": "Source quality",
       "llm_score": 3,
@@ -211,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_historical_context_014",
       "dimension_source": "rubric",
       "dimension_name": "Citation completeness",
       "llm_score": 3,
@@ -219,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_historical_context_014",
       "dimension_source": "rubric",
       "dimension_name": "Genealogical implications",
       "llm_score": 3,
@@ -227,7 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_011",
+      "test_id": "ut_historical_context_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -235,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_011",
+      "test_id": "ut_historical_context_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -243,9 +187,49 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_011",
+      "test_id": "ut_historical_context_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
@@ -253,17 +237,9 @@
     {
       "test_id": "ut_historical_context_009",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_009",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -275,19 +251,43 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_historical_context_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_historical_context_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -299,187 +299,35 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Source quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Citation completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_002",
+      "test_id": "ut_historical_context_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Source quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Citation completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Source quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Citation completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
       "test_id": "ut_historical_context_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
       "test_id": "ut_historical_context_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -491,15 +339,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_012",
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -507,23 +379,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_historical_context_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -531,15 +387,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_historical_context_006",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
       "dimension_source": "rubric",
       "dimension_name": "Relevance to research",
       "llm_score": 3,
@@ -547,7 +411,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_historical_context_005",
       "dimension_source": "rubric",
       "dimension_name": "Source quality",
       "llm_score": 3,
@@ -555,7 +419,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_historical_context_005",
       "dimension_source": "rubric",
       "dimension_name": "Citation completeness",
       "llm_score": 3,
@@ -563,55 +427,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_hbt",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_hbt",
-      "dimension_source": "rubric",
-      "dimension_name": "Source quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_hbt",
-      "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_hbt",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_hbt",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_hbt",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -619,7 +435,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -627,15 +443,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "rubric",
       "dimension_name": "Relevance to research",
       "llm_score": 3,
@@ -643,7 +459,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_008",
       "dimension_source": "rubric",
       "dimension_name": "Genealogical implications",
       "llm_score": 3,
@@ -651,7 +475,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "rubric",
       "dimension_name": "Citation completeness",
       "llm_score": 3,
@@ -659,7 +483,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_hbt",
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_007",
       "dimension_source": "rubric",
       "dimension_name": "Citation completeness",
       "llm_score": 3,
@@ -667,20 +531,44 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI missed three required elements: county boundaries changed frequently, records stay in the original county, and historical boundary maps can identify jurisdiction."
+    },
+    {
+      "test_id": "ut_historical_context_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Agree with judge. Push-factor claims (crop failures, 1848 Revolutions, forced church mergers) and the port-hierarchy claim (Philadelphia primary, New York dominant) are presented as settled fact despite the skill's own admission that tools returned no confirming source — a real register violation, not noise."
+      "comment": "The AI correctly explained 1863 statehood but did not mention county-level boundary changes."
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_005",
       "dimension_source": "rubric",
-      "dimension_name": "Source quality",
+      "dimension_name": "Genealogical implications",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Same issue as Correctness — the same two claim clusters lack tool support but are presented with full confidence. Church-records and naturalization claims are correctly tied to real tool output."
+      "comment": "The AI gave some county guidance but did not explain that records stay in the original county regardless of which state it ended up in."
+    },
+    {
+      "test_id": "ut_historical_context_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "In this run the model routed correctly with no tool calls. The score of 1 reflects a historical pattern where the model executed the skill instead of routing in 4 of 47 prior runs."
     }
   ]
 }
