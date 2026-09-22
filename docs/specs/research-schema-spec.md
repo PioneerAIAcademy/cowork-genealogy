@@ -563,6 +563,41 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 | `occupation` | `{ "occupation" }` | `{ "occupation": "coal miner" }` |
 | `immigration` | `{ "year", "origin", "destination", "port" }` | `{ "year": 1848, "origin": "Ireland", "destination": "Philadelphia" }` |
 
+**Direction, for `relationship`:** `relationship_type` is the record **subject's own** role; `related_person_role` is the **other party's**. The row above reads that way and so does every consumer: a census child enumerated under a head of household is `{ "relationship_type": "son", "related_person_role": "head_of_household" }`, and a death certificate naming the father is `"child"` on the deceased, never `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, so a brother or sister is `sibling` and never `child`. Enforced at the write boundary by `research_append` and over the corpus by `test_relationship_type_agrees_with_its_value`; the refusal rate is recorded in `guardrail-enforcement-spec.md` §4.
+
+**It is a per-ASSERTION role, not the persona's record role.** `record_role`
+is what the persona is in the *record* — one value per persona.
+`relationship_type` is what they are in *this one relationship*, and a persona
+carries several. The census example above makes the two look identical because
+there they coincide; a baptism separates them. A man recorded as
+`record_role: "father"` carries one assertion typed `parent` (of the baptised
+child) and another typed `spouse` (of the mother), both correct, and neither
+equal to his record role.
+
+Measured over `eval/**/*final-research.json`, `fact_type: relationship`, and
+emitted by `measure_relationship_direction.py --axes` so it is re-derivable
+rather than pasted, measured at 1d5656fe3: requiring the two to agree refuses **62 of 281**
+comparable assertions, of which **60 are correct data**; and **59 of 1149**
+personas carrying a relationship assertion carry more than one category. So no guard may require `relationship_type` to match
+`record_role`, and two earlier attempts to build one were abandoned without the
+reason being written down. That is what this paragraph exists to prevent a third
+time.
+
+**Why the enforcement compares `value`'s prose, which is a choice.**
+`related_person_role` also names the other party and is present on 98.3% of
+relationship assertions, so a `(record_role x related_person_role)` composition
+rule is constructible. It was not chosen because that vocabulary is open — 60+
+spellings in the corpus — so it needs a role table somebody maintains, and
+because the field carries the persona's own role on 14 of 1844 assertions
+(`tree-materialization-spec.md`, the 2026-09-07 rejection). Comparing the prose
+needs no table and checks against the layer a human reads. Two further
+candidates do not reach: `record_persona_id` plus the sidecar GedcomX is null
+for full-text-, image-, PDF- and `record_read`-sourced assertions, and the tree
+does not exist at extraction time. Revisit with a measurement of both, not with
+an assumption that one is impossible.
+
+Do not confuse this field with the closed `relationship_type` enum in `enums.schema.json`, which is the simplified-GedcomX **tree** relationship type (`ParentChild` / `Couple`) and has no `sibling` member at all — siblings are carried there by shared `ParentChild` edges.
+
 **Authority:** `structured_value` is derived from `value`, `date`, and `place` — not the other way around. If they disagree, the human-readable fields (`value`, `date`, `place`) govern. This follows the same authority pattern as `narrative_markdown` vs. structured fields in proof summaries.
 
 **`_inferred` suffix convention:** Use the `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record — the 1790–1870 censuses, which have no relationship column (introduced in 1880). This convention is specific to `relationship_type`; other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
@@ -1520,7 +1555,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "record_role": "deceased",
       "fact_type": "relationship",
       "value": "Father: Thomas Flynn",
-      "structured_value": { "relationship_type": "father", "related_person_role": "deceased" },
+      "structured_value": { "relationship_type": "child", "related_person_role": "father_of_deceased" },
       "date": null,
       "date_certainty": null,
       "place": null,

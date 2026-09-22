@@ -1,0 +1,196 @@
+{
+  "_comment": [
+    "Shared cases for the relationship-direction rule (issue #2535).",
+    "",
+    "The rule exists twice -- Python in eval/harness/validators/",
+    "test_record_extraction.py (the eval check) and TypeScript in",
+    "packages/engine/mcp-server/src/tools/research-append.ts (the write-path",
+    "deny) -- because this repo has no runtime sharing between the harness and",
+    "the engine. Nothing else keeps the two in step, so both sides assert",
+    "against this table and either one drifting reds its own suite.",
+    "",
+    "`states` is the category the VALUE claims for the record subject, or null",
+    "when the value does not speak to the subject's own role. It is NOT the",
+    "expected verdict: the verdict also depends on relationship_type, which the",
+    "callers supply.",
+    "",
+    "Measured counts refer to eval/**/*final-research.json plus",
+    "eval/runlogs/unit/** at 1d5656fe3; re-derive with",
+    "eval/harness/scripts/measure_relationship_direction.py.",
+    "",
+    "`categories` is the relation-word -> category table, which is the OTHER",
+    "half of the rule. Both languages assert their own table equals this one,",
+    "because pinning only the value predicate let a spelling added to one side",
+    "pass both suites while the engine and the validator disagreed.",
+    "",
+    "`category_cases` pins the relationship_type -> category LOOKUP, which is",
+    "the third part of the rule: the table says what maps, the value predicate",
+    "says what the value claims, and this says how a raw field value is",
+    "normalised before either is consulted.",
+    "",
+    "`category_cases` pins the LOOKUP -- the normalisation each language applies",
+    "before indexing the table. The table and the value predicate were pinned",
+    "first; the normalisation between them was not, and the two languages",
+    "disagreed there."
+  ],
+  "cases": [
+    {
+      "value": "child of Jim Neal",
+      "states": "child",
+      "why": "the plain subject-role form; 11 of the 16 e2e refusals are this"
+    },
+    {
+      "value": "son of Emma Ferber (stated)",
+      "states": "child",
+      "why": "gendered spelling, accepted not normalised away"
+    },
+    {
+      "value": "mother of James Neal (child_2) (inferred)",
+      "states": "parent",
+      "why": "the inverse direction, also a real corpus defect"
+    },
+    {
+      "value": "brother of John Grice (inferred)",
+      "states": "sibling",
+      "why": "the sibling class the agent body never named"
+    },
+    {
+      "value": "sibling of Grace (Whitaker) Tolman",
+      "states": "sibling",
+      "why": "the live defect, 5 sightings in the current unit run logs"
+    },
+    {
+      "value": "father named as Casper A. Battermiller on death certificate",
+      "states": null,
+      "why": "labels the OTHER party; no ' of ', so the position regex never matches"
+    },
+    {
+      "value": "father: Jan Roelfs Harkema",
+      "states": null,
+      "why": "label form with a colon"
+    },
+    {
+      "value": "Father of groom named as Tellef Aadnesen in 1840 register",
+      "states": null,
+      "why": "carries ' of ', and is excluded by the role guard's islower() test -- `groom` is a role word, not a name."
+    },
+    {
+      "value": "father of the bride: Jan Roelfs Harkema",
+      "states": null,
+      "why": "carries ' of ' AND a label marker; only the label guard catches it. No corpus assertion has this shape, so without it that branch is unreachable"
+    },
+    {
+      "value": "named in the will of his brother John Grice",
+      "states": null,
+      "why": "the relation word is not the value's opening claim"
+    },
+    {
+      "value": "child of Thomas Flynn and brother of Mary Flynn",
+      "states": "child",
+      "why": "several relations; the leading one is the subject's own role"
+    },
+    {
+      "value": "stepfather of Charles Ferber",
+      "states": null,
+      "why": "spelling the category table does not know; skip, never guess"
+    },
+    {
+      "value": "Jacob Lang",
+      "states": null,
+      "why": "names no relation at all"
+    },
+    {
+      "value": "",
+      "states": null,
+      "why": "no value"
+    },
+    {
+      "value": "child of Hannah Grice (wife)",
+      "states": "child",
+      "why": "a second party named in passing must not change the reading. The pre-#2535 word-anywhere rule refused values of this shape, which is what `measure_relationship_direction.py --counterfactual` counts."
+    },
+    {
+      "value": "Sibling of Grace (Whitaker) Tolman",
+      "states": "sibling",
+      "why": "capitalised, so the `i` flag is what lets the subject-role pattern match at all. No corpus refusal is capitalised today and dropping the flag moves the measured rate by zero, so this case is the ONLY thing that would notice -- and dropping it on either side reds that side of the pact. Python was pinned by an existing test; TypeScript was not, and the table could not see it because every other capitalised case here resolves to null."
+    },
+    {
+      "value": "sibling of Lucas, named as one of Gerrit Witbeck's four children",
+      "states": "sibling",
+      "why": "a CAPITALISED token immediately before 'named' -- a person's name, not a role -- so the value states the subject's own tie. The role branch's islower() test is the only thing keeping it out of the skip, and this is the only case in this table that reaches that branch capitalised. The longer 'Lucas G. Witbeck, named as' form does NOT reach it: the regex needs the punctuation directly after the token."
+    },
+    {
+      "value": "father of the bräutigam: Johann Mayer",
+      "states": "parent",
+      "why": "a non-ASCII role token is not `[a-z]+`, so it is read as a name and the value is compared. The point of the case is that both languages say so: JS `\\w` would not match `ä` and Python's would, which is how the two used to diverge here."
+    },
+    {
+      "value": "father of the 2: Johann Mayer",
+      "states": "parent",
+      "why": "an uncased token is not `[a-z]+`. JS `=== toLowerCase()` was true for `2` and Python .islower() was false, so the two used to disagree in the opposite direction to the case above."
+    },
+    {
+      "value": "Father of groom Benjamin Christophersen",
+      "states": "parent",
+      "why": "no `:` and no `named`, so this states the subject's own role -- the subject IS the father. Dropping the marker requirement to catch the role word here was measured and rejected: it lost 60 correct classifications over the four populations `measure_relationship_direction.py` scans, including `son of head of household Frank Ogletree`."
+    }
+  ],
+  "categories": {
+    "father": "parent",
+    "mother": "parent",
+    "parent": "parent",
+    "son": "child",
+    "daughter": "child",
+    "child": "child",
+    "wife": "spouse",
+    "husband": "spouse",
+    "spouse": "spouse",
+    "widow": "spouse",
+    "widower": "spouse",
+    "brother": "sibling",
+    "sister": "sibling",
+    "sibling": "sibling"
+  },
+  "category_cases": [
+    {
+      "relationship_type": "child",
+      "category": "child",
+      "why": "the plain spelling"
+    },
+    {
+      "relationship_type": "child_inferred",
+      "category": "child",
+      "why": "one trailing `_inferred` suffix is stripped before the lookup"
+    },
+    {
+      "relationship_type": "  Child_Inferred  ",
+      "category": "child",
+      "why": "lower-cased and trimmed on both sides before the suffix is stripped"
+    },
+    {
+      "relationship_type": "child_inferred_inferred",
+      "category": null,
+      "why": "a doubled suffix stays unknown. Python str.replace strips EVERY occurrence and a string-argument String.replace in JS strips only the FIRST, so an unanchored strip made this `child` to the eval validator and unknown to the engine -- the validator categorising a spelling the writer skips. Anchoring one trailing suffix on both sides makes them agree, and an unknown spelling is skipped, never guessed."
+    },
+    {
+      "relationship_type": "_inferredchild",
+      "category": null,
+      "why": "the strip must be ANCHORED. Unanchored this becomes `child` and yields a category; anchored to the end it stays unknown. This is the case that pins the TypeScript side -- for the doubled suffix above both TS spellings already return undefined, so that one constrains only Python."
+    },
+    {
+      "relationship_type": "grandparent",
+      "category": null,
+      "why": "an unknown spelling yields no category and is skipped, never refused"
+    },
+    {
+      "relationship_type": "constructor",
+      "category": null,
+      "why": "the table is indexed by a model-supplied string; on a plain object literal this returned the Object constructor, which is truthy"
+    },
+    {
+      "relationship_type": "__proto__",
+      "category": null,
+      "why": "same, via the prototype"
+    }
+  ]
+}
