@@ -243,16 +243,17 @@ re-classify inline in this context.
 ## Present and continue
 
 Print to the user exactly the text after the final `---` in the agent's
-return — its two closing paragraphs — verbatim, with no label, heading or
-preamble of your own. Nothing above that line reaches the user: the source
-id, assertion counts and flags are for you. Do not re-print per-assertion
-detail; it is already persisted.
+return — its two closing paragraphs — verbatim. Add nothing after them:
+your reply for this record ends with the agent's second paragraph.
+Everything above that line — the source id, the `S` id, the assertion
+counts, the key-findings list and the next-step hint — is yours to act on
+and must not appear in your reply, in any wording, at any point.
 
 Then **keep going in the same turn**: if more records are queued,
 delegate the next one now; if this was the last record, hand off to
 person-evidence or return to the orchestrator that invoked you.
-Presenting a summary and yielding with records still unextracted is a
-failure — the summary is a progress marker, not a stopping point.
+Yielding with records still unextracted is a failure — a relayed record
+is a progress marker, not a stopping point.
 
 **Exception — a `record-extractor` spawn failure:** report it and stop;
 do not extract the record yourself or retry another way. This rule assumes
