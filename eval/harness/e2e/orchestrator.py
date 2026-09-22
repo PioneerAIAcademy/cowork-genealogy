@@ -58,6 +58,7 @@ from harness.skill_invocation import (
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
     find_conclusions_without_tree_encoding,
+    find_tree_facts_disagreeing_with_assertions,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -602,7 +603,7 @@ def load_seed_person_ids(starting_tree_path: Path) -> set[str] | None:
     """
     try:
         seed = json.loads(starting_tree_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
         print(
             f"  [warn] could not read seed tree {starting_tree_path} "
             f"({type(e).__name__}: {e}) — issue #963 same_person check DISABLED "
@@ -906,7 +907,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         )
         for sid in (starting_research.get("project") or {}).get("subject_person_ids") or []:
             subject_ids.add(str(sid))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         pass
     src = fixture_json.get("source_pid")
     if src and "TODO" not in str(src):
@@ -1158,6 +1159,24 @@ _RUNLOG_STRING_MAX = 500
 # acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
 
+# Per-key exemptions from the string and backstop caps above. Each entry is
+# (bare_tool_suffix, response_key): a tool matched by suffix (so every server
+# spelling resolves — CLAUDE.md § "Dual-spelled tool names") and a top-level
+# key in the unwrapped response dict. The full value is preserved verbatim,
+# bypassing both `_RUNLOG_STRING_MAX` and `_RUNLOG_MAX_CHARS`.
+#
+# Scope of the bypass: `if not saved` below skips the backstop for the WHOLE
+# response, not just the exempt key's bytes. Harmless for image_transcribe,
+# where the transcription IS the payload. But a future (tool, key) pair added
+# for a tool with a large non-exempt sibling field would take that sibling out
+# of the cap too — silently. If that arises, split the backstop to exempt only
+# the saved key's contribution and cap the rest.
+#
+# Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
+_RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
+    ("image_transcribe", "transcription"),
+}
+
 
 def _serialize_result(content: Any) -> str:
     """The full serialized tool result, before any truncation.
@@ -1197,7 +1216,20 @@ def _raw_result_chars(content: Any) -> int:
     return len(_serialize_result(content))
 
 
-def _summarize_tool_response(content: Any) -> str:
+def _exempt_keys_for(tool_name: str | None) -> set[str]:
+    """Response keys exempted from truncation for this tool, if any."""
+    if not tool_name:
+        return set()
+    return {
+        key
+        for suffix, key in _RUNLOG_EXEMPT_KEYS
+        if tool_name.endswith(suffix)
+    }
+
+
+def _summarize_tool_response(
+    content: Any, *, tool_name: str | None = None
+) -> str:
     """Key-preserving summary of a tool result for the run log.
 
     This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
@@ -1232,19 +1264,58 @@ def _summarize_tool_response(content: Any) -> str:
     `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
     runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
     escaped form does not contain it — grep the bare name, which matches both.
+
+    `tool_name` (HARNESS_SCHEMA_VERSION 5): when the tool has keys listed in
+    `_RUNLOG_EXEMPT_KEYS`, those keys bypass both `_RUNLOG_STRING_MAX` and
+    `_RUNLOG_MAX_CHARS`. `image_transcribe`'s `transcription` is the first
+    exemption: at v4 the field was truncated at 500 chars though the
+    transcriptions were often many times longer, making extraction-accuracy
+    audits impossible. `make e2e-transcription-join SINCE=all` reports the
+    current truncated-capture count over its window.
     """
     raw = _serialize_result(content)
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
         return raw
 
-    summary = _summarize_response(
-        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
-    )
+    exempt = _exempt_keys_for(tool_name)
+    unwrapped = _unwrap_mcp_text_blocks(content)
+
+    # Save full values of exempt keys before summarization truncates them.
+    # One value per key: if multiple text blocks carry the same key, the last
+    # wins. Safe for image_transcribe (always one text block).
+    saved: dict[str, Any] = {}
+    if exempt:
+        docs = unwrapped if isinstance(unwrapped, list) else [unwrapped]
+        for doc in docs:
+            if isinstance(doc, dict):
+                for key in exempt:
+                    if key in doc:
+                        saved[key] = doc[key]
+
+    summary = _summarize_response(unwrapped, string_max=_RUNLOG_STRING_MAX)
+
+    # Re-insert full values of exempt keys, replacing truncated copies.
+    if saved:
+        if isinstance(summary, dict):
+            summary.update(saved)
+        elif isinstance(summary, list):
+            for item in summary:
+                if isinstance(item, dict):
+                    for key, val in saved.items():
+                        if key in item:
+                            item[key] = val
+
     try:
         text = summary if isinstance(summary, str) else json.dumps(summary)
     except (TypeError, ValueError):
         text = repr(summary)
-    if len(text) > _RUNLOG_MAX_CHARS:
+
+    # The backstop cap is skipped when exempt keys contributed content — it
+    # exists for git size on the long tail, and the whole point of an exemption
+    # is to preserve the full value (issue #2561 item 2: the largest
+    # transcriptions run past the 4000-char backstop, so it would truncate them
+    # without this bypass).
+    if not saved and len(text) > _RUNLOG_MAX_CHARS:
         text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
 
     # Never emit a SHORTER capture than the old head-truncation would have. A
@@ -2387,7 +2458,10 @@ async def _run_agent(
                         for block in content:
                             if isinstance(block, ToolResultBlock):
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
-                                summary = _summarize_tool_response(block.content)
+                                summary = _summarize_tool_response(
+                                    block.content,
+                                    tool_name=entry["tool"] if entry else None,
+                                )
                                 if entry is not None:
                                     apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
@@ -2744,8 +2818,8 @@ async def _run_agent(
 def collect_post_hoc_shadow(
     workspace: Path, *, emit: Callable[[str], None] | None = None
 ) -> list[dict[str, Any]]:
-    """The two SHADOW-MODE post-hoc checks that read the FINAL research.json,
-    rather than scanning `tool_calls`. Returns entries for
+    """The three SHADOW-MODE post-hoc checks that read the FINAL project
+    documents, rather than scanning `tool_calls`. Returns entries for
     `guardrail_shadow_violations`; never fails a run.
 
     - **citation-nulling** (issue #1133): a source that BACKS A WRITTEN CONCLUSION
@@ -2755,21 +2829,31 @@ def collect_post_hoc_shadow(
       resolved conflict that no structured `conflicts[]` entry backs, so the
       resolution lives only in prose and the viewer's Conflicts section stays
       blank.
+    - **tree-fact/assertion disagreement** (issues #2472, #2558): a materialized
+      tree fact holds a value the assertion it was minted from no longer holds,
+      so a correction never reached the fact. The one check here that reads the
+      tree as well as research.json.
 
-    Both share `guardrail_shadow_violations`, discriminated by `kind` so the
+    All three share `guardrail_shadow_violations`, discriminated by `kind` so the
     shadow report counts each in its own bucket.
 
     **Extracted from `_run_agent` so it can be tested at all.** Inline, this ran
     only inside a coroutine that needs the Claude Agent SDK and a live model, so
-    nothing offline could reach it — and `read_research_json` returns None on a
-    missing or unparseable file while both detectors return `[]` on None, which
-    means a broken workspace read is indistinguishable from a clean project. That
+    nothing offline could reach it — and both workspace readers return None on a
+    missing or unparseable file while every detector here returns `[]` on None,
+    which means a broken workspace read is indistinguishable from a clean
+    project. That
     is exactly the "is the behaviour absent or is the detector broken" ambiguity
     this phase exists to remove, sitting in the one path no test covered. The
     citation-nulling check has never fired on the corpus, so this is its only
     positive control.
     """
     research = read_research_json(workspace)
+    # The tree is read here too, for the agreement check below. Both reads
+    # return None on a missing or unparseable file and every detector answers
+    # [] on None, so a broken workspace read stays indistinguishable from a
+    # clean project — the ambiguity this function's own tests pin.
+    tree = read_tree_json(workspace)
     out: list[dict[str, Any]] = []
 
     citation_nulling = find_citation_nulling_in_conclusions(research)
@@ -2789,6 +2873,16 @@ def collect_post_hoc_shadow(
                 f"[guardrail-shadow] {len(conflict_unpersisted)} concluded "
                 "question(s) relying on an unpersisted conflict resolution "
                 "(shadow mode — not failed)"
+            )
+
+    fact_disagreements = find_tree_facts_disagreeing_with_assertions(research, tree)
+    if fact_disagreements:
+        out.extend(fact_disagreements)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(fact_disagreements)} tree fact "
+                "attribute(s) disagreeing with the assertion they were "
+                "materialized from (shadow mode — not failed)"
             )
     return out
 
@@ -3010,10 +3104,14 @@ async def run_e2e_test(
                 guardrail_shadow_violations + warnings_unchecked_shadow
             )
 
-        # The TREE-side citation-nulling arm (issue #1358). Wired here, not beside
-        # the research-side call above, because that site has no tree in scope —
-        # this one has `final_research`, `final_tree` and `starting_tree`
-        # together, which is what the gate needs.
+        # The TREE-side citation-nulling arm (issue #1358). This arm reads
+        # `final_research` and `final_tree` and no seed, so since issue #2558 gave
+        # `collect_post_hoc_shadow` a tree read it could equally sit there; the
+        # original reason recorded here, that the other site had no tree in scope,
+        # has stopped being true. It stays beside the two arms below, which DO
+        # diff against `starting_tree` and can only live at this site: moving one
+        # of the three alone would split the tree-reading arms across two call
+        # sites and buy nothing.
         #
         # Shadow only, and deliberately not graduated by this card. Its sibling
         # measures ZERO across the corpus (1,884 concluded sources, all cited),

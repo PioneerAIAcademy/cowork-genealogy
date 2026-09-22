@@ -11,6 +11,11 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { imageReadTool } from "../../src/tools/image-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
+import {
+  recordImageReadCap,
+  sourceImageCapState,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -106,6 +111,28 @@ describe("imageReadTool — imageId input", () => {
     mockImageResponse();
     const result = await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.metadata.imageRef).toBeUndefined();
+  });
+
+  it("does NOT touch the truncation cap — image_read returns bytes, not a transcription, so clearing a prior image_transcribe cap would drop a real truncation marker (#2457 review, blocker 3)", async () => {
+    // The earlier design cleared the cap here; that fires only on the main thread
+    // (no agent declares image_read) and turns a capped transcribe-then-read into
+    // a complete-looking persisted transcription — a false negative worse than
+    // the guesswork it replaced. image_read must leave the cap untouched.
+    const dir = await mkdtemp(join(tmpdir(), "imgr-cap-"));
+    try {
+      recordImageReadCap(dir, "images/004884748_02613.jpg", true);
+      mockImageResponse(new Uint8Array([1, 2, 3]));
+      const result = await imageReadTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.metadata.imageRef).toBe("images/004884748_02613.jpg");
+      // The cap the prior image_transcribe recorded still stands.
+      expect(sourceImageCapState(dir, "images/004884748_02613.jpg")).toBe(true);
+    } finally {
+      __clearTruncatedSourceImagesForTests();
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it.each([

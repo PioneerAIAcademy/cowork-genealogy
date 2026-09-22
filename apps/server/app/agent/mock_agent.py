@@ -259,7 +259,7 @@ class MockAgent:
             "date_certainty": "approximate", "place": "Pennsylvania",
             "information_quality": "secondary", "informant": "head of household",
             "informant_proximity": "household_member", "informant_bias_notes": None,
-            "evidence_type": "direct", "log_entry_id": log_id,
+            "record_basis": "stated", "log_entry_id": log_id,
             "record_persona_id": None, "extracted_for_question_ids": ["q_001"],
         })
         research["project"]["updated"] = "2026-06-06"

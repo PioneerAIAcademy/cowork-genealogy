@@ -58,7 +58,7 @@
       "information_quality": "primary",
       "informant": "Civil registration / census enumerator",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "extracted_for_question_ids": [
         "q_001"
       ],
@@ -80,7 +80,7 @@
       "information_quality": "primary",
       "informant": "Civil registration / census enumerator",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "extracted_for_question_ids": [
         "q_001"
       ],
@@ -102,7 +102,7 @@
       "information_quality": "primary",
       "informant": "Civil registration / census enumerator",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "extracted_for_question_ids": [
         "q_001"
       ],
@@ -124,7 +124,7 @@
       "information_quality": "primary",
       "informant": "Civil registration / census enumerator",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "extracted_for_question_ids": [
         "q_001"
       ],

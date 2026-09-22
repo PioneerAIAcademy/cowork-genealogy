@@ -63,7 +63,7 @@ const EXAMPLES: Record<string, string> = {
   "informant": "Mary Flynn, widow",
   "informant_proximity": "household_member",
   "informant_bias_notes": null,
-  "evidence_type": "direct",
+  "record_basis": "stated",
   "log_entry_id": "log_004",
   "extracted_for_question_ids": ["q_002"]
 }`,
@@ -164,10 +164,16 @@ const EXAMPLES: Record<string, string> = {
   // conflict example. Do not re-add an id here without also adding a settled
   // conflict example whose `preferred_assertion_id` and `resolution_rationale`
   // match it.
+  //
+  // `shortfall` is "ceiling" here and not "gap" because this example's own
+  // `exhaustive_search_summary` says no further records surfaced — the value
+  // has to agree with the narrative beside it, or the example teaches the model
+  // to write a shortfall that contradicts its own summary.
   proof_summaries: `{
   "question_id": "q_002",
   "tier": "probable",
   "vehicle": "summary",
+  "shortfall": "ceiling",
   "supporting_assertion_ids": ["a_013", "a_025"],
   "resolved_conflict_ids": [],
   "exhaustive_search_summary": "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",

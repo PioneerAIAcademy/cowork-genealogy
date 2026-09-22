@@ -62,6 +62,20 @@ describe("PgS3ProjectStore without a stack", () => {
     }
   });
 
+  it("exposes its projectId — the identity the image-store cap keys on for patron isolation (#2457 B2)", async () => {
+    // The shared-process cap isolation (truncatedImageKey) keys on the bound
+    // store's `projectId`. If an isolating backend omitted the optional field it
+    // would silently fall back to the shared anchor projectPath and collide, so
+    // pin that PgS3 — the isolating backend — actually surfaces it.
+    const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
+    try {
+      const store = new PgS3ProjectStore(backend, { projectId: "proj_alice", anchorPath: ANCHOR });
+      expect(store.projectId).toBe("proj_alice");
+    } finally {
+      await backend.close();
+    }
+  });
+
   describe("timeouts", () => {
     // A listener that accepts every connection and never sends a byte: the
     // stalled-host shape both clients would otherwise wait on forever.
