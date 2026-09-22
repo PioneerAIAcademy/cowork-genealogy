@@ -110,6 +110,7 @@ describe("research_log_append", () => {
     } as any);
 
     expect(result.ok).toBe(true);
+    if (!result.ok || !("logId" in result)) throw new Error("expected a single-op success");
     expect(result.returnedCount).toBe(1);
     const research = await readJson("research.json");
     expect(research.log[0].tool).toBe("image_transcribe");
