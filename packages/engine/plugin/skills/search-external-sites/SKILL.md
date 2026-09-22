@@ -306,18 +306,14 @@ value it rejected, a site's standing caution — comes back in the response's
   has since rejected. The conflict entry says *whether* to encode the
   field; the tree says *what* to encode.
   - **`status: "resolved"` or `"moot"`** → encode the tree person's fact
-    for that field, and only that value. That is the project's own
-    answer: `tree-edit` writes the resolution's preferred value to the
-    tree. If the tree has not caught up yet and the two disagree, the
-    recorded resolution wins.
+    for that field, and only that value. Where the tree and
+    `preferred_assertion_id` disagree, the recorded resolution wins.
   - **`status: "unresolved"`, or the entry names no surviving value** →
     **omit the field**, and say in one line that the value is contested,
     naming the candidates so the researcher can filter by eye. A tree
-    fact is not evidence the dispute is settled — GedcomX has no
-    "contested" state, so the tree carries some value either way, and
-    `conflict-resolution` does not update it. These sites *filter* on the
-    field, so a guessed side returns nothing and the nil gets logged as
-    evidence of absence for a record that exists.
+    fact is never evidence that a dispute is settled. These sites
+    *filter* on the field, so a guessed side returns nothing and the nil
+    gets logged as evidence of absence for a record that exists.
 
   This governs only the fields a conflict names. Every other parameter
   still comes from the plan item's event, as above.
@@ -400,8 +396,7 @@ Then present the URL, with every note from the tool's response.
 
 **If the results for that URL are already present in this conversation,
 present the URL and its notes but stop there** — skip the capture
-instructions below and go straight to step 5. They ask the user to
-produce something you already have.
+instructions below and go straight to step 5.
 
 ---
 
@@ -455,9 +450,8 @@ extraction. The steps below are the same either way:
 5. **On selection, request the individual record.** "Click result #1 to
    open the full record page, then save it as a PDF and upload it." That
    single-record PDF goes to record-extraction. If the record page's
-   content is **already present in this conversation**, read it and hand
-   it to record-extraction directly — same rule as the Capture step, and
-   don't ask for a PDF you have already been given.
+   content is **already present in this conversation**, hand that to
+   record-extraction directly and don't ask for a PDF.
 
 Don't send the raw search-results PDF straight to record-extraction — the
 user picks which records are worth examining.
