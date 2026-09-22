@@ -460,8 +460,8 @@ Not every site here is commercial. `chronicling_america`, `digital_newspaper_arc
 |-------|------|----------|-------------|
 | `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, or `italian_genealogy`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
-| `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
-| `capture_filename` | string or null | no | Filename of the returned capture |
+| `capture_received` | boolean | yes | Whether the results reached the agent. A capture need not be a file: page content already present in the conversation is a capture that arrived without one, and is recorded `true` with `capture_filename` null |
+| `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file |
 
 ### 5.4.1 Sidecar result files
 
