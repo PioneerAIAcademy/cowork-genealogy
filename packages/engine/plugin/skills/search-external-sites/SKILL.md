@@ -15,6 +15,7 @@ description: Generates search URLs for external genealogy sites and
   is planning, not execution (use research-plan); or to analyze a single
   record already in context (use record-extraction).
 allowed-tools:
+  - research_query
   - place_search
   - collections_search
   - external_links_search
@@ -230,7 +231,14 @@ or census years exist in this `collections_search` result, never in memory.
 
 ### 3. Build the URL
 
-Call `build_external_search_url` to get the URL — never hand-compose one.
+**First, call `research_query` with `section: "conflicts"`.** Do this before
+the `build_external_search_url` call, every time you are about to pass a
+place or date. `project_context` does not return `conflicts[]` and neither
+does the rendered project state, so this call is the only way you can see
+whether a value is disputed — without it you are guessing, and the research
+objective's own text is a value the project may already have rejected.
+
+Then call `build_external_search_url` to get the URL — never hand-compose one.
 It returns `{ ok: true, url, notes, access }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
 blindly or hand-writing a URL.
@@ -302,7 +310,9 @@ value it rejected, a site's standing caution — comes back in the response's
 - Unusual name → start broad (surname + place only).
 - Common name → start narrow (add dates, relatives, a specific collection).
 - Include only parameters you're confident about; omit uncertain ones.
-- **Check `conflicts[]` before encoding a place or date.** Consider only
+- **Check `conflicts[]` before encoding a place or date** — fetch them with
+  `research_query` (`section: "conflicts"`); `project_context` does not
+  return them, so without that call you are guessing. Consider only
   `conflict_type: "fact"` entries whose `disputed_attribute` names that
   field. When more than one such entry names the field, apply the
   highest-precedence status present — `unresolved` beats `resolved` beats
