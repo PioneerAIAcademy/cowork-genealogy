@@ -1,4 +1,5 @@
 # Dependabot configuration.
+# Advisory register: docs/dependency-security-advisories.md
 #
 # ── ONE BATCH A MONTH, DELIBERATELY ───────────────────────────────────────────
 # Every ecosystem is `interval: monthly`. Dependency work should arrive on a
