@@ -351,7 +351,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "skill": {
           "type": "string",
-          "description": "Directory name under packages/engine/plugin/skills/. Must match an existing skill."
+          "description": "Directory name under packages/engine/plugin/skills/, OR — on a direct-agent test (one carrying `input.delegation`) — the basename of a plugin-agent file under packages/engine/plugin/agents/. Must match an existing skill directory or agent file. An agent-keyed suite such as gps-mentor has no skill directory at all; see unit-test-spec.md §5.2.1."
         },
         "name": {
           "type": "string",
@@ -639,6 +639,36 @@ On a direct test the harness:
   `skills_invoked`, which is empty by construction (§7);
 - fills the judge's `{user_message}` slot with the delegation and its
   `{skills_invoked}` slot with the spawned agent.
+
+**What `test.skill` names.** A skill directory under
+`packages/engine/plugin/skills/`, **or** a plugin-agent file of that name under
+`packages/engine/plugin/agents/`. For a paired skill both exist and the field is
+unambiguous. For an **agent-keyed suite** — an agent with no routing skill at
+all, `gps-mentor` being the first — only the agent file exists, and the
+runnability gate falls back to it. That fallback is gated on the test being
+direct: on a routed test a missing skill directory is still a typo worth
+catching, and falling through to a same-named agent would grade the test by a
+route it never asked for.
+
+A separate `test.agent` field was considered and rejected: the direct arm
+already resolves the agent by `spec.skill` and decides the positive outcome on
+`spec.skill in agents_spawned`, so a new field would add persisted surface to
+two schema trees and every run log for no behavioural gain, and leave two fields
+that must never disagree. **Do not satisfy the gate by creating a stub skill
+directory instead** — `scripts/package-plugin.mjs` walks `skills/` wholesale, so
+a stub ships in the plugin zip as a user-triggerable skill competing with the
+agent's own description, while `stage_skills=not spec.is_direct` never stages it
+into the run; it would exist only to fool the gate. **And do not point
+`test.skill` at a neighbouring skill**, which grades the agent under another
+skill's rubric, snapshot and eval slot.
+
+**An agent-keyed suite's snapshot embeds the agent body.** `build_snapshot`
+embeds `packages/engine/plugin/agents/<skill>.md` whenever one exists — not only
+when a SKILL.md names it via `@plugin:`, since there is no SKILL.md to scan —
+and `check_runlogs.py` marks the suite touched when that file changes. Without
+both, editing the agent leaves the suite's run log **active** and its grades are
+quoted forward against prose that changed. For a paired skill the `@plugin:`
+scan already embeds the same path, so neither rule moves an existing snapshot.
 
 **Never reach the agent with `--agent` / `extra_args={"agent": …}`.** The shipped
 ownership hook keys on the **presence** of `agent_id`, and a session started that
