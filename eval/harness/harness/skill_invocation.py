@@ -1030,6 +1030,14 @@ DEDICATED_AGENT_NAMES = frozenset(
         # the hook routes the whole `person_evidence` section to this agent, so
         # every legitimate link now arrives from it.
         "person-evidence",
+        # NOT the same shape (issue #2121). This pair is cost-motivated, not
+        # attribution-motivated: no hook routes anything to it, and it writes no
+        # protected section — only `log` entries and a plan item's `status`. It
+        # is listed because the set is asserted equal to the shipped agent files,
+        # and because a browse log arriving from it is legitimate rather than an
+        # unnamed-delegate bypass. Do not read its presence here as evidence that
+        # a hook route exists.
+        "search-images",
     }
 )
 
@@ -1408,13 +1416,13 @@ def find_citation_nulling_in_tree_sources(
     ``proof-conclusion/SKILL.md`` — that body moved to the delegated agent when
     the skill became a skill-agent pair — but
     ``packages/engine/plugin/agents/proof-conclusion.md`` step 3, "Source entries
-    (upload-time citation + conclusion-gated upload)":
+    (upload-time citation)":
 
         copy the finalized ``research.json`` ``sources[].citation`` string into
-        the **``citation``** field … **Upload is conclusion-gated:** the working
-        tree carries *all* sourced evidence facts (materialized at link time by
-        person-evidence), but **only ``primary``/proof-backed facts upload to
-        FamilySearch** — un-concluded evidence stays out.
+        the **``citation``** field … **What the tree surfaces about upload
+        readiness:** the working tree carries *all* sourced evidence facts
+        (materialized at link time by person-evidence); marking a fact
+        ``primary`` is what records that a conclusion stands behind it.
 
     THE GATE IS THAT SENTENCE, both clauses. A tree source is held to a citation
     only when (1) the run wrote a ``proof_summaries`` entry, and (2) the source is

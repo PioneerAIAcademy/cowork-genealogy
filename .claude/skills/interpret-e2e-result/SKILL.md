@@ -310,7 +310,11 @@ These are the regression causes:
   run. The agent isn't at fault. First compare `harness_schema_version`
   on both runs. Across the `1` → `2` boundary the capture format
   changed, not the data — roughly half of all captures differ there, so
-  do not read a `response_summary` diff across it. The later
+  do not read a `response_summary` diff across it. The `4` → `5`
+  boundary likewise moves `response_summary`, but only for
+  `image_transcribe`: `5` preserves the full `transcription` where `4`
+  truncated it at 500 chars, so a transcribe-call diff across it is the
+  capture change, not FS drift. The later
   `tool_calls[].is_error` boundary does **not** affect
   `response_summary`, so a drift comparison still holds across it; what
   it does move is `compliance` / `outcome` and the guardrail violation

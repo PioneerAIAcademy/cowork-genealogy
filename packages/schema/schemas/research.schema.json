@@ -396,7 +396,7 @@
         "information_quality",
         "informant",
         "informant_proximity",
-        "evidence_type",
+        "record_basis",
         "extracted_for_question_ids"
       ],
       "additionalProperties": false,
@@ -422,7 +422,7 @@
         "informant": { "type": "string" },
         "informant_proximity": { "$ref": "enums.schema.json#/$defs/informant_proximity" },
         "informant_bias_notes": { "type": ["string", "null"] },
-        "evidence_type": { "$ref": "enums.schema.json#/$defs/evidence_type" },
+        "record_basis": { "$ref": "enums.schema.json#/$defs/record_basis" },
         "log_entry_id": {
           "anyOf": [
             { "type": "string", "pattern": "^log_" },
@@ -436,10 +436,10 @@
       },
       "allOf": [
         {
-          "$comment": "Negative evidence is the researcher's own conclusion that a person expected in a record is missing from it, so record_role is the literal 'absent' and informant_proximity is 'researcher' — no record informant reported an absence, whatever the record type. Forward direction only: the converse (absent implies negative) is an unexercised branch and is left to research_append's own precondition. `informant` is not constrained; it is free text. The `required` below is load-bearing: without it an assertion missing `evidence_type` matches the `if` vacuously and collects a spurious second error.",
+          "$comment": "TWO DIFFERENT FIELDS SHARE THE VALUE 'absent' HERE — read the field name on every line below. `record_basis: \"absent\"` says the record lacked the value; `record_role: \"absent\"` says the person held no role in it because they were not there. This rule couples them: negative evidence is the researcher's own conclusion that a person expected in a record is missing from it, so `record_role` is the literal 'absent' and `informant_proximity` is 'researcher' — no record informant reported an absence, whatever the record type. Forward direction only: the converse (`record_role: \"absent\"` implies `record_basis: \"absent\"`) is an unexercised branch and is left to research_append's own precondition. `informant` is not constrained; it is free text. The `required` below is load-bearing: without it an assertion missing `record_basis` matches the `if` vacuously and collects a spurious second error. (This field was renamed 2026-09-18 — see the retired-identifier registry in enums.schema.json; the coupling PR #2601 landed is unchanged in meaning.)",
           "if": {
-            "required": ["evidence_type"],
-            "properties": { "evidence_type": { "const": "negative" } }
+            "required": ["record_basis"],
+            "properties": { "record_basis": { "const": "absent" } }
           },
           "then": {
             "properties": {
@@ -652,7 +652,8 @@
         "supporting_assertion_ids",
         "resolved_conflict_ids",
         "exhaustive_search_summary",
-        "narrative_markdown"
+        "narrative_markdown",
+        "shortfall"
       ],
       "additionalProperties": false,
       "properties": {
@@ -660,6 +661,7 @@
         "question_id": { "type": "string", "pattern": "^q_" },
         "tier": { "$ref": "enums.schema.json#/$defs/proof_tier" },
         "vehicle": { "$ref": "enums.schema.json#/$defs/proof_vehicle" },
+        "shortfall": { "$ref": "enums.schema.json#/$defs/proof_shortfall" },
         "supporting_assertion_ids": {
           "type": "array",
           "items": { "type": "string", "pattern": "^a_" }
@@ -684,6 +686,7 @@
       "properties": {
         "claim": { "type": "string" },
         "proof_tier": { "$ref": "enums.schema.json#/$defs/proof_tier" },
+        "shortfall": { "$ref": "enums.schema.json#/$defs/proof_shortfall" },
         "supporting_assertion_ids": {
           "type": "array",
           "items": { "type": "string", "pattern": "^a_" }

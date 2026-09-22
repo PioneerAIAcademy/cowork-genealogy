@@ -34,80 +34,80 @@
     {
       "record_role": "groom",
       "fact_type": "name",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "groom",
       "fact_type": "age",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "groom",
       "fact_type": "occupation",
       "value": "Coal miner",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "groom",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Ireland",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "groom",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "optional": true
     },
     {
       "record_role": "bride",
       "fact_type": "name",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "bride",
       "fact_type": "age",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "bride",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Pennsylvania",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "bride",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "optional": true
     },
     {
       "record_role": "father_of_groom",
       "fact_type": "name",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "mother_of_groom",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self",
       "information_quality": "primary"
     },
     {
       "record_role": "father_of_bride",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self",
       "information_quality": "primary"
     },
     {
       "record_role": "mother_of_bride",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self",
       "information_quality": "primary"
     }

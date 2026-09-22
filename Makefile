@@ -1088,6 +1088,16 @@ e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-transcription-join
+e2e-transcription-join: ## Join image_transcribe to extraction_append assertions over committed e2e runs (issue #2561): make e2e-transcription-join | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Walks tool_calls[] to join
+	# each image_transcribe call to the extraction_append assertions that follow it,
+	# producing the denominator for extraction-accuracy audits. Same 14-day horizon
+	# as e2e-transcribe-failures: it reads response_summary.
+	cd eval/harness && uv run python -m e2e.transcription_join_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-wiki-failures
 e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (issue #1552): make e2e-wiki-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/
@@ -1226,6 +1236,11 @@ eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Ne
 .PHONY: eval-ui-test
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
+
+.PHONY: eval-ui-e2e
+eval-ui-e2e: $(EVAL_APP_DEPS) ## Eval CRUD UI e2e tests — eval/app (Playwright, boots Next.js)
+	cd eval/app && npx playwright install --with-deps chromium
+	cd eval/app && npm run test:e2e
 
 .PHONY: feedback-case
 feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]
