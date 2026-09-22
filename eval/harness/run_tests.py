@@ -115,7 +115,7 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
     newest = max(dated, key=lambda pair: pair[0])[1]
     try:
         return json.loads(newest.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         # A corrupt predecessor must not take down the run that is writing a
         # new one — the sample simply starts a fresh sweep.
         return None

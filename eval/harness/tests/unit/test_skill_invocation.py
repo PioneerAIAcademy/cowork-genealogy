@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from harness.skill_invocation import (
+    find_tree_facts_disagreeing_with_assertions,
     CITATION_NULLING_KIND,
     CONFLICT_ANALYSIS_FIELDS,
     CONFLICT_UNPERSISTED_KIND,
@@ -2257,3 +2258,67 @@ def test_a_plural_assertion_ids_op_is_not_treated_as_resolvable():
         research=_research("image_transcribe"),
     )
     assert out == ["I1"]
+
+
+def test_find_tree_facts_disagreeing_with_assertions_refuses_non_dict_documents():
+    """The predicate's own document type-guard, pinned directly.
+
+    It is shadowed by `read_tree_json`'s non-dict guard on the live path and by
+    `_load_json`'s on the replay path, so each of the three could be deleted on
+    its own with the whole suite green while the class stayed covered by the
+    other two. That is coverage that cannot fail: the guards only look load
+    bearing because they overlap. This test reaches the predicate directly, so
+    it holds this one whatever its callers do -- and the validator caller, which
+    passes whatever `after_state` contains, has no reader in front of it at all.
+    """
+    tree = {"persons": [{"id": "I1", "facts": [{"id": "F1", "assertion_id": "a1", "place": "X"}]}]}
+    research = {"assertions": [{"id": "a1", "place": "Y"}]}
+    # a positive control first, so a silent return cannot pass this test
+    assert find_tree_facts_disagreeing_with_assertions(research, tree)
+    for label, r, tr in (
+        ("tree is a list", research, []),
+        ("research is a list", [], tree),
+        ("tree is a string", research, "{}"),
+        ("research is None", None, tree),
+        ("tree is None", research, None),
+    ):
+        assert find_tree_facts_disagreeing_with_assertions(r, tr) == [], label
+
+
+def test_an_empty_assertion_id_names_nothing_and_is_skipped():
+    """An empty backlink is skipped BEFORE the lookup, not by it.
+
+    `_lookup_assertion` guards the type and not the emptiness, and
+    `_provenance_index` will index an assertion whose own id is "", so without
+    the explicit skip a document carrying both would be compared and would
+    render as "assertion  has ...". The pre-change inline scan skipped it
+    (`if not isinstance(linked_id, str) or not linked_id`), so this is what makes
+    "as selective as the scan it replaced" true rather than merely claimed.
+
+    Both sides are schema-invalid and the corpus holds none, which is exactly why
+    a test is the only thing that can hold it.
+    """
+    research = {"assertions": [{"id": "", "fact_type": "immigration", "place": "Odessa"}]}
+    tree = {
+        "persons": [
+            {
+                "id": "I1",
+                "facts": [
+                    {
+                        "id": "F1",
+                        "type": "Immigration",
+                        "assertion_id": "",
+                        "sources": [{"ref": "S1"}],
+                        "place": "Wellburn",
+                    }
+                ],
+            }
+        ],
+        "relationships": [],
+    }
+    assert find_tree_facts_disagreeing_with_assertions(research, tree) == []
+    # positive control: the same documents with a real id DO disagree, so the
+    # empty case is being skipped rather than the shapes simply not matching.
+    research["assertions"][0]["id"] = "a_011"
+    tree["persons"][0]["facts"][0]["assertion_id"] = "a_011"
+    assert find_tree_facts_disagreeing_with_assertions(research, tree)
