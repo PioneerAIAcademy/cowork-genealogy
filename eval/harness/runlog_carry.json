@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "$comment": "Day-one carry list for check_runlogs.py rule 6. A carried red WARNS; past review_by it BLOCKS; if its test passes it BLOCKS so the line gets deleted, unless flaky. `flaky: true` is set iff the test resolved to `pass` at least once in its skill's last five committed run logs -- for those the pass-retirement arm cannot tell a fix from a flap. That is 29 of 35 here, so pass-retirement covers the other 6; review_by is what moves the rest. Contract: docs/plan/eval-runlog-versioning.md SS C6.",
+  "$comment": "Day-one carry list for check_runlogs.py rule 6. A carried red WARNS; past review_by it BLOCKS; if its test passes it BLOCKS so the line gets deleted, unless flaky. `flaky: true` is set iff the test resolved to `pass` at least once in its skill's last five committed run logs -- for those the pass-retirement arm cannot tell a fix from a flap. That is 41 of 49 here, so pass-retirement covers the other 8; review_by is what moves the rest. Contract: docs/plan/eval-runlog-versioning.md SS C6.",
   "entries": [
     {
       "skill": "citation",
@@ -164,13 +164,79 @@
     },
     {
       "skill": "record-extraction",
+      "test_id": "ut_record_extraction_001",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_002",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_005",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
       "test_id": "ut_record_extraction_007",
       "outcome": "fail",
       "issue": 2654,
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
-      "baseline": "v1_2026-09-18_12-34-27.json",
+      "baseline": "v1_2026-09-20_18-19-02.json",
       "reason": "baseline red carried from v1_2026-09-18_12-34-27.json"
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_008",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_009",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_010",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
     },
     {
       "skill": "record-extraction",
@@ -179,8 +245,19 @@
       "issue": 2654,
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
-      "baseline": "v1_2026-09-18_12-34-27.json",
+      "baseline": "v1_2026-09-20_18-19-02.json",
       "reason": "baseline red carried from v1_2026-09-18_12-34-27.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_013",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
       "flaky": true
     },
     {
@@ -190,19 +267,95 @@
       "issue": 2654,
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
-      "baseline": "v1_2026-09-18_12-34-27.json",
+      "baseline": "v1_2026-09-20_18-19-02.json",
       "reason": "baseline red carried from v1_2026-09-18_12-34-27.json",
       "flaky": true
     },
     {
       "skill": "record-extraction",
-      "test_id": "ut_record_extraction_025",
+      "test_id": "ut_record_extraction_015",
       "outcome": "fail",
       "issue": 2654,
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
-      "baseline": "v1_2026-09-18_12-34-27.json",
-      "reason": "baseline red carried from v1_2026-09-18_12-34-27.json",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_016",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_018",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_021",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json"
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_022",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_029",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_030",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
+      "flaky": true
+    },
+    {
+      "skill": "record-extraction",
+      "test_id": "ut_record_extraction_031",
+      "outcome": "fail",
+      "issue": 2654,
+      "filed": "2026-09-22",
+      "review_by": "2026-11-21",
+      "baseline": "v1_2026-09-20_18-19-02.json",
+      "reason": "baseline red carried from v1_2026-09-20_18-19-02.json",
       "flaky": true
     },
     {
@@ -246,8 +399,7 @@
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
       "baseline": "v1_2026-09-17_15-04-52.json",
-      "reason": "aborts on max_turns and has never passed in the last five committed runs; flaky per the 2026-09-21 ruling, inert in practice",
-      "flaky": true
+      "reason": "aborts on max_turns and has never passed in the last five committed runs; flaky per the 2026-09-21 ruling, inert in practice"
     },
     {
       "skill": "research-plan",
