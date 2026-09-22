@@ -1,6 +1,7 @@
 ---
 name: search-images
-description: Browses FamilySearch digitized image volumes page-by-page and logs
+description: >-
+  Browses FamilySearch digitized image volumes page-by-page and logs
   the browse. Invoke when the user says "browse the images", "browse a volume",
   "page through", "look through the film/roll", "go through the unindexed
   records", or gives an image group number. Use when a record set is digitized
