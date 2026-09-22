@@ -1,0 +1,374 @@
+{
+  "run_log": "v1_2026-09-21_18-16-58.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_wiki_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool call returned an empty results array, and the response accurately told the user that the FamilySearch Wiki had no results for “blockchain birth certificate records.” It did not fabricate wiki content. The main issue is routing, which is captured separately."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The expected no-result behavior was completed: the wiki search was performed, the empty result was communicated, and no file was created. The response also provided additional contextual suggestions, although these were not necessary."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The wiki_search call used the correct query, “blockchain birth certificate records,” which matches the fixture's expected ~blockchain pattern. The tool executed successfully and returned the expected empty result."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No file should be created when the wiki search returns no results, and none was created. This rubric is not applicable to this negative-result case."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "There were no wiki results to cite and no file containing synthesized wiki content was required. Therefore, this rubric is not applicable."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No wiki content was returned, so there was no substantive wiki summary to evaluate. The response did not fabricate a wiki summary."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly stated that the FamilySearch Wiki returned no results and did not create a file. The additional alternative suggestions were clearly presented as alternatives rather than as FamilySearch Wiki results."
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response provided plausible information about German church records, but it did not perform the required FamilySearch Wiki search. Since the task specifically required search-familysearch-wiki to retrieve and use Wiki guidance, the generic response does not satisfy the core task."
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The required workflow was not completed. The skill should have activated, called wiki_search, retrieved the German church-record guidance, and synthesized the results. No MCP tool call was made."
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tools were called, so there are no tool arguments to assess."
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The deterministic validator test_wrote_exactly_one_markdown_file failed. No markdown file was created, even though the skill was expected to save exactly one Markdown file. The test_expected_slug validator also failed, confirming the expected file output was missing."
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "No FamilySearch Wiki results were retrieved and no Sources section was created. The expected file should have included properly formatted source links based on the Wiki results."
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response contains information about Matricula Online, Archion, Meyers Gazetteer, Transkribus, FEEFHS, and GenTeam, but none of these claims can be traced to retrieved FamilySearch Wiki results because wiki_search was never called. Therefore, the response does not meet the required source-grounding standard."
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This test did not exercise the empty-results path. wiki_search was never called, so there was no empty result to handle."
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly recognized that wiki_search was unavailable and did not attempt to fabricate FamilySearch Wiki content. It also correctly identified locality-guide as the appropriate alternative for this type of request."
+    },
+    {
+      "test_id": "ut_search_wiki_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response clearly explained why it could not perform the Wiki search and directed the user toward locality-guide, which is the appropriate handling after the routing context. As a diagnostic dimension, this reflects that the response itself was complete even though the overall test failed."
+    },
+    {
+      "test_id": "ut_search_wiki_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. Given the negative-test context and the hand-off behavior, there are no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    }
+  ]
+}

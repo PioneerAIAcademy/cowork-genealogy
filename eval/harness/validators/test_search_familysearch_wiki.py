@@ -232,6 +232,44 @@ def test_expected_slug(before_state, after_state, test):
     )
 
 
+def test_census_era_boundaries_preserved(before_state, after_state, test):
+    """A census summary keeps the period boundaries its chunk states.
+
+    Gated on the `census` tag. The fixture chunk distinguishes three eras —
+    1790-1840 the head of household only, 1850-1870 every free person named
+    without a stated relationship, 1880 onward everyone named with their
+    relationship. A summary that collapses them into one blanket claim is the
+    reviewer-reported defect behind `453a2f69f`: "it claimed every census
+    lists each household member by name, age, birthplace, and relationship".
+
+    Deterministic proxy: both interior boundary years survive into the saved
+    file. A flattened summary states one rule for all years and has no reason
+    to name 1850 and 1880; a faithful one cannot express the distinction
+    without them.
+
+    This replaces `judge_context` bullet 5, deleted under #2693. That bullet
+    stated the era facts AND the score to apply, so the judge audited the
+    summary against a three-item checklist and docked whichever item it found
+    compressed — base Correctness 2 in five consecutive runs, once with a
+    rationale naming no defect at all. The rule is real; grading it by prompt
+    is what failed. `docs/specs/unit-test-spec.md` 5.4: deterministic checks
+    belong in validators.
+    """
+    if "census" not in (test.get("tags") or []):
+        pytest.skip("only applies to census tests")
+    new_md = _new_md_files(before_state, after_state)
+    if not new_md:
+        pytest.skip("no file written; covered by test_wrote_exactly_one_markdown_file")
+    text = "\n".join(new_md.values())
+    missing = [year for year in ("1850", "1880") if year not in text]
+    assert not missing, (
+        "the saved census summary must keep the era boundaries the chunk "
+        f"states; missing {missing} from {sorted(new_md)}. A summary that "
+        "names neither boundary has flattened the eras into one blanket claim "
+        "(the defect behind 453a2f69f)."
+    )
+
+
 # --- The saved file's Sources section ---------------------------------
 
 

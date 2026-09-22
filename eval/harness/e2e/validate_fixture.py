@@ -592,7 +592,7 @@ def suspect_genre(fixture_dir: Path) -> str:
     """
     try:
         raw = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return "strip"
     return str(raw.get("genre") or "strip") if isinstance(raw, dict) else "strip"
 

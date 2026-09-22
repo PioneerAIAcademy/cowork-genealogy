@@ -444,7 +444,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   // arg validation and before any I/O.
   tokenStep("record_search", { surname: "Smoke" }),
   tokenStep("person_search", { surname: "Smoke", givenName: "Test" }),
-  tokenStep("person_read", { personId: FS_PID }),
+  // `relatives` on purpose: without it the smoke never touches the sibling
+  // fan-out, so the only advertised path with a second wave of requests goes
+  // uncovered. Breaks no rule either way -- the harness asks only that each
+  // advertised tool be called -- but one argument buys the coverage (#2593).
+  tokenStep("person_read", { personId: FS_PID, relatives: true }),
   tokenStep("person_ancestors", { personId: FS_PID }),
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),
