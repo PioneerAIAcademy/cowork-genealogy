@@ -642,10 +642,16 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
 #
 # _HookDrivingStream drives every scripted hook input to completion BEFORE
 # yielding any message (see its __anext__ above). For a short-circuit skill
-# that deterministically reproduces the race's worst case: routing_resolved
+# that deterministically reproduces one of the two orderings: routing_resolved
 # is already True before the very message that caused it is ever delivered to
-# the consumer loop — the same ordering the real SDK produces in the majority
-# of negative runs, per the corpus measurement in issue #2189.
+# the consumer loop.
+#
+# It is only one of the two. The SDK also delivers the message first and runs
+# PreToolUse for it afterwards, and this double cannot produce that — see
+# _MessageFirstHookStream at the end of this file, which does. Re-measured
+# over the committed corpus: across the 150 negative-test runs logged since
+# `no_result_message` was added, it is True on zero of them, so the stop was
+# firing in production under neither ordering.
 
 
 def _routing_short_circuit_stream(tool_use_id="tool-use-id"):
@@ -1346,3 +1352,397 @@ def test_a_quota_during_a_routing_short_circuit_survives_the_clean_clear(
 
     assert result.aborted_reason == QUOTA_ABORT_REASON
     assert "rate_limit_status=rejected" in (result.error or "")
+
+
+# --- routing short-circuit: the hook can fire AFTER its own message (#2189) ---
+#
+# _HookDrivingStream drives every hook input before message one, which is only
+# one of the two orderings the SDK produces. The other — the AssistantMessage
+# carrying the Skill ToolUseBlock is delivered to the consumer BEFORE the
+# PreToolUse hook runs for it — is what the committed corpus shows in
+# production: across the 150 negative-test runs logged since the id-keyed stop
+# point landed, `no_result_message` is True on exactly zero of them, i.e. the
+# stop never fired once. Under that ordering `routing_resolved` is still empty
+# while the hand-off message is being scanned, so an id match cannot be made
+# and the run reads to completion.
+
+
+class _MessageFirstHookStream:
+    """Yields messages, running the PreToolUse hook AFTER a chosen message.
+
+    The mirror image of `_HookDrivingStream`: there the hook is driven to
+    completion before message one, here it fires only once the message that
+    would have triggered it has already reached the consumer loop.
+    """
+
+    def __init__(self, hook, hook_inputs, messages, hook_after_index=0,
+                 hook_tool_use_id="tool-use-id"):
+        self._hook = hook
+        self._hook_inputs = hook_inputs
+        self._messages = messages
+        self._hook_after_index = hook_after_index
+        self._hook_tool_use_id = hook_tool_use_id
+        self._i = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self._i > self._hook_after_index and self._hook_inputs:
+            for inp in self._hook_inputs:
+                await self._hook(inp, self._hook_tool_use_id, None)
+            self._hook_inputs = []
+        if self._i >= len(self._messages):
+            raise StopAsyncIteration
+        msg = self._messages[self._i]
+        self._i += 1
+        return msg
+
+    async def aclose(self):
+        return None
+
+
+async def _run_short_circuit_hook_after_message(
+    monkeypatch, tmp_path, messages, **run_kwargs
+):
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _MessageFirstHookStream(
+            hook, hook_inputs, [handoff_message, *messages]
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        routing_short_circuit_skills={"record-extraction"},
+        **run_kwargs,
+    )
+
+
+def test_short_circuit_stops_when_the_hook_fires_after_its_own_message(
+    tmp_path, monkeypatch
+):
+    """The stop must not depend on the flag being up before the message.
+
+    Keyed on `block.id == routing_resolved["tool_use_id"]` alone, the hand-off
+    message is scanned while `routing_resolved` is still empty, no later
+    message carries that id, and the run reads on past the deny — which is
+    what every committed negative run since 2026-09-14 did.
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock, ToolUseBlock
+
+    reaction = AssistantMessage(
+        content=[
+            TextBlock(text="The skill was denied, so I will do it myself."),
+            ToolUseBlock(
+                id="reaction-call",
+                name="mcp__genealogy__research_append",
+                input={"section": "person_evidence"},
+            ),
+        ],
+        model="stub",
+    )
+
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(monkeypatch, tmp_path, [reaction])
+    )
+
+    assert result.no_result_message is True, (
+        "the short-circuit never fired: the run read past the denied hand-off "
+        "to the end of the stream"
+    )
+    assert "do it myself" not in result.text_response, (
+        "the model's reaction to the deny was recorded as the skill's own turn"
+    )
+    assert not [
+        c for c in result.attempted_mcp_calls
+        if c["tool"] == "mcp__genealogy__research_append"
+    ], "a post-deny tool call was recorded as the skill's own work"
+    assert result.usage.get("num_turns") == 1, (
+        f"the reaction turn was counted; num_turns={result.usage.get('num_turns')}"
+    )
+
+
+def test_the_handoff_message_survives_the_hook_firing_after_it(
+    tmp_path, monkeypatch
+):
+    """The other direction: stopping late must not cost the hand-off text.
+
+    The guard fails two ways — reading on past the deny, and dropping the
+    narration the deny was supposed to preserve (the original #2189 defect).
+    This pins the second under the ordering the first test introduces.
+
+    A trailing message is required, not decoration: with the stream ending at
+    the hand-off, `_MessageFirstHookStream` raises StopAsyncIteration on the
+    same __anext__ that runs the hook, the stop is never reached, and both
+    assertions below pass with this PR reverted — the test would pin nothing
+    (review of #2739). The trailing message makes the stop fire, and
+    `no_result_message` is what proves it did.
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    reaction = AssistantMessage(
+        content=[TextBlock(text="The skill was denied, so I will do it myself.")],
+        model="stub",
+    )
+
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(monkeypatch, tmp_path, [reaction])
+    )
+
+    assert result.no_result_message is True, (
+        "the stop never fired, so this test is not exercising the path it "
+        "claims to guard"
+    )
+    assert "Routing this to record-extraction." in result.text_response
+    assert result.skills_invoked == ["record-extraction"], (
+        "the routing verdict must still be recorded — the hook has to have run"
+    )
+
+
+def test_the_token_cap_is_not_applied_to_the_suppressed_reaction_turn(
+    tmp_path, monkeypatch
+):
+    """The reaction turn carries the run's largest context and is discarded.
+
+    It is the likeliest turn of any to breach max_input_tokens_per_turn — the
+    hand-off context plus the deny — and the loop has already declared it is
+    not the skill's work. Aborting on it fails a run whose routing verdict was
+    captured, on the content of a turn thrown away two lines later; and because
+    `_LimitExceeded` abandons the stream, `usage` would carry no num_turns at
+    all (review of #2739).
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    reaction = AssistantMessage(
+        content=[TextBlock(text="The skill was denied, so I will do it myself.")],
+        model="stub",
+        usage={"input_tokens": 500_000},
+    )
+
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(
+            monkeypatch, tmp_path, [reaction], max_input_tokens_per_turn=1_000
+        )
+    )
+
+    assert result.aborted_reason is None, (
+        f"the discarded reaction turn aborted the run: {result.aborted_reason}"
+    )
+    assert result.no_result_message is True, "the short-circuit stop never fired"
+    assert result.usage.get("num_turns") == 1, (
+        f"num_turns={result.usage.get('num_turns')} — the hand-off turn is the "
+        "run's one real turn"
+    )
+    assert "Routing this to record-extraction." in result.text_response
+
+
+def test_a_real_over_cap_turn_still_aborts(tmp_path, monkeypatch):
+    """The other direction: the skip must be scoped to the suppressed turn.
+
+    A hand-off turn that is itself over the cap is the skill's own work and
+    must still abort — otherwise the exemption above has quietly disabled the
+    cap for every short-circuited run.
+    """
+    import asyncio
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+    handoff_message.usage = {"input_tokens": 500_000}
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _MessageFirstHookStream(hook, hook_inputs, [handoff_message])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            routing_short_circuit_skills={"record-extraction"},
+            max_input_tokens_per_turn=1_000,
+        )
+    )
+
+    assert result.aborted_reason == "max_input_tokens_per_turn"
+    assert result.usage.get("num_turns") == 1, (
+        "the _LimitExceeded path must report the turns it streamed, like the "
+        "wall-clock path — otherwise the orchestrator reads a zero-progress run"
+    )
+
+
+def test_a_quota_in_the_suppressed_reaction_turn_still_aborts(tmp_path, monkeypatch):
+    """The reaction turn is not the skill's text, but it is still evidence.
+
+    #2192's suite breaker reads prose, and a subscription rejection arrives
+    as prose as often as as a RateLimitEvent. The turn right after the deny
+    is exactly where it lands when the model is cut off mid-hand-off. Withheld
+    from `text_chunks` and NOT handed to the classifier, the quota goes
+    unseen, `aborted_reason` stays None, and the suite keeps submitting —
+    which is the one failure #2192 exists to prevent.
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    cut_off = AssistantMessage(
+        content=[
+            TextBlock(
+                text="Claude AI usage limit reached. Your limit will reset at 5pm."
+            )
+        ],
+        model="stub",
+    )
+
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(monkeypatch, tmp_path, [cut_off])
+    )
+
+    assert result.aborted_reason == QUOTA_ABORT_REASON, (
+        "a quota rejection arriving in the suppressed reaction turn was not "
+        f"classified; aborted_reason={result.aborted_reason!r}"
+    )
+    assert "usage limit reached" not in result.text_response, (
+        "the reaction turn must still be withheld from the skill's own text"
+    )
+    assert "usage limit reached" in (result.error or ""), (
+        "the quota was classified from prose that then appears in NO field of "
+        "the run log — withheld from text_response and absent from error, so "
+        "the operator has nothing to read and the next occurrence cannot be "
+        f"settled without another paid suite; error={result.error!r}"
+    )
+
+
+# --- the short-circuit's abort clearing is scoped, and nothing pinned it ------
+#
+# `if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON: clear`
+# cleared EVERY reason but the quota one, including harness-imposed caps the
+# hook's stop cannot fabricate. With the stop broken from 2026-09-14, negative
+# runs that then blew a cap were logged clean: ut_citation_003
+# (citation/v1_2026-09-18_21-06-39) ran 305.1s over 38 turns against a 300s
+# default and carries `aborted_reason: null, outcome: "pass"`, and none of the
+# 168 committed post-cut negative runs carries an abort reason at all. The
+# clause was pinned in NEITHER direction, so both go in here.
+
+
+async def _run_short_circuit_with_cap(monkeypatch, tmp_path):
+    """Trip `max_tool_calls` and THEN resolve routing, in one run."""
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    _, handoff_message = _routing_short_circuit_stream()
+    hook_inputs = [
+        {"tool_name": "mcp__genealogy__research_query", "tool_input": {}},
+        {"tool_name": "Skill", "tool_input": {"skill": "record-extraction"}},
+    ]
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(hook, hook_inputs, [handoff_message])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        routing_short_circuit_skills={"record-extraction"},
+        max_tool_calls=0,
+    )
+
+
+def test_a_harness_cap_survives_the_routing_short_circuit(tmp_path, monkeypatch):
+    """A cap the hook's stop cannot have fabricated must not be cleared.
+
+    This is the alarm that would have caught the 2026-09-14 break in its first
+    week and did not, because the clause keyed on the same flag the broken stop
+    keyed on.
+    """
+    import asyncio
+
+    result = asyncio.run(_run_short_circuit_with_cap(monkeypatch, tmp_path))
+
+    assert result.aborted_reason == "max_tool_calls", (
+        "a deterministic harness cap was cleared as short-circuit noise; "
+        f"aborted_reason={result.aborted_reason!r}"
+    )
+    assert "max_tool_calls" in (result.error or "")
+
+
+def test_an_sdk_error_is_still_cleared_by_the_routing_short_circuit(
+    tmp_path, monkeypatch
+):
+    """The other direction: the clearing this clause exists for still happens.
+
+    The SDK may surface the hook-initiated stop as an error on a trailing
+    ResultMessage. That is noise from a deliberate, successful early stop and
+    must still be cleared — narrowing the clause to caps-only would make every
+    short-circuited run look aborted, which is worse than the bug above.
+    """
+    import asyncio
+
+    result = asyncio.run(
+        _run_short_circuit_with_prefix(
+            monkeypatch, tmp_path, [_result_message(api_error_status=500)]
+        )
+    )
+
+    assert result.aborted_reason is None, (
+        "the SDK's own error on a deliberate stop should still be cleared; "
+        f"aborted_reason={result.aborted_reason!r}"
+    )
+    assert result.error is None
+
+
+def test_the_suppressed_reaction_calls_are_recorded_not_dropped(tmp_path, monkeypatch):
+    """Withheld from the skill's own record, but kept on the result.
+
+    Dropping them left two things unanswerable from any run log — whether a
+    reaction call ever executes, and whether one ever names an unregistered
+    tool — which is what made the earlier "measured" claim about this
+    unfalsifiable (issue #2740).
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock, ToolUseBlock
+
+    reaction = AssistantMessage(
+        content=[
+            TextBlock(text="Denied, so I will do it myself."),
+            ToolUseBlock(
+                id="reaction-call",
+                name="mcp__genealogy__research_append",
+                input={"section": "person_evidence"},
+            ),
+        ],
+        model="stub",
+    )
+
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(monkeypatch, tmp_path, [reaction])
+    )
+
+    assert [c["tool"] for c in result.suppressed_post_deny_calls] == [
+        "mcp__genealogy__research_append"
+    ], f"the discarded attempt was not recorded: {result.suppressed_post_deny_calls}"
+    assert not result.attempted_mcp_calls, (
+        "a post-deny call must still stay OUT of attempted_mcp_calls, or the "
+        "uncovered_tool_call advisory fires on a deliberately stopped run"
+    )
