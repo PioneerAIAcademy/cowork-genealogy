@@ -62,17 +62,22 @@ _RESEARCH = json.loads(
 )
 
 
-def _states(*new_log_entries):
+def _states(*new_log_entries, prior=()):
     """Identical before/after by default. With entries, the after side carries
     them as extra log[] entries — enough for `_new_log_entries`'s before/after-
     length comparison to see them as new. Takes more than one so a test can
     build the real two-entry step-4-then-step-6 shape, which is what tells a
-    re-log apart from a fresh generation."""
+    re-log apart from a fresh generation.
+
+    `prior` seeds the BEFORE log, which is the only way to express a URL that
+    an earlier turn already generated. Without it a "re-log" test re-logs
+    nothing: the URL appears for the first time in `after`, so `seen_before` is
+    empty and the entry is a fresh generation however it is labelled."""
     entries = [e for e in new_log_entries if e is not None]
-    if not entries:
-        return {"research_json": _RESEARCH}, {"research_json": _RESEARCH}
-    before_log = list(_RESEARCH.get("log") or [])
+    before_log = list(_RESEARCH.get("log") or []) + list(prior)
     before = {"research_json": {**_RESEARCH, "log": before_log}}
+    if not entries:
+        return before, {"research_json": {**_RESEARCH, "log": before_log}}
     after = {"research_json": {**_RESEARCH, "log": before_log + entries}}
     return before, after
 
@@ -340,16 +345,75 @@ def test_hand_composed_check_skips_when_no_url_generation_entry_this_run():
         _HAND_COMPOSED_CHECK(*_states(), [], {"type": "positive"})
 
 
-def test_hand_composed_check_skips_a_capture_entry_with_no_tool_call():
+def test_hand_composed_check_skips_a_capture_entry_relogging_a_prior_url():
     """A capture-arrival entry re-logs the earlier URL without generating a
     new one this turn — not a "URL was hand-composed" situation, so no tool
-    call is required and the check correctly has nothing to grade."""
-    before, after = _states({
-        "id": "log_999", "tool": "external_site", "outcome": "positive",
-        "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn", "capture_received": True},
-    })
+    call is required and the check correctly has nothing to grade.
+
+    The prior turn's entry has to be in the BEFORE log for that to be true.
+    This test asserted the same skip with an empty before-log until #2207, so
+    what it actually pinned was the blanket `capture_received` exemption, not
+    re-log detection — and that exemption is what let an in-window turn
+    hand-compose a URL unchecked."""
+    url = "https://www.ancestry.com/search/?name=Flynn"
+    before, after = _states(
+        {
+            "id": "log_999", "tool": "external_site", "outcome": "positive",
+            "external_site": {"site": "ancestry", "url_generated": url, "capture_received": True},
+        },
+        prior=[{
+            "id": "log_900", "tool": "external_site", "outcome": "partial",
+            "external_site": {"site": "ancestry", "url_generated": url, "capture_received": False},
+        }],
+    )
     with pytest.raises(pytest.skip.Exception):
         _HAND_COMPOSED_CHECK(before, after, [], {"type": "positive"})
+
+
+def test_hand_composed_check_fires_on_an_in_window_capture_with_a_fresh_url():
+    """#2207's in-window read route: the results arrive in the conversation, so
+    the arrival entry carries `capture_received: true` — and its URL appears
+    nowhere earlier. That is a fresh generation, and with no
+    `build_external_search_url` call the URL was hand-composed.
+
+    Regression for the live miss: `ut_search_external_sites_iwc` passed on two
+    paid runs while the skill hand-composed its MyHeritage URL, because
+    `capture_received: True` exempted the entry before re-log detection ran."""
+    _expect_fires(
+        [],
+        {"type": "positive"},
+        "hand-composed",
+        states=_states({
+            "id": "log_999", "tool": "external_site", "outcome": "positive",
+            "external_site": {
+                "site": "myheritage",
+                "url_generated": "https://www.myheritage.com/research/collection-20822/x",
+                "capture_received": True,
+                "capture_filename": None,
+            },
+        }),
+        check=_HAND_COMPOSED_CHECK,
+    )
+
+
+def test_hand_composed_check_passes_an_in_window_capture_when_the_tool_was_called():
+    """The other direction: same in-window shape, but the skill did call
+    `build_external_search_url`. Nothing to complain about — the check must not
+    fire merely because the capture arrived in the same turn."""
+    _expect_passes(
+        _tool_calls("Ireland"),
+        {"type": "positive"},
+        states=_states({
+            "id": "log_999", "tool": "external_site", "outcome": "positive",
+            "external_site": {
+                "site": "myheritage",
+                "url_generated": "https://www.myheritage.com/research/collection-20822/x",
+                "capture_received": True,
+                "capture_filename": None,
+            },
+        }),
+        check=_HAND_COMPOSED_CHECK,
+    )
 
 
 def test_hand_composed_check_skips_an_error_entry_with_no_tool_call():
@@ -591,7 +655,13 @@ def test_hand_composed_check_skips_a_negative_relog_beside_a_captured_sibling():
     a `partial` entry in the same run already carries is a re-log, even when
     that sibling is itself excluded from grading (here by `capture_received`).
     Without this clause the re-log becomes its own grading target and demands a
-    tool call the generating turn already made."""
+    tool call the generating turn already made.
+
+    Since #2207 the captured sibling is itself a grading target (a
+    `capture_received` entry is no longer blanket-exempt), so the assertion is
+    no longer "the check skips" — it is that only the EARLIER entry is named.
+    The sibling rule is what keeps one hand-composed URL from being reported
+    twice, and it is still the thing under test."""
     url = "https://www.ancestry.com/search/?name=Flynn"
     states = _states(
         {
@@ -603,8 +673,14 @@ def test_hand_composed_check_skips_a_negative_relog_beside_a_captured_sibling():
             "external_site": {"site": "ancestry", "url_generated": url, "capture_received": False},
         },
     )
-    with pytest.raises(pytest.skip.Exception):
+    # One tool call covers the generating entry: nothing to report.
+    _expect_passes(_tool_calls("Ireland"), {"type": "positive"},
+                   states=states, check=_HAND_COMPOSED_CHECK)
+    # With no call it fires once, naming the earlier entry and not the re-log.
+    with pytest.raises(AssertionError) as excinfo:
         _HAND_COMPOSED_CHECK(*states, [], {"type": "positive"})
+    assert "log_998" in str(excinfo.value)
+    assert "log_999" not in str(excinfo.value)
 
 
 def test_hand_composed_check_still_grades_two_partials_sharing_one_url():
