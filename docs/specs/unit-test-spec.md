@@ -832,10 +832,17 @@ callee, `stub_skills` to deny it.
 > no per-skill allowlist (`permission_mode="bypassPermissions"` with no
 > `allowed_tools`), so a real session holds every tool and the callee works.
 
-Assert the hand-off with a deterministic `skills_invoked` validator, not the
-judge, which reads a transcript and can misread it. Note the limit: the harness
-records the skill **name** only, not the `args` string the caller composed, so
-no validator can currently assert *what* crossed the seam.
+Assert the hand-off with a deterministic validator reading `handoffs`
+(`skill_runner.py`), not the judge, which reads a transcript and can misread it.
+`handoffs` counts a `Skill` call and a main-thread agent spawn alike, so the
+assertion survives the callee's conversion from a skill to an agent. Note the
+limit: for a `Skill` call the harness records the skill **name** only, not the
+`args` string the caller composed, so no validator can currently assert *what*
+crossed a `Skill` seam.
+
+A `stub_skills` entry may name an agent with no skill directory; the hook then
+denies that agent's main-thread spawn the same way it denies a `Skill` call. A
+name that is still a skill is stubbed at its `Skill` call only.
 
 ### 5.8 `intentionally_invalid`
 
