@@ -73,8 +73,8 @@ References to load when the moment arrives:
 2. **Click** — the user opens it in their authenticated browser.
 3. **Capture** — the user saves the page as PDF and uploads it. If the
    page content for that URL is **already present in this conversation**,
-   read it and go straight to step 4: don't ask for a PDF, and don't tell
-   the user a capture is outstanding.
+   read it and go straight to triage (`### 5. Triage the results`): don't
+   ask for a PDF, and don't tell the user a capture is outstanding.
 4. **Analyze** — you read the results, triage them, and hand promising
    records to record-extraction.
 
@@ -303,14 +303,21 @@ value it rejected, a site's standing caution — comes back in the response's
 - **A place or date that `conflicts[]` disputes comes from the tree
   person's facts** — never from `assertions[]`, a record, or the research
   objective's own text, any of which may still echo a value the project
-  has since rejected.
-  - **The tree has settled it** → encode the tree person's fact for that
-    field, and only that value.
-  - **The tree has not settled it** → omit the field, and say in one line
-    that the value is contested, naming the candidates so the researcher
-    can filter by eye. These sites *filter* on it, so a guessed side
-    returns nothing and the nil gets logged as evidence of absence for a
-    record that exists.
+  has since rejected. The conflict entry says *whether* to encode the
+  field; the tree says *what* to encode.
+  - **`status: "resolved"` or `"moot"`** → encode the tree person's fact
+    for that field, and only that value. That is the project's own
+    answer: `tree-edit` writes the resolution's preferred value to the
+    tree. If the tree has not caught up yet and the two disagree, the
+    recorded resolution wins.
+  - **`status: "unresolved"`, or the entry names no surviving value** →
+    **omit the field**, and say in one line that the value is contested,
+    naming the candidates so the researcher can filter by eye. A tree
+    fact is not evidence the dispute is settled — GedcomX has no
+    "contested" state, so the tree carries some value either way, and
+    `conflict-resolution` does not update it. These sites *filter* on the
+    field, so a guessed side returns nothing and the nil gets logged as
+    evidence of absence for a record that exists.
 
   This governs only the fields a conflict names. Every other parameter
   still comes from the plan item's event, as above.
@@ -391,6 +398,11 @@ was written. On success the response carries the `logId` it assigned.
 
 Then present the URL, with every note from the tool's response.
 
+**If the results for that URL are already present in this conversation,
+present the URL and its notes but stop there** — skip the capture
+instructions below and go straight to step 5. They ask the user to
+produce something you already have.
+
 ---
 
 **Search: 1850 Census on Ancestry for Patrick Flynn**
@@ -442,7 +454,10 @@ extraction. The steps below are the same either way:
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
    open the full record page, then save it as a PDF and upload it." That
-   single-record PDF goes to record-extraction.
+   single-record PDF goes to record-extraction. If the record page's
+   content is **already present in this conversation**, read it and hand
+   it to record-extraction directly — same rule as the Capture step, and
+   don't ask for a PDF you have already been given.
 
 Don't send the raw search-results PDF straight to record-extraction — the
 user picks which records are worth examining.

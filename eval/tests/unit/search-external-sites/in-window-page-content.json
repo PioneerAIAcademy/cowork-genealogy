@@ -12,7 +12,6 @@
       "in-window-content",
       "capture-received",
       "plan-item-status",
-      "terminal-status-expected",
       "issue-2207"
     ]
   },
