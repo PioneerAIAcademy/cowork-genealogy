@@ -39,20 +39,20 @@
     {
       "record_role": "deceased",
       "fact_type": "name",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "deceased",
       "fact_type": "birth",
       "attribute": "place",
       "value": "Brigham City, Box Elder County, Utah",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "deceased",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "optional": true
     }
   ]

@@ -10,7 +10,8 @@ export type PlanItemStatus = 'planned' | 'in_progress' | 'completed' | 'skipped'
 export type LogOutcome = 'positive' | 'negative' | 'partial' | 'error'
 export type SourceClassification = 'original' | 'derivative' | 'authored'
 export type InformationQuality = 'primary' | 'secondary' | 'indeterminate'
-export type EvidenceType = 'direct' | 'indirect' | 'negative'
+export type RecordBasis = 'stated' | 'inferred' | 'absent'
+export type ProofShortfall = 'ceiling' | 'gap' | 'conflict' | 'none'
 export type ConflictType = 'fact' | 'identity'
 export type ConflictStatus = 'unresolved' | 'resolved' | 'moot'
 export type HypothesisStatus = 'active' | 'supported' | 'ruled_out'
@@ -196,7 +197,7 @@ export interface Assertion {
   informant: string
   informant_proximity: InformantProximity
   informant_bias_notes: string | null
-  evidence_type: EvidenceType
+  record_basis: RecordBasis
   log_entry_id: string | null
   record_persona_id?: string | null
   extracted_for_question_ids: string[]
@@ -276,6 +277,7 @@ export interface ProofSummary {
   question_id: string
   tier: ProofTier
   vehicle: ProofVehicle
+  shortfall: ProofShortfall
   supporting_assertion_ids: string[]
   resolved_conflict_ids: string[]
   exhaustive_search_summary: string
