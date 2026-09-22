@@ -22,6 +22,9 @@
     "user_message": "Start a new research project to identify the parents of Patrick Flynn, born around 1845 in Pennsylvania and died 1908 in Schuylkill County. His FamilySearch person ID is LZNY-BRF.",
     "scenario": null
   },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
   "mcp_fixtures": [
     "person-read-flynn-family"
   ],
