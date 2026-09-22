@@ -4,13 +4,14 @@
     "skill": "search-images",
     "name": "Indexed name search should not trigger search-images",
     "type": "negative",
-    "description": "User wants an indexed name/date/place search of the census. That's search-records — search-images is for browsing UNINDEXED digitized volumes page-by-page, not running indexed queries.",
-    "tags": ["near-miss", "browse-vs-indexed", "boundary"]
+    "description": "User wants an indexed name/date/place search of the census. That's search-records — search-images is for browsing UNINDEXED digitized volumes page-by-page, not running indexed queries. The volume-search-any / image-search-any mcp_fixtures are declared deliberately and must NOT be removed as unused (#1788): they advertise the browse tools so a forbidden browse lands in tool_calls where the no-browse-on-indexed invariant can catch it.",
+    "tags": ["near-miss", "browse-vs-indexed", "boundary", "no-browse-on-indexed"]
   },
   "input": {
     "user_message": "Search the 1850 U.S. census index for Patrick Flynn in Schuylkill County, Pennsylvania.",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": ["volume-search-any", "image-search-any"],
   "execution": {
     "max_wall_clock_seconds": 600
   },
@@ -19,6 +20,8 @@
     "explanation": "This is an indexed search by name/date/place — exactly what search-records does. search-images browses unindexed image volumes one page at a time; it should not be used when an index exists."
   },
   "judge_context": [
-    "Should route to search-records rather than browsing images — an indexed census query does not require paging through a digitized volume."
+    "Should route to search-records rather than browsing images — an indexed census query does not require paging through a digitized volume.",
+    "The no-browse-on-indexed invariant is the deterministic gate here: a volume_search/image_search call, or a new log entry whose tool names one of them, fails the run regardless of how the prose reads. A log entry from search-records itself (tool: record_search) is the CORRECT route working and is not a violation.",
+    "The volume-search-any / image-search-any mcp_fixtures are deliberate and must NOT be removed as unused (#1788): they advertise volume_search and image_search so a forbidden browse actually lands in tool_calls where the invariant can catch it. Without them the mock offers neither tool, the browse can never be recorded, and the invariant passes vacuously. They are catch-alls returning empty results, so they do not make a browse look successful."
   ]
 }
