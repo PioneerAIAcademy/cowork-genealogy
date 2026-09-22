@@ -232,7 +232,7 @@
       "information_quality": "indeterminate",
       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to the census enumerator",
       "informant_proximity": "unknown",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -253,7 +253,7 @@
       "information_quality": "indeterminate",
       "informant": "Officiating minister",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": [
         "q_001"
@@ -274,7 +274,7 @@
       "information_quality": "indeterminate",
       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to the census enumerator",
       "informant_proximity": "unknown",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -295,7 +295,7 @@
       "information_quality": "primary",
       "informant": "Thomas Flynn (testator)",
       "informant_proximity": "household_member",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"
@@ -316,7 +316,7 @@
       "information_quality": "primary",
       "informant": "Thomas Flynn (testator)",
       "informant_proximity": "household_member",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"

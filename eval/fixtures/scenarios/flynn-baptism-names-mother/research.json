@@ -85,7 +85,7 @@
       "information_quality": "primary",
       "informant": "Officiating priest recording the baptism",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -104,7 +104,7 @@
       "information_quality": "primary",
       "informant": "Officiating priest recording the baptism",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }
