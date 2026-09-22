@@ -210,8 +210,6 @@ The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) 
 
 It matters because **rule 2 makes "the baseline" whatever ran last.** It gates on the newest full-skill log being active, so anyone comparing a new run against it inherits wherever in that spread the previous run landed: when the previous run sat at the top of the range, an ordinary next run reads as a multi-test regression. Two limits on the remedy — **`tests[].flaky` cannot carry this signal**, since `runlog.py` computes it *within* one test entry across its `runs[]`, so under the standing `runs_per_test: 1` policy it is structurally always false (measured 2026-08-24: **0 of 1,893 test entries across 122 committed unit run logs**, and `rubric-critic` consumes it as an input) — and candidate retention keeps only the newest 5 per skill, so the cross-log window is 5 runs deep and narrows as new candidates land.
 
-**To clear a `cluster:baseline-reds` card, run three consecutive `make eval-skill` runs on one snapshot with zero `fail`.** An existing active annotated log on that snapshot counts as the first of the three — do not discard it and run three fresh ones. If run 2 or 3 produces a `fail`, stop and report the `test_id` and its judge rationale on the issue rather than editing anything.
-
 ## Snapshot model
 
 Every run log embeds a `snapshot: {repo-relative-path: sha256-of-normalized-content}` block covering every file the run depended on:
