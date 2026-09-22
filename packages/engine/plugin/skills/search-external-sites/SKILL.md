@@ -73,10 +73,10 @@ References to load when the moment arrives:
 2. **Click** — the user opens it in their authenticated browser.
 3. **Capture** — the user saves the page as PDF and uploads it. If the
    page content for that URL is **already present in this conversation**,
-   steps 1 and 2 still run — build the URL with `build_external_search_url`
-   and log it — and then read that content and go straight to triage
-   (`### 5. Triage the results`): don't ask for a PDF, and don't tell the
-   user a capture is outstanding.
+   still build the URL with `build_external_search_url` — never hand-compose
+   it — then read that content and go straight to triage (`### 5. Triage the
+   results`): don't ask for a PDF, and don't tell the user a capture is
+   outstanding. One log entry covers it, written at step 6.
 4. **Analyze** — you read the results, triage them, and hand promising
    records to record-extraction.
 
@@ -400,8 +400,9 @@ was written. On success the response carries the `logId` it assigned.
 Then present the URL, with every note from the tool's response.
 
 **If the results for that URL are already present in this conversation,
-present the URL and its notes but stop there** — skip the capture
-instructions below and go straight to step 5.
+skip this whole step** — no in-flight entry and no capture instructions.
+The search is not awaiting anything: go to step 5, and log it once at step 6
+as the capture that arrived with no file.
 
 ---
 
