@@ -41,12 +41,13 @@ Two checks the deep dive proposed were dropped after review (PR #2579):
     its result — even the "No match in volume_search" branch presupposes the
     call was made, with the wiki as a cross-check, not a substitute. VR4
     already gates "a survey must call volume_search". In the acceptance run
-    (v1_2026-09-21_08-34-13) every survey with volume_search available called
-    it (VR4: 22 passed, 0 survey skipped it); the only two runs that assign a
-    digitization label without a volume_search call, ut_002 and ut_023, are the
-    ones whose fixtures don't register volume_search (it is fixture-backed and
-    absent from LIVE_TOOLS), so the tool was uncallable there — exactly where
-    VR3 would fire wrongly.
+    (v1_2026-09-21_13-46-57) every survey with volume_search available called
+    it (VR4: 22 passed, 0 survey skipped it). The one run that assigns a
+    digitization label without a volume_search call is ut_002, whose fixtures
+    don't register volume_search (fixture-backed, absent from LIVE_TOOLS) so the
+    tool was uncallable — exactly where VR3 would fire wrongly. (ut_023 makes no
+    such classification at all: with the search tools unregistered it reports
+    the coverage gap plainly rather than labelling.)
 
 See `test_universal.py` module docstring for the full validator
 function-signature contract. The `test` argument is the parsed test
@@ -118,9 +119,11 @@ def test_persisted_localities_entry_shape(before_state, after_state):
     `test_universal.py::test_research_json_validates_schema` against
     `research.schema.json` ($defs.locality, additionalProperties:false + required
     keys), so VR1 does not duplicate them. Presence-gated rather than tag-gated:
-    the ~20 `empty-project-just-created` survey tests persist without the
-    `localities-persist` tag, so this catches source/section defects the
-    tag-gated test above never sees.
+    the ~20 `empty-project-just-created` survey tests carry that scenario
+    without the `localities-persist` tag, so on any that DO persist this catches
+    source/section defects the tag-gated test above never sees. (How many
+    persist is a separate, currently-low number — 2 of 26 in v1_2026-09-21_13-46-57;
+    that population question is tracked on #1886, not asserted here.)
 
     Skips when the run wrote no entry (standalone Q&A / decline). Persistence
     itself is asserted only by the tag-gated test above, so a skill that stops
@@ -148,18 +151,25 @@ def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
     required Step-3 calls (SKILL.md Step 3, "do not drop any call").
 
     Grades call PRESENCE, not the result: the skill *making* both calls is the
-    behaviour under test. A `fixture_not_found` response means the skill called
-    the tool but the eval corpus lacks a fixture (a test-corpus gap, not skill
-    misbehaviour); in production the call always returns. Grounding of a result
-    is not this validator's concern.
+    behaviour under test. A `fixture_not_found` response means the skill DID call
+    a *registered* tool with args no fixture matched (a test-corpus gap, not
+    skill misbehaviour); in production the call always returns. That is distinct
+    from a tool with NO fixture at all: collections_search and volume_search are
+    fixture-backed and absent from LIVE_TOOLS, so a test that declares no fixture
+    for one never registers it and the skill cannot call it — which is why ut_002
+    (no volume_search fixture) shows up as a one-search run, not a
+    `fixture_not_found`. Grounding of a result is not this validator's concern.
 
     LIMIT (documented, not a bug): a run that called NEITHER search is skipped —
     it cannot be distinguished from a legitimate non-survey (standalone Q&A, a
     wiki-only guide, or a decline). `ut_locality_guide_023` is exactly such a
     deliberate no-collection-tool test (its judge_context forbids naming a
-    collection), so VR4 correctly stands down there. Catching "a survey that
-    should have called both but called neither" would need an intent signal
-    (e.g. a survey tag) VR4 does not have.
+    collection), so VR4 correctly stands down there; `ut_002` is a plain records
+    survey that stands down only because its fixture list omits the searches.
+    Catching "a survey that should have called both but called neither" would
+    need an intent signal (e.g. the `volume-search` tag already on 12 tests, none
+    of them the seven rewired here) VR4 does not yet consult — a deliberate
+    choice, tracked on #1886, not an absence.
     """
     tools = {bare_tool_name(tc.get("tool")) for tc in (tool_calls or [])}
     called_cs = "collections_search" in tools

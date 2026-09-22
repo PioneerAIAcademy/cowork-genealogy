@@ -23,7 +23,7 @@
           {
             "place": "Virginia, United States",
             "dateRange": "1779-1800",
-            "recordType": "Revolutionary War land bounty warrants (browse-only images)"
+            "recordType": "Revolutionary War land bounty warrants"
           }
         ]
       },
@@ -38,7 +38,7 @@
           {
             "place": "Augusta, Virginia, United States",
             "dateRange": "1775-1795",
-            "recordType": "County court order books (partially name-indexed)"
+            "recordType": "County court order books"
           }
         ]
       },
@@ -53,7 +53,7 @@
           {
             "place": "Virginia, United States",
             "dateRange": "1782-1799",
-            "recordType": "State enumerations / tax lists (full-text searchable)"
+            "recordType": "State enumerations / tax lists"
           }
         ]
       }

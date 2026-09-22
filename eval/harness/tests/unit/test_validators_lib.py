@@ -196,10 +196,7 @@ def test_log_append_only_fails_when_entry_deleted():
 # `new_log_entries` had no coverage here at all before #2390, despite four
 # validator files depending on it. It is now a one-line alias for the general
 # form, so both are exercised together.
-
-
-def _wrap(section, entries):
-    return {"research_json": {section: entries}}
+# (`_wrap` is defined once at module top; this section reuses it.)
 
 
 def test_new_section_entries_returns_only_what_is_new():

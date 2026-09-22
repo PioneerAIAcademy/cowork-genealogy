@@ -14,11 +14,12 @@ schema validator does not (source + four-section coverage); VR2 and VR3 were
 dropped (VR2 was circular against project_context's read-back and duplicated
 test_research_plan/provenance_report; VR3 is subsumed by VR4 and would only
 false-fire — SKILL.md:82 makes volume_search a required Step-3 call and Step 4
-derives every label from its result, so the only acceptance runs assigning a
-label without a volume_search call are the two whose fixtures don't register
+derives every label from its result, so the one acceptance run assigning a
+label without a volume_search call is ut_002, whose fixtures don't register
 volume_search). VR4 gates that a records survey called both Step-3 searches.
 """
 
+import json
 import sys
 from copy import deepcopy
 from pathlib import Path
@@ -36,6 +37,33 @@ from test_locality_guide import (  # noqa: E402
     test_persisted_localities_entry_shape as check_shape,
     test_survey_run_calls_both_collections_and_volume_search as check_both_searches,
 )
+
+from harness.mock_mcp import create_mock_server  # noqa: E402
+
+_EVAL_DIR = Path(__file__).resolve().parents[3]
+_FIXTURES_DIR = _EVAL_DIR / "fixtures" / "mcp"
+_LOCALITY_TESTS = _EVAL_DIR / "tests" / "unit" / "locality-guide"
+
+# The survey tests this PR rewired to exercise VR4: each MUST register both
+# Step-3 searches through its own `mcp_fixtures`, or VR4's assertion silently
+# disarms (an unregistered tool is never called, so VR4 sees neither and skips).
+# Hardcoded by id — NOT discovered by "declares a volume-search fixture" —
+# because the fixture reference is the very thing that can go missing; a
+# discovery scan would shrink its own population and miss the regression.
+_VR4_SURVEY_TEST_IDS = [
+    "ut_locality_guide_004",
+    "ut_locality_guide_009",
+    "ut_locality_guide_014",
+    "ut_locality_guide_015",
+    "ut_locality_guide_017",
+    "ut_locality_guide_019",
+    "ut_locality_guide_020",
+]
+
+
+def _declared_fixtures(test_id):
+    path = _LOCALITY_TESTS / f"{test_id}.json"
+    return json.loads(path.read_text(encoding="utf-8")).get("mcp_fixtures", [])
 
 
 # --- helpers ------------------------------------------------------------
@@ -164,3 +192,58 @@ def test_both_searches_skips_when_neither_called():
     checked (review B7)."""
     with pytest.raises(pytest.skip.Exception):
         check_both_searches([_call("wiki_place_page"), _call("place_search")])
+
+
+# --- B11: VR4 reachability pins (mirrors search-images #1788) -----------
+
+
+@pytest.mark.parametrize(
+    "prefix",
+    [
+        "mcp__genealogy__",
+        # Cowork's two other server spellings; VR4 normalizes on
+        # bare_tool_name() and CLAUDE.md requires all three to resolve.
+        "mcp__remote-devices__Genealogy_Research__",
+        "mcp__Genealogy_Research__",
+    ],
+)
+def test_vr4_recognizes_collections_search_in_every_server_spelling(prefix):
+    """Pins VR4's `bare_tool_name()` normalization. Deleting that call makes VR4
+    compare a qualified name against a bare one, match nothing, and SKIP rather
+    than fire — which pytest reports as *skipped, not failed*, so a plain
+    `pytest.raises` guard would go green-to-skipped and never catch it. So this
+    converts the skip into an explicit failure: with `collections_search` called
+    (in each spelling) and `volume_search` absent, VR4 must FIRE, never skip."""
+    call = {"tool": f"{prefix}collections_search", "args": {}}
+    try:
+        check_both_searches([call])
+    except AssertionError as exc:
+        assert "volume_search" in str(exc)  # recognized cs, fired for missing vs
+    except pytest.skip.Exception:
+        pytest.fail(
+            f"VR4 did not recognize collections_search in spelling {prefix!r} — "
+            "bare_tool_name() normalization dropped, so VR4 is blind to real calls"
+        )
+    else:
+        pytest.fail("VR4 neither fired nor skipped on a one-search survey")
+
+
+def test_vr4_survey_tests_register_both_step3_searches():
+    """The other half: `mcp_fixtures` is what makes collections_search and
+    volume_search callable (both are fixture-backed, absent from LIVE_TOOLS), so
+    dropping either reference silently disarms VR4 for that test. Reads each
+    survey test's OWN declaration and asserts the mock arms both — removing a
+    fixture reds this. The empty-declaration case documents the disarmed state."""
+    for test_id in _VR4_SURVEY_TEST_IDS:
+        declared = _declared_fixtures(test_id)
+        _, _, armed = create_mock_server(declared, _FIXTURES_DIR)
+        assert {"collections_search", "volume_search"} <= set(armed), (
+            f"{test_id}'s mcp_fixtures must register both Step-3 searches or VR4 "
+            f"silently skips it; declared {declared} -> registered {sorted(armed)}"
+        )
+
+    _, _, unarmed = create_mock_server([], _FIXTURES_DIR)
+    assert not ({"collections_search", "volume_search"} & set(unarmed)), (
+        "with no mcp_fixtures both searches must be absent — if they are now "
+        f"live-registered this pin is obsolete; got {sorted(unarmed)}"
+    )

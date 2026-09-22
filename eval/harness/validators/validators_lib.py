@@ -184,6 +184,12 @@ def new_section_entries(
     # hardening rather than a fix; the section being caller-supplied is what
     # widens the set of shapes that reach here. (2130 drifts as runs land — the
     # 0 is the claim.)
+    # `prior` is a dict {id: entry}, not the set of ids the pre-`include_modified`
+    # helper kept: `include_modified` needs the entry itself to compare against.
+    # One consequence beyond the "default unchanged" claim above: duplicate ids in
+    # `before` collapse to the LAST occurrence, so a same-id pair there is compared
+    # only against its last member. No section reaching this holds duplicate ids
+    # today (research_append assigns them), so it is latent, not live.
     prior = {
         e.get("id"): e for e in (before.get(section) or []) if isinstance(e, dict)
     }
