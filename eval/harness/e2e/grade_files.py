@@ -53,7 +53,7 @@ def load_json(path: Path, *, what: str) -> dict[str, Any]:
         return json.loads(Path(path).read_text(encoding="utf-8"))
     except OSError as exc:
         raise InputError(f"cannot read the {what} at {path}: {exc}") from exc
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise InputError(f"the {what} at {path} is not valid JSON: {exc}") from exc
 
 

@@ -44,6 +44,29 @@ def test_read_tree_json_parses_valid(tmp_path: Path):
     assert parsed == {"persons": []}
 
 
+def test_read_tree_json_returns_none_for_a_json_array(tmp_path: Path):
+    """A tree parsing to an ARRAY is not None, so without the isinstance guard it
+    passed every `is None` test its three callers make and then raised
+    AttributeError on `.get(...)`. Same guard `read_research_json` documents."""
+    (tmp_path / "tree.gedcomx.json").write_text("[1, 2]", encoding="utf-8")
+    assert read_tree_json(tmp_path) is None
+
+
+def test_read_tree_json_returns_none_on_invalid_utf8(tmp_path: Path):
+    """`UnicodeDecodeError` is a ValueError, not an OSError, so a tree written in
+    cp1252 -- the Windows default, and this team runs on Windows -- propagated
+    out of every caller instead of degrading. `collect_post_hoc_shadow` reads
+    this file on the paid e2e path, where a raise aborts the run before any
+    result file is written.
+
+    Written as raw bytes because the point is a file this process would not have
+    produced."""
+    (tmp_path / "tree.gedcomx.json").write_bytes(
+        json.dumps({"persons": [{"id": "I1", "place": "Od\u00e9ssa"}]}, ensure_ascii=False).encode("cp1252")
+    )
+    assert read_tree_json(tmp_path) is None
+
+
 def test_project_completed_true_when_status_completed():
     assert project_completed({"project": {"status": "completed"}}) is True
 
