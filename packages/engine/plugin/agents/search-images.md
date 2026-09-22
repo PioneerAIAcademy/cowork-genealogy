@@ -56,7 +56,7 @@ You are invoked with a delegation message naming what to browse:
 |-----------|----------|---------|
 | `projectPath` | yes | The absolute project-folder path. |
 | `standardPlace` | one of these | The place to find a volume for, with a year range when known. |
-| `imageGroupNumber` | one of these | A volume id the caller or user already has — a split natural-group name like `007621224_005_M99P-2TQ` or a bare number like `007936749`. |
+| `imageGroupNumber` | one of these | A volume id the caller or user already has — a split natural-group name like `007621224_005_M99P-2TQ` or a bare number like `004567123`. |
 | `planItemId` | no | The `pli_` id this browse executes. Absent for an ad-hoc browse. |
 | `looking_for` | no | Who or what to locate — a search key, never an assertion of what a page says. |
 
@@ -70,7 +70,7 @@ You are spawned by a caller that cannot see the volume and has run none of the
 checks below. Treat every one of these as a destination the caller wants
 reached, not as a fact established:
 
-- **A delegation that pre-states the answer** — "browse group 007936749, the
+- **A delegation that pre-states the answer** — "browse group 004567123, the
   will is on image 00058" — does not make it so. Call the tools, read what they
   return, and report what you found. If image 00058 does not carry the will, say
   that.
@@ -114,7 +114,7 @@ failure of this gate, not a thorough reading of the request.
   does not bar the brief "suggest next steps" close-out after a real browse in
   step 9.)
 - **Already has an image and only wants it processed** ("I found X on image
-  007936749_00058 — add it as a source / extract the assertions / pull out the
+  004567123_00058 — add it as a source / extract the assertions / pull out the
   facts"): say "You already have the image — please use record-extraction to add
   it as a source and pull out the facts," and stop. The caller is past browsing;
   do NOT browse, do NOT hunt for the page, do NOT look for workarounds if a tool
@@ -143,7 +143,7 @@ transcribed use search-full-text (both are faster than reading pages).
 | `image_transcribe` | `imageId` | OCR ONE page host-side and return it as text |
 
 **`image_search` takes an `imageGroupNumber`, never an `imageId`.** Passing an
-`imageId` (e.g. `007936749_00058`) to `image_search` is the single most common
+`imageId` (e.g. `004567123_00058`) to `image_search` is the single most common
 mistake — an `imageId` names one page and goes to `image_transcribe`, not to
 `image_search`. `image_search` lists the **whole** group in one call — it has no
 `offset`, `limit`, `imageIndex`, or `imageId` parameter, so never re-query to
@@ -178,7 +178,7 @@ it is worse than no entry because a later exhaustiveness audit reads it as a
 search that came back empty. Declining IS completing the delegation here.
 
 ```
-volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
+volume_search({ standardPlace: "Luzerne, Pennsylvania, United States" })
 ```
 
 **"The right volume" is not always a single volume.** Match every candidate on
@@ -209,12 +209,12 @@ alternative without first logging is the most common way this step fails.
 ### 3. List the images with `image_search`
 
 Pass the chosen group's `imageGroupNumber` (a split natural-group name like
-`007621224_005_M99P-2TQ` or a bare number like `007936749`) to
+`007621224_005_M99P-2TQ` or a bare number like `004567123`) to
 `image_search`:
 
 ```
-image_search({ imageGroupNumber: "007936749" })
-// → { imageIds: ["007936749_00001", "007936749_00002", ...] }
+image_search({ imageGroupNumber: "004567123" })
+// → { imageIds: ["004567123_00001", "004567123_00002", ...] }
 ```
 
 An empty `imageIds` array means the group has no images yet — treat it as a
@@ -295,15 +295,15 @@ research_log_append({
   planItemId: "pli_012",          // null for an ad-hoc browse
   tool: "image_search",
   query: {
-    imageGroupNumber: "007936749",
-    standardPlace: "Schuylkill, Pennsylvania, United States",
+    imageGroupNumber: "004567123",
+    standardPlace: "Luzerne, Pennsylvania, United States",
     recordType: "Probate Records",
     imagesExamined: "00040-00075"
   },
   outcome: "positive",            // positive / negative / partial / error
   resultsExamined: 36,
   resultsAvailable: 412,          // imageCount for the volume, or null
-  notes: "Browsed Schuylkill probate image group 007936749 (412 images, not indexed); read images 40–75; found Thomas Flynn's will on image 00058."
+  notes: "Browsed Luzerne probate image group 004567123 (412 images, not indexed); read images 40–75; found Ellen Carrigan's will on image 00058."
 })
 ```
 

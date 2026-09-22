@@ -10,6 +10,8 @@ description: Invoke for browsing FamilySearch digitized image volumes
   search (use search-full-text), external repositories like Ancestry (use
   search-external-sites), planning what to browse (use research-plan), and
   extracting facts from an image you have already found (use record-extraction).
+allowed-tools:
+  - project_context
 ---
 
 # Search Images (router)
@@ -28,7 +30,7 @@ From the user's words, gather:
 - `looking_for` — who or what they are hunting for, in their words.
 
 Pass them through as given. Do not read `research.json` to choose a volume, do
-not call a tool, and do not judge whether the set is indexed, whether a volume
+not call a tool beyond the narration read above, and do not judge whether the set is indexed, whether a volume
 exists, or whether the request is in scope — the agent runs every one of those
 checks and declines when one fails.
 
