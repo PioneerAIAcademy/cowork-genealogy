@@ -216,6 +216,23 @@ def test_rehash_tags_fails_on_zero_rewrites(tmp_path: Path):
     assert rc == 1  # zero rewrites → failure
 
 
+def test_rehash_tags_dry_run_changes_nothing(tmp_path: Path):
+    repo = _make_repo_with_test(tmp_path)
+    runlogs = tmp_path / "runlogs"
+
+    old_hash = _old_rule_hash(TEST_JSON_BODY)
+    p = _write_log(runlogs, "v1_2026-07-01_00-00-00.json",
+                   schema_version=3, snapshot={
+                       SKILL_MD: hash_content("body\n"),
+                       TEST_JSON_KEY: old_hash,
+                   })
+    before = p.read_text(encoding="utf-8")
+
+    prune_runlogs.cmd_rehash_tags(runlogs, repo_root=repo, dry_run=True)
+
+    assert p.read_text(encoding="utf-8") == before
+
+
 def test_rehash_tags_is_idempotent(tmp_path: Path):
     """Running the migration twice should not change the output."""
     repo = _make_repo_with_test(tmp_path)
