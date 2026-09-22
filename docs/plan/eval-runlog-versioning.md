@@ -547,21 +547,18 @@ not accountable for the committed baseline and is not graded here; without that,
 a skill carrying reds could satisfy neither rule 3 nor rule 6, and its
 annotations could never land.
 
-Pre-existing reds are carried in `eval/harness/runlog_carry.json`, one entry per
-test with `skill`, `test_id`, `outcome`, `issue`, `filed`, `review_by`,
-`baseline`, `reason` and optional `flaky`. A carried red **warns**, naming its
-owning issue; one **past its `review_by`** blocks; one whose test **now passes**
-blocks, so the line is deleted — that is how a carried red retires. `flaky: true`
-exempts an entry from the pass-retirement arm only, never from `review_by`. A
-malformed entry blocks rather than being skipped: failing open there would make a
-carried red permanent and silent, which is the rot the file replaces.
+**Zero reds, not zero new reds** (lead ruling 2026-09-22, reversing the
+2026-09-21 decision). There is no carry list, no review-by date and no per-entry
+exemption. A run log a PR adds must be clean whether or not the red predates the
+PR: "it was already red before my change" is the excuse the rule exists to
+remove, because a suite carrying reds cannot answer "did my refactor break
+something", which is the one question it exists to answer. Cost and elapsed time
+are explicitly not factors in that trade.
 
-The carry file lives under `eval/harness/`, which matches no `touched_skills`
-prefix, so editing it marks zero skills touched and costs no paid run. Markers
-were rejected for the day-one backlog for the opposite reason: `expected_outcome`
-is in the snapshot hash, so writing 35 of them would stale 12 skills under rule 2,
-and `eval-cosmetic-skip` cannot honestly clear that — the label is for
-behaviour-neutral changes and `expected_outcome` changes grading.
+A warn-only arm resolves each `expected_outcome: xfail` marker's cited issue and
+says so when it is closed, since a marker whose stated removal condition names a
+closed issue can never be met. It needs the network, so it is inert without `gh`
+or a token, never blocks, and swallows every error.
 
 ## Supersessions
 

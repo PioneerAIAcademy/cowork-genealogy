@@ -1033,11 +1033,11 @@ def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys)
     assert "no comment" in capsys.readouterr().out
 
 
-# --- rule 6: outcome gate (#2684) ------------------------------------------------
+# --- rule 6: the outcome gate ---------------------------------------------------
 #
-# The rule blocks a PR that ADDS a run log carrying an unsuppressed fail/aborted.
-# Direct unit calls, because the shapes worth pinning are per-test, not per-PR;
-# the main()-level wiring (which added log is graded) is covered separately below.
+# Zero reds, not zero new reds (lead ruling 2026-09-22). No carry list, no
+# review-by date, no per-entry exemption. Direct unit calls, because the shapes
+# worth pinning are per-test; the main() wiring is covered further down.
 
 
 def _t(test_id, outcomes, *, expected="pass"):
@@ -1048,35 +1048,26 @@ def _t(test_id, outcomes, *, expected="pass"):
     }
 
 
-def _carry(test_id, *, review_by="2099-01-01", flaky=False, issue=1234):
-    e = {
-        "skill": "s", "test_id": test_id, "outcome": "fail", "issue": issue,
-        "filed": "2026-09-22", "review_by": review_by,
-        "baseline": "v1_2026-09-01_00-00-00.json", "reason": "r",
-    }
-    if flaky:
-        e["flaky"] = True
-    return {test_id: e}
-
-
-def _rule6(tests, carry=None):
-    return check_runlogs.rule6_outcomes("s", {"tests": tests}, "v1.json", carry or {})
-
-
-def _rule6_closed(tests, carry, closed):
+def _rule6(tests, closed=None, markers=None):
     return check_runlogs.rule6_outcomes(
-        "s", {"tests": tests}, "v1.json", carry, closed
+        "s", {"tests": tests}, "v1.json", closed, markers
     )
 
 
-def test_rule6_blocks_an_uncarried_fail(capsys):
+def test_rule6_blocks_a_fail(capsys):
     assert _rule6([_t("ut_s_1", ["fail"])]) == 1
-    assert "resolved to `fail`" in capsys.readouterr().out
+    assert "may not carry a red" in capsys.readouterr().out
 
 
-def test_rule6_blocks_an_uncarried_abort(capsys):
+def test_rule6_blocks_an_abort(capsys):
     assert _rule6([_t("ut_s_1", ["pass", "aborted"])]) == 1
     assert "resolved to `aborted`" in capsys.readouterr().out
+
+
+def test_rule6_blocks_a_red_that_predates_the_pr(capsys):
+    """The whole point of the 2026-09-22 reversal: there is no "already red"
+    exemption, so an old red and a new one are the same failure."""
+    assert _rule6([_t("ut_s_1", ["fail"]), _t("ut_s_2", ["fail"])]) == 2
 
 
 def test_rule6_does_not_block_a_partial(capsys):
@@ -1085,7 +1076,7 @@ def test_rule6_does_not_block_a_partial(capsys):
 
 def test_rule6_uses_the_modal_aggregate_not_any_run(capsys):
     """[pass, fail, pass] is a passing test. Blocking on "any run failed" would be
-    a second definition, and a stricter one than the runner's."""
+    a second definition, and stricter than the runner's."""
     assert _rule6([_t("ut_s_1", ["pass", "fail", "pass"])]) == 0
 
 
@@ -1104,36 +1095,12 @@ def test_rule6_suppressed_pass_warns_but_does_not_block(capsys):
     assert "but PASSED" in capsys.readouterr().out
 
 
-def test_rule6_carried_red_warns_and_names_its_owner(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1")) == 0
-    out = capsys.readouterr().out
-    assert "carried red" in out and "issue #1234" in out
-
-
-def test_rule6_carried_red_past_review_by_blocks(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by="2020-01-01")) == 1
-    assert "passed its `review_by`" in capsys.readouterr().out
-
-
-def test_rule6_carried_red_that_now_passes_blocks(capsys):
-    """The retirement mechanism: a green test must not keep a carry line alive."""
-    assert _rule6([_t("ut_s_1", ["pass"])], _carry("ut_s_1")) == 1
-    assert "now PASSES" in capsys.readouterr().out
-
-
-def test_rule6_flaky_carried_red_that_passes_does_not_block(capsys):
-    assert _rule6([_t("ut_s_1", ["pass"])], _carry("ut_s_1", flaky=True)) == 0
-
-
-def test_rule6_flaky_does_not_exempt_from_review_by(capsys):
-    assert _rule6(
-        [_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by="2020-01-01", flaky=True)
-    ) == 1
-
-
-def test_rule6_ownerless_carry_entry_says_so(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", issue=None)) == 0
-    assert "NO OWNING ISSUE" in capsys.readouterr().out
+def test_rule6_names_a_closed_owner_on_a_stale_marker(capsys):
+    """A marker whose removal condition cites a closed issue can never be met.
+    Three of the five live markers are in that state."""
+    assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")],
+                  closed={2173}, markers={"ut_s_1": 2173}) == 0
+    assert "issue #2173, which is CLOSED" in capsys.readouterr().out
 
 
 def test_rule6_a_test_with_no_runs_blocks(capsys):
@@ -1143,85 +1110,74 @@ def test_rule6_a_test_with_no_runs_blocks(capsys):
     assert "has no runs" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize(
+    "runs",
+    [
+        [{}],
+        [{"outcome": None}],
+        [{"outcome": "FAIL"}],
+        [{"outcome": "failed"}],
+        [{"outcome": "pass"}, {"outcome": "skipped"}],
+    ],
+    ids=["missing", "null", "uppercase", "misspelled", "one-bad-of-two"],
+)
+def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
+    entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
+    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json") == 1
+    assert "outside the schema's" in capsys.readouterr().out
+
+
+def test_rule6_accepts_every_value_the_schema_allows(capsys):
+    """The other direction — the guard must not reject a legitimate enum member."""
+    for outcome in ("pass", "partial"):
+        assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
+
+
 def test_rule6_an_all_suppressed_log_is_allowed(capsys):
     assert _rule6([_t("ut_s_1", ["fail"], expected="xfail"),
                    _t("ut_s_2", ["fail"], expected="xfail")]) == 0
 
 
-def test_rule6_an_empty_tests_array_is_allowed_but_reported():
+def test_rule6_an_empty_tests_array_is_allowed():
     """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
-    second definition. Rule 1 and rule 3 own "a PR must carry a real run log"."""
+    second definition. Rules 1 and 3 own "a PR must carry a real run log"."""
     assert _rule6([]) == 0
 
 
-# --- the carry file's own shape --------------------------------------------------
+# --- marker owners, read from the committed test corpus --------------------------
 
 
-def _write_carry(tmp_path, monkeypatch, doc):
-    p = tmp_path / "runlog_carry.json"
-    p.write_text(json.dumps(doc), encoding="utf-8")
-    monkeypatch.setattr(check_runlogs, "CARRY_PATH", p)
-    return p
+def test_marker_owners_reads_the_issue_out_of_an_xfail_reason(tmp_path):
+    d = tmp_path / "some-skill"
+    d.mkdir()
+    (d / "t.json").write_text(json.dumps({"test": {
+        "id": "ut_x_1", "expected_outcome": "xfail",
+        "xfail_reason": "Remove this marker once #2173 lands.",
+    }}), encoding="utf-8")
+    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2173}
 
 
-def test_carry_missing_file_is_not_an_error(tmp_path, monkeypatch):
-    monkeypatch.setattr(check_runlogs, "CARRY_PATH", tmp_path / "nope.json")
-    assert check_runlogs.load_carry() == ({}, 0)
+def test_marker_owners_ignores_unmarked_tests_and_reasonless_markers(tmp_path):
+    d = tmp_path / "some-skill"
+    d.mkdir()
+    (d / "a.json").write_text(json.dumps({"test": {
+        "id": "ut_x_1", "expected_outcome": "pass",
+        "xfail_reason": "mentions #999 but is not a marker"}}), encoding="utf-8")
+    (d / "b.json").write_text(json.dumps({"test": {
+        "id": "ut_x_2", "expected_outcome": "xfail",
+        "xfail_reason": "no issue cited, so nothing to check"}}), encoding="utf-8")
+    assert check_runlogs.marker_owners(tmp_path) == {}
 
 
-def test_carry_malformed_json_blocks(tmp_path, monkeypatch, capsys):
-    p = tmp_path / "runlog_carry.json"
-    p.write_text("{not json", encoding="utf-8")
-    monkeypatch.setattr(check_runlogs, "CARRY_PATH", p)
-    carry, fails = check_runlogs.load_carry()
-    assert fails == 1 and carry == {}
-
-
-def test_carry_entry_missing_review_by_blocks(tmp_path, monkeypatch, capsys):
-    """The fail-open direction: a dropped key must not silently make a red
-    permanent."""
-    e = dict(next(iter(_carry("ut_s_1").values())))
-    del e["review_by"]
-    _write_carry(tmp_path, monkeypatch, {"entries": [e]})
-    carry, fails = check_runlogs.load_carry()
-    assert fails == 1 and carry == {}
-    assert "missing key" in capsys.readouterr().out
-
-
-def test_carry_entry_with_a_typod_key_blocks(tmp_path, monkeypatch, capsys):
-    e = dict(next(iter(_carry("ut_s_1").values())))
-    e["reviewBy"] = e.pop("review_by")
-    _write_carry(tmp_path, monkeypatch, {"entries": [e]})
-    _, fails = check_runlogs.load_carry()
-    assert fails == 1
-    out = capsys.readouterr().out
-    assert "missing key" in out and "unknown key" in out
-
-
-def test_carry_entry_with_an_unparseable_date_blocks(tmp_path, monkeypatch, capsys):
-    e = dict(next(iter(_carry("ut_s_1").values())))
-    e["review_by"] = "next tuesday"
-    _write_carry(tmp_path, monkeypatch, {"entries": [e]})
-    _, fails = check_runlogs.load_carry()
-    assert fails == 1
-    assert "unparseable `review_by`" in capsys.readouterr().out
-
-
-def test_the_shipped_carry_file_is_well_formed():
-    """The real file, not a fixture — a malformed entry that only CI sees is the
-    shape this whole guard exists to prevent."""
-    carry, fails = check_runlogs.load_carry()
-    raw = json.loads(check_runlogs.CARRY_PATH.read_text(encoding="utf-8"))
-    assert fails == 0
-    assert carry, "the carry file is empty -- rule 6 would block 12 skills on day one"
-    # Length is pinned against the FILE, not a literal: adding or retiring an entry is
-    # the file's whole purpose and must not red a test. A literal would be bumped or
-    # skipped within a month. This still catches the collapse a duplicate test_id
-    # causes, since the dict is keyed on test_id.
-    assert len(carry) == len(raw["entries"])
-
-
-# --- rule 6 wiring: the PR's OWN log is graded, not the resolved latest -----------
+def test_marker_owners_survives_an_unreadable_file(tmp_path):
+    """It scans the whole corpus, so one bad file must not take the gate down."""
+    d = tmp_path / "some-skill"
+    d.mkdir()
+    (d / "bad.json").write_text("{ not json", encoding="utf-8")
+    (d / "good.json").write_text(json.dumps({"test": {
+        "id": "ut_x_1", "expected_outcome": "xfail",
+        "xfail_reason": "owned by #2030"}}), encoding="utf-8")
+    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2030}
 
 
 def _clean_log(test_id="ut_ip_1", outcome="pass"):
@@ -1243,7 +1199,6 @@ def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
     monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
     (tmp_path / "tests" / skill).mkdir(parents=True)
     monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests")
-    monkeypatch.setattr(check_runlogs, "CARRY_PATH", tmp_path / "no_carry.json")
     return skill_dir
 
 
@@ -1283,53 +1238,6 @@ def test_rule6_does_not_grade_the_baseline_on_an_annotation_only_pr(
 
     check_runlogs.main()
     assert "resolved to `fail`" not in capsys.readouterr().out
-
-
-def test_main_feeds_the_real_carry_file_to_rule6(tmp_path, monkeypatch, capsys):
-    """The seam: main() loads runlog_carry.json and hands the dict down. Tested at
-    main() level because rule6_outcomes takes carry as a parameter and load_carry is
-    tested alone — so passing `{}` instead of `carry` regressed with every test green,
-    which would block the next PR touching 12 of 27 skills."""
-    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
-    added = "v2_2026-09-22_09-00-00.json"
-    (skill_dir / added).write_text(
-        json.dumps(_clean_log("ut_ip_carried", "fail")), encoding="utf-8"
-    )
-    _write_ann(skill_dir, added, [])
-    _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
-
-    carry_file = tmp_path / "carry.json"
-    monkeypatch.setattr(check_runlogs, "CARRY_PATH", carry_file)
-
-    # no carry file -> the red blocks
-    assert check_runlogs.main() == 1
-    assert "resolved to `fail`" in capsys.readouterr().out
-
-    # the SAME red, now carried -> warns instead
-    carry_file.write_text(
-        json.dumps({"entries": [dict(next(iter(_carry("ut_ip_carried").values())),
-                                     skill="init-project")]}),
-        encoding="utf-8",
-    )
-    assert check_runlogs.main() == 0
-    assert "carried red `ut_ip_carried`" in capsys.readouterr().out
-
-
-def test_main_counts_a_malformed_carry_entry_as_a_failure(tmp_path, monkeypatch, capsys):
-    """`fails += carry_fails` — dropping that one line turns the whole carry
-    validation block into a warning stream, with every function-level test green."""
-    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
-    (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
-    _write_ann(skill_dir, "v1.json", [])
-    _patch_diffs(monkeypatch, ["eval/runlogs/unit/init-project/v1.ann.json"])
-
-    bad = dict(next(iter(_carry("ut_s_1").values())))
-    del bad["review_by"]
-    carry_file = tmp_path / "carry.json"
-    carry_file.write_text(json.dumps({"entries": [bad]}), encoding="utf-8")
-    monkeypatch.setattr(check_runlogs, "CARRY_PATH", carry_file)
-
-    assert check_runlogs.main() == 1
 
 
 def test_rule6_grades_every_added_log_when_a_pr_adds_two(tmp_path, monkeypatch, capsys):
@@ -1411,77 +1319,6 @@ def test_rule6_accepts_every_value_the_schema_allows(capsys):
     """The other direction — the guard must not reject a legitimate enum member."""
     for outcome in ("pass", "partial"):
         assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
-
-
-def test_carry_entry_that_is_not_an_object_blocks(tmp_path, monkeypatch, capsys):
-    _write_carry(tmp_path, monkeypatch, {"entries": ["ut_s_1", 42, None]})
-    carry, fails = check_runlogs.load_carry()
-    assert fails == 3 and carry == {}
-    assert "is not an object" in capsys.readouterr().out
-
-
-def test_carry_entry_due_today_does_not_block_yet(capsys):
-    """Boundary: `due < today`, so an entry due TODAY is still inside its window.
-    Tested because the two existing cases are years either side of it."""
-    today = date.today().isoformat()
-    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by=today)) == 0
-    assert "carried red" in capsys.readouterr().out
-
-
-def test_carry_entry_due_yesterday_blocks(capsys):
-    y = (date.today() - timedelta(days=1)).isoformat()
-    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by=y)) == 1
-
-
-def test_rule6_warns_when_a_carried_reds_owner_is_closed(capsys):
-    """Split item 4. Three of the five live xfail markers already cite a closed
-    issue, so this is the rot the carry file would grow without it."""
-    assert _rule6_closed([_t("ut_s_1", ["fail"])], _carry("ut_s_1", issue=1234), {1234}) == 0
-    assert "is CLOSED" in capsys.readouterr().out
-
-
-def test_rule6_does_not_cry_closed_for_an_open_owner(capsys):
-    assert _rule6_closed([_t("ut_s_1", ["fail"])], _carry("ut_s_1", issue=1234), set()) == 0
-    assert "is CLOSED" not in capsys.readouterr().out
-
-
-def test_closed_owner_lookup_is_inert_without_gh(capsys):
-    """Network-optional and never raises: no gh, a timeout, a 403 and a shape change
-    are the same non-answer, and none is the author's problem."""
-    def boom(*a, **k):
-        raise FileNotFoundError("gh")
-    assert check_runlogs.closed_carry_owners(_carry("ut_s_1"), runner=boom) == set()
-
-
-def test_closed_owner_lookup_reads_the_state(capsys):
-    class P:
-        returncode = 0
-        stdout = "CLOSED\n"
-    assert check_runlogs.closed_carry_owners(
-        _carry("ut_s_1", issue=99), runner=lambda *a, **k: P()
-    ) == {99}
-
-
-def test_rule6_warns_when_a_carried_reds_outcome_changed_shape(capsys):
-    """`outcome` is required on a carry entry, so it must mean something. A red
-    recorded as `fail` that now aborts has changed shape and is worth a look."""
-    out_of_date = _carry("ut_s_1")          # records outcome "fail"
-    assert _rule6([_t("ut_s_1", ["aborted"])], out_of_date) == 0
-    assert "recorded as `fail` but now resolves to `aborted`" in capsys.readouterr().out
-
-
-def test_rule6_does_not_cry_shape_change_when_the_outcome_matches(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1")) == 0
-    assert "changed shape" not in capsys.readouterr().out
-
-
-def test_rule6_warns_when_a_carry_entry_names_another_skill(capsys):
-    """Entries are keyed on test_id alone, so a mismatched `skill` would silently
-    carry the wrong red. Benign today only because rule 4 makes ids unique."""
-    wrong = _carry("ut_s_1")
-    wrong["ut_s_1"]["skill"] = "some-other-skill"
-    assert _rule6([_t("ut_s_1", ["fail"])], wrong) == 0
-    assert "names skill `some-other-skill`" in capsys.readouterr().out
 
 
 def test_rule5_names_an_unparseable_annotation_outside_the_repo(tmp_path, monkeypatch, capsys):

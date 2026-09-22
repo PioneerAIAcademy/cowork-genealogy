@@ -25,8 +25,9 @@ docs/plan/eval-runlog-versioning.md §C6:
     Rule 4   no two unit-test files share a `test.id`.
     Rule 5   every committed unit .ann.json is valid JSON.
     Rule 6   no unsuppressed test in a run log THIS PR ADDS resolves to
-             `fail` or `aborted`; pre-existing reds are carried in
-             eval/harness/runlog_carry.json with an owner and a review_by.
+             `fail` or `aborted`. Zero reds, not zero new reds: there is no
+             carry list and no exemption, because "it was already red" is the
+             excuse the rule exists to remove.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
@@ -42,7 +43,6 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -65,7 +65,6 @@ RUNLOGS_DIR = REPO_ROOT / "eval" / "runlogs" / "unit"
 JUDGE_PROMPT_PATH = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
 PLUGIN_SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_UNIT_DIR = REPO_ROOT / "eval" / "tests" / "unit"
-CARRY_PATH = REPO_ROOT / "eval" / "harness" / "runlog_carry.json"
 
 
 # Match `eval/runlogs/unit/<skill>/<file>.json`
@@ -656,128 +655,84 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
 # and matches neither "fail" nor "pass" -- the exact exit-0-having-done-nothing
 # shape CLAUDE.md names.
 _RUN_OUTCOMES = frozenset({"pass", "partial", "fail", "aborted"})
-
-_CARRY_REQUIRED = ("skill", "test_id", "outcome", "issue", "filed", "review_by",
-                   "baseline", "reason")
-_CARRY_OPTIONAL = ("flaky",)
-
-
-def load_carry() -> tuple[dict[str, dict], int]:
-    """-> ({test_id: entry}, failure_count).
-
-    A malformed entry BLOCKS rather than being skipped. The fail-open direction
-    is the dangerous one here: a typo'd `review_by` key on a carried red would
-    make that red permanent and silent, which is the rot the carry file exists
-    to replace (CLAUDE.md, "a guard fails two ways").
-    """
-    if not CARRY_PATH.exists():
-        return {}, 0
-    try:
-        doc = json.loads(CARRY_PATH.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        gh_error(f"`{_format_path(CARRY_PATH)}` is not valid JSON ({exc}).")
-        return {}, 1
-    fails = 0
-    carry: dict[str, dict] = {}
-    for i, e in enumerate(doc.get("entries") or []):
-        where = f"entry {i}" + (f" (`{e['test_id']}`)" if isinstance(e, dict) and e.get("test_id") else "")
-        if not isinstance(e, dict):
-            gh_error(f"runlog carry: {where} is not an object.")
-            fails += 1
-            continue
-        missing = [k for k in _CARRY_REQUIRED if k not in e]
-        unknown = [k for k in e if k not in _CARRY_REQUIRED + _CARRY_OPTIONAL]
-        if missing or unknown:
-            gh_error(
-                f"runlog carry: {where} has "
-                + (f"missing key(s) {missing}. " if missing else "")
-                + (f"unknown key(s) {unknown}. " if unknown else "")
-                + "Required: " + ", ".join(_CARRY_REQUIRED) + "."
-            )
-            fails += 1
-            continue
-        if not _parse_iso_date(e["review_by"]):
-            gh_error(
-                f"runlog carry: {where} has an unparseable `review_by` "
-                f"({e['review_by']!r}). Use YYYY-MM-DD."
-            )
-            fails += 1
-            continue
-        carry[e["test_id"]] = e
-    return carry, fails
-
-
-def _parse_iso_date(value) -> date | None:
-    if not isinstance(value, str):
-        return None
-    try:
-        return date.fromisoformat(value)
-    except ValueError:
-        return None
-
-
-# Whole-call budget for the closed-owner lookup. Warn-only, so a slow or absent
-# `gh` must cost seconds and then get out of the way.
 _GH_TIMEOUT_SECONDS = 20
 
+def closed_marker_owners(markers: dict[str, int], runner=subprocess.run) -> set[int]:
+    """-> the set of issues cited by an `xfail_reason` that are CLOSED.
 
-def closed_carry_owners(carry: dict[str, dict], runner=subprocess.run) -> set[int]:
-    """-> the set of carried-red owner issues that are CLOSED.
+    Warn-only and **never raises**: it needs the network, so it is silently inert
+    with no `gh`, no token, or no connection. A gate that hard-fails on a GitHub
+    blip fails work the author was entitled to land.
 
-    Split item 4 of issue #2684. Warn-only and **never raises**: it needs the
-    network, so it is silently inert with no `gh`, no token, or no connection. A
-    gate that hard-fails on a GitHub blip fails work the author was entitled to
-    land — and `review_by` is the arm that works offline regardless.
-
-    It exists because three of the five live `xfail` markers cite an issue that is
-    already closed (#2173, #2030, #1967), so their stated removal condition can
-    never be met and nothing notices. The same rot is what the carry file would
-    grow without this.
+    It exists because a marker's stated removal condition can cite an issue that
+    is already closed, at which point the condition can never be met and nothing
+    notices. Three of the five live markers are in that state (#2173, #2030,
+    #1967), and `h4k`'s has been stale since 2026-09-02.
     """
-    issues = sorted({e["issue"] for e in carry.values() if e.get("issue")})
-    if not issues:
-        return set()
     closed: set[int] = set()
-    for number in issues:
+    for number in sorted(set(markers.values())):
         try:
             proc = runner(
-                ["gh", "api", f"repos/{_REPO_SLUG}/issues/{number}",
-                 "--jq", ".state"],
+                ["gh", "api", f"repos/{_REPO_SLUG}/issues/{number}", "--jq", ".state"],
                 capture_output=True, text=True, encoding="utf-8",
                 timeout=_GH_TIMEOUT_SECONDS,
             )
             if proc.returncode == 0 and (proc.stdout or "").strip().upper() == "CLOSED":
                 closed.add(number)
         except Exception:
-            # Blanket, and deliberate: every failure mode here — no gh, no token,
-            # a 403, a timeout, a shape change — is the same non-answer, and none
-            # of them is the author's problem.
+            # Blanket, and deliberate: no gh, no token, a 403, a timeout, a shape
+            # change -- all the same non-answer, and none the author's problem.
             return set()
     return closed
+
+
+def marker_owners(tests_root: Path) -> dict[str, int]:
+    """-> {test_id: issue number} for every committed `expected_outcome: xfail`
+    marker whose `xfail_reason` cites one. A marker citing no issue is not an
+    error here; it simply cannot be checked."""
+    owners: dict[str, int] = {}
+    for path in sorted(tests_root.rglob("*.json")):
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        test = doc.get("test") or {}
+        if test.get("expected_outcome") != "xfail":
+            continue
+        m = re.search(r"#(\d{3,6})", str(test.get("xfail_reason") or ""))
+        if m and test.get("id"):
+            owners[test["id"]] = int(m.group(1))
+    return owners
 
 
 def rule6_outcomes(
     skill: str,
     log: dict,
     filename: str,
-    carry: dict[str, dict],
     closed_owners: set[int] | None = None,
+    marker_issues: dict[str, int] | None = None,
 ) -> int:
     """Rule 6 (blocking): no unsuppressed test in this run log resolves to
     `fail` or `aborted`.
 
-    Ruling A (#2684) points at `runs[].outcome`, whose enum is
-    pass/partial/fail/aborted, so this never meets the aggregate's xfail/xpass
-    remap. Aggregation is `harness.outcomes.aggregate_per_run_outcome` — the
-    same function the runner uses, so the gate and `run_tests.py` cannot drift.
+    **Zero reds, not zero new reds** (lead ruling 2026-09-22, reversing the
+    2026-09-21 decision). A run log a PR adds must be clean whether or not the
+    red predates the PR. There is no carry list, no review-by date and no
+    per-entry exemption: "it was already red" is the excuse the rule exists to
+    remove, because a suite carrying reds cannot answer "did my refactor break
+    something", which is the one question it exists to answer.
+
+    Resolution is from `runs[].outcome`, whose enum is pass/partial/fail/aborted,
+    so this never meets the aggregate's xfail/xpass remap. Aggregation is
+    `harness.outcomes.aggregate_per_run_outcome` -- the same function the runner
+    uses, so the gate and `run_tests.py` cannot drift.
 
     `partial` never blocks (lead ruling 2026-09-18: "tests must pass, or
-    partial, consistently"). An `expected_outcome: xfail` marker declares a
-    known FAILURE, so it suppresses `fail` only: a suppressed test that aborts
-    blocks, because an abort is an ungraded run rather than evidence of the
-    declared defect, and one that passes warns as a stale-marker signal.
+    partial, consistently"). An `expected_outcome: xfail` marker declares a known
+    FAILURE, so it suppresses `fail` only: a suppressed test that aborts blocks,
+    because an abort is an ungraded run rather than evidence of the declared
+    defect, and one that passes warns as a stale-marker signal.
     """
-    today = date.today()
     fails = 0
     for test in log.get("tests") or []:
         test_id = test.get("test_id", "<no id>")
@@ -795,15 +750,15 @@ def rule6_outcomes(
             gh_error(
                 f"skill `{skill}`: `{filename}` test `{test_id}` has run outcome(s) "
                 f"{sorted(set(unknown))!r}, outside the schema's "
-                f"{sorted(_RUN_OUTCOMES)}. A value this gate does not recognise would "
-                f"otherwise resolve to neither fail nor pass and wave the test through.",
+                f"{sorted(_RUN_OUTCOMES)}. A value this gate does not recognise "
+                f"would otherwise resolve to neither fail nor pass and wave the "
+                f"test through.",
             )
             fails += 1
             continue
         agg = aggregate_per_run_outcome(per_run)
-        suppressed = test.get("expected_outcome") == "xfail"
 
-        if suppressed:
+        if test.get("expected_outcome") == "xfail":
             if agg == "aborted":
                 gh_error(
                     f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
@@ -813,64 +768,25 @@ def rule6_outcomes(
                 )
                 fails += 1
             elif agg == "pass":
+                owner = (marker_issues or {}).get(test_id)
+                stale = (
+                    f" Its removal condition cites issue #{owner}, which is CLOSED."
+                    if owner and owner in (closed_owners or set())
+                    else ""
+                )
                 gh_warning(
                     f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
                     f"`expected_outcome: xfail` but PASSED. The marker may be "
-                    f"stale — check whether its removal condition is met.",
+                    f"stale — check whether its removal condition is met.{stale}",
                 )
             continue
 
-        entry = carry.get(test_id)
         if agg in ("fail", "aborted"):
-            if entry is None:
-                gh_error(
-                    f"skill `{skill}`: `{filename}` test `{test_id}` resolved to "
-                    f"`{agg}`. A run log may not carry a new red. Fix the test, or "
-                    f"add it to `eval/harness/runlog_carry.json` with the issue "
-                    f"that owns the fix.",
-                )
-                fails += 1
-            elif (due := _parse_iso_date(entry["review_by"])) and due < today:
-                owner = f"issue #{entry['issue']}" if entry.get("issue") else "NO OWNING ISSUE"
-                gh_error(
-                    f"skill `{skill}`: carried red `{test_id}` passed its "
-                    f"`review_by` ({entry['review_by']}) and still resolves to "
-                    f"`{agg}`. {owner}. Fix it, or re-date the entry with a reason.",
-                )
-                fails += 1
-            else:
-                # `outcome` and `skill` are required on an entry, so a reader
-                # reasonably infers they mean something. Compare them rather than
-                # let them rot into decoration: a carried red that changed shape
-                # (fail -> aborted) is worth a look even inside its window.
-                if entry.get("outcome") and entry["outcome"] != agg:
-                    gh_warning(
-                        f"skill `{skill}`: carried red `{test_id}` is recorded as "
-                        f"`{entry['outcome']}` but now resolves to `{agg}`. Re-check "
-                        f"the entry — the defect may have changed shape.",
-                    )
-                if entry.get("skill") and entry["skill"] != skill:
-                    gh_warning(
-                        f"skill `{skill}`: carry entry for `{test_id}` names skill "
-                        f"`{entry['skill']}`. Entries are looked up by test_id, so a "
-                        f"mismatched skill silently carries the wrong red.",
-                    )
-                owner = f"issue #{entry['issue']}" if entry.get("issue") else "NO OWNING ISSUE — needs one"
-                if entry.get("issue") and entry["issue"] in (closed_owners or set()):
-                    owner = (
-                        f"issue #{entry['issue']} is CLOSED — this red's stated "
-                        f"removal condition can never be met; re-own it or fix it"
-                    )
-                gh_warning(
-                    f"skill `{skill}`: carried red `{test_id}` ({agg}), "
-                    f"review by {entry['review_by']}. {owner}.",
-                )
-        elif agg == "pass" and entry is not None and not entry.get("flaky"):
             gh_error(
-                f"skill `{skill}`: carried red `{test_id}` now PASSES. Delete its "
-                f"entry from `eval/harness/runlog_carry.json` — that is how a "
-                f"carried red retires. (Mark `flaky: true` instead only if it "
-                f"genuinely flaps.)",
+                f"skill `{skill}`: `{filename}` test `{test_id}` resolved to "
+                f"`{agg}`. A run log may not carry a red. Fix the test and re-run "
+                f"before committing the log — a suite carrying reds cannot tell "
+                f"you whether a refactor broke something.",
             )
             fails += 1
     return fails
@@ -1086,10 +1002,15 @@ def main() -> int:
     # see its docstring for why per-skill scoping is exactly what hid the bug.
     fails += rule5_annotations_parse(RUNLOGS_DIR)
 
-    carry, carry_fails = load_carry()
-    fails += carry_fails
     graded_logs = graded_tests = 0
-    closed_owners = closed_carry_owners(carry)
+    # Only when there is something to grade. The lookup is network-bound, and a
+    # PR that adds no run log pays up to one `gh` call per marker for a warning it
+    # can never trigger.
+    marker_issues: dict[str, int] = {}
+    closed_owners: set[int] = set()
+    if added_by_skill:
+        marker_issues = marker_owners(TESTS_UNIT_DIR)
+        closed_owners = closed_marker_owners(marker_issues)
 
     for skill in sorted(touched_skills):
         skill_dir = RUNLOGS_DIR / skill
@@ -1128,9 +1049,9 @@ def main() -> int:
                 added_log = json.loads(
                     (skill_dir / added).read_text(encoding="utf-8")
                 )
-            except json.JSONDecodeError as exc:
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
                 gh_error(
-                    f"skill `{skill}`: added run log `{added}` is not valid JSON "
+                    f"skill `{skill}`: added run log `{added}` is not readable JSON "
                     f"({exc}). If this is a merge conflict marker, re-run the harness "
                     f"rather than resolving it by hand.",
                 )
@@ -1138,7 +1059,9 @@ def main() -> int:
                 continue
             graded_logs += 1
             graded_tests += len(added_log.get("tests") or [])
-            fails += rule6_outcomes(skill, added_log, added, carry, closed_owners)
+            fails += rule6_outcomes(
+                skill, added_log, added, closed_owners, marker_issues
+            )
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See
@@ -1168,7 +1091,7 @@ def main() -> int:
     # `rule 6: graded 0 run log(s)` means it proved nothing, not that nothing is wrong.
     print(
         f"\nrule 6: graded {graded_logs} added run log(s), "
-        f"{graded_tests} test(s), against {len(carry)} carried red(s)."
+        f"{graded_tests} test(s)."
     )
     if fails:
         print(f"\n{fails} rule violation(s). See annotations above.")

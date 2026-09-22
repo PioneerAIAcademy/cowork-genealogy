@@ -172,10 +172,11 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           COSMETIC_SKIP: ${{ steps.cosmetic.outputs.skip }}
-          # Rule 6's closed-owner arm resolves each carried red's issue via
-          # `gh api`. Warn-only and it swallows every error, so without a token
-          # it is silently inert rather than red -- which is the shape that ships
-          # a dead check. Same reason the eval-slot lint below sets it.
+          # Rule 6's closed-owner arm resolves each xfail marker's cited issue
+          # via `gh api`, to catch a marker whose removal condition can never be
+          # met. Warn-only and it swallows every error, so without a token it is
+          # silently inert rather than red -- the shape that ships a dead check.
+          # Same reason the eval-slot lint below sets it.
           GH_TOKEN: ${{ github.token }}
         run: python eval/harness/scripts/check_runlogs.py
 
