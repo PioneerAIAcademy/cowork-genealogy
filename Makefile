@@ -1088,6 +1088,16 @@ e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-transcription-join
+e2e-transcription-join: ## Join image_transcribe to extraction_append assertions over committed e2e runs (issue #2561): make e2e-transcription-join | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Walks tool_calls[] to join
+	# each image_transcribe call to the extraction_append assertions that follow it,
+	# producing the denominator for extraction-accuracy audits. Same 14-day horizon
+	# as e2e-transcribe-failures: it reads response_summary.
+	cd eval/harness && uv run python -m e2e.transcription_join_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-wiki-failures
 e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (issue #1552): make e2e-wiki-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/

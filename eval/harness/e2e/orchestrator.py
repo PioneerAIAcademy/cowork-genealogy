@@ -1158,6 +1158,24 @@ _RUNLOG_STRING_MAX = 500
 # acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
 
+# Per-key exemptions from the string and backstop caps above. Each entry is
+# (bare_tool_suffix, response_key): a tool matched by suffix (so every server
+# spelling resolves — CLAUDE.md § "Dual-spelled tool names") and a top-level
+# key in the unwrapped response dict. The full value is preserved verbatim,
+# bypassing both `_RUNLOG_STRING_MAX` and `_RUNLOG_MAX_CHARS`.
+#
+# Scope of the bypass: `if not saved` below skips the backstop for the WHOLE
+# response, not just the exempt key's bytes. Harmless for image_transcribe,
+# where the transcription IS the payload. But a future (tool, key) pair added
+# for a tool with a large non-exempt sibling field would take that sibling out
+# of the cap too — silently. If that arises, split the backstop to exempt only
+# the saved key's contribution and cap the rest.
+#
+# Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
+_RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
+    ("image_transcribe", "transcription"),
+}
+
 
 def _serialize_result(content: Any) -> str:
     """The full serialized tool result, before any truncation.
@@ -1197,7 +1215,20 @@ def _raw_result_chars(content: Any) -> int:
     return len(_serialize_result(content))
 
 
-def _summarize_tool_response(content: Any) -> str:
+def _exempt_keys_for(tool_name: str | None) -> set[str]:
+    """Response keys exempted from truncation for this tool, if any."""
+    if not tool_name:
+        return set()
+    return {
+        key
+        for suffix, key in _RUNLOG_EXEMPT_KEYS
+        if tool_name.endswith(suffix)
+    }
+
+
+def _summarize_tool_response(
+    content: Any, *, tool_name: str | None = None
+) -> str:
     """Key-preserving summary of a tool result for the run log.
 
     This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
@@ -1232,19 +1263,58 @@ def _summarize_tool_response(content: Any) -> str:
     `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
     runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
     escaped form does not contain it — grep the bare name, which matches both.
+
+    `tool_name` (HARNESS_SCHEMA_VERSION 5): when the tool has keys listed in
+    `_RUNLOG_EXEMPT_KEYS`, those keys bypass both `_RUNLOG_STRING_MAX` and
+    `_RUNLOG_MAX_CHARS`. `image_transcribe`'s `transcription` is the first
+    exemption: at v4 the field was truncated at 500 chars though the
+    transcriptions were often many times longer, making extraction-accuracy
+    audits impossible. `make e2e-transcription-join SINCE=all` reports the
+    current truncated-capture count over its window.
     """
     raw = _serialize_result(content)
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
         return raw
 
-    summary = _summarize_response(
-        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
-    )
+    exempt = _exempt_keys_for(tool_name)
+    unwrapped = _unwrap_mcp_text_blocks(content)
+
+    # Save full values of exempt keys before summarization truncates them.
+    # One value per key: if multiple text blocks carry the same key, the last
+    # wins. Safe for image_transcribe (always one text block).
+    saved: dict[str, Any] = {}
+    if exempt:
+        docs = unwrapped if isinstance(unwrapped, list) else [unwrapped]
+        for doc in docs:
+            if isinstance(doc, dict):
+                for key in exempt:
+                    if key in doc:
+                        saved[key] = doc[key]
+
+    summary = _summarize_response(unwrapped, string_max=_RUNLOG_STRING_MAX)
+
+    # Re-insert full values of exempt keys, replacing truncated copies.
+    if saved:
+        if isinstance(summary, dict):
+            summary.update(saved)
+        elif isinstance(summary, list):
+            for item in summary:
+                if isinstance(item, dict):
+                    for key, val in saved.items():
+                        if key in item:
+                            item[key] = val
+
     try:
         text = summary if isinstance(summary, str) else json.dumps(summary)
     except (TypeError, ValueError):
         text = repr(summary)
-    if len(text) > _RUNLOG_MAX_CHARS:
+
+    # The backstop cap is skipped when exempt keys contributed content — it
+    # exists for git size on the long tail, and the whole point of an exemption
+    # is to preserve the full value (issue #2561 item 2: the largest
+    # transcriptions run past the 4000-char backstop, so it would truncate them
+    # without this bypass).
+    if not saved and len(text) > _RUNLOG_MAX_CHARS:
         text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
 
     # Never emit a SHORTER capture than the old head-truncation would have. A
@@ -2387,7 +2457,10 @@ async def _run_agent(
                         for block in content:
                             if isinstance(block, ToolResultBlock):
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
-                                summary = _summarize_tool_response(block.content)
+                                summary = _summarize_tool_response(
+                                    block.content,
+                                    tool_name=entry["tool"] if entry else None,
+                                )
                                 if entry is not None:
                                     apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
