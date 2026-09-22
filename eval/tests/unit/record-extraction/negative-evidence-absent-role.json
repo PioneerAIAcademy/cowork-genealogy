@@ -4,7 +4,7 @@
     "skill": "record-extraction",
     "name": "Negative evidence — Patrick absent from 1870 census",
     "type": "positive",
-    "description": "When a person is expected in a record but not found, the absence itself can be an assertion. Tests the negative-evidence convention from research-schema-spec.md §5.6: record_role='absent', evidence_type='negative', value describes the expected-but-missing information.",
+    "description": "When a person is expected in a record but not found, the absence itself can be an assertion. Tests the negative-evidence convention from research-schema-spec.md §5.6: record_role='absent', record_basis='absent', value describes the expected-but-missing information.",
     "tags": ["extraction", "negative-evidence", "absent-role", "1870-census"]
   },
   "input": {

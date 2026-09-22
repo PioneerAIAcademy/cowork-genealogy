@@ -35,21 +35,21 @@
     {
       "record_role": "head_of_household",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "place",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -57,13 +57,13 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect"
+      "record_basis": "inferred"
     },
     {
       "record_role": "daughter",
       "fact_type": "relationship",
       "optional": true,
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "head_of_household",
