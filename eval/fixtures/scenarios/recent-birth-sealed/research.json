@@ -297,7 +297,7 @@
       "informant": "Marriage record — the marrying parties named on a county marriage record.",
       "informant_proximity": "official_duty",
       "informant_bias_notes": "County clerk recorded the parties at the 1926 marriage.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -316,7 +316,7 @@
       "informant": "Marriage record — the marrying parties named on a county marriage record.",
       "informant_proximity": "official_duty",
       "informant_bias_notes": "Confirms the mother's maiden name (Harvey).",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -335,7 +335,7 @@
       "informant": "1940 census — a household member reported the relationship to head.",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Household relationship-to-head stated to the enumerator.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -354,7 +354,7 @@
       "informant": "1950 census — a household member reported the relationship to head.",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Independent enumeration ten years after 1940.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -373,7 +373,7 @@
       "informant": "Obituary — family-supplied notice naming the deceased's parents.",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Family knowledge recorded long after the parents' deaths; independent of the census/marriage line of evidence.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     }

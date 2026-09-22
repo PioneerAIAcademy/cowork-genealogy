@@ -148,7 +148,7 @@ def _read_json(path: Path) -> dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         raise AuthorError(f"missing required file: {path}") from e
-    except json.JSONDecodeError as e:
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise AuthorError(f"{path.name} did not parse: {e}") from e
 
 
@@ -291,9 +291,13 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     * drops fields the schema forbids (`source.notes`, person-level
       `sources`, facts on a `ParentChild`);
     * PascalCases fact types (`move` -> `Move`);
-    * drops relationships whose endpoints aren't in `persons` — `person_read
-      --relatives` returns edges to grandparents and in-laws whose person
-      records it did not include, and those are dangling references;
+    * drops relationships whose endpoints aren't in `persons`. NOTE the cause
+      moved: `person_read --relatives` used to return edges to grandparents and
+      in-laws whose person records it did not include, and since #2593 it drops
+      those itself before returning. The rule stays because this function also
+      takes hand-authored and pre-#2593 captured input, where such edges still
+      arrive — but on the PID path below, which shells out to the live tool,
+      it can no longer fire;
     * de-duplicates identical relationships;
     * warns on duplicate incoming ids — preserved verbatim, so a duplicate
       makes `strip`'s selectors ambiguous (and `apply_strip` refuses).
@@ -427,8 +431,9 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     if dangling:
         warnings.append(
             f"dropped {dangling} relationship(s) pointing at persons not in the "
-            f"tree — `person_read --relatives` returns edges to kin one hop "
-            f"beyond the persons it includes"
+            f"tree. Since #2593 `person_read --relatives` drops these itself, so "
+            f"on the PID path this cannot fire; seeing it means the input was "
+            f"hand-authored or captured before that change"
         )
     for key, n in sorted(dropped.items()):
         warnings.append(f"dropped {n} unsupported field(s) named {key!r} (not in the tree schema)")

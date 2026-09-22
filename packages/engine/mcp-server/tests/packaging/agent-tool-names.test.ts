@@ -547,6 +547,32 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
+  // The grant is the folded skill's own former allowed-tools plus
+  // `image_transcribe` and `Read`. It holds the BROAD `research_append` — unlike
+  // record-extractor above, which is pinned OFF it — and nothing narrows that
+  // here: this agent writes no hook-routed section, so `AGENT_WRITABLE_SECTIONS`
+  // returns None for it and the hook's out-of-lane check never fires. What keeps
+  // it to a plan item's `status` is its body's lane rule and this snapshot, which
+  // is weaker than a hook and is stated so a reviewer weighs it rather than
+  // assuming a guard exists.
+  //
+  // `image_transcribe` is the page reader the monolithic skill reached by
+  // delegating to `@plugin:image-reader` — a route an agent does not have. The
+  // base64 rationale for that delegation does not transfer: `image_transcribe`
+  // OCRs host-side and returns text, so nothing accumulates in this agent's
+  // context. `image_read` is deliberately NOT granted; it returns the page
+  // inline and a volume browse overflows the transport (PR #718).
+  "search-images.md": {
+    tools: [
+      "Read",
+      "image_search",
+      "image_transcribe",
+      "research_append",
+      "research_log_append",
+      "volume_search",
+    ],
+    denies: [],
+  },
 };
 
 /** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */
