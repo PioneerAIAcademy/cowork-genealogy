@@ -93,7 +93,7 @@
       "informant": "census enumerator",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }

@@ -197,7 +197,7 @@
       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "The subject as a child, in his widowed mother's household.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -216,7 +216,7 @@
       "informant": "Unknown — most likely a household member, possibly a neighbor",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Age 5 in 1850 implies birth ~1845. Even allowing for census age error, Patrick was born no earlier than ~1843.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -235,7 +235,7 @@
       "informant": "Officiating priest (contemporaneous parish register entry)",
       "informant_bias_notes": "The decisive refuting fact: the Thomas Flynn the online tree names as Patrick's father was buried in 1842, ~3 years before Patrick was born.",
       "informant_proximity": "official_duty",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -253,7 +253,7 @@
       "informant": "Officiating priest (parish register entry)",
       "informant_proximity": "official_duty",
       "informant_bias_notes": "Identifies the burial as that of Thomas Flynn of Ballingarry — matching the townland, approximate age, and wife (Bridget) named in the online tree, establishing this is the man the claim refers to.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -271,7 +271,7 @@
       "informant": "Attending physician (signature on certificate)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -290,7 +290,7 @@
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Birth year derived from age at death; corroborates the 1850 census in placing Patrick's birth ~1845.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": ["q_001"]
     }

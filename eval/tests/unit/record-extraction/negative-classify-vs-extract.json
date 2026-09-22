@@ -8,16 +8,16 @@
     "tags": ["near-miss", "classification-refinement", "boundary"]
   },
   "input": {
-    "user_message": "I've extracted several assertions from the 1850 and 1870 census records. Now I want you to re-examine the evidence_type classifications — some of the 'indirect' labels might actually be 'direct' given what the records explicitly state. Please reclassify them.",
+    "user_message": "I've extracted several assertions from the 1850 and 1870 census records. Now I want you to re-examine the record_basis classifications — some of the 'inferred' labels might actually be 'stated' given what the records explicitly state. Please reclassify them.",
     "scenario": "mid-research-flynn"
   },
   "negative": {
     "correct_skill": ["record-extraction"],
-    "explanation": "Classification has exactly one owner: record-extraction writes first-and-final three-layer classifications at extraction and refines them on re-invocation (its description covers 'reclassify these assertions'). The former assertion-classification skill no longer exists. Answering the evidence_type question inline — without invoking record-extraction — is the failure mode this test guards."
+    "explanation": "Classification has exactly one owner: record-extraction writes first-and-final three-layer classifications at extraction and refines them on re-invocation (its description covers 'reclassify these assertions'). The former assertion-classification skill no longer exists. Answering the record_basis question inline — without invoking record-extraction — is the failure mode this test guards."
   },
   "judge_context": [
     "Should route to record-extraction, which owns classification refinement since the assertion-classification merge — the skill re-examines the named assertions and updates classification fields in place via its record-extractor delegation",
-    "It is WRONG to answer the reclassification inline (rewriting evidence_type judgments in chat or via direct tool calls without invoking the record-extraction skill), and WRONG to route to the deleted assertion-classification skill or decline the request as out-of-scope"
+    "It is WRONG to answer the reclassification inline (rewriting record_basis judgments in chat or via direct tool calls without invoking the record-extraction skill), and WRONG to route to the deleted assertion-classification skill or decline the request as out-of-scope"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,

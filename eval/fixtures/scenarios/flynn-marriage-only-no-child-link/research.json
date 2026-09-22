@@ -213,7 +213,7 @@
       "informant": "Officiating priest recording the marriage at the time of the event",
       "informant_proximity": "witness",
       "informant_bias_notes": "Parish priest recorded the marriage contemporaneously; direct evidence of the marriage event itself.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -237,7 +237,7 @@
       "informant": "John Brennan, son-in-law (informant named on the certificate)",
       "informant_proximity": "witness",
       "informant_bias_notes": "Present at the death and reporting it; reliable on the death itself, remote from Patrick's Irish origins.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": []
     },
@@ -259,7 +259,7 @@
       "informant": "the researcher",
       "informant_bias_notes": "Negative evidence: the one US record carrying parent-name fields leaves both blank. The son-in-law informant did not know Patrick's parents, so this record cannot link the child to the couple.",
       "informant_proximity": "researcher",
-      "evidence_type": "negative",
+      "record_basis": "absent",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": [
         "q_001"

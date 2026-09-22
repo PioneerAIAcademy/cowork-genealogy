@@ -232,7 +232,7 @@
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_002"
@@ -256,7 +256,7 @@
       "informant": "Unknown household member (likely Thomas Flynn or wife)",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Age and birthplace require active reporting by a household member — someone had to tell the enumerator these facts. Proximity is 'household_member' rather than 'unknown' because these facts could only come from someone in the household.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_002"
@@ -276,7 +276,7 @@
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
       "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where the household member is the true informant.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_002"
@@ -300,7 +300,7 @@
       "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
       "informant_proximity": "unknown",
       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -320,7 +320,7 @@
       "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -340,7 +340,7 @@
       "informant": "Ancestry transcriber (derivative of census enumerator)",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Derivative index — transcription errors possible",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": [
         "q_002"
@@ -360,7 +360,7 @@
       "informant": "Ancestry transcriber (derivative)",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": [
         "q_002"
@@ -479,6 +479,7 @@
       "question_id": "q_001",
       "tier": "possible",
       "vehicle": "summary",
+      "shortfall": "gap",
       "supporting_assertion_ids": [
         "a_004"
       ],
