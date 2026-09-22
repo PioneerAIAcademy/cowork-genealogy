@@ -355,6 +355,67 @@ TREE = {
 
 BEFORE_STATE = {"research_json": RESEARCH, "tree_gedcomx_json": TREE}
 
+# TREE with the fact->source ref deleted and nothing else changed: the shape a
+# real FamilySearch import produces. Simplified GedcomX has no person-level
+# source field, so the only source<->person link is a fact-level `sources` ref,
+# and real imports do not write them -- 3 of 136 e2e starting trees carry any
+# (55 of 4,182 facts) against 62 of 99 hand-authored scenarios (issue #2208,
+# measured 2026-09-22). Every fixture above carries the ref, so before this one
+# no test told the source-ref-gated version of the check apart from the current
+# one: reverting the widening left the whole suite green.
+TREE_NO_SOURCE_REF = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "date": "1875",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "value": "Purchased land, Deed Book 42 p. 118",
+                }
+            ],
+        },
+        {
+            "id": "I3",
+            "names": [{"given": "", "surname": "Sheahan"}],
+        },
+    ]
+}
+
+BEFORE_STATE_NO_SOURCE_REF = {
+    "research_json": RESEARCH,
+    "tree_gedcomx_json": TREE_NO_SOURCE_REF,
+}
+
+
+def test_fires_on_production_shape_when_fact_never_surfaced():
+    """The mutation guard for issue #2208's widening. With the fact->source
+    ref gone, the pre-change check skipped this person entirely and passed
+    silently -- the blind spot, on the shape 133 of 136 real trees have.
+    Reverting `sourced_facts` to the source-ref-filtered comprehension must
+    turn this test red."""
+    response = (
+        "Here is the plan for Michael Sheahan's move to Schuylkill County: "
+        "1880 census, 1900 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)
+
+
+def test_passes_on_production_shape_when_content_present():
+    """The other direction: the widening must not fail a response that does
+    state the fact's content, or it would red every honest plan on a
+    production-shaped tree."""
+    response = (
+        "Patrick Sheahan (I2) purchased land in Schuylkill County in 1875 "
+        "(Deed Book 42, p. 118) -- seven years before Michael's own "
+        "documented arrival. Plan: 1880 census, 1900 census, church records."
+    )
+    check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)  # does not raise
+
 
 def test_fires_when_fact_never_surfaced():
     """Proves the check actually fails: a response that never mentions
@@ -499,20 +560,27 @@ def test_skipped_when_not_tagged():
         check(BEFORE_STATE, response, UNTAGGED)
 
 
-def test_passes_vacuously_when_no_sourced_fan_facts():
-    """A tree with no already-sourced non-subject fact has nothing to
-    check -- must pass vacuously (nothing in scope), not fail. Named for
+def test_passes_vacuously_when_non_subject_persons_have_no_facts():
+    """A tree whose non-subject persons carry no facts at all has nothing
+    to check -- must pass vacuously (nothing in scope), not fail. Named for
     what actually happens: the validator has no `pytest.skip()` branch for
     this case, it just finds nothing to add to `missed` (PR #2004 review,
-    clack391 -- the previous name/docstring here claimed a skip that the
-    code never performed)."""
-    tree_no_sources = {
+    clack391 -- an earlier name/docstring here claimed a skip that the code
+    never performed).
+
+    Renamed for issue #2208: the old name said "no sourced fan facts",
+    which stopped describing this fixture once the check widened from
+    source-ref'd facts to all recorded facts. These persons have no facts,
+    which is why it still passes; a person with an UNSOURCED fact is now in
+    scope and is covered by
+    `test_fires_on_production_shape_when_fact_never_surfaced`."""
+    tree_no_facts = {
         "persons": [
             {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
             {"id": "I2", "names": [{"given": "Patrick", "surname": "Sheahan"}]},
         ]
     }
-    before_state = {"research_json": RESEARCH, "tree_gedcomx_json": tree_no_sources}
+    before_state = {"research_json": RESEARCH, "tree_gedcomx_json": tree_no_facts}
     response = "No mention of anyone."
     check(before_state, response, TAGGED)  # does not raise (nothing in scope)
 

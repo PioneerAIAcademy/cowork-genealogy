@@ -814,7 +814,19 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     scenario could add one incidentally, and this check has no way to know
     whether surfacing it was that test's point.
 
-    Check: for each non-subject person with a sourced fact, require
+    The tag gate carries more weight since issue #2208 widened the checked
+    population from source-ref'd facts to all recorded facts: across the 136
+    e2e starting trees that moves the demand from 12 persons to 772, up to 19
+    in one tree. Both tagged scenarios are hand-authored with a single
+    checkable non-subject person, so nothing over-fires today -- but do NOT
+    apply the `already-attached` tag to an imported tree without re-scoping
+    this check, or it will demand a date-and-value for every relative and fire
+    on every honest response. Note also that `surfaced` is satisfied by ANY of
+    the person's facts, so widening the fact set made the per-person bar
+    easier, not harder.
+
+    Check: for each non-subject person with a fact the tree records --
+    sourced or not (issue #2208; see the inline note at the loop) -- require
     somewhere in the response (case-insensitive) -- their given name
     (word-boundary match, not a bare substring test: "Ann" must not match
     inside "planning") AND the fact's *content*: a date token (`date`,
@@ -825,7 +837,7 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     with no date at all degrades to name+value -- either signal alone still
     gates on *some* fact-specific content, never on the name alone. A fact
     with neither a date nor a value has nothing fact-specific to check
-    against and is out of scope, the same as a person with no sourced facts
+    against and is out of scope, the same as a person with no facts
     at all (there is no content to confirm was read, so nothing is asked of
     the response) -- this closes a real false negative found during review
     (clack391): `date` is optional in the schema, so a sourced fact that
@@ -891,16 +903,25 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
         given = (person.get("names") or [{}])[0].get("given", "")
         if not given:
             continue
-        sourced_facts = [f for f in (person.get("facts") or []) if f.get("sources")]
-        if not sourced_facts:
-            continue  # nothing already attached for this person -- not in scope for this check
+        # EVERY fact the tree records, not only the source-ref'd ones (issue #2208,
+        # measured 2026-09-22). Simplified GedcomX has no person-level source field, so
+        # the only source<->person link is a fact-level `sources` ref -- and real
+        # FamilySearch imports do not write them: 3 of 136 e2e starting trees carry any
+        # (55 of 4,182 facts), against 62 of 99 hand-authored scenarios. Gating on
+        # `sources` made this check pass VACUOUSLY on the production shape, which is the
+        # shape the live report behind it (#2158) actually had: all 34 validators passed
+        # on a run the judge marked down 2 on Correctness and Completeness for exactly
+        # the miss this function exists to observe.
+        recorded_facts = list(person.get("facts") or [])
+        if not recorded_facts:
+            continue  # nothing recorded for this person -- not in scope for this check
 
         name_pattern = rf"\b{re.escape(given.lower())}\b"
         name_present = bool(re.search(name_pattern, response_lower))
 
         surfaced = False
         any_checkable = False
-        for fact in sourced_facts:
+        for fact in recorded_facts:
             date_tokens = {
                 t.lower() for t in (fact.get("date"), fact.get("standard_date")) if t
             }
@@ -928,7 +949,7 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
                 break
 
         if not any_checkable:
-            continue  # no sourced fact on this person has a date or value -- nothing to check
+            continue  # no recorded fact on this person has a date or value -- nothing to check
 
         if surfaced:
             continue
@@ -937,11 +958,11 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
             reason = "the person's given name never appears in the response"
         else:
             reason = (
-                "the person's given name appears, but no sourced fact's date and value "
+                "the person's given name appears, but no recorded fact's date and value "
                 "content (whichever the fact carries) both also appear in the response"
             )
-        missed.append(f"{pid} ({given}): has a sourced fact but {reason}")
+        missed.append(f"{pid} ({given}): the tree records a fact for them but {reason}")
     assert not missed, (
-        "already-attached FAN-cluster fact(s) never surfaced in the "
+        "already-recorded FAN-cluster fact(s) never surfaced in the "
         "response:\n  - " + "\n  - ".join(missed)
     )
