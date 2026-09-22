@@ -70,6 +70,18 @@ export interface WriteJsonBothOptions {
 
 export interface ProjectStore {
   /**
+   * A stable, patron-isolating identity for the project this store is bound to,
+   * when the backend has one (the hosted `PgS3ProjectStore`, keyed by the
+   * request's `X-Genealogy-Project-Id`). `undefined` on the file backend, where
+   * one process serves one project and `projectPath` already isolates. A
+   * process-lifetime util cache that must not leak one project's state into
+   * another under the shared-process entrypoint (`http.ts`, where every request
+   * presents the same anchor `projectPath`) keys on this instead of
+   * `projectPath` — see `truncatedImageKey` in `utils/image-store.ts`.
+   */
+  readonly projectId?: string;
+
+  /**
    * Run `fn` serialized against every other writer for the same project. Wrap
    * the ENTIRE tool body — first read to last write — so a read-modify-write
    * cannot interleave with another writer's. On the file backend this is the

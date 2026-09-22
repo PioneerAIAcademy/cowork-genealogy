@@ -333,6 +333,64 @@ def spawned_agents(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
     return out
 
 
+def handoffs(
+    skills_invoked: list[str], builtin_tool_calls: list[dict[str, Any]]
+) -> list[str]:
+    """Every hand-off the run made, `Skill` calls and agent spawns, in call order.
+
+    A validator asserting "the router handed off to X" has to accept X arriving
+    either way: under the 2026-09-22 ruling each skill becomes an agent, so the
+    correct hand-off to a converted callee is an `Agent` spawn and never appears
+    in `skills_invoked` (issue #2825).
+
+    One walk over `builtin_tool_calls`, which records `Skill` calls and spawns
+    alike in hook order, so the interleaving is real rather than reconstructed.
+    Main-thread calls only, the rule `spawned_agents` uses: a hand-off is the
+    caller's, not one made inside a subagent. A caller with no `Skill` record in
+    `builtin_tool_calls` — a fixture that sets only `skills_invoked` — gets
+    `skills_invoked` followed by the spawns.
+
+    Every named spawn counts, advisory ones included: a `/research` router that
+    spawns `gps-mentor` before the callee a routing test expects took a different
+    first route, and that is what a `routes-to:` test asserts.
+    """
+    calls = builtin_tool_calls or []
+    if not any(call.get("tool") == "Skill" for call in calls):
+        return list(skills_invoked or []) + spawned_agents(calls)
+    out: list[str] = []
+    for call in calls:
+        tool = call.get("tool")
+        if "agent_id" in call:
+            continue
+        if tool == "Skill":
+            name, _ = read_skill_tool_input(call.get("args") or {})
+        elif tool in SPAWN_TOOL_NAMES:
+            name = (call.get("args") or {}).get("subagent_type")
+        else:
+            continue
+        if name:
+            out.append(str(name))
+    return out
+
+
+def spawn_stub_denial(
+    tool_name: str, input_data: dict[str, Any], stub_agents: dict[str, str | None]
+) -> dict[str, Any] | None:
+    """The stub denial for a main-thread spawn of a stubbed agent, else None.
+
+    The spawn-side twin of the `Skill`-call stub in `run_skill`'s hook: once a
+    stubbed callee is converted to an agent the router spawns it, and without
+    this the real agent runs inside the test (issue #2825). A spawn made inside
+    a subagent is never stubbed, matching `spawned_agents`.
+    """
+    if tool_name not in SPAWN_TOOL_NAMES or input_data.get("agent_id"):
+        return None
+    name = (input_data.get("tool_input") or {}).get("subagent_type")
+    if name not in stub_agents:
+        return None
+    return stub_denial(name, stub_agents[name])
+
+
 def spawn_prompts(
     builtin_tool_calls: list[dict[str, Any]], agent: str | None = None
 ) -> list[str]:
@@ -556,6 +614,15 @@ class SkillRunResult:
     # no partial token count exists before a ResultMessage. This says so
     # instead of leaving 0 indistinguishable from "the skill used no tokens."
     no_result_message: bool = False
+    # MCP calls the routing short-circuit discarded: attempts made in the turn
+    # AFTER the hook denied the hand-off, which is the model reacting to the
+    # deny rather than the skill working. They are kept out of
+    # `attempted_mcp_calls` so they cannot raise an `uncovered_tool_call`
+    # advisory on a run that was deliberately stopped — but they are recorded,
+    # because dropping them outright made two claims uncheckable from any run
+    # log (issue #2740): whether a reaction call ever executes, and whether one
+    # ever names a tool the mock server does not register.
+    suppressed_post_deny_calls: list[dict[str, Any]] = field(default_factory=list)
 
 
 async def run_skill(
@@ -574,6 +641,7 @@ async def run_skill(
     allowed_tools_override: list[str] | None = None,  # IGNORED — see below
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
+    stub_agents: dict[str, str | None] | None = None,
     declared_tools: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -632,6 +700,10 @@ async def run_skill(
     # Maps skill name -> canned response (None = bare deny); see skill_stubs.py
     # for which form a given hand-off needs.
     _stub_skills = stub_skills or {}
+    # The same stub for a callee converted to an agent: a main-thread spawn of
+    # one of these names is denied and continued the same way (issue #2825).
+    # The orchestrator passes only stub entries with no skill directory.
+    _stub_agents = stub_agents or {}
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
     # Raw writes to a protected project file, denied by the hook below.
@@ -683,6 +755,8 @@ async def run_skill(
                 # handing back the canned response when the caller reads one.
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
+        elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
+            return denial
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read, extraction_append) on
         # the main thread UNLESS this skill declared it itself. Checked BEFORE
@@ -833,6 +907,14 @@ async def run_skill(
     # in the orchestrator depends on it (`_is_zero_progress_timeout`).
     # A mutable holder because the nested consumer rebinds `usage` wholesale.
     turns_seen: dict[str, int] = {"n": 0}
+    # True once the AssistantMessage carrying the denied hand-off has been
+    # scanned. The stop needs it because `routing_resolved["v"]` alone does
+    # not say WHERE in the stream we are: under the early-hook ordering the
+    # flag is already up while messages that PRECEDE the hand-off are still
+    # arriving, and stopping on one of those drops the hand-off entirely.
+    handoff_seen: dict[str, bool] = {"v": False}
+    # See SkillRunResult.suppressed_post_deny_calls.
+    suppressed_post_deny_calls: list[dict[str, Any]] = []
     # Set on the routing short-circuit path when no ResultMessage arrived, so
     # output_tokens: 0 there is legible as "no real count exists" rather than
     # "the skill used no tokens" (issue #2189). A mutable holder, not read
@@ -914,39 +996,111 @@ async def run_skill(
                 # that reaction as the skill's own turns and text (review of
                 # #2189, round 2).
                 routed_call_seen = False
+                # Held per-turn rather than appended straight through: a turn
+                # that turns out to be the model's reaction to the deny is not
+                # the skill's own work and must not reach the run log.
+                #
+                # This suppresses the ATTEMPT record, and the orchestrator's
+                # `unmatched_tool_call` abort reads that list — so in principle
+                # a hallucinated tool name issued in the reaction turn would go
+                # unseen. NOT settled by the two verification runs: both had
+                # `tool_calls` empty, which a reaction turn that made no call at
+                # all explains just as well, and the suppressed attempts are in
+                # no field of the run log to tell the two apart. Accepted for
+                # now because keeping them would fire an `uncovered_tool_call`
+                # advisory on any short-circuited negative test whose reaction
+                # turn does call a tool, and a reaction call to an unregistered
+                # name would trip the Type-1 `unmatched_tool_call` ABORT. The
+                # reverse would be real too -- a reaction call that executes
+                # and matches a fixture raises `covered` while `attempted`
+                # stays suppressed, so `len(attempted) > covered` could mask an
+                # uncovered call from an EARLIER turn. Both are closed by
+                # RECORDING what is suppressed rather than dropping it: the
+                # orchestrator's gate counts these on the attempted side and
+                # scans them for unregistered names, while `_build_warnings`
+                # still reads `attempted_mcp_calls` alone so no advisory fires
+                # on a deliberately stopped run (issue #2740).
+                turn_mcp_calls: list[dict[str, Any]] = []
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         turn_text_parts.append(block.text)
                     elif isinstance(block, ToolUseBlock):
-                        if block.id == routing_resolved["tool_use_id"] or (
-                            routing_resolved["v"]
-                            and routing_resolved["tool_use_id"] is None
-                            and block.name == "Skill"
+                        # Matched by NAME first, and by the hook's id only as a
+                        # fallback. An id-first match is what broke this stop:
+                        # under the ordering where the SDK delivers the message
+                        # before running PreToolUse for it, routing_resolved is
+                        # still empty here, so no id is available to match and
+                        # the hand-off message scans clean.
+                        if (
+                            block.name == "Skill"
                             and read_skill_tool_input(dict(block.input or {}))[0]
                             in _short_circuit
+                        ) or (
+                            routing_resolved["tool_use_id"] is not None
+                            and block.id == routing_resolved["tool_use_id"]
                         ):
                             routed_call_seen = True
                         if block.name.startswith("mcp__"):
-                            attempted_mcp_calls.append(
+                            turn_mcp_calls.append(
                                 {"tool": block.name, "args": dict(block.input or {})}
                             )
-                if turn_text_parts:
-                    text_chunks.append("".join(turn_text_parts))
+                # The hook fires either before or after the message carrying
+                # the call it denies, and the stop has to survive both. When
+                # the flag is already up and THIS message is not the hand-off,
+                # the message is the model reacting to the deny: it is not the
+                # skill's turn, so nothing from it is recorded and the turn it
+                # was already counted as is given back.
+                post_routing_reaction = (
+                    routing_resolved["v"] and handoff_seen["v"] and not routed_call_seen
+                )
+                if routed_call_seen:
+                    handoff_seen["v"] = True
+                if post_routing_reaction:
+                    turns_seen["n"] -= 1
+                    suppressed_post_deny_calls.extend(turn_mcp_calls)
+                    # Withheld from text_chunks — it is not the skill's own
+                    # utterance — but still handed to the quota classifier
+                    # below. A subscription rejection reaches us as PROSE as
+                    # often as as a RateLimitEvent, and this turn is exactly
+                    # where it lands when the model is cut off right after the
+                    # deny. Dropping it outright let #2192's suite breaker
+                    # miss a real quota and keep submitting.
+                    suppressed_text = "".join(turn_text_parts)
+                else:
+                    suppressed_text = ""
+                    attempted_mcp_calls.extend(turn_mcp_calls)
+                    if turn_text_parts:
+                        text_chunks.append("".join(turn_text_parts))
                 # Per-turn input-token cap, post-hoc: the SDK exposes usage
                 # on the AssistantMessage *after* the model returned, so
                 # the offending turn was already billed. This still catches
                 # runaway context growth between turns — but doesn't prevent
                 # the over-budget call itself. See module docstring.
-                if message.usage:
+                #
+                # Not applied to a suppressed post-deny reaction. That turn
+                # carries the largest context of the run -- the hand-off
+                # context plus the deny -- so it is the likeliest of any to
+                # breach the cap, and it is the one turn this loop has just
+                # declared is not the skill's own work: nothing from it
+                # reaches text_chunks, attempted_mcp_calls, or turns_seen.
+                # Aborting on it would fail a run whose routing verdict was
+                # already captured, on the content of a turn that is about to
+                # be discarded, two lines before the stop that discards it.
+                if message.usage and not post_routing_reaction:
                     turn_input = int(
                         message.usage.get("input_tokens", 0) or 0
                     )
                     if turn_input > max_input_tokens_per_turn:
                         raise _LimitExceeded("max_input_tokens_per_turn")
-                if routed_call_seen:
+                if routing_resolved["v"] and (routed_call_seen or post_routing_reaction):
                     # Negative-test routing short-circuit: the hook denied the
-                    # correct-skill launch the instant it saw the ToolUseBlock
-                    # above and set routing_resolved. The SDK does NOT honor
+                    # correct-skill launch when it saw the ToolUseBlock and set
+                    # routing_resolved. Keyed on the flag, never on this message
+                    # carrying the call, so the stop is reached under either
+                    # hook/message ordering; `post_routing_reaction` above is
+                    # what keeps the stop point exact in the late-hook case.
+                    #
+                    # The SDK does NOT honor
                     # the hook's `continue_: False` to end the run (it just
                     # retries other tools), so we stop consuming here — the
                     # routing verdict is already captured in skills_invoked.
@@ -961,10 +1115,12 @@ async def run_skill(
                     # aborted_reason, so a quota that happens to coincide with
                     # a routing short-circuit must not go undetected.
                     if aborted_reason is None and _looks_like_quota(
-                        rate_limit_signals, None, "".join(text_chunks)
+                        rate_limit_signals, None, "".join(text_chunks) + suppressed_text
                     ):
                         aborted_reason = QUOTA_ABORT_REASON
-                        error = _format_quota_evidence(rate_limit_signals, None)
+                        error = _format_quota_evidence(
+                            rate_limit_signals, suppressed_text or None
+                        )
                     # No ResultMessage will arrive on this path in the common
                     # case (the downstream skill never launched), so `usage`
                     # never gets its SDK-reported fields — UNLESS one already
@@ -1047,24 +1203,22 @@ async def run_skill(
             # The hook's tool_use_id is `str | None` on the SDK's own hook
             # request type (read with `.get()`), so there can in principle be
             # no id to key on. That case is covered inside the
-            # AssistantMessage branch above too — by matching the
-            # ToolUseBlock's own Skill name against `_short_circuit` when the
-            # id is absent, not by a second flag-only check after the message
-            # is processed. A flag-only check here, even gated on the id
-            # being absent, still fires on whichever message arrives first
-            # once the flag is set (e.g. an earlier RateLimitEvent), dropping
-            # the hand-off exactly like the bug this PR fixes — reproduced
-            # and removed during review (round 3).
+            # AssistantMessage branch above, which matches the ToolUseBlock's
+            # own Skill name against `_short_circuit` FIRST and falls back to
+            # the id — not by a second flag-only check after the message is
+            # processed. A flag-only check here still fires on whichever
+            # message arrives first once the flag is set (e.g. an earlier
+            # RateLimitEvent), dropping the hand-off exactly like the bug that
+            # match fixes — reproduced and removed during review (round 3).
             #
-            # The two remaining orderings — the hand-off consumed before the
-            # hook runs, or the routed ToolUseBlock never appearing on the
-            # stream at all — are accepted rather than closed: closing them
-            # with a flag check would bring back the dropped-hand-off bug
-            # this PR fixes, since the flag can be true before the hand-off
-            # message is ever processed. When routed_call_seen never fires,
-            # the loop keeps consuming until the stream ends naturally
-            # (StopAsyncIteration, a cap, or a timeout already handle that
-            # case).
+            # The ordering where the hand-off is consumed BEFORE the hook runs
+            # is closed, and closing it is what `handoff_seen` is for: the stop
+            # keys on the flag only once the hand-off has actually been
+            # scanned, so it cannot fire on a message that precedes it. What
+            # stays open is the routed ToolUseBlock never appearing on the
+            # stream at all; there the loop keeps consuming until the stream
+            # ends naturally (StopAsyncIteration, a cap, or a timeout already
+            # handle that case).
 
     start = time.perf_counter()
     try:
@@ -1081,6 +1235,14 @@ async def run_skill(
         usage["num_turns"] = turns_seen["n"]
     except _LimitExceeded as e:
         aborted_reason = e.reason
+        # Same reason as the wall-clock branch above: this path abandons the
+        # stream mid-run, so no ResultMessage ever lands and `usage` is empty.
+        # Without this the orchestrator reads num_turns 0 and cannot tell a run
+        # that aborted after real work from one that never started. Guarded on
+        # `usage` being empty so a ResultMessage that did arrive earlier keeps
+        # its own SDK-reported count rather than this manufactured one.
+        if not usage:
+            usage["num_turns"] = turns_seen["n"]
         if e.reason == "sdk_stream_silence":
             error = (
                 f"no SDK message received within "
@@ -1126,7 +1288,17 @@ async def run_skill(
     # see it and stop submitting. A real quota rejection is real regardless of
     # whether routing also happened to resolve on the same run — clearing it
     # here would silently discard the one signal that decision is made from.
-    if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON:
+    #
+    # Only the SDK-surfaced "error" bucket is cleared. A harness-imposed cap --
+    # max_turns, max_wall_clock_seconds, max_tool_calls, sdk_stream_silence,
+    # max_input_tokens_per_turn -- cannot be fabricated by the hook's stop, and
+    # clearing one is what hid the 2026-09-14 break for a week: ut_citation_003
+    # (citation/v1_2026-09-18_21-06-39) ran the full 305.1s wall clock over 38
+    # turns and was still logged `aborted_reason: null, outcome: pass`. Across
+    # the 168 committed post-2026-09-14 negative runs, not one carries an abort
+    # reason. The single alarm that would have caught this was being switched
+    # off by the same flag the broken stop was keyed to.
+    if routing_resolved["v"] and aborted_reason in (None, "error"):
         aborted_reason = None
         error = None
 
@@ -1152,4 +1324,5 @@ async def run_skill(
         unread_skill_calls=unread_skill_calls,
         builtin_tool_calls=builtin_tool_calls,
         no_result_message=no_result_message_flag["v"],
+        suppressed_post_deny_calls=suppressed_post_deny_calls,
     )
