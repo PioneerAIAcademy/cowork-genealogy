@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Patrick Hoban's wife was named Ellen, and their son Thomas Dee married Bessie Butler at Halifax, Nova Scotia in 1895.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Patrick Hoban (PID KK3W-WLT, b. 1836, Halifax, Nova Scotia) had a wife named Ellen, or a son Thomas Dee who married Bessie Butler at Halifax in 1895. The hinted 1895 marriage names the groom's parents only by the bare forenames 'Patrick' and 'Ellen', with the groom carrying the surname Dee — not Hoban/Hobin. That groom's own birth record identifies him as Thomas A. Dee, born 8 October 1874 at Halifax to Patrick Dee and Ellen Callahan, a distinct Halifax family. Patrick Hoban's documented wife is Catherine Donovan (married 18 November 1867), and his son Thomas Patrick Hobin was born 11 February 1873, not 1874, and never carried the surname Dee. Pass = the final tree/research adds no wife named Ellen for Patrick Hoban, no son Thomas Dee, and no 1895 Dee marriage fact tied to him (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
-        "subject_person": "Patrick Hoban (KK3W-WLT)",
+        "subject_person": "Patrick Hoban (PID KK3W-WLT)",
         "relation": "spouse",
-        "target_person": {
-          "name": "Ellen"
-        },
-        "son": "Thomas Dee, b. about 1874, Halifax; m. Bessie Butler 1895"
+        "wrong_candidate": {
+          "name": "a wife 'Ellen' for Patrick Hoban, and a son 'Thomas Dee' (b. ~1874, Halifax) who married Bessie Butler in 1895",
+          "note": "the 1895 marriage's 'Patrick' and 'Ellen' are Patrick Dee and Ellen Callahan/Callaghan of Halifax; their son Thomas A. Dee (b. 8 Oct 1874) is the groom. Patrick Hoban's wife is Catherine Donovan (m. 18 Nov 1867) and his son Thomas Patrick Hobin was born 11 Feb 1873 — a different surname, a different mother, and a different birth date"
+        }
       },
       "supporting_sources": [
-        "Canada, Marriages, 1661-1949 — entry for Thomas Dee and Bessie Butler, 1895, naming the groom's parents Patrick and Ellen"
+        "Canada, Nova Scotia, Births, 1864-1877 — entry for Thomas A. Dee, born 8 October 1874, Halifax, naming his parents as Patrick Dee and Ellen Callahan (ark:/61903/1:1:F26H-XH5) — the disproving record: it fixes the 1895 groom's father as Patrick Dee, not Patrick Hoban",
+        "Canada, Nova Scotia, Church Records / Births and Baptisms — the same Thomas Alexander Dee, b./bapt. October 1874, son of Patrick Dee and Ellen Callahan (ark:/61903/1:1:XLPP-H96)",
+        "Patrick Hoban's own marriage to Catherine Donovan, 18 November 1867, Halifax (ark:/61903/1:1:DX6P-6YT2), and his son Thomas Patrick Hobin's birth, 11 February 1873 (ark:/61903/1:1:F264-DXS) — establishing the true wife and son, independent of the hint"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having compared the hinted 1895 Thomas Dee-Bessie Butler marriage against Patrick Hoban's own attached records, the agent should document a negative conclusion: the hint is a false match. The marriage belongs to the distinct Patrick Dee x Ellen Callahan/Callaghan family of Halifax (whose son Thomas A. Dee, b. 8 October 1874, is the groom), and no record makes Patrick Hoban (b. 1836) the father of that groom or gives Patrick Hoban a wife named Ellen. Patrick Hoban's sole documented wife remains Catherine Donovan (m. 18 November 1867), and his son named Thomas remains Thomas Patrick Hobin (b. 11 February 1873).",
+      "details": {
+        "subject_person": "Patrick Hoban (PID KK3W-WLT)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1895 Thomas Dee marriage does not belong to Patrick Hoban's family",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No record in Canada, Nova Scotia marriage, birth, church, or census collections (searched Halifax, 1860s-1895) makes Patrick Hoban (b. 1836) the father of the 1895 groom Thomas Dee or gives Patrick Hoban a wife named Ellen; the searches instead surface an independent Patrick Dee x Ellen Callahan household as the groom's actual family"
       ],
       "required": true
     }
