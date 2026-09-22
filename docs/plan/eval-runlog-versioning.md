@@ -462,8 +462,8 @@ Action does not require pruning.
 
 ### C6. GitHub Action enforcement
 
-`.github/workflows/check-runlogs.yml` enforces four rules — rules 1–3
-per skill changed in the PR, rule 4 across the whole test corpus:
+`.github/workflows/check-runlogs.yml` enforces six rules — rules 1–3 and 6
+per skill changed in the PR, rules 4 and 5 across the whole test corpus:
 
 **Rule 1**: At most one **newly added or renamed-into-place**
 `v{N}.json` file per skill subdirectory. Detection uses
@@ -517,6 +517,51 @@ log's snapshot and diffs vs working tree, using the same
 `normalize()` contract as the harness.
 
 ---
+
+**Rule 5** (blocking): every committed `eval/runlogs/unit/**/*.ann.json` parses
+as JSON. Corpus-wide rather than per-skill: an unparseable annotation used to
+abort the whole check with a raw `JSONDecodeError`, naming no file and leaving
+every later skill unchecked.
+
+**Rule 6** (blocking): no **unsuppressed** test in a run log **this PR adds**
+resolves to `fail` or `aborted`.
+
+Each test is resolved from `runs[].outcome` — whose enum is
+`pass|partial|fail|aborted`, so it never meets the aggregate's `xfail`/`xpass`
+remap — and aggregated by `harness.outcomes.aggregate_per_run_outcome`, the same
+function the runner uses, so the gate and `run_tests.py` cannot drift. `partial`
+never blocks (lead ruling 2026-09-18: "tests must pass, or partial,
+consistently").
+
+An `expected_outcome: "xfail"` marker declares a known **failure**, so it
+suppresses `fail` only. A suppressed test that **aborts** blocks — an abort is an
+ungraded run, not evidence of the declared defect. One that **passes** warns, as
+a stale-marker signal.
+
+Rule 6 grades the log the PR **added**, resolved from the AR diff, not the one
+`latest_full_skill_runlog` returns: that helper prefers any released `v{N}.json`
+over every candidate regardless of date, so a PR adding a red `v2_<ts>.json`
+beside a clean released `v1.json` would read as clean. `init-project` has exactly
+that shape. A PR that adds no run log — annotation-only, or SKILL.md-only — is
+not accountable for the committed baseline and is not graded here; without that,
+a skill carrying reds could satisfy neither rule 3 nor rule 6, and its
+annotations could never land.
+
+Pre-existing reds are carried in `eval/harness/runlog_carry.json`, one entry per
+test with `skill`, `test_id`, `outcome`, `issue`, `filed`, `review_by`,
+`baseline`, `reason` and optional `flaky`. A carried red **warns**, naming its
+owning issue; one **past its `review_by`** blocks; one whose test **now passes**
+blocks, so the line is deleted — that is how a carried red retires. `flaky: true`
+exempts an entry from the pass-retirement arm only, never from `review_by`. A
+malformed entry blocks rather than being skipped: failing open there would make a
+carried red permanent and silent, which is the rot the file replaces.
+
+The carry file lives under `eval/harness/`, which matches no `touched_skills`
+prefix, so editing it marks zero skills touched and costs no paid run. Markers
+were rejected for the day-one backlog for the opposite reason: `expected_outcome`
+is in the snapshot hash, so writing 35 of them would stale 12 skills under rule 2,
+and `eval-cosmetic-skip` cannot honestly clear that — the label is for
+behaviour-neutral changes and `expected_outcome` changes grading.
 
 ## Supersessions
 

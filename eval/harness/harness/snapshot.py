@@ -45,6 +45,12 @@ _AGENT_REF_RE = re.compile(r"@plugin:([a-z0-9-]+)")
 # `HASH_RE` in eval/app/lib/snapshot.ts.
 _HASH_RE = re.compile(r"^[a-f0-9]{64}$")
 
+# Stripped from a test JSON before hashing: prose a human reads, which cannot
+# change how the test is graded. `expected_outcome` is deliberately NOT here and
+# must not be added (issue #2684) — it decides whether check_runlogs.py's rule 6
+# suppresses a failing test, so changing it changes grading, and a skill whose
+# marker moved owes a re-run. Only the marker's PROSE (`xfail_reason`) is a
+# candidate for this tuple; that is a separate card.
 _COSMETIC_TEST_FIELDS = ("name", "description", "tags")
 _JSON_EXTS = {".json"}
 _TEXT_EXTS = {

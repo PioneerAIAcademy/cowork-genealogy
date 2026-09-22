@@ -1029,3 +1029,274 @@ def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys)
     )
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     assert "no comment" in capsys.readouterr().out
+
+
+# --- rule 6: outcome gate (#2684) ------------------------------------------------
+#
+# The rule blocks a PR that ADDS a run log carrying an unsuppressed fail/aborted.
+# Direct unit calls, because the shapes worth pinning are per-test, not per-PR;
+# the main()-level wiring (which added log is graded) is covered separately below.
+
+
+def _t(test_id, outcomes, *, expected="pass"):
+    return {
+        "test_id": test_id,
+        "expected_outcome": expected,
+        "runs": [{"outcome": o} for o in outcomes],
+    }
+
+
+def _carry(test_id, *, review_by="2099-01-01", flaky=False, issue=1234):
+    e = {
+        "skill": "s", "test_id": test_id, "outcome": "fail", "issue": issue,
+        "filed": "2026-09-22", "review_by": review_by,
+        "baseline": "v1_2026-09-01_00-00-00.json", "reason": "r",
+    }
+    if flaky:
+        e["flaky"] = True
+    return {test_id: e}
+
+
+def _rule6(tests, carry=None):
+    return check_runlogs.rule6_outcomes("s", {"tests": tests}, "v1.json", carry or {})
+
+
+def test_rule6_blocks_an_uncarried_fail(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"])]) == 1
+    assert "resolved to `fail`" in capsys.readouterr().out
+
+
+def test_rule6_blocks_an_uncarried_abort(capsys):
+    assert _rule6([_t("ut_s_1", ["pass", "aborted"])]) == 1
+    assert "resolved to `aborted`" in capsys.readouterr().out
+
+
+def test_rule6_does_not_block_a_partial(capsys):
+    assert _rule6([_t("ut_s_1", ["partial"])]) == 0
+
+
+def test_rule6_uses_the_modal_aggregate_not_any_run(capsys):
+    """[pass, fail, pass] is a passing test. Blocking on "any run failed" would be
+    a second definition, and a stricter one than the runner's."""
+    assert _rule6([_t("ut_s_1", ["pass", "fail", "pass"])]) == 0
+
+
+def test_rule6_suppressed_fail_does_not_block(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail")]) == 0
+
+
+def test_rule6_suppressed_abort_blocks(capsys):
+    """A marker declares a known FAILURE; an abort is an ungraded run."""
+    assert _rule6([_t("ut_s_1", ["aborted"], expected="xfail")]) == 1
+    assert "but ABORTED" in capsys.readouterr().out
+
+
+def test_rule6_suppressed_pass_warns_but_does_not_block(capsys):
+    assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")]) == 0
+    assert "but PASSED" in capsys.readouterr().out
+
+
+def test_rule6_carried_red_warns_and_names_its_owner(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1")) == 0
+    out = capsys.readouterr().out
+    assert "carried red" in out and "issue #1234" in out
+
+
+def test_rule6_carried_red_past_review_by_blocks(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by="2020-01-01")) == 1
+    assert "passed its `review_by`" in capsys.readouterr().out
+
+
+def test_rule6_carried_red_that_now_passes_blocks(capsys):
+    """The retirement mechanism: a green test must not keep a carry line alive."""
+    assert _rule6([_t("ut_s_1", ["pass"])], _carry("ut_s_1")) == 1
+    assert "now PASSES" in capsys.readouterr().out
+
+
+def test_rule6_flaky_carried_red_that_passes_does_not_block(capsys):
+    assert _rule6([_t("ut_s_1", ["pass"])], _carry("ut_s_1", flaky=True)) == 0
+
+
+def test_rule6_flaky_does_not_exempt_from_review_by(capsys):
+    assert _rule6(
+        [_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by="2020-01-01", flaky=True)
+    ) == 1
+
+
+def test_rule6_ownerless_carry_entry_says_so(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", issue=None)) == 0
+    assert "NO OWNING ISSUE" in capsys.readouterr().out
+
+
+def test_rule6_a_test_with_no_runs_blocks(capsys):
+    """Schema forbids it, so this is a hand-edit guard — it must not resolve to
+    green by falling through."""
+    assert _rule6([{"test_id": "ut_s_1", "expected_outcome": "pass", "runs": []}]) == 1
+    assert "has no runs" in capsys.readouterr().out
+
+
+def test_rule6_an_all_suppressed_log_is_allowed(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail"),
+                   _t("ut_s_2", ["fail"], expected="xfail")]) == 0
+
+
+def test_rule6_an_empty_tests_array_is_allowed_but_reported():
+    """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
+    second definition. Rule 1 and rule 3 own "a PR must carry a real run log"."""
+    assert _rule6([]) == 0
+
+
+# --- the carry file's own shape --------------------------------------------------
+
+
+def _write_carry(tmp_path, monkeypatch, doc):
+    p = tmp_path / "runlog_carry.json"
+    p.write_text(json.dumps(doc), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "CARRY_PATH", p)
+    return p
+
+
+def test_carry_missing_file_is_not_an_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(check_runlogs, "CARRY_PATH", tmp_path / "nope.json")
+    assert check_runlogs.load_carry() == ({}, 0)
+
+
+def test_carry_malformed_json_blocks(tmp_path, monkeypatch, capsys):
+    p = tmp_path / "runlog_carry.json"
+    p.write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "CARRY_PATH", p)
+    carry, fails = check_runlogs.load_carry()
+    assert fails == 1 and carry == {}
+
+
+def test_carry_entry_missing_review_by_blocks(tmp_path, monkeypatch, capsys):
+    """The fail-open direction: a dropped key must not silently make a red
+    permanent."""
+    e = dict(next(iter(_carry("ut_s_1").values())))
+    del e["review_by"]
+    _write_carry(tmp_path, monkeypatch, {"entries": [e]})
+    carry, fails = check_runlogs.load_carry()
+    assert fails == 1 and carry == {}
+    assert "missing key" in capsys.readouterr().out
+
+
+def test_carry_entry_with_a_typod_key_blocks(tmp_path, monkeypatch, capsys):
+    e = dict(next(iter(_carry("ut_s_1").values())))
+    e["reviewBy"] = e.pop("review_by")
+    _write_carry(tmp_path, monkeypatch, {"entries": [e]})
+    _, fails = check_runlogs.load_carry()
+    assert fails == 1
+    out = capsys.readouterr().out
+    assert "missing key" in out and "unknown key" in out
+
+
+def test_carry_entry_with_an_unparseable_date_blocks(tmp_path, monkeypatch, capsys):
+    e = dict(next(iter(_carry("ut_s_1").values())))
+    e["review_by"] = "next tuesday"
+    _write_carry(tmp_path, monkeypatch, {"entries": [e]})
+    _, fails = check_runlogs.load_carry()
+    assert fails == 1
+    assert "unparseable `review_by`" in capsys.readouterr().out
+
+
+def test_the_shipped_carry_file_is_well_formed():
+    """The real file, not a fixture — a malformed entry that only CI sees is the
+    shape this whole guard exists to prevent."""
+    carry, fails = check_runlogs.load_carry()
+    assert fails == 0
+    assert len(carry) == 35
+
+
+# --- rule 6 wiring: the PR's OWN log is graded, not the resolved latest -----------
+
+
+def _clean_log(test_id="ut_ip_1", outcome="pass"):
+    return {
+        "snapshot": {},
+        "tests": [{"test_id": test_id, "expected_outcome": "pass",
+                   "runs": [{"outcome": outcome}]}],
+    }
+
+
+def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
+    """A released `v1.json` beside candidates — the shape `init-project` has on
+    main, and the one `latest_full_skill_runlog` resolves backwards."""
+    runlogs = tmp_path / "runlogs"
+    skill_dir = runlogs / skill
+    skill_dir.mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs)
+    (tmp_path / "skills" / skill).mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    (tmp_path / "tests" / skill).mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests")
+    monkeypatch.setattr(check_runlogs, "CARRY_PATH", tmp_path / "no_carry.json")
+    return skill_dir
+
+
+def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, capsys):
+    """`latest_full_skill_runlog` returns ANY released `v{N}.json` in preference to
+    every candidate, whatever the date. So a PR adding a red candidate beside a
+    clean released log would be read as clean if rule 6 used that resolution.
+    It reads the log the PR ADDED instead."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    added = "v2_2026-09-22_09-00-00.json"
+    (skill_dir / added).write_text(
+        json.dumps(_clean_log("ut_ip_2", "fail")), encoding="utf-8"
+    )
+    _write_ann(skill_dir, added, [])
+    _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "ut_ip_2" in out and "resolved to `fail`" in out
+
+
+def test_rule6_does_not_grade_the_baseline_on_an_annotation_only_pr(
+    tmp_path, monkeypatch, capsys
+):
+    """An annotation-only PR adds no run log, so it is not accountable for the
+    committed baseline's reds. Without this, a red skill could satisfy neither
+    rule 3 nor rule 6 and its annotations could never land."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    (skill_dir / "v1.json").write_text(
+        json.dumps(_clean_log("ut_ip_9", "fail")), encoding="utf-8"
+    )
+    _write_ann(skill_dir, "v1.json", [])
+    _patch_diffs(monkeypatch, ["eval/runlogs/unit/init-project/v1.ann.json"])
+
+    check_runlogs.main()
+    assert "resolved to `fail`" not in capsys.readouterr().out
+
+
+def test_rule6_grades_every_added_log_when_a_pr_adds_two(tmp_path, monkeypatch, capsys):
+    """Rule 1 caps RELEASED logs at one per skill and never short-circuits main(),
+    so two added candidates reach rule 6 — any red in any of them blocks."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    for name, tid, outcome in (
+        ("v1_2026-09-22_08-00-00.json", "ut_ip_a", "pass"),
+        ("v1_2026-09-22_09-00-00.json", "ut_ip_b", "fail"),
+    ):
+        (skill_dir / name).write_text(json.dumps(_clean_log(tid, outcome)), encoding="utf-8")
+        _write_ann(skill_dir, name, [])
+    _patch_diffs(
+        monkeypatch,
+        [f"eval/runlogs/unit/init-project/v1_2026-09-22_08-00-00.json",
+         f"eval/runlogs/unit/init-project/v1_2026-09-22_09-00-00.json"],
+    )
+
+    check_runlogs.main()
+    assert "ut_ip_b" in capsys.readouterr().out
+
+
+def test_rule6_ignores_an_added_ann_json(tmp_path, monkeypatch, capsys):
+    """`added_runlog_paths` holds every added path, `.ann.json` included, because
+    RUNLOG_PATH_RE matches them. Parsing one as a run log would crash the gate."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    _patch_diffs(monkeypatch, ["eval/runlogs/unit/init-project/v1.ann.json"])
+
+    check_runlogs.main()  # must not raise

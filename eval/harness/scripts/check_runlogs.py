@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Four blocking rules + one warn-only rule per
+Six blocking rules + two warn-only rules per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -23,9 +23,16 @@ docs/plan/eval-runlog-versioning.md §C6:
              `review_sample` owes every dimension of every test. An edited
              annotation gates; a pruned (deleted) one does not.
     Rule 4   no two unit-test files share a `test.id`.
+    Rule 5   every committed unit .ann.json is valid JSON.
+    Rule 6   no unsuppressed test in a run log THIS PR ADDS resolves to
+             `fail` or `aborted`; pre-existing reds are carried in
+             eval/harness/runlog_carry.json with an owner and a review_by.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
-stdlib + the harness's own `snapshot.py` and `versioning.py` modules.
+stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
+`review_sample`, `outcomes`). Do NOT import `harness.runlog` here: it pulls in
+jsonschema/referencing, and the workflow runs this on a bare interpreter with no
+dependency step, so the import would red every PR (issue #2684).
 """
 
 from __future__ import annotations
@@ -35,6 +42,7 @@ import os
 import re
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -49,6 +57,7 @@ from harness.snapshot import (  # noqa: E402
 )
 from harness.review_sample import review_dimensions, zero_dimension_test_ids  # noqa: E402
 from harness.versioning import classify  # noqa: E402
+from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
 
 
 REPO_ROOT = HARNESS_DIR.parents[1]
@@ -56,6 +65,7 @@ RUNLOGS_DIR = REPO_ROOT / "eval" / "runlogs" / "unit"
 JUDGE_PROMPT_PATH = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
 PLUGIN_SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_UNIT_DIR = REPO_ROOT / "eval" / "tests" / "unit"
+CARRY_PATH = REPO_ROOT / "eval" / "harness" / "runlog_carry.json"
 
 
 # Match `eval/runlogs/unit/<skill>/<file>.json`
@@ -637,6 +647,148 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
     return fails
 
 
+_CARRY_REQUIRED = ("skill", "test_id", "outcome", "issue", "filed", "review_by",
+                   "baseline", "reason")
+_CARRY_OPTIONAL = ("flaky",)
+
+
+def load_carry() -> tuple[dict[str, dict], int]:
+    """-> ({test_id: entry}, failure_count).
+
+    A malformed entry BLOCKS rather than being skipped. The fail-open direction
+    is the dangerous one here: a typo'd `review_by` key on a carried red would
+    make that red permanent and silent, which is the rot the carry file exists
+    to replace (CLAUDE.md, "a guard fails two ways").
+    """
+    if not CARRY_PATH.exists():
+        return {}, 0
+    try:
+        doc = json.loads(CARRY_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        gh_error(f"`{_format_path(CARRY_PATH)}` is not valid JSON ({exc}).")
+        return {}, 1
+    fails = 0
+    carry: dict[str, dict] = {}
+    for i, e in enumerate(doc.get("entries") or []):
+        where = f"entry {i}" + (f" (`{e['test_id']}`)" if isinstance(e, dict) and e.get("test_id") else "")
+        if not isinstance(e, dict):
+            gh_error(f"runlog carry: {where} is not an object.")
+            fails += 1
+            continue
+        missing = [k for k in _CARRY_REQUIRED if k not in e]
+        unknown = [k for k in e if k not in _CARRY_REQUIRED + _CARRY_OPTIONAL]
+        if missing or unknown:
+            gh_error(
+                f"runlog carry: {where} has "
+                + (f"missing key(s) {missing}. " if missing else "")
+                + (f"unknown key(s) {unknown}. " if unknown else "")
+                + "Required: " + ", ".join(_CARRY_REQUIRED) + "."
+            )
+            fails += 1
+            continue
+        if not _parse_iso_date(e["review_by"]):
+            gh_error(
+                f"runlog carry: {where} has an unparseable `review_by` "
+                f"({e['review_by']!r}). Use YYYY-MM-DD."
+            )
+            fails += 1
+            continue
+        carry[e["test_id"]] = e
+    return carry, fails
+
+
+def _parse_iso_date(value) -> date | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def rule6_outcomes(skill: str, log: dict, filename: str, carry: dict[str, dict]) -> int:
+    """Rule 6 (blocking): no unsuppressed test in this run log resolves to
+    `fail` or `aborted`.
+
+    Ruling A (#2684) points at `runs[].outcome`, whose enum is
+    pass/partial/fail/aborted, so this never meets the aggregate's xfail/xpass
+    remap. Aggregation is `harness.outcomes.aggregate_per_run_outcome` — the
+    same function the runner uses, so the gate and `run_tests.py` cannot drift.
+
+    `partial` never blocks (lead ruling 2026-09-18: "tests must pass, or
+    partial, consistently"). An `expected_outcome: xfail` marker declares a
+    known FAILURE, so it suppresses `fail` only: a suppressed test that aborts
+    blocks, because an abort is an ungraded run rather than evidence of the
+    declared defect, and one that passes warns as a stale-marker signal.
+    """
+    today = date.today()
+    fails = 0
+    for test in log.get("tests") or []:
+        test_id = test.get("test_id", "<no id>")
+        per_run = [r.get("outcome") for r in (test.get("runs") or [])]
+        if not per_run:
+            gh_error(
+                f"skill `{skill}`: `{filename}` test `{test_id}` has no runs, so "
+                f"its outcome cannot be resolved. The schema requires at least "
+                f"one; re-run the harness rather than hand-editing the log.",
+            )
+            fails += 1
+            continue
+        agg = aggregate_per_run_outcome(per_run)
+        suppressed = test.get("expected_outcome") == "xfail"
+
+        if suppressed:
+            if agg == "aborted":
+                gh_error(
+                    f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
+                    f"`expected_outcome: xfail` but ABORTED. A marker declares a "
+                    f"known failure; an abort is an ungraded run, not evidence of "
+                    f"it. Re-run, or fix the abort.",
+                )
+                fails += 1
+            elif agg == "pass":
+                gh_warning(
+                    f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
+                    f"`expected_outcome: xfail` but PASSED. The marker may be "
+                    f"stale — check whether its removal condition is met.",
+                )
+            continue
+
+        entry = carry.get(test_id)
+        if agg in ("fail", "aborted"):
+            if entry is None:
+                gh_error(
+                    f"skill `{skill}`: `{filename}` test `{test_id}` resolved to "
+                    f"`{agg}`. A run log may not carry a new red. Fix the test, or "
+                    f"add it to `eval/harness/runlog_carry.json` with the issue "
+                    f"that owns the fix.",
+                )
+                fails += 1
+            elif (due := _parse_iso_date(entry["review_by"])) and due < today:
+                owner = f"issue #{entry['issue']}" if entry.get("issue") else "NO OWNING ISSUE"
+                gh_error(
+                    f"skill `{skill}`: carried red `{test_id}` passed its "
+                    f"`review_by` ({entry['review_by']}) and still resolves to "
+                    f"`{agg}`. {owner}. Fix it, or re-date the entry with a reason.",
+                )
+                fails += 1
+            else:
+                owner = f"issue #{entry['issue']}" if entry.get("issue") else "NO OWNING ISSUE — needs one"
+                gh_warning(
+                    f"skill `{skill}`: carried red `{test_id}` ({agg}), "
+                    f"review by {entry['review_by']}. {owner}.",
+                )
+        elif agg == "pass" and entry is not None and not entry.get("flaky"):
+            gh_error(
+                f"skill `{skill}`: carried red `{test_id}` now PASSES. Delete its "
+                f"entry from `eval/harness/runlog_carry.json` — that is how a "
+                f"carried red retires. (Mark `flaky: true` instead only if it "
+                f"genuinely flaps.)",
+            )
+            fails += 1
+    return fails
+
+
 def rule5_annotations_parse(runlogs_dir: Path) -> int:
     """Rule 5 (blocking): every committed unit `.ann.json` is valid JSON.
 
@@ -658,7 +810,7 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
     """
     bad = 0
     for path in sorted(runlogs_dir.rglob("*.ann.json")):
-        rel = path.relative_to(REPO_ROOT).as_posix()
+        rel = _format_path(path)
         try:
             text = path.read_text(encoding="utf-8")
         except OSError as exc:
@@ -717,6 +869,20 @@ def main() -> int:
     # not cause (19 of 26 skills are already inactive on main; issues #1217,
     # #1094).
     added_runlog_paths = {p for _, p in changes if p is not None}
+    # Rule 6 resolves its own set rather than reusing `added_runlog_paths`, which
+    # holds every path this PR added -- `.ann.json` siblings included, because
+    # RUNLOG_PATH_RE matches them (see the arm below). It also cannot use
+    # `latest_full_skill_runlog`: that prefers ANY released `v{N}.json` over every
+    # candidate regardless of date, so a PR adding a red `v2_<ts>.json` beside a
+    # clean released `v1.json` would be read as clean (`init-project` has exactly
+    # that shape today). The log a PR ADDS is the one it is accountable for.
+    added_by_skill: dict[str, list[str]] = {}
+    for path in added_runlog_paths:
+        m = RUNLOG_PATH_RE.match(path)
+        if not m or path.endswith(".ann.json"):
+            continue
+        if classify(m.group(2)).kind in ("released", "candidate"):
+            added_by_skill.setdefault(m.group(1), []).append(m.group(2))
     deleted_paths = set(git_diff_deleted_paths())
     touched_paths = git_diff_touched_paths()
     touched_skills: set[str] = set()
@@ -825,6 +991,9 @@ def main() -> int:
     # see its docstring for why per-skill scoping is exactly what hid the bug.
     fails += rule5_annotations_parse(RUNLOGS_DIR)
 
+    carry, carry_fails = load_carry()
+    fails += carry_fails
+
     for skill in sorted(touched_skills):
         skill_dir = RUNLOGS_DIR / skill
         status, latest = resolve_latest_runlog(skill_dir)
@@ -847,6 +1016,14 @@ def main() -> int:
         fails += rule2_active(skill, log, filename)
         rule2b_judge_prompt(skill, log, filename)
         fails += rule3_completeness(skill, log, filename, skill_dir)
+        # Rule 6 grades the log(s) this PR added. Rule 1 caps released logs at one
+        # per skill but does not bound candidates, and it never short-circuits
+        # main(), so N added logs are all graded -- any red in any of them blocks.
+        # A PR that adds none (an annotation-only or SKILL.md-only change) is not
+        # accountable for the committed baseline, so it is not graded here.
+        for added in sorted(added_by_skill.get(skill, [])):
+            added_log = json.loads((skill_dir / added).read_text(encoding="utf-8"))
+            fails += rule6_outcomes(skill, added_log, added, carry)
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See
