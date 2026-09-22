@@ -609,21 +609,62 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
   return info;
 }
 
+/** Most place candidates an ambiguity result will name. Mirrors
+ *  `MAX_JURISDICTION_HINTS` in `record-search.ts`, for the same reason: a list
+ *  long enough to be a wall of text is not a list anyone acts on. */
+const MAX_PLACE_CANDIDATES = 8;
+
 /**
- * A `standardPlace` name -> its parent placeId ("spot on earth"), or null.
- * Returns null when the surviving candidates DISAGREE on placeId, so callers
- * that fan out over all reps (volume_search, place_population) never silently
- * query the wrong spot. See plan §11.
+ * The outcome of resolving a `standardPlace` to a placeId.
+ *
+ * `standardPlaceToPlaceId` collapses all three to `string | null`, which is why
+ * this exists: `null` meant BOTH "no such place" and "several places, and
+ * picking one would silently research the wrong jurisdiction", and a caller
+ * reading one `null` cannot tell the user which happened. Measured on the
+ * committed e2e corpus, the ambiguous arm fires far more often than the
+ * feedback report that prompted this suggested (`grep -rn "to a single place"
+ * eval/runlogs/e2e/`).
  */
-export async function standardPlaceToPlaceId(
+export type PlaceIdResolution =
+  | { kind: "resolved"; placeId: string }
+  | { kind: "ambiguous"; candidates: string[] }
+  | { kind: "unresolved" };
+
+/** One human-readable line per DISTINCT placeId, capped. The type qualifier is
+ *  what separates the real pairs: Virginia has both a Franklin County and an
+ *  independent City of Franklin, and their `fullName`s are identical, so a list
+ *  of bare names would repeat one string and help nobody. */
+function describeCandidates(pool: SearchEntry[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const e of pool) {
+    const id = e.placeId as string;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(e.type ? `${e.fullName} (${e.type})` : e.fullName);
+    if (out.length === MAX_PLACE_CANDIDATES) break;
+  }
+  return out;
+}
+
+/**
+ * A `standardPlace` name -> its parent placeId ("spot on earth"), discriminated.
+ *
+ * NEVER auto-picks among candidates. Virginia's Franklin County and City of
+ * Franklin are a real pair, and choosing one silently researches the wrong
+ * jurisdiction — worse than refusing, because nothing downstream can tell.
+ * Callers that fan out over all reps (volume_search, place_population) rely on
+ * that. See plan §11.
+ */
+export async function resolveStandardPlaceToPlaceId(
   standardPlace: string,
   opts: ResolveOpts = {},
-): Promise<string | null> {
+): Promise<PlaceIdResolution> {
   let entries: SearchEntry[];
   try {
     entries = await getSearchEntries(standardPlace, opts.contextName);
   } catch {
-    return null;
+    return { kind: "unresolved" };
   }
 
   const target = normalizeKey(standardPlace);
@@ -631,11 +672,28 @@ export async function standardPlaceToPlaceId(
     (e) => normalizeKey(e.fullName) === target && e.placeId,
   );
   const pool = exact.length > 0 ? exact : entries.filter((e) => e.placeId);
-  if (pool.length === 0) return null;
+  if (pool.length === 0) return { kind: "unresolved" };
 
   const distinct = new Set(pool.map((e) => e.placeId as string));
-  if (distinct.size > 1) return null; // ambiguous spot — guard the fan-out
-  return pool[0].placeId ?? null;
+  if (distinct.size > 1) {
+    return { kind: "ambiguous", candidates: describeCandidates(pool) };
+  }
+  return { kind: "resolved", placeId: pool[0].placeId as string };
+}
+
+/**
+ * The `string | null` form, kept because three of the four call sites only need
+ * that much: `external-links-search.ts`, `wiki-place-page.ts` and
+ * `place-population.ts` all treat both failures identically today, and widening
+ * their messages is not this change. A thin wrapper rather than a parallel copy,
+ * per CLAUDE.md § Code reuse.
+ */
+export async function standardPlaceToPlaceId(
+  standardPlace: string,
+  opts: ResolveOpts = {},
+): Promise<string | null> {
+  const resolution = await resolveStandardPlaceToPlaceId(standardPlace, opts);
+  return resolution.kind === "resolved" ? resolution.placeId : null;
 }
 
 /**

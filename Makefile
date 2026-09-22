@@ -726,7 +726,7 @@ harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv
 
 .PHONY: harness-lint
 harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
-	cd eval/harness && uv run ruff check .
+	cd eval/harness && uv run ruff check . ../../.claude/skills
 
 .PHONY: replay-check
 replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar
@@ -1030,19 +1030,20 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
-	# what runs stored: the four post-hoc families (the §8 person_evidence
+	# what runs stored: the seven post-hoc families (the §8 person_evidence
 	# provenance check from tool_calls + each fixture's committed seed tree, and the
-	# three §7/§7.5 checks from each run's committed final-research / final-tree
+	# six §7/§7.5 checks from each run's committed final-research / final-tree
 	# sidecars) and the §11 unnamed-delegate check (issue #980) from tool_calls,
 	# which is the only half that reflects a later detector change such as the
 	# namespaced-agent_type tolerance. The §11 count always prints its attribution
 	# denominator — how many runs carry any caller attribution to fire on at all.
 	# READ THE REPLAY BEFORE CONCLUDING A CHECK NEVER FIRES. The stored counts
-	# above only cover runs made after each check shipped -- all three post-hoc
-	# checks landed in August against a corpus that is 84% July, so their zeros
-	# measured the corpus's age, not the behaviour. Replaying turns two of the
-	# three into real counts. Counts, never rates: this is behaviour presence over
-	# the corpus, not a per-run compliance score.
+	# above only cover runs made after each check shipped -- the first three
+	# post-hoc checks landed in August against a corpus that was 84% July, so their
+	# zeros measured the corpus's age, not the behaviour, and replaying turned two
+	# of those three into real counts. Every check added since starts from the same
+	# place. Counts, never rates: this is behaviour presence over the corpus, not a
+	# per-run compliance score.
 	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(FEEDBACK_DIR),--feedback-dir $(FEEDBACK_DIR),) $(if $(PLATFORMS),--platforms $(PLATFORMS),) $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-skill-episodes
@@ -1085,6 +1086,16 @@ e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter
 	# a bad machine from a bad service (today it cannot). Same 14-day horizon as
 	# e2e-wiki-failures and for the same reason: it reads response_summary.
 	cd eval/harness && uv run python -m e2e.image_transcribe_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-transcription-join
+e2e-transcription-join: ## Join image_transcribe to extraction_append assertions over committed e2e runs (issue #2561): make e2e-transcription-join | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Walks tool_calls[] to join
+	# each image_transcribe call to the extraction_append assertions that follow it,
+	# producing the denominator for extraction-accuracy audits. Same 14-day horizon
+	# as e2e-transcribe-failures: it reads response_summary.
+	cd eval/harness && uv run python -m e2e.transcription_join_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
@@ -1226,6 +1237,11 @@ eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Ne
 .PHONY: eval-ui-test
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
+
+.PHONY: eval-ui-e2e
+eval-ui-e2e: $(EVAL_APP_DEPS) ## Eval CRUD UI e2e tests — eval/app (Playwright, boots Next.js)
+	cd eval/app && npx playwright install --with-deps chromium
+	cd eval/app && npm run test:e2e
 
 .PHONY: feedback-case
 feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]

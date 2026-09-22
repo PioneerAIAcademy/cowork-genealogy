@@ -144,6 +144,7 @@ depends on another shipping first.
 | # | Layer | Binds in | Catches | Status |
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
+| §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
@@ -153,18 +154,19 @@ depends on another shipping first.
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
-| §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `direct` supporting assertion nor ≥2 `indirect` ones citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
+| §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `record_basis: "stated"` supporting assertion nor ≥2 at `record_basis: "inferred"` citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
 | §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
 | §5 | `stop_criteria` shape | engine (validator) — so Cowork, hosted, both harnesses | `stop_criteria` written as prose, a number or an array instead of the seven-key object | **enforcing** (since 2026-08-23; 48 corpus write ops, all of them on the bypassed path — 0 of 241 writes made by runs that invoked the owning skill) |
-| §5 | Negative evidence implies `absent` + `researcher` | engine (validator + both `research.schema.json` trees) **and** the `research_append` write boundary — so Cowork, hosted, both harnesses | an assertion with `evidence_type: "negative"` whose `record_role` is not the literal `"absent"` or whose `informant_proximity` is not `"researcher"`. The role half already shipped at the write boundary and has been firing there since 2026-07-24; what was unguarded was the **proximity** half (nowhere at all) and the whole rule at the **document** tier, so any `research.json` not assembled op-by-op through `research_append` — a scenario fixture, a replay, a hosted import, a hand edit — carried the violation unchallenged. Forward direction only at the document tier: the converse (`absent` implies negative) is an unexercised branch and stays a writer-tool-only precondition. `informant` is not constrained; it is free text, and a semantic gate prefers a false allow (ADR-0011 limit 1) | **enforcing** (measured at 189b579d6 over every git-tracked JSON, descending into tool-call arguments: 269 objects carrying `evidence_type: "negative"`, 42 violating, of which 10 were already refused by `checkEnum`/`checkRequired`, leaving **32 net-new objects** (31 after this change retags the one committed fixture instance). Replay it with `eval/harness/scripts/measure_negative_evidence.py`, which is committed for exactly this reason: `PLAN.md` is deleted on merge, and an `enforcing` row whose ADR-0011 limit-2 evidence cannot be re-derived is not evidence. Those 32 objects are re-sends and persisted copies of **14 underlying assertions**, which is a HAND collapse: there is no canonical key, and the script prints four, and they move with the tree: at 189b579d6 32 raw / 23 by file+id / 16 by value / 14 by record_id+role+proximity, and on this branch 31 / 22 / 16 / 14, the difference being the a_012 retag, so quote the object count and show the working for any assertion-level number. All 14 read individually per ADR-0011 limit 2; all true positives, no false deny — including the informant-reported shape flagged on the issue as the likely false deny, which is a mislabelled `direct` assertion. **Eval-corpus counts, not production** (`docs/architecture.md` 9.4 gap 3) — do not quote a rate off them. Both refusal messages name the alternatives rather than only the field to change, because a field-naming refusal is observed to buy a relabel: in `eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json` the role arm refused two blank-field negatives and the agent's next call re-sent the same two defects with the role flipped, and they were accepted. Whether the reworded message reduces that class, rather than moving it, is **unverified** — no check distinguishes a fix from a relabel outside a paid `record-extraction` run) |
+| §5 | Negative evidence implies `absent` + `researcher` | engine (validator + both `research.schema.json` trees) **and** the `research_append` write boundary — so Cowork, hosted, both harnesses | an assertion with `record_basis: "absent"` whose `record_role` is not the literal `"absent"` or whose `informant_proximity` is not `"researcher"`. The role half already shipped at the write boundary and has been firing there since 2026-07-24; what was unguarded was the **proximity** half (nowhere at all) and the whole rule at the **document** tier, so any `research.json` not assembled op-by-op through `research_append` — a scenario fixture, a replay, a hosted import, a hand edit — carried the violation unchallenged. Forward direction only at the document tier: the converse (`absent` implies negative) is an unexercised branch and stays a writer-tool-only precondition. `informant` is not constrained; it is free text, and a semantic gate prefers a false allow (ADR-0011 limit 1) | **enforcing** (measured at 189b579d6 over every git-tracked JSON, descending into tool-call arguments: 269 objects carrying `record_basis: "absent"`, 42 violating, of which 10 were already refused by `checkEnum`/`checkRequired`, leaving **32 net-new objects** (31 after this change retags the one committed fixture instance). Replay it with `eval/harness/scripts/measure_negative_evidence.py`, which is committed for exactly this reason: `PLAN.md` is deleted on merge, and an `enforcing` row whose ADR-0011 limit-2 evidence cannot be re-derived is not evidence. Those 32 objects are re-sends and persisted copies of **14 underlying assertions**, which is a HAND collapse: there is no canonical key, and the script prints four, and they move with the tree: at 189b579d6 32 raw / 23 by file+id / 16 by value / 14 by record_id+role+proximity, and on this branch 34 / 22 / 20 / 16, the difference being the a_012 retag plus
+the four objects in this branch’s own record-extraction candidate, so quote the object count and show the working for any assertion-level number. All 14 read individually per ADR-0011 limit 2; all true positives, no false deny — including the informant-reported shape flagged on the issue as the likely false deny, which is a mislabelled `stated` assertion. **Eval-corpus counts, not production** (`docs/architecture.md` 9.4 gap 3) — do not quote a rate off them. Both refusal messages name the alternatives rather than only the field to change, because a field-naming refusal is observed to buy a relabel: in `eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json` the role arm refused two blank-field negatives and the agent's next call re-sent the same two defects with the role flipped, and they were accepted. Whether the reworded message reduces that class, rather than moving it, is **unverified** — no check distinguishes a fix from a relabel outside a paid `record-extraction` run) |
 | §5 | Plan-item non-emptiness | engine (validator) — so Cowork, hosted, both harnesses | a `plans[]` entry whose `items` is `[]` or not an array. `research.schema.json` has always said `type: array, minItems: 1`; `validateResearch` required only the key, so an empty plan passed the runtime enforcer and failed nothing but the eval harness's jsonschema pass | **enforcing** (since 2026-09-01; measured at 9a0eb98e5, **8 of 295** `plans` append ops in the committed corpus send `items: []`, and each is the *second* half of a retry loop — the shell was sent with `items` absent, refused for a missing field, then re-sent with `[]`. The two calls are observed; the refusal and acceptance between them are deduced, since run logs record no tool responses) |
 | §5 | Misrouted plan items name their cause | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` **append** op writing into a plan other than the one its own call created, leaving that plan empty — whether the other plan pre-existed (the hard-coded-`pl_001` misroute) or was created by the same call (a forgotten sibling, which needs the opposite fix and gets a different sentence). Adds **no** refusal — the call was already refused by the row above, or by `items` being required — it replaces a message naming the symptom with one naming the cause, because the previous message drove the model to `"items": []` and that then validated | **enforcing** (since 2026-09-01; fires on **6** corpus `plans` append ops, measured at 9a0eb98e5 — both halves of the retry loop in each of three unit runs, where nine item ops carry a hard-coded `pl_001`, a **completed** plan for another question, while the plan the same call created ends empty. That is exactly the corruption this arm exists to stop, committed to the corpus, so it is the arm's strongest evidence rather than a gap. It is a derivable **floor**, not a total: the assigned `pl_` id is only recoverable where a scenario fixture seeds the plan ids. The arm still adds no refusal — every call it catches is one the row above or the required-field check already refused — so it changes the message, not the outcome — but no check observes whether the new message actually breaks the loop, and none can outside a paid eval run) |
 | n/a | Malformed element reported, not thrown | engine (validator) — so Cowork, hosted, both harnesses, and `validate_research_schema` | a `null` or primitive element in any document array, and a primitive in a required-object field. `checkRequired` tests `field in obj` and `in` THROWS on null and on every primitive, so one stray element took `validateParsed` down with `TypeError: Cannot use 'in' operator` — and because every writer tool validates the whole document, every one of them failed with a message naming no field and no fix, while the read-only reporter crashed instead of saying what to repair. Guarded at the 20 array loops, at **four** further sites outside them that a loop-by-loop patch missed (three dereferences in `person-id-refs.ts`, reached from the cross-file pass, and the cross-file `sources` ref), and at **four** required-object fields — `exhaustive_declaration`, `external_site` and `citation_detail`, whose `typeof X === "object" && X !== null` opening skipped a primitive silently, plus `researcher_profile`, whose `typeof rp !== "object"` opening caught a string and missed `[]`. The four missed cross-file sites are why the tests enumerate every section rather than sampling one. **Arrays are treated differently on the two halves, deliberately:** an array ELEMENT is left alone (`in` does not throw on one, so re-shaping its messages would be an unrelated change riding on a crash fix), while an array in a required-object FIELD is refused, and refused once rather than once per missing key | **enforcing** (since 2026-09-01; reachable by hand edit or a truncated write, and the one persisted itemless plan in the committed corpus arrived exactly that way, from a run that made zero MCP tool calls) |
 | n/a | `assertion_id` is stamped, never supplied | engine (MCP tool) — so Cowork, hosted, both harnesses | a caller passing `assertion_id` on any `tree_edit`/`tree_correct` fact write path (`add_fact`, `update_fact`, `add_person`, `add_relationship`). The backlink means "materialize_facts minted this fact from this assertion"; a forged one would make `research_append` rewrite a hand-entered fact from an assertion it never came from | **enforcing** (a hard refusal, not a warning: nothing legitimate supplies it, so there is no correct call this can deny. Its one cost is that a whole-fact read-modify-write is now rejected; no shipped skill does that) |
 | n/a | Assertion correction reaches its materialized fact | engine (MCP tool) — so Cowork, hosted, both harnesses | a `place`/`standard_place`/`date`/`value` corrected on an assertion never reaching the tree fact already materialized from it | **enforcing as a WRITE, not a refusal** — the write being made is the legitimate one, so there is nothing for a boundary check to refuse, and ADR-0009 constraint 6 rules out a gate no call shape can satisfy. Eight advisories ride it, none blocking: no fact carries the backlink; the fact holds a value this assertion never asserted (another source corroborated it); the assertion's value is malformed rather than withdrawn; the assertion has been re-classified so the fact no longer matches its type; a field was DELETED from the fact; the rewritten fact is `primary` (a concluded value a proof summary may cite); a `place` corrected without its `standard_place`; and a `date` corrected without its `standard_date`. A ninth, the country-contradiction clear, rides the same channel. Every advisory that describes a CHANGE is discarded if the rewrite is rolled back |
-| below | Tree fact agrees with its linked assertion | unit harness only, and only inside a paid per-skill run | a backlinked fact whose `place`/`standard_place`/`date`/`value` disagrees with the assertion it was minted from | **enforcing there, nowhere else.** The card it closes was filed off an **e2e** run, and the e2e plane runs no universal validators at all, so this does not reach the plane the defect was observed on. It is also green by construction on today's unit corpus, where the two populations are disjoint: all 51 `materialize_facts` calls are person-evidence's and every four-field assertion `update` is record-extraction's. Its falsifiable half is `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py` |
+| below | Tree fact agrees with its linked assertion | unit harness (inside a paid per-skill run) **and** the e2e harness, where it reports rather than fails | a backlinked fact whose `place`/`standard_place`/`date`/`value` disagrees with the assertion it was minted from | **enforcing on unit, reporting on e2e.** One predicate, `find_tree_facts_disagreeing_with_assertions`: the universal validator asserts on it, while `collect_post_hoc_shadow` emits its findings as a shadow kind live and `replay_post_hoc` recomputes them offline, so the plane the card was filed off is now covered — as a measured number, not a gate. Still green by construction on today's unit corpus, where no run both mints a backlinked fact and corrects its assertion; the shadow bucket likewise reads zero so far, over a small live population. Its falsifiable halves are `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py` and `eval/harness/tests/unit/test_post_hoc_shadow.py` |
 | below | Fact rewrite authorized by tool identity | unit harness only, and only inside a paid per-skill run | record-extraction touching `tree.gedcomx.json`'s `persons` for anything other than that rewrite. The skill is deliberately NOT added to the row's `callers`, which would also authorize adding an unsourced person and setting `primary`; `research_append`/`extraction_append` are authorized as TOOLS, and only when the whole persons delta is mirrored attributes on facts that already carried the same backlink | **enforcing there, nowhere else** (the same reasoning that authorizes `merge_tree_persons` on the research side — anything the substitution does not explain still fails) |
 | §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 
@@ -339,6 +341,17 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
+| §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped |
+| §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 184 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
+
+The last two rows are measured 2026-09-21, not with the rest. The agreement
+check did not exist at the 2026-08-23 sweep; tree-encoding did, and had simply
+never been given a row. Their denominators differ because they read different
+inputs, not because one sample is larger: tree-encoding needs a fixture's seed
+tree and the corpus holds one run without one. Re-measure before quoting any
+row — the agreement row's denominator was 183 when it was written and 184 by the
+time it was reviewed, a single increment rather than a measured rate, and the
+reason no figure on this page is worth quoting second-hand.
 
 Reading the two columns: **stored** is what a run recorded when it ran;
 **replayed** is the same detector recomputed now from that run's committed final
@@ -497,9 +510,9 @@ corpus only grows:
 make e2e-guardrail-shadow REPLAY=1 SINCE=all
 ```
 
-`REPLAY=1` recomputes **the four post-hoc families and the §11 unnamed-delegate
+`REPLAY=1` recomputes **the seven post-hoc families and the §11 unnamed-delegate
 check**, not just `same_person` provenance: that one from each run's `tool_calls`
-plus its fixture's committed seed tree, the three §7/§7.5 checks from each run's
+plus its fixture's committed seed tree, the six §7/§7.5 checks from each run's
 committed `.final-research.json` / `.final-tree.gedcomx.json` sidecars, and §11
 from each run's `tool_calls`. Each is a distinct
 number from the *stored* count printed above it, and the distinction is the thing
@@ -952,6 +965,49 @@ derived blocker before writing a tier the disputed-source rule will refuse.
 `research_query`'s `conflicts.questionId` filter is narrower than this gate for
 the same reason and is an advertised contract.
 
+### `relationship_type` must not contradict its own `value`
+
+A `fact_type: relationship` assertion may not carry a
+`structured_value.relationship_type` whose category contradicts what its own
+`value` says about the record **subject**. `relationship_type` is the subject's
+own role; `related_person_role` is the other party's
+(`research-schema-spec.md` §5.6.1). A death certificate naming the father is
+`"child"` on the deceased, not `"parent"`; and a sister is `"sibling"`, a value
+earlier guidance never named, which is the live defect the rule was built for.
+
+**Position decides whose role the value names, and that is why two earlier
+guards here were abandoned.** A value opening `<relation> of <name>` states the
+subject's role and can be compared. `father named as Casper` and
+`father: Jan Roelfs` label the *other* party; so does
+`Father of groom named as Tellef`, where the token after `of` is a role word
+rather than a name. Comparing relation words without regard to position refused
+22 of the 37 it flagged over the e2e run logs — correct data, refused. An
+unknown spelling (`grandparent`, `ParentChild`, `administrator` — 73
+assertions across 18 spellings) yields no category and is skipped, never
+refused.
+
+Implemented as `validateRelationshipDirection` in `research-append.ts`, scoped
+to `fact_type: relationship` and to ops that set `value`, `structured_value`
+or `fact_type` — the third because it is what decides whether the guard
+applies at all, so a retype INTO `relationship` cannot carry a standing
+contradiction in past it. An unrelated edit to an assertion written before the
+rule existed is still not refused — the same scoping the place-containment row
+uses, and for the same reason. `extraction_append` delegates to the same writer, so one check binds
+both. The eval validator
+`test_record_extraction.py::test_relationship_type_agrees_with_its_value`
+applies the identical predicate over the corpus; the two are pinned to one
+another by `relationship_direction_cases.json` and a test on each side, because
+the harness and the engine share no runtime.
+
+Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by
+`eval/harness/scripts/measure_relationship_direction.py` — 19 distinct
+assertions, since a unit log carries the id-less write op and the persisted
+copy of one assertion; 0 in the scenario fixtures and 0 in the hosted seed. Every refusal
+was read individually per ADR-0011 limit 2 and every one is a true positive.
+The script's `--counterfactual`, `--axes`, `--domain` and `--self-referential`
+arms emit every other figure this rule is cited for, each over a named
+population.
+
 ### The hypothesis `supported` evidence floor
 
 A `hypotheses` entry may not be **set to** `status: "supported"` unless it clears
@@ -961,7 +1017,7 @@ both mechanical halves of `research-schema-spec.md` §5.9:
   hypothesis's `supporting_assertion_ids` or `contradicting_assertion_ids` is
   `resolved` or `moot`;
 - **(b)** either at least one supporting assertion carries
-  `evidence_type: "direct"`, or at least two carry `evidence_type: "indirect"`
+  `record_basis: "stated"`, or at least two carry `record_basis: "inferred"`
   and cite at least two distinct `source_id` values.
 
 Implemented as `hypothesisSupportedInvariants` in `research-append.ts`, ported
@@ -998,11 +1054,11 @@ narrative-only edit — naming none of the three — is still not refused.
 
 **An empty `supporting_assertion_ids` at `supported` is a refusal, not a pass.**
 An empty list carries no evidence and so fails half (b) with "only 0 distinct
-indirect source(s)". Worth stating because the card authorising this gate called it
+inferred source(s)". Worth stating because the card authorising this gate called it
 "unaffected, not treated as violations", which is wrong; the eval validator
 refuses it too. An id that resolves to no assertion counts as nothing, which is
 different: such an id neither adds to nor subtracts from the floor, so a
-hypothesis citing one dangling id beside one real `direct` assertion is
+hypothesis citing one dangling id beside one real `stated` assertion is
 accepted.
 
 **Both halves read the pre-call snapshot**, per ADR-0011's criterion — snapshot
@@ -1019,8 +1075,8 @@ settle the conflict **in an earlier call** rather than retrying the batch.
 
 **Both halves' refusals carry that same-call clause, because both reads are
 snapshots.** Half (b) needs it as much as half (a): a batch that appends a valid
-`direct` assertion and promotes on it in the next op is refused saying there is
-no direct supporting assertion, one op after the agent supplied one. Without the
+`stated` assertion and promotes on it in the next op is refused saying there is
+no stated supporting assertion, one op after the agent supplied one. Without the
 clause the agent retries the identical batch, or mints further assertions to
 satisfy a floor it has already met, which is the ADR-0011 satisfiability limit
 this gate is otherwise careful about. The message therefore ends "Assertions
