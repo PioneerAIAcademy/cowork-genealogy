@@ -299,8 +299,13 @@ implementer's, but the writer must be able to read it — so a `match_score` on 
 link is checked against a call that happened rather than trusted."*
 
 Written host-side by the tool that computed it, so the payload never round-trips
-through the model. That is what makes it non-forgeable, and what `match_score`
-alone never was (ADR-0009 constraint 2).
+through the model on the legitimate path. That is what `match_score` alone never
+was (ADR-0009 constraint 2). **It is not yet unforgeable.**
+`guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers `research.json`,
+`tree.gedcomx.json` and `starting-tree.gedcomx.json` only, so nothing stops a raw
+`Write` to `results/.scores/` from inside the VM: the model cannot produce the
+payload, but it can author the file. Closing that is a precondition for the
+refusal step trusting this record, and it touches ADR-0005, which owns the list.
 
 **Location: `results/.scores/<sha256(arkToBareId(record_id))>.json`, one file per
 record, holding a map.** Under `results/` because architecture.md §6.1 already

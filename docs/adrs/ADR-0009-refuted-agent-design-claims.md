@@ -166,10 +166,18 @@ a graduation, must satisfy all six:
    What shipped for it (PR A, #1731 steps 1-2): `same_person` gained a
    project-relative arm and writes every score it computes to
    `results/.scores/`, host-side, so the record never round-trips through the
-   model. What has NOT shipped is the writer-side requirement (step 3), which is
-   gated on re-measuring after PR A and on the score-TTL question. Until it
-   does, `match_score` remains caller-fabricable — the attestation exists but
-   nothing yet checks a link against it.
+   model on the legitimate path. What has NOT shipped is the writer-side
+   requirement (step 3), which is gated on re-measuring after PR A and on the
+   score-TTL question. Until it does, `match_score` remains caller-fabricable:
+   the attestation exists but nothing yet checks a link against it.
+
+   **The attestation is not yet unforgeable either, and step 3 must not assume
+   it is.** `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers
+   `research.json`, `tree.gedcomx.json` and `starting-tree.gedcomx.json` only,
+   so a raw `Write` to `results/.scores/` from inside the VM is unguarded. The
+   model cannot produce the payload; it can author the file. Extending that list
+   touches ADR-0005, which owns it, and is a precondition for the refusal step
+   relying on this record.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.

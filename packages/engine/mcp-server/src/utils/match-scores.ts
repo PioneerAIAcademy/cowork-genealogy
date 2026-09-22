@@ -14,9 +14,16 @@
 // lead for this artifact (#1731, 2026-09-10). A project-folder sidecar staged
 // host-side by the tool that produced it is the pattern architecture.md §6.1
 // already carries for results/<log_id>.json, and its whole point is that the
-// payload never round-trips through the model — which is what makes this record
-// non-forgeable, and the thing `match_score` alone never was (ADR-0009
-// constraint 2).
+// payload never round-trips through the model ON THE LEGITIMATE PATH, which is
+// the thing `match_score` alone never was (ADR-0009 constraint 2).
+//
+// IT IS NOT YET UNFORGEABLE, and step 3 must not assume it is.
+// `guard_project_files.py`'s PROTECTED_PROJECT_FILES covers research.json,
+// tree.gedcomx.json and starting-tree.gedcomx.json only, so a raw Write to
+// results/.scores/ from inside the VM is unguarded: the model cannot produce
+// the payload, but it can author the file. Extending that list touches
+// ADR-0005, which owns it, and is a precondition for the refusal step trusting
+// this record.
 //
 // WHY UNDER results/.scores/ AND NOT results/*.json. The validator's orphan
 // check lists results/ NON-recursively and errors on any top-level *.json no log
