@@ -20,8 +20,10 @@ import {
   formatUnloggedRefs,
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
+  NOT_FULLTEXT_SEARCHABLE_NOTE,
 } from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
+import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
 
@@ -285,6 +287,36 @@ export async function fulltextSearchTool(
     return [...matched];
   }
 
+  // A nil on an image group the volume metadata reports as NOT full-text
+  // searchable is a fact about the volume, not about the person. The session
+  // behind issue #1988 ran exactly this search against a group already returned
+  // with `fulltextSearchable: false` and read the guaranteed zero as evidence of
+  // absence. Stated, not enforced: the endpoint can answer unknown, and refusing
+  // on unknown would block a legitimate search.
+  let notSearchableNote: string | undefined;
+  if (
+    // Truthiness, NOT `!== undefined`: `buildUrl` gates the `q.groupName`
+    // filter the same way, so an empty string runs an UNSCOPED full-corpus
+    // search. Gated on `!== undefined` the note then told the caller a nil from
+    // the whole corpus was a fact about a volume it never searched -- and, on a
+    // `projectPath` call, contradicted `nilSearchNeedsLog` in the same response,
+    // discarding a real negative finding.
+    input.imageGroupNumber &&
+    results.length === 0 &&
+    (data.results ?? 0) === 0
+  ) {
+    // Bounded to the nil + imageGroupNumber case on purpose: this is an extra
+    // upstream leg, and it buys nothing on a search that returned rows.
+    const searchable = await fetchFulltextSearchable(
+      [input.imageGroupNumber],
+      token,
+    );
+    // `null` is UNKNOWN, not false — no note rather than a wrong one.
+    if (searchable !== null && !searchable.has(input.imageGroupNumber)) {
+      notSearchableNote = NOT_FULLTEXT_SEARCHABLE_NOTE;
+    }
+  }
+
   const out: FulltextSearchResponse = {
     query: echoQuery(input),
     totalResults: data.results ?? 0,
@@ -310,6 +342,8 @@ export async function fulltextSearchTool(
     ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
       ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
       : {}),
+    // Precedes `results` with the other notes, for the same size-bound reason.
+    ...(notSearchableNote ? { notFulltextSearchable: notSearchableNote } : {}),
     // nameExpansion precedes results so it survives a size-bound trim —
     // the field after the largest payload is the first thing dropped.
     ...(expansion && input.name
@@ -373,6 +407,10 @@ export const fulltextSearchToolSchema = {
     "(+ require, - exclude, \"...\" phrase, * wildcard). Finds people mentioned anywhere in a document " +
     "(witnesses, neighbors, heirs, appraisers), not just indexed principals. " +
     "No fuzzy matching — use + to require terms, otherwise default is OR. " +
+    "Coverage is an incomplete, continuously growing subset of FamilySearch's images — " +
+    "weighted toward English-language records from the Americas, the UK and Australasia, " +
+    "and weaker on non-Latin scripts and continental Europe. Verify coverage before reading " +
+    "a nil result as absence: the document may be unsearchable rather than missing. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
