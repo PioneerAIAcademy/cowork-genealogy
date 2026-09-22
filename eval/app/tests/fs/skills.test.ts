@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { makeFixtureTree, type FixtureTreeHandle } from '../helpers/fixtureTree';
 import { listSkills, parseRubric } from '../../lib/skills';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 const SKILL_MD_LOCALITY = `---
 name: locality-guide
@@ -280,5 +282,44 @@ describe('skills — an agent-keyed suite reaches the picker (issue #1253)', () 
     const mentor = (await listSkills()).find((s) => s.name === 'gps-mentor')!;
     expect(mentor.rubricError).toBeNull();
     expect(mentor.rubricDimensions.map((d) => d.name)).toEqual(['Verdict accuracy']);
+  });
+});
+
+describe('skills — a tests/unit directory that is not a suite is not listed', () => {
+  let handle: FixtureTreeHandle;
+
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      skills: [{ name: 'locality-guide', skillMd: SKILL_MD_LOCALITY, rubricMd: RUBRIC_LOCALITY }],
+      agents: [{ name: 'gps-mentor', agentMd: AGENT_MD_GPS_MENTOR, rubricMd: RUBRIC_GPS_MENTOR }],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('drops a directory holding neither a rubric nor any .json', async () => {
+    const stray = path.join(handle.root, 'tests', 'unit', '__pycache__');
+    await fs.mkdir(stray, { recursive: true });
+    await fs.writeFile(path.join(stray, 'skills.cpython-312.pyc'), 'not a suite', 'utf8');
+
+    const names = (await listSkills()).map((s) => s.name);
+    expect(names).not.toContain('__pycache__');
+    // The real suites are untouched by the guard.
+    expect(names).toEqual(['gps-mentor', 'locality-guide']);
+  });
+
+  it('keeps a suite that has only a rubric and no tests yet', async () => {
+    // The authoring case the harness deliberately excludes: `_list_skills`
+    // needs a runnable test JSON, the picker needs the rubric visible before
+    // the first test is written.
+    const fresh = path.join(handle.root, 'tests', 'unit', 'brand-new-suite');
+    await fs.mkdir(fresh, { recursive: true });
+    await fs.writeFile(path.join(fresh, 'rubric.md'), RUBRIC_GPS_MENTOR, 'utf8');
+
+    expect((await listSkills()).map((s) => s.name)).toContain('brand-new-suite');
   });
 });

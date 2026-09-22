@@ -257,13 +257,29 @@ function isStateless(allowedTools: string[]): boolean {
  * blocks the PR until that annotation lands, so the suite could not be
  * finished at all.
  *
- * Keyed on directory existence rather than a name list, matching the harness
- * (`run_tests.py::_list_skills` discovers suites the same way), so a new suite
- * appears here the moment it lands.
+ * Keyed on directory existence rather than a name list, so a new suite appears
+ * here the moment it lands.
+ *
+ * Deliberately NOT the same rule as the harness's `run_tests.py::_list_skills`,
+ * which requires a directory to hold at least one runnable test JSON. That is
+ * right for something about to execute a suite and wrong for a picker an author
+ * opens to write `rubric.md` before the first test exists. The guard here only
+ * drops directories that are not suites at all — no `rubric.md` and no `.json`
+ * — so a stray `__pycache__` never becomes a skill in the UI.
  */
+async function looksLikeSuite(dir: string): Promise<boolean> {
+  const files = await fs.readdir(dir).catch(() => [] as string[]);
+  return files.some((f) => f === 'rubric.md' || f.endsWith('.json'));
+}
+
 async function suiteNames(): Promise<string[]> {
   const names = new Set<string>();
-  for (const root of [pluginSkillsDir(), testsUnitDir()]) {
+  // A plugin skill is listed whether or not it has tests — pre-existing
+  // behaviour, unchanged. A tests-only directory must look like a suite.
+  for (const [root, mustLookLikeSuite] of [
+    [pluginSkillsDir(), false] as const,
+    [testsUnitDir(), true] as const,
+  ]) {
     let entries: string[];
     try {
       entries = await fs.readdir(root);
@@ -271,8 +287,11 @@ async function suiteNames(): Promise<string[]> {
       continue;
     }
     for (const name of entries) {
-      const stat = await fs.stat(path.join(root, name)).catch(() => null);
-      if (stat?.isDirectory()) names.add(name);
+      const dir = path.join(root, name);
+      const stat = await fs.stat(dir).catch(() => null);
+      if (!stat?.isDirectory()) continue;
+      if (mustLookLikeSuite && !(await looksLikeSuite(dir))) continue;
+      names.add(name);
     }
   }
   return [...names];

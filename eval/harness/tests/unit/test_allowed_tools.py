@@ -549,3 +549,58 @@ def test_tool_allowlist_warns_on_attempted_mcp_calls_only():
     assert any("secret_tool" in m for m in msgs), (
         f"expected a warning about secret_tool from attempted_mcp_calls; got: {msgs}"
     )
+
+
+# ---- an agent-keyed suite declares the AGENT's tools (issue #1253) --------
+
+
+def _agent_keyed_repo(tmp_path: Path) -> tuple[Path, Path]:
+    """A plugin tree with one real skill and one agent that has no skill dir."""
+    skills = tmp_path / "skills"
+    (skills / "router").mkdir(parents=True)
+    (skills / "router" / "SKILL.md").write_text(
+        "---\nname: router\nallowed-tools:\n"
+        "  - mcp__genealogy__research_query\n---\nbody\n",
+        encoding="utf-8",
+    )
+    agents = tmp_path / "agents"
+    agents.mkdir(parents=True)
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n"
+        "  - mcp__genealogy__sidecar_read\n"
+        "  - mcp__genealogy__research_append\n---\nagent body\n",
+        encoding="utf-8",
+    )
+    # A same-named agent beside a REAL skill, to pin that the fallback does not
+    # fire there.
+    (agents / "router.md").write_text(
+        "---\nname: router\ntools:\n  - mcp__genealogy__tree_edit\n---\nagent body\n",
+        encoding="utf-8",
+    )
+    return skills, agents
+
+
+def test_agent_keyed_suite_declares_the_agents_own_tools(tmp_path: Path):
+    """`gps-mentor` has an agent file and no skill directory, so the SKILL.md
+    scan yields nothing and the declared set would otherwise be the baseline
+    alone — making `test_tool_allowlist` warn on every test in the suite."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("gps-mentor", skills, agents_dir=agents)
+    assert "mcp__genealogy__sidecar_read" in tools
+    assert "mcp__genealogy__research_append" in tools
+
+
+def test_real_skill_does_not_inherit_a_same_named_agents_tools(tmp_path: Path):
+    """The fallback fires only when the skill directory is ABSENT. A real skill
+    whose SKILL.md declares a tool set has said what it holds, and must not
+    silently gain the tools of a same-named agent it never delegates to."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("router", skills, agents_dir=agents)
+    assert "mcp__genealogy__research_query" in tools
+    assert "mcp__genealogy__tree_edit" not in tools
+
+
+def test_unknown_name_with_neither_skill_nor_agent_is_just_the_baseline(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("not-a-thing", skills, agents_dir=agents)
+    assert not [t for t in tools if t.startswith("mcp__")]

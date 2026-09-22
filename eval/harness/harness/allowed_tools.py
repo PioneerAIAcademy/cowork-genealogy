@@ -69,6 +69,26 @@ def compute_allowed_tools(
     fm = load_skill_frontmatter(skill_md)
     declared = list(fm.get("allowed-tools", []) or [])
 
+    # An agent-keyed suite (issue #1253) names a plugin agent rather than a
+    # skill directory, so there is no SKILL.md here and the scan above yields
+    # nothing. Read the agent's own frontmatter instead — an agent declares
+    # `tools:` where a skill declares `allowed-tools:`, which is the same pair
+    # `eval/app/lib/skills.ts` reads for the picker.
+    #
+    # Without this the declared set for `gps-mentor` is the baseline alone (7
+    # entries, 0 MCP), so `test_tool_allowlist` warns "skill called MCP tools
+    # but declared none in allowed-tools" on every test in that suite — an
+    # advisory that fires unconditionally teaches its reader to ignore it.
+    #
+    # Only when the skill directory is absent: a real skill whose SKILL.md
+    # declares nothing has said so, and must not silently inherit the tools of
+    # a same-named agent it never delegates to.
+    if not skill_md.is_file():
+        own_agent_md = Path(agents_dir) / f"{skill_name}.md"
+        if own_agent_md.is_file():
+            own_fm = load_skill_frontmatter(own_agent_md)
+            declared.extend(own_fm.get("tools", []) or [])
+
     baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill", "Task"]
 
     # Union in the tools of every referenced plugin agent. Referenced-only
