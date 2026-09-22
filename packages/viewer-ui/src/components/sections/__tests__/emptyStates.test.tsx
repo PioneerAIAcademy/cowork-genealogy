@@ -36,7 +36,7 @@ describe('section empty states', () => {
   for (const [key, Component] of Object.entries(sectionComponents)) {
     it(`${key} renders non-empty empty-state text for an all-empty project`, () => {
       vi.mocked(useResearchData).mockReturnValue(
-        buildMockContext({ research: {} as ResearchData, activeSection: key })
+        buildMockContext({ research: {} as ResearchData, gedcomx: null, activeSection: key })
       )
       const { container } = render(<Component />)
       // Every <p>, not `querySelector('p')`. The first paragraph is not
@@ -101,7 +101,7 @@ describe('empty-state copy names the section owner', () => {
     const expected = PROSE_ALIASES[row.section] ?? `${slug} step`
     it(`${row.section} names ${expected}`, () => {
       vi.mocked(useResearchData).mockReturnValue(
-        buildMockContext({ research: {} as ResearchData, activeSection: row.section })
+        buildMockContext({ research: {} as ResearchData, gedcomx: null, activeSection: row.section })
       )
       const Component = sectionComponents[row.section]
       const { container } = render(<Component />)
