@@ -38,21 +38,24 @@ def write_test(
     type_: str = "negative",
     correct_skill: list[str] | None = None,
     skill_field: str | None = None,
+    expected_outcome: str | None = None,
 ) -> Path:
     """Write one test JSON into `tests_dir/<skill>/<test_id>.json`.
 
     `skill_field` overrides `test.skill` independently of the directory, so
-    the source-of-truth rule can be exercised.
+    the source-of-truth rule can be exercised.  `expected_outcome` sets
+    ``test.expected_outcome`` (e.g. ``"xfail"``).
     """
     skill_dir = tests_dir / skill
     skill_dir.mkdir(parents=True, exist_ok=True)
-    payload: dict = {
-        "test": {
-            "id": test_id,
-            "skill": skill_field if skill_field is not None else skill,
-            "type": type_,
-        }
+    test_block: dict = {
+        "id": test_id,
+        "skill": skill_field if skill_field is not None else skill,
+        "type": type_,
     }
+    if expected_outcome is not None:
+        test_block["expected_outcome"] = expected_outcome
+    payload: dict = {"test": test_block}
     if correct_skill is not None:
         payload["negative"] = {
             "correct_skill": correct_skill,
@@ -138,6 +141,56 @@ def test_self_naming_target_yields_no_edge(tmp_path: Path) -> None:
         ("alpha", "beta")
     }
     assert flagged_pairs(tmp_path) == {("alpha", "beta")}
+
+
+def test_xfail_edge_still_declares_its_own_edge(tmp_path: Path) -> None:
+    """An xfail negative still appears in routing_edges — it declares its own
+    edge even though it cannot satisfy the reverse reciprocal check."""
+    write_test(
+        tmp_path, "alpha", "ut_alpha_001",
+        correct_skill=["beta"], expected_outcome="xfail",
+    )
+    make_suite(tmp_path, "beta")
+    assert ("alpha", "beta") in check_negative_reciprocity.routing_edges(tmp_path)
+
+
+def test_xfail_edge_does_not_satisfy_reciprocal(tmp_path: Path) -> None:
+    """An xfail negative cannot satisfy the reverse direction's reciprocal
+    check. Here alpha->beta is declared by a normal test, beta->alpha by an
+    xfail — alpha->beta should be flagged because its reciprocal is xfail."""
+    write_test(tmp_path, "alpha", "ut_alpha_001", correct_skill=["beta"])
+    write_test(
+        tmp_path, "beta", "ut_beta_001",
+        correct_skill=["alpha"], expected_outcome="xfail",
+    )
+    assert flagged_pairs(tmp_path) == {("alpha", "beta")}
+
+
+def test_xfail_reciprocal_is_excluded_non_xfail_is_kept(tmp_path: Path) -> None:
+    """When one reciprocal is xfail and another is not, the non-xfail one
+    satisfies the check."""
+    write_test(tmp_path, "alpha", "ut_alpha_001", correct_skill=["beta"])
+    write_test(
+        tmp_path, "beta", "ut_beta_001",
+        correct_skill=["alpha"], expected_outcome="xfail",
+    )
+    write_test(tmp_path, "beta", "ut_beta_002", correct_skill=["alpha"])
+    assert flagged_pairs(tmp_path) == set()
+
+
+def test_xfail_excluded_from_exclude_xfail_routing_edges(tmp_path: Path) -> None:
+    """routing_edges(exclude_xfail=True) omits xfail tests entirely."""
+    write_test(
+        tmp_path, "alpha", "ut_alpha_001",
+        correct_skill=["beta"], expected_outcome="xfail",
+    )
+    write_test(tmp_path, "alpha", "ut_alpha_002", correct_skill=["gamma"])
+    make_suite(tmp_path, "beta", "gamma")
+    non_xfail = check_negative_reciprocity.routing_edges(
+        tmp_path, exclude_xfail=True
+    )
+    assert ("alpha", "beta") not in non_xfail
+    assert ("alpha", "gamma") in non_xfail
 
 
 def test_target_without_suite_dir_is_skipped_not_flagged(tmp_path: Path) -> None:

@@ -41,14 +41,11 @@ would silently diverge:
   say "this skill handling it is also acceptable" on a routing-flaky
   negative. A -> A has no reciprocal to write, and admitting it would both
   inflate the edge total and trivially satisfy its own check.
-- An `expected_outcome: "xfail"` negative still declares its edge, and is
-  still accepted as a reciprocal for the reverse one. That is arguably wrong
-  -- an xfail asserts the routing is known-broken, so it pins nothing -- but
-  it masks nothing today: both xfail negatives in the corpus
-  (proof-conclusion -> question-selection and -> record-extraction) are
-  themselves reported as one-directional. Recorded rather than fixed because
-  narrowing what counts as a reciprocal is a semantic change to the rule this
-  script only enforces.
+- An `expected_outcome: "xfail"` negative still declares its own edge (it
+  appears in ``routing_edges``), but it does NOT satisfy the reverse
+  direction's reciprocal check. An xfail asserts the routing is known-broken,
+  so it pins nothing — accepting it as a reciprocal would mask a gap. The
+  exclusion is applied in ``asymmetric_edges`` via ``exclude_xfail=True``.
 - An edge whose target has no `eval/tests/unit/<target>/` directory is
   SKIPPED, not flagged. A reciprocal cannot be written into a suite that does
   not exist. Today `forget-and-rederive` is the only skill without one
@@ -131,12 +128,19 @@ def suite_skills(tests_dir: Path) -> set[str]:
     return {d.name for d in tests_dir.iterdir() if d.is_dir()}
 
 
-def routing_edges(tests_dir: Path) -> dict[tuple[str, str], list[str]]:
+def routing_edges(
+    tests_dir: Path, *, exclude_xfail: bool = False
+) -> dict[tuple[str, str], list[str]]:
     """Directed routing edges -> the negative test ids that declared each.
 
     `{(source, target): [test_id, ...]}`. Provenance is kept, not just the
     edge set, so a warning about a missing reciprocal can name the test on
     the other side of the pair — the reader's starting point for writing it.
+
+    When *exclude_xfail* is True, tests with ``expected_outcome: "xfail"``
+    are skipped. Used by ``asymmetric_edges`` to build the reciprocal-check
+    map: an xfail negative declares its own edge (it stays in the default
+    call) but cannot satisfy the reverse edge's reciprocal check.
     """
     edges: dict[tuple[str, str], list[str]] = defaultdict(list)
     if not tests_dir.is_dir():
@@ -150,6 +154,8 @@ def routing_edges(tests_dir: Path) -> dict[tuple[str, str], list[str]]:
             continue
         test = data.get("test")
         if not isinstance(test, dict) or test.get("type") != "negative":
+            continue
+        if exclude_xfail and test.get("expected_outcome") == "xfail":
             continue
         # `test.skill` only — deliberately NOT falling back to the parent
         # directory. A directory fallback would source this half of the pair
@@ -189,13 +195,16 @@ def asymmetric_edges(tests_dir: Path) -> list[tuple[str, str, list[str]]]:
     """Edges with no reciprocal, as sorted `(source, target, test_ids)`.
 
     Both halves key on the same map (see the module docstring): an edge
-    `A -> B` is backed iff `A` appears among `B`'s own declared targets.
+    `A -> B` is backed iff `A` appears among `B`'s own non-xfail declared
+    targets. An xfail negative declares its own edge but cannot satisfy
+    the reverse direction's reciprocal check.
     """
     edges = routing_edges(tests_dir)
+    non_xfail_edges = routing_edges(tests_dir, exclude_xfail=True)
     skills = suite_skills(tests_dir)
 
     outbound: dict[str, set[str]] = defaultdict(set)
-    for source, target in edges:
+    for source, target in non_xfail_edges:
         outbound[source].add(target)
 
     flagged: list[tuple[str, str, list[str]]] = []
@@ -203,7 +212,7 @@ def asymmetric_edges(tests_dir: Path) -> list[tuple[str, str, list[str]]]:
         if target not in skills:
             continue  # no suite to write the reciprocal into
         if source in outbound[target]:
-            continue  # pinned from both sides
+            continue  # pinned from both sides (by a non-xfail test)
         flagged.append((source, target, sorted(test_ids)))
     return sorted(flagged)
 
@@ -227,10 +236,10 @@ def main(tests_dir: Path = TESTS_DIR) -> int:
     for source, target, test_ids in flagged:
         gh_warning(
             f"negative routing edge `{source} -> {target}` is one-directional: "
-            f"no negative test declares `test.skill: {target}` with `{source}` "
-            f"in its `negative.correct_skill`, so the pair is pinned from one "
-            f"side only. A description edit that fixes routing one way can "
-            f"break it the other way without reddening anything. Write the "
+            f"no non-xfail negative test declares `test.skill: {target}` with "
+            f"`{source}` in its `negative.correct_skill`, so the pair is pinned "
+            f"from one side only. A description edit that fixes routing one way "
+            f"can break it the other way without reddening anything. Write the "
             f"reciprocal under `eval/tests/unit/{target}/`. Declared by: "
             f"{', '.join(test_ids)}. Rule: {RULE_CITATION}"
         )
