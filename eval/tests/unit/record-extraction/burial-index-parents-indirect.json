@@ -35,7 +35,7 @@
     {
       "record_role": "deceased",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
     },
@@ -43,7 +43,7 @@
       "record_role": "deceased",
       "fact_type": "death",
       "attribute": "date",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
     },
@@ -52,21 +52,21 @@
       "fact_type": "burial",
       "attribute": "place",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "father_of_deceased",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "mother_of_deceased",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
     },
@@ -74,7 +74,7 @@
       "record_role": "deceased",
       "fact_type": "relationship",
       "optional": true,
-      "evidence_type": "direct"
+      "record_basis": "stated"
     }
   ]
 }

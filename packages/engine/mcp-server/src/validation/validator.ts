@@ -42,12 +42,13 @@ const CLOSED_ENUMS = {
   log_outcome: new Set(["positive", "negative", "partial", "error"]),
   source_classification: new Set(["original", "derivative", "authored"]),
   information_quality: new Set(["primary", "secondary", "indeterminate"]),
-  evidence_type: new Set(["direct", "indirect", "negative"]),
+  record_basis: new Set(["stated", "inferred", "absent"]),
   conflict_type: new Set(["fact", "identity"]),
   conflict_status: new Set(["unresolved", "resolved", "moot"]),
   hypothesis_status: new Set(["active", "supported", "ruled_out"]),
   proof_tier: new Set(["proved", "probable", "possible", "not_proved", "disproved"]),
   proof_vehicle: new Set(["statement", "summary", "argument"]),
+  proof_shortfall: new Set(["ceiling", "gap", "conflict", "none"]),
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
   priority: new Set(["high", "medium", "low"]),
@@ -572,7 +573,7 @@ export const RESEARCH_SHAPES = {
     "id", "source_id", "record_id", "record_role", "record_persona_id",
     "fact_type", "value", "structured_value", "date", "date_certainty",
     "place", "standard_place", "information_quality", "informant",
-    "informant_proximity", "informant_bias_notes", "evidence_type",
+    "informant_proximity", "informant_bias_notes", "record_basis",
     "log_entry_id", "extracted_for_question_ids",
   ]),
   person_evidence_entry: new Set([
@@ -603,12 +604,14 @@ export const RESEARCH_SHAPES = {
     "start", "end", "expected_events", "severity", "notes",
   ]),
   proof_summary: new Set([
-    "id", "question_id", "tier", "vehicle", "supporting_assertion_ids",
+    "id", "question_id", "tier", "vehicle", "shortfall",
+    "supporting_assertion_ids",
     "resolved_conflict_ids", "exhaustive_search_summary",
     "narrative_markdown", "claims",
   ]),
   proof_claim: new Set([
-    "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+    "claim", "proof_tier", "shortfall", "supporting_assertion_ids",
+    "relationship",
   ]),
   proof_claim_relationship: new Set([
     "type", "parent", "child",
@@ -1021,7 +1024,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkRequired(a, [
       "id", "source_id", "record_id", "record_role", "fact_type",
       "value", "information_quality", "informant", "informant_proximity",
-      "evidence_type", "extracted_for_question_ids",
+      "record_basis", "extracted_for_question_ids",
     ], ap, report, NULLABLE_FIELDS);
     checkAllowedKeys(a, RESEARCH_SHAPES.assertion, "assertions", ap, report);
     checkStringOrNull(
@@ -1037,14 +1040,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("information_quality" in a) {
       checkEnum(a.information_quality, "information_quality", ap, report);
     }
-    if ("evidence_type" in a) {
-      checkEnum(a.evidence_type, "evidence_type", ap, report);
+    if ("record_basis" in a) {
+      checkEnum(a.record_basis, "record_basis", ap, report);
     }
     if ("informant_proximity" in a) {
       checkEnum(a.informant_proximity, "informant_proximity", ap, report);
     }
+    // TWO DIFFERENT FIELDS SHARE THE VALUE "absent" BELOW. `record_basis:
+    // "absent"` says the RECORD lacked the value; `record_role: "absent"` says
+    // the PERSON held no role in it. Read the field name on every line.
+    //
     // Negative evidence is not three independent judgment calls. An assertion
-    // whose `evidence_type` is "negative" is the RESEARCHER's conclusion that a
+    // whose `record_basis` is "absent" is the RESEARCHER's conclusion that a
     // person expected in a record is missing from it, so `record_role` is the
     // literal "absent" and `informant_proximity` is "researcher" — no record
     // informant reported an absence, whatever the record type
@@ -1055,15 +1062,16 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // committed instance.
     //
     // Forward direction ONLY. The converse (`record_role: "absent"` implies
-    // negative) is deliberately not checked here: every `absent` assertion in
-    // the corpus is already negative, so it is an unexercised branch.
+    // `record_basis: "absent"`) is deliberately not checked here: every
+    // role-absent assertion in the corpus already has `record_basis: "absent"`,
+    // so it is an unexercised branch.
     // `research_append`'s own precondition does check it, and a writer-tool
     // precondition is allowed to be stricter than this integrity tier — the
     // reverse would be the bug.
     //
     // `informant` is deliberately NOT checked. It is free text, and a semantic
     // gate prefers a false allow (ADR-0011 limit 1).
-    if (a.evidence_type === "negative") {
+    if (a.record_basis === "absent") {
       // No presence guard on either field: when one is missing, `!==` is true
       // and this fires alongside `checkRequired` rather than leaving a shape
       // that escapes the rule entirely.
@@ -1071,25 +1079,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         addError(
           report,
           ap,
-          `evidence_type 'negative' requires record_role 'absent' (got ` +
-            `${JSON.stringify(a.record_role)}) — even when the record NAMES the person ` +
-            `(the "preceded in death by" shape is still negative evidence). Check the ` +
-            `finding is an ABSENCE at all: a fact about a person PRESENT in the record ` +
-            `is 'direct' carrying that person's real role — change both fields, not ` +
-            `one — and a blank field on a present person is silence, which produces no ` +
-            `assertion`
+          `record_basis 'absent' requires record_role 'absent' (got ` +
+            `${JSON.stringify(a.record_role)}) — these are two different fields that ` +
+            `share the value: record_basis 'absent' means the RECORD lacked the value, ` +
+            `record_role 'absent' means the PERSON was not in it — and that holds ` +
+            `even when the record NAMES the person (the "preceded in death by" shape ` +
+            `is still negative evidence). Check the finding is an ABSENCE at all: a fact about a person ` +
+            `PRESENT in the record is record_basis 'stated' carrying that person's real ` +
+            `record_role — change both fields, not one — and a blank field on a present ` +
+            `person is silence, which produces no assertion`
         );
       }
       if (a.informant_proximity !== "researcher") {
         addError(
           report,
           ap,
-          `evidence_type 'negative' requires informant_proximity 'researcher' (got ` +
+          `record_basis 'absent' requires informant_proximity 'researcher' (got ` +
             `${JSON.stringify(a.informant_proximity)}) — negative evidence is the ` +
             `researcher's own conclusion; no record informant reported an absence, ` +
             `whatever the record type, and that holds even when the record names the ` +
             `person. Set it to 'researcher'. Only if the finding is not an absence at ` +
-            `all is 'negative' wrong, and then record_role must change with it`
+            `all is record_basis 'absent' wrong, and then record_role must change with it`
         );
       }
     }
@@ -1254,7 +1264,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     const psp = `${path}/proof_summaries[${i}]`;
     if (!isObjectEntry(ps, psp, report)) continue;
     checkRequired(ps, [
-      "id", "question_id", "tier", "vehicle",
+      "id", "question_id", "tier", "vehicle", "shortfall",
       "supporting_assertion_ids", "resolved_conflict_ids",
       "exhaustive_search_summary", "narrative_markdown",
     ], psp, report, NULLABLE_FIELDS);
@@ -1268,6 +1278,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("vehicle" in ps) {
       checkEnum(ps.vehicle, "proof_vehicle", psp, report);
+    }
+    // `shortfall` answers "why is this conclusion not higher?" — remediability,
+    // orthogonal to the confidence `tier` carries. Required here; OPTIONAL on
+    // `claims[]` below, which is reached through an already-optional object, so
+    // requiring it there would add a second thing to get wrong for no gain.
+    if ("shortfall" in ps) {
+      checkEnum(ps.shortfall, "proof_shortfall", psp, report);
     }
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
@@ -1444,6 +1461,11 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           "claim", "proof_tier", "supporting_assertion_ids", "relationship",
         ], clp, report, NULLABLE_FIELDS);
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
+        // Optional here (unlike the scalar above) but still closed: an
+        // out-of-enum value is rejected wherever it is written.
+        if (claim && typeof claim === "object" && "shortfall" in claim) {
+          checkEnum(claim.shortfall, "proof_shortfall", clp, report);
+        }
         if (claim && typeof claim === "object" && "claim" in claim && typeof claim.claim === "string") {
           if (seenClaimLabels.has(claim.claim)) {
             addError(report, clp, `duplicate claim label '${claim.claim}' — claims[] entries must be uniquely named (the eval validator and viewer both look one up by this label)`);
