@@ -6,6 +6,7 @@ import CrossLink from '../shared/CrossLink'
 import Linkify from '../shared/Linkify'
 import type { Source, GedcomxSource } from '../../lib/schema'
 import { openExternal } from '../../lib/external'
+import { treeOnlySources } from '../../lib/tree-sources'
 import styles from './SourcesSection.module.css'
 
 const TRANSCRIPTION_PREVIEW_CHARS = 300
@@ -71,6 +72,12 @@ function TreeSourceCard({ source }: { source: GedcomxSource }): React.JSX.Elemen
       summary={source.citation ? truncate(source.citation, 200) : undefined}
       rawData={source}
     >
+      {source.citation && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Citation</div>
+          <div className={styles.fieldValue}>{source.citation}</div>
+        </div>
+      )}
       {source.author && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Author</div>
@@ -202,13 +209,12 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
 export default function SourcesSection(): React.JSX.Element {
   const { research, gedcomx } = useResearchData()
   const sources = research?.sources ?? []
-  const coveredIds = new Set(sources.map((s) => s.gedcomx_source_description_id))
-  const treeOnlySources = (gedcomx?.sources ?? []).filter((gs) => !coveredIds.has(gs.id))
+  const uncoveredTreeSources = treeOnlySources(research, gedcomx)
 
   return (
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Sources</h2>
-      {sources.length === 0 && treeOnlySources.length === 0 ? (
+      {sources.length === 0 && uncoveredTreeSources.length === 0 ? (
         <p className={styles.empty}>
           No sources captured yet. Sources are the records examined during
           research — each is captured during the record-extraction step and
@@ -217,10 +223,10 @@ export default function SourcesSection(): React.JSX.Element {
       ) : (
         <>
           {sources.map((s) => <SourceCard key={s.id} source={s} />)}
-          {treeOnlySources.length > 0 && (
+          {uncoveredTreeSources.length > 0 && (
             <>
               <h3 className={styles.subheading}>From the imported tree</h3>
-              {treeOnlySources.map((gs) => <TreeSourceCard key={gs.id} source={gs} />)}
+              {uncoveredTreeSources.map((gs) => <TreeSourceCard key={gs.id} source={gs} />)}
             </>
           )}
         </>

@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import nodefs from 'node:fs'
-import nodepath from 'node:path'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { setOpenExternal, setOpenFamilySearch } from '../../../lib/external'
 import PersonCard from '../PersonCard'
 import type { GedcomxPerson } from '../../../lib/schema'
+import styles from '../PersonCard.module.css'
 
 /**
  * Link visibility (#1018 review).
@@ -84,18 +85,18 @@ describe('PersonCard — link channel', () => {
   })
 })
 
-describe('PersonCard — no anchor element (#2661)', () => {
-  const source = nodefs.readFileSync(
-    nodepath.resolve(__dirname, '../PersonCard.tsx'),
-    'utf8'
-  )
-
-  it('does not contain an anchor element in the source', () => {
-    expect(source).not.toMatch(/<a[\s>]/)
+describe('PersonCard — layout placement (#2661)', () => {
+  it('puts the FamilySearch control in the name row, not the meta footer', () => {
+    const { container } = render(<PersonCard person={person('ark:/61903/1:1:MXYZ-9QP')} />)
+    const button = screen.getByRole('button', { name: /FamilySearch/i })
+    expect(container.querySelector(`.${styles.nameRow}`)).toContainElement(button)
+    expect(container.querySelector(`.${styles.meta}`)).not.toContainElement(button)
   })
 
-  it('would fail if an anchor element were present', () => {
-    const withAnchor = source + '\n<a href="#">test</a>'
-    expect(withAnchor).toMatch(/<a[\s>]/)
+  it('the .ark rule has text-decoration: underline without :hover', () => {
+    const css = readFileSync(resolve(__dirname, '../PersonCard.module.css'), 'utf8')
+    const arkRule = css.match(/\.ark\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(arkRule).toMatch(/text-decoration:\s*underline/)
   })
 })
+

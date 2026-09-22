@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
+import { treeOnlySources } from '../../lib/tree-sources'
 import styles from './Sidebar.module.css'
 
 interface SectionItem {
@@ -71,14 +72,8 @@ export default function Sidebar({
     {
       key: 'sources',
       label: 'Sources',
-      countFn: () => {
-        const researchCount = research?.sources?.length ?? 0
-        const coveredIds = new Set(
-          (research?.sources ?? []).map((s) => s.gedcomx_source_description_id)
-        )
-        const treeOnly = (gedcomx?.sources ?? []).filter((gs) => !coveredIds.has(gs.id)).length
-        return researchCount + treeOnly
-      }
+      countFn: () =>
+        (research?.sources?.length ?? 0) + treeOnlySources(research, gedcomx).length
     },
     { key: 'assertions', label: 'Assertions', countFn: () => research?.assertions?.length ?? 0 },
     {

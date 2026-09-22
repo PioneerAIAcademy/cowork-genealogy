@@ -26,9 +26,11 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
     <div className={styles.personCard}>
       <div className={styles.nameRow}>
         <div className={styles.name}>{name}</div>
-        {/* Styled as a button, not an anchor: middle-click fires auxclick (not
-            click), so an onClick handler never runs and the raw href is followed
-            unchecked — the poisoned case when ark holds an https:// value. */}
+        {/* A <button>, not an <a href>. Middle-click fires auxclick (not click),
+            so an onClick handler never runs and the raw href is followed unchecked
+            — the poisoned case when ark holds an https:// value. (Ctrl+click does
+            fire click, and the handler's preventDefault stops it; an earlier
+            version of this comment claimed otherwise.) */}
         {arkTarget && (
           <button
             type="button"
