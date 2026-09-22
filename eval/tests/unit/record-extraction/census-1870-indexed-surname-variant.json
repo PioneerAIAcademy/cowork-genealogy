@@ -18,7 +18,7 @@
     "scenario": "empty-project-just-created"
   },
   "judge_context": [
-    "The 1870 census has NO relationship-to-head column (that begins in 1880). NO relationship assertions — this census has no relationship column (that begins in 1880), so the record establishes only that these people shared a dwelling. Extract every person's stated facts and their residence, and write NO parent-child or spousal assertion in any form, including `indirect` / `_inferred` ones. Omitting them is CORRECT and is NOT a Completeness gap; emitting them is the error this test guards against. Noting the apparent family in the summary is good practice — that hypothesis belongs to downstream correlation, not to extraction (decided 2026-08-15, #1626)",
+    "The 1870 census has NO relationship-to-head column (that begins in 1880). NO relationship assertions — this census has no relationship column (that begins in 1880), so the record establishes only that these people shared a dwelling. Extract every person's stated facts and their residence, and write NO parent-child or spousal assertion in any form, including `inferred` / `_inferred` ones. Omitting them is CORRECT and is NOT a Completeness gap; emitting them is the error this test guards against. Noting the apparent family in the summary is good practice — that hypothesis belongs to downstream correlation, not to extraction (decided 2026-08-15, #1626)",
     "Surname is indexed as 'Baker' - extract it as stated ('Baker'); flagging it as a likely variant of the German 'Becker' is good practice, but the assertion value must not be silently 'corrected' to Becker",
     "Atomic assertions per person: separate entries for name, birth year, and birthplace",
     "Birthplaces (Bavaria for the parents, Ohio for the children) are DIRECT (stated); birth years are derived from stated age, so they are INDIRECT",
@@ -35,7 +35,7 @@
     {
       "record_role": "head_of_household",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -43,20 +43,20 @@
       "fact_type": "birth",
       "attribute": "place",
       "value": "Bavaria",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "date",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "wife",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -65,7 +65,7 @@
       "attribute": "place",
       "value": "Bavaria",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -73,13 +73,13 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "child_1",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -88,7 +88,7 @@
       "attribute": "place",
       "value": "Ohio",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -96,13 +96,13 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "child_2",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -111,7 +111,7 @@
       "attribute": "place",
       "value": "Ohio",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -119,13 +119,13 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "child_3",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -134,7 +134,7 @@
       "attribute": "place",
       "value": "Ohio",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -142,13 +142,13 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "child_4",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -157,7 +157,7 @@
       "attribute": "place",
       "value": "Ohio",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -165,13 +165,13 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "child_5",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -180,7 +180,7 @@
       "attribute": "place",
       "value": "Ohio",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -188,13 +188,13 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "child_6",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -203,7 +203,7 @@
       "attribute": "place",
       "value": "Ohio",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "information_quality": "indeterminate"
     },
     {
@@ -211,7 +211,7 @@
       "fact_type": "birth",
       "attribute": "date",
       "optional": true,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "information_quality": "indeterminate"
     },
     {

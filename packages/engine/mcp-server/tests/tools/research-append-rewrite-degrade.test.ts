@@ -68,7 +68,7 @@ const research = () => ({
     place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
     standard_place: "Thames Centre Township, Middlesex, Ontario, Canada",
     information_quality: "primary", informant: "self", informant_proximity: "self",
-    evidence_type: "direct", extracted_for_question_ids: [],
+    record_basis: "stated", extracted_for_question_ids: [],
   }],
   person_evidence: [], conflicts: [], hypotheses: [], timelines: [],
   proof_summaries: [], evaluations: [],

@@ -39,7 +39,7 @@ def _assertion(**overrides):
         "informant": "household head (self)",
         "informant_proximity": "self",
         "informant_bias_notes": "assumed self-reported",
-        "evidence_type": "direct",
+        "record_basis": "stated",
         "log_entry_id": "log_001",
         "extracted_for_question_ids": ["q_001"],
     }
@@ -63,7 +63,7 @@ def _sibling(**overrides):
         "informant": "household head (self)",
         "informant_proximity": "self",
         "informant_bias_notes": "assumed self-reported",
-        "evidence_type": "direct",
+        "record_basis": "stated",
         "log_entry_id": "log_001",
         "extracted_for_question_ids": ["q_001"],
     }
