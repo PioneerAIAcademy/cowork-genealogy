@@ -159,7 +159,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "agent",
         excerpt:
-          "**A delegation that pre-states the answer** — \"browse group 007936749, the\n  will is on image 00058\" — does not make it so.",
+          "**A delegation that pre-states the answer** — \"browse group 004567123, the\n  will is on image 00058\" — does not make it so.",
       },
     ],
   },
