@@ -32,6 +32,7 @@ export default function Sidebar({
 } = {}): React.JSX.Element {
   const {
     research,
+    gedcomx,
     folderPath,
     activeSection,
     setActiveSection,
@@ -67,7 +68,18 @@ export default function Sidebar({
     { key: 'localities', label: 'Localities', countFn: () => research?.localities?.length ?? 0 },
     { key: 'plans', label: 'Plans', countFn: () => research?.plans?.length ?? 0 },
     { key: 'log', label: 'Research Log', countFn: () => research?.log?.length ?? 0 },
-    { key: 'sources', label: 'Sources', countFn: () => research?.sources?.length ?? 0 },
+    {
+      key: 'sources',
+      label: 'Sources',
+      countFn: () => {
+        const researchCount = research?.sources?.length ?? 0
+        const coveredIds = new Set(
+          (research?.sources ?? []).map((s) => s.gedcomx_source_description_id)
+        )
+        const treeOnly = (gedcomx?.sources ?? []).filter((gs) => !coveredIds.has(gs.id)).length
+        return researchCount + treeOnly
+      }
+    },
     { key: 'assertions', label: 'Assertions', countFn: () => research?.assertions?.length ?? 0 },
     {
       key: 'person_evidence',

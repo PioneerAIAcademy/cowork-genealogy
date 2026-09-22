@@ -14,8 +14,6 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
   const birth = getPrimaryFact(person, 'Birth')
   const death = getPrimaryFact(person, 'Death')
 
-  // `preventDefault` went with the <a>; a <button type="button"> submits nothing.
-  //
   // Rendered only when the value actually resolves. `tree_edit` stores
   // `input.ark` unvalidated and `toArk` returns its input unchanged on no match,
   // so a person CAN carry a non-FamilySearch URL. Before the destination policy
@@ -26,7 +24,23 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
 
   return (
     <div className={styles.personCard}>
-      <div className={styles.name}>{name}</div>
+      <div className={styles.nameRow}>
+        <div className={styles.name}>{name}</div>
+        {/* Styled as a button, not an anchor: middle-click fires auxclick (not
+            click), so an onClick handler never runs and the raw href is followed
+            unchecked — the poisoned case when ark holds an https:// value. */}
+        {arkTarget && (
+          <button
+            type="button"
+            onClick={() => openFamilySearch(person.ark)}
+            className={styles.ark}
+            title={person.ark}
+            aria-label="View on FamilySearch"
+          >
+            View on FamilySearch
+          </button>
+        )}
+      </div>
       {relationship && <div className={styles.relationship}>{relationship}</div>}
       <div className={styles.facts}>
         {birth && (
@@ -45,26 +59,6 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
       </div>
       <div className={styles.meta}>
         {person.gender} · {person.facts?.length ?? 0} facts
-        {arkTarget && (
-          <>
-            {' · '}
-            {/* A <button>, not an <a href>. The hole is MIDDLE-click, which fires
-                `auxclick` — not `click` — so an onClick handler never runs and the
-                href is followed unchecked. (Ctrl+click does fire `click`, and the
-                handler's preventDefault stops it; an earlier version of this
-                comment claimed otherwise.) It only bites when `ark` holds an
-                https:// value, which is the poisoned case and what the fixtures
-                contain. `title` keeps the hover disclosure. */}
-            <button
-              type="button"
-              onClick={() => openFamilySearch(person.ark)}
-              className={styles.ark}
-              title={person.ark}
-            >
-              View on FamilySearch
-            </button>
-          </>
-        )}
       </div>
     </div>
   )

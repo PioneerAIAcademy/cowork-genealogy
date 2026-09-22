@@ -4,7 +4,7 @@ import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
 import Linkify from '../shared/Linkify'
-import type { Source } from '../../lib/schema'
+import type { Source, GedcomxSource } from '../../lib/schema'
 import { openExternal } from '../../lib/external'
 import styles from './SourcesSection.module.css'
 
@@ -61,6 +61,32 @@ function SourceImage({ filename }: { filename: string }): React.JSX.Element | nu
   // show nothing (the transcription still stands on its own).
   if (!getSourceImage || failed || !src) return null
   return <img className={styles.sourceImage} src={src} alt="Source page scan" />
+}
+
+function TreeSourceCard({ source }: { source: GedcomxSource }): React.JSX.Element {
+  return (
+    <Card
+      id={source.id}
+      title={source.title}
+      summary={source.citation ? truncate(source.citation, 200) : undefined}
+      rawData={source}
+    >
+      {source.author && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Author</div>
+          <div className={styles.fieldValue}>{source.author}</div>
+        </div>
+      )}
+      {source.url && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>URL</div>
+          <button className={styles.externalLink} onClick={() => openExternal(source.url)}>
+            {source.url}
+          </button>
+        </div>
+      )}
+    </Card>
+  )
 }
 
 function SourceCard({ source }: { source: Source }): React.JSX.Element {
@@ -174,20 +200,30 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
 }
 
 export default function SourcesSection(): React.JSX.Element {
-  const { research } = useResearchData()
+  const { research, gedcomx } = useResearchData()
   const sources = research?.sources ?? []
+  const coveredIds = new Set(sources.map((s) => s.gedcomx_source_description_id))
+  const treeOnlySources = (gedcomx?.sources ?? []).filter((gs) => !coveredIds.has(gs.id))
 
   return (
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Sources</h2>
-      {sources.length === 0 ? (
+      {sources.length === 0 && treeOnlySources.length === 0 ? (
         <p className={styles.empty}>
           No sources captured yet. Sources are the records examined during
           research — each is captured during the record-extraction step and
           formally cited during the citation step.
         </p>
       ) : (
-        sources.map((s) => <SourceCard key={s.id} source={s} />)
+        <>
+          {sources.map((s) => <SourceCard key={s.id} source={s} />)}
+          {treeOnlySources.length > 0 && (
+            <>
+              <h3 className={styles.subheading}>From the imported tree</h3>
+              {treeOnlySources.map((gs) => <TreeSourceCard key={gs.id} source={gs} />)}
+            </>
+          )}
+        </>
       )}
     </div>
   )

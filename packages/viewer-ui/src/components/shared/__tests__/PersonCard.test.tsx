@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import nodefs from 'node:fs'
+import nodepath from 'node:path'
 import { setOpenExternal, setOpenFamilySearch } from '../../../lib/external'
 import PersonCard from '../PersonCard'
 import type { GedcomxPerson } from '../../../lib/schema'
@@ -79,5 +81,21 @@ describe('PersonCard — link channel', () => {
     await userEvent.click(screen.getByRole('button', { name: /FamilySearch/i }))
     expect(fs).toHaveBeenCalledTimes(1)
     expect(generic).not.toHaveBeenCalled()
+  })
+})
+
+describe('PersonCard — no anchor element (#2661)', () => {
+  const source = nodefs.readFileSync(
+    nodepath.resolve(__dirname, '../PersonCard.tsx'),
+    'utf8'
+  )
+
+  it('does not contain an anchor element in the source', () => {
+    expect(source).not.toMatch(/<a[\s>]/)
+  })
+
+  it('would fail if an anchor element were present', () => {
+    const withAnchor = source + '\n<a href="#">test</a>'
+    expect(withAnchor).toMatch(/<a[\s>]/)
   })
 })
