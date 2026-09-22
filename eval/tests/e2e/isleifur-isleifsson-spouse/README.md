@@ -53,6 +53,8 @@ Kyrkjulandi` witnesses on page 40 and appears again on page 45 — so the word i
 reading. He was an unmarried farmhand at Kyrkjuland; Þórunn was on that same farm, and
 Guðríður was at Litluhildisey with her parents, who stood as Steinunn's godparents.
 
+**External control on the farm name.** The calibration check below verifies child, father, mother and date against the index — but the index carries **no farm column**, so it cannot license a farm reading, and farm names are exactly the class that failed every earlier attempt. The independent check is this: *Iceland, Church Census, 1744-1965* record `ark:/61903/1:1:6JYM-KK28` places a household at **`Landeyjaprestakall, Kirkjuland`** in 1873 — headed by **Bjarni Bjarnason b. 1823** with his wife Katrín Jónsdóttir. That is the same benefice the film's own archive slip names (`Landeyjaþing prestakall 0000-165`), and Bjarni Bjarnason is the godparent the register enters `á Kyrkjulandi` on **both** page 40 and page 45. So Kirkjuland is a documented farm of this parish and that man lived on it, established from an indexed source with no handwriting involved. The same household also accounts for the index's *other* 1856 Einar — 9 August, father Bjarni Bjarnason, mother Katrín Jónsdóttir.
+
 **Why the README's original argument failed.** It reasoned that twelve days between the two
 christenings ruled out one mother, therefore there must be a second Ísleifur Ísleifsson in
 the parish. The first half holds; the second never followed. Twelve days rules out one *mother*,
@@ -67,7 +69,9 @@ Einar 1856, Guðmundur 1859, Jóhann 1861. The only others in Rangárvallasýsla
 Stóriólfshvoll to Katrín Jónsdóttir in 1845 and 1850, an older man since ours was born 1832;
 the rest are at Staður í Aðalvík in the Westfjords.
 
-**On the mother's name.** The index writes "Gudrun Gunnlogsdr" in 1856 and 1861 and "Gudridr" in
+**On the mother's name — and a reversal in my own reporting.** An earlier comment on issue #2308 stated that *the register* writes `Guðrún`. That came from the low-resolution machine reads which were subsequently shown to be unusable, and it is withdrawn: on the full-resolution scan the register writes `Guðríðr`. **f2's argument does not depend on which of the two it is.** The discriminator between this woman and Þórunn Einarsdóttir is the **patronymic** — Gunnlaugsdóttir versus Einarsdóttir — which is stable across every reading anyone has produced, and the residence, Litluhildisey versus Kyrkjuland.
+
+The index writes "Gudrun Gunnlogsdr" in 1856 and 1861 and "Gudridr" in
 1859 for the same woman; the register writes `Guðríðr`. She is one person, confirmed
 independently of the handwriting: Guðríður Gunnlaugsdóttir b. 1836 lives with her daughter
 Steinunn Ísleifsdóttir b. 1856 and her own mother Guðríður Magnúsdóttir b. 1807 in the
@@ -87,14 +91,10 @@ the register page carries no item-level ark, and the ark rule is met by the hint
 record, `ark:/61903/1:1:FG58-V8X`, which is correct for a true match. The register is cited by
 archive box and film number instead.
 
-**Provenance, stated plainly.** The register pages were read directly from full-resolution scans by
-a genealogist and by Claude working from the same images, in agreement. Earlier machine
+**Provenance, stated plainly — including what is NOT evidenced.** The deciding reading of both entries was made by Claude from full-resolution scans supplied by the genealogist. **No independent reader of Icelandic secretary hand has confirmed the word `Kyrkjulandi` on either entry.** The card asks for a second genealogist's read and that has not been obtained on the deciding word; what stands in its place is the external control above plus the calibration below. An earlier reviewer, working from a low-resolution screenshot, returned "cannot verify, too faint" on the status word `ógift`; the full-resolution scan is a different artifact and the word is legible on it, but that is a change of evidence, not a second opinion. Earlier machine
 transcriptions of these pages were **wholly unreliable** — six separate reads produced six
 different answers, including invented Norwegian names, and two of Claude's own findings had to be
 retracted. What broke the deadlock was a calibration check: the FamilySearch index is a human
 transcription of this same register, so reading two entries with known answers first exposes an
-unreliable source in a minute. Entry 2 (Erlendr Guðmundsson, 9 Mai, father G. Bjarnason) and
-entry 8 (Jón Þórgilsson, 16 Dec, father Þ. Jónsson) both matched the index on page 40, which is
-what licensed trusting entry 6. **Anyone resolving another Icelandic fixture in this batch should
-run that check before anything else.**
+unreliable source in a minute. Entry 2 (Erlendr Guðmundsson, 9 Mai, father G. Bjarnason) and entry 8 (Jón Þórgilsson, 16 Dec, father Þ. Jónsson) both matched the index **on page 40**, which is what licensed trusting entry 6. **Entry numbering is per page-section, not per year**: page 40's 1856 male entries run 1-8, while the separate section on pages 44-45 runs its own sequence (4-11 male, 7-10 female, then 1857). An earlier comment on #2308 reported the 1856 male entries as 4-11; that was pages 44-45, a different section, and is corrected here. **Anyone resolving another Icelandic fixture in this batch should run that check before anything else** — it is filed for the guide as issue #2831. Note its limit: the index has no farm column, so calibrating on child/father/mother/date does not license a farm reading, which is why the Kirkjuland external control above is separate.
 
