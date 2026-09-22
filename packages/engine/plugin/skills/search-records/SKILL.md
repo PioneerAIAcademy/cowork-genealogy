@@ -355,9 +355,6 @@ must be dead — please log in and I'll re-run."
 ✅ CORRECT: "Zero results US-wide despite good coverage. The search ran fine, so
 this is a real nil — most likely a transcription error the index cannot match."
 
-A zero-result response counts toward Step 8 item 7's variant tally. Suspecting
-the session, the coverage or the tool does not exempt it from that count.
-
 ### 4. Triage results — rank by match, then confirm
 
 **If you passed `subjectId` in Step 3, the ranking is already in the response —
@@ -649,7 +646,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
-7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. Count every zero-result response toward those variants, however implausible the nil looks. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for approval.
+7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for approval.
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
