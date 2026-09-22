@@ -332,8 +332,8 @@ project's research objective; nothing about the researcher is asked.
 `intended_audience` and `subscriptions` are not written by it (see their rows
 below). Read
 by every skill. Skills adapt their narration density to
-`narration_guidance`, and `search-external-sites` prioritizes URLs for
-sites listed in `subscriptions`. All fields optional — absence falls
+`narration_guidance`, and `search-external-sites` reads `subscriptions`
+only to flag a site the researcher has named but has no access to on file. All fields optional — absence falls
 back to default narration. To update mid-project, edit this section
 directly.
 
