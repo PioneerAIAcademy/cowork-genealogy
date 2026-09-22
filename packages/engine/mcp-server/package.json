@@ -10,7 +10,7 @@
     "npm": ">=11.12 <12"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node ../../../scripts/write-build-info.mjs",
     "start": "node build/index.js",
     "typecheck": "tsc --project tsconfig.typecheck.json",
     "pretest": "npm run build && npm run typecheck",
