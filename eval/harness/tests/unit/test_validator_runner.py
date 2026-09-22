@@ -433,7 +433,7 @@ def test_expected_classifications_optional_skips_existence_but_checks_classifica
 def test_expected_classifications_value_pins_the_fact_value():
     """`value` (#1108) checks the fact VALUE, not a layer. The ut_013 leak —
     Patrick's birthplace persisted 'Pennsylvania' where the record says
-    'Ireland' — is `direct` either way, so only a value matcher catches it.
+    'Ireland' — is `stated` either way, so only a value matcher catches it.
     Substring + case-insensitive, read from the attribute-relevant field."""
     # Correct value → passes.
     ok = _run_expected_classifications(
@@ -444,7 +444,7 @@ def test_expected_classifications_value_pins_the_fact_value():
     )
     assert ok.passed is True, f"unexpected failure: {ok.error}"
 
-    # The ut_013 leak: wrong birthplace value, still classified `direct` → the
+    # The ut_013 leak: wrong birthplace value, still classified `stated` → the
     # value matcher fails where the record_basis facet alone would pass.
     leak = _run_expected_classifications(
         [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
@@ -468,8 +468,8 @@ def test_expected_classifications_value_pins_the_fact_value():
 
 
 def test_expected_classifications_attribute_facet_separates_birth_claims():
-    """A `birth` place-claim (place set, `direct`) and a `birth` date-claim
-    (date set, `indirect`) share the `birth` fact_type but are independently
+    """A `birth` place-claim (place set, `stated`) and a `birth` date-claim
+    (date set, `inferred`) share the `birth` fact_type but are independently
     checkable via `attribute`: the place matcher grades only the place-claim,
     the date matcher only the date-claim — even though a naive fact_type-only
     match would conflate them and fail the census direct/indirect split."""
@@ -932,7 +932,7 @@ def _birth_assertion(**overrides):
 
 
 def test_birth_year_rule_flags_dateless_compound_value():
-    """The defect (#1407): a place-keyed `direct` birth assertion carrying a
+    """The defect (#1407): a place-keyed `stated` birth assertion carrying a
     year in `value` and NO structured `date` — two facts in one assertion,
     invisible to every structured matcher."""
     result = _run_birth_year_rule(
@@ -1022,8 +1022,8 @@ def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
 
 def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
     """The ut_028 shape, from the 2026-08-14 paid run. The party gets TWO
-    atomic birth assertions — a `direct` place-claim whose label redundantly
-    repeats the year, beside an `indirect` date-claim that states it
+    atomic birth assertions — a `stated` place-claim whose label redundantly
+    repeats the year, beside an `inferred` date-claim that states it
     structurally. Atomicity is correct and nothing is lost, so this must not
     fail; the pre-fix rule reddened it."""
     result = _run_birth_year_rule(
@@ -1170,13 +1170,13 @@ def _relationship(rel_type, record_basis="inferred"):
 @pytest.mark.parametrize(
     "rel_type,record_basis",
     [
-        ("child_inferred", "indirect"),  # the OLD policy's correct output
-        ("spouse_inferred", "indirect"),
-        ("child", "direct"),  # and the plainly-wrong one
+        ("child_inferred", "inferred"),  # the OLD policy's correct output
+        ("spouse_inferred", "inferred"),
+        ("child", "stated"),  # and the plainly-wrong one
     ],
 )
 def test_pre_1880_rule_rejects_any_relationship_assertion(rel_type, record_basis):
-    """The `_inferred`/`indirect` form is rejected too — that is the whole
+    """The `_inferred`/`inferred` form is rejected too — that is the whole
     reversal (#1626, decided 2026-08-15). Labelling the doubt is still
     asserting the relationship."""
     result = _run_pre1880_rule(
@@ -1227,7 +1227,7 @@ def test_pre_1880_rule_gate_derives_the_year_from_tags(tags):
     ],
 )
 def test_pre_1880_rule_skips_everything_it_should_not_gate(tags):
-    """1880+ census relationships are STATED and stay `direct`; a
+    """1880+ census relationships are STATED and stay `stated`; a
     non-census record is out of scope entirely."""
     result = _run_pre1880_rule([_relationship("child", "stated")], tags)
     assert result.passed is True, result.error
@@ -1486,8 +1486,137 @@ def test_rel_agreement_skips_what_it_cannot_compare(rel_type, value):
     assert result.passed is True, result.error
 
 
+@pytest.mark.parametrize(
+    "rel_type,value",
+    [
+        # The value LABELS the other party rather than stating the
+        # subject's role. Comparing relation words without regard to
+        # position refused 22 of the 37 it flagged over the e2e run logs,
+        # which is how two earlier guards here got their refusal rates.
+        ("child", "father named as Casper A. Battermiller on death cert"),
+        ("child", "mother named as Mary Mehlman on death certificate"),
+        ("child", "father: Jan Roelfs Harkema"),
+        # Carries " of ", so the role guard keeps it out: `groom` is a
+        # role word, not a name.
+        ("child", "Father of groom named as Tellef Aadnesen in 1840"),
+        # Carries " of " AND a label marker: only the label guard catches
+        # this one. No corpus assertion has the shape today, so without
+        # this case that guard is a branch no test can reach.
+        ("child", "father of the bride: Jan Roelfs Harkema"),
+        # The relation word is not the value's opening claim.
+        ("child", "named in the will of his brother John Grice"),
+    ],
+)
+def test_rel_agreement_reads_position_not_mere_presence(rel_type, value):
+    """Only a leading `<relation> of <name>` states the SUBJECT's own role.
+
+    `relationship_type` is the record subject's own role and
+    `related_person_role` is the other party's (research-schema-spec 5.6.1),
+    so a value that names the other party says nothing to disagree with.
+    Every case here was flagged by the previous word-anywhere rule and is
+    correct data."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is True, f"false positive on {rel_type}/{value}: {result.error}"
+
+
+@pytest.mark.parametrize(
+    "rel_type,value,states",
+    [
+        # The live, reproducing defect: 5 sightings across the three
+        # current record-extraction run logs (three of the five), every one typed `child`.
+        ("child", "sibling of Grace (Whitaker) Tolman", "sibling"),
+        # Its committed shape carries the `_inferred` suffix, which must be
+        # stripped before the category lookup or all three are missed.
+        ("child_inferred", "brother of John Grice (inferred)", "sibling"),
+    ],
+)
+def test_rel_agreement_catches_the_sibling_typed_as_a_child(rel_type, value, states):
+    """The half of issue #2535 that reproduces today. `sibling` was never
+    named as a legal `relationship_type` in the agent body, so the extractor
+    picked the nearest of the three values it had been given."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is False
+    assert states in (result.error or ""), result.error
+
+
+def test_relationship_direction_cases_match_the_shared_table():
+    """The Python half of a cross-language pact (issue #2535).
+
+    The rule exists twice -- here and in TypeScript at
+    `src/tools/research-append.ts` -- because the harness and the engine
+    share no runtime (CLAUDE.md, "Don't try to share code at runtime").
+    Duplication is forced; unpinned duplication is not. Both sides assert
+    against one table, so either drifting reds its own suite. The TS half is
+    `tests/packaging/relationship-direction-drift.test.ts`."""
+    import json
+    import sys
+    from pathlib import Path
+
+    # `test_record_extraction` imports `validators_lib` as a sibling, which
+    # resolves only with the validators dir itself on the path. Every other
+    # test in this block reaches the module through `run_validators`, which
+    # arranges that; this one imports it directly, so it must arrange it
+    # too or it passes only when a neighbour ran first.
+    sys.path.insert(0, str(VALIDATORS_DIR))
+    try:
+        from validators.test_record_extraction import (
+            _RELATION_CATEGORY,
+            _subject_role_in_value,
+        )
+    finally:
+        sys.path.remove(str(VALIDATORS_DIR))
+
+    table = json.loads(
+        (Path(__file__).resolve().parents[2]
+         / "validators" / "relationship_direction_cases.json")
+        .read_text(encoding="utf-8")
+    )
+    # The value predicate is only half the rule -- see the note in the
+    # shared file. Pin the category table too, or a spelling added to one
+    # language alone passes both suites.
+    assert table.get("categories"), "shared table has no 'categories'"
+    assert _RELATION_CATEGORY == table["categories"], (
+        "python's relation-word table differs from the shared one -- the "
+        "two implementations have drifted"
+    )
+
+    from validators.test_record_extraction import _relationship_category
+
+    cat_cases = table.get("category_cases") or []
+    assert len(cat_cases) >= 5, (
+        "the shared file carries no category cases -- a renamed key would "
+        "make the loop below vacuous while the suite stayed green"
+    )
+    for c in cat_cases:
+        assert c.get("why"), (
+            "category case %r has no reason" % c["relationship_type"]
+        )
+        got = _relationship_category(c["relationship_type"])
+        assert got == c["category"], (
+            "%r: python reads category %r, the shared table says %r -- the "
+            "two implementations have drifted"
+            % (c["relationship_type"], got, c["category"])
+        )
+
+    cases = table["cases"]
+    # A table that shrank to nothing would make every assertion below
+    # vacuous while the suite stayed green.
+    assert len(cases) >= 15
+    assert sum(1 for c in cases if c["states"] is not None) >= 5
+    assert sum(1 for c in cases if c["states"] is None) >= 5
+    for c in cases:
+        assert c.get("why"), "case %r has no reason" % c["value"]
+        assert _subject_role_in_value(c["value"]) == c["states"], (
+            "%r: python reads %r, the shared table says %r -- the two "
+            "implementations have drifted"
+            % (c["value"], _subject_role_in_value(c["value"]), c["states"])
+        )
+
+
 def test_rel_agreement_accepts_a_value_naming_several_relations():
-    """`want in found` — the type only has to match one of them."""
+    """Only the value's OPENING claim is compared, so a second relation
+    named later does not contradict it. The rule this replaced compared
+    every relation word in the value and accepted when any matched."""
     result = _run_rel_agreement(
         _rel("child", "child of Thomas Flynn and brother of Mary Flynn")
     )
