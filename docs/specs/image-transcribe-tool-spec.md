@@ -977,7 +977,10 @@ can add a `true` badge, never a false "verified whole").
   scoped by the store's `projectId` rather than the `projectPath` `browseBudgetSeen`
   keys on, so it isolates patrons on the shared-process entrypoint.
 - **Derive (persist side).** In `research_append`'s `prepareOps`, after the
-  source-reuse rewrite, every `sources` op carrying an `image_filename` reads
+  source-reuse rewrite, every `sources` op is folded with its siblings onto the
+  persisted entry to get the `image_filename` the batch actually leaves behind —
+  so the reference may arrive in an earlier op, or already be persisted, and need
+  not be re-sent by the op carrying the transcription. That result reads
   `sourceImageCapState(projectPath, image_filename)` and sets the field from it —
   **authoritative**, any agent-supplied value stripped first. The persisted marker
   is **`true` or absent, never `false`**: `true` is written only when the image is

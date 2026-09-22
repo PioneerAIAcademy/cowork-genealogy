@@ -616,9 +616,18 @@ Derivation, per op:
   value is a guess and is dropped rather than persisted. On an `update` the
   stripped key is then absent from the patch, so `applyOne` keeps whatever is
   already persisted (below).
-- The op is then joined by `image_filename` against the image-store cap set
-  (`sourceImageCapState` — `true` when the image was read past the cap, absent
-  otherwise).
+- **The join reads the batch's FINAL state per source, not the single op.** Both
+  `image_filename` and `transcription` are folded across the whole batch onto the
+  entry already persisted, in op order, and the marker is set on the last op that
+  writes that source. So it does not matter which op carries which field, an
+  `update` need not re-send a field it is not changing, and a field a later op in
+  the same batch removes is gone before the join runs. Presence decides, not
+  truthiness: an explicit `image_filename: null` or `""` is the caller **removing**
+  the reference, which is the opposite of omitting it, and a source that ends the
+  batch citing no scan is never marked.
+- The result is then joined by `image_filename` against the image-store cap set
+  (`sourceImageCapState` — `true` when the image was read past the cap, `false`
+  otherwise; it returns a plain boolean, never `undefined`).
 - The flag is set `true` **only** on a hit that also carries a non-empty
   `transcription`. That guard is load-bearing: `true` beside empty/null
   `transcription` is a state `validate_research_schema` rejects, so deriving it

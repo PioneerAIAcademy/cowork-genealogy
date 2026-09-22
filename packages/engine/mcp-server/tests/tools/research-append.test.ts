@@ -909,6 +909,85 @@ describe("research_append (Phase 1)", () => {
       const after = (await readResearch()).sources.length;
       expect(after - before).toBe(2);
     });
+
+    it("marks the source on the MIRROR two-op sequence — append {transcription}, then a later update {image_filename} that omits it (#2457 r11 [0])", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // r10 gave `image_filename` a persisted fallback and `transcription` none, so
+      // this order derived nothing while its mirror derived `true`, on the SAME final
+      // document. Both fields now fall back, so op order cannot decide the marker.
+      const noRef = imageSource({});
+      delete (noRef as Record<string, unknown>).image_filename;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noRef });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("first half of the page");
+      expect(after.transcription_truncated).toBe(true); // pre-fix: absent — a partial read reading as whole
+    });
+
+    it("an update that REMOVES the image does not stamp the badge — an explicit null is not an omission (#2457 r11 [0b])", async () => {
+      await writeProject();
+      // Cap recorded AFTER the append, so the source carries NO persisted marker and
+      // the only thing that could stamp it is this update's own derivation.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // The r10 fallback keyed on truthiness, so an explicit `null` — the caller
+      // REMOVING the reference — looked identical to not re-sending it, and the badge
+      // was derived from the very scan this op deletes. Keyed on presence now.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: null, transcription: "text with no scan behind it" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.image_filename).toBeNull();
+      expect("transcription_truncated" in after).toBe(false); // pre-fix: true — badged a source citing no scan
+    });
+
+    it("does not stamp a source a later op in the same batch empties, and so does not refuse its own write (#2457 r11 [0c])", async () => {
+      await writeProject();
+      // Cap recorded AFTER the append: the document holds NO marker, so any `true` the
+      // batch trips over is one this loop put there. (Nulling the text of a source that
+      // genuinely carries a persisted `true` is a DIFFERENT case and is correctly
+      // refused — ruling C keeps that loud failure.)
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // Per-op derivation stamped `true` from op[0] and then the validator refused the
+      // batch — "do not null the partial transcription of a truncated source" — for a
+      // value only the tool had set. The fold reads what the batch actually leaves.
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { transcription: null } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // pre-fix: false — the tool rejected a write only it had made
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBeNull();
+      expect("transcription_truncated" in after).toBe(false);
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {
@@ -5011,6 +5090,36 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(research.assertions[1].source_id).toBe("src_001"); // stamped with the existing src
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("derives transcription_truncated THROUGH a §3.4.1 reuse fold — pins the derivation after the rewrite (#2457 r11 [0e])", async () => {
+    await writeProject();
+    // The derivation must run AFTER the reuse rewrite, and since r10 that is
+    // load-bearing rather than decorative: before the fold this op is an `append`
+    // carrying no entryId, so the persisted-entry fallback cannot resolve it; after
+    // the fold it is an `update` on src_001 and it can. Moving the block earlier in
+    // prepareOps leaves the whole suite green EXCEPT this test.
+    await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "update",
+      entryId: "src_001",
+      fields: { image_filename: "images/x.jpg" },
+    } as any);
+    recordImageReadCap(dir, "images/x.jpg", true);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("NARA", { transcription: "first half of the page" }) },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse?.action).toBe("updated_existing"); // the fold happened
+    const folded = (await readResearch()).sources.find((s: any) => s.id === "src_001");
+    expect(folded.transcription_truncated).toBe(true); // reds if the derivation runs before the rewrite
+    __clearTruncatedSourceImagesForTests();
   });
 
   it("updated_existing: repository matches on normalized form (case + whitespace)", async () => {
