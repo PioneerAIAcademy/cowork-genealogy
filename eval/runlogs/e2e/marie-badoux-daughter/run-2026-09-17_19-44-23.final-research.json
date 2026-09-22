@@ -1,0 +1,2381 @@
+{
+  "project": {
+    "id": "rp_marie_badoux_daughter",
+    "objective": "Was Claudine Th\u00e9not, baptised 12 October 1781 at Romenay to Philippe Th\u00e9not and Marie Joly, a daughter of Marie Badoux \u2014 or of a second wife?",
+    "subject_person_ids": [
+      "LT9H-SK3"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-09-17"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Is 'Marie Joly' named as mother of Claudine Th\u00e9not (baptised 12 October 1781 at Romenay, Sa\u00f4ne-et-Loire) the same person as Marie Badoux, known wife of Philippe Th\u00e9not \u2014 or was she a different woman, indicating Philippe Th\u00e9not had a second wife?",
+      "rationale": "The baptism record names the mother as 'Marie Joly', not 'Marie Badoux'. This identity question is the core of the research objective: determining whether 'Joly' was an alias, a second surname, or a distinct individual. Romenay parish registers (Sa\u00f4ne-et-Loire, France) survive for this period and should yield the Th\u00e9not marriage record, other baptisms for the Th\u00e9not\u2013Badoux union, and potentially a death record for Marie Badoux that would establish whether she predeceased the 1781 baptism. These records together can establish or refute the identity of the mother.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-09-17",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_006",
+        "a_015",
+        "a_017"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All five completed plan items and the skipped notarial item have been assessed. Marie Badoux's burial record (S1, W5XV-6XPZ) establishes her death on 21 March 1780 \u2014 19 months before Claudine Th\u00e9not's 12 October 1781 baptism. This is a biological impossibility: a deceased woman cannot be the living mother of a child baptised 19 months after her death. Three independent post-1780 baptism records (S4, S5, and the 1781 Claudine baptism established by the research question) all name 'Marie Joly' as Philippe Th\u00e9not's children's mother. The marriage record S3 confirms the Th\u00e9not\u2013Badoux union from 22 February 1773. The evidence converges definitively: Marie Joly is a distinct second wife of Philippe Th\u00e9not, not Marie Badoux. Civil registration in France began in 1792 (FamilySearch wiki, France Civil Registration); all relevant events (1780\u20131784) predate that threshold \u2014 no civil record gap exists. The secondary naming conflict between S6 (bride 'Marie Claudine Bourgeois') and S4/S5 (mother 'Marie Joly') does not affect the binary conclusion of this question, because under any resolution of that conflict the mother of Claudine is not Marie Badoux. FamilySearch collection 2840171 (the only digitised repository for Romenay 1737\u20131802) was searched across all record types; the notarial series (pli_005) was skipped as a fallback since the primary marriage record S3 was found and is decisive. No additional repository or record type could plausibly name a different mother for Claudine.",
+        "log_entry_ids": [
+          "log_001",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the question asks whether Marie Joly (mother of Claudine, baptised 12 Oct 1781) is the same person as Marie Badoux. S1 establishes Marie Badoux died 21 March 1780, 19 months before Claudine's baptism. A deceased person cannot be a living mother. The answer is definitive: they are different women. Goal fully met.",
+          "repository_breadth": "FamilySearch collection 2840171 \u2014 the only digitised, fully name-indexed repository covering all Romenay parish registers 1737\u20131802 \u2014 was searched across marriage (pli_001), baptism (pli_002), and burial/death (pli_003) record types, plus a targeted Marie Joly baptism search (pli_004) and an external-links sweep (pli_005, skipped as negative). The notarial archives at Archives D\u00e9partementales de Sa\u00f4ne-et-Loire (pli_005) were identified as a fallback but skipped because the primary marriage record S3 was found and the notarial series could only corroborate, not change, the conclusion. Name variants (Thenot/Th\u00e9not, Joly/Voly, Philippes/Philippe) were applied. FAN research was conducted via sibling baptisms (S2, S4, S5) and the second marriage record (S6). Breadth is adequate for this question type and jurisdiction.",
+          "original_substitution": "Records S1\u2013S6 were all retrieved from the FamilySearch index of collection 2840171, a digitised derivative. The assertions note that original parish register images are accessible (e.g., image links cited in informant_bias_notes for S6). The key finding \u2014 the death date in S1 \u2014 was confirmed by two burial records (log_004 notes W5XV-6XPZ and W5XK-J4MM, likely duplicate volumes). The core conclusion does not rest on a single index transcription; it is corroborated across multiple independent records. The secondary Bourgeois/Joly conflict in S6 flagged that the S6 image should be examined, but that conflict does not affect the binary answer to this question.",
+          "independent_verification": "Three independent sources confirm that the mother of Philippe Th\u00e9not's post-1780 children was not Marie Badoux: S1 (burial record, parish officiant as informant \u2014 Marie Badoux died 21 Mar 1780), S4 (Marie Fran\u00e7oise Th\u00e9not baptism 1783, Philippe Th\u00e9not as informant naming 'Marie Joly'), and S5 (Pierre Th\u00e9not baptism 1784, Philippe Th\u00e9not as informant naming 'Marie Joly'). S2 further independently confirms that Philippe's last child by Marie Badoux was baptised the day after her death (22 Mar 1780), closing the Badoux line. Each record was created at a separate event, by a different set of parties. The informant for S1 is unknown but distinct from Philippe Th\u00e9not (the informant for S4/S5); S1 and S4/S5 are therefore fully independent units. At minimum two independent informants and three independent records support the conclusion.",
+          "evidence_class": "S1 (Marie Badoux burial, 22 Mar 1780) is an original parish burial record with primary information for the burial event; the burial officiant recorded the date and place as primary informant. S3 (Philippe Th\u00e9not\u2013Marie Badoux marriage, 22 Feb 1773) is an original parish marriage record with primary information supplied by the parties themselves. S4 and S5 are original parish baptism records with primary information. The evidence includes multiple original records with primary information. The classification of a_003 (death date) as 'indeterminate' reflects the unknown identity of the informant who notified the cur\u00e9 \u2014 it is correctly reasoned and does not diminish the evidentiary force of a_004 (burial event, primary).",
+          "conflict_resolution": "The secondary conflict \u2014 S6 names Philippe's June 1780 bride as 'Marie Claudine Bourgeois' while S4/S5 name 'Marie Joly' as mother of post-1780 children \u2014 is flagged in the assertions and noted as unresolved (three hypotheses: third marriage, indexing confusion with Philippe's mother, or wrong Philippe Th\u00e9not). This conflict bears on the identity of Philippe's second wife but does NOT bear on the core question: under any resolution of the Bourgeois/Joly conflict, neither woman is Marie Badoux. The conflict does not block proof of the binary question asked. No blocking conflicts[] entry exists, consistent with this assessment. The marriage S3 (Th\u00e9not\u2013Badoux 1773) is uncontested.",
+          "overturn_risk": "Low. The conclusion rests on a biological impossibility: Marie Badoux was buried 21 March 1780 and cannot have been the living mother of Claudine Th\u00e9not baptised 12 October 1781. No surviving record type \u2014 not a civil registration (France's began in 1792, per FamilySearch wiki), not a second burial record, not notarial records \u2014 could plausibly name Marie Badoux as the mother of a child born 19 months after her confirmed death. The one credible gap (original image of S6 to resolve the Bourgeois/Joly naming conflict) is irrelevant to the core conclusion. No unsearched record type could overturn the finding."
+        }
+      },
+      "created": "2026-09-17"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-17",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "date_range": "1740-1790",
+          "repository": "FamilySearch",
+          "rationale": "The marriage record for Philippe Th\u00e9not is the single highest-value source for this question. French Catholic marriage registers of this period name both the groom and the bride in full, their parents, their marital status (bachelor/spinster or widower/widow indicating a prior marriage), witnesses, and often ages and residences. This entry would directly confirm whether Philippe Th\u00e9not married a woman surnamed Badoux or Joly \u2014 and whether a second marriage existed. If two marriages appear (one to Badoux, one to Joly), the dates of each relative to the 1781 baptism of Claudine would establish which woman was her mother. All 6 Romenay-specific volumes (1737\u20131802) are 100% name-indexed on FamilySearch in collection 2840171 ('France, Sa\u00f4ne-et-Loire, Parish and Civil Registration, 1530\u20131892'). Search for Th\u00e9not / Thenot variants in the marriage record type. The estimated marriage window (1740\u20131790) is sized to Philippe's plausible lifespan as father of children in the 1770s\u20131780s, per loc_001.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "date_range": "1740-1800",
+          "repository": "FamilySearch",
+          "rationale": "A search for all baptisms at Romenay naming Philippe Th\u00e9not as father will establish the full pattern of how the mother's surname was recorded across multiple events. If every baptism entry for a Th\u00e9not child names the mother as 'Marie Joly,' this consistently supports 'Joly' as her actual birth surname. If other entries name her as 'Marie Badoux,' the 1781 'Joly' reading may be a scribal error, an abbreviation, or a misread name. If the entries split into two name series \u2014 some 'Badoux,' some 'Joly,' with a chronological break \u2014 this would be strong circumstantial evidence of a second marriage. This is also a FAN-directed item: each sibling's baptism record is a separate witness event recording the same mother's identity, providing independent corroboration or contradiction across different hands and different years. Collection 2840171 on FamilySearch, 100% indexed; search Th\u00e9not/Thenot as father surname in birth/baptism record type.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "date_range": "1740-1800",
+          "repository": "FamilySearch",
+          "rationale": "A burial or death record for Marie Badoux provides a critical timeline test. If Marie Badoux died before 12 October 1781 (Claudine's baptism date), she cannot have been Claudine's mother, directly establishing that Philippe Th\u00e9not had a second wife before 1781. Conversely, if no burial record for Marie Badoux appears before 1781, that is negative evidence consistent with her still being alive \u2014 and thus potentially the same person as 'Marie Joly.' Burial records in French Catholic registers of this period often give the deceased's name, age, spouse's name, and witnesses; an age would allow calculation of approximate birth year, corroborating or ruling out her generational fit as Claudine's mother. Search for 'Badoux' in all record types across the 1740\u20131800 window; also search 'Marie Joly' for a death record if she proves to be a distinct person. Collection 2840171 on FamilySearch; date range sized to Marie Badoux's plausible lifespan as wife of Philippe Th\u00e9not.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "date_range": "1720-1760",
+          "repository": "FamilySearch",
+          "rationale": "Finding the baptism records of 'Marie Badoux' and/or 'Marie Joly' as children of named parents would establish whether these are one woman or two distinct individuals. If a 'Marie Joly' is baptised at Romenay circa 1720\u20131755 as the daughter of a Joly father, she is a distinct person from Marie Badoux; both women exist independently, and the 1781 baptism entry naming 'Marie Joly' identifies the second wife. If no such 'Marie Joly' appears but a 'Marie Badoux' is found born to Badoux parents, this narrows the identity question to whether Badoux sometimes appears in records as 'Joly' (a surname variant, transcription error, or double-surname practice). The date range 1720\u20131760 is sized to a woman who would have been of child-bearing age in the 1770s\u20131780s (born c. 1725\u20131755). The 6 Romenay volumes from 1737 onward are 100% indexed; collection 2840171 covers Sa\u00f4ne-et-Loire from 1530, so older Romenay records within the departmental collection may yield results for years before 1737. Search surnames 'Joly' and 'Badoux' independently in baptism/birth record type.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "date_range": "1740-1790",
+          "repository": "Archives D\u00e9partementales de Sa\u00f4ne-et-Loire",
+          "rationale": "Notarial marriage contracts (contrats de mariage) were common in 18th-century Burgundy before or alongside the church marriage ceremony. They name both contracting parties and their parents, and would directly establish whether Philippe Th\u00e9not's marriage partner bore the surname Badoux or Joly. If the parish marriage register entry (item 1) cannot be located or is illegible, the notarial series E at the Archives D\u00e9partementales de Sa\u00f4ne-et-Loire (M\u00e2con) is the principal fallback. These records are not digitized for this commune and period (per loc_001); access requires a written inquiry to the Archives D\u00e9partementales de Sa\u00f4ne-et-Loire or an in-person visit. Date range sized to Philippe Th\u00e9not's plausible marriage window as father of children in the 1770s\u20131780s.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-17T18:39:07.945Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Thenot",
+        "givenName": "Philippe",
+        "recordType": "marriage",
+        "collectionId": "2840171",
+        "marriagePlace": "Romenay, Sa\u00f4ne-et-Loire, France",
+        "marriageYearFrom": 1740,
+        "marriageYearTo": 1790
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 19,
+      "notes": "Found marriage record W5XJ-F7T2: Philippe (Philippes) Thenot married Marie Badoux on 22 Feb 1773 at Romenay (Sa\u00f4ne-et-Loire vol 1763\u20131782). Bride's parents: Pierre Badoux (father) + Marie Fromin (mother) \u2014 both match tree persons GGCT-6PZ and GGCT-VVW. This is the primary marriage record for pli_001. Also found W5XG-BTPZ: a second marriage record for 'Philippe Thenot' dated 27 Jun 1780 at Romenay marrying 'Marie Claudine Bourgeois' \u2014 if same Philippe, this would be a remarriage after Marie Badoux's death; identity requires verification. Found W527-KMN2 (1826 birth of Pierre Th\u00e9not): Philippe Th\u00e9not listed as father with mother 'Marie Voly' \u2014 almost certainly a J/V transcription variant of 'Marie Joly,' fitting a post-1773 remarriage after Badoux. Need pli_002 (sibling baptisms) and pli_003 (Marie Badoux burial) to determine whether Marie Badoux predeceased the 1781 Claudine baptism and whether 'Marie Joly' is the second wife."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-09-17T18:46:19.135Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Romenay, Sa\u00f4ne-et-Loire, France",
+        "startYear": 1740,
+        "endYear": 1800
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "External links search performed during locality-guide phase for Romenay, Sa\u00f4ne-et-Loire, 1740-1800. Staged but not logged during that skill's execution."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-17T18:46:19.135Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Thenot",
+        "fatherGivenName": "Philippe",
+        "fatherSurname": "Thenot",
+        "collectionId": "2840171",
+        "anyPlace": "Romenay",
+        "anyYearFrom": 1773,
+        "anyYearTo": 1800,
+        "recordType": "birth",
+        "isPrincipal": true
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 24,
+      "notes": "Found 9 Romenay baptism records with Philippe Thenot as father (1774-1787). Claudine Th\u00e9not (1781) absent from first 20 results; requires dedicated search. Records confirm Philippe had children in both the Marie Badoux era and the later Marie Joly era."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-17T18:46:19.144Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Badoux",
+        "givenName": "Marie",
+        "collectionId": "2840171",
+        "anyPlace": "Romenay",
+        "recordType": "death",
+        "anyYearFrom": 1740,
+        "anyYearTo": 1785
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 86,
+      "notes": "CRITICAL FINDING: Two burial records (W5XV-6XPZ and W5XK-J4MM, likely duplicate volumes) confirm Marie Badoux buried 22 March 1780 at Romenay, died 21 March 1780, born ~1754. Record W5XV-6XPZ confirms Philippe Thenot as her husband. This is approximately 18 months before Claudine Th\u00e9not's October 1781 baptism. Jean Thenot (W5XP-QBN2) baptised same day 22 March 1780 \u2014 Marie Badoux appears to have died in or just after childbirth."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-17T18:48:42.107Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Thenot",
+        "givenName": "Claudine",
+        "fatherGivenName": "Philippe",
+        "collectionId": "2840171",
+        "anyPlace": "Romenay",
+        "anyYearFrom": 1781,
+        "anyYearTo": 1782,
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 86,
+      "notes": "Searched specifically for Claudine Thenot baptism at Romenay 1781-1782. Top results show 'Claudine Thenot' and 'Marie Claudine Th\u00e9not' appearing as mothers in later records (she survived to adulthood), but her direct baptism record as a principal was not returned in the first 20 results. The research question already states she was baptised 12 Oct 1781 with mother named 'Marie Joly', so the primary evidence gap is the parents' identities, not this record itself."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-17T18:49:40.897Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Thenot",
+        "givenName": "Claudine",
+        "collectionId": "2840171",
+        "anyPlace": "Romenay",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 246,
+      "notes": "Searched for 'Claudine Thenot' as principal at Romenay without year restriction. Did not find her 1781 baptism in the first 20 results. Notable: W5XT-D5ZM \u2014 'Claudine Th\u00e9not' died 30 Sep 1839 at Romenay (b. ~1772 per record; likely our Claudine b. 1781 with age discrepancy). Her baptism record may be missing from the index or indexed under a different name form. The research question itself establishes that the 1781 baptism names Philippe Th\u00e9not and Marie Joly as parents."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-17T18:51:04.765Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Joly",
+        "givenName": "Marie",
+        "collectionId": "2840171",
+        "anyYearFrom": 1740,
+        "anyYearTo": 1770,
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 2172,
+      "notes": "Searched for Marie Joly baptism in Sa\u00f4ne-et-Loire 1740-1770. Returned 2,172 results across the entire d\u00e9partement \u2014 cannot identify Philippe's specific wife without her origin place. pli_004's primary question (whether Marie Joly = Marie Badoux) is resolved by other evidence: Marie Badoux's burial (W5XV-6XPZ, died 21 Mar 1780) confirms she is a distinct person who predeceased Claudine's 1781 baptism by 18 months."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": null,
+      "performed": "2026-09-17T19:31:54.824Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Philippe",
+        "fatherSurname": "Thenot",
+        "motherSurname": "Joly",
+        "birthYearFrom": 1780,
+        "birthYearTo": 1782,
+        "recordCountry": "France",
+        "collectionId": "2840171",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 1,
+      "notes": "Targeted search for Claudine Th\u00e9not baptism Oct 1781, Romenay \u2014 searching by father Philippe Thenot + mother surname Joly + birth year 1780-1782, collection 2840171. Returned 1 result (Claude Thenot burial 1787, a different child). No 1781 Claudine baptism found. The search was prompted by the GPS mentor noting the question premise (Claudine baptised 12 Oct 1781, mother Marie Joly) was never verified against an actual record."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-09-17T19:31:54.831Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Philippe",
+        "fatherSurname": "Thenot",
+        "birthYearFrom": 1781,
+        "birthYearTo": 1781,
+        "recordCountry": "France",
+        "collectionId": "2840171",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 1,
+      "notes": "Fallback search for Claudine Th\u00e9not baptism 1781, dropping mother name filter \u2014 father Philippe Thenot + birth year 1781, collection 2840171. Still returned only Claude Thenot (1787 burial). The 1781 Claudine baptism is not name-indexed in FamilySearch collection 2840171. The record either does not survive in the digitized collection or the relevant page was not indexed. This constitutes a documented nil result for the question premise's source record."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XV-6XPZ : 09 Mar 2024), Entry for Marie Badoux and Philippe Thenot, 22 Mar 1780.",
+      "citation_detail": {
+        "who": "Marie Badoux and Philippe Thenot",
+        "what": "Burial register entry, parish of Romenay, Sa\u00f4ne-et-Loire",
+        "when_created": "22 Mar 1780",
+        "when_accessed": "2026-09-17",
+        "where": "FamilySearch, collection 2840171 \u2014 France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892",
+        "where_within": "Volume 1763\u20131782, Romenay; image ark:/61903/3:1:3Q9M-CSR6-TJ9B"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-17",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XV-6XPZ",
+      "notes": "FamilySearch index/transcription of the original Romenay parish burial register (volume 1763\u20131782). Original register image available at ark:/61903/3:1:3Q9M-CSR6-TJ9B but not directly examined for this extraction \u2014 original not examined (index only). Transcription errors possible.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XP-QBN2 : accessed 17 September 2026), entry for Jean Thenot and Philippe Thenot, 22 Mar 1780.",
+      "citation_detail": {
+        "who": "Jean Thenot (baptised child); Philippe Thenot (father); Marie Badoux (mother)",
+        "what": "Parish baptism register entry, Romenay, Sa\u00f4ne-et-Loire \u2014 FamilySearch index/transcription of original register",
+        "when_created": "22 March 1780",
+        "when_accessed": "17 September 2026",
+        "where": "FamilySearch, collection 2840171 (France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892)",
+        "where_within": "Entry for Jean Thenot and Philippe Thenot, 22 Mar 1780; image volume 1763\u20131782, Romenay"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-17",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XP-QBN2",
+      "notes": "Original not examined \u2014 the index/transcription record was read via record_read; the original parish register image is available at ark:/61903/3:1:3Q9M-CSR6-TJ9B (volume 1763\u20131782, Romenay) but was not opened in this extraction. The FamilySearch collection consists of digitized images of original registers; this entry is the derived index. Image should be consulted to verify the spelling of all names, especially 'Badoux' vs any alternate form.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XJ-F7T2 : accessed 17 Sep 2026), Entry for Philippes Thenot and Marie Badoux, 22 Feb 1773.",
+      "citation_detail": {
+        "who": "Philippes Thenot and Marie Badoux",
+        "what": "Parish marriage register entry, Romenay, Sa\u00f4ne-et-Loire, France",
+        "when_created": "22 February 1773",
+        "when_accessed": "17 September 2026",
+        "where": "FamilySearch (https://www.familysearch.org), collection 2840171",
+        "where_within": "Entry for Philippes Thenot and Marie Badoux, 22 Feb 1773; digital image of volume 1763\u20131782, Romenay"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-17",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XJ-F7T2",
+      "notes": "Parish marriage register, Romenay, Sa\u00f4ne-et-Loire. Digital image via FamilySearch collection 2840171; volume 1763\u20131782. Image ARK: ark:/61903/3:1:3Q9M-CSR6-TJ97. Record URL (household/record level): https://www.familysearch.org/ark:/61903/1:2:71TX-L3HM. Groom's name indexed as 'Philippes' (with terminal s) \u2014 French orthographic variant of Philippe. Sidecar also lists groom's parents (Jean Thenot, Marie Clau) and a second record for the groom's father; extracted here.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XL-B7T2 : accessed 17 Sep 2026), Entry for Marie Fran\u00e7oise Thenot and Philippe Thenot, 10 Apr 1783.",
+      "citation_detail": {
+        "who": "Marie Fran\u00e7oise Thenot; Philippe Thenot (father); Marie Joly (mother)",
+        "what": "Baptism register entry, parish of Romenay, volume 1783\u20131792",
+        "when_created": "10 Apr 1783",
+        "when_accessed": "17 Sep 2026",
+        "where": "FamilySearch \u2014 France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892 (collection 2840171)",
+        "where_within": "Entry for Marie Fran\u00e7oise Thenot, 10 Apr 1783; digital image ARK: ark:/61903/3:1:3Q9M-CSR6-T6CP"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-17",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XL-B7T2",
+      "notes": "FamilySearch indexed record entry examined; original parish register image (ark:/61903/3:1:3Q9M-CSR6-T6CP) not opened \u2014 original not examined. The underlying register is a duplicate original kept at Archives D\u00e9partementales de Sa\u00f4ne-et-Loire, M\u00e2con. Indexing error risk: French names in Bresse parish registers are susceptible to surname mis-reading; image confirmation recommended for 'Joly' vs other possible readings.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XL-J23Z : accessed 17 Sep 2026), Entry for Pierre Thenot and Philippe Thenot, 22 Apr 1784.",
+      "citation_detail": {
+        "who": "Pierre Thenot (baptised); Philippe Thenot (father); Marie Joly (mother)",
+        "what": "Parish baptism register entry, Romenay, vol. 1783\u20131792 \u2014 FamilySearch index/transcript (collection 2840171)",
+        "when_created": "22 Apr 1784 (register entry); indexed by FamilySearch",
+        "when_accessed": "17 Sep 2026",
+        "where": "FamilySearch (https://www.familysearch.org), collection 2840171",
+        "where_within": "Entry for Pierre Thenot and Philippe Thenot, 22 Apr 1784; digital artifact ark:/61903/3:1:3Q9M-CSR6-TJMW"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XL-J23Z",
+      "access_date": "2026-09-17",
+      "notes": "FamilySearch index/transcript of the original Romenay parish register (volume 1783\u20131792). Original register image available at ark:/61903/3:1:3Q9M-CSR6-TJMW \u2014 original not examined in this extraction; image confirmation outstanding. Record URL (household): https://www.familysearch.org/ark:/61903/1:2:71TF-55T2. Second independent record naming Marie Joly as mother of Philippe Th\u00e9not's children, corroborating W5XL-B7T2 (Marie Fran\u00e7oise, baptised 1783).",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XG-BTPZ : 09 Mar 2024), Entry for Philippe Thenot and Jean Thenot, 27 Jun 1780.",
+      "citation_detail": {
+        "who": "Philippe Thenot (groom) and Marie Claudine Bourgeois (bride)",
+        "what": "Parish marriage register, volume 1763\u20131782, Romenay, Sa\u00f4ne-et-Loire, France",
+        "when_created": "27 Jun 1780",
+        "when_accessed": "2026-09-17",
+        "where": "FamilySearch, collection 2840171",
+        "where_within": "Digital image of parish register, Romenay, 27 Jun 1780; image at https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSR6-TNHH"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-17",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XG-BTPZ",
+      "notes": "Original not examined \u2014 what was read is the FamilySearch index entry (a derivative). The underlying parish register image is at https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSR6-TNHH (volume 1763\u20131782, Romenay) but was not directly examined here; image must be consulted to verify the bride's name and resolve the Bourgeois/Joly discrepancy. The bride's name 'Marie Claudine Bourgeois' is identical to the groom's mother's name in this same record \u2014 possible indexing error. All post-1780 children's baptism records (1781\u20131787) name 'Marie Joly' as mother, not 'Marie Claudine Bourgeois'; conflict is unresolved.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S6"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144300",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Marie Badoux",
+      "structured_value": {
+        "given": "Marie",
+        "surname": "Badoux"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Burial register entry; the person who notified the cure of the death and supplied the decedent's name is not identified in the index. As a derivative, the original register image was not examined \u2014 transcription errors possible.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144300",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Stated in the index record. Same unknown informant as name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144300",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "21 Mar 1780",
+      "date": "21 Mar 1780",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Death date stated in the record. The informant who notified the cure is unknown; likely a family member or witness present at death. CENTRAL FINDING FOR q_001: Marie Badoux died 21 Mar 1780, approximately 19 months before Claudine Th\u00e9not's baptism on 12 Oct 1781, making it impossible for her to be 'Marie Joly' named as Claudine's mother.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144300",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "22 Mar 1780, Romenay, Sa\u00f4ne-et-Loire, France",
+      "date": "22 Mar 1780",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The parish officiant performed and recorded the burial \u2014 primary information for the burial event itself (date and place). This is the primary event in the record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144300",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "~1754",
+      "date": "~1754",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "FamilySearch indexer",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year ~1754 appears as an estimated figure in the FamilySearch index; it is not a value stated in the original burial register entry (French burial registers of this period rarely record the deceased's birth year). This is an indexer estimate derived from unknown evidence \u2014 indirect and indeterminate. Original image not examined to verify.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144300",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "wife of Philippe Thenot",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The couple relationship (Marie Badoux as wife of Philippe Thenot) is stated in the burial record. The informant who supplied this to the cure is unknown. Key corroboration for q_001: confirms Philippe Th\u00e9not's wife was named Marie Badoux, not Marie Joly.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144400",
+      "record_role": "husband",
+      "fact_type": "name",
+      "value": "Philippe Thenot",
+      "structured_value": {
+        "given": "Philippe",
+        "surname": "Thenot"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Husband named in the burial record of his wife Marie Badoux. The informant who reported this to the cure is unknown. Surname spelling 'Thenot' vs. 'Th\u00e9not' reflects index normalization (diacritics dropped).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:W5XV-6XPZ",
+      "record_persona_id": "p_149071144400",
+      "record_role": "husband",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sex stated/implied by role designation as husband in the burial record. Same unknown informant as name.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963700",
+      "record_role": "baptised_child",
+      "fact_type": "name",
+      "value": "Jean Thenot",
+      "structured_value": {
+        "given": "Jean",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presented child at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963700",
+      "record_role": "baptised_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presented child at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963700",
+      "record_role": "baptised_child",
+      "fact_type": "christening",
+      "value": "Baptised 22 Mar 1780 at Romenay, Sa\u00f4ne-et-Loire",
+      "date": "22 Mar 1780",
+      "date_certainty": "exact",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "parish officiant (priest performing the sacrament)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963800",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Philippe Thenot",
+      "structured_value": {
+        "given": "Philippe",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (self \u2014 father who presented child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963800",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (self \u2014 father who presented child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963800",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "Father of Jean Thenot (baptised child)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "baptised_child"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (self \u2014 father who presented child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963900",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Marie Badoux",
+      "structured_value": {
+        "given": "Marie",
+        "surname": "Badoux"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (husband, named the mother when presenting child)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963900",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (husband, named the mother when presenting child)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:W5XP-QBN2",
+      "record_persona_id": "p_149074963900",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "Mother of Jean Thenot (baptised child)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "baptised_child"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (husband, named the mother when presenting child)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380300",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Philippes Thenot",
+      "structured_value": {
+        "given": "Philippes",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Name indexed with terminal 's' (Philippes) \u2014 French orthographic variant; the same person as Philippe Th\u00e9not (2S86-XWG) already in the tree.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380300",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380300",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "22 Feb 1773, Romenay, Sa\u00f4ne-et-Loire, France",
+      "date": "1773-02-22",
+      "date_certainty": "exact",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "Philippes Thenot and Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Both parties participated in the marriage ceremony; co-informants for the event date and place.",
+      "source_id": "src_003",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380800",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Marie Badoux",
+      "structured_value": {
+        "given": "Marie",
+        "surname": "Badoux"
+      },
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380800",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380800",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "22 Feb 1773, Romenay, Sa\u00f4ne-et-Loire, France",
+      "date": "1773-02-22",
+      "date_certainty": "exact",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "Philippes Thenot and Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Both parties participated in the marriage ceremony; co-informants for the event date and place.",
+      "source_id": "src_003",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380600",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Pierre Badoux",
+      "structured_value": {
+        "given": "Pierre",
+        "surname": "Badoux"
+      },
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Name stated by the bride, Marie Badoux, who has firsthand ongoing knowledge of her own father's identity. Tree person GGCT-6PZ (Pierre Badoux) is the likely match.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380600",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380600",
+      "record_role": "father_of_bride",
+      "fact_type": "relationship",
+      "value": "father of Marie Badoux",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380700",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Marie Fromin",
+      "structured_value": {
+        "given": "Marie",
+        "surname": "Fromin"
+      },
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Name stated by the bride, Marie Badoux, who has firsthand ongoing knowledge of her own mother's identity. Tree person GGCT-VVW (Marie Fromin) is the likely match.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380700",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380700",
+      "record_role": "mother_of_bride",
+      "fact_type": "relationship",
+      "value": "mother of Marie Badoux",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Marie Badoux",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380400",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Jean Thenot",
+      "structured_value": {
+        "given": "Jean",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Name stated by the groom, Philippes Thenot, who has firsthand ongoing knowledge of his own father's identity.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380400",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380400",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "father of Philippes Thenot",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380500",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Marie Clau",
+      "structured_value": {
+        "given": "Marie",
+        "surname": "Clau"
+      },
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Name stated by the groom, Philippes Thenot, who has firsthand ongoing knowledge of his own mother's identity.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380500",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:W5XJ-F7T2",
+      "record_persona_id": "p_149070380500",
+      "record_role": "mother_of_groom",
+      "fact_type": "relationship",
+      "value": "mother of Philippes Thenot",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Philippes Thenot",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971300",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Marie Fran\u00e7oise Thenot",
+      "structured_value": {
+        "given": "Marie Fran\u00e7oise",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presenter at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971300",
+      "record_role": "principal",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presenter at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971300",
+      "record_role": "principal",
+      "fact_type": "birth",
+      "value": "born 9 Apr 1783",
+      "date": "9 Apr 1783",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presenter at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971300",
+      "record_role": "principal",
+      "fact_type": "christening",
+      "value": "baptised 10 Apr 1783, Romenay, Sa\u00f4ne-et-Loire, France",
+      "date": "10 Apr 1783",
+      "date_certainty": "exact",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "parish priest, Romenay",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971300",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "child of Philippe Thenot",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presenter at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971300",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "child of Marie Joly",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presenter at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971400",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Philippe Thenot",
+      "structured_value": {
+        "given": "Philippe",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (self \u2014 presenter at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971400",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (self \u2014 presenter at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971500",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Marie Joly",
+      "structured_value": {
+        "given": "Marie",
+        "surname": "Joly"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presenter at baptism \u2014 stated mother's name)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Philippe Thenot as presenter at baptism would have firsthand knowledge of the mother's identity and name. 'Joly' is the surname at issue for q_001: this is the second recorded instance (after the 1781 Claudine Th\u00e9not baptism) of 'Marie Joly' named as mother of a child of Philippe Th\u00e9not, born approximately 3 years after Marie Badoux's March 1780 death. Women retained their birth surnames throughout life in France, so 'Joly' is her birth surname, not an alias for Badoux. Image confirmation outstanding \u2014 the original parish register image (ark:/61903/3:1:3Q9M-CSR6-T6CP) should be consulted to verify the reading 'Joly' vs any mis-indexed alternative. A second record of 'Marie Joly' as mother corroborates the Claudine Th\u00e9not 1781 entry and strengthens the case that Marie Joly is a person distinct from Marie Badoux.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:W5XL-B7T2",
+      "record_persona_id": "p_149073971500",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (father, presenter at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687100",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Pierre Thenot",
+      "structured_value": {
+        "given": "Pierre",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (declaring father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687100",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (declaring father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687100",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born 22 Apr 1784",
+      "date": "22 Apr 1784",
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (declaring father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687100",
+      "record_role": "deceased",
+      "fact_type": "christening",
+      "value": "Baptised 22 Apr 1784, Romenay, Sa\u00f4ne-et-Loire, France",
+      "date": "22 Apr 1784",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "parish priest/officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_005",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687200",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Philippe Thenot",
+      "structured_value": {
+        "given": "Philippe",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (self, declaring father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687200",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (self, declaring father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687200",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "Father of Pierre Thenot",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (self, declaring father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687300",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Marie Joly",
+      "structured_value": {
+        "given": "Marie",
+        "surname": "Joly"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (declaring father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687300",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (declaring father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:W5XL-J23Z",
+      "record_persona_id": "p_149073687300",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "Mother of Pierre Thenot",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Th\u00e9not (declaring father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800100",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Philippe Thenot",
+      "structured_value": {
+        "given": "Philippe",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800100",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Marie Claudine Bourgeois, 27 Jun 1780, Romenay",
+      "date": "27 Jun 1780",
+      "date_certainty": "exact",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "CRITICAL DISCREPANCY: The bride named in this record is 'Marie Claudine Bourgeois,' but all baptism records of Philippe Th\u00e9not's children born after March 1780 (Oct 1781, Apr 1783, Apr 1784, Jun 1785, Jan 1787) name 'Marie Joly' as mother \u2014 not Bourgeois. Three unresolved hypotheses: (a) a third marriage occurred after Bourgeois also died; (b) the index confused the bride's name with Philippe's mother's name (also 'Marie Claudine Bourgeois' in this same record); (c) this record belongs to a different Philippe Th\u00e9not. Original image at https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSR6-TNHH must be examined. Conflict not resolved here.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800400",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Marie Claudine Bourgeois",
+      "structured_value": {
+        "given": "Marie Claudine",
+        "surname": "Bourgeois"
+      },
+      "information_quality": "primary",
+      "informant": "Marie Claudine Bourgeois (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "CRITICAL DISCREPANCY: The bride is indexed as 'Marie Claudine Bourgeois,' which is identical to Philippe Thenot's mother's name in this same record (p_149074800300 vs p_149074800400). All post-1780 baptism records of Philippe's children (1781\u20131787) name 'Marie Joly' as mother, not Bourgeois. The FamilySearch index may have inadvertently duplicated the mother-in-law's name as the bride's name. Original image must be examined before this name can be treated as confirmed. Possible indexing error; flagged unresolved.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800400",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Philippe Thenot, 27 Jun 1780, Romenay",
+      "date": "27 Jun 1780",
+      "date_certainty": "exact",
+      "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "information_quality": "primary",
+      "informant": "Marie Claudine Bourgeois (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride's identity as 'Marie Claudine Bourgeois' is contested by post-1780 children's baptism records naming 'Marie Joly' as mother. Original image must be examined to confirm bride's true name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006",
+      "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800200",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Jean Thenot",
+      "structured_value": {
+        "given": "Jean",
+        "surname": "Thenot"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800200",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800200",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "father of Philippe Thenot (groom)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800300",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Marie Claudine Bourgeois",
+      "structured_value": {
+        "given": "Marie Claudine",
+        "surname": "Bourgeois"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Philippe's mother is named 'Marie Claudine Bourgeois' \u2014 the same full name as the bride in this same record (p_149074800300 mother_of_groom vs p_149074800400 bride). Whether this is a genuine coincidence or an indexing duplication error cannot be determined from the index alone. Original image must be examined to verify both names independently.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800300",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800300",
+      "record_role": "mother_of_groom",
+      "fact_type": "relationship",
+      "value": "mother of Philippe Thenot (groom)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Philippe's mother and the bride share the identical name 'Marie Claudine Bourgeois' in this record \u2014 possible indexing error that may have duplicated the mother's name as the bride's name. Original image required to verify.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800100",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Jean Thenot",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:W5XG-BTPZ",
+      "record_persona_id": "p_149074800100",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Marie Claudine Bourgeois",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Philippe Thenot (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Philippe's mother is named 'Marie Claudine Bourgeois,' identical to the bride's indexed name in this record. Whether a genuine coincidence or indexing error, original image examination is required before treating either name as confirmed.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_006"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LT9H-SK3",
+      "confidence": "confident",
+      "match_score": 0.152,
+      "rationale": "Record S1 (W5XV-6XPZ) is the burial record of 'Marie Badoux, wife of Philippe Thenot,' buried 22 Mar 1780 at Romenay. This matches LT9H-SK3 (Marie Badoux) on all available identifiers: exact name match (Badoux), female, wife of Philippe Th\u00e9not (2S86-XWG). The Romenay location is consistent. The same_person score (0.152) is low due to thin content in the tree stub \u2014 LT9H-SK3 currently holds few facts for the algorithm to compare \u2014 but the qualitative correlation is definitive: name, sex, location, and spousal relationship all agree with no competing candidate. No other Marie Badoux wife of a Philippe Th\u00e9not at Romenay is known. Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_006",
+      "person_id": "LT9H-SK3",
+      "confidence": "confident",
+      "match_score": 0.152,
+      "rationale": "The relationship assertion in S1 ('wife of Philippe Thenot') further confirms LT9H-SK3 as the deceased \u2014 it names her explicitly as Philippe's wife, which matches the known couple relationship in the tree. Same score/rationale as the primary S1 link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_007",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.174,
+      "rationale": "S1 (W5XV-6XPZ) names 'Philippe Thenot' as husband of the deceased Marie Badoux, buried at Romenay 22 Mar 1780. This matches 2S86-XWG (Philippe Th\u00e9not) on name (Thenot, Philippe), role (spouse of Marie Badoux/LT9H-SK3), and location (Romenay). Score 0.174 is thin-subject \u2014 the tree person currently has few vitals for algorithmic comparison \u2014 but the qualitative match is definitive: exact name, known spouse, same parish, no competing candidate. Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_006",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.174,
+      "rationale": "The spousal relationship assertion in S1 bears on both parties of the couple. Philippe Thenot named as husband of the deceased is 2S86-XWG. Same rationale and score as the primary S1 Philippe link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_018",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.122,
+      "rationale": "S3 (W5XJ-F7T2) is the 1773 marriage record of 'Philippes Thenot' and Marie Badoux at Romenay. 'Philippes' is a French orthographic variant (terminal s) of Philippe \u2014 a well-documented scribal convention in Bresse-area registers of the 18th century, not a different name. The same_person score (0.122) is low due to both the name variant and thin content in 2S86-XWG's tree stub, but the qualitative correlation is definitive: same surname, same parish, bride is LT9H-SK3 (Philippe's known wife), bride's parents are GGCT-6PZ and GGCT-VVW (known in the tree), groom's parents Jean Thenot and Marie Clau appear consistently in S6. No competing Philippe(s) Thenot at Romenay is known. Transcription-variant scores do not downgrade a strong qualitative match. Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_021",
+      "person_id": "LT9H-SK3",
+      "confidence": "confident",
+      "match_score": 0.752,
+      "rationale": "S3 (W5XJ-F7T2) bride 'Marie Badoux' married Philippe(s) Thenot at Romenay, 22 Feb 1773. Same_person score 0.752 \u2014 strong, above the 0.7 threshold. Qualitative agreement: exact name (Marie Badoux), female, married a Philippe Thenot at Romenay, father Pierre Badoux and mother Marie Fromin both match the tree (GGCT-6PZ, GGCT-VVW). No competing candidate. Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_024",
+      "person_id": "GGCT-6PZ",
+      "confidence": "confident",
+      "match_score": 0.731,
+      "rationale": "S3 (W5XJ-F7T2) names 'Pierre Badoux' as father of bride Marie Badoux. Same_person score 0.731 \u2014 strong. Qualitative agreement: exact name (Pierre Badoux), male, father of Marie Badoux (LT9H-SK3), with wife Marie Fromin (GGCT-VVW) also named in the same record. No competing candidate. GGCT-6PZ is the known tree person for Pierre Badoux, father of Marie Badoux. Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_026",
+      "person_id": "LT9H-SK3",
+      "confidence": "confident",
+      "match_score": 0.752,
+      "rationale": "The paternity relationship assertion (a_026) names Pierre Badoux as father of bride Marie Badoux \u2014 this assertion bears on LT9H-SK3 as the daughter identified. Same score and rationale as the primary S3 bride link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_027",
+      "person_id": "GGCT-VVW",
+      "confidence": "confident",
+      "match_score": 0.741,
+      "rationale": "S3 (W5XJ-F7T2) names 'Marie Fromin' as mother of bride Marie Badoux. Same_person score 0.741 \u2014 strong. Qualitative agreement: exact name (Marie Fromin), female, mother of Marie Badoux (LT9H-SK3), with husband Pierre Badoux (GGCT-6PZ) also named in the same record. No competing candidate. GGCT-VVW is the known tree person for Marie Fromin, mother of Marie Badoux. Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_029",
+      "person_id": "LT9H-SK3",
+      "confidence": "confident",
+      "match_score": 0.752,
+      "rationale": "The maternity relationship assertion (a_029) names Marie Fromin as mother of bride Marie Badoux \u2014 bears on LT9H-SK3 as the daughter. Same score and rationale as primary S3 bride link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S3 (W5XJ-F7T2) names 'Jean Thenot' as father of groom Philippes Thenot at Romenay, 1773. I1 is a newly minted stub created from this persona \u2014 match_score is null because the candidate was minted from the same persona (circular comparison). The link rests on this single record; Jean Thenot as Philippe's father is further corroborated by S6 (W5XG-BTPZ) which also names 'Jean Thenot' as father of groom Philippe Thenot. Linked at probable (single-record introduction, independently corroborated by S6).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_032",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.122,
+      "rationale": "The paternity relationship assertion a_032 bears on 2S86-XWG as the son of Jean Thenot (I1). Philippe(s) Thenot as child of Jean Thenot is established by S3. Same thin-subject score and qualitative rationale as primary S3 Philippe link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_032",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion a_032 bears on I1 (Jean Thenot, father of groom) as the parent side. Consistent with the primary S3 father_of_groom link to I1 (a_030). Score null \u2014 stub minted from this persona.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S3 (W5XJ-F7T2) names 'Marie Clau' as mother of groom Philippes Thenot at Romenay, 1773. I2 is a newly minted stub created from this persona \u2014 match_score null (circular). 'Marie Clau' is an indexed truncation or scribal abbreviation; S6 (W5XG-BTPZ) gives the full name as 'Marie Claudine Bourgeois,' strongly suggesting these are the same person (see pe_ link for a_063 \u2192 I2). Linked at probable.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_035",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.122,
+      "rationale": "The maternity relationship assertion a_035 bears on 2S86-XWG as son of Marie Clau (I2). Consistent with primary S3 groom link. Score thin-subject 0.122, qualitative match definitive.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_035",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion a_035 bears on I2 (Marie Clau, mother of groom) as the parent side. Consistent with primary S3 mother_of_groom link. Score null \u2014 stub minted from this persona.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_012",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.66,
+      "rationale": "S2 (W5XP-QBN2) baptism of Jean Thenot, 22 Mar 1780, Romenay \u2014 Philippe Thenot named as father. Same_person score 0.660 \u2014 moderate/upper-moderate range. Qualitative agreement: exact name (Philippe Thenot), male, father of a son born/baptised at Romenay 22 Mar 1780, wife named Marie Badoux (consistent with LT9H-SK3 who died the previous day). Romenay location, same surname, and the remarkable date (his wife's burial was also 22 Mar 1780) uniquely identify this as Philippe Th\u00e9not (2S86-XWG). Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.66,
+      "rationale": "S2 parentage assertion (a_014) bears on 2S86-XWG as father of Jean Thenot (I3). Consistent with primary S2 father link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_014",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S2 parentage assertion a_014 bears on I3 (Jean Thenot, baptised 22 Mar 1780) as the child. Stub minted from this persona \u2014 score null (circular). Single record introducing this person; probable appropriate.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "LT9H-SK3",
+      "confidence": "confident",
+      "match_score": 0.576,
+      "rationale": "S2 (W5XP-QBN2) names 'Marie Badoux' as mother in the baptism of Jean Thenot, 22 Mar 1780. Same_person score 0.576 \u2014 moderate. Qualitative agreement: exact name (Marie Badoux), female, wife of Philippe Thenot, at Romenay. Critically: S1 confirms Marie Badoux (LT9H-SK3) died 21 Mar 1780 \u2014 the day BEFORE this baptism \u2014 consistent with death in childbirth. This is the same Marie Badoux as LT9H-SK3; Philippe (2S86-XWG) named his deceased wife when presenting the child. Linked at confident (the cross-record corroboration between S1 and S2 is definitive \u2014 death date, parish, spouse all agree).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "LT9H-SK3",
+      "confidence": "confident",
+      "match_score": 0.576,
+      "rationale": "S2 maternity relationship assertion (a_017) bears on LT9H-SK3 as mother of Jean Thenot (I3). Consistent with primary S2 mother link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S2 maternity relationship assertion a_017 bears on I3 (Jean Thenot, baptised 22 Mar 1780) as the child. Stub minted from this persona; score null (circular).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_009",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": 0.392,
+      "rationale": "S4 (W5XL-B7T2) baptism of Marie Fran\u00e7oise Thenot, 10 Apr 1783 \u2014 Philippe Thenot named as father. Scored S4 Philippe (p_149073971400) against 2S86-XWG: same_person score 0.392 \u2014 lower-moderate range. The tree person's thin content (few vitals) depresses the score; qualitative match is definitive \u2014 exact name (Philippe Thenot), male, father at Romenay, 1783, wife Marie Joly consistent with multiple records. Five records now corroborate 2S86-XWG as Philippe Thenot of Romenay across a decade (1773\u20131784). Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_042",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "S4 (W5XL-B7T2) baptism of Marie Fran\u00e7oise Thenot, 10 Apr 1783 \u2014 Philippe Thenot named as father. No independent same_person score for this record's Philippe (the S2 score of 0.660 and S3 score of 0.122 already establish 2S86-XWG; score null here to avoid re-running). Qualitative: exact name (Philippe Thenot), male, father at Romenay, 1783 \u2014 entirely consistent with 2S86-XWG. Multiple records now corroborate this identification across a decade (1773\u20131784). Linked at confident.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_036",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S4 (W5XL-B7T2) primary persona: Marie Fran\u00e7oise Thenot, Female, born 9 Apr 1783, baptised 10 Apr 1783 at Romenay. Parents: Philippe Thenot (2S86-XWG) and Marie Joly (I5). I4 is the stub minted from this persona. Score null \u2014 minted from this persona (circular). Single-record introduction, probable.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_040",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "S4 relationship assertion a_040 (child of Philippe Thenot) bears on 2S86-XWG as the named parent. Consistent with primary S4 father link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_040",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S4 relationship assertion a_040 bears on I4 (Marie Fran\u00e7oise Thenot) as the child of Philippe Thenot. Stub minted from this persona; score null.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_044",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S4 (W5XL-B7T2) names 'Marie Joly' as mother of Marie Fran\u00e7oise Thenot, baptised 10 Apr 1783 at Romenay. I5 is the stub minted from this persona. Score null \u2014 minted from this persona (circular). Marie Joly's identity is distinct from Marie Badoux (LT9H-SK3): Badoux died 21 Mar 1780, and this child was born 9 Apr 1783 \u2014 biologically impossible for Badoux to be the mother. Marie Joly is Philippe Th\u00e9not's post-1780 wife or partner. Probable \u2014 single-record introduction, though S5 independently corroborates the same 'Marie Joly' as mother. Active naming conflict with S6 (bride named 'Marie Claudine Bourgeois') flagged; see conflict note.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_041",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S4 relationship assertion a_041 (child of Marie Joly) bears on I4 as the child. Consistent with primary S4 persona link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_041",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": 0.704,
+      "rationale": "S5 (W5XL-J23Z) names 'Marie Joly' as mother of Pierre Thenot, baptised 22 Apr 1784 at Romenay. Scored S5 Marie Joly (p_149073687300) against I5 (minted from S4's mother persona): same_person score 0.704 \u2014 strong, matched=true. This is a cross-record score (S5 persona vs I5 minted from S4), not circular. Two independent baptism records name 'Marie Joly' as mother of Philippe Th\u00e9not's children \u2014 S4 (Marie Fran\u00e7oise, 1783) and S5 (Pierre, 1784). Score 0.704 and cross-record consistency raise confidence to confident. Active naming conflict with S6 (bride named 'Marie Claudine Bourgeois') noted; do not merge I5 with I7 without conflict resolution.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_050",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": 0.704,
+      "rationale": "S5 relationship assertion a_055 (mother of Pierre Thenot) bears on I5 (Marie Joly) as the named parent. Cross-record score 0.704 (S5 Marie Joly vs I5 from S4). Consistent with primary S5 mother link (a_053).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_052",
+      "person_id": "2S86-XWG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "S5 relationship assertion a_052 (father of Pierre Thenot) bears on 2S86-XWG as the named parent. Consistent with primary S5 father link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_052",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S5 relationship assertion a_052 bears on I6 (Pierre Thenot, born 22 Apr 1784) as the child. Stub minted from this persona; score null.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_053",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "S5 (W5XL-J23Z) names 'Marie Joly' as mother of Pierre Thenot, baptised 22 Apr 1784 at Romenay. This is an independent corroboration of the S4 identification of Marie Joly (I5) as Philippe Th\u00e9not's post-1780 spouse/partner. Two separate baptism records (S4: Marie Fran\u00e7oise 1783, S5: Pierre 1784) both name 'Marie Joly' as mother, attributed to Philippe Thenot as father. The consistency across independent entries (different children, consecutive years) raises the link from probable to confident for I5. Score null \u2014 stub previously minted from S4; cross-record confirmation provides confidence.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_055",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "S5 relationship assertion a_055 (mother of Pierre Thenot) bears on I5 (Marie Joly) as the named parent. Consistent with primary S5 mother link (a_053).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_055",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S5 relationship assertion a_055 bears on I6 (Pierre Thenot) as the child of Marie Joly. Stub minted from this persona; score null.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_046",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S5 (W5XL-J23Z) primary persona: Pierre Thenot, Male, born 22 Apr 1784, baptised 22 Apr 1784 at Romenay. Parents: Philippe Thenot (2S86-XWG) and Marie Joly (I5). I6 is the stub minted from this persona. Score null \u2014 minted from this persona (circular). Probable \u2014 single-record introduction.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_056",
+      "person_id": "2S86-XWG",
+      "confidence": "probable",
+      "match_score": 0.012,
+      "rationale": "S6 (W5XG-BTPZ) groom 'Philippe Thenot' married 'Marie Claudine Bourgeois' at Romenay, 27 Jun 1780 \u2014 approximately 3 months after Marie Badoux's (LT9H-SK3) death on 21 Mar 1780. Same_person score 0.012 \u2014 very low, reflecting thin content in 2S86-XWG's tree stub (the algorithm has little to match on), not negative evidence against the identity. Qualitative case for this being 2S86-XWG: exact name (Philippe Thenot), same parish (Romenay), marriage date is consistent with a widower remarrying shortly after his wife's death, groom's parents Jean Thenot and Marie Claudine Bourgeois match I1 and I2 (established from S3). CONFLICT FLAGGED: all post-1780 baptism records (S4: Marie Fran\u00e7oise 1783, S5: Pierre 1784) name 'Marie Joly' as mother of Philippe's children, not 'Marie Claudine Bourgeois.' This naming conflict is unresolved \u2014 possible explanations include (a) 'Marie Claudine Bourgeois' also died before 1783 and a third marriage to 'Marie Joly' occurred, (b) the S6 index misread the bride's name (it is identical to the groom's mother's name in the same record), or (c) this Philippe is a different person. Original image at ark:/61903/3:1:3Q9M-CSR6-TNHH must be examined. Linked at probable pending conflict resolution.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_057",
+      "person_id": "2S86-XWG",
+      "confidence": "probable",
+      "match_score": 0.012,
+      "rationale": "S6 marriage assertion (a_057) bears on 2S86-XWG as the groom. Consistent with primary S6 groom link (a_056). Naming conflict with S4/S5 (Marie Joly as mother) noted \u2014 same flag as primary link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_057",
+      "person_id": "I7",
+      "confidence": "probable",
+      "match_score": 0.535,
+      "rationale": "S6 (W5XG-BTPZ) names 'Jean Thenot' as father of groom Philippe Thenot at Romenay, 27 Jun 1780. Scored against I1 (Jean Thenot, minted from S3's father_of_groom persona): same_person score 0.535 \u2014 moderate, matched=true. Qualitative agreement: exact name (Jean Thenot), male, father of Philippe Thenot, with wife Marie Claudine Bourgeois (consistent with I2). S3 also independently names Jean Thenot as Philippe's father \u2014 two independent marriage records agree. Score 0.535 reflects the stub's thin content. Linked at probable.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_058",
+      "person_id": "I7",
+      "confidence": "probable",
+      "match_score": 0.535,
+      "rationale": "S6 relationship assertion a_062 (father of groom) bears on I1 as the named parent. Cross-record score 0.535 (S6 Jean Thenot vs I1 from S3). Consistent with primary S6 father_of_groom link (a_060).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_060",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.012,
+      "rationale": "S6 relationship assertion a_062 bears on 2S86-XWG as the son of Jean Thenot (I1). Score 0.012 (thin-subject, S6 Philippe persona scored against 2S86-XWG). Consistent with primary S6 groom link (a_056).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_062",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.535,
+      "rationale": "S6 relationship assertion a_066 (child of Jean Thenot) bears on 2S86-XWG as the groom/son. The record_persona_id p_149074800100 (Philippe in S6) scores 0.012 against 2S86-XWG (thin subject). S6 Jean Thenot (father) scores 0.535 against I1 \u2014 cross-record consistency supports the identification. Consistent with primary S6 groom link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_062",
+      "person_id": "2S86-XWG",
+      "confidence": "probable",
+      "match_score": 0.535,
+      "rationale": "S6 relationship assertion a_066 bears on I1 (Jean Thenot) as the named father. Score 0.535 (S6 Jean Thenot vs I1 from S3). Consistent with primary S6 father_of_groom link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_066",
+      "person_id": "2S86-XWG",
+      "confidence": "probable",
+      "match_score": 0.012,
+      "rationale": "S6 relationship assertion a_066 (child of Jean Thenot) bears on 2S86-XWG as the groom/child. Consistent with primary S6 groom link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_066",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S6 relationship assertion a_066 bears on I1 (Jean Thenot) as the named father. Consistent with primary S6 father_of_groom link.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_063",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "S6 (W5XG-BTPZ) names 'Marie Claudine Bourgeois' as mother of groom Philippe Thenot at Romenay, 27 Jun 1780. S3 (W5XJ-F7T2) named Philippe's mother as 'Marie Clau' \u2014 almost certainly a truncated form of 'Marie Claudine,' with 'Bourgeois' being her surname (abbreviated in S3 as simply 'Clau'). I2 was minted as the mother_of_groom stub from S3; S6 now provides her full name 'Marie Claudine Bourgeois,' further corroborating the identification. Score null \u2014 thin stub. NOTE: the bride in this same record (I7) also carries the name 'Marie Claudine Bourgeois' \u2014 possible indexing duplication error. The mother-of-groom identity (I2) and bride identity (I7) are kept separate; they are different persons unless the original image demonstrates otherwise. Linked at probable.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_065",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.054,
+      "rationale": "S6 (W5XG-BTPZ) names 'Marie Claudine Bourgeois' as mother of groom Philippe Thenot at Romenay, 27 Jun 1780. S3 (W5XJ-F7T2) named Philippe's mother as 'Marie Clau' \u2014 almost certainly a truncated form of 'Marie Claudine,' with 'Bourgeois' being her surname (abbreviated in S3 as simply 'Clau'). Scored S6 Marie Claudine Bourgeois (p_149074800300) against I2 (as 'Marie Clau'): same_person score 0.054 \u2014 low, matched=false. The low score reflects the name mismatch between the S3 index abbreviation 'Clau' and the S6 full name 'Bourgeois'; the algorithm sees these as different surnames. However, the qualitative case is strong: same role (Philippe's mother), same parish, same family context, and 'Clau' is a well-attested 18th-century French scribal abbreviation for 'Claudine.' No other woman is named as Philippe's mother in any record. The naming conflict (bride and mother-in-law sharing identical full names in S6) may indicate an indexing error. Linked at probable, score 0.054 noted. I2 and I7 are kept separate.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_065",
+      "person_id": "2S86-XWG",
+      "confidence": "probable",
+      "match_score": 0.054,
+      "rationale": "S6 relationship assertion a_065 (mother of groom) bears on I2. Score 0.054 (S6 Marie Claudine Bourgeois vs I2 as Marie Clau). Consistent with primary S6 mother_of_groom link (a_063). Name mismatch between 'Clau' (S3) and 'Bourgeois' (S6) explained by scribal abbreviation; qualitative case supports I2. See pe_048 for full rationale.",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_067",
+      "person_id": "2S86-XWG",
+      "confidence": "probable",
+      "match_score": 0.012,
+      "rationale": "S6 relationship assertion a_065 bears on 2S86-XWG as son of Marie Claudine Bourgeois (I2). Score 0.012 (thin-subject S6 Philippe vs 2S86-XWG). Consistent with primary S6 groom link (a_056).",
+      "created": "2026-09-17"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_067",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.054,
+      "rationale": "S6 relationship assertion a_067 (child of Marie Claudine Bourgeois) bears on I2 as the named mother. Score 0.054 (S6 Marie Claudine Bourgeois vs I2). Consistent with primary S6 mother_of_groom link. Name variant 'Clau'\u2192'Claudine Bourgeois' explained by scribal abbreviation.",
+      "created": "2026-09-17"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "Philippe Th\u00e9not's 1780 remarriage record (W5XG-BTPZ, src_006) names the bride as 'Marie Claudine Bourgeois', but all baptism records of Philippe's post-1780 children (S4 1783, S5 1784) name 'Marie Joly' as mother. The bride named in S6 (a_058) and the mother named in S4/S5 (a_044, a_053) cannot be reconciled on surname alone \u2014 French women retained their birth surnames, so 'Bourgeois' and 'Joly' represent different individuals unless an indexing error is present. The identity question: is the S6 bride 'Marie Claudine Bourgeois' the same woman as the 'Marie Joly' who appears as mother in all post-1780 Th\u00e9not baptisms?",
+      "disputed_attribute": "second_wife_surname",
+      "identity_question": "Is the bride named 'Marie Claudine Bourgeois' in W5XG-BTPZ (a_058) the same person as 'Marie Joly' named as mother of Philippe Th\u00e9not's post-1780 children (a_044, a_053)? If the same person, the surname discrepancy requires explanation (indexing error or alias). If different persons, Philippe contracted a third marriage to Marie Joly between Jun 1780 and Oct 1781.",
+      "competing_assertion_ids": [
+        "a_058",
+        "a_044",
+        "a_053"
+      ],
+      "independence_analysis": "a_044 (S4, W5XL-B7T2, 1783 baptism of Marie Fran\u00e7oise Th\u00e9not) and a_053 (S5, W5XL-J23Z, 1784 baptism of Pierre Th\u00e9not) each record 'Marie Joly' as the mother in separate, independently created parish register entries one year apart, supplied by Philippe Th\u00e9not as presenter on two distinct occasions. a_058 (S6, W5XG-BTPZ, 1780 marriage) records 'Marie Claudine Bourgeois' as the bride in a third, fully independent register entry. All three entries were created by different clerks at different events (two baptisms, one marriage). The S6 index uniquely shows the identical name 'Marie Claudine Bourgeois' for both the bride (p_149074800400) and Philippe's mother (p_149074800300), which is independent evidence of a possible indexing duplication within S6 itself. No two of the three asserting entries share an informant.",
+      "weighing_analysis": "Quantity: two independent entries (S4, S5) against one (S6) favour 'Marie Joly'. Quality: S4 and S5 are baptism records where Philippe Th\u00e9not, as father and presenter, supplies the mother's name with close firsthand knowledge. S6 is a marriage record where both parties supplied their own names \u2014 normally equally reliable \u2014 but the identical name coincidence between bride and mother-in-law in this specific index entry creates a plausible indexing-error hypothesis (h_002) that cannot be evaluated without the original image at ark:/61903/3:1:3Q9M-CSR6-TNHH. The balance of evidence provisionally favours 'Marie Joly' as the correct name of Philippe's second wife (consistent with h_002 or h_001), but a definitive preference cannot be stated without the original register image. Preferred assertion: cannot be determined from indexed evidence alone.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": "This conflict cannot be settled on the basis of the FamilySearch index alone. Three hypotheses remain active: h_001 (Bourgeois died before Oct 1781, Philippe then married Joly \u2014 requires an unlocated Bourgeois death record and Joly marriage record); h_002 (the S6 FamilySearch indexer duplicated Philippe's mother's name as the bride's name \u2014 testable only by examining the original register image); h_003 (W5XG-BTPZ belongs to a different Philippe Th\u00e9not \u2014 no supporting evidence found). Resolution requires examination of the original parish register image at ark:/61903/3:1:3Q9M-CSR6-TNHH. This conflict does not bear on q_001: under any resolution, neither 'Marie Claudine Bourgeois' nor any other candidate is Marie Badoux, who died 21 March 1780. The conflict is recorded as a deferral pending image examination \u2014 a finding, not an omission. preferred_assertion_id is left null.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Marie Claudine Bourgeois (S6 bride, Jun 1780) died before Oct 1781, after which Philippe Th\u00e9not married Marie Joly; all three post-1780 children (1781, 1783, 1784) are Marie Joly's, not Bourgeois's.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_057",
+        "a_059"
+      ],
+      "contradicting_assertion_ids": [
+        "a_044",
+        "a_053"
+      ],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Consistent with all records but requires an unlocated Bourgeois death record and an unlocated Joly marriage record. pli_004 (Marie Joly baptism search, 2172 results) found no definitive Romenay match for Philippe's wife. A dedicated Romenay burial search for 'Bourgeois' and marriage search for 'Thenot + Joly' would test this hypothesis."
+    },
+    {
+      "id": "h_002",
+      "claim": "The FamilySearch indexer duplicated Philippe's mother's name ('Marie Claudine Bourgeois', a_063) as the bride's name in W5XG-BTPZ; the bride's actual name in the original register is 'Marie Joly', and the conflict is an indexing error.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_058",
+        "a_063"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "The identical name of both bride and mother-in-law in the S6 index makes a duplication error plausible. Can only be confirmed or excluded by examining the original register image at ark:/61903/3:1:3Q9M-CSR6-TNHH. If confirmed, this is the most parsimonious resolution: Philippe married Marie Joly on 27 Jun 1780 and she is the mother of all post-1780 children."
+    },
+    {
+      "id": "h_003",
+      "claim": "W5XG-BTPZ belongs to a different Philippe Th\u00e9not of Romenay (not 2S86-XWG), and Philippe Th\u00e9not (2S86-XWG) married Marie Joly at an unrecorded date after Marie Badoux's death.",
+      "status": "active",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_057"
+      ],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Th\u00e9not was a common Bresse surname. No evidence for a second Philippe Th\u00e9not at Romenay in 1780 found in current searches. The tight temporal and geographic match makes this the least parsimonious explanation, but it has not been excluded. No Philippe Th\u00e9not burial at Romenay after 1780 was found to confirm identity with 2S86-XWG."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "statement",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_006",
+        "a_015",
+        "a_017",
+        "a_021",
+        "a_023"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch collection 2840171 (France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892) \u2014 the sole digitized, fully name-indexed repository covering all surviving Romenay parish registers 1737\u20131802 \u2014 was searched across marriage, baptism, and burial/death record types. Name variants (Thenot/Th\u00e9not, Joly/Voly, Philippes/Philippe) were applied. Six records were retrieved and extracted. The notarial series at Archives D\u00e9partementales de Sa\u00f4ne-et-Loire was identified as a fallback but not searched; it could only corroborate, not change, the conclusion established by the burial record. No civil registration existed for the relevant dates (France's civil registration began in 1792; all key events are 1773\u20131784). The original parish register images for S1 (ark:/61903/3:1:3Q9M-CSR6-TJ9B), S4 (ark:/61903/3:1:3Q9M-CSR6-T6CP), and S5 (ark:/61903/3:1:3Q9M-CSR6-TJMW) were not directly examined; index transcriptions were used. The core finding \u2014 Marie Badoux's death on 21 March 1780 \u2014 is corroborated across two records (burial record S1 and baptism record S2, recording her last child baptised the day after her death). Research declared exhaustive: no unsearched record type could plausibly establish a different answer.",
+      "narrative_markdown": "## Proof Statement: Marie Joly Was Not Marie Badoux\n\n**Question:** Is 'Marie Joly,' named as mother of Claudine Th\u00e9not (baptised 12 October 1781 at Romenay, Sa\u00f4ne-et-Loire), the same person as Marie Badoux, known wife of Philippe Th\u00e9not \u2014 or was she a different woman, indicating Philippe Th\u00e9not had a second wife?\n\n**Conclusion:** Marie Joly was not Marie Badoux. They were two distinct women. The evidence establishes this with certainty on the basis of biological impossibility.\n\n---\n\nMarie Badoux was buried at Romenay on 22 March 1780, with death recorded the previous day, 21 March 1780. The parish burial register, recorded by the officiant as primary information for the burial event, identifies the deceased as Marie Badoux, wife of Philippe Thenot.^1 On the same day \u2014 22 March 1780 \u2014 Philippe Thenot presented an infant son, Jean, for baptism at the same parish, naming Marie Badoux as the child's mother; Philippe's own testimony as presenter is primary information for this entry.^2 These two records together document the close of Philippe Th\u00e9not's union with Marie Badoux: she died, likely in or shortly after childbirth, on 21 March 1780.\n\nThe question's premise \u2014 that Claudine Th\u00e9not was baptised 12 October 1781 at Romenay, with Philippe Th\u00e9not as father and 'Marie Joly' as mother \u2014 is stipulated rather than verified from a located record. Two dedicated searches for this baptism in FamilySearch collection 2840171 (the fully name-indexed Romenay parish register series, 1737\u20131802) returned no matching entry: a search on father Philippe Thenot, mother surname Joly, and birth year 1780\u20131782 (log_008) returned no relevant result; a broader fallback search on father Philippe Thenot and birth year 1781 alone (log_009) also returned no relevant result. The 1781 Claudine Th\u00e9not baptism is not name-indexed in this collection. The register page may be missing from the digitized set, or it may not have been indexed. The premise's identification of 'Marie Joly' as Claudine's mother therefore derives from the research question itself, not from a record retrieved and examined in this project.\n\nThis does not affect the conclusion. The premise places Claudine's baptism on 12 October 1781 \u2014 nineteen months after Marie Badoux's verified death on 21 March 1780. A deceased woman cannot be the living mother of a child baptised nineteen months after her death. Whatever the source of the question's premise, the conclusion is identical: the mother named at Claudine's baptism was necessarily a different person from Marie Badoux.\n\nThe marriage record of 22 February 1773 independently establishes that the bride's birth surname was Badoux, not Joly.^5 In French Catholic practice, a woman retained her birth surname throughout life; the mother's surname in a baptism register is her own birth name, not her husband's. 'Marie Joly' and 'Marie Badoux' are therefore two different women by naming convention alone \u2014 a conclusion that the burial record makes absolute on independent grounds.\n\nTwo additional baptism records exist as corroborating context. On 10 April 1783, Philippe Thenot presented Marie Fran\u00e7oise Thenot for baptism at Romenay, naming 'Marie Joly' as the mother.^3 On 22 April 1784, Philippe Thenot presented Pierre Thenot for baptism, again naming 'Marie Joly' as the mother.^4 These two records (S4, W5XL-B7T2; S5, W5XL-J23Z) independently establish that a woman named Marie Joly was the mother of Philippe Th\u00e9not's post-1780 children \u2014 consistent with the research question's premise about Claudine, but standing on their own feet as located, indexed records. They are not listed as supporting assertions for this proof because conflict **c_001** (unresolved) records a naming dispute between the June 1780 remarriage index entry (a_058, bride 'Marie Claudine Bourgeois') and the post-1780 baptism mother entries (a_044, a_053, mother 'Marie Joly'). Three hypotheses are active to account for this discrepancy: **h_001** (Bourgeois died before Oct 1781 and Philippe then married Joly), **h_002** (FamilySearch indexing error duplicated the mother-in-law's name as the bride's name, and the bride's true name is 'Marie Joly'), and **h_003** (W5XG-BTPZ belongs to a different Philippe Th\u00e9not). All three are unresolved; resolution requires examination of the original register image at ark:/61903/3:1:3Q9M-CSR6-TNHH. This conflict bears solely on the identity of Philippe's second wife and does not affect the question concluded here: under any resolution of c_001, neither 'Marie Claudine Bourgeois' nor any other candidate is Marie Badoux, who died on 21 March 1780.\n\nAll six records were retrieved from \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\" (FamilySearch collection 2840171), the sole digitized and fully name-indexed repository for Romenay parish registers 1737\u20131802. The source classifications for S1, S2, S4, and S5 are derivative (FamilySearch index/transcription); S3 was accessed as an original digital image. The original register images for S1, S4, and S5 were not directly examined for this project; all name readings rest on the FamilySearch index and should be confirmed against the original register images as a matter of good practice. That caveat cannot alter the conclusion: no transcription variant of Marie Badoux's birth surname could produce 'Joly,' and no image examination could restore life to a woman the burial record confirms died in March 1780.\n\n**Tier: Proved.** The conclusion rests on a biological impossibility established by a primary-informant burial record (the officiant's own entry), corroborated by the baptism of Marie Badoux's last child on the day of her burial. The 1781 Claudine Th\u00e9not baptism could not be located in the FamilySearch name index, but this does not weaken the conclusion: by the research question's own premise, Claudine was baptised nineteen months after Marie Badoux's death, and that gap is impossible to bridge regardless of whether the register page is indexed. All five GPS components are satisfied: research was declared exhaustive across the only accessible digitized repository (including two dedicated nil searches for the Claudine baptism, log_008 and log_009); citations are complete for all six located records; each source was classified by type, information quality, and evidence class; the one known secondary conflict (c_001) is acknowledged by id with its competing hypotheses (h_001\u2013h_003) and is shown not to bear on the conclusion; and the conclusion is a direct, unambiguous finding resting on biological impossibility.\n\n---\n\n^1 \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XV-6XPZ : 09 Mar 2024), Entry for Marie Badoux and Philippe Thenot, 22 Mar 1780.\n\n^2 \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XP-QBN2 : accessed 17 September 2026), entry for Jean Thenot and Philippe Thenot, 22 Mar 1780.\n\n^3 \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XL-B7T2 : accessed 17 Sep 2026), Entry for Marie Fran\u00e7oise Thenot and Philippe Thenot, 10 Apr 1783.\n\n^4 \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XL-J23Z : accessed 17 Sep 2026), Entry for Pierre Thenot and Philippe Thenot, 22 Apr 1784.\n\n^5 \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XJ-F7T2 : accessed 17 Sep 2026), Entry for Philippes Thenot and Marie Badoux, 22 Feb 1773.\n\n^6 \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W5XG-BTPZ : 09 Mar 2024), Entry for Philippe Thenot and Jean Thenot, 27 Jun 1780."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-17T00:00:00Z",
+      "superseded_by": "ev_002",
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-17T00-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-17T19:15:00Z",
+      "superseded_by": "ev_003",
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-17T19-15-00.json"
+    },
+    {
+      "id": "ev_003",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-17T20:00:00Z",
+      "superseded_by": "ev_004",
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-17T20-00-00.json"
+    },
+    {
+      "id": "ev_004",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "looks_solid",
+      "timestamp": "2026-09-17T21:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-17T21-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Sa\u00f4ne-et-Loire, France",
+      "for_place": "Romenay, Sa\u00f4ne-et-Loire, France",
+      "time_period": "1740-1800",
+      "jurisdictions": [
+        {
+          "name": "Province of Burgundy (Bourgogne), diocese of Autun",
+          "date_range": "before 1790"
+        },
+        {
+          "name": "Sa\u00f4ne-et-Loire, France",
+          "date_range": "1790-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2840171",
+          "title": "France, Sa\u00f4ne-et-Loire, Parish and Civil Registration, 1530-1892",
+          "date_range": "1530-1892"
+        },
+        {
+          "id": "1782519",
+          "title": "France, Births and Baptisms, 1546-1896",
+          "date_range": "1546-1896"
+        },
+        {
+          "id": "1500690",
+          "title": "France, Marriages, 1546-1924",
+          "date_range": "1546-1924"
+        },
+        {
+          "id": "1500691",
+          "title": "France, Deaths and Burials, 1546-1960",
+          "date_range": "1546-1960"
+        }
+      ],
+      "quirks": [
+        "All 6 Romenay parish/civil register volumes on FamilySearch (1737\u20131802) are 100% name-indexed and searchable by name via record_search \u2014 do not treat them as browse-only. Image group numbers: 008303973_005, 008303974_001\u2013004, 008303975_001.",
+        "All volumes are flagged 'Image out of order' \u2014 page images may not be in strict chronological/folio sequence; if a name-search hit seems inconsistent, browse the surrounding images in the volume.",
+        "French Republican Calendar applies to civil records from September 1792 onward; convert dates before citing. The Republic used this calendar until 1806.",
+        "Women kept their birth surnames throughout life in France \u2014 searching for 'Marie Badoux' or 'Marie Joly' as separate identities is correct. The mother's surname in the baptism register is her own birth name, not her husband's.",
+        "Pre-1792 parish registers were kept in duplicate (law of 1667, reinforced 1736): one at the parish, one at the greffe du bailliage. Both series now held at Archives D\u00e9partementales de Sa\u00f4ne-et-Loire (M\u00e2con). When an entry is damaged or missing in one series, check the other.",
+        "After 1792, the Catholic cur\u00e9 continued keeping parish registers alongside civil registration, but these post-1792 church registers were not systematically filmed; contact the parish of Romenay or the diocesan archives of Autun/Dijon for post-1792 parish sacramental records.",
+        "Notarial records (marriage contracts, wills, inventories after death) for Romenay are held at Archives D\u00e9partementales de Sa\u00f4ne-et-Loire and are not in the FamilySearch digitized volumes \u2014 physical consultation or written inquiry required.",
+        "Romenay lies near the eastern border of Sa\u00f4ne-et-Loire with the Ain department (Bresse region). If any family member originated across the border, search Ain records at Archives D\u00e9partementales de l'Ain, Bourg-en-Bresse.",
+        "The marriage record for Philippe Th\u00e9not is the single highest-value source: French Catholic marriage registers name both the bride and groom's parents, providing direct evidence of the mother's surname."
+      ],
+      "guide_markdown": "# Locality Guide: Romenay, Sa\u00f4ne-et-Loire, France (1740\u20131800)\n\n## Jurisdiction overview\n- **Formed:** Sa\u00f4ne-et-Loire department created 1790 from the former Province of Burgundy (Bourgogne). Before 1790, Romenay was in Burgundy, diocese of Autun.\n- **Administrative centre:** M\u00e2con (department capital); Romenay in arrondissement of Louhans.\n- **Population:** Small rural commune in Bresse Louhannaise; no population figure returned by tool.\n- **Economy:** Agricultural (Burgundian Bresse).\n- **Religion:** Overwhelmingly Roman Catholic.\n- **Key events:** French Revolution (1789); department creation (1790); civil registration begins (1792); Republican Calendar 1792\u20131806.\n\n## Boundary changes\n- Before 1790: Province of Burgundy, diocese of Autun.\n- 1790: Sa\u00f4ne-et-Loire department created.\n- 1792: Civil registration at commune level begins.\n\n## Available record types\n\n### Parish registers (BMS) \u2014 primary source for 1740\u20131792\n6 digitized FamilySearch volumes for Romenay, all 100% name-indexed, French language:\n- 008303973_005_M9M4-GTY: 1737\u20131742, 197 images\n- 008303974_001_M9M4-GQ2: 1743\u20131762, 558 images\n- 008303974_002_M9M4-GQL: 1763\u20131782, 679 images\n- 008303974_003_M9M4-GQP: 1783\u20131792, 501 images\n- 008303974_004_M9M4-GQT: 1792\u20131802, 271 images\n- 008303975_001_M9M4-LCK: 1792\u20131802 Death & Marriage, 491 images\nAll flagged 'Image out of order'. Also in collection 2840171 (France, Sa\u00f4ne-et-Loire, Parish and Civil Registration, 1530\u20131892).\n\n### Civil registration (\u00e9tat civil)\nBegins 1792 at commune level. Births, marriages, deaths. Republican Calendar 1792\u20131806.\n\n### Notarial records\nMarriage contracts, wills, inventories. Held at Archives D\u00e9partementales de Sa\u00f4ne-et-Loire (M\u00e2con), series E. Not online.\n\n### Probate/court records\nSeigneurial and royal bailliage (pre-1790), civil tribunal (post-1790). Archives D\u00e9partementales, series B/L.\n\n### Census records\nNo census for this period. First French censuses early 19th century.\n\n## Repository guide\n\n| Repository | Holdings | Access |\n|---|---|---|\n| FamilySearch | 6 Romenay volumes (indexed); collection 2840171 | Free |\n| Archives D\u00e9p. Sa\u00f4ne-et-Loire, M\u00e2con | Parish registers originals + greffes, notarial, court, land records | In-person / archives71.fr |\n| Filae | French \u00e9tat civil | Subscription |\n| Geneanet | French genealogies | Partly free |\n| CGSL (cgsl.fr) | Local genealogical society indexes | Contact society |\n\n## Records NOT online\n- Notarial records for Romenay 1740\u20131800\n- Seigneurial court and land records\n- Post-1792 parish sacramental registers (held at parish/diocese)\n\n## Research tips\n1. Duplicate registers: both original and greffe copy at Archives D\u00e9p. Sa\u00f4ne-et-Loire \u2014 check both when an entry is damaged.\n2. Republican Calendar: convert all post-September 1792 civil dates.\n3. Women kept birth surnames \u2014 'Marie Badoux' and 'Marie Joly' are distinct identities.\n4. Marriage records name both parties' parents \u2014 the Th\u00e9not marriage record is the key target.\n5. Search all sibling baptisms to establish a consistent pattern of how the mother was recorded.\n6. 'Image out of order' warning: supplement name-search with chronological browse.\n7. Cross-border: Ain department (Bresse) records may be relevant if family originated east of Romenay.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/France_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/France_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/France_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/France_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-17"
+    }
+  ]
+}

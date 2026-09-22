@@ -589,8 +589,8 @@ the groom's marriage register). Take the first that applies:
    add the record's spelling of her name, carry that `personId` into 2 or 3.
 2. **That role has a persona on this record** —
    `materialize_facts({ personId?, recordId, recordRole })`. When you are
-   MINTING her (no `personId` from 1), that persona must carry a non-negative
-   `name` assertion: the persona arm refuses to mint a person it cannot name,
+   MINTING her (no `personId` from 1), that persona must carry a `name`
+   assertion whose `record_basis` is not `absent`: the persona arm refuses to mint a person it cannot name,
    so a persona carrying only a gender, a birth, or other facts goes to 3.
    Enriching an existing `personId` needs no name assertion. Gender comes from
    her `gender`/`sex` assertions; absent one it is `Unknown`. **Caveat on
@@ -764,12 +764,12 @@ hands a merge set to proof-conclusion to fold. For a household record:
    `parentage` or `parentchild` assertion this edge comes from) — do **not** hand-walk `assertion.source_id →
    research source → tree S-entry` and supply a literal
    `relationship.sources` yourself; the tool resolves it for you (the same
-   resolver `materialize_facts` uses), including the direct/indirect quality
+   resolver `materialize_facts` uses), including the stated/inferred quality
    distinction, and rejects the call clearly if the assertion or its source
    doesn't resolve — cheaper to fix than a silent wrong ref, and removes the
    chain-walking mistake that used to cost a retry. A pre-1880 census
    parent-child edge is *indirect* evidence (a headship/co-residence
-   inference, not a stated relationship) — its assertion's `evidence_type`
+   inference, not a stated relationship) — its assertion's `record_basis`
    already reflects that, so the resolved ref quality follows automatically.
    `tree_edit`'s `ops[]` form is validate-once/write-once/all-or-nothing, so
    a household's edges land atomically — none of them, or all of them,
