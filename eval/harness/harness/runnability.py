@@ -134,7 +134,7 @@ def check_runnable(
                 continue
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
-            except json.JSONDecodeError as e:
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 return RunnabilityResult(
                     False, f"scenario {fname} is not valid JSON: {e}"
                 )

@@ -431,7 +431,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     # from taking the run down if it ever arrives by another route.
     try:
         ann = json.loads(ann_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         gh_error(
             f"skill `{skill}`: annotation `{ann_filename}` is not valid JSON "
             f"({exc}). Restore the last valid version from git, or delete it "
