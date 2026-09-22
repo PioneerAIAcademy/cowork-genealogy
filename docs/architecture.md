@@ -222,10 +222,11 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **28** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **7** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`proof-conclusion`, `research-exhaustiveness` and `person-evidence`.
+The seven agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`proof-conclusion`, `research-exhaustiveness`, `person-evidence` and
+`search-images`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -1390,7 +1391,7 @@ outside this list and outside every check.)*
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
 | 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
-| 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
+| 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
@@ -1406,12 +1407,12 @@ Two things the site list alone won't tell you:
   validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror,
-  site 4), `test-js` (the TS-interface mirror, site 5) and `typecheck` (site 10)
-  — and no shorter target reaches all four. Naming them individually is how the
-  last one gets skipped.
+  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror, site 4,
+  byte-identical across both trees via `test_schema_mirrors.py`), `test-js` (the
+  TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
+  reaches all four. Naming them individually is how the last one gets skipped.
 
-**Add a value to a closed enum** (e.g. `evidence_type`, `proof_tier`). The enum
+**Add a value to a closed enum** (e.g. `record_basis`, `proof_tier`). The enum
 lives in `enums.schema.json` (`$defs`), **not** `research.schema.json` (which
 only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 `CLOSED_ENUMS` in `validator.ts`, and the prose tables.

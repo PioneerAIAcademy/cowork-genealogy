@@ -179,7 +179,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
     for test_path in sorted(skill_tests.glob("*.json")):
         try:
             test = json.loads(test_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             continue
         for fixture_name in test.get("mcp_fixtures") or []:
             fixture_path = FIXTURES_DIR / f"{fixture_name}.json"
@@ -187,7 +187,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
                 continue
             try:
                 fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, UnicodeDecodeError):
                 continue
             tool = fixture.get("tool")
             if isinstance(tool, str):

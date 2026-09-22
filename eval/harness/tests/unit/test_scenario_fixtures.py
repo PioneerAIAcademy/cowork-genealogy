@@ -67,7 +67,7 @@ def _intentionally_invalid_scenarios(tests_dir: Path = TESTS_DIR) -> set[str]:
     for f in tests_dir.rglob("*.json"):
         try:
             raw = json.loads(f.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
             continue
         if isinstance(raw, dict) and raw.get("intentionally_invalid") is True:
             scenario = (raw.get("input") or {}).get("scenario")
