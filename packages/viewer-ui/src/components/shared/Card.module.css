@@ -19,7 +19,6 @@
   justify-content: space-between;
   gap: var(--spacing-sm);
   cursor: pointer;
-  user-select: none;
 }
 
 .title {
@@ -30,7 +29,6 @@
   flex: 1;
   min-width: 0;
   line-height: 1.4;
-  user-select: text;
 }
 
 .badges {
@@ -38,6 +36,8 @@
   align-items: center;
   gap: var(--spacing-xs);
   flex-shrink: 0;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .chevron {
