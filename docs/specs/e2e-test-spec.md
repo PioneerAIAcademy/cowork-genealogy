@@ -1122,7 +1122,7 @@ The judge grades **two axes**:
   graded **from the tree only**: a finding that appears only in
   `proof_summaries` and not in the tree does not count.
 
-  **Dates are graded by denotation, not by overlap.** Formatting tolerance
+  **Dates and places are graded by denotation, not by overlap.** Formatting tolerance
   covers different spellings of the same value (`~1820`, `abt. 1820`,
   `approximately 1820`); it does not cover a difference in precision or
   qualification. A tree date is `supported` only when it denotes the claimed
@@ -1131,7 +1131,10 @@ The judge grades **two axes**:
   claim. A tree date more precise than the claim and consistent with it
   (claim `1912`, tree `13 January 1912`) is `supported`. Where the finding
   itself states an approximate or bounded date, an equivalent approximation
-  in the tree is `supported`.
+  in the tree is `supported`. The same rule governs places: a broader
+  jurisdiction that merely contains the claim — `Zulia, Venezuela` against a
+  claimed `Maracaibo, Zulia, Venezuela` — is `unsupported`, and a more
+  specific place consistent with the claim is `supported`.
 
   The rule is general, and the prompt states it once for every finding type.
   It matters most on `fact` findings, which the component derivation (§3.4.2)
@@ -1141,7 +1144,9 @@ The judge grades **two axes**:
   none supported `"false"`, some supported and some unsupported `"partial"`,
   all supported `"true"`. That is the same arithmetic the relationship table
   applies to `link` components; on a `fact` finding there is no `detail` tier
-  to exclude.
+  to exclude. The rollup is scoped to non-`avoid` findings, as the derivation
+  is (§3.4.2): on an `avoid` finding `matched: "true"` means correctly avoided
+  (§3.4.1), which no component tally expresses.
   A bounded tree date reading as `supported` is how a run whose agent reached
   the opposite conclusion from the fixture came back `pass`.
 - **Proof quality (advisory).** Grade the soundness of the agent's

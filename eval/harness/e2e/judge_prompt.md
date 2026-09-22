@@ -179,12 +179,21 @@ A tree date is `supported` only when it **denotes** the claimed date.
 - When the **finding itself** states an approximate or bounded date, an
   equivalent approximation in the tree is `supported`. This does not displace
   the unresolved-detail bullet above.
+- The same rule governs places. A tree place is `supported` only when it
+  denotes the claimed place. A broader jurisdiction that merely *contains*
+  the claim — `Zulia, Venezuela` against a claimed `Maracaibo, Zulia,
+  Venezuela` — is `unsupported`; a more specific place consistent with the
+  claim is `supported`.
 
 **Rolling a `fact` finding's components up to `matched`.** Every component of a
 `fact` finding scores — tag each `kind: "link"`; there is no `detail` tier
 here. Then: any component contradicted → `"false"`; none supported →
 `"false"`; some supported and some unsupported → `"partial"`; all supported →
 `"true"`.
+
+This rollup does not apply to `polarity: "avoid"` findings. There
+`matched: "true"` means *correctly avoided*, which is not a component
+tally — see *Negative findings* below.
 
 ### Negative findings (`polarity: "avoid"` — the agent should NOT conclude something)
 
