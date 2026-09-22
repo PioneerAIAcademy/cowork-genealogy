@@ -287,7 +287,7 @@ export async function fulltextSearchTool(
     return [...matched];
   }
 
-    // A nil on an image group the volume metadata reports as NOT full-text
+  // A nil on an image group the volume metadata reports as NOT full-text
   // searchable is a fact about the volume, not about the person. The session
   // behind issue #1988 ran exactly this search against a group already returned
   // with `fulltextSearchable: false` and read the guaranteed zero as evidence of
@@ -295,7 +295,13 @@ export async function fulltextSearchTool(
   // on unknown would block a legitimate search.
   let notSearchableNote: string | undefined;
   if (
-    input.imageGroupNumber !== undefined &&
+    // Truthiness, NOT `!== undefined`: `buildUrl` gates the `q.groupName`
+    // filter the same way, so an empty string runs an UNSCOPED full-corpus
+    // search. Gated on `!== undefined` the note then told the caller a nil from
+    // the whole corpus was a fact about a volume it never searched -- and, on a
+    // `projectPath` call, contradicted `nilSearchNeedsLog` in the same response,
+    // discarding a real negative finding.
+    input.imageGroupNumber &&
     results.length === 0 &&
     (data.results ?? 0) === 0
   ) {
@@ -311,7 +317,7 @@ export async function fulltextSearchTool(
     }
   }
 
-const out: FulltextSearchResponse = {
+  const out: FulltextSearchResponse = {
     query: echoQuery(input),
     totalResults: data.results ?? 0,
     returned: results.length,
