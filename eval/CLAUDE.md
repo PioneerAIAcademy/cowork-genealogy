@@ -226,7 +226,7 @@ MCP tool source (`packages/engine/mcp-server/src/**`) is deliberately **not** in
 `eval/harness/judge/prompt.md` is **not** in the snapshot — it's project-global and gets a separate `judge_prompt_hash` field. This keeps "activate this run log" a per-skill operation; activating skill A's v1 doesn't clobber skill B's judge calibration.
 
 Normalization rules (shared with `eval/app/lib/snapshot.ts`):
-- JSON files: parse + re-emit with sorted keys, indent=2, trailing newline. Test JSONs (`eval/tests/unit/*/*.json`) also strip `test.{name,description,tags}` cosmetic fields.
+- JSON files: parse + re-emit with sorted keys, indent=2, trailing newline. Test JSONs (`eval/tests/unit/*/*.json`) also strip `test.{name,description}` cosmetic fields. `tags` is **not** cosmetic — it selects validators and changes outcome computation (issue #2694).
 - Text files (`.md`, `.txt`, `.yaml`, `.yml`, …): CRLF → LF, ensure trailing newline.
 
 ## Releasable invocations
