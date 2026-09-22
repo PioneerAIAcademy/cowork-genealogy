@@ -1402,7 +1402,9 @@ class _MessageFirstHookStream:
         return None
 
 
-async def _run_short_circuit_hook_after_message(monkeypatch, tmp_path, messages):
+async def _run_short_circuit_hook_after_message(
+    monkeypatch, tmp_path, messages, **run_kwargs
+):
     from harness import skill_runner as sr
     from harness.auth import AuthConfig
 
@@ -1422,6 +1424,7 @@ async def _run_short_circuit_hook_after_message(monkeypatch, tmp_path, messages)
         fixtures_dir=tmp_path,
         auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
         routing_short_circuit_skills={"record-extraction"},
+        **run_kwargs,
     )
 
 
@@ -1478,16 +1481,110 @@ def test_the_handoff_message_survives_the_hook_firing_after_it(
     The guard fails two ways — reading on past the deny, and dropping the
     narration the deny was supposed to preserve (the original #2189 defect).
     This pins the second under the ordering the first test introduces.
+
+    A trailing message is required, not decoration: with the stream ending at
+    the hand-off, `_MessageFirstHookStream` raises StopAsyncIteration on the
+    same __anext__ that runs the hook, the stop is never reached, and both
+    assertions below pass with this PR reverted — the test would pin nothing
+    (review of #2739). The trailing message makes the stop fire, and
+    `no_result_message` is what proves it did.
     """
     import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
 
-    result = asyncio.run(
-        _run_short_circuit_hook_after_message(monkeypatch, tmp_path, [])
+    reaction = AssistantMessage(
+        content=[TextBlock(text="The skill was denied, so I will do it myself.")],
+        model="stub",
     )
 
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(monkeypatch, tmp_path, [reaction])
+    )
+
+    assert result.no_result_message is True, (
+        "the stop never fired, so this test is not exercising the path it "
+        "claims to guard"
+    )
     assert "Routing this to record-extraction." in result.text_response
     assert result.skills_invoked == ["record-extraction"], (
         "the routing verdict must still be recorded — the hook has to have run"
+    )
+
+
+def test_the_token_cap_is_not_applied_to_the_suppressed_reaction_turn(
+    tmp_path, monkeypatch
+):
+    """The reaction turn carries the run's largest context and is discarded.
+
+    It is the likeliest turn of any to breach max_input_tokens_per_turn — the
+    hand-off context plus the deny — and the loop has already declared it is
+    not the skill's work. Aborting on it fails a run whose routing verdict was
+    captured, on the content of a turn thrown away two lines later; and because
+    `_LimitExceeded` abandons the stream, `usage` would carry no num_turns at
+    all (review of #2739).
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    reaction = AssistantMessage(
+        content=[TextBlock(text="The skill was denied, so I will do it myself.")],
+        model="stub",
+        usage={"input_tokens": 500_000},
+    )
+
+    result = asyncio.run(
+        _run_short_circuit_hook_after_message(
+            monkeypatch, tmp_path, [reaction], max_input_tokens_per_turn=1_000
+        )
+    )
+
+    assert result.aborted_reason is None, (
+        f"the discarded reaction turn aborted the run: {result.aborted_reason}"
+    )
+    assert result.no_result_message is True, "the short-circuit stop never fired"
+    assert result.usage.get("num_turns") == 1, (
+        f"num_turns={result.usage.get('num_turns')} — the hand-off turn is the "
+        "run's one real turn"
+    )
+    assert "Routing this to record-extraction." in result.text_response
+
+
+def test_a_real_over_cap_turn_still_aborts(tmp_path, monkeypatch):
+    """The other direction: the skip must be scoped to the suppressed turn.
+
+    A hand-off turn that is itself over the cap is the skill's own work and
+    must still abort — otherwise the exemption above has quietly disabled the
+    cap for every short-circuited run.
+    """
+    import asyncio
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+    handoff_message.usage = {"input_tokens": 500_000}
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _MessageFirstHookStream(hook, hook_inputs, [handoff_message])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            routing_short_circuit_skills={"record-extraction"},
+            max_input_tokens_per_turn=1_000,
+        )
+    )
+
+    assert result.aborted_reason == "max_input_tokens_per_turn"
+    assert result.usage.get("num_turns") == 1, (
+        "the _LimitExceeded path must report the turns it streamed, like the "
+        "wall-clock path — otherwise the orchestrator reads a zero-progress run"
     )
 
 

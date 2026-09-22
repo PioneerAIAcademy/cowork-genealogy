@@ -1002,7 +1002,17 @@ async def run_skill(
                 # the offending turn was already billed. This still catches
                 # runaway context growth between turns — but doesn't prevent
                 # the over-budget call itself. See module docstring.
-                if message.usage:
+                #
+                # Not applied to a suppressed post-deny reaction. That turn
+                # carries the largest context of the run -- the hand-off
+                # context plus the deny -- so it is the likeliest of any to
+                # breach the cap, and it is the one turn this loop has just
+                # declared is not the skill's own work: nothing from it
+                # reaches text_chunks, attempted_mcp_calls, or turns_seen.
+                # Aborting on it would fail a run whose routing verdict was
+                # already captured, on the content of a turn that is about to
+                # be discarded, two lines before the stop that discards it.
+                if message.usage and not post_routing_reaction:
                     turn_input = int(
                         message.usage.get("input_tokens", 0) or 0
                     )
@@ -1151,6 +1161,14 @@ async def run_skill(
         usage["num_turns"] = turns_seen["n"]
     except _LimitExceeded as e:
         aborted_reason = e.reason
+        # Same reason as the wall-clock branch above: this path abandons the
+        # stream mid-run, so no ResultMessage ever lands and `usage` is empty.
+        # Without this the orchestrator reads num_turns 0 and cannot tell a run
+        # that aborted after real work from one that never started. Guarded on
+        # `usage` being empty so a ResultMessage that did arrive earlier keeps
+        # its own SDK-reported count rather than this manufactured one.
+        if not usage:
+            usage["num_turns"] = turns_seen["n"]
         if e.reason == "sdk_stream_silence":
             error = (
                 f"no SDK message received within "
