@@ -24,7 +24,7 @@ function a(over: Record<string, unknown> = {}): any {
     value: "",
     date: "12 May 1843",
     place: "Schuylkill County, Pennsylvania",
-    evidence_type: "direct",
+    record_basis: "stated",
     ...over,
   };
 }
@@ -62,8 +62,8 @@ describe("projectsToRecordPersonaFact vs materializesToPersonFact", () => {
     }
   });
 
-  it("excludes negative evidence, as the ruling requires", () => {
-    expect(projectsToRecordPersonaFact(a({ evidence_type: "negative" }))).toBe(false);
+  it("excludes an absent-basis assertion, as the ruling requires", () => {
+    expect(projectsToRecordPersonaFact(a({ record_basis: "absent" }))).toBe(false);
   });
 
   it("agrees with the tree filter on an ordinary event", () => {
@@ -92,13 +92,13 @@ describe("projectRecordPersonas", () => {
   // when either guard is deleted, because the other one still catches it — the
   // first version of this test did exactly that and survived a break-test of
   // the `absent` rule.
-  it("drops record_role 'absent' even when the evidence is not marked negative", () => {
+  it("drops record_role 'absent' even when the basis is not itself absent", () => {
     const groups = projectRecordPersonas([
       a({ id: "a_1", record_role: "principal", fact_type: "name", value: "Patrick Flynn" }),
       a({
         id: "a_2",
         record_role: "absent",
-        evidence_type: "direct",
+        record_basis: "stated",
         fact_type: "name",
         value: "Nobody Here",
       }),
@@ -106,16 +106,36 @@ describe("projectRecordPersonas", () => {
     expect(groups.map((g) => g.role)).toEqual(["principal"]);
   });
 
-  it("drops negative evidence even when the role is an ordinary one", () => {
+  it("drops an absent-basis assertion even when the role is an ordinary one", () => {
     const groups = projectRecordPersonas([
       a({ id: "a_1", record_role: "principal", fact_type: "name", value: "Patrick Flynn" }),
       a({
         id: "a_2",
         record_role: "wife",
-        evidence_type: "negative",
+        record_basis: "absent",
         fact_type: "name",
         value: "Nobody Here",
       }),
+    ]);
+    expect(groups.map((g) => g.role)).toEqual(["principal"]);
+  });
+
+  it("still excludes a LEGACY evidence_type: negative assertion", () => {
+    // record_basis replaced evidence_type mid-flight. `recordBasisOf` reads the
+    // new field first and falls back, so a half-migrated document keeps
+    // excluding negative evidence. Without the fallback this projects a person
+    // the record says was NOT there, and every suite stays green because the
+    // other tests all use the new field.
+    const groups = projectRecordPersonas([
+      a({ id: "a_1", record_role: "principal", fact_type: "name", value: "Patrick Flynn" }),
+      a({
+        id: "a_2",
+        record_role: "wife",
+        record_basis: undefined,
+        evidence_type: "negative",
+        fact_type: "name",
+        value: "Nobody Here",
+      } as any),
     ]);
     expect(groups.map((g) => g.role)).toEqual(["principal"]);
   });

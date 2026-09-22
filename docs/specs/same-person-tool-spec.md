@@ -124,7 +124,7 @@ else — that is the sanctioned `match_score: null`, not a failure.
 `facts[]`". This projection answers "what identifies this **record** person".
 The two part company on exactly one type — `marriage` — so the projection
 declares its own predicate rather than reusing that one: `record_role: "absent"`
-and `evidence_type: "negative"` never project (both lead rulings); `name`
+and a `record_basis` of `absent` never project (both lead rulings); `name`
 becomes a `SimplifiedName` and `gender`/`sex` the scalar; **`marriage` is
 admitted**; the three pure two-party edges and `age` are not.
 `record-persona.test.ts` pins that the two still differ, so a later tidy-up

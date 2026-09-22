@@ -1430,7 +1430,7 @@ Two things the site list alone won't tell you:
   — and no shorter target reaches all four. Naming them individually is how the
   last one gets skipped.
 
-**Add a value to a closed enum** (e.g. `evidence_type`, `proof_tier`). The enum
+**Add a value to a closed enum** (e.g. `record_basis`, `proof_tier`). The enum
 lives in `enums.schema.json` (`$defs`), **not** `research.schema.json` (which
 only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 `CLOSED_ENUMS` in `validator.ts`, and the prose tables.

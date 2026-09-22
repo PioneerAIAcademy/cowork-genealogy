@@ -21,6 +21,8 @@ import json
 
 import pytest
 
+
+from harness.record_basis import record_basis_of
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
@@ -1218,7 +1220,10 @@ def _record_facts_from_assertions(state: dict, assertion: dict) -> list[dict]:
             continue
         if a.get("record_id") != record_id or a.get("record_role") != record_role:
             continue
-        if a.get("evidence_type") == "negative":
+        # `record_basis_of` reads across the 2026-09-18 rename, so a
+        # half-migrated document keeps excluding the absent-basis assertions
+        # rather than projecting a person the record says was NOT there.
+        if record_basis_of(a) == "absent":
             continue
         ft = a.get("fact_type")
         if not isinstance(ft, str) or not ft:

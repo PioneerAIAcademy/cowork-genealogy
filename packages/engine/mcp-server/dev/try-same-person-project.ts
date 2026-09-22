@@ -63,7 +63,7 @@ function assertion(over: Record<string, unknown> = {}): Record<string, unknown> 
     information_quality: "primary",
     informant: "the register",
     informant_proximity: "participant",
-    evidence_type: "direct",
+    record_basis: "stated",
     extracted_for_question_ids: [],
     log_entry_id: null,
     record_persona_id: null,

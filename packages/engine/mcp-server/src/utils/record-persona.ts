@@ -19,6 +19,7 @@ import type {
   SimplifiedPerson,
 } from "../types/gedcomx.js";
 import { toArk } from "./ark.js";
+import { recordBasisOf } from "./record-basis.js";
 
 // ─── fact_type → tree fact type (honors the #711 structured-fact model) ───────
 //
@@ -215,7 +216,7 @@ export function materializesToPersonFact(assertion: any): boolean {
   // Mirrors the materialize loop's own four skips, in its order: negative
   // evidence stays an argument and never becomes a positive fact; `gender`/`sex`
   // set the scalar; `name` becomes a tree name; SKIP_TYPES are two-party links.
-  if (assertion?.evidence_type === "negative") return false;
+  if (recordBasisOf(assertion) === "absent") return false;
   const t = String(assertion?.fact_type ?? "").toLowerCase();
   return t !== "" && !NAME_TYPES.has(t) && !GENDER_TYPES.has(t) && !SKIP_TYPES.has(t);
 }
@@ -311,7 +312,7 @@ export const RECORD_PERSONA_SKIP_TYPES: ReadonlySet<string> = new Set([
  *  scalar); negative evidence never projects, by the same 2026-09-11 ruling that
  *  excludes `record_role: "absent"`. */
 export function projectsToRecordPersonaFact(assertion: any): boolean {
-  if (assertion?.evidence_type === "negative") return false;
+  if (recordBasisOf(assertion) === "absent") return false;
   const t = String(assertion?.fact_type ?? "").toLowerCase();
   return (
     t !== "" &&
@@ -348,7 +349,7 @@ function projectable(a: any): boolean {
     !!a &&
     typeof a === "object" &&
     a.record_role !== "absent" &&
-    a.evidence_type !== "negative" &&
+    recordBasisOf(a) !== "absent" &&
     typeof a.record_role === "string" &&
     a.record_role !== ""
   );

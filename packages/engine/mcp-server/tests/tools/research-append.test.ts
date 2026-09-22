@@ -54,7 +54,7 @@ const validAssertion = (id: string, sourceId = "src_001") => ({
   information_quality: "primary",
   informant: "self",
   informant_proximity: "self",
-  evidence_type: "direct",
+  record_basis: "stated",
   extracted_for_question_ids: [],
 });
 
@@ -137,7 +137,7 @@ describe("research_append (Phase 1)", () => {
       information_quality: "primary",
       informant: "self",
       informant_proximity: "self",
-      evidence_type: "direct",
+      record_basis: "stated",
       extracted_for_question_ids: [],
       ...over,
     });
@@ -1407,6 +1407,155 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
+  // question puts it at the write boundary rather than in prose. Until
+  // 2026-09-21 it lived only in the agent body and the eval validator, and
+  // {tier: "probable", shortfall: "none"} validated clean in production.
+  describe("shortfall must match the tier's conclusiveness", () => {
+    const append = (tier: string, shortfall: string) =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier,
+          vehicle: "summary",
+          shortfall,
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "Searched census + vitals",
+          narrative_markdown: "## Conclusion\n...",
+        },
+      } as never);
+
+    // Both conclusive tiers, not just `proved`: dropping "disproved" from the
+    // set left a proved-only version of this block green, which is how the
+    // first version of this rule shipped wrong in the first place.
+    it.each([
+      ["proved", "ceiling"], ["proved", "gap"], ["proved", "conflict"],
+      ["disproved", "ceiling"], ["disproved", "gap"], ["disproved", "conflict"],
+    ])("refuses tier '%s' with shortfall '%s'", async (tier, shortfall) => {
+      await writeProject();
+      const r = await append(tier, shortfall);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("conclusive answer");
+    });
+
+    it.each(["proved", "disproved"])(
+      "accepts shortfall 'none' on conclusive tier '%s'",
+      async (tier) => {
+        // A conclusive tier ALSO needs the question already declared
+        // exhaustive — the sibling arm of this same function. Without that
+        // setup these refuse for the other reason and prove nothing about
+        // shortfall.
+        const research = baseResearch();
+        research.questions = [
+          {
+            ...validQuestion("q_001"),
+            status: "exhaustive_declared",
+            exhaustive_declaration: {
+              declared: true,
+              log_entry_ids: ["log_001"],
+              stop_criteria: {},
+            },
+          },
+        ];
+        research.log = [
+          {
+            id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+            tool: "record_search", query: {}, outcome: "negative",
+            results_examined: 0, external_site: null, results_ref: null,
+          },
+        ];
+        await writeProject(research);
+        expect((await append(tier, "none")).ok).toBe(true);
+      },
+    );
+
+    it.each(["probable", "possible", "not_proved"])(
+      "refuses shortfall 'none' on tier '%s', which reached no answer",
+      async (tier) => {
+        await writeProject();
+        const r = await append(tier, "none");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toContain("reached no conclusive answer");
+      },
+    );
+
+    it("accepts the pairings that do agree", async () => {
+      await writeProject();
+      expect((await append("probable", "gap")).ok).toBe(true);
+    });
+
+    it("says nothing when shortfall is a non-string — that is checkEnum's job", async () => {
+      // The `typeof === "string"` guard, which nothing tested: loosening it to
+      // `!== undefined` left this whole block green while a null shortfall
+      // collected BOTH this refusal and checkEnum's, for one defect.
+      // Must be a CONCLUSIVE tier: on a lower one neither arm reaches the
+      // comparison, so the loosened guard is indistinguishable there.
+      const research = baseResearch();
+      research.questions = [
+        {
+          ...validQuestion("q_001"),
+          status: "exhaustive_declared",
+          exhaustive_declaration: {
+            declared: true, log_entry_ids: ["log_001"], stop_criteria: {},
+          },
+        },
+      ];
+      research.log = [
+        {
+          id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+          tool: "record_search", query: {}, outcome: "negative",
+          results_examined: 0, external_site: null, results_ref: null,
+        },
+      ];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001", tier: "proved", vehicle: "summary",
+          shortfall: null, supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [], exhaustive_search_summary: "s",
+          narrative_markdown: "## C\n...",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).not.toContain("conclusive answer");
+    });
+
+    it("says nothing when shortfall is absent — that is checkRequired's job", async () => {
+      // Two diagnoses for one defect is what makes an agent repair the wrong
+      // thing; the same reason the resolved_conflict_ids guard exists.
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier: "probable",
+          vehicle: "summary",
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "s",
+          narrative_markdown: "## C\n...",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain("missing required field 'shortfall'");
+      expect(msg).not.toContain("reached no conclusive answer");
+    });
+  });
+
   it("appends a proof_summary referencing an existing question", async () => {
     await writeProject();
     const r = await researchAppend({
@@ -1417,6 +1566,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "probable",
         vehicle: "summary",
+        shortfall: "gap",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -1447,6 +1597,7 @@ describe("research_append (Phase 3)", () => {
             question_id: "q_001",
             tier: "probable",
             vehicle: "summary",
+            shortfall: "gap",
             supporting_assertion_ids: ["a_001"],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Searched census + vitals",
@@ -1486,6 +1637,7 @@ describe("research_append (Phase 3)", () => {
             question_id: "q_001",
             tier: "probable",
             vehicle: "summary",
+            shortfall: "gap",
             supporting_assertion_ids: ["a_001"],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Searched census + vitals",
@@ -1907,6 +2059,7 @@ describe("research_append (Phase 3)", () => {
       question_id: "q_001",
       tier,
       vehicle: "summary",
+      shortfall: "gap",
       supporting_assertion_ids: supporting,
       resolved_conflict_ids: [],
       exhaustive_search_summary: "census + vitals",
@@ -2136,6 +2289,7 @@ describe("research_append (Phase 3)", () => {
           question_id: "q_001",
           tier: "probable",
           vehicle: "summary",
+          shortfall: "gap",
           supporting_assertion_ids: ["a_004"],
           resolved_conflict_ids: [],
           exhaustive_search_summary: "census",
@@ -2148,6 +2302,7 @@ describe("research_append (Phase 3)", () => {
       question_id: "q_001",
       tier,
       vehicle: "summary",
+      shortfall: "gap",
       supporting_assertion_ids: ["a_004"],
       resolved_conflict_ids: [],
       exhaustive_search_summary: "census",
@@ -2257,6 +2412,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2290,6 +2446,7 @@ describe("research_append (Phase 3)", () => {
             question_id: "q_001",
             tier: "proved",
             vehicle: "summary",
+            shortfall: "none",
             supporting_assertion_ids: ["a_001"],
             resolved_conflict_ids: [],
             exhaustive_search_summary: "Searched census + vitals",
@@ -2347,6 +2504,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2372,6 +2530,7 @@ describe("research_append (Phase 3)", () => {
         question_id: "q_001",
         tier: "proved",
         vehicle: "summary",
+        shortfall: "none",
         supporting_assertion_ids: ["a_001"],
         resolved_conflict_ids: [],
         exhaustive_search_summary: "Searched census + vitals",
@@ -2831,6 +2990,7 @@ describe("research_append (project singleton section)", () => {
     question_id: questionId,
     tier: "proved",
     vehicle: "summary",
+    shortfall: "none",
     supporting_assertion_ids: ["a_001"],
     resolved_conflict_ids: [],
     exhaustive_search_summary: "Every identified repository was searched.",
@@ -2929,7 +3089,13 @@ describe("research_append (project singleton section)", () => {
     // tier `possible` — a proved/probable summary additionally requires a prior
     // exhaustive declaration, which is a different invariant than the one under
     // test and would mask it.
-    const { id: _id, ...summaryEntry } = { ...summary(), tier: "possible" };
+    // `possible` reached no conclusive answer, so it owes a real shortfall —
+    // the helper's `none` belongs to its default `proved` tier.
+    const { id: _id, ...summaryEntry } = {
+      ...summary(),
+      tier: "possible",
+      shortfall: "gap",
+    };
     const r = await researchAppend({
       projectPath: dir,
       ops: [
@@ -4373,7 +4539,7 @@ describe("research_append (composite persist + enforcement)", () => {
             record_id: "1850-census-schuylkill",
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
             log_entry_id: "log_001",
           },
         },
@@ -4473,7 +4639,7 @@ describe("research_append (composite persist + enforcement)", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
             log_entry_id: "log_001",
           },
         },
@@ -5902,7 +6068,7 @@ describe("research_append — negative evidence role invariant", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
 
-  it("rejects evidence_type: negative with a non-absent record_role", async () => {
+  it("rejects record_basis: absent with a non-absent record_role", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -5913,7 +6079,7 @@ describe("research_append — negative evidence role invariant", () => {
           entry: {
             ...noId(validAssertion("x", "src_001")),
             record_role: "father_of_deceased",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -5923,7 +6089,7 @@ describe("research_append — negative evidence role invariant", () => {
     expect(r.errors[0]).toMatch(/negative evidence always uses the literal record_role "absent"/);
   });
 
-  it("rejects record_role: absent paired with a non-negative evidence_type", async () => {
+  it("rejects record_role: absent paired with a non-negative record_basis", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -5934,17 +6100,17 @@ describe("research_append — negative evidence role invariant", () => {
           entry: {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
-            evidence_type: "direct",
+            record_basis: "stated",
           },
         },
       ],
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+    expect(r.errors[0]).toMatch(/record_role "absent" \(the PERSON was not in the record\) is reserved for/);
   });
 
-  it("accepts evidence_type: negative paired with record_role: absent", async () => {
+  it("accepts record_basis: absent paired with record_role: absent", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -5956,7 +6122,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -5976,7 +6142,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -5985,18 +6151,18 @@ describe("research_append — negative evidence role invariant", () => {
     if (!created.ok) return;
     const entryId = (created as any).results[0].entryId as string;
 
-    // Flips evidence_type back to direct without also fixing record_role —
+    // Flips record_basis back to direct without also fixing record_role —
     // the merged result violates the invariant even though this one update
     // only names one field.
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "assertions", op: "update", entryId, fields: { evidence_type: "direct" } },
+        { section: "assertions", op: "update", entryId, fields: { record_basis: "stated" } },
       ],
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+    expect(r.errors[0]).toMatch(/record_role "absent" \(the PERSON was not in the record\) is reserved for/);
   });
 
   it("the role message names the predeceased case and the two-field fix", async () => {
@@ -6016,7 +6182,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "spouse_1",
             informant_proximity: "researcher",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6032,7 +6198,7 @@ describe("research_append — negative evidence role invariant", () => {
   });
 
   it("no message prescribes a fix another arm refuses", async () => {
-    // Regression guard. The first proximity message said "it is evidence_type
+    // Regression guard. The first proximity message said "it is record_basis
     // \"direct\", not \"negative\" — change that rather than the proximity",
     // and following that instruction on an absent-role assertion was refused
     // by the converse role arm. A message that buys the wrong relabel
@@ -6042,7 +6208,7 @@ describe("research_append — negative evidence role invariant", () => {
       ...noId(validAssertion("x", "src_001")),
       record_role: "absent",
       informant_proximity: "official_duty",
-      evidence_type: "negative",
+      record_basis: "absent",
     };
     const first = await researchAppend({
       projectPath: dir,
@@ -6061,14 +6227,14 @@ describe("research_append — negative evidence role invariant", () => {
     });
     expect(prescribed.ok).toBe(true);
 
-    // And it must not tell the caller to flip evidence_type on its own, which
+    // And it must not tell the caller to flip record_basis on its own, which
     // the converse role arm refuses.
     expect(first.errors[0]).not.toMatch(/change that rather than the proximity/);
     const evidenceTypeOnly = await researchAppend({
       projectPath: dir,
       ops: [{
         section: "assertions", op: "append",
-        entry: { ...violating, evidence_type: "direct" },
+        entry: { ...violating, record_basis: "stated" },
       }],
     });
     expect(evidenceTypeOnly.ok).toBe(false);
@@ -6081,7 +6247,7 @@ describe("research_append — negative evidence role invariant", () => {
   // validator.ts refuses the same append through validateIntroduced, so a bare
   // `ok === false` passes with this whole clause reverted and proves nothing.
 
-  it("rejects evidence_type: negative with a non-researcher informant_proximity", async () => {
+  it("rejects record_basis: absent with a non-researcher informant_proximity", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -6093,7 +6259,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "self",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6106,7 +6272,7 @@ describe("research_append — negative evidence role invariant", () => {
     // evidence is the researcher's own conclusion", then again on "no record
     // informant reported an absence" after the validator message was reworded
     // to include it. Check both messages before changing this regex.
-    expect(r.errors[0]).toMatch(/changing evidence_type alone is refused/);
+    expect(r.errors[0]).toMatch(/changing record_basis alone is refused/);
   });
 
   it("names the absence test as the discriminator, not just the field to change", async () => {
@@ -6129,7 +6295,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
             informant_proximity: "self",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6150,7 +6316,7 @@ describe("research_append — negative evidence role invariant", () => {
     const research = baseResearch();
     research.assertions = [
       { ...validAssertion("a_001", "src_001"), record_role: "absent",
-        informant_proximity: "self", evidence_type: "negative" },
+        informant_proximity: "self", record_basis: "absent" },
     ] as any;
     await writeProject(research);
     const r = await researchAppend({
@@ -6161,7 +6327,7 @@ describe("research_append — negative evidence role invariant", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/changing evidence_type alone is refused/);
+    expect(r.errors[0]).toMatch(/changing record_basis alone is refused/);
   });
 
   it("accepts the update once the same call also fixes the proximity (self-healing)", async () => {
@@ -6170,7 +6336,7 @@ describe("research_append — negative evidence role invariant", () => {
     const research = baseResearch();
     research.assertions = [
       { ...validAssertion("a_001", "src_001"), record_role: "absent",
-        informant_proximity: "self", evidence_type: "negative" },
+        informant_proximity: "self", record_basis: "absent" },
     ] as any;
     await writeProject(research);
     const r = await researchAppend({
@@ -6196,7 +6362,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "deceased",
             informant_proximity: "official_duty",
-            evidence_type: "direct",
+            record_basis: "stated",
           },
         },
       ],
@@ -6219,7 +6385,7 @@ describe("research_append — negative evidence role invariant", () => {
             ...noId(validAssertion("x", "src_001")),
             record_role: "deceased",
             informant_proximity: "family_not_present",
-            evidence_type: "negative",
+            record_basis: "absent",
           },
         },
       ],
@@ -6230,7 +6396,7 @@ describe("research_append — negative evidence role invariant", () => {
     // because each one spells out the conforming shape — so matching it counts
     // two and proves nothing about which arms fired.
     expect(r.errors.filter((e) => /always uses the literal record_role/.test(e))).toHaveLength(1);
-    expect(r.errors.filter((e) => /changing evidence_type alone is refused/.test(e))).toHaveLength(1);
+    expect(r.errors.filter((e) => /changing record_basis alone is refused/.test(e))).toHaveLength(1);
   });
 
   // ── The field-ABSENT shape. Both arms decide it deliberately (no presence
@@ -6243,7 +6409,7 @@ describe("research_append — negative evidence role invariant", () => {
     const entry: Record<string, unknown> = {
       ...noId(validAssertion("x", "src_001")),
       informant_proximity: "researcher",
-      evidence_type: "negative",
+      record_basis: "absent",
     };
     delete entry.record_role;
     const r = await researchAppend({
@@ -6264,7 +6430,7 @@ describe("research_append — negative evidence role invariant", () => {
     const entry: Record<string, unknown> = {
       ...noId(validAssertion("x", "src_001")),
       record_role: "absent",
-      evidence_type: "negative",
+      record_basis: "absent",
     };
     delete entry.informant_proximity;
     const r = await researchAppend({
@@ -6273,10 +6439,10 @@ describe("research_append — negative evidence role invariant", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.some((e) => /changing evidence_type alone is refused/.test(e))).toBe(true);
+    expect(r.errors.some((e) => /changing record_basis alone is refused/.test(e))).toBe(true);
   });
 
-  it("does not fire for non-assertion sections (no evidence_type field)", async () => {
+  it("does not fire for non-assertion sections (no record_basis field)", async () => {
     await writeProject();
     const r = await researchAppend({
       projectPath: dir,
@@ -6896,10 +7062,10 @@ describe("supported evidence floor (#2086)", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2), "utf-8");
   }
 
-  /** An assertion with an explicit evidence_type/source_id, everything else valid. */
-  const ev = (id: string, evidenceType: string, sourceId = "src_001") => ({
+  /** An assertion with an explicit record_basis/source_id, everything else valid. */
+  const ev = (id: string, recordBasis: string, sourceId = "src_001") => ({
     ...validAssertion(id, sourceId),
-    evidence_type: evidenceType,
+    record_basis: recordBasis,
   });
 
   const hyp = (over: Record<string, unknown> = {}) => ({
@@ -6913,7 +7079,7 @@ describe("supported evidence floor (#2086)", () => {
   it("rejects promoting a hypothesis to supported on a single indirect assertion", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "indirect", "src_001")];
+    research.assertions = [ev("a_001", "inferred", "src_001")];
     await writeProject(research);
 
     const { id: _omit, ...entry } = hyp({
@@ -6929,15 +7095,15 @@ describe("supported evidence floor (#2086)", () => {
 
     expect(r.ok).toBe(false);
     const joined = failure(r).errors.join("\n");
-    expect(joined).toMatch(/no direct supporting assertion/);
-    expect(joined).toMatch(/only 1 distinct indirect source/);
-    expect(joined).toMatch(/needs >=1 direct or >=2 distinct indirect sources/);
+    expect(joined).toMatch(/no stated supporting assertion/);
+    expect(joined).toMatch(/only 1 distinct inferred source/);
+    expect(joined).toMatch(/needs >=1 record_basis "stated" or >=2 distinct sources at record_basis "inferred"/);
   });
 
   it("rejects an update to supported when two indirect assertions share one source", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "indirect", "src_001"), ev("a_002", "indirect", "src_001")];
+    research.assertions = [ev("a_001", "inferred", "src_001"), ev("a_002", "inferred", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001", "a_002"] })];
     await writeProject(research);
 
@@ -6953,13 +7119,13 @@ describe("supported evidence floor (#2086)", () => {
     const joined = failure(r).errors.join("\n");
     // Two assertions, one source ⇒ 1 distinct indirect source, not 2.
     expect(joined).toMatch(/hypotheses\[h_001\]/);
-    expect(joined).toMatch(/only 1 distinct indirect source/);
+    expect(joined).toMatch(/only 1 distinct inferred source/);
   });
 
   it("rejects an update to supported while a conflict naming its assertions is unresolved", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001"), ev("a_002", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001"] })];
     research.conflicts = [
       { ...validConflict(), id: "c_001", competing_assertion_ids: ["a_001", "a_002"], status: "unresolved" },
@@ -6981,7 +7147,7 @@ describe("supported evidence floor (#2086)", () => {
     // The ruling requires the refusal to say what to do, not only what is wrong.
     expect(joined).toMatch(/settle each as "resolved".*or "moot"/s);
     // Half (a) short-circuits: the evidence floor is moot once this already fails.
-    expect(joined).not.toMatch(/no direct supporting assertion/);
+    expect(joined).not.toMatch(/no stated supporting assertion/);
   });
 
   // ── Accept: the direction a replay cannot test ──
@@ -6992,10 +7158,10 @@ describe("supported evidence floor (#2086)", () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
     research.assertions = [
-      ev("a_004", "indirect", "src_001"),
-      ev("a_013", "direct", "src_001"),
-      ev("a_002", "indirect", "src_001"),
-      ev("a_009", "indirect", "src_001"),
+      ev("a_004", "inferred", "src_001"),
+      ev("a_013", "stated", "src_001"),
+      ev("a_002", "inferred", "src_001"),
+      ev("a_009", "inferred", "src_001"),
     ];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_004", "a_013"] })];
     research.conflicts = [
@@ -7026,7 +7192,7 @@ describe("supported evidence floor (#2086)", () => {
     // the floor, never one that clears it and was left active.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001"] })];
     await writeProject(research);
 
@@ -7045,7 +7211,7 @@ describe("supported evidence floor (#2086)", () => {
   it("allows supported on a single direct supporting assertion", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     await writeProject(research);
 
     const { id: _omit, ...entry } = hyp({
@@ -7068,7 +7234,7 @@ describe("supported evidence floor (#2086)", () => {
     // in an earlier call — legitimately or not — stays editable.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "indirect", "src_001")];
+    research.assertions = [ev("a_001", "inferred", "src_001")];
     research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
     await writeProject(research);
 
@@ -7092,11 +7258,11 @@ describe("supported evidence floor (#2086)", () => {
     //
     // Nothing cross-references `supporting_assertion_ids` against `assertions`,
     // so a dangling id reaches the floor. Without the guard this call throws
-    // `TypeError: Cannot read properties of undefined (reading 'evidence_type')`
+    // `TypeError: Cannot read properties of undefined (reading 'record_basis')`
     // instead of returning a refusal.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_999", "a_001"] })];
     await writeProject(research);
 
@@ -7120,7 +7286,7 @@ describe("supported evidence floor (#2086)", () => {
     // assumed; the PR body records that the card's wording is wrong here.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: [] })];
     await writeProject(research);
 
@@ -7133,7 +7299,7 @@ describe("supported evidence floor (#2086)", () => {
     } as never);
 
     expect(r.ok).toBe(false);
-    expect(failure(r).errors.join("\n")).toMatch(/only 0 distinct indirect source/);
+    expect(failure(r).errors.join("\n")).toMatch(/only 0 distinct inferred source/);
   });
 
   it("refuses resolving a conflict and promoting on it in the same batch", async () => {
@@ -7147,7 +7313,7 @@ describe("supported evidence floor (#2086)", () => {
     // The satisfying shape is the same two ops in two calls; the refusal says so.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_133", "direct", "src_001"), ev("a_135", "direct", "src_001")];
+    research.assertions = [ev("a_133", "stated", "src_001"), ev("a_135", "stated", "src_001")];
     research.hypotheses = [hyp({ supporting_assertion_ids: ["a_133", "a_135"] })];
     research.conflicts = [
       {
@@ -7207,7 +7373,7 @@ describe("supported evidence floor (#2086)", () => {
   it("refuses narrowing supporting_assertion_ids below the floor without naming status", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001"), validSource("src_003")];
-    research.assertions = [ev("a_001", "indirect", "src_001"), ev("a_002", "indirect", "src_003")];
+    research.assertions = [ev("a_001", "inferred", "src_001"), ev("a_002", "inferred", "src_003")];
     // Stands legitimately at `supported`: two indirect, two distinct sources.
     research.hypotheses = [
       hyp({ status: "supported", supporting_assertion_ids: ["a_001", "a_002"] }),
@@ -7224,13 +7390,13 @@ describe("supported evidence floor (#2086)", () => {
     } as never);
 
     expect(r.ok).toBe(false);
-    expect(failure(r).errors.join("\n")).toMatch(/only 1 distinct indirect source/);
+    expect(failure(r).errors.join("\n")).toMatch(/only 1 distinct inferred source/);
   });
 
   it("refuses adding a supporting assertion an unresolved conflict names, without naming status", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001"), ev("a_002", "stated", "src_001")];
     research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
     research.conflicts = [
       {
@@ -7261,7 +7427,7 @@ describe("supported evidence floor (#2086)", () => {
     // it reached no precondition under the narrow gate.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
-    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.assertions = [ev("a_001", "stated", "src_001"), ev("a_002", "stated", "src_001")];
     research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
     research.conflicts = [
       {
@@ -7291,9 +7457,9 @@ describe("supported evidence floor (#2086)", () => {
     const research = baseResearch();
     research.sources = [validSource("src_001"), validSource("src_003")];
     research.assertions = [
-      ev("a_001", "indirect", "src_001"),
-      ev("a_002", "indirect", "src_003"),
-      ev("a_003", "indirect", "src_003"),
+      ev("a_001", "inferred", "src_001"),
+      ev("a_002", "inferred", "src_003"),
+      ev("a_003", "inferred", "src_003"),
     ];
     research.hypotheses = [
       hyp({ status: "supported", supporting_assertion_ids: ["a_001", "a_002"] }),
@@ -7341,7 +7507,7 @@ describe("supported evidence floor (#2086)", () => {
             information_quality: "primary",
             informant: "self",
             informant_proximity: "self",
-            evidence_type: "direct",
+            record_basis: "stated",
             extracted_for_question_ids: [],
           },
         },
@@ -7356,7 +7522,7 @@ describe("supported evidence floor (#2086)", () => {
 
     expect(r.ok).toBe(false);
     const joined = failure(r).errors.join("\n");
-    expect(joined).toMatch(/no direct supporting assertion/);
+    expect(joined).toMatch(/no stated supporting assertion/);
     // Satisfiability: without this the agent is told there is no direct
     // assertion one op after appending one, and retries the same batch.
     expect(joined).toMatch(/appended in THIS call do not count/);
@@ -7385,7 +7551,7 @@ describe("supported evidence floor (#2086)", () => {
         information_quality: "primary",
         informant: "self",
         informant_proximity: "self",
-        evidence_type: "direct",
+        record_basis: "stated",
         extracted_for_question_ids: [],
       },
     } as never);

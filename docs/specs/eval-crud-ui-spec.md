@@ -232,6 +232,20 @@ Next.js API routes for:
 - Run log listing and filtering
 - Annotation and adjudication creation
 
+### Testing
+
+Three testing layers, each covering a different failure class:
+
+1. **Vitest (unit, `npm test`)** runs in Node with no DOM. Covers data-layer logic, API route behavior, snapshot normalization, and schema validation. Cannot render a component or detect layout issues.
+
+2. **Playwright (e2e, `npm run test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
+
+3. **Manual browser check** remains necessary for interaction flows (annotation save round-trip, keyboard shortcuts, drag-to-resize) that are not yet automated.
+
+**Why Playwright geometry assertions, not `toBeVisible()`.** An element pushed outside an `overflow: hidden` ancestor (the dimension `Card`) is still "visible" to Playwright and its text is still reachable by locators. Measured 2026-09-14: `isVisible()` returned `true` on a score picker whose bounding box extended 379px past the card's right edge. Only a `boundingBox()` comparison (picker right edge vs. card right edge) separates the clipped state from the correct state.
+
+**Why not jsdom/testing-library.** jsdom implements no layout engine: `getBoundingClientRect()` returns all fields as `0` and `offsetWidth` is `0`. A `.tsx` render-test suite cannot detect the overflow bug or any regression of it. A component render harness may be worth having for other reasons; it must not be what closes this gap.
+
 ---
 
 ## 8. Phased Build

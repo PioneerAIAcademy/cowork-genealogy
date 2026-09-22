@@ -260,7 +260,7 @@
       "informant": "Death registration — decedent named by the registrar.",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -283,7 +283,7 @@
       "informant": "1880 census — age 5 reported by a household member.",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Census ages are routinely off by a year or two.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -307,7 +307,7 @@
       "informant": "Death registration informant — the decedent's daughter, reporting her mother's parentage seventy-one years after the birth she is describing.",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "A survivor's recollection, not a witness to the birth.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -331,7 +331,7 @@
       "informant": "Death registration informant — the decedent's daughter, giving the maternal grandmother's maiden surname.",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Maiden surnames reported at a death are a known weak point.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_003",
       "extracted_for_question_ids": [
         "q_001"
@@ -355,7 +355,7 @@
       "informant": "1900 census — relationship-to-head column, reported by a household member.",
       "informant_proximity": "household_member",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": [
         "q_001"

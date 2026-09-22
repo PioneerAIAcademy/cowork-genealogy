@@ -529,12 +529,12 @@ describe("samePerson — project-relative arm", () => {
         {
           id: "a_005", record_id: RECORD, record_role: "principal",
           fact_type: "name", value: "Thomas Flynn", record_persona_id: null,
-          evidence_type: "direct", log_entry_id: "log_1",
+          record_basis: "stated", log_entry_id: "log_1",
         },
         {
           id: "a_006", record_id: RECORD, record_role: "bride",
           fact_type: "name", value: "Mary Doyle", record_persona_id: null,
-          evidence_type: "direct", log_entry_id: "log_1",
+          record_basis: "stated", log_entry_id: "log_1",
         },
       ],
       ...over,
@@ -722,7 +722,7 @@ describe("samePerson — project-relative arm", () => {
       r.assertions.push({
         id: "a_007", record_id: RECORD, record_role: "principal",
         fact_type: "name", value: "Somebody Else", record_persona_id: "p_other",
-        evidence_type: "direct", log_entry_id: "log_1",
+        record_basis: "stated", log_entry_id: "log_1",
       });
       await project(r);
       okScore();
@@ -753,7 +753,7 @@ describe("samePerson — project-relative arm", () => {
       r.assertions.push({
         id: "a_007", record_id: RECORD, record_role: "principal",
         fact_type: "name", value: "Somebody Else", record_persona_id: null,
-        evidence_type: "direct", log_entry_id: "log_1",
+        record_basis: "stated", log_entry_id: "log_1",
       });
       await project(r);
       await expect(
@@ -770,7 +770,7 @@ describe("samePerson — project-relative arm", () => {
       r.assertions.push({
         id: "a_007", record_id: RECORD, record_role: "principal",
         fact_type: "name", value: "Thomas Flinn", record_persona_id: "p_1",
-        evidence_type: "direct", log_entry_id: "log_1",
+        record_basis: "stated", log_entry_id: "log_1",
       });
       await project(r);
       okScore();

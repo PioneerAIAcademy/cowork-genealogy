@@ -1423,13 +1423,13 @@ def find_citation_nulling_in_tree_sources(
     ``proof-conclusion/SKILL.md`` — that body moved to the delegated agent when
     the skill became a skill-agent pair — but
     ``packages/engine/plugin/agents/proof-conclusion.md`` step 3, "Source entries
-    (upload-time citation + conclusion-gated upload)":
+    (upload-time citation)":
 
         copy the finalized ``research.json`` ``sources[].citation`` string into
-        the **``citation``** field … **Upload is conclusion-gated:** the working
-        tree carries *all* sourced evidence facts (materialized at link time by
-        person-evidence), but **only ``primary``/proof-backed facts upload to
-        FamilySearch** — un-concluded evidence stays out.
+        the **``citation``** field … **What the tree surfaces about upload
+        readiness:** the working tree carries *all* sourced evidence facts
+        (materialized at link time by person-evidence); marking a fact
+        ``primary`` is what records that a conclusion stands behind it.
 
     THE GATE IS THAT SENTENCE, both clauses. A tree source is held to a citation
     only when (1) the run wrote a ``proof_summaries`` entry, and (2) the source is
