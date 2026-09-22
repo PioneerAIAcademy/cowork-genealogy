@@ -59,7 +59,7 @@ def stage_openrouter_key(config_path: Path = FS_CONFIG_PATH) -> None:
             parsed = json.loads(config_path.read_text(encoding="utf-8"))
             if isinstance(parsed, dict):
                 config = parsed
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             config = {}
     if config.get("openRouterApiKey") == key:
         return
