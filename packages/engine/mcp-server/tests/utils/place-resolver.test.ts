@@ -17,6 +17,7 @@ import {
   resolveStandardPlace,
   standardPlaceToRepId,
   standardPlaceToPlaceId,
+  resolveStandardPlaceToPlaceId,
   repIdToStandardPlace,
   standardPlaceToCoords,
   placeIdToRepIds,
@@ -217,6 +218,79 @@ describe("standardPlaceToPlaceId", () => {
       entry({ placeRepId: "2", placeId: "P2", fullName: "Berlin, Germany", score: 0.9 }),
     ]);
     expect(await standardPlaceToPlaceId("Berlin, Germany")).toBeNull();
+  });
+});
+
+describe("resolveStandardPlaceToPlaceId", () => {
+  it("resolves to a placeId when exact matches agree", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P", fullName: "Berlin, Germany", score: 0.9 }),
+    ]);
+    expect(await resolveStandardPlaceToPlaceId("Berlin, Germany")).toEqual({
+      kind: "resolved",
+      placeId: "P",
+    });
+  });
+
+  // The whole point of the discriminated form: the wrapper collapses this and
+  // the case below to the same `null`.
+  it("reports ambiguous with one candidate per distinct placeId", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    expect(await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States")).toEqual({
+      kind: "ambiguous",
+      candidates: [
+        "Franklin, Virginia, United States (County)",
+        "Franklin, Virginia, United States (Independent City)",
+      ],
+    });
+  });
+
+  it("reports unresolved when nothing carries a placeId", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", fullName: "Nowhere", score: 0.9 }),
+    ]);
+    expect(await resolveStandardPlaceToPlaceId("Nowhere")).toEqual({ kind: "unresolved" });
+  });
+
+  // One line per distinct placeId, not per rep: two reps of one spot are not a
+  // choice the caller has to make.
+  it("collapses several reps of one placeId to a single candidate", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Berlin, Germany", type: "City", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P1", fullName: "Berlin, Germany", type: "City", score: 0.8 }),
+      entry({ placeRepId: "3", placeId: "P2", fullName: "Berlin, Germany", type: "State", score: 0.7 }),
+    ]);
+    const r = await resolveStandardPlaceToPlaceId("Berlin, Germany");
+    expect(r).toEqual({
+      kind: "ambiguous",
+      candidates: ["Berlin, Germany (City)", "Berlin, Germany (State)"],
+    });
+  });
+
+  it("caps the candidate list at 8", async () => {
+    mockSearchPlace.mockResolvedValue(
+      Array.from({ length: 12 }, (_unused, i) =>
+        entry({ placeRepId: `r${i}`, placeId: `P${i}`, fullName: "Springfield", type: "City", score: 0.9 })
+      )
+    );
+    const r = await resolveStandardPlaceToPlaceId("Springfield");
+    expect(r.kind).toBe("ambiguous");
+    expect(r.kind === "ambiguous" && r.candidates).toHaveLength(8);
+  });
+
+  // No exact fullName match, so the fallback pool (everything with a placeId)
+  // is what gets described -- and a blank `type` must not leave a dangling
+  // " ()" on the end of the line.
+  it("omits the type qualifier when the entry has none", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Alpha, X", type: "", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Beta, Y", type: "", score: 0.9 }),
+    ]);
+    const r = await resolveStandardPlaceToPlaceId("Gamma");
+    expect(r).toEqual({ kind: "ambiguous", candidates: ["Alpha, X", "Beta, Y"] });
   });
 });
 
