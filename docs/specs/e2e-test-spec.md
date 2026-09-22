@@ -260,7 +260,17 @@ stripped starting tree, then reviewed and pruned by the author.
 
 Most findings should be `required: true` for v1. The `false` lever
 exists for cases where the author is unsure whether a finding is
-truly part of the answer.
+truly part of the answer — and, second, for an `avoid` finding whose
+guard is *structurally dead*: one whose name tokens unavoidably collide
+with a person the starting tree legitimately contains, which
+`apply_avoid_guard` force-fails on every run including a perfect one
+(§3.4.1). At `required: true` that makes `pass` unreachable and the
+fixture ungradable. A fixture using the lever this way must say so in
+its README and name what the dead guard costs: the `recall_total`
+ceiling, a permanent `avoid_guard.forced_false` entry in every run log,
+and one structural judge-vs-human disagreement per annotated run
+against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
+`eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
 
 #### 3.4.1 Negative findings (`polarity: "avoid"`)
 
@@ -298,9 +308,19 @@ linter's own matcher, given+surname token overlap plus fact type for
 recall fractions are recomputed, and the verdict is recomputed
 **downgrade-only**. What was forced is recorded under the result's
 `judge_output.avoid_guard.forced_false` and in the finding's `notes`.
-The judge still grades the subjective half (is the claim present "only
-as an explicitly rejected hypothesis"?); the guard only prevents a
-model grader from excusing the objective half. Authoring gates treat
+The guard is **unconditional on presence**: it overrides the
+rejected-hypothesis allowance rather than preserving it. A target that
+appears in the agent's final tree is forced to `matched: "false"`
+however the agent annotated it — including as an explicitly rejected
+candidate, which is the outcome the allowance exists to permit.
+Measured against the shipped guard with every judge label set to `true`:
+a clean final tree scores the avoid finding `true`, and the same tree
+plus the avoided person written in as a rejected candidate scores it
+`false`. So an `avoid` finding must not promise a pass route through the
+tree. Word its pass condition to put a rejected candidate in the
+research log (`research.json`) and keep it out of `tree.gedcomx.json`;
+a finding whose text offers the tree route describes a pass that cannot
+be taken. Authoring gates treat
 `avoid` findings accordingly: the presence mirror skips them (the
 claim was never in the tree), while the stripping linter still warns
 when an avoided claim is already present in the *starting* tree — a
@@ -311,6 +331,36 @@ exactly like a recover finding (`matched: "true"` = correctly
 avoided). Pair a required `avoid` guard with a required positive
 finding that the agent *documented* the negative conclusion, so a run
 that does nothing at all does not pass by default.
+
+**Word that paired finding so an absence cannot satisfy it.** Every
+`avoid` finding passes by non-assertion, so on a fixture whose findings
+are all negative the paired positive finding is the only thing standing
+between a zero-research run and `pass`. A bar phrased as "the hint is
+reported as unsupported" is met literally by a run that searched
+nothing and wrote "I could not confirm this". Require instead that the
+conclusion **rest on a named conflicting record** — the disproving
+record of §3.6.1 — and say in the finding that a conclusion resting
+only on failure to confirm does not satisfy it.
+
+**Open doctrine call: guards that can never go green (as of 2026-09-18).**
+Three committed fixtures — `antonio-lucas-spouse`,
+`thomas-seaver-other-wife` and `heinrich-zinsmeister-death` — carry a
+`required: true` avoid finding whose name tokens collide with a
+non-exempt person in their own starting tree, so `apply_avoid_guard`
+force-fails it on every run and their ceiling is `partial`, a perfect run
+included. Four remedies have been named and none adopted: relax the guard
+so it matches on more than name tokens, drop `required` on the colliding
+findings, re-author those findings so their target names no longer
+collide, or exclude guard-forced findings from `calibrate_judge`'s
+denominator. Which one to take is the lead's call, not the fixture
+author's. Until it is made the set is pinned by
+`test_no_new_fixture_becomes_unpassable_via_the_avoid_guard`
+(`eval/harness/tests/unit/test_e2e_fixture_corpus.py`), which fails in
+**both** directions — a fourth fixture entering the state fails it, and
+fixing one of the three fails it too — so the defect can neither spread
+nor be silently repaired while the call is open. The mirror-image defect —
+a guard that can never go *red* — is a different thing and is tracked
+separately.
 
 #### 3.4.2 Relationship findings: `matched` is derived, not trusted
 
@@ -437,6 +487,18 @@ stripped:
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
   state the fixture is in.
+- **The adjudicator may use `packages/engine/mcp-server/dev/try-*.ts`
+  against live FamilySearch to *retrieve* records** — collections search,
+  record search, record read, image read. **The identity judgement stays
+  human:** no tool output decides whether a hint record concerns the tree
+  person. A tool path for this retrieval does exist and is permitted; any
+  statement that there is "no tool shortcut" describes the judgement, not
+  the retrieval. The alternative this beat was hand-only retrieval, meant
+  to keep a fixture's ground truth independent of the tool path the
+  benchmark measures; the required ark plus a human identity call already
+  carry that load, at a fraction of the per-card cost. Record in the
+  fixture README that retrieval was tool-assisted, so the next reader can
+  weigh it.
 
 #### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
 
@@ -677,7 +739,7 @@ the `max_cost_usd` note in §6 step 5.
    call or runs away across turns (0 pass, ~20 min per test). The pin's known
    cost is ~0.24/3 mean judge score, concentrated in GPS classification nuance —
    the existing "blank columns produce no assertions" rule, and
-   `informant_proximity` / `evidence_type` calls; recovering that is issue #1131.
+   `informant_proximity` / `record_basis` calls; recovering that is issue #1131.
    **Anyone running the reasoning-effort A/B (#1136) must account for this**: a
    sweep that lowers effort changes the conditions that forced this pin, and a
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.

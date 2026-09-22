@@ -172,11 +172,16 @@ was matched to them.
 2. **Read the fixture's README**, "Notes for reviewers" section, for what the
    original author already found (the tree's existing sources, the
    match-strength argument for and against).
-3. **Open the hint record** and look, by hand, for corroborating or
-   contradicting evidence — the same way you would for any genealogical proof.
+3. **Open the hint record** and look for corroborating or contradicting
+   evidence — the same way you would for any genealogical proof.
 
-This is the human GPS work the benchmark exists to measure; there's no tool
-shortcut for it. **Ask a genealogist for a second opinion** if the call is
+**Retrieval may be tool-assisted; the identity judgement may not.** You can use
+the `packages/engine/mcp-server/dev/try-*.ts` scripts against live FamilySearch
+(`make e2e-login` first, or `eval\Login.bat` on Windows) for collections
+search, record search, record read and image read. What no tool decides is
+whether the hint record concerns the tree person — that is the human GPS work
+the benchmark exists to measure. Say in the README which you used. Spec §3.6
+carries the decision. **Ask a genealogist for a second opinion** if the call is
 borderline — don't guess alone.
 
 **Write the outcome with the skill — don't hand-edit the fixture files:**

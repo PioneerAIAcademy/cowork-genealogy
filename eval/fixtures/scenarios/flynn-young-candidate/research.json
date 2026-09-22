@@ -147,7 +147,7 @@
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -166,7 +166,7 @@
       "informant": "Unknown household member (likely Thomas Flynn)",
       "informant_proximity": "household_member",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -185,7 +185,7 @@
       "informant": "Inferred from household structure",
       "informant_proximity": "unknown",
       "informant_bias_notes": "1850 census does not state relationships; inferred from household position and shared surname.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -204,7 +204,7 @@
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -223,7 +223,7 @@
       "informant": "Unknown household member (likely Thomas Flynn himself)",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Census ages are frequently rounded or misreported. The age of ~20 is the enumerator's recording, which may be approximate.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -242,7 +242,7 @@
       "informant": "Parish priest recording baptism at time of event",
       "informant_proximity": "witness",
       "informant_bias_notes": "Original parish register entry created at time of baptism. Primary information quality — the priest witnessed the baptism and recorded it contemporaneously.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -260,7 +260,7 @@
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }
