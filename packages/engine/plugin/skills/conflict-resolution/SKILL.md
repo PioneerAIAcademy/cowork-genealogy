@@ -75,7 +75,7 @@ fact conflicts which require at least two).
 ### 1. Identify conflicts
 
 Read `research.json` assertions, person_evidence, and timelines.
-**Trust the existing assertion classifications** (evidence_type,
+**Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
 NOT invoke the record-extraction or check-warnings skills from here.
 If a classification looks wrong and would change the weighing, note it

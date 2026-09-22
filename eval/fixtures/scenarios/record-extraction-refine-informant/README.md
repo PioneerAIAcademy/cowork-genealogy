@@ -35,9 +35,9 @@ reclassification is `informant_proximity: "self"` → `"unknown"` and
 existing corpus's own precedent for a census fact whose actual informant
 can no longer be assumed (`mid-research-flynn`'s `a_001`: "unknown
 informant... most likely a household member, possibly a neighbor").
-`evidence_type` does **not** change: the birthplace is still *stated*
+`record_basis` does **not** change: the birthplace is still *stated*
 content on the census (someone told the enumerator), only the identity
-and reliability of who reported it is now in doubt — evidence_type is
+and reliability of who reported it is now in doubt — record_basis is
 stated-vs-inferred, not a proxy for informant confidence.
 
 `a_001` (the name assertion) is a deliberate **distractor**: it shares
@@ -52,7 +52,7 @@ This is an invented scenario (no real FamilySearch identifiers), built
 to match the corpus's existing informant-doctrine conventions rather
 than carved from an observed failure — there is no live run to check it
 against. Confirm the doctrine call (self → unknown, primary →
-indeterminate, evidence_type unchanged) reads as correct GPS practice
+indeterminate, record_basis unchanged) reads as correct GPS practice
 before relying on it as the refinement's expected outcome.
 
 ## Used by
