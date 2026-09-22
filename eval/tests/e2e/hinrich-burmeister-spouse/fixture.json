@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 13, hint-samples.csv row 403, flag adds_spouse, confidence 3). Draft transcribed from a 1687 Mecklenburg Lutheran baptismal entry; unverified. The hinted 'spouse' is most likely the first wife under her married surname."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 13, hint-samples.csv row 403, flag adds_spouse, confidence 3). Resolved 2026-09-17 under issue #2306: FALSE MATCH, outcome 3. The hinted ark QPV4-RPBS is the father persona on a 29 Jul 1687 Schoenberg baptism whose mother is 'Elsch Burmeister'; that couple baptised another child on 16 Oct 1690 (QPV4-RS8D), 21 months after the subject's first wife Liesbeth Oldenburg died, so Elsch is a different woman married to a different Hinrich Burmeister. The subject's own 1683 son's baptism (QPVH-33NS) writes his wife as 'Liesebeth Burmeister', not 'Elsch'. No substitute answer is encoded: a 20 Jan 1691 baptism (QPV4-G7GT) is a live candidate for a genuine second son Hinrich but cannot be separated from a rival Hinrich-and-Anna couple on the index alone. f1's avoid finding is required:false because its name tokens unavoidably collide with P71D-DRJ and P9PK-53N under apply_avoid_guard; see README."
 }
