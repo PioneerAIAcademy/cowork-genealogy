@@ -341,10 +341,22 @@ def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     canned-response form — see harness/skill_stubs.py for which to pick and why
     (it turns on whether the CALLER reads the result, not on the callee).
 
-    Assert the hand-off with a `skills_invoked` validator; do not leave it to
-    the judge, which reads a transcript and can misread it.
+    Assert the hand-off with a `handoffs` validator; do not leave it to the
+    judge, which reads a transcript and can misread it.
     """
     return parse_stub_skills(spec.execution) or None
+
+
+def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | None:
+    """The `stub_skills` entries to deny when reached by an agent spawn.
+
+    Exactly the entries with no skill directory: a callee converted from a skill
+    to an agent (issue #2825), which the router now spawns rather than loads. A
+    name that is still a skill keeps its `Skill`-call stub only — the paired
+    agents in `route-shortcut-guard.json` rely on their spawn running.
+    """
+    stubbed = parse_stub_skills(spec.execution)
+    return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
 
 
 # Field names inside one `modelUsage` entry, as the CLI emits them.
@@ -480,6 +492,7 @@ async def _execute_single_run(
         model=model,
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
+        stub_agents=_stub_agents(spec, paths.skills_dir),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -879,6 +892,7 @@ async def _execute_skill_with_retry(
     model: str,
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
+    stub_agents: dict[str, str | None] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -967,6 +981,7 @@ async def _execute_skill_with_retry(
                         allowed_tools_override=skill_baseline,
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
+                        stub_agents=stub_agents,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.

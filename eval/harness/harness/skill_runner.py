@@ -333,6 +333,58 @@ def spawned_agents(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
     return out
 
 
+def handoffs(
+    skills_invoked: list[str], builtin_tool_calls: list[dict[str, Any]]
+) -> list[str]:
+    """Every hand-off the run made, `Skill` calls and agent spawns, in call order.
+
+    A validator asserting "the router handed off to X" has to accept X arriving
+    either way: under the 2026-09-22 ruling each skill becomes an agent, so the
+    correct hand-off to a converted callee is an `Agent` spawn and never appears
+    in `skills_invoked` (issue #2825).
+
+    One walk over `builtin_tool_calls`, which records `Skill` calls and spawns
+    alike in hook order, so the interleaving is real rather than reconstructed.
+    Spawns are main-thread only, as in `spawned_agents`; `Skill` calls are not
+    filtered by `agent_id`, matching how `skills_invoked` is collected. A caller
+    with no `Skill` record in `builtin_tool_calls` — a fixture that sets only
+    `skills_invoked` — gets `skills_invoked` followed by the spawns.
+    """
+    calls = builtin_tool_calls or []
+    if not any(call.get("tool") == "Skill" for call in calls):
+        return list(skills_invoked or []) + spawned_agents(calls)
+    out: list[str] = []
+    for call in calls:
+        tool = call.get("tool")
+        if tool == "Skill":
+            name, _ = read_skill_tool_input(call.get("args") or {})
+        elif tool in SPAWN_TOOL_NAMES and "agent_id" not in call:
+            name = (call.get("args") or {}).get("subagent_type")
+        else:
+            continue
+        if name:
+            out.append(str(name))
+    return out
+
+
+def spawn_stub_denial(
+    tool_name: str, input_data: dict[str, Any], stub_agents: dict[str, str | None]
+) -> dict[str, Any] | None:
+    """The stub denial for a main-thread spawn of a stubbed agent, else None.
+
+    The spawn-side twin of the `Skill`-call stub in `run_skill`'s hook: once a
+    stubbed callee is converted to an agent the router spawns it, and without
+    this the real agent runs inside the test (issue #2825). A spawn made inside
+    a subagent is never stubbed, matching `spawned_agents`.
+    """
+    if tool_name not in SPAWN_TOOL_NAMES or input_data.get("agent_id"):
+        return None
+    name = (input_data.get("tool_input") or {}).get("subagent_type")
+    if name not in stub_agents:
+        return None
+    return stub_denial(name, stub_agents[name])
+
+
 def spawn_prompts(
     builtin_tool_calls: list[dict[str, Any]], agent: str | None = None
 ) -> list[str]:
@@ -583,6 +635,7 @@ async def run_skill(
     allowed_tools_override: list[str] | None = None,  # IGNORED — see below
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
+    stub_agents: dict[str, str | None] | None = None,
     declared_tools: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -641,6 +694,10 @@ async def run_skill(
     # Maps skill name -> canned response (None = bare deny); see skill_stubs.py
     # for which form a given hand-off needs.
     _stub_skills = stub_skills or {}
+    # The same stub for a callee converted to an agent: a main-thread spawn of
+    # one of these names is denied and continued the same way (issue #2825).
+    # The orchestrator passes only stub entries with no skill directory.
+    _stub_agents = stub_agents or {}
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
     # Raw writes to a protected project file, denied by the hook below.
@@ -692,6 +749,8 @@ async def run_skill(
                 # handing back the canned response when the caller reads one.
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
+        elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
+            return denial
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read, extraction_append) on
         # the main thread UNLESS this skill declared it itself. Checked BEFORE
