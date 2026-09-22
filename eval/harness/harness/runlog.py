@@ -146,6 +146,12 @@ class SingleRun:
     # exists pre-ResultMessage) — this says why 0 there isn't "used no
     # tokens," rather than leaving it indistinguishable from a genuine zero.
     no_result_message: bool = False
+    # MCP calls the routing short-circuit discarded (the post-deny reaction
+    # turn's). Recorded but read by no gate here: the orchestrator's
+    # unmatched_tool_call comparison counts them, the uncovered_tool_call
+    # advisory deliberately does not. Present so a future run log can settle
+    # whether a reaction call ever executes at all (issue #2740).
+    suppressed_post_deny_calls: list[dict] = field(default_factory=list)
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -449,6 +455,11 @@ def assemble_test_entry(
             "output_tokens": r.output_tokens,
             "model_usage": r.model_usage,
             "no_result_message": r.no_result_message,
+            **(
+                {"suppressed_post_deny_calls": r.suppressed_post_deny_calls}
+                if r.suppressed_post_deny_calls
+                else {}
+            ),
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {

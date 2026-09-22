@@ -23,6 +23,11 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
+import {
+  recordImageReadCap,
+  sourceImageCapState,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
@@ -704,6 +709,391 @@ describe("research_append (Phase 1)", () => {
       const persisted = research.sources.find((s: any) => s.id === singleOk(r).entryId);
       expect(persisted.access_date, `${supplied} → ISO`).toBe(expected);
     }
+  });
+
+  describe("transcription_truncated is derived at the write boundary (#2457)", () => {
+    afterEach(() => __clearTruncatedSourceImagesForTests());
+    const imageSource = (over: Record<string, unknown>) => {
+      const { id: _omit, ...src } = validSource("x");
+      return { ...src, image_filename: "images/x.jpg", transcription: "first half of the page", ...over };
+    };
+
+    it("marks a source truncated when image_transcribe capped the cited image", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect(persisted.transcription_truncated).toBe(true);
+    });
+
+    it("leaves the field absent when no read of the cited image reached the write boundary (not established)", async () => {
+      await writeProject();
+      // No recordImageReadCap → the image is not in the add-only cap set, so its
+      // state is "not established" and the marker is left absent.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("is authoritative — strips an agent-asserted flag the tool did not record", async () => {
+      await writeProject();
+      // The image read was NOT capped, but the caller asserts it was. The field
+      // is derived from the tool's record, so the false assertion is dropped
+      // rather than persisted (the failure mode #2457 removes the agent from).
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription_truncated: true }),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("strips an agent-asserted flag even on a source with no image_filename to join", async () => {
+      await writeProject();
+      // No image_filename → nothing to join, but the field is still derived-only.
+      // Without stripping here the agent's guess persists verbatim, exactly where
+      // the join key that would override it is absent (#2457 review, blocker 4c).
+      const { id: _omit, ...src } = validSource("x");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: { ...src, transcription: "first half of the page", transcription_truncated: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("does not derive (and so does not self-reject) a capped image whose op carries no transcription text (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(r.ok).toBe(true); // pre-fix: false — true beside no transcription is rejected
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("marks the source on a two-op sequence — append {image_filename}, then a later update {transcription} that omits it (#2457 r10 [0])", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // Op 1: the source arrives with its image_filename but no transcription yet.
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      // Op 2 (a later call): the transcription arrives, WITHOUT re-sending image_filename —
+      // the shape research/SKILL.md encourages. The derivation must fall back to the
+      // persisted source's image_filename and mark it. Pre-fix: no marker, silently.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "Row 1: Anna … rtway down the pag" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("Row 1: Anna … rtway down the pag");
+      expect(after.transcription_truncated).toBe(true); // pre-fix: marker missing
+    });
+
+    it("permits an in-place transcription refinement of a persisted-true source; the marker survives and over-reports by design (#2457 rulings, C 2026-09-21)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect((await readResearch()).sources.find((s: any) => s.id === id).transcription_truncated).toBe(true);
+      // Ruling C removed the update guard: an in-place refinement (e.g. replacing the
+      // partial text with the fuller indexed-record reading) SUCCEEDS. The derivation
+      // only ever deletes the marker from the patch, so the merge keeps the persisted
+      // `true` — the badge over-reports the now-fuller text, which the ruling accepts
+      // as an unneeded badge (never a false "verified whole"). Nothing moves partial→whole.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "the complete page text now" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("the complete page text now"); // refinement took
+      expect(after.transcription_truncated).toBe(true); // marker survives (over-reports by design), never false
+    });
+
+    it("B1 regression: a narrower uncapped re-read does not flip a capped image to whole — append persists true (#2457 B1 ruling 2026-09-19)", async () => {
+      await writeProject();
+      // Praise's reproduction, at the derivation+store level: read 1 caps, read 2
+      // (narrower lookingFor) comes back uncapped, then a source carrying read 1's
+      // partial text is appended. Pre-ruling this persisted `false` ("verified
+      // whole") on partial text; sticky-true + true-or-delete must persist `true`.
+      recordImageReadCap(dir, "images/x.jpg", true);  // read 1: capped
+      recordImageReadCap(dir, "images/x.jpg", false); // read 2: narrower, uncapped
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription: "Row 1: Anna … rtway down the pag" }),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect(persisted.transcription_truncated).toBe(true); // pre-fix: false — a false "verified whole" on partial text
+    });
+
+    it("an image not in the cap set: append leaves the marker absent, and a later in-place transcription update is permitted (#2457 rulings, C 2026-09-21)", async () => {
+      await writeProject();
+      // The image was never recorded as capped (a whole read records nothing —
+      // add-only). The marker stays absent on append, and a later in-place
+      // transcription update goes through (nothing is written to block it).
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg", transcription: "a corrected fuller reading" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false); // still absent, update permitted
+    });
+
+    it("does not discard a good op when a sibling capped op carries no transcription (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const before = (await readResearch()).sources.length;
+      const good = imageSource({ image_filename: "images/other.jpg", transcription: "the complete page text" });
+      const bad = imageSource({});
+      delete (bad as Record<string, unknown>).transcription;
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: good },
+          { section: "sources", op: "append", entry: bad },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // pre-fix: false — the whole batch is discarded, losing `good` too
+      const after = (await readResearch()).sources.length;
+      expect(after - before).toBe(2);
+    });
+
+    it("marks the source on the MIRROR two-op sequence — append {transcription}, then a later update {image_filename} that omits it (#2457 r11 [0])", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // r10 gave `image_filename` a persisted fallback and `transcription` none, so
+      // this order derived nothing while its mirror derived `true`, on the SAME final
+      // document. Both fields now fall back, so op order cannot decide the marker.
+      const noRef = imageSource({});
+      delete (noRef as Record<string, unknown>).image_filename;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noRef });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBe("first half of the page");
+      expect(after.transcription_truncated).toBe(true); // pre-fix: absent — a partial read reading as whole
+    });
+
+    it("an update that REMOVES the image does not stamp the badge — an explicit null is not an omission (#2457 r11 [0b])", async () => {
+      await writeProject();
+      // Cap recorded AFTER the append, so the source carries NO persisted marker and
+      // the only thing that could stamp it is this update's own derivation.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // The r10 fallback keyed on truthiness, so an explicit `null` — the caller
+      // REMOVING the reference — looked identical to not re-sending it, and the badge
+      // was derived from the very scan this op deletes. Keyed on presence now.
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: null, transcription: "text with no scan behind it" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.image_filename).toBeNull();
+      expect("transcription_truncated" in after).toBe(false); // pre-fix: true — badged a source citing no scan
+    });
+
+    it("does not stamp a source a later op in the same batch empties, and so does not refuse its own write (#2457 r11 [0c])", async () => {
+      await writeProject();
+      // Cap recorded AFTER the append: the document holds NO marker, so any `true` the
+      // batch trips over is one this loop put there. (Nulling the text of a source that
+      // genuinely carries a persisted `true` is a DIFFERENT case and is correctly
+      // refused — ruling C keeps that loud failure.)
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect("transcription_truncated" in (await readResearch()).sources.find((s: any) => s.id === id)).toBe(false);
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // Per-op derivation stamped `true` from op[0] and then the validator refused the
+      // batch — "do not null the partial transcription of a truncated source" — for a
+      // value only the tool had set. The fold reads what the batch actually leaves.
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { transcription: null } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // pre-fix: false — the tool rejected a write only it had made
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription).toBeNull();
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("is authoritative on an UPDATE too — strips an agent-asserted flag on a never-capped source (#2457 r11 mutation 1)", async () => {
+      await writeProject();
+      // Both pre-existing authority tests use `append`, so restricting the strip to
+      // appends survived the whole suite while an asserted flag rode an update
+      // through onto a source whose image was never capped. That defeats "derived
+      // here, never asserted by the agent" on the very path this PR is about.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { transcription: "still partial", transcription_truncated: true },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false); // the image was never capped
+    });
+
+    it("an EMPTY-STRING image_filename is a removal too, not an omission (#2457 r11 mutation 2)", async () => {
+      await writeProject();
+      // The spec sentence this PR added says "an explicit `image_filename: null` or
+      // `\"\"`". Testing only `null` left the other spelling of the same removal
+      // uncovered, and `""` is schema-legal for this field.
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "", transcription: "text with no scan behind it" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("an EMPTY-STRING transcription empties the source too — the batch is not refused (#2457 r11 mutation 3)", async () => {
+      await writeProject();
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "" } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // folding the persisted text back in would stamp, then self-reject
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect("transcription_truncated" in after).toBe(false);
+    });
+
+    it("whitespace-only transcription is no text — the .trim() is load-bearing (#2457 r11 mutation 4)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      // validate_research_schema rejects `true` beside a .trim()-empty transcription,
+      // so dropping the .trim() here makes the tool stamp a state its own validator
+      // refuses. Nothing supplied whitespace-only text before.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription: "   \n\t " }),
+      });
+      expect(r.ok).toBe(true); // pre-fix mutant: false — the tool self-rejects
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("the fold ACCUMULATES across a source's ops — a later unrelated op does not reset it (#2457 r11 mutation 5)", async () => {
+      await writeProject();
+      // The only other two-op test asserts the ABSENCE of a stamp, so a fold that
+      // re-seeds from the persisted entry on every op — gutting the accumulation this
+      // change exists for — passed the whole suite. Here the badge MUST land: the text
+      // arrives in op[0] and the last op touching the source carries neither field.
+      const noText = imageSource({});
+      delete (noText as Record<string, unknown>).transcription;
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noText });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "update", entryId: id, fields: { transcription: "partial" } },
+          { section: "sources", op: "update", entryId: id, fields: { notes: ["unrelated bookkeeping"] } },
+        ],
+      } as any);
+      expect(r.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription_truncated).toBe(true); // mutant re-seeding per op: absent
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {
@@ -3412,20 +3802,24 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    // Read the ERROR, not the joined list: the worked example is appended to it
-    // and legitimately contains the id-prediction rule, so a negative
-    // assertion over the join would be satisfied by the hint.
     const msg = r.errors[0];
-    // The distinctive half is the CAUSE. "is empty" alone is what sent the
-    // model round the loop, so a refusal that only says that fails this test.
-    expect(msg).toMatch(/plan 'pl_002' was created for question 'q_001' and ends this call with no items/);
-    expect(msg).toMatch(/the items went to a plan this call did not create/);
-    expect(msg).toMatch(/'pl_001' \(completed plan for q_002\)/);
-    expect(msg).toMatch(/which is 'pl_002' for this one/);
-    expect(msg).toMatch(/Never a hard-coded 'pl_001'/);
-    // Blamed on the plans append op, and the hint teaches the batched shape.
-    expect(msg).toMatch(/^ops\[0\]:/);
-    expect(r.errors.join(" ")).toContain("worked example for 'plans'");
+    // #2108 CHANGED WHICH GUARD ANSWERS THIS. The terminal-plan deny throws in
+    // applyOne, which returns the batch at once, so emptyCreatedPlanErrors —
+    // a post-pass over the applied ops — never runs on a COMPLETED parent. This
+    // is the exact corpus shape (54 appends, 6 calls, 4 run logs, all
+    // flynn-first-plan-surveyed/pl_001), so the deny now owns the corpus case
+    // and the misroute arm keeps the ACTIVE-parent and same-call-sibling cases
+    // the sibling tests below cover.
+    //
+    // The distinctive half is still the CAUSE plus the prescription: "is empty"
+    // or "is completed" ALONE is what sent the model round the loop, so a
+    // refusal that names only the status fails this test.
+    expect(msg).toMatch(/plans entry 'pl_001' is 'completed' \(question 'q_002'\)/);
+    expect(msg).toMatch(/settled audit trail and takes no new items/);
+    // Inherited from the arm it preempts: name the plan THIS call created.
+    expect(msg).toMatch(/This call created plan 'pl_002' — re-issue these items with planId 'pl_002'/);
+    // Blamed on the offending plan_items op, not the plans append.
+    expect(msg).toMatch(/^ops\[1\]:/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -3581,10 +3975,14 @@ describe("research_append (batch ops)", () => {
     // following either emptied the other and reproduced the loop with the two
     // plans swapped. With more than one created plan ending empty there is no
     // single id to add, and the message must say that instead of naming one.
+    // #2108: the misroute target is seeded ACTIVE so the arm still answers, and
+    // parked on q_003 — a question this batch creates no plan for. An active
+    // plan on q_002 would collide with the q_002 plan created below, since a
+    // question may hold only one active plan.
     const research = baseResearch();
-    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_003", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
 
@@ -3613,8 +4011,8 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
-      { ...validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_002", "q_002", "active", [seededPlanItem("pli_002")]) },
     ] as any;
     await writeProject(research);
 
@@ -3629,7 +4027,7 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const msg = r.errors[0];
-    expect(msg).toMatch(/wrote into 'pl_002' \(completed plan for q_002\)/);
+    expect(msg).toMatch(/wrote into 'pl_002' \(active plan for q_002\)/);
     expect(msg).not.toMatch(/pl_001/); // never named a plan the caller did not write
     expect(msg).toMatch(/belongs to a different question/);
   });
@@ -3638,6 +4036,14 @@ describe("research_append (batch ops)", () => {
     // The other unconditional clause: a superseded plan for the same question
     // was described as "another question's plan" in the same sentence that
     // correctly printed its question id.
+    // #2108: this input now reaches the terminal-plan deny rather than the
+    // misroute arm. Seeding an ACTIVE same-question target and creating another
+    // active plan reds `already has an active plan` instead, so this case is
+    // stated with a terminal target. The arm's same-question branch is NOT dead
+    // — a created plan that is itself terminal escapes the one-active-plan rule
+    // and still reaches it; the SAME-question ACTIVE test above pins that. The
+    // concern this test was written for still holds and is asserted against the
+    // new message: do not describe a plan for THIS question as another's.
     const research = baseResearch();
     research.questions = [validQuestion("q_001")];
     research.plans = [
@@ -3656,7 +4062,7 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const msg = r.errors[0];
-    expect(msg).toMatch(/wrote into 'pl_001' \(superseded plan for q_001\)/);
+    expect(msg).toMatch(/plans entry 'pl_001' is 'superseded' \(question 'q_001'\)/);
     expect(msg).not.toMatch(/different question/);
     expect(msg).not.toMatch(/another question/);
   });
@@ -3690,8 +4096,12 @@ describe("research_append (batch ops)", () => {
     // printed a singular "it belongs to a different question" over both.
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    // #2108: same reason as the SAME-QUESTION test above — stated with a
+    // terminal same-question target, so the deny answers first. Asserted against
+    // the new message; `pl_002` is the same-question target and the refusal must
+    // name ITS question, not call it another question's.
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
       { ...validPlan("pl_002", "q_001", "superseded", [seededPlanItem("pli_002")]) },
     ] as any;
     await writeProject(research);
@@ -3700,16 +4110,17 @@ describe("research_append (batch ops)", () => {
       projectPath: dir,
       ops: [
         { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_003 for q_001
-        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // q_002
-        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" }, // q_001, SAME question
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // q_002, active — allowed
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" }, // q_001, SAME question, terminal
       ],
     });
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const msg = r.errors[0];
-    expect(msg).toMatch(/wrote into 'pl_001' \(completed plan for q_002\), 'pl_002' \(superseded plan for q_001\)/);
-    expect(msg).not.toMatch(/different question/); // not all of them are
+    expect(msg).toMatch(/^ops\[2\]:/); // the terminal target, not the active one
+    expect(msg).toMatch(/plans entry 'pl_002' is 'superseded' \(question 'q_001'\)/);
+    expect(msg).not.toMatch(/different question/); // it is not a different one
     expect(msg).not.toMatch(/None of them belongs to this question/);
   });
 
@@ -3722,7 +4133,7 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
     const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -3770,7 +4181,7 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
     const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -3797,7 +4208,7 @@ describe("research_append (batch ops)", () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001"), validQuestion("q_002")];
     research.plans = [
-      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
     ] as any;
     await writeProject(research);
 
@@ -3837,6 +4248,168 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(true);
     const out = await readResearch();
     expect(out.plans[1].id).toBe("pl_001");
+  });
+
+  // ── (d3-terminal) plan_items append into a terminal plan is refused (#2108) ──
+  // A completed or superseded plan is a settled audit trail. research-plan's own
+  // prose forbade writing into one in two places and did not bind: the corpus
+  // holds 54 such appends over 6 calls in 4 run logs, all the same misroute.
+  // Decidable from research.json alone, so it is a writer-tool precondition
+  // rather than a line of SKILL.md prose (ADR-0011's first question).
+  //
+  // The accept-side cases are NOT optional. A guard fails two ways, and cases
+  // (3), (4) and (5) are the ways this one would wrongly block legitimate work.
+
+  it("(d2-misroute) does not call a SAME-question ACTIVE plan another question's", async () => {
+    // The created plan is terminal, so `planActiveInvariants` no-ops (it returns
+    // early on a non-active entry) and the one-active-plan rule does not apply.
+    // That is the one input still reaching the misroute arm's same-question
+    // branch — the terminal-plan deny does not preempt it, because the target is
+    // active. `pl_001` is parked on another question so the hard-coded-pl_001
+    // tail does not take precedence.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_002", "q_001", "active", [seededPlanItem("pli_002")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "completed")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors[0];
+    expect(msg).toMatch(/wrote into 'pl_002' \(active plan for q_001\)/);
+    expect(msg).not.toMatch(/different question/);
+    expect(msg).not.toMatch(/another question/);
+  });
+
+  it("(d3-terminal) refuses a plan_items append into a COMPLETED plan — writes nothing", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }],
+    });
+
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/plans entry 'pl_001' is 'completed'/);
+    expect(msg).toMatch(/question 'q_002'/);
+    expect(msg).toMatch(/settled audit trail and takes no new items/);
+    // op-indexed, like the adjacent throws in this block
+    expect(msg).toMatch(/^ops\[0\]:/m);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d3-terminal) refuses a plan_items append into a SUPERSEDED plan", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "superseded", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }],
+    });
+
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/plans entry 'pl_001' is 'superseded'/);
+  });
+
+  it("(d3-terminal) ACCEPTS a plan_items append into an ACTIVE plan", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items.map((i: any) => i.id)).toEqual(["pli_001", "pli_002"]);
+  });
+
+  it("(d3-terminal) ACCEPTS a plan_items UPDATE inside a completed plan — the cleanup route stays open", async () => {
+    // research-plan supersedes a plan by flipping `plans.status` alone; its items
+    // keep whatever status they held. Denying updates would strand an
+    // `in_progress` item in a terminal plan with no route to move it — the
+    // unrecoverable false deny ADR-0011's first limit exists to prevent.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "completed", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "skipped" }, planId: "pl_001" },
+      ],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("skipped");
+  });
+
+  it("(d3-terminal) ACCEPTS items appended to a plan CREATED earlier in the same batch", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[1].id).toBe("pl_002");
+    expect(out.plans[1].items.map((i: any) => i.id)).toEqual(["pli_002"]);
+  });
+
+  it("(d3-terminal) refuses an append into a plan THIS batch flipped to completed", async () => {
+    // The ONLY case that falsifies the live read. Under a pre-call snapshot the
+    // plan still reads `active`, so the append is wrongly accepted. Appending to
+    // a plan created in the same batch (the case above) cannot falsify it: a
+    // snapshot simply lacks the plan, the status lookup yields undefined, and
+    // the append is accepted under both readings.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "update", entryId: "pl_001", fields: { status: "completed" } },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/plans entry 'pl_001' is 'completed'/);
   });
 
   it("(b) rolls back the whole batch on a mid-batch validation failure — writes nothing", async () => {
@@ -4972,6 +5545,36 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(research.assertions[1].source_id).toBe("src_001"); // stamped with the existing src
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("derives transcription_truncated THROUGH a §3.4.1 reuse fold — pins the derivation after the rewrite (#2457 r11 [0e])", async () => {
+    await writeProject();
+    // The derivation must run AFTER the reuse rewrite, and since r10 that is
+    // load-bearing rather than decorative: before the fold this op is an `append`
+    // carrying no entryId, so the persisted-entry fallback cannot resolve it; after
+    // the fold it is an `update` on src_001 and it can. Moving the block earlier in
+    // prepareOps leaves the whole suite green EXCEPT this test.
+    await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "update",
+      entryId: "src_001",
+      fields: { image_filename: "images/x.jpg" },
+    } as any);
+    recordImageReadCap(dir, "images/x.jpg", true);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("NARA", { transcription: "first half of the page" }) },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse?.action).toBe("updated_existing"); // the fold happened
+    const folded = (await readResearch()).sources.find((s: any) => s.id === "src_001");
+    expect(folded.transcription_truncated).toBe(true); // reds if the derivation runs before the rewrite
+    __clearTruncatedSourceImagesForTests();
   });
 
   it("updated_existing: repository matches on normalized form (case + whitespace)", async () => {

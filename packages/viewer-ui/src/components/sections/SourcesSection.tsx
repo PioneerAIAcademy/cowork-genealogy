@@ -158,7 +158,14 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
 
       {source.transcription && (
         <div className={styles.field}>
-          <div className={styles.fieldLabel}>Transcription</div>
+          <div className={styles.fieldLabel}>
+            Transcription
+            {source.transcription_truncated && (
+              <span className={styles.partialBadge} title="image_transcribe hit its output-token cap — the text below the cut was not read">
+                {' '}· partial (truncated)
+              </span>
+            )}
+          </div>
           <Transcription text={source.transcription} />
         </div>
       )}

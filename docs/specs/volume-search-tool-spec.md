@@ -841,7 +841,8 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Condition | Behavior |
 |-----------|----------|
 | `standardPlace` not provided | Throw: `"volume_search requires a standardPlace."` |
-| `standardPlace` unresolvable / ambiguous | Throw: `"Could not resolve \"<name>\" to a single place; use place_search ..."` |
+| `standardPlace` resolves to NOTHING | Throw: `"Could not resolve \"<name>\" to a single place; use place_search to get a standard place name first."` |
+| `standardPlace` resolves to SEVERAL distinct places | Throw, naming them: `"\"<name>\" matches more than one place: <candidate>; <candidate>. Pass the exact full name of the one you mean as standardPlace, or call place_search to see the full list."` Each candidate is `fullName (type)`, one per distinct placeId, capped at 8 as `record_search` caps its jurisdiction hints — the type qualifier is what separates the real pairs, since Virginia's Franklin County and City of Franklin share a `fullName`. **Never auto-pick**: choosing one silently researches the wrong jurisdiction and nothing downstream can tell. The two rows above were one row until the ambiguous case was found dropping a county from the research while the agent reported having searched it |
 | `startYear` not an integer year | Throw: `"startYear must be an integer year (e.g., 1730)."` |
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
@@ -852,7 +853,8 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
-| Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}."` |
+| Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ body, when non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range and recordTypeGroups, omitting pageToken."` A real 409 arrives bodyless, so `statusText` is empty and the generic row below rendered it as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
+| Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}.{ body, when non-empty }"` |
 | Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {message}."` |
 | Group missing inline count fields | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
 | **Full-text** check fails (after 3 retries) | Set `fulltextSearchable` to `null` for the batch; continue |
@@ -952,7 +954,10 @@ docs):
   same years always produce the same `fromDateString`/`toDateString` and
   hence the same body.
 - The token is a client-side cursor with a **~9-day TTL** (the database
-  is repaired every 9 days); stale tokens may skip or duplicate rows.
+  is repaired every 9 days); stale tokens may skip or duplicate rows. A
+  rejected cursor surfaces as a 409, and the error text names this recovery —
+  re-issue page 1 with the identical `standardPlace`, years and
+  `recordTypeGroups`, omitting `pageToken`.
 
 > **`standardPlace` re-resolution caveat (since the input is now a name, not a
 > placeId).** Each page re-resolves `standardPlace` → `placeId` → `placeRepIds`
@@ -1050,6 +1055,12 @@ images are digitized, indexed, or full-text processed.
 | 17 | Throws on 401 with re-login guidance | Token-expired path |
 | 18 | Throws on network error | Connectivity failure |
 | 19 | Sends correct headers (Authorization, Content-Type, User-Agent, FS-User-Agent-Chain) | Header contract |
+| 20 | An ambiguous `standardPlace` throws naming each candidate as `fullName (type)`, one per distinct placeId, and never resolves to one | Ambiguity, never auto-picked |
+| 21 | An unresolvable `standardPlace` keeps its own wording and does not borrow the ambiguity text | The two failures stay distinguishable |
+| 22 | A candidate list longer than 8 is capped at 8 | Hint cap, mirroring `record_search` |
+| 23 | A bodyless 409 carries the re-issue-from-page-1 recovery and never renders as a bare `409 .` | Paging conflict |
+| 24 | A 409 **with** a body includes it alongside the recovery | Upstream detail preserved |
+| 25 | A non-409 non-OK keeps `{status} {statusText}.`, appends any body, and does **not** carry the pageToken advice | Generic arm, previously covered by no test |
 
 ### Smoke test
 
