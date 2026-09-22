@@ -13,11 +13,11 @@ proceeds**, at identity-link time (via person-evidence's
 `materialize_facts`), each carrying a non-null source-ref — they do
 **not** wait for a proof conclusion. **Which value is *concluded*** —
 the `primary` fact / `preferred` name — is a separate, later act owned
-by proof-conclusion, and **upload to FamilySearch stays
-conclusion-gated** (only `primary`/proof-backed facts leave the working
-tree). The old "nothing lands until proof ≥ probable" reading is relaxed
-accordingly: proof ≥ probable gates the **conclusion** and the
-**upload**, not the sourced evidence.
+by proof-conclusion, and marking a fact **`primary` is what records that a
+conclusion stands behind it** — not a permission to upload. What reaches
+FamilySearch is the researcher's decision. The old "nothing lands until proof ≥ probable" reading is relaxed
+accordingly: proof ≥ probable gates the **conclusion**, not the sourced
+evidence.
 
 ## When edits are justified
 
