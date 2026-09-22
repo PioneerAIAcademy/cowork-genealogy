@@ -101,6 +101,22 @@ def build_workspace(
         results_src = src / "results"
         if results_src.is_dir():
             shutil.copytree(results_src, target / "results", dirs_exist_ok=True)
+        # The two sidecar classes `sidecar_read` serves — a verdict body under
+        # `evaluations/` and a text upload under `uploads/` (mock_mcp.py's
+        # LIVE_TOOLS note). Staged for the same reason as `results/`: the tool
+        # is live and resolves a project-relative ref against the workspace, so
+        # a scenario that declares an `evaluations[]` entry with a `file_path`
+        # but ships no file makes `sidecar_read` answer `not_found` for a file
+        # the fixture says exists.
+        #
+        # Nothing staged these before, which is why no scenario in the corpus
+        # ships one: the gps-mentor craft-supersession path reads a prior
+        # verdict body's `craft` flag through exactly this call
+        # (`agents/gps-mentor.md:308-312`) and could not be exercised at all.
+        for sidecar in ("evaluations", "uploads"):
+            sidecar_src = src / sidecar
+            if sidecar_src.is_dir():
+                shutil.copytree(sidecar_src, target / sidecar, dirs_exist_ok=True)
 
     if stage_skills:
         skills_target = target / ".claude" / "skills"

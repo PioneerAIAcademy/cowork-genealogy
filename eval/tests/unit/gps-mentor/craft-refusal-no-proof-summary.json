@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_gps_mentor_k4p",
+    "skill": "gps-mentor",
+    "name": "Craft review refuses when no proof summary exists yet, and records the refusal against \"project\"",
+    "type": "positive",
+    "description": "One of the two paths issue #848 specified and nobody has ever observed live. The researcher asks how their write-up reads, but nothing has been written up: the project carries two questions and ten assertions and no proof_summaries entry at all. Craft requests invert the normal on-demand target priority — they take the most recent proof summary first and never a question (agents/gps-mentor.md:163-164) — so with no summary to read there is no valid craft target, and the agent must refuse rather than degrade into an evidentiary on-demand review of a question. The refusal is itself persisted, so the audit trail records it.",
+    "tags": ["craft", "refusal", "on-demand", "direct-arm"]
+  },
+  "input": {
+    "delegation": "The researcher wants to share what we have with their family and asked how it reads. Give it a craft review.\n\nfocus: on-demand\nmode: autonomous\nprojectPath: <workspace>",
+    "scenario": "flynn-decisive-record-unsearched"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "The delegation deliberately does NOT supply a target_id. Selecting the target is the agent's job, and for a craft request the selection rule is the inverted one: most recent proof summary, never a question or \"project\". This scenario has no proof_summaries entry, so there is no valid craft target.",
+    "The correct outcome is a refusal: a structured verdict with verdict \"refused\" and a one-line narrative_for_user, persisted to evaluations[] via research_append. The refusal row for this case is at agents/gps-mentor.md:426 and reads \"There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads.\" Wording need not match verbatim; the two things it must convey are that there is no finished prose to read and that proof-conclusion comes first.",
+    "The persisted entry should carry target_id \"project\" — the fallback at the end of the target-selection priority order, since no question or proof summary is a valid craft target. A persisted entry targeting a question id (q_001 or q_002) is the specific failure this test exists to catch: it means the agent degraded into an evidentiary on-demand review of a question, which agents/gps-mentor.md:430 forbids (\"Do not degrade silently into on-demand mode\").",
+    "HARNESS NOTE: research_query, project_context, sidecar_read and research_append are LIVE in this harness — they read and write the staged workspace rather than returning canned responses. Reading the project's state is IN SCOPE and expected; a sidecar_read that answers not_found is a correct answer here, not a fault, because this scenario ships no evaluations/ directory.",
+    "The agent must NOT evaluate the evidence. A refusal that also grades the research, or that produces strengths and must_address items, has done the work it was supposed to decline.",
+    "Do NOT penalise the agent for declining. Refusing is the pass condition for this test."
+  ]
+}

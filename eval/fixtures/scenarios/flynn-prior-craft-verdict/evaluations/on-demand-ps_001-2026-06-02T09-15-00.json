@@ -1,0 +1,22 @@
+{
+  "focus": "on-demand",
+  "target_id": "ps_001",
+  "target_type": "proof_summary",
+  "verdict": "consider_addressing",
+  "craft": true,
+  "strengths": [
+    "The opening paragraph states the conclusion before the evidence, so a reader knows what is being argued before being asked to follow it."
+  ],
+  "must_address": [],
+  "consider_addressing": [
+    {
+      "standard": "Readability — paragraph length",
+      "issue": "The central paragraph runs to nine sentences and carries three separate points; a reader loses the thread of the parentage argument partway through.",
+      "specific_action": "Split it at the shift from the census evidence to the death certificate."
+    }
+  ],
+  "non_blocking_notes": [
+    "Two spellings of the surname appear in the narrative ('Flynn' and 'Flinn') without a note saying the variation is in the records rather than in the writing."
+  ],
+  "narrative_for_user": "I read this for how it reads, not for whether the evidence holds up — that is what a proof-critique does. It opens well: the conclusion arrives before the evidence, which is the hardest thing to get right. The middle paragraph is doing too much work; split it where the censuses give way to the death certificate and the argument will carry. The surname spellings need a line saying the variation is in the records."
+}
