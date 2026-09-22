@@ -1,6 +1,7 @@
 """Tests for harness.fixtures — manifest building and predicate matching."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -148,6 +149,29 @@ def test_load_multiple_fixtures_preserves_order():
 # `shapeRelationships`/`shapeSources`, which always assemble those three keys.
 
 _PERSON_READ_TOP_LEVEL = {"persons", "relationships", "sources"}
+# `notes[]` is emitted ONLY when endpoint closure dropped an edge, so it is
+# optional rather than part of the always-shape (#2593, @chesworthrm).
+_PERSON_READ_OPTIONAL = {"notes"}
+
+
+# Source keys on a `person_read` fixture are snake_case, because `person_read`
+# returns the simplified-GedcomX shape and the skills read these fixtures as the
+# contract. Nothing else ties the Python plane to the engine's actual emitted key:
+# the validators here supply their own fixtures, and the engine suite never reads
+# these files -- so renaming the field on one side and not the other leaves BOTH
+# suites green and surfaces first as a false red inside a paid run. That is how
+# `artifactUrl` reached five files before anyone noticed it was the only camelCase
+# key on the object (#2593, chesworthrm 2026-09-17).
+def _is_snake_case(key):
+    """A key carrying ANY uppercase is not snake_case.
+
+    Deliberately not a regex. The first version of this was `^[a-z]+[A-Z]`,
+    which @Praise-Enato's self-review on #2593 showed passes `artifact_Url`,
+    `artifact2Url` and every PascalCase key -- and both of its "proofs" were the
+    same shape (`artifactUrl`, `imageRef`), so neither could reveal the gap.
+    `key.lower()` has no such blind spot.
+    """
+    return key == key.lower()
 
 
 def _person_read_fixtures():
@@ -183,7 +207,7 @@ def test_person_read_fixtures_match_the_tool_contract():
             wrong.append(f"{name}: response is {type(response).__name__}, not an object")
             continue
         keys = set(response)
-        if keys != _PERSON_READ_TOP_LEVEL:
+        if keys - _PERSON_READ_OPTIONAL != _PERSON_READ_TOP_LEVEL:
             wrong.append(f"{name}: top-level keys {sorted(keys)}")
         elif not isinstance(response["persons"], list):
             wrong.append(f"{name}: persons is not a list")
@@ -387,3 +411,45 @@ def test_an_exemption_does_not_suppress_the_other_sidecar():
     problems = _problems(data)
     assert any("has date, no standard_date" in p for p in problems), problems
     assert not any("standard_place" in p for p in problems), problems
+
+
+def _walk_keys(node, path):
+    """Every (path, key) in a nested fixture response, depth-first.
+
+    The first version of this check walked `response.sources` ONLY. A casing
+    slip anywhere else -- `persons[].facts[]`, where `standard_place` and
+    `standard_date` live, or a relationship's facts -- went unseen, which is the
+    same class of blind spot the check exists to close (#2593 self-review).
+    """
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield path, key
+            yield from _walk_keys(value, f"{path}.{key}")
+    elif isinstance(node, list):
+        for item in node:
+            yield from _walk_keys(item, f"{path}[]")
+
+
+def test_person_read_fixture_keys_are_snake_case():
+    """No key anywhere in a person_read fixture response may carry uppercase.
+
+    The tool returns simplified GedcomX, which is snake_case throughout
+    (CLAUDE.md, "Identifier casing"): persisted documents are snake_case and the
+    MCP boundary is the seam. Nothing else ties the Python plane to the engine's
+    emitted keys -- the validators supply their own fixtures and the engine suite
+    never reads these files -- so a rename applied on one side only leaves BOTH
+    suites green and surfaces first as a false red inside a paid run.
+
+    Values are NOT checked, only keys: `standard_place` legitimately holds
+    "Branch, Schuylkill, Pennsylvania, United States", and fact `type` holds
+    "Birth".
+    """
+    offenders = []
+    for name, data in _person_read_fixtures():
+        for path, key in _walk_keys((data.get("response") or {}), "response"):
+            if not _is_snake_case(key):
+                offenders.append(f"{name}: {path}.{key}")
+    assert not offenders, (
+        "person_read fixture keys must be snake_case -- the tool returns a "
+        f"simplified-GedcomX shape: {offenders}"
+    )

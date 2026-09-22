@@ -64,7 +64,9 @@ RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 # Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
 # An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
 # (the agent body is embedded in those skills' run-log snapshots), exactly
-# like an edit inside the skill dir itself.
+# like an edit inside the skill dir itself — plus `eval/tests/unit/<name>/`
+# itself when that agent has its own agent-keyed suite (issue #1253), which
+# no SKILL.md scan can reach because there is no SKILL.md.
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 # Match a shared fixture the run-log snapshot embeds:
@@ -429,7 +431,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     # from taking the run down if it ever arrives by another route.
     try:
         ann = json.loads(ann_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         gh_error(
             f"skill `{skill}`: annotation `{ann_filename}` is not valid JSON "
             f"({exc}). Restore the last valid version from git, or delete it "
@@ -759,11 +761,28 @@ def main() -> int:
 
     # A touched plugin agent gates every skill whose SKILL.md references
     # `@plugin:<name>` — the agent body is part of those skills' run-log
-    # snapshots, so editing it outside eval discipline must fail rule 2.
+    # snapshots, so editing it outside eval discipline must fail rule 2 — and
+    # also its OWN agent-keyed suite, if it has one.
     if touched_agents:
         referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
         for agent in sorted(touched_agents):
             touched_skills |= referencing.get(agent, set())
+            # The agent's own suite (issue #1253). `skills_referencing_agents`
+            # scans SKILL.md bodies for `@plugin:<name>`, so it can only reach
+            # suites that have a SKILL.md. An agent-keyed suite has none:
+            # `gps-mentor`'s tests live at eval/tests/unit/gps-mentor/ and key
+            # on the agent file directly. Without this line, editing
+            # agents/gps-mentor.md gates only `research` — the one skill whose
+            # SKILL.md happens to reference it — and leaves the suite that
+            # actually grades the agent ungated, which is the same staleness
+            # the snapshot rule closes from the other side.
+            #
+            # Keyed on directory existence rather than a name list, so a suite
+            # arms itself when it lands instead of waiting for someone to also
+            # remember to edit a constant here — the same discipline as the
+            # `exempt_suiteless` filter below.
+            if (TESTS_UNIT_DIR / agent).is_dir():
+                touched_skills.add(agent)
 
     # A touched shared fixture gates every skill whose tests reference it — the
     # fixture is embedded in those skills' run-log snapshots, so editing it

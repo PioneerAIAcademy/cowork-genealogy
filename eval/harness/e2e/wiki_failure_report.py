@@ -304,7 +304,7 @@ def scan(
         run = f"{p.parent.name}/{p.stem}"
         try:
             doc = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             unreadable += 1
             continue
         stripped = bool(doc.get("captures_stripped"))

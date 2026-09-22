@@ -116,7 +116,7 @@
       "information_quality": "secondary",
       "informant": "Informant (likely family member) reporting to registrar",
       "informant_proximity": "family_not_present",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }

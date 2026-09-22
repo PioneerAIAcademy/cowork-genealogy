@@ -136,7 +136,9 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 
 `person_read` already returns this format — persons/relationships/sources,
 snake_case, `standard_place` on facts. It is not full GedcomX and needs no
-field renaming. What it does need:
+field renaming. It may also return a top-level `notes` array, reporting a
+relationship it dropped because the other endpoint was not in `persons`; it is
+not part of the tree and is not copied into one. What it does need:
 
 - **Re-id.** Persons get `I` ids; names and relationships arrive with no ids, so
   mint `N`/`R`, and mint `F` for any fact the tool did not id. Rewrite every

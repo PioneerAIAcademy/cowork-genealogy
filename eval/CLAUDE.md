@@ -125,14 +125,15 @@ A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anythin
 two reader families handle it differently (`harness/since_window.py`):
 
 - **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
-  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures`, `make e2e-transcribe-failures` tally many runs into one number, so mixing eras corrupts
+  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures`, `make e2e-transcribe-failures`, `make e2e-transcription-join` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
   excluded. `SINCE=all` opts back in. (`make e2e-wiki-failures`'s useful horizon
   IS the 14-day default: it classifies calls from `response_summary`, and the e2e
   capture strip below drops that field past 14 days — so `SINCE=all` there mostly
   reports how many older calls are stripped-and-unclassifiable, not more causes.
-  `make e2e-transcribe-failures` reads the same field and has the same horizon,
-  which is why it prints the stripped tally as a first-class line.)
+  `make e2e-transcribe-failures` and `make e2e-transcription-join` read the same
+  field and have the same horizon, which is why they print the stripped tally as a
+  first-class line.)
   **One exception inside that list:** `make e2e-guardrail-shadow FEEDBACK_DIR=…`
   reads hosted feedback bundles from outside the repo rather than run logs, so it
   is NOT windowed and prints no window — that corpus is small and hand-collected,
@@ -280,6 +281,8 @@ The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rew
 That expiry is decided **from the event, not from the label**: on a `synchronize` the workflow sets `COSMETIC_SKIP=0` without reading the labels API at all. Deciding it this way needs no write token, which is what makes it hold on a PR from a fork. The label *is* still removed on a push — by `.github/workflows/cosmetic-skip-strip.yml`, a separate `pull_request_target` workflow — but only so the PR's UI matches; nothing enforcing rule 2 depends on it. Until 2026-07-31 the removal was the enforcement, done inside `check-runlogs.yml` and then re-read; on a fork PR that job holds a read-only token, so the removal 403'd, `|| true` swallowed it, and the bypass silently survived every later push. Don't reintroduce a label read on the `synchronize` path. Full workflow + one-time `gh label create` setup: `eval/README.md` "Cosmetic-change exemption". The label must exist in the repo and seniors need Triage/Write to apply it.
 
 **Suiteless-skill exemption.** Skills listed in `RUNLOG_GATE_EXEMPT_SKILLS` in `check_runlogs.py` are dropped from the per-skill rules (2 + 3). Currently only `forget-and-rederive` is exempt (issue #1152 owns that one). `research` was formerly exempt but gained a trigger corpus and is now gated. The exemption is keyed on directory existence, not name (the `exempt_suiteless` filter in `main`): a skill in the set that later gains an `eval/tests/unit/<skill>/` dir stops being exempt automatically, so adding a unit suite arms the gate with no second edit to the set — pruning the now-suited entry is optional tidiness.
+
+**Running the gate locally: merge `main` first, or it answers for the wrong run log.** `check_runlogs.py` resolves "the latest full-skill run log" by globbing the **working tree** it runs in, not `main`. On a branch whose base is behind, a run log that `main` has already superseded is still the newest file on disk, so the script reports *its* staleness as if it were current — silently, with no signal that a newer one exists. The failure is not a false green: it is a true statement about a superseded artifact, which reads as a conclusion about the live one. To settle whether a run log is stale on `main` independently of your branch, check it out in a throwaway worktree and call the harness's own comparator rather than rehashing by hand: `git worktree add --detach <tmp> origin/main`, then `diff_snapshot_vs_disk(snapshot, <tmp>)` from `harness/snapshot.py`. Zero diffs there means the run log is active on `main` and **your branch's edit is what stales it**; a non-empty diff means the debt predates you. That distinction decides who owes the re-run, which is why it is worth the worktree. Do not hand-roll the normalisation to shortcut this — text files are CRLF-to-LF plus a trailing newline, but JSON is parsed and re-emitted with `test.{name,description,tags}` stripped on test JSONs, and a hand-written hash will disagree with the snapshot for reasons that look like drift. Worked case (PR #2651, 2026-09-21): a local run on an unmerged base reported `hypothesis-tracking`'s `v1_2026-09-01_13-17-15.json` as stale from an earlier PR, and the argument "this warning is not ours" was published on that basis. `v1_2026-09-18_15-42-44.json` had landed on `main` five hours earlier in #2662, was active there with zero diffs, and the branch's one-word scenario-README edit was exactly what took it out of active. A senior had already conceded to the wrong correction before the newer run log was noticed.
 
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 

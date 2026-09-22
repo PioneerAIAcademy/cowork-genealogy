@@ -45,7 +45,7 @@ function baseResearch() {
         information_quality: "primary",
         informant: "self",
         informant_proximity: "self",
-        evidence_type: "direct",
+        record_basis: "stated",
         extracted_for_question_ids: [],
       },
     ],
@@ -78,15 +78,15 @@ const assertionAppend = (value: string) => ({
   information_quality: "primary",
   informant: "self",
   informant_proximity: "self",
-  evidence_type: "direct",
+  record_basis: "stated",
   extracted_for_question_ids: [],
 });
 
 // A create-or-enrich persona for materialize_facts: a name + a Birth, no place.
 // Distinct assertion ids so it can be appended to baseResearch without clashing.
 const persona = (recordId: string, given: string) => [
-  { id: "a_010", source_id: "src_001", record_id: recordId, record_role: "child", record_persona_id: null, fact_type: "name", value: `${given} Smith`, date: null, place: null, standard_place: null, information_quality: "primary", informant: "unknown", informant_proximity: "official_duty", evidence_type: "direct", extracted_for_question_ids: [] },
-  { id: "a_011", source_id: "src_001", record_id: recordId, record_role: "child", record_persona_id: null, fact_type: "birth", value: "1855", date: "1855", place: null, standard_place: null, information_quality: "primary", informant: "unknown", informant_proximity: "official_duty", evidence_type: "direct", extracted_for_question_ids: [] },
+  { id: "a_010", source_id: "src_001", record_id: recordId, record_role: "child", record_persona_id: null, fact_type: "name", value: `${given} Smith`, date: null, place: null, standard_place: null, information_quality: "primary", informant: "unknown", informant_proximity: "official_duty", record_basis: "stated", extracted_for_question_ids: [] },
+  { id: "a_011", source_id: "src_001", record_id: recordId, record_role: "child", record_persona_id: null, fact_type: "birth", value: "1855", date: "1855", place: null, standard_place: null, information_quality: "primary", informant: "unknown", informant_proximity: "official_duty", record_basis: "stated", extracted_for_question_ids: [] },
 ];
 
 describe("write serialization under concurrency (issue #1715)", () => {
