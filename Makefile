@@ -1030,19 +1030,20 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
-	# what runs stored: the four post-hoc families (the §8 person_evidence
+	# what runs stored: the seven post-hoc families (the §8 person_evidence
 	# provenance check from tool_calls + each fixture's committed seed tree, and the
-	# three §7/§7.5 checks from each run's committed final-research / final-tree
+	# six §7/§7.5 checks from each run's committed final-research / final-tree
 	# sidecars) and the §11 unnamed-delegate check (issue #980) from tool_calls,
 	# which is the only half that reflects a later detector change such as the
 	# namespaced-agent_type tolerance. The §11 count always prints its attribution
 	# denominator — how many runs carry any caller attribution to fire on at all.
 	# READ THE REPLAY BEFORE CONCLUDING A CHECK NEVER FIRES. The stored counts
-	# above only cover runs made after each check shipped -- all three post-hoc
-	# checks landed in August against a corpus that is 84% July, so their zeros
-	# measured the corpus's age, not the behaviour. Replaying turns two of the
-	# three into real counts. Counts, never rates: this is behaviour presence over
-	# the corpus, not a per-run compliance score.
+	# above only cover runs made after each check shipped -- the first three
+	# post-hoc checks landed in August against a corpus that was 84% July, so their
+	# zeros measured the corpus's age, not the behaviour, and replaying turned two
+	# of those three into real counts. Every check added since starts from the same
+	# place. Counts, never rates: this is behaviour presence over the corpus, not a
+	# per-run compliance score.
 	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(FEEDBACK_DIR),--feedback-dir $(FEEDBACK_DIR),) $(if $(PLATFORMS),--platforms $(PLATFORMS),) $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-skill-episodes
