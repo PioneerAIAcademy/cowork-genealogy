@@ -335,6 +335,20 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
       scope: ["docs/specs/gedcomx-convert-spec.md"],
     },
   ],
+  [
+    6665,
+    {
+      reason: "FamilySearch's user-searchable full-text auto-collection count, asserted from upstream documentation and measured by NO probe in this repo — there is no full-text section in dev/measured-figures.json and dev/try-fulltext-search.ts is a smoke script, not a probe. The spec says so in its Coverage section. This entry is the durable record that the figure is unverified; deleting it without landing a probe reds the traceability check",
+      scope: ["docs/specs/fulltext-search-tool-spec.md"],
+    },
+  ],
+  [
+    8000,
+    {
+      reason: "FamilySearch's INTERNAL auto-collection definition count (\"8,000+\"), the other half of the coverage mismatch the Coverage section records. Same provenance and same absence of a probe as 6665 above; exempt for the same reason and on the same surface only",
+      scope: ["docs/specs/fulltext-search-tool-spec.md"],
+    },
+  ],
 ]);
 
 /** Documented API limits, not measurements — allowed on agent surfaces. */
