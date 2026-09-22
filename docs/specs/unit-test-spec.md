@@ -760,8 +760,10 @@ Optional object overriding the harness's default execution limits. All fields ar
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
 and wall-clock budget. If the callee has its own unit suite, that spends budget
 on coverage which already exists. Naming it here makes the PreToolUse hook
-record the delegation in `skills_invoked`, deny the launch, and let the run
-**continue** — so the caller still finishes its own logging and summary. (This
+deny the launch and let the run **continue** — so the caller still finishes its
+own logging and summary. A `Skill` call is also recorded in `skills_invoked`; a
+stubbed agent's spawn is recorded in `builtin_tool_calls` only, so assert either
+with `handoffs`. (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
 test still has work left.)
@@ -832,10 +834,17 @@ callee, `stub_skills` to deny it.
 > no per-skill allowlist (`permission_mode="bypassPermissions"` with no
 > `allowed_tools`), so a real session holds every tool and the callee works.
 
-Assert the hand-off with a deterministic `skills_invoked` validator, not the
-judge, which reads a transcript and can misread it. Note the limit: the harness
-records the skill **name** only, not the `args` string the caller composed, so
-no validator can currently assert *what* crossed the seam.
+Assert the hand-off with a deterministic validator reading `handoffs`
+(`skill_runner.py`), not the judge, which reads a transcript and can misread it.
+`handoffs` counts a `Skill` call and a main-thread agent spawn alike, so the
+assertion survives the callee's conversion from a skill to an agent. Note the
+limit: for a `Skill` call the harness records the skill **name** only, not the
+`args` string the caller composed, so no validator can currently assert *what*
+crossed a `Skill` seam.
+
+A `stub_skills` entry may name an agent with no skill directory; the hook then
+denies that agent's main-thread spawn the same way it denies a `Skill` call. A
+name that is still a skill is stubbed at its `Skill` call only.
 
 ### 5.8 `intentionally_invalid`
 
