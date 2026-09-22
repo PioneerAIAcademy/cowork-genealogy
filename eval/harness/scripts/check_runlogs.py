@@ -839,6 +839,22 @@ def rule6_outcomes(
                 )
                 fails += 1
             else:
+                # `outcome` and `skill` are required on an entry, so a reader
+                # reasonably infers they mean something. Compare them rather than
+                # let them rot into decoration: a carried red that changed shape
+                # (fail -> aborted) is worth a look even inside its window.
+                if entry.get("outcome") and entry["outcome"] != agg:
+                    gh_warning(
+                        f"skill `{skill}`: carried red `{test_id}` is recorded as "
+                        f"`{entry['outcome']}` but now resolves to `{agg}`. Re-check "
+                        f"the entry — the defect may have changed shape.",
+                    )
+                if entry.get("skill") and entry["skill"] != skill:
+                    gh_warning(
+                        f"skill `{skill}`: carry entry for `{test_id}` names skill "
+                        f"`{entry['skill']}`. Entries are looked up by test_id, so a "
+                        f"mismatched skill silently carries the wrong red.",
+                    )
                 owner = f"issue #{entry['issue']}" if entry.get("issue") else "NO OWNING ISSUE — needs one"
                 if entry.get("issue") and entry["issue"] in (closed_owners or set()):
                     owner = (

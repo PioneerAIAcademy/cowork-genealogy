@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "$comment": "Day-one carry list for check_runlogs.py rule 6 (issue #2684). A carried red WARNS; past review_by it BLOCKS; if its test passes it BLOCKS so the line is deleted, unless flaky. Contract: docs/plan/eval-runlog-versioning.md SS C6.",
+  "$comment": "Day-one carry list for check_runlogs.py rule 6. A carried red WARNS; past review_by it BLOCKS; if its test passes it BLOCKS so the line gets deleted, unless flaky. `flaky: true` is set iff the test resolved to `pass` at least once in its skill's last five committed run logs -- for those the pass-retirement arm cannot tell a fix from a flap. That is 29 of 35 here, so pass-retirement covers the other 6; review_by is what moves the rest. Contract: docs/plan/eval-runlog-versioning.md SS C6.",
   "entries": [
     {
       "skill": "citation",
@@ -213,7 +213,7 @@
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
       "baseline": "v1_2026-09-17_15-04-52.json",
-      "reason": "baseline red carried from v1_2026-09-17_15-04-52.json",
+      "reason": "aborts on max_tool_calls -- a cap abort, so plausibly a looping skill defect rather than infrastructure",
       "flaky": true
     },
     {
@@ -246,7 +246,7 @@
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
       "baseline": "v1_2026-09-17_15-04-52.json",
-      "reason": "never passes in the last five committed runs and aborts on max_turns; flaky per the 2026-09-21 ruling, inert in practice",
+      "reason": "aborts on max_turns and has never passed in the last five committed runs; flaky per the 2026-09-21 ruling, inert in practice",
       "flaky": true
     },
     {
@@ -319,11 +319,11 @@
       "skill": "search-external-sites",
       "test_id": "ut_search_external_sites_002",
       "outcome": "fail",
-      "issue": null,
+      "issue": 2207,
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
       "baseline": "v1_2026-09-17_04-58-35.json",
-      "reason": "baseline red carried from v1_2026-09-17_04-58-35.json",
+      "reason": "same defect as ut_search_external_sites_001 -- issue #2688 was merged into #2207, which says the two are one defect, not two",
       "flaky": true
     },
     {

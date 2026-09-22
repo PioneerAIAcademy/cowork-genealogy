@@ -1460,3 +1460,40 @@ def test_closed_owner_lookup_reads_the_state(capsys):
     assert check_runlogs.closed_carry_owners(
         _carry("ut_s_1", issue=99), runner=lambda *a, **k: P()
     ) == {99}
+
+
+def test_rule6_warns_when_a_carried_reds_outcome_changed_shape(capsys):
+    """`outcome` is required on a carry entry, so it must mean something. A red
+    recorded as `fail` that now aborts has changed shape and is worth a look."""
+    out_of_date = _carry("ut_s_1")          # records outcome "fail"
+    assert _rule6([_t("ut_s_1", ["aborted"])], out_of_date) == 0
+    assert "recorded as `fail` but now resolves to `aborted`" in capsys.readouterr().out
+
+
+def test_rule6_does_not_cry_shape_change_when_the_outcome_matches(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1")) == 0
+    assert "changed shape" not in capsys.readouterr().out
+
+
+def test_rule6_warns_when_a_carry_entry_names_another_skill(capsys):
+    """Entries are keyed on test_id alone, so a mismatched `skill` would silently
+    carry the wrong red. Benign today only because rule 4 makes ids unique."""
+    wrong = _carry("ut_s_1")
+    wrong["ut_s_1"]["skill"] = "some-other-skill"
+    assert _rule6([_t("ut_s_1", ["fail"])], wrong) == 0
+    assert "names skill `some-other-skill`" in capsys.readouterr().out
+
+
+def test_rule5_names_an_unparseable_annotation_outside_the_repo(tmp_path, monkeypatch, capsys):
+    """Direct regression test for rule 5's path handling. It used to call
+    `relative_to(REPO_ROOT)` unguarded, so pointing RUNLOGS_DIR at a tmp dir raised
+    ValueError instead of reporting the bad file — which is why rule 5 had no
+    main()-level test at all. Named after rule 5 so a reverter sees the right rule
+    fail."""
+    skill_dir = tmp_path / "runlogs" / "some-skill"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "v1.ann.json").write_text("{ broken", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path / "runlogs")
+
+    assert check_runlogs.rule5_annotations_parse(tmp_path / "runlogs") == 1
+    assert "v1.ann.json" in capsys.readouterr().out
