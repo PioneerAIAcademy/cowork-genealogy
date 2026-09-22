@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import pytest
+from datetime import date, timedelta
 import re
 from pathlib import Path
 
@@ -1061,6 +1063,12 @@ def _rule6(tests, carry=None):
     return check_runlogs.rule6_outcomes("s", {"tests": tests}, "v1.json", carry or {})
 
 
+def _rule6_closed(tests, carry, closed):
+    return check_runlogs.rule6_outcomes(
+        "s", {"tests": tests}, "v1.json", carry, closed
+    )
+
+
 def test_rule6_blocks_an_uncarried_fail(capsys):
     assert _rule6([_t("ut_s_1", ["fail"])]) == 1
     assert "resolved to `fail`" in capsys.readouterr().out
@@ -1203,8 +1211,14 @@ def test_the_shipped_carry_file_is_well_formed():
     """The real file, not a fixture — a malformed entry that only CI sees is the
     shape this whole guard exists to prevent."""
     carry, fails = check_runlogs.load_carry()
+    raw = json.loads(check_runlogs.CARRY_PATH.read_text(encoding="utf-8"))
     assert fails == 0
-    assert len(carry) == 35
+    assert carry, "the carry file is empty -- rule 6 would block 12 skills on day one"
+    # Length is pinned against the FILE, not a literal: adding or retiring an entry is
+    # the file's whole purpose and must not red a test. A literal would be bumped or
+    # skipped within a month. This still catches the collapse a duplicate test_id
+    # causes, since the dict is keyed on test_id.
+    assert len(carry) == len(raw["entries"])
 
 
 # --- rule 6 wiring: the PR's OWN log is graded, not the resolved latest -----------
@@ -1271,6 +1285,53 @@ def test_rule6_does_not_grade_the_baseline_on_an_annotation_only_pr(
     assert "resolved to `fail`" not in capsys.readouterr().out
 
 
+def test_main_feeds_the_real_carry_file_to_rule6(tmp_path, monkeypatch, capsys):
+    """The seam: main() loads runlog_carry.json and hands the dict down. Tested at
+    main() level because rule6_outcomes takes carry as a parameter and load_carry is
+    tested alone — so passing `{}` instead of `carry` regressed with every test green,
+    which would block the next PR touching 12 of 27 skills."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    added = "v2_2026-09-22_09-00-00.json"
+    (skill_dir / added).write_text(
+        json.dumps(_clean_log("ut_ip_carried", "fail")), encoding="utf-8"
+    )
+    _write_ann(skill_dir, added, [])
+    _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
+
+    carry_file = tmp_path / "carry.json"
+    monkeypatch.setattr(check_runlogs, "CARRY_PATH", carry_file)
+
+    # no carry file -> the red blocks
+    assert check_runlogs.main() == 1
+    assert "resolved to `fail`" in capsys.readouterr().out
+
+    # the SAME red, now carried -> warns instead
+    carry_file.write_text(
+        json.dumps({"entries": [dict(next(iter(_carry("ut_ip_carried").values())),
+                                     skill="init-project")]}),
+        encoding="utf-8",
+    )
+    assert check_runlogs.main() == 0
+    assert "carried red `ut_ip_carried`" in capsys.readouterr().out
+
+
+def test_main_counts_a_malformed_carry_entry_as_a_failure(tmp_path, monkeypatch, capsys):
+    """`fails += carry_fails` — dropping that one line turns the whole carry
+    validation block into a warning stream, with every function-level test green."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    _patch_diffs(monkeypatch, ["eval/runlogs/unit/init-project/v1.ann.json"])
+
+    bad = dict(next(iter(_carry("ut_s_1").values())))
+    del bad["review_by"]
+    carry_file = tmp_path / "carry.json"
+    carry_file.write_text(json.dumps({"entries": [bad]}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "CARRY_PATH", carry_file)
+
+    assert check_runlogs.main() == 1
+
+
 def test_rule6_grades_every_added_log_when_a_pr_adds_two(tmp_path, monkeypatch, capsys):
     """Rule 1 caps RELEASED logs at one per skill and never short-circuits main(),
     so two added candidates reach rule 6 — any red in any of them blocks."""
@@ -1287,16 +1348,115 @@ def test_rule6_grades_every_added_log_when_a_pr_adds_two(tmp_path, monkeypatch, 
          f"eval/runlogs/unit/init-project/v1_2026-09-22_09-00-00.json"],
     )
 
-    check_runlogs.main()
-    assert "ut_ip_b" in capsys.readouterr().out
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    # NOT just `"ut_ip_b" in out` -- rule 3 also names it (empty corrections), so that
+    # alone stays green under a `break` that grades only the first added log.
+    assert rc == 1
+    assert "`ut_ip_b` resolved to `fail`" in out
 
 
-def test_rule6_ignores_an_added_ann_json(tmp_path, monkeypatch, capsys):
-    """`added_runlog_paths` holds every added path, `.ann.json` included, because
-    RUNLOG_PATH_RE matches them. Parsing one as a run log would crash the gate."""
+def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch, capsys):
+    """`added_runlog_paths` holds every added path — `.ann.json` siblings included,
+    because RUNLOG_PATH_RE matches anything ending `.json`. Parsing one as a run log
+    would crash the gate. `classify()` is what actually excludes both an annotation
+    and a `scratch_` log; assert the OUTCOME (nothing graded) rather than trusting
+    either guard, since a bare `main()` call with no assertion passes even with rule
+    6 deleted."""
     skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
     (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
     _write_ann(skill_dir, "v1.json", [])
-    _patch_diffs(monkeypatch, ["eval/runlogs/unit/init-project/v1.ann.json"])
+    scratch = "scratch_2026-09-22_09-00-00.json"
+    (skill_dir / scratch).write_text(
+        json.dumps(_clean_log("ut_ip_scratch", "fail")), encoding="utf-8"
+    )
+    _patch_diffs(monkeypatch, [
+        "eval/runlogs/unit/init-project/v1.ann.json",
+        f"eval/runlogs/unit/init-project/{scratch}",
+    ])
 
-    check_runlogs.main()  # must not raise
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert "rule 6: graded 0 added run log(s)" in out
+    assert "ut_ip_scratch" not in out
+    assert rc == 0
+
+
+# --- rule 6: shapes that used to fall through as green ---------------------------
+#
+# The `has no runs` guard was added for hand-edited logs; four adjacent hand-edit
+# shapes walked straight past it, because an unrecognized string aggregates to
+# itself and matches neither "fail" nor "pass". CLAUDE.md names this exact pattern:
+# "each made the tool exit 0 having done nothing, past a guard added beside it."
+
+
+@pytest.mark.parametrize(
+    "runs",
+    [
+        [{}],                        # entry missing `outcome` entirely
+        [{"outcome": None}],
+        [{"outcome": "FAIL"}],       # right word, wrong case
+        [{"outcome": "failed"}],     # near-miss spelling
+        [{"outcome": "pass"}, {"outcome": "skipped"}],
+    ],
+    ids=["missing", "null", "uppercase", "misspelled", "one-bad-of-two"],
+)
+def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
+    entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
+    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json", {}) == 1
+    assert "outside the schema's" in capsys.readouterr().out
+
+
+def test_rule6_accepts_every_value_the_schema_allows(capsys):
+    """The other direction — the guard must not reject a legitimate enum member."""
+    for outcome in ("pass", "partial"):
+        assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
+
+
+def test_carry_entry_that_is_not_an_object_blocks(tmp_path, monkeypatch, capsys):
+    _write_carry(tmp_path, monkeypatch, {"entries": ["ut_s_1", 42, None]})
+    carry, fails = check_runlogs.load_carry()
+    assert fails == 3 and carry == {}
+    assert "is not an object" in capsys.readouterr().out
+
+
+def test_carry_entry_due_today_does_not_block_yet(capsys):
+    """Boundary: `due < today`, so an entry due TODAY is still inside its window.
+    Tested because the two existing cases are years either side of it."""
+    today = date.today().isoformat()
+    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by=today)) == 0
+    assert "carried red" in capsys.readouterr().out
+
+
+def test_carry_entry_due_yesterday_blocks(capsys):
+    y = (date.today() - timedelta(days=1)).isoformat()
+    assert _rule6([_t("ut_s_1", ["fail"])], _carry("ut_s_1", review_by=y)) == 1
+
+
+def test_rule6_warns_when_a_carried_reds_owner_is_closed(capsys):
+    """Split item 4. Three of the five live xfail markers already cite a closed
+    issue, so this is the rot the carry file would grow without it."""
+    assert _rule6_closed([_t("ut_s_1", ["fail"])], _carry("ut_s_1", issue=1234), {1234}) == 0
+    assert "is CLOSED" in capsys.readouterr().out
+
+
+def test_rule6_does_not_cry_closed_for_an_open_owner(capsys):
+    assert _rule6_closed([_t("ut_s_1", ["fail"])], _carry("ut_s_1", issue=1234), set()) == 0
+    assert "is CLOSED" not in capsys.readouterr().out
+
+
+def test_closed_owner_lookup_is_inert_without_gh(capsys):
+    """Network-optional and never raises: no gh, a timeout, a 403 and a shape change
+    are the same non-answer, and none is the author's problem."""
+    def boom(*a, **k):
+        raise FileNotFoundError("gh")
+    assert check_runlogs.closed_carry_owners(_carry("ut_s_1"), runner=boom) == set()
+
+
+def test_closed_owner_lookup_reads_the_state(capsys):
+    class P:
+        returncode = 0
+        stdout = "CLOSED\n"
+    assert check_runlogs.closed_carry_owners(
+        _carry("ut_s_1", issue=99), runner=lambda *a, **k: P()
+    ) == {99}

@@ -71,6 +71,10 @@ CARRY_PATH = REPO_ROOT / "eval" / "harness" / "runlog_carry.json"
 # Match `eval/runlogs/unit/<skill>/<file>.json`
 RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 
+# For the closed-owner lookup. Hard-coded rather than derived from the git remote:
+# a fork's `origin` points at the fork, whose issue numbers are not these.
+_REPO_SLUG = "PioneerAIAcademy/cowork-genealogy"
+
 # Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
 # An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
 # (the agent body is embedded in those skills' run-log snapshots), exactly
@@ -647,6 +651,12 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
     return fails
 
 
+# The run-log schema's runs[].outcome enum. Anything else is a hand edit, and the
+# guard exists because an unrecognized string is modal-aggregated straight through
+# and matches neither "fail" nor "pass" -- the exact exit-0-having-done-nothing
+# shape CLAUDE.md names.
+_RUN_OUTCOMES = frozenset({"pass", "partial", "fail", "aborted"})
+
 _CARRY_REQUIRED = ("skill", "test_id", "outcome", "issue", "filed", "review_by",
                    "baseline", "reason")
 _CARRY_OPTIONAL = ("flaky",)
@@ -706,7 +716,53 @@ def _parse_iso_date(value) -> date | None:
         return None
 
 
-def rule6_outcomes(skill: str, log: dict, filename: str, carry: dict[str, dict]) -> int:
+# Whole-call budget for the closed-owner lookup. Warn-only, so a slow or absent
+# `gh` must cost seconds and then get out of the way.
+_GH_TIMEOUT_SECONDS = 20
+
+
+def closed_carry_owners(carry: dict[str, dict], runner=subprocess.run) -> set[int]:
+    """-> the set of carried-red owner issues that are CLOSED.
+
+    Split item 4 of issue #2684. Warn-only and **never raises**: it needs the
+    network, so it is silently inert with no `gh`, no token, or no connection. A
+    gate that hard-fails on a GitHub blip fails work the author was entitled to
+    land — and `review_by` is the arm that works offline regardless.
+
+    It exists because three of the five live `xfail` markers cite an issue that is
+    already closed (#2173, #2030, #1967), so their stated removal condition can
+    never be met and nothing notices. The same rot is what the carry file would
+    grow without this.
+    """
+    issues = sorted({e["issue"] for e in carry.values() if e.get("issue")})
+    if not issues:
+        return set()
+    closed: set[int] = set()
+    for number in issues:
+        try:
+            proc = runner(
+                ["gh", "api", f"repos/{_REPO_SLUG}/issues/{number}",
+                 "--jq", ".state"],
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=_GH_TIMEOUT_SECONDS,
+            )
+            if proc.returncode == 0 and (proc.stdout or "").strip().upper() == "CLOSED":
+                closed.add(number)
+        except Exception:
+            # Blanket, and deliberate: every failure mode here — no gh, no token,
+            # a 403, a timeout, a shape change — is the same non-answer, and none
+            # of them is the author's problem.
+            return set()
+    return closed
+
+
+def rule6_outcomes(
+    skill: str,
+    log: dict,
+    filename: str,
+    carry: dict[str, dict],
+    closed_owners: set[int] | None = None,
+) -> int:
     """Rule 6 (blocking): no unsuppressed test in this run log resolves to
     `fail` or `aborted`.
 
@@ -731,6 +787,16 @@ def rule6_outcomes(skill: str, log: dict, filename: str, carry: dict[str, dict])
                 f"skill `{skill}`: `{filename}` test `{test_id}` has no runs, so "
                 f"its outcome cannot be resolved. The schema requires at least "
                 f"one; re-run the harness rather than hand-editing the log.",
+            )
+            fails += 1
+            continue
+        unknown = [o for o in per_run if o not in _RUN_OUTCOMES]
+        if unknown:
+            gh_error(
+                f"skill `{skill}`: `{filename}` test `{test_id}` has run outcome(s) "
+                f"{sorted(set(unknown))!r}, outside the schema's "
+                f"{sorted(_RUN_OUTCOMES)}. A value this gate does not recognise would "
+                f"otherwise resolve to neither fail nor pass and wave the test through.",
             )
             fails += 1
             continue
@@ -774,6 +840,11 @@ def rule6_outcomes(skill: str, log: dict, filename: str, carry: dict[str, dict])
                 fails += 1
             else:
                 owner = f"issue #{entry['issue']}" if entry.get("issue") else "NO OWNING ISSUE — needs one"
+                if entry.get("issue") and entry["issue"] in (closed_owners or set()):
+                    owner = (
+                        f"issue #{entry['issue']} is CLOSED — this red's stated "
+                        f"removal condition can never be met; re-own it or fix it"
+                    )
                 gh_warning(
                     f"skill `{skill}`: carried red `{test_id}` ({agg}), "
                     f"review by {entry['review_by']}. {owner}.",
@@ -876,15 +947,23 @@ def main() -> int:
     # candidate regardless of date, so a PR adding a red `v2_<ts>.json` beside a
     # clean released `v1.json` would be read as clean (`init-project` has exactly
     # that shape today). The log a PR ADDS is the one it is accountable for.
+    deleted_paths = set(git_diff_deleted_paths())
+    touched_paths = git_diff_touched_paths()
+
+    # Intersected with `touched_paths` because the two git views disagree:
+    # `git_diff_changes` is a TWO-dot `A..B` and `git_diff_touched_paths` a THREE-dot
+    # `A...B`. When a branch's base has moved past a prune commit the branch has not
+    # rebased onto, the two-dot view reports that pruned run log as ADDED while the
+    # three-dot view does not see it at all -- so rule 6 would grade, and block on, a
+    # log the PR never touched. Verified against commit 1f8a6001. Rule 1 is insulated
+    # because it counts released logs only and a pruned candidate is never released.
     added_by_skill: dict[str, list[str]] = {}
-    for path in added_runlog_paths:
+    for path in sorted(added_runlog_paths & set(touched_paths)):
         m = RUNLOG_PATH_RE.match(path)
         if not m or path.endswith(".ann.json"):
             continue
         if classify(m.group(2)).kind in ("released", "candidate"):
             added_by_skill.setdefault(m.group(1), []).append(m.group(2))
-    deleted_paths = set(git_diff_deleted_paths())
-    touched_paths = git_diff_touched_paths()
     touched_skills: set[str] = set()
     touched_agents: set[str] = set()
     touched_fixtures: set[tuple[str, str]] = set()
@@ -993,6 +1072,8 @@ def main() -> int:
 
     carry, carry_fails = load_carry()
     fails += carry_fails
+    graded_logs = graded_tests = 0
+    closed_owners = closed_carry_owners(carry)
 
     for skill in sorted(touched_skills):
         skill_dir = RUNLOGS_DIR / skill
@@ -1022,8 +1103,26 @@ def main() -> int:
         # A PR that adds none (an annotation-only or SKILL.md-only change) is not
         # accountable for the committed baseline, so it is not graded here.
         for added in sorted(added_by_skill.get(skill, [])):
-            added_log = json.loads((skill_dir / added).read_text(encoding="utf-8"))
-            fails += rule6_outcomes(skill, added_log, added, carry)
+            # Guarded for the same reason rules 3 and 5 are: an unguarded parse dies
+            # with a raw traceback naming no file, taking every later skill's checks
+            # down with it. A PR-ADDED run log is the likeliest carrier of an
+            # unresolved conflict marker, since run-log renames collide on any merge
+            # where both sides ran the harness.
+            try:
+                added_log = json.loads(
+                    (skill_dir / added).read_text(encoding="utf-8")
+                )
+            except json.JSONDecodeError as exc:
+                gh_error(
+                    f"skill `{skill}`: added run log `{added}` is not valid JSON "
+                    f"({exc}). If this is a merge conflict marker, re-run the harness "
+                    f"rather than resolving it by hand.",
+                )
+                fails += 1
+                continue
+            graded_logs += 1
+            graded_tests += len(added_log.get("tests") or [])
+            fails += rule6_outcomes(skill, added_log, added, carry, closed_owners)
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See
@@ -1048,6 +1147,13 @@ def main() -> int:
         filename, log = latest
         rule2_fixture_touched(skill, log, filename, touched_fixture_paths)
 
+    # Every way rule 6 can end up inert also prints a clean pass, so it reports its
+    # denominator -- the same standard eval/CLAUDE.md sets for conflict_verdict_report.
+    # `rule 6: graded 0 run log(s)` means it proved nothing, not that nothing is wrong.
+    print(
+        f"\nrule 6: graded {graded_logs} added run log(s), "
+        f"{graded_tests} test(s), against {len(carry)} carried red(s)."
+    )
     if fails:
         print(f"\n{fails} rule violation(s). See annotations above.")
         return 1

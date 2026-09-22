@@ -38,21 +38,56 @@ def test_runlog_reexports_the_same_objects_not_copies():
     assert runlog._OUTCOME_RANK is _OUTCOME_RANK
 
 
+def _bare(code: str) -> subprocess.CompletedProcess:
+    """Run `code` on an interpreter with no site-packages and no environment.
+
+    `sys.executable` is the uv venv, so `-S -E` is what strips it back to roughly
+    the dependency-free runner CI gives us. Verified: `-S -E -c "import jsonschema"`
+    raises ModuleNotFoundError.
+    """
+    return subprocess.run(
+        [sys.executable, "-S", "-E", "-c", code],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+
+
 def test_outcomes_imports_on_a_bare_interpreter():
-    """The failure this module exists to prevent. `sys.executable` is the uv venv,
-    so it is NOT the right interpreter — `-S -E` strips site-packages and the
-    environment, approximating the dependency-free runner CI gives us."""
-    proc = subprocess.run(
-        [sys.executable, "-S", "-E", "-c",
-         "import sys; sys.path.insert(0, %r);"
-         "from harness.outcomes import aggregate_per_run_outcome as a;"
-         "print(a(['pass', 'pass', 'fail']))" % str(HARNESS_DIR)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
+    proc = _bare(
+        "import sys; sys.path.insert(0, %r);"
+        "from harness.outcomes import aggregate_per_run_outcome as a;"
+        "print(a(['pass', 'pass', 'fail']))" % str(HARNESS_DIR)
     )
     assert proc.returncode == 0, f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
     assert proc.stdout.strip() == "pass"
+
+
+def test_check_runlogs_itself_imports_on_a_bare_interpreter():
+    """The guard that matters, and the one the leaf test above does NOT give.
+
+    `outcomes.py` exists so `scripts/check_runlogs.py` can aggregate without
+    pulling jsonschema/referencing onto CI's dependency-free interpreter. Testing
+    only `outcomes.py` leaves the CONSUMER unprotected: swapping its import back to
+    `harness.runlog` breaks CI for every PR in the repo and every test still passes.
+    Measured — that swap left 91/91 green while this same invocation raised
+    ModuleNotFoundError. So this loads the script the workflow actually runs, which
+    also covers its other three stdlib-only imports (snapshot, review_sample,
+    versioning) regressing the same way.
+    """
+    script = HARNESS_DIR / "scripts" / "check_runlogs.py"
+    proc = _bare(
+        "import importlib.util, sys;"
+        "sys.path.insert(0, %r);"
+        "spec = importlib.util.spec_from_file_location('cr', %r);"
+        "m = importlib.util.module_from_spec(spec);"
+        "spec.loader.exec_module(m);"
+        "print('loaded')" % (str(HARNESS_DIR), str(script))
+    )
+    assert proc.returncode == 0, (
+        "check_runlogs.py must import with no third-party packages — the workflow "
+        f"runs it after actions/setup-python with no dependency step.\n"
+        f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+    )
+    assert proc.stdout.strip() == "loaded"
 
 
 @pytest.mark.parametrize(

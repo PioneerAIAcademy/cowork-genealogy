@@ -246,7 +246,8 @@
       "filed": "2026-09-22",
       "review_by": "2026-11-21",
       "baseline": "v1_2026-09-17_15-04-52.json",
-      "reason": "baseline red carried from v1_2026-09-17_15-04-52.json"
+      "reason": "never passes in the last five committed runs and aborts on max_turns; flaky per the 2026-09-21 ruling, inert in practice",
+      "flaky": true
     },
     {
       "skill": "research-plan",
