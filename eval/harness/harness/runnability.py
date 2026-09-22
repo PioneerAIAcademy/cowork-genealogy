@@ -201,14 +201,19 @@ def check_runnable(
     # and run-time agree on which names are live: parse_stub_skills applies
     # the same normalization the hook matches against (both entry forms,
     # malformed entries dropped — the JSON Schema is the gate for shape).
+    #
+    # An entry may also name an agent with no skill directory: a callee
+    # converted from a skill to an agent, whose spawn the hook stubs instead
+    # (`stub_agents`, issue #2825).
     stubbed = parse_stub_skills(spec.execution)
+    agents_dir = Path(skills_dir).parent / "agents"
     for name in stubbed:
-        if not (Path(skills_dir) / name).is_dir():
+        if not (Path(skills_dir) / name).is_dir() and not (agents_dir / f"{name}.md").is_file():
             return RunnabilityResult(
                 False,
                 f"execution.stub_skills entry '{name}' is not an existing "
-                f"skill (no directory at {skills_dir}/{name}) — the stub "
-                f"would silently never fire",
+                f"skill or agent (no directory at {skills_dir}/{name}, no "
+                f"{agents_dir}/{name}.md) — the stub would silently never fire",
             )
 
     # A callee in BOTH run_skills and stub_skills is the one combination that

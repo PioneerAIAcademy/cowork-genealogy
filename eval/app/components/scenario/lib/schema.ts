@@ -179,6 +179,7 @@ export interface Source {
   notes: string | null
   log_entry_id?: string | null
   transcription?: string | null
+  transcription_truncated?: true
 }
 
 export interface Assertion {

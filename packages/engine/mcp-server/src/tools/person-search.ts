@@ -350,7 +350,8 @@ export const personSearchToolSchema = {
     "count). Additional fields narrow the ranking. Returns a ranked list of " +
     "candidate tree persons, each with a tree-person ID and simplified " +
     "GedcomX (name + facts), so the user can pick which one to research. To " +
-    "expand a chosen match into parents, spouses, and children, call " +
+    "expand a chosen match into parents, siblings, spouses, and children, " +
+    "call " +
     "person_read with relatives: true. Requires authentication — call the " +
     "login tool first if not logged in. For ambiguous place names, call the " +
     "place_search tool first. " +
