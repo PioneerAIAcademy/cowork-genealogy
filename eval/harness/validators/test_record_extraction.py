@@ -566,18 +566,68 @@ _RELATION_CATEGORY = {
     "brother": "sibling", "sister": "sibling", "sibling": "sibling",
 }
 
-_RELATION_WORD_IN_VALUE = re.compile(
-    r"\b(" + "|".join(_RELATION_CATEGORY) + r")\b", re.IGNORECASE
+# WHERE the relation word sits decides whose role it names, and a rule that
+# ignores position was wrong on 22 of the 37 it flagged over the e2e run
+# logs (27 of 47 over the full population that
+# `scripts/measure_relationship_direction.py --counterfactual` reports). `child of Jim Neal` states the SUBJECT's own role.
+#
+# A value LABELS the other party in two shapes that need different patterns,
+# and an earlier single pattern spanning `[^,]*?` was wrong in BOTH directions:
+# a stray `[KEY:` colon suppressed real sibling refusals, and one comma in
+# `Father of the groom, named as X` made it miss and wrongly refuse.
+#
+# Only ONE label guard is needed, and this is it. A label with no ` of `
+# -- `father: Jan Roelfs`, `father named as Casper` -- never reaches here:
+# `_STATES_SUBJECT_ROLE` requires ` of `, so those are already skipped.
+# A second guard for them was written, measured against the corpus, found
+# to change nothing, and deleted; do not add it back.
+#
+# By role: `Father of groom named as Tellef`. The party being named is
+# identified by ROLE -- a bare lowercase word -- so it is the other party. A
+# CAPITALISED token there is a name, which means the value states the
+# subject's own tie to that person and must not be skipped:
+# `sibling of Lucas G. Witbeck (named as one of Gerrit Witbeck's children)` is
+# a real refusal, and the loose pattern used to swallow it.
+_LABELS_BY_ROLE = re.compile(
+    r"^\s*(?:the\s+)?(?:" + "|".join(_RELATION_CATEGORY) + r")\s+of\s+"
+    r"(?:the\s+)?(\w+)[\s,]*(?::|\s+named\b)",
+    re.IGNORECASE,
+)
+_STATES_SUBJECT_ROLE = re.compile(
+    r"^\s*(?:the\s+)?(" + "|".join(_RELATION_CATEGORY) + r")\s+of\s+",
+    re.IGNORECASE,
 )
 
 
 def _relationship_category(relationship_type):
     """Category for a `relationship_type`, ignoring an `_inferred` suffix.
-    Returns None for a spelling this table does not know (`stepfather`,
-    `father_in_law`, …) so the check SKIPS rather than guesses — an unknown
-    type is not evidence of disagreement."""
-    base = str(relationship_type or "").lower().replace("_inferred", "").strip()
+    Returns None for a spelling this table does not know (`grandparent`, `ParentChild`,
+    `administrator` — the commonest in the corpus; `ward` and `grandchild`
+    follow) so the check SKIPS
+    rather than guesses: an unknown type is not evidence of disagreement."""
+    # Anchored, and one suffix only -- see the note on the TypeScript
+    # mirror: `str.replace` strips every occurrence here and only the
+    # first there, so a doubled suffix used to mean different things.
+    base = re.sub(r"_inferred$", "", str(relationship_type or "").lower().strip())
     return _RELATION_CATEGORY.get(base)
+
+
+def _subject_role_in_value(value):
+    """The category the VALUE claims for the record subject, or None.
+
+    None means the value does not speak to the subject's own role -- either
+    label shape, an unknown spelling, or prose naming no relation -- and the
+    caller must skip rather than guess.
+    """
+    m = _LABELS_BY_ROLE.match(value)
+    # A lowercase ASCII token is a role word, not a name. Must stay an
+    # explicit class, never .islower(): that is False for a token with no
+    # case (`2`) where the TypeScript mirror's `=== toLowerCase()` is
+    # true, and the two disagreed in both directions before this.
+    if m and re.fullmatch(r"[a-z]+", m.group(1)):
+        return None
+    m = _STATES_SUBJECT_ROLE.match(value)
+    return _RELATION_CATEGORY.get(m.group(1).lower()) if m else None
 
 
 def test_relationship_type_agrees_with_its_value(before_state, after_state):
@@ -593,17 +643,21 @@ def test_relationship_type_agrees_with_its_value(before_state, after_state):
       direction inversion  rt=parent  value='child of Louise Becker'
 
     This is the most dangerous classification defect of its family because the
-    two layers disagree SILENTLY. Downstream materialisation reads
-    `structured_value`, so a wrong `relationship_type` writes a wrong family
-    edge into the tree — or one pointing the wrong way — while the assertion
-    still reads correctly to a human checking `value`. The LLM judge reads the
+    two layers disagree SILENTLY. NOTHING in the engine reads
+    `structured_value.relationship_type` today — `materialize-facts.ts`
+    skips `relationship` fact types entirely and reads only
+    `related_person_role` — so the wrong value sits in `research.json`
+    reading perfectly to a human checking `value`, and bites whoever reads
+    the machine-readable layer later. A latent defect, not an inert one:
+    the correlation skills are written against this field. The LLM judge reads the
     prose and passes it; a `value`-only matcher passes it too. Nothing else in
     the harness looks at both fields at once.
 
     Compared by CATEGORY (parent / child / spouse / sibling), so `spouse` beside
-    "wife of …" agrees. A value naming several relations passes if the type
-    matches any of them, and a value naming none is skipped — there is nothing
-    to disagree with.
+    "wife of …" agrees. Only the value's OPENING claim is compared, so a
+    second relation named later ("child of Thomas Flynn and brother of Mary")
+    does not contradict it; a value naming none is skipped — there is
+    nothing to disagree with.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -623,19 +677,19 @@ def test_relationship_type_agrees_with_its_value(before_state, after_state):
         want = _relationship_category(rel_type)
         if not want or not value:
             continue
-        found = {
-            _RELATION_CATEGORY[w.lower()]
-            for w in _RELATION_WORD_IN_VALUE.findall(value)
-        }
-        if found and want not in found:
+        states = _subject_role_in_value(value)
+        if states and want != states:
             errors.append(
                 f"assertions[{a.get('id', '?')}] (record_role="
                 f"'{a.get('record_role')}'): relationship_type="
                 f"{rel_type!r} is a {want} relation, but value={value!r} "
-                f"states a {'/'.join(sorted(found))} relation. The two layers "
-                f"must agree — materialisation reads structured_value, so this "
-                f"writes the wrong family edge (or the right one backwards) "
-                f"while the value still reads correctly"
+                f"states the subject is a {states}. `relationship_type` is "
+                f"the record subject's OWN role and `related_person_role` is "
+                f"the other party's, so the two layers must agree. Nothing "
+                f"reads structured_value.relationship_type today, so this "
+                f"is silent: the value still reads correctly to a human, "
+                f"and whoever reads the machine-readable layer later gets "
+                f"the wrong family edge, or the right one backwards"
             )
 
     assert not errors, (

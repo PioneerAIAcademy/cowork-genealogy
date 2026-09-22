@@ -156,9 +156,9 @@
           "jurisdiction": "Schuylkill County, Pennsylvania",
           "date_range": "1845-1850",
           "repository": "FamilySearch",
-          "rationale": "Catholic baptism record could provide primary direct evidence of parentage, but pre-1850 Irish Catholic parish records for Schuylkill County are fragmentary and largely unavailable on FamilySearch. Three converging sources make the father identification defensible without this record type.",
+          "rationale": "Patrick's Catholic baptism would be the one original record carrying primary, direct evidence of his father. St. John the Baptist, Pottsville (est. 1827) is the Schuylkill County parish whose registers cover a birth of ca. 1845.",
           "fallback_for": null,
-          "status": "skipped"
+          "status": "completed"
         },
         {
           "id": "pli_009",
@@ -250,6 +250,17 @@
       "outcome": "positive",
       "results_examined": 9,
       "notes": "1870 census: Patrick Flynn age 25 in household of Thomas Flynn, Schuylkill Co. — corroborates 1850/1860 placement. 1880 census: Patrick Flynn age 35, head of own household, wife Margaret, no parentage information (relationship column says 'Self'). 1900 census: Patrick Flynn age 55, same household. Later censuses corroborate identity but add no new parentage evidence beyond 1870.",
+      "external_site": null
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_008",
+      "performed": "2026-05-05T11:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "Patrick", "jurisdiction": "Schuylkill County, Pennsylvania", "date_range": "1845-1850", "collection": "St. John the Baptist Catholic Church, Pottsville — baptismal register" },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Baptismal register of St. John the Baptist, Pottsville — the parish serving Schuylkill County Irish Catholics at Patrick's birth — read page by page for 1845-1850. No baptism for a Patrick Flynn, and no Flynn entry naming a Thomas Flynn as father. The register is continuous across these years, so this is a searched negative rather than a gap in the record: the one record type that could have supplied original, primary, direct evidence of the father was looked for and is not there.",
       "external_site": null
     }
   ],
