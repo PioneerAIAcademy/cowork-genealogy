@@ -7,7 +7,8 @@ import {
   assertKnownGroupNames,
   conceptIdsForGroups,
 } from "../utils/record-type-groups.js";
-import { standardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
+import { resolveStandardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
+import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   VolumeSearchInput,
@@ -18,14 +19,10 @@ import type {
   MetadataRmsSearchResponse,
   MetadataRmsGroup,
   MetadataRmsCoverageEntry,
-  FulltextGroupNumberResponse,
 } from "../types/volume-search.js";
 
 const RMS_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/records/rms/group-service/group/search";
-const FULLTEXT_GROUP_URL =
-  "https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber";
-
 // `concept-id:…` is an opaque internal id with nothing a reader can use. A
 // `title:…` prefix is different in kind: it marks *provenance* — the value came
 // from the volume's title rather than the concept taxonomy — and what follows it
@@ -138,29 +135,27 @@ async function callGroupSearch(
     throw new Error("FamilySearch volume search API error: 403 Forbidden.");
   }
   if (!response.ok) {
+    // `statusText` is empty on a bodyless response, which is how a real upstream
+    // 409 reached the user as "409 ." -- a status, a space and a full stop, with
+    // nothing to act on. Read the body so the message carries whatever upstream
+    // did say, and say nothing about WHY it said it: no 409 here is reproducible,
+    // and a guessed upstream diagnosis is a claim we cannot defend.
+    const body = (await response.text().catch(() => "")).trim();
+    const detail = body ? ` ${body}` : "";
+    if (response.status === 409) {
+      throw new Error(
+        `FamilySearch volume search API error: 409.${detail} ` +
+          "A pageToken is only valid alongside a byte-identical search and it expires; " +
+          "re-issue this search from the first page with the same standardPlace, year " +
+          "range and recordTypeGroups, omitting pageToken."
+      );
+    }
     throw new Error(
-      `FamilySearch volume search API error: ${response.status} ${response.statusText}.`
+      `FamilySearch volume search API error: ${response.status} ${response.statusText}.${detail}`
     );
   }
 
   return (await response.json()) as MetadataRmsSearchResponse;
-}
-
-async function fetchFulltextSearchable(
-  groupNames: string[],
-  token: string
-): Promise<Set<string> | null> {
-  const ids = groupNames.join(",");
-  const url = `${FULLTEXT_GROUP_URL}?ids=${encodeURIComponent(ids)}`;
-
-  try {
-    const response = await fetchWithRetry(url, { headers: rmsHeaders(token) });
-    if (!response.ok) return null;
-    const data = (await response.json()) as FulltextGroupNumberResponse;
-    return new Set(data.ids ?? []);
-  } catch {
-    return null;
-  }
 }
 
 function derivePrefix(groupName: string): string {
@@ -269,15 +264,30 @@ export async function volumeSearchTool(
   const token = await getValidToken(principal);
 
   // Resolve the standard place name -> placeId -> all of its representation
-  // IDs. standardPlaceToPlaceId returns null when the name is unresolvable or
-  // resolves to multiple distinct spots (guards the fan-out).
-  const placeId = await standardPlaceToPlaceId(input.standardPlace);
-  if (!placeId) {
+  // IDs. The two failures are answered separately: a name that matches nothing
+  // is a different problem from one that matches several spots, and the second
+  // is recoverable in one call once the candidates are named. Never auto-pick
+  // among them -- that researches the wrong jurisdiction silently.
+  const resolution = await resolveStandardPlaceToPlaceId(input.standardPlace);
+  if (resolution.kind === "ambiguous") {
+    // The candidates go in the message because the caller demonstrably does not
+    // notice a bare failure: in the session behind issue #1988 the agent neither
+    // retried nor called place_search, and Franklin County was dropped from the
+    // research while the agent reported having searched it.
+    throw new Error(
+      `"${input.standardPlace}" matches more than one place: ` +
+        `${resolution.candidates.join("; ")}. ` +
+        "Pass the exact full name of the one you mean as standardPlace, " +
+        "or call place_search to see the full list."
+    );
+  }
+  if (resolution.kind === "unresolved") {
     throw new Error(
       `Could not resolve "${input.standardPlace}" to a single place; ` +
         "use place_search to get a standard place name first."
     );
   }
+  const placeId = resolution.placeId;
 
   const placeRepIds = await placeIdToRepIds(placeId);
   if (placeRepIds.length === 0) {

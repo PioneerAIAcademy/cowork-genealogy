@@ -245,7 +245,7 @@ def load_manifest_tools() -> set[str] | None:
         return None
     try:
         data = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return None
     names = {t.get("name") for t in data.get("tools", []) if isinstance(t, dict)}
     return {n for n in names if isinstance(n, str)}

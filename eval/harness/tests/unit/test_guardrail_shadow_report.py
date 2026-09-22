@@ -36,6 +36,8 @@ from e2e.guardrail_shadow_report import (
     format_unnamed_delegate,
     scan_tree_encoding,
     format_tree_encoding,
+    scan_tree_fact_assertion,
+    format_tree_fact_assertion,
     UnnamedDelegateScan,
 )
 from harness.skill_invocation import (
@@ -44,6 +46,7 @@ from harness.skill_invocation import (
     CONFLICT_UNPERSISTED_KIND,
     PERSON_EVIDENCE_DENY_KIND,
     TREE_ENCODING_KIND,
+    TREE_FACT_ASSERTION_KIND,
     WARNINGS_UNCHECKED_KIND,
 )
 
@@ -347,6 +350,28 @@ def test_scan_provenance_excludes_deny_mode_entries(tmp_path):
     assert "kind" not in prov[0]
 
 
+def test_scan_provenance_excludes_warnings_unchecked_entries(tmp_path):
+    """The fifth exclusion, and the last one in the tuple with no test.
+
+    `find_relationship_writes_without_warnings_check` entries carry `detail`, so
+    without their line in the tuple they are double counted in the issue-#963
+    provenance bucket -- the same defect this change fixed for
+    `TREE_ENCODING_KIND`. Deleting that one line left this file green, which is
+    the shape the repo's lint doctrine calls coverage that cannot fail.
+    """
+    warnings_entry = {
+        "index": -1,
+        "tool": "tree.gedcomx.json",
+        "required_skill": "check-warnings",
+        "kind": WARNINGS_UNCHECKED_KIND,
+        "detail": "new ParentChild/Couple relationship written with no person_warnings call",
+    }
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), warnings_entry])
+    prov = scan_provenance([p])
+    assert len(prov) == 1
+    assert prov[0]["required_skill"] == "person-evidence"
+
+
 # --- replay_provenance (issue #1231: a baseline over the pre-hook corpus) -----
 # The stored entries above only exist for runs made AFTER #1178 merged. Replay
 # recomputes the same check from `tool_calls` + the fixture's committed seed
@@ -587,9 +612,9 @@ def test_format_provenance_replay_reports_rate_against_the_denominator(tmp_path)
     assert "lower bound" in text  # the same-turn caveat is stated, not implied
 
 
-# --- replay_post_hoc: the three post-hoc checks, recomputed over history ------
+# --- replay_post_hoc: the six post-hoc checks, recomputed over history --------
 # The scan_* readers above report what a run STORED, so each check reads zero
-# over every run made before it shipped — all three landed in August against a
+# over every run made before it shipped — the first three landed in August against a
 # corpus that is 84% July. These tests are controls for the REPLAY PLUMBING
 # (sidecar resolution, seed-tree load, per-check skip discipline), not for the
 # detectors: those already have firing predicate controls in
@@ -1224,3 +1249,353 @@ def test_format_tree_citation_nulling_reports_sources_and_runs():
     assert "3 uploaded tree source(s)" in out
     assert "across 2 run(s)" in out
     assert "#1358" in out
+
+
+# --- tree-fact/assertion agreement bucket (issues #2472, #2558) --------------
+# The trio every other kind has, and the reason it is not optional: without its
+# own scan_, its exclusion from the #963 provenance bucket, and a formatter that
+# counts runs rather than entries, the three new call sites are mutation-provably
+# dead (senior review of #1438).
+
+
+def _fact_assertion_entry(field="place", fact_id="F4"):
+    return {
+        "index": -1,
+        "tool": "tree.gedcomx.json",
+        "kind": TREE_FACT_ASSERTION_KIND,
+        "owner_id": "I1",
+        "fact_id": fact_id,
+        "assertion_id": "a_011",
+        "field": field,
+        "detail": (
+            f"I1/{fact_id} {field}: fact has 'Wellburn, Thames Centre, Middlesex, "
+            "Ontario, Canada' but assertion a_011 has 'Odessa, Francis No. 127, "
+            "Saskatchewan, Canada'"
+        ),
+    }
+
+
+def test_scan_tree_fact_assertion_picks_up_only_its_own_kind(tmp_path):
+    p = _write_result(
+        tmp_path / "fx", "run-1.json", [_provenance_entry(), _fact_assertion_entry()]
+    )
+    out = scan_tree_fact_assertion([p])
+    assert len(out) == 1
+    assert out[0]["kind"] == TREE_FACT_ASSERTION_KIND
+    assert out[0]["fixture"] == "fx"
+
+
+def test_the_provenance_scan_excludes_the_fact_assertion_arm(tmp_path):
+    """It carries `detail` too, so without the exclusion it would be double
+    counted as a #963 person_evidence-provenance gap."""
+    p = _write_result(
+        tmp_path / "fx", "run-1.json", [_provenance_entry(), _fact_assertion_entry()]
+    )
+    prov = scan_provenance([p])
+    assert len(prov) == 1
+    assert prov[0]["required_skill"] == "person-evidence"
+
+
+def test_the_provenance_scan_excludes_the_tree_encoding_arm(tmp_path):
+    """The exclusion that was missing until this change. `TREE_ENCODING_KIND`
+    entries carry `detail`, so each was counted a second time in the #963 bucket.
+    No committed run stores one, so no published number moved — which is why only
+    a test can hold it."""
+    te_entry = {
+        "index": -1,
+        "tool": "tree.gedcomx.json",
+        "required_skill": "proof-conclusion",
+        "kind": TREE_ENCODING_KIND,
+        "question_id": "q_001",
+        "detail": "proof summary ps_001 (tier probable, parentage) added no new tree structure",
+    }
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), te_entry])
+    prov = scan_provenance([p])
+    assert len(prov) == 1
+    assert prov[0]["required_skill"] == "person-evidence"
+
+
+def test_format_tree_fact_assertion_counts_runs_not_just_entries(tmp_path):
+    """One fact can carry a stale `place` and a stale `standard_place`, so the
+    entry count and the run count are different readings and both print."""
+    a = _write_result(
+        tmp_path / "fx1",
+        "run-1.json",
+        [_fact_assertion_entry("place"), _fact_assertion_entry("standard_place")],
+    )
+    b = _write_result(tmp_path / "fx2", "run-1.json", [_fact_assertion_entry("date")])
+    text = format_tree_fact_assertion(scan_tree_fact_assertion([a, b]))
+    assert "3 backlinked tree fact attribute(s)" in text
+    assert "across 2 run(s)" in text
+
+
+def _research_with_corrected_assertion(place="Odessa, Francis No. 127, Saskatchewan, Canada"):
+    return {
+        "assertions": [
+            {
+                "id": "a_011",
+                "source_id": "src_001",
+                "fact_type": "immigration",
+                "place": place,
+                "date": "1924",
+            }
+        ]
+    }
+
+
+def _tree_with_backlinked_fact(place="Odessa, Francis No. 127, Saskatchewan, Canada"):
+    return {
+        "persons": [
+            {
+                "id": "I1",
+                "facts": [
+                    {
+                        "id": "F4",
+                        "type": "Immigration",
+                        "assertion_id": "a_011",
+                        "sources": [{"ref": "S1"}],
+                        "place": place,
+                        "date": "1924",
+                    }
+                ],
+            }
+        ],
+        "relationships": [],
+    }
+
+
+def test_replay_fact_assertion_fires_on_a_synthetic_stale_fact(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        research=_research_with_corrected_assertion(),
+        tree=_tree_with_backlinked_fact("Wellburn, Thames Centre, Middlesex, Ontario, Canada"),
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert len(rep.fact_agreement.violations) == 1
+    v = rep.fact_agreement.violations[0]
+    assert v["kind"] == TREE_FACT_ASSERTION_KIND
+    assert v["field"] == "place"
+    assert v["fixture"] == "fx"
+    assert rep.fact_agreement.runs_scanned == 1
+    assert rep.fact_agreement.skipped == []
+
+
+def test_replay_fact_assertion_silent_when_the_fact_agrees(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        research=_research_with_corrected_assertion(),
+        tree=_tree_with_backlinked_fact(),
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.fact_agreement.violations == []
+    assert rep.fact_agreement.runs_scanned == 1
+
+
+def test_replay_fact_assertion_scans_a_run_with_no_seed_tree(tmp_path):
+    """Its denominator is deliberately NOT `missing_for_tree_encoding`'s: this
+    check never reads a seed, so a run with no fixture directory is scannable.
+    Sharing that method would have dropped it and under-reported the rate."""
+    p = _write_posthoc_run(
+        tmp_path,
+        "orphan",
+        "run-1.json",
+        research=_research_with_corrected_assertion(),
+        tree=_tree_with_backlinked_fact("Wellburn, Thames Centre, Middlesex, Ontario, Canada"),
+    )
+    rep = replay_post_hoc([p], fixtures_root=tmp_path / "no-fixtures")
+    assert rep.fact_agreement.runs_scanned == 1
+    assert rep.fact_agreement.skipped == []
+    assert len(rep.fact_agreement.violations) == 1
+    # Its seed-reading neighbour skips the same run, which is what makes the two
+    # denominators different rather than redundant.
+    assert rep.tree_encoding.runs_scanned == 0
+    assert len(rep.tree_encoding.skipped) == 1
+
+
+def test_replay_fact_assertion_names_a_run_with_no_tree_sidecar(tmp_path):
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", research=_research_with_corrected_assertion()
+    )
+    rep = replay_post_hoc([p], fixtures_root=tmp_path / "no-fixtures")
+    assert rep.fact_agreement.runs_scanned == 0
+    assert rep.fact_agreement.skipped == ["fx/run-1.json: no readable final-tree.gedcomx.json sidecar"]
+
+
+def test_fact_assertion_lines_and_the_full_detail_loop_appear_in_main(
+    tmp_path, capsys, monkeypatch
+):
+    """Pins the DELIVERABLE for this arm, on both of main()'s paths.
+
+    The direct tests above all call `scan_`/`replay_` themselves, so every one of
+    them stays green while main() never prints either line. Three separate wirings
+    are pinned here:
+
+      - the STORED line on the default command (no `--replay`);
+      - the REPLAY line, having actually scanned the run rather than skipped it;
+      - `--detail`'s post-hoc loop, which listed three of the five families and so
+        printed NOTHING for the two tree-side arms — indistinguishable from their
+        having found nothing. Asserting all six labels is what stops the next
+        family being added to the formatter and forgotten here.
+    """
+    import e2e.guardrail_shadow_report as mod
+
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    stale = "Wellburn, Thames Centre, Middlesex, Ontario, Canada"
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-2026-07-01_00-00-00.json",
+        research=_research_with_corrected_assertion(),
+        tree=_tree_with_backlinked_fact(stale),
+    )
+    # The stored half: the same entry a live run would have recorded.
+    p.write_text(
+        json.dumps(
+            {"tool_calls": [], "guardrail_shadow_violations": [_fact_assertion_entry()]}
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "E2E_FIXTURES", fixtures)
+    monkeypatch.setattr(mod, "all_result_jsons", lambda: [p])
+
+    assert mod.main(["--since", "all"]) == 0
+    stored_out = capsys.readouterr().out
+    assert "tree-fact/assertion agreement check" in stored_out
+    assert "1 backlinked tree fact attribute(s)" in stored_out
+
+    assert mod.main(["--replay", "--detail", "--since", "all"]) == 0
+    out = capsys.readouterr().out
+    replayed = out.split("Post-hoc checks REPLAYED")[1]
+    assert "fact/assertion drift" in replayed
+    assert "across 1 run(s), of 1 scanned" in replayed
+    for label in (
+        "Replayed citation-nulling",
+        "Replayed tree citation-nulling",
+        "Replayed conflict-unpersisted",
+        "Replayed warnings-unchecked",
+        "Replayed tree-encoding",
+        "Replayed fact/assertion drift",
+    ):
+        assert label in out, f"--detail never printed {label}"
+
+
+def test_fact_agreement_scans_a_run_whose_log_is_unreadable(tmp_path):
+    """The deviation this arm ships, pinned in the direction that matters.
+
+    `missing_for_fact_agreement` deliberately does NOT inherit
+    `missing_for_tree_citation`'s `run_log is None` skip, because the predicate
+    reads two documents and never `tool_calls`. Nothing else can catch a
+    regression here: no committed run has an unreadable log alongside readable
+    sidecars, so a corpus replay would report the same number either way, and a
+    denominator that silently shrank is exactly what `PostHocReplay`'s docstring
+    exists to warn about. Re-adding the run-log requirement leaves the rest of
+    this file green; it reds this test.
+    """
+    stale = "Wellburn, Thames Centre, Middlesex, Ontario, Canada"
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        research=_research_with_corrected_assertion(),
+        tree=_tree_with_backlinked_fact(stale),
+    )
+    p.write_text("{ not a run log", encoding="utf-8")  # log unreadable, sidecars fine
+
+    rep = replay_post_hoc([p], fixtures_root=tmp_path / "no-fixtures")
+    assert rep.fact_agreement.runs_scanned == 1
+    assert rep.fact_agreement.skipped == []
+    assert len(rep.fact_agreement.violations) == 1
+    # Its run-log-reading neighbour skips the same run, which is the difference
+    # the deviation exists to create.
+    assert rep.tree_citation.runs_scanned == 0
+    assert rep.tree_citation.skipped == ["fx/run-1.json: unreadable run log"]
+
+
+def test_a_stored_scan_names_a_cp1252_run_log_instead_of_dying_on_it(tmp_path):
+    """`UnicodeDecodeError` is a ValueError, not an OSError, so before the shared
+    `UNREADABLE_FILE` tuple a single run log written in the Windows default
+    encoding raised out of every stored scan and took the whole report with it,
+    rather than being named and skipped.
+
+    Written as raw bytes because the point is a file this process would not have
+    produced. The clean run beside it is the positive control: the scan must
+    still find the entry it is looking for, not merely survive.
+    """
+    d = tmp_path / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    bad = d / "run-bad.json"
+    bad.write_bytes(
+        json.dumps(
+            {"guardrail_shadow_violations": [_fact_assertion_entry()], "note": "Odéssa"},
+            ensure_ascii=False,
+        ).encode("cp1252")
+    )
+    good = _write_result(d, "run-good.json", [_fact_assertion_entry()])
+
+    out = scan_tree_fact_assertion([bad, good])
+    assert len(out) == 1
+    assert out[0]["fixture"] == "fx"
+    # every other stored scan reads the same file through the same helper
+    assert scan_provenance([bad, good]) == []
+
+
+def test_replay_fact_assertion_names_a_run_with_no_research_sidecar(tmp_path):
+    """The other half of this arm's denominator, which nothing else pins.
+
+    Deleting the research row from `missing_for_fact_agreement` leaves every
+    other test in this file green, and a run with no `final-research.json` would
+    then be counted into `runs_scanned` as a clean scan instead of being named in
+    `skipped`. That is the "a denominator that quietly grew reads as a clean
+    corpus" failure `replay_post_hoc`'s own skip discipline exists to prevent,
+    and no corpus replay can catch it: every committed run has a readable
+    research sidecar today.
+    """
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tree=_tree_with_backlinked_fact("Wellburn")
+    )
+    rep = replay_post_hoc([p], fixtures_root=tmp_path / "no-fixtures")
+    assert rep.fact_agreement.runs_scanned == 0
+    assert rep.fact_agreement.skipped == [
+        "fx/run-1.json: no readable final-research.json sidecar"
+    ]
+
+
+def test_no_reader_in_the_report_module_narrows_the_unreadable_tuple():
+    """Makes `UNREADABLE_FILE`'s own comment true instead of aspirational.
+
+    That comment says the constant is kept in one place "so a seventh reader
+    cannot quietly narrow it" -- but nothing stopped a new reader writing
+    `except (json.JSONDecodeError, OSError)` inline, which is the shape that put
+    `UnicodeDecodeError` back into this module five times over. A claim in a
+    comment is not a guard; this is the guard.
+
+    Scoped to this module deliberately. The same class is open across the wider
+    harness (48 narrow clauses in 30 files, counted by AST), which is a repo-wide
+    lint rather than something to bolt on here.
+    """
+    import ast
+    from pathlib import Path
+
+    import e2e.guardrail_shadow_report as mod
+
+    source = Path(mod.__file__).read_text(encoding="utf-8")
+    offenders = []
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.ExceptHandler) or node.type is None:
+            continue
+        caught = [
+            n.attr if isinstance(n, ast.Attribute) else getattr(n, "id", "")
+            for n in ast.walk(node.type)
+        ]
+        if "JSONDecodeError" in caught and "UnicodeDecodeError" not in caught:
+            offenders.append(node.lineno)
+    assert offenders == [], (
+        "these except clauses spell the tuple out and omit UnicodeDecodeError; "
+        f"use UNREADABLE_FILE instead (lines {offenders})"
+    )
