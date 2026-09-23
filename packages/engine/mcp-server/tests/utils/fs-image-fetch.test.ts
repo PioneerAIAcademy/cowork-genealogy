@@ -399,8 +399,11 @@ describe("fetchFsImageBytes — bad-identifier ark guidance", () => {
   it("does not tell the agent an image ark comes from image_search", async () => {
     mockErrorResponse(400, "Bad Request");
 
-    const err = await fetchFsImageBytes(ARK_URL_31, undefined, LOCAL).catch(
-      (e: unknown) => e as Error
+    const err = await fetchFsImageBytes(ARK_URL_31, undefined, LOCAL).then(
+      () => {
+        throw new Error("expected the fetch to reject");
+      },
+      (e: unknown) => e as Error,
     );
     expect(err.message).not.toMatch(/ark comes from .*image_search/);
     expect(err.message).toMatch(/image_search returns image ids, not arks/);
