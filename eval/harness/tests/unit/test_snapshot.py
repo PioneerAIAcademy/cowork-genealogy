@@ -409,3 +409,67 @@ def test_expected_outcome_is_not_cosmetic():
     from harness.snapshot import _COSMETIC_TEST_FIELDS
 
     assert "expected_outcome" not in _COSMETIC_TEST_FIELDS
+
+
+# ---- the suite's own agent (issue #1253) ---------------------------------
+
+
+def test_build_snapshot_embeds_the_suites_own_agent_with_no_skill_dir(tmp_path: Path):
+    """An agent-keyed suite: `test.skill` names an agent file and there is no
+    skill directory, so the `@plugin:` scan has no SKILL.md to read.
+
+    This is the test that reds without the rule. Without it the snapshot omits
+    the very body the suite grades, so editing the agent leaves the run log
+    ACTIVE and its grades are quoted forward against prose that changed — a
+    suite that cannot go stale is a suite that cannot be trusted.
+    """
+    repo = tmp_path
+    agents_dir = repo / "packages" / "engine" / "plugin" / "agents"
+    agents_dir.mkdir(parents=True)
+    (agents_dir / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\n---\nagent body\n", encoding="utf-8"
+    )
+    tests_dir = repo / "eval" / "tests" / "unit" / "gps-mentor"
+    tests_dir.mkdir(parents=True)
+    (tests_dir / "rubric.md").write_text("# Rubric\n", encoding="utf-8")
+
+    assert not (repo / "packages" / "engine" / "plugin" / "skills" / "gps-mentor").exists()
+
+    snap = build_snapshot(skill="gps-mentor", repo_root=repo)
+    assert "packages/engine/plugin/agents/gps-mentor.md" in snap
+    assert snap["packages/engine/plugin/agents/gps-mentor.md"] == hash_content(
+        "---\nname: gps-mentor\n---\nagent body\n"
+    )
+    assert "eval/tests/unit/gps-mentor/rubric.md" in snap
+
+
+def test_build_snapshot_own_agent_is_a_noop_for_a_pair(tmp_path: Path):
+    """For a skill-agent pair the `@plugin:` scan already embeds the same path,
+    so the rule adds no key and changes no hash.
+
+    That is why it invalidates no existing run log and buys no paid re-run —
+    verified across all 27 committed suites, and pinned here.
+    """
+    repo = tmp_path
+    skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "search-images"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: search-images\n---\nDelegate to `@plugin:search-images`.\n",
+        encoding="utf-8",
+    )
+    agents_dir = repo / "packages" / "engine" / "plugin" / "agents"
+    agents_dir.mkdir(parents=True)
+    (agents_dir / "search-images.md").write_text(
+        "---\nname: search-images\n---\nagent body\n", encoding="utf-8"
+    )
+
+    snap = build_snapshot(skill="search-images", repo_root=repo)
+    assert [k for k in snap if k.startswith("packages/engine/plugin/agents/")] == [
+        "packages/engine/plugin/agents/search-images.md"
+    ]
+
+
+def test_build_snapshot_skill_with_no_same_named_agent_embeds_nothing_extra(tmp_path: Path):
+    repo = _skill_repo(tmp_path)
+    snap = build_snapshot(skill="s1", repo_root=repo)
+    assert not [k for k in snap if k.startswith("packages/engine/plugin/agents/")]

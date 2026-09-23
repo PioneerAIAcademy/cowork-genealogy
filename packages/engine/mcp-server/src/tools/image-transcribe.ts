@@ -4,7 +4,11 @@ import {
   resolveFsImageInput,
   fetchFsImageBytes,
 } from "../utils/fs-image-fetch.js";
-import { saveSourceImage, recordImageReadCap } from "../utils/image-store.js";
+import {
+  saveSourceImage,
+  recordImageReadCap,
+  projectScope,
+} from "../utils/image-store.js";
 import { fetchWithTimeout, isFetchTimeout } from "../utils/http.js";
 import { expandLookingFor } from "../utils/name-variants.js";
 import type {
@@ -24,10 +28,14 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const BROWSE_BUDGET_IMAGES = 20;
 
 // Distinct imageIds seen per (project, image-group), keyed
-// `${projectPath}\0${imageGroup}`. Keyed by PROJECT too, deliberately: the MCP
-// server process outlives one conversation, so a group-only key would tell a
-// second project it had already browsed 20 pages on its first read. Process-
-// lifetime, never persisted; re-reading an image already in the set does not
+// `${projectScope(projectPath)}\0${imageGroup}` — the scope being the bound store's
+// patron-isolating projectId where there is one (shared-process http.ts, where every
+// request presents the same anchor projectPath, so a projectPath key would collide
+// patrons — #2771, the browse-budget twin of the #2457 B2 cap fix), else the
+// normalized projectPath, else the `<no-project>` sentinel. Keyed by PROJECT
+// deliberately: the MCP server process outlives one conversation, so a group-only key
+// would tell a second project it had already browsed 20 pages on its first read.
+// Process-lifetime, never persisted; re-reading an image already in the set does not
 // advance the count. Follows place-search.ts's module-cache precedent.
 const browseBudgetSeen = new Map<string, Set<string>>();
 
@@ -50,7 +58,7 @@ function recordBrowseAndCheckBudget(
 ): ImageTranscribeResult["browseBudget"] {
   if (!imageId) return undefined;
   const imageGroup = imageId.split("_")[0];
-  const key = `${projectPath ?? "<no-project>"}\0${imageGroup}`;
+  const key = `${projectScope(projectPath)}\0${imageGroup}`;
   let seen = browseBudgetSeen.get(key);
   if (!seen) {
     seen = new Set<string>();

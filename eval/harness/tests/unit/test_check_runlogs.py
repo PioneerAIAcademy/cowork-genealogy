@@ -1334,3 +1334,45 @@ def test_rule5_names_an_unparseable_annotation_outside_the_repo(tmp_path, monkey
 
     assert check_runlogs.rule5_annotations_parse(tmp_path / "runlogs") == 1
     assert "v1.ann.json" in capsys.readouterr().out
+
+
+# --- An agent's OWN agent-keyed suite (issue #1253) ------------------------
+
+
+def test_touched_agent_gates_its_own_agent_keyed_suite(monkeypatch, capsys, tmp_path):
+    """An agent with its own suite and no SKILL.md anywhere referencing it must
+    still be gated by an edit to its body.
+
+    `skills_referencing_agents` can only reach suites that have a SKILL.md to
+    scan. Before this rule, editing agents/gps-mentor.md gated only the skills
+    that happen to name it (`research`) and never the suite that grades it, so
+    the suite's run log stayed active against prose that had changed.
+    """
+    skills = _make_skills_tree(tmp_path)  # references spike-echo, not gps-mentor
+    tests_unit = tmp_path / "tests-unit"
+    (tests_unit / "gps-mentor").mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/agents/gps-mentor.md"])
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "gps-mentor" in out  # gated by its own name, with no referencing skill
+    assert "uses-agent" not in out
+
+
+def test_touched_agent_with_no_suite_is_untouched_by_the_identity_rule(
+    monkeypatch, capsys, tmp_path
+):
+    """Keyed on directory existence, so an agent with no suite of its own
+    (image-reader, record-extractor today) stays ungated until one lands —
+    and arms itself when it does, with no constant to remember to edit."""
+    skills = _make_skills_tree(tmp_path)
+    tests_unit = tmp_path / "tests-unit"
+    tests_unit.mkdir()
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/agents/image-reader.md"])
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out

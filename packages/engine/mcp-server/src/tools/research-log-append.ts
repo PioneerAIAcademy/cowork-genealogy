@@ -142,9 +142,10 @@ class LogAppendError extends Error {}
  * there. England & Wales and Scotland gained the relationship column in 1851,
  * so an "1871 Scotland Census household" is fully documented and was still
  * refused. This is the second of the three objections the lead raised against a
- * tool-boundary gate on 2026-08-27 (recorded in whitfield-1850-household.json's
- * xfail_reason): "not generalizable outside the US (post-1851 England & Wales
- * censuses do carry a relationship column)".
+ * tool-boundary gate on 2026-08-27 (issue #1967, "Decision (lead, 2026-08-27)",
+ * and restated in docs/specs/research-log-editor-spec.md § 8.2): "not
+ * generalizable outside the US (post-1851 England & Wales censuses do carry a
+ * relationship column)".
  *
  * MEASURED over the 3,522 distinct `notes` arguments of research_log_append in
  * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
