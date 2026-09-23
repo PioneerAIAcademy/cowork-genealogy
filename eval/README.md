@@ -66,7 +66,16 @@ the e2e benchmark; see
   ```
   Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
-  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it. The harness refuses to start without a judge key when any selected test is positive, so a missing link fails in a second rather than after a paid-for suite — override with `--allow-missing-judge` if you deliberately want an ungraded run.
+  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it.
+
+  Both harnesses refuse to start without a judge key, so a missing link fails in a second rather than after a paid-for run — but they take different flags, because the flags mean different things:
+
+  | Harness | Refuses when | Override |
+  |---|---|---|
+  | unit (`run_tests.py`) | any selected test is `positive` (a negative test grades on routing and survives a dead judge) | `--allow-missing-judge` |
+  | e2e (`run_e2e.py`) | always | `--skip-judge` |
+
+  The e2e arm was added 2026-09-23 after a `catharina-gosner-daughter` run cost $4.87 and 28.5 minutes in a fresh worktree and then discarded its own grade. An e2e run started with `--skip-judge` is still committable and can be graded later without re-running the research.
 
 ## Running manually (macOS / Linux)
 
