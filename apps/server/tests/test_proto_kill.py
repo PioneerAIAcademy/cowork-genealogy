@@ -164,6 +164,43 @@ def test_wait_for_tool_call_sees_the_row_by_bare_name_and_reports_a_turn_that_fi
     assert turn.wait_for_tool_call("dsn", "t", "extraction_append", 1.0) == "timeout"
 
 
+def test_background_only_waits_on_the_transcript_join_and_ignores_a_foreground_agent(monkeypatch):
+    seen_sql: list[str] = []
+
+    def db(dsn, sql, params):
+        seen_sql.append(sql)
+        return [] if sql == turn.BACKGROUND_AGENT_SQL else [("Agent",)]
+
+    monkeypatch.setattr(turn, "db", db)
+    monkeypatch.setattr(turn, "one", lambda dsn, sql, params: "2026-09-23T10:00:00+00:00")
+    assert turn.wait_for_tool_call("dsn", "t", "Agent", 1.0) == "seen", "a foreground Agent row counts without the flag"
+    assert turn.wait_for_tool_call("dsn", "t", "Agent", 1.0, background_only=True) == "completed", \
+        "with the flag a foreground-only turn never triggers the kill"
+    assert seen_sql[-1] == turn.BACKGROUND_AGENT_SQL
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [("Agent",)] if sql == turn.BACKGROUND_AGENT_SQL else [])
+    assert turn.wait_for_tool_call("dsn", "t", "Agent", 1.0, background_only=True) == "seen"
+
+
+def test_background_agent_sql_keys_on_run_in_background_true_by_tool_use_id():
+    sql = turn.BACKGROUND_AGENT_SQL
+    assert "b->>'id' = c.tool_use_id" in sql and "run_in_background' = 'true'" in sql and "c.turn_id = %s" in sql
+
+
+def test_background_only_reaches_the_spec_and_needs_kill_on_agent():
+    assert turn.kill_spec(_args("--kill-on", "Agent", "--background-only")).background_only is True
+    assert turn.kill_spec(_args("--kill-on", "Agent")).background_only is False
+    with pytest.raises(ValueError, match="--background-only needs --kill-on Agent"):
+        turn.kill_spec(_args("--background-only"))
+
+
+def test_run_kill_passes_background_only_to_the_wait(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", container="w", background_only=True)
+    turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order[0] == "wait_for_tool_call Agent deadline=100.0 background"
+
+
 # ── the evidence block: a pure function of canned rows ──────────────────────────────
 
 
@@ -296,8 +333,8 @@ def _fake_stack(monkeypatch, order: list[str], wait_outcome: str = "seen") -> No
     monkeypatch.setattr(turn, "one", lambda dsn, sql, params: 7 if "count(*)" in sql else "v")
     monkeypatch.setattr(turn, "post_message", lambda client, base, session_id, text: "turn_x")
 
-    def wait_for_tool_call(dsn, turn_id, tool, deadline_s):
-        order.append(f"wait_for_tool_call {tool} deadline={deadline_s}")
+    def wait_for_tool_call(dsn, turn_id, tool, deadline_s, background_only=False):
+        order.append(f"wait_for_tool_call {tool} deadline={deadline_s}{' background' if background_only else ''}")
         return wait_outcome
 
     def take_marks(*args):
