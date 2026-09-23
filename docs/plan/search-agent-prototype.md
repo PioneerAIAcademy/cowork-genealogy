@@ -25,7 +25,8 @@ D17 re-run twice and probed 2026-09-23 — criterion 1 passes for foreground and
 kills, criterion 2 failed on a triple write (fixed as a tool precondition, PR #2850) and
 then held, and **background delegations turn out to be lost at every turn end, kill or
 not** — so the worker now forces delegations to the foreground (lead ruling); that and the
-per-attempt token broker were built the same day (see D17);
+per-attempt token broker were built the same day; **D17 PASSES** on the final run of
+2026-09-23 — criteria 1, 2 and 3 green on one valid run (see D17);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -1665,6 +1666,33 @@ without whichever Bedrock refuses.
   2026-09-20 (D14) and on the first 2026-09-23 re-run, and the resume rule keeps covering
   a zero-turn redelivery from any other cause.
   Probe export: `apps/server/proto/exports/proj_bagley-father-1884_5021d9/`.
+  **Final run 2026-09-23 — PASS: criteria 1, 2 and 3 green on one valid run**
+  (`sess_f1741b2fa383478b`, turn `a5c797d9-1e89-4e5b-883d-f1e82153c2af`, SDK session
+  `044e8bc0-3de9-49b9-9423-992edf2f49c4`; bagley, three interactive turns, $8.44). Built
+  from current `main` with both PRs' heads merged: PR #2850 (the §3.4.3 guard, and the HTTP
+  tool server rolling back a write whose client disconnected) and PR #2852 (forced-foreground
+  delegations, the token broker). The token broker was on (5 asks, 0 failures), the hold was
+  20 s, and the kill was `make proto-kill … --kill-on extraction_append --kill-after-s 5`.
+  Turns 1–2 ($1.45, $4.09) selected the question, planned, and searched (23 `record_search`,
+  6 `record_read`); turn 3 took "Yes, continue." into `record-extraction` on two vital
+  records. The worker died at 17:55:53, 5 s into the first delegated `extraction_append`
+  (shim: `connection_reset`, requeue, backoff 0). **The killed write rolled back:**
+  `research.json` stayed at the pre-kill version past the moment the hold ended, and the
+  resumed extractor's batch *created* `src_001` (`op: append`) — a committed first write
+  would have folded it onto the existing source (§3.4.1) and been refused by the guard. So
+  D17's copy 1 cannot occur, and the guard did not need to fire (0 refusals). **Criterion 1:**
+  receive 2 resumed the same SDK session in a fresh process (`resumed: true`,
+  `list_subkeys` 1, `subkeys_returned` 2), re-delegated in the foreground, and completed —
+  `outcome ok`, 6 model turns, $2.90, 1,579 s against the 1,800 s ceiling. **Criterion 2:**
+  two distinct records, one copy each (`src_001` QPQP-24HR, `src_002` QPQP-R8T8, 20
+  assertions, the only repeated key being two parentage relationships inside one batch),
+  `log` 23 → 23, `person_evidence` 0 → 24, and the reply continued the conversation; no
+  FamilySearch call answered 401. **Criterion 3:** 0 Bash, 0 allowed project reads, 2
+  denied `Glob`s. **Criterion 4:** 120 calls with a duration, 2 without (the killed
+  `Agent` and its `extraction_append`), longest 893 s (`Agent`), p50 61 ms. Export:
+  `apps/server/proto/exports/proj_bagley-father-1884_7b4922/`. Driven through the web
+  tier's REST API, not the SPA — the same `POST /messages` the SPA sends; the SPA-over-SSE
+  path was verified at D11–13.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
