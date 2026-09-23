@@ -958,3 +958,22 @@ def test_fs_search_check_follows_the_mcp_connection_check():
     names = [c[1] for c in pf.CHECKS]
     assert pf._check_fs_search in names
     assert names.index(pf._check_fs_search) > names.index(pf._check_mcp_connection)
+
+
+def test_fs_search_classifier_matches_the_tool_s_wording() -> None:
+    """The strings `_check_fs_search` classifies on must exist in the tool.
+
+    Check 8 decides FAIL-vs-WARN by substring against `record_search`'s error
+    text. Nothing else couples the two, so rewording the tool silently turns a
+    WAF block into an unclassified WARN while every suite stays green.
+    """
+    src = (
+        Path(__file__).resolve().parents[4]
+        / "packages/engine/mcp-server/src/tools/record-search.ts"
+    ).read_text(encoding="utf-8")
+    for marker in ("blocked the request", "session not accepted",
+                   "did not complete after retries"):
+        assert marker in src, (
+            f"preflight check 8 classifies on {marker!r}, which record-search.ts "
+            "no longer emits — the check is now blind to that failure"
+        )
