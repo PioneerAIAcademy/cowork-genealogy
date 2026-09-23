@@ -17,6 +17,7 @@ from harness.allowed_tools import (
     compute_allowed_tools,
     declared_tools,
     load_suite_frontmatter,
+    suite_body_path,
 )
 
 
@@ -664,3 +665,62 @@ def test_bare_tool_names_reduces_qualified_and_drops_builtins():
     # Built-ins never appear in tool_calls, so comparing against them would
     # only produce false "undeclared" findings.
     assert bare_tool_names(["Read", "Glob"]) == []
+
+
+# ---- the body and the frontmatter resolve to ONE file (#1253) -------------
+#
+# LATENT, not live: no agent body carries an `@plugin:` reference today
+# (`grep -rn "@plugin:" packages/engine/plugin/agents/` is empty), so these
+# exercise a population of zero in the real corpus and are written against a
+# tmp fixture for that reason. They exist because the frontmatter and the body
+# are now resolved by the same rule, and a site that read one from the agent
+# and scanned the other from a SKILL.md that does not exist is the exact
+# inconsistency this pair of helpers was introduced to remove.
+
+
+def _agent_that_delegates(tmp_path: Path) -> tuple[Path, Path]:
+    skills = tmp_path / "skills"
+    skills.mkdir(parents=True)
+    agents = tmp_path / "agents"
+    agents.mkdir(parents=True)
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n  - mcp__genealogy__sidecar_read\n---\n"
+        "Hand the page to `@plugin:image-reader` when it needs transcribing.\n",
+        encoding="utf-8",
+    )
+    (agents / "image-reader.md").write_text(
+        "---\nname: image-reader\ntools:\n  - mcp__genealogy__image_transcribe\n---\n"
+        "Agent body.\n",
+        encoding="utf-8",
+    )
+    return skills, agents
+
+
+def test_suite_body_path_prefers_the_skill(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert suite_body_path("router", skills, agents_dir=agents).name == "SKILL.md"
+
+
+def test_suite_body_path_falls_back_to_the_agent(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert suite_body_path("gps-mentor", skills, agents_dir=agents).name == "gps-mentor.md"
+
+
+def test_agent_keyed_suite_widens_by_its_own_delegations(tmp_path: Path):
+    """An agent-keyed suite's `@plugin:` refs live in the AGENT body, since
+    there is no SKILL.md to hold them. Scanning the missing skill path found
+    none, so such a suite was never widened by what it delegates to."""
+    skills, agents = _agent_that_delegates(tmp_path)
+    tools = compute_allowed_tools("gps-mentor", skills, agents_dir=agents)
+    assert "mcp__genealogy__sidecar_read" in tools  # its own
+    assert "mcp__genealogy__image_transcribe" in tools  # unioned from the delegate
+
+
+def test_a_real_skill_still_widens_from_its_skill_md(tmp_path: Path):
+    """The accept direction: resolution is unchanged wherever a SKILL.md
+    exists, which is every skill in the corpus."""
+    skills, agents = _make_skill_and_agent(
+        tmp_path, body="Delegate to `@plugin:spike-echo` for the lookup.\n"
+    )
+    tools = compute_allowed_tools("router", skills, agents_dir=agents)
+    assert "mcp__genealogy__wikipedia_search" in tools

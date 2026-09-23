@@ -69,10 +69,29 @@ def load_suite_frontmatter(
     empty: a real skill with an empty frontmatter block has said what it
     declares, and must not inherit a same-named agent's.
     """
+    return load_skill_frontmatter(suite_body_path(name, skills_dir, agents_dir=agents_dir))
+
+
+def suite_body_path(
+    name: str,
+    skills_dir: Path,
+    *,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> Path:
+    """The file that carries a suite's frontmatter AND its body.
+
+    A skill's `SKILL.md`, or the plugin agent file of the same name for an
+    agent-keyed suite. One resolution for both, so the frontmatter a site reads
+    and the body it scans for `@plugin:` delegations can never come from
+    different files.
+
+    Returns the agent path unconditionally when the skill file is absent —
+    callers already tolerate a non-existent path (`load_skill_frontmatter`
+    returns `{}`, `agent_refs_for_skill` returns `[]`), so an unknown name
+    answers empty rather than raising.
+    """
     skill_md = Path(skills_dir) / name / "SKILL.md"
-    if skill_md.is_file():
-        return load_skill_frontmatter(skill_md)
-    return load_skill_frontmatter(Path(agents_dir) / f"{name}.md")
+    return skill_md if skill_md.is_file() else Path(agents_dir) / f"{name}.md"
 
 
 def declared_tools(fm: dict[str, Any]) -> list[str]:
@@ -134,7 +153,10 @@ def compute_allowed_tools(
     comment claimed the advisory as the reason for the agent fallback, which is
     wrong and sent a reader to the wrong file (PR #2782 review).
     """
-    skill_md = skills_dir / skill_name / "SKILL.md"
+    # The body scanned for `@plugin:` below and the frontmatter read here must
+    # come from ONE file, or an agent-keyed suite reads its tools from the agent
+    # and its delegations from a SKILL.md that does not exist.
+    skill_md = suite_body_path(skill_name, skills_dir, agents_dir=agents_dir)
     fm = load_suite_frontmatter(skill_name, skills_dir, agents_dir=agents_dir)
     declared = list(declared_tools(fm))
 

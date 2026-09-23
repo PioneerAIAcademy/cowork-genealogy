@@ -603,3 +603,44 @@ def test_ownership_table_is_not_skipped_for_an_agent_keyed_suite():
     after = research(proof_summaries=[{"id": "ps_001"}])
     with pytest.raises(AssertionError):
         check_research(before, after, AGENT_FM, POSITIVE)
+
+
+def test_tool_allowlist_widens_by_an_agent_keyed_suites_own_delegations(monkeypatch, tmp_path):
+    """The widening scan must read the AGENT body for an agent-keyed suite.
+
+    It scanned `skills/<test.skill>/SKILL.md`, absent for such a suite, so the
+    suite was never widened by what it delegates to. LATENT: no agent body
+    carries an `@plugin:` reference today, so this fixture is synthetic and the
+    real corpus exercises none of it. It is guarded anyway because the
+    frontmatter beside it is now resolved from the agent, and the two reading
+    different files is the inconsistency that made the declared set wrong.
+
+    `DEFAULT_PLUGIN_AGENTS` is patched on `harness.workspace` rather than on the
+    validator, because the validator imports it inside the function body.
+    """
+    import harness.workspace as _ws
+
+    agents = tmp_path / "agents"
+    agents.mkdir()
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n  - mcp__genealogy__sidecar_read\n---\n"
+        "Hand the page to `@plugin:image-reader`.\n",
+        encoding="utf-8",
+    )
+    (agents / "image-reader.md").write_text(
+        "---\nname: image-reader\ntools:\n  - mcp__genealogy__image_transcribe\n---\nx\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_ws, "DEFAULT_PLUGIN_AGENTS", agents)
+
+    fm = {"name": "gps-mentor", "tools": ["mcp__genealogy__sidecar_read"]}
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        # A call the suite holds only THROUGH its delegate. Unwidened, this is
+        # reported as undeclared.
+        check_tool_allowlist(
+            tool_calls=[{"tool": "mcp__genealogy__image_transcribe"}],
+            skill_frontmatter=fm,
+            test={"skill": "gps-mentor"},
+        )
+    assert [str(w.message) for w in caught] == []

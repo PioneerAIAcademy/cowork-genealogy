@@ -999,13 +999,26 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
 
     # Widen with referenced plugin agents' tools (bare MCP names only —
     # built-in tools like Read never appear in tool_calls).
-    from harness.allowed_tools import agent_refs_for_skill, load_skill_frontmatter
+    from harness.allowed_tools import (
+        agent_refs_for_skill,
+        load_skill_frontmatter,
+        suite_body_path,
+    )
     from harness.workspace import DEFAULT_PLUGIN_AGENTS
 
     _repo_root = Path(__file__).resolve().parents[3]
-    _skill_md = (
-        _repo_root / "packages" / "engine" / "plugin" / "skills"
-        / str(test.get("skill", "")) / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md.
+    # Scanning the missing path returned no refs, so such a suite was not
+    # widened by anything it delegates to. LATENT rather than live: no agent
+    # body carries an `@plugin:` reference today, so the population is empty
+    # and this changes no current run. It is here because the frontmatter this
+    # function reads is now resolved that way, and a body scanned from a
+    # different file than the frontmatter is the inconsistency that made the
+    # declared set wrong in the first place.
+    _skill_md = suite_body_path(
+        str(test.get("skill", "")),
+        _repo_root / "packages" / "engine" / "plugin" / "skills",
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     for _agent in agent_refs_for_skill(_skill_md):
         _agent_fm = load_skill_frontmatter(DEFAULT_PLUGIN_AGENTS / f"{_agent}.md")
