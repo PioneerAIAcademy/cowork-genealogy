@@ -103,7 +103,7 @@
       "information_quality": "indeterminate",
       "informant": "Unknown informant (likely George Ackerman himself) reporting to the census enumerator",
       "informant_proximity": "unknown",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -119,7 +119,7 @@
       "information_quality": "indeterminate",
       "informant": "Unknown informant (most likely a household member) reporting to the census enumerator",
       "informant_proximity": "unknown",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -138,7 +138,7 @@
       "information_quality": "indeterminate",
       "informant": "Unknown — most likely a household member",
       "informant_proximity": "unknown",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -158,7 +158,7 @@
       "informant": "Inferred from household structure — no explicit informant for relationships in the 1860 census",
       "informant_proximity": "researcher",
       "informant_bias_notes": "The 1860 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -174,7 +174,7 @@
       "information_quality": "indeterminate",
       "informant": "Unknown informant (most likely a household member) reporting to the census enumerator",
       "informant_proximity": "unknown",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -193,7 +193,7 @@
       "information_quality": "indeterminate",
       "informant": "Unknown — most likely a household member",
       "informant_proximity": "unknown",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -213,7 +213,7 @@
       "informant": "Inferred from household structure — no explicit informant for relationships in the 1860 census",
       "informant_proximity": "researcher",
       "informant_bias_notes": "The 1860 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }

@@ -1,6 +1,6 @@
 """Guard: `research.schema.json`'s negative-evidence conditional must reject.
 
-`evidence_type: "negative"` implies `record_role: "absent"` AND
+`record_basis: "absent"` implies `record_role: "absent"` AND
 `informant_proximity: "researcher"` (#986). The rule lives in three places —
 the runtime validator, the `research_append` write boundary, and the
 `$defs/assertion` `allOf` in BOTH schema trees. The first two carry their own
@@ -55,7 +55,7 @@ _ASSERTION = {
     "information_quality": "primary",
     "informant": "the researcher",
     "informant_proximity": "researcher",
-    "evidence_type": "negative",
+    "record_basis": "absent",
     "extracted_for_question_ids": [],
 }
 
@@ -128,43 +128,43 @@ def test_both_fields_are_reported_when_both_disagree():
 
 def test_a_plain_direct_assertion_is_untouched():
     assert validate_research_json(_research(
-        evidence_type="direct", record_role="deceased",
+        record_basis="stated", record_role="deceased",
         informant="James Brown", informant_proximity="official_duty",
     )) == []
 
 
 def test_the_converse_is_not_enforced_here():
-    """`absent` + a non-negative evidence_type is left to research_append.
+    """`absent` + a non-negative record_basis is left to research_append.
 
     Forward direction only at this tier: every `absent` assertion in the
     corpus is already negative, so the converse is an unexercised branch.
     """
     assert validate_research_json(_research(
-        evidence_type="direct", informant="James Brown",
+        record_basis="stated", informant="James Brown",
         informant_proximity="official_duty",
     )) == []
 
 
 def test_an_indirect_assertion_is_untouched():
     assert validate_research_json(_research(
-        evidence_type="indirect", record_role="head_of_household",
+        record_basis="inferred", record_role="head_of_household",
         informant="unknown household member",
         informant_proximity="household_member",
     )) == []
 
 
-def test_a_missing_evidence_type_does_not_match_the_conditional_vacuously():
-    """The `required: ["evidence_type"]` inside the `if` is load-bearing.
+def test_a_missing_record_basis_does_not_match_the_conditional_vacuously():
+    """The `required: ["record_basis"]` inside the `if` is load-bearing.
 
-    Without it an assertion that merely OMITS `evidence_type` matches the `if`
+    Without it an assertion that merely OMITS `record_basis` matches the `if`
     vacuously and collects two spurious `allOf/0/then` errors on top of the
     real "required property" one.
     """
     errors = validate_research_json(
-        _research(evidence_type=_OMIT, record_role="deceased",
+        _research(record_basis=_OMIT, record_role="deceased",
                   informant_proximity="self")
     )
-    assert any("evidence_type" in e and "required" in e for e in errors), errors
+    assert any("record_basis" in e and "required" in e for e in errors), errors
     assert _conditional_errors(_research(
-        evidence_type=_OMIT, record_role="deceased", informant_proximity="self"
-    )) == [], "the conditional fired on an assertion carrying no evidence_type"
+        record_basis=_OMIT, record_role="deceased", informant_proximity="self"
+    )) == [], "the conditional fired on an assertion carrying no record_basis"

@@ -22,7 +22,7 @@
   "judge_context": [
     "The skill MUST call record_read with recordId '68Q9-K34P' (or the full ARK) — not hallucinate record contents",
     "Should extract assertions for Patrick Flynn (primary person): name, birth date ~1845, birthplace Ireland, residence 1850 Branch Township Schuylkill Pennsylvania",
-    "Should NOT extract a ParentChild relationship between Thomas Flynn and Patrick Flynn — the 1850 census does not state relationships, and a link inferred from household position is not written at extraction in any form (not `indirect`, not `_inferred`). The record_read call must still yield every person's stated facts; the family structure is downstream correlation's to infer",
+    "Should NOT extract a ParentChild relationship between Thomas Flynn and Patrick Flynn — the 1850 census does not state relationships, and a link inferred from household position is not written at extraction in any form (not `inferred`, not `_inferred`). The record_read call must still yield every person's stated facts; the family structure is downstream correlation's to infer",
     "Should create a source entry pointing to the United States Census 1850 collection",
     "Should NOT invent facts not present in the record_read response",
     "Informant: for name/age/birthplace, use 'unknown household member' with reasoning (e.g., 'likely a parent' for a child) and proximity 'household_member'. For residence, 'census enumerator' with proximity 'witness' is acceptable. Use informant_bias_notes to explain reasoning.",

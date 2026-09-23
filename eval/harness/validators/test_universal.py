@@ -55,6 +55,7 @@ from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
 )
+from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions
 from harness.ts_validator import validate_parsed
 
 
@@ -126,53 +127,18 @@ def test_tree_gedcomx_json_validates_schema(after_state):
 def test_tree_facts_agree_with_linked_assertions(after_state):
     """A materialized fact must not disagree with the assertion it came from.
 
-    Issue #2472: a place corrected on a `research.json` assertion did not reach
-    the tree fact already materialised from the earlier reading. The stale value
-    stayed on the fact and nothing reported the divergence -- in the run that
-    produced the card, person I1's Immigration fact kept "Wellburn, Thames
-    Centre, Middlesex, Ontario, Canada" and a `standard_place` of "Thames Centre
-    Township, Middlesex, Ontario, Canada" while the assertion already held the
-    corrected "Odessa, Francis No. 127, Saskatchewan, Canada". A wrong reading reached a place-AUTHORITY value, not only a
-    display string, so anything joining on `standard_place` put her in the wrong
-    province.
+    The rule itself is `find_tree_facts_disagreeing_with_assertions`, which
+    carries the reported defect, the four compared attributes and the five
+    legitimate false-positive directions it skips. This is the only one of that
+    predicate's three call sites that ASSERTS; the two on the e2e side REPORT
+    the same findings in shadow mode, live (`collect_post_hoc_shadow`) and on
+    replay (`replay_post_hoc`). Do not re-derive the rule here -- a second copy
+    diverges at the first correction to either one.
 
-    That was uncheckable until the fact carried a backlink. With `assertion_id`
-    on it, "this fact disagrees with its own source assertion" is a computable
-    property, and this is it.
-
-    Compared only where BOTH sides hold a non-empty string, only on a fact
-    citing a SINGLE source, and only while the fact's type still matches its
-    assertion's. Five false-positive directions, all legitimate:
-
-      - assertion side absent: the corroboration branch can fill an attribute on
-        a backlinked fact from a DIFFERENT assertion, so "fact has it, linked
-        assertion does not" is not drift.
-      - fact side absent: an event fact never carries the assertion's `value`
-        (#711, `factCandidate`), so comparing it would fail every event fact --
-        and skipping means this needs no copy of `EVENT_TREE_TYPES` in Python.
-      - `assertion_id` naming nothing: there is no assertion to compare against,
-        so it is skipped rather than failed. Referential integrity for this field
-        is not this check's job.
-      - MORE THAN ONE SOURCE REF: the corroboration branch can fill an attribute
-        from another assertion, and `research_append`'s rewrite then refuses to
-        overwrite it (that would destroy the other source's evidence). The fact
-        legitimately holds a value its own backlink never asserted, and there is
-        no tool that can reconcile the two without destroying one of them, so
-        firing here would be red forever on correct work. That is the population
-        `tree-materialization-spec.md` section 4.4 already bounds and accepts:
-        175 of 7225 person facts in the committed corpus carry more than one
-        ref. A single-ref fact holds exactly what its own assertion said, which
-        is where the reported defect lives (the run that produced the card has
-        one ref on the diverging fact).
-
-    Facts corrected by hand (`tree_correct`) and facts merged from differently
-    backlinked members carry no `assertion_id` by then -- both writers drop it --
-    so neither reads as drift here.
-
-    Scans relationship facts as well as person facts. Nothing can stamp a
-    relationship fact today, so that arm cannot fire; a validator with a blind
-    spot is worse than one that is silent where nothing happens, and a backlink
-    appearing there is exactly the thing worth being told about.
+    The two skips stay on this side because a plain function cannot skip: the
+    predicate answers `[]` for an absent or malformed document, which is right
+    for a live e2e run reading files off disk and wrong here, where "these
+    documents were never produced" must not read as "they agree".
     """
     research = after_state.get("research_json")
     tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
@@ -184,64 +150,11 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
     if not isinstance(research, dict) or not isinstance(tree, dict):
         pytest.skip("malformed project documents — the schema validators report this")
 
-    by_id = {
-        a.get("id"): a
-        for a in (research.get("assertions") or [])
-        if isinstance(a, dict)
-    }
-
-    def text(value):
-        """The comparable form of a field, or None when there is nothing to compare."""
-        return value.strip() if isinstance(value, str) and value.strip() else None
-
-    def facts_of(container):
-        for item in container or []:
-            if not isinstance(item, dict):
-                continue
-            for fact in item.get("facts") or []:
-                if isinstance(fact, dict):
-                    yield item.get("id"), fact
-
-    mismatches = []
-    for owner_id, fact in [
-        *facts_of(tree.get("persons")),
-        *facts_of(tree.get("relationships")),
-    ]:
-        linked_id = fact.get("assertion_id")
-        # `isinstance`, not truthiness alone: a non-string backlink (a list, say)
-        # is unhashable and would raise TypeError out of the dict lookup below
-        # instead of producing a verdict. The schema check in this same file
-        # already rejects that shape; this one must not crash on the way.
-        if not isinstance(linked_id, str) or not linked_id:
-            continue
-        assertion = by_id.get(linked_id)
-        if assertion is None:
-            continue
-        refs = [r for r in (fact.get("sources") or []) if isinstance(r, dict)]
-        if len(refs) > 1:
-            continue
-        # A fact whose type no longer matches its assertion's is not comparable:
-        # the rewrite refuses it precisely because the two no longer describe the
-        # same thing, so firing here would report the refusal as drift. PascalCase
-        # the assertion's snake_case fact_type the way `toTreeFactType` does.
-        fact_type = fact.get("type")
-        want_type = "".join(
-            w[:1].upper() + w[1:]
-            for w in re.split(r"[_\s]+", str(assertion.get("fact_type") or ""))
-            if w
-        )
-        if want_type and isinstance(fact_type, str) and fact_type != want_type:
-            continue
-        for field in ("place", "standard_place", "date", "value"):
-            on_fact = text(fact.get(field))
-            on_assertion = text(assertion.get(field))
-            if on_fact is None or on_assertion is None:
-                continue
-            if on_fact != on_assertion:
-                mismatches.append(
-                    f"{owner_id}/{fact.get('id')} {field}: fact has "
-                    f"'{on_fact}' but assertion {linked_id} has '{on_assertion}'"
-                )
+    # Each finding's `detail` names the diverging FIELD and both values, and it
+    # is rendered here rather than summarised: the field name appears nowhere
+    # else in this message, and it is what tells a reader whether a display
+    # string or a place-AUTHORITY value went stale.
+    mismatches = [v["detail"] for v in find_tree_facts_disagreeing_with_assertions(research, tree)]
 
     assert not mismatches, (
         "tree fact(s) disagree with the assertion they were materialized from — "
@@ -1073,15 +986,39 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
 
+    # An agent-keyed suite (issue #1253) is handed the AGENT's frontmatter,
+    # which declares `tools` rather than `allowed-tools`, qualified rather than
+    # bare. Without this the declared set is empty for every test in such a
+    # suite and the advisory below fires unconditionally — and an advisory that
+    # always fires teaches its reader to ignore it. Only when `allowed-tools`
+    # yielded nothing, so no existing skill's set changes.
+    if not declared:
+        from harness.allowed_tools import bare_tool_names
+
+        declared = set(bare_tool_names((skill_frontmatter or {}).get("tools", []) or []))
+
     # Widen with referenced plugin agents' tools (bare MCP names only —
     # built-in tools like Read never appear in tool_calls).
-    from harness.allowed_tools import agent_refs_for_skill, load_skill_frontmatter
+    from harness.allowed_tools import (
+        agent_refs_for_skill,
+        load_skill_frontmatter,
+        suite_body_path,
+    )
     from harness.workspace import DEFAULT_PLUGIN_AGENTS
 
     _repo_root = Path(__file__).resolve().parents[3]
-    _skill_md = (
-        _repo_root / "packages" / "engine" / "plugin" / "skills"
-        / str(test.get("skill", "")) / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md.
+    # Scanning the missing path returned no refs, so such a suite was not
+    # widened by anything it delegates to. LATENT rather than live: no agent
+    # body carries an `@plugin:` reference today, so the population is empty
+    # and this changes no current run. It is here because the frontmatter this
+    # function reads is now resolved that way, and a body scanned from a
+    # different file than the frontmatter is the inconsistency that made the
+    # declared set wrong in the first place.
+    _skill_md = suite_body_path(
+        str(test.get("skill", "")),
+        _repo_root / "packages" / "engine" / "plugin" / "skills",
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     for _agent in agent_refs_for_skill(_skill_md):
         _agent_fm = load_skill_frontmatter(DEFAULT_PLUGIN_AGENTS / f"{_agent}.md")
@@ -1310,7 +1247,7 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 
 def test_activated_run_produces_response(
     activated, aborted_reason, num_turns, output_tokens, text_response, test,
-    skills_invoked,
+    skills_invoked, builtin_tool_calls,
 ):
     """An activated run that produced no output is a dead run — fail it.
 
@@ -1326,8 +1263,10 @@ def test_activated_run_produces_response(
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
-    if set(skills_invoked or []) - {test.get("skill")}:
-        return  # handed off to another skill — not a dead run
+    from harness.skill_runner import handoffs
+
+    if set(handoffs(skills_invoked, builtin_tool_calls)) - {test.get("skill")}:
+        return  # handed off to another skill or agent — not a dead run
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:

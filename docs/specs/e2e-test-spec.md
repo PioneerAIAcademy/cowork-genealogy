@@ -739,7 +739,7 @@ the `max_cost_usd` note in §6 step 5.
    call or runs away across turns (0 pass, ~20 min per test). The pin's known
    cost is ~0.24/3 mean judge score, concentrated in GPS classification nuance —
    the existing "blank columns produce no assertions" rule, and
-   `informant_proximity` / `evidence_type` calls; recovering that is issue #1131.
+   `informant_proximity` / `record_basis` calls; recovering that is issue #1131.
    **Anyone running the reasoning-effort A/B (#1136) must account for this**: a
    sweep that lowers effort changes the conditions that forced this pin, and a
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
@@ -864,7 +864,17 @@ The agent must recover everything through **records** (`record_search`,
 because they don't surface the answer off the subject: `record_person_matches`
 / `record_record_matches` (keyed off a *record* the agent already found),
 `source_attachments` (confirms a found record's attachment — real GPS
-work), and `person_warnings` (reads the *local* stripped tree).
+work), and `person_warnings` **without** `live` (it then reads the *local*
+stripped tree).
+
+**`person_warnings` with `live: true` IS blocked**, and the block is
+argument-aware rather than name-only — `LIVE_TREE_ARG_TOOLS` in
+`e2e/orchestrator.py`, consulted by `is_blocked_tree_tool`. Live mode fetches
+the subject plus parents, spouses and children from the live tree, and each
+warning carries `personId`, `personName` and `relatedPersonId`, so on a parents
+fixture it hands back a stripped relative's name and PID — exactly the read
+`person_read` heads this list for. The tool is on both lists for different
+argument shapes, which is why the block cannot be a bare name match.
 
 > **The block is necessary but not sufficient.** Records that prove the
 > answer may *already be attached* to the live subject, so `record_search`
@@ -1227,7 +1237,7 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `4` for the shape above — and a `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `5` for the current shape. At `5`, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1599,6 +1609,14 @@ check, or to a mandatory `person_warnings` call in the `/research` orchestrator 
 an inlined write is still gated — is gated on reading this fire rate across the
 corpus first**; not decided here.
 
+**This numbered list stopped at six and the check set did not.** The ordinals
+are filing order, not a census: the tree-side citation arm is written up above
+without one, and tree-encoding and tree-fact/assertion agreement ship with their
+own `kind` and their own bucket and no block here at all. The roster is the
+shadow-to-graduate table in `docs/specs/guardrail-enforcement-spec.md`, which
+carries a row per check; when you add a kind, add the row, because this section
+is not where a reader will find it.
+
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
@@ -1755,7 +1773,11 @@ project reads, is never compared against one that did.
 `ToolResultBlock` arrives, so an entry whose result never arrived — any aborted
 or wall-clock-capped run — carries none of the three. `response_summary` is the
 exception: the entry literal initializes it, so it is present-but-`null` there
-rather than absent.
+rather than absent. At `harness_schema_version` 5, the tool name
+(`entry["tool"]`) is threaded into `_summarize_tool_response` so that per-key
+exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
+for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
+is the first exemption.
 
 A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
@@ -2216,6 +2238,20 @@ changing anything, because the fix differs completely by cause.
    > though by ~1 entry corpus-wide. The boundary is main `4541a4c5`, not
    > cleanly a version number: see §7.5 "Historical runs" for the table and the
    > measurement.
+   >
+   > **A third boundary: `image_transcribe` transcription completeness
+   > (v4 → v5).** At v4 and below, `response_summary` for `image_transcribe`
+   > calls was truncated at 500 chars, well under the length of many
+   > transcriptions (`make e2e-transcription-join SINCE=all` reports the
+   > current count of truncated captures over its window). At v5, the
+   > `transcription` key is preserved in full, bypassing
+   > both the per-string cap and the backstop. The entry shape is unchanged —
+   > `response_summary` stays a string — so **branch on
+   > `harness_schema_version` before treating a v4 `image_transcribe` summary
+   > as a complete transcription**. A v4 summary ending in
+   > `[truncated by harness for prompt size; full length N chars]` is confirmed
+   > truncated; one ending in `...` may be backstop-truncated; only a v5 entry
+   > is guaranteed complete.
    >
    > Two format details that matter when diffing or grepping. Captures at or under
    > 500 chars are passed through verbatim, so they keep the raw MCP envelope in

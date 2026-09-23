@@ -82,28 +82,28 @@ interface UnparsedDecl {
 }
 
 /**
- * Scan a single file for lines containing `∈` whose left-hand side names
- * a closed enum, then extract the value set from the right-hand side.
+ * Scan content for lines containing `∈` whose left-hand side names a closed
+ * enum, then extract the value set from the right-hand side.
  *
  * Two prose patterns are handled:
  *   Pattern A (spaced pipes):  `name` ∈ `v1` | `v2` | `v3` (closed set …)
  *   Pattern B (compact pipes): `name` ∈ `v1|v2|v3` ·
  *
- * Values are read only out of backtick spans, but the enum *name* match is
- * plain text — so a declaration written without backticks is recognized as a
- * declaration and then yields nothing. Appending unparsed lines to `unparsed`
- * (asserted empty below) is what keeps that from being silent: dropping them
- * here would make a declaration this scan cannot read indistinguishable from a
- * file that declares no enum at all. Same reasoning as the discovery-guard
- * test — a silent no-op reads as coverage.
+ * The enum name is matched by a backticked identifier immediately adjacent to
+ * `∈` (allowing a bold closer and whitespace — **`enum`** ∈). Three outcomes:
+ *
+ *   1. Adjacent backtick names a closed enum → declaration. Extract values.
+ *   2. Adjacent backtick names something else → not a declaration, skip.
+ *   3. No adjacent backtick, but a closed-enum name appears somewhere before
+ *      `∈` → malformed declaration → pushed to `unparsed` (asserted empty by
+ *      the test below, keeping un-backticked declarations loud).
  */
-function extractDeclarationsFromFile(
-  absPath: string,
+function extractDeclarationsFromContent(
+  content: string,
   relPath: string,
   closedNames: Set<string>,
   unparsed: UnparsedDecl[],
 ): ProseDecl[] {
-  const content = readFileSync(absPath, "utf8");
   const lines = content.split(/\r?\n/);
   const decls: ProseDecl[] = [];
   // Sort longest-first so "date_certainty_timeline" matches before its
@@ -116,17 +116,29 @@ function extractDeclarationsFromFile(
     const elemIdx = lines[i].indexOf("\u2208"); // ∈
     if (elemIdx === -1) continue;
 
-    // The enum name must appear before ∈ on the same line.
-    // Check longest names first so a prefix can't shadow a longer name.
     const before = lines[i].slice(0, elemIdx);
+
+    // Step A: check for adjacent backticked identifier.
+    const adjacentMatch = before.match(/`([A-Za-z_][A-Za-z0-9_]*)`\**\s*$/);
     let matchedEnum: string | null = null;
-    for (const name of closedNamesByLength) {
-      if (before.includes(name)) {
-        matchedEnum = name;
-        break;
+
+    if (adjacentMatch) {
+      if (closedNames.has(adjacentMatch[1])) {
+        matchedEnum = adjacentMatch[1];
+      } else {
+        // Not a closed enum (e.g. preferred_assertion_id) — skip.
+        continue;
       }
+    } else {
+      // Step B: no adjacent backtick — loose scan for unparsed guard.
+      const looseMatch = closedNamesByLength.find(
+        (name) => before.includes(name),
+      );
+      if (looseMatch) {
+        unparsed.push({ relPath, enumName: looseMatch, lineNo: i + 1 });
+      }
+      continue;
     }
-    if (!matchedEnum) continue;
 
     // Gather a multi-line chunk starting right after ∈ — Pattern A wraps
     // values across lines. Stop at the first blank line or 10 lines.
@@ -170,6 +182,16 @@ function extractDeclarationsFromFile(
   }
 
   return decls;
+}
+
+function extractDeclarationsFromFile(
+  absPath: string,
+  relPath: string,
+  closedNames: Set<string>,
+  unparsed: UnparsedDecl[],
+): ProseDecl[] {
+  const content = readFileSync(absPath, "utf8");
+  return extractDeclarationsFromContent(content, relPath, closedNames, unparsed);
 }
 
 // ─── File discovery ────────────────────────────────────────────────
@@ -255,13 +277,13 @@ const EXPECTED: Array<{ relPath: string; enums: string[] }> = [
       "date_certainty",
       "information_quality",
       "informant_proximity",
-      "evidence_type",
+      "record_basis",
     ],
   },
   {
     relPath: "skills/research/SKILL.md",
     enums: [
-      "evidence_type",
+      "record_basis",
       "information_quality",
       "informant_proximity",
       "date_certainty",
@@ -374,6 +396,239 @@ describe("enum-drift lint", () => {
         }
       });
     }
+  });
+
+  describe("anchored matcher rejects loose matches", () => {
+    it("a line mentioning an enum in passing before an unrelated ∈ is not a declaration", () => {
+      // Shape 1: loose misbind — date_certainty appears in prose, not as a
+      // backtick-adjacent declaration.
+      const fixture = "The date_certainty field is used when foo ∈ {bar, baz}";
+      const unparsed: UnparsedDecl[] = [];
+      const decls = extractDeclarationsFromContent(
+        fixture, "fixture.md", closedNames, unparsed,
+      );
+      expect(decls, "must not bind as a declaration").toEqual([]);
+      expect(
+        unparsed.map((d) => d.enumName),
+        "loose mention must land in unparsed",
+      ).toEqual(["date_certainty"]);
+    });
+
+    it("an un-backticked declaration lands in unparsed", () => {
+      // Shape 2: un-backticked declaration — enum name present but no backticks.
+      const fixture = "record_basis ∈ stated | inferred | absent";
+      const unparsed: UnparsedDecl[] = [];
+      const decls = extractDeclarationsFromContent(
+        fixture, "fixture.md", closedNames, unparsed,
+      );
+      expect(decls, "must not bind as a declaration").toEqual([]);
+      expect(
+        unparsed.map((d) => d.enumName),
+        "un-backticked declaration must land in unparsed",
+      ).toEqual(["record_basis"]);
+    });
+  });
+});
+
+// ─── The fourth copy: spec enum tables ───────────────────────────
+
+interface SpecTableRow {
+  file: string;
+  lineNo: number;
+  enumName: string;
+  values: Set<string>;
+}
+
+/**
+ * Extract closed-enum rows from a markdown spec file's tables.
+ * Keyed on the table header: finds a header row whose cells include "Values",
+ * then reads subsequent rows whose first data cell is a backticked closed-enum
+ * name. Resets on leaving the table.
+ */
+function extractSpecTableEnums(
+  content: string,
+  file: string,
+  closedNames: Set<string>,
+): SpecTableRow[] {
+  const lines = content.split(/\r?\n/);
+  const rows: SpecTableRow[] = [];
+  let valuesColIdx = -1; // 0-based index among data cells
+  let inTable = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Not a table line → reset.
+    if (!line.startsWith("|")) {
+      inTable = false;
+      valuesColIdx = -1;
+      continue;
+    }
+
+    // Separator row (|---|---|...) → skip but stay in table.
+    if (/^\|[\s-|]+$/.test(line)) continue;
+
+    // Split by | and drop the empty first/last from leading/trailing pipes.
+    const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+
+    if (!inTable) {
+      // Check if this is a header row with a "Values" column.
+      const idx = cells.findIndex((c) => c === "Values");
+      if (idx !== -1) {
+        valuesColIdx = idx;
+        inTable = true;
+      }
+      continue;
+    }
+
+    // Inside a table with a Values column — check if first cell is a
+    // backticked closed-enum name.
+    if (cells.length <= valuesColIdx) continue;
+    const firstCell = cells[0];
+    const nameMatch = firstCell.match(/^`([A-Za-z_][A-Za-z0-9_]*)`$/);
+    if (!nameMatch || !closedNames.has(nameMatch[1])) continue;
+
+    // Extract values from the Values cell — raw backtick spans, no identifier filter.
+    const valuesCell = cells[valuesColIdx];
+    const values = new Set<string>();
+    for (const [, inner] of valuesCell.matchAll(/`([^`]+)`/g)) {
+      values.add(inner.trim());
+    }
+
+    if (values.size > 0) {
+      rows.push({
+        file,
+        lineNo: i + 1,
+        enumName: nameMatch[1],
+        values,
+      });
+    }
+  }
+
+  return rows;
+}
+
+// ─── Build spec-table rows ──────────────────────────────────────
+
+const SPEC_TABLE_FILES = [
+  join(projectRoot, "docs", "specs", "research-schema-spec.md"),
+  join(projectRoot, "docs", "specs", "simplified-gedcomx-spec.md"),
+];
+
+const specTableRows: SpecTableRow[] = [];
+for (const file of SPEC_TABLE_FILES) {
+  const content = readFileSync(file, "utf8");
+  const relName = file.includes("research-schema") ? "research-schema-spec.md" : "simplified-gedcomx-spec.md";
+  specTableRows.push(...extractSpecTableEnums(content, relName, closedNames));
+}
+
+describe("spec enum-table values match schema", () => {
+  it("every closed enum has a spec-table row", () => {
+    const found = new Set(specTableRows.map((r) => r.enumName));
+    const missing = [...canonical.keys()].filter((n) => !found.has(n)).sort();
+    expect(
+      missing,
+      `closed enums with no row in the spec enum tables: ${missing.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  describe("values match the schema", () => {
+    for (const row of specTableRows) {
+      it(`${row.file}:${row.lineNo} — ${row.enumName}`, () => {
+        const schemaValues = canonical.get(row.enumName)!;
+        const stale = [...row.values]
+          .filter((v) => !schemaValues.has(v))
+          .sort();
+        const missing = [...schemaValues]
+          .filter((v) => !row.values.has(v))
+          .sort();
+
+        if (stale.length > 0 || missing.length > 0) {
+          const parts: string[] = [];
+          if (stale.length > 0) {
+            parts.push(`stale (in spec table, not in schema): ${stale.join(", ")}`);
+          }
+          if (missing.length > 0) {
+            parts.push(
+              `missing (in schema, not in spec table): ${missing.join(", ")}`,
+            );
+          }
+          expect.fail(
+            `${row.enumName} drift at ${row.file}:${row.lineNo}\n${parts.join("\n")}`,
+          );
+        }
+      });
+    }
+  });
+
+  describe("extractor rejects bad input (prove it fails)", () => {
+    it("detects a stale value added to a spec row", () => {
+      const fixture = [
+        "| Enum name | Values | Used by |",
+        "|-----------|--------|---------|",
+        "| `record_basis` | `stated`, `inferred`, `absent`, `bogus` | assertions |",
+      ].join("\n");
+      const rows = extractSpecTableEnums(fixture, "fixture.md", closedNames);
+      expect(rows).toHaveLength(1);
+      const stale = [...rows[0].values].filter((v) => !canonical.get("record_basis")!.has(v));
+      expect(stale, "must detect the stale value").toEqual(["bogus"]);
+    });
+
+    it("detects a missing value deleted from a spec row", () => {
+      const fixture = [
+        "| Enum name | Values | Used by |",
+        "|-----------|--------|---------|",
+        "| `record_basis` | `stated`, `inferred` | assertions |",
+      ].join("\n");
+      const rows = extractSpecTableEnums(fixture, "fixture.md", closedNames);
+      expect(rows).toHaveLength(1);
+      const missing = [...canonical.get("record_basis")!].filter((v) => !rows[0].values.has(v));
+      expect(missing, "must detect the missing value").toContain("absent");
+    });
+
+    it("detects a missing enum when its row is deleted", () => {
+      // Table with one row present, one deleted — the deleted enum must be
+      // absent from the extractor's output so the coverage test catches it.
+      const fixture = [
+        "| Enum name | Values | Used by |",
+        "|-----------|--------|---------|",
+        "| `record_basis` | `stated`, `inferred`, `absent` | assertions |",
+        // proof_tier row deliberately deleted
+      ].join("\n");
+      const rows = extractSpecTableEnums(fixture, "fixture.md", closedNames);
+      expect(rows).toHaveLength(1);
+      const found = new Set(rows.map((r) => r.enumName));
+      expect(found.has("record_basis"), "present row is found").toBe(true);
+      expect(
+        found.has("proof_tier"),
+        "deleted row must not be found — the coverage test catches it",
+      ).toBe(false);
+    });
+  });
+
+  describe("extractor accepts legitimate non-enum tables", () => {
+    it("field tables with no Values header are ignored", () => {
+      // Simulates the field tables in research-schema-spec.md that reuse
+      // enum names as field names / types.
+      const fixture = [
+        "| Field | Type | Required | Description |",
+        "|-------|------|----------|-------------|",
+        "| `source_classification` | `source_classification` | yes | classification |",
+        "| `record_basis` | `record_basis` | yes | basis |",
+      ].join("\n");
+      const rows = extractSpecTableEnums(fixture, "fixture.md", closedNames);
+      expect(rows, "field table must not yield enum rows").toEqual([]);
+    });
+
+    it("open-enum tables with Recommended values header are ignored", () => {
+      const fixture = [
+        "| Enum | Schema name | Recommended values | Used by |",
+        "|------|-------------|-------------------|---------|",
+        "| `fact_type` | `gedcomx_fact_type_recommended` | `Birth`, `Death` | facts |",
+      ].join("\n");
+      const rows = extractSpecTableEnums(fixture, "fixture.md", closedNames);
+      expect(rows, "open-enum table must not yield rows").toEqual([]);
+    });
   });
 });
 

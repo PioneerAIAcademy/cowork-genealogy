@@ -20,7 +20,6 @@
  * is dropped with a cheerful message.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { LOCAL } from "../../src/auth/principal.js";
 import { mkdtemp, writeFile, rm, chmod } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -31,6 +30,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn(async () => null) };
 });
 
+import { LOCAL } from "../../src/auth/principal.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
@@ -158,7 +158,7 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   },
   {
     tool: "person_warnings",
-    call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
+    call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any, LOCAL),
   },
 ];
 

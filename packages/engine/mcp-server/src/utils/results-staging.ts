@@ -264,6 +264,17 @@ export function formatUnloggedRefs(refs: string[]): string {
 }
 
 /**
+ * Emitted on a nil `fulltext_search` against an `imageGroupNumber` FamilySearch
+ * reports as not full-text searchable. The zero was guaranteed before the query
+ * ran, so it says nothing about the person (issue #1988).
+ */
+export const NOT_FULLTEXT_SEARCHABLE_NOTE =
+  "This image group is not full-text searchable, so this nil was guaranteed " +
+  "before the query ran: it is a fact about the volume, not about the person. " +
+  "Do not record it as a negative finding. Browse the images instead — " +
+  "image_search / image_read — or search a different group.";
+
+/**
  * Emitted on a `projectPath`-carrying search that returned nothing. A nil search
  * stages no file, so the note above can never see it — this is the only signal for
  * the case a reasonably exhaustive search is most obliged to record.

@@ -30,7 +30,7 @@
         },
         "skill": {
           "type": "string",
-          "description": "Directory name under packages/engine/plugin/skills/. Must match an existing skill."
+          "description": "Directory name under packages/engine/plugin/skills/, OR — on a direct-agent test (one carrying `input.delegation`) — the basename of a plugin-agent file under packages/engine/plugin/agents/. Must match an existing skill directory or agent file. An agent-keyed suite such as gps-mentor has no skill directory at all; see unit-test-spec.md §5.2.1."
         },
         "name": {
           "type": "string",
@@ -213,7 +213,7 @@
             "type": "string",
             "description": "Optional expected fact value on every matching new assertion (#1108). Compared case-insensitively as a SUBSTRING of the assertion's value for the matcher's `attribute`: `place`/`standard_place` for attribute \"place\", `date` for \"date\", else the human-readable `value`. Substring tolerates place standardization (\"Pennsylvania\" -> \"Pennsylvania, United States\") while still failing a genuinely wrong value (\"Ireland\" is not in \"Pennsylvania\"). Declare only where the doctrine fixes the value deterministically."
           },
-          "evidence_type": {
+          "record_basis": {
             "oneOf": [
               {
                 "type": "string"
@@ -226,7 +226,7 @@
                 "minItems": 1
               }
             ],
-            "description": "Expected evidence_type on every matching new assertion (direct | indirect | negative). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
+            "description": "Expected record_basis on every matching new assertion (stated | inferred | absent). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
           },
           "informant_proximity": {
             "oneOf": [

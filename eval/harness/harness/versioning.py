@@ -117,21 +117,29 @@ InvocationMode = Literal["test", "skill", "tag"]
 _VALID_MODES: frozenset[str] = frozenset({"test", "skill", "tag"})
 
 
-def is_releasable_invocation(*, mode: InvocationMode, has_tag_filter: bool) -> bool:
-    """A run is releasable iff `--skill <name>` with no extra filters.
+def is_releasable_invocation(
+    *, mode: InvocationMode, has_tag_filter: bool, runs_per_test: int = 1
+) -> bool:
+    """A run is releasable iff `--skill <name>`, no tag filter, single run.
 
     `mode` is the CLI selection mode: "test" | "skill" | "tag". A
     `--skill X` invocation with `--tag` still filters tests within the
     skill, so it's not a full suite run. Unknown modes raise ValueError
     rather than silently returning False, so a future CLI mode that
     needs releasability has to be wired in explicitly.
+
+    `runs_per_test` is the resolved runs-per-test for the invocation. A
+    `--runs-per-test N` (N > 1) run repeats each test to surface the
+    `flaky` flag; by lead ruling (issue #2816) it is a scratch run, never
+    a committed candidate — so N > 1 makes the invocation non-releasable
+    regardless of mode. The default 1 is the normal single-run path.
     """
     if mode not in _VALID_MODES:
         raise ValueError(
             f"unknown invocation mode {mode!r}; expected one of "
             f"{sorted(_VALID_MODES)}"
         )
-    return mode == "skill" and not has_tag_filter
+    return mode == "skill" and not has_tag_filter and runs_per_test <= 1
 
 
 def now_utc_filename_timestamp() -> str:

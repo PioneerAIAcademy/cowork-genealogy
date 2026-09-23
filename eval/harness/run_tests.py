@@ -115,7 +115,7 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
     newest = max(dated, key=lambda pair: pair[0])[1]
     try:
         return json.loads(newest.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         # A corrupt predecessor must not take down the run that is writing a
         # new one — the sample simply starts a fresh sweep.
         return None
@@ -136,6 +136,23 @@ def _review_sample_for(
         prior_sample=(previous or {}).get("review_sample"),
         seed=sum(ord(c) for c in (skill + timestamp)),
     )
+
+
+def _positive_int(value: str) -> int:
+    """argparse `type=` for a >= 1 integer.
+
+    A non-integer (`3.5`, `abc`) raises ValueError, which argparse turns
+    into an exit-2 usage error. Zero and negatives raise
+    ArgumentTypeError with a clear message rather than silently doing
+    nothing — the class of typo that has twice exited 0 having run
+    nothing. No upper bound: `--max-cost-usd` is the spend guard.
+    """
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError(
+            f"must be a positive integer (>= 1), got {n}"
+        )
+    return n
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -170,6 +187,17 @@ def _build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Filter by tag. May be repeated; all tags must match (AND).",
+    )
+    parser.add_argument(
+        "--runs-per-test",
+        type=_positive_int,
+        default=None,
+        metavar="N",
+        help="Override runs_per_test for every selected test (CLI-only — the "
+        "test files and schema stay pinned to 1). Runs each test N times so "
+        "the per-test `flaky` flag can fire. N > 1 makes the invocation "
+        "non-releasable (writes scratch_<ts>.json), and a 3x run is 3x the "
+        "API spend.",
     )
     parser.add_argument(
         "--allow-missing-judge",
@@ -523,7 +551,7 @@ def _print_summary(rows: list[dict]) -> None:
 # Every outcome the harness can record, per unit-test-spec.md §7 and
 # `harness/runlog.py`. Enumerated rather than spot-checked: a four-value tally
 # (pass/partial/fail/aborted) silently under-sums a suite containing an
-# xfail/xpass test, and two live proof-conclusion tests declare exactly that.
+# xfail/xpass test.
 _OUTCOMES = ("pass", "partial", "fail", "aborted", "xfail", "xpass")
 
 
@@ -695,6 +723,14 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
+    # CLI-only runs-per-test override. Mutates the loaded specs after
+    # selection; the loader and JSON schema stay pinned to 1, so no test
+    # file can request this — only the operator, per invocation. The
+    # orchestrator reads spec.runs_per_test off these same objects.
+    if args.runs_per_test is not None:
+        for spec in specs:
+            spec.runs_per_test = args.runs_per_test
+
     try:
         auth = resolve_auth()
     except AuthError as e:
@@ -777,16 +813,23 @@ def main(argv: list[str] | None = None) -> int:
             "  NOTE: the judge is pinned to temperature=0, but the skill run "
             "is not (the SDK exposes no temperature), so a single run can "
             "vary. That is a reason to re-run a suspect test, not to accept "
-            "one that flaps: re-run it with --test <id> --runlogs-root <tmp> "
-            "and fix whatever differs. runs_per_test cannot be bumped — the "
-            "schema pins it to 1, so the flaky flag never fires.",
+            "one that flaps: re-run it with --test <id> --runs-per-test 3 "
+            "--runlogs-root <tmp> to surface the `flaky` flag, and fix "
+            "whatever differs. (Test files stay pinned to runs_per_test=1; "
+            "--runs-per-test overrides at the CLI and writes a scratch log.)",
             file=sys.stderr,
         )
     mode, has_tag_filter = _classify_invocation(args)
-    releasable = is_releasable_invocation(mode=mode, has_tag_filter=has_tag_filter)
+    resolved_runs_per_test = max((s.runs_per_test for s in specs), default=1)
+    releasable = is_releasable_invocation(
+        mode=mode,
+        has_tag_filter=has_tag_filter,
+        runs_per_test=resolved_runs_per_test,
+    )
     invocation_timestamp = now_utc_filename_timestamp()
     print(
         f"Invocation: mode={mode}, releasable={releasable}, "
+        f"runs_per_test={resolved_runs_per_test}, "
         f"timestamp={invocation_timestamp}"
     )
     print(f"Running {len(specs)} test(s)...")
