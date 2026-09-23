@@ -186,19 +186,21 @@ def test_wiki_prework_fetch_runs_when_required(tool_calls, test):
 # (issue #2283), widened to a tuple because each of these tests declares two
 # topical pages rather than one.
 #
-# `ut_search_full_text_009`'s second stem is a NOT-FOUND fixture, not a
-# subject-matter page: `Cuba_Naming_Customs` does not exist in the corpus
-# (verified live 2026-09-23; `wiki_read` returns "No wiki page found", and
-# Cuba_Genealogy's sidebar carries no Naming Customs entry where Spain's
-# does). Asserting it here is the same guarantee as for a topical page --
-# that the model's argument hit the intended predicate rather than falling
-# through to `wiki-read-any` -- and it additionally pins that the test
-# really exercises SKILL.md's gap path rather than silently skipping it.
+# `ut_search_full_text_009` lists the word list ONLY. Its subject is "Jose
+# Maria Garcia", a single surname, so SKILL.md's `{Country}_Naming_Customs`
+# bullet -- which triggers on "a compound or patronymic surname" -- does not
+# fire for it. Its one REQUIRED page is the word list, because the record is
+# not in English.
+#
+# It still DECLARES `wiki-read-cuba-naming-customs-not-found`, which is not
+# asserted here. Cuba_Naming_Customs does not exist in the corpus (verified
+# live 2026-09-23), so the fixture's job is to answer truthfully if the model
+# reaches for it, rather than let an over-matching Spain fixture serve another
+# jurisdiction's page as it did in v1_2026-09-22_22-33-05. Declaring is the
+# guard; requiring the call is not, and asserting it here failed the
+# 2026-09-23 09:16 run on a page the test never had reason to fetch.
 _TOPICAL_FIXTURES_BY_TEST_ID = {
-    "ut_search_full_text_009": (
-        "wiki-read-spanish-word-list",
-        "wiki-read-cuba-naming-customs-not-found",
-    ),
+    "ut_search_full_text_009": ("wiki-read-spanish-word-list",),
     "ut_search_full_text_013": (
         "wiki-read-spain-naming-customs",
         "wiki-read-spanish-word-list",
