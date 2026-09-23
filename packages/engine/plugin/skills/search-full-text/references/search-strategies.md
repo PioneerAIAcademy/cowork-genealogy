@@ -141,19 +141,22 @@ Escalate precision as you learn the names:
 3. `+Naveda +Somarriba +Limpias` (add the parish once a locality is in
    hand) — or apply the place *filter* rather than a keyword.
 
-**Two register forms the `{Country}_Naming_Customs` page does not carry.**
-Measured 2026-09-23 against the live corpus: `Spain_Naming_Customs` covers the
-four-part name, `de`/`y`/`e`, and emigrant reversal, and carries neither of
-these. They stay here under ADR-0012's provision for craft the wiki
-demonstrably lacks.
+**Two register forms, one of which the wiki does not carry.** Measured
+2026-09-23 against the live corpus.
 
 - The maternal surname is often written with the particle **`de la`** —
-  `María de la Somarriba` for `María Somarriba`. The clerk wrote it and the
-  transcription preserves it, so an entry carrying it will not match a query
-  for the bare surname.
+  `María de la Somarriba` for `María Somarriba` — and an entry carrying it will
+  not match a query for the bare surname. `Spanish_Genealogical_Word_List`
+  carries the search instruction for this ("prefixes such as *De la Torre* may
+  be ignored in alphabetization... search under both parts of a name"), so take
+  it from the page. What no page states is that the register writes the particle
+  where the modern form of the same name omits it, which is why both forms have
+  to be run rather than only the one the researcher brought.
 - The paternal surname appears in a **plural form** in a minority of entries —
   `Navedas` for `Naveda`, `Gonzáles` for `González`. Both forms occur for the
-  same household, sometimes in consecutive acts.
+  same household, sometimes in consecutive acts. Neither
+  `Spain_Naming_Customs` nor the word list carries this, so it stays here under
+  ADR-0012's provision for craft the wiki demonstrably lacks.
 
 Search both separately; the singular alone misses the acts that use the other.
 
