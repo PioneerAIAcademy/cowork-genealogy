@@ -10,7 +10,9 @@ import {
   stripHandBack,
   withOpeningTurn,
   stripOpeningTurn,
-  type ChatMessage
+  type ChatMessage,
+  clearQueued,
+  turnOutcomeLabel
 } from './chatEvents'
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
@@ -169,6 +171,11 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
+  // 1c: the label for how the last turn ended, or null for an ordinary finish.
+  const [outcome, setOutcome] = useState<string | null>(null)
+  // 1b: the server is holding a message for this session. Distinct from the per-bubble
+  // `queued` flag, which only the tab that sent it knows about.
+  const [queuedOnServer, setQueuedOnServer] = useState(false)
   const { detached, follow, scrollToBottom } = useStickToBottom(scrollRef)
 
   // Append agent_event content onto the last assistant message (the streaming one).
@@ -177,6 +184,12 @@ export default function ChatPane({
     if (kind === 'turn_done') {
       setBusy(false)
       setActivity(null)
+      // 1b: a message held while the turn ran is picked up now, so nothing
+      // should still read as waiting.
+      setMessages(clearQueued)
+      // 1c: say WHY the run ended. Without this a budget-capped or stalled run is
+      // indistinguishable from a finished one.
+      setOutcome(turnOutcomeLabel(ev.outcome, ev.limit))
       // A task killed via TaskUpdated emits no task_done on the wire, so the
       // set is reset at turn end rather than trusted to drain itself.
       liveTasksRef.current = new Set()
@@ -243,6 +256,10 @@ export default function ChatPane({
       // a second tab. Without this the indicator is idle while the agent works,
       // because busy is otherwise set only locally in send(). turn_done clears it.
       else if (msg.type === 'status' && msg.state === 'turn_active') setBusy(true)
+      // 1b: a message is held on the server. The bubble is marked locally in send(),
+      // but a reload or a second tab learns it only from here.
+      else if (msg.type === 'status' && msg.state === 'turn_queued') setQueuedOnServer(true)
+      else if (msg.type === 'status' && msg.state === 'turn_unqueued') setQueuedOnServer(false)
       else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)
@@ -278,15 +295,21 @@ export default function ChatPane({
 
   const send = (text: string): void => {
     const trimmed = text.trim()
-    if (!trimmed || busy) return
+    // 1b: `busy` is NOT a reason to refuse. Under continuous work a turn is the
+    // whole job -- a median of 53 minutes -- so the old `|| busy` guard meant
+    // typing and pressing Enter did nothing at all, silently, for most of a run.
+    // The server holds a message sent mid-turn and enqueues it when the turn
+    // ends; the bubble says so.
+    if (!trimmed) return
     // A new session's first message is the opening turn: the canned opener goes
     // on the wire ahead of it so init-project runs and consumes the objective in
     // one turn (PR #2649), instead of a canned turn that asks "who?" first.
     const opening = isNew && !startedRef.current
     startedRef.current = true
-    setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [] }])
+    setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [], queued: busy }])
     conn.send({ type: 'user_msg', text: opening ? withOpeningTurn(trimmed) : trimmed })
     setAutoPaused(null)
+    setOutcome(null) // 1c: a new message supersedes how the last turn ended
     setBusy(true)
     setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
@@ -366,6 +389,10 @@ export default function ChatPane({
                   </Markdown>
                 </div>
               )}
+              {/* 1b: the agent is mid-turn, so this one waits for the next step
+                  boundary rather than interrupting. Without the label a message
+                  that visibly went nowhere reads as dropped. */}
+              {m.queued && <div className="msgQueued">Picked up at the next step</div>}
               {/* In-flight text, rendered as plain preformatted text: markdown is
                   routinely mid-token at delta granularity, and re-parsing a partial
                   document every frame makes list/code blocks flicker as they close. */}
@@ -398,6 +425,13 @@ export default function ChatPane({
               as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {connState === 'reconnecting' ? (
             <div className="typing">●●● Reconnecting…</div>
+          ) : outcome && !busy ? (
+            <div className="turnOutcome">{outcome}</div>
+          ) : queuedOnServer && !messages.some((m) => m.queued) ? (
+            // The server is holding a message this tab did not send — another tab, or
+            // this one before a reload. Without this the feed looks idle while a message
+            // sits waiting.
+            <div className="turnOutcome">A message is waiting to be picked up at the next step.</div>
           ) : (
             busy && (
               <div className="typing">
@@ -492,17 +526,22 @@ export default function ChatPane({
             }
           }}
         />
-        {/* While a turn runs, Send becomes Stop — the only escape from a long
-            turn used to be a page reload (interrupt was a no-op end to end). */}
-        {busy ? (
+        {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
+            Under continuous work a turn is the whole job, so a composer that
+            only offers Stop for 53 minutes is a composer you cannot use. */}
+        {busy && (
           <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
             Stop
           </button>
-        ) : (
-          <button className="chatSend" type="submit" disabled={!input.trim()}>
-            Send
-          </button>
         )}
+        <button
+          className="chatSend"
+          type="submit"
+          disabled={!input.trim()}
+          title={busy ? 'The agent is working — this is picked up at the next step' : 'Send'}
+        >
+          Send
+        </button>
       </form>
     </div>
   )

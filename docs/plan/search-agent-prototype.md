@@ -350,11 +350,15 @@ that matters here: a redelivered message carries the same `turn_id`, and that cl
 be granted immediately — that *is* the resume path, and refusing it stalls every
 kill-resume iteration at D14 and D17.
 
-**The shipped `/v1` lock has a real defect, and it is not ours to fix here.** It claims a
+**~~The shipped `/v1` lock has a real defect~~ — MOOT, and do not fix it.** It claims a
 bare timestamp with no turn identity inside `POST /sessions/{id}/messages`, with a 600 s
 stale TTL and **no heartbeat anywhere**, against an immovable 1800 s step ceiling and a
 measured p99 segment of 1488 s — so a healthy long turn has its lock reclaimed while it is
-still running. File it as a `nothing-checks` issue against `/v1`.
+still running. **`/v1` is being removed from the repo** (lead, 2026-09-21): the team it was
+built for never used it and will use the prototype instead, so the defect goes with it.
+`research-as-a-job.md` deleted the phase item that fixed this, and says in as many words
+to disregard this entry — it is left standing only so a reader who arrives here from an
+older link is not sent to build it. Do not file the `nothing-checks` issue.
 
 **Everything else about locking is deferred to R8, deliberately.** An earlier draft
 specified a full protocol here — `claim_epoch` fencing, epoch-conditioned release,
@@ -1359,7 +1363,14 @@ without whichever Bedrock refuses.
   rule was not built then. **The D17 run of 2026-09-21 confirmed it on background agents,
   which makes foreground-versus-background the settled difference — a foreground
   delegation is re-run, background agents are lost to a zero-turn synthetic result — and
-  the rule is built (see D17).** But this kill differs from that run's: the kill mechanism was the
+  the rule is built (see D17).** What "the rule" means there is D17's RE-QUERY — one
+  continue prompt on a zero-turn redelivery — and that is all that was built. The guard
+  `research-as-a-job.md` 0a asks for is a different thing and landed separately: a
+  redelivered attempt that did no work is a FAILURE rather than a completion, bounded by
+  a cap on consecutive zero-progress attempts (`turns.zero_progress_attempts`, N = 2) that
+  answers 200 with `outcome = 'no_progress'` on exhaustion, because this queue has no
+  redrive policy and a terminal failure surfaced as an error re-runs the model forever.
+  But this kill differs from that run's: the kill mechanism was the
   shim's own (`docker kill` + `docker start`, what its `kill_worker` does at the
   `read_timeout`), but this turn ran with the Stop hook off (`proto-kill` leaves
   `AUTONOMOUS_MAX_NUDGES` at compose's 0), one foreground delegation
@@ -1370,9 +1381,14 @@ without whichever Bedrock refuses.
   still specific to the background case — and the D17 run of 2026-09-21 then observed it
   there for the second time, with the main thread's own narration naming the two agents as
   running in the background, which is what settled it and built the rule. A scripted probe
-  of the same shape still needs a switch this arm does not have: `--kill-on` fires on the
-  first `Agent` row, by name only (`tool_calls` carries no input; `session_entries` does),
-  and on the autonomous message the first `Agent` is whichever sub-skill delegates first.
+  of the same shape ~~still needs a switch this arm does not have~~ **now has one**:
+  `--kill-on` fired on the first `Agent` row by name only (`tool_calls` carries no input;
+  `session_entries` does), and on the autonomous message the first `Agent` is whichever
+  sub-skill delegates first. `--kill-on-input run_in_background=true` reads the `tool_use`
+  block out of `session_entries.entry` and selects on the input, which is the distinction
+  this paragraph identifies as the settled one. `make proto-probe-resume` wires it to the
+  other two pieces the probe needs — a message that provokes two concurrent extractions,
+  and a non-zero `AUTONOMOUS_MAX_NUDGES` — and is billed, roughly an hour a try.
 - **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
   Probed live with the five bodies then present: all register under **bare** names with

@@ -6,8 +6,8 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
 - the shim is its own service and holds the docker socket -- that is what lets it
   kill the worker on a step-ceiling overrun without dying with it;
 - the worker restarts unless stopped -- a kill needs a fresh worker to redeliver to;
-- READ_TIMEOUT_S is the 1800 s step ceiling by default -- an `up` environment may set it
-  (proto-demo-auto's 7200), read here off the interpolation's default -- and only the
+- READ_TIMEOUT_S is the 1800 s step ceiling by default -- an `up` environment may still
+  set it, read here off the interpolation's default -- and only the
   ceiling override lowers it;
 - elasticmq's visibility timeout sits above every ceiling the shim can run at -- the
   compose default and the one proto-demo-auto exports -- and there is NO redrive
@@ -28,13 +28,18 @@ deadLettersQueue or committed_batches is not an offence.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
+import pytest
 import yaml
+
+from proto.web import app
 
 ROOT = Path(__file__).resolve().parents[3]
 PROTO = Path(__file__).resolve().parents[1] / "proto"
+REPO = Path(__file__).resolve().parents[3]
 COMPOSE = PROTO / "docker-compose.yml"
 CEILING_OVERRIDE = PROTO / "docker-compose.ceiling.yml"
 ELASTICMQ_CONF = PROTO / "elasticmq.conf"
@@ -326,9 +331,9 @@ def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn_on_the_default
 
 
 def test_shim_read_timeout_is_the_step_ceiling():
-    """The compose default is the pinned 1800 s; the variable that overrides it is the one
-    proto-demo-auto exports (7200 for the D18 arm), so a renamed interpolation would leave
-    that arm silently at 1800."""
+    """The compose default is the pinned 1800 s, and the variable an `up` environment
+    overrides it through is the one proto-demo-auto exports -- so a renamed interpolation
+    would leave an override silently ignored."""
     env = _env(_service(_load(COMPOSE), "shim"))
     var, default = _compose_default(env["READ_TIMEOUT_S"])
     assert int(default) == STEP_CEILING_S
@@ -355,7 +360,7 @@ def test_ceiling_override_lowers_read_timeout_and_nothing_else():
 # ── queue ───────────────────────────────────────────────────────────────────────
 
 
-# proto-demo-auto's `export READ_TIMEOUT_S="${READ_TIMEOUT_S:-7200}"` in raw make text ($$
+# proto-demo-auto's `export READ_TIMEOUT_S="${READ_TIMEOUT_S:-1800}"` in raw make text ($$
 # is the shell's $); either default form, since this reads the number only.
 _EXPORTED_CEILING = re.compile(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:?-(\d+)\}"')
 
@@ -371,12 +376,82 @@ def test_elasticmq_visibility_timeout_exceeds_the_ceiling():
     attempt longer than the visibility timeout is redelivered mid-flight and the worker
     runs the same turn twice at once on one SDK session. The literal must therefore top
     every ceiling the shim can run at -- the compose default and the one proto-demo-auto
-    exports (7200 s) -- not only the 1800 s this compared against until 2026-09-20."""
+    exports. Both are 1800 s since research-as-a-job 0b, but this still takes the LARGER
+    of the two, so raising either one again without raising the literal reds this test."""
     match = _DURATION.search(_turns_block())
     assert match, "turns needs a defaultVisibilityTimeout with a seconds/minutes unit"
     seconds = int(match.group(1)) * _UNIT_S[match.group(2)]
     ceiling = max(STEP_CEILING_S, _exported_ceiling_s())
     assert seconds > ceiling, f"visibility timeout {seconds}s must exceed the largest step ceiling, {ceiling}s"
+
+
+# ── 1a: the nudge cap the web tier stamps ────────────────────────────────────────
+
+RUNLOGS_E2E = REPO / "eval" / "runlogs" / "e2e"
+_STEP_TOOLS = {"Skill", "Task", "Agent"}
+
+
+def _steps_per_run() -> list[int]:
+    """Skill/Task/Agent calls per committed e2e run -- the STEP count the nudge cap is
+    sized on. A run that yields at every step boundary needs one nudge per step, which is
+    the worst case the cap has to clear; the nudge HISTOGRAM cannot answer this because
+    every committed run was produced under a harness that forbids yielding."""
+    steps = []
+    for path in sorted(RUNLOGS_E2E.glob("*/run-*.json")):
+        if path.name.endswith((".ann.json", ".final-research.json", ".final-tree.gedcomx.json")):
+            continue
+        try:
+            calls = json.loads(path.read_text(encoding="utf-8")).get("tool_calls") or []
+        except (ValueError, OSError):
+            continue
+        if isinstance(calls, list):
+            steps.append(sum(1 for c in calls
+                             if isinstance(c, dict) and (c.get("tool") or c.get("name")) in _STEP_TOOLS))
+    return sorted(steps)
+
+
+def test_the_web_tiers_nudge_cap_clears_the_corpus_p99_step_count():
+    """The number is DERIVED, not remembered. Measured 2026-09-23 over 189 runs: median
+    15, p90 25, p99 51, max 76 -- so the shipped 60 clears p99. Re-deriving it here means
+    a corpus that grows past the cap reds this instead of silently truncating runs.
+
+    The plan's floor is 30, and the max (76) is deliberately NOT the target: the cap is
+    not the spend control (1e's per-session bound is), and sizing to the longest run in
+    the corpus would mean the cap never fires at all."""
+    steps = _steps_per_run()
+    assert len(steps) >= 100, f"only {len(steps)} runs readable; the derivation needs the corpus"
+    p99 = steps[int(0.99 * (len(steps) - 1))]
+    default = _compose_default(_env(_service(_load(COMPOSE), "web"))["AUTONOMOUS_MAX_NUDGES"])[1]
+    assert int(default) >= p99, \
+        f"the web tier's cap {default} is below the corpus p99 step count {p99}: runs would be truncated"
+    assert int(default) >= 30, "the plan's floor"
+    assert int(default) == app.DEFAULT_MAX_NUDGES, \
+        "compose and the tier's own fallback must agree, or an unset variable changes behaviour"
+
+
+def test_the_cap_is_not_read_off_the_request():
+    """This tier has no auth. A field on MessageBody would let any client set its own
+    nudge budget, which is the one thing bounding how long an unattended run works for."""
+    assert "max_nudges" not in app.MessageBody.model_fields, "the cap must not be a request field"
+    assert app.MessageBody(text="hi", max_nudges=999).model_dump() == {"text": "hi"}, \
+        "an extra field on the request is dropped, never carried through to the queue body"
+
+
+@pytest.mark.parametrize("env, expected", [
+    ({}, app.DEFAULT_MAX_NUDGES),
+    ({"AUTONOMOUS_MAX_NUDGES": ""}, app.DEFAULT_MAX_NUDGES),
+    ({"AUTONOMOUS_MAX_NUDGES": "  "}, app.DEFAULT_MAX_NUDGES),
+    ({"AUTONOMOUS_MAX_NUDGES": "nonsense"}, app.DEFAULT_MAX_NUDGES),
+    ({"AUTONOMOUS_MAX_NUDGES": "0"}, 0),
+    ({"AUTONOMOUS_MAX_NUDGES": "40"}, 40),
+    ({"AUTONOMOUS_MAX_NUDGES": " 7 "}, 7),
+    ({"AUTONOMOUS_MAX_NUDGES": "-3"}, 0),
+])
+def test_max_nudges_reads_the_environment_and_never_silently_disables_itself(env, expected):
+    """Unset, blank and malformed all take the DEFAULT rather than 0. Guessing 0 here
+    would ship the stop-every-step behaviour the plan exists to remove, and it would look
+    exactly like the feature not working. An explicit 0 is honoured -- proto-demo needs it."""
+    assert app.max_nudges(env) == expected
 
 
 def test_elasticmq_has_no_redrive_policy():

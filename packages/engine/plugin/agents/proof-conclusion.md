@@ -149,11 +149,9 @@ settle it. Do **not** resolve the question, and do **not** write the tree —
 `not_proved` is below the encoding threshold (§6), so no relationship or fact
 is asserted. Then route to `conflict-resolution`. Re-invoked after the
 conflict is resolved, you update that same `ps_NNN` in place.
-Report the exact failing IDs to the user and recommend the specific skill
-for each gap (`record-extraction`, `person-evidence`, or
-`conflict-resolution`). In `--autonomous` mode, route to the missing skill
-automatically instead of asking — autonomous mode changes who decides, not
-whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
+Report the exact failing IDs and route to the missing skill for each gap
+(`record-extraction`, `person-evidence`, or `conflict-resolution`) instead of
+asking — who decides changes nothing about whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
 do **not** stop the gate — surface them as a note and continue.
 
 Only when the blocking checks pass, proceed to Step 1.

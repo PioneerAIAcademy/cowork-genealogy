@@ -133,6 +133,11 @@ services:
       # D18's autonomous arm: the worker's Stop hook vetoes the model's voluntary yield up
       # to this many times per turn (proto-demo-auto exports the harness's 40). 0: off.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
+      # 1b: where a message held during a turn is released to when that turn ends. The
+      # SAME queue the web tier and the shim use. The worker is the only component that
+      # knows a turn finished -- the web tier is stateless and the browser may be closed
+      # -- so the handover is its job. Unset means no release.
+      QUEUE_URL: http://elasticmq:9324/000000000000/turns
       ENGINE_DIR: /opt/genealogy/engine
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project
@@ -149,6 +154,8 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      elasticmq:
         condition: service_healthy
 
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
@@ -171,6 +178,21 @@ services:
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
       POLL_S: "1"
       SSE_PING_S: "15"
+      # research-as-a-job 1a: the Stop hook's veto cap, stamped on every queue message
+      # this tier enqueues (begin_turn -> body.max_nudges) and preferred by run_turn over
+      # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: this
+      # tier has no auth, so a request field would let any client set its own nudge
+      # budget. The worker cannot tell the browser from `make proto-demo` -- there is no
+      # browser path it can see -- so each recipe recreates this container with its own
+      # export instead, and proto-demo exports 0 to stay a one-turn run.
+      #
+      # 60 is sized on STEP count, not on the nudge histogram: measured over the 189
+      # committed e2e runs, Skill/Task/Agent steps per run are median 15, p90 25, p99 51,
+      # max 76 -- so 60 clears p99 with margin. The nudge histogram (median 1, p90 4)
+      # describes runs under a harness that FORBIDS yielding and does not describe this
+      # regime. The cap is not the spend control either; 1e's per-session bound is.
+      # test_proto_config re-derives the p99 from the corpus and fails if this drops below it.
+      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-60}
     depends_on:
       postgres:
         condition: service_healthy
@@ -243,7 +265,8 @@ services:
       WORKER_CONTAINER: proto-worker
       HTTP_CONNECTIONS: "2"
       # The step ceiling: 1800 s unless the `up` environment sets READ_TIMEOUT_S
-      # (proto-demo-auto exports 7200 for the D18 arm; proto-demo, proto-turn and
+      # (proto-demo-auto exports it too, but at the same pinned 1800 since 0b brought
+      # the ceiling back down -- it buys MORE attempts now, not a longer one; proto-demo, proto-turn and
       # proto-kill run at the default). docker-compose.ceiling.yml lowers it for the
       # smoke's ceiling case and changes nothing else.
       READ_TIMEOUT_S: "${READ_TIMEOUT_S:-1800}"

@@ -602,6 +602,28 @@ button {
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
 }
+/* research-as-a-job 1b: a message typed while a turn is running is HELD, not
+   enqueued -- two turns on one session would resume the same SDK session. The
+   label is what stops that reading as "my message was dropped"; it clears at
+   turn_done, which is when the held message becomes the next turn. Right-aligned
+   under the bubble it belongs to, since .msgUser is align-self: flex-end. */
+.msgQueued {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  text-align: right;
+  margin-top: 4px;
+  font-style: italic;
+}
+/* research-as-a-job 1c: how the last turn ended. complete() used to hardcode
+   'ok', so a run that hit its step budget or stalled looked exactly like one
+   that finished -- and a genealogist reads that as "nothing more was found".
+   Sits where the "working… Ns" indicator sits, so the same spot answers both
+   "is it running?" and "why did it stop?". */
+.turnOutcome {
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding: 4px 2px;
+}
 /* Restore paragraph spacing the global reset (viewer-ui global.css) zeroes.
    Without this, two text blocks joined with a blank line render on consecutive
    lines with no gap — the paragraph break #1312 requires never reaches the
@@ -820,8 +842,11 @@ button {
 .chatSend:disabled {
   opacity: 0.5;
 }
-/* Replaces Send while a turn is running (interrupt). Muted rather than accented
-   so it reads as a secondary "abort", not the primary action. */
+/* Shown BESIDE Send while a turn is running (interrupt) — research-as-a-job 1b.
+   It used to replace Send, which under continuous work meant the composer offered
+   only Stop for the length of a whole research job (a median of 53 minutes). Muted
+   rather than accented so it still reads as a secondary "abort", not the primary
+   action. */
 .chatStop {
   align-self: stretch;
   background: var(--bg-card);

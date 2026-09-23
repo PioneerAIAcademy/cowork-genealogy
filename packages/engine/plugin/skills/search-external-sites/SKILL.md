@@ -83,14 +83,14 @@ References to load when the moment arrives:
 
 Repeat for each external-site plan item.
 
-## Autonomous mode — no user to capture
+## No user is waiting to capture
 
-Under `--autonomous` (the research objective was launched with that flag)
-there is **no user** to click a link, capture a PDF, or upload it — so the
-click-capture-analyze loop above **cannot complete**. Do **not** present a
-URL and wait for a capture, and do **not** end your turn to ask the user to
-capture it: that stalls an autonomous run (the orchestrator's rule is that
-only `project.status == "completed"` or a logged blocker ends the run).
+Nobody is sitting there to click a link, capture a PDF, or upload it while you
+work — so the click-capture-analyze loop above **cannot complete** mid-run. Do
+**not** present a URL and wait for a capture, and do **not** end your turn to ask
+for one: that stalls the run (the orchestrator's rule is that only
+`project.status == "completed"`, a logged blocker, or something only the user can
+supply ends it).
 
 Instead, for each capture-required external-site plan item:
 
@@ -102,9 +102,9 @@ Instead, for each capture-required external-site plan item:
    — it is a genuine lead worth recording.
 3. **Log it as deferred** in one `research_log_append` call: `outcome:
    "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
-   and `notes` stating the search was **deferred — requires an interactive
-   user capture and is not obtainable in an autonomous run**, with the
-   generated URL recorded so a later interactive session can capture it.
+   and `notes` stating the search was **deferred — requires a user capture,
+   which cannot happen while the run is working**, with the generated URL
+   recorded so the researcher can capture it later.
 4. **If — and only if — the search came from an existing plan item**, mark
    that item `skipped` (step 7): terminal, and honest that nothing was
    searched. For an ad-hoc search with no plan item, stop at the log entry.
@@ -527,10 +527,10 @@ not mark it `completed` for handing over a URL.
 | User *reports* a nil, no capture | `in_progress` |
 | Site inaccessible **and the user asks to skip it** | `skipped` |
 | Site inaccessible, user has not decided | `in_progress` |
-| `--autonomous` (no user can ever capture) | `skipped` |
+| Capture required, and no user is present to make one | `skipped` |
 
-Outside `--autonomous`, `skipped` requires the user to have asked for it —
-never infer it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
+`skipped` on any other row requires the user to have asked for it — never infer
+it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
 inputs — never hand-edit `research.json`. This skill writes only `log[]`
 entries and the plan-item status; record-extraction writes any
 source/assertion entries when you hand it a single-record capture. Then offer

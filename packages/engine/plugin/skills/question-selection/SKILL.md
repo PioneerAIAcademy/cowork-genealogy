@@ -221,17 +221,15 @@ test of a name or date may not stand in for the fact.
 
 **When the objective signals the user doubts an existing assignment** —
 phrasing like "correct parents", "the right X", "not correct" — the current
-tree assignment is the premise *under doubt*, not a starting fact. **In
-interactive mode, before formulating, ask the user two things: (1) what
-evidence led them to doubt the current assignment, and (2) the birth date and
-place they are working from — unless the user's own message already states
-both, however briefly, in which case treat both as answered and do not ask
-again or demand elaboration or provenance beyond what was given.** Then frame
-the first question as a **test of the disputed assignment** — e.g. "Do
-independent records confirm or refute that X and Y are the parents of Z?" —
-never treating the questioned tree as evidence for its own conclusion.
-Under `--autonomous` (no user to answer), skip the ask and go straight to
-the verification-framed question.
+tree assignment is the premise *under doubt*, not a starting fact. **Do not stop
+to ask what led them to doubt it, or what birth date and place they are working
+from — nobody is waiting to answer.** Take whatever the objective already states,
+however briefly, and go straight to framing the first question as a **test of the
+disputed assignment** — e.g. "Do independent records confirm or refute that X and
+Y are the parents of Z?" — never treating the questioned tree as evidence for its
+own conclusion. If the objective is genuinely unusable without something only the
+researcher holds, that is the orchestrator's fourth stop condition, not an inline
+question.
 
 ## 4. Write the question
 

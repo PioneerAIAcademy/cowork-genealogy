@@ -787,10 +787,18 @@ There **is** an orchestrator, and it is a skill:
    overrides a direct request for a downstream skill and sends the router back
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
-3. **Two modes.** Interactive surfaces meaningful decisions to the user.
-   `--autonomous` runs the loop in one continuous turn: no clarifying questions
-   and decisions logged to the audit-trail fields. **The router does not yield on
-   a mentor verdict.** The one verdict table in the file is advisory in both modes
+3. **One mode, in the router.** It runs the loop in one continuous turn — no
+   clarifying questions, decisions logged to the audit-trail fields — for every
+   run, with no flag to turn it on. `--autonomous` survives in
+   `research/SKILL.md` only as a trigger phrase in the description; it gates no
+   branch in that body. **It still gates branches in six OTHER bodies** —
+   `search-external-sites`, `question-selection`, `search-records`,
+   `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md` — and
+   the browser path never sends the flag, so those branches do not fire on a
+   hosted run. Each is a separate paid eval slot, which is why they did not move
+   with the router; the e2e harness and `make proto-demo` both still build
+   `/research --autonomous …`, so no offline suite can see the difference.
+   **The router does not yield on a mentor verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
    resolved question, or force a remediation skill. A second, blocking table
    said the opposite for seven weeks — a merge had restored text that an
@@ -801,12 +809,14 @@ There **is** an orchestrator, and it is a skill:
    **mentor gate** — every `ps_id` a resolved question references must carry a
    `focus: "proof-critique"` verdict in `evaluations[]`, written by
    `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
-   recommendation stays advisory and never forces rework. **Who owns that write
-   is an open question**, not a settled "one direct write": the routing table's
-   last-but-one row has the orchestrator write it, while the same file's
-   "Re-invocation behavior" section says the router writes "nothing directly."
-   The lead has to pick one; until then, do not build a check that assumes
-   either.
+   recommendation stays advisory and never forces rework. **`proof-conclusion`
+   owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` by
+   the research-as-a-job plan. Three surfaces already said so and the router
+   contradicted all three: `docs/specs/schemas/ownership.json` names
+   `skill:init-project` and `skill:proof-conclusion` as the `project` section's
+   only callers, `agents/proof-conclusion.md` §8 makes the call, and the
+   router's own `allowed-tools` grants no writer tool. The router verifies the
+   two gates and re-invokes `proof-conclusion`; it never writes the status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
 
@@ -830,9 +840,10 @@ record), and it never writes identity links or eliminations inline
 > corpus (15 tests) plus stubbed routing tests covering rows 1–4 and the
 > shortcut guard. Row 14 (post-verdict `address_first` handler) is now
 > gradeable — the contradiction it was blocked on is gone (item 3 above).
-> Row 16 (`project.status = "completed"`) stays blocked, on who owns that
-> write rather than on a verdict table. A live e2e run is still the only
-> instrument for routing-table rows the unit suite does not yet cover.
+> Row 16 (`project.status = "completed"`) is no longer blocked on who owns
+> that write — item 4 above settles it — but no unit test covers it yet. A
+> live e2e run is still the only instrument for routing-table rows the unit
+> suite does not yet cover.
 
 ### If you're asked to…
 
@@ -1561,7 +1572,16 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   many hours as it needs. **Do not read the cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once.
   Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured**.
+  measured** — which is exactly why the research-as-a-job ruling of 2026-09-21
+  refused to accept the pause. Since that plan's 1d, `set_timeout` is no longer
+  called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
+  live sandbox on a 300 s loop from the control plane, so a turn cannot age out
+  while it works. That matters now because a turn is a whole research job —
+  median 53.9 minutes, p90 107.9 — so under continuous work one user message
+  would otherwise reach the cap mid-flight on about half of runs. The control
+  plane is deliberately out of the streaming path (`/connect` hands the browser
+  a WSS straight to the sandbox), so the loop beats on **liveness**, the
+  superset of "a turn is active" that it can actually see.
 
 - **The delete-janitor for abandoned sandboxes is unimplemented** — paused
   sandboxes are never reclaimed, by us or by E2B (never reaping them is what

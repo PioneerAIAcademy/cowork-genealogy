@@ -1,0 +1,9 @@
+Work on this project's open research question. Two record images are already staged and
+both need extracting, and they are independent of each other — neither one's result
+changes how you read the other.
+
+Start BOTH extractions at the same time, as concurrent background delegations, rather
+than running one and then the other. Launch them together in a single step, keep working
+on the rest of the question while they run, and collect their results when they finish.
+
+Then continue the normal GPS loop with whatever they return.

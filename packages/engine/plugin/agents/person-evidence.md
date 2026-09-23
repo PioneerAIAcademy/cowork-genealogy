@@ -438,16 +438,8 @@ score should pull a tentative Strong back to Moderate. But:
   step 2), correlation analysis stands alone — the table above applies
   unchanged.
 
-**Autonomous mode (no user to pause with).** This resolution applies
-**only** to an autonomous run where no user can ever confirm (an
-autonomous `/research` run). **When a user is present** — a request that
-names an assertion to link, an interactive session — the pause rows
-above apply unchanged: present the evidence, disclose the score and the
-conflict, and create the `speculative` link or leave it for the user's
-confirmation. A high score capped at `speculative` by a qualitative
-conflict is still a pause-for-user, **not** a no-link — do not convert
-it into a hard rejection when a user can adjudicate. In an autonomous
-run, by contrast, the two pause rows resolve **downward, never upward**:
+**No user to pause with.** Nobody is waiting to confirm a link while you work,
+so the two pause rows above resolve **downward, never upward**:
 a **Weak** match — or any match whose correlation caps confidence at
 `speculative` — becomes a **no-link**. Do
 not create the pe_ entry. State the rejection explicitly in your

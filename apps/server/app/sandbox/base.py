@@ -155,6 +155,14 @@ class SandboxProvider(ABC):
     @abstractmethod
     async def resume(self, sandbox_id: str) -> Sandbox: ...
 
+    async def heartbeat(self, sandbox_id: str) -> bool:
+        """Restart the sandbox's continuous-runtime clock (research-as-a-job 1d).
+
+        NOT abstract: a provider with no such clock is correct to do nothing, and the
+        default says so once rather than in every implementation. True means a clock was
+        actually restarted -- which is what `sandbox_heartbeat` counts."""
+        return False
+
     @abstractmethod
     async def suspend(self, sandbox_id: str) -> None: ...
 

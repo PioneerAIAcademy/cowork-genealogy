@@ -1,9 +1,40 @@
 # Research as a job — phases 0 and 1
 
-> **Status:** NOT BUILT. Plan of 2026-09-21, for beta in Fall 2026. **This is the whole of
-> what to build now**, and it is several weeks of work. Phases 2 to 5 of the wider design are
+> **Status:** BUILT, pending the billed acceptance runs. Plan of 2026-09-21, revised
+> 2026-09-23 (PR #2722), for beta in Fall 2026. Phases 2 to 5 of the wider design are
 > in `research-as-a-job-later.md` at intent only; they get their own detailed pass once this
 > lands, when the surfaces they touch can actually be opened.
+>
+> **What is built:** S2, 0a, 0b, 1a, 1b, 1c, 1d, 1e — code, offline tests, and a mutation
+> pass proving each new guard fails when broken and still accepts a legitimate variant.
+> 0a's probe gate was already satisfied before this work: `search-agent-prototype.md`
+> records the D17 run of 2026-09-21 observing the synthetic result on background agents
+> for the second time. `make proto-probe-resume` now reproduces it on demand
+> (`--kill-on-input run_in_background=true`), which the older arm could not.
+>
+> **What is NOT done, and cannot be done offline:** every billed run. The
+> `make eval-skill SKILL=research` run plus a genealogist annotation pass that S2's eval
+> slot requires; `make proto-demo-auto` at the restored ceiling; the live
+> `make proto-probe-resume`; 1c's two SDK measurements (whether `continue_: False`
+> suppresses the Stop hook dispatch, and whether a SUBAGENT's halts the parent session);
+> and 1d's alpha acceptance.
+>
+> **Two open questions for the lead**, both raised rather than invented:
+> 1. The `question-selection` path the 2026-09-01 ruling does not settle — see S2 below.
+> 2. **`--autonomous` still gates branches in six bodies S2 does not cover**
+>    (`search-external-sites`, `question-selection`, `search-records`, `research-plan`,
+>    `agents/proof-conclusion.md`, `agents/gps-mentor.md`), and the browser path never
+>    sends the flag, so those branches do not fire on a hosted run — most consequentially
+>    `search-external-sites`, which then presents a URL and waits for a capture nobody is
+>    there to make. Each is a separate paid eval slot, which is why they did not move with
+>    the router. No offline suite can see it: the e2e harness and `make proto-demo` both
+>    still build `/research --autonomous …`.
+>
+> **One deviation from the plan as written, and why.** 1b wires `pending_user_message()`
+> into the Stop hook only. It is wired into the `PreToolUse` halt as well, because the
+> plan's own measurement — the model yields a median of once per run, 31% of runs never —
+> is the same figure it uses to rule out a yield-gated Stop, and the UI promises the
+> message is "picked up at the next step". Both carriers read the same row.
 >
 > Hardened over four adversarial review rounds. Supersedes the hand-back literal ruled
 > 2026-09-07 (issues #2292, #1104, #2328) and the regex auto-continue of PR #2667.

@@ -12,6 +12,8 @@ silent, which is the failure mode this whole issue is about.
 """
 from __future__ import annotations
 
+import asyncio
+
 import re
 from pathlib import Path
 
@@ -142,13 +144,37 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
     opts = real_agent.build_options(tmp_path)
 
     matchers = opts.hooks["PreToolUse"]
-    assert [h for m in matchers for h in m.hooks] == [real_agent._pretool_hook]
+    # Exactly one hook, and it must REACH `_pretool_hook`. Since 1d it is a thin wrapper
+    # that counts tool calls for the Stop hook's no-progress arm -- so identity is the
+    # wrong assertion, but "the deny still fires" is not: this hook is the session's only
+    # restraint under bypassPermissions, and a wrapper that forgot to delegate would let
+    # every raw write onto research.json through with this test green.
+    # Since 1d there are TWO PreToolUse matchers: an unscoped counter for the Stop hook's
+    # no-progress arm, and the deny hook on its own narrow matcher. Identity is the wrong
+    # assertion now, but "the deny still fires" is not -- this hook is the session's only
+    # restraint under bypassPermissions, so a refactor that stopped it reaching the write
+    # lockdown would let every raw write onto research.json through with this test green.
+    registered = [h for m in matchers for h in m.hooks]
+    assert len(registered) == 2
+    verdicts = [
+        asyncio.run(h({"tool_name": "Write",
+                       "tool_input": {"file_path": str(tmp_path / "research.json")}}, None, None))
+        for h in registered
+    ]
+    denies = [v for v in verdicts
+              if v.get("hookSpecificOutput", {}).get("permissionDecision") == "deny"]
+    assert len(denies) == 1, "exactly one registered hook must deny the raw write"
     # Scoped, not matcher=None. `None` fired the hook for every tool, so one
     # unanswered callback took down `ToolSearch` too (issue #1915).
-    assert [m.matcher for m in matchers] == [real_agent._PRETOOL_MATCHER]
-    assert all(m.matcher for m in matchers), "a falsy matcher fires for every tool"
+    # The DENY matcher is still scoped. `None` fired the deny for every tool, so one
+    # unanswered callback took down `ToolSearch` too (issue #1915). The counter beside it
+    # is deliberately unscoped and is exempt from that reasoning: it is a dict increment
+    # with no I/O, no await, and no way to go unanswered.
+    assert [m.matcher for m in matchers] == [None, real_agent._PRETOOL_MATCHER]
+    deny_matchers = [m for m in matchers if m.matcher]
+    assert len(deny_matchers) == 1 and deny_matchers[0].matcher == real_agent._PRETOOL_MATCHER
     # Explicitly set, so the effective bound is not whichever CLI default applies.
-    assert [m.timeout for m in matchers] == [real_agent._PRETOOL_TIMEOUT_S]
+    assert [m.timeout for m in matchers] == [real_agent._PRETOOL_TIMEOUT_S] * 2
     assert 0 < real_agent._PRETOOL_TIMEOUT_S <= 60
 
 
