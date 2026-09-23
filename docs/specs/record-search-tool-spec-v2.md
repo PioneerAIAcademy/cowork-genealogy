@@ -502,7 +502,7 @@ entries; 154 scored candidate rows reached `results/match-scores.jsonl` while
 `stageSearchResults` writes `results/.staging/<uuid>.json` and
 `research_log_append` unlinks it on finalize, so a surviving file is a candidate
 unlogged search. It is only a candidate: `research_log_append` *warns* rather than
-fails when a staging-capable tool logs `results_available > 0` with no
+fails when a staging search tool logs `results_available > 0` with no
 `stagedResultsRef`, so a logged search can leave its file behind for the full TTL.
 Each staged file therefore consumes at most one such entry — same `tool`,
 `performed` at or after the file's `retrieved` — and only unpaired files count.
