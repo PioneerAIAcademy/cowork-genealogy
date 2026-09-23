@@ -13,8 +13,9 @@
 /**
  * Parse a named block-sequence out of YAML frontmatter.
  *
- * Two shapes in this repo's frontmatter would silently return nothing if the
- * scan were naive, and both are live:
+ * Three comment-and-layout shapes cost a naive scan the grants it is meant to
+ * read. The first two are live in the tree today; the third is not yet, and is
+ * handled because both callers fail OPEN on it:
  *
  *  - **Comment lines inside the list.** `record-extractor.md` carries a 10-line
  *    `#` comment block between `tools:` and its first entry. A scan that stops
@@ -22,6 +23,12 @@
  *  - **A later top-level key.** Several skills put `description:` *after*
  *    `allowed-tools:`, so the list has to end at the next unindented key — but
  *    an unindented comment is not one.
+ *  - **A trailing comment on an entry.** `- mcp__genealogy__tree_forget  # …`
+ *    must yield the tool name, not the name with the comment glued to it. A
+ *    mangled entry matches no tool, so the ownership guard stops seeing the
+ *    grant and passes — and on a SKILL.md nothing else reads `allowed-tools:`,
+ *    so nothing else would catch it. Comments inside these lists are already
+ *    house style (see the first shape), which is what makes this reachable.
  *
  * Returns the entries in file order; `[]` when the key is absent. Throws when
  * there is no frontmatter at all, which is a malformed file rather than an
@@ -38,7 +45,7 @@ export function extractList(text: string, key: string): string[] {
   const items: string[] = [];
   for (let i = start + 1; i < lines.length; i++) {
     if (/^\S/.test(lines[i]) && !/^\s*#/.test(lines[i])) break; // next top-level key
-    const item = /^\s*-\s+(.+?)\s*$/.exec(lines[i]);
+    const item = /^\s*-\s+(.+?)(?:\s+#.*)?\s*$/.exec(lines[i]);
     if (item) items.push(item[1]);
   }
   return items;

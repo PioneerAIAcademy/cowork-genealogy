@@ -1,4 +1,4 @@
-"""The freshness window every run-log reader shares.
+"""The freshness window most run-log readers share.
 
 A run log more than a fortnight old usually describes behaviour that has since
 been fixed. Both corpora are affected — `eval/runlogs/e2e/run-<ts>.json` and
