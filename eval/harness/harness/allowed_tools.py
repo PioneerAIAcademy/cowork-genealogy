@@ -8,8 +8,14 @@ that removes a tool is `disallowed-tools`, which no skill declares.
 
 `compute_allowed_tools` still resolves the declared set (skill + agent union
 + run_skills callees) for two consumers that need it:
-  - the advisory `test_tool_allowlist` validator (warns on undeclared calls)
+  - `skill_baseline`, which the orchestrator passes as `allowed_tools_override`
   - the `ValueError` guard that validates `execution.run_skills` references
+
+It does **not** feed the advisory `test_tool_allowlist` validator, which this
+docstring claimed until PR #2782's review: that validator builds its own
+declared set from the `skill_frontmatter` it is handed. The three sites share
+`load_suite_frontmatter` / `declared_tools` below so they agree on what a
+suite declares, rather than agreeing by coincidence.
 
 `uncovered_callee_fixtures` and `declared_skill_tools` are independent
 helpers used by runnability preflight and the per-context policy
@@ -19,6 +25,7 @@ respectively; they were never part of the narrowing and are unchanged.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +52,77 @@ from harness.workspace import DEFAULT_PLUGIN_AGENTS
 _SKILL_REF_RE = re.compile(r"""Skill\(\s*['"]([a-z0-9-]+)['"]\s*\)""")
 
 
+def load_suite_frontmatter(
+    name: str,
+    skills_dir: Path,
+    *,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> dict[str, Any]:
+    """Frontmatter for a suite — its `SKILL.md`, or the plugin agent file of
+    the same name when no skill directory exists (issue #1253).
+
+    An agent-keyed suite has no `SKILL.md`, so every site that resolved one
+    got `{}` back and silently lost whatever it read from it: the declared tool
+    set, and `name`, which `test_ownership_table` skips on rather than fails.
+
+    Gated on the skill's own file being absent, not on the frontmatter being
+    empty: a real skill with an empty frontmatter block has said what it
+    declares, and must not inherit a same-named agent's.
+    """
+    return load_skill_frontmatter(suite_body_path(name, skills_dir, agents_dir=agents_dir))
+
+
+def suite_body_path(
+    name: str,
+    skills_dir: Path,
+    *,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> Path:
+    """The file that carries a suite's frontmatter AND its body.
+
+    A skill's `SKILL.md`, or the plugin agent file of the same name for an
+    agent-keyed suite. One resolution for both, so the frontmatter a site reads
+    and the body it scans for `@plugin:` delegations can never come from
+    different files.
+
+    Returns the agent path unconditionally when the skill file is absent —
+    callers already tolerate a non-existent path (`load_skill_frontmatter`
+    returns `{}`, `agent_refs_for_skill` returns `[]`), so an unknown name
+    answers empty rather than raising.
+    """
+    skill_md = Path(skills_dir) / name / "SKILL.md"
+    return skill_md if skill_md.is_file() else Path(agents_dir) / f"{name}.md"
+
+
+def declared_tools(fm: dict[str, Any]) -> list[str]:
+    """The tools a suite's frontmatter declares.
+
+    A skill declares `allowed-tools`; a plugin agent declares `tools`. The two
+    never co-occur, so preferring the skill spelling is a total rule rather
+    than a precedence one. `eval/app/lib/skills.ts` reads the same pair for the
+    picker.
+    """
+    return list(fm.get("allowed-tools") or fm.get("tools") or [])
+
+
+def bare_tool_names(tools: Iterable[str]) -> list[str]:
+    """Bare MCP names from a frontmatter tools list.
+
+    Agent frontmatter lists MCP tools qualified (`mcp__genealogy__record_read`)
+    because the SDK resolves a subagent's tools by exposed name; a skill's
+    `allowed-tools` lists them bare. Validators compare against `tool_calls`,
+    which carries bare names, so a qualified entry is reduced to its last
+    segment and built-ins (capitalized — `Read`, `Glob`, …) are dropped, since
+    those never appear in `tool_calls`.
+    """
+    out: list[str] = []
+    for t in tools:
+        bare = t.split("__")[-1] if "__" in t else t
+        if bare and not bare[:1].isupper():
+            out.append(bare)
+    return out
+
+
 def compute_allowed_tools(
     skill_name: str,
     skills_dir: Path,
@@ -61,33 +139,26 @@ def compute_allowed_tools(
         tool calls without failing the test)
       - the ``ValueError`` guard below (validates ``run_skills`` references)
 
-    The returned list still composes the same union as before (baseline +
-    skill frontmatter + agent frontmatter + run_skills callees) so the
-    advisory check and the guard remain accurate.
-    """
-    skill_md = skills_dir / skill_name / "SKILL.md"
-    fm = load_skill_frontmatter(skill_md)
-    declared = list(fm.get("allowed-tools", []) or [])
+    The returned list composes a union of five sources: the baseline, the
+    suite's own frontmatter (a skill's `allowed-tools` or, for an agent-keyed
+    suite, the agent's `tools` — `load_suite_frontmatter`), the frontmatter of
+    every `@plugin:` agent the SKILL.md references, and the `run_skills`
+    callees.
 
-    # An agent-keyed suite (issue #1253) names a plugin agent rather than a
-    # skill directory, so there is no SKILL.md here and the scan above yields
-    # nothing. Read the agent's own frontmatter instead — an agent declares
-    # `tools:` where a skill declares `allowed-tools:`, which is the same pair
-    # `eval/app/lib/skills.ts` reads for the picker.
-    #
-    # Without this the declared set for `gps-mentor` is the baseline alone (7
-    # entries, 0 MCP), so `test_tool_allowlist` warns "skill called MCP tools
-    # but declared none in allowed-tools" on every test in that suite — an
-    # advisory that fires unconditionally teaches its reader to ignore it.
-    #
-    # Only when the skill directory is absent: a real skill whose SKILL.md
-    # declares nothing has said so, and must not silently inherit the tools of
-    # a same-named agent it never delegates to.
-    if not skill_md.is_file():
-        own_agent_md = Path(agents_dir) / f"{skill_name}.md"
-        if own_agent_md.is_file():
-            own_fm = load_skill_frontmatter(own_agent_md)
-            declared.extend(own_fm.get("tools", []) or [])
+    **This output does not reach `test_tool_allowlist`.** That validator builds
+    its own declared set from the `skill_frontmatter` the orchestrator passes it
+    (`validators/test_universal.py`) and never calls this function. What this
+    feeds is `skill_baseline` → `allowed_tools_override` at the SDK call, plus
+    the `ValueError` guard below. Stated because an earlier version of this
+    comment claimed the advisory as the reason for the agent fallback, which is
+    wrong and sent a reader to the wrong file (PR #2782 review).
+    """
+    # The body scanned for `@plugin:` below and the frontmatter read here must
+    # come from ONE file, or an agent-keyed suite reads its tools from the agent
+    # and its delegations from a SKILL.md that does not exist.
+    skill_md = suite_body_path(skill_name, skills_dir, agents_dir=agents_dir)
+    fm = load_suite_frontmatter(skill_name, skills_dir, agents_dir=agents_dir)
+    declared = list(declared_tools(fm))
 
     baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill", "Task"]
 
