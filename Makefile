@@ -372,14 +372,16 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  uv run python dev/probe_agent_binding.py
 
 .PHONY: probe-agent-nesting
-probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 4 sessions, ~$1)
+probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 6 sessions, ~$5)
 	# Main thread -> probe-driver-<arm> -> probe-leaf. Four arms grant the driver
 	# Task, Agent, both, or neither; the neither arm is the control and must not
 	# spawn. The verdict is read off the message stream, never the agents' prose.
 	#
 	# Answered 2026-09-23 (Claude Code 2.1.220, SDK 0.2.128): yes, at depth 2, and
 	# the tool is Agent -- a Task grant resolves to it. The SDK streams no depth-2
-	# messages. Re-run when the CLI or the SDK moves.
+	# messages. A driver spawning three real record-extractors in parallel ran
+	# them concurrently: 694 s wall against ~1,419 s back to back, every write
+	# landed. Re-run when the CLI or the SDK moves.
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_nesting.py
