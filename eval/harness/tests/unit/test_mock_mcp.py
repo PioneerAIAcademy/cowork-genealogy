@@ -956,6 +956,43 @@ def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
     assert not any(w["kind"] == "harness_node_timeout" for w in warnings)
 
 
+def test_compiled_tool_live_mode_is_refused_without_running_node():
+    """The unit suite is hermetic — every response is a fixture. A compiled
+    tool's live mode is real code that makes an authenticated FamilySearch
+    request, and `_COMPILED_TOOLS` runs real code, so nothing else stops it:
+    measured, it really does fetch and return live warnings.
+
+    Injecting `projectPath` instead would be worse than refusing. person_warnings
+    rejects projectPath and live together (they read different trees), so a skill
+    that called live mode correctly would be handed an error the judge scores
+    against the skill. The refusal names the harness as the limitation.
+
+    No workspace and no build are passed: reaching either branch means the
+    refusal did not fire first.
+    """
+    import asyncio
+
+    from harness.mock_mcp import (
+        _COMPILED_TOOLS,
+        _COMPILED_TOOLS_WITH_PRINCIPAL,
+        _make_compiled_tool_handler,
+    )
+
+    assert "person_warnings" in _COMPILED_TOOLS_WITH_PRINCIPAL
+    js, sym = _COMPILED_TOOLS["person_warnings"]
+    handler = _make_compiled_tool_handler("person_warnings", js, sym, None, [])
+
+    result = asyncio.run(handler({"personId": "KD96-TV2", "live": True}))
+    text = result["content"][0]["text"]
+    assert "live mode is not available in the unit harness" in text
+    # Not the "workspace not provided" branch — that would mean the refusal
+    # did not fire and only the missing workspace saved us.
+    assert "workspace not provided" not in text
+
+    # A non-live call still falls through to the ordinary path.
+    plain = asyncio.run(handler({"personId": "I1"}))
+    assert "workspace not provided" in plain["content"][0]["text"]
+
 def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
     """The `except` arm must ABSORB a node failure, not become one.
 
