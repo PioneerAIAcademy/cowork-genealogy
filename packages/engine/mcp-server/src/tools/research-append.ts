@@ -19,6 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { getProjectStore } from "../store/project-store.js";
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -164,6 +165,21 @@ const SECTIONS: Record<string, SectionConfig> = {
     },
   },
 };
+
+// A terminal plan is a settled audit trail, so it takes no new items —
+// research-plan's own prose said so in two places and did not bind, which is
+// what makes this a writer-tool precondition rather than a SKILL.md rule
+// (ADR-0011's first question: decidable from the documents alone).
+//
+// DERIVED from `plan_status`, not hand-listed: terminal means "not active", so
+// a value added to the enum is terminal here the moment it exists rather than
+// silently escaping the deny. A hand-written `{completed, superseded}` is the
+// stale copy `tool-schema-enums.test.ts` refuses, and it caught exactly that
+// here. Today the set is {completed, superseded} — the `exhausted` status the
+// 2026-09-07 ruling anticipated never arrived (issue #2077 closed not planned).
+const TERMINAL_PLAN_STATUSES = new Set(
+  [...VALIDATOR_ENUMS.plan_status].filter((s) => s !== "active"),
+);
 
 // Section invariants the project validator does NOT already enforce. (It already
 // checks conflict competing-counts, hypothesis ruled_out⇒reason, and
@@ -2439,6 +2455,36 @@ function applyOne(
     const parent = Array.isArray(parents) ? parents.find((p) => p && p.id === op.planId) : undefined;
     if (!parent) {
       throw new ResearchAppendError(`${config.nested.parent} entry '${op.planId}' not found`);
+    }
+    // APPENDS only. An update targets an item already inside the plan, and
+    // `research-plan` supersedes a plan by flipping `plans.status` alone — its
+    // items keep whatever status they held. Denying updates would strand an
+    // `in_progress` item in a terminal plan with no route to move it, which is
+    // the unrecoverable false deny ADR-0011's first limit exists to prevent.
+    //
+    // `parent` is read LIVE, not from a pre-call snapshot: ops apply in order
+    // over the mutated document, so a plan created (or flipped terminal)
+    // earlier in this same batch is the same author's own prior step and must
+    // be seen. A snapshot read cannot see a same-call plan at all.
+    if (op.op === "append" && TERMINAL_PLAN_STATUSES.has(parent.status)) {
+      // Both fields are guarded the way `emptyCreatedPlanErrors`' describe()
+      // guards them: this fires BEFORE document validation, so a hand-edited
+      // research.json can reach it with either field absent.
+      const q = typeof parent.question_id === "string" ? `'${parent.question_id}'` : "an unknown question";
+      const createdHere = [...(appendedThisBatch ?? [])].filter((id) => id.startsWith("pl_"));
+      // This deny fires before `emptyCreatedPlanErrors` (applyOne throws, and
+      // the batch returns at once), so it inherits that arm's job of naming the
+      // plan this call created — the message, not the symptom, is what drives
+      // the model's next move.
+      const remedy =
+        createdHere.length === 1
+          ? `This call created plan '${createdHere[0]}' — re-issue these items with planId '${createdHere[0]}'.`
+          : `Append to that question's active plan, or create one first; if these items belong to a ` +
+            `different question, re-issue with that question's plan id.`;
+      throw new ResearchAppendError(
+        `${config.nested.parent} entry '${op.planId}' is '${parent.status}' (question ${q}) — ` +
+          `a ${parent.status} plan is a settled audit trail and takes no new items. ${remedy}`,
+      );
     }
     if (!Array.isArray(parent[config.nested.field])) parent[config.nested.field] = [];
     array = parent[config.nested.field];

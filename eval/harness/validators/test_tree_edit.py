@@ -112,7 +112,9 @@ def test_tree_edit_noop(before_state, after_state, test):
 
 # --- Post-edit check-warnings (deep dive #1657, Finding F) ------------
 
-def test_check_warnings_runs_after_any_tree_write(before_state, after_state, skills_invoked):
+def test_check_warnings_runs_after_any_tree_write(
+    before_state, after_state, skills_invoked, builtin_tool_calls=None
+):
     """SKILL.md § Validation: "After ANY edit or merge, run check-warnings
     to catch genealogical impossibilities the structural validator cannot"
     -- unconditional, no carve-out for a single-field correction. Deep dive
@@ -135,9 +137,11 @@ def test_check_warnings_runs_after_any_tree_write(before_state, after_state, ski
     after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before_tree is None or after_tree is None:
         pytest.skip("missing tree.gedcomx.json on one side")
+    from harness.skill_runner import handoffs
+
     if before_tree == after_tree:
         pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
-    assert "check-warnings" in (skills_invoked or []), (
+    assert "check-warnings" in handoffs(skills_invoked, builtin_tool_calls), (
         "tree.gedcomx.json changed but check-warnings was never invoked -- "
         "SKILL.md § Validation requires it after ANY edit or merge"
     )

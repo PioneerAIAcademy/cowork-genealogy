@@ -94,7 +94,7 @@
       }
     },
     "researcher_profile": {
-      "description": "Per-project context about the researcher. Written once by init-project at project creation as a fixed profile (experience_level novice, one house-style narration_guidance); nothing about the researcher is asked. Read by every skill — narration_guidance is the narration style, and subscriptions (framed to the researcher as access) guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
+      "description": "Per-project context about the researcher. Written once by init-project at project creation as a fixed profile (experience_level novice, one house-style narration_guidance); nothing about the researcher is asked. Read by every skill — narration_guidance is the narration style, and search-external-sites reads subscriptions only to flag a named site the researcher has no access to on file. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
