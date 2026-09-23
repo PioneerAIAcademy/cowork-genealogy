@@ -62,11 +62,22 @@ async function postTokenEndpoint(
   return data;
 }
 
+/**
+ * The lifetime to store when the token response names none — which FamilySearch's
+ * never does: its keys are `access_token`, `token_type` and `refresh_token`
+ * (measured 2026-09-23). A FamilySearch access token lives 8 h of idle time and
+ * 24 h at most, so 8 h from issue is a lower bound it cannot undercut. The old
+ * default, one hour, made every holder refresh hourly for nothing — and a refresh
+ * revokes the previous access token at once, so each needless one killed the calls
+ * of whatever else still held it.
+ */
+export const FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60;
+
 function toTokenStore(
   data: FSTokenResponse,
   fallbackRefreshToken?: string
 ): TokenStore {
-  const expiresInMs = (data.expires_in ?? 3600) * 1000;
+  const expiresInMs = (data.expires_in ?? FS_ACCESS_TOKEN_LIFETIME_S) * 1000;
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token ?? fallbackRefreshToken,
