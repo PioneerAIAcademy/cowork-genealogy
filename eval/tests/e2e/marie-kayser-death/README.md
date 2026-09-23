@@ -60,6 +60,7 @@ Hochhertz/Hochbertz couple.
 **Still unverified.**
 - *The 1805 civil act.* The tree's only source (`ark:/61903/1:1:WQ8T-8N2M`,
   "Luxembourg, Registres d'état civil, 1796-1941") names her in its index with
-  name and sex only. Its image has not yet been read for "défunte".
+  name and sex only. Its image, read 23 September 2026, names her as
+  défunte — consistent with a death in 1780.
 - *Parish.* The register page carries no parish header; the location appears
   only on the volume's title page.
