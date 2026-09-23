@@ -253,9 +253,10 @@ something is an identifier, it is.
 
 Then **keep going in the same turn**: if more records are queued,
 delegate the next one now; if this was the last record, hand off to
-person-evidence or return to the orchestrator that invoked you.
-Yielding with records still unextracted is a failure — a relayed record
-is a progress marker, not a stopping point.
+person-evidence or return to the orchestrator that invoked you. Routing
+and hand-off are acts, never text you print. Yielding with records still
+unextracted is a failure — a relayed record is a progress marker, not a
+stopping point.
 
 **Exception — a `record-extractor` spawn failure:** report it and stop;
 do not extract the record yourself or retry another way. This rule assumes
@@ -265,15 +266,12 @@ record is not a reason to keep going.
 ## Tool availability
 
 **If `record_read`, `volume_search`, or `research_log_append` are not
-immediately available** (e.g., shown as deferred), call ToolSearch first.
-**Search by bare tool name, never by a fully-qualified `select:` list** —
-the MCP server prefix differs per deployment, and there are three of them,
-so a hardcoded qualified name resolves to nothing in some environments.
-Use one keyword search per tool, e.g. `query: "+record_read"`, which
-matches whatever prefix this session actually exposes. **Never fall
-back to writing `research.json` or `tree.gedcomx.json` directly** —
-direct writes bypass schema validation, id allocation, and the `.bak`
-safety net; persistence belongs to the record-extractor agent's tools.
+immediately available** (e.g., shown as deferred), call ToolSearch **once
+per tool, by bare name** — `query: "+record_read"` — never a qualified
+`select:` list. If `record_read` still does not resolve and the record
+content is already in hand, use it rather than searching again.
+**Never fall back to writing `research.json` or `tree.gedcomx.json`
+directly** — persistence belongs to the record-extractor agent's tools.
 
 ## What this skill does not do
 
