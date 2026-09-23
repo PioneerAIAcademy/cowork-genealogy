@@ -1366,8 +1366,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-25 of the 27 skills carry a `**Narration:**` line — 22 of them as the first line
-of the body, the other four further down — instructing Claude to read
+25 of the 27 skills carry a `**Narration:**` line — 24 of them as the first line
+of the body, the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
 questions it answers from the opening message or from defaults — it **never

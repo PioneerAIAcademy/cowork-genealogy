@@ -705,8 +705,10 @@ writes it cannot attribute, and dropping it silently would deny that agent's own
 writes. Converting a skill to an agent makes exactly one agent visible — the
 suite's subject, whose `name` is what `load_suite_frontmatter` reads off
 `agents/<n>.md`. So `writer_sets(artifact, plane, subject=<n>)` resolves
-`agent:<n>` and nothing else; every other `agent:` caller still raises
-(lead's ruling, 2026-09-23). Without this, every positive test in a
+`agent:<n>` and nothing else; every other `agent:` caller is dropped from the
+resolved set rather than raising, because raising would fire on every other
+suite's run (lead's ruling, 2026-09-23). Dropping is safe only because the
+structural rule below holds: each such agent is authorizable on its own suite. Without this, every positive test in a
 converted suite fails ownership on its own legitimate writes. A row naming an
 agent caller must also ship `agents/<n>.md` **and** own an
 `eval/tests/unit/<n>/` suite — otherwise no one ever passes `<n>` as the subject

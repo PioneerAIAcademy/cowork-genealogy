@@ -380,7 +380,11 @@ never the courthouse building or a generic records office. If the page
 does not name an office for that document type, treat `who` as missing
 data and flag it under the missing-data rule — do not fall back to
 inference. Where `tree.gedcomx.json` carries an `author` on the matching
-source description, that value takes precedence over the page.
+source description, that value wins for `who` — but make the lookup first
+and decide after. An `author` on file is a previous extraction's best effort,
+and the page is how you check that it names a real office for this document
+type rather than a courthouse or a records office. Never skip the lookup
+because the tree already answers.
 
 `where_within` for probate records contains ONLY the physical locator
 (the Will Book volume and page, in the form "Will Book [volume],

@@ -571,7 +571,7 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
     }
 
 
-def test_registration_passes_with_six_bare_agents_and_every_skill():
+def test_registration_passes_with_every_bare_agent_and_every_skill():
     assert options.check_registration(_info(AGENTS, 27, ("general-purpose", "genealogy-research:gps-mentor")),
                                       expected_agents=AGENTS, expected_skills=27) == []
 
@@ -585,7 +585,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=27)
 
 
-def test_the_plugin_ships_seven_agents_and_twenty_eight_skills():
+def test_the_plugin_ships_eight_agents_and_twenty_seven_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS

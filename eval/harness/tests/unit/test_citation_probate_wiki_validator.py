@@ -2,11 +2,14 @@
 
 CLAUDE.md, "A new lint must be proven to fail": break it several ways, and show
 a legitimate variant it still accepts. This gate is the only thing standing
-behind the ADR-0012 wiki move for probate (issue #2262, carried into #2799) --
-the agent body no longer names Pennsylvania's Register of Wills, so nothing else
-can tell a fetched office from a recalled one. A gate that passed on an empty
-ledger would put the move's whole acceptance criterion on an assertion that
-checks nothing.
+behind the ADR-0012 wiki move for probate (issue #2262, carried into #2799).
+It checks that the fetch HAPPENED, not what the citation says, and that is the
+only thing checkable: the body still carries a Berks County worked example that
+names a Register of Wills (kept deliberately -- it is a citation template), and
+both probate tests are Pennsylvania, so a recalled office is indistinguishable
+from a looked-up one by reading the output. Only the tool ledger separates them.
+A gate that passed on an empty ledger would put the move's whole acceptance
+criterion on an assertion that checks nothing.
 
 The rejections below are the three shapes a real run can produce: no lookup at
 all, a lookup of the wrong page, and a `wiki_read` whose url is missing or

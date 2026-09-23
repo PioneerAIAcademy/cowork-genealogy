@@ -130,7 +130,8 @@ Skills that call this tool after writing project files:
 Agents: `person-evidence.md`, `gps-mentor.md`, `citation.md` (its Step 6 makes
 the call, mandatory on every write).
 
-Referenced in: `citation/references/validation-protocol.md`.
+Referenced in: the "Validate" step of `agents/citation.md`, which absorbed the
+former `citation/references/validation-protocol.md`.
 
 ## 6. Implementation
 
