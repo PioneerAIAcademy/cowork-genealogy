@@ -112,9 +112,12 @@ This is the difference between this pass and the general rule, and it is
 justified by Gate 4 rather than by taste: at most one issue touching a skill's
 snapshot may be in Ready, In Progress or Review at a time, so a queue of eight
 drains as eight sequential `make eval-skill` runs, each with a fresh `.ann.json`
-carrying a correction entry for **every dimension of every test** — 27 tests for
-`record-extraction`. The money is $8–12 a run. The binding cost is genealogist
-hours, eight times over, on the same suite.
+carrying a correction entry for **every dimension of the tests that run's
+`review_sample` names** — a median of 5 and a maximum of 13, not the whole
+suite. The money is $8–12 a run. The binding cost is still genealogist hours,
+eight times over, on the same suite, but it is a fraction of what it was before
+sampling shipped; price a merge on the sequential runs, not on a full
+re-annotation.
 
 **The lane-split verdict does not apply inside a slot.** It asks whether each
 half can finish without the other — but under Gate 4 neither half can be in an

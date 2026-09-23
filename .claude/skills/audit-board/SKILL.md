@@ -405,9 +405,10 @@ run log goes stale the moment the *next* edit lands. Six issues landing as six
 sequential PRs is six runs, however carefully they are ordered.
 
 **The money is not the binding cost.** A run is $8–12, but rule 3 requires the
-`.ann.json` to carry a correction entry for **every dimension of every test** in
-the suite — 27 tests for `record-extraction` — and that pass is genealogist hours.
-Six runs means six full re-annotations of the same suite.
+`.ann.json` to carry a correction entry for **every dimension of the tests that
+run's `review_sample` names** — a median of 5 and a maximum of 13, not the whole
+suite — and that pass is genealogist hours. Six runs means six annotation passes
+over the same suite, each a sample rather than a full re-annotation.
 
 ### One active issue per skill
 
@@ -571,13 +572,17 @@ print('  of which senior-pool cards in Ready (expected, not a finding):',
       [n for n in _unass if onboard[n]=='Ready' and _senior(n)])
 
 # `high-priority` — /fill-ready applies it to Ready cards only. Anywhere else
-# it is a filing that slipped past the recipe or a card that moved with it on.
+# it is a filing that slipped past the recipe or a card that moved with it on —
+# except a card whose body carries the lead's `lead:` line, which ranks from
+# any column (fill-ready, "The lead's `lead:` line ranks first").
 # The body line is what /fill-ready re-derives against.
+import re
+def _lead(n): return re.search(r'^> \*\*High priority \([^)]*\):\*\* lead:', issues[n]['body'] or '', re.M)
 def _hp(n): return any(l['name']=='high-priority' for l in issues[n]['labels'])
 def _lane(n, lane): return any(l['name']==lane for l in issues[n]['labels'])
 hp=[n for n in issues if _hp(n)]
 print('high-priority outside Ready (Ready-only label):',
-      [(n, onboard.get(n)) for n in hp if onboard.get(n)!='Ready'])
+      [(n, onboard.get(n)) for n in hp if onboard.get(n)!='Ready' and not _lead(n)])
 print('high-priority without a `> **High priority (` body line:',
       [n for n in hp if '> **High priority (' not in (issues[n]['body'] or '')])
 for lane in ('developer','genealogist'):

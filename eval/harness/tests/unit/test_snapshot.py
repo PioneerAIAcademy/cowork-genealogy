@@ -400,6 +400,17 @@ def test_hash_snapshot_returns_per_path_hashes(tmp_path: Path):
     assert hashes["b.md"] == hash_content("beta\n")
 
 
+def test_expected_outcome_is_not_cosmetic():
+    """`expected_outcome` decides whether check_runlogs.py's rule 6 suppresses a
+    failing test, so stripping it from the hash would let a marker move without
+    staling the skill's run log — silently defeating the gate's suppression field.
+    Only the marker's PROSE (`xfail_reason`) is a candidate for this tuple.
+    Guarded rather than left as a comment because the comment cannot fail."""
+    from harness.snapshot import _COSMETIC_TEST_FIELDS
+
+    assert "expected_outcome" not in _COSMETIC_TEST_FIELDS
+
+
 # ---- the suite's own agent (issue #1253) ---------------------------------
 
 
