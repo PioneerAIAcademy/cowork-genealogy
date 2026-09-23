@@ -94,9 +94,15 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
-    # Purely local: `person-warnings.ts` holds zero `getValidToken` calls and
-    # computes every tag from the workspace tree, so a live handler is both
-    # possible and more faithful than a canned answer. Live since 2026-09-03
+    # Local by default, and that is the only mode this harness permits: the
+    # default path computes every tag from the workspace tree, so a live
+    # handler is both possible and more faithful than a canned answer. It is
+    # NOT that the tool cannot reach the network -- since #2225 D1 a
+    # `live: true` call fetches from FamilySearch via `personReadTool` and
+    # `getValidToken`. What keeps it safe here is that the compiled-tool
+    # handler REFUSES `live: true` outright (see `_COMPILED_TOOLS_WITH_PRINCIPAL`
+    # below); measured, an unrefused live call really does reach FamilySearch
+    # from a suite whose contract is that it makes none. Live since 2026-09-03
     # (lead ruling on PR #2151): it was fixture-backed, no person-evidence test
     # declared a `person-warnings-*` fixture, so every call in every committed
     # person-evidence run log since August reported the tool missing -- the
@@ -911,6 +917,14 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
 }
 
+#: Compiled tools whose exported function takes a `Principal` as its last
+#: argument. CLAUDE.md requires every credential read to take one explicitly, so
+#: a tool that gains a network path gains this parameter — and because the
+#: handler script below is built from a Python f-string, no typechecker catches
+#: the mismatch. A tool missing from this set calls with one argument and its
+#: `principal` arrives `undefined`.
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"person_warnings"})
+
 
 def _make_live_handler(
     tool_name: str,
@@ -1147,9 +1161,24 @@ def _make_compiled_tool_handler(
     tool_js = _MCP_BUILD / "tools" / js_filename
 
     async def handler(args, _ws=workspace, _tjs=tool_js):
-        if _ws is None or not _tjs.exists():
-            reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
+        if tool_name in _COMPILED_TOOLS_WITH_PRINCIPAL and args.get("live"):
+            # Refused, not run. This suite is hermetic — every response is a
+            # fixture — and a compiled tool's live mode is real code that makes an
+            # authenticated FamilySearch request. Measured: without this it really
+            # does fetch. Injecting projectPath instead would be worse: the tool
+            # rejects projectPath and live together, so the judge would score the
+            # refusal against a skill that called correctly. This names the harness.
             response: dict[str, Any] = {
+                "ok": False,
+                "errors": [
+                    f"{tool_name}: live mode is not available in the unit harness "
+                    "(it makes a real FamilySearch request and this suite is "
+                    "hermetic). Pass projectPath to check the workspace tree."
+                ],
+            }
+        elif _ws is None or not _tjs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
+            response = {
                 "ok": False,
                 "errors": [f"{tool_name}: {reason}"],
             }
@@ -1159,14 +1188,40 @@ def _make_compiled_tool_handler(
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
+            #
+            # A live-mode call is REFUSED here rather than run. The unit harness is
+            # hermetic — every response is a fixture — and person_warnings' live
+            # mode is real compiled code behind `_COMPILED_TOOLS`, so letting it
+            # through makes an authenticated FamilySearch request from a suite whose
+            # whole contract is that it makes none. Measured: it really does fetch.
+            #
+            # Injecting the workspace instead would be worse than refusing. The tool
+            # rejects projectPath and live together (they read different trees), so
+            # the skill would be blamed by the judge for a call it made correctly.
+            # This error names the harness as the limitation.
             input_obj = dict(args)
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
+            # Tools whose entry point takes a Principal as its last argument. The
+            # harness is one user per process, so LOCAL is the right one — the same
+            # binding the stdio dispatcher makes. Nothing typechecks this script, so
+            # a signature change here surfaces only at harness runtime.
+            principal_js = str(_MCP_BUILD / "auth" / "principal.js").replace("\\", "/")
+            principal_url = (
+                ("file:///" + principal_js) if sys.platform == "win32" else principal_js
+            )
+            takes_principal = tool_name in _COMPILED_TOOLS_WITH_PRINCIPAL
+            principal_import = (
+                f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
+            )
+            call_args = "input, LOCAL" if takes_principal else "input"
+
             script = (
                 f"import {{ {export_symbol} }} from '{tool_url}';"
+                f"{principal_import}"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                f" const r = await {export_symbol}(input);"
+                f" const r = await {export_symbol}({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
