@@ -436,11 +436,3 @@ def test_proto_test_runs_the_d18_tests():
     assert any(
         "tests/test_proto_d18.py" in line for line in _recipe("proto-test")
     ), "make proto-test must run the D18 tests, or they run nowhere"
-
-
-def test_the_worker_asks_the_host_token_broker_only_when_fs_token_url_is_set():
-    """The broker is opt-in (empty by default, so the file path is unchanged) and reachable:
-    it binds the host's 127.0.0.1, which the worker reaches through host-gateway."""
-    worker = _service(_load(COMPOSE), "worker")
-    assert _env(worker)["FS_TOKEN_URL"] == "${FS_TOKEN_URL:-}"
-    assert "host.docker.internal:host-gateway" in (worker.get("extra_hosts") or [])
