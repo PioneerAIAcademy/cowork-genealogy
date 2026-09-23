@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Ísleifur Ísleifsson (PID KCS6-8SG) had a son Einar, born 23 September and christened 28 September 1856 at Kross, Rangárvallasýsla, Iceland. The parish register records the father of that child at the SAME farm, Kyrkjuland, as it records him on his daughter Steinunn's entry twelve days earlier, and marks him ógift — unmarried — on both. He was an unmarried farmhand at Kyrkjuland. Two children twelve days apart therefore require two mothers, not two fathers. Pass = the final tree/research records Einar as his son, christened 28 September 1856. (The child's mother is a separate claim, graded under f2.)",
+      "description": "Ísleifur Ísleifsson (PID KCS6-8SG) had a son Einar, born 23 September and christened 28 September 1856 at Kross, Rangárvallasýsla, Iceland. The parish register records the father of that child at the SAME farm, Kyrkjuland, as it records him on his daughter Steinunn's entry twelve days earlier, and marks him ógift — unmarried — on both. He was an unmarried farmhand at Kyrkjuland. Two children twelve days apart therefore require two mothers, not two fathers. Pass = the final tree records Einar as his son, christened 28 September 1856. (The child's mother is a separate claim, graded under f2.)",
       "details": {
         "subject_person": "Ísleifur Ísleifsson (PID KCS6-8SG)",
         "relation": "child",
@@ -27,7 +27,7 @@
     {
       "id": "f2",
       "type": "person",
-      "description": "The mother named on the 28 September 1856 Einar baptism is Þórunn Einarsdóttir, not Guðríður Gunnlaugsdóttir, the partner the tree records. The register names her on the same farm as the father — \"báði ógift á Kyrkjulandi\" — while Guðríður is entered twelve days earlier at Litluhildisey. She is a second partner, not a variant spelling: the patronymic differs, and the register holds patronymics steady. Pass = the final tree/research names Þórunn Einarsdóttir as Einar's mother and does not conflate her with Guðríður Gunnlaugsdóttir.",
+      "description": "The mother named on the 28 September 1856 Einar baptism is Þórunn Einarsdóttir, not Guðríður Gunnlaugsdóttir, the partner the tree records. The register names her on the same farm as the father — \"báði ógift á Kyrkjulandi\" — while Guðríður is entered twelve days earlier at Litluhildisey. She is a second partner, not a variant spelling: the patronymic differs, and the register holds patronymics steady. Pass = the final tree names Þórunn Einarsdóttir as Einar's mother and does not conflate her with Guðríður Gunnlaugsdóttir.",
       "details": {
         "person": {
           "name": "Þórunn Einarsdóttir (indexed as Thorun Einarsdr)",
