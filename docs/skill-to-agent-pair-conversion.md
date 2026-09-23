@@ -374,6 +374,11 @@ Two things this does NOT close:
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
    pending list.
+   **A request that belongs to another agent is handed back, never spawned**
+   (lead ruling 2026-09-23): the agent does none of that work, names the
+   owning agent in its caller-facing lines, and the main thread spawns it. The
+   `next_step` sentence still names nothing. Do not grant the agent `Task` or
+   `Agent`; `agent-tool-names.test.ts` fails the grant.
 8. Apply the delete-the-skill acceptance check — now mechanically. **Author a
    direct twin**: copy the gate-bearing positive test byte for byte, give it a
    new `test.id` and name, replace `input.user_message` with an
