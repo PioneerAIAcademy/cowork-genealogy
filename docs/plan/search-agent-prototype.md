@@ -1846,6 +1846,19 @@ without whichever Bedrock refuses.
   number is the judge's, and it matched. One judge is sampled once, so this says the two
   gradings agreed on this run, not that grading is stable; a disagreement on a later run
   is a finding about the judge, not a bug in this command.
+  **Two parity gaps closed before the billed runs, 2026-09-23.** The second fixture is
+  `paerai-teupooihi-spouse` (French Polynesian civil registration, run 2026-09-21, pass,
+  $4.94, 32 min, no images; the other 32 qualifying fixtures were cheaper-and-older,
+  image-bound or pre-delegation). First, the tree-read block now also denies
+  `person_warnings` with `live: true` while `BLOCKED_TOOLS` is on — the harness's
+  `LIVE_TREE_ARG_TOOLS`, held equal to it by an AST read — because on that spouse
+  fixture the live mode returns the stripped spouse. Second, the http MCP entry carries
+  `"timeout": 1800000`: without it CLI 2.1.220 aborts every http tool call at 60 s (D17's
+  60,013 ms), where the harness's stdio server is cut only by its 1,800,000 ms idle
+  limit. 121 committed harness calls ran past 60 s — six of them `research_append`,
+  which #2850 would roll back — so without this the prototype could not run what the
+  harness runs. Neither fixture's committed run had one, so the D18 numbers do not hinge
+  on it.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
   **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
   [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as

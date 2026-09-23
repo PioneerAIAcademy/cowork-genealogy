@@ -568,6 +568,35 @@ def test_blocked_tools_are_denied_by_bare_name_under_any_server_spelling(tmp_pat
     assert open_rows[-1]["decision"] == "allow"
 
 
+def test_the_block_denies_a_live_person_warnings_and_allows_a_local_one(tmp_path):
+    # person_warnings is local by default and reads the live tree only with `live: true`,
+    # which hands back the stripped relatives' names and PIDs; the harness denies that
+    # mode by argument (LIVE_TREE_ARG_TOOLS), so the worker must too while the block is on.
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path / "cfg"),
+        record=rows.append, blocked=options.parse_blocked_tools("person_read"),
+    )
+    for name in ("mcp__genealogy__person_warnings", "mcp__Genealogy_Research__person_warnings"):
+        out = _call(hook, {"tool_name": name, "tool_input": {"personId": "97XW-7VN", "live": True}})
+        assert out["hookSpecificOutput"]["permissionDecision"] == "deny", name
+    for tool_input in ({"personId": "97XW-7VN"}, {"personId": "97XW-7VN", "live": False}):
+        assert _call(hook, {"tool_name": "mcp__genealogy__person_warnings", "tool_input": tool_input}) == {}, \
+            "the local mode reads the stripped project tree: legitimate research"
+    assert [r["decision"] for r in rows] == ["deny", "deny", "allow", "allow"]
+    # BLOCKED_TOOLS= lifts the whole block, the live mode with it.
+    assert _call(_hook([], str(tmp_path), str(tmp_path / "cfg")),
+                 {"tool_name": "mcp__genealogy__person_warnings", "tool_input": {"live": True}}) == {}
+    # Held equal to the harness's table, read off its source.
+    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
+    harness = [
+        ast.literal_eval(node.value) for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "LIVE_TREE_ARG_TOOLS" for t in node.targets)
+    ]
+    assert harness == [options.LIVE_TREE_ARG_TOOLS], "re-sync with orchestrator.py's LIVE_TREE_ARG_TOOLS"
+
+
 def test_the_hook_never_raises(tmp_path):
     def exploding_record(row):
         raise RuntimeError("postgres is down")
@@ -912,7 +941,12 @@ def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_pat
         "type": "http",
         "url": "http://tools:8787/mcp",
         "headers": {"Authorization": "Bearer turn-token", "X-Genealogy-Project-Id": "proj-1"},
+        "timeout": 1_800_000,
     }
+    # CLI 2.1.220 cuts an http MCP call at 60 s without a per-server timeout; the stdio
+    # entry needs none, its own idle limit is already the 1,800,000 ms this matches.
+    stdio = _server(_options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"}))
+    assert "timeout" not in stdio
     custom = _server(_options(
         config_dir=str(tmp_path), fs_access_token="", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
