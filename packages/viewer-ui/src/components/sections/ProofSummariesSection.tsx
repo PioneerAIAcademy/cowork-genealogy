@@ -40,6 +40,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
               <>
                 <StatusBadge value={ps.tier} />
                 <StatusBadge value={ps.vehicle} />
+                <StatusBadge value={ps.shortfall} />
               </>
             }
             summary={ps.exhaustive_search_summary}
@@ -73,6 +74,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
                     <div key={c.claim} className={styles.claim}>
                       <span className={styles.claimLabel}>{c.claim}</span>
                       <StatusBadge value={c.proof_tier} />
+                      {c.shortfall && <StatusBadge value={c.shortfall} />}
                       <span className={styles.claimEndpoint}>
                         {c.relationship.type}: {c.relationship.parent} → {c.relationship.child}
                       </span>

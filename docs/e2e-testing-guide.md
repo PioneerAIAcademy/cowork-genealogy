@@ -172,11 +172,16 @@ was matched to them.
 2. **Read the fixture's README**, "Notes for reviewers" section, for what the
    original author already found (the tree's existing sources, the
    match-strength argument for and against).
-3. **Open the hint record** and look, by hand, for corroborating or
-   contradicting evidence — the same way you would for any genealogical proof.
+3. **Open the hint record** and look for corroborating or contradicting
+   evidence — the same way you would for any genealogical proof.
 
-This is the human GPS work the benchmark exists to measure; there's no tool
-shortcut for it. **Ask a genealogist for a second opinion** if the call is
+**Retrieval may be tool-assisted; the identity judgement may not.** You can use
+the `packages/engine/mcp-server/dev/try-*.ts` scripts against live FamilySearch
+(`make e2e-login` first, or `eval\Login.bat` on Windows) for collections
+search, record search, record read and image read. What no tool decides is
+whether the hint record concerns the tree person — that is the human GPS work
+the benchmark exists to measure. Say in the README which you used. Spec §3.6
+carries the decision. **Ask a genealogist for a second opinion** if the call is
 borderline — don't guess alone.
 
 **Write the outcome with the skill — don't hand-edit the fixture files:**
@@ -198,9 +203,15 @@ the fixture files, and validates the result. The three outcomes:
 Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't apply
 here (nothing was stripped, and the skill already validated).
 
-> No fixture of this genre has been resolved and run end to end yet, so there's
-> no finished one to copy. You are working an unexercised path: if a step doesn't
-> behave the way this page says, that's worth reporting, not working around.
+> Worked examples of this genre already resolved and run end to end:
+> `eval/tests/e2e/creszentia-haas-birth/` (false hint, real answer found),
+> `eval/tests/e2e/antonio-lucas-spouse/` (false match, `avoid` + `required`
+> pair) and `eval/tests/e2e/chresten-nielsen-daughter/` (re-adjudicated
+> after a graded run). To re-derive the resolved set, normalise both greps to
+> directories first — one prints `<dir>/fixture.json` and the other
+> `<dir>/README.md`, so comparing them as-is reports every fixture as differing:
+>
+>     comm -23 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | xargs -n1 dirname | sort)
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 

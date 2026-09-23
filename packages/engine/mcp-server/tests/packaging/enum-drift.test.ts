@@ -255,13 +255,13 @@ const EXPECTED: Array<{ relPath: string; enums: string[] }> = [
       "date_certainty",
       "information_quality",
       "informant_proximity",
-      "evidence_type",
+      "record_basis",
     ],
   },
   {
     relPath: "skills/research/SKILL.md",
     enums: [
-      "evidence_type",
+      "record_basis",
       "information_quality",
       "informant_proximity",
       "date_certainty",

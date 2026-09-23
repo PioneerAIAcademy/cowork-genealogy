@@ -177,3 +177,13 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/app
         run: npm run typecheck
+
+      - name: Install Playwright browsers
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/app
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests (Playwright)
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/app
+        run: npm run test:e2e

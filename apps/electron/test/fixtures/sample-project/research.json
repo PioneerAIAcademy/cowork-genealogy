@@ -499,7 +499,7 @@
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -518,7 +518,7 @@
       "informant": "Unknown household member (likely Thomas Flynn or wife)",
       "informant_proximity": "household_member",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -537,7 +537,7 @@
       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -556,7 +556,7 @@
       "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
       "informant_proximity": "unknown",
       "informant_bias_notes": "1850 census does not state relationships; inferred from household position and shared surname.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -575,7 +575,7 @@
       "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -594,7 +594,7 @@
       "informant": "Ancestry transcriber (derivative of census enumerator)",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Derivative index — transcription errors possible",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -613,7 +613,7 @@
       "informant": "Ancestry transcriber (derivative)",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_002",
       "extracted_for_question_ids": ["q_002"]
     },
@@ -632,7 +632,7 @@
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -651,7 +651,7 @@
       "informant": "Unknown household member (likely Thomas Flynn or wife)",
       "informant_proximity": "household_member",
       "informant_bias_notes": null,
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -670,7 +670,7 @@
       "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
       "informant_proximity": "unknown",
       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -689,7 +689,7 @@
       "informant": "Attending physician (signature on certificate)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": []
     },
@@ -708,7 +708,7 @@
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Death cert says Pennsylvania, but census records say Ireland.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -727,7 +727,7 @@
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Secondary information — son-in-law reporting parentage",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -746,7 +746,7 @@
       "informant": "Rev. Michael O'Brien (officiant)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_006",
       "extracted_for_question_ids": ["q_004"]
     },
@@ -765,7 +765,7 @@
       "informant": "Rev. Michael O'Brien (officiant recording witness information)",
       "informant_proximity": "witness",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_006",
       "extracted_for_question_ids": ["q_001"]
     }
@@ -996,6 +996,7 @@
       "question_id": "q_001",
       "tier": "probable",
       "vehicle": "summary",
+      "shortfall": "conflict",
       "supporting_assertion_ids": ["a_004", "a_010", "a_013", "a_015"],
       "resolved_conflict_ids": ["c_001"],
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), and St. Patrick's Church marriage records (FamilySearch — log_006). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",

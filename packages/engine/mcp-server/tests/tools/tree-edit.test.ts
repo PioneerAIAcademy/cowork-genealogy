@@ -1406,7 +1406,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
       information_quality: "primary" as const,
       informant: "unknown",
       informant_proximity: "official_duty" as const,
-      evidence_type: "direct" as const,
+      record_basis: "stated" as const,
       extracted_for_question_ids: [] as string[],
       ...over,
     };
@@ -1446,7 +1446,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
   });
 
   it("indirect evidence resolves a lower ref quality (2), not 3", async () => {
-    await writeProject(twoPersons(), research([relationshipAssertion({ evidence_type: "indirect" })]));
+    await writeProject(twoPersons(), research([relationshipAssertion({ record_basis: "inferred" })]));
 
     const r = await treeEdit({
       projectPath: dir,

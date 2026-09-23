@@ -40,7 +40,7 @@ Differs from `flynn-resolved` in these ways:
 
 ## Why this scenario supports a genuine declaration
 
-All seven log entries are present (three census searches, one death
+All seven log entries are present (four census searches, one death
 cert, one probate negative, one baptismal-register negative). The plan
 for q_001 (pl_002) has four items completed and two skipped with
 documented rationales. The birthplace conflict (c_001) is resolved.

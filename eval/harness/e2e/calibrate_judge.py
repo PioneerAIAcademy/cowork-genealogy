@@ -291,7 +291,7 @@ def load_annotated_runs(
         # 1. parse
         try:
             ann = json.loads(ann_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as e:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             err(f"invalid JSON: {e}")
             continue
         if not isinstance(ann, dict):
@@ -324,7 +324,7 @@ def load_annotated_runs(
                 (fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
             fixture = json.loads(
                 (fixture_dir / "fixture.json").read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as e:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             err(f"fixture for slug '{slug}' unreadable ({e})")
             continue
 
@@ -335,7 +335,7 @@ def load_annotated_runs(
             continue
         try:
             final_tree = json.loads(tree_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as e:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             err(f"{tree_path.name} unreadable ({e})")
             continue
         research_path = ann_path.parent / f"{stem}.final-research.json"
@@ -343,7 +343,7 @@ def load_annotated_runs(
         if research_path.exists():
             try:
                 final_research = json.loads(research_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as e:
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
                 err(f"{research_path.name} unreadable ({e})")
                 continue
 

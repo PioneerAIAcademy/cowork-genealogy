@@ -476,3 +476,117 @@ def test_stdout_guard_rule_catches_and_clears_the_real_shapes():
     # em-dash and smart quotes ARE encodable in cp1252 -- only the arrows, box
     # glyphs and mathematical symbols are not.
     assert _needs_stdout_guard('if __name__ == "__main__":\n    print("a — b")\n') == set()
+
+
+# --- the catch side of the same class --------------------------------------
+# The rules above govern how we WRITE the encoding= argument. This one governs
+# what happens when a file arrives in the wrong encoding anyway: `read_text`
+# raises `UnicodeDecodeError` BEFORE `json` ever sees the bytes, so a handler
+# that catches only `json.JSONDecodeError` (and/or `OSError`) does not catch it,
+# and one cp1252 file takes down whatever report was scanning the corpus instead
+# of being named and skipped. Same failure, same population (the Windows
+# genealogist team), one file later.
+#
+# Scoped to handlers whose own `try` body actually decodes a file. A handler
+# around `json.loads(some_string)` cannot raise it, and demanding the exception
+# there would be noise. `UnicodeDecodeError` subclasses `ValueError`, so a
+# handler already catching `ValueError` is compliant and is not flagged.
+#
+# KNOWN LIMIT, stated rather than implied: a handler that names a CONSTANT
+# (`except UNREADABLE_FILE:`) is not inspected, because the constant's members
+# are not resolvable from this file's AST alone. Such a constant is covered
+# where it lives instead -- see
+# `test_guardrail_shadow_report.py::test_no_reader_in_the_report_module_narrows_the_unreadable_tuple`.
+# If a second module adopts that pattern it needs the same module-local guard,
+# or this lint needs constant resolution.
+
+_DECODING_CALLS = ("read_text", "open(", ".read()")
+
+
+def _exception_names(node: ast.expr | None) -> list[str]:
+    """Every name in an `except` clause, whether bare, dotted or a tuple."""
+    found: list[str] = []
+
+    def walk(inner: ast.AST) -> None:
+        if isinstance(inner, ast.Name):
+            found.append(inner.id)
+        elif isinstance(inner, ast.Attribute):
+            found.append(inner.attr)
+        elif isinstance(inner, ast.Tuple):
+            for element in inner.elts:
+                walk(element)
+
+    if node is not None:
+        walk(node)
+    return found
+
+
+def _narrow_json_handlers(source: str) -> list[tuple[int, str]]:
+    """(lineno, clause) for each handler that decodes a file, catches
+    JSONDecodeError, and would let UnicodeDecodeError through."""
+    out: list[tuple[int, str]] = []
+    lines = source.splitlines()
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.Try) or not node.handlers:
+            continue
+        body = ast.get_source_segment(source, node) or ""
+        try_body = "\n".join(body.splitlines()[: node.handlers[0].lineno - node.lineno])
+        if not any(marker in try_body for marker in _DECODING_CALLS):
+            continue
+        for handler in node.handlers:
+            caught = _exception_names(handler.type)
+            if "JSONDecodeError" not in caught:
+                continue
+            if "UnicodeDecodeError" in caught or "ValueError" in caught:
+                continue
+            out.append((handler.lineno, lines[handler.lineno - 1].strip()))
+    return out
+
+
+def test_no_json_handler_lets_a_decode_error_through():
+    """A handler that reads a file and catches only JSONDecodeError is a crash
+    waiting for the first non-UTF-8 file in the corpus."""
+    assert REPO_ROOT.joinpath("CLAUDE.md").is_file(), "repo-root detection is wrong"
+    offenders: list[str] = []
+    harness_root = REPO_ROOT / "eval" / "harness"
+    for path in _iter_python_files(harness_root):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        try:
+            hits = _narrow_json_handlers(path.read_text(encoding="utf-8"))
+        except (SyntaxError, ValueError, UnicodeDecodeError):
+            continue
+        for lineno, clause in hits:
+            offenders.append(
+                f"{rel}:{lineno}: `{clause}` reads a file but lets "
+                "UnicodeDecodeError through; add it to the tuple"
+            )
+    assert offenders == [], "\n".join(offenders)
+
+
+def test_the_decode_error_lint_flags_a_narrow_handler():
+    """Positive control. Without this the lint above could match nothing at all
+    and still read as coverage."""
+    hits = _narrow_json_handlers(
+        "import json\n"
+        "from pathlib import Path\n"
+        "try:\n"
+        "    json.loads(Path('x').read_text(encoding='utf-8'))\n"
+        "except json.JSONDecodeError:\n"
+        "    pass\n"
+    )
+    assert len(hits) == 1
+    assert "JSONDecodeError" in hits[0][1]
+
+
+def test_the_decode_error_lint_accepts_the_compliant_shapes():
+    """The other direction, which is what stops this lint being `skip`ped later:
+    a tuple that names it, a handler that catches ValueError (its base class),
+    a shared constant, and a handler over a string that never decodes a file."""
+    compliant = [
+        "import json\nfrom pathlib import Path\ntry:\n    json.loads(Path('x').read_text(encoding='utf-8'))\nexcept (json.JSONDecodeError, UnicodeDecodeError):\n    pass\n",
+        "import json\nfrom pathlib import Path\ntry:\n    json.loads(Path('x').read_text(encoding='utf-8'))\nexcept (json.JSONDecodeError, ValueError):\n    pass\n",
+        "import json\nfrom pathlib import Path\nUNREADABLE = (json.JSONDecodeError, UnicodeDecodeError, OSError)\ntry:\n    json.loads(Path('x').read_text(encoding='utf-8'))\nexcept UNREADABLE:\n    pass\n",
+        "import json\ntry:\n    json.loads(payload)\nexcept json.JSONDecodeError:\n    pass\n",
+    ]
+    for source in compliant:
+        assert _narrow_json_handlers(source) == [], source

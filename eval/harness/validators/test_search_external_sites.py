@@ -407,8 +407,16 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
         url = detail.get("url_generated")
         if not isinstance(url, str) or not url.strip():
             return False
-        if detail.get("capture_received") is True:
-            return False
+        # `capture_received: True` is NOT an exemption on its own. It was one
+        # until #2207 added the in-window read route, which makes
+        # `capture_received: true` the NORMAL state of the arrival entry — so a
+        # blanket exemption left every in-window turn permanently unable to fail
+        # this check, and `ut_search_external_sites_iwc` passed twice while the
+        # skill hand-composed its URL. The two clauses below already exempt the
+        # case the blanket rule was reaching for: a capture that re-logs a URL
+        # from a prior turn (`seen_before`) or from an earlier entry this run.
+        # An arrival carrying a URL that appears nowhere else IS a fresh
+        # generation, whoever captured it.
         if entry.get("outcome") == "error":
             return False
         if detail.get("site") == "familysearch_web":
