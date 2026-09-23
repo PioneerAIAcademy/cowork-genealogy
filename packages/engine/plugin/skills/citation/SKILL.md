@@ -330,16 +330,20 @@ Berks County Register of Wills, Pennsylvania, will of Edward
 Mooney, proved 3 June 1874; Will Book 9, p. 113; Berks County
 Courthouse, Reading.
 ```
-For Pennsylvania probate, match the authority to the document. A
-will is received, probated and recorded by the county **Register of
-Wills** — that office is the creator of a
-will, a probate record, or a letters-testamentary entry. The county
-**Orphans' Court** adjudicates estate distribution, accounts,
-partition and guardianship — name it for those records. Either way,
-name the office in `who`, never the courthouse building or a generic
-records office. Where `tree.gedcomx.json` carries an `author` on the
-matching source description, that value takes precedence over this
-inference.
+For probate, match the authority to the document. The office that
+creates a will differs from the court that adjudicates the estate, and
+which office is which differs by state — so do not infer it. Before you
+fill `who`, call `wiki_read` on
+`https://www.familysearch.org/en/wiki/{State}_Probate_Records` for the
+state the record comes from, and take the office from that page: it
+names the county office wills are filed and recorded with, and the court
+whose records carry estate distribution, accounts, inventories and
+guardianship. Name the office the page gives for the document in hand,
+never the courthouse building or a generic records office. If the page
+does not name an office for that document type, treat `who` as missing
+data and flag it under the missing-data rule — do not fall back to
+inference. Where `tree.gedcomx.json` carries an `author` on the matching
+source description, that value takes precedence over the page.
 
 `where_within` for probate records contains ONLY the physical locator
 (the Will Book volume and page, in the form "Will Book [volume],
