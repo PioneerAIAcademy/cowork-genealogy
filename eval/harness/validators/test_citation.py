@@ -627,6 +627,58 @@ def _harvest_skill_examples():
     return {m.group(0).strip() for m in _LOCATOR_RE.finditer(text)}
 
 
+# --- V13: The probate office is fetched, not recalled --------------------
+
+_PROBATE_WIKI_RE = re.compile(r"/wiki/([A-Za-z_]+)_Probate_Records\b")
+
+
+def _probate_wiki_reads(tool_calls) -> list[str]:
+    """Every `{State}_Probate_Records` page this run fetched, by state."""
+    states = []
+    for tc in (tool_calls or []):
+        if not tc.get("tool", "").endswith("wiki_read"):
+            continue
+        url = ((tc.get("args") or {}).get("url") or "")
+        m = _PROBATE_WIKI_RE.search(url)
+        if m:
+            states.append(m.group(1))
+    return states
+
+
+def test_probate_office_came_from_the_wiki(tool_calls, test):
+    """V13: a probate refinement must `wiki_read` the state's probate page.
+
+    Tier 1 - gates. Gated on the `probate` tag.
+
+    The agent body used to name Pennsylvania's offices outright. ADR-0012 moved
+    that one-jurisdiction fact onto the wiki (issue #2262, carried into #2799),
+    so the body now says only "match the authority to the document" and "never
+    the courthouse building" and sends the agent to
+    `{State}_Probate_Records` for the office itself.
+
+    Nothing else can hold that. The judge grades the citation it is shown, and a
+    correct-looking "Register of Wills" is indistinguishable from a recalled one
+    -- which is the whole failure mode the move exists to prevent, because the
+    recall is right for Pennsylvania and wrong for most other states. Only the
+    tool ledger says whether the agent looked it up.
+    """
+    if "probate" not in (test.get("tags") or []):
+        pytest.skip("only applies to probate tests")
+    reads = _probate_wiki_reads(tool_calls)
+    assert reads, (
+        "this probate test refined a citation without fetching the creating "
+        "office: no `wiki_read` of a `{State}_Probate_Records` page is in the "
+        "tool ledger. The office named in `who` was recalled, not looked up "
+        "-- which is exactly what ADR-0012 moved out of the body. wiki_read "
+        "calls this run: "
+        + repr([
+            ((tc.get("args") or {}).get("url") or "")
+            for tc in (tool_calls or [])
+            if tc.get("tool", "").endswith("wiki_read")
+        ])
+    )
+
+
 # --- V11: Negative-search citation quotes log verbatim ------------------
 
 def report_negative_search_quotes_log(before_state, text_response, test):

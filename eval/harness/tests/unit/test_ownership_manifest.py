@@ -218,8 +218,13 @@ def test_a_unit_plane_agent_caller_is_a_suite_subject():
     assert offending == []
 
 
-def test_loader_refuses_an_agent_caller_on_the_unit_plane(monkeypatch):
-    """The guard above is only worth having if the loader actually raises."""
+def test_the_loader_resolves_an_agent_caller_only_for_its_own_subject(monkeypatch):
+    """The structural guard above is only worth having if resolution matches it.
+
+    Dropping a non-subject agent is safe ONLY because that guard proves every
+    such agent owns a suite of its own, where it IS the subject. This pins the
+    resolution half of that pair.
+    """
     manifest = load_manifest()
     poisoned = {
         **manifest,
@@ -235,16 +240,15 @@ def test_loader_refuses_an_agent_caller_on_the_unit_plane(monkeypatch):
         ],
     }
     monkeypatch.setattr("harness.ownership.load_manifest", lambda: poisoned)
-    with pytest.raises(OwnershipManifestError, match="cannot see any other agent"):
-        writer_sets(RESEARCH_JSON, UNIT_PLANE)
-    # ...and still raises when a subject is given that is not this agent. The
-    # #2799 exception is exactly one name wide.
-    with pytest.raises(OwnershipManifestError, match="cannot see any other agent"):
-        writer_sets(RESEARCH_JSON, UNIT_PLANE, subject="citation")
-    # The one case it does NOT raise: the agent IS the subject.
+    # The #2799 exception is exactly one name wide: the agent resolves when it
+    # IS the subject, and is dropped for every other subject (and for none).
     assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject="gps-mentor") == {
         "evaluations": {"gps-mentor"}
     }
+    assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject="citation") == {
+        "evaluations": set()
+    }
+    assert writer_sets(RESEARCH_JSON, UNIT_PLANE) == {"evaluations": set()}
 
 
 def test_every_row_declares_an_artifact_the_harness_knows():

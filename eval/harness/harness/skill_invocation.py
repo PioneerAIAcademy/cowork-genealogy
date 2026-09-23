@@ -1038,6 +1038,14 @@ DEDICATED_AGENT_NAMES = frozenset(
         # unnamed-delegate bypass. Do not read its presence here as evidence that
         # a hook route exists.
         "search-images",
+        # Same shape as search-images, and for the same reason (issue #2799):
+        # `citation` is a converted skill, not a hook-routed pair. No hook
+        # routes anything to it. It is listed because the set is asserted equal
+        # to the shipped agent files, and because a `sources` refinement
+        # arriving from it is legitimate -- `ownership.json` names
+        # `agent:citation` on that row -- rather than an unnamed-delegate
+        # bypass. Do not read its presence here as evidence of a hook route.
+        "citation",
     }
 )
 

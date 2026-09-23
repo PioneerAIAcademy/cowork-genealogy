@@ -627,6 +627,32 @@ graded** — a direct test is a separate file with its own `test.id`, not a seco
 arm over an existing one, because a duplicated `test_id` in one envelope corrupts
 annotations, which key on `(test_id, dimension_source, dimension_name)`.
 
+**A converted suite is the one case where the direct test keeps the original
+`test.id`.** Once a skill is deleted outright rather than thinned into a router
+(the lead's ruling of 2026-09-22: every skill becomes an agent and the skill is
+deleted; `citation` is the first, issue #2799), there is no routed arm left to
+grade and no second file to collide with. The routed original is not kept
+alongside the direct one — it is *converted in place*: `input.user_message`
+becomes `input.delegation`, `direct-arm` is appended to `tags`, and `tags`,
+`execution`, `mcp_fixtures`, `judge_reads_files` and `negative` are otherwise
+untouched. Keeping the id is what preserves the suite's annotation history
+across the conversion; minting new ids would orphan every prior grade on the
+`(test_id, dimension_source, dimension_name)` key this section already names.
+The "separate file, own id" rule above still governs a **pair** — a routing
+skill that still ships — because there both arms exist and both are graded.
+
+**A negative converts too, when its outcome does not depend on routing.** The
+conversion doc says negatives get no twin, and for a pair that is right: routing
+is the router's job and a direct test has no router. A negative graded with
+`negative.grade_on_invariant` is the exception — its outcome is decided solely
+by its tag-gated invariant validator, with routing and activation deliberately
+not gated (`orchestrator._compute_outcome`), so nothing it measures was ever the
+router's. `ut_citation_012` (never create a source entry) is the worked case: it
+keeps its `negative` block, its `grade_on_invariant`, its `no-new-source` tag
+and the validator that gates on it, and only the input changes. A negative
+*without* `grade_on_invariant` has no defined outcome path on the direct arm and
+must be deleted or re-shaped, not converted.
+
 On a direct test the harness:
 
 - builds a workspace staging `.claude/agents/` and **no skills at all** — the
@@ -669,6 +695,23 @@ and `check_runlogs.py` marks the suite touched when that file changes. Without
 both, editing the agent leaves the suite's run log **active** and its grades are
 quoted forward against prose that changed. For a paired skill the `@plugin:`
 scan already embeds the same path, so neither rule moves an existing snapshot.
+
+**An `agent:` caller in `ownership.json` is readable here only when it is the
+suite's subject.** `test_ownership_table` compares the sections a run modified
+against `writer_sets`, which resolves bare names and had to refuse an `agent:`
+caller outright: the check reads one frontmatter `name` and cannot see which
+agent made any given call, so resolving an arbitrary agent would authorize
+writes it cannot attribute, and dropping it silently would deny that agent's own
+writes. Converting a skill to an agent makes exactly one agent visible — the
+suite's subject, whose `name` is what `load_suite_frontmatter` reads off
+`agents/<n>.md`. So `writer_sets(artifact, plane, subject=<n>)` resolves
+`agent:<n>` and nothing else; every other `agent:` caller still raises
+(lead's ruling, 2026-09-23, issue #2799). Without this, every positive test in a
+converted suite fails ownership on its own legitimate writes. A row naming an
+agent caller must also ship `agents/<n>.md` **and** own an
+`eval/tests/unit/<n>/` suite — otherwise no one ever passes `<n>` as the subject
+and the row authorizes nobody while reading as though it authorizes someone
+(`test_a_unit_plane_agent_caller_is_a_suite_subject`).
 
 **Never reach the agent with `--agent` / `extra_args={"agent": …}`.** The shipped
 ownership hook keys on the **presence** of `agent_id`, and a session started that

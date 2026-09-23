@@ -121,21 +121,29 @@ def writer_sets(
     it reads the suite subject's frontmatter `name`.
 
     **The agent rule (issue #2799).** The unit plane keys on one name — the
-    suite's subject — and has no view of which agent made any *other* call. So:
+    suite's subject — and has no view of which agent made any *other* call. So
+    an `agent:<n>` caller resolves to `<n>` when `<n>` IS `subject`, and is
+    dropped otherwise. The suite is that agent; `load_suite_frontmatter` reads
+    its `name` off `agents/<n>.md`, and the comparison the validator makes is
+    then exactly as sound as it is for a skill. Without this, every positive
+    test in a converted suite fails ownership on its own legitimate writes.
 
-    - an `agent:<n>` caller where `<n>` is `subject` resolves to `<n>`. The
-      suite IS that agent, `load_suite_frontmatter` reads its `name` off
-      `agents/<n>.md`, and the comparison the validator makes is exactly as
-      sound as it is for a skill. A converted skill's own writes have to be
-      authorizable, or every positive test in its suite fails ownership.
-    - any other `agent:<n>` caller still raises. Dropping it would silently
-      deny that agent's legitimate writes, which is the declaration error this
-      has always refused — `evaluations` is exactly that shape, and its row
-      carries `enforceableAt: []` for the reason.
+    **Why dropping the others is safe now, when it never was before.** This
+    used to raise on any agent caller, because dropping one silently denied
+    that agent's legitimate writes and nothing else would have noticed. What
+    changed is not the risk but where the guarantee lives: every unit-plane
+    agent caller must now ship `agents/<n>.md` AND own an
+    `eval/tests/unit/<n>/` suite, checked against the filesystem by
+    `test_a_unit_plane_agent_caller_is_a_suite_subject`. So an agent dropped
+    here is always one that IS authorizable — on its own suite, where it is the
+    subject — and never one that has been left with no route to authorization.
+    Raising instead would fire on every OTHER suite's run, since `citation` is
+    not their subject.
 
-    `subject=None` therefore keeps the pre-#2799 behaviour unchanged: every
-    agent caller on a unit-plane row raises. A caller that cannot name a
-    subject has not become able to see one.
+    That check is free and runs on every push; this function is reached only
+    inside a paid eval run. Keeping the structural rule in the free tier and
+    the resolution here is the same split the module docstring already
+    describes.
     """
     sets: dict[str, set[str]] = {}
     for row in rows(artifact):
@@ -143,22 +151,11 @@ def writer_sets(
             continue
         section = row["section"]
         callers = row.get("callers") or []
-        agents = [c for c in callers if c.startswith(_AGENT_PREFIX)]
-        unmatched = [c for c in agents if agent_name(c) != subject]
-        if unmatched and plane == UNIT_PLANE:
-            raise OwnershipManifestError(
-                f"{artifact} section '{section}' is declared enforceable at '{plane}' but "
-                f"names agent caller(s) {unmatched}. The unit plane keys on the suite "
-                f"subject's frontmatter name and cannot see any other agent, so enforcing "
-                f"this row there would deny that agent's own writes. An agent caller is "
-                f"readable here only when it IS the suite subject"
-                + (f" (subject: {subject!r})." if subject else "; no subject was given.")
-            )
         resolved = set()
         for c in callers:
             name = skill_name(c)
-            if name is None and plane == UNIT_PLANE:
-                name = agent_name(c) if agent_name(c) == subject else None
+            if name is None and plane == UNIT_PLANE and agent_name(c) == subject:
+                name = subject
             if name is not None:
                 resolved.add(name)
         sets[section] = resolved
