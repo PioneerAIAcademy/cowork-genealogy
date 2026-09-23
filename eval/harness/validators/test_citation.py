@@ -1,4 +1,4 @@
-"""Skill-specific validators for the citation skill.
+"""Validators for the citation agent's unit suite.
 
 citation keeps its `rubric.md` — all three dimensions (Evidence
 Explained compliance, Replication test, Source vs information
@@ -501,7 +501,7 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
     if test.get("type") == "negative":
         pytest.skip("negative test")
     if (skill_frontmatter or {}).get("name") != "citation":
-        pytest.skip("not the citation skill")
+        pytest.skip("not the citation suite")
     before_rj = before_state.get("research_json")
     after_rj = after_state.get("research_json")
     if before_rj is None or after_rj is None:
@@ -555,7 +555,7 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
     if test.get("type") == "negative":
         pytest.skip("negative test")
     if (skill_frontmatter or {}).get("name") != "citation":
-        pytest.skip("not the citation skill")
+        pytest.skip("not the citation suite")
     response = text_response or ""
     if not response.strip():
         pytest.skip("no response text to check")

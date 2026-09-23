@@ -630,7 +630,7 @@ annotations, which key on `(test_id, dimension_source, dimension_name)`.
 **A converted suite is the one case where the direct test keeps the original
 `test.id`.** Once a skill is deleted outright rather than thinned into a router
 (the lead's ruling of 2026-09-22: every skill becomes an agent and the skill is
-deleted; `citation` is the first, issue #2799), there is no routed arm left to
+deleted; `citation` is the first), there is no routed arm left to
 grade and no second file to collide with. The routed original is not kept
 alongside the direct one — it is *converted in place*: `input.user_message`
 becomes `input.delegation`, `direct-arm` is appended to `tags`, and `tags`,
@@ -706,7 +706,7 @@ writes. Converting a skill to an agent makes exactly one agent visible — the
 suite's subject, whose `name` is what `load_suite_frontmatter` reads off
 `agents/<n>.md`. So `writer_sets(artifact, plane, subject=<n>)` resolves
 `agent:<n>` and nothing else; every other `agent:` caller still raises
-(lead's ruling, 2026-09-23, issue #2799). Without this, every positive test in a
+(lead's ruling, 2026-09-23). Without this, every positive test in a
 converted suite fails ownership on its own legitimate writes. A row naming an
 agent caller must also ship `agents/<n>.md` **and** own an
 `eval/tests/unit/<n>/` suite — otherwise no one ever passes `<n>` as the subject

@@ -955,7 +955,7 @@ The worked example (§9) shows the evidence layer: the GedcomX birthplace "Irela
 
 ### Source ownership: record-extraction vs. citation
 
-Both `record-extraction` and `citation` write to the `sources` section. The protocol: `record-extraction` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` skill later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` skill never creates new source entries; it only refines entries created by `record-extraction`.
+Both `record-extraction` and `citation` write to the `sources` section. The protocol: `record-extraction` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` agent later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` skill never creates new source entries; it only refines entries created by `record-extraction`.
 
 ---
 
