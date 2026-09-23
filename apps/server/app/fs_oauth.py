@@ -133,9 +133,17 @@ async def fetch_identity(access_token: str) -> dict | None:
     return users[0] if users else None
 
 
+# FamilySearch's token response carries no ``expires_in`` (measured 2026-09-23); an access
+# token lives 8 h idle / 24 h max, so 8 h from issue is a lower bound. Kept equal to the
+# engine's FS_ACCESS_TOKEN_LIFETIME_S (packages/engine/mcp-server/src/auth/refresh.ts).
+FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60
+
+
 def expires_at_from(token_json: dict) -> datetime:
-    """Absolute UTC expiry from a token response's ``expires_in`` (seconds)."""
-    seconds = int(token_json.get("expires_in", 3600))
+    """Absolute UTC expiry from a token response's ``expires_in`` (seconds), else the
+    FamilySearch lifetime. A refresh revokes the previous access token, so an expiry
+    that is too short costs a needless refresh that kills the sandbox's live token."""
+    seconds = int(token_json.get("expires_in", FS_ACCESS_TOKEN_LIFETIME_S))
     return datetime.now(timezone.utc).replace(microsecond=0) + timedelta(seconds=seconds)
 
 

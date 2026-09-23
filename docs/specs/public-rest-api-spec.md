@@ -205,9 +205,12 @@ fall through to FastAPI's defaults.
 ```
 - `familysearch_token` is **optional**. Omit it for an FS-tool-less session (the agent
   runs but FS-authenticated tools fail with "not logged in"). Supply it to authenticate
-  FS tools. Only `access_token` is required; `expires_in` defaults to 3600s.
+  FS tools. Only `access_token` is required; `expires_in` defaults to 8 h (28,800 s) —
+  FamilySearch's own token response carries none, and its access tokens live 8 h idle,
+  24 h at most.
 - **Include `refresh_token`** (OAuth `offline_access`) for any session that may outlive
-  the access token: FS access tokens last ~1h, so a multi-hour session needs it. The
+  the access token: FS access tokens last 8 h idle and 24 h at most, so a longer session
+  needs it. The
   token is self-refreshed **in-sandbox** by the engine's `getValidToken(principal)` — the same
   mechanism the browser path relies on — so a single create-time injection suffices for
   the life of the sandbox. Without a refresh token the session works only until the
