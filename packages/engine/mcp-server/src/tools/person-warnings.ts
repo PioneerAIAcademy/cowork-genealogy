@@ -53,6 +53,7 @@ import {
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
+import { preferredName } from "../utils/name-helpers.js";
 import { getSimilarNamePairs } from "../utils/name-pairs.js";
 import {
   getEarliest,
@@ -159,8 +160,7 @@ export const personWarningsToolSchema = {
 // Returns the display name for a person:
 // preferred name → first name → "Unknown (id)" fallback.
 export function getPersonName(person: SimplifiedPerson): string {
-  const names = person.names ?? [];
-  const chosen = names.find((n) => n.preferred) ?? names[0];
+  const chosen = preferredName(person.names);
   if (!chosen) return `Unknown (${person.id ?? "?"})`;
   const given = chosen.given?.trim() ?? "";
   const surname = chosen.surname?.trim() ?? "";
