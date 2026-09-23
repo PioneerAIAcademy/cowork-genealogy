@@ -465,6 +465,41 @@ def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
                      "tool_use_id": "tu-1"}]
 
 
+@pytest.mark.parametrize("tool_name", ["Agent", "Task"])
+def test_a_background_delegation_is_forced_to_the_foreground_and_still_logged(tmp_path, tool_name):
+    rows: list[dict] = []
+    logged: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="turn-1", session_id="sess-1", cwd=str(tmp_path),
+                                     config_root=str(tmp_path / "cfg"), record=rows.append,
+                                     log=lambda **kw: logged.append(kw))
+    tool_input = {"subagent_type": "genealogy-research:record-extractor", "prompt": "extract X",
+                  "description": "Extract X", "run_in_background": True}
+    out = _call(hook, {"tool_name": tool_name, "tool_input": tool_input, "tool_use_id": "tu-9"})
+    spec = out["hookSpecificOutput"]
+    assert spec["permissionDecision"] == "allow"
+    assert spec["updatedInput"] == {**tool_input, "run_in_background": False}, "everything else passes through"
+    assert tool_input["run_in_background"] is True, "the model's input is not mutated in place"
+    assert rows[0]["decision"] == "allow" and rows[0]["tool_name"] == tool_name
+    assert logged == [{"ev": "foregrounded", "turn_id": "turn-1", "tool_name": tool_name, "tool_use_id": "tu-9"}]
+
+
+@pytest.mark.parametrize("tool_input", [
+    {"subagent_type": "x", "prompt": "p"},
+    {"subagent_type": "x", "prompt": "p", "run_in_background": False},
+    {"subagent_type": "x", "prompt": "p", "run_in_background": "true"},
+], ids=["absent", "false", "a string is not the flag"])
+def test_a_foreground_delegation_passes_untouched(tmp_path, tool_input):
+    rows: list[dict] = []
+    hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    assert _call(hook, {"tool_name": "Agent", "tool_input": tool_input}) == {}
+
+
+def test_run_in_background_on_another_tool_is_not_rewritten(tmp_path):
+    rows: list[dict] = []
+    hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    assert _call(hook, {"tool_name": "mcp__genealogy__record_read", "tool_input": {"run_in_background": True}}) == {}
+
+
 def test_the_row_carries_the_subagent_identity_and_the_path_when_the_input_has_one(tmp_path):
     rows: list[dict] = []
     hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))

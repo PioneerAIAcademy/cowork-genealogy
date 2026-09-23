@@ -272,6 +272,24 @@ def _deny(reason: str) -> dict[str, Any]:
     }
 
 
+# Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
+# the main thread's ResultMessage and closes the CLI, so a background agent still running
+# then dies with it -- measured 2026-09-23 (plan D17: both background extractors lost, the
+# patron told their summaries would follow). Forcing the foreground keeps parallelism: several
+# Agent calls in one message still run concurrently. Lead ruling 2026-09-23.
+DELEGATION_TOOLS = frozenset({"Agent", "Task"})
+
+
+def _foregrounded(tool_input: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "updatedInput": {**tool_input, "run_in_background": False},
+        },
+    }
+
+
 def make_pretool_hook(
     *,
     turn_id: str,
@@ -326,6 +344,10 @@ def make_pretool_hook(
             if log is not None:
                 log(ev="deny", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id, reason=reason)
             return _deny(reason or "denied")
+        if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is True:
+            if log is not None:
+                log(ev="foregrounded", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id)
+            return _foregrounded(tool_input)
         return {}
 
     return _pretool

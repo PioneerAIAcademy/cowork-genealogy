@@ -24,8 +24,8 @@ rule plus the forced token refresh that run cost built the same day (PR #2719);
 D17 re-run twice and probed 2026-09-23 — criterion 1 passes for foreground and main-thread
 kills, criterion 2 failed on a triple write (fixed as a tool precondition, PR #2850) and
 then held, and **background delegations turn out to be lost at every turn end, kill or
-not** — an open decision; the per-attempt token broker and `--background-only` built the
-same day (see D17);
+not** — so the worker now forces delegations to the foreground (lead ruling); that, the
+per-attempt token broker and `--background-only` were built the same day (see D17);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -1648,14 +1648,21 @@ without whichever Bedrock refuses.
   the worker takes the main thread's `ResultMessage` as the turn and closes the CLI, and
   the background agents die with it. The 2026-09-21 zero-turn synthetic result is the same
   loss observed after a kill; the resume rule re-queries only a redelivery, and a turn that
-  ends normally is never redelivered, so it cannot reach this case. **Open decision:**
-  either keep the SDK client open after a `ResultMessage` while any `task_started` has no
-  `task_done` (so the CLI can deliver the completion notification inside the same turn and
-  ceiling), or force delegations to the foreground with the worker's `PreToolUse` hook —
-  which keeps parallelism, since several foreground `Agent` calls in one message already
-  run concurrently (six `image-reader`s did in the second re-run). Until one lands,
-  criterion 1 cannot pass for background agents and a patron can be told work is running
-  that never will. Export: `apps/server/proto/exports/proj_bagley-father-1884_5021d9/`.
+  ends normally is never redelivered, so it cannot reach this case. **Decided and built the
+  same day (lead ruling 2026-09-23): the worker forces delegations to the foreground.** Its
+  `PreToolUse` hook answers an `Agent`/`Task` call carrying `run_in_background: true` with
+  `updatedInput` setting it `false` (`DELEGATION_TOOLS`, `apps/server/proto/worker/options.py`;
+  logged `ev=foregrounded`). Parallelism survives, because several foreground `Agent` calls
+  in one message already run concurrently. The alternative — keep the SDK client open after
+  a `ResultMessage` while a `task_started` has no `task_done` — was not taken; it would have
+  needed a measurement of the pinned CLI after a result first. **Re-probed live the same
+  day** (`sess_0f079cd03727430c`, the identical message): both calls rewritten, the two
+  `Agent` calls blocking for 427 s and 333 s and overlapping, both `task_done`, 2 sources
+  and 22 assertions, `receive_count` 1, $1.24. So a background delegation cannot occur in
+  the worker any more: criterion 1's delegation case is the foreground one, which passed on
+  2026-09-20 (D14) and on the first 2026-09-23 re-run, and the resume rule keeps covering
+  a zero-turn redelivery from any other cause.
+  Probe export: `apps/server/proto/exports/proj_bagley-father-1884_5021d9/`.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
