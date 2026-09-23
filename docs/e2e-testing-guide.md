@@ -186,6 +186,28 @@ was matched to them.
 3. **Open the hint record** and look for corroborating or contradicting
    evidence — the same way you would for any genealogical proof.
 
+**If you read an image rather than taking the index's text, check that reading
+against the index before you trust it.** This covers any image you read during
+this research, not only the hint record's, and any reader: `image_transcribe`,
+`dev/try-image-transcribe.ts`, another model, or you reading the scan by eye.
+
+1. Before reading the entries you care about, read **two other entries on the
+   same page** that the FamilySearch index already holds. Compare child,
+   father, mother and date.
+2. **Both match:** the reading is licensed for those fields. **Either one
+   differs:** discard everything that transcription read from the page. Don't
+   correct it and carry on.
+3. **The page has no indexed entries:** the reading is unlicensed. Say so in
+   the README, and don't fall back to trusting it.
+4. **Farm, residence and occupation are not covered.** The index has no farm
+   column, so a passing check does not license those words. Confirm them from a
+   separate indexed source, such as a church-census household placing that
+   person on that farm.
+5. **A sharper image is not the fix.** On issue #2308 a full-resolution scan of
+   one page still gave different wrong answers.
+
+Name the two entries you checked, and whether they matched, in the README.
+
 **Retrieval may be tool-assisted; the identity judgement may not.** You can use
 the `packages/engine/mcp-server/dev/try-*.ts` scripts against live FamilySearch
 (`make e2e-login` first, or `eval\Login.bat` on Windows) for collections

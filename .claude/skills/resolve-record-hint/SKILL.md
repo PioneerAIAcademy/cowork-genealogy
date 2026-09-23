@@ -56,6 +56,19 @@ record search, record read, image read are all permitted for **retrieval**
    the person, checking dates, places and family members against what the tree
    already has.
 
+When any image in this research is read rather than its index text taken —
+the hint record's or any other, by `image_transcribe`,
+`dev/try-image-transcribe.ts`, a model or a person reading the scan — that
+reading is checked first: read two other entries on the same page that the
+FamilySearch index already holds and compare child, father, mother and date.
+Both match: the reading is licensed for those fields. Either differs: discard
+everything that transcription read from the page. No indexed entries
+on the page: the reading is unlicensed, and the README says so. The check never
+licenses a farm, residence or occupation; those need a separate indexed source
+such as a church-census household. A higher-resolution image does not rescue a
+reading that failed the check. The README names the two entries checked and the
+result.
+
 The **identity judgement** is the actual GPS work the benchmark exists to
 measure, and there is no tool shortcut for *that*: no tool output decides
 whether the hint record concerns the tree person. Retrieval is a different
@@ -123,10 +136,11 @@ it carries no record provenance). See spec §3.6.1 (issue #1025).
   it anyway.
 
 - **`README.md`** — replace the "DRAFT PENDING ADJUDICATION" paragraph under
-  "Notes for reviewers" with the genealogist's conclusion and reasoning. 40 of
-  65 record-hint fixtures have been resolved this way (re-derive: `grep -rl
-  '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | wc -l` against
-  `grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | wc -l`);
+  "Notes for reviewers" with the genealogist's conclusion and reasoning. Most
+  record-hint fixtures have been resolved this way (drafts remaining:
+  `comm -12 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json |
+  xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ |
+  xargs -n1 dirname | sort -u) | wc -l`);
   `eval/tests/e2e/chresten-nielsen-daughter/README.md`'s
   "Notes for reviewers" is a worked example (re-adjudicated after a graded
   run, the closest match to a correction-not-rejection outcome). Write the
