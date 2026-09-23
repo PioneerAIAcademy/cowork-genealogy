@@ -248,8 +248,27 @@ def test_rehash_tags_is_idempotent(tmp_path: Path):
     prune_runlogs.cmd_rehash_tags(runlogs, repo_root=repo, dry_run=False)
     first_run = p.read_text(encoding="utf-8")
 
-    # Second run: the stored hash now matches the NEW rule, so old_rule != stored.
-    # That means the key won't match old rule either, and falls through.
-    # The result should be exit 1 (zero rewrites in 2nd run), but the file is unchanged.
+    # Second run: stored hash now matches the NEW rule, so it's detected as
+    # already-migrated and skipped — file unchanged, exit 0.
     prune_runlogs.cmd_rehash_tags(runlogs, repo_root=repo, dry_run=False)
     assert p.read_text(encoding="utf-8") == first_run
+
+
+def test_rehash_tags_second_run_exits_zero(tmp_path: Path):
+    """A fully-migrated tree must exit 0, not 1 — re-running the command on
+    a correct steady state is not an error (Gennecis review, PR #2815)."""
+    repo = _make_repo_with_test(tmp_path)
+    runlogs = tmp_path / "runlogs"
+
+    old_hash = _old_rule_hash(TEST_JSON_BODY)
+    _write_log(runlogs, "v1_2026-07-01_00-00-00.json",
+               schema_version=3, snapshot={
+                   SKILL_MD: hash_content("body\n"),
+                   TEST_JSON_KEY: old_hash,
+               })
+
+    rc1 = prune_runlogs.cmd_rehash_tags(runlogs, repo_root=repo, dry_run=False)
+    assert rc1 == 0
+
+    rc2 = prune_runlogs.cmd_rehash_tags(runlogs, repo_root=repo, dry_run=False)
+    assert rc2 == 0, "second run on fully-migrated tree must exit 0"

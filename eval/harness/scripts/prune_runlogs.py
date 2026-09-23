@@ -217,6 +217,7 @@ def cmd_rehash_tags(root: Path, *, repo_root: Path, dry_run: bool) -> int:
     logs = committed_runlogs(root)
     rewritten_total = 0
     mismatch_total = 0
+    already_migrated_total = 0
     logs_touched = 0
 
     for log_path in logs:
@@ -243,6 +244,11 @@ def cmd_rehash_tags(root: Path, *, repo_root: Path, dry_run: bool) -> int:
 
             if old_rule_hash == new_rule_hash:
                 # No tags in this test, or tags field is absent — hash unchanged.
+                continue
+
+            if stored_hash == new_rule_hash:
+                # A prior run of this command already migrated this key.
+                already_migrated_total += 1
                 continue
 
             if stored_hash != old_rule_hash:
@@ -272,16 +278,18 @@ def cmd_rehash_tags(root: Path, *, repo_root: Path, dry_run: bool) -> int:
         print(
             f"rehash-tags --dry-run: {rewritten_total} snapshot key(s) would "
             f"be rewritten across {len(logs)} run log(s); "
+            f"{already_migrated_total} already migrated; "
             f"{mismatch_total} pre-existing mismatch(es)"
         )
     else:
         print(
             f"rehash-tags: rewrote {rewritten_total} snapshot key(s) across "
             f"{logs_touched} run log(s); "
+            f"{already_migrated_total} already migrated; "
             f"{mismatch_total} pre-existing mismatch(es)"
         )
 
-    if rewritten_total == 0 and not dry_run:
+    if rewritten_total == 0 and already_migrated_total == 0 and not dry_run:
         print("ERROR: zero keys rewritten — nothing was migrated", file=sys.stderr)
         return 1
     return 0
