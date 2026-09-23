@@ -2,20 +2,26 @@
 
 Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/per-pr-review-workflow.md`.
 
-> **TEST-AUTHORING POLICY (standing, not a stage): `runs_per_test` is always 1.**
+> **TEST-AUTHORING POLICY (standing, not a stage): a test FILE's `runs_per_test` is always 1.**
 > When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
 > omit the field (it defaults to 1) or set it to `1`. Multi-run tests make the
 > suite painfully slow (each run is a full skill execution **plus** a judge LLM
-> call). The multi-run aggregation under "Variance: runs per test" in
-> `unit-test-spec.md` stays in the code but is unreachable. The JSON Schema pins
-> `maximum: 1` to enforce this, and the pin is not scheduled to be lifted.
+> call). The JSON Schema pins `maximum: 1` to enforce this on test files, and that
+> pin is not scheduled to be lifted. What the pin does **not** do is stop an
+> operator from repeating a run on demand: `run_tests.py --runs-per-test N`
+> overrides the loaded value at the CLI (the file stays 1), which runs each test N
+> times so the per-test `flaky` flag can fire and drives the "Variance: runs per
+> test" aggregation in `unit-test-spec.md`. Any `N > 1` run is non-releasable — it
+> writes a `scratch_<ts>.json`, never a committed candidate — so the committed
+> corpus stays single-run.
 >
-> **The pin means we do not detect single-run variance. It does not mean we
-> tolerate it.** A test that passes on one run and fails on the next is a defect
-> to diagnose and fix — never something to re-run until it comes back green, and
-> never something the silent `flaky` flag excuses. Because the pin makes `flaky`
-> structurally false, checking a suspect test is manual: re-run it with
-> `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
+> **The pin means a committed run log does not detect single-run variance. It does
+> not mean we tolerate it.** A test that passes on one run and fails on the next is
+> a defect to diagnose and fix — never something to re-run until it comes back
+> green, and never something the silent `flaky` flag excuses. To check a suspect
+> test, surface its flakiness deliberately: `run_tests.py --test <id>
+> --runs-per-test 3 --runlogs-root <tmp>`, read `flaky` / `per_run_outcomes` off
+> the scratch log, and fix whatever differs.
 
 ## Directory Layout
 
@@ -208,7 +214,9 @@ The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) 
 
 **Before calling a red test a regression, get its non-pass rate across the committed run logs.** One run is not a measurement. `record-extraction`'s four committed logs span **17, 19, 24 and 24 passes (of 27–28 tests) with no code change between them**, and per-test rates inside that spread run as high as 3-of-4 non-pass (`ut_record_extraction_009`, `_021`). A red run inside a test's normal rate says nothing about the change under review. This costs **no API spend** — read the same `test_id` out of each `v*.json` in the skill's runlog dir — so do it *before* diagnosing, not after. Worked instance and the per-test table: issue #1443.
 
-It matters because **rule 2 makes "the baseline" whatever ran last.** It gates on the newest full-skill log being active, so anyone comparing a new run against it inherits wherever in that spread the previous run landed: when the previous run sat at the top of the range, an ordinary next run reads as a multi-test regression. Two limits on the remedy — **`tests[].flaky` cannot carry this signal**, since `runlog.py` computes it *within* one test entry across its `runs[]`, so under the standing `runs_per_test: 1` policy it is structurally always false (measured 2026-08-24: **0 of 1,893 test entries across 122 committed unit run logs**, and `rubric-critic` consumes it as an input) — and candidate retention keeps only the newest 5 per skill, so the cross-log window is 5 runs deep and narrows as new candidates land.
+**Clearing a card that names specific tests: `--runs-per-test 3`, then one committed run.** A card clears when each test it names comes back `flaky: false` and non-failing on `run_tests.py --test <ut_id> --runs-per-test 3` — a scratch run; paste its `per_run_outcomes` into the PR body — followed by one normal committed `make eval-skill SKILL=<skill>`. This is the same API spend as three suite runs but one annotation pass instead of three, no snapshot clock to reset, and it names *which* test is inconsistent. It replaces the retired "three consecutive all-green suite runs" bar, which graded the whole suite: one unrelated flapper blocked a card that had fixed every red it named (across the baseline-reds suites, runs with zero fail/abort were 8 of 54, so three-in-a-row was ~2%). A *committed* ×3 log was rejected for the same reason — Rule 6 grades every test in a log, so a ×3 suite log would let one unrelated flapper red the card at ~3× the spend — which is why the ×3 run is a scratch run and Rule 6 is unchanged.
+
+It matters because **rule 2 makes "the baseline" whatever ran last.** It gates on the newest full-skill log being active, so anyone comparing a new run against it inherits wherever in that spread the previous run landed: when the previous run sat at the top of the range, an ordinary next run reads as a multi-test regression. Two limits on the remedy — **`tests[].flaky` cannot carry this signal**, since `runlog.py` computes it *within* one test entry across its `runs[]`, so in every committed run log — each test entry has a single run under the standing `runs_per_test: 1` file policy — it is always false (measured 2026-08-24: **0 of 1,893 test entries across 122 committed unit run logs**, and `rubric-critic` consumes it as an input). A `--runs-per-test N` run *can* make `flaky` fire, but only in a `scratch_` log that never enters the committed corpus, so it still cannot carry a cross-committed-log spread signal — and candidate retention keeps only the newest 5 per skill, so the cross-log window is 5 runs deep and narrows as new candidates land.
 
 ## Snapshot model
 
@@ -330,8 +338,9 @@ Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — pro
 The harness is deliberately *not* a perfect reproduction of how skills run in Cowork. A passing eval suite does not guarantee identical production behavior. The known divergences:
 
 - **`setting_sources=["project"]`.** Production loads `["user","project"]`. Eval omits `"user"` so a developer's `~/.claude/skills/` doesn't contaminate routing tests.
-- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes. The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade. **It is the reason a test can flap, not a reason to accept one that does** — a test that only passes on some samples is under-specified, and the fix is to sharpen it (rubric wording, `judge_context`, a deterministic validator), not to average it away. `runs_per_test` cannot currently be bumped: the schema pins it to 1.
+- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes. The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade. **It is the reason a test can flap, not a reason to accept one that does** — a test that only passes on some samples is under-specified, and the fix is to sharpen it (rubric wording, `judge_context`, a deterministic validator), not to average it away. A test file's `runs_per_test` cannot be bumped — the schema pins it to 1 — but `run_tests.py --runs-per-test N` overrides it at the CLI for a scratch (non-releasable) run, the deliberate way to expose a flapping test rather than to average its grade.
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate. What the mock does *around* a canned response is production's own compiled code, not a Python restatement of it: `record_search` / `fulltext_search` responses are staged through `stageSearchResults` and then compacted through `compactStagedRecordSearch` / `compactStagedFulltextSearch`, so the agent is handed the slimmed shape production sends rather than the full fixture. **Add a transformation to a search tool's post-staging path and it must be exported from `utils/staged-compaction.ts`, not mirrored here** — a mock that serves a field production strips grades triage against a shape production never sends (#1826, #2009).
+- **Acquisition staging is not mirrored.** In production `image_transcribe` and `record_read` stage their payload when given a `projectPath` and return `staged.resultsRef` + a digest (issue #2048); the mock stages only the three search tools (`STAGING_SEARCH_TOOLS`), because their canned fixtures carry `transcription` / a GedcomX document rather than a `results[]` page and building the engine's envelope in Python is the restatement this file forbids. So under eval an agent never sees `staged` on a transcription. Neither path nags about an acquisition file: the unlogged-search note and the retained-none warning are search-only in the engine too, so that half is at parity. A skill or agent that consumes that handle (issue #2490) has to be measured on an e2e run, not a unit eval, until the mock calls the compiled stager for these two as it does for the search tools.
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
 - **Concurrent execution.** Eval runs tests through a bounded thread pool *within a single invocation* (RAM-aware default ~1–8 slots — about one per 2 GiB, so a low-RAM box scales *down* instead of getting SIGKILLed, and an undetectable-RAM box runs serially; override with `--concurrency N`, or `--concurrency 1` to force serial). Tests are submitted **longest-first** (estimated from each test's `max_wall_clock_seconds` cap) so a long-pole test can't land in the last wave and stretch the makespan tail. To cover several skills, pass them to **one** invocation — `--skill a b c` (or `make eval-skill SKILL="a b c"`); each skill still writes its own releasable run log and they all share the one pool. **Still avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each spawns its own Claude Code SDK subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`); the in-process pool (one invocation, many skills) is the safe way to parallelize. The retry mechanism recovers most transient stalls.
 
