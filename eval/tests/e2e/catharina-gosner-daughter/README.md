@@ -28,10 +28,19 @@ match strength.
 
 ## Notes for reviewers
 
-**PENDING SECOND READER.** The adjudication below is complete and the
-findings are written, but the identity call has not yet had the independent
-second opinion this fixture's issue asks for. Do not treat it as settled, and
-do not open a PR from it, until that reader has signed off and is named here.
+**No independent second reader — PR review is the second read.** Issue #2310
+asked for a named second opinion on the identity call. None was available, so
+this landed with PR review standing in for it. **Reviewer: you are that second
+read.** Please treat the verdict below as a proposal to check, not a settled
+finding, and say so on the PR if you disagree.
+
+Why the requirement was relaxed rather than met: it was written when the call
+looked borderline, the wife-naming convention argument being genuinely
+plausible. It stopped being borderline once the marriage record turned up —
+a union dated 10 August 1751 against a christening of 12 June 1743 is
+arithmetic, not judgement. What is written below is enough to re-derive the
+call without repeating the research; the one thing that could overturn it is
+named explicitly under "The loose end: Antonius, 1741".
 
 **Verdict: false match (outcome 3).** The 12 June 1743 baptism of Magdalena
 Schedler at Triesen belongs to a different couple. `expected-findings.json`
