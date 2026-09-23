@@ -1234,7 +1234,7 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 
 def test_activated_run_produces_response(
     activated, aborted_reason, num_turns, output_tokens, text_response, test,
-    skills_invoked,
+    skills_invoked, builtin_tool_calls,
 ):
     """An activated run that produced no output is a dead run — fail it.
 
@@ -1250,8 +1250,10 @@ def test_activated_run_produces_response(
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
-    if set(skills_invoked or []) - {test.get("skill")}:
-        return  # handed off to another skill — not a dead run
+    from harness.skill_runner import handoffs
+
+    if set(handoffs(skills_invoked, builtin_tool_calls)) - {test.get("skill")}:
+        return  # handed off to another skill or agent — not a dead run
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:

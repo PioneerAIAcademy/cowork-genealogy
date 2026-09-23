@@ -28,21 +28,51 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 16, `hint-samples.csv` row 494,
-flag `adds_spouse`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Canada, Marriages, 1661-1949", an 1895 marriage entry for Thomas Dee (b. 1874, Halifax) and Bessie Butler (b. 1875, Halifax), naming the groom's parents as Patrick and Ellen and the bride's as Martin and Ann.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Ellen as his wife and Thomas Dee as his son, plus a `required` finding that the report documents
-the rejection.
+**RESOLVED — FALSE MATCH (Outcome 3).** The hint
+(`ark:/61903/1:1:F2GT-LYK`, "Canada, Marriages, 1661-1949", the father
+persona in the 1895 Thomas Dee-Bessie Butler marriage) does **not** belong to
+Patrick Hoban `KK3W-WLT`. It matched on a first name, a city, and a son named
+Thomas born within a year or two — and nothing else.
 
-This one looks like a false match, and the reviewer's job is to say so with evidence rather than on impression.
+**What decided it.** The hinted groom is Thomas **Dee**, born 1874 at Halifax,
+whose parents appear only as bare forenames "Patrick" and "Ellen". His own birth
+record — Canada, Nova Scotia, Births, 1864-1877, `ark:/61903/1:1:F26H-XH5` —
+names him Thomas A. Dee, born 8 October 1874 at Halifax, son of **Patrick Dee**
+and **Ellen Callahan**, corroborated by his baptism (`ark:/61903/1:1:XLPP-H96`,
+"Thomas Alexander Dee", October 1874). Independent searches surfaced the whole
+family: a documented **Patrick Dee x Ellen Callahan/Callaghan** household of
+Halifax (marriages in NS Marriages 1864-1918, NS Church Records, NS Vital
+Records and Canada Marriages 1661-1949; children Thomas A., Mary E., Frances and
+Patrick Reginald Dee in NS Births 1864-1877 and NS Births and Baptisms). So the
+1895 marriage's "Patrick and Ellen" are Patrick Dee and Ellen Callaghan.
+FamilySearch's own tree already keeps them separate: the hint persona
+`F2GT-LYK` and the Patrick Dee x Ellen Callaghan marriage (`KMLR-1S6`) attach to
+tree person `LYB7-7BR` (Patrick Dee), and the groom's birth/baptism attach to
+`LRPZ-92D` (Thomas Dee) — neither is a Hoban PID.
 
-The hint's groom is Thomas **Dee**, born about 1874 at Halifax, whose parents are given only as bare given names — Patrick and Ellen. The subject is Patrick **Hoban/Hobin**, whose wife the tree records as **Catherine Donovan** (married 18 November 1867 at Halifax) and whose son Thomas Patrick **Hobin** was born 11 February 1873 and baptised 20 February 1873. So the hinting engine has matched on a first name, a city, and a son called Thomas born within a year or two — and nothing else. The surname is wrong and the wife's name is wrong.
+Patrick Hoban's own records disagree with the hint on every discriminator except
+the given name and city: his wife is **Catherine Donovan**, married 18 November
+1867 at Halifax (`ark:/61903/1:1:DX6P-6YT2`), and his son named Thomas is
+**Thomas Patrick Hobin** `KK3W-WLP`, born 11 February 1873
+(`ark:/61903/1:1:F264-DXS`) — surname Hobin, mother Catherine, born 1873 not
+1874. Thomas Patrick Hobin is confirmed alive in the 1881 census in Patrick
+Hobin's own household; his adult fate is not conclusively traced beyond 1881, but
+that is immaterial — the 1895 groom is independently identified as Thomas A. Dee.
 
-What makes this a good test rather than a trivial one is that the subject is densely documented — 27 sources, including his own marriage, four children's baptisms and the 1881 census — so the material to refute the hint is all on the tree side and easy to reach. The expected outcome (c) shape would be an `avoid` guard on Ellen-as-wife and Thomas Dee-as-son, paired with a required finding that the report documents the rejection and says what the evidence actually shows.
+**What was searched and came up empty.** A search of the Nova Scotia marriage,
+birth, church and census collections for a Patrick-and-Ellen household at Halifax
+returns the Dee/Callaghan family, not the Hoban/Donovan one; no record makes
+Patrick Hoban (b. 1836) the father of the 1895 groom or gives him a wife named
+Ellen. An absent "Ellen" on the tree does not by itself rule out a second wife,
+but the affirmative Dee family accounts for both "Patrick" and "Ellen" as a
+different couple, closing that gap.
 
-Note for the corpus: the batch CSV labels this row Ireland. Every record is Nova Scotian; Ireland is where the subject's parents were born (County Kilkenny), and the fixture is tagged CA-NS.
+**Retrieval method.** Record retrieval was tool-assisted — done in a Claude Code
+session using the genealogy MCP read tools (`record_read`, `record_search`,
+`person_read`, `source_attachments`) against live FamilySearch. No original
+register image was examined; all evidence is from indexed records. The identity
+judgement (that the hint is a false match) is the genealogist's.
+
+Note for the corpus: the batch CSV labels this row Ireland. Every record is Nova
+Scotian; Ireland is where the subject's parents were born (County Kilkenny), and
+the fixture is tagged CA-NS.
