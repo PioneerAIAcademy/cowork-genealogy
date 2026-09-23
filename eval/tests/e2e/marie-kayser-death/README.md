@@ -55,12 +55,11 @@ Maria Philippina, baptised to this couple on 12 March 1780. A death four months
 after that confinement fits the evidence. A search of the same
 collection for Hochhertz/Hochbertz baptisms at Luxembourg from 1780 to 1800
 found no child born after the death, and nothing turned up a second
-Hochhertz/Hochbertz couple.
+Hochhertz/Hochbertz couple. The tree's only source, an 1805 civil act
+(`ark:/61903/1:1:WQ8T-8N2M`, "Luxembourg, Registres d'état civil, 1796-1941"),
+names her in its index with name and sex only; its image, read 23 September
+2026, names her as défunte — consistent with a death in 1780.
 
 **Still unverified.**
-- *The 1805 civil act.* The tree's only source (`ark:/61903/1:1:WQ8T-8N2M`,
-  "Luxembourg, Registres d'état civil, 1796-1941") names her in its index with
-  name and sex only. Its image, read 23 September 2026, names her as
-  défunte — consistent with a death in 1780.
 - *Parish.* The register page carries no parish header; the location appears
   only on the volume's title page.
