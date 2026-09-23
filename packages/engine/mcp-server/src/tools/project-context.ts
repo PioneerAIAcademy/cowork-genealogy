@@ -234,7 +234,8 @@ export const projectContextSchema = {
     "[{id, state, nextStep, openConflictIds, storedStatus}] — per question, how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued), " +
     "what it is waiting on, and storedStatus, the question's own questions[].status " +
-    "verbatim (null when absent). state is DERIVED from the documents and storedStatus " +
+    "verbatim (null when absent or not a string). state is DERIVED from the documents " +
+    "and storedStatus " +
     "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
     "proof summary while its storedStatus is still 'in_progress'; that is not a " +
     "contradiction. questionStatuses is ADVISORY: it reports what the " +
