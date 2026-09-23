@@ -2974,7 +2974,9 @@ function reextractionCollisions(
           }). This batch re-persists the record, so it is a re-extraction: refine the existing ` +
           `assertion${ids.length === 1 ? "" : "s"} with an assertions \`update\` op by id instead of ` +
           `appending a second copy — a duplicate reads as independent corroboration. If you are ` +
-          `retrying a call that timed out, it most likely committed and these ids are its own writes. A fact ` +
+          `retrying a call that timed out, it most likely committed and these ids are its own writes. If this ` +
+          `is a genuinely distinct fact of the same type (a second relationship), append it in a call without ` +
+          `the sources op — never \`update\` an existing assertion to a different fact. A fact ` +
           `type this person has no assertion for yet may still be appended.`,
       ),
     );

@@ -5774,6 +5774,7 @@ describe("research_append (composite persist + enforcement)", () => {
       expect(r.errors.find((e) => e.startsWith("ops[12]:"))).toMatch(/a_012 .*religion.*persona p_2/);
       expect(text).toMatch(/under log_001/);
       expect(text).toMatch(/assertions `update` op/);
+      expect(text).toMatch(/append it in a call without the sources op — never `update`/);
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
     });
 
