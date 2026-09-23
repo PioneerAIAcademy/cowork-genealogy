@@ -24,7 +24,7 @@ design.
 That serves both audiences at once. Someone who asks a question and comes back in an hour
 gets an answer. Someone who watches learns the craft by reading the reasoning as it happens.
 
-**Dependencies.** 1a needs S2 · 1d needs the E2B tier choice. **S2 is a paid eval run plus a
+**Dependencies.** 1a needs S2 · 1e needs 1c's hook. **S2 is a paid eval run plus a
 genealogist annotation pass on the `research` skill**, one item per skill at a time, so start
 it first even though it is described last.
 
@@ -61,6 +61,18 @@ it is already good. The plugin's job there is to not get in the way.
 
 Under one turn per step these were rare. Under continuous turns they are on every run.
 **Nothing else here can be trusted until 0a lands.**
+
+An earlier draft carried a third item here, fixing the `/v1` lock's missing turn identity and
+heartbeat. **`/v1` is being removed from the repo** (lead, 2026-09-21) — the team it was built
+for never used it and will use the prototype instead — so that defect disappears with it. Do
+not re-add it, and disregard the `/v1` lock entry in the prototype plan's residual-risk
+register.
+
+**That removal is coming while you work, and it lands in a tree you are editing.**
+`apps/server/app/agent/runner.py` carries `/v1`'s behaviour — `AutoContinue` honours the
+`"auto_continue": false` that `/v1` sends — and 1d edits the alpha's agent code beside it, so
+expect a conflict there rather than being surprised by one. The lead owns the removal; check
+with him before you start 1d so you are not both in that file on the same day.
 
 ### 0a. A resumed attempt that runs zero model turns is a failure, not a completion
 
@@ -172,16 +184,6 @@ help text and comment block, and `elasticmq.conf`'s header, which names 7,200 tw
 **No exception for tests.** A test that never crosses the ceiling can never exercise resume,
 and resume is now load-bearing on every production run. The crossing *is* the test.
 
-### 0c. The `/v1` lock needs turn identity and a heartbeat
-
-It claims a bare timestamp with no turn identity, a 600 s stale TTL and no heartbeat, against
-a measured p99 segment of 1,488 s — so a healthy long turn already has its lock reclaimed
-while it is still running. That was rare enough to defer when turns were short. Every turn is
-long now.
-
-**Acceptance:** a turn longer than the stale TTL keeps its lock; a dead worker's lock is
-still reclaimable.
-
 ---
 
 ## Phase 1 — turn continuous work on
@@ -194,10 +196,12 @@ voluntary yield, and `should_continue_run` allows the stop when `project.status 
 `research.json` off the `documents` row at each stop. **This is the whole mechanism** — do
 not build an MCP tool, a server-side turn router, or an injected "continue" message.
 
-**Blocked on S2.** Until that lands, the skill's continuous-work branches are gated on the
-literal string `--autonomous` in the user message, and the browser posts raw text straight
-through `begin_turn`. So either S2 lands first, or the web tier prefixes the flag — decide,
-do not leave it implied.
+**Blocked on S2 — ruled 2026-09-21.** Until it lands, the skill's continuous-work branches
+are gated on the literal string `--autonomous` in the user message, and the browser posts raw
+text straight through `begin_turn`. **S2 lands first.** Do not unblock this by having the web
+tier prefix the flag: that ships the regime where the shipped prose suppresses preambles and
+narrates "only at phase boundaries (or not at all)", so the first window would ship a silent
+feed — the exact thing the feed design exists to prevent.
 
 **Two carriers, both missing today.**
 
@@ -320,18 +324,14 @@ returns 204 and silently no-ops. It clocks **continuous runtime, not idleness**,
 of 53.9 minutes and p90 of 107.9, one continuous turn per job pauses mid-turn at or before
 p90, and around half of runs come within minutes of it.
 
-**Pick one before starting 1d and write it in the PR:**
+**Ruled 2026-09-21: the heartbeat.** Call `set_timeout(_RUNNING_TIMEOUT_S)` from the control
+plane while a turn is active, which restarts the clock — only values *past* the ceiling no-op,
+and this is what `resume()` already does on every connect. No Pro-tier upgrade, and do not
+accept the pause: nothing in the repo records what pausing does to an in-flight turn, and the
+CLI subprocess, the SDK stream and the browser socket are all in-process.
 
-- **(a) Pro tier** — the same comment records 86,400 s on Pro. A billing decision, not an
-  engineering one.
-- **(b) A heartbeat.** `set_timeout(_RUNNING_TIMEOUT_S)` from the control plane while a turn
-  is active restarts the clock; only values *past* the ceiling no-op. This is the cheapest
-  route and it is what `resume()` already does on every connect.
-- **(c) Accept the pause** — but then **measure what it does to an in-flight turn first**.
-  The CLI subprocess, the SDK stream and the browser socket are all in-process, and nothing
-  in the repo records the outcome of pausing across them.
-
-Until one is chosen, 1d is gated. What remains true: the alpha suspends rather than killing,
+Pick the interval so a turn cannot age out between beats, and say in the PR what happens if a
+beat is missed. What remains true: the alpha suspends rather than killing,
 so this is a different failure from the prototype's kill-and-redeliver, and phase 0's resume
 guard does not apply to it.
 
@@ -354,13 +354,52 @@ problem.
 user message *without the sandbox pausing mid-turn*. The e2e suite still passes against the
 shared predicate.
 
+### 1e. A spend bound, because phase 1 is what creates the exposure
+
+**Ruled 2026-09-21: cap a session at $35.** Continuous work removes the human who used to
+stop a run by not clicking Continue, and nothing replaces them. The nudge cap does not: it is
+consulted only at a voluntary yield, 31% of runs never yield, and it resets on every attempt.
+
+**Per session, not per run or per project.** A `sessions` row carries a `project_id`, so a
+project spans many sessions — the bound caps one sitting, never the research. Sized against
+the corpus: 155 runs with cost data, median $7.84, p90 $14.75, max $25.24. So $35 is about
+four median runs in one sitting, and above the most expensive single run ever recorded.
+
+**No grant mechanism, deliberately.** When a session reaches the bound it stops, and the way
+to continue is to start a new session on the same project — which is what users already do by
+default. Building an in-session "spend more" flow is not beta work.
+
+**Three things this needs:**
+
+- **Sum tokens, not `cost_usd`.** `turns.cost_usd` is the *completing attempt's*
+  `ResultMessage`, so it misses every killed attempt — and per 0b the median run has two.
+  The `turns` token columns do carry a killed attempt's spend, but `complete()` writes them
+  only when the turn closes — and under continuous work one turn is the whole run, so mid-run
+  they are NULL and a hook reading them never sees the run it exists to stop. Price the live
+  sum instead: the session's assistant usage in `session_entries`, deduplicated by message
+  id — `TURN_USAGE_SQL` in `worker.py` without its turn filter.
+- **Enforce it in the `PreToolUse` hook**, the same place 1c halts on Stop — it fires every
+  few seconds, where a yield-gated check fires about once a run.
+- **Terminal state, and it has to say what to do next.** A budget stop is a `turns.outcome`
+  of `budget`, rendered as what it is, with what was found so far and the sentence that tells
+  the user to start a new session to carry on. A session that stops at $35 and looks finished
+  is worse than no cap at all — the user reads it as "nothing more was found".
+
+**Acceptance:** a session that reaches the bound stops within seconds, is visibly
+distinguishable from a completed one, and says how to continue.
+
 ---
 
 ## The one prose change these phases need
 
 `research/SKILL.md` is a paid eval slot: one `make eval-skill SKILL=research` run plus a
 genealogist annotation pass. Only one item per skill may be in an active column at a time, so
-this is the longest-lead item here. Start it first.
+this is the longest-lead item here. **Start it first**, and re-check the slot before opening
+the PR rather than trusting this paragraph — the map is a snapshot and goes stale.
+
+The slot was held by issues #2075 and #2524 on 2026-09-21, with issue #2292 queued behind
+them. The lead's ruling of 2026-09-21: **proceed and accept the occasional collision.** Avoid
+one where you can see it; do not block on the queue being empty.
 
 **S2 — `research`:**
 
@@ -392,6 +431,11 @@ on an already-resolved question. Raise it; do not invent a mechanism.
 | `q_` and `ps_` in user-facing text | Allowed, ruled 2026-09-20 |
 | Proto is production | Alpha is backported; Cowork is degraded |
 | The step ceiling | 1,800 s, no test exception |
+| The E2B ceiling | Heartbeat, ruled 2026-09-21. Not a Pro upgrade, not accepting the pause |
+| S2 before 1a | Ruled 2026-09-21. Do not unblock by prefixing the flag from the web tier |
+| Eval-slot collisions | Avoid where visible, accept occasionally. Do not block on an empty queue |
+| A spend bound | $35 per session, ruled 2026-09-21. No in-session grant flow |
+| `/v1` | Being removed from the repo. Not in scope, do not fix its lock |
 
 ## What would show phases 0 and 1 worked
 
@@ -405,6 +449,7 @@ on an already-resolved question. Raise it; do not invent a mechanism.
   as stopped rather than completed, and a later message resumes it.
 - A message typed mid-run is accepted, shown as queued, and answered at the next step
   boundary.
-- A capped or stalled run is visibly distinguishable from a finished one.
+- A capped or stalled run is visibly distinguishable from a finished one, and a session that
+  reaches the $35 bound says so and says how to continue.
 - An alpha session runs a multi-step objective to a proof conclusion without the sandbox
   pausing mid-turn.
