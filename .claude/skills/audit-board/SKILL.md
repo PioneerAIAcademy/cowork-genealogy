@@ -571,13 +571,17 @@ print('  of which senior-pool cards in Ready (expected, not a finding):',
       [n for n in _unass if onboard[n]=='Ready' and _senior(n)])
 
 # `high-priority` — /fill-ready applies it to Ready cards only. Anywhere else
-# it is a filing that slipped past the recipe or a card that moved with it on.
+# it is a filing that slipped past the recipe or a card that moved with it on —
+# except a card whose body carries the lead's `lead:` line, which ranks from
+# any column (fill-ready, "The lead's `lead:` line ranks first").
 # The body line is what /fill-ready re-derives against.
+import re
+def _lead(n): return re.search(r'^> \*\*High priority \([^)]*\):\*\* lead:', issues[n]['body'] or '', re.M)
 def _hp(n): return any(l['name']=='high-priority' for l in issues[n]['labels'])
 def _lane(n, lane): return any(l['name']==lane for l in issues[n]['labels'])
 hp=[n for n in issues if _hp(n)]
 print('high-priority outside Ready (Ready-only label):',
-      [(n, onboard.get(n)) for n in hp if onboard.get(n)!='Ready'])
+      [(n, onboard.get(n)) for n in hp if onboard.get(n)!='Ready' and not _lead(n)])
 print('high-priority without a `> **High priority (` body line:',
       [n for n in hp if '> **High priority (' not in (issues[n]['body'] or '')])
 for lane in ('developer','genealogist'):
