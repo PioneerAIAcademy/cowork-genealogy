@@ -15,7 +15,9 @@
       "tree-encoding",
       "direct-arm"
     ],
-    "holdout": true
+    "holdout": true,
+    "expected_outcome": "xfail",
+    "xfail_reason": "The direct arm tiers the bounded conclusion at `probable` under a delegation that asserts `probable` is correct; routed (`ut_proof_conclusion_018`) the same fixture holds at `possible`. Confirmed in annotation of `v1_2026-09-22_13-08-22` rather than inferred: \"the narrative concedes the 1880 census was not searched and then asserts it would not narrow the bracket. It would halve 1870 to 1885, and a gap that narrows the answer caps the tier at possible under the 2026-08-21 ruling.\" `test_q001_possible_tier` catches it deterministically, independently of the judge. Measured 2026-09-22 across 15 runs of the routed original on this branch, which held `possible` every time — so this is the delegation boundary, not the doctrine. Prose was tried twice on this family of defect and measured ineffective; do not simply reword the agent body. REMOVE THIS when the direct arm holds `possible` on three consecutive runs, or when a mechanism outside the prompt enforces the tier cap."
   },
   "input": {
     "delegation": "Write the proof conclusion for the death question q_001. The 1885 estate administration and the 1870 residence bracket the death firmly, and the remaining record types would only corroborate — `probable` is the right tier.\n\nquestionId: q_001\nprojectPath: <workspace>",
