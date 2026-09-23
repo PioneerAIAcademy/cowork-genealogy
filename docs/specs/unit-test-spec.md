@@ -351,7 +351,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "skill": {
           "type": "string",
-          "description": "Directory name under packages/engine/plugin/skills/. Must match an existing skill."
+          "description": "Directory name under packages/engine/plugin/skills/, OR — on a direct-agent test (one carrying `input.delegation`) — the basename of a plugin-agent file under packages/engine/plugin/agents/. Must match an existing skill directory or agent file. An agent-keyed suite such as gps-mentor has no skill directory at all; see unit-test-spec.md §5.2.1."
         },
         "name": {
           "type": "string",
@@ -639,6 +639,36 @@ On a direct test the harness:
   `skills_invoked`, which is empty by construction (§7);
 - fills the judge's `{user_message}` slot with the delegation and its
   `{skills_invoked}` slot with the spawned agent.
+
+**What `test.skill` names.** A skill directory under
+`packages/engine/plugin/skills/`, **or** a plugin-agent file of that name under
+`packages/engine/plugin/agents/`. For a paired skill both exist and the field is
+unambiguous. For an **agent-keyed suite** — an agent with no routing skill at
+all, `gps-mentor` being the first — only the agent file exists, and the
+runnability gate falls back to it. That fallback is gated on the test being
+direct: on a routed test a missing skill directory is still a typo worth
+catching, and falling through to a same-named agent would grade the test by a
+route it never asked for.
+
+A separate `test.agent` field was considered and rejected: the direct arm
+already resolves the agent by `spec.skill` and decides the positive outcome on
+`spec.skill in agents_spawned`, so a new field would add persisted surface to
+two schema trees and every run log for no behavioural gain, and leave two fields
+that must never disagree. **Do not satisfy the gate by creating a stub skill
+directory instead** — `scripts/package-plugin.mjs` walks `skills/` wholesale, so
+a stub ships in the plugin zip as a user-triggerable skill competing with the
+agent's own description, while `stage_skills=not spec.is_direct` never stages it
+into the run; it would exist only to fool the gate. **And do not point
+`test.skill` at a neighbouring skill**, which grades the agent under another
+skill's rubric, snapshot and eval slot.
+
+**An agent-keyed suite's snapshot embeds the agent body.** `build_snapshot`
+embeds `packages/engine/plugin/agents/<skill>.md` whenever one exists — not only
+when a SKILL.md names it via `@plugin:`, since there is no SKILL.md to scan —
+and `check_runlogs.py` marks the suite touched when that file changes. Without
+both, editing the agent leaves the suite's run log **active** and its grades are
+quoted forward against prose that changed. For a paired skill the `@plugin:`
+scan already embeds the same path, so neither rule moves an existing snapshot.
 
 **Never reach the agent with `--agent` / `extra_args={"agent": …}`.** The shipped
 ownership hook keys on the **presence** of `agent_id`, and a session started that
@@ -1320,7 +1350,9 @@ At `temperature=0`, Sonnet is documented as not fully deterministic — tool sel
 
 **No regression threshold will be pinned, and none is coming.** Setting one (e.g. "pass rate drop > X% on a skill counts as a regression vs noise") needs an empirical noise characterization, which needs repeated golden-set passes. Nothing prevents running those by hand — the `runs_per_test` pin constrains a test definition, not how often you invoke the suite — and that is exactly why this is a cost decision rather than a mechanical one: five golden-set passes is a standing bill nobody is going to pay for a number that changes with every model, rubric and harness bump. The three things this section once promised — a per-skill pass-rate noise band, a regression threshold derived from it, and a monthly N=5 stability run — are not coming, and should not be planned for.
 
-What that leaves is the rule already in force: **treat any pass-rate drop as a signal to investigate manually.** There is no band to fall inside of, so "probably noise" is never an available conclusion — either you found a real regression, or you found a test that flaps, and both get fixed.
+**None of that scopes a per-test bar, and one now exists.** The refusal above is about a *statistical threshold over pass rates* — a number needing a noise characterization nobody will fund. `check_runlogs.py`'s rule 6 needs no threshold and no baseline: it asks, of each test in a run log the PR adds, whether that test resolved to `fail` or `aborted`. That is a per-test question with a yes/no answer, so the cost argument above does not reach it. It is scoped to the fields that exist today: it reads `runs[].outcome`, whose enum already excludes `xfail`/`xpass`, and consults `expected_outcome` as the suppression field, so it never meets the aggregate remap and needs no schema change, no `eval/app` change and no migration. Retiring the `xfail`/`xpass` enum values is a separate, larger job — roughly 25 edits across 45 files — and is not a precondition for the bar.
+
+What that leaves for *pass rates* is the rule already in force: **treat any pass-rate drop as a signal to investigate manually.** There is no band to fall inside of, so "probably noise" is never an available conclusion — either you found a real regression, or you found a test that flaps, and both get fixed. Rule 6 sits underneath that as the mechanical floor: a red test in a run log the PR adds blocks outright, with no carry list and no exemption. Zero reds, not zero new reds — a suite carrying reds cannot answer whether a refactor broke something, which is the one question it exists to answer.
 
 ---
 
