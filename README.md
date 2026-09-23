@@ -161,7 +161,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 28 skills covering the full GPS research cycle. Skills
+The plugin ships 27 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -198,7 +198,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
-| **citation** | Polishes citations to Evidence Explained standards (Who/What/When/Where/Where-within). | "Fix citations" |
 | **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 
 ### Identity resolution and analysis
@@ -257,7 +256,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships six Cowork agents. Unlike skills, an agent runs in
+The plugin ships eight Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -270,6 +269,7 @@ don't load it explicitly.
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (not invoked directly — the `person-evidence` skill delegates) |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the seven stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
+| **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 
 ## Recommended workflow
@@ -285,7 +285,7 @@ don't load it explicitly.
 5. record-extraction         Extract assertions from found records
                              (evidence classifications are written
                              here and are final at extraction)
-6. citation                  Polish citations to Evidence Explained standards
+6. citation (agent)          Polish citations to Evidence Explained standards
 7. person-evidence           Link assertions to persons in the tree
 8. timeline                  Build chronological timeline, find gaps
 9. conflict-resolution       Resolve disagreements between sources
@@ -481,20 +481,22 @@ What's shipped:
 - **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **28 shipped skills.** Full GPS research cycle from `init-project`
+- **27 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **6 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+- **8 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
   the only caller that may declare one exhaustive), `person-evidence` (identity
-  resolution, and the only writer of `person_evidence`) and `image-reader`
-  (page OCR).
+  resolution, and the only writer of `person_evidence`), `citation` (Evidence
+  Explained refinement of citations on sources that already exist),
+  `search-images` (page-by-page browse of an unindexed volume) and
+  `image-reader` (page OCR).
 - **Researcher profile.** `init-project` asks only the research objective, in
   one non-blocking opening turn; the profile itself is fixed (`novice`, one
   house-style narration string) and nothing about the researcher is asked.

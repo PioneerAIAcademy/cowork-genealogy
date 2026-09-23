@@ -101,15 +101,15 @@ function findMatchesInFile(abs: string, rel: string): Match[] {
 const ALLOWLIST: Array<{ relPath: string; lineNo: number; reason: string }> = [
   {
     relPath: "agents/citation.md",
-    lineNo: 670,
+    lineNo: 668,
     reason:
       'terminology guardrail: quotes the user\'s "primary source"/"secondary source" phrasing back at them in order to correct it',
   },
   {
     relPath: "agents/citation.md",
-    lineNo: 701,
+    lineNo: 699,
     reason:
-      "terminology guardrail decision-rule row: same correction context as line 670",
+      "terminology guardrail decision-rule row: same correction context as line 668",
   },
 ];
 

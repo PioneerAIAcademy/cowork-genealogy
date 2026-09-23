@@ -2,7 +2,10 @@
 
 Built from `packages/engine/plugin/skills/citation/SKILL.md` as this PR leaves
 it, plus `references/gps-citation-standards.md` and
-`references/validation-protocol.md`.
+`references/validation-protocol.md`. **Those three files no longer exist.**
+Issue #2799 folded all three into `packages/engine/plugin/agents/citation.md`
+on 2026-09-23; the prohibitions below were carried over with the body and
+still hold, but read them against the agent file.
 Every line below is checkable by eye against a run-log transcript
 (`output.text_response`, `output.tool_calls`, `output.file_changes`).
 

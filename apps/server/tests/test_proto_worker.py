@@ -68,7 +68,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-images"}
+AGENTS = {"citation", "gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-images"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -572,27 +572,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_six_bare_agents_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 28, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=28) == []
+    assert options.check_registration(_info(AGENTS, 27, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=27) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 28, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=28)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 27, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=27)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 27), expected_agents=AGENTS, expected_skills=28)
-    assert problems == ["27 genealogy-research:* commands registered, expected 28"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=28)
+    problems = options.check_registration(_info(AGENTS, 26), expected_agents=AGENTS, expected_skills=27)
+    assert problems == ["26 genealogy-research:* commands registered, expected 27"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=27)
 
 
 def test_the_plugin_ships_seven_agents_and_twenty_eight_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 28
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 27
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 28\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 27\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -627,24 +627,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Six agents and 28 skills registered: clean. Five, or 27: the miss, whatever loaded --
+    # Eight agents and 27 skills registered: clean. Seven, or 26: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 28)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 28, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 27)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 27, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 27)) == ["27 genealogy-research:* commands registered, expected 28"]
+    assert worker.registration_problems(_info(AGENTS, 26)) == ["26 genealogy-research:* commands registered, expected 27"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 27, and a count of that same copy would have expected 27.
+    # registers 26, and a count of that same copy would have expected 26.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 27
+    assert worker.count_skills(str(copy)) == 26
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "27 genealogy-research:* commands registered, expected 28"
+        "26 genealogy-research:* commands registered, expected 27"
     ]
 
 
@@ -999,7 +999,7 @@ def turn_env(monkeypatch, tmp_path):
 
 
 def _run(state: dict, messages: list[Any], info: dict | None = None) -> dict:
-    state["client"] = FakeClient(messages, _info(AGENTS, 28) if info is None else info)
+    state["client"] = FakeClient(messages, _info(AGENTS, 27) if info is None else info)
     return asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
 
 
@@ -1093,7 +1093,7 @@ def _run_passes(
     ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
     shape, a second delivery of a resumed turn."""
     state["entries"] = entries
-    state["client"] = TwoPassClient(streams, _info(AGENTS, 28))
+    state["client"] = TwoPassClient(streams, _info(AGENTS, 27))
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1484,7 +1484,7 @@ class NudgingClient(FakeClient):
 
 def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, 28), turn_env)
+    turn_env["client"] = NudgingClient(_info(AGENTS, 27), turn_env)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
