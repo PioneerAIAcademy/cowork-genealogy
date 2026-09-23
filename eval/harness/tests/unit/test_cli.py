@@ -114,6 +114,77 @@ def test_select_by_multiple_tags_is_and(tmp_path):
     assert ids == ["ut_a_001"]  # only this one has BOTH tags
 
 
+# ---- --runs-per-test override (issue #2816) ------------------------------
+
+
+def test_runs_per_test_defaults_to_none():
+    """Omitted, the flag leaves runs_per_test unset so the loaded (pinned)
+    value stands and nothing about the run changes."""
+    args = run_tests._build_parser().parse_args(["--skill", "skill-a"])
+    assert args.runs_per_test is None
+
+
+def test_runs_per_test_parses_positive():
+    args = run_tests._build_parser().parse_args(
+        ["--skill", "skill-a", "--runs-per-test", "3"]
+    )
+    assert args.runs_per_test == 3
+
+
+@pytest.mark.parametrize("bad", ["0", "-1", "3.5", "abc"])
+def test_runs_per_test_rejects_bad_values(bad):
+    """0, negatives, and non-integers are each rejected (exit 2), not
+    silently ignored — the NaN/typo class that has exited 0 doing nothing."""
+    parser = run_tests._build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--skill", "skill-a", "--runs-per-test", bad])
+
+
+def test_runs_per_test_override_makes_run_non_releasable(tmp_path):
+    """--runs-per-test N (N>1) overrides every selected spec and makes the
+    otherwise-releasable --skill run a scratch run. Mirrors main()'s
+    override loop + releasability computation."""
+    from harness.versioning import is_releasable_invocation
+
+    root = _make_tests_dir(tmp_path)
+    args = run_tests._build_parser().parse_args(
+        ["--skill", "skill-a", "--runs-per-test", "3"]
+    )
+    specs = run_tests._select_tests(args, root)
+    for spec in specs:  # main() applies this
+        spec.runs_per_test = args.runs_per_test
+    assert all(s.runs_per_test == 3 for s in specs)
+
+    mode, has_tag_filter = run_tests._classify_invocation(args)
+    resolved = max((s.runs_per_test for s in specs), default=1)
+    assert (
+        is_releasable_invocation(
+            mode=mode, has_tag_filter=has_tag_filter, runs_per_test=resolved
+        )
+        is False
+    )
+
+
+def test_skill_run_without_flag_stays_releasable(tmp_path):
+    """--skill alone (flag omitted) is unchanged: single run, releasable."""
+    from harness.versioning import is_releasable_invocation
+
+    root = _make_tests_dir(tmp_path)
+    args = run_tests._build_parser().parse_args(["--skill", "skill-a"])
+    specs = run_tests._select_tests(args, root)
+    assert args.runs_per_test is None  # no override applied
+    assert all(s.runs_per_test == 1 for s in specs)  # loader default stands
+
+    mode, has_tag_filter = run_tests._classify_invocation(args)
+    resolved = max((s.runs_per_test for s in specs), default=1)
+    assert (
+        is_releasable_invocation(
+            mode=mode, has_tag_filter=has_tag_filter, runs_per_test=resolved
+        )
+        is True
+    )
+
+
 def _stub_log(test_id, skill, outcome, aborted_reason=None):
     """Return a minimal test ENTRY for exit-code logic tests.
 

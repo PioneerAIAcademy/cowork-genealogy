@@ -766,11 +766,11 @@ Only present when `test.type` is `"negative"`.
 
 ### 5.6 `runs_per_test`
 
-**POLICY: always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call), and that budget goes on covering more tests rather than on re-running the same one. **This is standing policy, not a stage** — do not plan around it being lifted.
+**POLICY: a test FILE's `runs_per_test` is always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call), and that budget goes on covering more tests rather than on re-running the same one. **This is standing policy, not a stage** — do not plan around the file pin being lifted.
 
-**The pin decides what the harness measures, not what the suite tolerates.** We deliberately do not *detect* single-run variance. We do not accept it either. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test. Never re-run one until it happens to come back green, and never read the absent `flaky` flag as evidence that a test is stable.
+**The file pin decides what a committed run log measures, not what the suite tolerates.** A committed run log deliberately does not *detect* single-run variance. We do not accept it either. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test. Never re-run one until it happens to come back green, and never read the absent `flaky` flag as evidence that a test is stable.
 
-The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") stays in the code but is unreachable under this policy. Treat `runs_per_test > 1` as a mistake. The JSON Schema pins `maximum: 1` to enforce it.
+The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") is reachable **only** through the `run_tests.py --runs-per-test N` CLI override, which sets the value after load without touching the test file. The JSON Schema pins `maximum: 1` on the file, so `runs_per_test > 1` in a test definition is a mistake; the override lives at the CLI, and any `N > 1` run is non-releasable (it writes a `scratch_` log), so it never enters the committed corpus.
 
 ### 5.7 `execution`
 
@@ -1295,12 +1295,12 @@ Models are nondeterministic even at `temperature=0` — tool-selection and struc
 
 **Default: N=1 run per test.** Combined with `temperature=0` (Section 15), this gives stable, low-cost regression catching for day-to-day iteration. A single run is the right grain for PR gating, dev-time iteration, and the suite-level dashboard.
 
-**N=3 (or higher) would serve two specific cases** — both ruled out by the standing pin ("Overrides" below), and recorded here only so the aggregation rules that follow have a stated purpose:
+**N=3 (or higher) serves two specific cases** — reachable only through the `run_tests.py --runs-per-test N` CLI override ("Overrides" below), never from a test file, and always as a non-releasable scratch run:
 
 - **Description-optimizer passes.** When the optimizer compares two SKILL.md descriptions, it relies on pass-rate deltas across the test set (e.g., 60% → 70%). At N=1 those deltas are dominated by sampling noise, so `runs_per_test: 3` on the tests being scored would be the right instrument for an optimization pass, reverting to N=1 afterward.
 - **Golden-set calibration.** Tests under active senior-genealogist calibration benefit from variance detection (`flaky: true` signals an unstable test) to identify rubric items that need tightening.
 
-For everything else, N=1 is the right choice — the cost saving is ~2.5x, and what is lost is flakiness *detection*, not the obligation to fix flakiness. Re-run a suspect test yourself (`run_tests.py --test <id> --runlogs-root <tmp>`, twice or more) and fix whatever differs between the runs before trusting it again.
+For everything else, N=1 is the right choice — the cost saving is ~2.5x, and what is lost is flakiness *detection* in the committed corpus, not the obligation to fix flakiness. Surface a suspect test's flakiness deliberately (`run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`), read `flaky` / `per_run_outcomes` off the scratch log, and fix whatever differs between the runs before trusting it again.
 
 The harness executes the test N times (one for N=1, three for N=3, etc.) and stores every run in the run log (Section 10).
 
@@ -1333,12 +1333,12 @@ This composition cleanly handles all edge cases:
 
 **Per-run aggregation of judge dimensions.** Within a single run, the judge produces one integer score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`1` < `2` < `3`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-`3` aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all scored `3`."
 
-**There are no overrides.** The schema pins `runs_per_test` to `maximum: 1` and the loader rejects anything higher (`InvalidTestError`, "maximum of 1"), so neither multi-run case below can be requested from a test definition. The pin is standing policy — do not propose lifting it as the fix for a flaky test:
+**Overrides live at the CLI, never in a test file.** The schema pins `runs_per_test` to `maximum: 1` and the loader rejects anything higher (`InvalidTestError`, "maximum of 1"), so neither multi-run case below can be requested from a test definition. The file pin is standing policy — do not propose lifting it as the fix for a flaky test. The one way to run N > 1 is the `run_tests.py --runs-per-test N` flag, which sets the value after load and makes the run non-releasable (a `scratch_` log); the cases it serves:
 
 - `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
 
-So `flaky` never fires and no dashboard surfaces a flapping test. **That is the instrument being permanently blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. Manual re-running is therefore not a stopgap; it is the mechanism. To check a test you suspect, re-run it yourself: `run_tests.py --test <id> --runlogs-root <tmp>`, twice or more, comparing the outcome and the per-dimension scores. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
+So `flaky` never fires in a *committed* run log and no cross-PR dashboard surfaces a flapping test. **That is the committed instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
 **Cost impact.** Running N=3 triples skill-execution cost and judge cost (every non-aborted run is judged). Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
 
