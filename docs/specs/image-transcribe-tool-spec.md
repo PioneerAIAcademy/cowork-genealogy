@@ -366,12 +366,14 @@ consistent across schema, manifest, and skill.)*
   imageId?: string    // DGS Image Group Number "NUMBER_NUMBER", e.g. 004884748_02613
   ark?: string        // FamilySearch document-image ARK / resolver URL / dist URL
   memoryArtifactUrl?: string // FamilySearch MEMORY artifact URL
+  file?: string       // project-relative path to an UPLOADED image/PDF inside the project (needs projectPath)
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
-  projectPath?: string // absolute project-folder path; supply to save the JPEG (§8.5)
+  projectPath?: string // absolute project-folder path; required with `file`; stages the read (§5.5) and saves an FS JPEG (§8.5)
 }
 ```
 
-- Exactly one of `imageId` / `ark` / `memoryArtifactUrl`. The first two resolve
+- Exactly one of `imageId` / `ark` / `memoryArtifactUrl` / `file`, checked in the tool
+  **before** the shared resolver (which knows only the three FamilySearch shapes). The first two resolve
   **identically to `image_read`** (§8 shares the resolver). Accept the same
   shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, resolver URLs,
   `/$dist`, `dgs:.../dist.jpg`).
@@ -397,16 +399,42 @@ consistent across schema, manifest, and skill.)*
     ordinary `image_url` data URL — 1222 chars off the smallest memory PDF — so
     no file-parser plugin and no second request shape are needed. `audio/*` and
     `video/*` are still refused.
+- **`file` — an uploaded image or PDF already inside the project folder**.
+  The hosted upload endpoint writes researcher files to `<project>/uploads/<name>` and the
+  MCP server runs in the same sandbox, so the bytes are already where the tool can reach
+  them; until this input existed an uploaded Ancestry JPEG had no path into extraction while
+  an uploaded PDF did (the model opened it itself). Contract:
+  - **Requires `projectPath`**; the ref is relative to it. The directory is classified first
+    (`classifyProjectPath`): a missing `projectPath` and a missing directory are the shared
+    loud errors, a folder holding neither project file is the no-project *answer*
+    (`{ ok: false, reason: "no_project" }`, the no-project rule) — before any key or path error.
+  - **Shape, before any I/O:** no leading slash or drive letter, no backslash, no NUL, no
+    empty / `.` / `..` segment. Any ref *inside* the project is allowed; the containment guard
+    is the store's (`FsProjectStore.readableReal`: realpath'd, symlink-aware, regular files
+    only), so a symlink out of the project is refused with "escapes the project directory".
+  - **Read through the ProjectStore (`readBytes`)**, never `readText` (a JPEG decoded as UTF-8
+    is mojibake). A missing file is "not found under the project folder"; a directory is refused.
+  - **Type by magic bytes, never by extension:** JPEG, PNG, GIF, WEBP, PDF. A `.jpg`-named PDF
+    is sent as a PDF; anything else is refused ("not an image or a PDF (by its content, not its
+    name)") and pointed at `sidecar_read` for text.
+  - **No FamilySearch token** — `fetchFsImageBytes` is not on this path, so a user who never
+    called `login` can read their own upload. The OpenRouter key is still required.
+  - **No `imageRef`, no copy under `images/`:** the upload is already retained at its own path;
+    `images/` is the retained-scan store the viewer and the `*.jpg` GC own (§8.5), and citing
+    an upload is `document-capture`'s job.
+  - A **PDF** goes down the same `image_url` data-URL path as a memory PDF (`application/pdf`)
+    — see §5.4 for why that is the PDF reader.
 - `lookingFor` mirrors the `image-reader` subagent's parameter: a search key
   only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
   §6.2); it **never** shortens or slants the full transcription, and any
   *assertion* in it ("confirm the father is Adam Schreck") is ignored —
   transcribe what the page says.
-- `projectPath`, when given, makes the tool **save** the fetched JPEG
+- `projectPath`, when given, makes the tool **stage** the transcription (§5.5,
+  `staged` / `digest`) and, for a FamilySearch input, **save** the fetched JPEG
   host-side to `<projectPath>/images/<key>.jpg` and return an `imageRef`
-  (§8.5). Best-effort: a save failure omits `imageRef` rather than losing the
-  transcription. Omit it (e.g. in the spike / dev smoke) to skip persistence
-  and just get text.
+  (§8.5). Both best-effort: a save failure omits `imageRef` and a staging
+  failure yields `staged: null` + `stagingError`, neither loses the
+  transcription. Omit it (e.g. in the dev smoke) to skip both and just get text.
 - All input is camelCase (MCP wire convention).
 
 ### 5.3.1 Given-name expansion in `lookingFor`
@@ -438,22 +466,37 @@ This mirrors `fulltext_search`'s `nameExpansion` without
 
 ### 5.4 Behavior (pipeline)
 
-1. **Resolve + fetch** the FS distribution image host-side, authed, via the
-   shared fetcher lifted from `image-read.ts` (§8). Reuse `getValidToken(principal)`
-   and `BROWSER_USER_AGENT` — do **not** re-implement token or fetch logic.
-2. **No pre-processing** — the spike (PR 723) showed prep lowers accuracy, so
-   the raw JPEG bytes go straight to OCR (no `jimp`; see §7).
-3. **OCR** via OpenRouter (§6): base64 the raw image into a data URL, POST an
+1. **Acquire the bytes.** For `imageId` / `ark` / `memoryArtifactUrl`: resolve + fetch the
+   FS distribution image host-side via the shared fetcher lifted from `image-read.ts` (§8),
+   reusing `getValidToken(principal)` and `BROWSER_USER_AGENT` — do **not** re-implement
+   token or fetch logic. For `file`: classify the project, check the ref shape, read the
+   bytes through the ProjectStore, sniff the type (§5.3) — no token.
+2. **Refuse an oversize payload** (§7): more than `MAX_OCR_INPUT_BYTES` (14 MiB raw) on
+   **any** input source is refused before the data URL is built, with the size, the cap
+   and the remedy in the message.
+3. **No pre-processing** — the spike (PR 723) showed prep lowers accuracy, so
+   the raw bytes go straight to OCR (no `jimp`; see §7).
+4. **OCR** via OpenRouter (§6): base64 the raw bytes into a data URL, POST an
    OpenAI-compatible chat/completions request with the faithful-OCR prompt,
-   read `choices[0].message.content`.
-4. **Return** the transcription text + light metadata (§5.5). No image block.
+   read `choices[0].message.content`. **A PDF goes down this same path** as an
+   `image_url` data URL with `application/pdf` — measured 2026-09-15 on memory PDFs
+   (§5.3), and it is why "teach the host to read a PDF"
+   needs no decoder in the three-dependency production tree: the default model's provider
+   extracts the text natively embedded in a PDF **and** renders its pages for vision
+   (Gemini document processing, up to 50 MB / 1000 pages), which is "text layer first,
+   page-render fallback" done by the provider. Caveat: a user-configured non-Gemini
+   `openRouterModel` may reject a PDF `image_url`; that surfaces as the ordinary
+   "OpenRouter OCR failed: <status>" error. If that ever matters, OpenRouter's `file`
+   content part with the `file-parser` plugin (engines `native`, free `cloudflare-ai`,
+   paid `mistral-ocr`) is the alternative request shape — not built, because the measured
+   path works with no plugin fee.
+5. **Stage** (with `projectPath`): the transcription is retained host-side through the
+   search tools' channel (§5.5) and a `digest` is computed. Best-effort.
+6. **Return** the transcription text + `staged` / `digest` + light metadata (§5.5). No image block.
 
-There is **no size cap on the fetched image** for transport reasons — the
-image goes host→OpenRouter, never back over MCP. The raw `dist.jpg` bytes are
-sent as-is (no prep, §7); the spike (PR 723) confirmed the hosted VLM reads
-the large T13 scans that way with no body-limit issue. A pathological multi-MB
-scan exceeding OpenRouter's own request-body limit is an open risk, not
-handled today.
+There is **no size cap for transport reasons** — the bytes go host→OpenRouter, never back
+over MCP. The only cap is the provider's request limit (§7), and the tool refuses rather than
+downscales.
 
 ### 5.5 Output
 
@@ -465,7 +508,16 @@ Returns **text only**:
   truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
   truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
-  imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
+  imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"; never for a `file` input
+  staged?: { resultsRef: string; returnedCount: number } | null  // iff projectPath: the staging handle (search-result-staging-spec.md); null when staging failed
+  stagingError?: string      // why `staged` is null
+  digest?: {                 // iff projectPath: what a caller triages on without the full text
+    id: string               // imageId / ark / memory URL, or `capture:<basename>` for a `file`
+    chars: number            // transcription length
+    excerpt: string          // first 300 chars
+    found?: "FOUND" | "NOT FOUND"
+    truncated?: true
+  }
   browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
     imageGroup: string       // the image-group prefix, e.g. "004261111"
     distinctImagesRead: number
@@ -474,11 +526,24 @@ Returns **text only**:
   metadata: {
     imageId?: string
     ark?: string
+    file?: string            // the project-relative ref that was read
+    contentType: string      // what was sent to the model: image/jpeg, image/png, application/pdf, …
     model: string            // the OpenRouter model slug actually used
-    sizeBytes: number        // raw FS image size (sent to OCR as-is; no pre-processing)
+    sizeBytes: number        // raw input size (sent to OCR as-is; no pre-processing)
   }
 }
 ```
+
+**The staged element** (one per call, `results[0]` of the envelope, snake_case — it is
+persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file },
+content_type, size_bytes, model, transcription, truncated?, found? }`; the envelope's
+`query` is `source` plus `lookingFor`. `research_log_append({ tool: "image_transcribe",
+stagedResultsRef })` finalizes it into `results/<log_id>.json` exactly as a search page.
+**The inline `transcription` stays** — the shipped `image-reader` agent and `person_read`'s
+memories leg read it — so this producer is exempt from the staging spec's inline strip
+until the consumer that reads the sidecar instead exists. Who reads the full
+text back from the sidecar is that card's design; this tool owes the writer, the envelope
+and the digest.
 
 The transcription follows the `image-reader` output protocol: full page
 (every relevant entry, not just the `lookingFor` target), original
@@ -489,8 +554,12 @@ list the caller can turn into assertions.
 
 | Condition | Message shape |
 |---|---|
-| No `imageId`/`ark` | `image_transcribe requires either imageId or ark.` |
-| Both provided | `Provide either imageId or ark, not both.` |
+| None of the four inputs | `image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file (…)` |
+| More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` |
+| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
+| `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
+| `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
+| Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
 | No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |
 | FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused) |
@@ -870,7 +939,22 @@ outside the tool, which is the line that matters. The hosted-path
 called from `sessions.py:create_project`) is the exact pattern the
 `write_config` sibling follows.
 
-## 7. Image pre-processing — decided against (PR 723)
+## 7. Image pre-processing — decided against (PR 723); payload cap — refuse, not downscale
+
+**Payload cap.** `MAX_OCR_INPUT_BYTES = 14 MiB` of raw bytes, on every input source, refused
+before any OpenRouter call with the size, the cap and the remedy in the message. Sized from the
+only documented limit in the chain — the default model's provider: *"Inline image data limits
+your total request size (text prompts, system instructions, and inline bytes) to 20MB"*
+(ai.google.dev, Gemini image understanding). OpenRouter documents no request-body cap of its own.
+14 MiB × 4/3 (base64) = 19.6 MB, under 20 MB with the prompt. Uploads may be 25 MiB
+(`apps/server/app/sessions.py`), so a 14–25 MiB upload is the case this names; nothing in the
+committed corpus shows a FamilySearch scan near the cap, so on that path the check is wiring.
+The figure is Gemini's — an `openRouterModel` override changes the true limit and the cap stays
+a conservative constant. **Alternative beaten:** downscaling. It needs the pre-processing this
+section rejects below (measured to lower accuracy and double hallucinations), and a downscaler
+worth having (`sharp`) is a native binary the `.mcpb` cannot carry. This retires the former §5.4
+sentence "a pathological multi-MB scan exceeding OpenRouter's own request-body limit is an open
+risk, not handled today".
 
 **No pre-processing. No `jimp` dependency.** The spike tested the full
 `enhance_for_ocr` pipeline (grayscale + autocontrast + unsharp + JPEG q95, via
@@ -908,6 +992,10 @@ built now.)
 scan** behind a transcription in the Electron viewer (and later the hosted
 web viewer). Persist the JPEG — but only for sources the researcher keeps,
 so projects don't bloat with every scan read.
+
+**A `file` input is never copied here and never yields `imageRef`**: the upload is
+already retained at its own path inside the project, `images/` is the retained-*scan* store this
+section's GC sweeps (`*.jpg`), and citing an upload on a source is `document-capture`'s job.
 
 **Save-by-imageId + TTL sweep (design B).** A source carries no imageId to
 key a staging→finalize on, so a GC sweep replaces the finalize:
@@ -1179,7 +1267,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `src/types/image-transcribe.ts`
 - `src/utils/fs-image-fetch.ts` (lifted from `image-read.ts`)
 - `src/utils/image-store.ts` *(image-persistence: save + TTL-GC, §8.5)*
-- `dev/try-image-transcribe.ts`
+- `dev/try-image-transcribe.ts` — `--project <dir> --file uploads/<name>`
 - `tests/tools/image-transcribe.test.ts`
 - `tests/tools/configure-openrouter.test.ts`
 - Phase 0 results write-up *(done: PR 723; the model-comparison conclusions live in §5 of this spec — Qwen 67% / Sonnet 5 76% / Sonnet 4.6 60% on hard hands, **superseded by §4.5**, and why an opt-in Sonnet-5 second opinion was dropped)*
@@ -1198,6 +1286,16 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `CLAUDE.md` — new per-user config keys in the config table
 - A GitHub issue per deferred follow-up (e.g. multi-image batching), filed in
   the same PR — see root `CLAUDE.md` § "Work you find along the way"
+
+*Uploaded-file input, payload cap and staging:*
+- `src/tools/image-transcribe.ts` — `file` input, `MAX_OCR_INPUT_BYTES`, staging + `digest`
+- `src/types/image-transcribe.ts` — `file`, `staged`, `stagingError`, `digest`, `StagedTranscription`
+- `src/utils/results-staging.ts` — `STAGING_SEARCH_TOOLS` beside a wider `STAGING_CAPABLE_TOOLS`
+- `src/tools/record-read.ts` + `src/types/record-read.ts` — a live read with `projectPath` stages the record
+- `src/tools/person-read.ts` — narrows the widened return; `src/tools/sidecar-read.ts` — `not_text` points at `image_transcribe({ file })`
+- `tests/tools/{image-transcribe,record-read,no-project,research-log-append,sidecar-read}.test.ts`, `tests/utils/results-staging.test.ts`
+- `eval/harness/tests/unit/test_mock_mcp.py` (parity lint compares the SEARCH sets), `eval/CLAUDE.md` (parity list)
+- `docs/specs/search-result-staging-spec.md` §2 / §5 / §11, `docs/specs/sidecar-read-tool-spec.md` §7, `README.md`
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write
