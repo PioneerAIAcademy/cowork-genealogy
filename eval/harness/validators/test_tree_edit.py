@@ -244,7 +244,7 @@ def test_uncle_reading_is_named_at_all(text_response, test):
     pressure to drop the alternative, and the first run taken after the
     reference said so did exactly that. Across every captured `_014` reply,
     `uncle` appears 2, 2, 1, 3 and 5 times in the five runs predating the
-    change and 0 times in `v1_2026-09-22_17-41-42`, the only run after it --
+    change and 0 times in `v1_2026-09-22_17-41-42`, the first run after it --
     which the judge nevertheless scored Completeness 3, on a rationale
     asserting the reply "names the competing reading (uncle by marriage via
     maiden name)" about a text containing neither word. `_014` drew no
