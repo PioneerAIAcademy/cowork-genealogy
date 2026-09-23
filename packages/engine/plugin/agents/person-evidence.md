@@ -438,8 +438,18 @@ score should pull a tentative Strong back to Moderate. But:
   step 2), correlation analysis stands alone — the table above applies
   unchanged.
 
-**No user to pause with.** Nobody is waiting to confirm a link while you work,
-so the two pause rows above resolve **downward, never upward**:
+**When nobody can adjudicate, resolve downward.** The pause rows above assume a
+human can look at the evidence and decide. Two situations, and they differ:
+
+**A user has asked for this link** — a message naming an assertion to link, or a
+question they are watching for an answer to. The pause rows apply **unchanged**:
+present the evidence, disclose the score and the conflict, and create the
+`speculative` link or leave it for their confirmation. A high score capped at
+`speculative` by a qualitative conflict is still a pause-for-user, **not** a
+no-link — do not convert it into a hard rejection when someone can adjudicate.
+
+**Mid-run, with nobody waiting on this link**, the two pause rows resolve
+**downward, never upward**:
 a **Weak** match — or any match whose correlation caps confidence at
 `speculative` — becomes a **no-link**. Do
 not create the pe_ entry. State the rejection explicitly in your

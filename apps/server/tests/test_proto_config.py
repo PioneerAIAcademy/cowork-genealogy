@@ -383,6 +383,15 @@ def test_elasticmq_visibility_timeout_exceeds_the_ceiling():
     seconds = int(match.group(1)) * _UNIT_S[match.group(2)]
     ceiling = max(STEP_CEILING_S, _exported_ceiling_s())
     assert seconds > ceiling, f"visibility timeout {seconds}s must exceed the largest step ceiling, {ceiling}s"
+    # ...and not wastefully above it. `> ceiling` alone is satisfied by the stale 7500 s
+    # this was before 0b, which is why reverting the change to 2100 broke no test. The
+    # cost of an over-large value is real and asymmetric: a POST abandoned by a shim
+    # killed mid-flight is invisible for the whole timeout, so at 7500 s a lost message
+    # reappears two hours later instead of in 35 minutes.
+    assert seconds <= 2 * ceiling, (
+        f"visibility timeout {seconds}s is more than twice the {ceiling}s ceiling: an "
+        f"abandoned POST stays invisible for all of it. 0b sets this to 2100."
+    )
 
 
 # ── 1a: the nudge cap the web tier stamps ────────────────────────────────────────

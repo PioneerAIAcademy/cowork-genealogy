@@ -170,6 +170,39 @@ def test_wait_for_tool_call_sees_the_row_by_bare_name_and_reports_a_turn_that_fi
     assert turn.wait_for_tool_call("dsn", "t", "extraction_append", 1.0) == "timeout"
 
 
+def test_run_kill_uses_the_input_selector_when_one_is_given(monkeypatch):
+    """The whole point of 0a's probe is selecting a BACKGROUND delegation, and the choice
+    between the two waiters is where that happens. Reverting it broke no test: the
+    selector had unit tests, but nothing asserted run_kill ever reaches for it, so the
+    probe would have silently fallen back to the name-only wait that already resumed
+    cleanly on 2026-09-20."""
+    used: list[str] = []
+    monkeypatch.setattr(turn, "wait_for_tool_call",
+                        lambda dsn, tid, tool, dl: used.append("by-name") or "completed")
+    monkeypatch.setattr(turn, "wait_for_tool_input",
+                        lambda dsn, sid, tid, tool, sel, dl: used.append("by-input") or "completed")
+    monkeypatch.setattr(turn, "one", lambda dsn, sql, params: "proj-1")
+    monkeypatch.setattr(turn, "post_message", lambda client, base, sid, text: "turn_x")
+
+    import httpx
+
+    class _Client:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def post(self, *a, **k): raise AssertionError("session creation should not be reached")
+    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+
+    # With a selector -> the input waiter.
+    turn.run_kill("http://x", "dsn", 1.0, turn.KillSpec(
+        kill_on="Agent", kill_on_input={"run_in_background": True}, session_id="sess-1"))
+    assert used == ["by-input"], used
+
+    # Without one -> the original name-only waiter, unchanged.
+    used.clear()
+    turn.run_kill("http://x", "dsn", 1.0, turn.KillSpec(session_id="sess-1"))
+    assert used == ["by-name"], used
+
+
 def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
     """1c made turns.outcome say HOW a run ended, so the old `== "ok"` literal would have
     failed the resume probe on a run that WORKED. `budget` is the case that makes the

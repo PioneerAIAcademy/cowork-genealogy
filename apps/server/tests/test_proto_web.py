@@ -363,6 +363,33 @@ async def test_the_stream_says_a_message_is_waiting_so_a_reload_still_shows_it()
         "the status follows the replay, and the held message follows the active turn"
 
 
+async def test_the_stream_announces_a_message_arriving_and_leaving_mid_stream():
+    """The frame at OPEN was asserted; the one the POLL LOOP emits on a change was not,
+    and reverting it broke no test. It is the only thing that tells a second tab -- or
+    this one, after the message is picked up -- that the state moved."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue, stream_max_polls=3) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "one"})
+
+        # The stream is consumed lazily, so drive stream_frames directly: hold a message
+        # after the first poll, release it after the second.
+        frames: list[str] = []
+        gen = app.stream_frames(store, row, 0, poll_s=0.0, ping_s=99.0, max_polls=3)
+        async for chunk in gen:
+            frames.append(chunk)
+            if len(frames) == 3:
+                store.queued.append(
+                    app.Turn(turn_id="held", seq=99,
+                             body={"session_id": row.session_id, "text": "two"})
+                )
+            if any("turn_queued" in f for f in frames) and store.queued:
+                store.queued.clear()
+        states = [f for f in frames if '"status"' in f]
+    assert any("turn_queued" in f for f in states), "a message arriving mid-stream is announced"
+    assert any("turn_unqueued" in f for f in states), "and so is its release"
+
+
 async def test_the_poll_read_carries_the_queued_state_too():
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()

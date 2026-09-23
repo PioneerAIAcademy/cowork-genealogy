@@ -65,6 +65,7 @@ COMPOSE = PROTO / "docker-compose.yml"
 DOCKERFILE = PROTO / "worker" / "Dockerfile"
 SQL_WORKER = PROTO / "sql" / "004_worker.sql"
 SQL_RESUME_GUARD = PROTO / "sql" / "005_resume_guard.sql"
+SQL_STOP_AND_QUEUE = PROTO / "sql" / "006_stop_and_queue.sql"
 PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
@@ -845,6 +846,15 @@ def test_worker_dockerfile_shape():
     assert re.search(r"^COPY packages/engine/mcp-server/build\s", body, re.M)
     assert re.search(r"^COPY packages/engine/plugin\s", body, re.M)
     assert re.search(r"^COPY apps/server/app\s", body, re.M) and re.search(r"^COPY apps/server/proto/sql\s", body, re.M)
+    # 1b's handover imports `proto.enqueue` inside the image. The Dockerfile copies
+    # proto/ SELECTIVELY, so a module not named here simply is not there -- and
+    # release_queued_turn swallows the ImportError, so the only symptom is a held
+    # message that is never released, in production only. Reverting this COPY broke no
+    # test until this line existed.
+    assert re.search(r"^COPY apps/server/proto/enqueue\.py\s", body, re.M), \
+        "the worker releases held messages through proto/enqueue.py; the image must carry it"
+    source = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
+    assert "from proto import enqueue" in source, "and that is the module it imports"
     assert re.search(r"mkdir -p /project", body)
     assert "tokens.json" not in body
     # The one place a key becomes an image layer: compose interpolates it at run time,
@@ -1375,6 +1385,27 @@ def test_the_terminal_close_answers_200_so_the_shim_deletes_the_message():
     assert body["outcome"] == "no_progress" and body["ok"] is True
 
 
+def test_the_stop_and_queue_schema_is_additive_and_applied():
+    """006 was UNPINNED by the mutation check: deleting it broke no test, and the only
+    thing that would notice is a live stack -- `stop_requested_at` missing makes every
+    Stop a no-op and the queued index silently absent."""
+    body = SQL_STOP_AND_QUEUE.read_text(encoding="utf-8")
+    statements = [line.split("--", 1)[0].strip() for line in body.splitlines()]
+    statements = [x for x in statements if x]
+    assert statements == [
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS stop_requested_at timestamptz;",
+        "CREATE INDEX IF NOT EXISTS turns_queued_idx ON turns (session_id) WHERE outcome = 'queued';",
+    ], "006 must stay additive and idempotent: the worker and the web tier both apply it at start"
+    # Both appliers glob the directory, so the file only works if it sorts after the
+    # tables it alters.
+    names = sorted(p.name for p in (PROTO / "sql").glob("*.sql"))
+    assert names.index("006_stop_and_queue.sql") > names.index("001_schema.sql")
+    # And the column it adds is the one both hooks read.
+    source = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
+    assert "stop_requested_at" in source, "the worker reads the column 006 adds"
+    assert "stop_requested_at" in (PROTO / "web" / "app.py").read_text(encoding="utf-8")
+
+
 def test_the_cap_is_a_turns_column_and_not_receive_count():
     """receive_count counts a healthy ceiling crossing and a deterministic failure with the
     same number, and per 0b a healthy run crosses it two to three times -- so the cap needs
@@ -1641,6 +1672,37 @@ def test_the_handover_runs_for_every_ending_including_a_stopped_one(turn_env, mo
 def test_release_is_a_no_op_without_a_queue_and_never_raises(monkeypatch):
     monkeypatch.setattr(worker, "QUEUE_URL", "")
     assert worker.release_queued_turn(FakeConn(), "sess-1") is None
+
+
+def test_the_release_actually_enqueues_on_the_configured_queue(monkeypatch):
+    """The MECHANISM, not the state. `release_queued_turn` catches every Exception so a
+    handover failure cannot fail a turn that did its work -- which means a programming
+    error inside it (a missing import, a renamed helper) is swallowed and reported as an
+    ordinary failed send. The mutation check caught exactly that: reverting the
+    `urlparse` import left the failure-path test below green.
+
+    So count the call and check what it was handed."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q.example:9324/000000000000/turns")
+    body = {"turn_id": "held-1", "text": "also the 1881 census"}
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: dict(body))
+    calls: list[tuple] = []
+
+    def fake_sqs(endpoint, action, params):
+        calls.append((endpoint, action, params))
+        return "<SendMessageResponse><MessageId>msg-7</MessageId></SendMessageResponse>"
+
+    import proto.enqueue as enq
+    monkeypatch.setattr(enq, "sqs_call", fake_sqs)
+    conn = FakeConn()
+    assert worker.release_queued_turn(conn, "sess-1") == "msg-7"
+    assert len(calls) == 1, f"the held message must reach the queue exactly once: {calls}"
+    endpoint, action, params = calls[0]
+    assert endpoint == "http://q.example:9324", "scheme+host only, derived from QUEUE_URL"
+    assert action == "SendMessage"
+    assert params["QueueUrl"] == worker.QUEUE_URL
+    assert json.loads(params["MessageBody"]) == body, "the patron's message, unchanged"
+    assert not any("SET outcome = %s" in sql for sql, _ in conn.executed), \
+        "a successful release must not put the message back"
 
 
 def test_a_failed_release_puts_the_message_back_rather_than_losing_it(monkeypatch):
