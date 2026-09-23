@@ -140,49 +140,78 @@ def test_runs_per_test_rejects_bad_values(bad):
         parser.parse_args(["--skill", "skill-a", "--runs-per-test", bad])
 
 
-def test_runs_per_test_override_makes_run_non_releasable(tmp_path):
-    """--runs-per-test N (N>1) overrides every selected spec and makes the
-    otherwise-releasable --skill run a scratch run. Mirrors main()'s
-    override loop + releasability computation."""
-    from harness.versioning import is_releasable_invocation
+@pytest.mark.parametrize(
+    "extra, want_n, want_scratch",
+    [
+        (["--runs-per-test", "3"], 3, True),  # override -> 3 runs, scratch log
+        ([], 1, False),  # flag omitted -> single run, releasable v{N} log
+    ],
+)
+def test_main_runs_per_test_end_to_end(
+    tmp_path, monkeypatch, extra, want_n, want_scratch
+):
+    """Drive main() end-to-end (not a re-implementation of its logic) and
+    assert the override actually reaches the run and the releasability
+    decision. `seen` captures the runs_per_test the run stub was handed;
+    `names` captures the written run-log filename. This is what catches a
+    deleted override line in main() or a dropped runs_per_test= argument to
+    is_releasable_invocation — a re-implementing test cannot."""
+    from pathlib import Path
+    from harness.auth import AuthConfig
 
-    root = _make_tests_dir(tmp_path)
-    args = run_tests._build_parser().parse_args(
-        ["--skill", "skill-a", "--runs-per-test", "3"]
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
     )
-    specs = run_tests._select_tests(args, root)
-    for spec in specs:  # main() applies this
-        spec.runs_per_test = args.runs_per_test
-    assert all(s.runs_per_test == 3 for s in specs)
+    (skill_dir / "t0.json").write_text(json.dumps({
+        "test": {"id": "ut_a_000", "skill": "skill-a", "name": "n",
+                  "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    }), encoding="utf-8")
 
-    mode, has_tag_filter = run_tests._classify_invocation(args)
-    resolved = max((s.runs_per_test for s in specs), default=1)
-    assert (
-        is_releasable_invocation(
-            mode=mode, has_tag_filter=has_tag_filter, runs_per_test=resolved
-        )
-        is False
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    seen: list[int] = []
+    names: list[str] = []
+
+    def fake_run(spec, **kwargs):
+        seen.append(spec.runs_per_test)
+        return _stub_log(spec.id, spec.skill, "pass")
+
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
+        names.append(filename)
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}", encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
     )
 
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+        *extra,
+    ])
 
-def test_skill_run_without_flag_stays_releasable(tmp_path):
-    """--skill alone (flag omitted) is unchanged: single run, releasable."""
-    from harness.versioning import is_releasable_invocation
-
-    root = _make_tests_dir(tmp_path)
-    args = run_tests._build_parser().parse_args(["--skill", "skill-a"])
-    specs = run_tests._select_tests(args, root)
-    assert args.runs_per_test is None  # no override applied
-    assert all(s.runs_per_test == 1 for s in specs)  # loader default stands
-
-    mode, has_tag_filter = run_tests._classify_invocation(args)
-    resolved = max((s.runs_per_test for s in specs), default=1)
-    assert (
-        is_releasable_invocation(
-            mode=mode, has_tag_filter=has_tag_filter, runs_per_test=resolved
-        )
-        is True
-    )
+    assert rc == 0
+    assert seen == [want_n]  # the override reached the run
+    assert names and names[0].startswith("scratch_") is want_scratch
 
 
 def _stub_log(test_id, skill, outcome, aborted_reason=None):
