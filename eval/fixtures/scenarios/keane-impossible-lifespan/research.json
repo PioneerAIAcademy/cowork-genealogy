@@ -96,7 +96,7 @@
       "informant": "unknown household member reporting to the enumerator",
       "informant_proximity": "unknown",
       "informant_bias_notes": "Derived from a stated age of 65, not from a birth record.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
