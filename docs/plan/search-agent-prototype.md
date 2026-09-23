@@ -1637,7 +1637,7 @@ without whichever Bedrock refuses.
   exist. With an 8 h token the file protocol already refreshes only between turns, which
   is the safe moment. The real defect is the engine's assumed hour, which triggers needless
   refreshes that revoke a token something else still holds — fixed in the engine and the
-  hosted control plane on its own PR.
+  hosted control plane in PR #2859.
   **Probe 2026-09-23 — background delegations are lost at EVERY turn end**
   (`sess_74022a6fe88241a6`, a fresh bagley seed). The message asked `/record-extraction` to
   delegate two named records "with `run_in_background: true`"; it did: both `Agent` calls
