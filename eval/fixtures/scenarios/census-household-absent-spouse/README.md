@@ -27,7 +27,7 @@ seven assertions describe George's household:
   `pe_001`.
 - `a_002`/`a_003`/`a_004` — **Henry Ackerman**, child_1: name, birth (age 9 →
   ~1851), and an **inferred** ParentChild relationship assertion
-  (`evidence_type: indirect`, `informant_proximity: researcher`).
+  (`record_basis: inferred`, `informant_proximity: researcher`).
 - `a_005`/`a_006`/`a_007` — **Margaret Ackerman**, child_2: name, birth (age 6 →
   ~1854), and the same inferred ParentChild relationship assertion.
 

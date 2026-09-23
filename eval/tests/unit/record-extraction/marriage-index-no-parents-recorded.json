@@ -32,32 +32,32 @@
     {
       "record_role": "groom",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self"
     },
     {
       "record_role": "bride",
       "fact_type": "name",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self"
     },
     {
       "record_role": "groom",
       "fact_type": "marriage",
       "attribute": "place",
-      "evidence_type": "direct"
+      "record_basis": "stated"
     },
     {
       "record_role": "groom",
       "fact_type": "marriage",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self"
     },
     {
       "record_role": "bride",
       "fact_type": "marriage",
       "optional": true,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "informant_proximity": "self"
     }
   ]

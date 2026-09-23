@@ -347,6 +347,7 @@ export function relationshipKey(r: SimplifiedRelationship): string {
 function mergeNames(names: SimplifiedName[]): SimplifiedName[] {
   if (names.length === 0) return names;
   if (names.length === 1) {
+    // Not preferredName(): names[0] is the only name here, so selection is vacuous.
     const only = structuredClone(names[0]);
     only.preferred = true;
     return [only];

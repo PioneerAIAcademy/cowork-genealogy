@@ -9,18 +9,18 @@
       {
         "rank": 1,
         "relevance_score": 0.94,
-        "chunk_text": "United States federal census records are among the most important genealogical sources. A census was taken every ten years beginning in 1790. FamilySearch has free access to indexed census records from 1790 through 1940. The 1950 census was released in 2022. To search census records, go to FamilySearch.org, click Search, then Records, enter your ancestor's name, and filter by record type 'Census, Voter Lists.' What a census recorded about each household member changed over time: from 1790 through 1840, only the head of household is named, and everyone else is counted only as tally marks within age and sex categories; from 1850 through 1870, every free person in the household is listed by name with age, sex, and birthplace, but relationship to the head of household is not stated; beginning in 1880, every person is listed by name together with their relationship to the head of household.",
+        "chunk_text": "United States federal census records are among the most important genealogical sources. A census was taken every ten years beginning in 1790. FamilySearch has a census collection with an index and images for each federal census year from 1790 through 1950. Most of these censuses are also on subscription sites such as Ancestry, Findmypast, and MyHeritage, which require a paid subscription for full access. To search census records, go to FamilySearch.org, click Search, then Records, enter your ancestor's name, and filter by record type 'Census, Voter Lists.' What a census recorded about each household member changed over time: from 1790 through 1840, only the head of household is named, and everyone else is counted only as tally marks within age and sex categories; from 1850 through 1870, every free person in the household is listed by name with age, sex, and birthplace, but relationship to the head of household is not stated; beginning in 1880, every person is listed by name together with their relationship to the head of household.",
         "page_title": "United States Census",
-        "section_heading": "Using Census Records for Genealogy",
-        "source_url": "https://www.familysearch.org/en/wiki/United_States_Census#Using_Census_Records_for_Genealogy"
+        "section_heading": "Background",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Census#Background"
       },
       {
         "rank": 2,
         "relevance_score": 0.88,
         "chunk_text": "By tracing a family through multiple census years, you can watch children grow up, track a family's migration, and identify previously unknown relatives. Each census decade can point you to a new location or a maiden name. When searching, try alternate spellings of surnames and consider that ages reported in different census years may vary by several years.",
         "page_title": "United States Census",
-        "section_heading": "Research Strategies",
-        "source_url": "https://www.familysearch.org/en/wiki/United_States_Census#Research_Strategies"
+        "section_heading": "Strategy",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Census#Strategy"
       }
     ],
     "query_time_ms": 577.3,

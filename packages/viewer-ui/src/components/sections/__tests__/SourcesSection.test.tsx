@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SourcesSection from '../SourcesSection'
 import type { ResearchData, Source } from '../../../lib/schema'
-import { patrickFlynnResearch } from '../../../lib/__fixtures__/patrick-flynn'
+import { patrickFlynnResearch, patrickFlynnGedcomx } from '../../../lib/__fixtures__/patrick-flynn'
 import { setOpenExternal } from '../../../lib/external'
 
 vi.mock('../../../contexts/ResearchDataContext', async () => {
@@ -158,5 +158,84 @@ describe('SourcesSection — url_archived (#1166)', () => {
     await expandFirstCard()
     await userEvent.click(screen.getByRole('button', { name: ARCHIVED }))
     expect(opened).toHaveBeenCalledWith(ARCHIVED)
+  })
+})
+
+describe('SourcesSection — tree-only sources (#2661)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setOpenExternal(() => {})
+  })
+
+  it('renders tree sources under "From the imported tree" when no research source covers them', () => {
+    // One research source covers S1; S2, S3, S4 are tree-only.
+    mockResearch({
+      sources: [makeSource({ gedcomx_source_description_id: 'S1' })]
+    })
+    render(<SourcesSection />)
+    expect(screen.getByText('From the imported tree')).toBeInTheDocument()
+    expect(screen.getByText('1860 U.S. Federal Census')).toBeInTheDocument()
+    expect(screen.getByText('Pennsylvania Death Certificates')).toBeInTheDocument()
+    expect(screen.getByText('Schuylkill County Probate Records')).toBeInTheDocument()
+  })
+
+  it('does not show tree subheading when all tree sources are covered', () => {
+    mockResearch({
+      sources: [
+        makeSource({ id: 'src_01', gedcomx_source_description_id: 'S1' }),
+        makeSource({ id: 'src_02', gedcomx_source_description_id: 'S2' }),
+        makeSource({ id: 'src_03', gedcomx_source_description_id: 'S3' }),
+        makeSource({ id: 'src_04', gedcomx_source_description_id: 'S4' })
+      ]
+    })
+    render(<SourcesSection />)
+    expect(screen.queryByText('From the imported tree')).toBeNull()
+  })
+
+  it('shows empty state when both research and gedcomx sources are absent', () => {
+    vi.mocked(useResearchData).mockReturnValue(
+      buildMockContext({
+        research: { ...patrickFlynnResearch, sources: [] },
+        gedcomx: null,
+        activeSection: 'sources'
+      })
+    )
+    render(<SourcesSection />)
+    expect(screen.getByText(/No sources captured yet/)).toBeInTheDocument()
+    expect(screen.queryByText('From the imported tree')).toBeNull()
+  })
+
+  it('tree source card has id for CrossLink scrolling', () => {
+    vi.mocked(useResearchData).mockReturnValue(
+      buildMockContext({
+        research: { ...patrickFlynnResearch, sources: [] },
+        gedcomx: {
+          ...patrickFlynnGedcomx,
+          sources: [{ id: 'S99', title: 'A Test Source' }]
+        },
+        activeSection: 'sources'
+      })
+    )
+    render(<SourcesSection />)
+    expect(document.getElementById('S99')).toBeTruthy()
+  })
+
+  it('tree source URL routes through openExternal', async () => {
+    const opened = vi.fn()
+    setOpenExternal(opened)
+    vi.mocked(useResearchData).mockReturnValue(
+      buildMockContext({
+        research: { ...patrickFlynnResearch, sources: [] },
+        gedcomx: {
+          ...patrickFlynnGedcomx,
+          sources: [{ id: 'S99', title: 'A Source', url: 'https://example.com/record' }]
+        },
+        activeSection: 'sources'
+      })
+    )
+    render(<SourcesSection />)
+    await expandFirstCard()
+    await userEvent.click(screen.getByRole('button', { name: 'https://example.com/record' }))
+    expect(opened).toHaveBeenCalledWith('https://example.com/record')
   })
 })

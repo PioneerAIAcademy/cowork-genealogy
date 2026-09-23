@@ -115,7 +115,7 @@
       "informant": "Anders Monsen (groom)",
       "informant_proximity": "self",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -134,7 +134,7 @@
       "informant": "Urna Halsteinsdr (bride) -- indexed variant of Unna Halsteinsdatter",
       "informant_proximity": "self",
       "informant_bias_notes": "Bride's name appears in the FamilySearch index as 'Urna Halsteinsdr' -- a transcription variant of 'Unna Halsteinsdatter'. Her christening record (27 May 1745, Hamre) independently corroborates the name as 'Unna Halsteinsdatter'.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -152,7 +152,7 @@
       "informant": "officiating minister or parish clerk, Hamre prestegjeld",
       "informant_proximity": "official_duty",
       "informant_bias_notes": null,
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_001"]
     }

@@ -4,6 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 import { projectContext } from "../../src/tools/project-context.js";
+import { readBuildInfo } from "../../src/utils/build-info.js";
 
 describe("project_context", () => {
   let dir: string;
@@ -48,8 +49,10 @@ describe("project_context", () => {
             id: "I1",
             gender: "Male",
             names: [
-              { id: "N1", given: "William", surname: "Bottermiller", preferred: true, sources: [{ ref: "S2" }] },
+              // Preferred name second on purpose: at index 0 the assertion below
+              // passes whether or not the code selects on `preferred` (#1389 review).
               { id: "N2", given: "Willie", surname: "Bottermiller" },
+              { id: "N1", given: "William", surname: "Bottermiller", preferred: true, sources: [{ ref: "S2" }] },
             ],
             facts: [
               { id: "F1", type: "Birth", date: "1863", sources: [{ ref: "S1" }] },
@@ -109,6 +112,7 @@ describe("project_context", () => {
     const r = await projectContext({ projectPath: dir });
     expect(r).toEqual({
       ok: true,
+      buildId: readBuildInfo().version,
       projectStatus: "active",
       openQuestions: [],
       questionStatuses: [],
@@ -196,5 +200,28 @@ describe("project_context", () => {
     expect(badTree.ok).toBe(false);
     if (badTree.ok) return;
     expect(badTree.errors.join(" ")).toMatch(/tree\.gedcomx\.json is not valid JSON/);
+  });
+  // #2126 — project_context is the primary "which build is this?" surface (8
+  // skills call it), so the stamp rides on every return branch including the
+  // two failure shapes.
+  describe("buildId (#2126)", () => {
+    const expected = readBuildInfo().version;
+
+    it("carries the same stamped build on every return branch", async () => {
+      await writeProject({ project: { status: "active" }, questions: [], sources: [], assertions: [] }, { persons: [] });
+      const populated = await projectContext({ projectPath: dir });
+      expect(populated.buildId).toBe(expected);
+
+      await rm(join(dir, "tree.gedcomx.json")); // broken project: one file of two
+      const broken = await projectContext({ projectPath: dir });
+      expect(broken.ok).toBe(false);
+      expect(broken.buildId).toBe(expected);
+
+      await rm(join(dir, "research.json")); // not a project at all
+      const none = await projectContext({ projectPath: dir });
+      expect(none.ok).toBe(false);
+      if (!none.ok) expect(none.reason).toBe("no_project");
+      expect(none.buildId).toBe(expected);
+    });
   });
 });

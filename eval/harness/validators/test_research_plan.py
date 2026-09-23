@@ -547,7 +547,7 @@ _FORBIDDEN_SKILL = "locality-guide"
 
 
 def test_research_plan_no_out_of_lane_tools(
-    tool_calls, attempted_mcp_calls, skills_invoked
+    tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls=None
 ):
     """research-plan owns six tools and states "You have no wiki/place-fact
     tools of your own" (SKILL.md 137). Fail on any call OR attempt of
@@ -560,8 +560,10 @@ def test_research_plan_no_out_of_lane_tools(
     denied call never reaches tool_calls, so union the attempts (#1748)."""
     called = [_bare(c.get("tool", "")) for c in (tool_calls or [])]
     attempted = [_bare(c.get("tool", "")) for c in (attempted_mcp_calls or [])]
+    from harness.skill_runner import handoffs
+
     hit_tools = sorted({t for t in called + attempted if t in _FORBIDDEN_TOOLS})
-    delegated = _FORBIDDEN_SKILL in (skills_invoked or [])
+    delegated = _FORBIDDEN_SKILL in handoffs(skills_invoked, builtin_tool_calls)
 
     problems: list[str] = []
     if hit_tools:

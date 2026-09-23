@@ -1,7 +1,7 @@
 ---
 name: resolve-record-hint
 model: claude-sonnet-4-6
-description: Resolves a draft `genre: "record-hint"` e2e fixture that was assigned via a GitHub issue titled "test <slug>". The fixture's expected-findings.json currently just transcribes an unverified FamilySearch hint record; this skill walks the genealogist through confirming or refuting the hint (the research itself is done by hand on familysearch.org — this skill never fetches anything), then writes the correct expected-findings.json, updates the README's "Notes for reviewers" and fixture.json's notes, and validates the result. Use when the user says "resolve this fixture", "adjudicate this fixture", "I was assigned test <slug>", "review this record hint", pastes a "test <slug>" GitHub issue, or asks to encode the outcome in expected-findings.json for a record-hint fixture. Do NOT use to author a brand-new fixture from a FamilySearch PID or research document (use author-e2e-fixture), to interpret or grade a completed e2e run (use interpret-e2e-result / grade-e2e-run), or to mine a unit test from a miss (use mine-unit-test).
+description: Resolves a draft `genre: "record-hint"` e2e fixture that was assigned via a GitHub issue titled "test <slug>". The fixture's expected-findings.json currently just transcribes an unverified FamilySearch hint record; this skill walks the genealogist through confirming or refuting the hint (retrieval may be tool-assisted, but the identity judgement is the genealogist's — this skill never fetches anything itself), then writes the correct expected-findings.json, updates the README's "Notes for reviewers" and fixture.json's notes, and validates the result. Use when the user says "resolve this fixture", "adjudicate this fixture", "I was assigned test <slug>", "review this record hint", pastes a "test <slug>" GitHub issue, or asks to encode the outcome in expected-findings.json for a record-hint fixture. Do NOT use to author a brand-new fixture from a FamilySearch PID or research document (use author-e2e-fixture), to interpret or grade a completed e2e run (use interpret-e2e-result / grade-e2e-run), or to mine a unit test from a miss (use mine-unit-test).
 allowed-tools:
   - Read
   - Write
@@ -41,8 +41,12 @@ neither.
 
 ## Step 2 — Send the genealogist to do the research
 
-Give them the two URLs from the issue and tell them to work in this order, by
-hand on **familysearch.org**:
+Give them the two URLs from the issue and tell them to work in this order,
+on **familysearch.org** or with the `packages/engine/mcp-server/dev/try-*.ts`
+scripts against live FamilySearch (`make e2e-login` first, or `eval\Login.bat`
+on Windows) — collections search,
+record search, record read, image read are all permitted for **retrieval**
+(spec §3.6):
 
 1. **The tree person first** — read the sources already attached to them. That
    is the baseline the hint has to be consistent with, and it is how they catch
@@ -52,8 +56,10 @@ hand on **familysearch.org**:
    the person, checking dates, places and family members against what the tree
    already has.
 
-This is the actual GPS work the benchmark exists to measure; there is no tool
-shortcut for it, and this skill does not fetch either page for them.
+The **identity judgement** is the actual GPS work the benchmark exists to
+measure, and there is no tool shortcut for *that*: no tool output decides
+whether the hint record concerns the tree person. Retrieval is a different
+act and may be tool-assisted. Record in the README which was used.
 
 If the call is borderline, tell them to ask a genealogist for a second
 opinion rather than guess alone.

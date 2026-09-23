@@ -43,9 +43,15 @@ HARNESS_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = HARNESS_DIR.parents[1]
 SCHEMAS_DIR = REPO_ROOT / "docs/specs/schemas"
 
-
-class RunlogAssemblyError(Exception):
-    pass
+# Re-exported from the stdlib-only `outcomes` module so `check_runlogs.py` can
+# import the aggregation without dragging jsonschema/referencing onto a bare
+# interpreter (issue #2684). One definition, two import paths.
+from .outcomes import (  # noqa: E402,F401
+    RunlogAssemblyError,
+    _modal_with_tiebreak_down,
+    _OUTCOME_RANK,
+    aggregate_per_run_outcome,
+)
 
 
 class RunlogCollisionError(Exception):
@@ -140,6 +146,12 @@ class SingleRun:
     # exists pre-ResultMessage) — this says why 0 there isn't "used no
     # tokens," rather than leaving it indistinguishable from a genuine zero.
     no_result_message: bool = False
+    # MCP calls the routing short-circuit discarded (the post-deny reaction
+    # turn's). Recorded but read by no gate here: the orchestrator's
+    # unmatched_tool_call comparison counts them, the uncovered_tool_call
+    # advisory deliberately does not. Present so a future run log can settle
+    # whether a reaction call ever executes at all (issue #2740).
+    suppressed_post_deny_calls: list[dict] = field(default_factory=list)
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -174,41 +186,10 @@ def _wall_clock_ms_from_runs(run_dicts: list[dict[str, Any]]) -> float:
 # ---- Aggregation helpers -------------------------------------------------
 
 
-_OUTCOME_RANK = {"fail": 0, "partial": 1, "pass": 2}
 # None (N/A) ranks above pass so it never wins a tie against a real score.
 # All-null buckets are handled separately in aggregate_dimensions and don't
 # rely on this rank.
 _DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
-
-
-def aggregate_per_run_outcome(per_run: list[str]) -> str:
-    """Aggregate per-run outcomes per unit-test-spec.md §7.
-
-    Operates on the strings `_compute_outcome` already produced, so the
-    validator-dominates-cap-abort demotion (issue #1866 V7) is baked in
-    upstream: a run that failed a validator under a deterministic cap
-    arrives here as "fail", never "aborted". This abort-precedence branch
-    therefore only fires on a genuinely ungradeable run, and the two sites
-    agree by construction.
-    """
-    if not per_run:
-        raise RunlogAssemblyError("no per-run outcomes to aggregate")
-    if "aborted" in per_run:
-        return "aborted"
-    return _modal_with_tiebreak_down(per_run, _OUTCOME_RANK)
-
-
-def _modal_with_tiebreak_down(values, rank):
-    if not values:
-        raise ValueError("empty values list")
-    counts: dict = {}
-    for v in values:
-        counts[v] = counts.get(v, 0) + 1
-    max_count = max(counts.values())
-    winners = [v for v, c in counts.items() if c == max_count]
-    if len(winners) == 1:
-        return winners[0]
-    return min(winners, key=lambda v: rank.get(v, 999))
 
 
 def aggregate_dimensions(
@@ -474,6 +455,11 @@ def assemble_test_entry(
             "output_tokens": r.output_tokens,
             "model_usage": r.model_usage,
             "no_result_message": r.no_result_message,
+            **(
+                {"suppressed_post_deny_calls": r.suppressed_post_deny_calls}
+                if r.suppressed_post_deny_calls
+                else {}
+            ),
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {
