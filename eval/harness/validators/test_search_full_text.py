@@ -186,12 +186,19 @@ def test_wiki_prework_fetch_runs_when_required(tool_calls, test):
 # (issue #2283), widened to a tuple because each of these tests declares two
 # topical pages rather than one.
 #
-# `ut_search_full_text_009` lists only the word list: `Cuba_Naming_Customs`
-# does not exist in the wiki corpus (`wiki_read` returns "No wiki page
-# found"), so its naming-customs leg is a not-found fixture, not a topical
-# one, and it is asserted by the gap-handling path instead.
+# `ut_search_full_text_009`'s second stem is a NOT-FOUND fixture, not a
+# subject-matter page: `Cuba_Naming_Customs` does not exist in the corpus
+# (verified live 2026-09-23; `wiki_read` returns "No wiki page found", and
+# Cuba_Genealogy's sidebar carries no Naming Customs entry where Spain's
+# does). Asserting it here is the same guarantee as for a topical page --
+# that the model's argument hit the intended predicate rather than falling
+# through to `wiki-read-any` -- and it additionally pins that the test
+# really exercises SKILL.md's gap path rather than silently skipping it.
 _TOPICAL_FIXTURES_BY_TEST_ID = {
-    "ut_search_full_text_009": ("wiki-read-spanish-word-list",),
+    "ut_search_full_text_009": (
+        "wiki-read-spanish-word-list",
+        "wiki-read-cuba-naming-customs-not-found",
+    ),
     "ut_search_full_text_013": (
         "wiki-read-spain-naming-customs",
         "wiki-read-spanish-word-list",

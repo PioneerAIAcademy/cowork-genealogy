@@ -22,7 +22,7 @@
   "mcp_fixtures": [
     "fulltext-search-cuban-notarial",
     "fulltext-search-cuban-notarial-by-name",
-    "wiki-read-spain-naming-customs",
+    "wiki-read-cuba-naming-customs-not-found",
     "wiki-read-spanish-word-list",
     "wiki-read-any",
     "wiki-search-any"
@@ -34,6 +34,6 @@
     "Should NOT mistakenly treat the prompt as out-of-scope and refuse — Latin American notarial coverage is explicitly listed in the skill's allowed scope (references/transcription-quirks.md 'Latin American notarial protocols (17th–19th c.)' under Strong coverage)",
     "Should mention in passing that FTS searches the AI transcript and Spanish-orthography variants (e.g. accented vs unaccented) may need separate queries if the canonical query returns nothing",
     "The pre-work block in step 3 makes the wiki fetches REQUIRED here: the records are Spanish (so {Language}_Genealogical_Word_List) and the subject carries a compound Spanish name (so {Country}_Naming_Customs). The skill MUST issue those wiki_read calls before settling the query.",
-    "The skill MUST USE what the pages returned, not merely call them — name at least one variant that exists ONLY in the fixture content and could not come from prior knowledge: the maternal particle 'de la' (\"María de la Somarriba\"), the plural-paternal form 'Navedas' for 'Naveda', or an abbreviated record form such as 'h.l.' or 'v.o'. Surfacing one of these as a spelling it will search — or explaining that it searched it — is the proof the page was read. A run that calls wiki_read and then builds exactly the query it would have built anyway has not consumed the response, and is the failure this check exists to catch."
+    "The subject is Cuban, so the pre-work bullet resolves to Cuba_Naming_Customs, which does not exist in the wiki corpus — the call returns \"No wiki page found\". The skill MUST take SKILL.md's documented gap path: report that no naming-customs page is available for the jurisdiction and proceed on the Spanish word list it did get, rather than inventing variants to stand in for the missing page. Naming a record abbreviation the word list actually carries, such as 'h.l.' for hijo legítimo, is the evidence it used what it received. Do NOT expect the Cantabrian 'de la' or 'Navedas' forms here: those belong to ut_search_full_text_013 and were copy-pasted onto this test in error."
   ]
 }

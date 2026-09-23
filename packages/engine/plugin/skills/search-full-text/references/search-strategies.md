@@ -141,6 +141,22 @@ Escalate precision as you learn the names:
 3. `+Naveda +Somarriba +Limpias` (add the parish once a locality is in
    hand) — or apply the place *filter* rather than a keyword.
 
+**Two register forms the `{Country}_Naming_Customs` page does not carry.**
+Measured 2026-09-23 against the live corpus: `Spain_Naming_Customs` covers the
+four-part name, `de`/`y`/`e`, and emigrant reversal, and carries neither of
+these. They stay here under ADR-0012's provision for craft the wiki
+demonstrably lacks.
+
+- The maternal surname is often written with the particle **`de la`** —
+  `María de la Somarriba` for `María Somarriba`. The clerk wrote it and the
+  transcription preserves it, so an entry carrying it will not match a query
+  for the bare surname.
+- The paternal surname appears in a **plural form** in a minority of entries —
+  `Navedas` for `Naveda`, `Gonzáles` for `González`. Both forms occur for the
+  same household, sometimes in consecutive acts.
+
+Search both separately; the singular alone misses the acts that use the other.
+
 This is the single highest-yield move for "where was X from / who were
 X's parents" when X emigrated and the destination records only say
 "native of Spain": the origin-country parish acts naming both parents
