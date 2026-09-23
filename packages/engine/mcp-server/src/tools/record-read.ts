@@ -25,6 +25,10 @@ export const recordReadSchema = {
     "Only the 1:1: persona form is accepted: a 1:2: record ARK " +
     "(record_search's `recordArk`, or a tree source's `url`) and a 3:1:/3:2: " +
     "document-image ARK are refused, not silently resolved. " +
+    "When the record carries a page-image source, the response includes an " +
+    "`imageArk` field (a 3:1:/3:2: document-image ARK) for use with " +
+    "image_read or image_transcribe — do not construct an image ARK from " +
+    "the record ARK. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -159,10 +163,24 @@ export async function recordReadTool(
 
   await resolveCoveragePlaces(simplified);
 
-  return simplified;
+  const imageArk = extractImageArk(simplified);
+  return imageArk ? { ...simplified, imageArk } : simplified;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
+
+// Find the first DigitalArtifact source whose url is a 3:1:/3:2: document-image
+// ARK and return the canonical ark. This surfaces the page-image ark as a named
+// field so the agent does not have to derive one from the record ark.
+export function extractImageArk(doc: SimplifiedGedcomX): string | undefined {
+  for (const sd of doc.sources ?? []) {
+    if (sd.resource_type !== "DigitalArtifact") continue;
+    if (!sd.url) continue;
+    const ark = toArk(sd.url);
+    if (/^ark:\/61903\/3:[12]:/.test(ark)) return ark;
+  }
+  return undefined;
+}
 
 // Resolve one record's gedcomx from a staged/finalized search sidecar by id,
 // returning it as-is. The staged search result already carries standardized
@@ -217,7 +235,11 @@ async function readFromSidecar(
   // record's own normalized places — never resolving an ambiguous place NAME and
   // mis-placing it (see the toSimplified comment above for the observed
   // mis-resolutions).
-  return match.gedcomx as SimplifiedGedcomX;
+  // Best-effort: the search-response GedcomX may not carry DigitalArtifact
+  // sources, so imageArk on the sidecar path may always be absent.
+  const staged = match.gedcomx as SimplifiedGedcomX;
+  const imageArk = extractImageArk(staged);
+  return imageArk ? { ...staged, imageArk } : staged;
 }
 
 async function resolveCoveragePlaces(doc: SimplifiedGedcomX): Promise<void> {

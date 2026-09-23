@@ -17,8 +17,9 @@ export interface RecordReadInput {
   projectPath?: string;
 }
 
-// The tool returns simplified GEDCOMX directly.
-export type RecordReadResult = SimplifiedGedcomX;
+// The tool returns simplified GEDCOMX plus an optional imageArk (the page-image
+// document-image ARK extracted from the DigitalArtifact source, when present).
+export type RecordReadResult = SimplifiedGedcomX & { imageArk?: string };
 
 // ─── FS recapi response (raw API) ─────────────────────────────────────────
 //

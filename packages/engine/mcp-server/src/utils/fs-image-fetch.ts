@@ -300,6 +300,22 @@ export async function fetchFsImageBytes(
           `but got content-type: ${attempt.nonImageContentType}`
       );
     }
+    // On a 4xx for a URL carrying a 3:1:/3:2: document-image ARK, name the
+    // likely cause. The agent's most common mistake is constructing an image
+    // ARK from a record ARK by changing the type prefix — the resulting id is
+    // syntactically valid but belongs to a different (or non-existent) entity.
+    if (attempt.status >= 400 && attempt.status < 500) {
+      const arkMatch = resolvedUrl.match(/ark:\/61903\/3:[12]:[A-Za-z0-9.-]+/);
+      if (arkMatch) {
+        throw new Error(
+          `FamilySearch image fetch failed: ${attempt.status} ${attempt.statusText}. ` +
+            `The ark ${arkMatch[0]} may not be a valid document-image identifier. ` +
+            "A valid image ark comes from record_read's imageArk field or " +
+            "image_search — do not construct one from a record ark by changing " +
+            "the type prefix."
+        );
+      }
+    }
     throw new Error(
       `FamilySearch image fetch failed: ${attempt.status} ${attempt.statusText}`
     );

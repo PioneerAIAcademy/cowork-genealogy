@@ -152,7 +152,7 @@ describe("fetchFsImageBytes — fallback retry", () => {
         "https://www.familysearch.org/ark:/61903/3:1:BAD",
         LOCAL
       )
-    ).rejects.toThrow(/FamilySearch image fetch failed/);
+    ).rejects.toThrow(/FamilySearch image fetch failed.*may not be a valid/);
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
@@ -270,6 +270,60 @@ describe("fs-image-fetch — memory artifacts", () => {
         "t",
       ),
     ).toThrow(/exactly one of/);
+  });
+});
+
+// ─── 4xx ark-guidance error messages ─────────────────────────────────────
+
+describe("fetchFsImageBytes — 4xx ark guidance", () => {
+  it("names the ark and directs to imageArk on a 400 for a 3:1: ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://www.familysearch.org/ark:/61903/3:1:QJRM-GV8V",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow(
+      /3:1:QJRM-GV8V may not be a valid document-image identifier.*imageArk/
+    );
+  });
+
+  it("names the ark on a 400 for a 3:2: ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://www.familysearch.org/ark:/61903/3:2:77TJ-PXCN",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow(/3:2:77TJ-PXCN may not be a valid/);
+  });
+
+  it("uses the generic message on a 400 for a non-ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow("FamilySearch image fetch failed: 400 Bad Request");
+  });
+
+  it("uses the generic message on a 5xx (not 4xx) even for an ark URL", async () => {
+    mockErrorResponse(500, "Internal Server Error");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://www.familysearch.org/ark:/61903/3:1:QJRM-GV8V",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow("FamilySearch image fetch failed: 500 Internal Server Error");
   });
 });
 

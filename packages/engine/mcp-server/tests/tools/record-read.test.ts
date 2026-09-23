@@ -23,7 +23,7 @@ vi.mock("../../src/utils/place-api.js");
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { recordReadTool, extractEntityId } from "../../src/tools/record-read.js";
+import { recordReadTool, extractEntityId, extractImageArk } from "../../src/tools/record-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { repIdToStandardPlace } from "../../src/utils/place-resolver.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
@@ -559,5 +559,132 @@ describe("#2367 resolveCoveragePlaces", () => {
     const out = await recordReadTool({ recordId: "P1" }, LOCAL);
     const sd = out.sources?.find((s: any) => s.coverage);
     expect(sd?.coverage?.standard_place).toBeUndefined();
+  });
+});
+
+// ─── extractImageArk unit tests ──────────────────────────────────────────
+
+describe("extractImageArk", () => {
+  it("returns the ark from a DigitalArtifact source with a 3:1: url", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  it("returns the ark from a DigitalArtifact source with a 3:2: url", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:2:77TJ-PXCN",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:2:77TJ-PXCN");
+  });
+
+  it("returns undefined when no sources are present", () => {
+    expect(extractImageArk({})).toBeUndefined();
+    expect(extractImageArk({ sources: [] })).toBeUndefined();
+  });
+
+  it("returns undefined when no DigitalArtifact source exists", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          { id: "sd_c_1", resource_type: "Collection", url: "https://example.com" },
+          { id: "src_r_1", title: "Record", url: "https://example.com/1:2:X" },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("returns undefined when the DigitalArtifact source has no url", () => {
+    expect(
+      extractImageArk({
+        sources: [{ id: "sd_da1", resource_type: "DigitalArtifact" }],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("skips a DigitalArtifact whose url is not a 3:1:/3:2: ark", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/1:2:HSJG-CLNF",
+          },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("returns the first matching ark when multiple DigitalArtifact sources exist", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:1:AAAA-BBBB",
+          },
+          {
+            id: "sd_da2",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:1:CCCC-DDDD",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:AAAA-BBBB");
+  });
+});
+
+// ─── imageArk integration (live path) ────────────────────────────────────
+
+describe("recordReadTool — imageArk field", () => {
+  const RECORD_WITH_IMAGE_SOURCE: GedcomX = {
+    persons: [
+      {
+        id: "P1",
+        gender: { type: "http://gedcomx.org/Male" },
+        names: [{ nameForms: [{ fullText: "Pedro Chaves" }] }],
+      },
+    ],
+    sourceDescriptions: [
+      {
+        id: "src_r_1",
+        titles: [{ value: "Buenos Aires Church Records" }],
+        about: "https://www.familysearch.org/ark:/61903/1:2:QJRM-GV8V",
+      },
+      {
+        id: "sd_da1",
+        resourceType: "http://gedcomx.org/DigitalArtifact",
+        about: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+      },
+    ],
+  };
+
+  it("surfaces imageArk when the record has a DigitalArtifact source", async () => {
+    mockOk(RECORD_WITH_IMAGE_SOURCE);
+    const result = await recordReadTool({ recordId: "P1" }, LOCAL);
+    expect(result.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  it("omits imageArk when no DigitalArtifact source is present", async () => {
+    mockOk(MINIMAL_RECORD);
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
+    expect(result.imageArk).toBeUndefined();
   });
 });

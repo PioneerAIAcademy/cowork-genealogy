@@ -163,7 +163,7 @@ The tool returns two content blocks:
 | Neither imageId nor ark provided | "image_read requires either imageId or ark." |
 | Invalid imageId format | "Unrecognized imageId. Expected an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613)." |
 | Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg)." |
-| FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" |
+| FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}". On a 4xx for a `3:1:`/`3:2:` ark, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field or `image_search`. |
 | Response is not an image | "Expected an image response but got content-type: {type}" |
 | Image exceeds the inline size cap | "FamilySearch image {imageId or ark} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. OCR it with image_transcribe instead (it reads the scan host-side and returns text, with no size limit), or read the indexed record with record_read / record_search." |
 
