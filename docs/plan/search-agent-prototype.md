@@ -24,8 +24,8 @@ rule plus the forced token refresh that run cost built the same day (PR #2719);
 D17 re-run twice and probed 2026-09-23 — criterion 1 passes for foreground and main-thread
 kills, criterion 2 failed on a triple write (fixed as a tool precondition, PR #2850) and
 then held, and **background delegations turn out to be lost at every turn end, kill or
-not** — so the worker now forces delegations to the foreground (lead ruling); that, the
-per-attempt token broker and `--background-only` were built the same day (see D17);
+not** — so the worker now forces delegations to the foreground (lead ruling); that and the
+per-attempt token broker were built the same day (see D17);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -1611,9 +1611,11 @@ without whichever Bedrock refuses.
   and 4 pass (93 rows, 0 / 0 / 0, longest `Agent` 629 s). Export:
   `apps/server/proto/exports/proj_bagley-father-1884_22ee97/`.
   **Re-run 2026-09-23, second attempt — stopped at turn 4** (`sess_3c1bf327eaec41c1`, with
-  PR #2850's guard in the image, a 20 s hold, and the kill armed by the new
-  `--background-only`, which joins each `Agent` row to its transcript `tool_use` and fires
-  only on `run_in_background: true`). Turns 1–3 ($2.11) selected the question, built the
+  PR #2850's guard in the image, a 20 s hold, and the kill armed by a
+  `--background-only` switch on the arm — it joined each `Agent` row to its transcript
+  `tool_use` and fired only on `run_in_background: true`; it was dropped before review,
+  because once the worker forces the foreground (below) the transcript still records the
+  model's `true` and the switch would fire on delegations that ran in the foreground). Turns 1–3 ($2.11) selected the question, built the
   locality guide and the plan. **Every delegation was foreground**, so the armed kill never
   fired. Turn 4 ("execute the plan") outlived the step ceiling **twice**: the shim killed
   the worker at 15:26:52 and 15:56:52 (`read_timeout`, `killed_worker: true`), both times on

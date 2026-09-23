@@ -31,10 +31,7 @@ reply names Nauvoo. ``--session <id>`` runs it on a seeded session (proto/seed.p
 The kill is generalised for the resume probes (D18): ``--kill-on <bare tool name>``
 (default ``place_search``; ``Agent`` lands it during a delegation), ``--kill-after-s
 <n>`` (default 0, the moment the row appears; ~15 s puts a subagent mid-work) and
-``--text ...`` / ``--text-file <path>`` for the message. ``--background-only`` (with
-``--kill-on Agent``) waits for an ``Agent`` call whose transcript input carries
-``run_in_background: true`` and ignores foreground delegations -- the only way to land
-the kill on the case the worker's resume rule exists for (D17, 2026-09-21). The two checks that are about
+``--text ...`` / ``--text-file <path>`` for the message. The two checks that are about
 the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
 Whatever the checks say, an evidence block follows ``turn_done``: the ``turns`` row, the
 ``tool_calls`` and ``session_entries`` rows written after the kill (the CLI's own words
@@ -195,7 +192,6 @@ class KillSpec:
     text: str = TEXT_KILL
     session_id: str | None = None
     container: str = "proto-worker"
-    background_only: bool = False
 
     @property
     def default_text(self) -> bool:
@@ -216,31 +212,13 @@ def matches_bare(tool_name: str, bare: str) -> bool:
     return tool_name == bare or (tool_name.startswith("mcp__") and bare_name(tool_name) == bare)
 
 
-# The turn's Agent calls whose transcript tool_use input says run_in_background: true.
-# tool_calls carries no input, so the row is joined to its session_entries tool_use by id.
-BACKGROUND_AGENT_SQL = (
-    "SELECT c.tool_name FROM tool_calls c "
-    "JOIN sessions s ON s.session_id = c.session_id "
-    "JOIN session_entries e ON e.session_id = s.sdk_session_id "
-    "CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(e.entry->'message'->'content') = 'array' "
-    "THEN e.entry->'message'->'content' ELSE '[]'::jsonb END) b "
-    "WHERE c.turn_id = %s AND b->>'type' = 'tool_use' AND b->>'id' = c.tool_use_id "
-    "AND b->'input'->>'run_in_background' = 'true' ORDER BY c.id"
-)
-
-
-def wait_for_tool_call(dsn: str, turn_id: str, tool: str, deadline_s: float, background_only: bool = False) -> str:
+def wait_for_tool_call(dsn: str, turn_id: str, tool: str, deadline_s: float) -> str:
     """``"seen"`` once the turn has a tool_calls row whose name is ``tool`` (the
-    PreToolUse hook writes it as the call starts) -- with ``background_only``, only an
-    ``Agent`` row whose transcript input carries ``run_in_background: true``;
-    ``"completed"`` if the turn finished without one (a kill would then land on
-    nothing); ``"timeout"`` at the deadline."""
+    PreToolUse hook writes it as the call starts); ``"completed"`` if the turn finished
+    without one (a kill would then land on nothing); ``"timeout"`` at the deadline."""
     t0 = time.monotonic()
     while time.monotonic() - t0 < deadline_s:
-        if background_only:
-            names = db(dsn, BACKGROUND_AGENT_SQL, (turn_id,))
-        else:
-            names = db(dsn, "SELECT tool_name FROM tool_calls WHERE turn_id = %s ORDER BY id", (turn_id,))
+        names = db(dsn, "SELECT tool_name FROM tool_calls WHERE turn_id = %s ORDER BY id", (turn_id,))
         if any(matches_bare(n, tool) for (n,) in names):
             return "seen"
         if one(dsn, "SELECT completed_at FROM turns WHERE turn_id = %s", (turn_id,)) is not None:
@@ -438,7 +416,7 @@ def run_kill(base: str, dsn: str, deadline_s: float, spec: KillSpec) -> tuple[li
         project_id = one(dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
         turn_id = post_message(client, base, session_id, spec.text)
         figures["turn_id"] = turn_id
-        outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s, spec.background_only)
+        outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
         checks.append((f"kill: the turn reached its first {spec.kill_on} call", outcome == "seen",
                        "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"))
         if outcome != "seen":
@@ -523,8 +501,6 @@ def build_parser() -> argparse.ArgumentParser:
                         "Agent lands it during a delegation)")
     p.add_argument("--kill-after-s", type=float, default=0.0,
                    help="with --kill: seconds to wait after that row before the kill (default 0: at once)")
-    p.add_argument("--background-only", action="store_true",
-                   help="with --kill --kill-on Agent: kill only on a delegation launched with run_in_background: true")
     text = p.add_mutually_exclusive_group()
     text.add_argument("--text", default=None, help="with --kill: the message to post (default: the place_search question)")
     text.add_argument("--text-file", default=None, help="with --kill: read the message from this UTF-8 file")
@@ -544,11 +520,8 @@ def kill_spec(args: argparse.Namespace) -> KillSpec:
         raise ValueError("--text/--text-file gave an empty message")
     if args.kill_after_s < 0:
         raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
-    if args.background_only and args.kill_on != "Agent":
-        raise ValueError(f"--background-only needs --kill-on Agent, not {args.kill_on}")
     return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
-                    session_id=args.session, container=args.worker_container,
-                    background_only=args.background_only)
+                    session_id=args.session, container=args.worker_container)
 
 
 def main(argv: list[str] | None = None) -> int:
