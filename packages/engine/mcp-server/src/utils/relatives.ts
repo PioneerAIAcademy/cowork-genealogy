@@ -15,6 +15,7 @@ import {
   normalizeString,
 } from "./string-similarity.js";
 import { BIRTHLIKE_FACT_TYPES } from "./mob.js";
+import { preferredName } from "./name-helpers.js";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 
 // ─── Tunable constants ───────────────────────────────────────────────────────
@@ -216,8 +217,7 @@ export function preScore(t: SimplifiedPerson, c: SimplifiedPerson): number {
 
 /** Normalized `given surname` of the person's preferred (else first) name. */
 function fullName(p: SimplifiedPerson): string {
-  const names = p.names ?? [];
-  const name = names.find((n) => n.preferred) ?? names[0];
+  const name = preferredName(p.names);
   if (name === undefined) return "";
   const parts = [name.given, name.surname].filter(
     (s): s is string => typeof s === "string" && s.length > 0,
