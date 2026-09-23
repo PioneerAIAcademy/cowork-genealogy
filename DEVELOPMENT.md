@@ -564,11 +564,11 @@ pushes it too, so a deploy ships both (`apps/server/sandbox/README.md`).
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
 one-time Fly `release_command`, and `deploy/fly.toml` has none. Two Machines
-booting together otherwise race on `create_all` + the allowlist seed — the
-failure is spelled out in
-[`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md)
-§ "Also before count > 1". Sticky routing is
-not an option (production is AWS-no-sticky). Because `fly deploy` provisions two
+booting together otherwise race: both pass `create_all`'s existence check and both
+`CREATE TABLE`, and both see an allowlist email absent and both `INSERT` the same
+primary key — an `IntegrityError` that crashes a boot. Harmless at `count = 1`; a
+`release_command` runs the schema and seed once, before any Machine starts. Sticky
+routing is not an option (production is AWS-no-sticky). Because `fly deploy` provisions two
 machines by default, always pass `--ha=false` (above); if a deploy ever leaves
 two, run `fly scale count 1` to drop back to one.
 

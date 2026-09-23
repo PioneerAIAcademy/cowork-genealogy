@@ -613,9 +613,10 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   / `expires_at` / `updated`. **Encrypted at rest** via `crypto.EncryptedStr` (see §5.2).
 > - **`projects`** — shipped, minus **`objstore_prefix`** (no object store, §6.4)
 >   and plus two columns this spec didn't foresee: `model` (the per-session model
->   knob from §0.5) and `status` (`active`/`archived`). A third, `turn_locked_at`,
->   backed the removed `/v1` API's turn lock; the column is left in the live
->   database as a dead nullable, since `create_all` never drops one.
+>   knob from §0.5) and `status` (`active`/`archived`).
+>   `turn_locked_at` was a third until 2026-09-22, when the `/v1` API it locked for
+>   was removed. It is gone from the model; only the live database still carries it,
+>   as a dead nullable, because `create_all` never drops a column.
 > - **`sessions`** — **not built**; the signed cookie is self-contained, which is
 >   the "or stateless JWT" branch this bullet allowed for.
 > - **`usage`** — **not built.** Per-turn cost/tokens are streamed to an
