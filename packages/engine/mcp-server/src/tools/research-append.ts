@@ -41,7 +41,7 @@ import { compatiblePlace } from "../utils/date-comparison.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
-import { gcUnreferencedImages } from "../utils/image-store.js";
+import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
@@ -3356,6 +3356,112 @@ async function prepareOps(
         );
       }
     }
+  }
+
+  // ── Derive transcription_truncated at the write boundary (#2457) ──
+  // The truncation of an image read is known to image_transcribe, not to
+  // record-extractor (which only holds the relayed text). So research_append is
+  // authoritative for it on any image-backed source — DERIVED here, never asserted
+  // by the agent. Per the B1/B2 ruling (2026-09-19) the PERSISTED marker is
+  // `true` or ABSENT, never `false`: the invariant is that nothing moves from
+  // "partial" to "whole", in memory (sticky-`true` in the cap store) or in the
+  // document (here). `false` lives only in the cap store; it is read below (as
+  // "not true"), never written to research.json. So a wrong-but-resolvable
+  // image_filename can only add an unneeded `true` badge, never a false
+  // "verified whole" — which is why the agent-supplied join key is acceptable.
+  // Absent means UNKNOWN, not whole.
+  //
+  // DERIVED FROM THE BATCH'S FINAL STATE PER SOURCE, not per op (#2457 r11).
+  // Both fields can arrive in a different op from each other, and either can be
+  // REMOVED by a later op in the same batch, so a per-op read got three things
+  // wrong. Keyed on PRESENCE (`"x" in bag`) rather than truthiness, because an
+  // explicit `null`/`""` is the caller REMOVING a field, which is the opposite of
+  // not re-sending it:
+  //   - `append {transcription}` then `update {image_filename}` derived nothing
+  //     while the mirror order derived `true`, on the same final document;
+  //   - `update {image_filename: null}` derived the badge from the very reference
+  //     that op deletes, onto a source that ends up citing no scan;
+  //   - two updates to one source, the second nulling the text, had op[0] stamp
+  //     `true` and then the validator refuse the whole batch, blaming the caller
+  //     for a value only this loop set.
+  //
+  // MUST RUN AFTER the §3.4.1 reuse rewrite above, and that is now load-bearing
+  // rather than decorative: before the fold a reused source is still an `append`
+  // carrying no entryId, so the persisted-entry lookup below cannot resolve it;
+  // after the fold it is an `update` carrying `entryId` and it can. Pinned by
+  // "derives through a §3.4.1 reuse fold" in research-append.test.ts — move this
+  // block and that test reds.
+  const persistedSourcesForDerive = Array.isArray(research.sources) ? research.sources : [];
+  // Pass 1: strip any caller-supplied value from EVERY sources bag first. The field
+  // is derived, so an agent's guess never persists — including on a source with no
+  // joinable image_filename, and including an op that pass 2 never stamps. On an
+  // `update` this also means the key is absent from the patch, so the merge keeps
+  // the persisted value: that is how a persisted `true` survives an update after a
+  // process restart emptied the store (the store, not the document, is what a
+  // restart clears).
+  const sourcesOpsForDerive: { op: (typeof ops)[number]; bag: Record<string, unknown> }[] = [];
+  for (const op of ops) {
+    if (op.section !== "sources") continue;
+    const bag = (op.op === "append" ? op.entry : op.fields) as
+      | Record<string, unknown>
+      | undefined;
+    if (!bag || typeof bag !== "object") continue;
+    delete bag.transcription_truncated;
+    sourcesOpsForDerive.push({ op, bag });
+  }
+  // Pass 2: fold each source's ops, in order, onto the entry already persisted, to
+  // get the `image_filename` and `transcription` this batch will actually leave
+  // behind. An append is its own source (§3.3 forbids updating an id appended in
+  // the same batch), so it keys on its own bag; updates key on `entryId`.
+  interface DeriveState {
+    last: Record<string, unknown>;
+    ref: unknown;
+    text: unknown;
+  }
+  const deriveBySource = new Map<unknown, DeriveState>();
+  for (const { op, bag } of sourcesOpsForDerive) {
+    const key = op.op === "update" && op.entryId ? `u:${op.entryId}` : bag;
+    let state = deriveBySource.get(key);
+    if (!state) {
+      const persisted =
+        op.op === "update" && op.entryId
+          ? persistedSourcesForDerive.find((s: any) => s && s.id === op.entryId)
+          : undefined;
+      state = {
+        last: bag,
+        ref: persisted?.image_filename,
+        text: persisted?.transcription,
+      };
+      deriveBySource.set(key, state);
+    }
+    if ("image_filename" in bag) state.ref = bag.image_filename;
+    if ("transcription" in bag) state.text = bag.transcription;
+    state.last = bag;
+  }
+  // `true` is the only value persisted, and only beside a non-empty transcription:
+  // the marker qualifies text, so it is meaningless without any, and `true` beside
+  // empty/null transcription is a state validate_research_schema rejects (its
+  // .trim()), which batched would discard every good op with it. Anything else —
+  // the image not in the cap set (a whole read, or no read here), no surviving
+  // image_filename, or no surviving text — leaves the key deleted by pass 1:
+  // nothing but `true` is ever written (#2457 rulings, C 2026-09-21). So a
+  // non-partial image permits an in-place transcription update (the patch omits
+  // the marker and the merge keeps the persisted value); and a persisted `true`
+  // survives such an update — the marker may over-report a since-refined read,
+  // which the ruling accepts as an unneeded badge, never a false "verified whole".
+  // The stamp lands on the last op touching that source. That is DEFENSIVE, not a
+  // guarded invariant, and the comment says so rather than overclaiming: `applyOne`
+  // merges an update key by key and pass 1 strips the key from every bag, so no
+  // later op can carry a competing value and which bag holds the stamp is currently
+  // unobservable (measured — stamping the FIRST op instead passes the whole suite).
+  // It is kept so this block does not silently depend on that merge staying key-wise.
+  for (const state of deriveBySource.values()) {
+    const ref = state.ref;
+    const text = state.text;
+    if (typeof ref !== "string" || ref.length === 0) continue;
+    if (typeof text !== "string" || text.trim() === "") continue;
+    if (!sourceImageCapState(projectPath, ref)) continue;
+    state.last.transcription_truncated = true;
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
