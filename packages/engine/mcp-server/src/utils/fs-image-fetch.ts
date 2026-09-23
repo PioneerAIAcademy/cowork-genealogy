@@ -8,7 +8,7 @@ import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
-import { toArk, arkToUrl } from "./ark.js";
+import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk } from "./ark.js";
 
 // fetchWithTimeout's budget covers headers and body together, and a full-size
 // page scan at typical throughput needs more than the 30s default to finish
@@ -33,7 +33,6 @@ const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 const ARK_PATTERN = /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
 const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
-const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 
 // A `3:1:`/`3:2:` ARK is not always self-sufficient: some are waypoints into
 // a multi-image film/register, and the bare resolver redirect can land on an
@@ -50,7 +49,7 @@ const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 // rather than assuming forwarding these params is always correct.
 const IMAGE_CONTEXT_PARAMS = ["i", "cc", "groupId"] as const;
 
-function extractImageContextQuery(raw: string): string {
+export function extractImageContextQuery(raw: string): string {
   let url: URL;
   try {
     url = new URL(raw);
@@ -125,7 +124,7 @@ function arkToImageUrl(ark: string): { url: string; fallbackUrl?: string } {
     return { url: ark };
   }
   const canonical = toArk(ark);
-  if (DOCUMENT_IMAGE_ARK_PATTERN.test(canonical)) {
+  if (isDocumentImageArk(canonical)) {
     const base = arkToUrl(canonical);
     const query = extractImageContextQuery(ark);
     // Only offer a fallback when we actually appended context params — if
@@ -310,31 +309,49 @@ export async function fetchFsImageBytes(
     // is real and the caller cannot have it right now — 401/403 is a
     // rights-restricted image, 429 a rate limit — and re-fetching from
     // record_read returns the same ARK, so the guidance sends the agent in a
-    // circle. 403 is in fact the MOST common ARK failure in the committed
-    // runlog corpus (creszentia-haas-birth's are all restricted images, and
-    // ogletree-children / stribling-father-1821 / jimmie-jewel-neal each carry
-    // more); issue #2392 carved that cause out explicitly. The 400s this
-    // guidance is for are pedro-chaves-spouse's.
+    // circle. 403 outnumbers 400 among ark failures in the committed runlogs —
+    // creszentia-haas-birth's are restricted images, and issue #2392 carved
+    // that cause out explicitly. Re-derive with `make e2e-transcribe-failures
+    // SINCE=all` rather than trusting a count written here: eval/runlogs/ grows
+    // on nearly every PR, and the report's stripped tally is what says how much
+    // of the corpus is classifiable at all. The 400s this guidance is for are
+    // pedro-chaves-spouse's; the 404s are ids that resolve to nothing, which is
+    // the same defect.
     //
     // Memory artifacts are excluded for the same reason: person_read's
     // artifact_url carries a 3:1: ARK (eval/fixtures/mcp/
     // person-read-flynn-family.json) that appears in neither record_read's
     // imageArk nor image_search, so naming those two would be a dead end.
-    if (!memoryShape && (attempt.status === 400 || attempt.status === 404)) {
-      const arkMatch = resolvedUrl.match(/ark:\/61903\/3:[12]:[A-Za-z0-9.-]+/);
-      if (arkMatch) {
+    // statusText is routinely EMPTY on the very failure this targets: the
+    // corpus records the live text as "FamilySearch image fetch failed: 400 "
+    // with nothing after the code, so interpolating it unconditionally left a
+    // stray "400 ." once a sentence was appended.
+    const failed = attempt.statusText
+      ? `FamilySearch image fetch failed: ${attempt.status} ${attempt.statusText}`
+      : `FamilySearch image fetch failed: ${attempt.status}`;
+
+    // Keyed on the URL's SHAPE, not only the memoryShape flag: a memory
+    // artifact URL reaches this function with memoryShape false whenever it
+    // arrives through `ark` rather than `memoryArtifactUrl` (it fails
+    // ARK_PATTERN, so arkToImageUrl resolves its embedded 3:1: ark), and the
+    // guidance would then name two tools that can never return it.
+    const isMemory = memoryShape || isMemoryArtifactUrl(resolvedUrl);
+
+    if (!isMemory && (attempt.status === 400 || attempt.status === 404)) {
+      const ark = findDocumentImageArk(resolvedUrl);
+      if (ark) {
         throw new Error(
-          `FamilySearch image fetch failed: ${attempt.status} ${attempt.statusText}. ` +
-            `The ark ${arkMatch[0]} may not be a valid document-image identifier. ` +
-            "A valid image ark comes from record_read's imageArk field or " +
-            "image_search — do not construct one from a record ark by changing " +
-            "the type prefix."
+          `${failed}. The ark ${ark} may not be a valid document-image ` +
+            "identifier. Use record_read's imageArk field — do not construct " +
+            "one from a record ark by changing the type prefix. If the ark came " +
+            "from a page URL carrying i=/cc=/groupId=, pass that full URL rather " +
+            "than the bare ark: some arks are waypoints into a multi-image film " +
+            "and do not resolve without it. (image_search returns image ids, not " +
+            "arks, and needs an imageGroupNumber from volume_search.)"
         );
       }
     }
-    throw new Error(
-      `FamilySearch image fetch failed: ${attempt.status} ${attempt.statusText}`
-    );
+    throw new Error(failed);
   }
 
   return {

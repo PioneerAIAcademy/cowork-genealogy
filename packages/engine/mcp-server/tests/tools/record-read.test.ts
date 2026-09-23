@@ -617,6 +617,164 @@ describe("extractImageArk", () => {
     ).toBeUndefined();
   });
 
+  // The shape record_search ACTUALLY stages. `simplifySourceDescription`
+  // (gedcomx-convert.ts) sets `resource_type` only when the upstream carries
+  // `resourceType`, and a search-response source description does not — every
+  // sd_da1 in eval/runlogs/e2e/pedro-chaves-spouse and in
+  // eval/fixtures/mcp/record-search-whitfield-1850-household.json is bare
+  // `{ id, url }`. All 8 record_read calls in that run went through the
+  // sidecar, so requiring the label dropped the ark on the one path the
+  // motivating failure used.
+  it("returns the ark when the source carries NO resource_type (the staged sidecar shape)", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  // FamilySearch's own vocabulary variant. `replace(/.*\//, "")` leaves the
+  // fragment on, so an exact !== "DigitalArtifact" test dropped it — see
+  // eval/fixtures/mcp/collection-read-by-id.json.
+  it("returns the ark for the DigitalArtifact#FamilySearch vocabulary variant", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact#FamilySearch",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  // The other direction: dropping the label requirement must not start
+  // returning arks off a source that is explicitly something else.
+  it("still skips a source whose resource_type names a different type", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_r_1",
+            resource_type: "Record",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
+  // 22 of the 538 document-image source urls in the corpus carry a context
+  // param (mostly cc=). toArk() strips the query, and a waypoint ark that
+  // loses its context can resolve to a NEIGHBOURING page with no error — the
+  // agent then OCRs the wrong scan. image_read/image_transcribe accept the
+  // full URL and already fall back to the bare ark.
+  it("preserves i=/cc=/groupId= context params from the source url", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            url: "https://familysearch.org/ark:/61903/3:1:3QS7-89G8-388L?cc=1473014&lang=en",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:3QS7-89G8-388L?cc=1473014");
+  });
+
+  it("returns a bare ark when the source url carries no context params", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            url: "https://familysearch.org/ark:/61903/3:1:3QS7-89G8-388L?lang=en",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:3QS7-89G8-388L");
+  });
+
+  // A household spanning two scans. The corpus carries sd_da2 (55), sd_da3
+  // (26), sd_da4 and one sd_da8, so "several page images on one record" is
+  // real, not hypothetical. Document-order "first" hands a co-resident on
+  // page 2 the ark for page 1 — and nothing errors, so the agent OCRs a scan
+  // its person is not on.
+  const TWO_PAGE_HOUSEHOLD = {
+    persons: [
+      { id: "PAGE1-PERSON", sources: [{ ref: "sd_da1" }] },
+      { id: "PAGE2-PERSON", sources: [{ ref: "sd_da2" }] },
+    ],
+    sources: [
+      {
+        id: "sd_da1",
+        resource_type: "DigitalArtifact",
+        url: "https://www.familysearch.org/ark:/61903/3:1:PAGE-ONE",
+      },
+      {
+        id: "sd_da2",
+        resource_type: "DigitalArtifact",
+        url: "https://www.familysearch.org/ark:/61903/3:1:PAGE-TWO",
+      },
+    ],
+  };
+
+  it("returns the page the REQUESTED persona is on, not document-order first", () => {
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD, "PAGE2-PERSON")).toBe(
+      "ark:/61903/3:1:PAGE-TWO",
+    );
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD, "PAGE1-PERSON")).toBe(
+      "ark:/61903/3:1:PAGE-ONE",
+    );
+  });
+
+  it("matches the persona by ARK as well as by bare id", () => {
+    expect(
+      extractImageArk(TWO_PAGE_HOUSEHOLD, "ark:/61903/1:1:PAGE2-PERSON"),
+    ).toBe("ark:/61903/3:1:PAGE-TWO");
+  });
+
+  it("falls back to document order when the persona has no source refs", () => {
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD, "NOT-IN-THIS-RECORD")).toBe(
+      "ark:/61903/3:1:PAGE-ONE",
+    );
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD)).toBe("ark:/61903/3:1:PAGE-ONE");
+  });
+
+  // A persona ref pointing at a NON-image source must not short-circuit the
+  // search and return nothing.
+  it("skips a persona ref that names a non-image source and keeps looking", () => {
+    expect(
+      extractImageArk(
+        {
+          persons: [
+            { id: "P1", sources: [{ ref: "sd_r_1" }, { ref: "sd_da1" }] },
+          ],
+          sources: [
+            {
+              id: "sd_r_1",
+              resource_type: "Record",
+              url: "https://www.familysearch.org/ark:/61903/1:2:SOME-RECORD",
+            },
+            {
+              id: "sd_da1",
+              resource_type: "DigitalArtifact",
+              url: "https://www.familysearch.org/ark:/61903/3:1:REAL-PAGE",
+            },
+          ],
+        },
+        "P1",
+      ),
+    ).toBe("ark:/61903/3:1:REAL-PAGE");
+  });
+
   it("skips a DigitalArtifact whose url is not a 3:1:/3:2: ark", () => {
     expect(
       extractImageArk({

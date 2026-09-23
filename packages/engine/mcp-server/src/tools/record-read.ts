@@ -5,7 +5,8 @@ import { fetchWithRetry } from "../utils/http.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { repIdToStandardPlace } from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
-import { toArk, arkToBareId } from "../utils/ark.js";
+import { toArk, arkToBareId, isDocumentImageArk } from "../utils/ark.js";
+import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
@@ -165,7 +166,7 @@ export async function recordReadTool(
 
   await resolveCoveragePlaces(simplified);
 
-  const imageArk = extractImageArk(simplified);
+  const imageArk = extractImageArk(simplified, entityId);
   // `imageArk` rides on the RESPONSE only — what gets staged below is the
   // record document itself, and readFromSidecar re-extracts the ark from that
   // on the way back out, so the two paths cannot disagree.
@@ -207,15 +208,70 @@ export async function recordReadTool(
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
-// Find the first DigitalArtifact source whose url is a 3:1:/3:2: document-image
-// ARK and return the canonical ark. This surfaces the page-image ark as a named
-// field so the agent does not have to derive one from the record ark.
-export function extractImageArk(doc: SimplifiedGedcomX): string | undefined {
-  for (const sd of doc.sources ?? []) {
-    if (sd.resource_type !== "DigitalArtifact") continue;
-    if (!sd.url) continue;
+// Find the first page-image source whose url is a 3:1:/3:2: document-image ARK
+// and return it. This surfaces the page-image ark as a named field so the agent
+// does not have to derive one from the record ark.
+//
+// `resource_type` is a NEGATIVE filter, not a requirement. A live read carries
+// it (`DigitalArtifact`, or FamilySearch's own `DigitalArtifact#FamilySearch`
+// variant), but a record_search-staged source does not: simplifySourceDescription
+// sets it only when the upstream response carries `resourceType`, and a search
+// response does not — every staged `sd_da1` is a bare `{ id, url }`. Requiring
+// an exact match therefore returned undefined on the SIDECAR path, which is the
+// path the motivating run used for all 8 of its record_read calls. A source that
+// names some other type is still skipped.
+//
+// The url is returned with its image-context params (i=/cc=/groupId=) intact
+// when it has any — 22 of the 538 document-image source urls in the corpus do.
+// Those disambiguate a waypoint ark into a multi-image film, and dropping them
+// can resolve to a neighbouring page with no error at all. image_read and
+// image_transcribe both accept the full URL and fall back to the bare ark.
+//
+// `personId`, when given, is the persona the caller asked for. A record can
+// carry several page-image sources — the corpus holds sd_da2/sd_da3/sd_da4 and
+// one sd_da8 — and in a household spanning two scans the co-resident's entry is
+// not on the first one. Returning document-order "first" would hand that caller
+// a scan its person is not on, and nothing errors: the agent OCRs the wrong page
+// and writes assertions from it. So the persona's OWN source refs are tried
+// first, in its order, and document order is only the fallback for a record
+// whose persons carry no refs.
+export function extractImageArk(
+  doc: SimplifiedGedcomX,
+  personId?: string,
+): string | undefined {
+  const sources = doc.sources ?? [];
+
+  const arkFrom = (sd: (typeof sources)[number]): string | undefined => {
+    if (!sd.url) return undefined;
+    if (
+      sd.resource_type !== undefined &&
+      !sd.resource_type.startsWith("DigitalArtifact")
+    ) {
+      return undefined;
+    }
     const ark = toArk(sd.url);
-    if (/^ark:\/61903\/3:[12]:/.test(ark)) return ark;
+    if (!isDocumentImageArk(ark)) return undefined;
+    return ark + extractImageContextQuery(sd.url);
+  };
+
+  if (personId) {
+    const wanted = arkToBareId(personId);
+    const person = doc.persons?.find(
+      (pp) =>
+        pp.id === wanted ||
+        (typeof pp.ark === "string" && arkToBareId(pp.ark) === wanted),
+    );
+    for (const ref of person?.sources ?? []) {
+      if (!ref.ref) continue;
+      const sd = sources.find((cand) => cand.id === ref.ref);
+      const ark = sd && arkFrom(sd);
+      if (ark) return ark;
+    }
+  }
+
+  for (const sd of sources) {
+    const ark = arkFrom(sd);
+    if (ark) return ark;
   }
   return undefined;
 }
@@ -273,10 +329,12 @@ async function readFromSidecar(
   // record's own normalized places — never resolving an ambiguous place NAME and
   // mis-placing it (see the toSimplified comment above for the observed
   // mis-resolutions).
-  // Best-effort: the search-response GedcomX may not carry DigitalArtifact
-  // sources, so imageArk on the sidecar path may always be absent.
+  // The staged source DOES carry the page-image ark, as a bare `{ id, url }`
+  // with no resource_type (a search response does not set `resourceType`), so
+  // extractImageArk must not require that label — see its comment. This is the
+  // path the motivating run used for all 8 of its record_read calls.
   const staged = match.gedcomx as SimplifiedGedcomX;
-  const imageArk = extractImageArk(staged);
+  const imageArk = extractImageArk(staged, wanted);
   return imageArk ? { ...staged, imageArk } : staged;
 }
 

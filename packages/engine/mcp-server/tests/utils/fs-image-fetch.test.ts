@@ -373,6 +373,68 @@ describe("fetchFsImageBytes — bad-identifier ark guidance", () => {
     );
   });
 
+  // The live 400 this whole guidance exists for carries an EMPTY statusText:
+  // eval/runlogs/e2e/pedro-chaves-spouse records it as "FamilySearch image
+  // fetch failed: 400 " with nothing after the code. Interpolating it blindly
+  // and then appending a sentence produced "400 . The ark ...".
+  it("renders no stray separator when statusText is empty (the live 400 shape)", async () => {
+    mockErrorResponse(400, "");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 400\. The ark /);
+  });
+
+  it("renders no stray separator on a generic empty-statusText failure", async () => {
+    mockErrorResponse(503, "");
+
+    await expect(
+      fetchFsImageBytes("https://familysearch.org/das/v2/dgs:1_2/dist.jpg", undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 503$/);
+  });
+
+  // image_search takes an imageGroupNumber from volume_search and returns
+  // image IDs — it has no way to return an ark, so an agent told to get one
+  // there has nowhere to go.
+  it("does not tell the agent an image ark comes from image_search", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    const err = await fetchFsImageBytes(ARK_URL_31, undefined, LOCAL).catch(
+      (e: unknown) => e as Error
+    );
+    expect(err.message).not.toMatch(/ark comes from .*image_search/);
+    expect(err.message).toMatch(/image_search returns image ids, not arks/);
+    expect(err.message).toMatch(/imageGroupNumber from volume_search/);
+  });
+
+  // A waypoint ark into a multi-image film needs its i=/cc=/groupId= context;
+  // without it FamilySearch may not resolve the document at all. Telling the
+  // agent only to re-fetch the ark loops it through the same bare form.
+  it("names the i=/cc=/groupId= remedy, not just the ark", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/i=\/cc=\/groupId=/);
+  });
+
+  // A memory artifact reaches the fetcher with memoryShape FALSE whenever it
+  // arrives through `ark` rather than `memoryArtifactUrl`: it fails
+  // ARK_PATTERN, so arkToImageUrl resolves the 3:1: ark embedded in its path.
+  // Keying the carve-out on the flag alone missed this arm entirely.
+  it("uses the generic message for a memory artifact URL passed via ark", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg",
+        undefined,
+        LOCAL,
+        false,
+      )
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 404 Not Found$/);
+  });
+
   // A memory artifact URL carries a 3:1: ark of its own — see
   // eval/fixtures/mcp/person-read-flynn-family.json, whose artifact_url is
   // https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg.
