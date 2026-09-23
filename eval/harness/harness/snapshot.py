@@ -138,6 +138,10 @@ def build_snapshot(
       - `packages/engine/plugin/agents/<name>.md` for each `@plugin:<name>`
         reference in the skill's SKILL.md (the agent prompt is part of the
         skill's behavior, so editing it must flip the run log inactive)
+      - `packages/engine/plugin/agents/<skill>.md` when one exists, for an
+        agent-keyed suite whose `test.skill` names an agent rather than a
+        skill directory (issue #1253) — a no-op for every skill-agent pair,
+        whose SKILL.md already names its own agent via `@plugin:`
       - `eval/tests/unit/<skill>/**` (rubric + test files)
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
@@ -168,6 +172,25 @@ def build_snapshot(
             agent_path = repo_root / rel
             if agent_path.is_file():
                 snapshot[rel] = normalize(rel, agent_path.read_bytes())
+
+    # The suite's OWN agent, for an agent-keyed suite (issue #1253). Such a
+    # suite — `eval/tests/unit/<agent>/` with no skill directory, e.g.
+    # `gps-mentor` — reaches its agent through `test.skill` naming the agent
+    # file directly, and there is no SKILL.md for the `@plugin:` scan above to
+    # read. Without this the snapshot omits the very body the suite grades:
+    # editing the agent leaves the run log ACTIVE and its grades are quoted
+    # forward against prose that changed.
+    #
+    # Unconditional rather than gated on "no skill directory", for two reasons.
+    # For the four existing pairs the `@plugin:` scan already embeds this exact
+    # path, so this is a no-op — same key, same bytes, no run log invalidated
+    # and no paid re-run bought. And it keeps the body embedded if a pair's
+    # SKILL.md ever stops naming its own agent, which is precisely what issue
+    # #2738 does when it deletes the thin routers.
+    own_agent_rel = f"packages/engine/plugin/agents/{skill}.md"
+    own_agent_path = repo_root / own_agent_rel
+    if own_agent_path.is_file():
+        snapshot[own_agent_rel] = normalize(own_agent_rel, own_agent_path.read_bytes())
 
     tests_dir = repo_root / "eval" / "tests" / "unit" / skill
     _embed_tree(snapshot, tests_dir, repo_root)

@@ -64,9 +64,9 @@ it, or when it hits something it can't resolve.
 
 The session opens by asking one thing: what you want to find out. Nothing is
 asked about you — every project gets plain-language narration, and every
-subscription site is assumed reachable (a site you mention is recorded and used
-later to break ties between equivalent sources — never as a gate on what gets
-searched). It then records your objective and what you already hold: family
+subscription site is assumed reachable (a site you mention having access to is
+recorded, and used only to warn you when you ask for a site you have no access
+to on file — never as a gate on what gets searched). It then records your objective and what you already hold: family
 papers, prior research, certificates.
 
 If the project starts from an existing online tree, every fact imported

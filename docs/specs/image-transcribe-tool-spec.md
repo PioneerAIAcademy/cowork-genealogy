@@ -572,10 +572,14 @@ route, or ask the user). The field is additive and independent of `truncated`:
 budget-advised read can also be output-cap truncated (the two co-occur).
 
 **Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
-`` `${projectPath ?? "<no-project>"}\0${imageGroup}` ``) holds the distinct `imageId`s seen per group
-per project; the group is the digits before the underscore in the `imageId`. The map
-is process-lifetime and **never persisted**; re-reading an image already in the set
-does not advance the count. `__clearBrowseBudgetForTests` resets it between tests.
+`` `${projectScope(projectPath)}\0${imageGroup}` ``) holds the distinct `imageId`s seen
+per group per project; the group is the digits before the underscore in the `imageId`.
+The scope is the bound store's `projectId` where it has one (patron isolation on the
+shared-process `http.ts` entrypoint — see the shared `projectScope` helper in
+`image-store.ts`, which the truncation cap keys on too), else the normalized
+`projectPath`, else the `<no-project>` sentinel when the LLM passed no `projectPath`.
+The map is process-lifetime and **never persisted**; re-reading an image already in the
+set does not advance the count. `__clearBrowseBudgetForTests` resets it between tests.
 
 **Key by project, not group alone.** The MCP server process outlives one
 conversation (on the desktop `.mcpb` it lives as long as Claude Desktop runs; the
@@ -587,6 +591,24 @@ different `projectPath` starts fresh). What no unit test or `make e2e-run` can
 observe is the intended flip side — that within one live process the count carries
 *across* conversations on the same project — because both start a fresh process; that
 rests on the process-lifetime map and is verified by reading, not by a test.
+
+On the shared-process `http.ts` entrypoint every request presents the *same* anchor
+`projectPath` (`/project`), so the "project" the key isolates is the bound store's
+`projectId`, not the anchor — the same `projectScope` scope the truncation cap keys on
+(§8.6). On the desktop `.mcpb` (one process, one project) that `projectId` is undefined
+and the scope is the normalized `projectPath`; a unit test pins patron isolation under
+a shared-process store binding. **Known limitation — header-less requests share a
+bucket.** A request that presents *no* `X-Genealogy-Project-Id` header binds an
+*unbound* store whose `projectId` is undefined (it does not 400; only a *malformed* id
+does), so two header-less patrons fall back to the same `projectPath`/`<no-project>`
+scope and can advance one another's browse counter. Unlike the truncation cap — whose
+store I/O throws before any cap is recorded, so its identical fallback is never reached
+— `recordBrowseAndCheckBudget` performs no store I/O, so the fallback is genuinely
+reachable here. Accepted, not fixed: any such session is already failing every
+persistence call with the unbound store's instruction message long before it reaches 21
+images in one group, and the consequence is only an advisory field on a *successful*
+read — nothing is refused (the ADR-0011 read-tool carve-out below). A 400 on a missing
+header would change the entrypoint's contract and is out of scope for a cache key.
 
 **Advisory, not a refusal — an ADR-0011 read-tool carve-out.** ADR-0011 lists "an
 advisory instead of a refusal" as a rejected alternative, but that evidence is about
@@ -973,9 +995,10 @@ can add a `true` badge, never a false "verified whole").
   both joins the cap and protects its scan from the sweep. It lives in
   `image-store.ts`, not `image-transcribe.ts`, because both the writer
   (`image_transcribe`) and the reader (`research_append`) already import that
-  module. Process-lifetime and never persisted (as `browseBudgetSeen` is, §5.8), but
-  scoped by the store's `projectId` rather than the `projectPath` `browseBudgetSeen`
-  keys on, so it isolates patrons on the shared-process entrypoint.
+  module. Process-lifetime and never persisted (as `browseBudgetSeen` is, §5.8), and
+  scoped the same way — both now key on the shared `projectScope` helper
+  (`image-store.ts`): the bound store's `projectId` where it has one, else the
+  normalized `projectPath` — so both isolate patrons on the shared-process entrypoint.
 - **Derive (persist side).** In `research_append`'s `prepareOps`, after the
   source-reuse rewrite, every `sources` op is folded with its siblings onto the
   persisted entry to get the `image_filename` the batch actually leaves behind —
