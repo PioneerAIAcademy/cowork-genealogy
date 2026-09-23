@@ -203,6 +203,27 @@ def test_run_kill_uses_the_input_selector_when_one_is_given(monkeypatch):
     assert used == ["by-name"], used
 
 
+def test_the_evidence_block_names_the_call_the_probe_actually_waited_for(monkeypatch):
+    """`figures["kill_on"]` is what a reader of a billed probe run sees. Reporting the
+    bare tool name on a run that selected on the INPUT would say the probe killed a
+    delegation it did not kill."""
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    monkeypatch.setattr(turn, "wait_for_tool_input", lambda *a, **k: "seen")
+    import httpx
+
+    class _Client:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+
+    spec = turn.KillSpec(kill_on="Agent", kill_on_input={"run_in_background": True},
+                         session_id="sess-1")
+    checks, figures = turn.run_kill("http://x", "dsn", 1.0, spec)
+    assert figures["kill_on"] == "Agent(run_in_background=true)", figures
+    assert any("Agent(run_in_background=true)" in name for name, _, _ in checks)
+
+
 def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
     """1c made turns.outcome say HOW a run ended, so the old `== "ok"` literal would have
     failed the resume probe on a run that WORKED. `budget` is the case that makes the

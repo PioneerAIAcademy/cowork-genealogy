@@ -473,7 +473,9 @@ class RecordingConn:
         return self
 
     async def fetchone(self):
-        return {"seq": 1}
+        # Enough for every caller here: begin_turn reads `seq`, has_queued reads
+        # `queued`, turn_active reads `active`, request_stop only checks for a row.
+        return {"seq": 1, "queued": True, "active": True, "stop_requested_at": "now"}
 
     def transaction(self):
         conn = self
@@ -499,6 +501,32 @@ async def _begin(queued: bool) -> RecordingConn:
                      created_at=T0, updated_at=T0)
     await store.begin_turn(row, "hello", queued=queued)
     return conn
+
+
+async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
+    """Both PgStore methods were UNPINNED: every route test drives FakeStore, which
+    re-implements them in Python, so the real bodies could be deleted with the suite
+    green. `request_stop` is the whole of Stop on the server side, and `has_queued` is
+    what tells a reloaded tab a message is still waiting."""
+    conn = RecordingConn()
+    store = app.PgStore("postgresql://unused")
+
+    async def fake_connect():
+        return conn
+
+    store._connect = fake_connect  # type: ignore[method-assign]
+
+    assert await store.has_queued("sess_1") is True  # RecordingConn.fetchone answers truthy
+    assert conn.sql and conn.sql[-1] == " ".join(app.HAS_QUEUED_SQL.split())
+
+    conn.sql.clear()
+    assert await store.request_stop("sess_1") is True
+    [stop_sql] = conn.sql
+    assert "UPDATE sessions" in stop_sql and "stop_requested_at" in stop_sql
+    # COALESCE, so a second press does not move the timestamp the worker is reading.
+    assert "COALESCE(stop_requested_at, now())" in stop_sql, \
+        "the first press wins; a second must change nothing"
+    assert "RETURNING stop_requested_at" in stop_sql, "a missing session must answer False, not silently pass"
 
 
 async def test_the_real_begin_turn_clears_the_stop_flag_only_when_it_enqueues():
