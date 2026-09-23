@@ -20,7 +20,7 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
-    load_skill_frontmatter,
+    load_suite_frontmatter,
 )
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
@@ -223,8 +223,15 @@ async def _run_one_test_async(
         spec.skill,
         rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
     )
-    skill_frontmatter = load_skill_frontmatter(
-        paths.skills_dir / spec.skill / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md
+    # (issue #1253). This dict is handed to every validator, and two of them
+    # read it: `test_tool_allowlist` takes its declared set from here — NOT
+    # from `compute_allowed_tools` — and `test_ownership_table` reads `name`
+    # and SKIPS when it is absent, so leaving this at `{}` would drop ownership
+    # checking for the whole suite silently rather than failing (PR #2782
+    # review).
+    skill_frontmatter = load_suite_frontmatter(
+        spec.skill, paths.skills_dir, agents_dir=DEFAULT_PLUGIN_AGENTS
     )
     # Honor the `model:` field in SKILL.md frontmatter when set (matches
     # Claude Code skill-frontmatter semantics: turn-scoped model override

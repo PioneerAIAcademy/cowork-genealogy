@@ -1,9 +1,10 @@
 """Tests for harness.allowed_tools — per-skill declared-tool computation.
 
 The session grants every registered MCP tool (issue #1748). The declared
-set computed by ``compute_allowed_tools`` is advisory: it feeds the
-``test_tool_allowlist`` validator (which warns but does not gate) and the
-``ValueError`` guard on ``run_skills``. These tests verify the declared
+set computed by ``compute_allowed_tools`` is advisory: it feeds
+``allowed_tools_override`` at the SDK call and the ``ValueError`` guard on
+``run_skills``. It does NOT feed ``test_tool_allowlist``, which builds its own
+set from the frontmatter it is handed (corrected in PR #2782 review). These tests verify the declared
 set is accurate, NOT that it narrows the SDK session.
 """
 
@@ -11,7 +12,12 @@ from pathlib import Path
 
 import pytest
 
-from harness.allowed_tools import compute_allowed_tools
+from harness.allowed_tools import (
+    bare_tool_names,
+    compute_allowed_tools,
+    declared_tools,
+    load_suite_frontmatter,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -604,3 +610,57 @@ def test_unknown_name_with_neither_skill_nor_agent_is_just_the_baseline(tmp_path
     skills, agents = _agent_keyed_repo(tmp_path)
     tools = compute_allowed_tools("not-a-thing", skills, agents_dir=agents)
     assert not [t for t in tools if t.startswith("mcp__")]
+
+
+# ---- load_suite_frontmatter / declared_tools / bare_tool_names (#1253) -----
+
+
+def test_load_suite_frontmatter_prefers_the_skill(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    fm = load_suite_frontmatter("router", skills, agents_dir=agents)
+    assert fm["name"] == "router"
+    assert "allowed-tools" in fm and "tools" not in fm
+
+
+def test_load_suite_frontmatter_falls_back_to_the_agent(tmp_path: Path):
+    """The whole point: an agent-keyed suite has no SKILL.md, so every site
+    resolving one got `{}` and silently lost both the declared tools and
+    `name` — which `test_ownership_table` skips on rather than fails."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    fm = load_suite_frontmatter("gps-mentor", skills, agents_dir=agents)
+    assert fm["name"] == "gps-mentor"
+    assert fm["tools"]
+
+
+def test_load_suite_frontmatter_does_not_fall_back_for_an_empty_skill_block(tmp_path: Path):
+    """Gated on the skill FILE being absent, not on the frontmatter being
+    empty: a skill that declares nothing has said so."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    (skills / "gps-mentor").mkdir(parents=True)
+    (skills / "gps-mentor" / "SKILL.md").write_text(
+        "---\nname: gps-mentor\n---\nbody\n", encoding="utf-8"
+    )
+    fm = load_suite_frontmatter("gps-mentor", skills, agents_dir=agents)
+    assert "tools" not in fm
+
+
+def test_load_suite_frontmatter_unknown_name_is_empty(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert load_suite_frontmatter("not-a-thing", skills, agents_dir=agents) == {}
+
+
+def test_declared_tools_reads_either_spelling():
+    assert declared_tools({"allowed-tools": ["a"]}) == ["a"]
+    assert declared_tools({"tools": ["b"]}) == ["b"]
+    assert declared_tools({}) == []
+
+
+def test_bare_tool_names_reduces_qualified_and_drops_builtins():
+    assert bare_tool_names(["mcp__genealogy__record_read"]) == ["record_read"]
+    assert bare_tool_names(["mcp__remote-devices__Genealogy_Research__record_read"]) == [
+        "record_read"
+    ]
+    assert bare_tool_names(["record_read"]) == ["record_read"]
+    # Built-ins never appear in tool_calls, so comparing against them would
+    # only produce false "undeclared" findings.
+    assert bare_tool_names(["Read", "Glob"]) == []

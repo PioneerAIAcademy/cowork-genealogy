@@ -534,3 +534,72 @@ def test_identifier_report_skips_a_negative_test():
 def test_identifier_report_skips_an_empty_reply():
     with pytest.raises(pytest.skip.Exception):
         check_ids("", POSITIVE)
+
+
+# --- An agent-keyed suite's frontmatter reaches the validators (#1253) ------
+#
+# The orchestrator hands every validator `skill_frontmatter`. Before
+# `load_suite_frontmatter` it resolved `skills/<skill>/SKILL.md` only, so for a
+# suite keyed to an agent it was `{}` — and two validators read it. Neither
+# failed; both degraded quietly, which is why this needs a test rather than a
+# bug report.
+
+import warnings as _warnings_mod  # noqa: E402
+
+from test_universal import test_tool_allowlist as check_tool_allowlist  # noqa: E402
+
+AGENT_FM = {
+    "name": "gps-mentor",
+    "tools": [
+        "mcp__genealogy__research_query",
+        "mcp__remote-devices__Genealogy_Research__research_query",
+        "mcp__Genealogy_Research__research_query",
+    ],
+}
+MCP_CALLS = [{"tool": "mcp__genealogy__research_query"}]
+
+
+def _advisories(fm):
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        check_tool_allowlist(
+            tool_calls=MCP_CALLS, skill_frontmatter=fm, test={"skill": "gps-mentor"}
+        )
+    return [str(w.message) for w in caught]
+
+
+def test_tool_allowlist_reads_an_agents_tools_key():
+    """An agent declares `tools`, qualified; a skill declares `allowed-tools`,
+    bare. Reading only the skill spelling left the declared set empty, so the
+    advisory fired on every test in the suite — and an advisory that always
+    fires teaches its reader to ignore it."""
+    assert _advisories(AGENT_FM) == []
+
+
+def test_tool_allowlist_still_warns_when_nothing_is_declared():
+    """The accept direction: an empty frontmatter is still a real finding."""
+    assert len(_advisories({})) == 1
+
+
+def test_tool_allowlist_still_flags_an_undeclared_call():
+    """Narrowing must not have become blanket permission."""
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        check_tool_allowlist(
+            tool_calls=[{"tool": "mcp__genealogy__tree_edit"}],
+            skill_frontmatter=AGENT_FM,
+            test={"skill": "gps-mentor"},
+        )
+    assert len(caught) == 1
+    assert "not in allowed-tools" in str(caught[0].message)
+
+
+def test_ownership_table_is_not_skipped_for_an_agent_keyed_suite():
+    """`test_ownership_table` reads `skill_frontmatter["name"]` and SKIPS when
+    it is absent, so a `{}` frontmatter dropped ownership checking for the whole
+    suite silently. An agent file carries `name`, so resolving it restores the
+    check — asserted here by the write being REFUSED rather than skipped."""
+    before = research(proof_summaries=[])
+    after = research(proof_summaries=[{"id": "ps_001"}])
+    with pytest.raises(AssertionError):
+        check_research(before, after, AGENT_FM, POSITIVE)

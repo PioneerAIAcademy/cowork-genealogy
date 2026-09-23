@@ -986,6 +986,17 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
 
+    # An agent-keyed suite (issue #1253) is handed the AGENT's frontmatter,
+    # which declares `tools` rather than `allowed-tools`, qualified rather than
+    # bare. Without this the declared set is empty for every test in such a
+    # suite and the advisory below fires unconditionally — and an advisory that
+    # always fires teaches its reader to ignore it. Only when `allowed-tools`
+    # yielded nothing, so no existing skill's set changes.
+    if not declared:
+        from harness.allowed_tools import bare_tool_names
+
+        declared = set(bare_tool_names((skill_frontmatter or {}).get("tools", []) or []))
+
     # Widen with referenced plugin agents' tools (bare MCP names only —
     # built-in tools like Read never appear in tool_calls).
     from harness.allowed_tools import agent_refs_for_skill, load_skill_frontmatter
