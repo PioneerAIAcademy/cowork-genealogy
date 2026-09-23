@@ -4,7 +4,7 @@
     "skill": "person-evidence",
     "name": "Autonomous mode: a weak match is a no-link, not a silent confidence upgrade",
     "type": "positive",
-    "description": "flynn-record-matching, autonomous framing: a_002 (the baptism record) scores 0.05 on same_person AND carries a qualitative conflict (record birthplace Germany vs the subject's consistently-attested Ireland). The threshold policy caps a weak match at speculative + pause-for-user — but in an autonomous run there is no user, and the observed failure mode (wilkins-death-kentucky runs 1/2/3/6) is inflating the confidence and linking anyway (a 0.026-scored death certificate linked at probable put a different person's death in the tree). Guards the new 'Autonomous mode' rule: weak match resolves to NO link + a recorded rejection, never an upgraded link; the score must be disclosed.",
+    "description": "flynn-record-matching, autonomous framing: a_002 (the baptism record) scores 0.05 on same_person AND carries a qualitative conflict (record birthplace Germany vs the subject's consistently-attested Ireland). The threshold policy caps a weak match at speculative + pause-for-user — but in an autonomous run there is no user, and the observed failure mode (wilkins-death-kentucky runs 1/2/3/6) is inflating the confidence and linking anyway (a 0.026-scored death certificate linked at probable put a different person's death in the tree). Guards the 'When nobody can adjudicate, resolve downward' rule: weak match resolves to NO link + a recorded rejection, never an upgraded link; the score must be disclosed.",
     "tags": ["identity", "autonomous", "weak-match", "threshold-policy", "no-link"]
   },
   "input": {

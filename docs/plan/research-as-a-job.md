@@ -19,16 +19,22 @@
 > suppresses the Stop hook dispatch, and whether a SUBAGENT's halts the parent session);
 > and 1d's alpha acceptance.
 >
-> **Two open questions for the lead**, both raised rather than invented:
-> 1. The `question-selection` path the 2026-09-01 ruling does not settle — see S2 below.
-> 2. **`--autonomous` still gates branches in six bodies S2 does not cover**
->    (`search-external-sites`, `question-selection`, `search-records`, `research-plan`,
->    `agents/proof-conclusion.md`, `agents/gps-mentor.md`), and the browser path never
->    sends the flag, so those branches do not fire on a hosted run — most consequentially
->    `search-external-sites`, which then presents a URL and waits for a capture nobody is
->    there to make. Each is a separate paid eval slot, which is why they did not move with
->    the router. No offline suite can see it: the e2e harness and `make proto-demo` both
->    still build `/research --autonomous …`.
+> **Wider than S2, on the lead's call (2026-09-23).** S2 as written covers
+> `research/SKILL.md` only, but the browser never sends `--autonomous`, so every branch
+> gated on it in the other bodies was dead on a hosted run — most consequentially
+> `search-external-sites`, which would present a URL and wait for a capture nobody is
+> there to make. The lead ruled: fold them in. Seven bodies moved beside the router —
+> `search-external-sites`, `question-selection`, `search-records`, `research-plan`,
+> `agents/proof-conclusion.md`, `agents/gps-mentor.md`, `agents/person-evidence.md` — and
+> no plugin body now reads the flag. The worst of them was not flag-shaped at all:
+> `gps-mentor`'s `mode` parameter defaulted to `interactive`, whose rule was to ASK the
+> user, and nothing ever passed the parameter. **That costs seven paid eval runs, not
+> one**, and `check_runlogs.py` names all seven. The instruction and its reasoning are
+> recorded on issue #2292.
+>
+> **One open question for the lead**, raised rather than invented: the
+> `question-selection` path the 2026-09-01 ruling does not settle — see S2 below, and
+> the three candidate mechanisms on issue #2292.
 >
 > **One deviation from the plan as written, and why.** 1b wires `pending_user_message()`
 > into the Stop hook only. It is wired into the `PreToolUse` halt as well, because the

@@ -566,9 +566,13 @@ user message of the form:
 /research --autonomous <researcher_question>
 ```
 
-The `--autonomous` flag instructs the skill body to proceed without
-pausing for the user. No test-mode system prompt is added; the
-e2e test exercises the production code path.
+The harness still sends `--autonomous`, but since the research-as-a-job
+fold-in (2026-09-23) **no plugin body reads it**: proceeding without pausing
+is now what every run does, with or without the string. It is kept in the
+message because it is a listed trigger in `research/SKILL.md`'s description,
+and because removing it would change what every committed run log was
+produced under. No test-mode system prompt is added; the e2e test exercises
+the production code path.
 
 `/research` is specified separately. For the contract that matters
 here:
@@ -578,7 +582,8 @@ here:
   conflict-resolution → proof-conclusion, iterating as needed)
 - It instructs the agent to read `research.json` and decide the
   next sub-skill based on state
-- Under `--autonomous`, it does not pause for clarifying questions
+- It does not pause for clarifying questions, and that no longer depends on
+  the flag
 
 ---
 
