@@ -76,3 +76,9 @@ Bergen baptism naming an "Anna Kathrine Edvardsen" is a different couple, husban
 `record_search`, `person_read`, `source_attachments`, and `image_transcribe`);
 the two Bodø and Leiranger register images were actually examined, and all other
 evidence is indexed. The identity judgement is the genealogist's.
+
+**Independent second opinion — Isaac Boateng** (an independent genealogist; not a
+senior genealogist, and not the adjudicator) independently reviewed the evidence
+and stated: "The evidence strongly indicates that Julius Eilertsen married Anne
+Kathrine Edvardsen on 15 August 1910. The record is an actual marriage record,
+not banns or an engagement."
