@@ -161,7 +161,8 @@ BASELINE_ALLOWED_TOOLS = [
 # records itself); record_person_matches / record_record_matches (keyed
 # off a RECORD the agent already found, not the subject); source_attachments
 # (confirms a found record's attachment — real GPS work); person_warnings
-# (reads the local stripped tree, not the live one).
+# WITHOUT `live` (it then reads the local stripped tree, not the live one —
+# a `live: true` call is blocked below, see LIVE_TREE_ARG_TOOLS).
 #
 # See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
 # `mcp__<server>__` prefix).
@@ -196,15 +197,32 @@ def is_turn_cap_error(detail: str | None) -> bool:
     return "maximum number of turns" in str(detail or "").lower()
 
 
-def is_blocked_tree_tool(tool_name: str) -> bool:
+# Tools that read the live tree only in one MODE, so the bare name cannot decide
+# it. `person_warnings` is local by default and fetches the subject plus their
+# parents, spouses and children from the live tree when called with `live: true`
+# — and each warning carries `personId`, `personName` and `relatedPersonId`, so
+# on a parents fixture the live mode hands back a stripped relative's name and
+# PID. That is the read `person_read` heads BLOCKED_TREE_TOOLS for.
+LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+
+
+def is_blocked_tree_tool(
+    tool_name: str, tool_input: dict[str, Any] | None = None
+) -> bool:
     """Whether a tool call should be denied as a live-tree answer-read.
 
     Only MCP genealogy tools are candidates; baseline tools (Read, Skill,
-    …) are never blocked. Matched on the bare advertised name.
+    …) are never blocked. Matched on the bare advertised name, except for
+    LIVE_TREE_ARG_TOOLS, where the deciding argument is inspected too — pass
+    `tool_input` for those or a live call reads as legitimate research.
     """
     if not tool_name.startswith("mcp__"):
         return False
-    return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
+    bare = _bare_tool_name(tool_name)
+    if bare in BLOCKED_TREE_TOOLS:
+        return True
+    arg = LIVE_TREE_ARG_TOOLS.get(bare)
+    return arg is not None and bool((tool_input or {}).get(arg))
 
 
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
@@ -1876,7 +1894,7 @@ async def _run_agent(
         # call never runs, so it shouldn't consume the budget. The run
         # continues (no stopReason); the agent must find a records path.
         bare = _bare_tool_name(tool_name)
-        if is_blocked_tree_tool(tool_name):
+        if is_blocked_tree_tool(tool_name, dict(input_data.get("tool_input") or {})):
             blocked_tree_reads.append(
                 {
                     "tool": bare,
