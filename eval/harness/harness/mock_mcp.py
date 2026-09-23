@@ -94,9 +94,15 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
-    # Purely local: `person-warnings.ts` holds zero `getValidToken` calls and
-    # computes every tag from the workspace tree, so a live handler is both
-    # possible and more faithful than a canned answer. Live since 2026-09-03
+    # Local by default, and that is the only mode this harness permits: the
+    # default path computes every tag from the workspace tree, so a live
+    # handler is both possible and more faithful than a canned answer. It is
+    # NOT that the tool cannot reach the network -- since #2225 D1 a
+    # `live: true` call fetches from FamilySearch via `personReadTool` and
+    # `getValidToken`. What keeps it safe here is that the compiled-tool
+    # handler REFUSES `live: true` outright (see `_COMPILED_TOOLS_WITH_PRINCIPAL`
+    # below); measured, an unrefused live call really does reach FamilySearch
+    # from a suite whose contract is that it makes none. Live since 2026-09-03
     # (lead ruling on PR #2151): it was fixture-backed, no person-evidence test
     # declared a `person-warnings-*` fixture, so every call in every committed
     # person-evidence run log since August reported the tool missing -- the
