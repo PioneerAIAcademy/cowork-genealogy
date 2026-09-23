@@ -64,8 +64,11 @@ carries only three sources — two 1889 baptisms (`687B-9PF2`, `687Y-T7V9`) and 
 Petrine Elisabeth Edisdatter (`GDJ3-R2L`) has no source behind it. The only
 *sourced* marriage for Julius is the 1910 union with Anne Kathrine. (The impossible
 Julius→Emil Knutsen link, Emil b. 1898, likewise shows the cluster's parent links
-are unvetted.) These are live-tree defects; they were **not** edited as part of
-this adjudication, and the hint was not attached.
+are unvetted — Emil is also attached to Petrine as a parent and carries the
+patronymic Knutsen, so he is most likely Petrine's son from a prior union rather
+than merely a broken link.) These are live-tree defects and supporting context
+only; they do **not** change the TRUE MATCH verdict, they were **not** edited as
+part of this adjudication, and the hint was not attached.
 
 **Searches.** "Norway, Church Books, 1797-1958" marriage 1909–1912 for Julius
 Eilertsen returned the three indexings above; a broad Anne Kathrine Edvardsen
