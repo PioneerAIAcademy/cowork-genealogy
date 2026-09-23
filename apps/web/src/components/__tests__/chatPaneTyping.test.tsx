@@ -124,6 +124,43 @@ describe('1b: a message typed while a turn is running', () => {
   })
 })
 
+describe('1b: a message held for a tab that did not send it', () => {
+  // The per-bubble label covers the tab that typed the message. A reload, or a second
+  // tab, learns it only from these frames -- and without them the feed looks idle while
+  // a message sits waiting. Reverting this handler broke no test until now.
+  it('announces a message held on the server', () => {
+    const { conn } = mount()
+    startTurn(conn)
+    expect(screen.queryByText(/a message is waiting/i)).toBeNull()
+
+    conn.emit({ type: 'status', state: 'turn_queued' })
+    expect(screen.getByText(/a message is waiting/i)).toBeTruthy()
+  })
+
+  it('stops announcing it once the server releases it', () => {
+    const { conn } = mount()
+    startTurn(conn)
+    conn.emit({ type: 'status', state: 'turn_queued' })
+    expect(screen.queryByText(/a message is waiting/i)).toBeTruthy()
+
+    conn.emit({ type: 'status', state: 'turn_unqueued' })
+    expect(screen.queryByText(/a message is waiting/i)).toBeNull()
+  })
+
+  it('does not double up when THIS tab is the one that typed it', () => {
+    const { conn } = mount()
+    startTurn(conn)
+    const box = screen.getByRole('textbox')
+    fireEvent.change(box, { target: { value: 'also the 1881 census' } })
+    fireEvent.keyDown(box, { key: 'Enter' })
+    conn.emit({ type: 'status', state: 'turn_queued' })
+
+    // The bubble already says it. A second, vaguer line would be noise.
+    expect(screen.getByText(/picked up at the next step/i)).toBeTruthy()
+    expect(screen.queryByText(/a message is waiting/i)).toBeNull()
+  })
+})
+
 describe('1b: Send sits beside Stop, it does not replace it', () => {
   it('offers both while a turn runs', () => {
     const { conn } = mount()
