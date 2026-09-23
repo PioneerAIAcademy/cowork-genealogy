@@ -49,8 +49,10 @@ describe("project_context", () => {
             id: "I1",
             gender: "Male",
             names: [
-              { id: "N1", given: "William", surname: "Bottermiller", preferred: true, sources: [{ ref: "S2" }] },
+              // Preferred name second on purpose: at index 0 the assertion below
+              // passes whether or not the code selects on `preferred` (#1389 review).
               { id: "N2", given: "Willie", surname: "Bottermiller" },
+              { id: "N1", given: "William", surname: "Bottermiller", preferred: true, sources: [{ ref: "S2" }] },
             ],
             facts: [
               { id: "F1", type: "Birth", date: "1863", sources: [{ ref: "S1" }] },

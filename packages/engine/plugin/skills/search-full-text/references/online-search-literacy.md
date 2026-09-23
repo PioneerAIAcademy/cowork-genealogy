@@ -22,8 +22,10 @@ Before searching, answer these:
 2. **Is this an index or original records?** FTS searches AI
    transcripts (derivative). The chain is: original → image → AI
    transcript → triage stubs (`highlightTerms`, `names`, etc.).
-3. **What coverage exists?** ~6,665 FTS-searchable collections as of
-   mid-2026. Not all FamilySearch collections are included.
+3. **What coverage exists?** An incomplete subset of FamilySearch's
+   collections, and it grows continuously — the `fulltext_search` tool
+   description carries the current shape. Not all FamilySearch
+   collections are included.
 4. **Known limitations?** English-language records from Americas/UK/
    Australasia are strongest. Non-Latin scripts and continental
    European records have weaker support.

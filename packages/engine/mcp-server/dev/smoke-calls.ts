@@ -348,6 +348,19 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // Live mode, and the ONLY check that the schema still accepts a call with
+    // no projectPath. `required` is ["personId"] alone because projectPath is
+    // conditionally required, which an input schema cannot express — so if it
+    // were re-added, the client would reject this before the tool ran and no
+    // vitest file would notice. A schema rejection does not carry
+    // HOSTED_REAUTH_INSTRUCTION, so `reauth` fails on it rather than passing.
+    // Not `offline`: live mode fetches the person from FamilySearch.
+    tool: "person_warnings",
+    label: "person_warnings live",
+    args: () => ({ personId: "KD96-TV2", live: true }),
+    expect: reauth,
+  },
+  {
     tool: "merge_warnings",
     offline: true,
     args: (ctx) => ({
@@ -431,7 +444,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   // arg validation and before any I/O.
   tokenStep("record_search", { surname: "Smoke" }),
   tokenStep("person_search", { surname: "Smoke", givenName: "Test" }),
-  tokenStep("person_read", { personId: FS_PID }),
+  // `relatives` on purpose: without it the smoke never touches the sibling
+  // fan-out, so the only advertised path with a second wave of requests goes
+  // uncovered. Breaks no rule either way -- the harness asks only that each
+  // advertised tool be called -- but one argument buys the coverage (#2593).
+  tokenStep("person_read", { personId: FS_PID, relatives: true }),
   tokenStep("person_ancestors", { personId: FS_PID }),
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),

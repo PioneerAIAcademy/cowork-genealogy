@@ -20,7 +20,7 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
-    load_skill_frontmatter,
+    load_suite_frontmatter,
 )
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
@@ -198,6 +198,17 @@ async def _run_one_test_async(
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
         validators_dir=paths.validators_dir,
+        # The gate's direct-agent fallback and `_prompt_for` need to resolve
+        # `test.skill` to the same agent file, or a direct test clears the gate
+        # and then dies in `_prompt_for` ~20 turns into a paid run. Nothing
+        # enforces that: `_prompt_for` reads the module-level constant directly,
+        # so the two agree by CONVENTION — this call site passing that same
+        # constant — not by construction. Passed explicitly rather than left to
+        # the default so the convention is visible at the site that upholds it.
+        # `test_direct_gate_resolves_the_same_agent_file_as_prompt_for` pins the
+        # default path only; a caller passing a different `agents_dir` (today,
+        # only a test) is outside it.
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     if not gate.runnable:
         return _aborted_entry(
@@ -212,8 +223,15 @@ async def _run_one_test_async(
         spec.skill,
         rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
     )
-    skill_frontmatter = load_skill_frontmatter(
-        paths.skills_dir / spec.skill / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md
+    # (issue #1253). This dict is handed to every validator, and two of them
+    # read it: `test_tool_allowlist` takes its declared set from here — NOT
+    # from `compute_allowed_tools` — and `test_ownership_table` reads `name`
+    # and SKIPS when it is absent, so leaving this at `{}` would drop ownership
+    # checking for the whole suite silently rather than failing (PR #2782
+    # review).
+    skill_frontmatter = load_suite_frontmatter(
+        spec.skill, paths.skills_dir, agents_dir=DEFAULT_PLUGIN_AGENTS
     )
     # Honor the `model:` field in SKILL.md frontmatter when set (matches
     # Claude Code skill-frontmatter semantics: turn-scoped model override
@@ -341,10 +359,22 @@ def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     canned-response form — see harness/skill_stubs.py for which to pick and why
     (it turns on whether the CALLER reads the result, not on the callee).
 
-    Assert the hand-off with a `skills_invoked` validator; do not leave it to
-    the judge, which reads a transcript and can misread it.
+    Assert the hand-off with a `handoffs` validator; do not leave it to the
+    judge, which reads a transcript and can misread it.
     """
     return parse_stub_skills(spec.execution) or None
+
+
+def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | None:
+    """The `stub_skills` entries to deny when reached by an agent spawn.
+
+    Exactly the entries with no skill directory: a callee converted from a skill
+    to an agent (issue #2825), which the router now spawns rather than loads. A
+    name that is still a skill keeps its `Skill`-call stub only — the paired
+    agents in `route-shortcut-guard.json` rely on their spawn running.
+    """
+    stubbed = parse_stub_skills(spec.execution)
+    return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
 
 
 # Field names inside one `modelUsage` entry, as the CLI emits them.
@@ -480,6 +510,7 @@ async def _execute_single_run(
         model=model,
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
+        stub_agents=_stub_agents(spec, paths.skills_dir),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -879,6 +910,7 @@ async def _execute_skill_with_retry(
     model: str,
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
+    stub_agents: dict[str, str | None] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -967,6 +999,7 @@ async def _execute_skill_with_retry(
                         allowed_tools_override=skill_baseline,
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
+                        stub_agents=stub_agents,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.

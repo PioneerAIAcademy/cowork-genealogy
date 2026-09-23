@@ -354,13 +354,24 @@ is a census named before 1800, which the old whole-note year test (`18[0-7]\d`)
 could not see and which the rule is squarely for -- the 1790-1840 US schedules
 name only the head of household.
 
-The lead rejected a tool-boundary content gate on 2026-08-27 on three grounds
-(recorded in `eval/tests/unit/search-records/whitfield-1850-household.json`):
+The lead rejected a tool-boundary content gate on 2026-08-27 on three grounds:
 a 41% refusal rate, non-generalizability outside the US, and the signal being
-author-supplied and optional. The binding above answers the first two — the rate
+author-supplied and optional. `requirePre1880CensusHedge`'s docstring in
+`research-log-append.ts` carries the second verbatim, with the issue it was
+ruled on. The binding above answers the first two — the rate
 is 5.7% of notes, and non-US censuses that carry the column are excluded. **The
 third stands**: a caller that omits the census year from `notes` is not refused,
 so this narrows a common failure rather than closing a hole.
+
+The same is true of the trigger word, and more broadly. The rule fires on
+`census`, so a note that describes a pre-1880 census household without ever
+using the word is not refused. That is not hypothetical: "1 result returned:
+Amos Whitfield, b. 1817, Georgia, in Pike, Kentucky, 1850. Indexed within the
+Household of Nancy Doss" is a real note, the recorded `ut_search_records_h4k`
+failure in the 2026-09-15 17:48 `search-records` run. Only the eval-plane
+validator `test_pre1880_census_structure_marked_inferred` covers that shape --
+`pre1880-census-hedge.test.ts` pins the plural-only hole deliberately and does
+not pin this one, so nothing in production refuses it.
 
 ---
 
