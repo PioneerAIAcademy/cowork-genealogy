@@ -15,6 +15,7 @@ description: Generates search URLs for external genealogy sites and
   is planning, not execution (use research-plan); or to analyze a single
   record already in context (use record-extraction).
 allowed-tools:
+  - research_query
   - place_search
   - collections_search
   - external_links_search
@@ -71,8 +72,13 @@ References to load when the moment arrives:
 
 1. **Generate** a search URL with pre-filled parameters.
 2. **Click** — the user opens it in their authenticated browser.
-3. **Capture** — the user saves the page as PDF and uploads it.
-4. **Analyze** — you read the PDF, triage results, and hand promising
+3. **Capture** — the user saves the page as PDF and uploads it. If the
+   page content for that URL is **already present in this conversation**,
+   still build the URL with `build_external_search_url` — never hand-compose
+   it — then read that content and go straight to triage (`### 5. Triage the
+   results`): don't ask for a PDF, and don't tell the user a capture is
+   outstanding. One log entry covers it, written at step 6.
+4. **Analyze** — you read the results, triage them, and hand promising
    records to record-extraction.
 
 Repeat for each external-site plan item.
@@ -126,34 +132,16 @@ paper that was never there to find. `locality-guide` output for the place often
 already names the right regional archive; read it before guessing.
 
 **Check access.** Read `researcher_profile.subscriptions` in
-`research.json` — the researcher's access, whether by paid subscription,
-FamilySearch-partnership access, or a library/family-history-centre
-account. Use it as a tie-breaker, never as a gate.
+`research.json`.
 
-| Site | Subscription value |
-|------|-------------------|
-| Ancestry.com | `Ancestry` |
-| MyHeritage.com | `MyHeritage` |
-| FindMyPast.com | `FindMyPast` |
-| FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
-| Newspapers.com | `Newspapers.com` |
-| any of the above | `FamilySearch-Partner`, `LibraryAccess` — may cover it |
-
-`FamilySearch-Partner` and `LibraryAccess` are access *routes*, not
-sites: which sites each unlocks varies by institution and changes. Treat
-neither as access to a named site, and neither as `none`. Generate the
-URL and note the route instead of flagging a paywall the researcher may
-not hit — "a family history centre often carries [SITE]; worth checking
-before you pay." A site the tool reports as `free` or `free_bot_protected`
-needs no subscription and no route — never raise access for it, unless the
+A site the tool reports as `free` or `free_bot_protected` needs no
+subscription — never raise access for it, unless the
 tool's own `notes` say the classification is that site class's default rather
 than a fact about this archive. `digital_newspaper_archive` is the one that
 does: its host comes from you, not the tool, so a paid archive passed there
 is reported `free_bot_protected` too. Relay that note and let the researcher
 check before paying.
 
-- If a plan item is repository-agnostic, prefer a site the researcher
-  has access to — that search is immediately actionable.
 - If the user explicitly names a site they don't have access to on file,
   **generate the URL anyway** and add one line: "You don't have access
   to [SITE] on file — the link will hit a login wall or a
@@ -243,7 +231,14 @@ or census years exist in this `collections_search` result, never in memory.
 
 ### 3. Build the URL
 
-Call `build_external_search_url` to get the URL — never hand-compose one.
+**First, call `research_query` with `section: "conflicts"`.** Do this before
+the `build_external_search_url` call, every time you are about to pass a
+place or date. `project_context` does not return `conflicts[]` and neither
+does the rendered project state, so this call is the only way you can see
+whether a value is disputed — without it you are guessing, and the research
+objective's own text is a value the project may already have rejected.
+
+Then call `build_external_search_url` to get the URL — never hand-compose one.
 It returns `{ ok: true, url, notes, access }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
 blindly or hand-writing a URL.
@@ -292,7 +287,7 @@ build_external_search_url({
 | `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace` (or `marriagePlace`/`deathPlace`/`residencePlace`)/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) — pass that event's place too; the site has one place field, filled birth-first |
 | `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear` | No place parameter |
 | `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` is a plain year or a hyphenated range (`"1880-1905"`) when the exact year isn't known; any other shape is rejected with a note. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
-| `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | `usState` is the state's name or postal abbreviation; the tool emits the working facet form. Pass the plan item's whole `date_range` as the window, never one year of it. On `outside_coverage`, say the page corpus (1798–1963) does not reach that period and route to the state/regional archive for the place or a paid site |
+| `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | `usState` is the state's name or postal abbreviation; the tool emits the working facet form. Pass the plan item's whole `date_range` as the window, never one year of it. On `outside_coverage`, say the page corpus does not reach that period and route to the state/regional archive for the place or a paid site |
 | `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
 | `archives_gov` | `givenName`/`surname`, `keywords` | National Archives Catalog — `keywords` is free text (a record type), not the name. No place parameter: a place passed here is ignored and reported in `notes` |
 | `archive_org` | `givenName`/`surname`/`keywords` | Internet Archive — no structured name/date/place fields; the name is only a free-text term here |
@@ -315,7 +310,9 @@ value it rejected, a site's standing caution — comes back in the response's
 - Unusual name → start broad (surname + place only).
 - Common name → start narrow (add dates, relatives, a specific collection).
 - Include only parameters you're confident about; omit uncertain ones.
-- **Check `conflicts[]` before encoding a place or date.** Consider only
+- **Check `conflicts[]` before encoding a place or date** — fetch them with
+  `research_query` (`section: "conflicts"`); `project_context` does not
+  return them, so without that call you are guessing. Consider only
   `conflict_type: "fact"` entries whose `disputed_attribute` names that
   field. When more than one such entry names the field, apply the
   highest-precedence status present — `unresolved` beats `resolved` beats
@@ -412,6 +409,11 @@ was written. On success the response carries the `logId` it assigned.
 
 Then present the URL, with every note from the tool's response.
 
+**If the results for that URL are already present in this conversation,
+skip this whole step** — no in-flight entry and no capture instructions.
+The search is not awaiting anything: go to step 5, and log it once at step 6
+as the capture that arrived with no file.
+
 ---
 
 **Search: 1850 Census on Ancestry for Patrick Flynn**
@@ -431,9 +433,11 @@ again.
 
 ---
 
-### 5. Triage the captured PDF
+### 5. Triage the results
 
-When the user uploads a PDF, triage formally before any extraction:
+When a capture arrives — an uploaded PDF, or the results-page content
+already present in this conversation — triage formally before any
+extraction. The steps below are the same either way:
 
 1. **List each result** with its key attributes — name, age/birth year,
    location, record type, any visible record ID.
@@ -461,7 +465,9 @@ When the user uploads a PDF, triage formally before any extraction:
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
    open the full record page, then save it as a PDF and upload it." That
-   single-record PDF goes to record-extraction.
+   single-record PDF goes to record-extraction. If the record page's
+   content is **already present in this conversation**, hand that to
+   record-extraction directly and don't ask for a PDF.
 
 Don't send the raw search-results PDF straight to record-extraction — the
 user picks which records are worth examining.
@@ -474,7 +480,11 @@ comes back, append a **new** `research_log_append` entry (never edit the
 in-flight one from step 4) — same `query` params as step 4's call, with
 `externalSite.captureReceived: true` and `externalSite.captureFilename` set to
 the uploaded PDF's filename when a capture arrived (`false` / `null` for a
-no-access wall where none did), and `outcome` chosen from your triage:
+no-access wall where none did), and `outcome` chosen from your triage.
+Results you read **from this conversation** are a capture that arrived with no
+file: `captureReceived: true`, `captureFilename: null`. Never log one as
+`outcome: "partial"` — that outcome is the in-flight URL handoff of step 4,
+which this is not. The outcomes:
 
 - **Results found** → `outcome: "positive"`, `resultsExamined: <n>`;
   `notes` summarize the matches.
@@ -512,6 +522,7 @@ not mark it `completed` for handing over a URL.
 |--------|--------|
 | URL handed over, no capture back yet | `in_progress` |
 | Capture triaged (results, or a captured empty page) | `completed` |
+| Results already in this conversation, read and triaged | `completed` |
 | Capture arrived unusable (login page, truncated) | `in_progress` |
 | User *reports* a nil, no capture | `in_progress` |
 | Site inaccessible **and the user asks to skip it** | `skipped` |

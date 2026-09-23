@@ -143,7 +143,7 @@ describe("person_read + memories", () => {
 
   it("carries the artifact URL, so the retry the note names is reachable", async () => {
     // `url` is the human /memories/<id> page, which image_transcribe refuses.
-    // Without artifactUrl the note said to retry with `memoryArtifactUrl` and the
+    // Without artifact_url the note said to retry with `memoryArtifactUrl` and the
     // response contained no such value anywhere, so following the instruction
     // threw "Unrecognized memoryArtifactUrl".
     const ART = "https://sg30p0.familysearch.org/ark:/xx/dist.jpg?ctx=1";
@@ -154,9 +154,9 @@ describe("person_read + memories", () => {
     })]] });
     const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
     const m = out.sources.find((s) => s.id === "175960782");
-    expect(m?.artifactUrl).toBe(ART);
+    expect(m?.artifact_url).toBe(ART);
     // and it is accepted by the input resolver the note points the agent at
-    expect(isMemoryArtifactUrl(m!.artifactUrl!)).toBe(true);
+    expect(isMemoryArtifactUrl(m!.artifact_url!)).toBe(true);
     // while the page URL it would otherwise have used is not
     expect(isMemoryArtifactUrl(m!.url!)).toBe(false);
   });

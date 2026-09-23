@@ -1973,6 +1973,40 @@ def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
     )
 
 
+def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monkeypatch):
+    """The orchestrator hop of the spawn stub (issue #2825). `_stub_agents` is
+    unit-tested, but only `stub_agents=` at the `_execute_single_run` call site
+    and the retry wrapper carry it to the hook; dropping either left the suite
+    green. `gps-mentor` ships as an agent with no skill directory."""
+    import asyncio
+    import json
+
+    raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
+    raw["execution"] = {"stub_skills": ["gps-mentor", "search-records"]}
+    spec = load_test_from_dict(raw)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-22_10-00-00",
+    ))
+    assert seen.get("stub_agents") == {"gps-mentor": None}
+    assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
+
+
 # --- #2057: a failing validator no longer skips the judge --------------------
 #
 # The gate is in `_execute_single_run`, NOT in `_compute_outcome`. A test that
@@ -2280,3 +2314,69 @@ def test_deterministic_deference_reaches_a_validator_failing_run(tmp_path, monke
         "[deterministic-deference]"
     )
     assert entry["outcome"] == "fail", "the validator failure still decides the outcome"
+
+
+# --- the unmatched_tool_call gate counts the suppressed calls (issue #2740) ---
+
+
+def _gate_result(attempted, suppressed, tool_calls, registered):
+    """A SkillRunResult carrying only what the Type-1 gate reads."""
+    from harness.skill_runner import SkillRunResult
+
+    return SkillRunResult(
+        text_response="",
+        skills_invoked=[],
+        tool_calls=tool_calls,
+        duration_ms=1.0,
+        usage={},
+        attempted_mcp_calls=attempted,
+        suppressed_post_deny_calls=suppressed,
+        registered_mcp_tools=set(registered),
+    )
+
+
+def test_an_unregistered_tool_in_the_suppressed_turn_still_aborts():
+    """A hallucinated tool name in the post-deny turn must not be invisible.
+
+    It is withheld from `attempted_mcp_calls` so it cannot raise an advisory;
+    that must not also make it un-abortable.
+    """
+    from harness import orchestrator as orch
+
+    result = _gate_result(
+        attempted=[],
+        suppressed=[{"tool": "mcp__genealogy__no_such_tool", "args": {}}],
+        tool_calls=[],
+        registered={"research_append"},
+    )
+    orch._apply_unmatched_tool_call_abort(result)
+
+    assert result.aborted_reason == "unmatched_tool_call", (
+        "an unregistered tool named in the suppressed turn went unseen; "
+        f"aborted_reason={result.aborted_reason!r}"
+    )
+
+
+def test_a_matched_suppressed_call_cannot_mask_an_earlier_uncovered_one():
+    """`covered` counts what EXECUTED; the left side must count the same set.
+
+    A post-deny call that executes and matches a fixture raises `covered`. If
+    the left side excludes it, `len(attempted) > covered` goes false and an
+    unregistered call from an EARLIER turn is never scanned for.
+    """
+    from harness import orchestrator as orch
+
+    result = _gate_result(
+        attempted=[{"tool": "mcp__genealogy__no_such_tool", "args": {}}],
+        suppressed=[{"tool": "mcp__genealogy__research_append", "args": {}}],
+        tool_calls=[
+            {"tool": "mcp__genealogy__research_append", "matched": {"kind": "predicate"}}
+        ],
+        registered={"research_append"},
+    )
+    orch._apply_unmatched_tool_call_abort(result)
+
+    assert result.aborted_reason == "unmatched_tool_call", (
+        "an executed, fixture-matching reaction call raised `covered` and "
+        "masked the earlier unregistered call"
+    )
