@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and no pool target covers the lead. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior or by the lead), and logistics (unlabelled, anyone once cleared). Nothing on the board is ever pre-assigned: every item, multi-week structural bets included, is self-served from Ready. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from four criteria it re-derives every run — a soft "take this first" for whoever picks from the menu, never a filing label. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and no pool target covers the lead. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior or by the lead), and logistics (unlabelled, anyone once cleared). Nothing on the board is ever pre-assigned: every item, multi-week structural bets included, is self-served from Ready. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from four criteria it re-derives every run — a soft "take this first" for whoever picks from the menu. The one exception is a card whose body carries a lead's `lead:` high-priority line: that is a ranking input wherever the card sits — promoted first, never swapped out, and it keeps its eval slot. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -117,7 +117,9 @@ Two labels carry the routing:
 Ready *take this before any other card in your lane* — a soft ordering, not an
 interrupt. It is applied only to cards in Ready and is yours alone to add and
 remove: § 5 "Mark the high-priority cards". It is never a filing label, so one
-sitting anywhere but Ready is a hygiene finding, not a ranking input.
+sitting anywhere but Ready is a hygiene finding, not a ranking input — **unless
+its body carries a `lead:` line**, which is the lead's standing order and the
+first thing the ranking reads ("The lead's `lead:` line ranks first").
 
 **The `feedback` label means untriaged, and nothing else.** An issue labelled
 `feedback` is a raw user bug report, filed automatically into the **Feedback**
@@ -434,6 +436,13 @@ milestone's own question:
   (issues #998 / #999 / #1006), halt-on-tool-layer-loss (issue #941), and the
   wiki/pop-stats deployment (issue #290 — the defaults are one developer's
   tailnet and 28–35% of those calls fail, silently thinning locality guidance).
+  **Speed gates Beta too (lead, 2026-09-23):** a non-expert will not wait out a
+  multi-hour run, so work that makes a run faster or cheaper is Beta-gating. Today
+  that is the skill-to-agent conversions (`cluster:pair-conversion`), the
+  model/effort floor searches (`cluster:agent-floor-search`), the baseline-red
+  cards a floor search needs green first (`cluster:baseline-reds`), and every
+  open card those are blocked on. Derive the set from those labels and each
+  card's `Blocked on` lines, not from a list.
 - **Public-launch gate** — *does a stranger's use, at volume and unsupervised,
   break the product or us?* That covers untrusted input reaching a
   write-capable agent, seeing quality for real users rather than fixtures, the
@@ -468,6 +477,23 @@ usually 10–20 of them. Ranking heuristics, in order:
    router sends the wrong question to, an unbounded hunt that burns a two-hour
    cap — these change what the product does. Rank on that, not on effort.
 4. **Everything else.**
+
+### The lead's `lead:` line ranks first
+
+An open card whose body carries `> **High priority (<date>):** lead: <login>` —
+in any column — ranks above heuristics 1–4 and above the critical-path reorder
+below. It is the lead's standing order, not a hint:
+
+- **Promote it first in its lane** whenever it passes Gate 1 (hard blocker) and
+  Gate 2 (open question). A blocked one stays in Backlog; name its blocker in
+  the report, and if that blocker is not itself lead-marked, say so.
+- **At target, it takes the slot of the lowest-ranked card without a `lead:`
+  line**, which goes back to Backlog in the same pass. It never loses a swap.
+- **It keeps its eval slot** against a junior challenger (Gate 4). When two
+  `lead:` cards want one slot, the one the other is blocked on goes first.
+- It still goes through `/review-ready` before promotion, like every card.
+
+Only Richard or Dallan adds or removes the line, by hand; never propose removing it.
 
 ### Critical path beats rank when the slack runs out
 
@@ -658,7 +684,8 @@ column at a time** — Ready, In Progress, or Review. If one is already there, t
 next one is not Ready — leave it in Backlog and name the holder.
 
 **An unstarted `senior` card yields the slot to a junior challenger** — it goes
-back to Backlog. An assigned or in-progress holder of either kind keeps it.
+back to Backlog. An assigned or in-progress holder of either kind keeps it, and
+so does any card carrying a `lead:` high-priority line.
 
 **Only an open issue in one of those three columns holds a slot.** Never test
 "outside Backlog" — that is wrong in both terminal directions, since Done and Not
@@ -879,8 +906,9 @@ of four criteria. Effort is never one.
    same skill, agent or unit-test directory in their `Touches:` line. Read it
    off the slot map already built for Gate 4 — do not run a fresh query.
    Finishing this card is what releases them.
-4. **A lead's call.** Applied by hand by Richard or Dallan, and never proposed
-   for removal here — only by hand.
+4. **A lead's call.** Applied by hand by Richard or Dallan, to a card in any
+   column, and never proposed for removal here — only by hand. It is also the
+   one criterion that ranks: see "The lead's `lead:` line ranks first".
 
 **Every application writes one line into the body**, directly below any
 `> **Reviewed …**` line and above the body proper, naming the criterion and the
@@ -1216,7 +1244,8 @@ list it does not appear in. Add state when it matters.
    proposed additions, each with its criterion and the body line you will write;
    proposed removals, each with the criterion that lapsed or the column it left; and the
    per-lane share from section 1, with the sentence when a lane passes half.
-   `lead:` cards are listed, never proposed for removal. A picker reads the
+   `lead:` cards are listed — including those still in Backlog, each with what
+   blocks it — never proposed for removal. A picker reads the
    label, not this report, so this is the only place the reasoning is visible.
 2. **Splits** — anything you broke in two, and which half is going to Ready. Skip
    the heading if you split nothing.
