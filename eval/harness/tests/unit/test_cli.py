@@ -114,6 +114,106 @@ def test_select_by_multiple_tags_is_and(tmp_path):
     assert ids == ["ut_a_001"]  # only this one has BOTH tags
 
 
+# ---- --runs-per-test override (issue #2816) ------------------------------
+
+
+def test_runs_per_test_defaults_to_none():
+    """Omitted, the flag leaves runs_per_test unset so the loaded (pinned)
+    value stands and nothing about the run changes."""
+    args = run_tests._build_parser().parse_args(["--skill", "skill-a"])
+    assert args.runs_per_test is None
+
+
+def test_runs_per_test_parses_positive():
+    args = run_tests._build_parser().parse_args(
+        ["--skill", "skill-a", "--runs-per-test", "3"]
+    )
+    assert args.runs_per_test == 3
+
+
+@pytest.mark.parametrize("bad", ["0", "-1", "3.5", "abc"])
+def test_runs_per_test_rejects_bad_values(bad):
+    """0, negatives, and non-integers are each rejected (exit 2), not
+    silently ignored — the NaN/typo class that has exited 0 doing nothing."""
+    parser = run_tests._build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--skill", "skill-a", "--runs-per-test", bad])
+
+
+@pytest.mark.parametrize(
+    "extra, want_n, want_scratch",
+    [
+        (["--runs-per-test", "3"], 3, True),  # override -> 3 runs, scratch log
+        ([], 1, False),  # flag omitted -> single run, releasable v{N} log
+    ],
+)
+def test_main_runs_per_test_end_to_end(
+    tmp_path, monkeypatch, extra, want_n, want_scratch
+):
+    """Drive main() end-to-end (not a re-implementation of its logic) and
+    assert the override actually reaches the run and the releasability
+    decision. `seen` captures the runs_per_test the run stub was handed;
+    `names` captures the written run-log filename. This is what catches a
+    deleted override line in main() or a dropped runs_per_test= argument to
+    is_releasable_invocation — a re-implementing test cannot."""
+    from pathlib import Path
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    (skill_dir / "t0.json").write_text(json.dumps({
+        "test": {"id": "ut_a_000", "skill": "skill-a", "name": "n",
+                  "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    seen: list[int] = []
+    names: list[str] = []
+
+    def fake_run(spec, **kwargs):
+        seen.append(spec.runs_per_test)
+        return _stub_log(spec.id, spec.skill, "pass")
+
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
+        names.append(filename)
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}", encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+        *extra,
+    ])
+
+    assert rc == 0
+    assert seen == [want_n]  # the override reached the run
+    assert names and names[0].startswith("scratch_") is want_scratch
+
+
 def _stub_log(test_id, skill, outcome, aborted_reason=None):
     """Return a minimal test ENTRY for exit-code logic tests.
 

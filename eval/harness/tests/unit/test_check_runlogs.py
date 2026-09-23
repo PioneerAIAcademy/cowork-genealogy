@@ -343,6 +343,26 @@ def _make_present_skill(tmp_path, monkeypatch, name: str = "present-skill"):
     return f"packages/engine/plugin/skills/{name}/SKILL.md"
 
 
+def _stage_runlog_dir(tmp_path, monkeypatch, skill="present-skill", candidates=()):
+    """Point RUNLOGS_DIR at a tmp tree and populate `<skill>/` with the given
+    candidate run-log filenames. Rule 7 recomputes the prunable set from the
+    names on disk, so a skill whose deletions must read as a legitimate prune
+    needs its surviving newer candidates staged here. Returns the skill's dir."""
+    runlogs = tmp_path / "runlogs-unit"
+    d = runlogs / skill
+    d.mkdir(parents=True)
+    for name in candidates:
+        (d / name).write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs)
+    return d
+
+
+def _five_newer_candidates() -> list[str]:
+    """Five v1 candidates all newer than 2026-06-01, so a deleted 2026-06-01
+    pair falls outside the keep-newest-5 window and reads as a real prune."""
+    return [f"v1_2026-07-0{i}_00-00-00.json" for i in range(1, 6)]
+
+
 def test_non_exempt_skill_without_runlogs_still_fails(monkeypatch, capsys, tmp_path):
     """The gate still bites for a non-exempt skill with no runlog dir — proof
     the exemption didn't widen into a blanket pass."""
@@ -369,8 +389,14 @@ def test_runlog_modify_or_delete_does_not_touch_skill(monkeypatch, capsys, tmp_p
     """Rewriting or pruning a committed run log is housekeeping, not evidence.
     A run log is not an input to its own snapshot, so a non-AR change under
     eval/runlogs/unit/<skill>/ must not gate rules 2 + 3 — otherwise a rehash
-    or prune sweep fails every skill on drift it did not cause."""
+    or prune sweep fails every skill on drift it did not cause.
+
+    The deleted pair must read as a real prune under rule 7, so the five newer
+    candidates that survive it are staged on disk (before rule 7 this test left
+    RUNLOGS_DIR empty and the lone deletion recomputed to an empty prunable set,
+    which rule 7 correctly flags)."""
     _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=_five_newer_candidates())
     monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
     pruned = [
         "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
@@ -791,16 +817,171 @@ def test_edited_annotation_still_gates_rule3(monkeypatch, capsys, tmp_path):
 
 
 def test_deleted_annotation_does_not_gate(monkeypatch, capsys, tmp_path):
-    """The prune deletes an annotation with its run log; that must stay green."""
+    """A prune drops an annotation ALONGSIDE its run log; that stays green.
+
+    The premise this test carried before rule 7 — deleting a lone `.ann.json`
+    with no run-log deletion — is now exactly the destroy-grading shape rule 7
+    flags (see the next test). A real prune deletes the pair, and only when the
+    keep-newest-5 window has moved past it: the five newer candidates that
+    survive are staged so the deleted 2026-06-01 pair recomputes as prunable."""
     _make_present_skill(tmp_path, monkeypatch)
-    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=_five_newer_candidates())
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
+    ]
     monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
-    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
-    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
 
     rc = check_runlogs.main()
     assert rc == 0
     assert "no run logs" not in capsys.readouterr().out
+
+
+# --- Rule 7: deletion of grading / run logs beyond the prune rule ----------
+#
+# The keep-newest-K set is recomputed from filenames (prunable_candidates over
+# head ∪ deleted candidates), so no frozen baseline is needed. Broken two ways
+# below: drop the recompute and a hand-deletion passes; drop --no-renames (its
+# own argv test) and a rename-masked prune never reaches the rule. Green
+# variants — legit prune, promotion, deleted skill — prove the other direction.
+
+
+def test_rule7_lone_annotation_deletion_blocks(monkeypatch, capsys, tmp_path):
+    """The #2737 core: deleting an `.ann.json` while its run log survives at
+    head destroys committed grading with no prune to justify it — must block."""
+    _make_present_skill(tmp_path, monkeypatch)
+    # The run log survives on disk; only its annotation is deleted.
+    _stage_runlog_dir(
+        tmp_path, monkeypatch, candidates=["v1_2026-07-01_00-00-00.json"]
+    )
+    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [ann])
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "still present" in out
+    assert "v1_2026-07-01_00-00-00.ann.json" in out
+
+
+def test_rule7_2579_shape_blocks(monkeypatch, capsys, tmp_path):
+    """The #2579 incident: a candidate `.json` + `.ann.json` pair deleted while
+    only 4 candidates remain on disk (keep is 5), so the recomputed prunable set
+    is empty and the deletion is a hand-deletion, not a prune."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(
+        tmp_path,
+        monkeypatch,
+        candidates=[f"v1_2026-09-0{i}_00-00-00.json" for i in range(4, 8)],  # 4 left
+    )
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-09-03_11-42-59.json",
+        "eval/runlogs/unit/present-skill/v1_2026-09-03_11-42-59.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "not a keep-newest-5 prune" in out
+    assert "v1_2026-09-03_11-42-59.json" in out
+
+
+def test_rule7_genuine_prune_passes(monkeypatch, capsys, tmp_path):
+    """The oldest candidate beyond the newest 5 deleted with its annotation is a
+    real prune and stays green — the direction a break-the-repo proof can't show."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=_five_newer_candidates())
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+def test_rule7_promotion_passes(monkeypatch, tmp_path):
+    """Promoting a candidate to a release is a rename read as delete(candidate) +
+    add(v{N}.json) under --no-renames. The added release exempts the deleted
+    candidate of the same version — even when it was the only candidate.
+
+    Exercises `rule7_deletions` directly: through `main()` the added `v2.json`
+    would (correctly) trip rules 2/3/6 for its own missing annotation, a
+    different contract than the deletion guard under test."""
+    _make_present_skill(tmp_path, monkeypatch)  # skill dir exists → not skipped
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=["v2.json"])  # only the release left
+    deleted = {
+        "eval/runlogs/unit/present-skill/v2_2026-07-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v2_2026-07-01_00-00-00.ann.json",
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v2.json"]}) == 0
+    # Without the promotion the same deletion is a within-K hand-deletion and
+    # blocks — proof the exemption, not the deleted-skill skip, is what passes it.
+    assert check_runlogs.rule7_deletions(deleted, {}) == 1
+
+
+def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):
+    """A released `v{N}.json` is canonical and never prunable — deleting it (or
+    its annotation) must block."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=["v2_2026-07-01_00-00-00.json"])
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1.json",
+        "eval/runlogs/unit/present-skill/v1.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "canonical" in out
+    assert "v1.json" in out
+
+
+def test_rule7_deleted_skill_skips(monkeypatch, capsys, tmp_path):
+    """A wholly-deleted skill (skill dir AND test dir absent) has nothing left to
+    protect — rule 7 skips it, the same skip rules 2 + 3 apply."""
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests-unit")
+    _stage_runlog_dir(tmp_path, monkeypatch, skill="gone-skill", candidates=[])
+    pruned = [
+        "eval/runlogs/unit/gone-skill/v1.json",
+        "eval/runlogs/unit/gone-skill/v1.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+def test_rule7_deleted_paths_passes_no_renames(monkeypatch):
+    """git_diff_deleted_paths must pass --no-renames, or a prune's delete+add
+    pair is read as a rename and --diff-filter=D omits the deletion entirely —
+    rule 7 (and rule 3's deleted-annotation arm) would then never see it."""
+    monkeypatch.setenv("BASE_SHA", "base123")
+    monkeypatch.setenv("HEAD_SHA", "head456")
+    captured: dict = {}
+
+    def fake_check_output(cmd, *args, **kwargs):
+        captured["cmd"] = cmd
+        return "eval/runlogs/unit/s/v1_2026-06-01_00-00-00.json\n"
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", fake_check_output)
+    paths = check_runlogs.git_diff_deleted_paths()
+    assert paths == ["eval/runlogs/unit/s/v1_2026-06-01_00-00-00.json"]
+    assert "--no-renames" in captured["cmd"]
+    assert "base123...head456" in captured["cmd"]
 
 
 # --- Rule 2 against a schema_version 3 (digest) snapshot -------------------
