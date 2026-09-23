@@ -100,7 +100,8 @@ resolve," not "is not a standard place."
 Source: `packages/engine/mcp-server/src/tools/distance.ts` (exports
 `placeDistanceTool` and `placeDistanceToolSchema`). Schema registered in
 `allToolSchemas` (`src/tool-schemas.ts`), dispatch in `src/server.ts`.
-Smoke test: `dev/try-place-distance.ts`.
+Smoke tests: `dev/try-place-distance.ts`, and a row in
+`dev/smoke-calls.ts` that `make engine-smoke-http` runs.
 
 Tests: `tests/tools/distance.test.ts` — 6 cases covering haversine
 accuracy (London-New York), zero distance (same point), integer rounding,

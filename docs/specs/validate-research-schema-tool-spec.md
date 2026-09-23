@@ -135,5 +135,6 @@ Referenced in: `citation/references/validation-protocol.md`.
 
 Source: `packages/engine/mcp-server/src/tools/validate-research-schema.ts`
 (68 lines). Schema registered in `allToolSchemas`
-(`src/tool-schemas.ts`), dispatch in `src/server.ts`. No smoke test
-script exists for this tool.
+(`src/tool-schemas.ts`), dispatch in `src/server.ts`. No `dev/try-*.ts`
+script exists for this tool; it is smoke-tested by two rows in
+`dev/smoke-calls.ts`, which `make engine-smoke-http` runs.
