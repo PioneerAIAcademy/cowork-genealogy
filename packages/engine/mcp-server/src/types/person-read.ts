@@ -85,7 +85,7 @@ export interface TreeSource {
    * the response. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
    * `TREE_SOURCE_FIELDS`, which is what strips it on the write.
    */
-  artifactUrl?: string;
+  artifact_url?: string;
   notes?: string[];
   /**
    * A memory's text: a story's own words, or OCR of a scan the filter kept.
@@ -118,6 +118,13 @@ export interface PersonReadResult {
   persons: TreePerson[];
   relationships: TreeRelationship[];
   sources: TreeSource[];
+  /** Present ONLY when something was silently dropped from this response.
+   *  Absent on a clean read, so the top-level shape is unchanged for every
+   *  caller that never triggers one. @chesworthrm's merge condition on #2593:
+   *  endpoint closure turns a loud `project_create` refusal into a quiet
+   *  partial loss, and "a quiet partial loss of the subject's own parentage is
+   *  worse than the refusal it replaces if nobody can see it happened." */
+  notes?: string[];
 }
 
 // ─── FS-extended GEDCOMX (raw API response) ───────────────────────────────
