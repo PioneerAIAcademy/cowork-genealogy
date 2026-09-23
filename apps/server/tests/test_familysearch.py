@@ -354,7 +354,7 @@ def test_init_db_removes_stale_allowlist_entries():
 async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
     """When a user is not on the allowlist, _revoke_sandboxes destroys their
     active sandbox sessions and archives only the successfully deleted ones.
-    Allowlisted and API-key users are spared."""
+    Allowlisted users are spared."""
     from unittest.mock import AsyncMock
     from app.main import _revoke_sandboxes
     from app.models import Project
@@ -363,13 +363,9 @@ async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
     monkeypatch.setattr(
         get_settings(), "allowed_emails", "spared-allow@example.com",
     )
-    monkeypatch.setattr(
-        get_settings(), "api_keys", "testkey1:spared-apikey@example.com",
-    )
 
     revoked_email = "revoke-sandbox-test@example.com"
     allowlisted_email = "spared-allow@example.com"
-    apikey_email = "spared-apikey@example.com"
     with TestClient(app):
         with Session(get_engine()) as s:
             user = User(id="usr_revoke_test_01", email=revoked_email)
@@ -394,12 +390,6 @@ async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
                 id="prj_revoke_test_03", user_id=allowed_user.id,
                 sandbox_id="sbx_revoke_test_03", status="active",
             ))
-            apikey_user = User(id="usr_revoke_test_03", email=apikey_email)
-            s.add(apikey_user)
-            s.add(Project(
-                id="prj_revoke_test_04", user_id=apikey_user.id,
-                sandbox_id="sbx_revoke_test_04", status="active",
-            ))
             s.commit()
 
         provider = AsyncMock()
@@ -417,9 +407,6 @@ async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
             spared_allowlisted = s.get(Project, "prj_revoke_test_03")
             assert spared_allowlisted is not None and spared_allowlisted.status == "active", \
                 "allowlisted user's project must survive the sweep"
-            spared_apikey = s.get(Project, "prj_revoke_test_04")
-            assert spared_apikey is not None and spared_apikey.status == "active", \
-                "API-key user's project must survive the sweep"
             assert s.get(FamilySearchToken, "usr_revoke_test_01") is None, \
                 "revoked user's FS token must be deleted"
             revoked_user = s.get(User, "usr_revoke_test_01")
@@ -427,11 +414,9 @@ async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
                 "revoked user's sessions must be invalidated"
             assert s.get(User, "usr_revoke_test_02").sessions_revoked_at is None, \
                 "allowlisted user's sessions must not be invalidated"
-            assert s.get(User, "usr_revoke_test_03").sessions_revoked_at is None, \
-                "API-key user's sessions must not be invalidated"
 
         with Session(get_engine()) as s:
-            for uid in ("usr_revoke_test_01", "usr_revoke_test_02", "usr_revoke_test_03"):
+            for uid in ("usr_revoke_test_01", "usr_revoke_test_02"):
                 u = s.get(User, uid)
                 if u:
                     for p in s.exec(select(Project).where(Project.user_id == uid)).all():

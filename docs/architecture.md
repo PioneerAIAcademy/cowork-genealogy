@@ -1617,10 +1617,9 @@ stale code: `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify
 since a bare `make sandbox-image` rebuilds PRODUCTION's template in place.
 `make deploy` rebuilds the production one as part of the deploy.
 
-**Add a control-plane endpoint.** `apps/server/app/v1.py` for the public REST
-API (see `DEVELOPMENT.md` "Public `/v1` REST API"), `sessions.py` for session
-lifecycle. Run `make server-test`. Keep the control plane out of the streaming
-path.
+**Add a control-plane endpoint.** `sessions.py` — session lifecycle is the
+control plane's REST surface. Run `make server-test`. Keep the control plane out
+of the streaming path.
 
 ---
 

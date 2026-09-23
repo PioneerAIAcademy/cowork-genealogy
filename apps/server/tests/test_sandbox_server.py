@@ -408,8 +408,8 @@ def test_a_spawn_failure_does_not_put_the_raw_exception_in_front_of_the_user(mon
     read verbatim by the user.
 
     `monkeypatch`, not `importlib.reload`: reloading the module rebinds the
-    objects other modules already hold, which leaked into `test_v1_api.py` and
-    reddened six unrelated tests when the two files ran in one session.
+    objects other modules already hold, which leaked across test files and
+    reddened six unrelated tests when two of them ran in one session.
     """
     import app.sandbox_server as ss
     from app.agent.errors import MISCONFIGURED, UNEXPECTED
@@ -479,17 +479,14 @@ def test_a_crashed_runners_synthetic_turn_done_enters_history():
     """The synthetic `turn_done` on agent exit must be RECORDED, not only
     broadcast, or every later reconnect replays an unbalanced `turn_start`.
 
-    Three facts composed into a wedge that persists rather than self-corrects:
+    Two facts composed into a wedge that persists rather than self-corrects:
 
     * `turn_start` is not in `TRANSIENT_KINDS`, so it IS recorded and replayed.
     * `_history` is never cleared, only trimmed at `_HISTORY_MAX` (1000). And
       `_record` trims from the FRONT, so a `turn_start` is always evicted before
-      its own `turn_done` - the survivable orphan is a `turn_done`, which the v1
-      drain already clamps. The crash path was the only producer of the other
-      orphan, and it was the one path that skipped `_record`.
-    * The v1 drain counts `turn_start` as a turn in flight and waits for a
-      `turn_done` that exists nowhere, so it ran to its own ceiling on every
-      later sync call until 1000 events pushed the frame out.
+      its own `turn_done` - a leading orphan `turn_done` is survivable, an
+      orphan `turn_start` is not. The crash path was the only producer of the
+      latter, and it was the one path that skipped `_record`.
 
     `broadcast` does not touch `_record`, which is why "the user saw it" was not
     the same as "history has it".
@@ -520,8 +517,8 @@ def test_a_crashed_runners_synthetic_turn_done_enters_history():
     ]
     assert kinds.count("turn_start") == kinds.count("turn_done"), (
         f"history is unbalanced: {kinds}. A reconnect replays a turn_start whose "
-        f"turn_done exists nowhere, and the v1 drain waits it out to its ceiling "
-        f"on every later call."
+        f"turn_done exists nowhere, so every later client is handed a turn that "
+        f"never closes."
     )
     # And the user still saw it: recording must be in ADDITION to broadcasting.
     assert any(

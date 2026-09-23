@@ -8,10 +8,9 @@ straight to the sandbox. `sandbox_server` spawns `agent_runner` itself on the
 first browser connection, so no host process owns the agent or watches /project.
 
 **`expose_port` is load-bearing — do not delete it.** It is what turns a
-sandbox id into the `wss://` URL the browser dials, and it has two live callers:
-`app/sessions.py` (`POST /api/sessions/{id}/connect`) and `app/v1.py` (the
-device-bridge `/connect` reuse). Both call it on every connect and reconnect,
-not just at create. `LocalProvider` implements the same method for the local
+sandbox id into the `wss://` URL the browser dials, and it has one live caller:
+`app/sessions.py` (`POST /api/sessions/{id}/connect`). It calls it on every
+connect and reconnect, not just at create. `LocalProvider` implements the same method for the local
 dev path.
 
 Verified against the `e2b` SDK (2.x) — Phase 0 findings:
