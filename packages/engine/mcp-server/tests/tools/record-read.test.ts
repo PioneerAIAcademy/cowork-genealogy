@@ -653,28 +653,29 @@ describe("extractImageArk", () => {
 
 // ─── imageArk integration (live path) ────────────────────────────────────
 
+const RECORD_WITH_IMAGE_SOURCE: GedcomX = {
+  persons: [
+    {
+      id: "P1",
+      gender: { type: "http://gedcomx.org/Male" },
+      names: [{ nameForms: [{ fullText: "Pedro Chaves" }] }],
+    },
+  ],
+  sourceDescriptions: [
+    {
+      id: "src_r_1",
+      titles: [{ value: "Buenos Aires Church Records" }],
+      about: "https://www.familysearch.org/ark:/61903/1:2:QJRM-GV8V",
+    },
+    {
+      id: "sd_da1",
+      resourceType: "http://gedcomx.org/DigitalArtifact",
+      about: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+    },
+  ],
+};
+
 describe("recordReadTool — imageArk field", () => {
-  const RECORD_WITH_IMAGE_SOURCE: GedcomX = {
-    persons: [
-      {
-        id: "P1",
-        gender: { type: "http://gedcomx.org/Male" },
-        names: [{ nameForms: [{ fullText: "Pedro Chaves" }] }],
-      },
-    ],
-    sourceDescriptions: [
-      {
-        id: "src_r_1",
-        titles: [{ value: "Buenos Aires Church Records" }],
-        about: "https://www.familysearch.org/ark:/61903/1:2:QJRM-GV8V",
-      },
-      {
-        id: "sd_da1",
-        resourceType: "http://gedcomx.org/DigitalArtifact",
-        about: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
-      },
-    ],
-  };
 
   it("surfaces imageArk when the record has a DigitalArtifact source", async () => {
     mockOk(RECORD_WITH_IMAGE_SOURCE);
@@ -686,5 +687,81 @@ describe("recordReadTool — imageArk field", () => {
     mockOk(MINIMAL_RECORD);
     const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     expect(result.imageArk).toBeUndefined();
+  });
+});
+
+describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-stage-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("stages the live record when projectPath is given, and record_read reads it back from the sidecar", async () => {
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "ark:/61903/1:1:QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.staged).not.toBeNull();
+    expect(live.staged!.returnedCount).toBe(1);
+    expect(live.stagingError).toBeUndefined();
+
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(await readFile(join(dir, live.staged!.resultsRef), "utf8"));
+    expect(envelope.tool).toBe("record_read");
+    expect(envelope.returned_count).toBe(1);
+    expect(envelope.payload.query).toEqual({ recordId: "ark:/61903/1:1:QVS9-DHDB" });
+    expect(envelope.payload.results[0].recordId).toBe("QVS9-DHDB");
+    expect(envelope.payload.results[0].gedcomx.persons?.[0]?.id).toBe("QVS9-DHDB");
+
+    // Sidecar mode finds it by the same id, with no second fetch.
+    const again = await recordReadTool(
+      { recordId: "QVS9-DHDB", resultsRef: live.staged!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(again.persons?.[0]?.id).toBe("QVS9-DHDB");
+    expect(again.staged).toBeUndefined(); // a sidecar read stages nothing
+  });
+
+  it("does not stage without projectPath", async () => {
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
+    expect("staged" in live).toBe(false);
+  });
+
+  it("a staging failure is non-fatal: the record still returns, with staged: null and the reason", async () => {
+    const { writeFile } = await import("fs/promises");
+    await writeFile(join(dir, "results"), "not a directory");
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.persons?.[0]?.id).toBe("QVS9-DHDB");
+    expect(live.staged).toBeNull();
+    expect(live.stagingError).toMatch(/ENOTDIR|not a directory|EEXIST/i);
+  });
+
+  // imageArk and staging were built independently and met at a merge. They ride
+  // on the same return, so a record that has both a DigitalArtifact source and a
+  // projectPath must carry both — and what is STAGED stays the plain document,
+  // since the sidecar path re-derives imageArk on the way back out.
+  it("carries imageArk alongside staged, and stages the document without it", async () => {
+    mockOk(RECORD_WITH_IMAGE_SOURCE);
+    const live = await recordReadTool({ recordId: "P1", projectPath: dir }, LOCAL);
+
+    expect(live.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+    expect(live.staged).not.toBeNull();
+
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(
+      await readFile(join(dir, live.staged!.resultsRef), "utf8"),
+    );
+    expect(envelope.payload.results[0].gedcomx.imageArk).toBeUndefined();
+
+    // ...and the sidecar read re-derives it from the staged document.
+    const again = await recordReadTool(
+      { recordId: "P1", resultsRef: live.staged!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+    expect(again.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
   });
 });
