@@ -494,7 +494,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_token_broker.py
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key.
@@ -516,6 +516,14 @@ proto-turn: $(ENGINE_BUILD) ## D9–10 acceptance: two real turns through web ti
 .PHONY: proto-token
 proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker reads per turn (forced when under 35 min of life is left)
 	@. apps/server/proto/env.sh
+
+# The host token broker: the worker asks it for a FamilySearch bearer at the start of
+# every attempt (FS_TOKEN_URL, set before `up`). A refresh revokes the previous access
+# token, so the only safe refresh moment is attempt start; a turn that outlives the step
+# ceiling otherwise resumes on the token its first attempt read. Foreground; Ctrl-C stops.
+.PHONY: proto-token-broker
+proto-token-broker: $(ENGINE_DEPS) ## Serve the FamilySearch token to the worker per attempt on 127.0.0.1:8790 (then: FS_TOKEN_URL=http://host.docker.internal:8790/token make proto-up)
+	cd apps/server && uv run python proto/token_broker.py $(ARGS)
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
 # place_search call starts, started again, and the shim's redelivery resumes the SDK

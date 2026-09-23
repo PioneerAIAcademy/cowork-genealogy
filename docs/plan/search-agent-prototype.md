@@ -21,6 +21,11 @@ one, no browser); D18's autonomous arm and export built 2026-09-20 (PR #2695;
 D17 run live 2026-09-21 — criteria 3 and 4 pass, criterion 1 FAILS on background agents
 and criterion 2 was never reached, so the run has to be repeated — and the worker's resume
 rule plus the forced token refresh that run cost built the same day (PR #2719);
+D17 re-run twice and probed 2026-09-23 — criterion 1 passes for foreground and main-thread
+kills, criterion 2 failed on a triple write (fixed as a tool precondition, PR #2850) and
+then held, and **background delegations turn out to be lost at every turn end, kill or
+not** — an open decision; the per-attempt token broker and `--background-only` built the
+same day (see D17);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -306,6 +311,17 @@ nowhere to persist that the web tier would see, so: the **web tier owns the gran
 Postgres, refreshes it, and hands the worker a fresh access token per turn. The tool
 server never refreshes — it uses the bearer it is given. That also disposes of
 "the grant expires mid-turn": a turn is minutes, the grant is 8 h idle.
+**Per turn is not enough: mint per ATTEMPT, and never refresh under a live one.** Measured
+2026-09-23: a FamilySearch refresh **revokes the previous access token at once** (token A
+answered `users/current` 200, then 401 three seconds after a forced refresh, while the new
+token answered 200; probed from inside the church network, but revocation is the server's
+act). So a turn redelivered after a ceiling kill must get a token minted after its last
+attempt died — the first attempt's token expires under a two-ceiling turn — and a refresh
+while any attempt holds the old token kills that attempt's FamilySearch calls. The grant
+owner therefore mints at attempt start and serialises refreshes; and one patron with two
+turns in flight at once (two tabs, or the shim's second POST) shares one grant, so a
+refresh for either revokes the other's token. That is R7's problem, not the prototype's
+(`make proto-token-broker`, D17).
 
 **The token must travel with the request, not be looked up from process state.**
 `STORAGE_DIR` is a module-level constant from `os.homedir()`; `getValidToken()` takes
@@ -1493,7 +1509,14 @@ without whichever Bedrock refuses.
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
   **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
-  1. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
+  1. **Since 2026-09-23, run `make proto-token-broker` in its own terminal first and start
+     the stack with `FS_TOKEN_URL=http://host.docker.internal:8790/token`**: the worker then
+     asks the broker for the bearer at the start of every attempt (`proto/token_broker.py`),
+     which is the only protocol that survives a turn longer than the step ceiling — see the
+     Auth section's measured revocation. Never source `proto/env.sh` or run `make
+     proto-token` while a turn is in flight: that refresh revokes the in-flight attempt's
+     token. What follows is the file protocol, still the default without `FS_TOKEN_URL`:
+     `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
      make proto-up` — the harness's tree-read block (the fixture's answer sits in the live
      tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
      key and writes the FamilySearch token, refreshed from the desktop login through
@@ -1564,6 +1587,69 @@ without whichever Bedrock refuses.
   refresh before it was a no-op and the token had eight minutes left, which is why the
   protocol above now starts with `make e2e-login` — so it carries **nothing** about
   research quality, and criterion 1 has to be re-run.
+  **Re-run 2026-09-23, first attempt — VOID** (`sess_8724b92a2b834d21`, bagley, four
+  interactive turns, $7.29 by the `turns` rows). The kill was scripted rather than clicked:
+  `make proto-kill SESSION=… ARGS="--kill-on extraction_append --kill-after-s 5 …"` with
+  `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=60000` on the `tools` service (a compose override),
+  so the worker died 5 s into a held write inside `record-extractor`. **Criterion 1 PASSES,
+  foreground only**: receive 2 resumed the same SDK session in a fresh process, re-delegated
+  (`run_in_background: false`, like every delegation that session) and completed on real
+  work — 5 model turns, $3.74, `list_subkeys` 1 / 2 keys; the resume rule checked the result
+  and did not fire. **Criterion 2 FAILED**: the record was written three times onto one
+  source, 36 assertions under one `log_001`. Copy 1 was the killed attempt's own write —
+  the shared `tools` process never passes the MCP abort signal to a handler, so it
+  committed 56 s after the worker died, after the re-delegated extractor had already read
+  the empty project. Copy 2 was a retry after the CLI's MCP client timed the held call out
+  at 60,013 ms while the server still committed — the hold's fault, and the reason a hold
+  must stay well under 60 s (research-append spec §11.5). Copy 3 was the clean write. Every
+  duplicate batch took §3.4.1's `updated_existing` fold, so the tool knew and appended
+  anyway; **fixed as a writer-tool precondition, research-append spec §3.4.3, PR #2850**
+  (corpus replay: 73 of 145 folding calls refused, all same-pass re-sends). **VOID**
+  because `person-evidence`'s `record_read` got a 401 at 13:11 — caused by the operator
+  sourcing `proto/env.sh` mid-turn at 13:09 to recreate `tools`, a refresh that revoked the
+  attempt's token (inferred then, measured the same afternoon; Auth section). Criteria 3
+  and 4 pass (93 rows, 0 / 0 / 0, longest `Agent` 629 s). Export:
+  `apps/server/proto/exports/proj_bagley-father-1884_22ee97/`.
+  **Re-run 2026-09-23, second attempt — stopped at turn 4** (`sess_3c1bf327eaec41c1`, with
+  PR #2850's guard in the image, a 20 s hold, and the kill armed by the new
+  `--background-only`, which joins each `Agent` row to its transcript `tool_use` and fires
+  only on `run_in_background: true`). Turns 1–3 ($2.11) selected the question, built the
+  locality guide and the plan. **Every delegation was foreground**, so the armed kill never
+  fired. Turn 4 ("execute the plan") outlived the step ceiling **twice**: the shim killed
+  the worker at 15:26:52 and 15:56:52 (`read_timeout`, `killed_worker: true`), both times on
+  the main thread, and each redelivery resumed the session and kept working — attempt 2
+  extracted five records. **Criterion 2 held across both resumes**: 5 sources, 43
+  assertions, no fact written twice across calls, 21 log entries with no search re-run, and
+  the guard correctly silent. But the turn never completed, so criterion 1's "and
+  completes" is not shown for it, and it exposed a token defect: attempt 2 read the bearer
+  at 15:26 and it expired at 15:42, because the file protocol refreshes only between turns.
+  No FamilySearch call came after 15:42 (the attempt worked from staged results), so the
+  run is not void, but the next long turn would be. Stopped by hand at 16:03 on attempt 3;
+  turn 4's three attempts spent ~$8.04 of tokens at Sonnet 4.6 list (984 k cache write,
+  4.1 M cache read, 208 k output), which the row does not carry. Export:
+  `apps/server/proto/exports/proj_bagley-father-1884_012776/`.
+  **Built from that run: the per-attempt token broker** (`make proto-token-broker`,
+  `FS_TOKEN_URL`; step 1 above). Live-checked the same day: `make proto-kill` with the
+  broker forcing a refresh on every ask — two asks (attempt 1, attempt 2), each revoking
+  the token before it, and the resumed `place_search` answered with the bearer: 9/9.
+  **Probe 2026-09-23 — background delegations are lost at EVERY turn end**
+  (`sess_74022a6fe88241a6`, a fresh bagley seed). The message asked `/record-extraction` to
+  delegate two named records "with `run_in_background: true`"; it did: both `Agent` calls
+  returned in 8 and 10 ms, one extractor reached `project_context`, and the main thread
+  closed with "Both extraction agents are running in the background. I'll present each
+  agent's closing summary for you as they complete." — then `turn_done`, 70 s in,
+  `receive_count` 1, **no `task_done`, 0 sources, 0 assertions**. No kill was involved:
+  the worker takes the main thread's `ResultMessage` as the turn and closes the CLI, and
+  the background agents die with it. The 2026-09-21 zero-turn synthetic result is the same
+  loss observed after a kill; the resume rule re-queries only a redelivery, and a turn that
+  ends normally is never redelivered, so it cannot reach this case. **Open decision:**
+  either keep the SDK client open after a `ResultMessage` while any `task_started` has no
+  `task_done` (so the CLI can deliver the completion notification inside the same turn and
+  ceiling), or force delegations to the foreground with the worker's `PreToolUse` hook —
+  which keeps parallelism, since several foreground `Agent` calls in one message already
+  run concurrently (six `image-reader`s did in the second re-run). Until one lands,
+  criterion 1 cannot pass for background agents and a patron can be told work is running
+  that never will. Export: `apps/server/proto/exports/proj_bagley-father-1884_5021d9/`.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
