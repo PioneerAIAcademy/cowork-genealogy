@@ -153,7 +153,10 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
   ["record_search", 14947],
-  ["person_search", 5292],
+  // 5292 -> 5302: the tool-level description gained "siblings, " when the
+  // sibling fan-out landed (#2593). Measured independently (1251 tool-level +
+  // 4051 params), not copied from the failure message.
+  ["person_search", 5302],
 ];
 
 /**

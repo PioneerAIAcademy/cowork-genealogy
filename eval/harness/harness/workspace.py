@@ -207,14 +207,14 @@ def snapshot_files(workspace: Path) -> dict[str, Any]:
     if research.exists():
         try:
             snap["research_json"] = json.loads(research.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             snap["research_json"] = None
 
     tree = workspace / "tree.gedcomx.json"
     if tree.exists():
         try:
             snap["tree_gedcomx_json"] = json.loads(tree.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             snap["tree_gedcomx_json"] = None
 
     for path in workspace.rglob("*"):

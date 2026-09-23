@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { createFixtureSync } from './tests/e2e/create-fixture';
 
 /**
  * Playwright config for the eval CRUD UI.
@@ -6,9 +7,18 @@ import { defineConfig, devices } from '@playwright/test';
  * Tests live in `tests/e2e/`. The webServer block boots `npm run dev`
  * automatically when running locally; CI can set PLAYWRIGHT_WEB_SERVER=0
  * to skip if the server is already running.
+ *
+ * A temp fixture tree is created at config load time (before the web
+ * server starts) so the server reads from isolated test data, not from
+ * the repository's real eval/ directory.
  */
+if (!process.env.EVAL_DIR) {
+  process.env.EVAL_DIR = createFixtureSync();
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
+  globalTeardown: './tests/e2e/global-teardown.ts',
   fullyParallel: false,
   retries: 0,
   workers: 1,

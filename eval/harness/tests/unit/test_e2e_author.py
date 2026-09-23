@@ -823,6 +823,53 @@ def test_strip_none_refuses_to_mix_with_selectors(fixtures_root, tree, capsys):
     assert "--none means nothing is stripped" in capsys.readouterr().err
 
 
+def _strip_lint_fixture(fixtures_root, slug, tree):
+    """A fixture `strip` can lint, with NO fixture.json — the first-strip state.
+
+    `test_strip_none_writes_the_snapshot_verbatim` covers the same shape with a
+    non-colliding finding, so no suspect is raised and the advice is never
+    printed. The finding here overlaps a tree person on purpose.
+    """
+    fixture_dir = fixtures_root / slug
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    (fixture_dir / "expected-findings.json").write_text(
+        json.dumps({"findings": [_finding("f1", "Robert Smith")]}), encoding="utf-8"
+    )
+    return fixture_dir
+
+
+def test_strip_none_wires_record_hint_advice_with_no_fixture_json(
+    fixtures_root, tree, capsys
+):
+    """`cmd_strip`'s call site, on the path an author actually reaches first.
+
+    `fixture_genre()` returns "strip" WITHOUT raising when fixture.json is
+    absent, so deciding the genre through it — even inside a try/except — hands
+    a `--none` author the strip wording the genre forbids. Dropping the third
+    argument here left the three suites green at 367 passed (#2306 review).
+    """
+    _strip_lint_fixture(fixtures_root, "rhstrip", tree)
+    assert author.main(["strip", "--slug", "rhstrip", "--none"]) == 0
+    err = capsys.readouterr().err
+    assert "edit either tree" in err
+    assert "delete that person" not in err
+
+
+def test_strip_prints_strip_advice_when_something_is_stripped(
+    fixtures_root, tree, capsys
+):
+    """The other direction: a call site hardcoding record-hint wording, or one
+    that reads `--none` and never consults the genre, passes the test above."""
+    _strip_lint_fixture(fixtures_root, "ststrip", tree)
+    assert author.main(["strip", "--slug", "ststrip", "--persons", "M4TT-2BC"]) == 0
+    err = capsys.readouterr().err
+    assert "delete that person" in err
+    assert "edit either tree" not in err
+
+
 def test_scaffold_writes_the_genre(fixtures_root):
     args = [
         "scaffold", "--slug", "rh3", "--name", "RH3", "--pid", "KNDX-MKG",
@@ -842,6 +889,42 @@ def test_scaffold_writes_the_genre(fixtures_root):
         (fixtures_root / "rh3b" / "fixture.json").read_text(encoding="utf-8")
     )
     assert meta["genre"] == "strip"
+
+
+def test_validate_wires_the_genre_into_the_advice_it_prints(fixtures_root, tree, capsys):
+    """`author validate`'s own wiring, not just `format_suspect`'s branch.
+
+    `validate_fixture`'s call site is pinned by
+    `test_cli_wires_the_fixture_genre_into_the_advice_it_prints`; author.py's
+    two call sites were not. Dropping the third argument at both left the whole
+    unit suite green at 4110 passed while this CLI told record-hint reviewers
+    to edit `starting-tree.gedcomx.json` — the advice the genre forbids, and
+    the defect this PR exists to fix (#2306 review).
+    """
+    findings = {"findings": [_finding("f1", "Robert Smith")]}
+    _write_record_hint_fixture(fixtures_root, "rhgenre", tree, findings=findings)
+    assert author.main(["validate", "--slug", "rhgenre"]) == 0
+    err = capsys.readouterr().err
+    # Two record-hint phrasings exist ("**Do not edit either tree**" and
+    # "**Do not delete the person and do not edit either tree.**"); match the
+    # half both share.
+    assert "edit either tree" in err
+    assert "Remove it from starting-tree.gedcomx.json" not in err
+
+
+def test_validate_still_prints_strip_advice_for_a_strip_fixture(
+    fixtures_root, tree, capsys
+):
+    """The other direction: a call site hardcoding record-hint wording, or a
+    genre lookup that swallowed every fixture, passes the test above."""
+    findings = {"findings": [_finding("f1", "Robert Smith")]}
+    _write_record_hint_fixture(
+        fixtures_root, "stgenre", tree, findings=findings, genre="strip"
+    )
+    author.main(["validate", "--slug", "stgenre"])
+    err = capsys.readouterr().err
+    assert "starting-tree.gedcomx.json" in err
+    assert "edit either tree" not in err
 
 
 def test_validate_record_hint_skips_the_presence_mirror(fixtures_root, tree, capsys):

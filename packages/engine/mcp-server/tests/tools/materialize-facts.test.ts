@@ -35,7 +35,7 @@ function assertion(id: string, over: Record<string, unknown> = {}) {
     information_quality: "primary" as const,
     informant: "unknown",
     informant_proximity: "official_duty" as const,
-    evidence_type: "direct" as const,
+    record_basis: "stated" as const,
     extracted_for_question_ids: [] as string[],
     ...over,
   };
@@ -370,7 +370,7 @@ describe("materialize_facts", () => {
       research({
         sources: [S1],
         assertions: [
-          assertion("a_001", { record_id: "REC10", record_role: "principal", fact_type: "birth", date: "1855", evidence_type: "indirect" }),
+          assertion("a_001", { record_id: "REC10", record_role: "principal", fact_type: "birth", date: "1855", record_basis: "inferred" }),
         ],
       }),
     );
@@ -441,7 +441,7 @@ describe("materialize_facts", () => {
             fact_type: "residence",
             place: "Schuylkill, Pennsylvania, United States",
             value: "expected but absent from the 1870 census",
-            evidence_type: "negative",
+            record_basis: "absent",
           }),
         ],
       }),
@@ -1221,7 +1221,7 @@ describe("materialize_facts", () => {
             record_id: "REC-DEATH",
             record_role: "deceased",
             fact_type: "relationship",
-            evidence_type: "negative",
+            record_basis: "absent",
             value: "Father: not recorded (informant reported 'unknown')",
           }),
         ],
@@ -2027,7 +2027,7 @@ describe("materialize_facts", () => {
       // Negative evidence is not a positive tree write (§7.1 (4)).
       ["negative evidence", [
         assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
-        assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1839", evidence_type: "negative" }),
+        assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1839", record_basis: "absent" }),
       ]],
     ];
     for (const [label, assertions] of cases) {

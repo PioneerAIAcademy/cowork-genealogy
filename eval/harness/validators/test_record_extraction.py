@@ -99,10 +99,10 @@ def test_new_assertions_have_required_classification(before_state, after_state):
     Per research-schema-spec.md §5.6, every assertion requires:
       - information_quality (primary | secondary | indeterminate)
       - informant_proximity (self, witness, household_member, ...)
-      - evidence_type (direct | indirect | negative)
+      - record_basis (stated | inferred | absent)
 
     Missing these silently breaks downstream skills (conflict-resolution
-    weighs by informant_proximity; proof-conclusion needs evidence_type).
+    weighs by informant_proximity; proof-conclusion needs record_basis).
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -116,7 +116,7 @@ def test_new_assertions_have_required_classification(before_state, after_state):
         if a.get("id") in before_ids:
             continue
         aid = a.get("id", "?")
-        for field in ("information_quality", "informant_proximity", "evidence_type"):
+        for field in ("information_quality", "informant_proximity", "record_basis"):
             if not a.get(field):
                 errors.append(f"assertions[{aid}]: missing {field}")
 
@@ -158,7 +158,7 @@ def _attribute_matches(assertion, attribute):
     `place` set; a computed birth year is a `birth` assertion with the `date`
     set. When a matcher declares `attribute: "place"` (or `"date"`), only
     assertions with that attribute populated match — so a `birth` place-claim
-    (`direct`) and a `birth` date-claim (`indirect`) stay independently
+    (`stated`) and a `birth` date-claim (`inferred`) stay independently
     checkable even though they now share the `birth` fact_type. No `attribute`
     on the matcher → no facet constraint (matches regardless of population)."""
     if not attribute:
@@ -231,7 +231,7 @@ def test_expected_classifications(before_state, after_state, test):
     Gated on the test JSON's optional top-level `expected_classifications`
     block (threaded into `test` by the orchestrator; see
     unit-test-spec.md §5.10). Each matcher names a (record_role, fact_type)
-    pair plus expected values for any of `evidence_type`,
+    pair plus expected values for any of `record_basis`,
     `informant_proximity`, `information_quality`. Semantics:
 
       1. At least one NEW-OR-UPDATED assertion (created by this run, or an
@@ -249,7 +249,7 @@ def test_expected_classifications(before_state, after_state, test):
 
     record_role / fact_type matching is normalized (see the helpers above)
     because both are open, model-chosen strings; the classification values
-    themselves (`evidence_type`, `informant_proximity`,
+    themselves (`record_basis`, `informant_proximity`,
     `information_quality`) are closed enums and compare exactly. Failure
     messages always show the ORIGINAL strings, not the normalized forms.
 
@@ -276,7 +276,7 @@ def test_expected_classifications(before_state, after_state, test):
     ]
 
     classification_fields = (
-        "evidence_type",
+        "record_basis",
         "informant_proximity",
         "information_quality",
     )
@@ -399,11 +399,11 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
 
         {"fact_type": "birth", "value": "born about 1845, Ohio",
          "place": "Ohio, United States", "date": null,
-         "evidence_type": "direct"}
+         "record_basis": "stated"}
 
-    has put TWO facts in one assertion. The birthplace is `direct` (stated)
-    while a year derived from a stated age is `indirect`, so one assertion
-    cannot carry a correct `evidence_type` for both — and every structured
+    has put TWO facts in one assertion. The birthplace is `stated` (stated)
+    while a year derived from a stated age is `inferred`, so one assertion
+    cannot carry a correct `record_basis` for both — and every structured
     matcher is blind to it, because the year lives in free text where
     `expected_classifications` never looks (ut_022 scored a false pass on
     `Assertion atomicity` eight times over).
@@ -420,7 +420,7 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
        year in its `date`.** This is the ut_028 case, and it is why the
        first exemption alone is not enough: the run persists TWO atomic
        assertions per party — `place='Cincinnati, Ohio'` / `date=None`
-       (`direct`) beside `date='~1887'` / `place=None` (`indirect`) — so
+       (`stated`) beside `date='~1887'` / `place=None` (`inferred`) — so
        atomicity is correct and only the place assertion's human-readable
        label is redundant. The year is not smuggled; it is stated twice.
        Failing that shape reddens a structurally-correct extraction.
@@ -477,7 +477,7 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     for a in new:
         if not _fact_type_matches(a.get("fact_type"), "birth"):
             continue
-        if a.get("evidence_type") != "direct":
+        if a.get("record_basis") != "stated":
             continue
         if not (a.get("place") or a.get("standard_place")):
             continue
@@ -566,18 +566,68 @@ _RELATION_CATEGORY = {
     "brother": "sibling", "sister": "sibling", "sibling": "sibling",
 }
 
-_RELATION_WORD_IN_VALUE = re.compile(
-    r"\b(" + "|".join(_RELATION_CATEGORY) + r")\b", re.IGNORECASE
+# WHERE the relation word sits decides whose role it names, and a rule that
+# ignores position was wrong on 22 of the 37 it flagged over the e2e run
+# logs (27 of 47 over the full population that
+# `scripts/measure_relationship_direction.py --counterfactual` reports). `child of Jim Neal` states the SUBJECT's own role.
+#
+# A value LABELS the other party in two shapes that need different patterns,
+# and an earlier single pattern spanning `[^,]*?` was wrong in BOTH directions:
+# a stray `[KEY:` colon suppressed real sibling refusals, and one comma in
+# `Father of the groom, named as X` made it miss and wrongly refuse.
+#
+# Only ONE label guard is needed, and this is it. A label with no ` of `
+# -- `father: Jan Roelfs`, `father named as Casper` -- never reaches here:
+# `_STATES_SUBJECT_ROLE` requires ` of `, so those are already skipped.
+# A second guard for them was written, measured against the corpus, found
+# to change nothing, and deleted; do not add it back.
+#
+# By role: `Father of groom named as Tellef`. The party being named is
+# identified by ROLE -- a bare lowercase word -- so it is the other party. A
+# CAPITALISED token there is a name, which means the value states the
+# subject's own tie to that person and must not be skipped:
+# `sibling of Lucas G. Witbeck (named as one of Gerrit Witbeck's children)` is
+# a real refusal, and the loose pattern used to swallow it.
+_LABELS_BY_ROLE = re.compile(
+    r"^\s*(?:the\s+)?(?:" + "|".join(_RELATION_CATEGORY) + r")\s+of\s+"
+    r"(?:the\s+)?(\w+)[\s,]*(?::|\s+named\b)",
+    re.IGNORECASE,
+)
+_STATES_SUBJECT_ROLE = re.compile(
+    r"^\s*(?:the\s+)?(" + "|".join(_RELATION_CATEGORY) + r")\s+of\s+",
+    re.IGNORECASE,
 )
 
 
 def _relationship_category(relationship_type):
     """Category for a `relationship_type`, ignoring an `_inferred` suffix.
-    Returns None for a spelling this table does not know (`stepfather`,
-    `father_in_law`, …) so the check SKIPS rather than guesses — an unknown
-    type is not evidence of disagreement."""
-    base = str(relationship_type or "").lower().replace("_inferred", "").strip()
+    Returns None for a spelling this table does not know (`grandparent`, `ParentChild`,
+    `administrator` — the commonest in the corpus; `ward` and `grandchild`
+    follow) so the check SKIPS
+    rather than guesses: an unknown type is not evidence of disagreement."""
+    # Anchored, and one suffix only -- see the note on the TypeScript
+    # mirror: `str.replace` strips every occurrence here and only the
+    # first there, so a doubled suffix used to mean different things.
+    base = re.sub(r"_inferred$", "", str(relationship_type or "").lower().strip())
     return _RELATION_CATEGORY.get(base)
+
+
+def _subject_role_in_value(value):
+    """The category the VALUE claims for the record subject, or None.
+
+    None means the value does not speak to the subject's own role -- either
+    label shape, an unknown spelling, or prose naming no relation -- and the
+    caller must skip rather than guess.
+    """
+    m = _LABELS_BY_ROLE.match(value)
+    # A lowercase ASCII token is a role word, not a name. Must stay an
+    # explicit class, never .islower(): that is False for a token with no
+    # case (`2`) where the TypeScript mirror's `=== toLowerCase()` is
+    # true, and the two disagreed in both directions before this.
+    if m and re.fullmatch(r"[a-z]+", m.group(1)):
+        return None
+    m = _STATES_SUBJECT_ROLE.match(value)
+    return _RELATION_CATEGORY.get(m.group(1).lower()) if m else None
 
 
 def test_relationship_type_agrees_with_its_value(before_state, after_state):
@@ -593,17 +643,21 @@ def test_relationship_type_agrees_with_its_value(before_state, after_state):
       direction inversion  rt=parent  value='child of Louise Becker'
 
     This is the most dangerous classification defect of its family because the
-    two layers disagree SILENTLY. Downstream materialisation reads
-    `structured_value`, so a wrong `relationship_type` writes a wrong family
-    edge into the tree — or one pointing the wrong way — while the assertion
-    still reads correctly to a human checking `value`. The LLM judge reads the
+    two layers disagree SILENTLY. NOTHING in the engine reads
+    `structured_value.relationship_type` today — `materialize-facts.ts`
+    skips `relationship` fact types entirely and reads only
+    `related_person_role` — so the wrong value sits in `research.json`
+    reading perfectly to a human checking `value`, and bites whoever reads
+    the machine-readable layer later. A latent defect, not an inert one:
+    the correlation skills are written against this field. The LLM judge reads the
     prose and passes it; a `value`-only matcher passes it too. Nothing else in
     the harness looks at both fields at once.
 
     Compared by CATEGORY (parent / child / spouse / sibling), so `spouse` beside
-    "wife of …" agrees. A value naming several relations passes if the type
-    matches any of them, and a value naming none is skipped — there is nothing
-    to disagree with.
+    "wife of …" agrees. Only the value's OPENING claim is compared, so a
+    second relation named later ("child of Thomas Flynn and brother of Mary")
+    does not contradict it; a value naming none is skipped — there is
+    nothing to disagree with.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -623,19 +677,19 @@ def test_relationship_type_agrees_with_its_value(before_state, after_state):
         want = _relationship_category(rel_type)
         if not want or not value:
             continue
-        found = {
-            _RELATION_CATEGORY[w.lower()]
-            for w in _RELATION_WORD_IN_VALUE.findall(value)
-        }
-        if found and want not in found:
+        states = _subject_role_in_value(value)
+        if states and want != states:
             errors.append(
                 f"assertions[{a.get('id', '?')}] (record_role="
                 f"'{a.get('record_role')}'): relationship_type="
                 f"{rel_type!r} is a {want} relation, but value={value!r} "
-                f"states a {'/'.join(sorted(found))} relation. The two layers "
-                f"must agree — materialisation reads structured_value, so this "
-                f"writes the wrong family edge (or the right one backwards) "
-                f"while the value still reads correctly"
+                f"states the subject is a {states}. `relationship_type` is "
+                f"the record subject's OWN role and `related_person_role` is "
+                f"the other party's, so the two layers must agree. Nothing "
+                f"reads structured_value.relationship_type today, so this "
+                f"is silent: the value still reads correctly to a human, "
+                f"and whoever reads the machine-readable layer later gets "
+                f"the wrong family edge, or the right one backwards"
             )
 
     assert not errors, (
@@ -729,12 +783,12 @@ def test_new_assertions_attached_to_record_role(before_state, after_state):
 
 
 def test_negative_evidence_uses_absent_role(before_state, after_state):
-    """Assertions with evidence_type='negative' must have record_role='absent'.
+    """Assertions with record_basis='absent' must have record_role='absent'.
 
     Per research-schema-spec.md §5.6 negative-evidence convention:
     when the absence of information is the finding, the role is `absent`
     and the value describes what was expected. Catches the common
-    mistake of using evidence_type='negative' on a regular role.
+    mistake of using record_basis='absent' on a regular role.
     """
     after = after_state.get("research_json")
     if after is None:
@@ -742,9 +796,9 @@ def test_negative_evidence_uses_absent_role(before_state, after_state):
 
     errors = []
     for a in after.get("assertions", []):
-        if a.get("evidence_type") == "negative" and a.get("record_role") != "absent":
+        if a.get("record_basis") == "absent" and a.get("record_role") != "absent":
             errors.append(
-                f"assertions[{a.get('id')}]: evidence_type=negative but "
+                f"assertions[{a.get('id')}]: record_basis=absent but "
                 f"record_role='{a.get('record_role')}' (expected 'absent')"
             )
 
@@ -813,7 +867,7 @@ def test_pre_1880_census_creates_no_relationship_assertions(
     before_state, after_state, test
 ):
     """A pre-1880 census extraction must create NO parent-child or spousal
-    relationship assertions — in any form, including `indirect` /
+    relationship assertions — in any form, including `inferred` /
     `_inferred`.
 
     The ruling this enforces is recorded on issue #1626 — quoted in full, with
@@ -860,9 +914,9 @@ def test_pre_1880_census_creates_no_relationship_assertions(
         errors.append(
             f"assertions[{a.get('id')}] (record_role="
             f"'{a.get('record_role')}', relationship_type='{rel_type}', "
-            f"evidence_type='{a.get('evidence_type')}'): a pre-1880 census "
+            f"record_basis='{a.get('record_basis')}'): a pre-1880 census "
             f"has no relationship column, so no relationship assertion may "
-            f"be written — not even `indirect`/`_inferred`. Record the "
+            f"be written — not even `inferred`/`_inferred`. Record the "
             f"people and their co-residence; the family links are "
             f"downstream correlation's to infer"
         )
@@ -877,7 +931,7 @@ def test_negative_evidence_assertion_created(
     before_state, after_state, test
 ):
     """For negative-evidence scenarios, the skill must create at least
-    one NEW assertion with `evidence_type: \"negative\"` and
+    one NEW assertion with `record_basis: \"absent\"` and
     `record_role: \"absent\"`. Otherwise the absence wasn't recorded.
 
     Tag-gated on `negative-evidence`.
@@ -894,12 +948,12 @@ def test_negative_evidence_assertion_created(
     new_neg = [
         a for a in after.get("assertions", [])
         if a.get("id") not in before_ids
-        and a.get("evidence_type") == "negative"
+        and a.get("record_basis") == "absent"
         and a.get("record_role") == "absent"
     ]
     assert new_neg, (
         "negative-evidence scenario produced no new assertion with "
-        "evidence_type='negative' and record_role='absent'"
+        "record_basis='absent' and record_role='absent'"
     )
 
 
@@ -930,7 +984,7 @@ def test_negative_evidence_value_describes_expectation(
     for a in after.get("assertions", []):
         if a.get("id") in before_ids:
             continue
-        if a.get("evidence_type") != "negative":
+        if a.get("record_basis") != "absent":
             continue
         value = (a.get("value") or "").strip()
         if not value or value.lower() in {"absent", "missing", "n/a", "none"}:
@@ -1177,7 +1231,7 @@ def test_refinement_preserves_extraction_fields_and_avoids_duplication(
     every other check here while still looking like a correct update), its
     `_EXTRACTION_FIELDS` unchanged, and at least one classification field
     (`information_quality`, `informant`, `informant_proximity`,
-    `informant_bias_notes`, `evidence_type`, `extracted_for_question_ids`)
+    `informant_bias_notes`, `record_basis`, `extracted_for_question_ids`)
     actually different -- an `update` call that changed nothing is not a
     completed refinement. Every OTHER pre-existing assertion (the
     fixture's un-named siblings) must be byte-identical to before, and no
@@ -1260,13 +1314,16 @@ def test_refinement_preserves_extraction_fields_and_avoids_duplication(
 
 # --- Tag-gated: pre-1752 Old Style dates route to convert-dates first ---
 
-def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
+def test_old_style_date_routes_to_convert_dates(
+    skills_invoked, builtin_tool_calls, test
+):
     """A pre-adoption date must be resolved by invoking `convert-dates`
     BEFORE the record-extractor is spawned — not narrated, and not
     converted inline by the router.
 
-    Graded here rather than by the LLM judge because `skills_invoked` is
-    ground truth: the PreToolUse hook fires on the real `Skill` call, so a
+    Graded here rather than by the LLM judge because the hook records are
+    ground truth: the PreToolUse hook fires on the real `Skill` call or, once
+    convert-dates is an agent, the real spawn (`handoffs`, issue #2825), so a
     response that only *mentions* the calendar problem ("this may be Old
     Style — shall I convert it?") cannot satisfy it, and a response that
     genuinely delegates cannot be marked down for it. This is the same
@@ -1285,14 +1342,17 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
     tests must NOT reach for convert-dates, and doing so on a modern date
     is over-application, not a pass.
     """
+    from harness.skill_runner import handoffs
+
     if "convert-dates-handoff" not in test.get("tags", []):
         pytest.skip("only the pre-1752 Old Style routing test")
-    assert "convert-dates" in skills_invoked, (
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    assert "convert-dates" in handed, (
         "the record's date falls before its jurisdiction adopted the "
-        "Gregorian calendar, so the router had to invoke "
-        "Skill('convert-dates') before delegating. Narrating the problem "
+        "Gregorian calendar, so the router had to hand off to "
+        "convert-dates before delegating. Narrating the problem "
         "in prose is not resolving it. "
-        f"skills_invoked={skills_invoked}"
+        f"handoffs={handed}"
     )
 
 
