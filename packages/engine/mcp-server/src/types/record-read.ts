@@ -17,8 +17,18 @@ export interface RecordReadInput {
   projectPath?: string;
 }
 
-// The tool returns simplified GEDCOMX directly.
-export type RecordReadResult = SimplifiedGedcomX;
+// The tool returns simplified GEDCOMX directly. A LIVE read given a
+// `projectPath` also stages the record (issue #2048 / #2489) and carries the
+// staging handle beside the document; a sidecar-mode read carries neither.
+export type RecordReadResult = SimplifiedGedcomX & {
+  /** Present iff `projectPath` was given on a live read: the record retained
+   *  as a one-element `results[]` envelope under results/.staging/, readable
+   *  back with `record_read({ recordId, resultsRef })` and finalized by
+   *  `research_log_append({ stagedResultsRef })`. `null` when staging failed. */
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  /** Why `staged` is null — staging is best-effort and never fails the read. */
+  stagingError?: string;
+};
 
 // ─── FS recapi response (raw API) ─────────────────────────────────────────
 //
