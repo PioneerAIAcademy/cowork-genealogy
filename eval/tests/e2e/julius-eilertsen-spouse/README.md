@@ -53,7 +53,10 @@ parish back-recorded the Bodø marriage in a later section of its book — the s
 page back-records other 1910 Bodø marriages (e.g. Martin Torkildsen, who is
 entry 36 in the 1910 Bodø register). The marriage date is 15 August 1910. A third
 index, `ark:/61903/1:1:68WM-Z75R`, is a parallel-register copy of the same 1910
-Bodø marriage. The hint's own ark is **not** used as corroboration.
+Bodø marriage. The independent corroboration is `68WM-2WVL` (Leiranger) and
+`68WM-Z75R` (parallel register). The third supporting source is the hint
+record's own page scan (`3:1:3QHK-Q3P5-YK5F`), read directly rather than taken
+from its index — better evidence than the index, but not a second record.
 
 **The tree's competing 1911/Petrine marriage is unsourced.** Julius's live page
 carries only three sources — two 1889 baptisms (`687B-9PF2`, `687Y-T7V9`) and the
