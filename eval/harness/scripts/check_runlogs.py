@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Six blocking rules + two warn-only rules per
+Seven blocking rules + two warn-only rules per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -21,13 +21,20 @@ docs/plan/eval-runlog-versioning.md §C6:
              run), each carrying a
              comment unless it is a confirmed pass. A run log with no
              `review_sample` owes every dimension of every test. An edited
-             annotation gates; a pruned (deleted) one does not.
+             annotation gates; a pruned (deleted) one does not — Rule 7 checks
+             that the deletion really is a prune.
     Rule 4   no two unit-test files share a `test.id`.
     Rule 5   every committed unit .ann.json is valid JSON.
     Rule 6   no unsuppressed test in a run log THIS PR ADDS resolves to
              `fail` or `aborted`. Zero reds, not zero new reds: there is no
              carry list and no exemption, because "it was already red" is the
              excuse the rule exists to remove.
+    Rule 7   a deleted run log / annotation is a legitimate keep-newest-K prune
+             (or a promotion), not a hand-deletion beyond the prune rule that
+             silently destroys committed genealogist grading. Flags: an
+             annotation deleted while its run log survives; a candidate run log
+             deleted that the recomputed prunable set would have kept; a
+             released `v{N}.json`/`.ann.json` deleted (never prunable).
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
@@ -56,7 +63,12 @@ from harness.snapshot import (  # noqa: E402
     hash_file,
 )
 from harness.review_sample import review_dimensions, zero_dimension_test_ids  # noqa: E402
-from harness.versioning import classify  # noqa: E402
+from harness.versioning import (  # noqa: E402
+    DEFAULT_KEEP_CANDIDATES,
+    ann_filename_for,
+    classify,
+    prunable_candidates,
+)
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
 
 
@@ -160,11 +172,23 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
 
 def git_diff_deleted_paths() -> list[str]:
     """Paths the PR DELETED. Used to tell a pruned annotation (housekeeping)
-    apart from an edited one (which must still gate rule 3)."""
+    apart from an edited one (which must still gate rule 3), and by rule 7 to
+    verify a deletion is a legitimate prune.
+
+    `--no-renames` is load-bearing: a harness prune deletes an old candidate in
+    the same commit that adds a new one, and git's rename heuristic pairs the
+    delete+add as a rename, so `--diff-filter=D` omits the deletion entirely.
+    Without this flag rule 7 never sees a real prune's deletions (and the
+    candidate → released promotion, which is also a delete+add pair, would be
+    invisible too), and rule 3's deleted-annotation arm would misread a pruned
+    annotation as an edit. Verified: deleting a 200-line file while adding a
+    199-line near-copy shows nothing under `--diff-filter=D` and shows the
+    deletion under `--diff-filter=D --no-renames`."""
     base = os.environ["BASE_SHA"]
     head = os.environ["HEAD_SHA"]
     out = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=D", f"{base}...{head}"],
+        ["git", "diff", "--name-only", "--diff-filter=D", "--no-renames",
+         f"{base}...{head}"],
         text=True,
         encoding="utf-8",
     )
@@ -839,6 +863,153 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
     return bad
 
 
+def rule7_deletions(
+    deleted_paths: set[str], added_by_skill: dict[str, list[str]]
+) -> int:
+    """Rule 7 (blocking): a deleted run log / annotation must be a legitimate
+    keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
+    rule that silently destroys committed genealogist grading.
+
+    The keep set needs no frozen baseline: it is recomputable from filenames.
+    `prunable_candidates(names, keep=DEFAULT_KEEP_CANDIDATES)` is a pure function
+    of the names, and `prune_old_candidates` deletes exactly its output plus each
+    pruned log's `.ann.json` (and `runs/` sidecars). So per skill a deletion is a
+    legitimate prune iff the deleted candidate is in
+    `prunable_candidates(head_candidates ∪ deleted_candidates, keep=K)` — the
+    union reconstructs what the dir held before the prune. The #2579 incident
+    (`v1_2026-09-03_11-42-59.{json,ann.json}` dropped with 4 candidates on disk
+    where the rule keeps 5) recomputes to an empty prunable set and is flagged.
+
+    Flags three shapes:
+      (a) an annotation deleted while its run-log `.json` still exists at head —
+          grading destroyed with no prune to justify it;
+      (b) a candidate `v{N}_<ts>.json` (± its `.ann.json`) deleted that the
+          recomputed prunable set would have kept;
+      (c) a released `v{N}.json` / `v{N}.ann.json` deleted — released logs are
+          canonical and never prunable.
+
+    Exemptions: a candidate `v{N}_<ts>.json` deleted in a PR that ADDS the
+    released `v{N}.json` is a promotion (rename read as delete+add under
+    `--no-renames`), and a wholly-deleted skill has nothing left to protect —
+    the same skip rules 2 + 3 apply.
+    """
+    per_skill: dict[str, set[str]] = {}
+    for path in deleted_paths:
+        m = RUNLOG_PATH_RE.match(path)  # matches `.json` and `.ann.json` alike
+        if m:
+            per_skill.setdefault(m.group(1), set()).add(m.group(2))
+
+    fails = 0
+    for skill in sorted(per_skill):
+        # Wholly-deleted skill: no skill dir AND no test dir left. Same skip as
+        # the "Drop DELETED skills" block for rules 2 + 3 — nothing to re-run,
+        # nothing to protect. A half-deleted skill is still gated.
+        if not (PLUGIN_SKILLS_DIR / skill).is_dir() and not (
+            TESTS_UNIT_DIR / skill
+        ).is_dir():
+            continue
+
+        skill_dir = RUNLOGS_DIR / skill
+        deleted_names = per_skill[skill]
+
+        deleted_candidate_json = {
+            n for n in deleted_names if classify(n).kind == "candidate"
+        }
+        head_candidate_json: set[str] = set()
+        if skill_dir.is_dir():
+            head_candidate_json = {
+                p.name
+                for p in skill_dir.iterdir()
+                if p.is_file() and classify(p.name).kind == "candidate"
+            }
+        prunable = set(
+            prunable_candidates(
+                list(head_candidate_json | deleted_candidate_json),
+                keep=DEFAULT_KEEP_CANDIDATES,
+            )
+        )
+
+        # Promotion exemption, keyed on version. Derived from `added_by_skill`
+        # (the merge-base-intersected added set main() already computed), NOT a
+        # fresh two-dot `git_diff_changes` read: a release that landed on main
+        # since this branch diverged shows as "A" in the two-dot view and would
+        # wrongly exempt a within-K hand-deletion of that version. Version-keyed,
+        # not timestamp-keyed — a real promotion renames exactly one candidate,
+        # so this only over-exempts a hand-deletion of a *different* v{N}
+        # candidate riding alongside a v{N} promotion, which is not a real shape.
+        added_released_versions = {
+            c.version
+            for f in added_by_skill.get(skill, [])
+            if (c := classify(f)).kind == "released" and c.version is not None
+        }
+
+        # Normalize each deletion to its base run-log `.json` name, tracking
+        # whether the `.json`, the `.ann.json`, or both were deleted.
+        bases: dict[str, dict[str, bool]] = {}
+        for name in sorted(deleted_names):
+            if name.endswith(".ann.json"):
+                base = name[: -len(".ann.json")] + ".json"
+                bases.setdefault(base, {})["ann"] = True
+            else:
+                bases.setdefault(name, {})["json"] = True
+
+        for base, flags in sorted(bases.items()):
+            c = classify(base)
+            if c.kind not in ("released", "candidate"):
+                continue  # scratch / unrecognized: gitignored or not ours
+            json_deleted = flags.get("json", False)
+            ann_deleted = flags.get("ann", False)
+            ann_name = ann_filename_for(base)
+
+            if c.kind == "released":
+                legit_removal = False
+            else:
+                legit_removal = (
+                    c.version in added_released_versions or base in prunable
+                )
+
+            # (a) Annotation deleted while its run log survives at head.
+            if ann_deleted and not json_deleted and (skill_dir / base).is_file():
+                gh_error(
+                    f"skill `{skill}`: annotation "
+                    f"`eval/runlogs/unit/{skill}/{ann_name}` was deleted but its "
+                    f"run log `{base}` is still present. Deleting an annotation "
+                    f"on its own destroys committed genealogist grading with no "
+                    f"prune to justify it. Restore it from git "
+                    f"(`git checkout {os.environ.get('BASE_SHA', '<base>')} -- "
+                    f"eval/runlogs/unit/{skill}/{ann_name}`), or delete the run "
+                    f"log too if it is genuinely being pruned.",
+                )
+                fails += 1
+                continue
+
+            # (b)/(c) The run log itself was deleted outside the prune rule.
+            if json_deleted and not legit_removal:
+                also = " and its annotation" if ann_deleted else ""
+                if c.kind == "released":
+                    gh_error(
+                        f"skill `{skill}`: released run log `{base}`{also} was "
+                        f"deleted. Released `v{{N}}.json` are canonical and are "
+                        f"never pruned. Restore it from git "
+                        f"(`git checkout {os.environ.get('BASE_SHA', '<base>')} "
+                        f"-- eval/runlogs/unit/{skill}/{base}`).",
+                    )
+                else:
+                    gh_error(
+                        f"skill `{skill}`: candidate run log `{base}`{also} was "
+                        f"deleted but is not a keep-newest-"
+                        f"{DEFAULT_KEEP_CANDIDATES} prune — the "
+                        f"{DEFAULT_KEEP_CANDIDATES} newest candidates are "
+                        f"retained and this is not among the prunable ones. A "
+                        f"hand-deletion beyond the prune rule destroys committed "
+                        f"grading. Restore it from git, or let the harness prune "
+                        f"it on its next `--skill {skill}` write.",
+                    )
+                fails += 1
+
+    return fails
+
+
 def main() -> int:
     # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
     # and dies on the arrows and box glyphs this module prints; the team it is
@@ -1020,6 +1191,12 @@ def main() -> int:
     # Rule 5 sweeps the whole annotation corpus, not just touched skills —
     # see its docstring for why per-skill scoping is exactly what hid the bug.
     fails += rule5_annotations_parse(RUNLOGS_DIR)
+
+    # Rule 7 checks that every deleted run log / annotation is a legitimate
+    # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
+    # rule that destroys committed grading. Keyed on the same deleted set rule 3
+    # reads and the merge-base-safe `added_by_skill` main() already computed.
+    fails += rule7_deletions(deleted_paths, added_by_skill)
 
     graded_logs = graded_tests = 0
     # Only when there is something to grade. The lookup is network-bound, and a
