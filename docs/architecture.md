@@ -1389,7 +1389,7 @@ outside this list and outside every check.)*
 | # | Site | What catches a miss |
 |---|---|---|
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
-| 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
+| 2 | the prose table in `docs/specs/research-schema-spec.md` (and `simplified-gedcomx-spec.md` Section 5) | `make engine-test` (`enum-drift.test.ts`) — closed-enum value rows only; the field tables and prose descriptions stay unchecked |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
 | 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
