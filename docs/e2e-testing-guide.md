@@ -80,11 +80,12 @@ the agent does sound, verifiable GPS research. Full framing: spec §1.
 ## Setup
 
 **Run the preflight first** — it green-lights FamilySearch auth, the built MCP
-server, the Anthropic API key, the harness deps, and **a live MCP connection**,
-so a setup gap fails here instead of deep inside an expensive run. Budget
-**~30 seconds**: the last check starts a real CLI session and waits for the
-genealogy server to report `connected`, because a green light on the *config*
-was what let three runs die with no tools at all (issue #941):
+server, the Anthropic API key, the harness deps, **a live MCP connection**, wiki
+and population services, the OpenRouter API key, and **a live FamilySearch
+search**, so a setup gap fails here instead of deep inside an expensive run.
+Budget **~60 seconds**: two checks start real server sessions — one waits for the
+genealogy server to report `connected` (issue #941), the other makes a live
+`record_search` call to catch WAF blocks before they burn a full run (#2810):
 
 ```bash
 make e2e-preflight                # Windows: eval\CheckSetup.bat
@@ -113,6 +114,16 @@ If it flags something:
   are expected to be reachable, so a WARN here is a per-machine setup problem to
   report before spending an hour on the run — not a normal state to run through.
 - **Harness deps** — `cd eval/harness && uv sync`.
+- **OpenRouter API key** — a WARN means `image_transcribe` will fail for the
+  whole run and image-dependent findings will be unreachable. Set
+  `OPENROUTER_API_KEY` in `eval/.env` (Setup.bat prompts for it) or add
+  `openRouterApiKey` to `~/.familysearch-mcp/config.json`. A run without the
+  key is degraded, not blocked.
+- **FamilySearch search** — a FAIL here means record searches are broken on this
+  machine right now. If it says "WAF-blocked", the issue is environment-specific
+  and will affect the whole run. If it says "session not accepted", re-run
+  `make e2e-login`. A WARN means the search timed out or the server couldn't be
+  spawned — transient, try again.
 
 ---
 
@@ -203,9 +214,15 @@ the fixture files, and validates the result. The three outcomes:
 Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't apply
 here (nothing was stripped, and the skill already validated).
 
-> No fixture of this genre has been resolved and run end to end yet, so there's
-> no finished one to copy. You are working an unexercised path: if a step doesn't
-> behave the way this page says, that's worth reporting, not working around.
+> Worked examples of this genre already resolved and run end to end:
+> `eval/tests/e2e/creszentia-haas-birth/` (false hint, real answer found),
+> `eval/tests/e2e/antonio-lucas-spouse/` (false match, `avoid` + `required`
+> pair) and `eval/tests/e2e/chresten-nielsen-daughter/` (re-adjudicated
+> after a graded run). To re-derive the resolved set, normalise both greps to
+> directories first — one prints `<dir>/fixture.json` and the other
+> `<dir>/README.md`, so comparing them as-is reports every fixture as differing:
+>
+>     comm -23 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | xargs -n1 dirname | sort)
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 

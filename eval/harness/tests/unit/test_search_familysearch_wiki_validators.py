@@ -19,6 +19,11 @@ The violating states are drawn from the #1647 deep dive:
     ways across five runs.
   - fabricated URLs in a summary: never observable before, because the saved
     file reached no grader.
+
+`test_census_era_boundaries_preserved` (#2693) is exercised the same way. Its
+violating state is the one `453a2f69f` reported: a summary claiming every
+census lists each household member by name, age, birthplace and relationship,
+which collapses the chunk's three eras into one blanket rule.
 """
 
 import sys
@@ -35,6 +40,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_search_familysearch_wiki import (  # noqa: E402
     report_reply_does_not_restate_the_saved_file as check_brevity,
+    test_census_era_boundaries_preserved as check_census_eras,
     test_expected_slug as check_slug,
     test_no_file_on_empty_results as check_no_file_on_empty,
     test_no_wiki_no_write as check_no_wiki_no_write,
@@ -175,6 +181,130 @@ def test_slug_rejects_two_expected_file_tags():
             _state(**{"census-records.md": "x"}),
             _tags("expects-file-census-records", "expects-file-something-else"),
         )
+
+
+# --- test_census_era_boundaries_preserved ------------------------------
+
+# The rank-1 chunk of `wiki-search-census-records.json` states three eras:
+# 1790-1840 the head of household only, 1850-1870 every free person named with
+# no stated relationship, 1880 onward everyone named with their relationship.
+# The validator's proxy is that both INTERIOR boundary years survive into the
+# summary. The outer years 1790 and 1950 are coverage, not boundaries, which is
+# why the blanket case below still carries them and must still fire.
+_CENSUS_TAGS = ("fs-wiki", "how-to", "census",
+                "slug-normalization", "expects-file-census-records")
+
+
+def _census_file(body):
+    return _state(**{"census-records.md": body})
+
+
+@pytest.mark.parametrize(
+    "shape, body",
+    [
+        (
+            "reflowed prose",
+            "# FamilySearch Wiki: Census Records\n\nWhat a census recorded\n"
+            "about each household member changed over time. From 1790 through\n"
+            "1840 only the head of household is named, with everyone else\n"
+            "counted as tally marks. From 1850 through 1870 every free person\n"
+            "is listed by name with age, sex and birthplace, but relationship\n"
+            "to the head is not stated. Beginning in 1880 every person is\n"
+            "listed together with their relationship to the head.\n",
+        ),
+        (
+            "bullets in different words",
+            "# FamilySearch Wiki: Census Records\n\n## What each era recorded\n\n"
+            "- 1790 to 1840: householder named; the rest are tally marks only\n"
+            "- 1850 to 1870: everyone free is named, no kinship given\n"
+            "- 1880 and later: names plus how each person relates to the head\n",
+        ),
+        (
+            "en-dash ranges",
+            "# FamilySearch Wiki: Census Records\n\n"
+            "Coverage runs 1790\u20131950. Recording practice differs by era: "
+            "1790\u20131840 (head only), 1850\u20131870 (all free persons named), "
+            "1880\u2013present (relationships stated).\n",
+        ),
+    ],
+    ids=["reflowed-prose", "bullets-reworded", "en-dash-ranges"],
+)
+def test_census_eras_pass_on_faithful_shapes(shape, body):
+    """Prove the other direction, per CLAUDE.md: a guard that can only fire is
+    one that gets `skip`ped within a month.
+
+    The rule is that the era distinction survives, not that a phrasing does.
+    These three say the same thing in different words, wrapping and dash
+    characters, and all three must pass -- otherwise the next author who
+    reflows a summary reds a correct run.
+    """
+    check_census_eras(EMPTY, _census_file(body), _tags(*_CENSUS_TAGS))
+
+
+def test_census_eras_fire_on_the_observed_blanket_claim():
+    """The reported defect behind `453a2f69f`: "it claimed every census lists
+    each household member by name, age, birthplace, and relationship".
+
+    This summary is not year-free -- it carries 1790 and 1950, the chunk's
+    coverage range, so a check that merely looked for "a year" would pass it.
+    The era boundaries are what it dropped and what is asserted.
+    """
+    blanket = (
+        "# FamilySearch Wiki: Census Records\n\n"
+        "FamilySearch has an index and images for each federal census year "
+        "from 1790 through 1950. Each census lists every member of the "
+        "household by name, age, birthplace, and relationship to the head of "
+        "household.\n"
+    )
+    with pytest.raises(AssertionError, match=r"missing \['1850', '1880'\]"):
+        check_census_eras(EMPTY, _census_file(blanket), _tags(*_CENSUS_TAGS))
+
+
+def test_census_eras_fire_on_a_half_flattened_summary():
+    """One boundary named, the other dropped.
+
+    1850-1870 -- named but with no stated relationship -- is the era a summary
+    drops first, because it is the one that is neither of the two simple
+    stories. Both years are required, so naming 1880 alone does not buy a pass.
+    """
+    half = (
+        "# FamilySearch Wiki: Census Records\n\n"
+        "From 1790 through 1840 only the head of household is named. From "
+        "1880 onward every person is listed with their relationship to the "
+        "head of household.\n"
+    )
+    with pytest.raises(AssertionError, match=r"missing \['1850'\]"):
+        check_census_eras(EMPTY, _census_file(half), _tags(*_CENSUS_TAGS))
+
+
+def test_census_eras_fire_on_a_summary_naming_no_year_at_all():
+    no_years = (
+        "# FamilySearch Wiki: Census Records\n\n"
+        "Census records list households and can be traced across decades to "
+        "watch children grow up and track a family's migration.\n"
+    )
+    with pytest.raises(AssertionError, match=r"missing \['1850', '1880'\]"):
+        check_census_eras(EMPTY, _census_file(no_years), _tags(*_CENSUS_TAGS))
+
+
+def test_census_eras_skip_a_non_census_test():
+    """Tag-gated. Every other positive in this suite writes a summary with no
+    reason to name either year, so an ungated version would fail all of them.
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check_census_eras(
+            EMPTY,
+            _state(**{"death-records-1800s.md": "No years here."}),
+            _tags("fs-wiki", "how-to", "expects-file-death-records-1800s"),
+        )
+
+
+def test_census_eras_skip_when_no_file_was_written():
+    """A run that wrote nothing is `test_wrote_exactly_one_markdown_file`'s
+    failure to report; firing here too would charge one defect twice.
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check_census_eras(EMPTY, EMPTY, _tags(*_CENSUS_TAGS))
 
 
 # --- test_no_file_on_empty_results -------------------------------------

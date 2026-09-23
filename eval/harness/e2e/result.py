@@ -117,15 +117,28 @@ from typing import Any
 #       `is_error` gate — a bare gate counts a write that never happened, and a
 #       miss in that direction is silent.
 #
+#   5 — `response_summary` for `image_transcribe` calls now carries the full
+#       `transcription` field instead of truncating at `_RUNLOG_STRING_MAX`
+#       (500 chars). Same shape as entries 2 and 4: the key keeps its name and
+#       type (string) while its CONTENT widens. A v4 log's `image_transcribe`
+#       summary is capped at 500 chars, though the transcription is often many
+#       times longer (run `make e2e-transcription-join SINCE=all` for the
+#       current count of truncated captures and its window); a v5 log preserves
+#       the full value,
+#       bypassing both the per-string cap and the `_RUNLOG_MAX_CHARS` backstop.
+#       This makes extraction-accuracy audits possible: the transcription-to-
+#       assertion join (via each assertion's `log_entry_id`) works, but the
+#       truncated transcription made the joined data useless (issue #2561).
+#
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
 # `default_factory=list` and the writer emits `asdict(result)`, so every run
 # log written since carries the key and every earlier one lacks it. Branch on
 # `"narration" in data`, not on a version. Bump only when a key keeps its name
 # and type while its MEANING changes — that is the case with no structural tell,
-# and entries 2 and 4 above are exactly it: `response_summary` stays a string and
-# `is_error` stays a bool, and only what each one means changes.
-HARNESS_SCHEMA_VERSION = 4
+# and entries 2, 4 and 5 above are exactly it: `response_summary` stays a string
+# and `is_error` stays a bool, and only what each one means changes.
+HARNESS_SCHEMA_VERSION = 5
 
 
 @dataclass

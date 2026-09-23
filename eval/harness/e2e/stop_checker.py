@@ -37,14 +37,36 @@ def read_research_json(workspace: Path) -> dict[str, Any] | None:
 
 
 def read_tree_json(workspace: Path) -> dict[str, Any] | None:
-    """Return parsed tree.gedcomx.json or None if missing/invalid."""
+    """Return parsed tree.gedcomx.json, or None if missing or unusable.
+
+    The same two guards `read_research_json` above documents, but they earn their
+    place differently, so read them separately.
+
+    `UnicodeDecodeError` is a `ValueError` rather than an `OSError`, so a tree
+    written in cp1252 (the Windows default, and this team runs on Windows) used
+    to propagate out of every caller. That one does matter on the paid e2e path:
+    `collect_post_hoc_shadow` reads this file, and a raise there aborts the run
+    before any result file is written.
+
+    The `isinstance` guard does NOT protect that path — every detector at that
+    site already returns `[]` on a non-dict, so an array-shaped tree was harmless
+    there. It protects the OTHER two callers: `final_tree` and `starting_tree`
+    are passed around as `dict | None`, and a list slipped through every
+    `is None` test to raise `AttributeError` on `.get(...)` later. It also
+    changes what such a run RECORDS -- the judge is skipped and the verdict is
+    `skipped` rather than the judge being handed a list and the run landing
+    `ungraded`. Both are better than the alternative, and both are tested in
+    `tests/unit/test_e2e_stop_checker.py`; neither is a side effect of the
+    post-hoc work that prompted the hardening.
+    """
     path = Path(workspace) / "tree.gedcomx.json"
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
         return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def project_completed(research: dict[str, Any] | None) -> bool:
