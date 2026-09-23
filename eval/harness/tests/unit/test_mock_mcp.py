@@ -494,22 +494,43 @@ def test_unlogged_refs_shown_has_not_drifted_from_the_typescript_source():
 
 
 def test_staging_tool_sets_agree_across_the_two_copies():
-    """`STAGING_SEARCH_TOOLS` here vs `STAGING_CAPABLE_TOOLS` in the engine.
+    """`STAGING_SEARCH_TOOLS` here vs `STAGING_SEARCH_TOOLS` in the engine.
 
     The engine consolidated its own two copies for exactly this reason ("a second
     copy would drift"); this is the third, and it lives in another language.
+
+    Compared against the engine's SEARCH set, not its wider `STAGING_CAPABLE_TOOLS`
+    (issue #2048): `image_transcribe` and `record_read` stage in production but
+    their canned fixtures carry no `results[]`, and the mock's nil-search /
+    unlogged-search notes are search semantics — keying them on the wider set
+    would stamp `nilSearchNeedsLog` onto every transcription fixture. The second
+    assertion pins the relation the split relies on: every search producer is a
+    capable producer. That parity gap is recorded in eval/CLAUDE.md, "Eval vs
+    production parity".
     """
     from harness.mock_mcp import STAGING_SEARCH_TOOLS
 
     src = (
         REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
     ).read_text(encoding="utf-8")
-    decl = re.search(
+    search_decl = re.search(
+        r"export const STAGING_SEARCH_TOOLS = new Set\(\[(.*?)\]\)", src, re.DOTALL
+    )
+    assert search_decl, "STAGING_SEARCH_TOOLS is gone from results-staging.ts"
+    ts_search = set(re.findall(r'"([a-z_]+)"', search_decl.group(1)))
+    assert ts_search == STAGING_SEARCH_TOOLS
+
+    capable_decl = re.search(
         r"export const STAGING_CAPABLE_TOOLS = new Set\(\[(.*?)\]\)", src, re.DOTALL
     )
-    assert decl, "STAGING_CAPABLE_TOOLS is gone from results-staging.ts"
-    ts_tools = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
-    assert ts_tools == STAGING_SEARCH_TOOLS
+    assert capable_decl, "STAGING_CAPABLE_TOOLS is gone from results-staging.ts"
+    capable_body = capable_decl.group(1)
+    assert "...STAGING_SEARCH_TOOLS" in capable_body, (
+        "STAGING_CAPABLE_TOOLS must be built from STAGING_SEARCH_TOOLS (spread), "
+        "so the search producers cannot drop out of the capable set"
+    )
+    ts_extra = set(re.findall(r'"([a-z_]+)"', capable_body))
+    assert ts_extra == {"image_transcribe", "record_read"}
 
 
 def test_nil_search_carries_the_negative_log_note(tmp_path):
