@@ -23,9 +23,11 @@ Two modes:
 Pure analysis over committed JSON — no live run, no API. `analyze_runlog` /
 `diff_skill` are pure and unit-tested; the CLI locates run logs and prints.
 
-Caveat carried in every number: unit tests run `runs_per_test=1`, and the skill
-run itself is not temperature-pinned (only the judge is — eval/CLAUDE.md), so a
-single test's token count carries run-to-run variance. Trust the *direction* and
+Caveat carried in every number: committed unit run logs are single-run (test
+files pin `runs_per_test=1`; the `--runs-per-test` override only writes scratch
+logs this report does not read), and the skill run itself is not
+temperature-pinned (only the judge is — eval/CLAUDE.md), so a single test's
+token count carries run-to-run variance. Trust the *direction* and
 the *aggregate across a skill's tests*, not a single test's exact percentage.
 
 CLI (from eval/harness/):

@@ -188,6 +188,24 @@ def test_flaky_false_when_all_outcomes_match():
     assert entry["outcome"] == "pass"
 
 
+def test_flaky_true_but_outcome_pass_on_majority_green():
+    """Acceptance shape for --runs-per-test 3 (issue #2816): a test whose
+    three runs disagree pass/pass/fail records flaky=true even though the
+    modal outcome aggregates to `pass`. This is the case a gate reading
+    `outcome` would call green — the reason the human reads `flaky`, not
+    `outcome`, off the scratch log."""
+    runs = [
+        _stub_run(outcome="pass"),
+        _stub_run(outcome="pass"),
+        _stub_run(outcome="fail", validators_passed=False,
+                  judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)),
+    ]
+    entry = _make_entry(runs=runs)
+    assert entry["flaky"] is True
+    assert entry["outcome"] == "pass"  # modal; tie-break not reached
+    assert entry["outcome_summary"]["per_run_outcomes"] == ["pass", "pass", "fail"]
+
+
 # ---- aggregate helpers ---------------------------------------------------
 
 
