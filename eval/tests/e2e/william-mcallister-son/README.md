@@ -72,7 +72,7 @@ The starting tree is left as captured (record-hint fixtures never edit it).
 **How f1 is enforced — read before grading.** The judge grades f1 on meaning,
 but `apply_avoid_guard` then re-checks it by name alone: any person in the final
 tree other than `LZDC-MJN` whose given name shares a token with "Thomas John"
-and whose surname contains "McFerran" forces f1 to `false`, whatever their birth
+and whose surname contains "McFerran", "Ferran" or "McFenan" forces f1 to `false`, whatever their birth
 year or parents. It cannot tell the 1879 child from the 1864 Kilmood one. So a
 run that adds the 1864 Thomas John (from `FRQY-WQD`) to the tree, or that brings
 `GQ96-96N`'s son (`GQ96-J1C`) into the tree to show the two families apart,
