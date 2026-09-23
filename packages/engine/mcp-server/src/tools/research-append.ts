@@ -2902,6 +2902,86 @@ function normalizeRepository(v: unknown): string {
   return typeof v === "string" ? v.trim().toLowerCase() : "";
 }
 
+/** §3.4.3 re-extraction key: which extracted fact an assertion is, for the
+ *  guard below. `undefined` = not comparable (exempt or malformed). The key is
+ *  (source, record, log entry, person in the record, canonical fact type):
+ *  the person is `record_persona_id` when set, else `record_role`; the fact type
+ *  goes through the same alias fold the tool applies at write; the log entry
+ *  scopes it to ONE extraction pass, so an image-transcription pass (its own log
+ *  entry) may add a second reading of a fact, while a re-run of the same pass —
+ *  a resumed or re-delegated extractor, which reuses its log entry — may not.
+ *  Values are ignored on purpose: a re-run re-decides its wording, so a value key
+ *  misses exactly the duplicate this exists for. `record_role: "absent"`
+ *  (negative evidence) is exempt — it names no persona, so its key cannot tell
+ *  two absent people apart. Exported for dev/replay-reextraction-guard.ts. */
+export function reextractionKey(a: any): string | undefined {
+  if (!a || typeof a !== "object") return undefined;
+  if (typeof a.source_id !== "string" || typeof a.record_id !== "string" || typeof a.fact_type !== "string") {
+    return undefined;
+  }
+  if (a.record_role === "absent") return undefined;
+  const who =
+    typeof a.record_persona_id === "string" && a.record_persona_id !== ""
+      ? `persona:${a.record_persona_id}`
+      : typeof a.record_role === "string"
+        ? `role:${a.record_role}`
+        : undefined;
+  if (who === undefined) return undefined;
+  const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
+  const ftKey = labelKey(a.fact_type);
+  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? labelKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
+  return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
+}
+
+/** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
+function factLabel(ft: unknown): string {
+  if (typeof ft !== "string") return String(ft);
+  const k = labelKey(ft);
+  return Object.hasOwn(FACT_TYPE_ALIASES, k) ? FACT_TYPE_ALIASES[k] : ft;
+}
+
+/** §3.4.3 re-extraction guard: refuse an assertions append whose
+ *  `reextractionKey` an assertion in the PRE-CALL document already holds — a
+ *  second copy of an extracted fact reads downstream as independent
+ *  corroboration. Batch-internal pairs are never compared: two same-typed facts
+ *  in one pass are ordinary extraction (a birth date and a birth place). */
+function reextractionCollisions(
+  ops: ResearchAppendOp[],
+  research: any,
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const existing = new Map<string, string[]>();
+  for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
+    const k = reextractionKey(a);
+    if (k === undefined || typeof a.id !== "string") continue;
+    existing.set(k, [...(existing.get(k) ?? []), a.id]);
+  }
+  if (existing.size === 0) return [];
+  const out: string[] = [];
+  ops.forEach((op, i) => {
+    if (op.section !== "assertions" || op.op !== "append") return;
+    const e = op.entry as any;
+    const k = reextractionKey(e);
+    const ids = k === undefined ? undefined : existing.get(k);
+    if (!ids) return;
+    out.push(
+      fmt(
+        i,
+        `record ${e.record_id} is already extracted on ${e.source_id}` +
+          `${e.log_entry_id ? ` under ${e.log_entry_id}` : ""}: ${ids.join(", ")} already ` +
+          `record${ids.length === 1 ? "s" : ""} ${factLabel(e.fact_type)} for this person (${
+            e.record_persona_id ? `persona ${e.record_persona_id}` : `role ${e.record_role}`
+          }). This batch re-persists the record, so it is a re-extraction: refine the existing ` +
+          `assertion${ids.length === 1 ? "" : "s"} with an assertions \`update\` op by id instead of ` +
+          `appending a second copy — a duplicate reads as independent corroboration. If you are ` +
+          `retrying a call that timed out, it most likely committed and these ids are its own writes. A fact ` +
+          `type this person has no assertion for yet may still be appended.`,
+      ),
+    );
+  });
+  return out;
+}
+
 /**
  * The composite/enforcement pre-pass. Runs BEFORE the apply loop, mutating the
  * in-memory `tree` (S entry) and the ops' entries (stamps, auto-fills,
@@ -3510,6 +3590,13 @@ async function prepareOps(
     if (typeof text !== "string" || text.trim() === "") continue;
     if (!sourceImageCapState(projectPath, ref)) continue;
     state.last.transcription_truncated = true;
+  }
+
+  // §3.4.3: only a batch that RE-PERSISTS a record already persisted on this
+  // source (the §3.4.1 fold) is a re-extraction; a later single append adding a
+  // distinct fact never re-sends the source and is not compared.
+  if (sourceReuse?.action === "updated_existing") {
+    errors.push(...reextractionCollisions(ops, research, fmt));
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
