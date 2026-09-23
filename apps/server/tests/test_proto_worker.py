@@ -782,50 +782,6 @@ def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
     assert options.bearer_token(env, None) == "", "an empty file is no token, not the env's"
 
 
-def test_the_broker_is_asked_per_attempt_and_beats_the_file(tmp_path, monkeypatch):
-    token_file = tmp_path / "fs-token"
-    token_file.write_text("file-token", encoding="utf-8")
-    env = {**WORKER_ENV, "FS_ACCESS_TOKEN_FILE": str(token_file), "FS_TOKEN_URL": "http://broker/token"}
-    asked: list[str] = []
-    answers = iter(["attempt-1-token", "attempt-2-token"])
-    monkeypatch.setattr(options, "broker_token", lambda url: (asked.append(url), next(answers))[1])
-    assert options.bearer_token(env, None) == "attempt-1-token"
-    assert options.bearer_token(env, None) == "attempt-2-token", "asked again, never cached"
-    assert asked == ["http://broker/token"] * 2
-    assert options.bearer_token(env, "message-token") == "message-token", "the message's token still wins"
-    assert len(asked) == 2, "and the broker is not asked when the message carries one"
-
-
-def test_a_failing_or_empty_broker_falls_through_to_the_file(tmp_path, monkeypatch):
-    token_file = tmp_path / "fs-token"
-    token_file.write_text("file-token", encoding="utf-8")
-    env = {**WORKER_ENV, "FS_ACCESS_TOKEN_FILE": str(token_file), "FS_TOKEN_URL": "http://broker/token"}
-    monkeypatch.setattr(options, "broker_token", lambda url: "")
-    assert options.bearer_token(env, None) == "file-token"
-
-
-def test_broker_token_reads_the_body_and_logs_a_failure(monkeypatch, capsys):
-    class Resp:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            return False
-
-        def read(self):
-            return b"  tok-123\n"
-
-    monkeypatch.setattr(options.urllib.request, "urlopen", lambda url, timeout: Resp())
-    assert options.broker_token("http://broker/token") == "tok-123"
-
-    def boom(url, timeout):
-        raise OSError("connection refused")
-
-    monkeypatch.setattr(options.urllib.request, "urlopen", boom)
-    assert options.broker_token("http://broker/token") == ""
-    assert '"ev": "token_broker_failed"' in capsys.readouterr().err
-
-
 def test_the_token_falls_back_to_the_worker_env_then_empty():
     """The stdio fork carries the token in its env; the http arm's same fallback is
     asserted as `Authorization: Bearer env-token` in the http test below."""

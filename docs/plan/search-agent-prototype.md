@@ -24,8 +24,8 @@ rule plus the forced token refresh that run cost built the same day (PR #2719);
 D17 re-run twice and probed 2026-09-23 — criterion 1 passes for foreground and main-thread
 kills, criterion 2 failed on a triple write (fixed as a tool precondition, PR #2850) and
 then held, and **background delegations turn out to be lost at every turn end, kill or
-not** — so the worker now forces delegations to the foreground (lead ruling); that and the
-per-attempt token broker were built the same day; **D17 PASSES** on the final run of
+not** — so the worker now forces delegations to the foreground (lead ruling), built the
+same day; **D17 PASSES** on the final run of
 2026-09-23 — criteria 1, 2 and 3 green on one valid run (see D17);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
@@ -312,17 +312,19 @@ nowhere to persist that the web tier would see, so: the **web tier owns the gran
 Postgres, refreshes it, and hands the worker a fresh access token per turn. The tool
 server never refreshes — it uses the bearer it is given. That also disposes of
 "the grant expires mid-turn": a turn is minutes, the grant is 8 h idle.
-**Per turn is not enough: mint per ATTEMPT, and never refresh under a live one.** Measured
-2026-09-23: a FamilySearch refresh **revokes the previous access token at once** (token A
-answered `users/current` 200, then 401 three seconds after a forced refresh, while the new
-token answered 200; probed from inside the church network, but revocation is the server's
-act). So a turn redelivered after a ceiling kill must get a token minted after its last
-attempt died — the first attempt's token expires under a two-ceiling turn — and a refresh
-while any attempt holds the old token kills that attempt's FamilySearch calls. The grant
-owner therefore mints at attempt start and serialises refreshes; and one patron with two
-turns in flight at once (two tabs, or the shim's second POST) shares one grant, so a
-refresh for either revokes the other's token. That is R7's problem, not the prototype's
-(`make proto-token-broker`, D17).
+**Never refresh under a live attempt.** Measured 2026-09-23: a FamilySearch refresh
+**revokes the previous access token at once** (token A answered `users/current` 200, then
+401 three seconds after a forced refresh, while the new token answered 200; probed from
+inside the church network, but revocation is the server's act). An access token lives
+**8 h of idle time, 24 h at most** (lead, 2026-09-23) — the token response carries no
+`expires_in` at all (its keys are `access_token`, `token_type` and a rotated
+`refresh_token`), so the engine's `expires_in ?? 3600` stores an *assumed* hour, and a
+token measured seven minutes past that stored expiry still answered 200. So a turn, and
+every attempt of a redelivered one, can run on one token; what kills a live attempt is a
+refresh made anywhere else on the same grant while it runs — including the needless ones
+the assumed hour triggers. One patron with two turns in flight at once (two tabs, or the
+shim's second POST) shares one grant, so a refresh for either revokes the other's token.
+That is R7's problem, not the prototype's.
 
 **The token must travel with the request, not be looked up from process state.**
 `STORAGE_DIR` is a module-level constant from `os.homedir()`; `getValidToken()` takes
@@ -1510,14 +1512,10 @@ without whichever Bedrock refuses.
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
   **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
-  1. **Since 2026-09-23, run `make proto-token-broker` in its own terminal first and start
-     the stack with `FS_TOKEN_URL=http://host.docker.internal:8790/token`**: the worker then
-     asks the broker for the bearer at the start of every attempt (`proto/token_broker.py`),
-     which is the only protocol that survives a turn longer than the step ceiling — see the
-     Auth section's measured revocation. Never source `proto/env.sh` or run `make
-     proto-token` while a turn is in flight: that refresh revokes the in-flight attempt's
-     token. What follows is the file protocol, still the default without `FS_TOKEN_URL`:
-     `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
+  1. **Never source `proto/env.sh` or run `make proto-token` while a turn is in flight**
+     (2026-09-23): a FamilySearch refresh revokes the previous access token, so the
+     in-flight attempt's calls answer 401 — the Auth section's measurement. Between turns
+     it is safe. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
      make proto-up` — the harness's tree-read block (the fixture's answer sits in the live
      tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
      key and writes the FamilySearch token, refreshed from the desktop login through
@@ -1624,17 +1622,22 @@ without whichever Bedrock refuses.
   extracted five records. **Criterion 2 held across both resumes**: 5 sources, 43
   assertions, no fact written twice across calls, 21 log entries with no search re-run, and
   the guard correctly silent. But the turn never completed, so criterion 1's "and
-  completes" is not shown for it, and it exposed a token defect: attempt 2 read the bearer
-  at 15:26 and it expired at 15:42, because the file protocol refreshes only between turns.
-  No FamilySearch call came after 15:42 (the attempt worked from staged results), so the
-  run is not void, but the next long turn would be. Stopped by hand at 16:03 on attempt 3;
+  completes" is not shown for it. It was stopped by hand at 16:03 on attempt 3, on a
+  diagnosis later withdrawn: attempt 2's bearer (read at 15:26) was taken to have expired
+  at 15:42, but 15:42 was the engine's *assumed* one-hour expiry — FamilySearch sends no
+  `expires_in`, and its tokens live 8 h idle (Auth section) — so the token was good and
+  the stop was unnecessary. No FamilySearch call answered 401 either way.
   turn 4's three attempts spent ~$8.04 of tokens at Sonnet 4.6 list (984 k cache write,
   4.1 M cache read, 208 k output), which the row does not carry. Export:
   `apps/server/proto/exports/proj_bagley-father-1884_012776/`.
-  **Built from that run: the per-attempt token broker** (`make proto-token-broker`,
-  `FS_TOKEN_URL`; step 1 above). Live-checked the same day: `make proto-kill` with the
-  broker forcing a refresh on every ask — two asks (attempt 1, attempt 2), each revoking
-  the token before it, and the resumed `place_search` answered with the bearer: 9/9.
+  **A per-attempt token broker was built from that diagnosis and withdrawn before review**
+  (`make proto-token-broker`, `FS_TOKEN_URL`): it minted a token at every attempt start,
+  and worked (a `make proto-kill` with a forced refresh per ask passed 9/9; the final run
+  below used it, 5 asks, 0 failures), but it answered a token lifetime that does not
+  exist. With an 8 h token the file protocol already refreshes only between turns, which
+  is the safe moment. The real defect is the engine's assumed hour, which triggers needless
+  refreshes that revoke a token something else still holds — fixed in the engine and the
+  hosted control plane on its own PR.
   **Probe 2026-09-23 — background delegations are lost at EVERY turn end**
   (`sess_74022a6fe88241a6`, a fresh bagley seed). The message asked `/record-extraction` to
   delegate two named records "with `run_in_background: true`"; it did: both `Agent` calls
@@ -1665,7 +1668,8 @@ without whichever Bedrock refuses.
   `044e8bc0-3de9-49b9-9423-992edf2f49c4`; bagley, three interactive turns, $8.44). Built
   from current `main` with both PRs' heads merged: PR #2850 (the §3.4.3 guard, and the HTTP
   tool server rolling back a write whose client disconnected) and PR #2852 (forced-foreground
-  delegations, the token broker). The token broker was on (5 asks, 0 failures), the hold was
+  delegations, and the token broker since withdrawn — it was on for this run, 5 asks, 0
+  failures), the hold was
   20 s, and the kill was `make proto-kill … --kill-on extraction_append --kill-after-s 5`.
   Turns 1–2 ($1.45, $4.09) selected the question, planned, and searched (23 `record_search`,
   6 `record_read`); turn 3 took "Yes, continue." into `record-extraction` on two vital

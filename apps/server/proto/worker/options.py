@@ -43,8 +43,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
-import urllib.request
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -138,20 +136,13 @@ def tool_server_env(
 
 
 def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
-    """The patron's FamilySearch token for this ATTEMPT: the message's; else the host
-    broker's at ``FS_TOKEN_URL`` (proto/token_broker.py), asked now -- at attempt start,
-    the one moment a refresh cannot revoke a token a live attempt holds, since
-    FamilySearch revokes the previous access token on refresh; else the file
-    ``FS_ACCESS_TOKEN_FILE`` names, read now (proto/env.sh writes it between turns);
-    else the worker env's ``FS_ACCESS_TOKEN``; else empty. A broker that fails or
-    answers nothing falls through to the file, with a log line."""
+    """The patron's FamilySearch token for this turn: the message's; else the file
+    ``FS_ACCESS_TOKEN_FILE`` names, read now -- per attempt -- so the operator can refresh
+    it between turns (proto/env.sh writes it; never refresh while a turn is in flight,
+    since a FamilySearch refresh revokes the previous access token); else the worker
+    env's ``FS_ACCESS_TOKEN``; else empty."""
     if fs_access_token is not None:
         return fs_access_token or ""
-    url = worker_env.get("FS_TOKEN_URL")
-    if url:
-        token = broker_token(url)
-        if token:
-            return token
     path = worker_env.get("FS_ACCESS_TOKEN_FILE")
     if path:
         try:
@@ -160,18 +151,6 @@ def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> 
         except OSError:
             pass
     return worker_env.get("FS_ACCESS_TOKEN", "") or ""
-
-
-def broker_token(url: str, timeout_s: float = 150.0) -> str:
-    """The token the host broker answers at ``url``, or ``""`` (logged) on any failure.
-    The timeout covers the broker's own refresh (it shells to the engine)."""
-    try:
-        with urllib.request.urlopen(url, timeout=timeout_s) as resp:
-            return resp.read().decode("utf-8").strip()
-    except (OSError, ValueError) as exc:
-        print(json.dumps({"ev": "token_broker_failed", "error": f"{type(exc).__name__}: {exc}"[:300]}),
-              file=sys.stderr, flush=True)
-        return ""
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
