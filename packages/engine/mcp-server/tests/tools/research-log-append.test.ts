@@ -913,7 +913,7 @@ describe("research_log_append", () => {
       expect(warnOf(result)).not.toMatch(/retained none/);
     });
 
-    it("warns for image_transcribe and record_read too — the two acquisition producers stage now (#2048)", async () => {
+    it("does not warn for image_transcribe or record_read — record-extraction logs both without a stagedResultsRef by instruction", async () => {
       for (const [tool, query] of [
         ["image_transcribe", { imageArk: "ark:/61903/3:1:XXXX-XXX" }],
         ["record_read", { recordId: "ark:/61903/1:1:XXXX-XXX" }],
@@ -929,7 +929,7 @@ describe("research_log_append", () => {
           planItemId: null,
         });
         expect(result.ok).toBe(true);
-        expect(warnOf(result)).toMatch(new RegExp(`${tool} reported 1 available result\\(s\\) but retained none`));
+        expect(warnOf(result)).not.toMatch(/retained none/);
       }
     });
 

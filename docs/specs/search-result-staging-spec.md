@@ -51,11 +51,14 @@ search had — a page transcription or an ARK-fetched record crossed the convers
 was retained nowhere until extraction wrote `sources[].transcription` — and ADR-0002's seam rule
 ("whatever a step acquires, the host fetches and stages") puts it in this channel. They stage a
 **single document**, so the envelope is a **one-element `results[]`** (§5) rather than a second
-shape: `returned_count` is 1, finalize recomputes it as usual, and the pairing rule in §7 needs no
-change. The engine exports the two sets separately — `STAGING_SEARCH_TOOLS` (the three above:
-their payload is a page with an upstream total, so the nil-search and unlogged-search *notes* are
-theirs) and `STAGING_CAPABLE_TOOLS` (every producer; what `research_log_append` finalizes) — and
-the eval mock mirrors the SEARCH set (`eval/CLAUDE.md`, "Eval vs production parity").
+shape: `returned_count` is 1 and finalize recomputes it as usual. The engine exports the two sets
+separately — `STAGING_SEARCH_TOOLS` (the three above) and `STAGING_CAPABLE_TOOLS` (every producer)
+— and the eval mock mirrors the SEARCH set (`eval/CLAUDE.md`, "Eval vs production parity").
+**Every nag stays on the search set:** the nil-search note, the unlogged-search note (the reader
+skips an acquisition file) and `research_log_append`'s retained-none warning (§6). Record-extraction
+logs an upload as `user_provided` and a `record_read` with no `stagedResultsRef`, so an acquisition
+file never pairs with a log entry, and a nag on it would tell the model to undo a correctly logged
+read. An acquisition file that is never finalized is removed by the TTL prune like any other.
 
 **The inline-strip rule below has one exemption:** `image_transcribe` keeps returning its
 `transcription` inline. The shipped `image-reader` agent and `person_read`'s memories leg read it
@@ -216,10 +219,10 @@ the log editor behaves exactly as its own spec describes.
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
 - **The un-finalized set is also a signal, not only garbage.** `stageSearchResults`
-  prunes it; `unloggedStagedSearches(projectPath)` *reads* it, and all three staging
-  tools surface what it returns as an advisory note (contract in
+  prunes it; `unloggedStagedSearches(projectPath)` *reads* its search files, and all three staging
+  search tools surface what it returns as an advisory note (contract in
   `record-search-tool-spec-v2.md`). What makes it a signal rather than a file count is
-  the pairing rule: `research_log_append` only WARNS when a staging-capable tool logs
+  the pairing rule: `research_log_append` only WARNS when a staging search tool logs
   `results_available > 0` with no `stagedResultsRef` (§6), so that entry's staged file
   survives the full TTL although its search WAS logged — measured at 126 of 1242
   non-nil staging-capable entries across the committed corpus. Each staged file

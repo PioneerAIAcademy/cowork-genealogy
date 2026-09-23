@@ -128,6 +128,24 @@ describe("results-staging", () => {
       expect(await unloggedStagedSearches(dir)).toHaveLength(2);
     });
 
+    it("does not count a staged acquisition file with no log entry", async () => {
+      // record-extraction logs an upload as `user_provided` and a record_read with
+      // no stagedResultsRef, so neither file can ever pair; counting it would nag
+      // the next search about a read that was logged correctly.
+      await writeResearch([]);
+      await stage("image_transcribe");
+      await stage("record_read");
+      expect(await unloggedStagedSearches(dir)).toEqual([]);
+    });
+
+    it("still counts an unlogged search staged beside an acquisition file", async () => {
+      await writeResearch([]);
+      await stage("image_transcribe");
+      await stage("record_search");
+      const unlogged = await unloggedStagedSearches(dir);
+      expect(unlogged.map((u) => u.tool)).toEqual(["record_search"]);
+    });
+
     it("returns handles the model can hand straight back as stagedResultsRef", async () => {
       // A bare count is unusable to the session that lost the ref, which is the
       // session this note exists for. The ref must come back with it.
