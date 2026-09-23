@@ -19,6 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { getProjectStore } from "../store/project-store.js";
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -41,7 +42,7 @@ import { compatiblePlace } from "../utils/date-comparison.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
-import { gcUnreferencedImages } from "../utils/image-store.js";
+import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
@@ -63,6 +64,7 @@ import {
   type AssertionFactAttr,
 } from "./materialize-facts.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
+import { recordBasisOf } from "../utils/record-basis.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -163,6 +165,21 @@ const SECTIONS: Record<string, SectionConfig> = {
     },
   },
 };
+
+// A terminal plan is a settled audit trail, so it takes no new items —
+// research-plan's own prose said so in two places and did not bind, which is
+// what makes this a writer-tool precondition rather than a SKILL.md rule
+// (ADR-0011's first question: decidable from the documents alone).
+//
+// DERIVED from `plan_status`, not hand-listed: terminal means "not active", so
+// a value added to the enum is terminal here the moment it exists rather than
+// silently escaping the deny. A hand-written `{completed, superseded}` is the
+// stale copy `tool-schema-enums.test.ts` refuses, and it caught exactly that
+// here. Today the set is {completed, superseded} — the `exhausted` status the
+// 2026-09-07 ruling anticipated never arrived (issue #2077 closed not planned).
+const TERMINAL_PLAN_STATUSES = new Set(
+  [...VALIDATOR_ENUMS.plan_status].filter((s) => s !== "active"),
+);
 
 // Section invariants the project validator does NOT already enforce. (It already
 // checks conflict competing-counts, hypothesis ruled_out⇒reason, and
@@ -484,22 +501,30 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
   for (const a of preCallResearch?.assertions ?? []) {
     if (a && a.id != null) byId.set(a.id, a);
   }
-  let direct = 0;
-  const indirectSources = new Set<string>();
+  // The floor is "one record STATED it, or two independent records let us
+  // infer it". It is a mechanical PROXY for the GPS rule it descends from —
+  // GPS direct evidence answers the research question by itself, and a value a
+  // record states is not always direct evidence FOR THIS QUESTION (a stated age
+  // is indirect evidence of a birth year). The proxy predates this rename and is
+  // unchanged by it; what changed is that the prose can no longer borrow the
+  // GPS's authority by reusing its word. research-schema-spec.md § Status
+  // transitions states the gap; do not re-derive it here.
+  let stated = 0;
+  const inferredSources = new Set<string>();
   for (const aid of supporting) {
     const a = byId.get(aid);
     if (!a) continue; // an id resolving to no assertion counts as nothing
-    if (a.evidence_type === "direct") direct += 1;
+    if (recordBasisOf(a) === "stated") stated += 1;
     // Skipping a null/absent `source_id` diverges from the Python, which adds
     // `None` to the set and so could count "no source" as a distinct source.
     // Unreachable through this tool — `source_id` is required and typed
     // `string` in research.schema.json, and every writer validates before
     // persisting — so the two planes cannot observably disagree.
-    else if (a.evidence_type === "indirect" && typeof a.source_id === "string") {
-      indirectSources.add(a.source_id);
+    else if (recordBasisOf(a) === "inferred" && typeof a.source_id === "string") {
+      inferredSources.add(a.source_id);
     }
   }
-  if (direct < 1 && indirectSources.size < 2) {
+  if (stated < 1 && inferredSources.size < 2) {
     // The same-call clause matters as much here as in half (a), and for the
     // same reason: this half also reads the pre-call snapshot, so an assertion
     // appended earlier in THIS batch is invisible and the agent is told there is
@@ -507,9 +532,10 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
     // retries the same batch, or mints further assertions to satisfy a floor it
     // has already met — the ADR-0011 satisfiability limit.
     return [
-      `hypotheses[${hid}]: supported with no direct supporting assertion and only ` +
-        `${indirectSources.size} distinct indirect source(s) (needs >=1 direct or >=2 ` +
-        `distinct indirect sources). Assertions appended in THIS call do not count — ` +
+      `hypotheses[${hid}]: supported with no stated supporting assertion and only ` +
+        `${inferredSources.size} distinct inferred source(s) (needs >=1 record_basis ` +
+        `"stated" or >=2 distinct sources at record_basis "inferred"). Assertions ` +
+        `appended in THIS call do not count — ` +
         `append them in an earlier call, then promote`,
     ];
   }
@@ -1081,12 +1107,47 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   ];
 }
 
+/** The two tiers that are a final answer rather than a stalled one: `proved`
+ *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
+ *  deliberately absent — it is a non-answer, so something IS holding it back. */
+const CONCLUSIVE_TIERS = new Set(["proved", "disproved"]);
+
 function proofSummaryInvariants(
   entry: any,
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
 ): string[] {
   const tier = entry?.tier;
-  if (tier !== "proved" && tier !== "disproved") return [];
+
+  // `shortfall` answers "why is this conclusion not higher?", so a conclusive
+  // tier owes `none` and nothing else may claim it. Both fields sit on THIS
+  // object, so ADR-0011's first question — can it be decided from the documents
+  // alone? — answers yes, and the rule belongs here rather than only in the
+  // agent body and the eval validator, where it lived until 2026-09-21.
+  //
+  // Checked ahead of the conclusive-tier early return below, because the
+  // `none`-on-a-lower-tier half applies to every tier.
+  const shortfall = entry?.shortfall;
+  if (typeof shortfall === "string") {
+    if (CONCLUSIVE_TIERS.has(tier) && shortfall !== "none") {
+      return [
+        `tier '${tier}' is a conclusive answer — it reached a verdict, so nothing ` +
+          `is holding it back and shortfall must be 'none'; got '${shortfall}'. ` +
+          `Use 'ceiling', 'gap' or 'conflict' only on a tier that did NOT reach ` +
+          `one (probable, possible, not_proved).`,
+      ];
+    }
+    if (!CONCLUSIVE_TIERS.has(tier) && shortfall === "none") {
+      return [
+        `shortfall 'none' says nothing is holding this conclusion back, but tier ` +
+          `'${tier}' reached no conclusive answer — so something is. Name it: ` +
+          `'ceiling' (the reachable record is exhausted), 'gap' (a reachable ` +
+          `source is still unsearched), or 'conflict' (an unresolved conflict ` +
+          `names this question in its blocks_question_ids).`,
+      ];
+    }
+  }
+
+  if (!CONCLUSIVE_TIERS.has(tier)) return [];
   const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
   if (!declaredBeforeThisCall) {
     return [
@@ -1918,23 +1979,34 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   }
 }
 
-/** Assertions with `evidence_type: "negative"` must set `record_role` to the
+/** TWO DIFFERENT FIELDS SHARE THE VALUE `"absent"` IN THIS FUNCTION.
+ *  `record_basis: "absent"` says the RECORD lacked the value;
+ *  `record_role: "absent"` says the PERSON held no role in it because they were
+ *  not there. Read the field name on every line, here and in every message.
+ *
+ *  Assertions with `record_basis: "absent"` must set `record_role` to the
  *  exact string `"absent"` (research-schema-spec.md §5.6, "Negative evidence") — and vice versa —
  *  and must set `informant_proximity` to `"researcher"`: no record informant
  *  reported an absence, whatever the record type, so a negative is always the
  *  researcher's own conclusion. None of these are independent judgment calls;
- *  each is a mechanical corollary of the evidence_type decision, so this
+ *  each is a mechanical corollary of the record_basis decision, so this
  *  REJECTS rather than silently coercing. Silently overwriting `record_role`
  *  would risk masking an assertion whose `value` also failed to differentiate
  *  the person — observed live: three negative-evidence assertions on three
  *  different people sharing one generic `value` string ("preceded Harold
  *  Dean Whitaker in death"), with `record_role` as their only distinguishing
  *  field. No-op for a non-assertion entry (only assertions carry
- *  `evidence_type`) or a non-string `evidence_type`.
+ *  `record_basis`) or a non-string `record_basis`. This is a WRITER
+ *  precondition, so it reads `record_basis` strictly and does NOT accept the
+ *  pre-2026-09-18 spelling of this field (see the retired-identifier registry in
+ *  enums.schema.json) — an entry carrying that is rejected as an unknown key by
+ *  the shape check before it reaches here. The legacy reader
+ *  (`utils/record-basis.ts`) is for documents already on disk, not for writes.
  *
  *  The `record_role` arm is bidirectional; the `informant_proximity` arm is
- *  FORWARD ONLY, matching the document tier — every `absent` assertion in the
- *  corpus is already negative, so the converse is an unexercised branch.
+ *  FORWARD ONLY, matching the document tier — every `record_role: "absent"`
+ *  assertion in the corpus already carries `record_basis: "absent"`, so the
+ *  converse is an unexercised branch.
  *  `informant` is not checked at all: it is free text (ADR-0011 limit 1).
  *
  *  **Both messages name the ABSENCE TEST, not just the field to change**, and
@@ -1943,15 +2015,15 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
  *  is wrong for the predeceased pattern (a person the record names can still
  *  be absent from among the living). Neither message may prescribe an edit
  *  another arm refuses: an earlier draft told the caller to flip
- *  `evidence_type` to "direct", which the converse role arm then rejected. In
+ *  `record_basis` to "stated", which the converse role arm then rejected. In
  *  `eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`
  *  (`ut_record_extraction_028`) the role arm refused two blank-field negatives;
  *  the agent's very next call re-sent the same two defects with `record_role`
  *  flipped to `"absent"` and they were accepted. A message that names one field
  *  buys a relabel, not a fix. */
 function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
-  if (typeof entry.evidence_type !== "string") return;
-  const isNegative = entry.evidence_type === "negative";
+  if (typeof entry.record_basis !== "string") return;
+  const basisIsAbsent = entry.record_basis === "absent";
   const roleIsAbsent = entry.record_role === "absent";
   // Both arms are COLLECTED, not thrown one at a time. An entry wrong on both
   // fields is the commonest violating shape in the corpus (a_012's pre-retag
@@ -1961,47 +2033,200 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   // one field at a time buys a relabel rather than a fix. The document tier
   // already reports both.
   const errors: string[] = [];
-  if (isNegative && !roleIsAbsent) {
+  if (basisIsAbsent && !roleIsAbsent) {
     errors.push(
-      `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
-        `— negative evidence always uses the literal record_role "absent", and that ` +
+      `assertion has record_basis "absent" but record_role '${entry.record_role}' ` +
+        `— these are two different fields that share the value: record_basis "absent" ` +
+        `means the RECORD lacked the value, record_role "absent" means the PERSON was ` +
+        `not in it — and negative evidence always uses the literal record_role "absent", and that ` +
         `holds even when the record NAMES the person: an obituary's "preceded in death ` +
         `by his wife, Ruth" is still negative evidence about her vital status, so her ` +
         `role is "absent", not "spouse_1". Before changing the role, check the finding ` +
         `is an ABSENCE at all. A fact about a person PRESENT in the record is ` +
-        `evidence_type "direct" carrying that person's real role — change both fields ` +
+        `record_basis "stated" carrying that person's real record_role — change both fields ` +
         `together, not just this one. A blank field on a present person (no surname, no ` +
         `occupation) is silence: write no assertion. If it is an absence, keep the ` +
         `person's identity in \`value\` (e.g. "Walter Whitaker preceded Harold Dean ` +
         `Whitaker in death"), not a generic value shared across multiple people. A ` +
         `conforming negative is exactly: record_role "absent", informant_proximity ` +
         `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
-        `a DIRECT assertion and does not satisfy this rule.`,
+        `a record_basis "stated" assertion and does not satisfy this rule.`,
     );
   }
-  if (roleIsAbsent && !isNegative) {
+  if (roleIsAbsent && !basisIsAbsent) {
     errors.push(
-      `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
-        `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
+      `assertion has record_role "absent" but record_basis '${entry.record_basis}' ` +
+        `— record_role "absent" (the PERSON was not in the record) is reserved for ` +
+        `negative evidence, which carries record_basis "absent" (the RECORD lacked the ` +
+        `value). Set record_basis to "absent", or give the person their real record_role.`,
     );
   }
-  if (isNegative && entry.informant_proximity !== "researcher") {
+  if (basisIsAbsent && entry.informant_proximity !== "researcher") {
     errors.push(
-      `assertion has evidence_type "negative" but informant_proximity ` +
+      `assertion has record_basis "absent" but informant_proximity ` +
         `'${entry.informant_proximity}' — negative evidence is the researcher's own ` +
         `conclusion, so it always takes informant_proximity "researcher": no record ` +
         `informant reported an absence, whatever the record type, and that holds even ` +
         `when the record names the person (the "preceded in death by" shape). Set ` +
         `informant_proximity to "researcher". Only if the finding is not an absence at ` +
-        `all — a fact about a person present in the record — is "negative" the wrong ` +
-        `evidence_type, and then record_role must change from "absent" to that person's ` +
-        `real role in the same edit; changing evidence_type alone is refused. A ` +
+        `all — a fact about a person present in the record — is "absent" the wrong ` +
+        `record_basis, and then record_role must change from "absent" to that person's ` +
+        `real role in the same edit; changing record_basis alone is refused. A ` +
         `conforming negative is exactly: record_role "absent", informant_proximity ` +
         `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
-        `a DIRECT assertion and does not satisfy this rule.`,
+        `a record_basis "stated" assertion and does not satisfy this rule.`,
     );
   }
   if (errors.length) throw new ResearchAppendError(errors);
+}
+
+/** `structured_value.relationship_type` names the record subject's OWN role;
+ *  `related_person_role` names the other party's (research-schema-spec.md
+ *  §5.6.1). Nothing stated that until issue #2535, and the corpus wrote both
+ *  readings — a death certificate naming the father persisted as `"child"` on
+ *  one run and `"parent"` on another, each internally coherent. The harm is
+ *  silent: `value` reads correctly either way, so the LLM judge passes it and
+ *  a value-only matcher passes it too. Nothing in the engine reads
+ *  `structured_value.relationship_type` today — `materialize-facts.ts` has
+ *  `relationship` in SKIP_TYPES and reads only `related_person_role` — so
+ *  the wrong value simply sits there until whoever reads the
+ *  machine-readable layer gets the wrong family edge, or the right one
+ *  backwards. Latent, not inert.
+ *
+ *  WHERE the relation word sits is what decides whose role it names, and this
+ *  is the whole reason two earlier guards were abandoned on this field. A
+ *  value opening `<relation> of <name>` states the SUBJECT's role and can be
+ *  compared. `father named as Casper` and `father: Jan Roelfs` LABEL the other
+ *  party and say nothing about the subject — comparing those refused 22 of
+ *  the 37 it flagged over the e2e run logs (27 of 47 over run logs plus the
+ *  unit logs, fixtures and seed), which is how the abandoned guards got
+ *  their unacceptable rates. Re-derive with
+ *  `measure_relationship_direction.py --counterfactual`.
+ *
+ *  Forward direction only, on the entry being written. A whole-document rule
+ *  would make a project holding one pre-#2535 assertion unwritable by every
+ *  tool; PR #2601 set that precedent for the same reason.
+ *
+ *  Skips rather than guesses on: an unknown spelling (`ward`, `godchild`,
+ *  `grandparent` — 73 assertions across 18 spellings), a label form, a
+ *  value naming no relation, and a non-assertion entry. An unknown type is not evidence of disagreement. */
+// Prototype-less: the keys come from a model-supplied `relationship_type`,
+// and on a plain object literal `constructor`, `toString` and `__proto__`
+// all read back truthy — which turned an unknown spelling into a refusal
+// quoting `a function Object() { [native code] } relation`, against the
+// skip-never-refuse contract this rule documents. Fixed here rather than
+// at each index site so a third one cannot reintroduce it, and so the
+// lookup means what the Python mirror's `dict.get()` already meant.
+// Exported only so the cross-language drift test can pin it against the
+// Python copy; nothing else outside this module reads it.
+export const RELATION_CATEGORY: Record<string, string> = Object.assign(
+  Object.create(null) as Record<string, string>,
+  {
+    father: "parent", mother: "parent", parent: "parent",
+    son: "child", daughter: "child", child: "child",
+    wife: "spouse", husband: "spouse", spouse: "spouse",
+    widow: "spouse", widower: "spouse",
+    brother: "sibling", sister: "sibling", sibling: "sibling",
+  },
+);
+const RELATION_WORDS = Object.keys(RELATION_CATEGORY).join("|");
+// A value LABELS the other party in two shapes that need different patterns.
+// An earlier single pattern spanning `[^,]*?` was wrong both ways: a stray
+// `[KEY:` colon suppressed real sibling refusals, and one comma in `Father of
+// the groom, named as X` made it miss and wrongly refuse a correct assertion.
+//
+// Only ONE label guard is needed. A label with no ` of ` -- `father: Jan
+// Roelfs`, `father named as Casper` -- never reaches here, because
+// STATES_SUBJECT_ROLE requires ` of `. A second guard for those was
+// written, measured against the corpus, found to change nothing, and
+// deleted; do not add it back.
+//
+// By role: `Father of groom named as Tellef`. The party being named is
+// identified by ROLE -- a bare lowercase word -- so it is the other party. A
+// CAPITALISED token there is a name, so the value states the subject's own tie
+// and must not be skipped.
+const LABELS_BY_ROLE = new RegExp(
+  `^\\s*(?:the\\s+)?(?:${RELATION_WORDS})\\s+of\\s+(?:the\\s+)?(\\w+)[\\s,]*(?::|\\s+named\\b)`,
+  "i",
+);
+const STATES_SUBJECT_ROLE = new RegExp(
+  `^\\s*(?:the\\s+)?(${RELATION_WORDS})\\s+of\\s+`,
+  "i",
+);
+
+/** Exported only so the cross-language drift test can pin it against the
+ *  Python `_relationship_category`: the table alone does not cover the
+ *  `_inferred` strip or the trim, and `String.replace` with a string
+ *  pattern replaces the FIRST occurrence here while Python's replaces
+ *  every one. */
+export function relationshipCategory(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  // Anchored, and one suffix only. A bare `.replace("_inferred", "")`
+  // strips the FIRST occurrence here and EVERY occurrence in the Python
+  // mirror, so `child_inferred_inferred` was unknown to this side and
+  // `child` to that one.
+  return RELATION_CATEGORY[value.toLowerCase().trim().replace(/_inferred$/, "")];
+}
+
+/** The category the VALUE claims for the record subject, or undefined when it
+ *  does not speak to the subject's own role. Exported so the cross-language
+ *  drift test can pin it against the Python copy in
+ *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
+ *  because the harness and the engine share no runtime, and nothing else keeps
+ *  the two in step. */
+export function subjectRoleInValue(value: string): string | undefined {
+  const byRole = LABELS_BY_ROLE.exec(value);
+  // A lowercase ASCII token is a role word, not a name. Must stay an
+  // explicit class, never a case test: `=== toLowerCase()` is true for a
+  // token with no case (`2`) where the Python mirror's .islower() is
+  // false, so the two disagreed in both directions before this. The
+  // capture stays `\w+` although that is ASCII here and Unicode
+  // there: with this guard both spellings reach the same verdict either
+  // way, and widening it to `\S+?` was reverted as unobservable.
+  if (byRole && /^[a-z]+$/.test(byRole[1])) return undefined;
+  const m = STATES_SUBJECT_ROLE.exec(value);
+  if (!m) return undefined;
+  return RELATION_CATEGORY[m[1].toLowerCase()];
+}
+
+function validateRelationshipDirection(entry: Record<string, unknown>): void {
+  // `fact_type: relationship` only, which is what the refusal-table row and
+  // the measurement script both scope to. The exact match is right here
+  // because `canonicalizeAssertionLabels` has already run on both the
+  // append and the update arm, folding `parentage` and
+  // `familycomposition` INTO `relationship`, so those are INSIDE this
+  // scope, not outside it.
+  // Genuinely outside: 81 assertions across 11 fact types still carry a
+  // categorised `relationship_type` (`marriage` 54, `parentchild` 11,
+  // `name` 4, …), re-derivable with
+  // `measure_relationship_direction.py --domain`.
+  // None would be refused today, so the measured rate is unchanged — but a
+  // guard whose domain nobody has measured is a guard whose rate nobody can
+  // trust, and `marriage` assertions use these fields differently enough that
+  // widening is a decision, not an oversight.
+  if (String(entry.fact_type ?? "").toLowerCase() !== "relationship") return;
+  const sv = entry.structured_value;
+  if (!sv || typeof sv !== "object" || Array.isArray(sv)) return;
+  const declared = relationshipCategory(
+    (sv as Record<string, unknown>).relationship_type,
+  );
+  const value = typeof entry.value === "string" ? entry.value : "";
+  if (!declared || !value) return;
+  const stated = subjectRoleInValue(value);
+  if (!stated || stated === declared) return;
+  throw new ResearchAppendError([
+    `assertion has structured_value.relationship_type ` +
+      `'${(sv as Record<string, unknown>).relationship_type}' (a ${declared} ` +
+      `relation) but value='${value}' states the subject is a ${stated}. ` +
+      `\`relationship_type\` is the record SUBJECT's own role and ` +
+      `\`related_person_role\` is the other party's, so a death certificate ` +
+      `naming the father is "child" on the deceased, not "parent". The legal ` +
+      `categories are "parent", "child", "spouse" and "sibling" — "sibling" ` +
+      `included, which earlier guidance omitted, so a brother or sister is ` +
+      `"sibling" and never "child". Either correct the type to ` +
+      `'${stated}', or, if the value is describing the OTHER party rather ` +
+      `than the subject, rewrite it to say whose role it names.`,
+  ]);
 }
 
 function applyOne(
@@ -2231,6 +2456,36 @@ function applyOne(
     if (!parent) {
       throw new ResearchAppendError(`${config.nested.parent} entry '${op.planId}' not found`);
     }
+    // APPENDS only. An update targets an item already inside the plan, and
+    // `research-plan` supersedes a plan by flipping `plans.status` alone — its
+    // items keep whatever status they held. Denying updates would strand an
+    // `in_progress` item in a terminal plan with no route to move it, which is
+    // the unrecoverable false deny ADR-0011's first limit exists to prevent.
+    //
+    // `parent` is read LIVE, not from a pre-call snapshot: ops apply in order
+    // over the mutated document, so a plan created (or flipped terminal)
+    // earlier in this same batch is the same author's own prior step and must
+    // be seen. A snapshot read cannot see a same-call plan at all.
+    if (op.op === "append" && TERMINAL_PLAN_STATUSES.has(parent.status)) {
+      // Both fields are guarded the way `emptyCreatedPlanErrors`' describe()
+      // guards them: this fires BEFORE document validation, so a hand-edited
+      // research.json can reach it with either field absent.
+      const q = typeof parent.question_id === "string" ? `'${parent.question_id}'` : "an unknown question";
+      const createdHere = [...(appendedThisBatch ?? [])].filter((id) => id.startsWith("pl_"));
+      // This deny fires before `emptyCreatedPlanErrors` (applyOne throws, and
+      // the batch returns at once), so it inherits that arm's job of naming the
+      // plan this call created — the message, not the symptom, is what drives
+      // the model's next move.
+      const remedy =
+        createdHere.length === 1
+          ? `This call created plan '${createdHere[0]}' — re-issue these items with planId '${createdHere[0]}'.`
+          : `Append to that question's active plan, or create one first; if these items belong to a ` +
+            `different question, re-issue with that question's plan id.`;
+      throw new ResearchAppendError(
+        `${config.nested.parent} entry '${op.planId}' is '${parent.status}' (question ${q}) — ` +
+          `a ${parent.status} plan is a settled audit trail and takes no new items. ${remedy}`,
+      );
+    }
     if (!Array.isArray(parent[config.nested.field])) parent[config.nested.field] = [];
     array = parent[config.nested.field];
     idPool = (Array.isArray(parents) ? parents : []).flatMap((p: any) =>
@@ -2267,6 +2522,7 @@ function applyOne(
     normalizeAccessDate(newEntry);
     canonicalizeAssertionLabels(newEntry);
     validateNegativeEvidenceRole(newEntry);
+    validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
@@ -2331,6 +2587,27 @@ function applyOne(
     normalizeAccessDate(existing);
     canonicalizeAssertionLabels(existing);
     validateNegativeEvidenceRole(existing);
+    // Scoped to ops that set one of the three inputs it compares.
+    // `fact_type` is one of them because it decides whether the guard
+    // applies at all, so a retype INTO `relationship` would otherwise move
+    // a standing contradiction inside the domain without either compared
+    // field being touched.
+    //
+    // The update arm validates the MERGED entry, so an unconditional call
+    // refuses an unrelated edit — a plain `place` correction on an
+    // assertion written before this rule existed — and `research_append`
+    // resolves and writes `standard_place` on every place-carrying
+    // assertion, so that is an ordinary edit, not a corner. Same discipline
+    // as the place-containment check below and the
+    // `hypothesisSupportedInvariants` floor: forward direction means the
+    // ops being written, not the document.
+    if (
+      Object.prototype.hasOwnProperty.call(op.fields, "value") ||
+      Object.prototype.hasOwnProperty.call(op.fields, "structured_value") ||
+      Object.prototype.hasOwnProperty.call(op.fields, "fact_type")
+    ) {
+      validateRelationshipDirection(existing);
+    }
     entryId = op.entryId;
     resultEntry = existing;
   } else {
@@ -3127,6 +3404,112 @@ async function prepareOps(
         );
       }
     }
+  }
+
+  // ── Derive transcription_truncated at the write boundary (#2457) ──
+  // The truncation of an image read is known to image_transcribe, not to
+  // record-extractor (which only holds the relayed text). So research_append is
+  // authoritative for it on any image-backed source — DERIVED here, never asserted
+  // by the agent. Per the B1/B2 ruling (2026-09-19) the PERSISTED marker is
+  // `true` or ABSENT, never `false`: the invariant is that nothing moves from
+  // "partial" to "whole", in memory (sticky-`true` in the cap store) or in the
+  // document (here). `false` lives only in the cap store; it is read below (as
+  // "not true"), never written to research.json. So a wrong-but-resolvable
+  // image_filename can only add an unneeded `true` badge, never a false
+  // "verified whole" — which is why the agent-supplied join key is acceptable.
+  // Absent means UNKNOWN, not whole.
+  //
+  // DERIVED FROM THE BATCH'S FINAL STATE PER SOURCE, not per op (#2457 r11).
+  // Both fields can arrive in a different op from each other, and either can be
+  // REMOVED by a later op in the same batch, so a per-op read got three things
+  // wrong. Keyed on PRESENCE (`"x" in bag`) rather than truthiness, because an
+  // explicit `null`/`""` is the caller REMOVING a field, which is the opposite of
+  // not re-sending it:
+  //   - `append {transcription}` then `update {image_filename}` derived nothing
+  //     while the mirror order derived `true`, on the same final document;
+  //   - `update {image_filename: null}` derived the badge from the very reference
+  //     that op deletes, onto a source that ends up citing no scan;
+  //   - two updates to one source, the second nulling the text, had op[0] stamp
+  //     `true` and then the validator refuse the whole batch, blaming the caller
+  //     for a value only this loop set.
+  //
+  // MUST RUN AFTER the §3.4.1 reuse rewrite above, and that is now load-bearing
+  // rather than decorative: before the fold a reused source is still an `append`
+  // carrying no entryId, so the persisted-entry lookup below cannot resolve it;
+  // after the fold it is an `update` carrying `entryId` and it can. Pinned by
+  // "derives through a §3.4.1 reuse fold" in research-append.test.ts — move this
+  // block and that test reds.
+  const persistedSourcesForDerive = Array.isArray(research.sources) ? research.sources : [];
+  // Pass 1: strip any caller-supplied value from EVERY sources bag first. The field
+  // is derived, so an agent's guess never persists — including on a source with no
+  // joinable image_filename, and including an op that pass 2 never stamps. On an
+  // `update` this also means the key is absent from the patch, so the merge keeps
+  // the persisted value: that is how a persisted `true` survives an update after a
+  // process restart emptied the store (the store, not the document, is what a
+  // restart clears).
+  const sourcesOpsForDerive: { op: (typeof ops)[number]; bag: Record<string, unknown> }[] = [];
+  for (const op of ops) {
+    if (op.section !== "sources") continue;
+    const bag = (op.op === "append" ? op.entry : op.fields) as
+      | Record<string, unknown>
+      | undefined;
+    if (!bag || typeof bag !== "object") continue;
+    delete bag.transcription_truncated;
+    sourcesOpsForDerive.push({ op, bag });
+  }
+  // Pass 2: fold each source's ops, in order, onto the entry already persisted, to
+  // get the `image_filename` and `transcription` this batch will actually leave
+  // behind. An append is its own source (§3.3 forbids updating an id appended in
+  // the same batch), so it keys on its own bag; updates key on `entryId`.
+  interface DeriveState {
+    last: Record<string, unknown>;
+    ref: unknown;
+    text: unknown;
+  }
+  const deriveBySource = new Map<unknown, DeriveState>();
+  for (const { op, bag } of sourcesOpsForDerive) {
+    const key = op.op === "update" && op.entryId ? `u:${op.entryId}` : bag;
+    let state = deriveBySource.get(key);
+    if (!state) {
+      const persisted =
+        op.op === "update" && op.entryId
+          ? persistedSourcesForDerive.find((s: any) => s && s.id === op.entryId)
+          : undefined;
+      state = {
+        last: bag,
+        ref: persisted?.image_filename,
+        text: persisted?.transcription,
+      };
+      deriveBySource.set(key, state);
+    }
+    if ("image_filename" in bag) state.ref = bag.image_filename;
+    if ("transcription" in bag) state.text = bag.transcription;
+    state.last = bag;
+  }
+  // `true` is the only value persisted, and only beside a non-empty transcription:
+  // the marker qualifies text, so it is meaningless without any, and `true` beside
+  // empty/null transcription is a state validate_research_schema rejects (its
+  // .trim()), which batched would discard every good op with it. Anything else —
+  // the image not in the cap set (a whole read, or no read here), no surviving
+  // image_filename, or no surviving text — leaves the key deleted by pass 1:
+  // nothing but `true` is ever written (#2457 rulings, C 2026-09-21). So a
+  // non-partial image permits an in-place transcription update (the patch omits
+  // the marker and the merge keeps the persisted value); and a persisted `true`
+  // survives such an update — the marker may over-report a since-refined read,
+  // which the ruling accepts as an unneeded badge, never a false "verified whole".
+  // The stamp lands on the last op touching that source. That is DEFENSIVE, not a
+  // guarded invariant, and the comment says so rather than overclaiming: `applyOne`
+  // merges an update key by key and pass 1 strips the key from every bag, so no
+  // later op can carry a competing value and which bag holds the stamp is currently
+  // unobservable (measured — stamping the FIRST op instead passes the whole suite).
+  // It is kept so this block does not silently depend on that merge staying key-wise.
+  for (const state of deriveBySource.values()) {
+    const ref = state.ref;
+    const text = state.text;
+    if (typeof ref !== "string" || ref.length === 0) continue;
+    if (typeof text !== "string" || text.trim() === "") continue;
+    if (!sourceImageCapState(projectPath, ref)) continue;
+    state.last.transcription_truncated = true;
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);

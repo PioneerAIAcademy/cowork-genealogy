@@ -207,7 +207,9 @@ gh issue create --label developer|genealogist [--label icebox] \
 - **Never `--label high-priority`.** That label is a picker signal — *take this
   before other cards in your lane* — applied to Ready cards by `/fill-ready`
   from criteria it re-derives every run, and never at filing. If the item is
-  urgent, say so in the body; the next `/fill-ready` decides.
+  urgent, say so in the body; the next `/fill-ready` decides. The one exception
+  is the lead's own `> **High priority (<date>):** lead: <login>` line, which
+  only the lead writes and which `/fill-ready` ranks first from any column.
 - **Pick the label by who does the work.** `developer` for anything with a
   mechanical pass/fail (lints, CI, validators, harness/Python, MCP tools,
   refactors, tooling bugs). `genealogist` for fixture adjudication, run-log
@@ -290,6 +292,29 @@ This section is the owner of these rules. [`CLAUDE.md`](./CLAUDE.md) keeps the
 four-step order, the exemptions that let you reach step 4, and the three rules
 whose failure is silent — never write to the board yourself, never start a queue
 file, and label a missing guard `nothing-checks`. It points here for the rest.
+
+## Dependency audits
+
+After any dependency bump, re-run the audits and update
+[`docs/dependency-security-advisories.md`](./docs/dependency-security-advisories.md):
+
+```bash
+(cd packages/engine/mcp-server && npm audit)
+(cd eval/app && npm audit)
+pnpm audit
+```
+
+Run these **without** `--omit=dev` / `--prod` — most of what the register tracks is
+dev-only, and the omitting forms report zero for trees that have open advisories.
+Re-run with `--omit=dev` / `--prod` afterwards to sort what ships from what does not;
+the "Reachability" paragraph in the register does that triage.
+
+These cover the three JS trees only. The two Python trees (`apps/server/uv.lock`,
+`eval/harness/uv.lock`) have no audit command here — Dependabot alerts are their only
+signal, and the register's backlog section carries the query.
+
+That file is the sole mechanism for tracking dependency vulnerabilities —
+no CI job audits any dependency tree (lead ruling, 2026-09-09).
 
 ## How to test a new tool end-to-end
 
@@ -598,7 +623,7 @@ built web client from a single origin. Full procedure in
 
 ```bash
 # Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY,
-# FS_TOKEN_ENC_KEY and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app
+# FS_TOKEN_ENC_KEY, ANTHROPIC_PROXY_SIGNING_KEY and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app
 # refuses to boot if DATABASE_URL is unset or any of those secrets is still at its
 # development default (config.assert_production_config). Not a silent downgrade: the
 # process exits at startup naming the offending setting. (A blank-but-set secret still
@@ -610,6 +635,7 @@ built web client from a single origin. Full procedure in
 fly secrets set \
   DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… FS_TOKEN_ENC_KEY=… \
+  ANTHROPIC_PROXY_SIGNING_KEY="$(openssl rand -hex 32)" \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
 # don't set it here (a secret would shadow the [env] value).

@@ -136,9 +136,9 @@ Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true 
 
 Build the simplified-GedcomX document in memory — you pass it to `project_create` in Step 4, which writes it. Do NOT write either project file yourself; `Write` on them is blocked. Follow `references/simplified-gedcomx-summary.md`.
 
-**`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
+**`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. It also returns a top-level `notes` array when it dropped a relationship whose other end it could not return; that is a sibling of `persons`, not a source field, and never goes in the tree. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
 
-**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifactUrl`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
+**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, siblings, spouse, children), all relationships, all source descriptions in the top-level `sources` array — minus `notes`, `text`, `image_ref` and `artifact_url`, none of which are allowed source fields and each of which fails the write. (`text` carries a memory's story text or OCR; keep it for Step 4b, then drop it from the tree.) A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
 
 **ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), and rewrite every relationship endpoint to the new person IDs.
 
@@ -269,6 +269,10 @@ here, only the framing changes.
 - Known holdings recorded (if any) and what each contributes
 - Any scanned documents or photos on the profile that could not be read this
   time — name each one and say they can be read later
+- If `person_read` returned a top-level `notes` array, one sentence from it: a
+  relative FamilySearch names but does not describe was left out. Say it in
+  plain words — "FamilySearch lists a parent for him but gives no record for
+  that person, so they are not in the tree" — never the count or the field name
 - One sentence on what comes next, defining "objective" and "research
   question" on first use — never "use question-selection to…": "Your objective
   is the overall goal — <restate it>. The next step is the first research
@@ -295,7 +299,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Never overwrite an existing project.** Guard clause catches this.
 - **v1 is read-only.** tree.gedcomx.json is not uploaded to FamilySearch.
 - **Use local GedcomX IDs** (`I1`, `I2`…) in both project files, including FamilySearch-seeded persons.
-- **Include relatives** (FAN principle). Known relatives from the start give downstream skills persons to link to.
+- **Include relatives** (FAN principle), **siblings included**. Known relatives from the start give downstream skills persons to link to. `person_read` with `relatives: true` returns siblings by reading each parent; a half-sibling comes back linked to the shared parent only, which is the truth of what was imported.
 - **Treat imported data as unverified.** FamilySearch tree is collaborative, quality varies. Never silently correct errors — flag them.
 - **Recording conventions:** maiden (birth) surnames for women; places most-specific to most-general; jurisdictions as they existed at event time; ISO 8601 dates in JSON.
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.

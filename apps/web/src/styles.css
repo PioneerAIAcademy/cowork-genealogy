@@ -616,6 +616,48 @@ button {
 .msgText :last-child {
   margin-bottom: 0;
 }
+/* Restore the block spacing the global reset (viewer-ui global.css) zeroes for
+   the rest of the markdown blocks agent narration emits — lists, fences and
+   quotes. Local to the bubble like .narrative in ProofSummariesSection, not in
+   global.css (whose bare tag rules style 14 viewer sections). em-relative, not
+   var(--spacing-*), which is sized for the viewer's 15px root, not the 13.5px
+   bubble. ul/ol also need padding-left: the reset zeroed it, so markers have
+   nowhere to sit and a margin-only fix would clip them. */
+.msgText ul,
+.msgText ol {
+  margin: 0.6em 0;
+  padding-left: 1.5em;
+}
+.msgText li {
+  margin: 0.2em 0;
+}
+.msgText pre {
+  margin: 0.6em 0;
+}
+.msgText blockquote {
+  margin: 0.6em 0;
+  padding-left: 0.8em;
+  border-left: 3px solid var(--line);
+}
+/* A heading in a bubble is emphasis, not a section title: de-escalate the
+   viewer's global h2/h3 treatment (1.6rem display, border-bottom, and a
+   color:var(--text-primary) that otherwise wins over a user bubble's inherited
+   light-on-accent color). One selector list so h1/h4-h6, which have no global
+   rule, don't return as a second card. Keep the display font, like .narrative. */
+.msgText h1,
+.msgText h2,
+.msgText h3,
+.msgText h4,
+.msgText h5,
+.msgText h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.1em;
+  margin: 0.8em 0 0.3em;
+  border-bottom: none;
+  padding-bottom: 0;
+  color: inherit;
+}
 .msgText.msgError {
   color: var(--danger);
 }

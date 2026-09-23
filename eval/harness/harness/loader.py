@@ -76,7 +76,7 @@ def load_test(path: Path) -> TestSpec:
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         raise InvalidTestError(f"test file not found: {path}") from e
-    except json.JSONDecodeError as e:
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise InvalidTestError(f"test file is not valid JSON: {path}: {e}") from e
     spec = load_test_from_dict(raw)
     spec.source_path = Path(path)

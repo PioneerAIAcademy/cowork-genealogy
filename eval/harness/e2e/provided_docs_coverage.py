@@ -133,7 +133,7 @@ def coverage_report(
     for slug, sidecar in sorted(latest.items()):
         try:
             data = json.loads(sidecar.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             continue
 
         # Accumulate skip table (all repos, all primaries)
