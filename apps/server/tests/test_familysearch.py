@@ -511,3 +511,28 @@ def test_get_current_user_rejects_removed_allowlist_email(monkeypatch):
         r = client.get("/auth/me")
         assert r.status_code == 403, \
             "a user removed from the allowlist must be rejected immediately"
+
+
+def test_expires_at_defaults_to_the_familysearch_lifetime_when_the_response_names_none():
+    """FamilySearch's token response carries no expires_in (measured 2026-09-23); its access
+    tokens live 8 h idle. An hour-long default made every holder refresh hourly, and a
+    refresh revokes the previous access token -- the sandbox's live one."""
+    from datetime import datetime, timedelta, timezone
+
+    before = datetime.now(timezone.utc).replace(microsecond=0)
+    got = fs_oauth.expires_at_from({"access_token": "a", "token_type": "family_search", "refresh_token": "r"})
+    assert fs_oauth.FS_ACCESS_TOKEN_LIFETIME_S == 8 * 60 * 60
+    assert before + timedelta(hours=8) <= got <= datetime.now(timezone.utc) + timedelta(hours=8)
+    assert fs_oauth.expires_at_from({"expires_in": 600}) <= datetime.now(timezone.utc) + timedelta(seconds=600)
+
+
+def test_the_hosted_lifetime_matches_the_engine():
+    """Two copies of one fact, one per language; a drift would have the web tier and the
+    in-sandbox engine disagree on when to refresh -- and each refresh revokes the other's."""
+    import re
+    from pathlib import Path
+
+    ts = (Path(__file__).resolve().parents[3] / "packages/engine/mcp-server/src/auth/refresh.ts").read_text(encoding="utf-8")
+    m = re.search(r"export const FS_ACCESS_TOKEN_LIFETIME_S = ([0-9 *]+);", ts)
+    assert m, "the engine constant moved; update this test"
+    assert eval(m.group(1)) == fs_oauth.FS_ACCESS_TOKEN_LIFETIME_S  # noqa: S307 -- digits and '*' only

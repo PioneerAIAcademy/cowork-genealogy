@@ -70,11 +70,11 @@ class FsTokenIn(BaseModel):
 
     Include `refresh_token` (OAuth `offline_access`) so the in-sandbox MCP can
     self-refresh: with it the session lasts as long as the sandbox; without it the
-    session works only until the access token expires (FS access tokens last ~1h, so a
-    multi-hour session needs the refresh token)."""
+    session works only until the access token expires (FS access tokens last 8 h idle,
+    24 h at most, so a longer session needs the refresh token)."""
     access_token: str = Field(min_length=1)
     refresh_token: str | None = None
-    expires_in: int | None = None  # seconds from now; defaults to 3600 (FS default)
+    expires_in: int | None = None  # seconds from now; defaults to 8 h (FS sends none; 8 h idle is its lifetime)
 
 
 class CreateSessionBody(BaseModel):

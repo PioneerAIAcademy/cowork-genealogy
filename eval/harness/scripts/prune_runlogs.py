@@ -3,6 +3,8 @@
 
     --rehash              migrate pre-v3 unit run logs: snapshot content ->
                           sha256 digests, dropping the dead mcp-server/src keys.
+    --rehash-tags         recompute snapshot hashes for test-JSON keys after
+                          tags was removed from cosmetic fields (issue #2694).
     --prune-unit K        one-time backfill to the keep-newest-K rule the
                           harness now applies on every write (harness.runlog).
     --strip-e2e-captures  reduce `response_summary` to its replay remnant in
@@ -30,6 +32,7 @@ key (`harness/since_window.py`, 14 days) is the point.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
 from datetime import date, timedelta
@@ -43,7 +46,13 @@ sys.path.insert(0, str(HARNESS_DIR))
 from harness.replay import parse_tool_result  # noqa: E402
 from harness.runlog import prune_old_candidates  # noqa: E402
 from harness.since_window import DEFAULT_SINCE_DAYS, run_date  # noqa: E402
-from harness.snapshot import _MCP_SRC_PREFIX, hash_snapshot, is_hashed_snapshot  # noqa: E402
+from harness.snapshot import (  # noqa: E402
+    _MCP_SRC_PREFIX,
+    hash_content,
+    hash_snapshot,
+    is_hashed_snapshot,
+    normalize,
+)
 from harness.versioning import DEFAULT_KEEP_CANDIDATES, prunable_candidates  # noqa: E402
 
 REPO_ROOT = HARNESS_DIR.parents[1]
@@ -160,6 +169,129 @@ def cmd_rehash(root: Path, *, dry_run: bool) -> int:
             f"{before_total / mb:.1f} MB -> {after_total / mb:.1f} MB "
             f"({(before_total - after_total) / mb:.1f} MB reclaimed)"
         )
+    return 0
+
+
+# --- rehash-tags (issue #2694) -------------------------------------------
+# The OLD normalization stripped tags; the new one does not. To migrate a
+# snapshot key that points at a test JSON: recompute the hash under the old
+# rule (tags stripped), compare to the stored value, and only if they match
+# (proving no other field drifted) store the new-rule hash.
+_OLD_COSMETIC_TEST_FIELDS = ("name", "description", "tags")
+
+
+def _normalize_old_rule(repo_relative_path: str, content: bytes) -> str:
+    """normalize() under the OLD cosmetic-fields rule (tags stripped).
+
+    Inline reimplementation so we compare against what the old code produced,
+    not what the now-changed `normalize()` produces.
+    """
+    if not (repo_relative_path.startswith("eval/tests/unit/") and repo_relative_path.endswith(".json")):
+        return normalize(repo_relative_path, content)
+    try:
+        obj = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return normalize(repo_relative_path, content)
+    if isinstance(obj, dict):
+        obj = copy.deepcopy(obj)
+        test_block = obj.get("test")
+        if isinstance(test_block, dict):
+            for field in _OLD_COSMETIC_TEST_FIELDS:
+                test_block.pop(field, None)
+    text = json.dumps(obj, sort_keys=True, indent=2, ensure_ascii=False)
+    if not text.endswith("\n"):
+        text += "\n"
+    return text
+
+
+def cmd_rehash_tags(root: Path, *, repo_root: Path, dry_run: bool) -> int:
+    """Recompute snapshot hashes for test-JSON keys after tags left cosmetic.
+
+    Safety contract (issue #2694):
+    1. For each test-JSON snapshot key, read the test file from disk.
+    2. Compute hash under OLD rule (tags stripped) — inline reimplementation.
+    3. Compare to stored value. Only if they match, store the NEW-rule hash.
+    4. If they don't match, report loudly (pre-existing staleness expected).
+    5. Fail on zero successful rewrites.
+    """
+    logs = committed_runlogs(root)
+    rewritten_total = 0
+    mismatch_total = 0
+    already_migrated_total = 0
+    logs_touched = 0
+
+    for log_path in logs:
+        log = json.loads(log_path.read_text(encoding="utf-8"))
+        snapshot = log.get("snapshot") or {}
+        if not is_hashed_snapshot(snapshot):
+            continue  # pre-v3, nothing to rehash here
+
+        changed_in_this_log = False
+        for key, stored_hash in list(snapshot.items()):
+            if not (key.startswith("eval/tests/unit/") and key.endswith(".json")):
+                continue
+
+            disk_path = repo_root / key
+            if not disk_path.is_file():
+                print(
+                    f"  SKIP {log_path.name}: {key} — file missing on disk"
+                )
+                continue
+
+            disk_bytes = disk_path.read_bytes()
+            old_rule_hash = hash_content(_normalize_old_rule(key, disk_bytes))
+            new_rule_hash = hash_content(normalize(key, disk_bytes))
+
+            if old_rule_hash == new_rule_hash:
+                # No tags in this test, or tags field is absent — hash unchanged.
+                continue
+
+            if stored_hash == new_rule_hash:
+                # A prior run of this command already migrated this key.
+                already_migrated_total += 1
+                continue
+
+            if stored_hash != old_rule_hash:
+                # Pre-existing staleness — the stored hash doesn't match the
+                # old rule either, so some other field drifted. Report loudly.
+                mismatch_total += 1
+                print(
+                    f"  MISMATCH {log_path.name}: {key}\n"
+                    f"    stored:   {stored_hash}\n"
+                    f"    old-rule: {old_rule_hash}\n"
+                    f"    new-rule: {new_rule_hash}"
+                )
+                continue
+
+            # Stored matches old rule — safe to rewrite.
+            if not dry_run:
+                snapshot[key] = new_rule_hash
+            changed_in_this_log = True
+            rewritten_total += 1
+
+        if changed_in_this_log and not dry_run:
+            log["snapshot"] = snapshot
+            log_path.write_text(json.dumps(log, indent=2), encoding="utf-8")
+            logs_touched += 1
+
+    if dry_run:
+        print(
+            f"rehash-tags --dry-run: {rewritten_total} snapshot key(s) would "
+            f"be rewritten across {len(logs)} run log(s); "
+            f"{already_migrated_total} already migrated; "
+            f"{mismatch_total} pre-existing mismatch(es)"
+        )
+    else:
+        print(
+            f"rehash-tags: rewrote {rewritten_total} snapshot key(s) across "
+            f"{logs_touched} run log(s); "
+            f"{already_migrated_total} already migrated; "
+            f"{mismatch_total} pre-existing mismatch(es)"
+        )
+
+    if rewritten_total == 0 and already_migrated_total == 0 and not dry_run:
+        print("ERROR: zero keys rewritten — nothing was migrated", file=sys.stderr)
+        return 1
     return 0
 
 
@@ -385,6 +517,11 @@ def main(argv: list[str] | None = None) -> int:
         help="migrate pre-v3 run logs to hashed snapshots",
     )
     ap.add_argument(
+        "--rehash-tags",
+        action="store_true",
+        help="recompute test-JSON snapshot hashes after tags left cosmetic (issue #2694)",
+    )
+    ap.add_argument(
         "--prune-unit",
         nargs="?",
         type=int,
@@ -418,14 +555,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    if not args.rehash and args.prune_unit is None and args.strip_e2e_captures is None:
+    if not args.rehash and not args.rehash_tags and args.prune_unit is None and args.strip_e2e_captures is None:
         ap.error(
-            "nothing to do — pass --rehash, --prune-unit and/or --strip-e2e-captures"
+            "nothing to do — pass --rehash, --rehash-tags, --prune-unit and/or --strip-e2e-captures"
         )
 
     rc = 0
     if args.rehash:
         rc |= cmd_rehash(args.runlogs_root, dry_run=args.dry_run)
+    if args.rehash_tags:
+        rc |= cmd_rehash_tags(args.runlogs_root, repo_root=REPO_ROOT, dry_run=args.dry_run)
     if args.prune_unit is not None:
         rc |= cmd_prune_unit(
             args.runlogs_root, keep=args.prune_unit, dry_run=args.dry_run
