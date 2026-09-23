@@ -376,6 +376,10 @@ inputs differ fundamentally (a pair-set + a candidate document vs. a single
 `personId`), and a separate tool keeps each schema honest. `person_warnings`
 remains the single-anchor final-mode tool.
 
+A candidate persona with no tree match is left unpaired — it is omitted from
+`merges` and the dry-run previews it as a new person. Passing a non-existent
+tree id as a survivor is rejected with an error naming the valid tree ids.
+
 ### 7.5 Output shape
 
 A discriminated union on `ok`, mirroring `merge_record_into_tree`'s envelope so
