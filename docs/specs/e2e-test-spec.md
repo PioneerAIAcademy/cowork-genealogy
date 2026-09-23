@@ -1134,7 +1134,10 @@ The judge grades **two axes**:
   in the tree is `supported`. The same rule governs places: a broader
   jurisdiction that merely contains the claim — `Zulia, Venezuela` against a
   claimed `Maracaibo, Zulia, Venezuela` — is `unsupported`, and a more
-  specific place consistent with the claim is `supported`.
+  specific place consistent with the claim is `supported`. A renamed place at
+  the same level is the same place: a tree carrying the modern
+  `Salt Lake, Salt Lake, Utah` denotes a claimed
+  `Great Salt Lake, Great Salt Lake, Utah Territory` and is `supported`.
 
   The rule is general, and the prompt states it once for every finding type.
   It matters most on `fact` findings, which the component derivation (§3.4.2)

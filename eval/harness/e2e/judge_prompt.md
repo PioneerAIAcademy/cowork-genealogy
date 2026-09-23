@@ -183,7 +183,9 @@ A tree date is `supported` only when it **denotes** the claimed date.
   denotes the claimed place. A broader jurisdiction that merely *contains*
   the claim — `Zulia, Venezuela` against a claimed `Maracaibo, Zulia,
   Venezuela` — is `unsupported`; a more specific place consistent with the
-  claim is `supported`.
+  claim is `supported`. A **renamed** place at the same level is the same
+  place, not a different one: `Salt Lake, Salt Lake, Utah` denotes a claimed
+  `Great Salt Lake, Great Salt Lake, Utah Territory` and is `supported`.
 
 **Rolling a `fact` finding's components up to `matched`.** Every component of a
 `fact` finding scores — tag each `kind: "link"`; there is no `detail` tier
