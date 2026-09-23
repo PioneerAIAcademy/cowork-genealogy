@@ -223,3 +223,39 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
         "\"Guardianship shortly after a remarriage\"). Offending text: "
         + " || ".join(u[:160] for u in offenders)
     )
+
+
+def test_uncle_reading_is_named_at_all(text_response, test):
+    """The other half of the same sentence in
+    `references/relationship-accuracy.md`: "Lead with the step reading, name
+    the uncle-by-marriage reading as unresolved, and say what would settle
+    it."
+
+    `test_step_reading_leads_when_the_surname_is_unresolved` only fires on a
+    unit that marks UNCLE as favoured without STEP beside it. A reply naming
+    neither reading produces zero offenders and passes it vacuously, so the
+    "name the uncle reading as unresolved" clause had no enforcement at all.
+
+    That is not hypothetical. Telling the model the step reading leads is
+    pressure to drop the alternative, and the first run taken after the
+    reference said so did exactly that. Across every captured `_014` reply,
+    `uncle` appears 2, 2, 1, 3 and 5 times in the five runs predating the
+    change and 0 times in `v1_2026-09-22_17-41-42`, the only run after it --
+    which the judge nevertheless scored Completeness 3, on a rationale
+    asserting the reply "names the competing reading (uncle by marriage via
+    maiden name)" about a text containing neither word. `_014` drew no
+    review_sample slot that run, so no human correction caught it either.
+    """
+    if "guardianship" not in (test.get("tags") or []):
+        pytest.skip("only applies to guardianship tests")
+    if not (text_response or "").strip():
+        pytest.skip("no reply to weigh")
+    assert _UNCLE.search(text_response), (
+        "the reply never names the uncle-by-marriage reading. When the record "
+        "does not settle whose surname it is, the step reading leads AND the "
+        "uncle reading is named as unresolved -- leading with step is only "
+        "half the instruction (references/relationship-accuracy.md, "
+        "\"Guardianship shortly after a remarriage\"). A reply that weighs "
+        "neither reading passes the lead-marker check vacuously, which is "
+        "why this arm exists."
+    )

@@ -31,6 +31,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_tree_edit import (  # noqa: E402
     test_step_reading_leads_when_the_surname_is_unresolved as check_leads,
+    test_uncle_reading_is_named_at_all as check_uncle,
 )
 
 
@@ -138,3 +139,48 @@ def test_skips_an_empty_reply():
     """A run that said nothing is a different defect, owned elsewhere."""
     with pytest.raises(pytest.skip.Exception):
         check_leads("   ", TAGS)
+
+
+# --- verbatim from v1_2026-09-22_17-41-42 (names NEITHER reading) -----
+# The first run taken after the reference began saying the step reading
+# leads. `uncle` appears 0 times; the five runs predating the change had
+# 2, 2, 1, 3 and 5. The judge scored it Completeness 3 anyway.
+REPLY_NAMES_NEITHER = "There's no initialized project here, so I'll answer this as a standing genealogical guidance question — the advice is the same regardless.\n\n---\n\n## Do not record a parent-child relationship\n\nA guardianship bond appoints a legal custodian for minors whose father has died. It does **not** assert biological, adoptive, step, or any other parental connection. Recording a `ParentChild` relationship — with any subtype — between Ridley Stribling and these four children would misrepresent what the source actually says.\n\n### What the bond *does* establish\n\nThe source proves a **guardian–ward** relationship: Ridley was legally responsible for John, Mary, Elizabeth, and Thomas Watts. If your tree supports a dedicated `Guardian` relationship type, that is the correct edge to record, citing the 1821 Amherst County guardianship bond.\n\n### What it strongly implies but does not prove\n\nThe surname overlap is significant. Ridley married **Nancy Watts** in November 1820, and within months he was appointed guardian of four **Watts** minors. The most common Virginia pattern is:\n\n- Nancy was a widow of a prior Mr. Watts, and these are **her children from that marriage**. When she remarried, the orphan's court appointed her new husband guardian of the fatherless minors.\n\nIf that inference is correct, then:\n\n| Relationship | Type | Subtype | Source needed |\n|---|---|---|---|\n| Nancy → each child | ParentChild | *(biological — but only once proved)* | Birth / baptism records, earlier census, prior Watts estate records |\n| Ridley → each child | ParentChild | **Step** | *Derives from proving Nancy is the mother; not from the bond itself* |\n\nNeither of those parent-child edges should be written yet. The bond alone does not close either inference.\n\n### Recommended next steps\n\n1. **Search for a prior Watts husband** — an estate or administration record in Amherst County circa 1818–1821 for a deceased Mr. Watts would name his widow and orphaned children, directly linking Nancy and the four minors.\n2. **Check the 1820 census** — if a Watts household in Amherst County enumerated a widow with minors, that corroborates the scenario.\n3. Once Nancy's maternity and the prior Watts marriage are proved, record:\n   - `ParentChild` (biological) between Nancy and each child\n   - `ParentChild` (step) between Ridley and each child\n   - Both citing the supporting sources, not just the guardianship bond\n\nUntil that research is done, the only defensible tree entry from this document is the guardian relationship."
+
+# --- verbatim from v1_2026-09-14_18-51-07 (names both, weighs both) ---
+REPLY_NAMES_UNCLE = 'Let me read the reference materials and project files before advising or touching anything.\n\nThere\'s no `tree.gedcomx.json` yet, so I can\'t make edits — but the question is an important analytical one, and the relationship-accuracy reference addresses this exact pattern directly. Let me give you the full picture.\n\n---\n\n## What the 1821 bond evidence actually establishes\n\nThe combination of facts you have — **Ridley marries Nancy Watts in November 1820, then is appointed guardian of four Watts-surname minors in 1821** — is the textbook scenario covered in the guidance on *guardianship shortly after remarriage*.\n\nTwo readings are both consistent with the evidence:\n\n| Reading | Logic |\n|---|---|\n| **Stepfather** (favoured) | "Watts" was Nancy\'s *married* surname from a prior marriage; the children are hers by that first husband, now deceased. Ridley married the widow and was then appointed guardian of her minor children\'s property. |\n| **Uncle by marriage** | "Watts" was Nancy\'s *maiden* name; the children are her brother\'s orphans. Ridley, now connected to the Watts family by marriage, was appointed to manage their inheritance. |\n\nThe bond does not distinguish these. What resolves it is **Nancy\'s earlier history**: if she has a maiden name other than Watts, the stepparent reading leads; if Watts is her maiden name, the uncle-by-marriage hypothesis stays open.\n\n---\n\n## What subtype to record\n\n**None.** The `Step` subtype requires more than the bond-plus-marriage pair. The reference is explicit:\n\n> *"Write the parent-child edge with no subtype at all — a Step subtype on the bond-plus-marriage pair alone fails the threshold."*\n\nSimilarly, do **not** assert Nancy\'s edge to the children as `Genetic` — her maternity rests on the same surname correspondence and earns the same treatment: an edge, no subtype.\n\n---\n\n## Recommended edges to create (once you have a project)\n\nOnce the project files exist, record these four relationships — one per child:\n\n- **Ridley Stribling → John Watts** — `ParentChild`, **no subtype**\n- **Ridley Stribling → Mary Watts** — `ParentChild`, **no subtype**\n- **Ridley Stribling → Elizabeth Watts** — `ParentChild`, **no subtype**\n- **Ridley Stribling → Thomas Watts** — `ParentChild`, **no subtype**\n\nEach edge carries the guardianship bond as its source-ref. If you also add Nancy as a possible mother to the children (the stepparent reading), those four Nancy-child edges get the same treatment — no subtype, sourced to the same bond via surname correspondence.\n\n---\n\n## Research implications before asserting Step\n\nTo upgrade to a `Step` subtype (or to correctly record `Uncle` instead), look for:\n\n1. **Nancy\'s prior marriage record** — Does a Watts husband appear? When did he die?\n2. **The children\'s father\'s estate records** — An Amherst County estate or will for a deceased "Mr. Watts" naming these children as heirs is what most likely *drove* the guardianship appointment.\n3. **Nancy\'s maiden name** — A marriage bond or register for the Ridley–Nancy marriage may name her father; if her father\'s surname is not Watts, the stepparent reading is strongly supported.\n4. **The guardianship bond itself in full** — Virginia bonds sometimes name the children\'s deceased father or the nature of the property being managed.\n\nThe appointment alone establishes neither orphanhood nor a step-relation — it establishes that a court entrusted Ridley with the management of these minors\' property. That\'s the floor the subtype must build from, not the ceiling.'
+
+
+def test_uncle_arm_fires_when_the_reply_names_neither_reading():
+    """RED direction: the captured reply this PR shipped as its own
+    evidence names neither reading, and the new arm catches it."""
+    with pytest.raises(AssertionError, match="never names the uncle"):
+        check_uncle(REPLY_NAMES_NEITHER, TAGS)
+
+
+def test_uncle_arm_passes_a_reply_that_names_the_uncle_reading():
+    """GREEN direction: a reply that does name the alternative passes.
+    Without this the arm could be a bare `assert False` and still look
+    like coverage."""
+    check_uncle(REPLY_NAMES_UNCLE, TAGS)
+
+
+def test_uncle_arm_passes_the_inverted_run():
+    """The inverted run named uncle repeatedly -- it weighted it WRONGLY,
+    which is `check_leads`'s job. This arm must not double-report it."""
+    check_uncle(_INVERTED_TABLE_ROW, TAGS)
+
+
+def test_uncle_arm_skips_a_test_without_the_guardianship_tag():
+    """Same gate as the lead arm: a non-guardianship reply says nothing
+    about this craft question and must not be graded on it."""
+    with pytest.raises(BaseException) as exc:
+        check_uncle(REPLY_NAMES_NEITHER, {"tags": ["tree-edit"]})
+    assert exc.typename == "Skipped"
+
+
+def test_uncle_arm_skips_an_empty_reply():
+    """A run with no reply has nothing to weigh."""
+    with pytest.raises(BaseException) as exc:
+        check_uncle("   ", TAGS)
+    assert exc.typename == "Skipped"

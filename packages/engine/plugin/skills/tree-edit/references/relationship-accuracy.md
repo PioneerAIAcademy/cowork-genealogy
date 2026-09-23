@@ -68,12 +68,11 @@ leads.** A marriage record gives her name *at marriage* and settles
 nothing on its own: the same entry reads as a maiden name for a first
 marriage and as a prior married name for a widow's second, and such a
 record rarely says which. Do not resolve it by assumption in either
-direction. The step reading leads because it
-explains the **timing** — the remarriage is why the appointment
-happened, the new husband taking charge of property the children
-inherited from their deceased father. The uncle reading has to treat the
-bond and the marriage as coincidental, and needs a second death nobody
-has evidenced. Lead with the step reading, name the uncle-by-marriage
+direction. The step reading leads because it explains the **timing** —
+the remarriage is why the appointment happened, the new husband taking
+charge of property the children inherited from their deceased father.
+The uncle reading has to treat the bond and the marriage as
+coincidental. Lead with the step reading, name the uncle-by-marriage
 reading as unresolved, and say what would settle it.
 
 **What to record.** Write the parent-child edge with **no subtype at
