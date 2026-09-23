@@ -20,7 +20,7 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
-    load_skill_frontmatter,
+    load_suite_frontmatter,
 )
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
@@ -198,6 +198,17 @@ async def _run_one_test_async(
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
         validators_dir=paths.validators_dir,
+        # The gate's direct-agent fallback and `_prompt_for` need to resolve
+        # `test.skill` to the same agent file, or a direct test clears the gate
+        # and then dies in `_prompt_for` ~20 turns into a paid run. Nothing
+        # enforces that: `_prompt_for` reads the module-level constant directly,
+        # so the two agree by CONVENTION — this call site passing that same
+        # constant — not by construction. Passed explicitly rather than left to
+        # the default so the convention is visible at the site that upholds it.
+        # `test_direct_gate_resolves_the_same_agent_file_as_prompt_for` pins the
+        # default path only; a caller passing a different `agents_dir` (today,
+        # only a test) is outside it.
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     if not gate.runnable:
         return _aborted_entry(
@@ -212,8 +223,15 @@ async def _run_one_test_async(
         spec.skill,
         rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
     )
-    skill_frontmatter = load_skill_frontmatter(
-        paths.skills_dir / spec.skill / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md
+    # (issue #1253). This dict is handed to every validator, and two of them
+    # read it: `test_tool_allowlist` takes its declared set from here — NOT
+    # from `compute_allowed_tools` — and `test_ownership_table` reads `name`
+    # and SKIPS when it is absent, so leaving this at `{}` would drop ownership
+    # checking for the whole suite silently rather than failing (PR #2782
+    # review).
+    skill_frontmatter = load_suite_frontmatter(
+        spec.skill, paths.skills_dir, agents_dir=DEFAULT_PLUGIN_AGENTS
     )
     # Honor the `model:` field in SKILL.md frontmatter when set (matches
     # Claude Code skill-frontmatter semantics: turn-scoped model override
