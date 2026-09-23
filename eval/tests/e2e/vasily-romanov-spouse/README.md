@@ -28,19 +28,49 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 25, `hint-samples.csv` row 761,
-flag `adds_spouse,adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Россия, Самарские метрические книги, 1748-1934", a birth entry of 16 July 1911 at the Петропавловская церковь, Samara for Раиса Романова, naming parents Василий Алексеев Романов and Клавдия Димитриева.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Klavdiya Dmitrieva as his wife and Raisa as his daughter, plus a `required` finding that the report documents
-the rejection.
+**RESOLVED — FALSE MATCH (Outcome c), with positive disproof.** The hint
+(`ark:/61903/1:1:KX4H-PKY`, the father persona on a 16 July 1911 birth of Раиса
+Романова at the Петропавловская церковь, Samara) does **not** belong to Vasily
+Ignatiev Romanov `L8TL-4NY`. The 1911 entry names the father **Василий Алексеев**
+Романов, a different man.
 
-The patronymic decides this one, and it is the cleanest discriminator in the batch. The subject is **Василий Игнатьев** Романов — Vasily, son of Ignatiy — and the tree corroborates it structurally: his father is Игнатий Васильевич Романов, and his own daughters are Елена and Анна **Васильевны**. The hint's father is **Василий Алексеев** Романов, Vasily son of Alexei. A Russian patronymic is not a spelling variant of another patronymic; it names a different man's father, and no transcription path leads from Алексеев to Игнатьев.
+**The patronymic decides it, and it was verified on the original image — not just
+the index.** The Samara register page was examined
+(`ark:/61903/3:1:33SQ-GR1P-VTC`, entry No. 391): the родители line reads
+"Самарскій мѣщанинъ **Василій Алексѣевъ Романовъ** и его законная жена **Клавдія
+Димитріева**." So the patronymic **Алексѣевъ (Alekseev)** is what the priest wrote
+— the discrepancy is genuine, not an indexer misreading Игнатьевъ. (A Russian
+patronymic is not a spelling variant of another; no transcription path leads from
+Алексеев to Игнатьев.)
 
-The wife's name says the same thing independently: the tree records Александра Андреева, the hint Клавдия Димитриева.
+**A distinct Alekseev family positively disproves the match.** The same Samara
+metrical books hold a self-consistent Vasily Alekseev Romanov family: he (b. 1887)
+married **Клавдия Димитриева Жильцова** on 14 January 1909 at the same Peter and
+Paul church (`ark:/61903/1:1:KX4H-8N5`), and their son Николай was born 29 January
+1913 (`ark:/61903/1:1:KXTQ-X5D`), with further children on file. Raisa (1911) sits
+inside that family — its godmother is Vasily Alekseev's sister "Елена Алексѣева
+Романова", and Raisa's godfather "Сергій Димитріевъ Жильцовъ" is the mother's kin,
+matching her married surname Zhiltsova. This is a positive disproof, not merely a
+patronymic mismatch.
 
-So the expected shape is (c), a false match. What makes it a fair test rather than a giveaway is that everything *around* the discriminator matches nicely — the surname Романов, the city of Samara, the same metrical-book collection the tree's five sources come from, and a 1911 daughter that would sit plausibly after the 1902 and 1904 daughters already recorded. An agent that matches on surname, place and plausibility will take the bait; one that reads the patronymic will not. Romanov is a common Samara surname, so a second Vasily Romanov in the same city needs no special explanation.
+**The tree person's own family is different and documented.** Vasily **Игнатьев**
+(father Игнатий Васильевич `LY1C-S97`) married **Александра Андреева Попреткина**
+in 1899 (`ark:/61903/1:1:KXRB-TVF`); his daughters Елена (1902) and Анна (1904)
+are Васильевны by Alexandra. Per the issue, those 1902/1904 daughters were **not**
+treated as the disproof (a remarriage could explain a different wife in 1911); the
+disproof rests on the original-image patronymic and the affirmative Alekseev
+family.
+
+**Provenance.** Retrieval was tool-assisted (MCP `record_read`, `record_search`,
+`person_read`, `image_transcribe`); the 1911 Samara register image was **actually
+examined**, and all other evidence is indexed. The hint's own ark is **not** used
+as the disproof, and the tree PID `L8TL-4NY` is not an evidence ark. The identity
+judgement is the genealogist's.
+
+What makes it a fair test rather than a giveaway: everything *around* the
+discriminator matches — surname Романов, the city of Samara, the same
+metrical-book collection the tree's five sources come from, and a 1911 daughter
+that would sit plausibly after the 1902 and 1904 daughters. An agent that matches
+on surname, place and plausibility takes the bait; one that reads the patronymic
+does not. Romanov is a common Samara surname, so a second Vasily Romanov in the
+same city needs no special explanation.
