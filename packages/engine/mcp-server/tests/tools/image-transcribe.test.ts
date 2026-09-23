@@ -29,6 +29,10 @@ import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import {
+  runWithProjectStore,
+  type ProjectStore,
+} from "../../src/store/project-store.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -734,6 +738,39 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     // The 21st DISTINCT image trips it at exactly 21, proving re-reads did not inflate.
     const r21 = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" }, LOCAL);
     expect(r21.browseBudget?.distinctImagesRead).toBe(21);
+  });
+
+  it("isolates patrons under a shared-process store binding — same anchor path, different projectId, no collision (#2771, same class as #2457 B2)", async () => {
+    mockOcrAlwaysOk();
+    // Under http.ts every request presents the SAME anchor projectPath (`/project`);
+    // the bound store's projectId is the real identity. Keying the budget on projectId
+    // (not the anchor) keeps patron A's count out of patron B's fresh read, while still
+    // carrying A's own count across A's turns. saveSourceImage throws on this method-
+    // less mock and is swallowed, so imageRef is undefined and the budget still counts.
+    const store = (projectId: string) => ({ projectId }) as unknown as ProjectStore;
+
+    // Patron A drives the group past the budget under the shared /project anchor.
+    await runWithProjectStore(store("proj-A"), async () => {
+      for (let i = 1; i <= 20; i++) {
+        const r = await imageTranscribeTool({ imageId: img(i), projectPath: "/project" }, LOCAL);
+        expect(r.browseBudget).toBeUndefined();
+      }
+      const r21 = await imageTranscribeTool({ imageId: img(21), projectPath: "/project" }, LOCAL);
+      expect(r21.browseBudget?.distinctImagesRead).toBe(21);
+    });
+
+    // Patron B: identical anchor path and group, must NOT inherit A's count.
+    await runWithProjectStore(store("proj-B"), async () => {
+      const rB = await imageTranscribeTool({ imageId: img(1), projectPath: "/project" }, LOCAL);
+      expect(rB.browseBudget).toBeUndefined();
+    });
+
+    // A still carries its own count (the across-turns join survives the B turn):
+    // a 22nd distinct image under A trips the budget at exactly 22.
+    await runWithProjectStore(store("proj-A"), async () => {
+      const r22 = await imageTranscribeTool({ imageId: img(22), projectPath: "/project" }, LOCAL);
+      expect(r22.browseBudget?.distinctImagesRead).toBe(22);
+    });
   });
 });
 

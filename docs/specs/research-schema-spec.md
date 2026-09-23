@@ -93,6 +93,7 @@ flagged. (One row below is the exception, and says so.)
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
 | `proof_tier` | `proved`, `probable`, `possible`, `not_proved`, `disproved` | proof_summaries |
+| `proof_shortfall` | `ceiling`, `gap`, `conflict`, `none` | proof_summaries |
 | `proof_vehicle` | `statement`, `summary`, `argument` | proof_summaries |
 | `person_evidence_confidence` | `confident`, `probable`, `speculative` | person_evidence |
 | `project_status` | `active`, `paused`, `completed` | project |
@@ -332,9 +333,9 @@ project's research objective; nothing about the researcher is asked.
 `intended_audience` and `subscriptions` are not written by it (see their rows
 below). Read
 by every skill. Skills adapt their narration density to
-`narration_guidance`, and `search-external-sites` prioritizes URLs for
-sites listed in `subscriptions`. All fields optional — absence falls
-back to default narration. To update mid-project, edit this section
+`narration_guidance`, and `search-external-sites` reads `subscriptions`
+only to flag a site the researcher has named but has no access to on
+file. All fields optional — absence falls back to default narration. To update mid-project, edit this section
 directly.
 
 | Field | Type | Required | Description |
