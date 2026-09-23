@@ -112,7 +112,7 @@ keep the per-literal assertion inside the loop.
 - **No leaf-skill changes.** `translation` and `search-external-sites` are correct when
   invoked directly.
 - **No *further* cost work.** Phase 1e bounds a session at $35, enforced in the `PreToolUse`
-  hook and priced off token columns rather than `cost_usd`. The nudge cap remains not a bound —
+  hook and priced off live token usage rather than `cost_usd`. The nudge cap remains not a bound —
   it is consulted only at a voluntary yield, 31% of runs never yield, and of 36 corpus runs
   killed by harness caps the highest nudge count was 5. Nothing further here.
 - **Nothing binds the reassigned status write.** After S2, `proof-conclusion` owns it by prose

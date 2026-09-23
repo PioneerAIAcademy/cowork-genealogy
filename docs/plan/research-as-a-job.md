@@ -69,9 +69,10 @@ not re-add it, and disregard the `/v1` lock entry in the prototype plan's residu
 register.
 
 **That removal is coming while you work, and it lands in a tree you are editing.**
-`apps/server/app/v1.py` imports from the runner that 1c changes for Stop, so expect a
-conflict there rather than being surprised by one. The lead owns the removal; check with him
-before you start 1c so you are not both in that file on the same day.
+`apps/server/app/agent/runner.py` carries `/v1`'s behaviour — `AutoContinue` honours the
+`"auto_continue": false` that `/v1` sends — and 1d edits the alpha's agent code beside it, so
+expect a conflict there rather than being surprised by one. The lead owns the removal; check
+with him before you start 1d so you are not both in that file on the same day.
 
 ### 0a. A resumed attempt that runs zero model turns is a failure, not a completion
 
@@ -372,9 +373,11 @@ default. Building an in-session "spend more" flow is not beta work.
 
 - **Sum tokens, not `cost_usd`.** `turns.cost_usd` is the *completing attempt's*
   `ResultMessage`, so it misses every killed attempt — and per 0b the median run has two.
-  `turns.input_tokens / cache_creation_tokens / cache_read_tokens / output_tokens` are summed
-  over assistant entries and **do** carry a killed attempt's spend, which is exactly why
-  `004_worker.sql` records them. Price those.
+  The `turns` token columns do carry a killed attempt's spend, but `complete()` writes them
+  only when the turn closes — and under continuous work one turn is the whole run, so mid-run
+  they are NULL and a hook reading them never sees the run it exists to stop. Price the live
+  sum instead: the session's assistant usage in `session_entries`, deduplicated by message
+  id — `TURN_USAGE_SQL` in `worker.py` without its turn filter.
 - **Enforce it in the `PreToolUse` hook**, the same place 1c halts on Stop — it fires every
   few seconds, where a yield-gated check fires about once a run.
 - **Terminal state, and it has to say what to do next.** A budget stop is a `turns.outcome`
