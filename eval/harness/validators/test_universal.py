@@ -657,7 +657,9 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    owners = writer_sets(RESEARCH_JSON)
+    # `subject` lets a row name this suite's own agent as a caller and still be
+    # enforced here (issue #2799). Any OTHER agent caller still raises.
+    owners = writer_sets(RESEARCH_JSON, subject=skill_name)
     writer_tools = writer_tool_sets(RESEARCH_JSON)
     called = _tools_called(tool_calls)
     remap = _merge_remap(tool_calls)

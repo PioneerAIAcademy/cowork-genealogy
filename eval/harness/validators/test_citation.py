@@ -77,8 +77,8 @@ def test_does_not_add_new_source_entries(before_state, after_state, test):
     """citation refines existing source entries — it must not create new
     ones. New record discovery is search-records / record-extraction's job.
 
-    Per SKILL.md: "This skill never creates new source entries — it only
-    refines entries created by record-extraction."
+    Per the agent body: "Citation only refines existing sources" — it never
+    creates one, and declines and routes to record-extraction when asked to.
     """
     # Runs on every positive citation test, and on negative tests tagged
     # `no-new-source` (e.g. ut_citation_012): those negatives DO run a
@@ -196,7 +196,8 @@ def test_unknown_markers_framework_only(before_state, after_state, test):
     Three checks, scoped per field:
     1. Position — a marker that IS the entire `citation_detail.where` value
        means the skill recorded no access point at all.  Under "cite what
-       you see" the access point is always known (SKILL.md §75–82), so
+       you see" the access point is always known (the agent body's "Cite
+       What You See" principle), so
        a bare marker fails.
     2. Empty element — a bare `[NOT RECORDED]` with no element name before
        NOT names nothing at all, so it cannot be a valid framework element.
@@ -207,7 +208,7 @@ def test_unknown_markers_framework_only(before_state, after_state, test):
        citation_detail fields only (see exemption below).
 
     Custody exemption (Edmond ruling, applied to `where` and `citation`):
-    citation/SKILL.md:79 defines `where` as a layered path from access point
+    the agent body defines `where` as a layered path from access point
     back to origin; layer 3 is the original custodian.  A custody marker
     there is the field working as designed, not a defect.  The assembled
     `citation` string embeds the where layer, so the same exemption applies.
@@ -490,7 +491,7 @@ def _citation_text_fields(source):
 # --- V4: Skill's own example values not emitted -------------------------
 
 def test_no_skill_example_values_persisted(before_state, after_state, test, skill_frontmatter):
-    """V4 persisted half: example values from the SKILL.md body must not
+    """V4 persisted half: example values from the agent body must not
     appear in persisted citation fields unless on file in the scenario.
 
     Tier 1 — gates. Harvests deny-list from the skill body's fenced Example
@@ -507,7 +508,7 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
         pytest.skip("missing research.json")
     deny_list = _harvest_skill_examples()
     if not deny_list:
-        pytest.skip("could not extract example values from SKILL.md")
+        pytest.skip("no example values in the citation agent body")
     # Subtract values present in the before-state
     before_text = ""
     for src in before_rj.get("sources", []):
@@ -537,7 +538,8 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
                         f"value {example_val!r}"
                     )
     assert not violations, (
-        "example values from SKILL.md appear in persisted citation fields "
+        "example values from the citation agent body appear in persisted "
+        "citation fields "
         "but are absent from the on-file data — these are illustrative, "
         "not data:\n  "
         + "\n  ".join(violations)
@@ -545,7 +547,7 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
 
 
 def report_skill_example_values_in_response(before_state, text_response, test, skill_frontmatter):
-    """V4 response half: example values from the SKILL.md body must not
+    """V4 response half: example values from the agent body must not
     appear in the text response unless on file in the scenario.
 
     Tier 2 — reports.
@@ -562,7 +564,7 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
         pytest.skip("missing research.json")
     deny_list = _harvest_skill_examples()
     if not deny_list:
-        pytest.skip("could not extract example values from SKILL.md")
+        pytest.skip("no example values in the citation agent body")
     # Subtract values present in the before-state
     before_text = ""
     for src in before_rj.get("sources", []):
@@ -583,30 +585,45 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
             matches.append(example_val)
     if matches:
         raise AssertionError(
-            "the response contains example values from SKILL.md that are "
+            "the response contains example values from the citation agent "
+            "body that are "
             "absent from the on-file data: "
             + ", ".join(f"'{v}'" for v in matches[:5])
         )
 
 
 def _harvest_skill_examples():
-    """Extract example locator values from the citation SKILL.md body.
+    """Extract example locator values from the citation suite's own body.
 
-    Every locator-shaped literal in the skill body is illustrative. The
+    Every locator-shaped literal in that body is illustrative. The
     templates carry theirs outside quotes and outside an "Example:"
     prefix (Will Book 9, p. 113; Deed Book 41, pp. 88-90), which the
     three narrower scans missed. On-file values are subtracted by the
     caller, so a wider harvest costs nothing.
+
+    Resolved through `suite_body_path`, the same resolver the harness uses
+    for the suite's frontmatter, so the body this scans and the frontmatter
+    the caller gates on can never come from different files. That matters
+    from issue #2799 on: `citation` is an agent, there is no
+    `skills/citation/SKILL.md`, and the previous hard-coded path would
+    resolve to nothing.
+
+    Raises rather than returning an empty set when the body is missing. An
+    empty deny-list makes both V4 halves skip, which reads as a pass while
+    enforcing nothing -- the same default-deny-becomes-default-allow shape
+    `harness.ownership.load_manifest` refuses for the same reason.
     """
-    from pathlib import Path
-    skill_md = (
-        Path(__file__).resolve().parents[3]
-        / "packages" / "engine" / "plugin" / "skills"
-        / "citation" / "SKILL.md"
-    )
-    if not skill_md.exists():
-        return set()
-    text = skill_md.read_text(encoding="utf-8")
+    from harness.allowed_tools import suite_body_path
+    from harness.workspace import DEFAULT_PLUGIN_AGENTS
+
+    body = suite_body_path("citation", DEFAULT_PLUGIN_AGENTS.parent / "skills")
+    if not body.is_file():
+        raise AssertionError(
+            f"citation suite body not found at {body} -- V4 cannot build its "
+            f"deny-list, and an empty deny-list would skip both halves and "
+            f"report a pass that checked nothing"
+        )
+    text = body.read_text(encoding="utf-8")
     return {m.group(0).strip() for m in _LOCATOR_RE.finditer(text)}
 
 

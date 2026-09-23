@@ -26,6 +26,7 @@ from __future__ import annotations
 import pytest
 
 from harness.ownership import (
+    REPO_ROOT,
     RESEARCH_JSON,
     TREE_GEDCOMX_JSON,
     UNIT_PLANE,
@@ -100,6 +101,16 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 
 
+# The suite subject the research.json rows need to resolve (issue #2799). The
+# `sources` row names `agent:citation`, and `writer_sets` reads an `agent:`
+# caller only when it IS the subject — so the freeze below is taken from
+# citation's own vantage point. Note what that buys: the frozen set for
+# `sources` is UNCHANGED at {"record-extraction", "citation"}. The conversion
+# moved how the caller is spelled, not who may write, and this test is what
+# says so.
+SUBJECT = "citation"
+
+
 def expected_research_owners() -> dict[str, set[str]]:
     expected = {k: set(v) for k, v in FROZEN_OWNERSHIP_TABLE.items()}
     for section, added in WIDENED.items():
@@ -113,7 +124,7 @@ def expected_research_owners() -> dict[str, set[str]]:
 
 
 def test_research_owners_match_the_frozen_tables():
-    assert writer_sets(RESEARCH_JSON, UNIT_PLANE) == expected_research_owners()
+    assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT) == expected_research_owners()
 
 
 def test_tree_owners_match_the_frozen_table():
@@ -130,7 +141,7 @@ def test_the_only_newly_enforced_section_is_localities():
     added to an existing one are different decisions with different costs.
     """
     before = set(FROZEN_OWNERSHIP_TABLE) - NEWLY_ENFORCED
-    after = set(writer_sets(RESEARCH_JSON, UNIT_PLANE))
+    after = set(writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT))
     assert after - before == NEWLY_ENFORCED
     assert before - after == set()
 
@@ -144,7 +155,7 @@ def test_no_owner_was_dropped_except_the_declared_one():
     the check — so the drop side gets its own named assertion and its own
     allow-list, which is a place a reviewer can look.
     """
-    actual = writer_sets(RESEARCH_JSON, UNIT_PLANE)
+    actual = writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT)
     dropped = {
         section: sorted((frozen - actual.get(section, set())) - NARROWED.get(section, set()))
         for section, frozen in FROZEN_OWNERSHIP_TABLE.items()
@@ -164,21 +175,46 @@ def test_no_owner_was_dropped_except_the_declared_one():
 # ── Invariants the loader depends on ───────────────────────────────────────
 
 
-def test_unit_plane_rows_name_no_agent_caller():
-    """An agent caller cannot be enforced at the unit plane, and the loader says so.
+def test_a_unit_plane_agent_caller_is_a_suite_subject():
+    """A unit-plane row may name an agent caller ONLY if that agent owns a suite.
 
-    The check reads `skill_frontmatter["name"]`; it has no view of which agent
-    made a call. A row marked `unit` while naming an agent would deny that
-    agent's own writes — `evaluations` is exactly that shape, which is why its
-    row claims no plane. This asserts the loader refuses rather than silently
-    dropping the agent from the permitted set.
+    Reverses the pre-#2799 rule that no unit-plane row could name an agent at
+    all. The reason that rule held was that the check reads one frontmatter
+    `name` and has no view of which agent made a call. That is still true of
+    every agent except one: the suite's own subject, whose `name` is exactly
+    what `load_suite_frontmatter` reads off `agents/<n>.md`. So the exception
+    is one name wide, and this test is what keeps it one name wide.
+
+    Both halves are load-bearing:
+
+    - `agents/<n>.md` must exist, or the name resolves to nothing and the row
+      authorizes an agent that does not ship.
+    - `eval/tests/unit/<n>/` must exist, or nothing ever passes `<n>` as the
+      subject, and the row silently authorizes no one while looking like it
+      authorizes someone.
+
+    `evaluations` (`agent:gps-mentor`) stays off the unit plane and is untouched
+    by this: it claims no plane, so it never reaches the filter below.
     """
-    offending = [
-        r
-        for r in rows()
-        if UNIT_PLANE in (r.get("enforceableAt") or [])
-        and any(c.startswith("agent:") for c in (r.get("callers") or []))
-    ]
+    repo_root = REPO_ROOT
+    agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
+    suites_dir = repo_root / "eval" / "tests" / "unit"
+
+    offending = []
+    for r in rows():
+        if UNIT_PLANE not in (r.get("enforceableAt") or []):
+            continue
+        for c in r.get("callers") or []:
+            if not c.startswith("agent:"):
+                continue
+            name = c[len("agent:") :]
+            if not (agents_dir / f"{name}.md").is_file():
+                offending.append(f"{r['artifact']}.{r['section']}: {c} ships no agent file")
+            elif not (suites_dir / name).is_dir():
+                offending.append(
+                    f"{r['artifact']}.{r['section']}: {c} has no eval/tests/unit/{name}/ "
+                    f"suite, so it is never the subject and this row authorizes no one"
+                )
     assert offending == []
 
 
@@ -199,8 +235,16 @@ def test_loader_refuses_an_agent_caller_on_the_unit_plane(monkeypatch):
         ],
     }
     monkeypatch.setattr("harness.ownership.load_manifest", lambda: poisoned)
-    with pytest.raises(OwnershipManifestError, match="cannot see an agent"):
+    with pytest.raises(OwnershipManifestError, match="cannot see any other agent"):
         writer_sets(RESEARCH_JSON, UNIT_PLANE)
+    # ...and still raises when a subject is given that is not this agent. The
+    # #2799 exception is exactly one name wide.
+    with pytest.raises(OwnershipManifestError, match="cannot see any other agent"):
+        writer_sets(RESEARCH_JSON, UNIT_PLANE, subject="citation")
+    # The one case it does NOT raise: the agent IS the subject.
+    assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject="gps-mentor") == {
+        "evaluations": {"gps-mentor"}
+    }
 
 
 def test_every_row_declares_an_artifact_the_harness_knows():

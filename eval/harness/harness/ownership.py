@@ -102,18 +102,40 @@ def writer_tool_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[st
     return sets
 
 
-def writer_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[str]]:
-    """`section -> permitted skill names`, for the rows `plane` can enforce.
+def agent_name(identifier: str) -> str | None:
+    """`agent:citation` -> `citation`; a skill id -> None. Mirror of `skill_name`."""
+    if identifier.startswith(_AGENT_PREFIX):
+        return identifier[len(_AGENT_PREFIX) :]
+    return None
 
-    Bare skill names, because that is what the unit validator has to compare
-    against: it reads the calling skill's `SKILL.md` frontmatter `name`, and has
-    no view of which agent made a call.
 
-    A row naming an **agent** caller therefore cannot be expressed on the unit
-    plane, and declaring it enforceable there would silently deny that agent's
-    legitimate writes. That is a declaration error, so it raises here rather than
-    being dropped — `evaluations` is exactly this shape, and its row carries
-    `enforceableAt: []` for this reason.
+def writer_sets(
+    artifact: str,
+    plane: str = UNIT_PLANE,
+    *,
+    subject: str | None = None,
+) -> dict[str, set[str]]:
+    """`section -> permitted writer names`, for the rows `plane` can enforce.
+
+    Bare names, because that is what the unit validator has to compare against:
+    it reads the suite subject's frontmatter `name`.
+
+    **The agent rule (issue #2799).** The unit plane keys on one name — the
+    suite's subject — and has no view of which agent made any *other* call. So:
+
+    - an `agent:<n>` caller where `<n>` is `subject` resolves to `<n>`. The
+      suite IS that agent, `load_suite_frontmatter` reads its `name` off
+      `agents/<n>.md`, and the comparison the validator makes is exactly as
+      sound as it is for a skill. A converted skill's own writes have to be
+      authorizable, or every positive test in its suite fails ownership.
+    - any other `agent:<n>` caller still raises. Dropping it would silently
+      deny that agent's legitimate writes, which is the declaration error this
+      has always refused — `evaluations` is exactly that shape, and its row
+      carries `enforceableAt: []` for the reason.
+
+    `subject=None` therefore keeps the pre-#2799 behaviour unchanged: every
+    agent caller on a unit-plane row raises. A caller that cannot name a
+    subject has not become able to see one.
     """
     sets: dict[str, set[str]] = {}
     for row in rows(artifact):
@@ -122,14 +144,22 @@ def writer_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[str]]:
         section = row["section"]
         callers = row.get("callers") or []
         agents = [c for c in callers if c.startswith(_AGENT_PREFIX)]
-        if agents and plane == UNIT_PLANE:
+        unmatched = [c for c in agents if agent_name(c) != subject]
+        if unmatched and plane == UNIT_PLANE:
             raise OwnershipManifestError(
                 f"{artifact} section '{section}' is declared enforceable at '{plane}' but "
-                f"names agent caller(s) {agents}. The unit plane keys on the calling "
-                f"skill's frontmatter name and cannot see an agent, so enforcing this row "
-                f"there would deny the owner's own writes."
+                f"names agent caller(s) {unmatched}. The unit plane keys on the suite "
+                f"subject's frontmatter name and cannot see any other agent, so enforcing "
+                f"this row there would deny that agent's own writes. An agent caller is "
+                f"readable here only when it IS the suite subject"
+                + (f" (subject: {subject!r})." if subject else "; no subject was given.")
             )
-        sets[section] = {
-            name for name in (skill_name(c) for c in callers) if name is not None
-        }
+        resolved = set()
+        for c in callers:
+            name = skill_name(c)
+            if name is None and plane == UNIT_PLANE:
+                name = agent_name(c) if agent_name(c) == subject else None
+            if name is not None:
+                resolved.add(name)
+        sets[section] = resolved
     return sets
