@@ -29,7 +29,7 @@ import {
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
-import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
+import { finalizeStagedResults, STAGING_SEARCH_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
@@ -642,8 +642,10 @@ async function applyLogAppendOp(
   //     nothing to keep, >0 means results existed and were discarded. Failing
   //     would also reject entries whose search genuinely ran without a
   //     projectPath, turning a lossy log into no log at all.
+  //     Search producers only: record-extraction logs a `record_read` with no
+  //     `stagedResultsRef` by instruction, so warning on it would contradict the skill.
   if (
-    STAGING_CAPABLE_TOOLS.has(op.tool) &&
+    STAGING_SEARCH_TOOLS.has(op.tool) &&
     (stagedResultsRef === undefined || stagedResultsRef === null) &&
     Number.isFinite(resultsAvailableCoerced) &&
     (resultsAvailableCoerced as number) > 0
