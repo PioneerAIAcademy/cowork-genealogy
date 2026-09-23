@@ -26,6 +26,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_search_full_text import (  # noqa: E402
     test_wiki_prework_fetch_runs_when_required as check_wiki_prework,
+    test_topical_fixture_actually_used as check_topical_fixture,
     test_log_query_traces_to_fulltext_search_call as check_log_fidelity,
     test_first_fulltext_search_call_is_unscoped as check_first_call_unscoped,
     test_fulltext_search_never_scopes_to_collection_id as check_never_scopes_to_collection_id,
@@ -458,3 +459,83 @@ def test_wiki_prework_is_not_satisfied_by_a_different_wiki_tool():
     snippet list, which is the failure this check exists to catch."""
     with pytest.raises(AssertionError):
         check_wiki_prework([call("wiki_search", query="Spanish naming customs")], TAGGED)
+
+
+# --- test_topical_fixture_actually_used --------------------------------
+# The backstop for the catch-all hole: `check_wiki_prework` is satisfied by
+# ANY wiki_read, including a fall-through to `wiki-read-any`. Mirrors
+# `test_historical_context.py`'s guard (issue #2283). The firing case is
+# real, not hypothetical -- `ut_search_full_text_009`'s Cuba_Naming_Customs
+# call was served Spain's fixture in `v1_2026-09-22_22-33-05` because the
+# predicate was an unscoped `~Naming_Customs` substring.
+
+TOPICAL_TAGS = {"id": "ut_search_full_text_013",
+                "tags": ["wiki-prework", "topical-fixture-required"]}
+
+
+def hit(stem):
+    return {"tool": "mcp__genealogy__wiki_read", "args": {}, "response_fixture": stem}
+
+
+def test_topical_fixture_fires_when_one_expected_stem_never_matched():
+    with pytest.raises(AssertionError) as e:
+        check_topical_fixture([hit("wiki-read-spanish-word-list"), hit("wiki-read-any")], TOPICAL_TAGS)
+    assert "wiki-read-spain-naming-customs" in str(e.value)
+
+
+def test_topical_fixture_fires_when_everything_fell_through_to_the_catch_all():
+    with pytest.raises(AssertionError) as e:
+        check_topical_fixture([hit("wiki-read-any"), hit("wiki-search-any")], TOPICAL_TAGS)
+    assert "wiki-read-any" in str(e.value)
+
+
+def test_topical_fixture_passes_when_every_expected_stem_matched():
+    check_topical_fixture(
+        [hit("wiki-read-spain-naming-customs"), hit("wiki-read-spanish-word-list"), hit("wiki-read-any")],
+        TOPICAL_TAGS,
+    )
+
+
+def test_topical_fixture_skips_a_test_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_topical_fixture([hit("wiki-read-any")], {"id": "ut_search_full_text_002", "tags": ["wiki-prework"]})
+
+
+def test_topical_fixture_fires_when_a_mapped_test_lost_its_tag():
+    """The map-to-tag direction, asserted BEFORE the skip. A skip keeps
+    `passed=True`, so without this, deleting the tag from a spec disarms the
+    guard and the run log still reads clean.
+
+    Deliberately NOT `pytest.raises(AssertionError)`. If the assertion is ever
+    moved below the skip, the call raises `Skipped` instead, `raises` does not
+    catch it, and this test turns into a SKIP that reads green in the summary
+    -- it would stop guarding the ordering at the moment the ordering broke.
+    Measured: moving the assert below the skip turns the bare `raises` form
+    into "6 passed, 1 skipped" and reds nothing."""
+    try:
+        check_topical_fixture(
+            [hit("wiki-read-any")],
+            {"id": "ut_search_full_text_013", "tags": ["wiki-prework"]},
+        )
+    except AssertionError as e:
+        assert "restore the tag" in str(e)
+    except pytest.skip.Exception:
+        pytest.fail(
+            "the map-to-tag assertion ran AFTER the skip: dropping the tag from a "
+            "spec now disarms this guard silently"
+        )
+    else:
+        pytest.fail("expected the map-to-tag assertion to fire")
+
+
+def test_topical_fixture_fires_when_tagged_but_unmapped():
+    with pytest.raises(AssertionError) as e:
+        check_topical_fixture([hit("wiki-read-any")], {"id": "ut_search_full_text_777",
+                                                       "tags": ["topical-fixture-required"]})
+    assert "_TOPICAL_FIXTURES_BY_TEST_ID" in str(e.value)
+
+
+def test_topical_fixture_fires_rather_than_raising_on_none_and_unfixtured_calls():
+    for calls in (None, [], [{"tool": "mcp__genealogy__wiki_read", "args": {}}]):
+        with pytest.raises(AssertionError):
+            check_topical_fixture(calls, TOPICAL_TAGS)

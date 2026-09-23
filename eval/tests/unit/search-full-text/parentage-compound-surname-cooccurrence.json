@@ -12,7 +12,8 @@
       "co-occurrence",
       "parentage",
       "e2e-derived",
-      "wiki-prework"
+      "wiki-prework",
+      "topical-fixture-required"
     ]
   },
   "input": {

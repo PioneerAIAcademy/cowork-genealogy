@@ -111,7 +111,7 @@ variant you will not search, and the query is built once.
 ```
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Spanish_Genealogical_Word_List" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Spain_Naming_Customs" })
-wiki_read({ url: "https://www.familysearch.org/en/wiki/Spain_Handwriting" })
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Cantabria,_Spain_Genealogy" })
 ```
 
 On `No wiki page found`, or a page that returns only generic content,

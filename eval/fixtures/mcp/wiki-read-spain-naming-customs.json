@@ -2,7 +2,7 @@
   "tool": "wiki_read",
   "description": "Spain_Naming_Customs for the search-full-text wiki move (#2253). Carries a distinctive marker — the 'Cantabrian Register Surname Forms' section, with the 'de la' maternal particle and the plural-paternal alternation (Naveda / Navedas) — so a test can assert the skill USED the page rather than reciting the naming convention from memory. Both forms are variants the skill must then search, so the marker changes the query rather than only the prose.",
   "args": {
-    "url": "~Naming_Customs"
+    "url": "~Spain_Naming_Customs"
   },
   "response": {
     "url": "https://www.familysearch.org/en/wiki/Spain_Naming_Customs",
