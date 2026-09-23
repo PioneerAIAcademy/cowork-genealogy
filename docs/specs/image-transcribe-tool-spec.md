@@ -493,7 +493,7 @@ list the caller can turn into assertions.
 | Both provided | `Provide either imageId or ark, not both.` |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
 | No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |
-| FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused). On a 4xx for a `3:1:`/`3:2:` ark, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field or `image_search`. |
+| FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field or `image_search`. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message. |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
 | OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present) |
 | OpenRouter unreachable | friendly `Could not reach OpenRouter (...)` (mirror `wiki-search.ts`) |

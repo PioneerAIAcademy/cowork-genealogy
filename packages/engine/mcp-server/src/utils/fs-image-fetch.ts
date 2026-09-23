@@ -300,11 +300,27 @@ export async function fetchFsImageBytes(
           `but got content-type: ${attempt.nonImageContentType}`
       );
     }
-    // On a 4xx for a URL carrying a 3:1:/3:2: document-image ARK, name the
+    // On a 400/404 for a URL carrying a 3:1:/3:2: document-image ARK, name the
     // likely cause. The agent's most common mistake is constructing an image
     // ARK from a record ARK by changing the type prefix — the resulting id is
     // syntactically valid but belongs to a different (or non-existent) entity.
-    if (attempt.status >= 400 && attempt.status < 500) {
+    //
+    // Deliberately only those two statuses, not the whole 4xx range: they are
+    // the ones that mean the identifier itself is wrong. The rest mean the ARK
+    // is real and the caller cannot have it right now — 401/403 is a
+    // rights-restricted image, 429 a rate limit — and re-fetching from
+    // record_read returns the same ARK, so the guidance sends the agent in a
+    // circle. 403 is in fact the MOST common ARK failure in the committed
+    // runlog corpus (creszentia-haas-birth's are all restricted images, and
+    // ogletree-children / stribling-father-1821 / jimmie-jewel-neal each carry
+    // more); issue #2392 carved that cause out explicitly. The 400s this
+    // guidance is for are pedro-chaves-spouse's.
+    //
+    // Memory artifacts are excluded for the same reason: person_read's
+    // artifact_url carries a 3:1: ARK (eval/fixtures/mcp/
+    // person-read-flynn-family.json) that appears in neither record_read's
+    // imageArk nor image_search, so naming those two would be a dead end.
+    if (!memoryShape && (attempt.status === 400 || attempt.status === 404)) {
       const arkMatch = resolvedUrl.match(/ark:\/61903\/3:[12]:[A-Za-z0-9.-]+/);
       if (arkMatch) {
         throw new Error(
