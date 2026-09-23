@@ -200,7 +200,16 @@ is calibrated appropriately, whether the rationale is sound, whether
 the link should still stand given the current evidence. Triggers
 include: "is the confidence on pe_NNN appropriate?",
 "review/confirm this identity link", "is pe_NNN still warranted?",
-"audit pe_NNN", "audit the person_evidence entries". In this mode:
+"audit pe_NNN", "audit the person_evidence entries",
+"audit the person_evidence links for [record]".
+
+**An audit verb beats a linking object.** "Audit the links for this
+record - is every role that should be linked actually linked?" is
+review-only, even though "every role in this record" is a linking-mode
+trigger on its own. Name the missing link, say what it would rest on,
+and ask. Creating it is the next request, not this one.
+
+In this mode:
 
 - Read the named `pe_` entry (or the entries the user pointed to),
   its assertion(s), its person(s), and the immediate corroborating
@@ -352,6 +361,17 @@ wasted research.
 assessment from step 2 — name, dates, places, relationship fit,
 household composition, and the independence of the evidence —
 determines the allowed confidence:
+
+**Before you pick a tier**, decide whether any core identifier —
+birthplace, a birth or christening date, an age, a parent, a spouse —
+*contradicts* what the tree person already attests. If one does, put it
+in the entry's `core_identifier_conflict` field, naming both sides
+("record gives birthplace Germany; tree attests Ireland across three
+censuses"). `research_append` then caps the link at `speculative`; a
+`confident` or `probable` entry carrying that field is refused. Leave
+the field null when nothing contradicts, and clear it to null — saying
+why in the `rationale` — when the conflict is explained and does not
+bear on identity. The score never promotes a declared conflict.
 
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
@@ -833,6 +853,11 @@ When multiple candidates share the same name in the same area:
   confirmation. No exceptions.
 - **The match score is an input, not a verdict** — record it in
   `match_score` when one was obtained; the full rule is in Step 3.
+- **You do not own `conflicts`.** A contradiction you find while
+  correlating belongs in your response to the user and in the pe_
+  entry's `rationale`. Do not write a `conflicts` entry for it: that
+  section is conflict-resolution's, and the hook denies the write -
+  taking the whole `research_append` batch it rides in with it.
 - **Transcription variants do not downgrade strength.** When the
   qualitative correlation is strong — age, year, place, household
   composition, and relationships all agree — a low

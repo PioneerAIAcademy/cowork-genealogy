@@ -592,6 +592,122 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
+/** A core identifier the RECORD states, contradicted by what the tree person
+ *  already attests, caps the link at `speculative` — detected, not self-reported.
+ *
+ *  This is the third instrument tried on `ut_person_evidence_012` / `_024`, and
+ *  the first that does not ask the agent to police itself. The other two failed
+ *  the same way and the failure is on record: the rule stated in the agent body
+ *  (with the same 0.85 figure as the test) did not bind; a Step 3 forcing
+ *  function made the agent WRITE the verdict and it argued past it; and the
+ *  self-declared `core_identifier_conflict` field was simply left null or
+ *  omitted while the higher tier was written anyway (measured 2026-09-23 —
+ *  `_012` wrote `probable` with the field present and null).
+ *
+ *  Place uses `compatiblePlace` + `placeSegments`, the SAME comparator
+ *  `placeContainmentErrors` uses, for the reason its docstring gives: equality
+ *  and containment are both compatible, so only an outright disagreement counts.
+ *  A place-less assertion states nothing and is skipped.
+ *
+ *  Scope is deliberately narrow: only the record's own assertions, only against
+ *  the tree person's BIRTH fact, and only where both sides actually state a
+ *  value. It cannot see a conflict nobody wrote down, which is the honest limit
+ *  of any document-side gate.
+ */
+const BIRTH_FACT_TYPES: ReadonlySet<string> = new Set([
+  "birth", "christening", "baptism", "baptized",
+]);
+
+function coreIdentifierContradictionInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+): string[] {
+  if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
+  const assertions: any[] = research.assertions ?? [];
+  const linked = assertions.find((a: any) => a?.id === entry.assertion_id);
+  if (!linked) return [];
+  const recordId = linked.record_id ?? linked.source_id ?? null;
+  if (recordId == null) return [];
+
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
+  if (!person) return [];
+  const birth = ((person.facts ?? []) as any[]).find(
+    (f: any) => String(f?.type ?? "").toLowerCase() === "birth",
+  );
+  if (!birth) return [];
+
+  // Every assertion drawn from THIS record, including the linked one.
+  const sameRecord = assertions.filter(
+    (a: any) => a && (a.record_id ?? a.source_id ?? null) === recordId,
+  );
+
+  const findings: string[] = [];
+
+  // ── place ────────────────────────────────────────────────────────────────
+  if (typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
+    for (const a of sameRecord) {
+      // Like for like. An ANY-place comparison refuses 274 of 323 committed
+      // confident/probable entries (85%, measured 2026-09-23 over
+      // eval/fixtures/scenarios/) because a marriage or census place is not a
+      // claim about birthplace: a man born in Ireland appears in a Pennsylvania
+      // census, and that is biography, not contradiction.
+      if (!BIRTH_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (typeof a.place !== "string" || placeSegments(a.place).length === 0) continue;
+      if (!compatiblePlace(a.place, birth.place)) {
+        findings.push(
+          `the record states '${a.place}' (assertion '${a.id}') where the tree person ` +
+            `attests '${birth.place}'`,
+        );
+        break;
+      }
+    }
+  }
+
+  if (findings.length === 0) return [];
+  return [
+    `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
+      `A contradicted core identifier caps the link at 'speculative' regardless of the match ` +
+      `score, and the user is asked before it stands. Use 'speculative' and name the ` +
+      `contradiction in the rationale, or resolve it first — a confident wrong identity is ` +
+      `worse than a flagged uncertain one.`,
+  ];
+}
+
+/** A declared core-identifier conflict caps the link at `speculative`.
+ *
+ *  Decidable from the write payload alone: it reads the entry's own
+ *  `core_identifier_conflict` and nothing else, so it needs neither the tree nor
+ *  a re-reading of the record. That is what makes it a precondition rather than
+ *  a prompt rule (ADR-0011's first question).
+ *
+ *  Why this one REFUSES where `personEvidenceScoreWarnings` only warns: that
+ *  warning fires on inferred state and would hit live traffic (`speculative` is
+ *  344 of 22,050 committed person_evidence writes, 1.6%). This fires only where
+ *  the agent has ITSELF declared a conflict, and the field is new, so it refuses
+ *  exactly zero writes that exist today.
+ *
+ *  The rule it replaces was prose, twice: the agent body already carried
+ *  "a qualitative conflict caps confidence regardless of score" using the same
+ *  0.85 figure as the test that kept failing, and a Step 3 forcing function that
+ *  made the agent WRITE the verdict still let it argue past the verdict in the
+ *  next clause (ut_person_evidence_012 and _024, 2026-09-23). Declaring the
+ *  conflict is now what binds, not describing it.
+ */
+function coreIdentifierConflictInvariants(entry: any): string[] {
+  const declared = entry.core_identifier_conflict;
+  if (typeof declared !== "string" || declared.trim() === "") return [];
+  if (entry.confidence === "speculative") return [];
+  return [
+    `confidence '${entry.confidence}' is not available on a link that declares a core-identifier ` +
+      `conflict (core_identifier_conflict: ${JSON.stringify(declared)}). A contradicted core ` +
+      `identifier caps the link at 'speculative' regardless of the match score, and the user is ` +
+      `asked before it stands. Either set confidence to 'speculative', or — if the conflict is ` +
+      `explained and does not bear on identity — say so in the rationale and clear ` +
+      `core_identifier_conflict to null rather than keeping both.`,
+  ];
+}
+
 /** Whether a record persona `same_person` could score against is reachable for
  *  this assertion — decidable from the project documents alone, which is what
  *  makes it a tool-side question rather than a prose one.
@@ -2235,6 +2351,11 @@ function applyOne(
   preCallCritiquedSummaryIds?: Set<string>,
   preCallBlockingConflicts?: any[],
   preCallResearch?: any,
+  // The tree is needed by `coreIdentifierContradictionInvariants`, which
+  // compares a record's stated identifiers against what the tree person already
+  // attests. Optional so every existing caller and test compiles unchanged; a
+  // missing tree makes that gate silent rather than wrong.
+  tree?: any,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -2731,6 +2852,17 @@ function applyOne(
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
+    invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
+    // WARN-ONLY, on the precedent of `personEvidenceScoreWarnings` above and
+    // the lead's standing ruling on issue #2272 ("do not flip the warn to a
+    // reject as a one-line change"). Measured 2026-09-23 over
+    // eval/fixtures/scenarios/: as a refusal this arm rejects 38 of 323
+    // committed confident/probable person_evidence entries (12%) even
+    // restricted to birth-type assertions. Graduating it needs those 38 read
+    // individually (ADR-0011 limit 2) and is @DallanQ's call, not a one-liner.
+    opWarnings.push(
+      ...coreIdentifierContradictionInvariants(resultEntry, research, tree),
+    );
     // Warn-only: a link that records no match_score where a persona was
     // reachable (#1006, re-pointed by #1429). Rides the response warnings; does
     // not block the write.
@@ -3683,6 +3815,7 @@ export async function researchAppend(
             preCallCritiquedSummaryIds,
             preCallBlockingConflicts,
             beforeResearch,
+            tree,
           ),
         );
       } catch (e) {

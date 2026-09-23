@@ -19,7 +19,8 @@
   },
   "mcp_fixtures": [
     "same-person-flynn-father-unindexed-surname",
-    "same-person-flynn-mother-distinctive-surname"
+    "same-person-flynn-mother-distinctive-surname",
+    "same-person-flynn-groom-circular"
   ],
   "judge_context": [
     "a_006 (father_of_groom, given name 'Thomas', surname not indexed, record_persona_id F1) and a_008 (mother_of_groom, 'Bridget Sheehy', record_persona_id M1) both carry a non-null record_persona_id — they are record-search-sourced personas from the same marriage record — and each names a person matching an existing tree candidate: I1 (Thomas Flynn) and I2 (Bridget Sheehy).",
@@ -28,7 +29,8 @@
     "The mother's name ('Bridget Sheehy') is an exact, distinctive match with no missing elements, so a 'confident' link is defensible for a_008 — but only once a same_person score has actually been obtained and disclosed in the rationale (match_score populated, not null). Assuming the match without ever calling the tool is the failure this test guards against, regardless of whether the resulting confidence happens to look reasonable.",
     "John Flynn (the groom, persona G1) has no existing tree candidate — he is a new person. Materializing him via materialize_facts and linking a_001-a_005 needs no same_person call; do not penalize skipping the tool on that half of the record.",
     "If either a_006's or a_008's resulting person_evidence entry is created with match_score null, or if same_person is never invoked at all despite the existing I1/I2 candidates, that is the core failure this test targets — the source run created exactly this pattern: two confident-tier links to existing tree persons built entirely from narrative correlation, with same_person never called anywhere in the session.",
-    "Tool Arguments: when same_person is called for the father or mother, it should be the project-relative form — projectPath, the assertion being linked (a_006 for the father, a_008 for the mother), and treePersonId naming the matching tree candidate (I1 or I2 respectively). Hand-assembled gedcomx1/gedcomx2 documents are the retired shape; do not require them."
+    "Tool Arguments: when same_person is called for the father or mother, it should be the project-relative form — projectPath, the assertion being linked (a_006 for the father, a_008 for the mother), and treePersonId naming the matching tree candidate (I1 or I2 respectively). Hand-assembled gedcomx1/gedcomx2 documents are the retired shape; do not require them.",
+    "A same_person call for the GROOM half (a_001 against the John Flynn stub the run itself minted from persona G1) is circular: both sides descend from one persona, so the returned 0.97 is self-confirmation and carries no independent information. The agent body forbids the call. Do not fail the run for making it, and do not fail it for skipping it - context 4 already settles that. What IS graded: a run that quotes that score as corroboration for the groom link, or lets it lift the groom link above 'probable', fails Confidence calibration, because the groom rests on this single record with no independent tree candidate."
   ],
   "execution": {
     "max_turns": 40,

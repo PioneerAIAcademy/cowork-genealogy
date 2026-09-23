@@ -5875,6 +5875,101 @@ describe("research_append — person_evidence epistemic gate", () => {
   });
 });
 
+// ─── Declared core-identifier conflict caps the tier (#2272) ────────────────
+//
+// The prose form of this rule was in the agent body twice — once stating the
+// cap with the same 0.85 figure as the test that kept failing, once as a Step 3
+// forcing function that made the agent WRITE the verdict. It wrote the verdict
+// and argued past it in the next clause (ut_person_evidence_012 and _024,
+// 2026-09-23). What binds is the declaration, which is what these pin.
+
+describe("research_append — declared core-identifier conflict", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-pe-conflict-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function write() {
+    const r = baseResearch();
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const link = (confidence: string, conflict: unknown) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_001",
+      person_id: "I1",
+      confidence,
+      rationale: "Names match the subject.",
+      core_identifier_conflict: conflict,
+      match_score: 0.85,
+      created: "2026-07-18",
+      superseded_by: null,
+    },
+  });
+
+  // ── fires ──
+  it("rejects 'confident' when a conflict is declared", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "record says Germany; tree attests Ireland"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/core-identifier conflict/i);
+  });
+
+  it("rejects 'probable' too — the cap is not confident-only", async () => {
+    await write();
+    const r = await researchAppend(link("probable", "christening 1858 vs birth ~1845"));
+    expect(r.ok).toBe(false);
+  });
+
+  it("fires on a declaration padded with whitespace", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "   birthplace contradicts   "));
+    expect(r.ok).toBe(false);
+  });
+
+  // ── does not fire: legitimate writes must still land ──
+  it("allows 'speculative' with the same declared conflict", async () => {
+    await write();
+    const r = await researchAppend(link("speculative", "record says Germany; tree attests Ireland"));
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows 'confident' when the field is null", async () => {
+    await write();
+    const r = await researchAppend(link("confident", null));
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows 'confident' when the field is absent entirely", async () => {
+    await write();
+    const op = link("confident", null) as any;
+    delete op.entry.core_identifier_conflict;
+    const r = await researchAppend(op);
+    expect(r.ok).toBe(true);
+  });
+
+  it("treats a whitespace-only declaration as no declaration", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "   "));
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not cap on a non-string value — the validator owns that", async () => {
+    await write();
+    const r = await researchAppend(link("confident", 5 as any));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/core_identifier_conflict/i);
+    expect(failure(r).errors?.join(" ")).not.toMatch(/caps the link/i);
+  });
+});
+
+
 // ─── Worked examples (#697) ─────────────────────────────────────────────────
 //
 // The point of the registry is that a rejected append is handed a shape the
