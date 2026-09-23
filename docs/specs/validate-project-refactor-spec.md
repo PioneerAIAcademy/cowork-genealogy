@@ -208,7 +208,11 @@ the project's advisory lock — the reason `validateParsed` runs inside the lock
 not after it. `validateProject` and the sidecar pass read through the same store,
 so a backend that is not a directory validates the same documents. The seam is
 total by lint (`tests/packaging/no-fs-outside-store.test.ts`), and a second
-backend proves itself against `tests/store/conformance.ts`.
+backend proves itself against `tests/store/conformance.ts` — which
+`PgS3ProjectStore` (`src/store/pg-s3-project-store.ts`: documents in Postgres
+jsonb, blobs and staged results in S3 behind a Postgres index, one project per
+store instance) does under `make proto-store-test`, with `writeJsonBoth` as one
+transaction and `withTransaction` as the advisory lock described above.
 
 Additionally, **export `validateGedcomx`** (today a private function at
 `validator.ts:737`; it already takes a parsed tree + a report and no `projectPath`).

@@ -28,7 +28,7 @@ Classify the user's request into exactly one category:
 |---|---|---|
 | "resolve this conflict", "weigh these assertions", "choose between", "which is correct" | **conflict-resolution** | Reply: "This is a conflict-resolution task — please use the conflict-resolution skill." Then STOP. |
 | "build a timeline", "create a timeline" | **timeline** | Reply: "This is a timeline task — please use the timeline skill." Then STOP. |
-| "write a proof", "proof conclusion", "write the conclusion" | **proof-conclusion** | Reply: "This requires proof-conclusion — please use the proof-conclusion skill." Then STOP. |
+| "write a proof", "proof conclusion", "write the conclusion" | **proof-conclusion** | Reply: "This is a proof-conclusion task." Then STOP — a direct user is told to use the `proof-conclusion` skill; an orchestrator routes there by the call its own routing row names. |
 | Anything about creating, updating, reviewing, or tracking hypotheses | **in scope** | Proceed below. |
 
 If the classification is NOT "in scope": output the one-sentence reply shown above and **produce no other output** — no file reads, no tool calls, no analysis. This is a hard constraint, not a suggestion.
@@ -132,8 +132,8 @@ active ──► supported ──► (to proof-conclusion)
 - Every `conflicts[]` entry whose `competing_assertion_ids` overlap this
   hypothesis's `supporting_assertion_ids` or `contradicting_assertion_ids`
   has `status` of `resolved` or `moot`
-- Either at least one supporting assertion carries `evidence_type: "direct"`,
-  or at least two carry `evidence_type: "indirect"` and cite at least two
+- Either at least one supporting assertion carries `record_basis: "stated"`,
+  or at least two carry `record_basis: "inferred"` and cite at least two
   distinct `source_id` values
 - The evidence is consistent — no logical impossibilities (check-warnings) or
   geographic infeasibilities (timeline)
@@ -205,9 +205,9 @@ Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn
 Status:     SUPPORTED
 
 Supporting evidence (3):
-  + a_004  1850 census: Patrick in Thomas's household (indirect)
-  + a_010  1860 census: Patrick in Thomas's household (indirect)
-  + a_013  Death certificate: "Father: Thomas Flynn" (direct)
+  + a_004  1850 census: Patrick in Thomas's household (inferred)
+  + a_010  1860 census: Patrick in Thomas's household (inferred)
+  + a_013  Death certificate: "Father: Thomas Flynn" (stated)
 
 Contradicting evidence (0):  (none)
 

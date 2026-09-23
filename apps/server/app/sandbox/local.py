@@ -207,6 +207,8 @@ class LocalProvider(SandboxProvider):
             "HOME": home_dir,
             "AGENT_MODE": settings.agent_mode,
             "MODEL": model,
+            "AUTO_CONTINUE": "1" if settings.auto_continue else "0",
+            "AUTO_CONTINUE_MAX_STEPS": str(settings.auto_continue_max_steps),
             "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
             # The agent's own summaries carry non-ASCII (mock_agent's
             # "1 match -> logged as ..." uses U+2192), and sandbox_server prints
@@ -228,6 +230,9 @@ class LocalProvider(SandboxProvider):
             # the path is real inside the microVM.
             "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
         }
+        from ..anthropic_proxy import proxy_active
+        if proxy_active():
+            env["ANTHROPIC_BASE_URL"] = f"{settings.public_url}/api/anthropic-proxy"
         env.pop("ANTHROPIC_API_KEY", None)
         log = open(self._root(sandbox_id) / "ws.log", "ab")
         proc = subprocess.Popen(

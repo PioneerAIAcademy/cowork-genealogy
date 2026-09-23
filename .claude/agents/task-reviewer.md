@@ -95,12 +95,34 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 
    **Settle what you can; escalate only what you cannot.** Most forks are already
    answered in a spec, an ADR, or the code — resolve those yourself and say in
-   one clause where the answer came from. What reaches the lead is only what is
-   genuinely undetermined: an API shape, a doctrine position, an enum value, a
-   retention rule, spend. Nine issues at three questions each is thirty
-   questions, and he stops reading at the fourth.
+   one clause where the answer came from. Nine issues at three questions each is
+   thirty questions, and he stops reading at the fourth.
 
-   Anything that does reach him → verdict `needs-a-decision`, written to the
+   **A fork reaches the lead only if at least one live option does one of these
+   four.** Otherwise you decide it.
+   1. Spends real money the card does not already budget: a subscription, a
+      paid run on an eval slot the card does not already buy. A $7–25 run the
+      card already pays for is not this.
+   2. Sets or changes doctrine or precedent: a first of its kind, a rule other
+      cards will cite, an ADR or spec rule change.
+   3. Adds surface that is hard to reverse: a persisted `research.json` or tree
+      field, an MCP tool parameter, a manifest shape.
+   4. Contradicts or reinterprets an earlier lead ruling, or the two nearest
+      rulings point opposite ways.
+
+   A fork whose every live option is $0, reversible, precedent-free and clear of
+   any prior ruling is not a decision, however well argued the alternatives are.
+   Decide it and write the
+   decision into the body edit, where the `## Decision needed` block would have
+   gone:
+   `**Decided (review-ready, <date>): A, <the consequence that decided it>.**
+   B considered: <one line>. C considered: <one line>.`
+   The verdict is then `ready` or `ready-after-edit`, not `needs-a-decision`.
+
+   **Before escalating, grep the issue's comments for `Ruling` and `Decision`.**
+   A question already ruled in a comment is applied, not re-asked.
+
+   What passes the four-way test → verdict `needs-a-decision`, written to the
    **For the lead** contract below. Do not promote it.
 8. **Hidden cost.** Editing a skill body, a rubric, or a unit test flips that
    skill's run log inactive, so landing it needs a fresh `make eval-skill
@@ -134,7 +156,7 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 |---|---|
 | `ready` | A junior can land this correctly today. You still name one thing you would improve, or say "nothing, because …", and — when there is one — the part most likely to send them to a senior. |
 | `ready-after-edit` | Ready once the body carries what you supply. Give the **exact text**, and where it goes. |
-| `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. Applied as the **`needs-decision`** label, which asks for one answer rather than a scarce person — the work behind the fork is frequently junior. Orthogonal to `senior`: add that too when the work would still be hard after the answer. |
+| `needs-a-decision` | An open fork only the lead can settle, meaning one that passes the four-way test in Pass B #7 (unbudgeted spend, doctrine or precedent, hard-to-reverse surface, or a prior ruling in play). State it as a choice with options and your recommendation. Do not promote. Applied as the **`needs-decision`** label, which asks for one answer rather than a scarce person — the work behind the fork is frequently junior. Orthogonal to `senior`: add that too when the work would still be hard after the answer. |
 | `senior` | Any of the triggers below, **and the item would still be hard once every open question is answered**. Label it `senior`, keep its `developer`/`genealogist` label (that picks the lane, and `.github/CODEOWNERS` routes the review the same way), and leave it assigned to nobody — it ranks in its lane's Ready pool alongside the junior work, and the `senior` label is what tells a junior the card is not theirs. If one answer from the lead would make the work junior, the verdict is `needs-a-decision` instead — check that first, because it is the more common case and the two have opposite remedies. This is the repo's existing `senior` label, whose description carries an abridged form of this row (GitHub caps it at 100 characters). |
 | `stale-rewrite` | The premise moved, so the ask itself is now wrong. Say what is false and supply the text that **replaces** the ask — not an addition to it. |
 | `close` | No longer needed, already done, or refuted. Give the reason and the evidence. |

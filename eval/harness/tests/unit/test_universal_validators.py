@@ -26,6 +26,7 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_universal import (  # noqa: E402
+    report_no_internal_identifiers_in_response as check_ids,
     test_no_entries_deleted as check_no_deletes,
     test_ownership_table as check_research,
     test_tree_ownership_table as check_tree,
@@ -485,3 +486,161 @@ def test_an_UNSTUBBED_run_still_checks_tree_ownership():
     except BaseException as exc:  # noqa: BLE001 -- Skipped is a BaseException
         outcome = f"{type(exc).__name__}: {exc}"
     assert outcome == "refused", f"ownership was not enforced on an unstubbed run: {outcome}"
+
+
+# --- lay mode: no internal identifiers in the reply (tier 2, advisory) ------
+
+def _report_fails(text):
+    try:
+        check_ids(text, POSITIVE)
+    except AssertionError as exc:
+        return str(exc)
+    return None
+
+
+def test_identifier_report_names_each_schema_id_it_finds():
+    msg = _report_fails("q_001 written. I logged the search as log_003 and added a_283.")
+    assert msg is not None
+    for ident in ("q_001", "log_003", "a_283"):
+        assert ident in msg
+
+
+def test_identifier_report_fires_on_bracketed_section_names():
+    """The schema's section names written as arrays — `conflicts[]`,
+    `hypotheses[]` — are how issue #2493's own quoted reply spoke to the tester."""
+    msg = _report_fails("I added a conflicts[] entry and a hypotheses[] entry for Etta.")
+    assert msg is not None and "conflicts[]" in msg and "hypotheses[]" in msg
+
+
+def test_identifier_report_fires_on_project_file_and_tool_names():
+    msg = _report_fails("I updated research.json through research_append.")
+    assert msg is not None and "research.json" in msg and "research_append" in msg
+
+
+def test_identifier_report_passes_a_lay_reply():
+    """The other direction: a reply in the house style, with a year, a place and
+    an ordinary numbered list, must not trip on numbers or underscores."""
+    assert _report_fails(
+        "I found the 1850 census for the household in Warren County. Mary is "
+        "listed as 12, born in Ohio, which fits. Next: search for her marriage."
+    ) is None
+
+
+def test_identifier_report_skips_a_negative_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_ids("q_001 written", {"type": "negative"})
+
+
+def test_identifier_report_skips_an_empty_reply():
+    with pytest.raises(pytest.skip.Exception):
+        check_ids("", POSITIVE)
+
+
+# --- An agent-keyed suite's frontmatter reaches the validators (#1253) ------
+#
+# The orchestrator hands every validator `skill_frontmatter`. Before
+# `load_suite_frontmatter` it resolved `skills/<skill>/SKILL.md` only, so for a
+# suite keyed to an agent it was `{}` — and two validators read it. Neither
+# failed; both degraded quietly, which is why this needs a test rather than a
+# bug report.
+
+import warnings as _warnings_mod  # noqa: E402
+
+from test_universal import test_tool_allowlist as check_tool_allowlist  # noqa: E402
+
+AGENT_FM = {
+    "name": "gps-mentor",
+    "tools": [
+        "mcp__genealogy__research_query",
+        "mcp__remote-devices__Genealogy_Research__research_query",
+        "mcp__Genealogy_Research__research_query",
+    ],
+}
+MCP_CALLS = [{"tool": "mcp__genealogy__research_query"}]
+
+
+def _advisories(fm):
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        check_tool_allowlist(
+            tool_calls=MCP_CALLS, skill_frontmatter=fm, test={"skill": "gps-mentor"}
+        )
+    return [str(w.message) for w in caught]
+
+
+def test_tool_allowlist_reads_an_agents_tools_key():
+    """An agent declares `tools`, qualified; a skill declares `allowed-tools`,
+    bare. Reading only the skill spelling left the declared set empty, so the
+    advisory fired on every test in the suite — and an advisory that always
+    fires teaches its reader to ignore it."""
+    assert _advisories(AGENT_FM) == []
+
+
+def test_tool_allowlist_still_warns_when_nothing_is_declared():
+    """The accept direction: an empty frontmatter is still a real finding."""
+    assert len(_advisories({})) == 1
+
+
+def test_tool_allowlist_still_flags_an_undeclared_call():
+    """Narrowing must not have become blanket permission."""
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        check_tool_allowlist(
+            tool_calls=[{"tool": "mcp__genealogy__tree_edit"}],
+            skill_frontmatter=AGENT_FM,
+            test={"skill": "gps-mentor"},
+        )
+    assert len(caught) == 1
+    assert "not in allowed-tools" in str(caught[0].message)
+
+
+def test_ownership_table_is_not_skipped_for_an_agent_keyed_suite():
+    """`test_ownership_table` reads `skill_frontmatter["name"]` and SKIPS when
+    it is absent, so a `{}` frontmatter dropped ownership checking for the whole
+    suite silently. An agent file carries `name`, so resolving it restores the
+    check — asserted here by the write being REFUSED rather than skipped."""
+    before = research(proof_summaries=[])
+    after = research(proof_summaries=[{"id": "ps_001"}])
+    with pytest.raises(AssertionError):
+        check_research(before, after, AGENT_FM, POSITIVE)
+
+
+def test_tool_allowlist_widens_by_an_agent_keyed_suites_own_delegations(monkeypatch, tmp_path):
+    """The widening scan must read the AGENT body for an agent-keyed suite.
+
+    It scanned `skills/<test.skill>/SKILL.md`, absent for such a suite, so the
+    suite was never widened by what it delegates to. LATENT: no agent body
+    carries an `@plugin:` reference today, so this fixture is synthetic and the
+    real corpus exercises none of it. It is guarded anyway because the
+    frontmatter beside it is now resolved from the agent, and the two reading
+    different files is the inconsistency that made the declared set wrong.
+
+    `DEFAULT_PLUGIN_AGENTS` is patched on `harness.workspace` rather than on the
+    validator, because the validator imports it inside the function body.
+    """
+    import harness.workspace as _ws
+
+    agents = tmp_path / "agents"
+    agents.mkdir()
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n  - mcp__genealogy__sidecar_read\n---\n"
+        "Hand the page to `@plugin:image-reader`.\n",
+        encoding="utf-8",
+    )
+    (agents / "image-reader.md").write_text(
+        "---\nname: image-reader\ntools:\n  - mcp__genealogy__image_transcribe\n---\nx\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_ws, "DEFAULT_PLUGIN_AGENTS", agents)
+
+    fm = {"name": "gps-mentor", "tools": ["mcp__genealogy__sidecar_read"]}
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        # A call the suite holds only THROUGH its delegate. Unwidened, this is
+        # reported as undeclared.
+        check_tool_allowlist(
+            tool_calls=[{"tool": "mcp__genealogy__image_transcribe"}],
+            skill_frontmatter=fm,
+            test={"skill": "gps-mentor"},
+        )
+    assert [str(w.message) for w in caught] == []

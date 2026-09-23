@@ -73,10 +73,10 @@ def test_objective_default_verbatim(after_state, test):
 
 def test_profile_defaults_when_all_default(after_state, test):
     """Tag-gated on `opening-turn-all-defaults`: when the test's premise is
-    that the user answered none of the opening-turn questions,
-    `researcher_profile.experience_level` must hold the documented default
-    exactly -- `intermediate` -- not be left absent (the pre-#1510
-    dead-edge-case behavior) and not hold anything else.
+    that the user answered nothing, `researcher_profile.experience_level` must
+    hold the fixed value -- `novice` (lead ruling 2026-09-18: the profile is
+    never asked) -- not be left absent (the pre-#1510 dead-edge-case behavior)
+    and not hold anything else.
 
     `subscriptions` is checked in the OPPOSITE direction to the deleted
     `== ["none"]` assertion: it must be absent, OR carry values the researcher
@@ -105,9 +105,9 @@ def test_profile_defaults_when_all_default(after_state, test):
         "proceeds, so this section should always be written, even when every "
         "answer defaults"
     )
-    assert profile.get("experience_level") == "intermediate", (
-        f"experience_level should default to 'intermediate', got: "
-        f"{profile.get('experience_level')!r}"
+    assert profile.get("experience_level") == _DEFAULT_LEVEL, (
+        f"experience_level is fixed at {_DEFAULT_LEVEL!r} (the profile is never "
+        f"asked), got: {profile.get('experience_level')!r}"
     )
     subs = profile.get("subscriptions")
     assert subs is None or (isinstance(subs, list) and subs and subs != ["none"]), (
@@ -133,20 +133,92 @@ _INIT_EMPTY_SECTIONS = (
 )
 
 
-def test_init_empty_sections(after_state, test):
+def test_init_empty_sections(after_state, test, tool_calls):
     """Tag-gated: at init time, every research.json array section must be
     empty. The init-project workflow surveys known information but does
-    not formulate questions or plans — those are downstream skills."""
+    not formulate questions or plans — those are downstream skills.
+
+    `sources` IS ALLOWED to carry memory transcriptions, and only those. A
+    memory's text is not something the skill formulated — it arrives with the
+    tree read, like the tree sources themselves — and the lead ruled it is
+    persisted at init, to `sources[].transcription`. Every other section, and
+    this one on a person with no memories, is unchanged.
+
+    The exemption is deliberately narrow: an entry qualifies only if its
+    `transcription` is VERBATIM one of the texts `person_read` actually
+    returned. So the skill cannot write a source it invented, and the same check
+    doubles as the verbatim requirement.
+
+    A NULL TRANSCRIPTION IS NO LONGER ALLOWED (decision 5, 2026-09-17). An
+    untranscribed memory gets no `sources` entry at all: it is already in
+    `tree.gedcomx.json` with its title and URL, so the lead survives, and what a
+    `sources` entry would add is the assertion that someone examined it -- the
+    one thing that is not true. Acceptance 14 is the case this pins: on a person
+    whose kept memories all came back untranscribed, `sources` is empty.
+
+    GATED ON MEMORIES RETURNED, NOT ON TEXT RETURNED. Gating on text alone was
+    wrong in both directions. A person whose memories all miss the budget or all
+    fail OCR returns no text at all, so the exemption never engaged and the
+    validator red-flagged a skill doing exactly what SKILL.md tells it to --
+    acceptance 11 is precisely that case. And with one text present the null
+    branch was unbounded, so any number of invented `transcription: null`
+    entries passed. `artifact_url` is the discriminator because `person_read`
+    puts it on every memory source and on nothing else; the count of them is
+    also the ceiling, since research.json cannot hold more memory-derived
+    sources than there were memories.
+    """
     if "init-empty-sections" not in test.get("tags", []):
         pytest.skip("not an init-empty-sections scenario")
     research = after_state.get("research_json")
     if research is None:
         assert False, "init-empty-sections requires research.json to exist"
+
+    memory_sources = [
+        s
+        for response in _responses(tool_calls, "person_read")
+        for s in (response.get("sources") or [])
+        if isinstance(s, dict)
+        and (
+            s.get("artifact_url")
+            or (isinstance(s.get("text"), str) and s["text"].strip())
+        )
+    ]
+    returned_texts = {
+        s["text"]
+        for s in memory_sources
+        if isinstance(s.get("text"), str) and s["text"].strip()
+    }
+
     non_empty = []
     for section in _INIT_EMPTY_SECTIONS:
         value = research.get(section, [])
-        if value:
-            non_empty.append(f"{section} ({len(value)} entries)")
+        if not value:
+            continue
+        if section == "sources" and memory_sources:
+            if len(value) > len(memory_sources):
+                non_empty.append(
+                    f"sources ({len(value)} entries, but person_read returned "
+                    f"only {len(memory_sources)} memories -- the exemption "
+                    f"cannot admit more entries than there were memories)"
+                )
+                continue
+            stray = [
+                e.get("gedcomx_source_description_id") or "<no id>"
+                for e in value
+                if not isinstance(e, dict)
+                # `None not in returned_texts` is what retires the null branch:
+                # a null-transcription entry is now stray like any other.
+                or e.get("transcription") not in returned_texts
+            ]
+            if not stray:
+                continue
+            non_empty.append(
+                f"sources ({len(stray)} entries whose transcription is not "
+                f"verbatim from person_read, or is null for a memory that was "
+                f"never transcribed and so gets no entry at all: {stray})"
+            )
+            continue
+        non_empty.append(f"{section} ({len(value)} entries)")
     assert not non_empty, (
         f"research.json sections not empty at init: {non_empty}. "
         f"init-project should leave questions/plans/log/sources/assertions/"
@@ -245,27 +317,16 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
 
 _ARK_RE = re.compile(r"^ark:/61903/\d:\d:(.+)$")
 
-_NARRATION_BY_LEVEL = {
-    "novice": (
-        "Narrate the *why* before each action. Define genealogy terms inline "
-        "when first introduced. Explain which GPS step you are executing and "
-        "what it produces. Err on the side of more context \u2014 the user is "
-        "learning."
-    ),
-    "intermediate": (
-        "One-line preamble per skill invocation explaining what you're about to "
-        "do. Assume basic GPS vocabulary. Define unusual or specialized "
-        "terminology inline."
-    ),
-    "experienced": (
-        "No preambles. Do the work and report results concisely. Assume fluency "
-        "with GPS and standard genealogy terminology."
-    ),
-    "professional": (
-        "No preambles. Do the work and report results concisely. Assume fluency "
-        "with GPS, BCG standards, and standard genealogy terminology."
-    ),
-}
+# The profile is fixed (lead ruling 2026-09-18): init-project asks nothing
+# about the researcher and writes these two values on every project. The
+# house-style string is SKILL.md's, verbatim; every downstream skill reads it.
+_DEFAULT_LEVEL = "novice"
+_HOUSE_STYLE = (
+    "Plain language for someone who has never done genealogy. No identifiers, "
+    "file names, tool names or field names. Do not narrate between actions; "
+    "report once when the step is done: what was found, in one paragraph, and "
+    "what happens next in one sentence."
+)
 
 
 def _tool(call):
@@ -622,10 +683,17 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
 # --- V6: the note is dropped, not the source ----------------------------
 
 def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
-    """`person_read` emits `notes` on a source; `TREE_SOURCE_FIELDS` rejects the
-    field, so a verbatim copy fails the `project_create` write. The plausible
-    wrong fix is to drop the whole source -- silently losing evidence the survey
-    found. Drop the note, keep the source.
+    """`person_read` emits fields a tree source may not carry -- `notes`, and now
+    `text`, `image_ref` and `artifact_url` on a memory; `TREE_SOURCE_FIELDS`
+    rejects them, so a verbatim copy fails the `project_create` write. The plausible wrong fix is to
+    drop the whole source -- silently losing evidence the survey found. Drop the
+    extra field, keep the source.
+
+    Checked against the ALLOW-LIST rather than against a list of known-bad names:
+    `notes` was the first field to do this and `text`/`image_ref`/`artifact_url`
+    followed, so a name-by-name check would go stale the next time person_read
+    grows a field -- as it just did, and this check needed no edit to cover it. Mirrors TREE_SOURCE_FIELDS in
+    packages/engine/mcp-server/src/validation/tree-shape.ts.
 
     Joined on `title`, because the skill re-ids sources to S1... on the way in.
     """
@@ -639,8 +707,12 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
     written = _written_tree(after_state).get("sources") or []
     titles = {s.get("title") for s in written}
 
+    allowed = {"id", "title", "citation", "author", "url"}
     bad = [
-        f"{s.get('id')}: has notes {s['notes']!r}" for s in written if s.get("notes")
+        f"{s.get('id')}: carries {sorted(set(s) - allowed)!r}, which "
+        f"project_create rejects"
+        for s in written
+        if isinstance(s, dict) and set(s) - allowed
     ]
     bad += [
         f"{s.get('id')} {s.get('title')!r}: returned by person_read but absent "
@@ -648,21 +720,24 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
         for s in returned if s.get("title") not in titles
     ]
     assert not bad, (
-        "drop the note, keep the source -- the survey found it: " + "; ".join(bad)
+        "drop the extra field, keep the source -- the survey found it: "
+        + "; ".join(bad)
     )
 
 
-# --- V5: narration_guidance verbatim ------------------------------------
+# --- V5: the fixed profile, verbatim ------------------------------------
 
-def test_narration_guidance_is_verbatim_for_the_level(after_state):
-    """A closed four-way mapping: `experience_level` keys one fixed string, and
-    SKILL.md calls it verbatim ("stored verbatim, not paraphrased").
+def test_narration_guidance_is_the_house_style(after_state):
+    """One fixed profile: `novice` plus the house-style string, stored verbatim
+    ("stored verbatim, not paraphrased"). Nothing about the researcher is asked
+    (lead ruling 2026-09-18), so any other level -- including one the user
+    volunteered -- is a defect: a user setting will own the level later.
 
     Its twin -- the objective's verbatim default -- already has a validator
     (`test_objective_default_verbatim`, issue #1510, added precisely so the
-    check lived in code rather than in judge interpretation). This one did not.
-    Every downstream SKILL.md reads this field as its narration style, so a
-    paraphrase degrades every later invocation in the project.
+    check lived in code rather than in judge interpretation). Every downstream
+    SKILL.md reads this field as its narration style, so a paraphrase degrades
+    every later invocation in the project.
     """
     research = after_state.get("research_json") or {}
     profile = research.get("researcher_profile") or {}
@@ -670,13 +745,13 @@ def test_narration_guidance_is_verbatim_for_the_level(after_state):
     guidance = profile.get("narration_guidance")
     if not level and not guidance:
         pytest.skip("no researcher_profile written")
-    assert level in _NARRATION_BY_LEVEL, (
-        f"experience_level {level!r} is not one of {sorted(_NARRATION_BY_LEVEL)}"
+    assert level == _DEFAULT_LEVEL, (
+        f"experience_level must be {_DEFAULT_LEVEL!r} -- the profile is fixed and "
+        f"never asked; got {level!r}"
     )
-    expected = _NARRATION_BY_LEVEL[level]
-    assert guidance == expected, (
-        f"narration_guidance for {level!r} must be the SKILL.md table text "
-        f"verbatim.\n  expected: {expected!r}\n  got:      {guidance!r}"
+    assert guidance == _HOUSE_STYLE, (
+        "narration_guidance must be the SKILL.md house-style text "
+        f"verbatim.\n  expected: {_HOUSE_STYLE!r}\n  got:      {guidance!r}"
     )
 
 

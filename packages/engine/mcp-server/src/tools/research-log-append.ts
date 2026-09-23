@@ -128,6 +128,225 @@ export type ResearchLogAppendResult =
 class LogAppendError extends Error {}
 
 /**
+ * Census mentions the note actually makes: a year BOUND to the word "census",
+ * with the jurisdiction that qualifies it.
+ *
+ * Two things used to be read off the whole note and both were wrong.
+ *
+ * THE YEAR. `/\b18[0-7]\d\b/` over the whole note meant any incidental pre-1880
+ * number tripped the rule, and a census note almost always carries birth years
+ * older than the census itself: "1880 US Census ... Henry Bottermiller (head,
+ * born 1828 Germany)" was refused on the 1828.
+ *
+ * THE JURISDICTION. The doctrine is US-federal: 1880 is the dividing line
+ * there. England & Wales and Scotland gained the relationship column in 1851,
+ * so an "1871 Scotland Census household" is fully documented and was still
+ * refused. This is the second of the three objections the lead raised against a
+ * tool-boundary gate on 2026-08-27 (issue #1967, "Decision (lead, 2026-08-27)",
+ * and restated in docs/specs/research-log-editor-spec.md § 8.2): "not
+ * generalizable outside the US (post-1851 England & Wales censuses do carry a
+ * relationship column)".
+ *
+ * MEASURED over the 3,522 distinct `notes` arguments of research_log_append in
+ * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
+ * form), measured at 414ee3c68: refusals fall 355 -> 202, and the 153 removed
+ * are 43.1% of every refusal the rule made -- 133 of them the year, 20 the
+ * jurisdiction. THE SPLIT RULE, because the figure is meaningless without it: a
+ * freed note counts as JURISDICTION when `censusMentions` bound it to a non-US
+ * threshold (a mention whose `columnFrom` is not 1880), and as YEAR otherwise.
+ * The obvious alternative -- counterfactual, "would it still be refused if every
+ * census were treated as US/1880?" -- splits the same 153 as 145 year and 8
+ * jurisdiction. The two rules disagree on exactly 12 notes, and all 12 are the
+ * same shape: a British census of 1881, 1891, 1901 or 1911, with a pre-1880
+ * BIRTH year elsewhere in the note ("1901 England census ... Robert Brierley
+ * b.1866"). None of them names a US census before 1880 -- such a note would be
+ * refused on both readings and never reach the freed set at all. What frees
+ * these is the year binding: `18[0-7]\d` matched the birth year under the old
+ * whole-note test, and bound to its own census (1901, past every threshold) it
+ * no longer does. The rule above files them under JURISDICTION because the
+ * census is non-US; the counterfactual files them under YEAR because that is
+ * what moved. That one shape is the whole 20-versus-8 gap. Neither rule is
+ * wrong; quoting a split without saying which is.
+ *
+ * Nothing in that corpus is newly refused. RE-DERIVE RATHER THAN QUOTE these:
+ * the corpus moves in both directions as run logs land, because a re-run
+ * REPLACES a skill's run log rather than adding one. Four earlier passes of
+ * this docstring read 3,275/332/136, 3,392/338/142, 3,490/355/154 and
+ * 3,489/355/153 -- it shrank by one between the last two of those and grew by
+ * 33 after them. The stamp is there so a reader can tell what the number was
+ * true of, per tests/packaging/corpus-figures.test.ts's rule 3.
+ *
+ * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
+ * leaning on it. `CENSUS_YEAR` spans 1600-1999 while the old gate was
+ * `\b18[0-7]\d\b`, so a census named before 1800 is newly refused: "1790 US
+ * Census household: John Smith head, with wife Mary" was allowed before and is
+ * refused now (1800 itself was already refused -- `18[0-7]\d` matches it -- so
+ * the boundary is 1600-1799). That behaviour is right, because the 1790-1840
+ * schedules name only the head of household and tally everyone else by age
+ * band, so the structure is inferred even more completely than on an 1850. But
+ * the rule does not only narrow, and a maintainer who believes it does will
+ * mis-predict this shape.
+ *
+ * The jurisdiction test is deliberately adjacency-bound and NOT a search of the
+ * note, because most non-US words in this corpus are birthplaces on a US
+ * schedule: "1850 US Census, Schuylkill County, PA ... born Ireland" is a US
+ * census of Irish immigrants and must stay refused. 52 of the 202 surviving
+ * refusals name a non-US place anywhere in the note (same corpus and stamp as
+ * above); read through, they are overwhelmingly that shape, so a wider window
+ * would be a regression rather than a further fix.
+ *
+ * Both are bound ADJACENTLY, never by scanning. The jurisdiction must sit in
+ * the unbroken run of words touching the census token -- punctuation ends the
+ * run -- so "born 1821 Wales, 1860 census at Cosumnes Township, California"
+ * still reads as a US 1860 census (correctly refused) rather than a Welsh one.
+ */
+type CensusMention = { year: number; columnFrom: number };
+
+const CENSUS_YEAR = String.raw`1[6-9]\d\d`;
+/** A run of years sharing one census token: "1860 and 1870 censuses". */
+const CENSUS_YEAR_RUN = String.raw`(?:${CENSUS_YEAR})(?:\s*(?:,|and|&|\/|or|to|-|–|through)\s*(?:${CENSUS_YEAR}))*`;
+/** Words allowed between the year and the token: "1900 US federal census". */
+const CENSUS_QUALIFIER = String.raw`(?:u\.?\s?s\.?|united\s+states|federal|state|national|uk|united\s+kingdom|england|english|wales|welsh|scotland|scottish|ireland|irish|britain|british|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian|colonial|population|agricultural|mortality|slave|veterans?|school|and|&)`;
+const CENSUS_TOKEN = String.raw`census(?:es)?`;
+const CENSUS_BEFORE = new RegExp(
+  String.raw`\b(${CENSUS_YEAR_RUN})\s*((?:${CENSUS_QUALIFIER}\s+){0,4})${CENSUS_TOKEN}\b`,
+  "gi",
+);
+const CENSUS_AFTER = new RegExp(
+  // The connector may be a word ("census of 1870"), punctuation ("census, 1870")
+  // or nothing at all but a space ("US Census 1880", which is how FamilySearch
+  // titles its collections). Only whitespace and these connectors may sit
+  // between, never free text -- that is what keeps "census ... born 1828" out.
+  String.raw`((?:${CENSUS_QUALIFIER}\s+){0,4})${CENSUS_TOKEN}\b(?:\s*(?:of|for|in|from|year|taken\s+in|enumerated\s+in)\s+|\s*[,:(\[-]\s*|\s+)(${CENSUS_YEAR_RUN})`,
+  "gi",
+);
+
+/**
+ * The first census year whose schedule carries a relationship-to-head column.
+ * Sources: search-records/references/census-field-availability.md -- US "1880,
+ * the dividing line"; England & Wales "1851 onward -- relationships and exact
+ * ages", 1841 having none. Scotland follows E&W. A jurisdiction named but not
+ * listed here returns null, which SKIPS the rule rather than guessing: the
+ * doctrine is documented for these two only, and a wrong refusal blocks a
+ * researcher mid-write.
+ */
+function relationshipColumnFrom(qualifier: string): number | null {
+  const q = qualifier.toLowerCase();
+  if (/\b(?:england|english|wales|welsh|scotland|scottish|britain|british|uk|united\s+kingdom)\b/.test(q)) {
+    return 1851;
+  }
+  if (/\b(?:ireland|irish|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian)\b/.test(q)) {
+    return Number.NaN; // named, non-US, undocumented here -> skip
+  }
+  return 1880; // unqualified or explicitly US/federal
+}
+
+export function censusMentions(notes: string): CensusMention[] {
+  const out: CensusMention[] = [];
+  const push = (years: string, qualifier: string, post: string) => {
+    const from = relationshipColumnFrom(`${qualifier} ${post}`);
+    if (from === null || Number.isNaN(from)) return;
+    for (const y of years.match(new RegExp(CENSUS_YEAR, "g")) ?? []) {
+      out.push({ year: Number(y), columnFrom: from });
+    }
+  };
+  for (const m of notes.matchAll(CENSUS_BEFORE)) {
+    const post = notes.slice(m.index + m[0].length, m.index + m[0].length + 24);
+    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "");
+  }
+  for (const m of notes.matchAll(CENSUS_AFTER)) push(m[2], m[1] ?? "", "");
+  return out;
+}
+
+/**
+ * Refuse a pre-1880 US census note that states household structure as fact.
+ *
+ * 1850/1860/1870 carry NO "relationship to head" column. Every "head" / "wife" /
+ * "son" read off such a household -- and the record's own ParentChild/Couple
+ * edges, which are the indexer's inference from the same signals -- is an
+ * inference, not something the census stated. A note asserting it flat records a
+ * relationship the source cannot support, and a later reader has no way to tell
+ * it from a stated one.
+ *
+ * ENFORCED HERE RATHER THAN IN PROSE because it is decidable from the note
+ * alone, which is ADR-0011's test for a writer-tool precondition. The prose rule
+ * has been in search-records/SKILL.md since issue #1284 and adherence is
+ * measurably partial: across the five committed run logs the marker appears in
+ * 32 of 43 logged searches, and issue #1912's flat "plus sons Thos T McElwee and
+ * Stephen McElwee" is real production text.
+ *
+ * DELIBERATELY NARROWER THAN THE EVAL VALIDATOR, whose pattern sets have been
+ * re-tuned three times (#1284, #1642, #1912) for false positives and negatives.
+ * Porting them wholesale into a hard refusal would inherit that history, and a
+ * wrong refusal blocks a researcher mid-write. This fires only where all three
+ * parts are unambiguous, and a note that trips it can always be fixed by saying
+ * what is true -- so the refusal is always actionable.
+ */
+export function requirePre1880CensusHedge(notes: string): void {
+  const text = notes.toLowerCase();
+  // `\bcensus\b`, singular only, KNOWINGLY: a note saying just "censuses"
+  // bypasses the rule entirely ("Traced the family across the 1850 and 1860 US
+  // censuses ... head of household Thomas Flynn" writes clean today). Widening
+  // to `census(?:es)?` was measured and reverted -- it adds 4 refusals of which
+  // 2 are research PLANS rather than claims ("check 1850 and 1860 censuses for
+  // a woman named Margaret in the Thomas Flynn household"). The rule cannot
+  // tell a plan from a claim, which is a pre-existing weakness that fixing the
+  // gate merely exposes on more notes, and it is the real objection here. Do
+  // not widen this without solving that first.
+  if (!/\bcensus\b/.test(text)) return;
+
+  // Tie the year to the census it qualifies. When no year binds to a census
+  // mention at all the note is undecidable on that axis, so fall back to the
+  // old whole-note test rather than letting an unhedged 1870 household through
+  // on a phrasing the patterns above do not cover. A note that reaches THIS
+  // branch gets its pre-change verdict, because the fallback below is the old
+  // gate verbatim and the `\bcensus\b` test above it is unchanged. That is a
+  // claim about this path and nothing wider: the rule as a whole does NOT only
+  // narrow -- a census named before 1800 is newly refused, and it is refused on
+  // the bound branch, never reaching this one. See the docstring's 1600-1799
+  // boundary, pinned by "refuses a census named before 1800, which the old
+  // whole-note test allowed".
+  const bound = censusMentions(notes);
+  const namesColumnlessCensus = bound.length > 0
+    ? bound.some((m) => m.year < m.columnFrom)
+    : /\b18[0-7]\d\b/.test(text);
+  if (!namesColumnlessCensus) return;
+
+  const describesHousehold =
+    /\b(household|dwelling|co-?resident|enumerated with|living with)\b/.test(text);
+  // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
+  // and Stephen". The lookbehind excludes the possessive form -- "searched for
+  // his wife Catherine" names a TREE-side relative who may be absent from the
+  // return, which is a statement about the tree and not about what the census
+  // stated. That carve-out is the eval validator's too, and dropping it made
+  // this refuse a compliant note.
+  const assertsKinship =
+    /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/.test(notes) ||
+    /\bhead\s+of\s+household\b/.test(text);
+  if (!describesHousehold && !assertsKinship) return;
+
+  const hedged =
+    /infer/.test(text) ||
+    /\bnot\s+(?:a\s+)?stated\b/.test(text) ||
+    /\bunstated\b/.test(text) ||
+    /\bimplied\b/.test(text) ||
+    /\bpresum\w*/.test(text) ||
+    /no\s+relationship\s+(?:to\s+head\s+)?column/.test(text) ||
+    /relationship\s+column[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b/.test(text);
+  if (hedged) return;
+
+  throw new LogAppendError(
+    "This note describes a pre-1880 US census household but states the family " +
+      "structure as fact. 1850/1860/1870 censuses have NO relationship-to-head " +
+      "column, so the structure is an inference from surname, ages and listing " +
+      "order -- as are any ParentChild/Couple edges on the record, which the " +
+      "indexer inferred the same way. Say so in the note, e.g. \"...in one " +
+      "dwelling; family structure inferred from surname, ages and order, not " +
+      "stated.\" Then re-send.",
+  );
+}
+
+/**
  * Coerce an object-typed tool argument that a model emitted as a JSON string
  * back into an object. Some models stringify nested-object params (observed
  * with `externalSite`: the call arrives as `"{\"site\":...}"` rather than an
@@ -374,6 +593,7 @@ async function applyLogAppendOp(
     entry.results_available = resultsAvailableCoerced as number;
   }
   if (op.notes !== undefined && op.notes !== null) {
+    requirePre1880CensusHedge(op.notes);
     entry.notes = op.notes;
   }
 

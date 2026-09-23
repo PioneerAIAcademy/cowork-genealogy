@@ -25,8 +25,17 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * #2071 then added the particle-surname clause to BOTH `surname` descriptions
  * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,292), combined
- * 20,164. Same direction again, and for the same reason: the clause records a
- * measured result (section K) that a model would otherwise guess at.
+ * 20,164.
+ *
+ * #1212 then added a `top` clause to `record_search` alone (14,872 -> 15,344,
+ * +472), combined 20,636. That clause described the REJECTED drop design, where
+ * `top` decided whether rows were visible at all, and was then corrected to the
+ * shipped shape (15,347 -> 15,486). Both figures are history: DallanQ's ruling
+ * on #2657 removed `top` from `record_search` outright — every candidate is
+ * scored either way, so the slice only cut what came BACK — and the clause went
+ * with it. (`top` survives on `rank_search_matches`, which this lint does not
+ * measure.) What #1212 leaves on this tool is +8 for a `count` reword: 14,939
+ * -> the 14,947 pinned below.
  *
  * The ruling on #1323 was to name
  * both roles and when each applies instead of recommending omission, and naming
@@ -143,8 +152,11 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14939],
-  ["person_search", 5292],
+  ["record_search", 14947],
+  // 5292 -> 5302: the tool-level description gained "siblings, " when the
+  // sibling fan-out landed (#2593). Measured independently (1251 tool-level +
+  // 4051 params), not copied from the failure message.
+  ["person_search", 5302],
 ];
 
 /**

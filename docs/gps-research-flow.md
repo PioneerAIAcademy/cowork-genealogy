@@ -62,11 +62,12 @@ it, or when it hits something it can't resolve.
 
 ### Defining the problem and surveying what's known
 
-The session opens with a short interview: your experience level, which sets
-how much the system explains as it goes, and which subscription sites you
-hold, used later to break ties between equivalent sources — never as a gate
-on what gets searched. It then records your objective and what you already
-hold: family papers, prior research, certificates.
+The session opens by asking one thing: what you want to find out. Nothing is
+asked about you — every project gets plain-language narration, and every
+subscription site is assumed reachable (a site you mention having access to is
+recorded, and used only to warn you when you ask for a site you have no access
+to on file — never as a gate on what gets searched). It then records your objective and what you already hold: family
+papers, prior research, certificates.
 
 If the project starts from an existing online tree, every fact imported
 from it is marked as *questionable* compiled data. Nothing arrives trusted
@@ -198,7 +199,20 @@ assertion:
 
 - **Source** — original, derivative, or authored — *per source*
 - **Information** — primary, secondary, or undetermined — *per assertion*
-- **Evidence** — direct, indirect, or negative — *per assertion*
+- **Evidence** — direct, indirect, or negative — *per question*
+
+The first two are stored, per assertion. The **direct-versus-indirect
+judgment** is not, and cannot be: it depends on the question being asked, so one
+assertion has no single answer — a stated age is direct evidence of age and
+indirect evidence of a birth year. What each assertion stores instead is
+`record_basis` (`stated` / `inferred` / `absent`), which records what the record
+did with the value rather than what it proves.
+
+Negative evidence is the exception, and it *is* stored: `absent` carries the
+finding that information expected in a record is missing from it. "Expected" is
+itself a judgment — which is why `absent`, unlike its two siblings, is not
+purely mechanical. The argument that absence supports is still made per
+question, in the conclusion.
 
 The same record reached two ways is two sources with two classifications: the
 1850 census is *original* read from the image and *derivative* read as an
@@ -281,9 +295,16 @@ and *ruled out*. A new hypothesis starts active even when the evidence
 already leans toward it; promotion is a separate judgment against stated
 criteria — no unresolved contradictions naming the hypothesis's own
 evidence, no chronological impossibility, and either one supporting
-direct-evidence assertion or two supporting indirect assertions from two
-sources. An indirect argument resting on a single source doesn't clear that
+assertion the record **stated** or two supporting **inferred** assertions from
+two sources. An inferred argument resting on a single source doesn't clear that
 floor; it concludes through a proof conclusion instead of promotion.
+
+That floor counts `record_basis`, which is question-independent, so it is a
+mechanical proxy for the GPS rule it descends from rather than the rule itself —
+a stated age clears it while being, for a parentage question, indirect evidence.
+The proxy is deliberate: extraction has no question in hand. The conclusion
+re-judges the evidence per question, and that judgment, not the count, is what
+the proof rests on.
 
 There is an explicit rule against demoting a supported hypothesis over
 ordinary noise: census age rounding and a few years' drift in a reported
@@ -335,10 +356,17 @@ carrying their source citations, with no value yet marked as the right one.
 Writing the conclusion is what settles that. At *probable* or better, the
 concluded relationship is added and the concluded value is marked preferred
 over the competing ones — not piled on as another alternative. Below that
-threshold the evidence stays in the tree unranked, and nothing is uploaded
-to FamilySearch: only concluded facts leave the working tree. A conclusion
-that never reaches the tree is a result found and then lost, so the system
-verifies the write happened.
+threshold the evidence stays in the tree unranked: nothing has been concluded,
+so nothing is marked as the right answer. A conclusion that never reaches the
+tree is a result found and then lost, so the system verifies the write happened.
+
+**What reaches FamilySearch is the researcher's decision, not the system's.**
+The system does not withhold anything; it surfaces what it knows so the choice
+is informed — for every conclusion, the tier it reached and, alongside it, the
+`shortfall` saying why it is not higher: the reachable record is exhausted, a
+reachable source is still unsearched, or an unresolved conflict is blocking it.
+A conclusion left unranked in the working tree is unranked because it was never
+concluded, not because it is being held back.
 
 ### Critique of the conclusion
 

@@ -55,6 +55,7 @@ repo's identifier-casing rule):
 ```typescript
 {
   ok: true,
+  buildId: string,                       // engine build stamp, e.g. "0.1.0+2026-09-17.abc12345"
   projectStatus: string | null,          // research.project.status
   openQuestions: [{
     id: string,                          // q_*
@@ -81,10 +82,17 @@ repo's identifier-casing rule):
     assertionCount: number,              // assertions with source_id = this id
   }],
 }
-// on failure: { ok: false, errors: string[] }
+// on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
 
 Projection rules:
+
+- **`buildId`** — the engine's build stamp (`<base>+<date>.<sha>[.dirty]`, or `<base>+dev`
+  for a build outside a git checkout), identical to the wire `serverInfo.version`. Present on
+  the `ok: true` result, the broken-project failure **and** the `no_project` answer, because
+  this tool is the primary "which build is this?" surface (8 skills call it; 0 call
+  `auth_status`) and the question is most urgent when nothing else works. Read from
+  `build/build-info.json`; format and rationale in `mcpb-package-spec.md` § Versioning.
 
 - **`openQuestions`** — every `research.questions[]` entry whose `status` is
   not `resolved` (i.e. `open`, `in_progress`, `exhaustive_declared`), in
@@ -181,8 +189,8 @@ within two runs.
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
-| Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors }`, loud |
+| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
 | empty project (no questions/persons/sources) | `ok: true` with empty arrays |
 | question with a >140-char text | truncated to 139 chars + `…` |
 | person with no names / no preferred flag | `name` falls back to the first names entry, else `null` |

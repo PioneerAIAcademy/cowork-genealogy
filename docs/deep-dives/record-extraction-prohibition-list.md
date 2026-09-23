@@ -23,7 +23,7 @@ the FAN lead well-argued" — are excluded; they belong to the judge, per the gu
 rebuilding it.**
 
 > **Read the dating note in the findings doc before you compute any rate against
-> this list.** The five committed run logs span two incompatible `evidence_type`
+> this list.** The five committed run logs span two incompatible `record_basis`
 > doctrines (the flip landed 2026-08-21, commit `61d7f919`). A rule's line number
 > below is where it sits today; several arrived mid-corpus. `git log -S'<phrase>'`
 > on the two bodies is the cheap check, and it changed three of my draft findings.
@@ -88,8 +88,8 @@ rebuilding it.**
 
 ## D. Router — presentation and continuation (SKILL.md)
 
-24. Relay the agent's compact summary — source id, assertion counts, tree changes, key
-    findings, next step. **Do not re-print per-assertion detail** (:212–215).
+24. Print only the text after the final `---` in the agent's return, verbatim and
+    unlabeled. Source id, counts and flags never reach the user (:245–249).
 25. **Keep going in the same turn.** Presenting a summary and yielding with records
     still unextracted is a failure (:217–221).
 26. **Exception:** on a `record-extractor` spawn failure, report and stop — do not
@@ -263,10 +263,10 @@ rebuilding it.**
 
 ## J. Agent — evidence type (Layer 3)
 
-93. `evidence_type` ∈ `direct` | `indirect` | `negative` — **there is no
+93. `record_basis` ∈ `stated` | `inferred` | `absent` — **there is no
     `no_evidence`** (:644–647).
 94. **A stated residence is `direct`**, never downgraded (:649–652).
-95. **`evidence_type` is stated-vs-inferred, and there is no exception.** Nothing about
+95. **`record_basis` is stated-vs-inferred, and there is no exception.** Nothing about
     the informant and nothing about the source's remove can change it. **The one test:
     was this value in a field on the record?** (:657–672).
 96. **A pre-1880 census yields ZERO relationship assertions** — no parent-child, no
@@ -284,12 +284,12 @@ rebuilding it.**
      are noted in `informant_bias_notes` and flagged in the return summary (:751–756).
 101. An identity conclusion resting on **one uncorroborated record** is **tentative at
      most**; a caller's stated doubt about a required identifier **is** a `[?]`, and the
-     doubt lives at the information/source layers — **never** in `evidence_type`
+     doubt lives at the information/source layers — **never** in `record_basis`
      (:760–790).
 
 ## K. Agent — negative evidence
 
-102. A negative assertion is `record_role: "absent"` + `evidence_type: "negative"`,
+102. A negative assertion is `record_role: "absent"` + `record_basis: "absent"`,
      `informant: "the researcher"` / `researcher`, with an
      `informant_bias_notes` that names the alternative explanations (:877–890).
 103. `value` is the **expected-but-missing fact naming the person** — never blank,

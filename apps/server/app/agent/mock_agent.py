@@ -1,9 +1,10 @@
 """A deterministic, scripted stand-in for the real Claude Agent SDK + genealogy
 skills. It needs no Anthropic key, so the whole POC runs offline. It:
 
-  * conducts the init-project researcher-profile interview (experience +
-    objective) conversationally — site access is deliberately NOT asked, which
-    is what the real skill does since the access question was dropped,
+  * asks only for the research objective, conversationally — nothing about the
+    researcher is asked: the profile is fixed (novice, one house-style
+    narration string), which is what the real skill does since the experience
+    question was dropped on 2026-09-18 and the access question on 2026-08-31,
   * writes a schema-shaped research.json + tree.gedcomx.json on completion,
   * on later "search records" turns, appends a source/assertion/log entry and a
     results sidecar (which the control-plane watch turns into live viewer
@@ -21,19 +22,15 @@ from pathlib import Path
 
 STATE_FILE = ".agent_state.json"
 
-_EXPERIENCE = ["novice", "intermediate", "experienced", "professional"]
-# There is deliberately no subscription/access vocabulary here any more. The
-# real interview stopped asking about site access, and `researcher_profile`
-# now leaves `subscriptions` ABSENT rather than defaulting it — `["none"]`
-# would assert the researcher told us they have nothing, which is the opposite
-# of the current assumption. A mock that still asked would keep producing a
-# schema-valid document while no longer standing in for what production does.
-_NARRATION = {
-    "novice": "Narrate why each step matters; define genealogy terms on first use.",
-    "intermediate": "One-line preamble per step; assume standard record-type familiarity.",
-    "experienced": "No preambles; concise rationale only when non-obvious.",
-    "professional": "No preambles; terse, citation-first.",
-}
+# The profile is fixed. There is deliberately no experience or access
+# vocabulary here any more: the real skill asks nothing about the researcher
+# and writes these two values on every project, and `researcher_profile` leaves
+# `subscriptions` ABSENT rather than defaulting it — `["none"]` would assert the
+# researcher told us they have nothing, the opposite of the current assumption.
+# A mock that still asked would keep producing a schema-valid document while no
+# longer standing in for what production does.
+_EXPERIENCE_LEVEL = "novice"
+_NARRATION = 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.'
 
 
 def _event(kind: str, **kw) -> dict:
@@ -63,10 +60,8 @@ class MockAgent:
                 pass
         # Pre-seeded (sample) project: skip onboarding.
         if (self.dir / "research.json").is_file():
-            return {"phase": "active", "experience_level": "intermediate",
-                    "objective": None, "log_seq": 1}
-        return {"phase": "greet", "experience_level": None,
-                "objective": None, "log_seq": 0}
+            return {"phase": "active", "objective": None, "log_seq": 1}
+        return {"phase": "greet", "objective": None, "log_seq": 0}
 
     def _save_state(self) -> None:
         (self.dir / STATE_FILE).write_text(json.dumps(self.state, indent=2), encoding="utf-8")
@@ -93,7 +88,6 @@ class MockAgent:
         phase = self.state["phase"]
         handler = {
             "greet": self._greet,
-            "await_experience": self._await_experience,
             "await_objective": self._await_objective,
             "active": self._active,
         }.get(phase, self._active)
@@ -115,32 +109,18 @@ class MockAgent:
         yield _event(
             "text",
             text=(
-                "Welcome! I'll help you run a GPS-conformant genealogy research "
-                "project. First, a couple of quick questions so I can pitch my "
-                "explanations at the right level.\n\n"
-                "**What's your genealogy experience?** (novice, intermediate, "
-                "experienced, or professional)"
+                "Welcome! I'll help you research your family tree.\n\n"
+                "**What would you like to find out?** Describe the person and the "
+                "question, e.g. \"Identify the parents of Mary Sullivan, born "
+                "ca. 1860 in County Cork.\""
             ),
         )
-        self.state["phase"] = "await_experience"
-        self._save_state()
-
-    async def _await_experience(self, text: str) -> AsyncIterator[dict]:
-        lvl = next((w for w in _EXPERIENCE if w in text.lower()), "intermediate")
-        self.state["experience_level"] = lvl
-        yield _event("text", text=(
-            f"Got it — **{lvl}**.\n\n"
-            "Last thing: **what's your research objective?** Describe the person "
-            "and question, e.g. \"Identify the parents of Mary Sullivan, born "
-            "ca. 1860 in County Cork.\""
-        ))
         self.state["phase"] = "await_objective"
         self._save_state()
 
     async def _await_objective(self, text: str) -> AsyncIterator[dict]:
         objective = text.strip() or "Unstated objective"
         self.state["objective"] = objective
-        lvl = self.state["experience_level"] or "intermediate"
 
         yield _event("tool_use", tool="init_project",
                      summary="Creating research.json + researcher profile")
@@ -157,8 +137,8 @@ class MockAgent:
             # `subscriptions` is deliberately absent, not []: access is no
             # longer asked and is assumed available.
             "researcher_profile": {
-                "experience_level": lvl,
-                "narration_guidance": _NARRATION[lvl],
+                "experience_level": _EXPERIENCE_LEVEL,
+                "narration_guidance": _NARRATION,
             },
             "questions": [{
                 "id": "q_001",
@@ -279,7 +259,7 @@ class MockAgent:
             "date_certainty": "approximate", "place": "Pennsylvania",
             "information_quality": "secondary", "informant": "head of household",
             "informant_proximity": "household_member", "informant_bias_notes": None,
-            "evidence_type": "direct", "log_entry_id": log_id,
+            "record_basis": "stated", "log_entry_id": log_id,
             "record_persona_id": None, "extracted_for_question_ids": ["q_001"],
         })
         research["project"]["updated"] = "2026-06-06"

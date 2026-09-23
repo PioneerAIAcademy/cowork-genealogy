@@ -31,6 +31,7 @@ from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
 )
+from validators_lib import new_section_entries as _new_section_entries
 
 
 # Ownership enforcement is centralised in test_universal.py, driven by
@@ -98,10 +99,10 @@ def test_new_assertions_have_required_classification(before_state, after_state):
     Per research-schema-spec.md §5.6, every assertion requires:
       - information_quality (primary | secondary | indeterminate)
       - informant_proximity (self, witness, household_member, ...)
-      - evidence_type (direct | indirect | negative)
+      - record_basis (stated | inferred | absent)
 
     Missing these silently breaks downstream skills (conflict-resolution
-    weighs by informant_proximity; proof-conclusion needs evidence_type).
+    weighs by informant_proximity; proof-conclusion needs record_basis).
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -115,7 +116,7 @@ def test_new_assertions_have_required_classification(before_state, after_state):
         if a.get("id") in before_ids:
             continue
         aid = a.get("id", "?")
-        for field in ("information_quality", "informant_proximity", "evidence_type"):
+        for field in ("information_quality", "informant_proximity", "record_basis"):
             if not a.get(field):
                 errors.append(f"assertions[{aid}]: missing {field}")
 
@@ -157,7 +158,7 @@ def _attribute_matches(assertion, attribute):
     `place` set; a computed birth year is a `birth` assertion with the `date`
     set. When a matcher declares `attribute: "place"` (or `"date"`), only
     assertions with that attribute populated match — so a `birth` place-claim
-    (`direct`) and a `birth` date-claim (`indirect`) stay independently
+    (`stated`) and a `birth` date-claim (`inferred`) stay independently
     checkable even though they now share the `birth` fact_type. No `attribute`
     on the matcher → no facet constraint (matches regardless of population)."""
     if not attribute:
@@ -230,7 +231,7 @@ def test_expected_classifications(before_state, after_state, test):
     Gated on the test JSON's optional top-level `expected_classifications`
     block (threaded into `test` by the orchestrator; see
     unit-test-spec.md §5.10). Each matcher names a (record_role, fact_type)
-    pair plus expected values for any of `evidence_type`,
+    pair plus expected values for any of `record_basis`,
     `informant_proximity`, `information_quality`. Semantics:
 
       1. At least one NEW-OR-UPDATED assertion (created by this run, or an
@@ -248,7 +249,7 @@ def test_expected_classifications(before_state, after_state, test):
 
     record_role / fact_type matching is normalized (see the helpers above)
     because both are open, model-chosen strings; the classification values
-    themselves (`evidence_type`, `informant_proximity`,
+    themselves (`record_basis`, `informant_proximity`,
     `information_quality`) are closed enums and compare exactly. Failure
     messages always show the ORIGINAL strings, not the normalized forms.
 
@@ -275,7 +276,7 @@ def test_expected_classifications(before_state, after_state, test):
     ]
 
     classification_fields = (
-        "evidence_type",
+        "record_basis",
         "informant_proximity",
         "information_quality",
     )
@@ -398,11 +399,11 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
 
         {"fact_type": "birth", "value": "born about 1845, Ohio",
          "place": "Ohio, United States", "date": null,
-         "evidence_type": "direct"}
+         "record_basis": "stated"}
 
-    has put TWO facts in one assertion. The birthplace is `direct` (stated)
-    while a year derived from a stated age is `indirect`, so one assertion
-    cannot carry a correct `evidence_type` for both — and every structured
+    has put TWO facts in one assertion. The birthplace is `stated` (stated)
+    while a year derived from a stated age is `inferred`, so one assertion
+    cannot carry a correct `record_basis` for both — and every structured
     matcher is blind to it, because the year lives in free text where
     `expected_classifications` never looks (ut_022 scored a false pass on
     `Assertion atomicity` eight times over).
@@ -419,7 +420,7 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
        year in its `date`.** This is the ut_028 case, and it is why the
        first exemption alone is not enough: the run persists TWO atomic
        assertions per party — `place='Cincinnati, Ohio'` / `date=None`
-       (`direct`) beside `date='~1887'` / `place=None` (`indirect`) — so
+       (`stated`) beside `date='~1887'` / `place=None` (`inferred`) — so
        atomicity is correct and only the place assertion's human-readable
        label is redundant. The year is not smuggled; it is stated twice.
        Failing that shape reddens a structurally-correct extraction.
@@ -476,7 +477,7 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     for a in new:
         if not _fact_type_matches(a.get("fact_type"), "birth"):
             continue
-        if a.get("evidence_type") != "direct":
+        if a.get("record_basis") != "stated":
             continue
         if not (a.get("place") or a.get("standard_place")):
             continue
@@ -565,18 +566,68 @@ _RELATION_CATEGORY = {
     "brother": "sibling", "sister": "sibling", "sibling": "sibling",
 }
 
-_RELATION_WORD_IN_VALUE = re.compile(
-    r"\b(" + "|".join(_RELATION_CATEGORY) + r")\b", re.IGNORECASE
+# WHERE the relation word sits decides whose role it names, and a rule that
+# ignores position was wrong on 22 of the 37 it flagged over the e2e run
+# logs (27 of 47 over the full population that
+# `scripts/measure_relationship_direction.py --counterfactual` reports). `child of Jim Neal` states the SUBJECT's own role.
+#
+# A value LABELS the other party in two shapes that need different patterns,
+# and an earlier single pattern spanning `[^,]*?` was wrong in BOTH directions:
+# a stray `[KEY:` colon suppressed real sibling refusals, and one comma in
+# `Father of the groom, named as X` made it miss and wrongly refuse.
+#
+# Only ONE label guard is needed, and this is it. A label with no ` of `
+# -- `father: Jan Roelfs`, `father named as Casper` -- never reaches here:
+# `_STATES_SUBJECT_ROLE` requires ` of `, so those are already skipped.
+# A second guard for them was written, measured against the corpus, found
+# to change nothing, and deleted; do not add it back.
+#
+# By role: `Father of groom named as Tellef`. The party being named is
+# identified by ROLE -- a bare lowercase word -- so it is the other party. A
+# CAPITALISED token there is a name, which means the value states the
+# subject's own tie to that person and must not be skipped:
+# `sibling of Lucas G. Witbeck (named as one of Gerrit Witbeck's children)` is
+# a real refusal, and the loose pattern used to swallow it.
+_LABELS_BY_ROLE = re.compile(
+    r"^\s*(?:the\s+)?(?:" + "|".join(_RELATION_CATEGORY) + r")\s+of\s+"
+    r"(?:the\s+)?(\w+)[\s,]*(?::|\s+named\b)",
+    re.IGNORECASE,
+)
+_STATES_SUBJECT_ROLE = re.compile(
+    r"^\s*(?:the\s+)?(" + "|".join(_RELATION_CATEGORY) + r")\s+of\s+",
+    re.IGNORECASE,
 )
 
 
 def _relationship_category(relationship_type):
     """Category for a `relationship_type`, ignoring an `_inferred` suffix.
-    Returns None for a spelling this table does not know (`stepfather`,
-    `father_in_law`, …) so the check SKIPS rather than guesses — an unknown
-    type is not evidence of disagreement."""
-    base = str(relationship_type or "").lower().replace("_inferred", "").strip()
+    Returns None for a spelling this table does not know (`grandparent`, `ParentChild`,
+    `administrator` — the commonest in the corpus; `ward` and `grandchild`
+    follow) so the check SKIPS
+    rather than guesses: an unknown type is not evidence of disagreement."""
+    # Anchored, and one suffix only -- see the note on the TypeScript
+    # mirror: `str.replace` strips every occurrence here and only the
+    # first there, so a doubled suffix used to mean different things.
+    base = re.sub(r"_inferred$", "", str(relationship_type or "").lower().strip())
     return _RELATION_CATEGORY.get(base)
+
+
+def _subject_role_in_value(value):
+    """The category the VALUE claims for the record subject, or None.
+
+    None means the value does not speak to the subject's own role -- either
+    label shape, an unknown spelling, or prose naming no relation -- and the
+    caller must skip rather than guess.
+    """
+    m = _LABELS_BY_ROLE.match(value)
+    # A lowercase ASCII token is a role word, not a name. Must stay an
+    # explicit class, never .islower(): that is False for a token with no
+    # case (`2`) where the TypeScript mirror's `=== toLowerCase()` is
+    # true, and the two disagreed in both directions before this.
+    if m and re.fullmatch(r"[a-z]+", m.group(1)):
+        return None
+    m = _STATES_SUBJECT_ROLE.match(value)
+    return _RELATION_CATEGORY.get(m.group(1).lower()) if m else None
 
 
 def test_relationship_type_agrees_with_its_value(before_state, after_state):
@@ -592,17 +643,21 @@ def test_relationship_type_agrees_with_its_value(before_state, after_state):
       direction inversion  rt=parent  value='child of Louise Becker'
 
     This is the most dangerous classification defect of its family because the
-    two layers disagree SILENTLY. Downstream materialisation reads
-    `structured_value`, so a wrong `relationship_type` writes a wrong family
-    edge into the tree — or one pointing the wrong way — while the assertion
-    still reads correctly to a human checking `value`. The LLM judge reads the
+    two layers disagree SILENTLY. NOTHING in the engine reads
+    `structured_value.relationship_type` today — `materialize-facts.ts`
+    skips `relationship` fact types entirely and reads only
+    `related_person_role` — so the wrong value sits in `research.json`
+    reading perfectly to a human checking `value`, and bites whoever reads
+    the machine-readable layer later. A latent defect, not an inert one:
+    the correlation skills are written against this field. The LLM judge reads the
     prose and passes it; a `value`-only matcher passes it too. Nothing else in
     the harness looks at both fields at once.
 
     Compared by CATEGORY (parent / child / spouse / sibling), so `spouse` beside
-    "wife of …" agrees. A value naming several relations passes if the type
-    matches any of them, and a value naming none is skipped — there is nothing
-    to disagree with.
+    "wife of …" agrees. Only the value's OPENING claim is compared, so a
+    second relation named later ("child of Thomas Flynn and brother of Mary")
+    does not contradict it; a value naming none is skipped — there is
+    nothing to disagree with.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -622,19 +677,19 @@ def test_relationship_type_agrees_with_its_value(before_state, after_state):
         want = _relationship_category(rel_type)
         if not want or not value:
             continue
-        found = {
-            _RELATION_CATEGORY[w.lower()]
-            for w in _RELATION_WORD_IN_VALUE.findall(value)
-        }
-        if found and want not in found:
+        states = _subject_role_in_value(value)
+        if states and want != states:
             errors.append(
                 f"assertions[{a.get('id', '?')}] (record_role="
                 f"'{a.get('record_role')}'): relationship_type="
                 f"{rel_type!r} is a {want} relation, but value={value!r} "
-                f"states a {'/'.join(sorted(found))} relation. The two layers "
-                f"must agree — materialisation reads structured_value, so this "
-                f"writes the wrong family edge (or the right one backwards) "
-                f"while the value still reads correctly"
+                f"states the subject is a {states}. `relationship_type` is "
+                f"the record subject's OWN role and `related_person_role` is "
+                f"the other party's, so the two layers must agree. Nothing "
+                f"reads structured_value.relationship_type today, so this "
+                f"is silent: the value still reads correctly to a human, "
+                f"and whoever reads the machine-readable layer later gets "
+                f"the wrong family edge, or the right one backwards"
             )
 
     assert not errors, (
@@ -728,12 +783,12 @@ def test_new_assertions_attached_to_record_role(before_state, after_state):
 
 
 def test_negative_evidence_uses_absent_role(before_state, after_state):
-    """Assertions with evidence_type='negative' must have record_role='absent'.
+    """Assertions with record_basis='absent' must have record_role='absent'.
 
     Per research-schema-spec.md §5.6 negative-evidence convention:
     when the absence of information is the finding, the role is `absent`
     and the value describes what was expected. Catches the common
-    mistake of using evidence_type='negative' on a regular role.
+    mistake of using record_basis='absent' on a regular role.
     """
     after = after_state.get("research_json")
     if after is None:
@@ -741,9 +796,9 @@ def test_negative_evidence_uses_absent_role(before_state, after_state):
 
     errors = []
     for a in after.get("assertions", []):
-        if a.get("evidence_type") == "negative" and a.get("record_role") != "absent":
+        if a.get("record_basis") == "absent" and a.get("record_role") != "absent":
             errors.append(
-                f"assertions[{a.get('id')}]: evidence_type=negative but "
+                f"assertions[{a.get('id')}]: record_basis=absent but "
                 f"record_role='{a.get('record_role')}' (expected 'absent')"
             )
 
@@ -812,7 +867,7 @@ def test_pre_1880_census_creates_no_relationship_assertions(
     before_state, after_state, test
 ):
     """A pre-1880 census extraction must create NO parent-child or spousal
-    relationship assertions — in any form, including `indirect` /
+    relationship assertions — in any form, including `inferred` /
     `_inferred`.
 
     The ruling this enforces is recorded on issue #1626 — quoted in full, with
@@ -859,9 +914,9 @@ def test_pre_1880_census_creates_no_relationship_assertions(
         errors.append(
             f"assertions[{a.get('id')}] (record_role="
             f"'{a.get('record_role')}', relationship_type='{rel_type}', "
-            f"evidence_type='{a.get('evidence_type')}'): a pre-1880 census "
+            f"record_basis='{a.get('record_basis')}'): a pre-1880 census "
             f"has no relationship column, so no relationship assertion may "
-            f"be written — not even `indirect`/`_inferred`. Record the "
+            f"be written — not even `inferred`/`_inferred`. Record the "
             f"people and their co-residence; the family links are "
             f"downstream correlation's to infer"
         )
@@ -876,7 +931,7 @@ def test_negative_evidence_assertion_created(
     before_state, after_state, test
 ):
     """For negative-evidence scenarios, the skill must create at least
-    one NEW assertion with `evidence_type: \"negative\"` and
+    one NEW assertion with `record_basis: \"absent\"` and
     `record_role: \"absent\"`. Otherwise the absence wasn't recorded.
 
     Tag-gated on `negative-evidence`.
@@ -893,12 +948,12 @@ def test_negative_evidence_assertion_created(
     new_neg = [
         a for a in after.get("assertions", [])
         if a.get("id") not in before_ids
-        and a.get("evidence_type") == "negative"
+        and a.get("record_basis") == "absent"
         and a.get("record_role") == "absent"
     ]
     assert new_neg, (
         "negative-evidence scenario produced no new assertion with "
-        "evidence_type='negative' and record_role='absent'"
+        "record_basis='absent' and record_role='absent'"
     )
 
 
@@ -929,7 +984,7 @@ def test_negative_evidence_value_describes_expectation(
     for a in after.get("assertions", []):
         if a.get("id") in before_ids:
             continue
-        if a.get("evidence_type") != "negative":
+        if a.get("record_basis") != "absent":
             continue
         value = (a.get("value") or "").strip()
         if not value or value.lower() in {"absent", "missing", "n/a", "none"}:
@@ -1176,7 +1231,7 @@ def test_refinement_preserves_extraction_fields_and_avoids_duplication(
     every other check here while still looking like a correct update), its
     `_EXTRACTION_FIELDS` unchanged, and at least one classification field
     (`information_quality`, `informant`, `informant_proximity`,
-    `informant_bias_notes`, `evidence_type`, `extracted_for_question_ids`)
+    `informant_bias_notes`, `record_basis`, `extracted_for_question_ids`)
     actually different -- an `update` call that changed nothing is not a
     completed refinement. Every OTHER pre-existing assertion (the
     fixture's un-named siblings) must be byte-identical to before, and no
@@ -1259,13 +1314,16 @@ def test_refinement_preserves_extraction_fields_and_avoids_duplication(
 
 # --- Tag-gated: pre-1752 Old Style dates route to convert-dates first ---
 
-def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
+def test_old_style_date_routes_to_convert_dates(
+    skills_invoked, builtin_tool_calls, test
+):
     """A pre-adoption date must be resolved by invoking `convert-dates`
     BEFORE the record-extractor is spawned — not narrated, and not
     converted inline by the router.
 
-    Graded here rather than by the LLM judge because `skills_invoked` is
-    ground truth: the PreToolUse hook fires on the real `Skill` call, so a
+    Graded here rather than by the LLM judge because the hook records are
+    ground truth: the PreToolUse hook fires on the real `Skill` call or, once
+    convert-dates is an agent, the real spawn (`handoffs`, issue #2825), so a
     response that only *mentions* the calendar problem ("this may be Old
     Style — shall I convert it?") cannot satisfy it, and a response that
     genuinely delegates cannot be marked down for it. This is the same
@@ -1284,12 +1342,274 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
     tests must NOT reach for convert-dates, and doing so on a modern date
     is over-application, not a pass.
     """
+    from harness.skill_runner import handoffs
+
     if "convert-dates-handoff" not in test.get("tags", []):
         pytest.skip("only the pre-1752 Old Style routing test")
-    assert "convert-dates" in skills_invoked, (
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    assert "convert-dates" in handed, (
         "the record's date falls before its jurisdiction adopted the "
-        "Gregorian calendar, so the router had to invoke "
-        "Skill('convert-dates') before delegating. Narrating the problem "
+        "Gregorian calendar, so the router had to hand off to "
+        "convert-dates before delegating. Narrating the problem "
         "in prose is not resolving it. "
-        f"skills_invoked={skills_invoked}"
+        f"handoffs={handed}"
+    )
+
+
+# --- V-relay: the router prints only the researcher-facing paragraphs -------
+
+# What the router may NOT add after the agent's `---`: schema ids, tree ids,
+# markdown tables, and backticked skill or tool names. The two paragraphs the
+# agent writes carry none of these by contract.
+_RELAY_LEAK_RE = re.compile(
+    r"\b(?:src|a|log|pli|q|ps)_\d+\b"   # research.json ids
+    r"|\b[SI]\d+\b"                     # tree ids
+    r"|^\|.*\|$"                         # a markdown table row
+    r"|`/?[a-z][a-z_-]+`",                # a backticked skill or tool name
+    re.M,
+)
+
+
+def test_relay_carries_no_caller_facing_lines(text_response, builtin_tool_calls):
+    """After a record-extractor delegation, the reply's tail must be the agent's
+    two paragraphs and nothing the router wrote itself.
+
+    The rule in record-extraction/SKILL.md ("print exactly the text after the
+    final `---`, nothing above it") was read and not followed: on the committed
+    run of 2026-09-18 12:34, 12 of 29 delegated runs printed the paragraphs and
+    then a table of assertion ids, a source id with counts, or a "run
+    /person-evidence" offer. A rule the model reads is not a rule the model
+    follows; this is the check that binds it (issue #2654 owns the reds).
+
+    Keyed on the `---` line because the run log carries the reply as one joined
+    string with no per-turn boundaries: when the router dropped the separator
+    the tail cannot be located, and the check skips rather than guessing.
+    """
+    from harness.skill_runner import spawned_agents
+
+    if "record-extractor" not in spawned_agents(builtin_tool_calls):
+        pytest.skip("no record-extractor delegation in this run")
+    reply = text_response or ""
+    if "\n---\n" not in reply:
+        pytest.skip("the reply carries no `---` separator, so the relayed tail cannot be located")
+    tail = reply.rsplit("\n---\n", 1)[-1]
+    leak = _RELAY_LEAK_RE.search(tail)
+    assert leak is None, (
+        "the router added caller-facing text after the agent's paragraphs: "
+        f"{leak.group(0)!r}. Only the two paragraphs after the final `---` reach "
+        "the researcher; the source id, counts, tables and skill names are for "
+        "the router."
+    )
+    paragraphs = [para for para in tail.strip().split("\n\n") if para.strip()]
+    assert len(paragraphs) <= 2, (
+        f"the router printed {len(paragraphs)} paragraphs after the agent's `---`; "
+        "the contract is two (what the record says; what happens next)"
+    )
+
+
+# --- Batch progress narration (issue #1998, candidate 3) ---------------
+#
+# The rubric CANNOT carry this check. `eval/tests/unit/record-extraction/
+# rubric.md` scores every dimension on the persisted assertion/source fields
+# and says so twice - "not on how the chat response narrates them" and
+# "Narrative style, verbosity, and presentation are never grounds for a
+# deduction". That is a deliberate calibration choice, not an oversight, so
+# the guard for a narration rule has to be deterministic and live here.
+
+# A position marker must be ANCHORED - preceded by a word or followed by a
+# colon. A bare `N/M` or `N of M` is not enough, because this skill narrates
+# ratios constantly and every one of them would read as a marker:
+# `record_person_matches` returns `confidence 4/5`, ages appear as `~48/45`,
+# roles as `child_1/2/3`, US dates as `9/14/1880`, fractional ages as
+# `Age 5/12`, enumeration districts as `district 12/3` - and, the one that
+# matters most for a genealogy tool, `2 of 3 children survived` is ordinary
+# census mortality prose. Measured on `v1_2026-09-09_17-11-04`: under the
+# unanchored pattern all four "passing" runs passed on exactly these
+# accidents (#2390 review).
+#
+# **The anchor is proximity to a delegation verb, not a keyword list.** The
+# keyword-or-colon anchor this replaces was calibrated against a corpus with
+# no announcements in it — the rule only reached `main` with PR #2391 — so it
+# was tuned against absence. Re-calibrated here on `v1_2026-09-11_18-49-21`,
+# the first run made WITH the rule:
+#
+#     keyword-or-colon anchor   real 23/26   false positives 6/17
+#     proximity anchor (this)   real 25/26   false positives 0/17
+#
+# The false-positive set is the accident list above plus the six Praise
+# raised in the #2390 round-2 review (`page 1 of 2 of the schedule`,
+# `Step 1 of 3:`, `Checklist item 1 of 4:`, `file 1 of 2.`, `doc 1 of 2`,
+# `1 of 3: q_001 only`) and three ARK cases, since `ark:/61903/1:1:…`
+# contains `61903/1` and sits next to extraction language constantly.
+#
+# Two deliberate narrowings, each of which costs nothing measured:
+#   - the separator is the WORD `of`, never `/`: every remaining accident
+#     (`confidence 4/5`, `~48/45`, `9/14/1880`, `Age 5/12`) is slash-shaped,
+#     and the skill's own prescribed wording is "3 of 12".
+#   - `(?<![\d/])` and `(?![\d/])` keep the marker out of longer numbers.
+#
+# The window is a THIRD parameter and is NOT a narrowing. It was 60 in the
+# first version of this change, justified by a string that does not
+# discriminate: `lists 2 of 3 children as surviving; extraction follows`
+# matches at 60 as well - the verb sits ~24 characters from the marker - and
+# it appears nowhere in the corpus (#2390 review). Re-measured across every
+# committed record-extraction run:
+#
+#     window  60 : 25 of the 112 runs that carry a text_response (of 124 total)
+#     window 120 : 26 of 112
+#     window 240 : 26 of 112
+#
+# The run 60 loses is `ut_record_extraction_022`, a real announcement whose
+# delegation verb trails the marker past an ARK. Nothing is gained below 120
+# and one true positive is lost, so 120 it is. 240 buys nothing further, and
+# an unbounded window would make the anchor meaningless - any run mentioning
+# extraction anywhere would satisfy any ratio anywhere.
+#
+# **What the window does NOT buy, at any value.** Proximity to a delegation
+# verb does not establish that the ratio IS the announcement, so a ratio about
+# something else passes whenever a verb happens to fall in range:
+#
+#     {1}  Extraction complete. 1 of 2 personas could be linked to a person.
+#     {1}  Before I extract: step 1 of 3 is logging the record.
+#     {1}  record_search returned 20 hits; 1 of 20 is plausible. I will extract it.
+#
+# The 60 rationale claimed to avoid this and did not - all three pass at 60 as
+# well (#2390 review). It is 0 of the 84 pre-rule runs that carry a
+# text_response (93 pre-rule runs in all), so the exposure is
+# theoretical today, and it is the standing reason this validator is not
+# promoted to `test_`: as a gate it could be satisfied vacuously. Narrowing the
+# window does not close it; distinguishing "the ratio is the announcement" from
+# "a ratio near a verb" needs something the marker does not carry.
+#
+# `test_anchor_window_is_calibrated` pins the value from both sides.
+# `[*_`]{0,2}` LOOKS redundant beside the lookbehind, which rejects only a
+# digit or a slash and so already admits `**1 of 2`. It is not. It moves where
+# the match STARTS, and `_announced_positions` measures the anchor window from
+# `m.start()` - so on a bolded marker the class buys two extra characters of
+# reach. At the window edge that decides the outcome:
+#
+#     "delegating" + "."*109 + "**1 of 1: ..."   ->  {1} with it, set() without
+#
+# It was removed as dead in the #2390 round-4 pass and restored when that probe
+# was run. Identical on all 124 committed runs, which is why the corpus alone
+# could not show it. Neither element below is coverage: nothing exercises
+# either today, and no test pins them.
+#
+# `re.IGNORECASE` likewise - all 28 markers in the corpus spell the separator
+# lowercase. It stays because a sentence-initial "Of" costs nothing to admit
+# and a missed marker on this `report_`-tier check would be invisible.
+_MARKER_RE = re.compile(
+    r"(?<![\d/])[*_`]{0,2}(\d{1,3})\s+of\s+(\d{1,3})\b(?![\d/])",
+    re.IGNORECASE,
+)
+_DELEGATION_RE = re.compile(r"\b(?:delegat|extract|invok)\w*", re.IGNORECASE)
+_ANCHOR_WINDOW = 120
+
+
+def _records_extracted(before_state, after_state):
+    """Records extracted this run, counted by the sources they created.
+
+    NOT by counting `extraction_append` calls. That was the first version and
+    it was wrong: on the discarded run of 2026-09-09, two tests each made TWO
+    append calls against ONE `Agent` delegation, with the two calls identical
+    - same source title, same op count. They are a retry. Counting calls
+    scored a compliant single-record run as a two-record batch and failed it.
+
+    One record creates one source, so the new-source count is the record
+    count. `Agent` delegations would be the most direct signal but
+    `builtin_tool_calls` is not among the fixtures the harness exposes here.
+    """
+    return len(_new_section_entries(before_state, after_state, "sources"))
+
+
+def _announced_positions(text_response, n):
+    """Positions announced in the narration, as ints.
+
+    A marker whose denominator is BELOW `n` is not counted: "1 of 2" in a
+    three-record run names a batch that is not the one being run. Above `n` is
+    accepted - announcing three and extracting two is a dropped record, a
+    different defect this check should not also fail for.
+
+    A marker counts only when a delegation verb sits within `_ANCHOR_WINDOW`
+    characters of it - see the calibration note above `_MARKER_RE`. The window
+    is measured on the raw text rather than per sentence: the skill routinely
+    puts the log-entry confirmation between the verb and the marker
+    ("Logged as `log_001`. Now delegating - **1 of 1:** 1850 U.S. Census"),
+    and sentence splitting drops those.
+    """
+    text = text_response or ""
+    found = set()
+    for m in _MARKER_RE.finditer(text):
+        lo = max(0, m.start() - _ANCHOR_WINDOW)
+        hi = min(len(text), m.end() + _ANCHOR_WINDOW)
+        if not _DELEGATION_RE.search(text[lo:hi]):
+            continue
+        if int(m.group(2)) >= n:
+            found.add(int(m.group(1)))
+    return found
+
+
+def report_a_multi_record_batch_announces_each_record_position(
+    text_response, before_state, after_state, test
+):
+    """Each record extracted is announced with its position before its turn.
+
+    SKILL.md "Per-record delegation": state the count once, then name each
+    record and its position before invoking the agent for it.
+
+    A document costs ~136 seconds and 81.9% of that is model reasoning inside
+    the subagent, so the silence falls INSIDE each extraction rather than
+    between them - and `record-extractor.md` is deliberately mute ("Work
+    silently ... the caller handles presentation"). The router is the only
+    thing that can speak during it, which is why a tester read a working run
+    as a hang (#1998).
+
+    **`report_`, not `test_`.** A `test_`-prefixed validator gates the run
+    outcome (`validator_runner.py`/`orchestrator.py`). The original reason for
+    reporting-only was that the rule lived on PR #2391 and not on main, so a
+    gate would have failed almost every committed run against a rule nobody had
+    been given — and this docstring said to promote once #2391 landed.
+
+    **That premise has expired and the answer is still no.** #2391 merged as
+    `7b836f499`, this branch has merged main, and
+    `record-extraction/SKILL.md:157` now carries the rule (#2390 review). What
+    blocks promotion now is a different thing: the anchor below admits a
+    non-announcement whenever any delegation word falls in range, so a gate
+    could be satisfied vacuously on a run that announced nothing —
+
+        {1}  Extraction complete. 1 of 2 personas could be linked to a person.
+        {1}  Before I extract: step 1 of 3 is logging the record.
+        {1}  record_search returned 20 hits; 1 of 20 is plausible. I will extract it.
+
+    0 of the 84 pre-rule runs carrying a text_response show that shape (93
+    pre-rule runs in all), so nothing is wrong today; it is a
+    reason not to turn this into a gate, not a reason to hold the PR.
+    `test_batch_progress_stays_reporting_only` holds the tier, since
+    `validator_runner` reads it from the prefix and nothing else would.
+
+    **Gated at one record, not two.** The batch this card describes does not
+    exist in the unit corpus: 0 of 124 runs across the committed logs extracted
+    more than one record. A two-record gate is dormant forever, which is the
+    "reads as coverage" failure the sibling #1950 work exists to prevent.
+
+    Verifying the real batch case needs a multi-record test in
+    `eval/tests/unit/record-extraction/`, which is genealogist-authored and
+    sits inside the run-log snapshot — so it needs a different skill and a
+    paid eval slot this PR does not buy. **Filed as issue #2644**, labelled
+    `nothing-checks`: until it lands, this check passes and cannot fail on the
+    case it was written for.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests extract records")
+
+    n = _records_extracted(before_state, after_state)
+    if n < 1:
+        pytest.skip("no record extracted - nothing to announce")
+
+    missing = sorted(set(range(1, n + 1)) - _announced_positions(text_response, n))
+    assert not missing, (
+        f"{n} record(s) extracted, but position(s) {missing} were never "
+        f"announced in the narration. At ~136s per document an unannounced "
+        f"record is silence the user cannot distinguish from a hang - say "
+        f"'1 of {n}: <record>' before delegating it."
     )

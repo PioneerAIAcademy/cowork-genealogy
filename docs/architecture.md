@@ -222,10 +222,11 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **28** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **7** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`proof-conclusion`, `research-exhaustiveness` and `person-evidence`.
+The seven agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`proof-conclusion`, `research-exhaustiveness`, `person-evidence` and
+`search-images`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -621,12 +622,19 @@ Architecturally:
   template.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
-  `allToolSchemas`, **and** parses `src/index.ts` for the dispatch chain —
+  `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
   advertised-but-undispatched, dispatched-but-unregistered, and duplicate cases
   all fail. Forgetting the `if (request.params.name === "…")` block used to ship
   a tool that fell through to the `Unknown tool: …` throw closing
-  `src/index.ts`'s `CallToolRequestSchema` handler, on its first real
-  call with CI green; that is now a CI failure. A commented-out `case` does not
+  `src/server.ts`'s `CallToolRequestSchema` handler, on its first real
+  call with CI green; that is now a CI failure. The chain lives in
+  `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
+  `LOCAL`), `src/hosted-stdio.ts` (the search-agent prototype's per-turn tool
+  server, binding a bearer) and `src/http.ts` (the prototype's Streamable HTTP
+  tool server, binding each request's bearer and a `PgS3ProjectStore` from its
+  `X-Genealogy-Project-Id` header) are entrypoints that only connect
+  a transport, so a new arm goes in `server.ts` and all three get it. A
+  commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
 - **If your tool signals failure by RETURNING `{ ok: false }` rather than
@@ -764,10 +772,16 @@ There **is** an orchestrator, and it is a skill:
 2. **A 17-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
-   is not duplicated here. Its `Invoke` column is a **literal
-   `Skill` tool call** — "writing `proceed to research-exhaustiveness` and then
-   hand-authoring the fields that skill would have written is not invoking it."
-   Agents are delegated as `Task` calls using the bare `@plugin:<name>` form.
+   is not duplicated here. Its `Invoke` column is a **literal tool call, by the
+   name written in the cell** — "writing `proceed to research-exhaustiveness`
+   and then hand-authoring the fields that skill would have written is not
+   invoking it." The column is **mixed**, and the spelling is what says which:
+   an entry spelled `@plugin:<name>` is an `Agent` spawn of that agent, and
+   every other entry is a `Skill` call. The paired rows —
+   `research-exhaustiveness`, `proof-conclusion` and `person-evidence` — take
+   the spawn; their same-named thin skills stay on disk as the direct-user and
+   unit-eval entry points and are **not** on the in-loop route
+   (`docs/skill-to-agent-pair-conversion.md` §0, which owns this rule).
    **The table is not the only routing surface in the file.** The section headed
    `## Direct user requests name a destination, not a shortcut`
    overrides a direct request for a downstream skill and sends the router back
@@ -977,9 +991,10 @@ is pinned synthetically because no agent ships a deny for it to fire on.
 **One cost, accepted.** `check_rubric_tool_drift.py` asks whether a tool named
 in an agent body appears in either list, and `disallowedTools:` was doubling as
 the marker for a deliberate "you do NOT have this tool" mention. Removing the
-denies took that marker away, so its agent-body warnings went 5 → 12. It is
-warn-only and does not block a build; the suppression mechanism it wants is
-`gh issue list --state open --search "check_rubric_tool_drift suppression"`.
+denies took that marker away, increasing its agent-body warnings (run
+`python eval/harness/scripts/check_rubric_tool_drift.py` for the current
+count). It is warn-only and does not block a build; known false positives
+are handled by the `SUPPRESSIONS` list in the script.
 
 **Two standing prohibitions:**
 
@@ -1376,7 +1391,7 @@ outside this list and outside every check.)*
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
 | 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
-| 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
+| 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
@@ -1392,12 +1407,12 @@ Two things the site list alone won't tell you:
   validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror,
-  site 4), `test-js` (the TS-interface mirror, site 5) and `typecheck` (site 10)
-  — and no shorter target reaches all four. Naming them individually is how the
-  last one gets skipped.
+  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror, site 4,
+  byte-identical across both trees via `test_schema_mirrors.py`), `test-js` (the
+  TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
+  reaches all four. Naming them individually is how the last one gets skipped.
 
-**Add a value to a closed enum** (e.g. `evidence_type`, `proof_tier`). The enum
+**Add a value to a closed enum** (e.g. `record_basis`, `proof_tier`). The enum
 lives in `enums.schema.json` (`$defs`), **not** `research.schema.json` (which
 only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 `CLOSED_ENUMS` in `validator.ts`, and the prose tables.
@@ -1451,7 +1466,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
-| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. |
+| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
 **The `ResearchTransport` seam is the reuse mechanism.** The provider talks only
@@ -1560,11 +1575,12 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   Opus on the model picker
   (`gh issue list --state open --search "delete-janitor"`).
 
-- **Four settings are boot-enforced in production, and one of them can never be
+- **Five settings are boot-enforced in production, and one of them can never be
   rotated.** When `PUBLIC_URL` starts with `https` — the sole production
   discriminant — `config.assert_production_config` refuses to boot if
-  `session_secret`, `ws_signing_key`, or `fs_token_enc_key` is still at its
-  declared default, or if `DATABASE_URL` is unset or blank (which would put a Fly
+  `session_secret`, `ws_signing_key`, `fs_token_enc_key`, or
+  `anthropic_proxy_signing_key` is still at its declared default, or if
+  `DATABASE_URL` is unset or blank (which would put a Fly
   deploy on SQLite over an unmounted rootfs). It runs as the first statement of
   `main.py`'s lifespan and names every offender at once, so one deploy fixes all
   of them. **`ws_signing_key` is set-once in practice:** `E2BProvider.create`
@@ -1574,6 +1590,9 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   plane mints against the new key, the sandbox verifies against the old, and
   every handshake fails with no recovery but a new session
   (`gh issue list --state open --search "WS_TOKEN_SECRET rotation"`).
+  **`anthropic_proxy_signing_key` has the same caveat:**
+  `HMAC(anthropic_proxy_signing_key, sandbox_id)` is the per-sandbox proxy
+  token; rotating the key orphans existing sandboxes the same way.
 
 > **Read the two source docs for reasoning, not for current state — this guide is
 > the current-state reference.** `docs/realtime-architecture.md` carries the
@@ -1607,7 +1626,8 @@ path.
 
 ## 8. Environments — who loads what
 
-Four environments run the engine, and they load the plugin differently.
+Four environments run the engine, and they load the plugin differently. A fifth,
+the search-agent prototype, has its tool server built and no worker yet.
 
 **There is one Cowork row, not two.** Every live census has found the same
 configuration — the agent runs in a cloud sandbox (`cwd = /home/claude`) and
@@ -1626,6 +1646,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
+| **Search-agent prototype** (`apps/server/proto/`, compose service `tools`) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | worker unbuilt (D9–10) | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the D9–10 worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the worker's own Postgres/S3 store. `build/hosted-stdio.js` is the per-turn stdio alternative |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
@@ -1712,7 +1733,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 
 | Test | Asserts |
 |---|---|
-| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/index.ts` (none missing, none orphaned, none duplicated) |
+| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/server.ts` (none missing, none orphaned, none duplicated) |
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
@@ -1967,7 +1988,14 @@ and per-fixture concentration, across the last 14 days of committed runs —
 every run-log reader windows that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
 actually called across those runs, and the
-`/interpret-e2e-result` skill exists to read the log for you. Mechanics:
+`/interpret-e2e-result` skill exists to read the log for you. `make
+e2e-ranked-reads` reports whether the main thread's `record_read` calls landed
+inside the ranker's **visible** top 3 — visible is the limit, because
+`judge.py` truncates `ranked.matches` past three entries, so it cannot tell a
+read at rank 7 from a read of an unranked record. It says nothing about
+subagent reads, which never saw the `ranked` block and are counted separately,
+and it prints counts rather than a rate for the reason §9.4 gap 3 gives.
+Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
 a sub-skill regression rather than a routing one.

@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
     default_model: str = "claude-sonnet-4-6"
+    # Lay mode's auto-continue (issue #2653): the in-sandbox runner answers the
+    # hand-back literal `Next: <step>. Continue?` with `Yes.` itself, so a stated
+    # objective runs step by step with no click. Both reach the runner as
+    # AUTO_CONTINUE / AUTO_CONTINUE_MAX_STEPS in the sandbox env. The budget
+    # bounds one unattended chain (consecutive auto turns since the last real
+    # user message), not the session. The public /v1 API opts out per frame
+    # regardless of this setting. Per-session on/off lands with the
+    # experience-level user setting (PR #2649).
+    auto_continue: bool = True
+    auto_continue_max_steps: int = 30
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
     # ANTHROPIC_API_KEY, which is written into the sandbox by
@@ -74,6 +84,13 @@ class Settings(BaseSettings):
     # A compromised sandbox can forge a token only for ITSELF. Must be stable
     # across CP restarts/instances. NOT the session_secret (that signs cookies).
     ws_signing_key: str = "dev-ws-signing-key-change-me"
+    # Master key for per-sandbox Anthropic proxy tokens. The CP derives a
+    # per-sandbox token = HMAC(anthropic_proxy_signing_key, sandbox_id) and
+    # passes it to the sandbox as the ANTHROPIC_API_KEY value. The proxy
+    # endpoint validates it by recomputing the HMAC, then injects the real
+    # Anthropic key — the sandbox never holds it. Same derivation pattern as
+    # ws_signing_key; same rotation caveat (orphans existing sandboxes).
+    anthropic_proxy_signing_key: str = "dev-proxy-signing-key-change-me"
     # Master key for encrypting FamilySearch OAuth tokens at rest in the DB
     # (familysearch_tokens.access_token / refresh_token, via crypto.EncryptedStr).
     # An arbitrary string like session_secret — a Fernet key is DERIVED from it
@@ -229,6 +246,10 @@ def assert_production_config(s: Settings) -> None:
     - `fs_token_enc_key` encrypts the FamilySearch tokens at rest
       (`crypto.EncryptedStr`), so a default value encrypts every user's token under
       a public string — no better than plaintext to anyone who reads the DB.
+    - `anthropic_proxy_signing_key` is the HMAC master key behind every per-sandbox
+      proxy token (`anthropic_proxy.proxy_token`), so a default value lets anyone
+      who guesses a sandbox_id forge a token and use the Anthropic key through the
+      proxy.
     - An unset `DATABASE_URL` is SQLite under DATA_DIR, and `deploy/fly.toml` mounts
       no volume (the DB lives on Neon), so in production that is an ephemeral rootfs:
       every user, session and allowlist row is lost on the next machine restart.
@@ -261,7 +282,8 @@ def assert_production_config(s: Settings) -> None:
     # Guarded by test_prod_preflight.py::
     # test_secret_defaults_are_literals_so_the_comparison_can_work — no other
     # test catches it, because they all inject `.default` as the value.
-    for field in ("session_secret", "ws_signing_key", "fs_token_enc_key"):
+    for field in ("session_secret", "ws_signing_key", "fs_token_enc_key",
+                  "anthropic_proxy_signing_key"):
         if getattr(s, field) == Settings.model_fields[field].default:
             env = field.upper()
             problems.append(

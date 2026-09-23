@@ -58,6 +58,7 @@ from harness.skill_invocation import (
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
     find_conclusions_without_tree_encoding,
+    find_tree_facts_disagreeing_with_assertions,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -83,10 +84,15 @@ from e2e.mcp_health import (
 )
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
+    COUNTED_TERMINAL_REASONS,
+    classify_hand_back,
     derive_stop_reason,
+    hand_back_outcome,
+    project_completed,
     read_research_json,
     read_tree_json,
     should_continue_run,
+    terminal_reason,
 )
 from e2e.subagent_capture import collect_subagents, sdk_cache_dir
 from e2e import judge as judge_module
@@ -597,7 +603,7 @@ def load_seed_person_ids(starting_tree_path: Path) -> set[str] | None:
     """
     try:
         seed = json.loads(starting_tree_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
         print(
             f"  [warn] could not read seed tree {starting_tree_path} "
             f"({type(e).__name__}: {e}) — issue #963 same_person check DISABLED "
@@ -856,7 +862,7 @@ class FixtureCaps:
     # steps, so a stingy cap ends the loop before proof-conclusion. The
     # no-progress check (see should_continue_run) is the real backstop against
     # a genuinely idle agent; this cap only bounds the worst case.
-    max_continue_nudges: int = 20
+    max_continue_nudges: int = 40
 
 
 @dataclass
@@ -901,7 +907,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         )
         for sid in (starting_research.get("project") or {}).get("subject_person_ids") or []:
             subject_ids.add(str(sid))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         pass
     src = fixture_json.get("source_pid")
     if src and "TODO" not in str(src):
@@ -1153,6 +1159,24 @@ _RUNLOG_STRING_MAX = 500
 # acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
 
+# Per-key exemptions from the string and backstop caps above. Each entry is
+# (bare_tool_suffix, response_key): a tool matched by suffix (so every server
+# spelling resolves — CLAUDE.md § "Dual-spelled tool names") and a top-level
+# key in the unwrapped response dict. The full value is preserved verbatim,
+# bypassing both `_RUNLOG_STRING_MAX` and `_RUNLOG_MAX_CHARS`.
+#
+# Scope of the bypass: `if not saved` below skips the backstop for the WHOLE
+# response, not just the exempt key's bytes. Harmless for image_transcribe,
+# where the transcription IS the payload. But a future (tool, key) pair added
+# for a tool with a large non-exempt sibling field would take that sibling out
+# of the cap too — silently. If that arises, split the backstop to exempt only
+# the saved key's contribution and cap the rest.
+#
+# Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
+_RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
+    ("image_transcribe", "transcription"),
+}
+
 
 def _serialize_result(content: Any) -> str:
     """The full serialized tool result, before any truncation.
@@ -1192,7 +1216,20 @@ def _raw_result_chars(content: Any) -> int:
     return len(_serialize_result(content))
 
 
-def _summarize_tool_response(content: Any) -> str:
+def _exempt_keys_for(tool_name: str | None) -> set[str]:
+    """Response keys exempted from truncation for this tool, if any."""
+    if not tool_name:
+        return set()
+    return {
+        key
+        for suffix, key in _RUNLOG_EXEMPT_KEYS
+        if tool_name.endswith(suffix)
+    }
+
+
+def _summarize_tool_response(
+    content: Any, *, tool_name: str | None = None
+) -> str:
     """Key-preserving summary of a tool result for the run log.
 
     This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
@@ -1227,19 +1264,58 @@ def _summarize_tool_response(content: Any) -> str:
     `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
     runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
     escaped form does not contain it — grep the bare name, which matches both.
+
+    `tool_name` (HARNESS_SCHEMA_VERSION 5): when the tool has keys listed in
+    `_RUNLOG_EXEMPT_KEYS`, those keys bypass both `_RUNLOG_STRING_MAX` and
+    `_RUNLOG_MAX_CHARS`. `image_transcribe`'s `transcription` is the first
+    exemption: at v4 the field was truncated at 500 chars though the
+    transcriptions were often many times longer, making extraction-accuracy
+    audits impossible. `make e2e-transcription-join SINCE=all` reports the
+    current truncated-capture count over its window.
     """
     raw = _serialize_result(content)
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
         return raw
 
-    summary = _summarize_response(
-        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
-    )
+    exempt = _exempt_keys_for(tool_name)
+    unwrapped = _unwrap_mcp_text_blocks(content)
+
+    # Save full values of exempt keys before summarization truncates them.
+    # One value per key: if multiple text blocks carry the same key, the last
+    # wins. Safe for image_transcribe (always one text block).
+    saved: dict[str, Any] = {}
+    if exempt:
+        docs = unwrapped if isinstance(unwrapped, list) else [unwrapped]
+        for doc in docs:
+            if isinstance(doc, dict):
+                for key in exempt:
+                    if key in doc:
+                        saved[key] = doc[key]
+
+    summary = _summarize_response(unwrapped, string_max=_RUNLOG_STRING_MAX)
+
+    # Re-insert full values of exempt keys, replacing truncated copies.
+    if saved:
+        if isinstance(summary, dict):
+            summary.update(saved)
+        elif isinstance(summary, list):
+            for item in summary:
+                if isinstance(item, dict):
+                    for key, val in saved.items():
+                        if key in item:
+                            item[key] = val
+
     try:
         text = summary if isinstance(summary, str) else json.dumps(summary)
     except (TypeError, ValueError):
         text = repr(summary)
-    if len(text) > _RUNLOG_MAX_CHARS:
+
+    # The backstop cap is skipped when exempt keys contributed content — it
+    # exists for git size on the long tail, and the whole point of an exemption
+    # is to preserve the full value (issue #2561 item 2: the largest
+    # transcriptions run past the 4000-char backstop, so it would truncate them
+    # without this bypass).
+    if not saved and len(text) > _RUNLOG_MAX_CHARS:
         text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
 
     # Never emit a SHORTER capture than the old head-truncation would have. A
@@ -1560,6 +1636,9 @@ async def _run_agent(
     # bounded by max_continue_nudges + a no-progress check (see
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
+    # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING terminal ones,
+    # so it exceeds `continue_nudges`, which stays the nudge total.
+    hand_back_classes: dict[str, int] = {}
     last_nudge_activity_count = {"n": -1}
     # #941 — the genealogy MCP surface's health. `unavailable` latches True on
     # the first detector hit and is read by the Stop hook (so an in-flight
@@ -2019,6 +2098,26 @@ async def _run_agent(
         # known stall. Veto it (decision=block) and tell the agent to resume,
         # bounded by should_continue_run() so a stuck run still ends + fails.
         research = read_research_json(workspace)
+
+        # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
+        # is not invisible — it returns {} below and used to be counted nowhere.
+        # Only the agent's last words count, and only when no tool call landed after
+        # them: 2 of the 71 committed narration nudges have tool calls between the last
+        # TextBlock and the nudge, and post-#2292 a hand-back narrated before a batch of
+        # calls would otherwise read as `step` on a turn that ended silently.
+        last_text = None
+        for entry in reversed(narration):
+            # `blocked` is a hook-deny message, not the agent's words — and a
+            # denied call never lands in `tool_calls`, so it shares the same
+            # `tool_calls_before` and would otherwise read as the closing text.
+            if entry.get("kind") in ("harness", "blocked"):
+                continue
+            if entry.get("tool_calls_before") == len(tool_calls):
+                last_text = entry.get("text")
+            break
+        hand_back = classify_hand_back(last_text)
+        completed_now = project_completed(research)
+
         if not should_continue_run(
             research=research,
             nudges_used=continue_nudges["n"],
@@ -2027,7 +2126,26 @@ async def _run_agent(
             tool_count_at_last_nudge=last_nudge_activity_count["n"],
             mcp_unavailable=mcp_state["unavailable"],
         ):
+            # Terminal. Count the class only where the stop is a defect — `completed`
+            # is the successful path (134 of 181 committed runs) and `mcp_unavailable`
+            # is infrastructure (#941); attributing either to the agent's hand-back
+            # would make the rate dominated by runs that did the right thing.
+            reason = terminal_reason(
+                research=research,
+                nudges_used=continue_nudges["n"],
+                max_nudges=fixture.caps.max_continue_nudges,
+                mcp_unavailable=mcp_state["unavailable"],
+            )
+            if reason in COUNTED_TERMINAL_REASONS:
+                key, _ = hand_back_outcome(hand_back, project_is_completed=completed_now)
+                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
+            else:
+                key = f"terminal_{reason}"
+                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             return {}
+
+        counter_key, reply = hand_back_outcome(hand_back, project_is_completed=completed_now)
+        hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
         narration.append(
@@ -2036,22 +2154,35 @@ async def _run_agent(
                 "kind": "harness",
                 "text": (
                     f"continue-nudge {continue_nudges['n']}/"
-                    f"{fixture.caps.max_continue_nudges}: agent yielded before "
-                    "project.status=='completed'; instructing it to resume the loop."
+                    f"{fixture.caps.max_continue_nudges}: agent yielded "
+                    f"({counter_key}) before project.status=='completed'; "
+                    "instructing it to resume the loop."
                 ),
             }
         )
         _emit(
             f"[continue-nudge {continue_nudges['n']}/"
-            f"{fixture.caps.max_continue_nudges}] agent yielded; resuming"
+            f"{fixture.caps.max_continue_nudges}] agent yielded "
+            f"({counter_key}); resuming"
         )
+        # A well-formed hand-back is the skill doing what #2292 asks of it, and in an
+        # e2e run the harness IS the user — so it gets the researcher's answer, "Yes.",
+        # not a scolding. `reply` is None for a silent stop, which keeps the existing
+        # block-reason semantics below.
+        #
+        # This wording deliberately does NOT tell the agent to emit
+        # "Next: <step>. Continue?": research/SKILL.md:53-55 calls that a failure in
+        # autonomous mode, so instructing it here would recreate the harness-vs-skill
+        # contradiction this card's sequencing exists to prevent, with the sides
+        # swapped. #2292 flips this wording when it lands the prose.
+        if reply is not None:
+            return {"decision": "block", "reason": reply}
         return {
             "decision": "block",
             "reason": (
                 "You are mid-run in an autonomous /research session and the "
                 "project is not yet complete (project.status is not "
-                "'completed'). Do not stop to report progress or announce the "
-                "next step. Re-read research.json and invoke the next GPS "
+                "'completed'). Re-read research.json and invoke the next GPS "
                 "sub-skill now; keep going until project.status is "
                 "'completed' or you hit a genuine, logged blocker."
             ),
@@ -2327,7 +2458,10 @@ async def _run_agent(
                         for block in content:
                             if isinstance(block, ToolResultBlock):
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
-                                summary = _summarize_tool_response(block.content)
+                                summary = _summarize_tool_response(
+                                    block.content,
+                                    tool_name=entry["tool"] if entry else None,
+                                )
                                 if entry is not None:
                                     apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
@@ -2590,6 +2724,12 @@ async def _run_agent(
         "message_usage": _message_usage,
         "thread_windows": _thread_windows,
         "continue_nudges": continue_nudges["n"],
+        # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING the
+        # terminal one, so a hook-terminated run carries one more than
+        # continue_nudges — but NOT universally: a run killed by the wall clock, the
+        # tool cap, inactivity or an error never reaches this hook and records no
+        # terminal class. Additive: branch on key presence, no schema bump.
+        "hand_back_classes": hand_back_classes,
         # Stall-resume + forensics (added with the progress watchdog). `timeline`
         # is [elapsed_seconds, kind] per SDK message — split structural vs stall
         # time and locate a no-progress gap without a session.jsonl. `caps` makes
@@ -2678,8 +2818,8 @@ async def _run_agent(
 def collect_post_hoc_shadow(
     workspace: Path, *, emit: Callable[[str], None] | None = None
 ) -> list[dict[str, Any]]:
-    """The two SHADOW-MODE post-hoc checks that read the FINAL research.json,
-    rather than scanning `tool_calls`. Returns entries for
+    """The three SHADOW-MODE post-hoc checks that read the FINAL project
+    documents, rather than scanning `tool_calls`. Returns entries for
     `guardrail_shadow_violations`; never fails a run.
 
     - **citation-nulling** (issue #1133): a source that BACKS A WRITTEN CONCLUSION
@@ -2689,21 +2829,31 @@ def collect_post_hoc_shadow(
       resolved conflict that no structured `conflicts[]` entry backs, so the
       resolution lives only in prose and the viewer's Conflicts section stays
       blank.
+    - **tree-fact/assertion disagreement** (issues #2472, #2558): a materialized
+      tree fact holds a value the assertion it was minted from no longer holds,
+      so a correction never reached the fact. The one check here that reads the
+      tree as well as research.json.
 
-    Both share `guardrail_shadow_violations`, discriminated by `kind` so the
+    All three share `guardrail_shadow_violations`, discriminated by `kind` so the
     shadow report counts each in its own bucket.
 
     **Extracted from `_run_agent` so it can be tested at all.** Inline, this ran
     only inside a coroutine that needs the Claude Agent SDK and a live model, so
-    nothing offline could reach it — and `read_research_json` returns None on a
-    missing or unparseable file while both detectors return `[]` on None, which
-    means a broken workspace read is indistinguishable from a clean project. That
+    nothing offline could reach it — and both workspace readers return None on a
+    missing or unparseable file while every detector here returns `[]` on None,
+    which means a broken workspace read is indistinguishable from a clean
+    project. That
     is exactly the "is the behaviour absent or is the detector broken" ambiguity
     this phase exists to remove, sitting in the one path no test covered. The
     citation-nulling check has never fired on the corpus, so this is its only
     positive control.
     """
     research = read_research_json(workspace)
+    # The tree is read here too, for the agreement check below. Both reads
+    # return None on a missing or unparseable file and every detector answers
+    # [] on None, so a broken workspace read stays indistinguishable from a
+    # clean project — the ambiguity this function's own tests pin.
+    tree = read_tree_json(workspace)
     out: list[dict[str, Any]] = []
 
     citation_nulling = find_citation_nulling_in_conclusions(research)
@@ -2723,6 +2873,16 @@ def collect_post_hoc_shadow(
                 f"[guardrail-shadow] {len(conflict_unpersisted)} concluded "
                 "question(s) relying on an unpersisted conflict resolution "
                 "(shadow mode — not failed)"
+            )
+
+    fact_disagreements = find_tree_facts_disagreeing_with_assertions(research, tree)
+    if fact_disagreements:
+        out.extend(fact_disagreements)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(fact_disagreements)} tree fact "
+                "attribute(s) disagreeing with the assertion they were "
+                "materialized from (shadow mode — not failed)"
             )
     return out
 
@@ -2944,10 +3104,14 @@ async def run_e2e_test(
                 guardrail_shadow_violations + warnings_unchecked_shadow
             )
 
-        # The TREE-side citation-nulling arm (issue #1358). Wired here, not beside
-        # the research-side call above, because that site has no tree in scope —
-        # this one has `final_research`, `final_tree` and `starting_tree`
-        # together, which is what the gate needs.
+        # The TREE-side citation-nulling arm (issue #1358). This arm reads
+        # `final_research` and `final_tree` and no seed, so since issue #2558 gave
+        # `collect_post_hoc_shadow` a tree read it could equally sit there; the
+        # original reason recorded here, that the other site had no tree in scope,
+        # has stopped being true. It stays beside the two arms below, which DO
+        # diff against `starting_tree` and can only live at this site: moving one
+        # of the three alone would split the tree-reading arms across two call
+        # sites and buy nothing.
         #
         # Shadow only, and deliberately not graduated by this card. Its sibling
         # measures ZERO across the corpus (1,884 concluded sources, all cited),

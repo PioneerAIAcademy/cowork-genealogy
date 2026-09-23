@@ -89,7 +89,7 @@ Evidence-based genealogy runs **Source → Information (persona) → Evidence �
 Conclusion**. This repo maps it onto two files:
 
 - **`research.json` assertions = the evidence layer.** Each assertion is
-  one source's classified claim about one persona (`evidence_type`,
+  one source's classified claim about one persona (`record_basis`,
   `information_quality`, `informant_proximity`, `date_certainty`). The GPS
   audit trail. **Unchanged.**
 - **`tree.gedcomx.json` = the conclusion layer.** Today, deliberately thin:
@@ -331,9 +331,11 @@ with no backlink is **warned about, never guessed at**.
 **What it knowingly does not fix.** A correction made on a *corroborating*
 assertion does not reach the fact: the fact carries the minting assertion's id,
 not the corroborator's. That is the narrower residue of the same bug and it is
-accepted. It bounds at **175 of 7225 person facts** in the committed e2e trees
-carrying more than one source ref (measured 2026-09-14; recount by counting
-facts with `len(sources) > 1` across
+accepted. It bounds at **204 of 7635 person facts** in the committed e2e trees
+carrying more than one source ref (re-measured 2026-09-21 by the method this
+sentence already gave, over tracked files only; it read 175 of 7225 on
+2026-09-14 and 202 of 7603 earlier the same day this was written, so treat the
+series as a growth rate rather than a constant and recount by counting facts with `len(sources) > 1` across
 `eval/runlogs/e2e/*/*final-tree.gedcomx.json`), and a multi-source fact is only
 *potentially* affected — the corroborators usually agree.
 
@@ -420,17 +422,77 @@ or CI job surfaced it. With `assertion_id` present it is a property, and
 asserts it: for every backlinked fact, where both the fact and its assertion
 hold a value for `place`/`standard_place`/`date`/`value`, the two must agree.
 
-Two limits on that check, stated because the `nothing-checks` label turns on
-them. It runs on the **unit** plane only — `run_validators` has one caller, the
-unit orchestrator, and the e2e harness runs no universal validators — while the
-card was filed off an e2e run. And it is **green by construction on today's unit
-corpus**, where the two populations are disjoint: all 51 `materialize_facts`
-calls are `person-evidence`'s and every four-field assertion `update` is
-`record-extraction`'s, so no unit run both mints a backlinked fact and later
-corrects its assertion. Its falsifiable half is the direct unit test at
+Two limits on that check were stated here because a `nothing-checks` register
+entry turned on them. **The plane limit is now closed; the unit-corpus one
+stands** — and it stands as a property of the corpus rather than as a missing
+guard, which is why closing that entry leaves nothing unrecorded.
+
+**One predicate, three call sites, two behaviours.** The rule is
+`find_tree_facts_disagreeing_with_assertions`, a plain function over
+(research, tree) returning one finding per diverging attribute. The unit plane
+ASSERTS on it — `test_tree_facts_agree_with_linked_assertions` fails a test when
+the returned list is non-empty. The e2e plane REPORTS it twice over, both in
+shadow mode: `collect_post_hoc_shadow` emits into `guardrail_shadow_violations`
+under the tree-fact/assertion kind while a run happens, and `replay_post_hoc`
+recomputes the same findings from committed sidecars, which is the only thing
+that reaches runs made before this shipped. Do not write a second copy of the
+rule for a fourth. Two copies of a rule agree only
+until the first correction to either, and the correction that matters here is a
+false-positive exemption: there are five, each admitting a legitimate operation,
+and a copy that loses one turns red forever on correct work.
+
+**Reported on e2e, not gated.** That is what every other post-hoc detector in
+that bucket does, and promoting one to something that fails a run is a separate
+step with its own evidence bar in `guardrail-enforcement-spec.md`'s
+shadow-to-graduate pipeline. It matters more for this check than for its
+neighbours: in shadow mode an over-firing predicate never reds a run, so it
+surfaces only as a number somebody later quotes — which is why the accept
+direction is break-tested as hard as the fail direction.
+
+**Closed does not mean observed.** Replayed over every committed e2e run pair
+the check reads zero, and that zero is measured rather than structural: the
+population is real but young rather than thin. Of the committed runs made since
+the backlink shipped (2026-09-15), most carry one: the facts are there, the
+large majority are single-ref and so comparable at all, and the check performs
+real attribute comparisons on them rather than skipping through. What it has not
+had is TIME. The run the gap was filed off predates the backlink and carries
+none, so it can never reproduce the defect on replay. Read a zero here as "not yet seen", never as
+"cannot happen".
+
+**The population SIZE is deliberately not pinned here**, though the zero is: the
+fire count is what `make e2e-guardrail-shadow REPLAY=1 SINCE=all` prints, with
+its denominator, and it will still read zero long after any population figure
+written on this page has gone stale. To size the population, count facts
+carrying an `assertion_id` across `eval/runlogs/e2e/*/*final-tree.gedcomx.json`
+and take those with at most one `sources` ref; that is the comparable subset,
+and it is the same shape the multi-ref bound above is measured with.
+
+**The unit-corpus limit stands: green by construction.** No unit run both mints
+a backlinked fact and later corrects the assertion it was minted from, so the
+two populations remain disjoint and nothing on that plane can make the check
+fire. The minting is overwhelmingly `person-evidence`'s and every four-field
+assertion `update` is `record-extraction`'s, through `extraction_append`.
+
+An earlier form of this paragraph pinned that with an exact call count and the
+claim that **all** of those calls were `person-evidence`'s. Both had drifted
+within weeks, the all-clause outright, while the conclusion they were offered as
+evidence for stayed true — so the shape is stated here and the counts are not.
+To recount, walk `tests[].runs[].output.tool_calls[]` in the tracked run logs
+under `eval/runlogs/unit/`, count the calls whose tool name ends in
+`materialize_facts`, and separately the `research_append`/`extraction_append`
+ops with `section: "assertions"` and `op: "update"` touching any of
+`place`/`standard_place`/`date`/`value`; the claim is that no single run does
+both. Count tracked files only: a working tree also holds `scratch_` and
+`.partial_` logs, and including them is how the superseded figures were got
+wrong in the first place.
+
+The unit-corpus limit's
+falsifiable half is still the direct unit test at
 `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py`;
 `validators/` is outside the harness's own `testpaths`, so without that file the
-check would ship unexecuted.
+check would ship unexecuted. The live-path twin at
+`eval/harness/tests/unit/test_post_hoc_shadow.py` does the same job for the e2e
+caller, whose own zero is likewise green by construction until a run fires.
 
 **Who may perform this write.** `record-extraction` is deliberately **not** added
 to the `tree.gedcomx.json`/`persons` row's `callers`: a skill-granular grant
@@ -597,7 +659,7 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   rather than optional because a guard a caller can skip by omitting it is not a
   guard.
 - **Negative evidence cannot mint anyone.** An assertion with
-  `evidence_type: "negative"` records what a source does **not** say
+  `record_basis: "absent"` records what a source does **not** say
   (`"Father: not recorded (informant reported 'unknown')"` is live in the
   corpus), so minting a father from it would assert the opposite of the
   evidence. The persona arm already skips negative assertions per §7.1 (4);
@@ -691,6 +753,45 @@ rate, carries the argument below.
   at some headline rate, which fixture cloning inflates in either direction, but
   reliably and on shapes that recur. Measured before it was built, not after,
   and re-measured after a reviewer showed the first rate was inflated.
+
+  **Re-openable, with a residue.** The convention this
+  rejection needed was never stated, which is why the shapes looked
+  contradictory: `relationship_type` is the record subject's own role and
+  `related_person_role` is the other party's. That convention was pinned on
+  2026-09-20 and is now stated
+  (`research-schema-spec.md` §5.6.1); it enforces the `relationship_type`
+  half at the write boundary, refusing 21 of 2586 (0.8%) across the run
+  logs, fixtures and hosted seed, measured at 1d5656fe3 by
+  `eval/harness/scripts/measure_relationship_direction.py`.
+
+  **This cross-check's own rate, which is not the one above.** A
+  `related_person_role` cross-check would carry **14 of 1844 (0.8%)** — the
+  denominator being relationship and marriage assertions that actually carry
+  the field, since a guard cannot run where it is absent — across 6 recurring
+  `(record_role, fact_type)` shapes once `child_N` and `grantor_N` collapse:
+  father 4, mother 3, child 3, grantor 2, head_of_household 1, wife 1.
+  Measured 2026-09-19 over `eval/**/*final-research.json`, measured at
+  1d5656fe3, and emitted by `measure_relationship_direction.py
+  --self-referential` so it is re-derivable rather than pasted. The rate
+  recorded beside the `relationship_type` guard is a **different guard's**
+  number over a **different denominator** — both round to 0.8%, which is
+  a coincidence of this corpus and not a reason to read either as the
+  other's.
+
+  What is NOT settled, and why this stays rejected rather than becoming
+  buildable: those 14 are the failure the 2026-09-07 note describes, and they
+  are a **content** defect — the field populated with the persona's own role —
+  not a consequence of the unstated convention. Stating the convention does
+  not repair them. The spec's own worked example encoded the same shape
+  (`relationship_type: "father"` with `related_person_role: "deceased"` under
+  `record_role: "deceased"`), and it is cloned into 40 files: 38 scenario
+  fixtures, the hosted seed and the electron fixture. The example is corrected
+  and the clones left, because neither guard shipped alongside refuses any of
+  them — 0 refusals in `eval/fixtures/**` and 0 in the seed, asserted by the
+  script above rather than assumed. So the population this cross-check would
+  run over is mixed, and whether those rows get healed or tolerated is a
+  decision nobody has taken. Re-open when it is; the convention being stated
+  does not clear this.
 - **Rejected as the answer, though it is the smaller diff: teach `tree_edit`
   `add_person`/`add_name` a `sourceAssertionId`.** It leaves the omission path
   open — a caller who passes nothing still gets a ref-less name — so it makes
@@ -864,7 +965,7 @@ Two conclusion paths for `proof-conclusion`, both of which set `primary` (§7):
 How indirect evidence flows through materialization:
 
 1. **Extraction already classifies it.** An indirect claim lands with
-   `evidence_type: indirect` and `date_certainty: calculated` (per `#711`,
+   `record_basis: inferred` and `date_certainty: calculated` (per `#711`,
    which splits a census into a *direct* birthplace assertion and an
    *indirect* computed birth-year). Materialization does not re-derive the
    class; it reads it.

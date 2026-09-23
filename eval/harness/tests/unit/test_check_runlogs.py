@@ -194,11 +194,10 @@ def test_rule3_warns_on_zero_dimension_tests(tmp_path, capsys):
     """An ungraded test asks nothing of rule 3 and is dropped from sampling, so
     without a warning a run with nothing gradeable passes silently.
 
-    The message says "no aggregated dimensions", not "produced no graded
-    dimensions": since #2057 a validator-failing run DOES produce graded
-    dimensions (they live in `runs[].judge.dimensions`) and is excluded from the
-    aggregate instead, so the old wording asserted something false about exactly
-    the class this warning now fires on most."""
+    The message says "no reviewable dimensions": an aborted run, or one whose
+    judge raised. A validator-failing run is not in this class any more — its
+    graded scores reach `review_dimensions` and rule 3 requires them (next
+    test) — so the wording must not name validators as a cause."""
     skill_dir = tmp_path / "init-project"
     skill_dir.mkdir()
     log = _multi_test_log(3, review_sample={"tests": ["ut_x_000"], "cursor": [], "seed": 0})
@@ -208,8 +207,63 @@ def test_rule3_warns_on_zero_dimension_tests(tmp_path, capsys):
     fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"]))
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
     out = capsys.readouterr().out
-    assert "no aggregated dimensions" in out
+    assert "no reviewable dimensions" in out
     assert "ut_x_aborted" in out
+
+
+def _validator_failed_test(test_id: str = "ut_x_vf") -> dict:
+    """As the harness writes a test whose only run failed a validator: `fail`,
+    aggregate empty by ruling (#2057), the judge's rows in `review_dimensions`."""
+    return {
+        "test_id": test_id,
+        "outcome": "fail",
+        "outcome_summary": {
+            "aggregated_dimensions": [],
+            "review_dimensions": [
+                {"source": "base", "name": "Correctness"},
+                {"source": "base", "name": "Completeness"},
+            ],
+        },
+    }
+
+
+def test_rule3_requires_a_validator_failing_tests_review_dimensions(tmp_path, capsys):
+    """The gap this closes: rule 3 iterated `aggregated_dimensions`, which is
+    empty for a validator-failing test, so a sampled test that FAILED demanded
+    zero corrections and CI stayed green on an annotation that never mentioned
+    it. 4 of the 7 non-passing tests on one record-extraction run."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_vf"]
+    log = _multi_test_log(3, review_sample={"tests": sampled, "cursor": [], "seed": 0})
+    log["tests"].append(_validator_failed_test())
+
+    # Annotated the clean test only — what every annotator did before the fix.
+    partial = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"]))
+    assert check_runlogs.rule3_completeness("init-project", log, partial, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "unreviewed" in out and "ut_x_vf" in out
+    assert "no reviewable dimensions" not in out, "it is reviewable — that warning is for aborts"
+
+    full = _write_ann(skill_dir, "v2_2026-06-24_00-00-00.json", _corrections_for(sampled))
+    assert check_runlogs.rule3_completeness("init-project", log, full, skill_dir) == 0
+
+
+def test_rule3_honours_a_sample_of_only_validator_failing_tests(tmp_path, capsys):
+    """The fail-closed guard keys on the same accessor. A sample naming only a
+    validator-failing test used to read as "only ungraded tests" and fall back
+    to the every-dimension rule; it is a real sample and must be enforced as
+    one — blocking on ITS unreviewed rows, not on the whole log's."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(2, review_sample={"tests": ["ut_x_vf"], "cursor": [], "seed": 0})
+    log["tests"].append(_validator_failed_test())
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "would require nothing" not in out
+    assert "ut_x_vf" in out
+    assert "ut_x_000" not in out, "unsampled tests owe nothing"
 
 
 # --- Rule 2 cosmetic-skip escape hatch -----------------------------------
@@ -975,3 +1029,45 @@ def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys)
     )
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     assert "no comment" in capsys.readouterr().out
+
+
+# --- An agent's OWN agent-keyed suite (issue #1253) ------------------------
+
+
+def test_touched_agent_gates_its_own_agent_keyed_suite(monkeypatch, capsys, tmp_path):
+    """An agent with its own suite and no SKILL.md anywhere referencing it must
+    still be gated by an edit to its body.
+
+    `skills_referencing_agents` can only reach suites that have a SKILL.md to
+    scan. Before this rule, editing agents/gps-mentor.md gated only the skills
+    that happen to name it (`research`) and never the suite that grades it, so
+    the suite's run log stayed active against prose that had changed.
+    """
+    skills = _make_skills_tree(tmp_path)  # references spike-echo, not gps-mentor
+    tests_unit = tmp_path / "tests-unit"
+    (tests_unit / "gps-mentor").mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/agents/gps-mentor.md"])
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "gps-mentor" in out  # gated by its own name, with no referencing skill
+    assert "uses-agent" not in out
+
+
+def test_touched_agent_with_no_suite_is_untouched_by_the_identity_rule(
+    monkeypatch, capsys, tmp_path
+):
+    """Keyed on directory existence, so an agent with no suite of its own
+    (image-reader, record-extractor today) stays ungated until one lands —
+    and arms itself when it does, with no constant to remember to edit."""
+    skills = _make_skills_tree(tmp_path)
+    tests_unit = tmp_path / "tests-unit"
+    tests_unit.mkdir()
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/agents/image-reader.md"])
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out

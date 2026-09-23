@@ -47,7 +47,7 @@ from harness.snapshot import (  # noqa: E402
     diff_snapshot_vs_disk,
     hash_file,
 )
-from harness.review_sample import zero_dimension_test_ids  # noqa: E402
+from harness.review_sample import review_dimensions, zero_dimension_test_ids  # noqa: E402
 from harness.versioning import classify  # noqa: E402
 
 
@@ -64,7 +64,9 @@ RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 # Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
 # An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
 # (the agent body is embedded in those skills' run-log snapshots), exactly
-# like an edit inside the skill dir itself.
+# like an edit inside the skill dir itself — plus `eval/tests/unit/<name>/`
+# itself when that agent has its own agent-keyed suite (issue #1253), which
+# no SKILL.md scan can reach because there is no SKILL.md.
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 # Match a shared fixture the run-log snapshot embeds:
@@ -429,7 +431,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     # from taking the run down if it ever arrives by another route.
     try:
         ann = json.loads(ann_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         gh_error(
             f"skill `{skill}`: annotation `{ann_filename}` is not valid JSON "
             f"({exc}). Restore the last valid version from git, or delete it "
@@ -466,21 +468,23 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     }
     tests = log.get("tests") or []
 
-    # A test with no AGGREGATED dimensions asks nothing of the loop below, and
-    # the sampler drops it from every slot. Three ways to get there: the run
-    # aborted, the judge raised, or a validator failed — that last one is
-    # graded now but excluded from the aggregate, so its scores exist in
-    # runs[].judge.dimensions while nothing here can see them. And the
-    # sampler drops it from every slot. Excluded is not unnoticed: warn, because
-    # an ungraded test is a signal, not an absence, and silently dropping it is
-    # how a run with nothing gradeable would pass rule 3 on an empty annotation.
+    # A test with no REVIEW dimensions asks nothing of the loop below, and the
+    # sampler drops it from every slot. Two ways to get there: the run aborted,
+    # or the judge raised. A validator failure is no longer one of them — its
+    # scores are excluded from the aggregate but the harness writes them to
+    # `review_dimensions`, which this rule and the sampler both read through
+    # `review_dimensions()`. On a run log written before that field existed the
+    # accessor falls back to the aggregate, so committed annotations keep the
+    # rule they were written under. Excluded is not unnoticed: warn, because an
+    # ungraded test is a signal, not an absence, and silently dropping it is how
+    # a run with nothing gradeable would pass rule 3 on an empty annotation.
     ungraded = zero_dimension_test_ids(tests)
     if ungraded:
         gh_warning(
             f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` have no "
-            f"aggregated dimensions, so nothing is required of them here: "
-            f"{', '.join(ungraded[:5])}. Read their `aborted_reason` / validator "
-            f"results before treating this run as a clean pass.",
+            f"reviewable dimensions, so nothing is required of them here: "
+            f"{', '.join(ungraded[:5])}. Read their `aborted_reason` / judge "
+            f"`error` before treating this run as a clean pass.",
         )
 
     # `review_sample` names the tests this run's annotation must cover. Absent
@@ -500,11 +504,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         # no error and no warning; an id that names no test in this run log is
         # the same hole with extra steps. Either falls back to the
         # every-dimension rule rather than being believed.
-        gradeable = {
-            t["test_id"]
-            for t in tests
-            if t.get("outcome_summary", {}).get("aggregated_dimensions")
-        }
+        gradeable = {t["test_id"] for t in tests if review_dimensions(t)}
         unknown = required_test_ids - {t["test_id"] for t in tests}
         if not required_test_ids or unknown:
             reason = (
@@ -530,7 +530,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     for t in tests:
         if required_test_ids is not None and t["test_id"] not in required_test_ids:
             continue
-        for d in t.get("outcome_summary", {}).get("aggregated_dimensions") or []:
+        for d in review_dimensions(t):
             key = (t["test_id"], d["source"], d["name"])
             if key not in have:
                 missing.append(key)
@@ -761,11 +761,28 @@ def main() -> int:
 
     # A touched plugin agent gates every skill whose SKILL.md references
     # `@plugin:<name>` — the agent body is part of those skills' run-log
-    # snapshots, so editing it outside eval discipline must fail rule 2.
+    # snapshots, so editing it outside eval discipline must fail rule 2 — and
+    # also its OWN agent-keyed suite, if it has one.
     if touched_agents:
         referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
         for agent in sorted(touched_agents):
             touched_skills |= referencing.get(agent, set())
+            # The agent's own suite (issue #1253). `skills_referencing_agents`
+            # scans SKILL.md bodies for `@plugin:<name>`, so it can only reach
+            # suites that have a SKILL.md. An agent-keyed suite has none:
+            # `gps-mentor`'s tests live at eval/tests/unit/gps-mentor/ and key
+            # on the agent file directly. Without this line, editing
+            # agents/gps-mentor.md gates only `research` — the one skill whose
+            # SKILL.md happens to reference it — and leaves the suite that
+            # actually grades the agent ungated, which is the same staleness
+            # the snapshot rule closes from the other side.
+            #
+            # Keyed on directory existence rather than a name list, so a suite
+            # arms itself when it lands instead of waiting for someone to also
+            # remember to edit a constant here — the same discipline as the
+            # `exempt_suiteless` filter below.
+            if (TESTS_UNIT_DIR / agent).is_dir():
+                touched_skills.add(agent)
 
     # A touched shared fixture gates every skill whose tests reference it — the
     # fixture is embedded in those skills' run-log snapshots, so editing it

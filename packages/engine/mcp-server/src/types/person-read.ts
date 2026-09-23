@@ -20,6 +20,11 @@ export interface PersonReadToolInput {
   personId: string;
   relatives?: boolean;
   sourceDescriptions?: boolean;
+  /** Absolute project-folder path. When given, a memory scan transcribed during
+   *  this read is retained under images/ and its ref returned as the source's
+   *  `image_ref`. A path is not a mode flag, so decision 1's "no third flag"
+   *  does not reach it. */
+  projectPath?: string;
 }
 
 export interface TreeName {
@@ -71,13 +76,55 @@ export interface TreeSource {
   title: string;
   citation?: string;
   url?: string;
+  /**
+   * The memory artifact's own URL, when this source is a memory.
+   *
+   * `url` is the human `/memories/<id>` page and is NOT accepted by
+   * `image_transcribe`/`image_read`, so a budget-skipped memory whose note says
+   * to retry with `memoryArtifactUrl` needs the artifact URL to be somewhere in
+   * the response. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
+   * `TREE_SOURCE_FIELDS`, which is what strips it on the write.
+   */
+  artifact_url?: string;
   notes?: string[];
+  /**
+   * A memory's text: a story's own words, or OCR of a scan the filter kept.
+   *
+   * Named `text`, not `transcription`, deliberately: the destination field in
+   * `research.json` is `transcription`, but a story told by a family member is
+   * not a transcription of anything, and the spec row says so.
+   *
+   * MUST NEVER REACH `tree.gedcomx.json`. `TREE_SOURCE_FIELDS` is
+   * `{id, title, citation, author, url}` and `project_create` validates with
+   * `validateParsed` WITHOUT sanitizing, so one stray key aborts the whole
+   * project write -- the `notes` defect PR #1800 fixed (finding F7, validator
+   * V6). `init-project`'s SKILL.md carries the matching exclusion.
+   */
+  text?: string;
+  /**
+   * Project-relative path of a retained memory scan (images/<key>.jpg), set only
+   * when `person_read` was given `projectPath` and the save succeeded. It is
+   * what a retained source's `image_filename` wants.
+   *
+   * MUST NEVER REACH `tree.gedcomx.json`, for the same reason as `text` above:
+   * `TREE_SOURCE_FIELDS` is `{id, title, citation, author, url}` and
+   * `project_create` validates without sanitizing, so one stray key aborts the
+   * whole project write.
+   */
+  image_ref?: string;
 }
 
 export interface PersonReadResult {
   persons: TreePerson[];
   relationships: TreeRelationship[];
   sources: TreeSource[];
+  /** Present ONLY when something was silently dropped from this response.
+   *  Absent on a clean read, so the top-level shape is unchanged for every
+   *  caller that never triggers one. @chesworthrm's merge condition on #2593:
+   *  endpoint closure turns a loud `project_create` refusal into a quiet
+   *  partial loss, and "a quiet partial loss of the subject's own parentage is
+   *  worse than the refusal it replaces if nobody can see it happened." */
+  notes?: string[];
 }
 
 // ─── FS-extended GEDCOMX (raw API response) ───────────────────────────────

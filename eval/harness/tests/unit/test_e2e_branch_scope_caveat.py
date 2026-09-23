@@ -26,7 +26,9 @@ from e2e import (
     image_transcribe_report,
     nudge_report,
     panel_report,
+    ranked_read_report,
     skill_episode_report,
+    transcription_join_report,
     wiki_failure_report,
 )
 
@@ -41,7 +43,9 @@ _READERS = [
     (image_transcribe_report, []),
     (nudge_report, []),
     (panel_report, []),
+    (ranked_read_report, []),
     (skill_episode_report, []),
+    (transcription_join_report, []),
     (wiki_failure_report, []),
     (detector_before_after_report, ["--detector", "lane-check"]),
 ]
