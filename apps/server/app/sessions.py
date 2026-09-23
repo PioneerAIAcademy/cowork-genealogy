@@ -103,8 +103,9 @@ def _derive_title_from_objective(objective: str | None) -> str | None:
 def _maybe_backfill_title(session: Session, project: Project, research: object) -> None:
     """Fallback session naming for a still-default session. The browser relays
     the agent-written project.title live (the primary path); this backstops the
-    cases with no browser relaying. Prefer the agent's title;
-    derive from the objective only for legacy projects without one. One-time,
+    cases with no browser relaying — a tab closed before the agent named the
+    project, or a session resumed elsewhere. Prefer the agent's title; derive
+    from the objective only for legacy projects without one. One-time,
     persisted — keeps the list from being a wall of 'New research session'."""
     if project.title != _DEFAULT_TITLE or not isinstance(research, dict):
         return

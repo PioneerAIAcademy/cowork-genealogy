@@ -168,20 +168,21 @@ def test_every_turn_announces_itself_and_the_queued_flag_still_distinguishes():
 
     WHY. Without an announcement a turn's only frames are the agent's own plus
     the terminal `turn_done`, so before its first frame there is a silence the
-    length of a full SDK round trip, and one consumer reads that silence as
+    length of a full SDK round trip, and the busy gate reads that silence as
     "idle":
 
-      * `sandbox_server` clears `_turn_active` on every `turn_done`, so the UI
-        went idle while messages were still queued.
+      * `sandbox_server` clears `_turn_active` on every `turn_done` - once per
+        TURN, not once per backlog - so the UI went idle while messages were
+        still queued.
 
     THIS FIRED ONLY FOR QUEUED TURNS AT FIRST, and this test asserted that. The
     reasoning was "the first turn's sender already knows it sent it" - which is
-    about the SENDER, while the consumer that matters is the client's busy gate.
-    `Hub` sets `_turn_active` on `turn_start`, and that flag is the only thing a
-    client reconnecting mid-turn is shown `turn_active` from; an
-    already-connected client acts on the raw frame instead. An unannounced first
-    turn leaves both reading idle for a full SDK round trip. Review round 3
-    on issue #2062.
+    about the SENDER. The load-bearing case is the QUEUED turn: `Hub` sets
+    `_turn_active` on the incoming `user_msg` and clears it on every
+    `turn_done`, so without a `turn_start` for the next queued turn the gate
+    drops to idle mid-backlog. The UNqueued arm's consumer was the public REST
+    API's replay drain, removed with `/v1`; it stays unconditional so the queued
+    case cannot regress by re-splitting the two. Review round 3 on issue #2062.
 
     The `queued` flag is asserted per turn rather than just counted, because
     emitting `turn_start` unconditionally with a hardcoded `queued: True` would

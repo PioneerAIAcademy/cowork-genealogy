@@ -184,25 +184,24 @@ async def serve(
         last_text = None
         # EVERY turn announces itself, queued or not.
         #
-        # Without this, the only frames a turn produces are the agent's own plus
-        # the terminal `turn_done`, so before a turn's first frame there is a
-        # silence the length of a full SDK round trip, and `sandbox_server`
-        # clears `_turn_active` on every `turn_done` - so the UI went idle while
-        # messages were still queued, and the client's busy gate is what is
-        # supposed to stop a backlog forming.
+        # What needs it is the QUEUED turn. `Hub` sets `_turn_active` on the
+        # incoming `user_msg`, but clears it on every `turn_done` - and
+        # `turn_done` fires once per TURN, not once per backlog. Without a
+        # `turn_start` for the next queued turn the gate therefore drops to idle
+        # while messages are still waiting, which is the backlog it exists to
+        # stop; the `turn_start` arm in `sandbox_server` re-arms the flag and
+        # broadcasts `status: turn_active`.
         #
-        # This fired only for QUEUED turns at first, on the reasoning that a
-        # first turn's sender already knows it started. That reasoning is about
-        # the SENDER, and the consumer that matters is the BUSY GATE. `Hub` sets
-        # `_turn_active` on `turn_start`, and that flag is the only thing a
-        # client reconnecting mid-turn is shown `turn_active` from; an
-        # already-connected client acts on the raw frame instead. An unannounced
-        # turn leaves both reading idle for a full SDK round trip before its
-        # first token, so the window is seconds wide, not a race.
-        # `queued` stays on the frame to distinguish the two kinds of turn -
-        # nothing in this repo reads it. The web client cannot: ChatPane returns
-        # early on turn_start and acts on the `status: turn_active` frame
-        # sandbox_server converts this into.
+        # It fires for UNqueued turns too, and that arm no longer has a reader:
+        # its consumer was the public REST API's replay drain, removed with
+        # `/v1`, and `Hub` has already set `_turn_active` from the `user_msg` by
+        # the time this runs. It stays unconditional so the queued case cannot
+        # regress by someone re-splitting the two, and `test_runner_turn_queue`
+        # pins it.
+        #
+        # `queued` distinguishes the two kinds - nothing in this repo reads it.
+        # The web client cannot: ChatPane returns early on `turn_start` and acts
+        # on the `status: turn_active` frame sandbox_server converts this into.
         emit({"kind": "turn_start", "queued": queued})
         turn_task = asyncio.create_task(_run_turn(agent, text, _observe))
         # Wakes this loop when the turn ends, which is what lets a queued message

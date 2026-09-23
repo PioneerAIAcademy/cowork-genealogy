@@ -231,9 +231,9 @@ def dev_login(
     if not _dev_login_enabled(get_settings()):
         raise HTTPException(status_code=403, detail="Dev-login disabled; sign in with FamilySearch")
     # No allowlist locally — any email signs in, so you can simulate distinct users
-    # (per-user session lists and ownership). The prod
-    # access gate is the FamilySearch callback's allowlist, which is unaffected. A
-    # blank email gets a default identity for one-click sign-in.
+    # (per-user session lists and ownership). The prod access gate is the
+    # FamilySearch callback's allowlist, which is unaffected. A blank email gets
+    # a default identity for one-click sign-in.
     email = body.email.strip().lower() or "dev@localhost"
     user = _upsert_user(session, email)
     set_session_cookie(response, user.id)

@@ -10,8 +10,8 @@ first browser connection, so no host process owns the agent or watches /project.
 **`expose_port` is load-bearing — do not delete it.** It is what turns a
 sandbox id into the `wss://` URL the browser dials, and it has one live caller:
 `app/sessions.py` (`POST /api/sessions/{id}/connect`). It calls it on every
-connect and reconnect, not just at create. `LocalProvider` implements the same method for the local
-dev path.
+connect and reconnect, not just at create. `LocalProvider` implements the same
+method for the local dev path.
 
 Verified against the `e2b` SDK (2.x) — Phase 0 findings:
 - `AsyncSandbox.create(template, metadata, envs, allow_internet_access, timeout,

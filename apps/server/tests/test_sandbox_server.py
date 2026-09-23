@@ -484,12 +484,14 @@ def test_a_crashed_runners_synthetic_turn_done_enters_history():
     * `turn_start` is not in `TRANSIENT_KINDS`, so it IS recorded and replayed.
     * `_history` is never cleared, only trimmed at `_HISTORY_MAX` (1000). And
       `_record` trims from the FRONT, so a `turn_start` is always evicted before
-      its own `turn_done` - a leading orphan `turn_done` is survivable, an
-      orphan `turn_start` is not. The crash path was the only producer of the
-      latter, and it was the one path that skipped `_record`.
+      its own `turn_done`. The crash path was the only producer of an orphan
+      `turn_start`, and it was the one path that skipped `_record`.
 
     `broadcast` does not touch `_record`, which is why "the user saw it" was not
-    the same as "history has it".
+    the same as "history has it". The consumer this actively broke was the
+    public REST API's replay drain, removed with `/v1`; what remains is the
+    invariant - a replayed transcript pairs its starts and dones, and this test
+    is what holds it.
     """
     import app.sandbox_server as ss
 
@@ -517,8 +519,8 @@ def test_a_crashed_runners_synthetic_turn_done_enters_history():
     ]
     assert kinds.count("turn_start") == kinds.count("turn_done"), (
         f"history is unbalanced: {kinds}. A reconnect replays a turn_start whose "
-        f"turn_done exists nowhere, so every later client is handed a turn that "
-        f"never closes."
+        f"turn_done exists nowhere, and nothing later in the transcript closes "
+        f"it."
     )
     # And the user still saw it: recording must be in ADDITION to broadcasting.
     assert any(

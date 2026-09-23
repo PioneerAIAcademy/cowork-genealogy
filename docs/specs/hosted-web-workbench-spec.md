@@ -426,7 +426,7 @@ later, so the package holds **13** today.
 >   OAuth is unconfigured *and* `PUBLIC_URL` is not https, so it can never be
 >   exposed by a deploy that forgot to configure FamilySearch.
 >
-> A second one, `/v1` bearer keys, was **removed 2026-09-22: the surface was
+> There were two. `/v1` bearer keys were **removed 2026-09-22: the surface was
 > sandbox-WebSocket-bound and had no live grant.**
 
 ### 5.2 Data auth: per-user FamilySearch OAuth (the big refactor)
