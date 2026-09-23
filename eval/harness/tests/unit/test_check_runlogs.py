@@ -1016,9 +1016,9 @@ def test_rule2_passes_on_hash_snapshot_when_disk_matches(tmp_path, monkeypatch, 
     assert "SKILL.md" in out  # names the drifted path, not just the count
 
 
-def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatch):
-    """`normalize()` runs BEFORE hashing, so stripping test.{name,description,
-    tags} still makes a cosmetic edit a no-op.
+def test_rule2_tolerates_a_cosmetic_name_description_edit(tmp_path, monkeypatch):
+    """`normalize()` runs BEFORE hashing, so stripping test.{name,description}
+    still makes a cosmetic edit a no-op.
 
     Undocumented invariant otherwise: hashing the raw bytes instead would turn
     every rename of a test's display name into a forced paid re-run, and
@@ -1038,12 +1038,39 @@ def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatc
 
     log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
 
+    # Name and description are cosmetic — changing them should not invalidate.
     body["test"]["name"] = "RENAMED"
-    body["test"]["tags"] = ["z"]
+    body["test"]["description"] = "NEW description"
     (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
     assert check_runlogs.rule2_active("s1", log, "v1.json") == 0
 
     body["input"]["user_message"] = "SUBSTANTIVE"
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
+
+
+def test_rule2_treats_tag_edit_as_substantive(tmp_path, monkeypatch):
+    """Tags select validators and change outcome computation (issue #2694).
+
+    A tag edit must invalidate the snapshot — unlike name/description, tags
+    are NOT cosmetic.
+    """
+    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
+    tests_dir = tmp_path / "eval/tests/unit/s1"
+    tests_dir.mkdir(parents=True)
+    body = {
+        "test": {"id": "ut_1", "skill": "s1", "name": "n",
+                 "description": "d", "tags": ["a"], "type": "positive"},
+        "input": {"user_message": "m"},
+    }
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
+
+    # Changing tags must invalidate the snapshot (returns 1).
+    body["test"]["tags"] = ["z"]
     (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
     assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
 
