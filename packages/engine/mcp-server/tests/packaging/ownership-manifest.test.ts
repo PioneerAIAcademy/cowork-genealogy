@@ -1,9 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
+import { OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
+import { extractList } from "./frontmatter.js";
 
 /**
  * The ownership manifest is the shared declaration of who may write each
@@ -53,6 +55,8 @@ interface OwnershipRow {
   remedy: string;
   override: string;
   notes?: string;
+  hookCallers?: string[];
+  agentCallers?: string[];
 }
 
 const manifest = JSON.parse(
@@ -69,6 +73,109 @@ const treeSchema = JSON.parse(
 
 const rows = manifest.rows;
 const key = (r: { artifact: string; section: string }) => `${r.artifact}#${r.section}`;
+
+/**
+ * Tools in `OK_FALSE_IS_FAILURE` that write neither project document.
+ *
+ * The subtraction is what makes the actual-writer guard's left-hand set
+ * independent of the manifest. Reading the writer-tool vocabulary out of the
+ * manifest's own `writerTools` would compare the manifest to itself exactly
+ * where it matters most: a newly shipped writer tool granted to an agent, on a
+ * row that lists it nowhere, would never enter the comparison at all and the
+ * guard would report a confident zero.
+ *
+ * Adding a tool to `OK_FALSE_IS_FAILURE` therefore forces a decision here —
+ * either it writes a project document and needs a manifest row, or it is one of
+ * these readers. **That is the floor, and it is one list-membership lower than
+ * it looks:** `OK_FALSE_IS_FAILURE`'s own rule is "the call could not do what
+ * was asked", not "the tool writes", so a writer that reports failure some other
+ * way is invisible to this guard exactly as it is to the manifest.
+ */
+const NOT_A_DOCUMENT_WRITER = new Set([
+  "convert_calendar",
+  "build_external_search_url",
+  "research_query",
+  "project_context",
+  "sidecar_read",
+]);
+
+/** Every tool the engine ships that writes research.json or tree.gedcomx.json. */
+const WRITER_TOOLS = OK_FALSE_IS_FAILURE.filter((t) => !NOT_A_DOCUMENT_WRITER.has(t));
+
+/** `mcp__<server>__<tool>` → `<tool>`; a built-in (`Read`) passes through. */
+function bareToolName(entry: string): string {
+  return entry.startsWith("mcp__") ? (entry.split("__").pop() as string) : entry;
+}
+
+interface PluginGrants {
+  /** `agent:<name>` / `skill:<name>` → the WRITER tools it is granted. */
+  byHolder: Map<string, Set<string>>;
+  /** Same keys → how many tool entries were parsed at all, writer or not. */
+  entriesParsed: Map<string, number>;
+  /** Holders whose frontmatter actually carries the key the scan reads. */
+  declaresKey: Set<string>;
+}
+
+/**
+ * What the shipped plugin actually hands out: the writer tools named by each
+ * agent's `tools:` and each skill's `allowed-tools:` frontmatter.
+ *
+ * This is the reading the manifest is checked AGAINST, so it deliberately
+ * touches no part of the manifest. `entriesParsed` is carried alongside because
+ * both ways this scan can read nothing are silent — a `tools:` list whose
+ * leading `#` comment block stops the parser, and a renamed frontmatter key —
+ * and a silent zero here PASSES the guard rather than failing it.
+ */
+function readPluginGrants(): PluginGrants {
+  const writers = new Set<string>(WRITER_TOOLS);
+  const byHolder = new Map<string, Set<string>>();
+  const entriesParsed = new Map<string, number>();
+  const declaresKey = new Set<string>();
+
+  const record = (holder: string, key: string, text: string) => {
+    const entries = extractList(text, key);
+    entriesParsed.set(holder, entries.length);
+    // Read the key's PRESENCE from the frontmatter block only: a body that
+    // happens to contain the string would make every holder look like a declarer.
+    const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? "";
+    if (new RegExp(`^${key}:`, "m").test(frontmatter)) declaresKey.add(holder);
+    const held = new Set(entries.map(bareToolName).filter((t) => writers.has(t)));
+    if (held.size > 0) byHolder.set(holder, held);
+  };
+
+  for (const file of readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"))) {
+    const text = readFileSync(join(pluginRoot, "agents", file), "utf8");
+    record(`agent:${file.slice(0, -3)}`, "tools", text);
+  }
+
+  for (const entry of readdirSync(join(pluginRoot, "skills"), { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillMd = join(pluginRoot, "skills", entry.name, "SKILL.md");
+    if (!existsSync(skillMd)) continue;
+    // `allowed-tools:` only, never the whole frontmatter. `forget-and-rederive`'s
+    // `description:` names `tree_correct` and `merge_tree_persons` in a "do NOT
+    // use this, use that" clause, so a frontmatter-wide word match reports it as
+    // a holder of two tools it does not hold (proven 2026-09-23: exactly those
+    // two false positives).
+    record(`skill:${entry.name}`, "allowed-tools", readFileSync(skillMd, "utf8"));
+  }
+
+  return { byHolder, entriesParsed, declaresKey };
+}
+
+const pluginGrants = readPluginGrants();
+
+/** Every identifier some row listing `tool` names as a permitted writer. */
+function listedWriters(tool: string): Set<string> {
+  const out = new Set<string>();
+  for (const r of rows) {
+    if (!r.writerTools.includes(tool)) continue;
+    for (const c of [...r.callers, ...(r.hookCallers ?? []), ...(r.agentCallers ?? [])]) {
+      out.add(c);
+    }
+  }
+  return out;
+}
 
 /** Every (artifact, section) pair that must have exactly one row. */
 function expectedKeys(): string[] {
@@ -178,11 +285,204 @@ describe("ownership manifest — every name resolves", () => {
   });
 
   it("resolves every caller to a shipped skill or agent", () => {
+    // All three caller fields, because the actual-writer guard below reads all
+    // three as the permitted set — so a name that has stopped shipping widens it
+    // from any of them.
     const bad: string[] = [];
     for (const r of rows) {
-      for (const c of r.callers) if (!resolves(c)) bad.push(`${key(r)}: caller '${c}'`);
+      for (const [field, list] of [
+        ["callers", r.callers],
+        ["hookCallers", r.hookCallers ?? []],
+        ["agentCallers", r.agentCallers ?? []],
+      ] as const) {
+        for (const c of list) if (!resolves(c)) bad.push(`${key(r)}: ${field} '${c}'`);
+      }
     }
     expect(bad).toEqual([]);
+  });
+
+  it("puts only agents in agentCallers", () => {
+    const bad: string[] = [];
+    for (const r of rows) {
+      for (const c of r.agentCallers ?? []) {
+        if (!c.startsWith("agent:")) bad.push(`${key(r)}: agentCallers '${c}'`);
+      }
+    }
+    expect(
+      bad,
+      "`agentCallers` records which AGENTS write a row. A skill writer goes in " +
+        "`callers`, the field the unit plane reads.",
+    ).toEqual([]);
+  });
+
+  it("keeps a non-owner agent out of callers", () => {
+    // One rule, not two. `callers` is what `harness/ownership.py:writer_sets`
+    // reads, and an agent there on a unit-plane row raises
+    // OwnershipManifestError outright — so a non-owner agent has to live
+    // elsewhere on those rows anyway. Letting it sit in `callers` on the rows
+    // that claim no plane would make the placement depend on `enforceableAt`,
+    // and a two-rule placement is where the next drift hides. The owner is the
+    // exception because a row must list its own owner among its callers.
+    const bad: string[] = [];
+    for (const r of rows) {
+      for (const c of r.callers) {
+        if (c.startsWith("agent:") && c !== r.owner) bad.push(`${key(r)}: caller '${c}'`);
+      }
+    }
+    expect(
+      bad,
+      "a non-owner agent goes in `agentCallers` (or `hookCallers` where the row " +
+        "claims the hook plane), never in `callers`",
+    ).toEqual([]);
+  });
+
+  it("declares a row for every writer tool the engine ships", () => {
+    // The vocabulary half of the guard below. Without it a writer tool that no
+    // row mentions at all falls outside the comparison entirely: the agent
+    // holding it is compared against nothing and reads as listed.
+    expect(
+      WRITER_TOOLS.length,
+      "no writer tools left after subtracting NOT_A_DOCUMENT_WRITER from " +
+        "OK_FALSE_IS_FAILURE — the guard below is comparing against an empty set",
+    ).toBeGreaterThan(0);
+
+    const declared = new Set<string>(rows.flatMap((r) => r.writerTools));
+    const shipped = new Set<string>(WRITER_TOOLS);
+    expect(
+      [...shipped].filter((tool) => !declared.has(tool)).sort(),
+      "these tools write a project document and no ownership row names them as a " +
+        "writer of anything — add the row's `writerTools` entry, or add the tool " +
+        "to NOT_A_DOCUMENT_WRITER if it turns out to write neither document",
+    ).toEqual([]);
+    expect(
+      [...declared].filter((tool) => !shipped.has(tool)).sort(),
+      "the manifest calls these writer tools and the engine does not: each is " +
+        "either missing from OK_FALSE_IS_FAILURE in src/tool-result.ts (a " +
+        "writer's `ok: false` IS its own failure) or wrongly listed in " +
+        "NOT_A_DOCUMENT_WRITER",
+    ).toEqual([]);
+  });
+
+  /**
+   * The direction issue #2575 was filed about. Every other check here runs
+   * listed -> exists; none runs exists -> listed. `record-extractor` held
+   * `research_log_append` under all three spellings, called it 12 times across 9
+   * committed runs, and appeared in no row's callers for as long as that was
+   * true.
+   *
+   * Two readings that must agree, the same shape as the `merge_tree_persons`
+   * check below: the plugin's grants on one side, the manifest's permitted
+   * callers on the other. The left-hand set has to come from the plugin — a
+   * guard that derived "actual writers" from the manifest's own `writerTools`
+   * would compare the manifest to itself, pass green, and check nothing.
+   *
+   * **It is per TOOL and unions across rows.** A holder listed for a writer tool
+   * on any one row is listed for it everywhere, because nothing static can say
+   * which section a grant will be used on. So this catches a holder listed for a
+   * writer tool NOWHERE — not a holder listed on the wrong row.
+   *
+   * That is looser than it first reads, and `record-extractor` is the live
+   * instance: it is an `agentCallers` entry on `tree.gedcomx.json#persons` for
+   * its `extraction_append` write, and that row lists all eight tree writer
+   * tools, so the union already counts it as listed for every one of them. A
+   * ninth writer tool granted to THAT agent would not red here. Narrowing it
+   * would mean pairing each `agentCallers` entry with the tools it is declared
+   * for, which is a manifest shape change, not a tightening of this test.
+   */
+  it("names every plugin holder of a writer tool", () => {
+    // Both readings that can silently return nothing here produce a clean zero
+    // rather than an error, so each is asserted non-empty before the comparison.
+    expect(
+      pluginGrants.entriesParsed.size,
+      "no agent or skill frontmatter parsed at all — the plugin tree moved and " +
+        "this guard is comparing an empty set against the manifest",
+    ).toBeGreaterThan(0);
+    // Keyed on whether the FILE carries the key, not on agent-vs-skill. Two
+    // skills legitimately declare no `allowed-tools`, so a blanket assertion
+    // would be wrong — but skipping every skill leaves the skill half of the
+    // scan with the same silent-zero hole the agent half exists to close.
+    for (const [holder, count] of pluginGrants.entriesParsed) {
+      if (!pluginGrants.declaresKey.has(holder)) continue; // declares none, truthfully
+      const key = holder.startsWith("agent:") ? "tools" : "allowed-tools";
+      expect(
+        count,
+        `${holder}: its frontmatter declares ${key}: and the scan read zero ` +
+          `entries from it. A leading "#" comment block inside the list is the ` +
+          `live shape that does this, and it leaves this guard reading nothing.`,
+      ).toBeGreaterThan(0);
+    }
+    // Three known grants, one per parse path, so a scan that returns entries but
+    // the wrong ones cannot pass either. Membership, not an exact set: the exact
+    // per-agent list is already pinned by AGENT_PERMISSIONS in
+    // agent-tool-names.test.ts, and pinning it twice would make a legitimate new
+    // grant red HERE first — masking the unlisted comparison below, which is the
+    // assertion that actually has something to say about it.
+    for (const tool of ["extraction_append", "research_log_append"]) {
+      expect([...(pluginGrants.byHolder.get("agent:record-extractor") ?? [])]).toContain(tool);
+    }
+    expect([...(pluginGrants.byHolder.get("skill:record-extraction") ?? [])]).toContain(
+      "research_log_append",
+    );
+    expect([...(pluginGrants.byHolder.get("skill:forget-and-rederive") ?? [])]).toContain(
+      "tree_forget",
+    );
+
+    const unlisted: string[] = [];
+    for (const holder of [...pluginGrants.byHolder.keys()].sort()) {
+      for (const tool of [...(pluginGrants.byHolder.get(holder) as Set<string>)].sort()) {
+        if (!listedWriters(tool).has(holder)) unlisted.push(`${holder} holds ${tool}`);
+      }
+    }
+    expect(
+      unlisted,
+      "the plugin grants these writer tools to holders that no row listing the " +
+        "tool names. Either the manifest is missing a writer — a skill goes in " +
+        "`callers`, a non-owner agent in `agentCallers` — or the grant should come " +
+        "out of the frontmatter. Do not close it by dropping the tool from a " +
+        "row's `writerTools`: that widens what the row permits.",
+    ).toEqual([]);
+  });
+
+  it("names each agent the same way on both sides of the manifest", () => {
+    // This file keys an agent by its FILENAME (`resolves()` and the grant scan
+    // above both do); `eval/harness/e2e/writer_attribution_report.py` keys it by
+    // the frontmatter `name`, through `declared_tools_by_agent`. They agree for
+    // all seven shipped agents and nothing but coincidence made them. Let them
+    // diverge and the corpus report misfiles a shipped agent as an UNBOUND
+    // DELEGATION — the #939 class it states no manifest edit can ever close.
+    const bad: string[] = [];
+    for (const file of readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"))) {
+      const text = readFileSync(join(pluginRoot, "agents", file), "utf8");
+      const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? "";
+      const declared = /^name:\s*(\S+)\s*$/m.exec(frontmatter)?.[1];
+      if (declared !== file.slice(0, -3)) bad.push(`${file}: frontmatter name '${declared}'`);
+    }
+    expect(
+      bad,
+      "an agent's frontmatter `name` must equal its filename stem, or the " +
+        "manifest's two readers disagree about what to call it",
+    ).toEqual([]);
+  });
+
+  it("gives every agentCallers entry a grant on one of its row's writer tools", () => {
+    // The stale half of the same declaration. A row keeps naming an agent after
+    // the grant that put it there is gone, and the guard above cannot see it —
+    // that one only walks holders the plugin still has.
+    const bad: string[] = [];
+    for (const r of rows) {
+      for (const c of r.agentCallers ?? []) {
+        const held = pluginGrants.byHolder.get(c) ?? new Set<string>();
+        if (!r.writerTools.some((tool) => held.has(tool))) {
+          bad.push(`${key(r)}: agentCallers '${c}' is granted none of ${r.writerTools.join(", ")}`);
+        }
+      }
+    }
+    expect(
+      bad,
+      "an `agentCallers` entry granted none of its row's writer tools cannot write " +
+        "the row — the grant came out of the agent's `tools:` and the declaration " +
+        "was left behind",
+    ).toEqual([]);
   });
 
   it("lists a non-null owner among its own callers", () => {

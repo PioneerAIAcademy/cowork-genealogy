@@ -1,0 +1,45 @@
+/**
+ * YAML frontmatter block-sequence parsing, shared by the two packaging lints
+ * that read a plugin agent's `tools:` or a skill's `allowed-tools:`.
+ *
+ * It lives here rather than in either test because a bug in it empties BOTH
+ * guards at once and neither would say so: `agent-tool-names.test.ts` asserts
+ * spellings over the entries it parses, and `ownership-manifest.test.ts` asserts
+ * that every writer-tool holder is declared in the ownership manifest. Read
+ * nothing and both report a clean pass. That shared failure mode is what makes
+ * one copy right and two wrong.
+ */
+
+/**
+ * Parse a named block-sequence out of YAML frontmatter.
+ *
+ * Two shapes in this repo's frontmatter would silently return nothing if the
+ * scan were naive, and both are live:
+ *
+ *  - **Comment lines inside the list.** `record-extractor.md` carries a 10-line
+ *    `#` comment block between `tools:` and its first entry. A scan that stops
+ *    at the first line which is not `- …` reads zero grants for that agent.
+ *  - **A later top-level key.** Several skills put `description:` *after*
+ *    `allowed-tools:`, so the list has to end at the next unindented key — but
+ *    an unindented comment is not one.
+ *
+ * Returns the entries in file order; `[]` when the key is absent. Throws when
+ * there is no frontmatter at all, which is a malformed file rather than an
+ * empty list.
+ */
+export function extractList(text: string, key: string): string[] {
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!frontmatter) throw new Error("no YAML frontmatter");
+
+  const lines = frontmatter[1].split(/\r?\n/);
+  const start = lines.findIndex((l) => new RegExp(`^${key}:`).test(l));
+  if (start === -1) return [];
+
+  const items: string[] = [];
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^\S/.test(lines[i]) && !/^\s*#/.test(lines[i])) break; // next top-level key
+    const item = /^\s*-\s+(.+?)\s*$/.exec(lines[i]);
+    if (item) items.push(item[1]);
+  }
+  return items;
+}

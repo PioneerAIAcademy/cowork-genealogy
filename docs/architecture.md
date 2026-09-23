@@ -1985,9 +1985,12 @@ and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly lik
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
 `make e2e-corpus` gives the three axes plus violation counts, the per-arm split
 and per-fixture concentration, across the last 14 days of committed runs —
-every run-log reader windows that way, `SINCE=all` to opt out — `make
+most run-log readers window that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
-actually called across those runs, and the
+actually called across those runs, `make e2e-writer-attribution` reports which
+subagent wrote a project document and whether an ownership row says it may
+(the one reader that defaults to the whole corpus, because a manifest gap is not
+a freshness question), and the
 `/interpret-e2e-result` skill exists to read the log for you. `make
 e2e-ranked-reads` reports whether the main thread's `record_read` calls landed
 inside the ranker's **visible** top 3 — visible is the limit, because

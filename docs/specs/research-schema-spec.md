@@ -220,11 +220,19 @@ date patterns the standardizer recognizes.
 
 Each skill writes to its own section and reads from others. Skills must never write across section boundaries.
 
-**The writer sets below are a rendering of `docs/specs/schemas/ownership.json`, which
-is the machine-readable declaration the checks read.** This table adds what the
-manifest does not carry — who *reads* each section, and how an entry is retired.
-When the two disagree, the manifest is right and this table is stale: it was, on
-four rows, until the manifest was promoted out of a pytest validator.
+**The writer sets below are a rendering of each row's `callers` in
+`docs/specs/schemas/ownership.json`, which is the machine-readable declaration
+the checks read.** This table adds what the manifest does not carry — who *reads*
+each section, and how an entry is retired. When the two disagree, the manifest is
+right and this table is stale: it was, on four rows, until the manifest was
+promoted out of a pytest validator.
+
+`callers` is the field that says **who may write**, so it is the one rendered
+here. The manifest carries two more caller fields and neither appears in these
+tables, because neither widens permission: `hookCallers` names the agent the
+plugin `PreToolUse` hook permits on a row claiming the `hook` plane, and
+`agentCallers` records the non-owner agents that write the row — both are
+described under "Who actually writes a row" below.
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
@@ -269,14 +277,83 @@ has told an agent to do exactly that: `question-selection` carried three instruc
 retire a question with `superseded` / `answered`, values `question_status` has never
 defined, and every such write was rejected on validation.
 
+### Who actually writes a row — `callers`, `hookCallers`, `agentCallers`
+
+The manifest's checks all used to run one way: every name a row lists must
+resolve to something that ships. Nothing ran the other way, so a writer that
+existed in the plugin and was missing from the manifest was invisible. The
+`record-extractor` agent held `research_log_append` under all three server
+spellings and called it a dozen times across the committed e2e corpus while
+appearing in no row — for as long as that was true, no check could see it.
+
+`ownership-manifest.test.ts` now runs both directions. The second one reads each
+agent's `tools:` and each skill's `allowed-tools:` frontmatter and requires that
+every holder of a writer tool be named by some row listing that tool. Its
+writer-tool vocabulary comes from the engine (`OK_FALSE_IS_FAILURE` in
+`src/tool-result.ts`, minus a named set of readers), never from the manifest's
+own `writerTools` — a guard that took both sides from the manifest would compare
+it to itself and pass green.
+
+**The check is per tool and unions across rows.** A holder listed for a writer
+tool on any one row counts as listed for it everywhere, because nothing static
+can say which section a given grant will be used on. So it catches a holder
+listed for a writer tool *nowhere*; it does not catch one listed on the wrong
+row. `record-extractor` is the live instance of how loose that can get: it is an
+`agentCallers` entry on tree `persons` for its `extraction_append` write, and
+that row lists all eight tree writer tools, so it already counts as listed for
+every one of them. Narrowing this would mean pairing each `agentCallers` entry
+with the tools it is declared for — a change to the manifest's shape, not to the
+check.
+
+Three fields make up the listed set, and which one a writer goes in is a single
+rule with no exceptions:
+
+| Field | Holds | Read by |
+|---|---|---|
+| `callers` | who **may** write the row: every permitted skill, plus the row's own owner when that owner is an agent | the unit plane (`harness/ownership.py`'s `writer_sets`), and the writer tables above |
+| `hookCallers` | the agent the plugin `PreToolUse` hook permits, on a row claiming the `hook` plane | `plugin-hooks.test.ts`, which pins it against the hook's hardcoded map |
+| `agentCallers` | the non-owner **agents** that write the row | the actual-writer direction above, and nothing else |
+
+A non-owner agent therefore never goes in `callers`. On a row claiming the unit
+plane it cannot: that plane keys on the calling skill's `SKILL.md` frontmatter
+name and has no view of which agent made a call, so the loader raises
+`OwnershipManifestError` rather than silently dropping the agent from the
+permitted set. Putting it in `callers` on a row that claims *no* plane — where
+the loader would allow it — was considered and rejected: it makes the placement
+depend on `enforceableAt`, and a two-rule placement is where the next drift
+hides. The one agent in `callers` today is `gps-mentor` on `evaluations`, which
+is that row's owner, and a row must list its own owner among its callers.
+
+**`agentCallers` records who wrote; it does not widen who may.** Nothing reads it
+as a permission: `writer_sets` reads `callers` only and must keep doing so. That
+is what makes the field free — the unit plane already authorizes an agent's write
+through the skill whose run it happens inside, so naming the agent costs that
+plane nothing.
+
+Two alternatives were weighed when this landed (lead ruling 2026-09-18). A
+blocking guard with a waiver table was rejected because it would put the known
+gaps in the one place future drift could also hide. Dropping the `unit` plane
+from the five rows that name agent writers was rejected because it would remove
+the only enforcement plane over `tree.gedcomx.json` as a side effect of adding a
+lint.
+
+The observed counterpart is `make e2e-writer-attribution`, which reads what the
+committed corpus records a subagent actually calling. It is weaker — a writer
+that never fired is invisible to it — and it catches one thing the static side
+structurally cannot: a delegation to an `agent_type` that is not a shipped unit
+at all. `general-purpose`, the stand-in the model falls back to when a bare-name
+delegation fails to resolve, is neither a skill nor an agent and can never be
+listed in any row, so the report classifies it as its own finding rather than as
+a manifest gap.
+
 ### Ownership for `tree.gedcomx.json`
 
 Three sections (`persons`, `relationships`, `sources`) carry overlapping writer sets:
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
-| `relationships` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal) | Mutable; preserve IDs |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `relationships` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal) | Mutable; preserve IDs |
 | `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs. **person-evidence is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description |
 
 `init-project` writes the initial stub persons at project creation;
@@ -299,7 +376,11 @@ the skill to the `persons` writer set: correcting an assertion's
 fact already carrying that assertion's `assertion_id`
 (`tree-materialization-spec.md` §4.4). It adds or removes no person,
 fact, name or ref, and the validator admits only that exact delta, so
-adding an unsourced person or setting `primary` stays refused. The harness's
+adding an unsourced person or setting `primary` stays refused.
+`forget-and-rederive` is the fifth writer of `persons` and `relationships` and
+the only **subtractive** one: `tree_forget` removes a slice of the tree so it can
+be re-derived from records as a practice run. It mints nothing, sources nothing,
+and writes no other section. The harness's
 `test_tree_ownership_table` universal validator enforces this ownership, reading
 the same `docs/specs/schemas/ownership.json` as the research.json half — and only
 inside a paid per-skill eval run, which is the whole of this rule's enforcement

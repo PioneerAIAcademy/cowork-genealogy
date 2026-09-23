@@ -195,6 +195,16 @@ class UsageScan(NamedTuple):
     across both sources. `captures` counts `subagents[]` entries per agent_type.
     The three coverage counters describe attribution reach — see `coverage_line`.
     `problems` holds one message per unreadable file.
+
+    `pair_calls` and `pair_runs` are the same data at (agent_type, tool)
+    granularity, for readers that need to name one pair rather than diff a whole
+    agent (`writer_attribution_report`). They are separate fields, not a finer
+    `used`, because they count different things: `pair_calls` counts INVOCATIONS
+    and comes from the capture blocks alone, while `pair_runs` counts distinct
+    runs and unions both sources — a pair recovered only through #1027
+    `tool_calls` attribution therefore has runs and no calls, which is honest
+    rather than a gap. Summing the two sources into one call count would
+    double-count every capture that `tool_calls` also attributed.
     """
 
     used: dict[str, set[str]]
@@ -205,15 +215,22 @@ class UsageScan(NamedTuple):
     no_field: int  # runs with no `subagents` key at all
     recovered_by_toolcalls: int  # capture-less runs still attributed via tool_calls
     problems: list[str]
+    pair_calls: Counter  # (agent_type, bare tool) -> capture-block invocations
+    pair_runs: dict[tuple[str, str], set[str]]  # same key -> `<slug>/<run stem>` ids
 
 
-def _tools_from_capture(sub: dict[str, Any]) -> set[str]:
-    """Bare tool names a single `subagents[]` capture called, from its turn blocks."""
-    tools: set[str] = set()
+def _tools_from_capture(sub: dict[str, Any]) -> Counter:
+    """Bare tool names a single `subagents[]` capture called, WITH multiplicity.
+
+    A Counter rather than a set so a caller that needs invocation counts has
+    them; a caller that only needs membership iterates it, which yields its keys,
+    so `set().update(...)` over the result is unchanged.
+    """
+    tools: Counter = Counter()
     for turn in sub.get("turns") or []:
         for block in turn.get("blocks") or []:
             if isinstance(block, str) and block.startswith("tool_use:"):
-                tools.add(block.split(":", 1)[1])
+                tools[block.split(":", 1)[1]] += 1
     return tools
 
 
@@ -229,6 +246,8 @@ def scan(paths: list[Path]) -> UsageScan:
     """
     used: dict[str, set[str]] = {}
     captures: Counter = Counter()
+    pair_calls: Counter = Counter()
+    pair_runs: dict[tuple[str, str], set[str]] = {}
     runs = with_captures = empty_captures = no_field = recovered = 0
     problems: list[str] = []
 
@@ -244,6 +263,7 @@ def scan(paths: list[Path]) -> UsageScan:
             # the running totals below, after every read has succeeded.
             file_used: dict[str, set[str]] = {}
             file_captures: Counter = Counter()
+            file_pair_calls: Counter = Counter()
             for sub in subs_list:
                 if not isinstance(sub, dict):
                     continue
@@ -251,7 +271,10 @@ def scan(paths: list[Path]) -> UsageScan:
                 if not agent:
                     continue  # a capture with no agent_type can't be attributed
                 file_captures[agent] += 1
-                file_used.setdefault(agent, set()).update(_tools_from_capture(sub))
+                called = _tools_from_capture(sub)
+                file_used.setdefault(agent, set()).update(called)
+                for tool, n in called.items():
+                    file_pair_calls[(agent, tool)] += n
 
             # #1027 attribution: fold in tool_calls tagged with an agent_type,
             # skipping entries the runlog marked `is_error` — a call the harness
@@ -272,9 +295,18 @@ def scan(paths: list[Path]) -> UsageScan:
             continue
 
         runs += 1
+        # `<slug>/<stem>`, the house run identity (`wiki_failure_report`,
+        # `ranked_read_report`, `compaction_report`, `image_transcribe_report`).
+        # The parent directory alone is the FIXTURE: 39 of the 108 committed
+        # slugs hold more than one run, up to 9, so keying on it would count
+        # fixtures and report them as runs.
+        run_id = f"{path.parent.name}/{path.stem}"
         for agent, tools in file_used.items():
             used.setdefault(agent, set()).update(tools)
+            for tool in tools:
+                pair_runs.setdefault((agent, tool), set()).add(run_id)
         captures.update(file_captures)
+        pair_calls.update(file_pair_calls)
 
         # Bucket on the SHAPE of `subagents`, not on whether any entry was
         # attributable: a non-empty list IS a captured delegation even if a
@@ -292,7 +324,16 @@ def scan(paths: list[Path]) -> UsageScan:
             no_field += 1
 
     return UsageScan(
-        used, captures, runs, with_captures, empty_captures, no_field, recovered, problems
+        used,
+        captures,
+        runs,
+        with_captures,
+        empty_captures,
+        no_field,
+        recovered,
+        problems,
+        pair_calls,
+        pair_runs,
     )
 
 

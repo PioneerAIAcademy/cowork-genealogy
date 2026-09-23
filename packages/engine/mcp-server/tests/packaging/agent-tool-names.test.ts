@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { allToolSchemas } from "../../src/tool-schemas.js";
+import { extractList } from "./frontmatter.js";
 
 // Plugin-agent `tools:` / `disallowedTools:` frontmatter must name every MCP
 // tool under ALL THREE server spellings.
@@ -168,24 +169,6 @@ const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
 const SERVER_PREFIXES = [HARNESS_PREFIX, BRIDGE_PREFIX, LOCAL_PREFIX].sort(
   (a, b) => b.length - a.length,
 );
-
-/** Parse a named block-sequence out of YAML frontmatter. */
-function extractList(text: string, key: string): string[] {
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-  if (!frontmatter) throw new Error("no YAML frontmatter");
-
-  const lines = frontmatter[1].split(/\r?\n/);
-  const start = lines.findIndex((l) => new RegExp(`^${key}:`).test(l));
-  if (start === -1) return [];
-
-  const items: string[] = [];
-  for (let i = start + 1; i < lines.length; i++) {
-    if (/^\S/.test(lines[i]) && !/^\s*#/.test(lines[i])) break; // next top-level key
-    const item = /^\s*-\s+(.+?)\s*$/.exec(lines[i]);
-    if (item) items.push(item[1]);
-  }
-  return items;
-}
 
 function bareName(entry: string): string {
   const prefix = SERVER_PREFIXES.find((p) => entry.startsWith(p));

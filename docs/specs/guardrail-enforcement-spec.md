@@ -204,9 +204,15 @@ Three checks hold it, all free and all running on every push:
 
 - `packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts` — every
   writable section of both schemas has exactly one row; every owner, caller and
-  writer tool resolves to something that ships.
+  writer tool resolves to something that ships; and, in the other direction,
+  every writer tool the shipped plugin grants is named by a row listing that
+  tool. That second direction reads the plugin's own `tools:` / `allowed-tools:`
+  frontmatter and takes its writer-tool vocabulary from the engine, so it cannot
+  be satisfied by the manifest agreeing with itself. A non-owner agent writer is
+  declared in `agentCallers`, which no plane reads as a permission —
+  `research-schema-spec.md` §4, "Who actually writes a row".
 - `eval/harness/tests/unit/test_ownership_manifest.py` — the enforced writer sets
-  still equal the pre-promotion literals, pasted in verbatim, plus the three
+  still equal the pre-promotion literals, pasted in verbatim, plus the four
   declared deltas below. Each delta is a named constant a reviewer can look at.
 - `eval/harness/tests/unit/test_universal_validators.py` — the *validators* still
   behave, called directly. They have to be, because `pyproject.toml` sets

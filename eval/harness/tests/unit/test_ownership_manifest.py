@@ -10,9 +10,9 @@ this module asserts the manifest still produces them. Deleting an owner reddens
 this test. Adding one reddens it too, which is the point: a widening is a
 decision, and it should have to be written down here.
 
-Three deltas are declared explicitly below — one newly-enforced section, one
-widening, one narrowing — each with the reason it was made and the measurement
-behind it. They are the only three.
+Four deltas are declared explicitly below — one newly-enforced section, two
+widenings (one per artifact), one narrowing — each with the reason it was made
+and the measurement behind it. They are the only four.
 
 **This is not `make harness-test`'s ownership result.** `pyproject.toml` sets
 `testpaths = ["tests"]`, so `validators/test_universal.py::test_ownership_table`
@@ -66,7 +66,7 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
 }
 
 
-# ── The two deltas, and why each was made ──────────────────────────────────
+# ── The four deltas, and why each was made ─────────────────────────────────
 
 #: `localities` had a declared owner from the day the section shipped and was
 #: never once evaluated: the check iterated `REQUIRED_SECTIONS`, which the
@@ -100,6 +100,30 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 
 
+#: tree `persons` and `relationships` gain `forget-and-rederive`. It holds
+#: `tree_forget` in its `allowed-tools`, and both rows list that tool among their
+#: `writerTools`, so it was a writer of both sections that no row named — one of
+#: the nine (holder, writer tool) pairs the new packaging guard finds
+#: (`ownership-manifest.test.ts`, "names every plugin holder of a writer tool").
+#: It is a `skill:`, so it goes straight into `callers` rather than the
+#: `agentCallers` the other eight needed.
+#:
+#: A widening cannot newly fail a test, and this one cannot fail anything at all:
+#: the skill has no unit suite (it is in `RUNLOG_GATE_EXEMPT_SKILLS` for exactly
+#: that reason), so no run is graded against this writer set.
+TREE_WIDENED: dict[str, set[str]] = {
+    "persons": {"forget-and-rederive"},
+    "relationships": {"forget-and-rederive"},
+}
+
+
+def expected_tree_owners() -> dict[str, set[str]]:
+    expected = {k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()}
+    for section, added in TREE_WIDENED.items():
+        expected[section] |= added
+    return expected
+
+
 def expected_research_owners() -> dict[str, set[str]]:
     expected = {k: set(v) for k, v in FROZEN_OWNERSHIP_TABLE.items()}
     for section, added in WIDENED.items():
@@ -117,9 +141,7 @@ def test_research_owners_match_the_frozen_tables():
 
 
 def test_tree_owners_match_the_frozen_table():
-    assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == {
-        k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()
-    }
+    assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == expected_tree_owners()
 
 
 def test_the_only_newly_enforced_section_is_localities():

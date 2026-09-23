@@ -1,5 +1,5 @@
 {
-  "$comment": "Who may write each section of research.json and tree.gedcomx.json. Keyed on the union of both schemas' top-level properties plus the `plan_items` pseudo-section research_append's `section` enum defines, so neither vocabulary can leave a hole. One row per (artifact, section). Contract and adjudication record: docs/specs/research-schema-spec.md section 4 and docs/specs/guardrail-enforcement-spec.md. Shape and exhaustiveness are checked by packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts; the enforced writer sets are frozen by eval/harness/tests/unit/test_ownership_manifest.py.",
+  "$comment": "Who may write each section of research.json and tree.gedcomx.json. Keyed on the union of both schemas' top-level properties plus the `plan_items` pseudo-section research_append's `section` enum defines, so neither vocabulary can leave a hole. One row per (artifact, section). Contract and adjudication record: docs/specs/research-schema-spec.md section 4 and docs/specs/guardrail-enforcement-spec.md. Shape and exhaustiveness are checked by packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts, which runs BOTH directions: every name a row lists must resolve to something that ships, and every writer tool the shipped plugin grants must be named by a row listing that tool. The enforced writer sets are frozen by eval/harness/tests/unit/test_ownership_manifest.py. Three caller fields, read together as the permitted set by that second direction and by nothing else: `callers` is who may write, and is the only one the unit plane reads (harness/ownership.py:writer_sets); `hookCallers` names the agent the plugin PreToolUse hook permits on a row claiming the hook plane; `agentCallers` records the non-owner AGENTS that write the row, which the unit plane cannot see and must not be given. An agent in `callers` is that row's own owner or nothing.",
   "version": 1,
   "enforcementPlanes": {
     "unit": "eval/harness/validators/test_universal.py — two checks. test_ownership_table diffs before/after project state against the calling skill's SKILL.md frontmatter name and cannot see an agent caller. test_no_out_of_lane_section_writes (issue #2022) records the shipped hook's own owner_denied verdict from skill_runner's PreToolUse hook, so since 2026-09-02 this plane DOES see the agent caller, and denies rather than merely detecting. Both run only inside a paid per-skill eval run.",
@@ -125,6 +125,9 @@
         "skill:search-images",
         "skill:record-extraction"
       ],
+      "agentCallers": [
+        "agent:search-images"
+      ],
       "writerTools": [
         "research_append"
       ],
@@ -147,6 +150,10 @@
         "skill:search-images",
         "skill:record-extraction"
       ],
+      "agentCallers": [
+        "agent:record-extractor",
+        "agent:search-images"
+      ],
       "writerTools": [
         "research_log_append"
       ],
@@ -168,6 +175,9 @@
         "skill:record-extraction",
         "skill:citation"
       ],
+      "agentCallers": [
+        "agent:record-extractor"
+      ],
       "writerTools": [
         "research_append",
         "extraction_append"
@@ -187,6 +197,9 @@
       "owner": "skill:record-extraction",
       "callers": [
         "skill:record-extraction"
+      ],
+      "agentCallers": [
+        "agent:record-extractor"
       ],
       "writerTools": [
         "research_append",
@@ -352,7 +365,13 @@
         "skill:init-project",
         "skill:tree-edit",
         "skill:proof-conclusion",
-        "skill:person-evidence"
+        "skill:person-evidence",
+        "skill:forget-and-rederive"
+      ],
+      "agentCallers": [
+        "agent:record-extractor",
+        "agent:person-evidence",
+        "agent:proof-conclusion"
       ],
       "writerTools": [
         "project_create",
@@ -381,7 +400,12 @@
         "skill:init-project",
         "skill:tree-edit",
         "skill:proof-conclusion",
-        "skill:person-evidence"
+        "skill:person-evidence",
+        "skill:forget-and-rederive"
+      ],
+      "agentCallers": [
+        "agent:person-evidence",
+        "agent:proof-conclusion"
       ],
       "writerTools": [
         "project_create",
@@ -407,6 +431,10 @@
         "skill:tree-edit",
         "skill:proof-conclusion",
         "skill:record-extraction"
+      ],
+      "agentCallers": [
+        "agent:record-extractor",
+        "agent:proof-conclusion"
       ],
       "writerTools": [
         "project_create",
