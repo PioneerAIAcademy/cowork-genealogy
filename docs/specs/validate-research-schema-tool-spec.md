@@ -112,10 +112,12 @@ The rule set lives in `validateProject`
 specified by `docs/specs/research-schema-spec.md`. This spec does not
 restate them.
 
-The rule set is exercised by 209 cases in
-`tests/validation/validator.test.ts` — the count `vitest` reports, not
-the `it(` line count, since the file builds many of its cases in `for`
-loops and `it.each` blocks.
+The rule set is exercised by 215 cases in
+`tests/validation/validator.test.ts` (measured 2026-09-23 — the count
+`vitest` reports, not the `it(` line count, since the file builds many of
+its cases in `for` loops and `it.each` blocks). The figure tracks a file
+that grows with the rule set and nothing checks it, so re-measure rather
+than trusting it: `npx vitest run tests/validation/validator.test.ts`.
 
 ## 5. Consumers
 
