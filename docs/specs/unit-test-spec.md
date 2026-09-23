@@ -351,7 +351,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "skill": {
           "type": "string",
-          "description": "Directory name under packages/engine/plugin/skills/. Must match an existing skill."
+          "description": "Directory name under packages/engine/plugin/skills/, OR — on a direct-agent test (one carrying `input.delegation`) — the basename of a plugin-agent file under packages/engine/plugin/agents/. Must match an existing skill directory or agent file. An agent-keyed suite such as gps-mentor has no skill directory at all; see unit-test-spec.md §5.2.1."
         },
         "name": {
           "type": "string",
@@ -640,6 +640,36 @@ On a direct test the harness:
 - fills the judge's `{user_message}` slot with the delegation and its
   `{skills_invoked}` slot with the spawned agent.
 
+**What `test.skill` names.** A skill directory under
+`packages/engine/plugin/skills/`, **or** a plugin-agent file of that name under
+`packages/engine/plugin/agents/`. For a paired skill both exist and the field is
+unambiguous. For an **agent-keyed suite** — an agent with no routing skill at
+all, `gps-mentor` being the first — only the agent file exists, and the
+runnability gate falls back to it. That fallback is gated on the test being
+direct: on a routed test a missing skill directory is still a typo worth
+catching, and falling through to a same-named agent would grade the test by a
+route it never asked for.
+
+A separate `test.agent` field was considered and rejected: the direct arm
+already resolves the agent by `spec.skill` and decides the positive outcome on
+`spec.skill in agents_spawned`, so a new field would add persisted surface to
+two schema trees and every run log for no behavioural gain, and leave two fields
+that must never disagree. **Do not satisfy the gate by creating a stub skill
+directory instead** — `scripts/package-plugin.mjs` walks `skills/` wholesale, so
+a stub ships in the plugin zip as a user-triggerable skill competing with the
+agent's own description, while `stage_skills=not spec.is_direct` never stages it
+into the run; it would exist only to fool the gate. **And do not point
+`test.skill` at a neighbouring skill**, which grades the agent under another
+skill's rubric, snapshot and eval slot.
+
+**An agent-keyed suite's snapshot embeds the agent body.** `build_snapshot`
+embeds `packages/engine/plugin/agents/<skill>.md` whenever one exists — not only
+when a SKILL.md names it via `@plugin:`, since there is no SKILL.md to scan —
+and `check_runlogs.py` marks the suite touched when that file changes. Without
+both, editing the agent leaves the suite's run log **active** and its grades are
+quoted forward against prose that changed. For a paired skill the `@plugin:`
+scan already embeds the same path, so neither rule moves an existing snapshot.
+
 **Never reach the agent with `--agent` / `extra_args={"agent": …}`.** The shipped
 ownership hook keys on the **presence** of `agent_id`, and a session started that
 way carries `agent_type` but no `agent_id` — so it reads as the main thread and
@@ -760,8 +790,10 @@ Optional object overriding the harness's default execution limits. All fields ar
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
 and wall-clock budget. If the callee has its own unit suite, that spends budget
 on coverage which already exists. Naming it here makes the PreToolUse hook
-record the delegation in `skills_invoked`, deny the launch, and let the run
-**continue** — so the caller still finishes its own logging and summary. (This
+deny the launch and let the run **continue** — so the caller still finishes its
+own logging and summary. A `Skill` call is also recorded in `skills_invoked`; a
+stubbed agent's spawn is recorded in `builtin_tool_calls` only, so assert either
+with `handoffs`. (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
 test still has work left.)
@@ -832,10 +864,17 @@ callee, `stub_skills` to deny it.
 > no per-skill allowlist (`permission_mode="bypassPermissions"` with no
 > `allowed_tools`), so a real session holds every tool and the callee works.
 
-Assert the hand-off with a deterministic `skills_invoked` validator, not the
-judge, which reads a transcript and can misread it. Note the limit: the harness
-records the skill **name** only, not the `args` string the caller composed, so
-no validator can currently assert *what* crossed the seam.
+Assert the hand-off with a deterministic validator reading `handoffs`
+(`skill_runner.py`), not the judge, which reads a transcript and can misread it.
+`handoffs` counts a `Skill` call and a main-thread agent spawn alike, so the
+assertion survives the callee's conversion from a skill to an agent. Note the
+limit: for a `Skill` call the harness records the skill **name** only, not the
+`args` string the caller composed, so no validator can currently assert *what*
+crossed a `Skill` seam.
+
+A `stub_skills` entry may name an agent with no skill directory; the hook then
+denies that agent's main-thread spawn the same way it denies a `Skill` call. A
+name that is still a skill is stubbed at its `Skill` call only.
 
 ### 5.8 `intentionally_invalid`
 
