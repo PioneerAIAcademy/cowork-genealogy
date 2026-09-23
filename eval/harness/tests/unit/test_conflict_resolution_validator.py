@@ -69,6 +69,8 @@ check_identity_first = getattr(
     getattr(_VALIDATOR, "test_resolution_precedes_identity", None),
 )
 
+check_naming_from_wiki = _VALIDATOR.test_naming_system_read_from_wiki
+
 _REPO = Path(__file__).resolve().parents[4]  # eval/harness/tests/unit -> repo root
 _CORPUS = sorted(
     p for p in glob.glob(str(_REPO / "eval/runlogs/unit/conflict-resolution/v1_*.json"))
@@ -2275,3 +2277,95 @@ def test_v4_the_quote_does_not_end_at_the_name_it_accuses():
         "the quote stops at the accused name, so it shows the run naming one "
         f"person when it named two:\n{quoted}"
     )
+
+
+# --- V: the naming-customs fetch is observed, not merely instructed (#2254) ---
+#
+# Proven to fail more than one way, per CLAUDE.md "A new lint must be proven to
+# fail": no wiki call at all, a wiki_search-only run, and a wiki_read of some
+# OTHER page. The last is the one that matters most -- the skill already reads
+# wiki pages elsewhere, so a validator that merely counted wiki_read calls would
+# pass a run that never fetched a naming page.
+#
+# And the other direction: an untagged test must SKIP, and a legitimate variant
+# (a different country's page) must PASS, or this becomes a check that gets
+# skip-marked the first time someone adds a Spanish fixture.
+
+_TAGGED = {"tags": ["identity-conflict", "naming-from-wiki"]}
+
+
+def _norway_read():
+    return {
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"url": "https://www.familysearch.org/en/wiki/Norway_Naming_Customs"},
+    }
+
+
+def test_naming_fetch_fails_when_no_wiki_call_at_all():
+    with pytest.raises(AssertionError) as e:
+        check_naming_from_wiki(tool_calls=[], test=_TAGGED)
+    assert "_Naming_Customs" in str(e.value)
+
+
+def test_naming_fetch_fails_when_only_wiki_search_was_called():
+    calls = [{"tool": "mcp__genealogy__wiki_search", "args": {"query": "norwegian patronymic"}}]
+    with pytest.raises(AssertionError):
+        check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_fails_when_wiki_read_hit_a_different_page():
+    # The skill reads other wiki pages; counting wiki_read alone would pass this.
+    calls = [{
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"url": "https://www.familysearch.org/en/wiki/Norway_Census"},
+    }]
+    with pytest.raises(AssertionError) as e:
+        check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+    assert "Norway_Census" in str(e.value), "the message must name what WAS fetched"
+
+
+def test_naming_fetch_fails_when_url_key_is_missing():
+    calls = [{"tool": "mcp__genealogy__wiki_read", "args": {}}]
+    with pytest.raises(AssertionError):
+        check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_passes_on_the_norway_page():
+    check_naming_from_wiki(tool_calls=[_norway_read()], test=_TAGGED)
+
+
+def test_naming_fetch_passes_on_another_country_page():
+    # The legitimate variant. Deliberately country-agnostic so a Spanish or
+    # Portuguese fixture needs no validator edit.
+    calls = [{
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"url": "https://www.familysearch.org/en/wiki/Spain_Naming_Customs"},
+    }]
+    check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_passes_when_the_naming_page_is_one_call_among_several():
+    calls = [
+        {"tool": "mcp__genealogy__place_search", "args": {"placeName": "Ringsaker"}},
+        _norway_read(),
+    ]
+    check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_skips_on_an_untagged_test():
+    # pytest.skip() raises from BaseException, not Exception, so catching
+    # Exception here would let the skip propagate and mark THIS test skipped --
+    # green, asserting nothing. Caught deliberately as BaseException and the
+    # type is asserted, so the gate is proven to be tag-gated rather than
+    # silently inert.
+    with pytest.raises(BaseException) as e:
+        check_naming_from_wiki(tool_calls=[], test={"tags": ["identity-conflict"]})
+    assert type(e.value).__name__ == "Skipped", (
+        f"expected a pytest skip on an untagged test, got {type(e.value).__name__}"
+    )
+
+
+def test_naming_fetch_skips_when_tags_are_absent_entirely():
+    with pytest.raises(BaseException) as e:
+        check_naming_from_wiki(tool_calls=[], test={})
+    assert type(e.value).__name__ == "Skipped"

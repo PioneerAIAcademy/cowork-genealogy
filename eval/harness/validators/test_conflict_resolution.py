@@ -1061,3 +1061,41 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
 
     if observations:
         raise AssertionError("\n".join(observations))
+
+
+# --- Naming system read from the wiki, not from memory (#2254) ---------
+
+def _wiki_read_calls(tool_calls) -> list[dict]:
+    """wiki_read tool calls this run, each carrying the response the mock
+    served (mock_mcp.py sets `entry["response"]`)."""
+    return [tc for tc in (tool_calls or []) if "wiki_read" in (tc.get("tool") or "")]
+
+
+def test_naming_system_read_from_wiki(tool_calls, test):
+    """Tag-gated (`naming-from-wiki`): an identity conflict turning on a
+    patronymic must fetch the jurisdiction's `{Country}_Naming_Customs` page
+    rather than apply a remembered rule (ADR-0012, issue #2254).
+
+    The rule and its end date were removed from `conflict-resolution/SKILL.md`
+    and replaced by an unconditional pre-work fetch, so a run that reaches the
+    right answer WITHOUT the call is reaching it from the model's own
+    knowledge -- which is exactly what the wiki move exists to stop. ADR-0012
+    requires the fetch be observed, not merely instructed.
+
+    Asserts the call happened and that its URL is a `_Naming_Customs` page;
+    it deliberately does not assert WHICH country, so the same validator
+    covers a Norwegian, Spanish or Portuguese fixture without edits.
+    """
+    if "naming-from-wiki" not in (test.get("tags") or []):
+        pytest.skip("not a naming-from-wiki test")
+
+    reads = _wiki_read_calls(tool_calls)
+    naming_reads = [
+        tc for tc in reads
+        if "_Naming_Customs" in ((tc.get("args") or {}).get("url") or "")
+    ]
+    assert naming_reads, (
+        "naming-from-wiki test must call wiki_read for a {Country}_Naming_Customs "
+        "page before ruling on a patronymic; wiki_read urls seen: "
+        f"{[(tc.get('args') or {}).get('url') for tc in reads]}"
+    )
