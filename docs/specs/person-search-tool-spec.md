@@ -23,7 +23,7 @@ place_search(query: "Kentucky")              // (optional) confirm an ambiguous 
   ↓
 person_search({ givenName, surname, ... })   // find candidate tree persons
   ↓  user picks one → personId (e.g. "LZJW-C31")
-person_read({ personId, relatives: true })   // expand to parents, spouse, children
+person_read({ personId, relatives: true })   // expand to parents, siblings, spouse, children
 ```
 
 Sibling to `record_search`: that tool searches indexed historical
