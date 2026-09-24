@@ -111,10 +111,15 @@ async function readAnnotationAt(filePath: string): Promise<AnnotationFile | null
 
 function rawToRunLog(raw: unknown): RunLogFile {
   // Pass-through with a shallow type assertion — nothing validates at read
-  // time. `lib/schema/run-log.ts` is generated from the JSON Schema but has no
-  // importers, and wiring it now would reject the pre-v3 logs still on
-  // in-flight branches. The harness validates on write (`validate_run_log`),
-  // which is where a malformed envelope is actually caught.
+  // time, and no Zod schema for the run log is generated: `gen-zod` stopped
+  // emitting one because nothing imported it (lead ruling 2026-09-18). Wiring
+  // read-time validation was the alternative and was rejected — it would reject
+  // the pre-v3 and pre-`outcome` logs still on in-flight branches, for a check
+  // the write side already performs. The harness validates on write
+  // (`validate_run_log`), which is where a malformed envelope is actually
+  // caught. Re-generating the schema is a two-line change to `SCHEMAS` in
+  // `scripts/gen-zod.ts`; whoever does it must handle both of those legacy
+  // shapes.
   return raw as RunLogFile;
 }
 
