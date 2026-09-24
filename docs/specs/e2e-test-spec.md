@@ -1267,16 +1267,16 @@ Independent of both guards, the run-level roll-up itself —
 `recall_required`, `recall_total`, `verdict` — is derived by the harness
 from `per_finding` on **every** graded run, inside
 `apply_component_derivation`, whether or not either guard changed a label
-(issue #2849: neither guard fires on a fact-only fixture, so the recompute
-used to be skipped and the model's self-reported roll-up shipped
+(neither guard fires on a fact-only fixture, so without this step the
+recompute was skipped and the model's self-reported roll-up shipped
 unchecked). When the recompute disagrees with what the model reported, the
 persisted `judge_output` carries `verdict_derivation`
 (`{"model": {...}, "derived": {...}}`, naming only the fields that
 changed — `verdict`, `recall_required` and/or `recall_total`, the two
 recall fractions compared with a `0.011` tolerance so a model's rounded
 `0.67` for an exact 2/3 is not recorded as a disagreement). Runs committed
-before this change are not rewritten; see issue #2849 for the
-reproduction against the committed corpus.
+before this derivation was added are not rewritten; 19 of 188 committed
+runs carried a verdict the deterministic layer disagrees with.
 
 ### 7.2.1 The three axes
 
