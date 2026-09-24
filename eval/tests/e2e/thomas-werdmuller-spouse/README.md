@@ -58,22 +58,53 @@ unsourced 14 January 1735 death. Her christening is `1:1:66JR-D6D2`, 8 Sep
 subject by thirty-one years, Regula Steiner cannot be a successor wife either,
 closing the one route by which a second family could have been legitimate.
 
-The draft was also right that the naming pool is narrow. A concrete
-alternative carrier exists: **Thomas Werdmüller baptised 5 May 1668 at Zürich,
+The draft was also right that the naming pool is narrow, and the register
+proves it directly: a **third** couple, Thomas Werdmüller and Elsbeth Esher,
+baptised a Heinrich on 20 February 1696 in the same parish (`1:1:66JP-SL8F`),
+inside the Regula run. So at least three distinct Thomas Werdmüller fathers
+were active in Zürich in those years. A concrete alternative carrier for the
+Regula family also exists: **Thomas Werdmüller baptised 5 May 1668 at Zürich,
 son of Heinrich Werdmüller and Magdalena Escher** (`1:1:66JR-XK9C`) — aged 24
-at the Regula family's first child and 44 at its last. The subject (b. 1657,
-d. 1704) fits neither end. This is a candidate, not a proven identification;
-no attempt was made to close it.
+at its first child and 44 at its last. The subject, christened 22 February
+1657, would have been **35** at the first child, which is an unremarkable age
+to father one: it is the **last** end alone that excludes him, not both. This
+is a candidate, not a proven identification; no attempt was made to close it.
 
 **Searched and came up empty.** No marriage record for Thomas Werdmüller and
 Regula Steiner is indexed — searched collection 4138674 and unrestricted,
 Zürich, 1680-1700. No burial record for the subject himself at Zürich in
-November 1704 — searched Werdmüller deaths and burials 1700-1710 — so the
-tree's death date rests on the starting tree rather than on an indexed record.
-That is the load-bearing weakness in the refutation and a reviewer should know
-it: the 1712 disproof assumes the tree's 1704 death. The twenty-year
-concurrency argument stands without it, since Dorothea's 1735 burial is
-independently evidenced.
+November 1704 — searched Werdmüller deaths and burials 1700-1710. And **no
+indexed baptism anywhere in 1686-1710 names Dorothea von Muralt as a mother**,
+so the subject has no documented children at all. That last absence cuts both
+ways and is reported rather than buried: it is what a true-match reading would
+predict, and it also means the cleanest form of this refutation — two families
+running in parallel under distinct mothers — cannot actually be shown. The
+concurrency here is inferred from one couple's twenty-year cadence, not
+demonstrated against the subject's own family.
+
+**Where the refutation is weakest, stated plainly.** Both legs lean on the same
+unsourced tree, and an earlier draft of this note wrongly claimed one of them
+escaped it. The 1712 baptism disproves the hint only if the subject died in
+1704, and that death carries no source. Dorothea's 1735 burial does **not**
+rescue the argument independently: the index gives a name, a date and a couple
+tie to a person recorded only as "Thomas Werdmüller" — no age, no parents — so
+reading it as *this* subject's wife rests on the two-day gap against the tree's
+own unsourced 14 January 1735 death. A **second** Thomas Werdmüller and
+Dorothea couple was baptising in the same parish in 1711, 1713 and 1715
+(`1:1:66J5-12HM`, `1:1:66J5-1ZC1`, `1:1:66JR-4448`), and that Dorothea's maiden
+name is not indexed, so nothing in the burial entry distinguishes the two
+women. What carries the call regardless is the benchmark's own frame: the agent
+is handed the starting tree, which asserts the 1704 death, and against that
+tree the 1712 baptism is decisive.
+
+**The Geneanet check named in the issue was attempted and could not be made.**
+Issue #2321 points at the tree's second source, the compiled Zürich genealogy
+at `gw.geneanet.org/uezuercher`, as the quickest way to list which Thomas
+Werdmüllers were alive in 1698 — which is exactly what would separate the
+candidate carriers above and say whose Dorothea was buried in 1735. The site
+returns **403 to automated fetching** (tried twice, 2026-09-24). It is free and
+needs no image access, so a reviewer with a browser can settle both soft spots
+in a few minutes; it is compiled work and would be corroboration, never proof.
 
 **Retrieval was tool-assisted** (spec §3.6): `record_read` and `record_search`
 against live FamilySearch via `packages/engine/mcp-server/dev/try-*.ts`. The
