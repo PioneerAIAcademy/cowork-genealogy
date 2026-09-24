@@ -113,9 +113,14 @@ function rawToRunLog(raw: unknown): RunLogFile {
   // Pass-through with a shallow type assertion — nothing validates at read
   // time, and no Zod schema for the run log is generated: `gen-zod` stopped
   // emitting one because nothing imported it (lead ruling 2026-09-18). Wiring
-  // read-time validation was the alternative and was rejected — it would reject
-  // the pre-v3 and pre-`outcome` logs still on in-flight branches, for a check
-  // the write side already performs. The harness validates on write
+  // read-time validation was the alternative and was rejected. The logs it
+  // would reject are NOT a transient in-flight population — they are the
+  // committed corpus this UI reads. Measured 2026-09-24 over the 167 run logs
+  // under `eval/runlogs/unit/`: 28 are still `schema_version: 2` where
+  // `run-log.schema.json` pins `const: 3`, and 99 carry at least one
+  // `validators.results[]` entry with no `outcome`, which that schema requires
+  // (added by PR #2422, merged 2026-09-10). Wiring the schema in would reject
+  // them on read, for a check the write side already performs. The harness validates on write
   // (`validate_run_log`), which is where a malformed envelope is actually
   // caught. Re-generating the schema is a two-line change to `SCHEMAS` in
   // `scripts/gen-zod.ts`; whoever does it must handle both of those legacy

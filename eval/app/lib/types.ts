@@ -1,9 +1,12 @@
 /**
  * Shared TypeScript types for the eval app.
  *
- * Mirrors the JSON Schemas under docs/specs/schemas/. The Zod schemas
- * in lib/schema/ (generated) are the runtime validators; this file is
- * the static-typing surface.
+ * Mirrors the JSON Schemas under docs/specs/schemas/. This file is the
+ * static-typing surface. The generated Zod schemas in lib/schema/ are the
+ * runtime validators for the unit-test and annotation files ONLY — run logs
+ * and MCP fixtures have no generated validator (`scripts/gen-zod.ts` stopped
+ * emitting them because nothing imported them), so `RunLogFile` and
+ * `McpFixtureFile` below are typing-only and nothing checks them at read time.
  *
  * Run log schema v3: one envelope per harness invocation, wrapping a
  * list of per-test entries. See docs/plan/eval-runlog-versioning.md.
