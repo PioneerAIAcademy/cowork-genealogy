@@ -48,23 +48,21 @@ customs, governance, laws, and regulations.
 - Migration routes followed predictable paths: ports of entry,
   canal routes, railroad lines, overland trails. Knowing the route
   suggests intermediate locations where records may exist.
-- **Starting 1820, passenger manifests list ALL passengers including
-  infants and young children.** U.S. customs passenger lists name
-  every individual aboard in their own right — name, age, sex,
-  occupation, and country of origin (with still more detail after the
-  1891 Immigration Act). Do NOT tell a researcher that a young child
-  "may not appear" on a manifest, "was rarely listed separately," or
-  "traveled under a parent's entry" — all of these are factually
-  wrong for U.S. arrivals from 1820 on. (Canadian passenger lists, by
-  contrast, are the rare case — scarce before 1865.) Always direct the
-  researcher to pull the full manifest page to find the whole
-  family group, rather than searching only for the child's name.
-  This holds even when a child clearly emigrated accompanied by a
-  parent: say "accompanied by [parent]" or "traveling with the family,"
-  never "traveled under [parent]'s entry" or "did not emigrate
-  independently" — both of those phrasings imply the child has no
-  separate line on the manifest, which is the same factual error in
-  different words.
+- U.S. customs passenger lists from 1820 onward and their field
+  structure are documented on `United_States_Emigration_and_Immigration`,
+  fetched live in Step 3. Canadian passenger records are documented on
+  `Canada_Emigration_and_Immigration` (scarce before 1865). **Do NOT
+  tell a researcher that a young child "may not appear" on a manifest,
+  "was rarely listed separately," or "traveled under a parent's entry"
+  — all of these are factually wrong for U.S. arrivals from 1820 on.**
+  Always direct the researcher to pull the full manifest page to find
+  the whole family group, rather than searching only for the child's
+  name. This holds even when a child clearly emigrated accompanied by
+  a parent: say "accompanied by [parent]" or "traveling with the
+  family," never "traveled under [parent]'s entry" or "did not
+  emigrate independently" — both of those phrasings imply the child
+  has no separate line on the manifest, which is the same factual
+  error in different words.
 - Timeline gaps (periods with no documented events) should prompt
   research in unexpected locations. The absence of records where
   expected is itself a clue that the person may have moved.
@@ -107,10 +105,12 @@ customs, governance, laws, and regulations.
 
 ### 5. Legal and governmental factors
 
-- Civil registration start dates vary widely (France 1792, England
-  1837, various US states 1860-1920). Before civil registration,
-  church records are usually the earliest surviving record of a
-  vital event, and are original sources.
+- Civil registration start dates vary by jurisdiction. The skill
+  fetches the jurisdiction's wiki page (`{Country}_Civil_Registration`
+  or `{State}_Vital_Records`, e.g. `France_Civil_Registration`,
+  `England_Civil_Registration`) live in Step 3 to confirm the exact
+  date. Before civil registration, church records are usually the
+  earliest surviving record of a vital event, and are original sources.
 - Census questions changed over time. Each census year collected
   different information, which determines what you can and cannot
   learn from it.
@@ -147,12 +147,13 @@ customs, governance, laws, and regulations.
   Mormon Trail migrations from Nauvoo to Utah) and kept separate
   record systems — church membership, ward, and emigration
   records — distinct from civil vital records. This distinction
-  did not end when Utah became a territory in 1850: Utah had no
-  statewide vital registration requirement until 1905, so LDS
-  church records remained the primary — often the only — record
-  of births, blessings, and burials for decades afterward. Search
-  LDS church records as a distinct record set, not just civil
-  records, for this population, especially before 1905.
+  did not end when Utah became a territory in 1850: the skill
+  fetches `Utah_Vital_Records` live in Step 3 to confirm when
+  statewide vital registration began. LDS church records remained
+  the primary — often the only — record of births, blessings, and
+  burials for decades before that requirement. Search LDS church
+  records as a distinct record set, not just civil records, for
+  this population.
 
 ### 7. Military factors
 
