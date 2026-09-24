@@ -38,7 +38,10 @@ children in the same Zürich parish across twenty years**: 4 Aug 1692
 (`1:1:66JR-8GWB`), 19 Aug 1696 (`1:1:66JR-FL1K`), 27 Mar 1698 — the hinted
 entry (`1:1:66JR-ZV3G`), 23 Jul 1702 (`1:1:66JR-CYCD`), Sep 1705
 (`1:1:66JR-6N8J`), 30 Jul 1707 (`1:1:66J5-RH8N`) and 21 Apr 1712
-(`1:1:66JR-7TSH`). That cadence is a continuous marital family, which is what
+(`1:1:66JR-7TSH`). The index spells the parents inconsistently across that run — the mother is
+"Rägula Striner" in 1694 and "Regel Steiner" in 1705, the father "Tomas" in
+1707 — which is ordinary register orthography, not a sign of separate couples.
+That cadence is a continuous marital family, which is what
 rules out the reading the draft could not exclude: an isolated illegitimate
 baptism naming both parents. The **disproving record is the 1712 baptism** —
 the same couple still baptising seven and a half years after the subject died
