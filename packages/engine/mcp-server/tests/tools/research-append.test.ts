@@ -5498,10 +5498,12 @@ describe("research_append (composite persist + enforcement)", () => {
     repository,
     ...extra,
   });
-  /** A schema-valid assertion without id/source_id, citing `recordId`. */
-  const reuseAssertionOp = (recordId: string) => {
+  /** A schema-valid assertion without id/source_id, citing `recordId`. Pass a
+   *  `factType` other than the fixtures' `birth` when the record already has one,
+   *  or the §3.4.3 re-extraction guard refuses the append. */
+  const reuseAssertionOp = (recordId: string, factType = "birth") => {
     const { source_id: _s, ...rest } = noId(validAssertion("x"));
-    return { ...rest, record_id: recordId };
+    return { ...rest, record_id: recordId, fact_type: factType };
   };
 
   it("created: no existing source for the record_id → S created, sourceReuse echoed", async () => {
@@ -5529,7 +5531,7 @@ describe("research_append (composite persist + enforcement)", () => {
       sourceDescription: { title: "ignored — reuse wins" },
       ops: [
         { section: "sources", op: "append", entry: reuseSourceOp("NARA", { notes: "refined on re-extraction" }) },
-        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1", "death") },
       ],
     });
     expect(r.ok).toBe(true);
@@ -5566,7 +5568,7 @@ describe("research_append (composite persist + enforcement)", () => {
       projectPath: dir,
       ops: [
         { section: "sources", op: "append", entry: reuseSourceOp("NARA", { transcription: "first half of the page" }) },
-        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1", "death") },
       ],
     });
     expect(r.ok).toBe(true);
@@ -5583,7 +5585,7 @@ describe("research_append (composite persist + enforcement)", () => {
       projectPath: dir,
       ops: [
         { section: "sources", op: "append", entry: reuseSourceOp("  nara ") },
-        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1", "death") },
       ],
     });
     expect(r.ok).toBe(true);
@@ -5653,7 +5655,7 @@ describe("research_append (composite persist + enforcement)", () => {
       projectPath: dir,
       ops: [
         { section: "sources", op: "append", entry: reuseSourceOp("Ancestry") },
-        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1", "death") },
       ],
     });
     expect(a.ok).toBe(true);
@@ -5683,7 +5685,7 @@ describe("research_append (composite persist + enforcement)", () => {
       projectPath: dir,
       ops: [
         { section: "sources", op: "append", entry: reuseSourceOp("NARA") },
-        { section: "assertions", op: "append", entry: reuseAssertionOp("1:1:MXYZ-TP4") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("1:1:MXYZ-TP4", "death") },
       ],
     });
     expect(r.ok).toBe(true);
@@ -5703,6 +5705,366 @@ describe("research_append (composite persist + enforcement)", () => {
     if (!r.ok || !("results" in r)) return;
     expect(r.sourceReuse).toBeUndefined();
     expect(r.sourceDescriptionId).toBe("S1");
+  });
+
+  // ── §3.4.3: re-extraction guard ──
+
+  describe("§3.4.3 re-extraction guard", () => {
+    const REC = "ark:/61903/1:1:ABCD-123";
+    /** One extracted fact on REC under log_001, keyed by persona. */
+    const extracted = (
+      id: string,
+      persona: string | null,
+      role: string,
+      factType: string,
+      value: string,
+      over: Record<string, unknown> = {},
+    ) => ({
+      id,
+      source_id: "src_001",
+      record_id: REC,
+      record_role: role,
+      record_persona_id: persona,
+      log_entry_id: "log_001",
+      fact_type: factType,
+      value,
+      information_quality: "primary",
+      informant: "unknown",
+      informant_proximity: "official_duty",
+      record_basis: "stated",
+      extracted_for_question_ids: [],
+      ...over,
+    });
+    const D17_FACTS = ["name", "birth", "death", "residence", "occupation", "religion"] as const;
+    /** The D17 project: 12 assertions for one record on src_001, all under log_001, personas set. */
+    function d17Research() {
+      const r = sidecarResearch();
+      r.assertions = [
+        ...D17_FACTS.map((f, i) => extracted(`a_${String(i + 1).padStart(3, "0")}`, "p_1", "principal", f, `${f} of John`)),
+        ...D17_FACTS.map((f, i) => extracted(`a_${String(i + 7).padStart(3, "0")}`, "p_2", "spouse", f, `${f} of Mary`)),
+      ];
+      return r;
+    }
+    /** The same facts re-extracted — reworded values, same log entry, no id/source_id. */
+    const d17Rerun = () =>
+      [
+        ...D17_FACTS.map((f) => extracted("x", "p_1", "principal", f, `John's ${f}, reworded`)),
+        ...D17_FACTS.map((f) => extracted("x", "p_2", "spouse", f, `Mary's ${f}, reworded`)),
+      ].map((a) => {
+        const { id: _i, source_id: _s, ...rest } = a;
+        return { section: "assertions" as const, op: "append" as const, entry: rest };
+      });
+    /** A sources append with src_001's repository: §3.4.1 folds it to
+     *  `updated_existing`, the only batch shape the guard compares. */
+    const refold = () => ({ section: "sources" as const, op: "append" as const, entry: reuseSourceOp("NARA") });
+
+    it("(a) D17: a re-run batch folding into the same source with reworded values is refused, nothing written", async () => {
+      await writeProject(d17Research());
+      await writeSidecar();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [{ section: "sources", op: "append", entry: reuseSourceOp("NARA") }, ...d17Rerun()],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const text = r.errors.join("\n");
+      expect(r.errors.filter((e) => /already extracted/.test(e))).toHaveLength(12);
+      expect(r.errors.find((e) => e.startsWith("ops[1]:"))).toMatch(/a_001 .*name.*persona p_1/);
+      expect(r.errors.find((e) => e.startsWith("ops[12]:"))).toMatch(/a_012 .*religion.*persona p_2/);
+      expect(text).toMatch(/under log_001/);
+      expect(text).toMatch(/assertions `update` op/);
+      expect(text).toMatch(/append it in a call without the sources op — never `update`/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("(b) same record, same log: a fact type the persona has no assertion for yet is accepted", async () => {
+      await writeProject(d17Research());
+      await writeSidecar();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [refold(), { section: "assertions", op: "append", entry: noId(extracted("x", "p_1", "principal", "immigration", "1850")) }],
+      });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect(r.sourceReuse?.action).toBe("updated_existing"); // compared, and still accepted
+      expect((await readResearch()).assertions).toHaveLength(13);
+    });
+
+    it("(c) two same-typed facts in one batch are accepted (batch-internal pairs never compared)", async () => {
+      // A re-persisting batch, so the guard runs: a date half and a place half of one
+      // new fact type for p_1. Comparing ops within the batch would refuse the second.
+      await writeProject(d17Research());
+      await writeSidecar();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          refold(),
+          { section: "assertions", op: "append", entry: { ...noId(extracted("x", "p_1", "principal", "immigration", "1850")), date: "1850" } },
+          { section: "assertions", op: "append", entry: { ...noId(extracted("x", "p_1", "principal", "immigration", "Ireland")), place: "Ireland", standard_place: null } },
+        ],
+      });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect(r.sourceReuse?.action).toBe("updated_existing");
+      expect((await readResearch()).assertions).toHaveLength(14);
+    });
+
+    it("(d) same role, different record_persona_id is accepted; the same persona is refused", async () => {
+      const research = sidecarResearch();
+      research.assertions = [extracted("a_001", "p_1", "principal", "name", "John Smith")];
+      await writeProject(research);
+      await writeSidecar();
+      const other = await researchAppend({
+        projectPath: dir,
+        ops: [refold(), { section: "assertions", op: "append", entry: noId(extracted("x", "p_2", "principal", "name", "Mary Smith")) }],
+      });
+      expect(other.ok, other.ok ? "" : errorsOf(other)?.join(" ")).toBe(true);
+      if (!other.ok || !("results" in other)) return;
+      expect(other.sourceReuse?.action).toBe("updated_existing");
+      const same = await researchAppend({
+        projectPath: dir,
+        ops: [refold(), { section: "assertions", op: "append", entry: noId(extracted("x", "p_1", "principal", "name", "Smith, John")) }],
+      });
+      expect(same.ok).toBe(false);
+      if (same.ok) return;
+      expect(same.errors[0]).toMatch(/^ops\[1\]:.*a_001 already records name .*persona p_1/);
+    });
+
+    it("(e) a record_role \"absent\" duplicate is accepted (exempt)", async () => {
+      const absent = extracted("a_013", null, "absent", "residence", "not enumerated with the household", {
+        informant_proximity: "researcher",
+        record_basis: "absent",
+      });
+      const research = d17Research();
+      research.assertions = [...research.assertions, absent];
+      await writeProject(research);
+      await writeSidecar();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [refold(), { section: "assertions", op: "append", entry: noId(absent) }],
+      });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect(r.sourceReuse?.action).toBe("updated_existing"); // compared, and exempt
+    });
+
+    it("(f) fact-type casing and aliases fold before comparing: 'Birth' and 'birthdate' against birth, and 'birth' against a stored alias", async () => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      for (const supplied of ["Birth", "birthdate"]) {
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [refold(), { section: "assertions", op: "append", entry: { ...noId(validAssertion("x", "src_001")), fact_type: supplied } }],
+        });
+        expect(r.ok, `${supplied} should be refused`).toBe(false);
+        if (r.ok) continue;
+        expect(r.errors[0]).toMatch(/a_001 already records/);
+      }
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      // A pre-canonicalization document holding the alias spelling itself.
+      const legacy = baseResearch();
+      legacy.assertions = [{ ...validAssertion("a_001"), fact_type: "dateofbirth" }];
+      await writeProject(legacy);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [refold(), { section: "assertions", op: "append", entry: noId(validAssertion("x", "src_001")) }],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/a_001 already records birth/);
+    });
+
+    it("(g) record_id ARK forms are compared canonically (bare ARK stored, resolver URL appended)", async () => {
+      const research = baseResearch();
+      research.assertions = [{ ...validAssertion("a_001"), record_id: "ark:/61903/1:1:MXYZ-TP4" }];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          refold(),
+          {
+            section: "assertions",
+            op: "append",
+            entry: {
+              ...noId(validAssertion("x", "src_001")),
+              record_id: "https://www.familysearch.org/ark:/61903/1:1:MXYZ-TP4",
+            },
+          },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/^ops\[1\]:.*already extracted on src_001: a_001/);
+    });
+
+    it("(h) a different source is accepted — an explicit other source_id, and a §3.4.1 different-repository batch", async () => {
+      const research = baseResearch();
+      research.sources = [
+        validSource("src_001"),
+        { ...validSource("src_002"), repository: "Ancestry", gedcomx_source_description_id: "SD-002" },
+      ];
+      const tree = { ...baseTree, sources: [...baseTree.sources, { id: "SD-002", title: "Same census via Ancestry" }] };
+      await writeProject(research, tree);
+      // A re-persisting batch (folds onto src_001, which holds rec1/birth) whose
+      // assertion names src_002 explicitly: compared, and accepted because the source differs.
+      const explicit = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: reuseSourceOp("NARA") },
+          { section: "assertions", op: "append", entry: { ...reuseAssertionOp("rec1"), source_id: "src_002" } },
+        ],
+      });
+      expect(explicit.ok, explicit.ok ? "" : errorsOf(explicit)?.join(" ")).toBe(true);
+      if (!explicit.ok || !("results" in explicit)) return;
+      expect(explicit.sourceReuse?.action).toBe("updated_existing");
+
+      await writeProject(); // only src_001 (NARA) holds rec1/birth
+      const viaReuse = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: reuseSourceOp("MyHeritage") },
+          { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+        ],
+      });
+      expect(viaReuse.ok, viaReuse.ok ? "" : errorsOf(viaReuse)?.join(" ")).toBe(true);
+      if (!viaReuse.ok || !("results" in viaReuse)) return;
+      expect(viaReuse.sourceReuse).toEqual({ action: "new_source_reused_s", srcId: "src_002", sId: "SD-001" });
+      expect((await readResearch()).assertions[1].source_id).toBe("src_002");
+    });
+
+    it("(j) an assertions update op on the existing assertion is not refused", async () => {
+      await writeProject(d17Research());
+      await writeSidecar();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [{ section: "assertions", op: "update", entryId: "a_001", fields: { value: "John Smith, reworded" } }],
+      });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      expect((await readResearch()).assertions[0].value).toBe("John Smith, reworded");
+    });
+
+    it("(k) image pass: the same record/role/fact under a NEW log entry is accepted; under the SAME log it is refused", async () => {
+      const logEntry = (id: string, tool: string) => ({
+        id,
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00Z",
+        tool,
+        query: {},
+        outcome: "positive",
+        results_examined: 1,
+        external_site: null,
+        results_ref: null,
+      });
+      const research = baseResearch();
+      research.log = [logEntry("log_001", "record_read"), logEntry("log_002", "image_transcribe")];
+      research.assertions = [{ ...validAssertion("a_001"), log_entry_id: "log_001" }];
+      await writeProject(research);
+      const appendUnder = (log: string) =>
+        researchAppend({
+          projectPath: dir,
+          ops: [
+            refold(),
+            {
+              section: "assertions",
+              op: "append",
+              entry: { ...noId(validAssertion("x", "src_001")), value: "abt 1850", log_entry_id: log },
+            },
+          ],
+        });
+      const sameLog = await appendUnder("log_001");
+      expect(sameLog.ok).toBe(false);
+      if (sameLog.ok) return;
+      expect(sameLog.errors[0]).toMatch(/^ops\[1\]:.*under log_001: a_001/);
+      const imagePass = await appendUnder("log_002");
+      expect(imagePass.ok, imagePass.ok ? "" : errorsOf(imagePass)?.join(" ")).toBe(true);
+      if (!imagePass.ok || !("results" in imagePass)) return;
+      expect(imagePass.sourceReuse?.action).toBe("updated_existing");
+    });
+
+    it("(l) documented miss: a legacy null-persona assertion does not block a persona-bearing append of the same fact", async () => {
+      const research = sidecarResearch();
+      research.assertions = [extracted("a_001", null, "principal", "name", "John Smith")];
+      await writeProject(research);
+      await writeSidecar();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [refold(), { section: "assertions", op: "append", entry: noId(extracted("x", "p_1", "principal", "name", "Smith, John")) }],
+      });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect(r.sourceReuse?.action).toBe("updated_existing"); // compared: role:principal vs persona:p_1 never match
+      expect((await readResearch()).assertions).toHaveLength(2);
+    });
+
+    /** The spriggs-parents-1898 shape: p_1 already has "son of John" on REC under log_001. */
+    async function spriggsProject() {
+      const research = sidecarResearch();
+      research.assertions = [extracted("a_001", "p_1", "principal", "relationship", "son of John Spriggs")];
+      await writeProject(research);
+      await writeSidecar();
+    }
+    const secondParent = () => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: noId(extracted("x", "p_1", "principal", "relationship", "son of Charlotte Spriggs")),
+    });
+
+    it("(m) spriggs: a later call with NO sources op appending a second relationship for the same persona and log is accepted (not compared)", async () => {
+      await spriggsProject();
+      const r = await researchAppend({ projectPath: dir, ops: [secondParent()] });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect(r.sourceReuse).toBeUndefined();
+      const research = await readResearch();
+      expect(research.assertions.map((a: any) => a.value)).toEqual(["son of John Spriggs", "son of Charlotte Spriggs"]);
+    });
+
+    it("(n) the same appended op WITH a folding sources op is refused — the gate is the only difference from (m)", async () => {
+      await spriggsProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({ projectPath: dir, ops: [refold(), secondParent()] });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors).toHaveLength(1);
+      expect(r.errors[0]).toMatch(/^ops\[1\]:.*under log_001: a_001 already records relationship .*persona p_1/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("(o) documented behaviour: a sources op with an explicit gedcomx_source_description_id bypasses detection, so the batch is not compared", async () => {
+      await writeProject(d17Research());
+      await writeSidecar();
+      const { id: _i, ...explicitS } = validSource("x"); // NARA, SD-001 — same repository as src_001
+      // source_id pinned to src_001 so the keys WOULD collide if compared: the
+      // absence of a fold is the only reason this is accepted.
+      const rerun = d17Rerun().map((op) => ({ ...op, entry: { ...op.entry, source_id: "src_001" } }));
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [{ section: "sources", op: "append", entry: explicitS }, ...rerun],
+      });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect(r.sourceReuse).toBeUndefined();
+      const research = await readResearch();
+      expect(research.sources).toHaveLength(2);
+      expect(research.assertions).toHaveLength(24);
+    });
+
+    it("(p) a §3.4.1 path-2 different-repository batch (new_source_reused_s) is not compared", async () => {
+      await writeProject(d17Research());
+      await writeSidecar();
+      // As in (o): source_id pinned to src_001 so only the gate separates this from a refusal.
+      const rerun = d17Rerun().map((op) => ({ ...op, entry: { ...op.entry, source_id: "src_001" } }));
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [{ section: "sources", op: "append", entry: reuseSourceOp("MyHeritage") }, ...rerun],
+      });
+      expect(r.ok, r.ok ? "" : errorsOf(r)?.join(" ")).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect(r.sourceReuse).toEqual({ action: "new_source_reused_s", srcId: "src_002", sId: "SD-001" });
+      expect((await readResearch()).assertions).toHaveLength(24);
+    });
   });
 });
 
@@ -5874,6 +6236,202 @@ describe("research_append — person_evidence epistemic gate", () => {
     expect(r.ok).toBe(false);
   });
 });
+
+// ─── DETECTED core-identifier contradiction caps the tier (#2272) ───────────
+//
+// The detected arm, as opposed to the declared one below. It reads the record's
+// own stated birthplace against what the tree person attests, so it binds
+// without the agent volunteering anything -- which is what the declared field
+// could not do: the agent set it to null and kept `probable`.
+//
+// Both gates on it are genealogical, not engineering. Without them the arm
+// refuses 38 of 323 committed confident/probable entries, and all 38 were read
+// individually (ADR-0011 limit 2): 35 are a death record's birthplace at
+// `secondary`/`family_not_present`, 3 are a christening PLACE against a birth
+// place. With them it refuses 0 of 323.
+
+describe("research_append — detected core-identifier contradiction", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-contradiction-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** The tree person attests Ireland; the record states somewhere else. */
+  async function write(stated: Record<string, unknown>) {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      {
+        ...validAssertion("a_050"),
+        record_id: "rec_bapt",
+        fact_type: "birth",
+        value: "Born at Trier",
+        place: "Trier, Rhine Province, Germany",
+        information_quality: "indeterminate",
+        informant_proximity: "official_duty",
+        ...stated,
+      },
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const link = (confidence: string) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_050", person_id: "I1", confidence,
+      rationale: "Name matches; same_person 0.85.", match_score: 0.85,
+      created: "2026-09-24", superseded_by: null,
+    },
+  });
+
+  it("refuses 'confident' when the record states a contradicting birthplace", async () => {
+    await write({});
+    const r = await researchAppend(link("confident"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/Trier/);
+  });
+
+  it("refuses 'probable' too", async () => {
+    await write({});
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  it("allows 'speculative' — the escape the rule intends", async () => {
+    await write({});
+    expect((await researchAppend(link("speculative"))).ok).toBe(true);
+  });
+
+  // The 35-of-38 class. A death record's birthplace comes from an informant
+  // with no firsthand knowledge of the birth (senior genealogist, 2026-09-23),
+  // so it must not veto a sound identity link.
+  it("does NOT cap on a secondary informant with no proximity to the birth", async () => {
+    await write({ information_quality: "secondary", informant_proximity: "family_not_present" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap on a researcher-sourced claim", async () => {
+    await write({ informant_proximity: "researcher" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // The other 3 of 38. You are christened where the church is.
+  it("does NOT compare a christening PLACE against a birth place", async () => {
+    await write({ fact_type: "christening", place: "Church of St Michael, Ashton-under-Lyne, Lancashire, England" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap when the stated place agrees with the tree", async () => {
+    await write({ place: "Ireland" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap when the record states no place at all", async () => {
+    await write({ place: null });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+});
+
+// ─── Declared core-identifier conflict caps the tier (#2272) ────────────────
+//
+// The prose form of this rule was in the agent body twice — once stating the
+// cap with the same 0.85 figure as the test that kept failing, once as a Step 3
+// forcing function that made the agent WRITE the verdict. It wrote the verdict
+// and argued past it in the next clause (ut_person_evidence_012 and _024,
+// 2026-09-23). What binds is the declaration, which is what these pin.
+
+describe("research_append — declared core-identifier conflict", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-pe-conflict-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function write() {
+    const r = baseResearch();
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const link = (confidence: string, conflict: unknown) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_001",
+      person_id: "I1",
+      confidence,
+      rationale: "Names match the subject.",
+      core_identifier_conflict: conflict,
+      match_score: 0.85,
+      created: "2026-07-18",
+      superseded_by: null,
+    },
+  });
+
+  // ── fires ──
+  it("rejects 'confident' when a conflict is declared", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "record says Germany; tree attests Ireland"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/core-identifier conflict/i);
+  });
+
+  it("rejects 'probable' too — the cap is not confident-only", async () => {
+    await write();
+    const r = await researchAppend(link("probable", "christening 1858 vs birth ~1845"));
+    expect(r.ok).toBe(false);
+  });
+
+  it("fires on a declaration padded with whitespace", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "   birthplace contradicts   "));
+    expect(r.ok).toBe(false);
+  });
+
+  // ── does not fire: legitimate writes must still land ──
+  it("allows 'speculative' with the same declared conflict", async () => {
+    await write();
+    const r = await researchAppend(link("speculative", "record says Germany; tree attests Ireland"));
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows 'confident' when the field is null", async () => {
+    await write();
+    const r = await researchAppend(link("confident", null));
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows 'confident' when the field is absent entirely", async () => {
+    await write();
+    const op = link("confident", null) as any;
+    delete op.entry.core_identifier_conflict;
+    const r = await researchAppend(op);
+    expect(r.ok).toBe(true);
+  });
+
+  it("treats a whitespace-only declaration as no declaration", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "   "));
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not cap on a non-string value — the validator owns that", async () => {
+    await write();
+    const r = await researchAppend(link("confident", 5 as any));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/core_identifier_conflict/i);
+    expect(failure(r).errors?.join(" ")).not.toMatch(/caps the link/i);
+  });
+});
+
 
 // ─── Worked examples (#697) ─────────────────────────────────────────────────
 //
@@ -7268,30 +7826,51 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
   });
 
-  it("warns and names the record_read route when the assertion came from record_read", async () => {
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
+  // Since #1731 the warning names ONE call whatever the provenance, because
+  // `same_person`'s project-relative arm resolves the record itself. The three
+  // tests these replace pinned a per-route retrieval recipe (record_read /
+  // sidecar / record_persona_id), and each told the agent to hand-build a
+  // `primaryId1` — the expensive shape the 94% skip rate was a symptom of.
+  // Still pinned: the warning names the CALL, not just the absence. A warning
+  // that only says "missing" is what the agent talked its way past.
+  for (const [name, entry] of [
+    ["record_read", { id: "log_001", tool: "record_read", results_ref: null }],
+    ["a retained sidecar", { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" }],
+  ] as const) {
+    it(`names the project-relative call when the assertion came from ${name}`, async () => {
+      await writeProjectWithProvenance(entry as any);
+      const r = await researchAppend(link({ match_score: null }));
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const w = r.validation.warnings.join(" ");
+      expect(w).toMatch(/records no usable match_score/);
+      expect(w).toMatch(/call same_person\(/);
+      expect(w).toMatch(/assertionId: 'a_010'/);
+      expect(w).toMatch(/treePersonId: 'I1'/);
+      // The retired shape must not come back: naming it steers the agent
+      // straight back to the cost this card exists to remove.
+      expect(w).not.toMatch(/primaryId1/);
+      expect(w).not.toMatch(/gedcomx1/);
+    });
+  }
+
+  it("tells a two-party assertion to name which party the link is about", async () => {
+    await writeProjectWithProvenance(
+      { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
+      { record_persona_id: "p_293161675629", fact_type: "relationship", record_role: "groom" },
+    );
     const r = await researchAppend(link({ match_score: null }));
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/records no usable match_score/);
-    // The route, not just the absence — a warning that only says "missing" is
-    // what the agent talked its way past.
-    expect(w).toMatch(/came from record_read/);
-    expect(w).toMatch(/1:1:MXHY-TP4/);
+    expect(w).toMatch(/recordRole/);
+    expect(w).toMatch(/'groom'/);
   });
 
-  it("warns and names the sidecar route when a record_search retained its results", async () => {
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_search", results_ref: "results/log_001.json" });
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/records no usable match_score/);
-    expect(w).toMatch(/results\/log_001\.json/);
-  });
-
-  it("warns when the assertion carries a record_persona_id, and names it", async () => {
+  it("does NOT ask a single-party assertion to name a party", async () => {
+    // The other direction: the recordRole sentence is noise on an assertion
+    // that names only one person, and noise in a warning is how the whole
+    // warning stops being read.
     await writeProjectWithProvenance(
       { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
       { record_persona_id: "p_293161675629" },
@@ -7299,7 +7878,7 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     const r = await researchAppend(link({ match_score: null }));
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/p_293161675629/);
+    expect(r.validation.warnings.join(" ")).not.toMatch(/recordRole/);
   });
 
   it("warns on unresolvable provenance — an absent log_entry_id is not an exemption", async () => {
