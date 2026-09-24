@@ -473,7 +473,7 @@ is the natural reduction and mirrors the ark decision.)
 
 | Condition | Behavior |
 |-----------|----------|
-| A surviving id in `merges` not found on the target side | throw `"merge survivor id <id> not found in target_gedcomx"` |
+| A surviving id in `merges` not found on the target side | throw `"merge survivor id <id> not found in target_gedcomx (tree ids: <first 10>[ …and N more][; a survivor must already be in the tree — leave a new person's persona out of merges])"`; the hint clause is mode 1 only |
 | A collapsed id not found (candidate side mode 1 / target side mode 2) | throw `"merge id <id> not found"` |
 | An id appears twice on the same side of `merges` | throw `"invalid merges: <id> appears in multiple pairs"` |
 | (Mode 2) an id is both a survivor and a collapsed id | throw `"invalid merges: <id> appears as both a survivor and a collapsed id (chains are not supported)"` |

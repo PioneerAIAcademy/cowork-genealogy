@@ -39,7 +39,7 @@ import {
   Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useSelectedSkill } from '@/lib/useSelectedSkill';
 import { hasGradingRelevantChange } from '@/lib/gradingRelevance';
@@ -78,6 +78,7 @@ function deepClone<T>(x: T): T {
 
 export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [headerSkill] = useSelectedSkill();
 
   const form = useForm<UnitTestFile>({
@@ -239,6 +240,14 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
       const json = await res.json();
       notifications.show({ color: 'green', title: 'Saved', message: `Test ${mode === 'create' ? 'created' : 'updated'}.` });
       onSaved?.(payload);
+      // Refetch what the destination reads before navigating — the cache rule in
+      // docs/specs/eval-crud-ui-spec.md §7 "API routes" (issue #1605).
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['tests'], refetchType: 'all' }),
+        mode === 'edit'
+          ? queryClient.invalidateQueries({ queryKey: ['test', payload.test.id], refetchType: 'all' })
+          : Promise.resolve(),
+      ]);
       if (mode === 'create' && json.id) {
         router.push(`/tests/${json.id}`);
       } else {
