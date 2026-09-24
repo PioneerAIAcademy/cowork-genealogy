@@ -140,17 +140,33 @@ def test_q001_proved_tier(after_state, test):
 
 
 def test_q001_possible_tier(after_state, test):
-    """For the thin-evidence test: the proof summary for q_001 must have
-    tier == 'possible'. A single uncorroborated indirect co-residence (the
-    1850 census alone) is a credible lead but cannot support 'probable'; it
-    still leans toward Thomas, so it is stronger than 'not_proved'."""
+    """Tagged `tier-possible-q001`: the proof summary for q_001 must have
+    tier == 'possible' EXACTLY — neither a higher tier nor a lower one.
+
+    The assertion is shared; what makes it bind differs per fixture, which is
+    why the tag carries it rather than the scenario name.
+
+    `possible-tier-thin-evidence` (_004): a single uncorroborated indirect
+    co-residence (the 1850 census alone) is a credible lead but cannot support
+    'probable'; it still leans toward Thomas, so it is stronger than
+    'not_proved'.
+
+    `bounded-death-encoded-not-collapsed` (_018): a reachable, unsearched 1880
+    census would halve the bracket, and a gap that NARROWS the answer is a
+    Component 1 failure rather than a corroboration gap (genealogist ruling,
+    2026-08-21). `test_bounded_conclusion_is_tiered_and_encoded`'s ACCEPTED set
+    is a FLOOR — it keeps the finding off `not_proved` and deliberately admits
+    `probable` — so it cannot express this ceiling. This does. Added 2026-09-22
+    after a run wrote `probable` + `shortfall: gap` and passed every
+    deterministic check while failing the key (issue #2604)."""
     if "tier-possible-q001" not in test.get("tags", []):
         pytest.skip("not a tier-possible-q001 scenario")
     ps = _proof_summary_for_question(after_state, "q_001")
     assert ps is not None, "no proof_summaries entry for q_001 found in after_state"
     assert ps.get("tier") == "possible", (
-        f"q_001 proof tier should be 'possible' (one uncorroborated "
-        f"indirect source); got {ps.get('tier')!r}"
+        f"q_001 proof tier should be 'possible' exactly — this test's key "
+        f"fixes the tier, and a HIGHER one fails it just as a lower one does; "
+        f"got {ps.get('tier')!r}"
     )
 
 
