@@ -130,9 +130,9 @@ closed-enum change is in CLAUDE.md's schema-change site list.
 > `record_basis` cannot represent "no evidence" honestly, and a bare enum add
 > buys that honesty at the cost of new exclusion logic in four consumers, none
 > of it validator-caught, plus an under-specified value. The retry loop it was
-> meant to fix was closed instead by a lower-blast-radius prose pin (issue #433:
+> meant to fix was closed instead by a lower-blast-radius prose pin:
 > state the valid values inline, plus "there is no `no_evidence`" and keep the
-> best-effort stated-vs-inferred value). If the honesty is ever judged worth it, do it
+> best-effort stated-vs-inferred value. If the honesty is ever judged worth it, do it
 > deliberately, not as a quick fix: settle the scalar-vs-structural mismatch
 > first, define the structural convention + eval invariant + re-classification
 > trigger, then land all ~6 definition sites, both skills, and the eval

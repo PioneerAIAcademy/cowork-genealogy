@@ -68,7 +68,7 @@ the FS ranker's failure auditable; `matchScore:null` on persistent call failure 
 
 **Internals (all host-side, all reuse):**
 1. Read the staged file via the `assertInsideProject`/`isInsideProject` + `readFile`
-   block `finalizeStagedResults` uses (`results-staging.ts:108-124`) — **read-only**,
+   block `finalizeStagedResults` uses (`src/utils/results-staging.ts`) — **read-only**,
    never unlink (so `research_log_append` can still finalize the same handle).
 2. Subject doc = **raw `person_read(subjectId)` output**, used directly as `gedcomx2`
    (probe-confirmed; no new assembly). Enrich with relatives only if later shown to help.
