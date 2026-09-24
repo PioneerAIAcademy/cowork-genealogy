@@ -19,7 +19,8 @@
   },
   "mcp_fixtures": [
     "record-read-birkeland-1817-baptism",
-    "volume-search-stavanger"
+    "volume-search-stavanger",
+    "image-search-stavanger-013729012"
   ],
   "judge_context": [
     "The father is the REQUIRED identifying finding, and the researcher has flagged the indexed patronymic 'Nadnesen' as a likely mistranscription (it should be 'Aadnesen' — true father Tollef Aadneson)",
