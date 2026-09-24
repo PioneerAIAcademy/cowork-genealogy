@@ -241,16 +241,16 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     },
   ],
   [
-    3855,
+    3882,
     {
       reason: "the research_log_append notes corpus, derived from eval/runlogs by dev/measure-census-hedge-refusals.ts rather than the qualifier probe, and stamped `measured at <sha>` in the spec. Keyed by EXACT value, so this entry must be re-keyed whenever the corpus is re-derived — which is the intended friction: the figure cannot move in the spec without someone touching this line",
       scope: ["docs/specs/research-log-editor-spec.md"],
     },
   ],
   [
-    1763,
+    1789,
     {
-      reason: "the staged record_search log entries carrying a note, from the same dev/measure-census-hedge-refusals.ts run and stamp as the 3855 notes corpus above; re-key both together",
+      reason: "the staged record_search log entries carrying a note, from the same dev/measure-census-hedge-refusals.ts run and stamp as the 3882 notes corpus above; re-key both together",
       scope: ["docs/specs/research-log-editor-spec.md"],
     },
   ],

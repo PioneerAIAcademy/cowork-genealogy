@@ -160,7 +160,7 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
     if (String(item?.record_type ?? "").trim().toLowerCase() !== "census") continue;
     const question = questions.find((q) => q?.id === plan?.question_id);
     if (!OPEN_QUESTION_STATUSES.has(question?.status)) continue;
-    notes.push(NIL_ESCALATION_NOTE.replace("{n}", String(nils)).replace("{planItemId}", pli));
+    notes.push(NIL_ESCALATION_NOTE.replaceAll("{n}", String(nils)).replaceAll("{planItemId}", pli));
   }
   return notes.length > 0 ? notes.join("\n") : null;
 }
@@ -273,9 +273,9 @@ class LogAppendError extends Error {}
  * Nothing in that corpus was newly refused by the binding. Those figures are the
  * record of what the binding moved and can no longer be reproduced: 414ee3c68
  * was a branch commit a squash merge discarded. The current figures come from
- * `dev/measure-census-hedge-refusals.ts`: measured at 8f2cbda68 plus this change's search-records run log, 215 of 3,855
+ * `dev/measure-census-hedge-refusals.ts`: measured at dc9766b15, 216 of 3,882
  * distinct notes are refused on note text alone, and the staged-search trigger
- * newly refuses 4 of the 637 staged `record_search` entries it can pair to their
+ * newly refuses 4 of the 662 staged `record_search` entries it can pair to their
  * search response (the `h4k` note twice, and two more flat household claims with
  * no census word) while freeing none. The "indexed" hedge frees 4 notes and
  * refuses none. RE-DERIVE RATHER THAN QUOTE these: the corpus moves in both
@@ -434,8 +434,7 @@ export function requirePre1880CensusHedge(
   // it is judged whatever word it uses. That also closes the word hole -- a note
   // that never says "census" -- for `record_search` only. A note with no census
   // payload behind it (every other tool, a nil search) still returns here.
-  // Measured at 8f2cbda68 plus this change's search-records run log
-  // (dev/measure-census-hedge-refusals.ts): the override
+  // Measured at dc9766b15 (dev/measure-census-hedge-refusals.ts): the override
   // newly refused no plural-only note in the committed corpus.
   const saysCensus = /\bcensus\b/.test(text);
   if (!saysCensus && payloadYears.length === 0) return;

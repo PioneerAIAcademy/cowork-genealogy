@@ -23,7 +23,8 @@ function validatorIndexedHedges(): string[] {
   const src = readFileSync(validatorPath, "utf-8");
   const roleWord = /^_ROLE_WORD\s*=\s*r"([^"]+)"/m.exec(src)?.[1];
   if (!roleWord) throw new Error(`_ROLE_WORD not found in ${validatorPath}`);
-  const markers = /^_INFERENCE_MARKERS\s*=\s*\(([\s\S]*?)^\)/m.exec(src)?.[1];
+  // The closing paren may be indented by a formatter; only its own line counts.
+  const markers = /^_INFERENCE_MARKERS\s*=\s*\(([\s\S]*?)^[ \t]*\)[ \t]*$/m.exec(src)?.[1];
   if (!markers) throw new Error(`_INFERENCE_MARKERS not found in ${validatorPath}`);
   return [...markers.matchAll(/^\s*rf"([^"]*)"/gm)]
     .map((m) => m[1])

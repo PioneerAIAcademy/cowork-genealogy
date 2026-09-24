@@ -389,16 +389,16 @@ Scope, and why it is this narrow:
 - **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
   is in the eval-plane validator. Flagging a *name* as indexed is not.
 
-Measured over the 3,855 distinct `notes` arguments in the committed run logs
-(measured at 8f2cbda68 plus this change's search-records run log; re-derive with `dev/measure-census-hedge-refusals.ts`
+Measured over the 3,882 distinct `notes` arguments in the committed run logs
+(measured at dc9766b15; re-derive with `dev/measure-census-hedge-refusals.ts`
 rather than quote — the corpus moves with every committed run, and shrinks as
 well as grows, because a re-run replaces a skill's run log), the note-only rule
-refuses 215 (5.6%). Against the rule before the staged-search trigger (the
+refuses 216 (5.6%). Against the rule before the staged-search trigger (the
 script's `--baseline` flag, given a copy of the earlier module), 4 notes
 are newly allowed, all by the "indexed" hedge, and none newly refused. Of the
-1,763 staged `record_search` entries with a note, 637 pair to the search
+1,789 staged `record_search` entries with a note, 662 pair to the search
 response that staged them (e2e run logs keep only a truncated summary, so the
-rest cannot be paired); the staged search newly refuses 4 of those 637 and
+rest cannot be paired); the staged search newly refuses 4 of those 662 and
 frees none. Two are the `ut_search_records_h4k` note quoted below and the other two
 are different notes of the same shape, a flat household claim with no census
 word. A census named before
