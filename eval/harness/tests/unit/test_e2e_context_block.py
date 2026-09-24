@@ -576,3 +576,130 @@ def test_out_of_lane_write_by_proof_conclusion_is_blocked():
     assert denied is not None
     assert denied[0] == "conflicts"
     assert denied[1] == "out_of_lane"
+
+
+# ── project.status: the field-scoped arm ──
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (_owned(section="project", fields={"status": "completed"}), "main thread, fields"),
+        (_owned(section="project", entry={"status": "completed"}), "main thread, entry"),
+        (
+            _owned(section="project", fields={}, entry={"status": "completed"}),
+            "empty fields beside a populated entry",
+        ),
+        (
+            _owned(
+                section="project",
+                fields={"status": "completed"},
+                agent_id="a1",
+                agent_type="genealogy-research:record-extractor",
+            ),
+            "a named agent that is not the owner",
+        ),
+    ],
+)
+def test_project_status_write_is_blocked(payload, label):
+    denied = main_thread_owned_section(payload)
+    assert denied is not None, label
+    assert denied[0] == "project.status", label
+    assert denied[1] == "owned_field", label
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(
+                section="project",
+                fields={"status": "completed"},
+                agent_id="a1",
+                agent_type="genealogy-research:proof-conclusion",
+            ),
+            "the owner, namespaced as production reports it",
+        ),
+        (
+            _owned(
+                section="project",
+                fields={"status": "completed"},
+                agent_id="a1",
+                agent_type="proof-conclusion",
+            ),
+            "the owner, bare",
+        ),
+        (
+            _owned(section="project", fields={"updated": "2026-09-24"}),
+            "the `updated` activity ping, free to any writer",
+        ),
+        (
+            _owned(section="project", fields={"objective": "x"}),
+            "init-project authoring the co-written section",
+        ),
+    ],
+)
+def test_project_status_write_is_allowed(payload, label):
+    assert main_thread_owned_section(payload) is None, label
+
+
+def test_project_status_narration_is_field_scoped_not_out_of_lane(tmp_path, monkeypatch):
+    """Drives the ORCHESTRATOR's own `owned_field` narration branch.
+
+    Asserting on `owned_section_denial` instead would pass with this branch
+    deleted: that is §3e's function, already pinned in
+    `test_universal_owned_sections.py`. Only `_run_agent`'s `pretool_hook`
+    executes the `text = …` block here, and the narration it builds is
+    `_run_agent`'s second return value. Verified by mutation — garbling the
+    branch's f-string left the whole suite green until this test existed.
+    """
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    sink: dict = {}
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        inputs = [
+            (
+                "status",
+                {
+                    "tool_name": "mcp__genealogy__research_append",
+                    "tool_input": {
+                        "section": "project",
+                        "op": "update",
+                        "fields": {"status": "completed"},
+                    },
+                },
+            ),
+        ]
+        return _HookDrivingAgent(
+            hook,
+            inputs,
+            [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()],
+            sink,
+        )
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    result = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )
+    narration = result[1]
+    blocked_context_calls = result[6]
+
+    assert sink["status"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert len(blocked_context_calls) == 1
+    assert blocked_context_calls[0]["tool"] == "research_append"
+
+    blocked = [n for n in narration if n.get("kind") == "blocked"]
+    assert len(blocked) == 1, narration
+    text = blocked[0]["text"]
+    # The field-scoped branch, not the `else` that would report the whole
+    # section as outside the caller's lane.
+    assert "status" in text, text
+    assert "proof-conclusion" in text, text
+    assert "outside this agent's lane" not in text, text

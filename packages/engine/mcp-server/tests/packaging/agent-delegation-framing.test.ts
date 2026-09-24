@@ -700,7 +700,7 @@ describe("agent delegation framing", () => {
     // Agents the hook can name, read from its routing tables rather than
     // hand-listed here.
     const routed = new Set<string>();
-    for (const table of ["OWNED_SECTIONS", "OWNED_DECLARATIONS"]) {
+    for (const table of ["OWNED_SECTIONS", "OWNED_DECLARATIONS", "OWNED_FIELDS"]) {
       const m = hook.match(new RegExp(`${table}\\s*=\\s*\\{[^}]*\\}`));
       expect(m, `${table} not found in guard_project_files.py`).not.toBeNull();
       for (const q of m![0].matchAll(/"([a-z][a-z0-9-]*)"/g)) {

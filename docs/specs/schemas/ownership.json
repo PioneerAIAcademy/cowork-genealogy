@@ -22,12 +22,17 @@
         "merge_tree_persons"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "hook"
       ],
       "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation.",
       "failure": "A skill rewrites the objective, subject persons, or status mid-project, and every later skill plans against a changed goal it never agreed to.",
       "remedy": "Route a status change through proof-conclusion; route an objective change through init-project.",
-      "override": "none"
+      "override": "none",
+      "hookCallers": [
+        "agent:proof-conclusion"
+      ],
+      "notes": "The hook rule is FIELD-scoped, not section-scoped: only `status` is routed, because `project` is co-written — init-project authors the section and every skill refreshes `updated`, so reserving the whole section would deny both. It is keyed on presence rather than on a value (unlike `questions`' `exhaustive_declaration`) because `status` has no honest non-claiming value: any write of it asserts the project's state."
     },
     {
       "artifact": "research.json",

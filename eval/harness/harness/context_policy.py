@@ -270,6 +270,11 @@ OWNED_SECTIONS = _guard.OWNED_SECTIONS
 #: Same import-don't-copy discipline as `OWNED_SECTIONS` above.
 OWNED_DECLARATIONS = _guard.OWNED_DECLARATIONS
 
+#: The presence-keyed field map: `(section, field) -> owning agent`, routed on
+#: the field being written at all rather than on a claim value. Same
+#: import-don't-copy discipline as the two maps above.
+OWNED_FIELDS = _guard.OWNED_FIELDS
+
 #: The shipped hook's own ownership predicate, re-exported rather than
 #: reimplemented. `e2e/orchestrator.py` carried a second copy of the rule until
 #: 2026-08-23 — it imported the map above and the reason text below, so the two
@@ -290,9 +295,12 @@ def owned_section_denial(denied: tuple[str, str, str]) -> dict[str, Any]:
     harness denies with the text the agent meets in Cowork.
 
     **Branch on `rule`, never on the shape of the first element.** A
-    `declaration` denial carries a dotted `section.field` that is a key in
-    neither owner map, so an unconditional lookup raises `KeyError` on exactly
-    the arm this function was extended to serve.
+    `declaration` or `owned_field` denial carries a dotted `section.field` that
+    is a key in neither owner map, so an unconditional lookup raises `KeyError`
+    on exactly the arms this function was extended to serve. The `else` arm
+    indexes `AGENT_WRITABLE_SECTIONS[caller]`, and `caller` is `""` on the main
+    thread, so a new rule tag left to fall through there raises rather than
+    denying.
 
     It cannot reuse `subagent_only_denial`: that one says the TOOL is reserved
     for a subagent, which is true of `extraction_append` and flatly false of
@@ -312,6 +320,13 @@ def owned_section_denial(denied: tuple[str, str, str]) -> dict[str, Any]:
             section=owned_section,
             field=field,
             agent=_guard.OWNED_DECLARATIONS[(owned_section, field)],
+        )
+    elif rule == "owned_field":
+        owned_section, _, field = section.partition(".")
+        reason = _guard.OWNED_FIELD_REASON.format(
+            section=owned_section,
+            field=field,
+            agent=_guard.OWNED_FIELDS[(owned_section, field)],
         )
     else:
         allowed = ", ".join(f"`{s}`" for s in sorted(_guard.AGENT_WRITABLE_SECTIONS[caller]))

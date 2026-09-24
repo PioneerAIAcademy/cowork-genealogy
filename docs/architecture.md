@@ -1085,8 +1085,13 @@ itself:
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
-   `proof_summaries` to `proof-conclusion`, and `OWNED_DECLARATIONS` reserves
-   `questions.exhaustive_declaration` to `research-exhaustiveness`.
+   `proof_summaries` to `proof-conclusion`, `OWNED_DECLARATIONS` reserves
+   `questions.exhaustive_declaration` to `research-exhaustiveness`, and
+   `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`. The three
+   differ in granularity and key: a whole section, a field at a particular claim
+   value, and a field on presence alone. `project` is co-written — `init-project`
+   authors it and any writer may refresh `updated` — so only the one field is
+   routed.
 3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops an owning agent writing
    *outside* its own set, added after a measured 2026-08-19 incident in which
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
