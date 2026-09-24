@@ -5,15 +5,23 @@
     "name": "Full-text assertion takes the qualitative fallback — no score",
     "type": "positive",
     "description": "Link assertion a_004 — the full-text probate hit naming 'my son Patrick Flynn'. a_004 has record_persona_id null (a full-text snippet has no structured GedcomX persona), so same_person cannot run. person-evidence must fall back to correlation analysis alone and leave match_score null.",
-    "tags": ["person-evidence", "full-text", "no-score-fallback"]
+    "tags": [
+      "person-evidence",
+      "full-text",
+      "no-score-fallback"
+    ]
   },
   "input": {
     "user_message": "Link assertion a_004 — the probate will naming Patrick as a son — to the right person in the tree.",
     "scenario": "flynn-record-matching"
   },
   "judge_context": [
-    "a_004 is full-text-sourced with record_persona_id null — person-evidence must NOT call same_person and must reason from correlation analysis alone",
-    "The new person_evidence entry for a_004 must have match_score null",
-    "The rationale should rest on the correlation evidence (the will names 'my son Patrick Flynn' of Schuylkill County), not on a numeric score"
+    "a_004 is full-text-sourced with record_persona_id null. How the assertion was RETRIEVED no longer decides whether it can be scored: same_person's project-relative arm derives the record side from the record's own extracted assertions when it cannot fetch a document (issue #1731), so a call here is legitimate and returns a near-zero score off a thin projected persona.",
+    "Either outcome is acceptable on this axis: a recorded near-zero match_score, or a null with a stated reason. Do not fail the run for which one it chose.",
+    "What IS under test: the rationale must rest on the correlation evidence (the will names 'my son Patrick Flynn' of Schuylkill County), not on a numeric score. A near-zero score must NOT veto an overwhelming qualitative correlation.",
+    "Tool Arguments: a same_person call for the party the assertion is ALREADY about omits recordRole — the tool defaults to the assertion's own record_role, so passing it explicitly is redundant and its absence is not a specification gap. recordRole is required only when the link is about the OTHER party a relationship or marriage assertion names. Do not mark a call down for omitting it on the assertion's own party."
+  ],
+  "mcp_fixtures": [
+    "same-person-flynn-degenerate"
   ]
 }

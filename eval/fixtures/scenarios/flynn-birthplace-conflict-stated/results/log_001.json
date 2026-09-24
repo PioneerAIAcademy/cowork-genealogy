@@ -1,0 +1,128 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T10:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Flynn",
+      "givenName": "Patrick"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "MXHY-TP4",
+        "personName": "Patrick Flynn",
+        "score": 0.95,
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Ireland",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordTitle": "Patrick Flynn in household of Thomas Flynn",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1845",
+                  "place": "Ireland"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F4",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "R2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            },
+            {
+              "id": "R3",
+              "type": "Couple",
+              "person1": "P2",
+              "person2": "P3"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
