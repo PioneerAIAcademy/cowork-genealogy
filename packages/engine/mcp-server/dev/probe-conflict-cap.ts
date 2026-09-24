@@ -10,6 +10,7 @@ const SCENARIOS: Array<[string, string, string]> = [
   ["_012 birthplace", "../../../eval/fixtures/scenarios/flynn-birthplace-conflict-stated", "a_005"],
   ["_024 chronology", "../../../eval/fixtures/scenarios/flynn-baptism-names-mother", "a_001"],
   ["_024 via christening assertion", "../../../eval/fixtures/scenarios/flynn-baptism-names-mother", "a_003"],
+  ["_023 weak match, stated conflict", "../../../eval/fixtures/scenarios/flynn-birthplace-conflict-stated", "a_002"],
 ];
 
 async function tryTier(dir: string, confidence: string, aid: string): Promise<void> {
