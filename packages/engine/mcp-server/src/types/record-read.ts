@@ -17,8 +17,29 @@ export interface RecordReadInput {
   projectPath?: string;
 }
 
-// The tool returns simplified GEDCOMX directly.
-export type RecordReadResult = SimplifiedGedcomX;
+// The tool returns simplified GEDCOMX directly. A LIVE read given a
+// `projectPath` also stages the record (issue #2048 / #2489) and carries the
+// staging handle beside the document; a sidecar-mode read carries neither.
+export type RecordReadResult = SimplifiedGedcomX & {
+  /** The page-image document-image ARK. The requested persona's own source
+   *  refs are tried first, then document order — a record can carry several
+   *  page images, and the co-resident on scan 2 is not on scan 1. A source is
+   *  skipped only when it names a `resource_type` that is not
+   *  `DigitalArtifact*`; a `record_search`-staged source names none at all.
+   *  Carries the source url's `i=`/`cc=`/`groupId=` context params when it has
+   *  any, since a waypoint ark stripped of them can resolve to a neighbouring
+   *  page without erroring. Absent when the record has no page-image source.
+   *  Callers pass this to `image_read` / `image_transcribe` rather than
+   *  deriving an image ARK from a record ARK. */
+  imageArk?: string;
+  /** Present iff `projectPath` was given on a live read: the record retained
+   *  as a one-element `results[]` envelope under results/.staging/, readable
+   *  back with `record_read({ recordId, resultsRef })` and finalized by
+   *  `research_log_append({ stagedResultsRef })`. `null` when staging failed. */
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  /** Why `staged` is null — staging is best-effort and never fails the read. */
+  stagingError?: string;
+};
 
 // ─── FS recapi response (raw API) ─────────────────────────────────────────
 //

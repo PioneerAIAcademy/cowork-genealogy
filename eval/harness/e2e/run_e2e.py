@@ -345,13 +345,38 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
-    # Key-validity preflight. A duplicated or revoked key is truthy, so the
-    # agent run proceeds (it uses the SDK's own auth), but the judge silently
-    # fails — and a $7+ e2e run's result is discarded. Catch bad keys before
-    # spending anything. Does NOT abort on a missing key: --skip-judge already
-    # handles that (produces verdict="skipped"), and the e2e path has never
-    # blocked on absence.
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    # Judge preflight, two arms, both before anything is spent.
+    #
+    # Absent key: abort. This used to fall through on the reasoning that
+    # --skip-judge already covers it — but that flag is an explicit opt-in, so
+    # it only protects an operator who already knows the key is gone. The case
+    # that actually happens is not knowing: eval/.env is gitignored, so a fresh
+    # worktree has none until `make worktree-link`, and the run completes and
+    # discards its own grade. Measured 2026-09-23: $4.87 and 28.5 min spent for
+    # an ungraded run on catharina-gosner-daughter. --skip-judge remains the way
+    # to ask for an ungraded run deliberately.
+    #
+    # Present but bad key: a duplicated or revoked key is truthy, so the agent
+    # run proceeds (it uses the SDK's own auth) while the judge silently fails.
+    # Catch that too.
+    #
+    # Stripped, so "" and "   " take the absent arm rather than reaching the API.
+    api_key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+    if not api_key and not args.skip_judge:
+        print(
+            "Judge preflight failed: no ANTHROPIC_API_KEY is set.\n"
+            "A $5-8 e2e run would complete and then discard its own result, "
+            "because the judge cannot grade it.\n"
+            "\n"
+            "  Fix: set ANTHROPIC_API_KEY in eval/.env or in your shell.\n"
+            "  In a git worktree, eval/.env is gitignored and has to be "
+            "linked in: make worktree-link\n"
+            "\n"
+            "Re-run with --skip-judge to run without grading "
+            '(the run is committable and re-gradable; verdict="skipped").',
+            file=sys.stderr,
+        )
+        return 2
     if api_key and not args.skip_judge:
         from e2e.judge import DEFAULT_JUDGE_MODEL
         from harness.auth import verify_judge_key

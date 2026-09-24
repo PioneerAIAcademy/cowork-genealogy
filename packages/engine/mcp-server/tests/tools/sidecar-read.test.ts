@@ -372,7 +372,8 @@ describe("sidecar_read", () => {
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(r.reason).toBe("not_text");
-      expect(r.errors[0]).toMatch(/image_read/);
+      // The refusal now points at the tool that CAN read an uploaded image or PDF (#2048).
+      expect(r.errors[0]).toMatch(/image_transcribe\(\{ file/);
     });
   }
 

@@ -385,8 +385,8 @@ other targets trade realism for less setup:
 
 - **`server`** (+ `web`) — **the default.** Real Claude Agent SDK + real
   FamilySearch OAuth on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`; client id from
-  the bundled config; `ANTHROPIC_API_KEY` from your env, falling back to the
-  sibling repo's `../cowork-genealogy-ui/.env`). Local sandboxes.
+  the bundled config; `ANTHROPIC_API_KEY` from your env or `apps/server/.env`).
+  Local sandboxes.
 - **`server-e2b`** (+ `web`) — the full hosted path: identical to `server` but
   **E2B microVM** sandboxes (`SANDBOX_PROVIDER=e2b`).
 - **`server-dev`** (+ `web-dev`) — real agent but **dev-login** (no
