@@ -376,32 +376,36 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "file": "eval/tests/unit/research-exhaustiveness/child-link-marriage-not-sufficient.json",
         "tool": "validate_research_schema",
         "reason": (
-            "not-needed - 'this is a decline/review response - Claude is "
-            "not expected to call validate_research_schema'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/research-exhaustiveness/decline-incomplete-research.json",
-        "tool": "validate_research_schema",
-        "reason": (
-            "not-needed - 'this is a decline/review response - Claude is "
-            "not expected to call validate_research_schema'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/research-exhaustiveness/exhaustiveness-decisive-record-gate.json",
-        "tool": "validate_research_schema",
-        "reason": (
-            "not-needed - 'this is a decline/review response - Claude is "
-            "not expected to call validate_research_schema'"
+            "not-needed - 'Tool Arguments: this is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
         ),
     },
     {
         "file": "eval/tests/unit/research-exhaustiveness/tentative-value-alternative-record-gate.json",
         "tool": "validate_research_schema",
         "reason": (
-            "not-needed - 'this is a decline/review response - Claude is "
-            "not expected to call validate_research_schema'"
+            "not-needed - 'Tool Arguments: this is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/decline-incomplete-research.json",
+        "tool": "validate_research_schema",
+        "reason": (
+            "not-needed - 'Tool Arguments: This is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/exhaustiveness-decisive-record-gate.json",
+        "tool": "validate_research_schema",
+        "reason": (
+            "not-needed - 'Tool Arguments: This is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
         ),
     },
     {
@@ -489,9 +493,8 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
-            "(research-plan no longer holds those tools - the know-how "
-            "comes from the localities entry). Do NOT fail it for not "
-            "surveying.'"
+            "(research-plan no longer holds those tools). Do NOT fail it "
+            "for not surveying.'"
         ),
     },
     {
@@ -500,9 +503,8 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
-            "(research-plan no longer holds those tools - the know-how "
-            "comes from the localities entry). Do NOT fail it for not "
-            "surveying.'"
+            "(research-plan no longer holds those tools). Do NOT fail it "
+            "for not surveying.'"
         ),
     },
     {
@@ -511,9 +513,8 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
-            "(research-plan no longer holds those tools - the know-how "
-            "comes from the localities entry). Do NOT fail it for not "
-            "surveying.'"
+            "(research-plan no longer holds those tools). Do NOT fail it "
+            "for not surveying.'"
         ),
     },
     {
@@ -536,37 +537,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/search-images/direct-browse-unindexed-probate.json",
-        "tool": "image_read",
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/direct-happy-path-browse.json",
-        "tool": "image_read",
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/search-images/image-group-listing.json",
-        "tool": "image_read",
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-mixed-item-sections.json",
         "tool": "image_read",
         "reason": (
             "negative mention - 'the agent reads pages itself with "
@@ -593,6 +564,33 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "image_transcribe - it must NOT call image_read (it has no such "
             "tool: image_read returns the page inline and a volume browse "
             "overflows the transport)'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/search-images/direct-browse-unindexed-probate.json",
+        "tool": "image_read",
+        "reason": (
+            "negative mention - 'the agent reads pages itself with "
+            "image_transcribe - it must NOT call image_read (it has no such "
+            "tool)'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/search-images/direct-happy-path-browse.json",
+        "tool": "image_read",
+        "reason": (
+            "negative mention - 'the agent reads pages itself with "
+            "image_transcribe - it must NOT call image_read (it has no such "
+            "tool)'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/search-images/volume-mixed-item-sections.json",
+        "tool": "image_read",
+        "reason": (
+            "negative mention, worded as a parenthetical rather than an "
+            "imperative - 'Page reading is done by the agent itself with "
+            "image_transcribe (never image_read, which it does not hold)'"
         ),
     },
     {
@@ -642,8 +640,8 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "tool": "place_search",
         "reason": (
             "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry Norway is a "
-            "sufficient anchor for the church search'"
+            "place_search or collections_search - recordCountry 'Norway' is "
+            "a sufficient anchor for the church search'"
         ),
     },
     {
@@ -651,8 +649,8 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "tool": "collections_search",
         "reason": (
             "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry Norway is a "
-            "sufficient anchor for the church search'"
+            "place_search or collections_search - recordCountry 'Norway' is "
+            "a sufficient anchor for the church search'"
         ),
     },
     {
@@ -752,7 +750,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "not-needed, naming unavailability outright - "
             "'`merge_tree_persons` validates before persisting, so a "
             "separate `validate_research_schema` call is neither required "
-            "nor available to this skill (SKILL.md Validation)'"
+            "nor available to this skill (SKILL.md § Validation)'"
         ),
     },
     {
@@ -829,8 +827,8 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "tool": "collections_search",
         "reason": (
             "descriptive provenance of record data the agent READS, not "
-            "calls - 'Only describe a source as having an accessible or "
-            "digitized image when the record data actually contains an "
+            "calls - 'Only describe a source as having an \"accessible\" or "
+            "\"digitized\" image when the record data actually contains an "
             "image reference (e.g. an `imageId`/`artifacts` field on the "
             "record, or a nonzero image count from "
             "`collections_search`/`volume_search`)'"
@@ -841,8 +839,8 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "tool": "volume_search",
         "reason": (
             "descriptive provenance of record data the agent READS, not "
-            "calls - 'Only describe a source as having an accessible or "
-            "digitized image when the record data actually contains an "
+            "calls - 'Only describe a source as having an \"accessible\" or "
+            "\"digitized\" image when the record data actually contains an "
             "image reference (e.g. an `imageId`/`artifacts` field on the "
             "record, or a nonzero image count from "
             "`collections_search`/`volume_search`)'"
@@ -865,7 +863,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "kept off (CLAUDE.md: what keeps record-extractor off the broad "
             "research_append is research_append not being in its `tools:`), "
             "describing what it enforces downstream - 'Its `record_role` is "
-            "the literal \"absent\", which `research_append` enforces'"
+            "the literal `\"absent\"`, which `research_append` enforces'"
         ),
     },
     {
