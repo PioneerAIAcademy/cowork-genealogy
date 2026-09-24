@@ -206,15 +206,21 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
 - **Run 10 (2026-09-24 07:23, post-ruling)** — recovered neither finding;
   graded `f1: false`, `f2: false`, proof quality 2. `stop_reason: completed`,
   and it finished well inside every cap: 43.4 min against a 120-minute wall,
-  $7.86 against a $15 ceiling, 210 tool calls against 300 — roughly half the
-  time and cost of runs 8 and 9. The `Couple` relationship is unchanged from
+  $7.86 against a $15 ceiling, and **137 MCP calls against the 300-call cap**
+  (210 tool calls in all — the cap counts `mcp__*` only, as run 9's entry
+  notes). That is roughly half the wall-clock of runs 8 and 9, and 55-68% of
+  their cost ($11.58 and $14.26). The `Couple` relationship is unchanged from
   the starting tree, and the only source added all run is the 1801 census
   household of Nils Andersen (`1:2:4H6K-B56Z`), which documents no marriage.
   **The drift is confirmed a third time, against a wider query set than either
-  earlier probe:** 14 of the run's 25 `record_search` calls targeted this
-  marriage, including `collectionId: 1468080` directly, the bride's exact
-  indexed surname alone, both spouse cross-references, and a 1775-1800 window
-  scoped to Hordaland. None returned the record. The agent graded itself
+  earlier probe.** Counted by stated criteria over the run's 25 `record_search`
+  calls, so the next reader can re-derive rather than re-guess: **13** carried
+  `recordType: "marriage"`; **14** named the bride in any field (`Unna` or
+  `Halstein*`); **3** were scoped to `collectionId: 1468080`; **3** carried a
+  `marriage*` year or place parameter. Twenty distinct calls matched at least
+  one of those. Between them they covered the bride's exact indexed surname
+  alone, both spouse cross-references, the marriage collection directly, and a
+  1775-1800 window scoped to Hordaland. None returned the record. The agent graded itself
   `not_proved` with `shortfall: gap` and named the two repositories it did not
   reach — Digitalarkivet's browse-only pre-1797 Hamre books and Ancestry's
   "Norway, Select Marriages" — as "the most likely repositories for a direct
