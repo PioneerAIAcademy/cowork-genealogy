@@ -135,6 +135,7 @@ The tool returns the pedigree **as a simplified GedcomX graph, directly**
 {
   persons: AncestorPerson[];
   relationships?: SimplifiedRelationship[];  // present ONLY with marriageDetails
+  notes?: string[];                          // present ONLY when an edge was dropped
 }
 ```
 
@@ -142,6 +143,54 @@ There is intentionally **no** `personId` / `generations` / `ancestorCount`
 envelope: the count is `persons.length`, the generation depth is what the
 caller passed, and the root is the person whose `ascendancyNumber` is
 `"1"`. Adding those would be redundant metadata the task did not ask for.
+**Nothing is added except loss reporting** — `notes[]` below, and only when the
+tool silently discarded something the caller asked for.
+
+That exception is narrow and deliberate, and it is stated here because this
+paragraph is the line that would otherwise be cited to revert it. Redundant
+metadata can be recomputed from the payload; a *dropped* edge cannot be. Under
+`marriageDetails` a discarded `Couple` takes a marriage date and place with it,
+to a person who is not in the result — so with no note the caller cannot tell an
+ancestor who never married from one whose spouse FamilySearch did not return.
+Lead ruling 2026-09-22, option A: report the loss, mirroring
+`person_read`. Option B — drop silently and spec the loss — was considered and
+rejected, because its defence rested on "no skill feeds this tool into a tree
+write today", a fact that can change with nothing watching it.
+
+### Endpoint closure, and `notes[]`
+
+**Every endpoint of every emitted relationship is a person in `persons[]`.** An
+edge that names anyone else is discarded and reported in `notes[]`.
+
+FamilySearch's relationship array reaches one hop further than its `persons[]`,
+so a `Couple` can name a spouse the response never returned.
+`validate_research_schema` makes an unresolvable endpoint a hard error on all
+four spellings, and `project_create` — alone among the tree writers in never
+calling `sanitizeTree` — refuses the **entire** write on any error. So the
+alternative to dropping the edge is the user losing their whole project write,
+not keeping the edge.
+
+**Measured, 2026-09-23**, live FamilySearch at 4 generations with
+`marriageDetails`: `LZJW-C31` emitted **11 dangling endpoints across 27
+relationships**, and 13 across 28 with `descendants: true`. A self-pedigree run
+(7 persons, 3 relationships) had none. Every instance was a `Couple`, and the
+absent endpoint was always the **spouse** — not a parent, and not a person the
+ascendancy filter had removed. Re-derive before quoting: this is live data and
+the counts move.
+
+The check runs **after** the ascendancy filter and compares against the persons
+actually emitted. Comparing against the raw response would re-admit the leak,
+since a person dropped for having no ascendancy number is exactly the kind of
+endpoint that then dangles.
+
+It is **filter-only**: an ancestor whose spouse was not returned keeps their own
+entry in `persons[]`; only the edge goes. Retaining the absent person instead
+was rejected — `ascendancyNumber` is a required field on `AncestorPerson`, and
+endpoint closure rather than person retention is what was ruled.
+
+The guard and the note sentence are shared with `person_read`
+(`utils/tree-graph.ts`), so the two tools cannot drift into two wordings of one
+fact.
 
 Each **`AncestorPerson`** is a standard simplified person extended with
 exactly one ancestry-specific field:
@@ -371,13 +420,24 @@ below operates on the resolved ID.
 3. **Strip dangling sources.** Delete `sources` from every output person
    (they have no matching `sourceDescriptions`). Mutates this tool's
    result only.
-4. **Shape relationships** (only when `marriageDetails`): for each
-   simplified `Couple`, strip `person1`/`person2` to bare tree IDs
+4. **Shape relationships** (only when `marriageDetails`): strip **all four**
+   endpoint keys — `parent`, `child`, `person1`, `person2` — to bare tree IDs
    (drop any `…/persons/<id>` URL prefix, same as `person_read`'s
-   `extractPersonRef`) and keep the marriage `facts`.
+   `extractPersonRef`) and keep the marriage `facts`. All four, not just the
+   `Couple` pair: `simplifyRelationship` writes `parent`/`child` from
+   `stripFragment(resource)`, which passes an absolute URL through untouched,
+   and step 5 compares against bare ids — so an unbared endpoint is dropped
+   even when its person **is** returned. Defensive: every probed response
+   carries `Couple` only (measured 2026-09-23), so no `ParentChild` is known to
+   reach this tool.
+5. **Close the endpoints** (only when `marriageDetails`): discard any
+   relationship naming a person not in the **emitted** `persons[]`, and report
+   the loss in `notes[]`. After step 2's filter and against the emitted list,
+   never the raw response — see "Endpoint closure, and `notes[]`" above for why,
+   and for the measured rate.
 
 **Assembled result:**
-`{ persons, ...(marriageDetails ? { relationships } : {}) }`. After a
+`{ persons, ...(marriageDetails ? { relationships } : {}), ...(dropped ? { notes } : {}) }`. After a
 `301` merge the persons come from the merged-to person; the root is
 identifiable as `ascendancyNumber === "1"`.
 
