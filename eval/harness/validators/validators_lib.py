@@ -143,13 +143,22 @@ def assert_foreign_keys_valid(
 
 
 def new_section_entries(
-    before_state: dict[str, Any], after_state: dict[str, Any], section: str
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    section: str,
+    *,
+    include_modified: bool = False,
 ) -> list[dict]:
-    """Entries of `section` present in `after_state` but not `before_state`, by id.
+    """Entries of `section` present in `after_state` but not `before_state`, by id
+    — or, when `include_modified` is set, also entries with the same id whose
+    content changed in place (research_append op:"update").
 
     The general form of `new_log_entries` below, which is now a thin alias for
     `section="log"`. Generalised rather than copied when `test_record_extraction`
-    needed the same diff over `sources`.
+    needed the same diff over `sources`; `include_modified` was added for
+    `localities`, which locality-guide can rewrite in place, so an update is not
+    silently skipped. `include_modified` defaults False, so `new_log_entries` and
+    the `sources` caller are unchanged.
 
     An earlier draft of this docstring called that copy "the fifth" and credited
     the `isinstance` guard to "the four earlier ones". Both were wrong, and the
@@ -175,13 +184,23 @@ def new_section_entries(
     # hardening rather than a fix; the section being caller-supplied is what
     # widens the set of shapes that reach here. (2130 drifts as runs land — the
     # 0 is the claim.)
-    before_ids = {
-        e.get("id") for e in (before.get(section) or []) if isinstance(e, dict)
+    # `prior` is a dict {id: entry}, not the set of ids the pre-`include_modified`
+    # helper kept: `include_modified` needs the entry itself to compare against.
+    # One consequence beyond the "default unchanged" claim above: duplicate ids in
+    # `before` collapse to the LAST occurrence, so a same-id pair there is compared
+    # only against its last member. No section reaching this holds duplicate ids
+    # today (research_append assigns them), so it is latent, not live.
+    prior = {
+        e.get("id"): e for e in (before.get(section) or []) if isinstance(e, dict)
     }
-    return [
-        e for e in (after.get(section) or [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+    out = []
+    for e in (after.get(section) or []):
+        if not isinstance(e, dict):
+            continue
+        eid = e.get("id")
+        if eid not in prior or (include_modified and prior[eid] != e):
+            out.append(e)
+    return out
 
 
 def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -> list[dict]:
