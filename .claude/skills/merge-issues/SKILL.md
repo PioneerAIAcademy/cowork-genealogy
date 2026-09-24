@@ -49,10 +49,17 @@ issues with **no `**Touches:**` line**, which reach no queue at all, and issues
 paths no second issue touches. Both are listed by number. Read them by hand and
 say in the report how many you got through.
 
-The pool is **non-icebox Backlog plus unassigned Ready**. An assigned card, an
-In Progress card and a Review card are someone's work: never merge one, in either
-direction. An *unassigned* Ready card is both in the pool and its slot's holder,
+The pool is **unassigned non-icebox Backlog plus unassigned Ready**. An assigned
+card in any column, an In Progress card and a Review card are someone's work: never
+merge one, in either direction. An assigned Backlog card appears nowhere — Backlog
+holds no slot. An *unassigned* Ready card is both in the pool and its slot's holder,
 which makes it the natural target — it is furthest along.
+
+An agent card also queues under every skill whose SKILL.md names it via
+`@plugin:` — editing the agent flips each one's run log. A skill that names its own
+agent (`person-evidence`) is one queue, not two. Once `skills/<x>/` is deleted and
+`agents/<x>.md` exists, every path of `<x>` queues under `agent:<x>`. Both read the
+checkout, so run `slots.py` from an up-to-date `main`.
 
 **A slot can be held and show no block above.** `block()` runs only for a queue of
 2 or more, so a slot held by an In Progress card, a Review card or an open PR — with

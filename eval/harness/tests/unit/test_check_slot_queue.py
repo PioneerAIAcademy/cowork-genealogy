@@ -43,6 +43,18 @@ _reset = check_slot_queue.gh_warning.__globals__["reset"]
 
 
 @pytest.fixture(autouse=True)
+def repo_root(tmp_path, monkeypatch):
+    """Pin the checkout `touches.slot_of` and the own-suite arm read. Against the real
+    one, `proof-conclusion` below would change slot the day that skill is converted."""
+    root = tmp_path / "repo"
+    for skill in ("citation", "timeline", "person-evidence", "proof-conclusion"):
+        (root / "packages" / "engine" / "plugin" / "skills" / skill).mkdir(parents=True)
+    (root / "packages" / "engine" / "plugin" / "agents").mkdir(parents=True)
+    monkeypatch.setattr(check_slot_queue.touches, "REPO_ROOT", str(root))
+    return root
+
+
+@pytest.fixture(autouse=True)
 def _clean_warnings():
     _reset()
     yield
@@ -104,6 +116,21 @@ def test_an_agent_nothing_references_reaches_no_skill():
         )
         == set()
     )
+
+
+def test_a_converted_skills_paths_reach_its_own_suite(repo_root):
+    """Skill directory gone, agent and suite kept: slot_of names every path
+    `agent:<x>`, and the suite of the same name embeds the agent body."""
+    root_agents = repo_root / "packages" / "engine" / "plugin" / "agents"
+    (root_agents / "convert-dates.md").write_text("# convert-dates\n", encoding="utf-8")
+    (repo_root / "eval" / "tests" / "unit" / "convert-dates").mkdir(parents=True)
+
+    for path in ("packages/engine/plugin/skills/convert-dates/SKILL.md",
+                 "eval/tests/unit/convert-dates/ut_cd_001.json",
+                 "packages/engine/plugin/agents/convert-dates.md"):
+        assert check_slot_queue.path_to_skills(
+            path, {"convert-dates": {"research"}}
+        ) == {"convert-dates", "research"}, path
 
 
 def test_affected_skills_unions_over_paths():

@@ -31,10 +31,20 @@ import sys
 from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_HERE, "..", "..", "merge-issues"))
+sys.path.insert(0, _HERE)
 
 import slots  # noqa: E402
+from _tree import make_tree, pin_repo_root  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def repo_root(tmp_path, monkeypatch):
+    """Every test reads a pinned tmp checkout, never the live one -- see _tree.py."""
+    return pin_repo_root(tmp_path, monkeypatch)
 
 SKILL = "packages/engine/plugin/skills/timeline"
 SLOT = "skill:timeline"
@@ -282,3 +292,86 @@ def test_an_unqueued_unheld_slot_renders_in_no_section(tmp_path):
     out = run([], tmp_path)
 
     assert "--- held, queue below 2 (0 slots) ---" in out
+
+
+# --- issue #2823's three miscounts ------------------------------------------------
+#
+# `repo_root` pins touches.REPO_ROOT to a tmp tree; these tests add to it.
+
+GPS = "packages/engine/plugin/agents/gps-mentor.md"
+
+
+def _assigned(number, **kw):
+    return issue(number, assignees=[{"login": "x"}], **kw)
+
+
+def test_a_deleted_skills_cards_queue_on_its_agent(repo_root):
+    """Once skills/<x>/ is gone and agents/<x>.md exists, a card still naming the old
+    skill path queues on agent:<x>, beside a card naming the suite that stayed."""
+    make_tree(repo_root, agents=["convert-dates"])
+    out = run([issue(11, touches="packages/engine/plugin/skills/convert-dates/SKILL.md"),
+               issue(12, touches="eval/tests/unit/convert-dates/ut_cd_001.json")],
+              tmp_path=repo_root)
+
+    assert depth(out, "agent:convert-dates") == 2
+    assert depth(out, "skill:convert-dates") is None
+
+
+def test_an_assigned_backlog_card_is_in_no_queue(repo_root):
+    """Merge doctrine never merges an assigned card, whatever its column."""
+    out = run(_queued_pair() + [_assigned(13)], tmp_path=repo_root)
+
+    assert depth(out, SLOT) == 2
+    assert "#13 " not in out
+    assert "pool: 2 issues" in out
+
+
+def test_an_assigned_backlog_card_is_not_named_a_holder(repo_root):
+    """/fill-ready's Gate 4 says Backlog holds nothing. An assigned Backlog card on an
+    otherwise empty slot must not conjure a held block."""
+    out = run([_assigned(13)], tmp_path=repo_root)
+
+    assert section_of(out, SLOT) is None
+    assert "--- held, queue below 2 (0 slots) ---" in out
+
+
+def test_an_unassigned_backlog_card_is_still_queued(repo_root):
+    out = run(_queued_pair() + [issue(13)], tmp_path=repo_root)
+
+    assert depth(out, SLOT) == 3
+
+
+def test_an_agent_card_also_queues_on_every_skill_that_embeds_it(repo_root):
+    """research/SKILL.md names @plugin:gps-mentor, so build_snapshot embeds the agent
+    in research's run log. Derived from the scan, not a list: bystander names no agent."""
+    make_tree(repo_root, skills=["research", "bystander"], agents=["gps-mentor"],
+              plugin_refs={"research": ["gps-mentor"]})
+    out = run([issue(11, touches=GPS), issue(12, touches=GPS)], tmp_path=repo_root)
+
+    assert depth(out, "agent:gps-mentor") == 2
+    assert depth(out, "skill:research") == 2
+    assert depth(out, "skill:bystander") is None
+
+
+def test_a_pair_agent_queues_on_its_skill_not_twice(repo_root):
+    """person-evidence names its own agent: the skill slot and the agent are one paid
+    run, so the card queues once there, not also under agent:person-evidence."""
+    make_tree(repo_root, skills=["person-evidence", "research"],
+              agents=["person-evidence"],
+              plugin_refs={"person-evidence": ["person-evidence"],
+                           "research": ["person-evidence"]})
+    pe = "packages/engine/plugin/agents/person-evidence.md"
+    out = run([issue(11, touches=pe), issue(12, touches=pe)], tmp_path=repo_root)
+
+    assert depth(out, "skill:person-evidence") == 2
+    assert depth(out, "skill:research") == 2
+    assert depth(out, "agent:person-evidence") is None
+
+
+def test_a_pr_on_an_agent_holds_every_embedding_skill(repo_root):
+    make_tree(repo_root, skills=["research"], agents=["gps-mentor"],
+              plugin_refs={"research": ["gps-mentor"]})
+    out = run([], tmp_path=repo_root, prs=[{"number": 900, "files": [{"path": GPS}]}])
+
+    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "skill:research")
+    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "agent:gps-mentor")

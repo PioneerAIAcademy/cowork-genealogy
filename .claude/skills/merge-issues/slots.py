@@ -21,9 +21,14 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_HERE, "..", "lib"))
+sys.path.insert(0, os.path.join(_HERE, "..", "..", "..", "eval", "harness", "scripts"))
 
+import touches  # noqa: E402
+from check_runlogs import skills_referencing_agents  # noqa: E402
 from touches import (  # noqa: E402
     in_snapshot,
     paths_from_touches,
@@ -61,13 +66,34 @@ def labels_of(issue):
     return {lb["name"] for lb in issue.get("labels") or []}
 
 
-def slots_of(entries):
+def embedders():
+    """agent name -> the skills whose SKILL.md delegates to it via `@plugin:`. The
+    scan check_runlogs.py's rule 2 uses, so an agent edit queues on exactly the
+    skills whose run logs it flips."""
+    return skills_referencing_agents(
+        Path(touches.REPO_ROOT) / "packages" / "engine" / "plugin" / "skills")
+
+
+def expand(slot, embedded_by):
+    """An agent slot, plus the slot of every skill that embeds the agent. A skill
+    naming its own agent (person-evidence) is one paid run, so its skill slot stands
+    for both; any other agent keeps its own slot beside the embedders."""
+    kind, _, name = slot.partition(":")
+    if kind != "agent":
+        return {slot}
+    out = {f"skill:{s}" for s in embedded_by.get(name, ())}
+    if f"skill:{name}" not in out:
+        out.add(slot)
+    return out
+
+
+def slots_of(entries, embedded_by):
     """Every eval slot an issue's Touches line puts it in."""
     out = set()
     for _, p in entries:
         s = slot_of(p)
         if s:
-            out.add(s)
+            out |= expand(s, embedded_by)
     return out
 
 
@@ -83,6 +109,7 @@ def main(board_path, open_path, prs_path):
               "re-pull with a higher one; gh truncates silently and every count below "
               "is then wrong.\n")
 
+    embedded_by = embedders()
     entries, pool, holders = {}, [], {}
     for n, issue in issues.items():
         col = status.get(n)
@@ -92,15 +119,18 @@ def main(board_path, open_path, prs_path):
             holders[n] = col
         # The merge pool: nobody is holding these. An unassigned Ready card is in
         # it *and* holds a slot -- it is the natural merge target, being furthest
-        # along. An assigned one is someone's work and is never a merge candidate.
+        # along. An assigned card is someone's work in any column, Backlog included,
+        # and is never a merge candidate.
+        if issue.get("assignees"):
+            continue
         if col == "Backlog" and "icebox" not in labs:
             pool.append(n)
-        elif col == "Ready" and not issue.get("assignees"):
+        elif col == "Ready":
             pool.append(n)
 
     queues, held = {}, {}
     for n in pool:
-        for s in slots_of(entries[n]):
+        for s in slots_of(entries[n], embedded_by):
             queues.setdefault(s, []).append(n)
     for n, col in holders.items():
         # "merge INTO this one" names a merge TARGET, so it may only be said of a
@@ -113,7 +143,7 @@ def main(board_path, open_path, prs_path):
             tag = "unassigned -- merge INTO this one"
         else:
             tag = "held"
-        for s in slots_of(entries[n]):
+        for s in slots_of(entries[n], embedded_by):
             held.setdefault(s, []).append((n, col, tag))
 
     pr_slots = {}
@@ -121,7 +151,8 @@ def main(board_path, open_path, prs_path):
         for f in p.get("files") or []:
             s = slot_of(f["path"])
             if s and in_snapshot(f["path"]):
-                pr_slots.setdefault(s, set()).add(p["number"])
+                for slot in expand(s, embedded_by):
+                    pr_slots.setdefault(slot, set()).add(p["number"])
 
     def describe(n):
         i = issues[n]
@@ -142,8 +173,8 @@ def main(board_path, open_path, prs_path):
     must = {s: m for s, m in queues.items() if len(m) >= MUST_CLEAR}
     rest = {s: m for s, m in queues.items() if 2 <= len(m) < MUST_CLEAR}
 
-    print(f"=== eval slot queues (pool: {len(pool)} issues -- non-icebox Backlog + "
-          "unassigned Ready) ===\n")
+    print(f"=== eval slot queues (pool: {len(pool)} issues -- unassigned non-icebox "
+          "Backlog + unassigned Ready) ===\n")
     print(f"--- MUST CLEAR: queue >= {MUST_CLEAR} "
           f"({len(must)} slots) ---\n")
     for s, m in sorted(must.items(), key=lambda x: (-len(x[1]), x[0])):

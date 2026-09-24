@@ -145,7 +145,13 @@ def path_to_skills(path: str, agent_map: dict[str, set[str]]) -> set[str]:
     kind, _, name = slot.partition(":")
     if kind == "skill":
         return {name}
-    return set(agent_map.get(name, ()))
+    out = set(agent_map.get(name, ()))
+    # A skill converted to an agent keeps its suite, and build_snapshot embeds
+    # `agents/<name>.md` in the suite of the same name -- slot_of names every path of
+    # that suite `agent:<name>` once the skill directory is gone.
+    if os.path.isdir(os.path.join(touches.REPO_ROOT, "eval", "tests", "unit", name)):
+        out.add(name)
+    return out
 
 
 def affected_skills(paths, agent_map: dict[str, set[str]]) -> set[str]:
