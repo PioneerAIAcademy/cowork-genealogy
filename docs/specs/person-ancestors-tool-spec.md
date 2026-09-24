@@ -424,8 +424,12 @@ below operates on the resolved ID.
 2. **Re-attach the ascendancy number.** Index the raw persons by `id`.
    For each simplified person, set `ascendancyNumber` ←
    `raw.display.ascendancyNumber`. A person with no
-   `display.ascendancyNumber` is skipped (defensive — every real ancestry
-   person has one).
+   `display.ascendancyNumber` is skipped. **Not defensive under
+   `descendants: true`:** measured 2026-09-23, five persons on `LZJW-C31` arrive
+   with no number and are dropped here. That person loss is **not** reported;
+   only the relationships they anchor are, in `notes[]` (step 5). Retaining them
+   instead would mean making `ascendancyNumber` optional on `AncestorPerson`,
+   which endpoint closure deliberately does not do.
 3. **Strip dangling sources.** Delete `sources` from every output person
    (they have no matching `sourceDescriptions`). Mutates this tool's
    result only.

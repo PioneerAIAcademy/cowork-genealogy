@@ -264,7 +264,12 @@ async function mapResponse(
   for (const sp of simplified.persons ?? []) {
     if (!sp.id) continue;
     const ascendancyNumber = ascById.get(sp.id);
-    if (ascendancyNumber === undefined) continue; // defensive — every ancestry person has one
+    // NOT defensive under `descendants: true`: measured 2026-09-23, five persons
+    // on LZJW-C31 arrive with no ascendancyNumber and are dropped here. This is
+    // load-bearing and lossy, and it is why the closure guard below compares
+    // against the EMITTED persons rather than the raw response. The person loss
+    // itself is unreported — only the edges those persons anchor reach notes[].
+    if (ascendancyNumber === undefined) continue;
     // Drop per-person source references: the ancestry response carries no
     // sourceDescriptions, so these would be dangling. Mutates this result
     // only — toSimplified is untouched, so other callers keep their sources.
