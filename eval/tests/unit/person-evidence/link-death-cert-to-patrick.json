@@ -5,7 +5,14 @@
     "name": "Verify confidence calibration on the death-certificate person link",
     "type": "positive",
     "description": "Review pe_005, the person_evidence link from a_013 (death certificate naming Thomas Flynn as Patrick's father) to person I1 (Patrick Flynn). The link is `confident` — the death certificate names Patrick Flynn, Schuylkill County, 1908, matching the subject's known identity. The skill should confirm the confidence calibration is appropriate.",
-    "tags": ["person-evidence", "death-cert", "confidence-calibration", "pe_005"]
+    "tags": [
+      "person-evidence",
+      "death-cert",
+      "confidence-calibration",
+      "pe_005"
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The agent modifies pe_005 during a review, which test_pe005_unchanged_when_review_confirms correctly refuses. Prose does not bind it: agents/person-evidence.md already says 'Do NOT modify the entry under review (not its confidence, not its rationale, not any other field)' and covers this exact case, 'If the review surfaces a concern (calibration off ...) stop and ask the user to authorize the action'. No tool instrument exists either -- a refusal on in-place person_evidence updates would reject 30 of 30 committed update ops, since none of them uses the append-then-supersede form Step 6 prescribes. No hook instrument exists, because review-versus-linking mode lives in the user's phrasing, which neither research_append nor the PreToolUse hook can see. Same class as ut_person_evidence_015. SECOND, SEPARATE PROBLEM, to settle before removing this marker: judge_context item 0 says the review should CONFIRM 'confident' is appropriate, but the agent concluded 'probable', the judge called that reasoning substantively sound, and an earlier annotation recorded it as 'a correct downgrade for the wrong reason'. The test may be asking the agent to affirm the wrong tier. It has never passed: 0 of 55 committed runs. Tracked as issue #2272. Remove this marker when person-evidence gains an explicit caller-set read-only mode AND the confident-versus-probable premise is settled with a genealogist, and this test passes three consecutive single-test runs."
   },
   "input": {
     "user_message": "Review the person_evidence link pe_005 (from a_013, the death certificate, to Patrick Flynn) and assess whether its confidence calibration is justified.",
