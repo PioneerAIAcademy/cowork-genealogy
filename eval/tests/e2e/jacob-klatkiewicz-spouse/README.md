@@ -120,6 +120,56 @@ no competing Jacob: no second Jacob Klatkiewicz appears anywhere in the
 1883-1885 pages. The wife's age remains unestablished — the tree gives her
 none, and the baptism register does not record parents' ages.
 
+### Step 1a image-reading calibration
+
+Required by the Step 1a calibration rule (`docs/e2e-testing-guide.md`). Every
+reading asserted here was made by eye from the scans, which the rule covers
+explicitly — it names "you reading the scan by eye" alongside the automated
+readers.
+
+Two other entries indexed by FamilySearch from the same image
+(`3:1:3Q9M-CSXV-6JG3`) were read from the register and compared:
+
+| | index | register | |
+|---|---|---|---|
+| `1:1:6FZ9-65VY` child | Antonius Waniewski | Antonius Waniewski | match |
+| father | Franciscus Waniewski | Franciscus Waniewski | match |
+| mother | Agnes Rakowska | Agnes Rakowska | match |
+| born / baptised | 18 May / 18 May 1886 | 18 May / 18 May 1886 | match |
+| `1:1:6FZ9-KW58` child | Joannes Stachowiak | Joannes Stachowiak | match |
+| father | Michael Stachowiak | Michael Stachowiak | match |
+| mother | Josepha Szymankiewicz | Josepha Szymankiewicz | match |
+| born / baptised | 11 May / 23 May 1886 | 11 May / 23 May 1886 | match |
+
+**Both match, so the reading is licensed for those fields**, and `Rurek` stands
+as an index error rather than a misreading: the same eye that read `Kurek` on
+entry 44 read two neighbouring entries exactly as the index holds them.
+
+**What the pass does not cover, stated rather than assumed.** Clause 2 licenses
+*those fields* — child, father, mother, date — and clause 4 excludes farm,
+residence and occupation outright. Two readings here sit outside that grant:
+
+- **`Rumianek` from the *Locus Nativitatis* column.** No index field was
+  compared against it; the index's place is Ceradz, the parish of baptism, a
+  different column. It is corroborated instead by the starting tree, which
+  independently records Rumianek as `LDZR-PH7`'s birthplace — the one element of
+  the tree's entry this resolution does *not* correct.
+- **The marginal marriage annotation** (11 Feb 1915, Poznań St Adalbert's). A
+  marriage date, place and spouse are none of the four compared fields, so the
+  calibration says nothing about it. It is offered as the reason no name-reuse
+  scenario is needed, not as a graded claim, and no finding depends on it.
+
+The 1883-85 sweep for absent Klatkiewicz baptisms rests on child and father
+names, which are compared fields, so it is within the grant.
+
+**Caution for the next reader.** This page's index is visibly noisy —
+`Klatkwicz`, `Dwczarczak` (for Owczarczak), `Lzeszak` among its 17 indexed
+entries. The two entries above were chosen *because* their indexed names are
+clean and plausible. Calibrating against one of the garbled ones could have
+failed the check on the index's error rather than the reader's, and the rule as
+written has no provision for that: it has a clause for too *few* indexed entries
+and none for unreliable ones.
+
 ### Provenance
 
 Record retrieval used `packages/engine/mcp-server/dev/try-*.ts` against live
