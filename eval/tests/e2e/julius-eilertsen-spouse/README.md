@@ -28,19 +28,60 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 20, `hint-samples.csv` row 611,
-flag `adds_spouse`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Norway, Church Books, 1797-1958", a 15 August 1910 entry for Julius Edmund Eilertsen (b. 1889, Leines) and Anne Kathrine Edvardsen (b. 1893, Steigen, of Leines), naming his father Eilert Johan Jensen and her father Edvard Johannessen.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Anne Kathrine Edvardsen as his wife, plus a `required` finding that the report documents
-the rejection.
+**RESOLVED — TRUE MATCH (Outcome a).** The hint is correct: Julius Edlund
+Eilertsen (`GDCS-WYY`) married **Anne Kathrine Edvardsen** (b. 1893, Steigen, of
+Leines, daughter of Edvard Johansen/Johannessen) on **15 August 1910 in Bodø**.
+Hint record: `ark:/61903/1:1:68WM-Q2DG`.
 
-The identification of the man is not in doubt and the marriage is. The record's Julius Edmund Eilertsen was born 1889 at Leines with a father named Eilert Johan Jensen; the tree's Julius Edlund Eilertsen was born 24 February 1889 and baptised at Steigen, father Eilert Johan Jensen, resident in the same district. Edlund/Edmund is one letter and the rest is exact.
+**The man is certain and the 1910 event is the marriage, not banns.** The record's
+Julius Edmund Eilertsen (b. 1889 Leines, father Eilert Johan Jensen) is the tree's
+Julius Edlund Eilertsen (b. 24 Feb 1889, baptised Steigen, father Eilert Johan
+Jensen) — Edlund/Edmund is one letter, the rest exact. The **Bodø marriage
+register page was examined** (`ark:/61903/3:1:3QHK-Q3P5-YK5F`): its header reads
+"Aar 1910, **D. I Ægteskab Indtraadte**" (marriages contracted), and entry No. 37,
+dated 15/8 1910, records Julius Edmund Eilertsen (Fisker, Leines) and Anne Kathrine
+Edvardsen, both **1st marriage**, banns column **"ikke lysning"** (married by
+licence, without banns). So this is the `vielse` itself — not `forlovelse` or
+`lysning`.
 
-The conflict is the woman. The tree gives him a marriage in **1911** to **Petrine Elisabeth Edisdatter** (b. 1877) — twelve years his senior — while the hint gives a **15 August 1910** union with **Anne Kathrine Edvardsen** (b. 1893), four years his junior and living at Leines. Both cannot be first marriages a year apart unless the first ended almost immediately. The likelier readings are that the 1910 entry is the betrothal or banns for a marriage the tree has mis-recorded, or that the tree's 1911/Petrine pairing is itself wrong.
+**Corroboration from a second parish register (also examined).** The couple's
+Leiranger (Steigen) home-parish register (`ark:/61903/1:1:68WM-2WVL`, image
+`ark:/61903/3:1:3QHV-13P5-1SS8`) records the same couple with the remark
+**"ægteviet i Bodø kirke, attest 16/8"** (married in Bodø church, certificate
+16 Aug). FamilySearch indexes that entry under **1911** only because the home
+parish back-recorded the Bodø marriage in a later section of its book — the same
+page back-records other 1910 Bodø marriages (e.g. Martin Torkildsen, who is
+entry 36 in the 1910 Bodø register). The marriage date is 15 August 1910. A third
+index, `ark:/61903/1:1:68WM-Z75R`, is a parallel-register copy of the same 1910
+Bodø marriage. The independent corroboration is `68WM-2WVL` (Leiranger) and
+`68WM-Z75R` (parallel register). The third supporting source is the hint
+record's own page scan (`3:1:3QHK-Q3P5-YK5F`), read directly rather than taken
+from its index — better evidence than the index, but not a second record.
 
-The tree is not a reliable check here: it attaches a son, Emil Knutsen born 4 July 1898, to a father born in 1889, which is impossible and shows the parent links in this cluster have not been vetted. Norwegian church books distinguish `forlovelse`, `lysning` and `vielse`, so the reviewer should read the register page and see which of the three the 1910 entry actually is before deciding.
+**The tree's competing 1911/Petrine marriage is unsourced.** Julius's live page
+carries only three sources — two 1889 baptisms (`687B-9PF2`, `687Y-T7V9`) and the
+1900 census (`DJ6F-6Q2M`), none a marriage record — so the `1911` Couple fact with
+Petrine Elisabeth Edisdatter (`GDJ3-R2L`) has no source behind it. The only
+*sourced* marriage for Julius is the 1910 union with Anne Kathrine. (The impossible
+Julius→Emil Knutsen link, Emil b. 1898, likewise shows the cluster's parent links
+are unvetted — Emil is also attached to Petrine as a parent and carries the
+patronymic Knutsen, so he is most likely Petrine's son from a prior union rather
+than merely a broken link.) These are live-tree defects and supporting context
+only; they do **not** change the TRUE MATCH verdict, they were **not** edited as
+part of this adjudication, and the hint was not attached.
+
+**Searches.** "Norway, Church Books, 1797-1958" marriage 1909–1912 for Julius
+Eilertsen returned the three indexings above; a broad Anne Kathrine Edvardsen
+(b. 1891–1895) search found no death/burial 1910–1912 for the bride (a 1899-death
+Anne Kathrine Edvardsdtr is a different child, b. 1892 Nord-Trøndelag; a 1914
+Bergen baptism naming an "Anna Kathrine Edvardsen" is a different couple, husband
+"Julius Pedersen Eidelund"). Retrieval was tool-assisted (MCP `record_read`,
+`record_search`, `person_read`, `source_attachments`, and `image_transcribe`);
+the two Bodø and Leiranger register images were actually examined, and all other
+evidence is indexed. The identity judgement is the genealogist's.
+
+**Independent second opinion — Isaac Boateng** (an independent genealogist; not a
+senior genealogist, and not the adjudicator) independently reviewed the evidence
+and stated: "The evidence strongly indicates that Julius Eilertsen married Anne
+Kathrine Edvardsen on 15 August 1910. The record is an actual marriage record,
+not banns or an engagement."
