@@ -4662,7 +4662,7 @@ describe("research_append (batch ops)", () => {
     expect((errorsOf(r) ?? []).join("\n")).toMatch(/appended earlier in this batch/);
   });
 
-  it("(d4-logattr) a stringified `fields` is caught by the shape guard before this arm runs", async () => {
+  it("(d4-logattr) a stringified `fields` in a BATCHED op is caught by the shape guard before this arm runs", async () => {
     await writeProject(attrResearch("in_progress", []));
     const r = await researchAppend({
       projectPath: dir,
@@ -4673,6 +4673,22 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(false);
     // The pre-existing guard, not this rule: `fields` must be an object.
     expect((errorsOf(r) ?? []).join("\n")).toMatch(/update requires a `fields` object/);
+  });
+
+  it("(d4-logattr) a stringified `fields` in the SINGLE-op form is coerced, and this rule still fires", async () => {
+    // The single-op form runs `fields` through coerceJsonArg, so a string reaches
+    // the rule as an object — 6 committed search-images calls take this shape.
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "plan_items",
+      op: "update",
+      planId: "pl_001",
+      entryId: "pli_001",
+      fields: '{"status":"completed"}',
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
   });
 
   // ── the second direction: what it must still ACCEPT ───────────────────────

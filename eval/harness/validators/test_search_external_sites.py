@@ -783,8 +783,9 @@ def test_no_plan_item_status_written_when_no_entry_names_one(
       any plan item, where the tool asks whether an entry names *this* item.
     - **Broader on status.** It refuses any status change, where the tool
       refuses `completed` only. That reach is the point: it covers
-      `in_progress` and `skipped` moves, and it covers this skill, whose corpus
-      holds zero `completed` writes — so the tool rule never fires here at all.
+      `in_progress` and `skipped` moves, which the tool rule never refuses —
+      and in this skill, whose 2 corpus `completed` writes both log
+      `planItemId` first, the tool rule refuses nothing.
 
     ADR-0011's "Production beats eval-only" makes this the complement of the
     gate rather than a second copy of it: what the tool cannot see from one
@@ -800,7 +801,7 @@ def test_no_plan_item_status_written_when_no_entry_names_one(
     filters on `if not r.reporting_only`, which drops a reporting-only result
     whether it passed OR fired — and a fired one goes to the judge as an
     observation, which the run log does not persist either. So its absence from
-    all 10 committed `search-external-sites` run logs (the function name appears
+    all 5 committed `search-external-sites` run logs (the function name appears
     0 times under either spelling) is not evidence that it never fired. The unit
     run logs carry no before/after state, so no replay is possible from anything
     committed, and the direction that matters for a newly-gating check — does it
