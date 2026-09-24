@@ -2274,6 +2274,39 @@ this section before reopening one.
   attribution sees it, and that is eval-only. It reaches production for nothing
   today because nothing needs it.
 
+- **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
+  summary's `exhaustive_search_summary` must appear in some `log[].query`." Proposed
+  2026-09-17 against a real defect: in the `pedro-chaves-spouse` run of 2026-09-09, call 182
+  (`agent_type: "proof-conclusion"`) reported `3:1:9Q97-YSRZ-GWP` and `3:1:9Q97-YSRZ-614` as
+  "attempted and returned 400 errors via the MCP transport" when neither was ever called —
+  the two actually called, `3:1:QJRM-GV8V` and `3:1:QP84-TH55`, are recorded correctly at
+  `log_028`/`log_029`. ADR-0011's first question answers *yes* (the log names the real
+  attempts), and `research_append` already carries a cross-check of this shape (D2).
+  **Rejected on measurement anyway.**
+
+  Re-derived over the 185 committed e2e runs carrying a `final-research.json`, measured at
+  df3a8b62e: of **202** `proof_summaries`, 56 name an ark in `exhaustive_search_summary` and
+  **38 of 56 name an ark absent from every `log[].query`** — because citing the record you
+  found is ordinary practice and that ark lives in `sources[]`, not the log. Narrowing to a
+  failure framing leaves 27 summaries and flags 18, and the flagged ones are truthful:
+  `wilkins-death-kentucky` reports "original image NOT READ after two format attempts",
+  `jimmie-jewel-neal` reports three image-agent attempts lost to persistent 529s. **The
+  check denies legitimate writes to catch one false one.**
+
+  (The 2026-09-17 pass reported 198 / 63 / 45 and 21 / 13 on a smaller corpus and a
+  different matcher; the ratio and the conclusion are unchanged. Re-derive rather than
+  quote forward — the corpus grew twice during this card alone.)
+
+  Because it is not mechanizable, the rule is lane 4: a provenance clause in
+  `packages/engine/plugin/agents/proof-conclusion.md` §5 — name the identifier you actually
+  called, never the one you wanted. **Nothing checks that a prose clause changes behaviour** —
+  the gap is on the `nothing-checks` register — so that clause is unmeasured.
+
+  **What would reopen it:** consistent logging of agent-side image attempts. The failure
+  reaches the log in `pedro-chaves-spouse` and not in `jimmie-jewel-neal`, so part of the
+  38 is a logging gap rather than a reporting one, and the false-deny rate is an upper
+  bound on a corpus that cannot currently distinguish the two.
+
 ## 10. Residual risks
 
 Open questions live on the board, not here. This section keeps only the risks

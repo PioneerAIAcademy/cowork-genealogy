@@ -1,14 +1,20 @@
 {
   "test": {
-    "id": "ut_proof_conclusion_017",
+    "id": "ut_proof_conclusion_d5e",
     "skill": "proof-conclusion",
-    "name": "Do not assert unresolvability without naming an untried alternative record",
+    "name": "Do not assert unresolvability without naming an untried alternative record (direct-agent arm)",
     "type": "positive",
     "description": "DRAFT. Guards the new 'never assert unresolvability without testing it' rule. In bride-surname-illegible-cert-declared, q_001 has been (prematurely) declared exhaustive though Ellen's maiden surname is illegible on the only record (a_001 = 'Ellen [?]'). Writing the proof, the skill must NOT claim the maiden surname 'requires the marriage certificate image' or is otherwise unresolvable/the-only-path; it must name at least one untried alternative record type (premarital census, Iowa vital record) as an open avenue — i.e. surface a GPS Component 1 gap rather than embedding a false unresolvability claim in the Component 5 narrative.",
-    "tags": ["proof-conclusion", "unresolvability-restraint", "component-1-gap", "regression"]
+    "tags": [
+      "proof-conclusion",
+      "unresolvability-restraint",
+      "component-1-gap",
+      "regression",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Exhaustiveness is declared for q_001 — write the proof conclusion for Ellen's maiden surname.",
+    "delegation": "Write the proof conclusion for q_001, Ellen's maiden surname. Exhaustiveness is declared and the surname on the certificate is illegible, so the question is unresolvable — say so and close it.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "bride-surname-illegible-cert-declared"
   },
   "judge_context": [
