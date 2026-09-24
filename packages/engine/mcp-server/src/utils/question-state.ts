@@ -46,6 +46,14 @@ export interface QuestionStatus {
   /** What this question is waiting on, in the router's vocabulary. */
   nextStep: string | null;
   openConflictIds: string[];
+  /** `questions[].status` verbatim — null when absent or not a string.
+   *
+   *  NOT a second opinion on `state`. `state` is this module's reading of the
+   *  documents (any proof summary present ⇒ `"concluded"`); `storedStatus` is
+   *  what the question says about itself. The two disagreeing is information,
+   *  not a defect — a reader given only `state` reports a question as settled
+   *  when its own status still says `in_progress`. */
+  storedStatus: string | null;
 }
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
@@ -248,7 +256,12 @@ export function questionStatus(research: any, question: any): QuestionStatus {
     nextStep = "research-exhaustiveness, then proof-conclusion";
   }
 
-  return { id: qid, state, nextStep, openConflictIds };
+  // Copied verbatim, never re-mapped or re-validated: this tool skips malformed
+  // entries defensively rather than reporting them (spec §2, "Not a validator").
+  const rawStatus = question?.status;
+  const storedStatus = typeof rawStatus === "string" ? rawStatus : null;
+
+  return { id: qid, state, nextStep, openConflictIds, storedStatus };
 }
 
 /** Every question's state, in document order. */
