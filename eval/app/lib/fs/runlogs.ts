@@ -115,12 +115,17 @@ function rawToRunLog(raw: unknown): RunLogFile {
   // emitting one because nothing imported it (lead ruling 2026-09-18). Wiring
   // read-time validation was the alternative and was rejected. The logs it
   // would reject are NOT a transient in-flight population — they are the
-  // committed corpus this UI reads. Measured 2026-09-24 over the 167 run logs
-  // under `eval/runlogs/unit/`: 28 are still `schema_version: 2` where
-  // `run-log.schema.json` pins `const: 3`, and 99 carry at least one
+  // committed corpus this UI reads. Measured 2026-09-23 over the 137 run logs
+  // COMMITTED under `eval/runlogs/unit/` — `git ls-files`, excluding
+  // `.ann.json`. Do NOT use a filesystem walk: it also picks up gitignored
+  // `scratch_*` logs that exist on one machine, which inflates every count
+  // here (167/28/99 rather than 137/1/69) and is how the first version of this
+  // comment got them wrong. 1 is still `schema_version: 2` where
+  // `run-log.schema.json` pins `const: 3`, and 69 carry at least one
   // `validators.results[]` entry with no `outcome`, which that schema requires
-  // (added by PR #2422, merged 2026-09-10). Wiring the schema in would reject
-  // them on read, for a check the write side already performs. The harness validates on write
+  // (added by PR #2422, merged 2026-09-10) — half the corpus. Wiring the
+  // schema in would reject them on read, for a check the write side already
+  // performs. The harness validates on write
   // (`validate_run_log`), which is where a malformed envelope is actually
   // caught. Re-generating the schema is a two-line change to `SCHEMAS` in
   // `scripts/gen-zod.ts`; whoever does it must handle both of those legacy
