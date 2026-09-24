@@ -4,7 +4,7 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { repIdToStandardPlace } from "../utils/place-resolver.js";
-import { readStagedResults } from "../utils/results-staging.js";
+import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { toArk, arkToBareId } from "../utils/ark.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
@@ -58,7 +58,9 @@ export const recordReadSchema = {
         type: "string",
         description:
           "Absolute path to the active project directory. Required when " +
-          "`resultsRef` is given (the sidecar lives under the project's results/ dir).",
+          "`resultsRef` is given (the sidecar lives under the project's results/ dir). " +
+          "On a live read it also stages the fetched record host-side and returns " +
+          "`staged.resultsRef` — hand it to research_log_append as stagedResultsRef.",
       },
     },
     required: ["recordId"],
@@ -158,6 +160,31 @@ export async function recordReadTool(
   const simplified = toSimplified(body);
 
   await resolveCoveragePlaces(simplified);
+
+  // Stage the fetched record when the caller named the project (issue #2048 /
+  // #2489): until now a record fetched by ARK was retained nowhere, so its full
+  // text crossed the conversation and was lost. The element carries the same
+  // `{ recordId, gedcomx }` shape record_search stages, so `readFromSidecar`
+  // above reads it back unchanged and `research_log_append` finalizes it with
+  // `tool: "record_read"`. Best-effort: a staging failure never fails the read.
+  if (typeof projectPath === "string" && projectPath.trim() !== "") {
+    let staged: RecordReadResult["staged"];
+    let stagingError: string | undefined;
+    try {
+      staged = await stageSearchResults({
+        projectPath,
+        tool: "record_read",
+        response: {
+          query: { recordId: recordId.trim() },
+          results: [{ recordId: entityId, gedcomx: simplified }],
+        },
+      });
+    } catch (error) {
+      staged = null;
+      stagingError = error instanceof Error ? error.message : String(error);
+    }
+    return { ...simplified, staged, ...(stagingError !== undefined ? { stagingError } : {}) };
+  }
 
   return simplified;
 }
