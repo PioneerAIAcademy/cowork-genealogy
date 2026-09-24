@@ -79,8 +79,11 @@ died before April 1886. He does not exist in this register:
   (Ceradz, 1858-1883), which was not searched.
 
 Image group **008024989**, images 00006-00023 inclusive, read page by page.
-Nine Stanislaus baptisms fall in that span, three of them at Rumianek — to
-Plick, Horonski, Napieralski and Naprałski. None to Jacob.
+Several Stanislaus baptisms fall in that span, including some at Rumianek — to
+Plick, Horonski and Napieralski among others. None to Jacob. The pages were
+read to answer one question, "is there a Klatkiewicz here", so no Stanislaus
+tally is asserted: anyone wanting a count should derive it rather than inherit
+one from this paragraph.
 
 One positive find from the same sweep: **1885 entry 101** (November) records
 *"Jacob Klatkiewicz ż Rum[ianek]"* standing as godfather to a Bogucki child.
