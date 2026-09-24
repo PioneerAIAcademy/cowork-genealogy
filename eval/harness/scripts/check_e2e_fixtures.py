@@ -533,6 +533,135 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
 
 
 # --------------------------------------------------------------------------- #
+# Annotation structural validation (blocking): reimplemented mechanical rungs
+# from calibrate_judge.load_annotated_runs (rungs 1-8)
+# --------------------------------------------------------------------------- #
+
+# Hand-kept in sync with calibrate_judge.ALLOWED_ANN_KEYS. This script cannot
+# import calibrate_judge (it pulls in e2e.judge → anthropic, and this script
+# runs on a bare python with no harness venv). Same pattern as derive_matched.
+_ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes", "findings_hash"}
+_FINDING_LABELS = {"true", "partial", "false"}
+
+
+def _findings_hash_local(expected_findings_path: Path) -> str:
+    """Reimplement ``e2e.provenance.findings_hash`` using only stdlib.
+
+    Hand-kept in sync with ``e2e.provenance.findings_hash`` — the
+    normalization is: JSON parse → ``json.dumps(sort_keys=True, indent=2,
+    ensure_ascii=False)`` → trailing newline → sha256. This is the same
+    contract ``harness.snapshot.hash_file`` fulfils for ``.json`` files.
+    """
+    import hashlib
+    raw = expected_findings_path.read_text(encoding="utf-8")
+    parsed = json.loads(raw)
+    normalized = json.dumps(parsed, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]:
+    """Run mechanical validation (rungs 1-8) over every e2e ``.ann.json``.
+
+    Returns a list of ``::error::`` messages for structural violations.
+    Never calls a model; no API key needed. A clean corpus returns ``[]``.
+    """
+    errors: list[str] = []
+    for ann_path in sorted(runlogs_dir.glob("*/run-*.ann.json")):
+        rel = ann_path.relative_to(runlogs_dir)
+
+        # 1. parse
+        try:
+            ann = json.loads(ann_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            errors.append(f"e2e annotation `{rel}`: invalid JSON ({e})")
+            continue
+        if not isinstance(ann, dict):
+            errors.append(f"e2e annotation `{rel}`: expected a JSON object")
+            continue
+
+        # 2. structural — known keys + per_finding present
+        unknown = set(ann) - _ALLOWED_ANN_KEYS
+        if unknown:
+            errors.append(
+                f"e2e annotation `{rel}`: unknown key(s) {sorted(unknown)} "
+                f"(allowed: {sorted(_ALLOWED_ANN_KEYS)})"
+            )
+            continue
+        per_finding = ann.get("per_finding")
+        if not isinstance(per_finding, dict) or not per_finding:
+            errors.append(f"e2e annotation `{rel}`: 'per_finding' missing or not a non-empty object")
+            continue
+
+        # 3. incomplete (inert) — skip, not error
+        if any(v is None for v in per_finding.values()):
+            continue
+
+        # 4. fixture + expected-findings
+        stem = ann_path.name[: -len(".ann.json")]
+        slug = ann_path.parent.name
+        fixture_dir = fixtures_dir / slug
+        ef_path = fixture_dir / "expected-findings.json"
+        try:
+            expected = json.loads(ef_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            errors.append(f"e2e annotation `{rel}`: fixture for slug '{slug}' unreadable ({e})")
+            continue
+
+        # 5. final-tree sibling
+        tree_path = ann_path.parent / f"{stem}.final-tree.gedcomx.json"
+        if not tree_path.exists():
+            errors.append(f"e2e annotation `{rel}`: {tree_path.name} missing — nothing to grade")
+            continue
+
+        # 6. id/key drift
+        findings = expected.get("findings") or []
+        fixture_ids = {str(f.get("id")) for f in findings if isinstance(f, dict)}
+        ann_ids = set(per_finding)
+        if ann_ids != fixture_ids:
+            errors.append(
+                f"e2e annotation `{rel}`: per_finding keys {sorted(ann_ids)} != "
+                f"fixture findings {sorted(fixture_ids)} — re-grade or delete"
+            )
+            continue
+
+        # 7. content drift — findings_hash
+        stored_hash = ann.get("findings_hash")
+        if stored_hash is not None:
+            try:
+                current_hash = _findings_hash_local(ef_path)
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                errors.append(f"e2e annotation `{rel}`: cannot compute findings_hash ({e})")
+                continue
+            if stored_hash != current_hash:
+                errors.append(
+                    f"e2e annotation `{rel}`: findings_hash mismatch — "
+                    f"expected-findings.json changed since grading; re-grade or delete"
+                )
+                continue
+
+        # 8. enum validation
+        bad = {fid: v for fid, v in per_finding.items() if v not in _FINDING_LABELS}
+        if bad:
+            errors.append(f"e2e annotation `{rel}`: per_finding labels {bad} not in {sorted(_FINDING_LABELS)}")
+            continue
+        pq = ann.get("proof_quality_score")
+        if pq not in (1, 2, 3, None):
+            errors.append(f"e2e annotation `{rel}`: proof_quality_score {pq!r} not 1/2/3/null")
+            continue
+        notes = ann.get("notes")
+        if notes is not None:
+            if not isinstance(notes, dict):
+                errors.append(f"e2e annotation `{rel}`: 'notes' must be a {{finding_id: text}} object")
+                continue
+            note_unknown = set(notes) - ann_ids
+            if note_unknown:
+                errors.append(f"e2e annotation `{rel}`: notes for unknown finding(s) {sorted(note_unknown)}")
+                continue
+
+    return errors
+
+
+# --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
 
@@ -610,6 +739,39 @@ def main() -> int:
             print(f"::error::{v}")
             print(f"  - {v}", file=sys.stderr)
     if grade_violations or beta_violations:
+        return 1
+
+    # --- Annotation structural validation (blocking on PR-added, warn corpus) —
+    # --- rungs 1-8 from calibrate_judge.load_annotated_runs, reimplemented
+    # --- stdlib-only (#2487 PR B).
+    fixtures_dir = REPO_ROOT / "eval" / "tests" / "e2e"
+    ann_errors = validate_e2e_annotations(RUNLOGS_DIR, fixtures_dir)
+    # Scope: PR-added annotation violations block; pre-existing ones warn.
+    added_ann_rels = {
+        Path(p).relative_to(RUNLOGS_DIR)
+        for p in ar_runlogs
+        if str(p).endswith(".ann.json")
+    }
+    # Also include annotations whose sibling run log was added (the annotation
+    # may not appear in the AR set if it was already committed).
+    for p in ar_runlogs:
+        if _is_primary_runlog(Path(p).name):
+            ann_rel = Path(p).parent / (Path(p).stem + ".ann.json")
+            added_ann_rels.add(ann_rel.relative_to(RUNLOGS_DIR) if ann_rel.is_relative_to(RUNLOGS_DIR) else ann_rel)
+    blocking_ann = []
+    for e in ann_errors:
+        # Check if the error names a PR-added annotation
+        is_pr_added = any(str(rel) in e for rel in added_ann_rels)
+        if is_pr_added:
+            blocking_ann.append(e)
+        else:
+            print(f"::warning::{e}")
+            print(f"  ! {e}", file=sys.stderr)
+    if blocking_ann:
+        print("E2E annotation validation — structural violations in PR-added files:", file=sys.stderr)
+        for e in blocking_ann:
+            print(f"::error::{e}")
+            print(f"  - {e}", file=sys.stderr)
         return 1
 
     # Report the set the gates actually read. A pure quarantine->corpus rename
