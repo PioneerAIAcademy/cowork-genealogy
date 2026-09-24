@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 25, hint-samples.csv row 761, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a 1911 Samara metrical-book entry; unverified. The patronymics disagree, which in Russian records is a hard discriminator."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 25, hint-samples.csv row 761, flags adds_spouse/adds_daughter, confidence 3). Resolved FALSE MATCH: the 1911 Raisa birth belongs to a distinct Vasily Alekseev Romanov x Klavdiya Dmitrieva Zhiltsova family of Samara (marriage 14 Jan 1909, ark:/61903/1:1:KX4H-8N5; son Nikolai 1913, ark:/61903/1:1:KXTQ-X5D), not the tree's Vasily Ignatiev Romanov. The father's patronymic 'Алексеев' was confirmed on the original 1911 register image (ark:/61903/3:1:33SQ-GR1P-VTC), so the discrepancy is genuine, not an indexing artifact. expected-findings.json is an avoid guard plus a required documented-negative finding."
 }
