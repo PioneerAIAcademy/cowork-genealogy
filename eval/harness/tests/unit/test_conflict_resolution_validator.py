@@ -70,6 +70,7 @@ check_identity_first = getattr(
 )
 
 check_naming_from_wiki = _VALIDATOR.test_naming_system_read_from_wiki
+check_calendar_from_tool = _VALIDATOR.test_calendar_regime_read_from_tool
 
 _REPO = Path(__file__).resolve().parents[4]  # eval/harness/tests/unit -> repo root
 _CORPUS = sorted(
@@ -2354,4 +2355,118 @@ def test_naming_fetch_skips_on_an_untagged_test():
 def test_naming_fetch_skips_when_tags_are_absent_entirely():
     with pytest.raises(BaseException) as e:
         check_naming_from_wiki(tool_calls=[], test={})
+    assert type(e.value).__name__ == "Skipped"
+
+
+# --- V5: the calendar regime must come from the tool, not from memory -------
+#
+# The mirror of the naming-fetch gate above, and it needs the same pairing: the
+# adoption table was REMOVED from SKILL.md and historical-contradictions.md by
+# issue #2254, so a run that reaches the right year without calling the tool is
+# answering from the model's own knowledge -- exactly what the move exists to
+# stop. Before these tests the validator shipped with its failure modes proven
+# only in a working session and nothing committed, which is the gap CLAUDE.md's
+# "break the repo so the check fires and watch it fail" closes.
+#
+# The `jurisdiction` arm is the subtle one and is why an empty/whitespace/null
+# case is here: convert_calendar answers from a default regime when the
+# jurisdiction is omitted, so a call without one is the same
+# answer-from-memory failure moved one layer down, and it would otherwise pass
+# a gate that merely counted calls.
+
+_CAL_TAGGED = {"tags": ["fact-conflict", "calendar", "calendar-from-tool"]}
+
+
+def _calendar_call(jurisdiction="England", year=1746):
+    return {
+        "tool": "mcp__genealogy__convert_calendar",
+        "args": {
+            "date": {"year": year, "month": 2, "day": 14},
+            "jurisdiction": jurisdiction,
+            "corrections": {"osNsYear": True},
+        },
+    }
+
+
+def test_calendar_fails_when_no_convert_calendar_call_at_all():
+    with pytest.raises(AssertionError) as e:
+        check_calendar_from_tool(tool_calls=[], test=_CAL_TAGGED)
+    assert "convert_calendar" in str(e.value)
+
+
+def test_calendar_fails_when_only_another_tool_was_called():
+    calls = [{"tool": "mcp__genealogy__wiki_read", "args": {"url": "x"}}]
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_missing():
+    call = _calendar_call()
+    del call["args"]["jurisdiction"]
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[call], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_empty():
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[_calendar_call("")], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_whitespace_only():
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[_calendar_call("   ")], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_null():
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[_calendar_call(None)], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_the_call_carries_no_args_at_all():
+    calls = [{"tool": "mcp__genealogy__convert_calendar"}]
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_passes_with_a_non_empty_jurisdiction():
+    check_calendar_from_tool(tool_calls=[_calendar_call()], test=_CAL_TAGGED)
+
+
+def test_calendar_passes_for_another_jurisdiction():
+    # Jurisdiction-agnostic on purpose: a Swedish or Russian fixture must not
+    # need a validator edit. Sweden ran an intermediate calendar 1700-1712.
+    check_calendar_from_tool(
+        tool_calls=[_calendar_call("Sweden", year=1700)], test=_CAL_TAGGED
+    )
+
+
+def test_calendar_passes_when_the_good_call_follows_a_bad_one():
+    # One malformed call must not poison a run that also made a correct one.
+    calls = [_calendar_call(""), _calendar_call("England")]
+    check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_passes_when_the_call_is_one_among_several_tools():
+    calls = [
+        {"tool": "mcp__genealogy__project_context", "args": {}},
+        _calendar_call(),
+        {"tool": "mcp__genealogy__research_append", "args": {}},
+    ]
+    check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_skips_on_an_untagged_test():
+    # Same BaseException care as the naming skip above: pytest.skip() raises
+    # from BaseException, so catching Exception would mark THIS test skipped --
+    # green, asserting nothing.
+    with pytest.raises(BaseException) as e:
+        check_calendar_from_tool(tool_calls=[], test={"tags": ["fact-conflict"]})
+    assert type(e.value).__name__ == "Skipped", (
+        f"expected a pytest skip on an untagged test, got {type(e.value).__name__}"
+    )
+
+
+def test_calendar_skips_when_tags_are_absent_entirely():
+    with pytest.raises(BaseException) as e:
+        check_calendar_from_tool(tool_calls=[], test={})
     assert type(e.value).__name__ == "Skipped"

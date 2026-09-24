@@ -224,12 +224,9 @@ convert_calendar({ date, jurisdiction, corrections })
 once per competing date, with `jurisdiction` set to the place governing
 the record. Do not first judge whether a calendar transition is
 plausible, do not compute an offset by hand, and do not carry an
-adoption date or a year-start from memory. The tool owns the
-per-jurisdiction table: it identifies the regime and returns a zero
-offset where no transition applies, so the call costs nothing on a date
-the calendar does not touch and is the only way to find the ones it
-does. Read `applied[]` — `offsetDays` for a Julian→Gregorian day
-difference, `yearAdjusted` for a year-start move. If the competing dates
+adoption date or a year-start from memory. The tool returns a zero
+offset where no transition applies. Read `applied[]` — `offsetDays` for a
+Julian→Gregorian day difference, `yearAdjusted` for a year-start move. If the competing dates
 differ by exactly what the tool returns, they are the same day expressed
 two ways, not a substantive disagreement — say so in the weighing
 analysis. A derivative that has already been modernised by its
