@@ -27,7 +27,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { HSplit } from '@/components/layout/HSplit';
 import { JsonViewer } from '@/components/common/JsonViewer';
 import { ScenarioViewer } from '@/components/scenario/ScenarioViewer';
@@ -401,7 +401,7 @@ const DimensionRow = memo(function DimensionRow({
   // correction changes from outside this row (e.g. "Agree All").
   const [draft, setDraft] = useState(persistedComment);
   const draftRef = useRef(draft);
-  draftRef.current = draft;
+  useEffect(() => { draftRef.current = draft; }, [draft]);
   const lastSyncedRef = useRef(persistedComment);
   if (persistedComment !== lastSyncedRef.current) {
     lastSyncedRef.current = persistedComment;
@@ -1266,7 +1266,6 @@ export default function RunLogDetailPage({
   // `%252e%252e` into `..` after normalisation has run. The four route handlers
   // were fixed; this fifth site was missed.
   const runLogId = id.join('/');
-  const qc = useQueryClient();
 
   const query = useQuery<Detail>({
     queryKey: ['runlog', runLogId],
