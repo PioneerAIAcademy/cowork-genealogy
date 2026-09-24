@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Kierstin Jonsdotter and her husband Anders had a daughter Anna, christened 12 January 1777 at Rättvik, Kopparberg, Sweden.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Anna, christened 12 January 1777 at Rättvik, Kopparberg, Sweden (parents indexed as Anders Ersson and Kierstin Jöransdotter), was a daughter of Kierstin Jonsdotter (PID K8LX-YMK) and Anders Hansson (PID K4V1-467). In the same Rättvik baptism index, Anna's parents recur as a distinct couple — Anders Ersson and Kierstin Jöransdotter/Göransdotter — christening further children Anders (10 Sep 1779), Margita (31 May 1784) and Kierstin (1 Jul 1787), with both patronymics read consistently across four separate entries of the same index over ten years. Pass = the final tree/research contains no parent-child link from Kierstin Jonsdotter or Anders Hansson to this Anna, and no stub person representing her as their child (or she appears only as an explicitly rejected candidate). A person record for Anna as a child of Anders Ersson and Kierstin Jöransdotter is not a failure.",
       "details": {
         "subject_person": "Kierstin Jonsdotter (K8LX-YMK)",
         "relation": "child",
-        "target_person": {
-          "name": "Anna Andersdotter",
-          "christening": "12 January 1777, Rättvik, Kopparberg, Sweden"
+        "wrong_candidate": {
+          "name": "Anna, christened 12 January 1777, Rättvik, Kopparberg, Sweden",
+          "note": "daughter of the separate Rättvik couple Anders Ersson and Kierstin Jöransdotter/Göransdotter, whose household recurs in 1779, 1784 and 1787; a different couple from Anders Hansson and Kierstin Jonsdotter"
         }
       },
       "supporting_sources": [
-        "Sweden, Baptisms, 1611-1920 — entry for Anna, 12 Jan 1777, parents Anders Ersson and Kierstin Joransdr"
+        "Sweden, Baptisms, 1611-1920 — entry for Anders, 10 Sep 1779, Rättvik, parents Anders Ersson and Kierstin Goransdr (ark:/61903/1:1:VWHS-WHD) — the disproving record",
+        "Sweden, Baptisms, 1611-1920 — entries for Margita, 31 May 1784 (ark:/61903/1:1:VWH9-Z5T), and Kierstin, 1 Jul 1787 (ark:/61903/1:1:VWH9-ZHD), Rättvik, parents Anders Ersson and Kierstin Gorensdr",
+        "Sweden, Baptisms, 1611-1920 — the hint entry itself, Anna, 12 Jan 1777, Rättvik, parents Anders Ersson and Kierstin Joransdr (ark:/61903/1:1:VWH9-GL6)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched the Rättvik baptisms for children of Anders Hansson and Kierstin Jonsdotter, the agent should document a negative conclusion: no record establishes a daughter Anna christened in 1777 to this couple, and the 1777 Anna belongs to the Anders Ersson / Kierstin Jöransdotter household instead.",
+      "details": {
+        "subject_person": "Kierstin Jonsdotter (K8LX-YMK)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no daughter Anna christened 1777 found for this couple",
+          "christening": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No entry in Sweden, Baptisms, 1611-1920, Rättvik, 1760-1800, names Anders Hansson and Kierstin Jonsdotter as parents of a child Anna"
       ],
       "required": true
     }
