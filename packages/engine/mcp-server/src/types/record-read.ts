@@ -21,10 +21,16 @@ export interface RecordReadInput {
 // `projectPath` also stages the record (issue #2048 / #2489) and carries the
 // staging handle beside the document; a sidecar-mode read carries neither.
 export type RecordReadResult = SimplifiedGedcomX & {
-  /** The page-image document-image ARK, extracted from the first
-   *  `DigitalArtifact` source carrying a `3:1:`/`3:2:` url. Absent when the
-   *  record has no such source. Callers pass this to `image_read` /
-   *  `image_transcribe` rather than deriving an image ARK from a record ARK. */
+  /** The page-image document-image ARK. The requested persona's own source
+   *  refs are tried first, then document order — a record can carry several
+   *  page images, and the co-resident on scan 2 is not on scan 1. A source is
+   *  skipped only when it names a `resource_type` that is not
+   *  `DigitalArtifact*`; a `record_search`-staged source names none at all.
+   *  Carries the source url's `i=`/`cc=`/`groupId=` context params when it has
+   *  any, since a waypoint ark stripped of them can resolve to a neighbouring
+   *  page without erroring. Absent when the record has no page-image source.
+   *  Callers pass this to `image_read` / `image_transcribe` rather than
+   *  deriving an image ARK from a record ARK. */
   imageArk?: string;
   /** Present iff `projectPath` was given on a live read: the record retained
    *  as a one-element `results[]` envelope under results/.staging/, readable
