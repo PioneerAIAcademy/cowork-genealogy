@@ -7,7 +7,8 @@
     "description": "Tests whether the skill bridges general history to the specific research at hand. Different from the stateless tests where context stands alone — here the context should inform the existing assertions and questions in the scenario.",
     "tags": [
       "context-to-research",
-      "scenario-aware"
+      "scenario-aware",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -26,6 +27,8 @@
     "wiki-search-coal-mine-accident-records",
     "wiki-search-irish-county-origin-tracing",
     "wiki-search-any",
+    "wiki-read-united-states-emigration-and-immigration",
+    "wiki-read-any",
     "wikipedia-search-great-famine",
     "wikipedia-search-schuylkill-coal",
     "wikipedia-search-schuylkill-county",
