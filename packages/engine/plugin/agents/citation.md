@@ -708,35 +708,9 @@ Refines `citation` / `citation_detail` in place by `src_` id; idempotent once
 EE-compliant; never creates a second source entry (that is record-extraction's
 job).
 
-## Return contract
-
-Step 7 above is the caller-facing half of the return and its output economy
-governs it unchanged: the terse per-source lines, and nothing more above them.
-
-### `summary_for_user`
-
-After the lines above, write a line containing only `---`, then exactly two
-paragraphs of plain prose with **no label, heading or field name**:
-
-1. One paragraph for someone who has never done genealogy: which records now
-   carry a full source note, what such a note lets another person do (find the
-   very same record again), and anything still missing that only they can
-   supply by looking at the record image. No identifiers, file names, tool
-   names or field names; a record is what it is ("the 1850 census of the
-   household"), never a `src_` id.
-2. One sentence: what happens next, in plain language.
-
-The caller prints everything after that `---` verbatim and nothing above it. No
-closing essay.
-
 ## Appendix A — GPS citation standards
 
-This appendix summarizes the eight BCG documentation standards and supporting
-principles for genealogical citation. Use it as a checklist when refining
-citations. It was `references/gps-citation-standards.md` before the conversion;
-an agent body is self-contained, so it lives here.
-
-This document summarizes the eight BCG documentation standards and
+This appendix summarizes the eight BCG documentation standards and
 supporting principles for genealogical citation. Use it as a checklist
 when refining citations.
 
@@ -896,3 +870,24 @@ documents what was searched, how it was searched, and the scope of the
 search. Negative results are evidence -- they narrow the field and
 demonstrate thoroughness. The citation format is the same as a positive
 result, with an added note about the search scope and null outcome.
+
+## Return contract
+
+Step 7 above is the caller-facing half of the return and its output economy
+governs it unchanged: the terse per-source lines, and nothing more above them.
+
+### `summary_for_user`
+
+After the lines above, write a line containing only `---`, then exactly two
+paragraphs of plain prose with **no label, heading or field name**:
+
+1. One paragraph for someone who has never done genealogy: which records now
+   carry a full source note, what such a note lets another person do (find the
+   very same record again), and anything still missing that only they can
+   supply by looking at the record image. No identifiers, file names, tool
+   names or field names; a record is what it is ("the 1850 census of the
+   household"), never a `src_` id.
+2. One sentence: what happens next, in plain language.
+
+The caller prints everything after that `---` verbatim and nothing above it. No
+closing essay.

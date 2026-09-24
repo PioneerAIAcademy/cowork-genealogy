@@ -19,14 +19,22 @@ nested where the validator does not read it.
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
+SUITE = REPO_ROOT / "eval" / "tests" / "unit" / "citation"
 
-PROBATE = {"tags": ["probate", "will", "src_006", "direct-arm"]}
-NOT_PROBATE = {"tags": ["census", "1850", "direct-arm"]}
+# Read from the real test rather than hand-copying its tags. A hand-written copy
+# and the validator's gate literal are two spellings of one fact, and nothing
+# compared them: moving the literal (`"probate"` -> `"probate-records"`) made
+# every reject case below SKIP and the file exit 0 -- `2 passed, 11 skipped`,
+# green, checking nothing. That is the "check that cannot fail" shape CLAUDE.md
+# names, reproduced on this very file. Derived, the same mutation reds it.
+PROBATE = json.loads((SUITE / "probate-will-citation.json").read_text(encoding="utf-8"))["test"]
+NOT_PROBATE = json.loads((SUITE / "refine-census-citation.json").read_text(encoding="utf-8"))["test"]
 
 
 def _citation():
@@ -39,6 +47,28 @@ def _citation():
 
 def _call(tool, **args):
     return {"tool": tool, "args": args}
+
+
+def _run_gate(mod, tool_calls, test):
+    """Call V13, turning a `pytest.skip` into a hard failure.
+
+    THIS is what makes the file provable, and deriving the tags from the suite
+    was not enough on its own. `Skipped` derives from `BaseException`, so a skip
+    raised inside `pytest.raises(AssertionError)` propagates straight past it and
+    marks the CALLING test skipped -- which reads as green. Moving the
+    validator's gate literal (`"probate"` -> `"probate-records"`) made all seven
+    reject cases skip and the file exit 0 at `2 passed, 11 skipped`. Reproduced
+    twice: once on the hand-written tags, and again after deriving them from the
+    suite, which changed nothing because the mutation is on the OTHER side of the
+    comparison. Converting the skip here is what reds it.
+    """
+    try:
+        mod.test_probate_office_came_from_the_wiki(tool_calls, test)
+    except pytest.skip.Exception as exc:
+        raise AssertionError(
+            f"V13 skipped on a test that carries the gating tag -- its gate "
+            f"literal and the suite's tag no longer agree: {exc}"
+        ) from None
 
 
 # ── Accepts ────────────────────────────────────────────────────────────────
@@ -56,14 +86,13 @@ def _call(tool, **args):
 )
 def test_accepts_a_probate_page_fetch(url):
     mod = _citation()
-    mod.test_probate_office_came_from_the_wiki(
-        [_call("mcp__genealogy__wiki_read", url=url)], PROBATE
-    )
+    _run_gate(mod, [_call("mcp__genealogy__wiki_read", url=url)], PROBATE)
 
 
 def test_accepts_the_fetch_alongside_other_calls():
     mod = _citation()
-    mod.test_probate_office_came_from_the_wiki(
+    _run_gate(
+        mod,
         [
             _call("mcp__genealogy__wiki_read",
                   url="https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records"),
@@ -124,8 +153,28 @@ def test_skips_a_test_that_is_not_probate():
 def test_rejects(tool_calls, why):
     mod = _citation()
     with pytest.raises(AssertionError) as exc:
-        mod.test_probate_office_came_from_the_wiki(tool_calls, PROBATE)
+        _run_gate(mod, tool_calls, PROBATE)
     assert "without fetching the creating" in str(exc.value), why
+
+
+@pytest.mark.parametrize(
+    "name", ["probate-will-citation.json", "fabrication-guardrail-probate.json"]
+)
+def test_the_gate_actually_fires_on_each_real_probate_test(name):
+    """V13 must RUN on both probate tests, using their own tag blocks.
+
+    The sibling below checks the JSON side (`"probate"` is present); this checks
+    the validator side (the gate matches it). Neither alone is enough, and the
+    gap between them is real: `probate-will-citation.json` also carries a `will`
+    tag, so moving the gate literal to `"will"` keeps that test covered while
+    silently dropping `fabrication-guardrail-probate.json`, which has no `will`
+    tag. Measured -- that mutation passed 13/13 before this test existed.
+    """
+    mod = _citation()
+    spec = json.loads((SUITE / name).read_text(encoding="utf-8"))
+    with pytest.raises(AssertionError) as exc:
+        _run_gate(mod, [], spec["test"])
+    assert "without fetching the creating" in str(exc.value), name
 
 
 def test_the_two_probate_tests_in_the_suite_carry_the_gating_tag():
@@ -134,10 +183,7 @@ def test_the_two_probate_tests_in_the_suite_carry_the_gating_tag():
     Named individually rather than counted: the acceptance criterion on issue
     #2799 is that the committed run log shows the fetch on these two.
     """
-    import json
-
-    suite = REPO_ROOT / "eval" / "tests" / "unit" / "citation"
     for name in ("probate-will-citation.json", "fabrication-guardrail-probate.json"):
-        spec = json.loads((suite / name).read_text(encoding="utf-8"))
+        spec = json.loads((SUITE / name).read_text(encoding="utf-8"))
         assert "probate" in spec["test"]["tags"], name
         assert "wiki-read-pennsylvania-probate-records" in spec["mcp_fixtures"], name
