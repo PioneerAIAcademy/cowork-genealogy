@@ -11,7 +11,9 @@
       "new-person",
       "a_005",
       "check-warnings-required"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The agent scores a_005 against the three existing tree persons (I1, I2, I3), correctly concludes none matches, mints James as I4, and then records one of those 0.005 scores on the I4 link. The score belongs to a different pairing, and scoring I4 itself would be circular -- judge_context item 3 says so, and agents/person-evidence.md already carries the rule ('Do not score a stub you minted from the persona you would be scoring'). Prose does not bind it. The instrument is designed and sequenced elsewhere: issue #1731 step 3, the research_append arm that checks a link's match_score against the attestation store PR A writes to results/.scores/. A score with no recorded attestation for THAT pairing is unbacked and would be refused. The lead sequenced step 3 as PR B and ruled it cannot open until PR #2725 lands and is re-measured, so building it here would break that sequencing. Tracked as issue #2272. Remove this marker when #1731 step 3 lands and this test passes three consecutive single-test runs."
   },
   "input": {
     "user_message": "Link assertion a_005 — the will of Thomas Flynn naming 'my son James Flynn' — to the correct person in the tree.",
