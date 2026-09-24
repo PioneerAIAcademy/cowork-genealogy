@@ -31,7 +31,6 @@ const EXCLUDED: Record<string, string> = {
 };
 
 const PENDING: Record<string, string> = {
-  "proof-conclusion.md": "its eval slot is held by issue #2604; the field lands with that edit",
   "person-evidence.md": "lands with its next body edit (issues #2272 / #2537)",
   "research-exhaustiveness.md": "lands with its next body edit",
   "gps-mentor.md":

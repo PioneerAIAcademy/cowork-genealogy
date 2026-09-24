@@ -1,19 +1,22 @@
 {
   "test": {
-    "id": "ut_proof_conclusion_012",
+    "id": "ut_proof_conclusion_d2b",
     "skill": "proof-conclusion",
-    "name": "Re-invocation updates the existing proof in place, no duplicate",
+    "name": "Re-invocation updates the existing proof in place, no duplicate (direct-agent arm)",
     "type": "positive",
     "description": "The mid-research-flynn scenario already has ps_001 (parentage, probable). The user asks to revisit and update the parentage proof. The skill must update the existing ps_001 in place — never create a second proof_summary for the same question (q_001).",
     "tags": [
       "proof",
       "parentage",
       "reinvocation-dedup",
-      "no-new-proof-expected"
-    ]
+      "no-new-proof-expected",
+      "direct-arm"
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The direct arm narrates a refinement it never persists. Routed (`ut_proof_conclusion_012`) the agent issues the `op: \"update\"` on ps_001; under a delegation that invites a read-out rather than a rewrite it describes changes and writes nothing, which `judge_context[3]` charges. Measured 2026-09-22: 0 of 4 scratch runs persisted, including 2 runs with an explicit 'the reply describes only what you persisted' rule in the agent body — that rule was reverted for having no measurable effect. Prose was tried and measured; do not simply reword it. REMOVE THIS when the refinement is persisted on three consecutive runs, or when a mechanism outside the prompt enforces it."
   },
   "input": {
-    "user_message": "Take another look at the parentage proof and update it with anything you'd refine.",
+    "delegation": "Give me a refined read of the parentage conclusion for q_001 — walk me through what you'd change in the narrative. No need to rewrite the stored entry unless something is actually wrong.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
