@@ -13,10 +13,12 @@
  * have the same class (issue #2747). CLAUDE.md: the second instance of a class
  * already fixed gets one shared guard, not a second one-off.
  *
- * Measured on live FamilySearch data 2026-09-23, `LZJW-C31` at 4 generations
- * with `marriageDetails`: **11 of 27** emitted relationships named a spouse
- * absent from `persons[]`; 13 of 28 with `--descendants`. Every instance was a
- * `Couple`, and the missing endpoint was always the spouse rather than a parent.
+ * Measured on live FamilySearch data 2026-09-23 at 4 generations with
+ * `marriageDetails`: 11 of 27 emitted relationships on `LZJW-C31` named a
+ * person not in `persons[]`, 9 of 20 on `KNDX-MKG`, and 13 of 28 on
+ * `LZJW-C31 --descendants`. Both causes occur — most name a person
+ * FamilySearch never returned, and 2 of those 13 name one the caller's
+ * ascendancy filter removed. See `person-ancestors-tool-spec.md`.
  */
 
 /** The endpoint-bearing shape both callers' relationship types satisfy.

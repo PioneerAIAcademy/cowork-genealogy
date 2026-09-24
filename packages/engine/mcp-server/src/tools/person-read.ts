@@ -1067,30 +1067,6 @@ function shapePersons(
 
 // ─── Shape relationships ─────────────────────────────────────────────────
 
-/**
- * Drop any relationship with an endpoint that is not a returned person.
- *
- * FamilySearch's relationship arrays reach ONE HOP FURTHER than its persons
- * array: a read names the subject's great-grandparents, a child's spouse, or a
- * non-spouse co-parent without returning a person record for them. Its refs even
- * carry an absolute-URL form used, in this file's own words, "when the person
- * isn't in this response".
- *
- * Emitting those edges is not free. `validate_research_schema` treats an
- * unresolvable endpoint as a HARD error on all four spellings -- `parent` and
- * `child` (validator.ts:1847/1852), `person1` and `person2` (1873/1878) -- and
- * `project_create`, alone among the tree writers in never calling
- * `sanitizeTree`, refuses the ENTIRE write on any error. So one edge pointing a
- * hop past the data costs the user their whole project, and the failure names a
- * person they never asked about.
- *
- * Dropping the edge loses nothing a caller could have used: the far endpoint is
- * not in `persons[]`, so there is no person to link to. What is lost is the hint
- * that some further relative exists -- the trade the card's rule 4 makes
- * deliberately, now made for every emitted edge rather than only for the ones
- * the sibling fan-out contributes.
- */
-
 function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],
 ): TreeRelationship[] {

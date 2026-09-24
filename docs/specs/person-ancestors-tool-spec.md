@@ -171,17 +171,26 @@ alternative to dropping the edge is the user losing their whole project write,
 not keeping the edge.
 
 **Measured, 2026-09-23**, live FamilySearch at 4 generations with
-`marriageDetails`: `LZJW-C31` emitted **11 dangling endpoints across 27
-relationships**, and 13 across 28 with `descendants: true`. A self-pedigree run
-(7 persons, 3 relationships) had none. Every instance was a `Couple`, and the
-absent endpoint was always the **spouse** — not a parent, and not a person the
-ascendancy filter had removed. Re-derive before quoting: this is live data and
-the counts move.
+`marriageDetails`, comparing every relationship endpoint against both the raw
+`body.persons` and the emitted `persons[]`:
 
-The check runs **after** the ascendancy filter and compares against the persons
-actually emitted. Comparing against the raw response would re-admit the leak,
-since a person dropped for having no ascendancy number is exactly the kind of
-endpoint that then dangles.
+| subject | raw | emitted | rels | dangling | of which filtered by ascendancy | never returned |
+|---|---|---|---|---|---|---|
+| `LZJW-C31` | 32 | 32 | 27 | **11** | 0 | 11 |
+| `LZJW-C31`, `descendants: true` | 37 | 32 | 28 | **13** | **2** | 11 |
+| `KNDX-MKG` | 22 | 22 | 20 | **9** | 0 | 9 |
+| self pedigree | 7 | 7 | 3 | 0 | 0 | 0 |
+
+**Both causes occur**, which is why the check compares against the emitted list
+rather than the raw one. Most dangling endpoints name a person FamilySearch
+never returned. But under `descendants: true` five persons arrive with no
+`ascendancyNumber`, the filter drops them, and **2 of the 13** dangling
+endpoints are theirs — a person present in the response and absent from the
+output. Checking the raw response would admit exactly those two.
+
+Every instance was a `Couple`, which is unsurprising: every relationship this
+endpoint returns is a `Couple`, so the type says nothing about the dangling ones
+specifically. Re-derive before quoting: this is live data and the counts move.
 
 It is **filter-only**: an ancestor whose spouse was not returned keeps their own
 entry in `persons[]`; only the edge goes. Retaining the absent person instead

@@ -278,8 +278,10 @@ async function mapResponse(
     // Against the EMITTED persons, after the ascendancy filter above — checking
     // `rawPersons` would re-admit exactly the leak this guards (issue #2747).
     // Measured on live data 2026-09-23: 11 of 27 edges on LZJW-C31 name a
-    // spouse absent from persons[]; each would fail the project_create write
-    // outright, costing the user the whole project rather than the edge.
+    // person absent from persons[] (9 of 20 on KNDX-MKG). Each would fail the
+    // project_create write outright, costing the user the whole project rather
+    // than the edge. Under descendants:true, 2 of 13 are persons the filter
+    // above removed — which is why this compares against `persons`, not raw.
     // `AncestorPerson.id` is optional in the type, so narrow rather than
     // building a Set<string|undefined> — an undefined in the set would make
     // `personIds.has(undefined)` meaningless and admit a malformed edge.
