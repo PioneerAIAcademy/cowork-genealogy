@@ -1,8 +1,8 @@
 # Eval run log versioning + active/release semantics — design
 
-**Status:** Shipped. Only the senior-onboarding note (§ Open items) is still
-outstanding. Kept because 20 files cite it as the contract and its rationale
-has not been folded into `docs/specs/eval-crud-ui-spec.md`.
+**Status:** Shipped; nothing is pending. The senior-onboarding note (§ Open
+items 2) is `eval/SENIOR-WALKTHROUGH.md`. Kept because 19 other files cite it as
+the contract and its rationale has not been folded into `docs/specs/eval-crud-ui-spec.md`.
 
 > Implementation plan for a redesign of the eval test harness, CRUD UI,
 > and PR review process. Supersedes parts of `docs/specs/eval-crud-ui-spec.md`
