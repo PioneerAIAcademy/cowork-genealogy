@@ -194,6 +194,13 @@ include: "is this the same person?", "link this to [person]",
 "this record mentions multiple people", "should this assertion also
 link to [other person]". Proceed to Step 1.
 
+Every one of those is an instruction to act. A **question about whether
+the links are complete** is not one of them, however close the wording
+gets: "is every role that should be linked actually linked?" asks you to
+check, and asking you to check is review-only mode below. The giveaway
+is the verb, not the object: "link the roles" acts, "is it linked" and
+"audit the links" report.
+
 **Review-only mode:** The user wants you to *evaluate* one or more
 *existing* `person_evidence` entries — checking whether the confidence
 is calibrated appropriately, whether the rationale is sound, whether
