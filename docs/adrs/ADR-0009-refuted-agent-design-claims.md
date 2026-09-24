@@ -155,18 +155,65 @@ a graduation, must satisfy all six:
    `materialize_facts` time, and gate there too — the tree write is where the
    violation lands, so a `person_evidence`-append gate alone cannot be the
    enforcement point.
-2. **An attestation — but note the owner has already decided against holding out
-   for a non-fabricable one.** Nothing today persists `same_person` output.
-   `docs/specs/research-append-tool-spec.md` records the 2026-08-01 decision
-   (#1006): validate `match_score`'s **presence** on the
-   `personEvidenceInvariants` path, explicitly conceding that presence does not
-   prove the call happened, and *"do not over-engineer past this."* The stronger
-   counter-design — `same_person` persisting a (person, record, persona)-keyed
-   attestation the writer tools check — is not what was decided; propose it
-   *against* that decision, not into a vacuum.
+2. **An attestation — SUPERSEDED 2026-09-07; the counter-design was adopted.**
+   This constraint told you to propose the attestation *against* the 2026-08-01
+   "do not over-engineer past this" decision (#1006) rather than into a vacuum.
+   The lead then decided the other way: the 2026-09-07 ruling on #1731 is that
+   `same_person` **does** persist what it computed and `research_append` **will**
+   require it. So the argument this constraint asked for has been made and won,
+   and the constraint is kept only as the record of what it displaced.
+
+   What shipped for it (PR A, #1731 steps 1-2): `same_person` gained a
+   project-relative arm and writes every score it computes to
+   `results/.scores/`, host-side, so the record never round-trips through the
+   model on the legitimate path. What has NOT shipped is the writer-side
+   requirement (step 3), which is gated on re-measuring after PR A and on the
+   score-TTL question. Until it does, `match_score` remains caller-fabricable:
+   the attestation exists but nothing yet checks a link against it.
+
+   **The attestation is not yet unforgeable either, and step 3 must not assume
+   it is.** `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers
+   `research.json`, `tree.gedcomx.json` and `starting-tree.gedcomx.json` only,
+   so a raw `Write` to `results/.scores/` from inside the VM is unguarded. The
+   model cannot produce the payload; it can author the file. Extending that list
+   touches ADR-0005, which owns it, and is a precondition for the refusal step
+   relying on this record.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.
+
+   **As implemented (#1731 PR A), with a documented deviation.** The attestation
+   keys on (`record_id`, party, `tree_person_id`), where party is
+   `record_persona_id` when non-null and `record_role` otherwise. The fallback
+   exists because `record_persona_id` is null on thousands of corpus links, so
+   it cannot key anything on its own, while `record_role` is required on every
+   assertion and is the field the record-side projection groups by — key and
+   grouping must agree or two calls about one persona land under two keys.
+
+   **The projection groups on the same key**, so the two cannot disagree about
+   what identifies a party. Grouping on `record_role` alone was the first
+   design and it was wrong twice over: it merges two personas that share a role
+   into one projected person (a transcribed register page holds many entries at
+   one role each), and it makes `recordPersonaId` useless as a disambiguator,
+   because the two people the caller is choosing between have already been
+   collapsed by the time it is read.
+
+   Measured over 3,093 projected parties on this corpus (1,330 persona-keyed,
+   1,763 role-keyed): **20 hold more than one distinct `name`.** Of those, 14
+   are role-keyed and are **refused** rather than scored as a merge; 6 are
+   persona-keyed and are exempt, because a group the record itself assigned one
+   persona id to is one persona under several spellings (maiden name, scribal
+   variant, "also known as"). Both directions are tested.
+
+   Two honesty notes on that exemption. It trusts the extractor's
+   `record_persona_id`, and by inspection 2 of the 6 exempt groups look like
+   two different people sharing one id (`1:1:MPXD-MZC`: "Charlotte Spriggs" /
+   "John W Spriggs") rather than one person under two spellings — an extraction
+   defect this guard cannot see and does not try to. And an earlier draft of
+   this paragraph claimed "18 of 22 are alias variants, so the guard exempts
+   them": that was a miscount, folding 14 groups carrying *no* persona id in
+   with 4 carrying one. The guard requires exactly one, so it never exempted
+   18.
 4. **Batch semantics.** Keep `proofSummaryInvariants`' pre-call-state discipline
    (`docs/specs/guardrail-enforcement-spec.md` §5, "Prefer this shape") with
    defined handling for an assertion and its link arriving in one batch.

@@ -62,7 +62,7 @@ import {
   factText,
   materializesToPersonFact,
   type AssertionFactAttr,
-} from "./materialize-facts.js";
+} from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 
@@ -592,6 +592,232 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
+/** Assertions naming two people. The link may be about either side, so the
+ *  assertion's own party identifiers cannot be assumed to describe the person
+ *  being linked. */
+const RELATIONAL_FACT_TYPES: ReadonlySet<string> = new Set([
+  "relationship", "parentage", "parentchild", "marriage",
+]);
+
+/** A christening date IS comparable to a birth date (a baptism follows birth
+ *  closely); a christening PLACE is not comparable to a birth place. Hence two
+ *  sets rather than one. */
+const BIRTH_DATE_FACT_TYPES: ReadonlySet<string> = new Set([
+  "birth", "christening", "baptism", "baptized",
+]);
+
+/** Years. The tree side is routinely a circa year, so a day-level comparison
+ *  would read every `~1845` as a contradiction. */
+const MAX_BIRTH_YEAR_GAP = 5;
+
+/** First 4-digit year in a date string, tolerating `~1845`, `11Jan1758`,
+ *  `1858-03-12` and `about 1832`. Null when none is present -- an unparseable
+ *  date states nothing to compare, which must not read as a contradiction. */
+function yearOf(value: unknown): number | null {
+  const m = /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(String(value ?? ""));
+  return m ? Number(m[1]) : null;
+}
+
+/** A core identifier the RECORD states, contradicted by what the tree person
+ *  already attests, caps the link at `speculative` — detected, not self-reported.
+ *
+ *  This is the third instrument tried on `ut_person_evidence_012` / `_024`, and
+ *  the first that does not ask the agent to police itself. The other two failed
+ *  the same way and the failure is on record: the rule stated in the agent body
+ *  (with the same 0.85 figure as the test) did not bind; a Step 3 forcing
+ *  function made the agent WRITE the verdict and it argued past it; and the
+ *  self-declared `core_identifier_conflict` field was simply left null or
+ *  omitted while the higher tier was written anyway (measured 2026-09-23 —
+ *  `_012` wrote `probable` with the field present and null).
+ *
+ *  Place uses `compatiblePlace` + `placeSegments`, the SAME comparator
+ *  `placeContainmentErrors` uses, for the reason its docstring gives: equality
+ *  and containment are both compatible, so only an outright disagreement counts.
+ *  A place-less assertion states nothing and is skipped.
+ *
+ *  Scope is deliberately narrow: only the record's own assertions, only against
+ *  the tree person's BIRTH fact, and only where both sides actually state a
+ *  value. It cannot see a conflict nobody wrote down, which is the honest limit
+ *  of any document-side gate.
+ */
+/** Only a BIRTH place compares against the tree person's birth place. A
+ *  christening place is where the church is, not where the child was born:
+ *  3 of the corpus's false positives were a christening at Ashton-under-Lyne
+ *  against a birth at Preston, which is an ordinary Lancashire life, not a
+ *  contradiction. The DATE arm is the other way round -- a christening follows
+ *  birth closely, so its date IS comparable. */
+const BIRTH_PLACE_FACT_TYPES: ReadonlySet<string> = new Set(["birth"]);
+
+/** An informant with no proximity to the birth cannot contradict it. Senior
+ *  genealogist ruling 2026-09-23 (John Mark Peter-Brown): "A baptismal record
+ *  carries weight of birth assertion than a death record with a secondary
+ *  information by someone who does not have firsthand information about the
+ *  birth." 35 of the corpus's 38 false positives were exactly that -- a death
+ *  record's `Born 1845, Pennsylvania` against a tree attesting Ireland, at
+ *  `information_quality: "secondary"`, `informant_proximity:
+ *  "family_not_present"`. Capping a sound identity link because a death
+ *  certificate misreported a birthplace would make the tool worse.
+ *
+ *  This reads `informant_proximity` to decide whether a contradiction is
+ *  CREDIBLE, which is evidence weighing. It is not the same as citing it to
+ *  justify a tier, which `agents/person-evidence.md` forbids -- that rule is
+ *  about raising confidence on source quality alone. Flagged here because the
+ *  two sit close enough to be confused. */
+const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
+  "family_not_present", "researcher", "unknown",
+]);
+
+/** Whether this assertion's stated value is credible enough to contradict the
+ *  tree. Measured over every committed scenario fixture 2026-09-24: with these
+ *  two gates the arm refuses **0 of 323** confident/probable person_evidence
+ *  entries, against 38 without them and 274 comparing any place at all. */
+function contradictionIsCredible(assertion: any): boolean {
+  if (assertion?.information_quality === "secondary") return false;
+  return !WEAK_INFORMANT_PROXIMITY.has(
+    String(assertion?.informant_proximity ?? "unknown"),
+  );
+}
+
+function coreIdentifierContradictionInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+): string[] {
+  if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
+  const assertions: any[] = research.assertions ?? [];
+  const linked = assertions.find((a: any) => a?.id === entry.assertion_id);
+  if (!linked) return [];
+  const recordId = linked.record_id ?? linked.source_id ?? null;
+  if (recordId == null) return [];
+
+  // A relationship assertion bears on BOTH people it names, and its own party
+  // is only one of them: `a_004` ("listed in household of Thomas Flynn,
+  // position consistent with son") carries the CHILD's role while the link may
+  // be to the father. Comparing the child's stated birth of 1845 against a
+  // father the tree puts at 1818 produced 14 refusals that are one household,
+  // not one contradiction. We cannot tell from the assertion which side a link
+  // is about, so two-party assertions are out of scope for this gate.
+  if (RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase())) return [];
+
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
+  if (!person) return [];
+  const birth = ((person.facts ?? []) as any[]).find(
+    (f: any) => String(f?.type ?? "").toLowerCase() === "birth",
+  );
+  if (!birth) return [];
+
+  // Every assertion this record makes about THE SAME PARTY as the linked one.
+  //
+  // Scoping to the record alone is wrong and was measured wrong: a census or a
+  // baptism names several people, and comparing a son's stated birth of 1845
+  // against a father who the tree says was born 1818 produced 30 refusals that
+  // are all one household, not one contradiction. The party key is the same one
+  // `record-persona.ts` groups by -- `record_persona_id` when the sidecar kept
+  // one, `record_role` otherwise, which is required on every assertion.
+  const partyKey = (a: any) => a?.record_persona_id ?? a?.record_role ?? null;
+  const linkedParty = partyKey(linked);
+  const sameRecord = assertions.filter(
+    (a: any) =>
+      a &&
+      (a.record_id ?? a.source_id ?? null) === recordId &&
+      partyKey(a) === linkedParty &&
+      linkedParty !== null,
+  );
+
+  const findings: string[] = [];
+
+  // ── place ────────────────────────────────────────────────────────────────
+  if (typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
+    for (const a of sameRecord) {
+      // Like for like. An ANY-place comparison refuses 274 of 323 committed
+      // confident/probable entries (85%) because a marriage or census place is
+      // not a claim about birthplace: a man born in Ireland appears in a
+      // Pennsylvania census, and that is biography, not contradiction.
+      if (!BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!contradictionIsCredible(a)) continue;
+      if (typeof a.place !== "string" || placeSegments(a.place).length === 0) continue;
+      if (!compatiblePlace(a.place, birth.place)) {
+        findings.push(
+          `the record states '${a.place}' (assertion '${a.id}') where the tree person ` +
+            `attests '${birth.place}'`,
+        );
+        break;
+      }
+    }
+  }
+
+  // ── date ─────────────────────────────────────────────────────────────────
+  // Unlike place, a CHRISTENING date is comparable to a birth date: a baptism
+  // follows birth closely, so a wide gap is a presumptive contradiction rather
+  // than date noise. Senior genealogist ruling 2026-09-23 on the 13-year Flynn
+  // gap: "Yes, the gap is too wide. This is something to scrutinize."
+  //
+  // The threshold is years, not days, because the tree side is routinely a
+  // circa year (`~1845`) and a day-level comparison would read every circa date
+  // as a contradiction. 5 years is wide enough to absorb a circa estimate and a
+  // genuinely late baptism, and narrow enough to catch the 13-year case;
+  // measured over every committed scenario fixture it refuses none.
+  const treeBirthYear = yearOf(birth.date);
+  if (treeBirthYear != null) {
+    for (const a of sameRecord) {
+      if (!BIRTH_DATE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!contradictionIsCredible(a)) continue;
+      const stated = yearOf(a.date);
+      if (stated == null) continue;
+      if (Math.abs(stated - treeBirthYear) > MAX_BIRTH_YEAR_GAP) {
+        findings.push(
+          `the record states ${a.fact_type} in ${stated} (assertion '${a.id}') where the tree ` +
+            `person attests a birth in ${treeBirthYear}, a ${Math.abs(stated - treeBirthYear)}-year gap`,
+        );
+        break;
+      }
+    }
+  }
+
+  if (findings.length === 0) return [];
+  return [
+    `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
+      `A contradicted core identifier caps the link at 'speculative' regardless of the match ` +
+      `score, and the user is asked before it stands. Use 'speculative' and name the ` +
+      `contradiction in the rationale, or resolve it first — a confident wrong identity is ` +
+      `worse than a flagged uncertain one.`,
+  ];
+}
+
+/** A declared core-identifier conflict caps the link at `speculative`.
+ *
+ *  Decidable from the write payload alone: it reads the entry's own
+ *  `core_identifier_conflict` and nothing else, so it needs neither the tree nor
+ *  a re-reading of the record. That is what makes it a precondition rather than
+ *  a prompt rule (ADR-0011's first question).
+ *
+ *  Why this one REFUSES where `personEvidenceScoreWarnings` only warns: that
+ *  warning fires on inferred state and would hit live traffic (`speculative` is
+ *  344 of 22,050 committed person_evidence writes, 1.6%). This fires only where
+ *  the agent has ITSELF declared a conflict, and the field is new, so it refuses
+ *  exactly zero writes that exist today.
+ *
+ *  The rule it replaces was prose, twice: the agent body already carried
+ *  "a qualitative conflict caps confidence regardless of score" using the same
+ *  0.85 figure as the test that kept failing, and a Step 3 forcing function that
+ *  made the agent WRITE the verdict still let it argue past the verdict in the
+ *  next clause (ut_person_evidence_012 and _024, 2026-09-23). Declaring the
+ *  conflict is now what binds, not describing it.
+ */
+function coreIdentifierConflictInvariants(entry: any): string[] {
+  const declared = entry.core_identifier_conflict;
+  if (typeof declared !== "string" || declared.trim() === "") return [];
+  if (entry.confidence === "speculative") return [];
+  return [
+    `confidence '${entry.confidence}' is not available on a link that declares a core-identifier ` +
+      `conflict (core_identifier_conflict: ${JSON.stringify(declared)}). A contradicted core ` +
+      `identifier caps the link at 'speculative' regardless of the match score, and the user is ` +
+      `asked before it stands. Either set confidence to 'speculative', or — if the conflict is ` +
+      `explained and does not bear on identity — say so in the rationale and clear ` +
+      `core_identifier_conflict to null rather than keeping both.`,
+  ];
+}
+
 /** Whether a record persona `same_person` could score against is reachable for
  *  this assertion — decidable from the project documents alone, which is what
  *  makes it a tool-side question rather than a prose one.
@@ -630,34 +856,32 @@ function personaReachable(entry: any, research: any): boolean {
   return false;
 }
 
-/** The retrieval route for a reachable persona, named so the warning tells the
- *  agent what to DO rather than only what is missing. */
+/** The call that would produce the missing score, named so the warning tells the
+ *  agent what to DO rather than only what is missing.
+ *
+ *  Since #1731 that is one call in every case: `same_person`'s project-relative
+ *  arm takes references and assembles both documents host-side, so there is no
+ *  longer a retrieval route for the agent to pick between. The branch this
+ *  replaced named three (record_persona_id / record_read / sidecar) and each
+ *  told the agent to hand-build a `primaryId1` — which is the expensive shape
+ *  the measured skip rate was a symptom of. */
 function personaRoute(entry: any, research: any): string {
   const assertions: any[] = research.assertions ?? [];
   const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
-  if (assertion?.record_persona_id) {
-    return (
-      `assertion '${entry.assertion_id}' carries record_persona_id ` +
-      `'${assertion.record_persona_id}' — use it as primaryId1 with that record's gedcomx`
-    );
-  }
-  const log: any[] = research.log ?? [];
-  const logEntry = log.find((l: any) => l?.id === assertion?.log_entry_id);
-  if (logEntry?.tool === "record_read") {
-    return (
-      `assertion '${entry.assertion_id}' came from record_read — call ` +
-      `record_read({ recordId: '${assertion?.record_id}' }) again; it returns simplified ` +
-      `GedcomX, and primaryId1 is the persons[].id for the party this link is about`
-    );
-  }
-  if (logEntry?.results_ref) {
-    return (
-      `log entry '${logEntry.id}' retained a sidecar — take the persona from ` +
-      `'${logEntry.results_ref}'; primaryId1 is the persons[].id for the party this link ` +
-      `is about, not the result's top-level primaryId`
-    );
-  }
-  return `resolve the persona for assertion '${entry.assertion_id}' before linking`;
+  const route =
+    `call same_person({ projectPath, assertionId: '${entry.assertion_id}', ` +
+    `treePersonId: '${entry.person_id}' }) — it resolves the record and builds the ` +
+    `tree-side matching mob itself, and records the score`;
+  // A relationship or marriage assertion names two parties and gets a link for
+  // each; only the second one needs to say which party it is about.
+  const twoParty = ["relationship", "marriage", "parentage", "parentchild"].includes(
+    String(assertion?.fact_type ?? "").toLowerCase(),
+  );
+  return twoParty
+    ? `${route}. This assertion names two parties, so add recordRole (or ` +
+        `recordPersonaId) when this link is about the party other than ` +
+        `'${assertion?.record_role}'`
+    : route;
 }
 
 /** Warn — NOT reject — a person_evidence link that records no numeric
@@ -715,10 +939,10 @@ function personEvidenceScoreWarnings(entry: any, research: any): string[] {
     `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
       `records no usable match_score (got ${JSON.stringify(entry.match_score)} — expected a ` +
       `number 0–1), but a record persona IS reachable for it: ${personaRoute(entry, research)}. ` +
-      `Score the pairing with same_person and record its score. A null record_persona_id is ` +
-      `NOT a reason to skip — same_person takes two gedcomx documents plus a focus id inside ` +
-      `each and never reads that field; a null value means only that no search sidecar was ` +
-      `retained. A locally-minted tree id is not a reason either: it scores on document ` +
+      `A null record_persona_id is NOT a reason to skip, and neither is how the assertion was ` +
+      `retrieved: the tool resolves the record itself, deriving the persona from the record's ` +
+      `own extracted assertions when it cannot fetch a document. A locally-minted tree id is ` +
+      `not a reason either: it scores on document ` +
       // The one legitimate null this warning must NOT badger the agent out of.
       // Scoring a persona against a person minted FROM that persona is circular
       // — it can only confirm itself. The tool cannot detect the case: by the
@@ -2237,6 +2461,11 @@ function applyOne(
   preCallCritiquedSummaryIds?: Set<string>,
   preCallBlockingConflicts?: any[],
   preCallResearch?: any,
+  // The tree is needed by `coreIdentifierContradictionInvariants`, which
+  // compares a record's stated identifiers against what the tree person already
+  // attests. Optional so every existing caller and test compiles unchanged; a
+  // missing tree makes that gate silent rather than wrong.
+  tree?: any,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -2733,6 +2962,18 @@ function applyOne(
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
+    invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
+    // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
+    // "do not flip the warn to a reject as a one-line change", and the bar it
+    // set is ADR-0011 limit 2: read the refusals individually rather than quote
+    // a rate. All 38 that the un-gated arm produced were read (2026-09-24) and
+    // every one is a false positive -- 35 death-record birthplaces at
+    // `secondary`/`family_not_present`, 3 christening PLACES against a birth
+    // place. Both classes are now excluded on genealogical grounds, and the
+    // arm refuses 0 of 323 committed confident/probable entries.
+    invariantErrors.push(
+      ...coreIdentifierContradictionInvariants(resultEntry, research, tree),
+    );
     // Warn-only: a link that records no match_score where a persona was
     // reachable (#1006, re-pointed by #1429). Rides the response warnings; does
     // not block the write.
@@ -2900,6 +3141,88 @@ function prepareVerdict(
 /** Normalized-exact repository comparison key (trim + casefold). */
 function normalizeRepository(v: unknown): string {
   return typeof v === "string" ? v.trim().toLowerCase() : "";
+}
+
+/** §3.4.3 re-extraction key: which extracted fact an assertion is, for the
+ *  guard below. `undefined` = not comparable (exempt or malformed). The key is
+ *  (source, record, log entry, person in the record, canonical fact type):
+ *  the person is `record_persona_id` when set, else `record_role`; the fact type
+ *  goes through the same alias fold the tool applies at write; the log entry
+ *  scopes it to ONE extraction pass, so an image-transcription pass (its own log
+ *  entry) may add a second reading of a fact, while a re-run of the same pass —
+ *  a resumed or re-delegated extractor, which reuses its log entry — may not.
+ *  Values are ignored on purpose: a re-run re-decides its wording, so a value key
+ *  misses exactly the duplicate this exists for. `record_role: "absent"`
+ *  (negative evidence) is exempt — it names no persona, so its key cannot tell
+ *  two absent people apart. Exported for dev/replay-reextraction-guard.ts. */
+export function reextractionKey(a: any): string | undefined {
+  if (!a || typeof a !== "object") return undefined;
+  if (typeof a.source_id !== "string" || typeof a.record_id !== "string" || typeof a.fact_type !== "string") {
+    return undefined;
+  }
+  if (a.record_role === "absent") return undefined;
+  const who =
+    typeof a.record_persona_id === "string" && a.record_persona_id !== ""
+      ? `persona:${a.record_persona_id}`
+      : typeof a.record_role === "string"
+        ? `role:${a.record_role}`
+        : undefined;
+  if (who === undefined) return undefined;
+  const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
+  const ftKey = labelKey(a.fact_type);
+  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? labelKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
+  return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
+}
+
+/** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
+function factLabel(ft: unknown): string {
+  if (typeof ft !== "string") return String(ft);
+  const k = labelKey(ft);
+  return Object.hasOwn(FACT_TYPE_ALIASES, k) ? FACT_TYPE_ALIASES[k] : ft;
+}
+
+/** §3.4.3 re-extraction guard: refuse an assertions append whose
+ *  `reextractionKey` an assertion in the PRE-CALL document already holds — a
+ *  second copy of an extracted fact reads downstream as independent
+ *  corroboration. Batch-internal pairs are never compared: two same-typed facts
+ *  in one pass are ordinary extraction (a birth date and a birth place). */
+function reextractionCollisions(
+  ops: ResearchAppendOp[],
+  research: any,
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const existing = new Map<string, string[]>();
+  for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
+    const k = reextractionKey(a);
+    if (k === undefined || typeof a.id !== "string") continue;
+    existing.set(k, [...(existing.get(k) ?? []), a.id]);
+  }
+  if (existing.size === 0) return [];
+  const out: string[] = [];
+  ops.forEach((op, i) => {
+    if (op.section !== "assertions" || op.op !== "append") return;
+    const e = op.entry as any;
+    const k = reextractionKey(e);
+    const ids = k === undefined ? undefined : existing.get(k);
+    if (!ids) return;
+    out.push(
+      fmt(
+        i,
+        `record ${e.record_id} is already extracted on ${e.source_id}` +
+          `${e.log_entry_id ? ` under ${e.log_entry_id}` : ""}: ${ids.join(", ")} already ` +
+          `record${ids.length === 1 ? "s" : ""} ${factLabel(e.fact_type)} for this person (${
+            e.record_persona_id ? `persona ${e.record_persona_id}` : `role ${e.record_role}`
+          }). This batch re-persists the record, so it is a re-extraction: refine the existing ` +
+          `assertion${ids.length === 1 ? "" : "s"} with an assertions \`update\` op by id instead of ` +
+          `appending a second copy — a duplicate reads as independent corroboration. If you are ` +
+          `retrying a call that timed out, it most likely committed and these ids are its own writes. If this ` +
+          `is a genuinely distinct fact of the same type (a second relationship), append it in a call without ` +
+          `the sources op — never \`update\` an existing assertion to a different fact. A fact ` +
+          `type this person has no assertion for yet may still be appended.`,
+      ),
+    );
+  });
+  return out;
 }
 
 /**
@@ -3512,6 +3835,13 @@ async function prepareOps(
     state.last.transcription_truncated = true;
   }
 
+  // §3.4.3: only a batch that RE-PERSISTS a record already persisted on this
+  // source (the §3.4.1 fold) is a re-extraction; a later single append adding a
+  // distinct fact never re-sends the source and is not compared.
+  if (sourceReuse?.action === "updated_existing") {
+    errors.push(...reextractionCollisions(ops, research, fmt));
+  }
+
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
   if (errors.length > 0) throw new ResearchAppendError(errors);
@@ -3685,6 +4015,7 @@ export async function researchAppend(
             preCallCritiquedSummaryIds,
             preCallBlockingConflicts,
             beforeResearch,
+            tree,
           ),
         );
       } catch (e) {
