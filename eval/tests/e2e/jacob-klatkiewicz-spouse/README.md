@@ -28,19 +28,77 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 22, `hint-samples.csv` row 677,
-flag `adds_spouse`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998", a baptism of 2 May 1886 at Ceradz, Posen West for Stanislaus Klatkwicz, born 30 April 1886, naming parents Jacob Klatkwicz and Hedvigis Rurek.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Hedvigis Rurek as a second wife, plus a `required` finding that the report documents
-the rejection.
+**Resolved: ANSWERABLE, BUT DIFFERENTLY** (outcome (b)) — adjudicated
+2026-09-24 from issue #2315. The hint record is real and correctly matched to
+this family; what it documents is the son the tree **already has**, with a
+birth date the tree gets wrong by two years. `expected-findings.json` now
+carries a corrected `required` finding naming `LDZR-PH7`, paired with an
+`avoid` finding so no second wife is created.
 
-The `adds_spouse` flag is a red herring and the reviewer should say so plainly: the hint's **Hedvigis Rurek** and the tree's **Hedvirgis Kurek** differ by one letter, R for K, in a Gothic-script register where exactly that confusion is routine. They are the same woman, and no second wife should be created.
+### What decided it
 
-The real question is the child. The tree records a son **Stanislaw, born 1884 at Rumianek**; the hint gives **Stanislaus, born 30 April 1886 and baptised 2 May at Ceradz** — two years and about fifteen kilometres apart. Either the tree's 1884/Rumianek is an unsourced approximation of this same baptism, or the couple had two sons of that name, which would mean the first died. The tree cannot settle it: it carries exactly **one** source for the whole family, and several of its children are entered as placeholders — `:Ludwika Klatkiewicz`, `Eldest Klatkiewicz`, `One More Klatkiewicz` — which is the signature of a submitter recording a remembered sibling set rather than transcribing a register.
+The hint index entry and the register page behind it disagree, and the
+register wins on both points.
 
-One age check worth doing: the subject was born in 1827, so he would be 58 at this birth. Not impossible, but it makes the wife's age the thing to establish, and the tree gives her none.
+| | Tree (`LDZR-PH7`) | Index entry | Register, entry 44 |
+|---|---|---|---|
+| Name | Stanislaw | Stanislaus | Stanislaus |
+| Born | 1884 | 30 Apr 1886 | **30 Apr 1886, 4pm** |
+| Place | Rumianek | *Ceradz* | **Rumianek** |
+| Mother | Hedvirgis **Kurek** | Hedvigis **Rurek** | Hedvigis **Kurek** |
+
+**The places were never in conflict.** The index records Ceradz because that
+is the parish church where the baptism happened; the register's *Locus
+Nativitatis* column gives the village, and it reads Rumianek — the same
+village the tree gives. The "two years and fifteen kilometres apart" framing
+in the original draft was an artefact of reading the index alone.
+
+**The mother is Kurek, not Rurek.** The register is unambiguous. The
+`adds_spouse` flag is exactly the red herring the draft suspected, confirmed
+from the page rather than assumed.
+
+**The 1886 child did not die in infancy.** The entry carries a later marginal
+annotation: *"Iniit matr. 11.2.15. Posnan. S. Adalb. cum Ant. Matuszak"* — he
+married on 11 February 1915 at St Adalbert's, Poznań. So no name-reuse
+scenario is needed to explain a single surviving Stanislaw in the tree.
+
+**`LDZR-PH7` carries no source at all** (`person_read --sources` returns an
+empty list), and Jacob himself carries exactly one — his own 1827 baptism.
+The tree's "1884" rests on nothing.
+
+### What was searched and came up empty
+
+The disconfirming check for the two-sons reading is an elder Stanislaus who
+died before April 1886. He does not exist in this register:
+
+- **1884, complete (entries 1-93)** — the tree's own claimed year. No
+  Klatkiewicz baptism of any kind.
+- **1885, complete (entries 1-113)** — none.
+- **1883, entries 52-119** — none. The volume *opens* at 1883 entry 52; the
+  earlier part of that year is in the predecessor film, `008015866_010`
+  (Ceradz, 1858-1883), which was not searched.
+
+Image group **008024989**, images 00006-00023 inclusive, read page by page.
+Nine Stanislaus baptisms fall in that span, three of them at Rumianek — to
+Plick, Horonski, Napieralski and Naprałski. None to Jacob.
+
+One positive find from the same sweep: **1885 entry 101** (November) records
+*"Jacob Klatkiewicz ż Rum[ianek]"* standing as godfather to a Bogucki child.
+He was living at Rumianek five months before the 1886 birth, in the very year
+between the tree's claim and the register's record.
+
+### On the father's age
+
+Jacob was born 21 June 1827 (baptised 1 July 1827 at Gluschin, Posen Ost), so
+he was 58 at this birth. That is late but unremarkable, and the register gives
+no competing Jacob: no second Jacob Klatkiewicz appears anywhere in the
+1883-1885 pages. The wife's age remains unestablished — the tree gives her
+none, and the baptism register does not record parents' ages.
+
+### Provenance
+
+Record retrieval used `packages/engine/mcp-server/dev/try-*.ts` against live
+FamilySearch, per the option-A decision in `docs/specs/e2e-test-spec.md` §3.6.
+The identity judgement was a human call, not a tool output. The register pages
+were read from the scans directly; OCR was not relied on for any reading
+asserted here.
