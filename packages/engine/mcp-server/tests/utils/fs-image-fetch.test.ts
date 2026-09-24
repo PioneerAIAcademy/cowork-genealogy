@@ -152,7 +152,7 @@ describe("fetchFsImageBytes — fallback retry", () => {
         "https://www.familysearch.org/ark:/61903/3:1:BAD",
         LOCAL
       )
-    ).rejects.toThrow(/FamilySearch image fetch failed/);
+    ).rejects.toThrow(/FamilySearch image fetch failed.*may not be a valid/);
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
@@ -273,3 +273,188 @@ describe("fs-image-fetch — memory artifacts", () => {
   });
 });
 
+// ─── Bad-identifier ark guidance (400/404 only) ───────────────────────────
+
+// The guidance ("that ark may not be a valid document-image identifier — get
+// one from record_read's imageArk or image_search") is only true when the ark
+// itself is wrong. It fires on 400 and 404 and nothing else: 401/403 is a
+// rights-restricted image and 429 a rate limit, where the ark is real and
+// re-fetching it from record_read hands back the same one. Memory artifacts
+// carry a 3:1: ark too (person_read's artifact_url) that neither named tool
+// can ever return, so they are excluded whatever the status.
+//
+// Every generic-message assertion below is ANCHORED. A substring matcher
+// cannot fail here: the guidance message BEGINS with the generic text, so
+// `.toThrow("FamilySearch image fetch failed: 400 Bad Request")` passes even
+// when the guidance leaks into the case the test exists to keep it out of.
+describe("fetchFsImageBytes — bad-identifier ark guidance", () => {
+  const ARK_URL_31 = "https://www.familysearch.org/ark:/61903/3:1:QJRM-GV8V";
+  const GENERIC_400 = /^FamilySearch image fetch failed: 400 Bad Request$/;
+
+  it("names the ark and directs to imageArk on a 400 for a 3:1: ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(
+      /3:1:QJRM-GV8V may not be a valid document-image identifier.*imageArk/
+    );
+  });
+
+  it("names the ark on a 400 for a 3:2: ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://www.familysearch.org/ark:/61903/3:2:77TJ-PXCN",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow(/3:2:77TJ-PXCN may not be a valid/);
+  });
+
+  it("names the ark on a 404 for a 3:1: ark URL", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/3:1:QJRM-GV8V may not be a valid/);
+  });
+
+  it("uses the generic message on a 400 for a non-ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow(GENERIC_400);
+  });
+
+  it("uses the generic message on a 5xx (not 4xx) even for an ark URL", async () => {
+    mockErrorResponse(500, "Internal Server Error");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(
+      /^FamilySearch image fetch failed: 500 Internal Server Error$/
+    );
+  });
+
+  // Every ark failure in creszentia-haas-birth's committed runlog is a 403 on
+  // a real, rights-restricted image — issue #2392 carved that cause out in the
+  // same words. Telling the agent the ark may be invalid and to re-fetch it
+  // from record_read sends it round the same loop.
+  it("uses the generic message on a 403 for an ark URL (restricted, not invalid)", async () => {
+    mockErrorResponse(403, "Forbidden");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 403 Forbidden$/);
+  });
+
+  it("uses the generic message on a 401 for an ark URL", async () => {
+    mockErrorResponse(401, "Unauthorized");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 401 Unauthorized$/);
+  });
+
+  it("uses the generic message on a 429 for an ark URL", async () => {
+    mockErrorResponse(429, "Too Many Requests");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(
+      /^FamilySearch image fetch failed: 429 Too Many Requests$/
+    );
+  });
+
+  // The live 400 this whole guidance exists for carries an EMPTY statusText:
+  // eval/runlogs/e2e/pedro-chaves-spouse records it as "FamilySearch image
+  // fetch failed: 400 " with nothing after the code. Interpolating it blindly
+  // and then appending a sentence produced "400 . The ark ...".
+  it("renders no stray separator when statusText is empty (the live 400 shape)", async () => {
+    mockErrorResponse(400, "");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 400\. The ark /);
+  });
+
+  it("renders no stray separator on a generic empty-statusText failure", async () => {
+    mockErrorResponse(503, "");
+
+    await expect(
+      fetchFsImageBytes("https://familysearch.org/das/v2/dgs:1_2/dist.jpg", undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 503$/);
+  });
+
+  // image_search takes an imageGroupNumber from volume_search and returns
+  // image IDs — it has no way to return an ark, so an agent told to get one
+  // there has nowhere to go.
+  it("does not tell the agent an image ark comes from image_search", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    const err = await fetchFsImageBytes(ARK_URL_31, undefined, LOCAL).then(
+      () => {
+        throw new Error("expected the fetch to reject");
+      },
+      (e: unknown) => e as Error,
+    );
+    expect(err.message).not.toMatch(/ark comes from .*image_search/);
+    expect(err.message).toMatch(/image_search returns image ids, not arks/);
+    expect(err.message).toMatch(/imageGroupNumber from volume_search/);
+  });
+
+  // A waypoint ark into a multi-image film needs its i=/cc=/groupId= context;
+  // without it FamilySearch may not resolve the document at all. Telling the
+  // agent only to re-fetch the ark loops it through the same bare form.
+  it("names the i=/cc=/groupId= remedy, not just the ark", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/i=\/cc=\/groupId=/);
+  });
+
+  // A memory artifact reaches the fetcher with memoryShape FALSE whenever it
+  // arrives through `ark` rather than `memoryArtifactUrl`: it fails
+  // ARK_PATTERN, so arkToImageUrl resolves the 3:1: ark embedded in its path.
+  // Keying the carve-out on the flag alone missed this arm entirely.
+  it("uses the generic message for a memory artifact URL passed via ark", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg",
+        undefined,
+        LOCAL,
+        false,
+      )
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 404 Not Found$/);
+  });
+
+  // A memory artifact URL carries a 3:1: ark of its own — see
+  // eval/fixtures/mcp/person-read-flynn-family.json, whose artifact_url is
+  // https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg.
+  // That ark comes from person_read and appears in neither record_read's
+  // imageArk nor image_search, so the guidance would name two dead ends.
+  it("uses the generic message for a memory artifact, ark in the URL or not", async () => {
+    const artifact =
+      "https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg";
+
+    for (const [status, text, expected] of [
+      [404, "Not Found", /^FamilySearch image fetch failed: 404 Not Found$/],
+      [400, "Bad Request", GENERIC_400],
+    ] as const) {
+      mockErrorResponse(status, text);
+      await expect(
+        fetchFsImageBytes(artifact, undefined, LOCAL, true)
+      ).rejects.toThrow(expected);
+    }
+  });
+});
