@@ -1,6 +1,8 @@
 # Unified FamilySearch login (replace Google OAuth)
 
-**Status:** Proposal for review · 2026-06-07
+**Status:** Shipped. Kept because `apps/server/app/fs_oauth.py` and
+`packages/engine/mcp-server/dev/probe-users-current.ts` cite it, and
+`oauth-auth-spec.md` (engine-side) does not cover the hosted front door.
 **Related:** [`neon-postgres-plan.md`](./neon-postgres-plan.md),
 [`docs/specs/hosted-web-workbench-spec.md`](../specs/hosted-web-workbench-spec.md) §5.
 
