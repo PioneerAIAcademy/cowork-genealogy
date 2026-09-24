@@ -1235,9 +1235,9 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | `components[]` | The claims the finding makes, each `kind` (`link`/`detail`) and `status` (`supported`/`unsupported`/`contradicted`), marked from the tree. Only `link` entries score; a date the finding requires is tagged `link` (§3.4.2) |
 | `matched_model` | Present only when derivation overrode the judge: the label the model originally emitted |
 | `agent_evidence` | Pointer into `final_tree` showing where the match was found (free text) |
-| `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5) |
-| `recall_total` | Fraction across all findings |
-| `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none |
+| `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5). **Derived by the harness** from `per_finding` on every graded run (`_recall(required_only=True)`), not taken from the judge — see below |
+| `recall_total` | Fraction across all findings. **Derived by the harness** the same way (`_recall(required_only=False)`) — see below |
+| `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none. **Derived by the harness** from `per_finding` (`derive_verdict`), not taken from the judge — see below |
 | `rationale` | Free-text summary |
 
 A fourth verdict value, **`skipped`**, is written by the *harness* rather
@@ -1262,6 +1262,21 @@ its `notes` gain a `[component-derivation]` annotation, and
 downgrade-only. `matched` on a non-`avoid` `relationship` finding is
 therefore a derived field: read `matched_model` to see what the judge
 itself said.
+
+Independent of both guards, the run-level roll-up itself —
+`recall_required`, `recall_total`, `verdict` — is derived by the harness
+from `per_finding` on **every** graded run, inside
+`apply_component_derivation`, whether or not either guard changed a label
+(issue #2849: neither guard fires on a fact-only fixture, so the recompute
+used to be skipped and the model's self-reported roll-up shipped
+unchecked). When the recompute disagrees with what the model reported, the
+persisted `judge_output` carries `verdict_derivation`
+(`{"model": {...}, "derived": {...}}`, naming only the fields that
+changed — `verdict`, `recall_required` and/or `recall_total`, the two
+recall fractions compared with a `0.011` tolerance so a model's rounded
+`0.67` for an exact 2/3 is not recorded as a disagreement). Runs committed
+before this change are not rewritten; see issue #2849 for the
+reproduction against the committed corpus.
 
 ### 7.2.1 The three axes
 
