@@ -1050,9 +1050,9 @@ any new log entry names any plan item (coarser on attribution) and then refuses
 any status change (broader on status). That reach is the point — it covers
 `in_progress` and `skipped` moves, and it covers `search-external-sites`, whose
 corpus holds zero `completed` writes, so the tool rule never fires there at all.
-Its fire count over the 5 committed unit run logs for that skill is 0, and that
-is a floor: passing `report_*` results are dropped from the log, so the
-committed runs can show it never fired and cannot show what it would refuse.
+Nothing committed can show whether it ever fired: `as_dicts`
+(`validator_runner.py`) drops every `report_*` result from the run log, fired or
+not, and a fired one reaches only the judge, as an unnamed observation.
 
 **What nothing checks.** Two things. No check observes whether the refusal
 message breaks the model's retry loop — the gap every row in this section
