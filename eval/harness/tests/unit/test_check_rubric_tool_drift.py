@@ -350,10 +350,15 @@ def test_suppression_is_selective_end_to_end(monkeypatch) -> None:
     _reset()
     monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", real)
 
-    # Pick a real (file, tool) pair that fires. validate_research_schema
-    # in tree-edit's rubric is the most durable: the rubric documents a
-    # post-edit validation call that tree-edit's own contract says is
-    # unnecessary, i.e. clear drift that won't be "fixed" away.
+    # Pick a real (file, tool) pair that fires. validate_research_schema in
+    # tree-edit's rubric is the most durable — but NOT because it is drift.
+    # It is a suppressed false positive (issue #2745): the rubric says the
+    # call is "neither required nor available to this skill", which is the
+    # not-needed shape, and it has read that way since 2026-07-30. That is
+    # exactly what makes it a stable target: prose already corrected is prose
+    # nobody is coming back to correct again. The baseline above clears
+    # SUPPRESSIONS, so the pair is still visible here despite being
+    # suppressed in the shipped list.
     target = ("eval/tests/unit/tree-edit/rubric.md", "validate_research_schema")
     if target not in all_pairs:
         pytest.skip("expected baseline hit not present — corpus changed")
