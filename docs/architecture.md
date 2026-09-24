@@ -1278,16 +1278,35 @@ it — which, because the script must never raise, fails silently.
 
 ## 6. State
 
-### 6.1 Three persisted locations, all in the project folder
+### 6.1 The persisted locations, all in the project folder
 
 **There is no host-side store.** Cowork sessions are ephemeral; only the project
 folder persists. There is no `~/.cowork-genealogy/` to write to.
+
+The three the model co-edits or triages from:
 
 | Location | What |
 |---|---|
 | `research.json` | the research document — questions, plans, log, assertions, conflicts, proofs, researcher profile |
 | `tree.gedcomx.json` | the simplified GedcomX tree |
 | `results/<log_id>.json` | search-result sidecars — raw payloads kept out of `research.json` so the co-edited file stays lean |
+
+Plus host-written bookkeeping the model never serializes, which is what makes it
+trustworthy rather than merely present:
+
+| Location | What |
+|---|---|
+| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it. 24h TTL. |
+| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, party, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
+| `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
+
+**The dot-directories are load-bearing, not cosmetic.** The validator's orphan
+check lists `results/` non-recursively and errors on any top-level `*.json` no
+log entry references, so anything under `results/` that is not a finalized
+sidecar must hide in a dot-segment. The same asymmetry bites the hosted viewer
+from the other side: its watcher walks the project recursively while its
+hydration snapshot does not, so `_emit_change` filters dot-segments or it
+broadcasts a `sidecar_updated` naming a log id that does not exist.
 
 The two documents and the sidecars are **written by different mechanisms**, and
 conflating them is the easy mistake. The documents go through validating writer
