@@ -20,7 +20,7 @@
     "stub_skills": [
       "question-selection", "locality-guide", "research-plan",
       "search-records", "record-extraction", "person-evidence",
-      "research-exhaustiveness", "proof-conclusion"
+      "research-exhaustiveness", "proof-conclusion", "gps-mentor"
     ]
   },
   "judge_context": [
