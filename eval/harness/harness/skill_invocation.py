@@ -578,8 +578,12 @@ def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
 
 
 def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
-    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far
-    (its `primaryId1`/`primaryId2` args). When one side of a call is the tree,
+    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far.
+
+    Two call shapes, both credited: the explicit form's `primaryId1`/
+    `primaryId2`, and the project-relative form's `treePersonId` (plus whichever
+    of `recordPersonaId`/`recordRole` named the record party). When one side of a
+    call is the tree,
     that side's `primaryId` equals the tree `person_id` (see
     `find_person_evidence_missing_same_person` for the confirmed-live basis of
     that equality), so this doubles as "which tree persons have been scored."
@@ -602,7 +606,18 @@ def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
         if bare_tool_name(entry.get("tool", "")) != "same_person":
             continue
         args = entry.get("args") or {}
+        # The explicit two-document form.
         for key in ("primaryId1", "primaryId2"):
+            v = args.get(key)
+            if isinstance(v, str):
+                scored.add(v)
+        # The project-relative form (issue #1731). It names the two sides by
+        # REFERENCE — the tool assembles both documents itself — so a call in
+        # this shape carries no `primaryId1`/`primaryId2` at all. Without this
+        # arm every such call is invisible here and the detector flags 100% of
+        # newly linked persons the moment the agent adopts the cheap call, which
+        # would also invalidate the corpus re-measurement PR B is gated on.
+        for key in ("treePersonId", "recordPersonaId", "recordRole"):
             v = args.get(key)
             if isinstance(v, str):
                 scored.add(v)
