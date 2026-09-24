@@ -211,12 +211,14 @@ List every person mentioned and assign a `record_role`:
   summary — that is how the hypothesis reaches the next skill.
   - **`record_role` labels apparent within-group structure; it asserts
     nothing.** Use the standard vocabulary — `head_of_household`,
-    `wife`, `child_N` — for a group presented as one household group, on
-    any census year; the pre-1880 relationship ban governs assertions,
-    not labels. A second co-resident family keeps its own
-    `head`/`wife`/`child_N`; an adult too old to be the head's child
-    isn't `child_N` of that head. Unknown tie to the head → label by the
-    person's own role, leave the cross-group link to a hypothesis.
+    `wife`, `child_N` — on any census year; the pre-1880 relationship ban
+    governs assertions, not labels. `child_N` numbers within one family
+    group and attaches to that group's own head: a second co-resident
+    family keeps its own `head`/`wife`/`child_N`, a surname differing
+    from the head's opens a new group rather than numbering across, and
+    an adult too old to be the head's child isn't `child_N` of that head.
+    Unknown tie to the head → label by the person's own role, leave the
+    cross-group link to a hypothesis.
 - **Obituaries — read the survivor list precisely.** A name with a
   parenthetical follows one of two conventions; disambiguate by *what is in
   the parens*:

@@ -246,10 +246,11 @@ Print to the user exactly the text after the final `---` in the agent's
 return — its two closing paragraphs — verbatim. Add nothing after them:
 your reply for this record ends with the agent's second paragraph.
 Everything above that line is yours to act on and must not appear in your
-reply, in any wording, at any point: no identifier of any kind — for a
-source, assertion, question, log, tree person or anything else — and no
-counts, tables, tool names or skill names. If you are weighing whether
-something is an identifier, it is.
+reply, in any wording: no identifier of any kind — for a source,
+assertion, question, log, tree person or anything else — and no counts,
+tables, tool names or skill names. If you are weighing whether something
+is an identifier, it is. This governs what you relay; it never suspends
+the "N of M" announcement you owe before each delegation.
 
 Then **keep going in the same turn**: if more records are queued,
 delegate the next one now; if this was the last record, hand off to
@@ -266,10 +267,13 @@ record is not a reason to keep going.
 ## Tool availability
 
 **If `record_read`, `volume_search`, or `research_log_append` are not
-immediately available** (e.g., shown as deferred), call ToolSearch **once
-per tool, by bare name** — `query: "+record_read"` — never a qualified
-`select:` list. If `record_read` still does not resolve and the record
-content is already in hand, use it rather than searching again.
+immediately available** (e.g., shown as deferred), call ToolSearch with a
+bare-name query, one tool per call — `query: "+record_read"`. **Never a
+fully-qualified `select:` query** — one naming an `mcp__` prefix — **and
+never batch tools into one `select:` list**: the server prefix differs per
+deployment, so a qualified name resolves to nothing in Cowork. If
+`record_read` still does not resolve and the record content is already in
+hand, use it rather than searching again.
 **Never fall back to writing `research.json` or `tree.gedcomx.json`
 directly** — persistence belongs to the record-extractor agent's tools.
 
