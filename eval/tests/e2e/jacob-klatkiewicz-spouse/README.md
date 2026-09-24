@@ -57,6 +57,15 @@ in the original draft was an artefact of reading the index alone.
 `adds_spouse` flag is exactly the red herring the draft suspected, confirmed
 from the page rather than assumed.
 
+**One limit of the `avoid` finding, stated rather than hidden.** `f2` rules out
+adding "Rurek" to `LDZR-FTC`'s names in the tree, which is a *grading*
+constraint and not genealogical advice — recording a source's name variant on
+the person is ordinarily right. The avoid guard matches on names alone and
+exempts only the fixture's subject (`LDZR-XPT`), so an alternate name on the
+wife is indistinguishable from a newly created second wife and force-fails the
+finding. No edit to this fixture can separate the two cases; the variant is
+therefore recorded in `research.json` instead.
+
 **The 1886 child did not die in infancy.** The entry carries a later marginal
 annotation: *"Iniit matr. 11.2.15. Posnan. S. Adalb. cum Ant. Matuszak"* — he
 married on 11 February 1915 at St Adalbert's, Poznań. So no name-reuse

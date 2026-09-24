@@ -23,7 +23,7 @@
       "id": "f2",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT add Hedvigis Rurek as a second or additional wife of Jacob Klatkiewicz (LDZR-XPT). 'Rurek' is a one-letter index error for Kurek: the register page behind the index entry plainly reads Hedvigis KUREK, and the tree already records Jacob's wife as Hedvirgis Kurek (LDZR-FTC). They are one woman. Pass = the final tree contains no person representing Hedvigis Rurek as a spouse of LDZR-XPT, and no second couple relationship for him. Recording the spelling variant in research as an explicitly rejected candidate, or noting it as an index error against the existing wife, is acceptable.",
+      "description": "The agent must NOT add Hedvigis Rurek as a second or additional wife of Jacob Klatkiewicz (LDZR-XPT). 'Rurek' is a one-letter index error for Kurek: the register page behind the index entry plainly reads Hedvigis KUREK, and the tree already records Jacob's wife as Hedvirgis Kurek (LDZR-FTC). They are one woman. Pass = the final tree contains no person representing Hedvigis Rurek as a spouse of LDZR-XPT, and no second couple relationship for him. Recording the spelling variant in research.json, as an explicitly rejected candidate or as an index error against the existing wife, is acceptable. Adding 'Rurek' to LDZR-FTC's names in the tree is not, because the avoid guard matches on names alone and cannot distinguish that alternate name from a newly created second wife.",
       "details": {
         "subject_person": "Jacob Klatkiewicz (LDZR-XPT)",
         "relation": "spouse",
@@ -33,7 +33,7 @@
         }
       },
       "supporting_sources": [
-        "Ceradz baptisms 1883-1901, image ark:/61903/3:1:3Q9M-CSXV-6JG3, Annus Domini 1886 entry no. 44 — the disproving record: the mother's surname is written Kurek, and the initial letter matches the K of Kurek elsewhere on the same page rather than the R of neighbouring Rurek-shaped hands.",
+        "Ceradz baptisms 1883-1901, image ark:/61903/3:1:3Q9M-CSXV-6JG3, Annus Domini 1886 entry no. 44 — the disproving record: the mother's surname is written Kurek.",
         "Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998 — the index entry that carries the misreading, mother persona ark:/61903/1:1:6FZ9-J8PK."
       ],
       "required": true
