@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from . import agent_secrets, fs_oauth
@@ -62,21 +62,6 @@ class ProjectOut(BaseModel):
         )
 
 
-class FsTokenIn(BaseModel):
-    """A FamilySearch token bundle a `/v1` client supplies at session create. Unlike
-    the browser path (whose token comes from the FS app-login row), `/v1` clients never
-    run FS OAuth, so they pass the token here; it is injected straight into the sandbox
-    and **never persisted** to the control-plane DB.
-
-    Include `refresh_token` (OAuth `offline_access`) so the in-sandbox MCP can
-    self-refresh: with it the session lasts as long as the sandbox; without it the
-    session works only until the access token expires (FS access tokens last 8 h idle,
-    24 h at most, so a longer session needs the refresh token)."""
-    access_token: str = Field(min_length=1)
-    refresh_token: str | None = None
-    expires_in: int | None = None  # seconds from now; defaults to 8 h (FS sends none; 8 h idle is its lifetime)
-
-
 class CreateSessionBody(BaseModel):
     title: str | None = None
     model: str | None = None
@@ -118,8 +103,9 @@ def _derive_title_from_objective(objective: str | None) -> str | None:
 def _maybe_backfill_title(session: Session, project: Project, research: object) -> None:
     """Fallback session naming for a still-default session. The browser relays
     the agent-written project.title live (the primary path); this backstops the
-    cases with no browser relaying (e.g. the /v1 API). Prefer the agent's title;
-    derive from the objective only for legacy projects without one. One-time,
+    cases with no browser relaying — a tab closed before the agent named the
+    project, or a session resumed elsewhere. Prefer the agent's title; derive
+    from the objective only for legacy projects without one. One-time,
     persisted — keeps the list from being a wall of 'New research session'."""
     if project.title != _DEFAULT_TITLE or not isinstance(research, dict):
         return
@@ -169,13 +155,9 @@ async def create_project(
     title: str | None = None,
     model: str | None = None,
     sample: bool = False,
-    fs_token: FsTokenIn | None = None,
 ) -> Project:
-    """Provision a sandbox + record the user→sandbox map. Shared by the browser
-    `create_session` route and the public `/v1` create route.
-
-    `fs_token`, when given, is a caller-supplied FamilySearch token (the `/v1` path)
-    that takes precedence over the user's stored row and is injected but not persisted.
+    """Provision a sandbox + record the user→sandbox map. Used by the browser
+    `create_session` route.
     """
     import uuid
 
@@ -185,22 +167,12 @@ async def create_project(
         SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
     )
     # Inject the FamilySearch token so the in-sandbox MCP is authenticated without an
-    # interactive login (which it cannot run). Two sources, explicit wins:
-    #   • /v1: the caller supplies the token in the create request (no DB row exists —
-    #     /v1 clients authenticate by bearer key, never via FS OAuth).
-    #   • browser: the user's row, persisted at FS app login (the front door).
-    # The offline/dev-login (mock-agent) path has neither and needs none — mock mode
-    # never reads it. In create_project (not the route) so the /v1 path injects too.
-    if fs_token is not None:
-        token_json = {"expires_in": fs_token.expires_in} if fs_token.expires_in is not None else {}
-        await fs_oauth.write_tokens(
-            sandbox, fs_token.access_token, fs_token.refresh_token,
-            fs_oauth.expires_at_from(token_json),
-        )
-    else:
-        # Refreshes first if the stored grant is stale — creating a session hours
-        # after signing in must not hand the sandbox an already-dead token.
-        await sync_fs_token(session, user, sandbox)
+    # interactive login (which it cannot run). The source is the user's row,
+    # persisted at FS app login (the front door). The offline/dev-login
+    # (mock-agent) path has none and needs none — mock mode never reads it.
+    # Refreshes first if the stored grant is stale — creating a session hours
+    # after signing in must not hand the sandbox an already-dead token.
+    await sync_fs_token(session, user, sandbox)
     # Provision the sandbox's ~/.familysearch-mcp/config.json. `hosted` tells the
     # in-sandbox MCP it is running in the VM, where the desktop `login` tool's
     # loopback OAuth flow can never complete — see fs_oauth.hosted_config().

@@ -18,7 +18,8 @@
 // `withTransaction` is one pool connection holding `pg_advisory_xact_lock` on
 // the project id for the whole callback; every store method called inside the
 // callback runs on that connection (bound through an AsyncLocalStorage), so a
-// throw rolls back every index write the body made.
+// throw rolls back every index write the body made — and so does the store's
+// `signal` aborting before COMMIT (the HTTP server's client went away).
 //
 // S3 objects are immutable per write. Every write puts a NEW object under
 // `<projectId>/<ref>/<uuid>` and points the index row at it; the object the row
@@ -261,11 +262,16 @@ export interface PgS3ProjectStoreOptions {
   /** The one `projectPath` string the tools pass for this project; every
    *  other value is "missing_dir". */
   anchorPath: string;
+  /** Aborted when the caller that bound this store is gone (the HTTP server's
+   *  client disconnected). A transaction still open then ROLLS BACK instead of
+   *  committing, so a write whose result nobody can receive never lands. */
+  signal?: AbortSignal;
 }
 
 export class PgS3ProjectStore implements ProjectStore {
   readonly projectId: string;
   readonly anchorPath: string;
+  private readonly signal: AbortSignal | undefined;
 
   constructor(
     private readonly backend: PgS3Backend,
@@ -279,6 +285,7 @@ export class PgS3ProjectStore implements ProjectStore {
     }
     this.projectId = options.projectId;
     this.anchorPath = options.anchorPath;
+    this.signal = options.signal;
   }
 
   // ── scope and connection ─────────────────────────────────────────────────
@@ -314,7 +321,8 @@ export class PgS3ProjectStore implements ProjectStore {
 
   /**
    * BEGIN, run `fn` with this project's transaction bound for every store
-   * method it calls, COMMIT — or ROLLBACK when `fn` or COMMIT throws. Then the
+   * method it calls, COMMIT — or ROLLBACK when `fn` or COMMIT throws, or when
+   * the store's `signal` aborted while `fn` ran. Then the
    * S3 side: after a commit the objects the rows stopped pointing at go, after
    * a rollback the objects this transaction wrote go.
    */
@@ -330,6 +338,12 @@ export class PgS3ProjectStore implements ProjectStore {
       const next = new Map(held);
       next.set(this.projectId, ctx);
       const result = await this.backend.transactions.run(next, fn);
+      if (this.signal?.aborted) {
+        throw new Error(
+          `project '${this.projectId}': the caller disconnected before this write committed, ` +
+            `so it was rolled back`,
+        );
+      }
       await client.query("COMMIT");
       committed = true;
       return result;

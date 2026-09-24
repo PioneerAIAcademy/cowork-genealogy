@@ -130,6 +130,12 @@ function normalizeGender(raw: string | undefined): GenderType {
 
 // ─── Mob ───────────────────────────────────────────────────────────────────
 
+/** Cap on the persons in a `matchSubset()` document. Mirrors FamilySearch's own
+ *  `MAX_CHILDREN_TO_COMPARE = 40` (the same number `getRelativeMobs` below
+ *  mirrors) and the cap `agents/person-evidence.md` gives the agent today, so a
+ *  very large family cannot bloat the `same_person` payload. */
+export const MAX_MATCH_MOB = 40;
+
 export class Mob {
   readonly tree: SimplifiedGedcomX;
   readonly anchorId: string;
@@ -279,6 +285,74 @@ export class Mob {
   /** Anchor's vital (birth-like / death-like / marriage-like) facts. */
   vitalFacts(): SimplifiedFact[] {
     return this.getFacts().filter((f) => isVitalType(f.type));
+  }
+
+  // ─── Match-mob extraction (issue #1731) ──────────────────────────────────
+
+  /**
+   * The anchor's **matching mob** as a standalone `SimplifiedGedcomX`: focus +
+   * parents + spouses + children + siblings, carrying only the relationships
+   * whose endpoints are both inside that set.
+   *
+   * This is the tree side of a `same_person` call, and it exists so the agent
+   * stops hand-building it. `agents/person-evidence.md` had the agent construct
+   * exactly this subset in prose (its step 2, "Build the tree side (the
+   * matching mob)"), including the warning that passing a months-long project's
+   * whole tree "may be slow or rejected" — `same_person` expects a
+   * record-sized document.
+   *
+   * **Trim order is decided here, not inherited.** The agent body says only
+   * "keep the closest relatives (focus, parents, spouses) and trim the
+   * children/siblings to stay under the cap" and states no order between the
+   * two. Siblings go first: they are two hops from the anchor (via a parent)
+   * and children are one, so dropping siblings first sheds the furthest kin,
+   * which is what that sentence's own "keep the closest" logic implies.
+   *
+   * Not `getRelativeMobs`, which synthesizes one mini-document PER RELATIVE for
+   * the warning loops. This is a single union slice.
+   */
+  matchSubset(cap = MAX_MATCH_MOB): { gedcomx: SimplifiedGedcomX; dropped: number } {
+    const focus = this.getPerson();
+    const parents = this.getParents();
+    const spouses = this.getSpouses();
+    let children = this.getChildren();
+    let siblings = this.getSiblings();
+
+    // Everything but focus/parents/spouses is trimmable. Siblings first, then
+    // children; the keep-set is never trimmed, so a cap smaller than it is
+    // honoured as "keep the closest" rather than producing a document with no
+    // focus person in it.
+    const keep = 1 + parents.length + spouses.length;
+    const before = keep + children.length + siblings.length;
+    const room = Math.max(0, cap - keep);
+    children = children.slice(0, Math.min(children.length, room));
+    siblings = siblings.slice(0, Math.max(0, room - children.length));
+
+    const persons: SimplifiedPerson[] = [];
+    const seen = new Set<string>();
+    for (const p of [focus, ...parents, ...spouses, ...children, ...siblings]) {
+      if (p.id === undefined || seen.has(p.id)) continue;
+      seen.add(p.id);
+      persons.push(p);
+    }
+
+    const relationships = (this.tree.relationships ?? []).filter((r) => {
+      if (r.type === "ParentChild") {
+        return (
+          r.parent !== undefined && r.child !== undefined &&
+          seen.has(r.parent) && seen.has(r.child)
+        );
+      }
+      if (r.type === "Couple") {
+        return (
+          r.person1 !== undefined && r.person2 !== undefined &&
+          seen.has(r.person1) && seen.has(r.person2)
+        );
+      }
+      return false;
+    });
+
+    return { gedcomx: { persons, relationships }, dropped: Math.max(0, before - persons.length) };
   }
 
   // ─── Internals ───────────────────────────────────────────────────────────
