@@ -38,7 +38,9 @@
     "place-search-all-any",
     "collection-read-by-id",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "volume-search-alabama",
+    "volume-search-mississippi-territory"
   ],
   "judge_context": [
     "Must mention territorial, church, land, and court records; historical societies in Alabama likely hold pre-statehood records and should be mentioned as repositories. Must avoid anachronistic record types like state archives or modern databases."
