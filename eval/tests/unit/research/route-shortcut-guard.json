@@ -9,7 +9,9 @@
       "routing",
       "routes-to:question-selection",
       "no-shortcut"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Genuine router behaviour, not a grading artifact: when it fails, the router spawns Agent(person-evidence) and Agent(research-exhaustiveness) directly instead of re-deriving state and walking its routing table from the top, which is exactly the shortcut this test forbids. The validator test_no_paired_skill_shortcut is correct. Measured over three consecutive single-test runs 2026-09-24: pass, pass, fail, with zero spawns in both passing runs and both spawns in the failing one, against a 47% historical fail rate (9 of 19 committed runs). The only lever is the research skill's routing prose, and prose has not bound a single one of the eight rules measured on this card today. The instrument that would bind is a routing guard that can see the router took a paired row without walking the table, which is a harness or hook capability that does not exist. Tracked as issue #2272. Remove this marker when that guard exists, or when the router stops shortcutting, and this test passes three consecutive single-test runs."
   },
   "input": {
     "user_message": "Research this project through to a proof conclusion.",
@@ -19,9 +21,15 @@
     "max_turns": 30,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
-      "question-selection", "locality-guide", "research-plan",
-      "search-records", "record-extraction", "person-evidence",
-      "research-exhaustiveness", "proof-conclusion", "gps-mentor"
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-extraction",
+      "person-evidence",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
     ]
   },
   "judge_context": [
