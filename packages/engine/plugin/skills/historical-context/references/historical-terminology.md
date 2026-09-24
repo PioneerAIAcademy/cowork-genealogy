@@ -195,9 +195,9 @@ means German.
 The relationship between ecclesiastical and civil jurisdictions
 varies by country and period:
 
-- In England, the parish was both a church unit and a civil
-  government unit until the 19th century. Parish records are both
-  religious and civil.
+- In England, the parish pattern (church unit, civil unit, types of
+  records held, and changes over time) is documented on
+  `England_Church_Records`, fetched live in Step 3.
 - In colonial New England, the town (township) was the primary unit.
 - In the colonial South, the parish was the primary unit.
 - In much of Europe, the parish (Catholic or Lutheran) maintained

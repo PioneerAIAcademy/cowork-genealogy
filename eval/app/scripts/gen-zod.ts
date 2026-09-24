@@ -26,8 +26,6 @@ const outDir = path.join(appRoot, 'lib', 'schema');
 const SCHEMAS = [
   { file: 'unit-test.schema.json', name: 'UnitTestSchema', out: 'unit-test.ts' },
   { file: 'ann.schema.json', name: 'AnnotationSchema', out: 'annotation.ts' },
-  { file: 'run-log.schema.json', name: 'RunLogSchema', out: 'run-log.ts' },
-  { file: 'mcp-fixture.schema.json', name: 'McpFixtureSchema', out: 'mcp-fixture.ts' },
 ];
 
 async function main(): Promise<void> {
