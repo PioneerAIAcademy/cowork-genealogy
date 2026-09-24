@@ -146,7 +146,7 @@ def test_cli_succeeds_on_valid_slug(tmp_path, capsys):
 # Import from the stdlib-only script path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-from check_e2e_fixtures import validate_e2e_annotations, _findings_hash_local
+from check_e2e_fixtures import validate_e2e_annotations, _findings_hash_local, _bundle_digest_local
 
 
 def _make_ann(runlogs_dir: Path, slug: str, stem: str, ann: dict,
@@ -247,3 +247,66 @@ def test_rung_null_per_finding_skips(tmp_path):
     }, fixtures_dir=fixtures)
     errors = validate_e2e_annotations(runlogs, fixtures)
     assert errors == []
+
+
+# --- blind_bundle_digest rung (rung 8) in validate_e2e_annotations ----------
+
+
+def test_rung_bundle_digest_match_passes(tmp_path):
+    runlogs = tmp_path / "runlogs"
+    fixtures = tmp_path / "fixtures"
+    stem = "run-2026-01-01_00-00-00"
+    _write_json(fixtures / "s" / "expected-findings.json", {"findings": [{"id": "f1"}]})
+    _write_json(fixtures / "s" / "fixture.json", {"id": "s"})
+    _write_json(runlogs / "s" / f"{stem}.final-tree.gedcomx.json", {"persons": []})
+    _write_json(runlogs / "s" / f"{stem}.final-research.json", {"proof_summaries": []})
+    h = _bundle_digest_local("s", stem, fixtures, runlogs)
+    _make_ann(runlogs, "s", stem, {
+        "per_finding": {"f1": "true"},
+        "blind_bundle_digest": h,
+    }, fixtures_dir=fixtures)
+    errors = validate_e2e_annotations(runlogs, fixtures)
+    assert errors == []
+
+
+def test_rung_bundle_digest_mismatch_fails(tmp_path):
+    runlogs = tmp_path / "runlogs"
+    fixtures = tmp_path / "fixtures"
+    stem = "run-2026-01-01_00-00-00"
+    _write_json(fixtures / "s" / "expected-findings.json", {"findings": [{"id": "f1"}]})
+    _write_json(fixtures / "s" / "fixture.json", {"id": "s"})
+    _write_json(runlogs / "s" / f"{stem}.final-tree.gedcomx.json", {"persons": []})
+    _write_json(runlogs / "s" / f"{stem}.final-research.json", {"proof_summaries": []})
+    _make_ann(runlogs, "s", stem, {
+        "per_finding": {"f1": "true"},
+        "blind_bundle_digest": "0" * 64,
+    }, fixtures_dir=fixtures)
+    errors = validate_e2e_annotations(runlogs, fixtures)
+    assert len(errors) == 1
+    assert "blind_bundle_digest mismatch" in errors[0]
+
+
+def test_rung_absent_bundle_digest_passes(tmp_path):
+    """Grandfather: no blind_bundle_digest → no bundle-provenance check."""
+    runlogs = tmp_path / "runlogs"
+    fixtures = tmp_path / "fixtures"
+    _write_json(fixtures / "s" / "expected-findings.json", {"findings": [{"id": "f1"}]})
+    _make_ann(runlogs, "s", "run-2026-01-01_00-00-00", {
+        "per_finding": {"f1": "true"},
+    }, fixtures_dir=fixtures)
+    errors = validate_e2e_annotations(runlogs, fixtures)
+    assert errors == []
+
+
+def test_bundle_digest_local_agrees_with_real(tmp_path):
+    """Cross-check: stdlib reimplementation produces the same digest as the real one."""
+    fixtures = tmp_path / "fixtures"
+    runlogs = tmp_path / "runlogs"
+    stem = "run-2026-01-01_00-00-00"
+    _write_json(fixtures / "s" / "expected-findings.json", {"findings": [{"id": "f1"}]})
+    _write_json(fixtures / "s" / "fixture.json", {"id": "s"})
+    _write_json(runlogs / "s" / f"{stem}.final-tree.gedcomx.json", {"persons": []})
+    _write_json(runlogs / "s" / f"{stem}.final-research.json", {"proof_summaries": []})
+    local = _bundle_digest_local("s", stem, fixtures, runlogs)
+    real = bundle_digest(bundle_paths("s", stem, fixtures_root=fixtures, runlogs_root=runlogs))
+    assert local == real
