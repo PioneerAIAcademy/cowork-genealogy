@@ -214,19 +214,26 @@ extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective
 description of "distant locations." As a rule of thumb, events within ~20 miles (32 km) of each other were plausibly the same community. Where origins are farther apart, consider whether a market town, county seat, or transport hub between them could serve as a meeting point. Terrain often constrains movement more than straight-line distance: a river crossing or mountain pass can make 10 miles more limiting than 30 miles of open road.
 
-**For date conflicts that a calendar transition might explain:** when
-you suspect the discrepancy is a Julian→Gregorian artifact rather than a
-genuine error, do not compute the offset by hand and do not carry an
-adoption date from memory. Call
-`convert_calendar({ date, jurisdiction, corrections: { julianToGregorianDay: true } })`
-with `jurisdiction` set to the place governing the record, and read
-`applied[].offsetDays` for the era-appropriate offset. The tool owns the
-per-jurisdiction adoption table, so it identifies the regime; you still
-name the question. If the two competing dates differ by exactly that
-offset, the conflict is an artifact of the calendar switch, not a
-substantive disagreement — note that in the weighing analysis. (You still
-decide *whether* a calendar correction applies; the tool only does the
-arithmetic.)
+**For every date conflict, before concluding the informants disagree:**
+call
+
+```
+convert_calendar({ date, jurisdiction, corrections })
+```
+
+once per competing date, with `jurisdiction` set to the place governing
+the record. Do not first judge whether a calendar transition is
+plausible, do not compute an offset by hand, and do not carry an
+adoption date or a year-start from memory. The tool owns the
+per-jurisdiction table: it identifies the regime and returns a zero
+offset where no transition applies, so the call costs nothing on a date
+the calendar does not touch and is the only way to find the ones it
+does. Read `applied[]` — `offsetDays` for a Julian→Gregorian day
+difference, `yearAdjusted` for a year-start move. If the competing dates
+differ by exactly what the tool returns, they are the same day expressed
+two ways, not a substantive disagreement — say so in the weighing
+analysis. A derivative that has already been modernised by its
+transcriber must not be corrected a second time.
 
 ### 5. Resolve or defer
 
@@ -336,7 +343,8 @@ system that country used, and **when it ended** — patronymics were fixed
 into inherited surnames at different dates in each country, and a rule
 applied past its end date is worse than no rule. If a
 `{Country}_Naming_Customs` page does not exist (`wiki_read` reports no page
-found), do not substitute another country's system or a remembered default —
+found), or exists but describes no patronymic or multi-surname system, do not
+substitute another country's system or a remembered default —
 record that the naming system could not be retrieved and weigh the surname
 evidence accordingly.
 
