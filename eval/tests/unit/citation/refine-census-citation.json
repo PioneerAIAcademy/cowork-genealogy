@@ -11,12 +11,13 @@
       "evidence-explained",
       "citation-review",
       "src_001",
-      "preserves-src001-original"
+      "preserves-src001-original",
+      "direct-arm"
     ],
     "holdout": true
   },
   "input": {
-    "user_message": "Review the citation for source src_001 and make sure it follows Evidence Explained standards.",
+    "delegation": "Review the citation on src_001 and bring it up to Evidence Explained standards.\n\nsourceId: src_001\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
