@@ -50,7 +50,7 @@ Paul church (`ark:/61903/1:1:KX4H-8N5`), and their son Николай was born 2
 1913 (`ark:/61903/1:1:KXTQ-X5D`), with further children on file. Raisa (1911) sits
 inside that family — its godmother is Vasily Alekseev's sister "Елена Алексѣева
 Романова", and Raisa's godfather "Сергій Димитріевъ Жильцовъ" is the mother's kin,
-matching her married surname Zhiltsova. This is a positive disproof, not merely a
+matching her maiden surname Zhiltsova. This is a positive disproof, not merely a
 patronymic mismatch.
 
 **The tree person's own family is different and documented.** Vasily **Игнатьев**
