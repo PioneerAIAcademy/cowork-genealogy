@@ -4,12 +4,12 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Anna, christened 12 January 1777 at Rättvik, Kopparberg, Sweden (parents indexed as Anders Ersson and Kierstin Jöransdotter), was a daughter of Kierstin Jonsdotter (PID K8LX-YMK) and Anders Hansson (PID K4V1-467). In the same Rättvik baptism index, Anna's parents recur as a distinct couple — Anders Ersson and Kierstin Jöransdotter/Göransdotter — christening further children Anders (10 Sep 1779), Margita (31 May 1784) and Kierstin (1 Jul 1787), with both patronymics read consistently across four separate entries of the same index over ten years. Pass = the final tree/research contains no parent-child link from Kierstin Jonsdotter or Anders Hansson to this Anna, and no stub person representing her as their child (or she appears only as an explicitly rejected candidate). A person record for Anna as a child of Anders Ersson and Kierstin Jöransdotter is not a failure.",
+      "description": "The agent must NOT assert that Anna, christened 12 January 1777 at Rättvik, Kopparberg, Sweden (parents indexed as Anders Ersson and Kierstin Jöransdotter), was a daughter of Kierstin Jonsdotter (PID K8LX-YMK) and Anders Hansson (PID K4V1-467). In the same Rättvik baptism index, Anna's parents recur as a distinct couple — Anders Ersson and Kierstin Jöransdotter/Göransdotter — christening further children Anders (10 Sep 1779), Margita (31 May 1784) and Kierstin (1 Jul 1787), with both patronymics read consistently across four separate entries of the same index over ten years. Pass = tree.gedcomx.json adds no person Anna Andersdotter/Andersdr christened 1777 at all — whoever her parents are shown to be — and no parent-child link from Kierstin Jonsdotter or Anders Hansson to her. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss.",
       "details": {
         "subject_person": "Kierstin Jonsdotter (K8LX-YMK)",
         "relation": "child",
         "wrong_candidate": {
-          "name": "Anna, christened 12 January 1777, Rättvik, Kopparberg, Sweden",
+          "name": "Anna Andersdotter (Andersdr), christened 12 January 1777, Rättvik, Kopparberg, Sweden",
           "note": "daughter of the separate Rättvik couple Anders Ersson and Kierstin Jöransdotter/Göransdotter, whose household recurs in 1779, 1784 and 1787; a different couple from Anders Hansson and Kierstin Jonsdotter"
         }
       },
@@ -23,7 +23,7 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having searched the Rättvik baptisms for children of Anders Hansson and Kierstin Jonsdotter, the agent should document a negative conclusion: no record establishes a daughter Anna christened in 1777 to this couple, and the 1777 Anna belongs to the Anders Ersson / Kierstin Jöransdotter household instead.",
+      "description": "Having searched the Rättvik baptisms for children of Anders Hansson and Kierstin Jonsdotter, the agent should document a negative conclusion: no record establishes a daughter Anna christened in 1777 to this couple, and the 1777 Anna belongs to the Anders Ersson / Kierstin Jöransdotter household instead. What is required is that the negative conclusion rest on a conflicting record the agent examined — the 1779 Rättvik baptism of Anders, son of Anders Ersson and Kierstin Göransdotter (ark:/61903/1:1:VWHS-WHD), or an equivalent record placing Anna's parents in a separate household. A conclusion resting only on a failure to confirm — 'no record was found linking this hint to Kierstin Jonsdotter', with no conflicting record cited — does NOT satisfy this finding.",
       "details": {
         "subject_person": "Kierstin Jonsdotter (K8LX-YMK)",
         "relation": "research conclusion",
@@ -33,6 +33,7 @@
         }
       },
       "supporting_sources": [
+        "Sweden, Baptisms, 1611-1920 — entry for Anders, 10 Sep 1779, Rättvik, parents Anders Ersson and Kierstin Goransdr (ark:/61903/1:1:VWHS-WHD) — the conflicting record the negative conclusion rests on: it shows Anna's parents as a separate, recurring Rättvik household",
         "No entry in Sweden, Baptisms, 1611-1920, Rättvik, 1760-1800, names Anders Hansson and Kierstin Jonsdotter as parents of a child Anna"
       ],
       "required": true
