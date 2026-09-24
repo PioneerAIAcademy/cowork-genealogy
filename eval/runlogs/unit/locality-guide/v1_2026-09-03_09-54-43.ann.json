@@ -1,0 +1,462 @@
+{
+  "run_log": "v1_2026-09-03_09-54-43.json",
+  "annotator": "mercybocumy2000@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "The skill did not route to familysearch-wiki and I gave it a partial because it did not also invoke the locality-guide skill"
+    },
+    {
+      "test_id": "ut_locality_guide_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "The skill did not route to familysearch-wiki and I gave it a partial because it did not also invoke the locality-guide skill"
+    },
+    {
+      "test_id": "ut_locality_guide_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Did build an accurate, well-grounded guide citing real volumes, collections, and links from tool output. Did not avoid contradicting itself, stated PA vital registration \"began in 1893\" as a \"widely noted\" fact, then in the same breath admitted that date has no tool source and told the researcher to verify it."
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Did use reasonable arguments for most calls. Did not qualify the place_search queries for \"Allegheny\"/\"Pittsburgh\" with a county-level context, so they came back as generic Pennsylvania-wide results instead of county-specific ones; also got an empty place_population result without flagging it."
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Did construct a well-targeted wiki_search query (\"Pennsylvania anthracite coal region genealogy records miners Schuylkill Luzerne\") that should have surfaced the required \"Lackawanna Valley Anthracite Index\" content. Did not end up citing it — but not because it ignored anything: the test's own mcp_fixtures list orders a different, less-specific fixture (wiki-search-schuylkill-coal-mining) ahead of the one that actually carries that content (wiki-search-pennsylvania-coal-region), and the harness serves the first matching fixture in list order."
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Did construct a well-targeted wiki_search query (\"Pennsylvania anthracite coal region genealogy records miners Schuylkill Luzerne\") that should have surfaced the required \"Lackawanna Valley Anthracite Index\" content. Did not end up citing it — but not because it ignored anything: the test's own mcp_fixtures list orders a different, less-specific fixture (wiki-search-schuylkill-coal-mining) ahead of the one that actually carries that content (wiki-search-pennsylvania-coal-region), and the harness serves the first matching fixture in list order."
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Did construct correct, reasonable arguments for both wiki_read calls and all wiki_search calls. The \"ignored the response content\" framing is inaccurate, the content it got back was generic because the fixture-ordering bug served it the wrong page, not because it failed to read what it was given."
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Did correctly cite the Vermont 1771 Grant Survey Schedule, the 1857 registration date, and town-history reprints, all genuinely from the wiki_place_page response. Did not stay inside that grounding, fabricated specific FamilySearch collection IDs and digitization labels (e.g. \"indexed + images\" for the 1790 census) that no tool call in this run actually returned."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Did name real, wiki-grounded record classes. Did not keep every digitization-level claim grounded, several go beyond what the tool response actually said."
+    }
+  ]
+}
