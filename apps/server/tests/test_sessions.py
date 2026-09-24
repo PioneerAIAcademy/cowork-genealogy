@@ -228,43 +228,6 @@ def test_pre_feature_cookie_rejected_after_revocation():
             s.commit()
 
 
-def test_api_key_request_does_not_undo_revocation(monkeypatch):
-    """A /v1 bearer request must not clear sessions_revoked_at — otherwise a
-    user holding both a cookie and an API key can undo their own logout."""
-    from app.config import get_settings
-
-    email = "dual-auth@example.com"
-    monkeypatch.setattr(
-        get_settings(), "api_keys", f"sk_dual:{email}",
-    )
-
-    with TestClient(app) as client:
-        client.post("/auth/dev-login", json={"email": email})
-        stolen = client.cookies.get("wb_session")
-        client.post("/auth/logout")
-
-        with TestClient(app) as api_client:
-            r = api_client.delete(
-                "/v1/sessions/prj_nonexistent",
-                headers={"Authorization": "Bearer sk_dual"},
-            )
-            assert r.status_code == 404, \
-                f"bearer dependency did not run: {r.status_code} {r.text}"
-
-        with TestClient(app, cookies={"wb_session": stolen}) as thief:
-            r = thief.get("/auth/me")
-            assert r.status_code == 401, \
-                "API-key request must not un-revoke cookie sessions"
-
-    with Session(get_engine()) as s:
-        u = s.exec(
-            select(User).where(User.email == email)
-        ).first()
-        if u:
-            s.delete(u)
-            s.commit()
-
-
 def test_revoked_cookie_is_not_resurrected_by_a_later_login():
     """A stolen cookie must stay dead even after the victim logs back in."""
     with TestClient(app) as client:

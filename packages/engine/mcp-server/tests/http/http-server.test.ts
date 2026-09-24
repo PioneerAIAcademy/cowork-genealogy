@@ -47,7 +47,9 @@ let base: string;
 /** The double's root: one directory per project id underneath. */
 let root: string;
 // Every id the server bound a store for, in order — the store half's oracle.
-const bindStore = vi.fn((projectId: string): ProjectStore => new ScopedFsStore(root, projectId));
+const bindStore = vi.fn(
+  (projectId: string, _signal: AbortSignal): ProjectStore => new ScopedFsStore(root, projectId),
+);
 const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
 const exchanges: Array<{ method: string; path: string; status: number }> = [];
@@ -283,5 +285,65 @@ describe("tool server over Streamable HTTP", () => {
 
     const missing = await fetch(`${base}/nope`);
     expect(missing.status).toBe(404);
+  });
+
+  it("6. a client that disconnects mid-call aborts its store's signal; one that reads its response does not", async () => {
+    // The store's first call blocks on `gate`, holding the tool mid-flight the
+    // way a debug hold does, so the client can go away before the response.
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const gated = (inner: ProjectStore): ProjectStore =>
+      new Proxy(inner, {
+        get(target, key, receiver) {
+          const v = Reflect.get(target, key, receiver);
+          return typeof v === "function"
+            ? async (...args: unknown[]) => {
+                await gate;
+                return v.apply(target, args);
+              }
+            : v;
+        },
+      });
+    const signals: AbortSignal[] = [];
+    const post = (id: string, init: RequestInit = {}) =>
+      fetch(`${base}/mcp`, {
+        ...init,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json, text/event-stream",
+          [PROJECT_HEADER]: id,
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } },
+        }),
+      });
+
+    bindStore.mockImplementationOnce((projectId, signal) => {
+      signals.push(signal);
+      return gated(new ScopedFsStore(root, projectId));
+    });
+    const client = new AbortController();
+    const dropped = post(`gone-${randomUUID()}`, { signal: client.signal }).catch(() => undefined);
+    await vi.waitFor(() => expect(signals).toHaveLength(1));
+    expect(signals[0].aborted).toBe(false);
+    client.abort();
+    await vi.waitFor(() => expect(signals[0].aborted).toBe(true));
+    release();
+    await dropped;
+
+    bindStore.mockImplementationOnce((projectId, signal) => {
+      signals.push(signal);
+      return new ScopedFsStore(root, projectId);
+    });
+    const answered = await post(`kept-${randomUUID()}`);
+    expect(answered.status).toBe(200);
+    await answered.text();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(signals).toHaveLength(2);
+    expect(signals[1].aborted).toBe(false);
   });
 });
