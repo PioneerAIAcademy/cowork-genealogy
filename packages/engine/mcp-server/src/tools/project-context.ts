@@ -11,6 +11,7 @@
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readBuildInfo } from "../utils/build-info.js";
+import { preferredName } from "../utils/name-helpers.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -76,8 +77,8 @@ function truncateQuestion(text: string): string {
 /** Preferred names entry (first entry when none is flagged) as "given surname". */
 function preferredDisplayName(person: any): string | null {
   const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
-  if (names.length === 0) return null;
-  const preferred = names.find((n: any) => n.preferred === true) ?? names[0];
+  const preferred = preferredName(names);
+  if (preferred === undefined) return null;
   const parts = [preferred.given, preferred.surname].filter(
     (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
   );

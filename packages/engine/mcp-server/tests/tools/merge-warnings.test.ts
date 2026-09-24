@@ -564,6 +564,38 @@ describe("merge_warnings tool", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.errors.join(" ")).toMatch(/NOPE not found in target/);
+    expect(result.errors.join(" ")).toContain("tree ids: I1");
+    expect(result.errors.join(" ")).toContain("leave a new person's persona out of merges");
+  });
+
+  it("candidate with one paired and one unpaired persona returns ok: true", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+
+    const result = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: {
+        persons: [
+          { id: "C1", gender: "Male", names: [{ id: "N1", given: "J", surname: "Smith" }] },
+          { id: "C2", gender: "Female", names: [{ id: "N2", given: "Jane", surname: "Smith" }] },
+        ],
+        relationships: [],
+        sources: [],
+      },
+      merges: [["I1", "C1"]],
+    });
+
+    expect(result.ok).toBe(true);
   });
 });
 
