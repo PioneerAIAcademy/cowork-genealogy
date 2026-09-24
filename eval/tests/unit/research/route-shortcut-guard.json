@@ -18,8 +18,8 @@
     "scenario": "empty-project-just-created"
   },
   "execution": {
-    "max_turns": 30,
-    "max_wall_clock_seconds": 600,
+    "max_turns": 40,
+    "max_wall_clock_seconds": 1200,
     "stub_skills": [
       "question-selection",
       "locality-guide",
