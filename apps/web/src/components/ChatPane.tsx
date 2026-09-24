@@ -392,7 +392,13 @@ export default function ChatPane({
               {/* 1b: the agent is mid-turn, so this one waits for the next step
                   boundary rather than interrupting. Without the label a message
                   that visibly went nowhere reads as dropped. */}
-              {m.queued && <div className="msgQueued">Picked up at the next step</div>}
+              {/* Set locally at send time, so it renders on BOTH transports -- and only
+                  the prototype answers at a step boundary. The alpha's runner holds a
+                  pending message until `turn_task` is done, which under 1d is the whole
+                  job, so a step promise here is false for alpha testers. The
+                  server-confirmed line below keeps the specific wording: it is driven by
+                  a `turn_queued` frame only the prototype sends. */}
+              {m.queued && <div className="msgQueued">Waiting — sent, not yet picked up</div>}
               {/* In-flight text, rendered as plain preformatted text: markdown is
                   routinely mid-token at delta granularity, and re-parsing a partial
                   document every frame makes list/code blocks flicker as they close. */}
@@ -538,7 +544,7 @@ export default function ChatPane({
           className="chatSend"
           type="submit"
           disabled={!input.trim()}
-          title={busy ? 'The agent is working — this is picked up at the next step' : 'Send'}
+          title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
         >
           Send
         </button>

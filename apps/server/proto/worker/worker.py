@@ -102,6 +102,11 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from proto.worker.options import (  # noqa: E402
+    PRICE_PER_MTOK,
+    SPEND_CAP_USD,
+    env_float,
+    env_int,
+    shared_price_usd,
     RESUME_CONTINUE_TEXT,
     HANDOVER_REASON,
     SPEND_CAP_REASON,
@@ -125,7 +130,7 @@ PG_DSN = os.environ.get("PG_DSN", "postgresql://postgres:proto@postgres:5432/pro
 # be closed -- so the release lives here. Unset means no release, which the D3 stub arms
 # and the offline tests run with.
 QUEUE_URL = os.environ.get("QUEUE_URL", "")
-PORT = int(os.environ.get("PORT", "8080"))
+PORT = env_int("PORT", 8080)
 WORKER_CWD = os.environ.get("WORKER_CWD", "/project")
 _REPO = HERE.parents[3]  # apps/server/proto/worker -> the repo root (venv runs only)
 ENGINE_DIR = os.environ.get("ENGINE_DIR", str(_REPO / "packages" / "engine" / "mcp-server"))
@@ -179,27 +184,19 @@ NO_PROGRESS_OUTCOME = "no_progress"
 # There is deliberately NO in-session grant flow. A session that reaches the bound stops,
 # and the way to continue is a new session on the same project -- which is what users
 # already do by default.
-SPEND_CAP_USD = float(os.environ.get("SESSION_SPEND_CAP_USD", "35") or 35)
+def _env_float(name: str, default: float) -> float:
+    """A float from the environment that cannot crash-loop the container -- the shared
+    guard, with this module's structured log as its error reporter. Every one of these is
+    read at module scope, so a bare ``float()`` on a typo'd value raises before the worker
+    binds and compose restarts it forever."""
+    return env_float(
+        name, default,
+        on_error=lambda n, raw, d: log(ev="bad_env", name=n, value=raw[:40], using=d),
+    )
 
-# $ per million tokens. Anthropic's list prices for the Sonnet tier the worker pins
-# (options.ANTHROPIC_MODEL), overridable per deployment because a price change must not
-# need a rebuild to stop being wrong.
-#
-# CALIBRATION, and its known direction. Priced against the 161 committed e2e runs that
-# carry both token counts and a recorded total_cost_usd, this vector predicts a median of
-# 0.86x the recorded cost (p90 1.00x) -- it UNDER-predicts, because a run log's top-level
-# usage omits the tokens its subagents spent while total_cost_usd includes them. The sum
-# below does NOT have that gap: it reads session_entries, which holds the subagent
-# transcripts too. So the corpus ratio is a floor on accuracy here, not a correction to
-# apply, and test_proto_worker pins the vector against the corpus so a drift is caught.
-# Every turn logs `spend_estimate_usd` beside the ResultMessage's own cost_usd, which is
-# what calibrates this on the first real runs.
-PRICE_PER_MTOK = {
-    "input": float(os.environ.get("PRICE_INPUT_PER_MTOK", "3") or 3),
-    "cache_write": float(os.environ.get("PRICE_CACHE_WRITE_PER_MTOK", "6") or 6),
-    "cache_read": float(os.environ.get("PRICE_CACHE_READ_PER_MTOK", "0.30") or 0.30),
-    "output": float(os.environ.get("PRICE_OUTPUT_PER_MTOK", "15") or 15),
-}
+
+# SPEND_CAP_USD and PRICE_PER_MTOK now live in `app.agent.continue_policy`, imported
+# via options.py: the alpha's cap must fire at the same dollar as this one.
 
 # research-as-a-job 0a: how many CONSECUTIVE zero-progress redeliveries of one turn the
 # worker will pay for before closing it. Two, per the plan. The counter lives on
@@ -305,23 +302,24 @@ TURN_USAGE_SQL = (
 # per 0b the median run has two. The turns token columns do span attempts, but complete()
 # writes them only when the turn CLOSES, and under continuous work one turn is the whole
 # run: mid-run they are NULL, and a hook reading them never sees the run it exists to stop.
-SESSION_USAGE_SQL = (
-    "SELECT sum((u->>'input_tokens')::bigint), "
-    "sum((u->>'cache_creation_input_tokens')::bigint), "
-    "sum((u->>'cache_read_input_tokens')::bigint), "
-    "sum((u->>'output_tokens')::bigint) "
-    "FROM (SELECT DISTINCT ON (entry->'message'->>'id') entry->'message'->'usage' AS u "
-    "FROM session_entries WHERE session_id = %s AND entry->>'type' = 'assistant' "
-    "ORDER BY entry->'message'->>'id', seq DESC) m"
+# The same four sums over the same de-duplicated assistant entries as TURN_USAGE_SQL,
+# minus its `seq > entries_seq_before` bound: 1e's cap is per SESSION, so it prices every
+# attempt of every turn including the ones that never closed. Derived rather than
+# copy-pasted, because the two must keep agreeing about what an assistant entry's usage
+# IS -- a fix to the DISTINCT ON that landed in one copy and not the other would make the
+# cap and the per-turn figures disagree with no test able to see it.
+SESSION_USAGE_SQL = TURN_USAGE_SQL.replace(
+    "AND seq > COALESCE((SELECT entries_seq_before FROM turns WHERE turn_id = %s), 0) ", ""
 )
+assert "entries_seq_before" not in SESSION_USAGE_SQL, "the session cap must not be turn-bounded"
 
 
 def price_usd(tokens: tuple) -> float:
-    """Tokens (input, cache_write, cache_read, output) priced at PRICE_PER_MTOK."""
-    order = ("input", "cache_write", "cache_read", "output")
-    return sum(
-        (int(n or 0) * PRICE_PER_MTOK[k]) / 1_000_000 for k, n in zip(order, tokens)
-    )
+    """Tokens (input, cache_write, cache_read, output) priced at PRICE_PER_MTOK.
+
+    The shared estimator, so the prototype's cap and the alpha's cannot disagree about
+    what a session has cost."""
+    return shared_price_usd(tokens)
 
 
 def session_spend_usd(conn: psycopg.Connection, sdk_session_id: str) -> float:
@@ -494,12 +492,32 @@ def pending_user_message(conn: psycopg.Connection, session_id: str) -> bool:
     return bool(row and row[0])
 
 
+# Releasing a held message IS enqueuing the session's next message, which is the exact
+# condition 006_stop_and_queue.sql names for clearing the flag. Spelled the same as the
+# web tier's CLEAR_STOP_SQL; `test_the_two_clear_stop_statements_match` pins them.
+CLEAR_STOP_SQL = "UPDATE sessions SET stop_requested_at = NULL WHERE session_id = %s"
+
+
 def take_queued_turn(conn: psycopg.Connection, session_id: str) -> dict[str, Any] | None:
     """Claim the session's oldest held message and hand back its queue body (1b).
 
     The UPDATE that clears the outcome IS the claim, in one statement, so two workers
     finishing turns on one session cannot both enqueue the same message. Returns None when
-    nothing is held."""
+    nothing is held.
+
+    AND it clears the Stop flag, because claiming IS enqueuing. 006_stop_and_queue.sql
+    states the invariant -- "Cleared when the session's next message is enqueued, which is
+    what makes 'a later message resumes it' true; a flag that outlived the turn would
+    wedge the session" -- and the web tier's `begin_turn` deliberately does NOT clear it
+    for a HELD message (clearing it there would cancel a Stop the patron pressed while the
+    turn was still winding down). That left the held message as the one path to a turn
+    with nobody to clear the flag: patron types mid-turn, presses Stop, the turn halts,
+    the worker releases their message, and that turn halts at its FIRST tool call with
+    "Stopped by the researcher." The patron's words are swallowed and the session looks
+    wedged until they type again.
+
+    `SELECT ... FOR UPDATE` above means only the claimer that wins gets here, so the clear
+    happens exactly once per released message."""
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE turns SET outcome = NULL WHERE turn_id = ("
@@ -509,7 +527,9 @@ def take_queued_turn(conn: psycopg.Connection, session_id: str) -> dict[str, Any
             (session_id, QUEUED_OUTCOME),
         )
         row = cur.fetchone()
-    body = row[0] if row else None
+        body = row[0] if row else None
+        if body is not None:
+            cur.execute(CLEAR_STOP_SQL, (session_id,))
     return body if isinstance(body, dict) else None
 
 
@@ -1058,7 +1078,19 @@ async def run_turn(
             outcome = terminal["reason"] or (
                 TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME
             )
-            if receive_count > 1 and not attempt_did_work(result, counters["tool_calls"]):
+            # A stopped turn is NOT a zero-progress attempt, and the order matters twice
+            # over. A turn killed at the ceiling after Stop comes back as exactly the
+            # synthetic zero-turn result 0a keys on -- no tool call, so halt() never runs
+            # -- and without this it raises ResumeFailure, answers 500, and decide.py
+            # requeues it: the model is re-run and BILLED after the patron pressed Stop.
+            # At the cap it would also be recorded `no_progress` and rendered "the agent
+            # stopped making progress", to the person who stopped it. That is the same
+            # "says the opposite of what happened" failure the on_allow clobber guard
+            # exists for, arriving by the other door.
+            stopped_here = outcome == TERMINAL_STOPPED
+            if (not stopped_here
+                    and receive_count > 1
+                    and not attempt_did_work(result, counters["tool_calls"])):
                 zero_progress = bump_zero_progress(conn, turn_id)
                 log(ev="zero_progress_attempt", turn_id=turn_id, session_id=session_id,
                     receive_count=receive_count, attempts=zero_progress, cap=ZERO_PROGRESS_CAP,
@@ -1083,7 +1115,13 @@ async def run_turn(
             seq = complete(
                 conn, turn, receive_count, outcome=outcome, detail=detail,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,
-                sdk_session_id=sdk_session_id, nudges=counters["nudges"],
+                sdk_session_id=sdk_session_id,
+                # `or None` so COALESCE keeps what record_nudge already wrote. The counter
+                # is 0 whenever THIS attempt vetoed nothing, and 31% of runs never yield
+                # at all -- so a plain assignment walks a cumulative count of 5 back to 0
+                # on the attempt that happens to finish, destroying the figure the column
+                # was added for. Zero is not a measurement here; it is "nothing to add".
+                nudges=counters["nudges"] or None,
             )
         finally:
             await client.disconnect()

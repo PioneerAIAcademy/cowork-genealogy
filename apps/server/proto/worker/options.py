@@ -47,6 +47,9 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from app.agent.continue_policy import (
+    CONTINUE_REASON,
+    env_float,
+    env_int,
     TERMINAL_BUDGET,
     TERMINAL_COMPLETED,
     TERMINAL_DECISION,
@@ -58,6 +61,8 @@ from app.agent.continue_policy import (
     should_continue_run,
     terminal_reason,
 )
+from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
+from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import project_read_denied
@@ -415,24 +420,6 @@ def make_posttool_hook(
 # deny.py's predicate -- the worker image carries no eval/ -- with the harness's reason
 # text verbatim, so the prototype's autonomous arm and the harness apply one rule.
 
-# The harness's own veto text for a SILENT stop, verbatim (its `stop_hook`'s fallback
-# block dict). Since 2026-09-20 the harness also answers a *well-formed* hand-back —
-# one that names its next step and asks — with the researcher's "Yes." instead
-# (`classify_hand_back` / `hand_back_outcome`, issues #2328 and #2292). The worker does
-# not mirror that branch: it classifies nothing, because the classifier reads the
-# harness's in-process narration list and the prose half of #2292 has not landed, so
-# copying a moving wording would drift the moment it does. Every stop the worker sees
-# therefore takes this text. `test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim`
-# reads it off the orchestrator and goes red when either side moves.
-CONTINUE_REASON = (
-    "You are mid-run in an autonomous /research session and the "
-    "project is not yet complete (project.status is not "
-    "'completed'). Re-read research.json and invoke the next GPS "
-    "sub-skill now; keep going until project.status is "
-    "'completed' or you hit a genuine, logged blocker."
-)
-
-
 # The one continue prompt a redelivered attempt sends when its first result carried no
 # model turn (worker.run_turn's resume rule, D17). Not the Stop hook's veto: that one
 # answers a model that yielded voluntarily mid-run, this one answers a CLI that returned
@@ -451,8 +438,9 @@ RESUME_CONTINUE_TEXT = (
 # this package (``direct_project_file_write`` above, ``map_message`` in worker.py), so the
 # hosted alpha and the prototype share a copy rather than drifting. ``eval/harness`` keeps
 # its own, deliberately: the worker image carries no ``eval/``, and a test asserts those
-# two trees never import each other. Re-exported at the bottom of this module, so every
-# existing caller and test keeps reading ``options.should_continue_run``.
+# two trees never import each other. Imported at the TOP of this module rather than
+# redefined, so every existing caller and test keeps reading
+# ``options.should_continue_run``.
 
 
 def make_stop_hook(
@@ -509,7 +497,11 @@ def make_stop_hook(
                 **verdict,
             ):
                 if on_allow is not None:
-                    on_allow(terminal_reason(**{k: v for k, v in verdict.items() if k != "tool_count"}))
+                    # `verdict` is built above from the state keys only; the two count
+                    # arguments are passed separately to should_continue_run and are
+                    # never in it. An earlier filter here stripped a key that cannot be
+                    # present, which reads as though it sometimes is.
+                    on_allow(terminal_reason(**verdict))
                 return {}
             state["nudges_used"] += 1
             state["tool_count_at_last_nudge"] = count

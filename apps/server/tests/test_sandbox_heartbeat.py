@@ -43,11 +43,14 @@ class FakeProvider:
         return sandbox_id not in self.dead
 
 
-def _project(session: Session, *, sandbox_id: str, age_s: float) -> Project:
+def _project(
+    session: Session, *, sandbox_id: str, age_s: float, status: str = "active"
+) -> Project:
     p = Project(
         id=f"sess_{sandbox_id or 'blank'}_{int(age_s)}",
         user_id="u1",
         sandbox_id=sandbox_id,
+        status=status,
         last_active=utcnow() - timedelta(seconds=age_s),
     )
     session.add(p)
@@ -110,6 +113,34 @@ def test_only_live_sandboxes_are_beaten(db):
         "worked -- so a 2-hour-old session is the normal shape of a long run and must "
         "still be beaten. Only a session past the longest run ever recorded is dropped."
     )
+
+
+def test_an_archived_project_is_left_to_pause(db):
+    """Archiving is the one action that is SUPPOSED to let a sandbox go. Without the
+    status filter -- the one every other live-project query in the app applies -- an
+    archived project is beaten awake every 5 minutes for as long as its `last_active`
+    stays inside a four-hour window, billing E2B for a sandbox the patron put away, in
+    the one code path whose entire purpose is to stop clocks running out."""
+    _project(db, sandbox_id="sb-active", age_s=10)
+    _project(db, sandbox_id="sb-archived", age_s=10, status="archived")
+    assert sandbox_heartbeat.live_sandbox_ids(db) == ["sb-active"]
+
+
+def test_the_status_filter_is_the_one_the_rest_of_the_app_uses(db):
+    """Spelled against the app's own call sites rather than against a literal written
+    here, so renaming the state fails this with the others instead of leaving the
+    heartbeat quietly beating rows nothing else considers live."""
+    import inspect
+
+    from app import anthropic_proxy, sessions
+
+    expected = 'Project.status == "active"'
+    for module in (sessions, anthropic_proxy):
+        assert expected in inspect.getsource(module), (
+            f"{module.__name__} no longer filters live projects with {expected!r}; the "
+            f"heartbeat's copy of it needs to move with it"
+        )
+    assert expected in inspect.getsource(sandbox_heartbeat)
 
 
 def test_beat_once_restarts_every_live_clock(db, monkeypatch):

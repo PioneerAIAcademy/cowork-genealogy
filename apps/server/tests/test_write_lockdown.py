@@ -13,7 +13,6 @@ silent, which is the failure mode this whole issue is about.
 from __future__ import annotations
 
 import asyncio
-
 import re
 from pathlib import Path
 
@@ -144,11 +143,6 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
     opts = real_agent.build_options(tmp_path)
 
     matchers = opts.hooks["PreToolUse"]
-    # Exactly one hook, and it must REACH `_pretool_hook`. Since 1d it is a thin wrapper
-    # that counts tool calls for the Stop hook's no-progress arm -- so identity is the
-    # wrong assertion, but "the deny still fires" is not: this hook is the session's only
-    # restraint under bypassPermissions, and a wrapper that forgot to delegate would let
-    # every raw write onto research.json through with this test green.
     # Since 1d there are TWO PreToolUse matchers: an unscoped counter for the Stop hook's
     # no-progress arm, and the deny hook on its own narrow matcher. Identity is the wrong
     # assertion now, but "the deny still fires" is not -- this hook is the session's only

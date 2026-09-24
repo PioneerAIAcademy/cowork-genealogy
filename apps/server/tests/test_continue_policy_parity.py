@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import ast
 import itertools
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -165,3 +166,67 @@ def test_the_worker_imports_the_shared_copy_rather_than_redefining_it():
     assert "def should_continue_run(" not in options, "the worker must import, not redefine"
     real_agent = (REPO / "apps/server/app/agent/real_agent.py").read_text(encoding="utf-8")
     assert "from .continue_policy import" in real_agent, "and so must the alpha"
+
+
+def test_the_veto_text_has_exactly_one_definition():
+    """The whole point of CONTINUE_REASON is that every plane sends the SAME words. It
+    shipped as two hand-kept copies -- one in `proto/worker/options.py`, one in
+    `real_agent.py` -- each carrying a comment saying it was copied from the other, which
+    is the one arrangement that cannot guarantee it. `--untracked` because git grep skips
+    files a branch has not added yet, and `^CONTINUE_REASON` so this test's own quoted
+    mention of the name does not match itself."""
+    out = subprocess.run(
+        ["git", "grep", "--untracked", "-l", "-e", "^CONTINUE_REASON = "],
+        cwd=REPO, capture_output=True, text=True, encoding="utf-8",
+    )
+    assert out.returncode in (0, 1), out.stderr
+    found = {line.strip() for line in out.stdout.splitlines() if line.strip()}
+    assert found == {"apps/server/app/agent/continue_policy.py"}, (
+        f"CONTINUE_REASON is defined in {sorted(found)}; there must be exactly one. "
+        "Both Stop hooks import it, and two copies drift silently."
+    )
+    for rel in ("apps/server/proto/worker/options.py", "apps/server/app/agent/real_agent.py"):
+        body = (REPO / rel).read_text(encoding="utf-8")
+        assert "CONTINUE_REASON" in body, f"{rel} still sends the veto"
+        assert "CONTINUE_REASON = (" not in body, f"{rel} must import it, not redefine it"
+
+
+def test_the_env_guard_is_shared_where_it_can_be_and_only_where_it_can_be():
+    """A bare `int()`/`float()` on a typo'd environment variable raises at module scope,
+    before anything binds, and the orchestrator restarts the container forever. That
+    shipped three times as three separate hand-written guards, which is what says it
+    belongs in one place -- and it bit once already (#F, the unguarded `int()`).
+
+    The web tier is the exception and it is a REAL one, not laziness: `proto/web/Dockerfile`
+    copies only `enqueue.py`, `sql/` and `web/`, so `app` is not importable there. An
+    import would pass every test -- the suite runs from the repo root, where the whole
+    tree is on the path -- and fail only in the deployed container. So it keeps its own
+    copy, and this test pins the reason by reading the Dockerfile."""
+    dockerfile = (REPO / "apps/server/proto/web/Dockerfile").read_text(encoding="utf-8")
+    copied = [ln.split()[1] for ln in dockerfile.splitlines() if ln.startswith("COPY ")]
+    assert not any(c.startswith("app") or "/app" in c for c in copied), (
+        f"the web image now copies {copied}; if `app` is in it, proto/web/app.py should "
+        f"import the shared env guard instead of keeping its own copy"
+    )
+
+    # Everything that CAN share, does.
+    for rel in ("apps/server/app/agent/real_agent.py", "apps/server/proto/worker/worker.py"):
+        body = (REPO / rel).read_text(encoding="utf-8")
+        assert "env_int(" in body or "env_float(" in body, f"{rel} must use the shared guard"
+
+    # The precise rule, and the only one worth asserting: an environment value may not be
+    # converted without a guard. Deliberately NOT "no bare int(raw) anywhere" -- an
+    # earlier draft of this test said that and flagged `parse_max_nudges`, which is
+    # correctly guarded by its caller and reads the QUEUE BODY rather than the
+    # environment. A check that fails legitimate code gets skipped within a month.
+    out = subprocess.run(
+        ["git", "grep", "--untracked", "-n", "-E",
+         r"(int|float)\(os\.environ(\.get)?"],
+        cwd=REPO / "apps/server", capture_output=True, text=True, encoding="utf-8",
+    )
+    assert out.returncode in (0, 1), out.stderr
+    offenders = [ln for ln in out.stdout.splitlines() if "tests/" not in ln.split(":")[0]]
+    assert not offenders, (
+        "an environment variable is parsed without a guard, so a typo crash-loops the "
+        "process that reads it:\n  " + "\n  ".join(offenders)
+    )

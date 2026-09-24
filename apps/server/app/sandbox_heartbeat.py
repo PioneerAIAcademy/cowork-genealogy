@@ -70,17 +70,28 @@ LIVE_WINDOW_S = 4 * 60 * 60
 
 
 def live_sandbox_ids(session: Session, *, window_s: int = LIVE_WINDOW_S) -> list[str]:
-    """Sandbox ids worth beating: a project whose browser attached inside the window.
+    """Sandbox ids worth beating: a LIVE project whose browser attached inside the window.
 
-    ``Project.sandbox_id`` and ``last_active`` are both non-nullable, so the only filter
-    is the window -- but the blank check stays: a row written before its sandbox existed
-    carries an empty string, and beating "" is a call that can only fail.
+    ``status == "active"`` is the same filter every other live-project query applies
+    (``main.py``, ``sessions.py``, ``anthropic_proxy.py``) and it is not cosmetic here:
+    archiving is the one action that is supposed to let a sandbox go, and without this
+    clause an archived project is beaten awake every 5 minutes for as long as its
+    ``last_active`` stays inside a FOUR-HOUR window -- billing E2B for a sandbox the
+    patron has explicitly put away, and doing it in the one code path whose whole purpose
+    is to stop clocks from running out.
+
+    ``Project.sandbox_id`` and ``last_active`` are both non-nullable, so the window and
+    the status are the only filters -- but the blank check stays: a row written before its
+    sandbox existed carries an empty string, and beating "" is a call that can only fail.
 
     ``last_active`` is NOT "when the agent last did something" -- see the module docstring.
     """
     cutoff = utcnow() - timedelta(seconds=window_s)
     rows = session.exec(
-        select(Project.sandbox_id).where(Project.last_active >= cutoff)  # type: ignore[operator]
+        select(Project.sandbox_id).where(
+            Project.status == "active",
+            Project.last_active >= cutoff,  # type: ignore[operator]
+        )
     ).all()
     return [r for r in rows if r]
 

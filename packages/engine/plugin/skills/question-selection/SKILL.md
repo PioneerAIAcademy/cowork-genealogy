@@ -287,9 +287,8 @@ cannot see `research.json`. Give:
   objective is the overall goal; the question is the single fact pursued next.
 - The rationale, and what it depends on / unblocks — naming any other `q_` by
   its question text, not by id alone.
-- One plain sentence on what comes next, never a skill name, then the hand-back
-  literal as the final line of the reply, exactly:
-  `Next: plan which records to search. Continue?`
+- One plain sentence on what comes next, never a skill name and never a question —
+  state the next step and take it in the same turn.
 
 ## Rules
 

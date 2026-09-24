@@ -21,6 +21,7 @@ predicates into a clean namespace without importing ``claude_agent_sdk``.
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -151,3 +152,67 @@ def terminal_reason(
     if nudges_used >= max_nudges:
         return TERMINAL_BUDGET
     return TERMINAL_NO_PROGRESS
+
+
+
+# The veto text both Stop hooks send, verbatim from the harness's. It lived in TWO copies
+# -- `proto/worker/options.py` and `real_agent.py` -- each with a comment saying it was
+# copied from the other, which is what a shared module is for: the whole point of this
+# text is that all three readers send the SAME words, and two hand-kept copies is the one
+# arrangement that cannot guarantee it.
+#
+# The worker does not mirror the harness's `classify_hand_back` branch -- it classifies
+# nothing, because the classifier reads the harness's in-process narration list and the
+# prose half of #2292 has not landed, so copying a moving wording would drift the moment
+# it does. Every stop either plane sees therefore takes this text, and
+# `test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim` reads it
+# off the orchestrator and goes red when either side moves.
+CONTINUE_REASON = (
+    "You are mid-run in an autonomous /research session and the "
+    "project is not yet complete (project.status is not "
+    "'completed'). Re-read research.json and invoke the next GPS "
+    "sub-skill now; keep going until project.status is "
+    "'completed' or you hit a genuine, logged blocker."
+)
+
+
+def env_int(name: str, default: int, *, env=None, on_error=None, floor: int = 0) -> int:
+    """An int from the environment that cannot crash-loop the process that reads it.
+
+    Every reader of these is at module scope or at container start, so a bare ``int()``
+    on ``"  "`` or ``"forty"`` raises before anything binds and the orchestrator restarts
+    it forever -- a typo in one environment variable taking the service down with no
+    working state to read the error from. This shipped three times as three separate
+    hand-written guards; the third instance is what says it belongs in one place.
+
+    ``env=None`` rather than ``env=os.environ``: a default evaluated at DEFINITION time
+    is evaluated by anything that lifts this module's functions into a clean namespace,
+    which the AST parity test does -- and ``os`` is not there, so the default turns that
+    test into a collection error.
+    """
+    raw = ((os.environ if env is None else env).get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        if on_error is not None:
+            on_error(name, raw, default)
+        return default
+    return max(floor, value)
+
+
+def env_float(name: str, default: float, *, env=None, on_error=None) -> float:
+    """``env_int`` for a float. Same reason, same shape; a negative takes the default
+    because every current reader is a price, an interval or a cap, and none of those has
+    a meaning below zero."""
+    raw = ((os.environ if env is None else env).get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        if on_error is not None:
+            on_error(name, raw, default)
+        return default
+    return value if value >= 0 else default

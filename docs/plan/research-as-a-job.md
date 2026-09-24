@@ -192,17 +192,18 @@ re-point `_exported_ceiling_s` now that the ruling is 1,800 with no exception.
 
 **What it costs, and it is not what an earlier draft said.** The ceiling bounds one queue
 message, and under continuous turns one queue message is a whole run — so the number that
-matters is run length, not segment length. Measured over the 134 committed e2e runs that
-reached `completed`:
+matters is run length, not segment length. Re-measured 2026-09-23 over the 139 committed
+e2e runs that reached `completed` (the corpus grew during the build; the shape did not
+move):
 
 | | |
 |---|---|
-| median | 53.5 min |
-| p90 | 83.3 min |
+| median | 53.6 min |
+| p90 | 85.0 min |
 | longest | 168.8 min |
-| exceed 1,800 s | **94.0%** |
-| exceed 3,600 s, so more than two attempts | 38.8% |
-| exceed 3,900 s, the demo's current deadline | 32.1% |
+| exceed 1,800 s | **94.2%** |
+| exceed 3,600 s, so more than two attempts | 39.6% |
+| exceed 3,900 s, the demo's current deadline | 33.1% |
 
 **Resume is the normal path, not the exception** — the median run needs two attempts, p90
 three, the longest in the corpus six. That is why 0a gates this phase.
@@ -399,8 +400,10 @@ consulted only at a voluntary yield, 31% of runs never yield, and it resets on e
 
 **Per session, not per run or per project.** A `sessions` row carries a `project_id`, so a
 project spans many sessions — the bound caps one sitting, never the research. Sized against
-the corpus: 155 runs with cost data, median $7.84, p90 $14.75, max $25.24. So $35 is about
-four median runs in one sitting, and above the most expensive single run ever recorded.
+the corpus, re-measured 2026-09-23: 161 runs with cost data, median $7.85, p90 $14.26,
+max $25.24. So $35 is about four median runs in one sitting, and above the most expensive
+single run ever recorded. `test_the_spend_cap_clears_the_costliest_run_in_the_corpus`
+re-derives that last clause rather than trusting this line.
 
 **No grant mechanism, deliberately.** When a session reaches the bound it stops, and the way
 to continue is to start a new session on the same project — which is what users already do by

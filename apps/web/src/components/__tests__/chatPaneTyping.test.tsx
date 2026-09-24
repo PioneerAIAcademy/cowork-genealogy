@@ -88,7 +88,7 @@ describe('1b: a message typed while a turn is running', () => {
     fireEvent.change(box, { target: { value: 'also the 1881 census' } })
     fireEvent.keyDown(box, { key: 'Enter' })
 
-    expect(screen.getByText(/picked up at the next step/i)).toBeTruthy()
+    expect(screen.getByText(/waiting — sent, not yet picked up/i)).toBeTruthy()
   })
 
   it('clears that label at turn_done, which is when the message is picked up', () => {
@@ -97,10 +97,10 @@ describe('1b: a message typed while a turn is running', () => {
     const box = screen.getByRole('textbox')
     fireEvent.change(box, { target: { value: 'also the 1881 census' } })
     fireEvent.keyDown(box, { key: 'Enter' })
-    expect(screen.queryByText(/picked up at the next step/i)).toBeTruthy()
+    expect(screen.queryByText(/waiting — sent, not yet picked up/i)).toBeTruthy()
 
     conn.emit({ type: 'agent_event', event: { kind: 'turn_done' } })
-    expect(screen.queryByText(/picked up at the next step/i)).toBeNull()
+    expect(screen.queryByText(/waiting — sent, not yet picked up/i)).toBeNull()
   })
 
   it('does not label a message sent when nothing is running', () => {
@@ -112,7 +112,7 @@ describe('1b: a message typed while a turn is running', () => {
     fireEvent.keyDown(box, { key: 'Enter' })
 
     expect(conn.sent).toHaveLength(2)
-    expect(screen.queryByText(/picked up at the next step/i)).toBeNull()
+    expect(screen.queryByText(/waiting — sent, not yet picked up/i)).toBeNull()
   })
 
   it('still refuses an empty message, so the guard was narrowed and not deleted', () => {
@@ -156,7 +156,7 @@ describe('1b: a message held for a tab that did not send it', () => {
     conn.emit({ type: 'status', state: 'turn_queued' })
 
     // The bubble already says it. A second, vaguer line would be noise.
-    expect(screen.getByText(/picked up at the next step/i)).toBeTruthy()
+    expect(screen.getByText(/waiting — sent, not yet picked up/i)).toBeTruthy()
     expect(screen.queryByText(/a message is waiting/i)).toBeNull()
   })
 })

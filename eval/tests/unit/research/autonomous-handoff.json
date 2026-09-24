@@ -2,26 +2,35 @@
   "test": {
     "id": "ut_research_005",
     "skill": "research",
-    "name": "Autonomous mode flag triggers research",
+    "name": "A plain research request proceeds without pausing",
     "type": "positive",
-    "description": "The --autonomous flag is an explicit trigger in the skill description. The user wants unattended GPS research without pausing for clarifying questions.",
-    "tags": ["core-trigger", "autonomous", "grade:trigger"]
+    "description": "Continuous work is unconditional since research-as-a-job S2: the --autonomous flag that used to gate it is gone from every body. What it gated is now the default, so this grades the ordinary request. Keeping the flag in the message would grade a trigger no body declares any more.",
+    "tags": [
+      "core-trigger",
+      "grade:trigger",
+      "continuous-work"
+    ]
   },
   "input": {
-    "user_message": "Research Patrick Flynn's parentage --autonomous",
+    "user_message": "Research Patrick Flynn's parentage",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
-    "--autonomous is a listed trigger for the research orchestrator",
-    "Should proceed without pausing for clarifying questions"
+    "The research orchestrator triggers on an ordinary research request; there is no mode flag",
+    "Should proceed without pausing for clarifying questions — continuous work is the default, and stopping to ask is a stall"
   ],
   "execution": {
     "max_turns": 30,
     "max_wall_clock_seconds": 1200,
     "stub_skills": [
-      "question-selection", "locality-guide", "research-plan",
-      "search-records", "record-extraction", "person-evidence",
-      "research-exhaustiveness", "proof-conclusion"
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-extraction",
+      "person-evidence",
+      "research-exhaustiveness",
+      "proof-conclusion"
     ]
   }
 }

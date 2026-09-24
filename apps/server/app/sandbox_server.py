@@ -31,17 +31,20 @@ from pathlib import Path
 
 from websockets.asyncio.server import serve
 
+from .agent.continue_policy import env_float, env_int
 from .agent.errors import classify, operator_log
 from .agent.real_agent import TRANSIENT_KINDS
 
-PORT = int(os.environ.get("WS_PORT", "8080"))
+# Guarded: read at module scope inside the sandbox, so a malformed value would
+# raise before the WS server binds and leave the browser with nothing to connect to.
+PORT = env_int("WS_PORT", 8080)
 SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", "/project"))
 _WATCH_INTERVAL = 0.7
 _HISTORY_MAX = 1000  # transcript events kept for replay-on-reconnect
 # Seconds between keepalive frames (see _heartbeat_loop). Env-overridable so the
 # test can assert the behaviour without a 15s sleep.
-_HEARTBEAT_INTERVAL = float(os.environ.get("WS_HEARTBEAT_INTERVAL", "15"))
+_HEARTBEAT_INTERVAL = env_float("WS_HEARTBEAT_INTERVAL", 15.0)
 # A token-locked client reconnects on a tight loop (and re-arms on every tab
 # focus), so a naive "one line per rejection" fills the 20 KB /logs window with
 # identical lines and evicts the agent activity timeline — which is exactly what

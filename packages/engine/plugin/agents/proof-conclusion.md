@@ -323,6 +323,8 @@ You own the resolution of **the question you actually concluded**: `status: "res
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
 - If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
+- That write is refused while a blocking conflict is unresolved, or while any resolved question's proof summary has no `proof-critique` verdict. Both are pre-call snapshots: settling one in the same batch does not count — do it, then complete in a later call.
+- A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
 
 **Never pass `updated` in `fields`.**

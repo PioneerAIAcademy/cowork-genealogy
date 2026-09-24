@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -250,7 +251,36 @@ def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue()
     for source in (inspect.getsource(e2b.E2BProvider._agent_env),
                    inspect.getsource(local.LocalProvider)):
         assert "AUTONOMOUS_MAX_NUDGES" in source, "the cap never reaches the sandbox"
-        assert "auto_continue" in source
+        # NOT a bare `"auto_continue" in source`. That was already satisfied by the
+        # NEIGHBOURING `"AUTO_CONTINUE": "1" if settings.auto_continue else "0"` line, so
+        # deleting `if settings.auto_continue else 0` from the cap line left the test
+        # green -- exactly the "field-name match that collides with an unrelated key"
+        # failure CLAUDE.md names. Read the cap's OWN line instead.
+        cap_line = next(
+            ln for ln in source.splitlines() if '"AUTONOMOUS_MAX_NUDGES"' in ln and ":" in ln
+        )
+        assert "auto_continue" in cap_line, (
+            f"the cap is not gated on auto_continue: {cap_line.strip()!r}. That flag "
+            f"already meant 'one turn per message'; a cap that ignores it silently takes "
+            f"away an existing kill switch."
+        )
+
+    # Behaviour, on BOTH providers -- the assertion above is still only a string match.
+    # LocalProvider builds its env inside `start`, so its dict is lifted and evaluated
+    # rather than called.
+    for settings_kw, expected in (({"auto_continue": True}, "42"), ({"auto_continue": False}, "0")):
+        from app import config as _config
+
+        st = _config.Settings(autonomous_max_nudges=42, **settings_kw)
+        line = next(
+            ln.strip() for ln in inspect.getsource(local.LocalProvider).splitlines()
+            if '"AUTONOMOUS_MAX_NUDGES"' in ln and ":" in ln
+        )
+        value = eval(line.split(":", 1)[1].rstrip(","), {"str": str}, {"settings": st})  # noqa: S307
+        assert value == expected, (
+            f"LocalProvider stamps {value!r} with auto_continue={st.auto_continue}; "
+            f"the two providers must answer the same setting the same way"
+        )
 
     # Behaviour, on the provider that builds its env as a pure function.
     provider = e2b.E2BProvider.__new__(e2b.E2BProvider)
@@ -268,3 +298,170 @@ def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue()
         finally:
             e2b_mod.get_settings = original
         assert env["AUTONOMOUS_MAX_NUDGES"] == expected, (settings.auto_continue, env)
+
+
+# ── 1b/1e reach the alpha: the two signals the shared predicate always accepted ──────
+
+
+class _FakeAgent:
+    """Just the surface `_build_hooks` reads off a RealAgent."""
+
+    def __init__(self, *, spend: float = 0.0, pending: bool = False) -> None:
+        self._spend, self._pending = spend, pending
+        self.pending_user_message = lambda: self._pending
+
+    def session_spend_usd(self) -> float:
+        return self._spend
+
+
+def _pretool(agent):
+    """The unscoped PreToolUse callback -- the one that sees EVERY tool call."""
+    from claude_agent_sdk import HookMatcher
+
+    from app.agent import real_agent as ra
+
+    hooks = ra._build_hooks(HookMatcher, Path("/project"), agent)
+    return hooks["PreToolUse"][0].hooks[0]
+
+
+def test_the_alpha_prices_its_own_session_from_the_stream():
+    """The prototype prices the session off `session_entries`. The alpha has no such
+    ledger -- and does not need one: AssistantMessage carries its own `usage` block, so
+    the same data arrives on the stream it already consumes.
+
+    ResultMessage's cumulative `total_cost_usd` is the obvious source and is useless for a
+    cap: under 1d one user message is one turn, so exactly one arrives, at the END -- after
+    every dollar is spent."""
+    from app.agent.real_agent import RealAgent
+    from app.agent.spend import price_usd
+
+    agent = RealAgent(Path("/project"))
+    assert agent.session_spend_usd() == 0.0
+
+    agent._record_usage(SimpleNamespace(
+        message_id="msg_1",
+        usage={"input_tokens": 1_000_000, "cache_creation_input_tokens": 0,
+               "cache_read_input_tokens": 0, "output_tokens": 0},
+    ))
+    assert agent.session_spend_usd() == pytest.approx(price_usd((1_000_000, 0, 0, 0)))
+
+    # The SAME message again -- the stream re-emits it. Summing it twice fires the cap
+    # early, which is why the prototype's SQL is DISTINCT ON the message id.
+    agent._record_usage(SimpleNamespace(
+        message_id="msg_1",
+        usage={"input_tokens": 1_000_000, "cache_creation_input_tokens": 0,
+               "cache_read_input_tokens": 0, "output_tokens": 0},
+    ))
+    assert agent.session_spend_usd() == pytest.approx(price_usd((1_000_000, 0, 0, 0))), \
+        "a re-emitted message must not be counted twice"
+
+    agent._record_usage(SimpleNamespace(message_id="msg_2", usage={"output_tokens": 1_000_000}))
+    assert agent.session_spend_usd() == pytest.approx(
+        price_usd((1_000_000, 0, 0, 1_000_000))
+    ), "a field the block omits is 0, never None -- the tuple must stay priceable"
+
+    # A message carrying no usage, and one carrying no id, are both skipped rather than
+    # raising: this runs on every streamed message.
+    agent._record_usage(SimpleNamespace(message_id="msg_3", usage=None))
+    agent._record_usage(SimpleNamespace(usage={"output_tokens": 5}, message_id=None, uuid=None))
+    assert agent.session_spend_usd() == pytest.approx(price_usd((1_000_000, 0, 0, 1_000_000)))
+
+
+def test_the_spend_cap_halts_the_alpha_on_a_tool_call_not_only_at_a_yield():
+    """1e's bound only reached the prototype. The plane 1d had just given continuous work
+    to had no dollar ceiling at all -- one message running up to the 4-hour live window.
+
+    It halts in PreToolUse, not in the Stop hook, for the reason the prototype's does: the
+    Stop hook is consulted at a VOLUNTARY YIELD, a median of once per run, and 31% of runs
+    never yield. A bound carried only there is not a bound."""
+    from app.agent.spend import SPEND_CAP_USD
+
+    under = asyncio.run(_pretool(_FakeAgent(spend=SPEND_CAP_USD - 0.01))({}, None, None))
+    assert under == {}, "under the cap the hook must not interfere with the call"
+
+    over = asyncio.run(_pretool(_FakeAgent(spend=SPEND_CAP_USD))({}, None, None))
+    assert over.get("continue") is False, (
+        "the halt fields are `continue`/`stopReason` -- a permission deny is a tool "
+        "RESULT the model argues with, which is the whole reason 1c chose these"
+    )
+    assert "stopReason" in over and "spend" in over["stopReason"].lower()
+
+
+def test_a_message_typed_mid_turn_is_taken_at_the_next_step_on_the_alpha():
+    """`runner.serve` holds a pending message while `turn_task` is not done -- and under
+    1d that task is the whole job, so the message waited a JOB boundary. The prototype
+    answers at the next tool call, a median 2.6 s away."""
+    quiet = asyncio.run(_pretool(_FakeAgent(pending=False))({}, None, None))
+    assert quiet == {}
+
+    waiting = asyncio.run(_pretool(_FakeAgent(pending=True))({}, None, None))
+    assert waiting.get("continue") is False
+    assert "message" in waiting["stopReason"].lower()
+
+
+def test_the_halt_never_fails_a_tool_call_the_researcher_was_entitled_to_make():
+    """This hook runs on EVERY tool call and it is not the restraint -- the deny hook is.
+    A raising check here would fail calls for a reason that has nothing to do with them,
+    so it allows and logs, exactly like the Stop hook's own except arm."""
+    class Exploding:
+        pending_user_message = staticmethod(lambda: False)
+
+        def session_spend_usd(self):
+            raise RuntimeError("the accumulator is broken")
+
+    assert asyncio.run(_pretool(Exploding())({}, None, None)) == {}
+
+
+def test_the_runner_is_what_tells_the_agent_a_message_is_waiting():
+    """`pending` is a local of `serve()` -- the runner owns the backlog -- so the agent
+    cannot see it any other way. Without this wire the hook above reads a lambda that is
+    permanently False and the whole handover is dead code."""
+    import ast
+    import inspect
+    import textwrap
+
+    from app.agent import runner
+
+    # Asserted on the STRUCTURE, not on the exact lambda text: an earlier draft matched
+    # the source line verbatim and failed a legitimate refactor to a named closure, which
+    # is how a guard gets `skip`ped within a month.
+    tree = ast.parse(textwrap.dedent(inspect.getsource(runner.serve)))
+    assigned = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(t, ast.Attribute) and t.attr == "pending_user_message"
+                for t in node.targets)
+    ]
+    assert assigned, (
+        "the runner no longer publishes its backlog to the agent; the mid-turn handover "
+        "silently reverts to a job boundary"
+    )
+    # ...and whatever it assigns has to actually read the backlog. A closure defined
+    # elsewhere in serve() counts: resolve it by name rather than requiring a lambda.
+    value = assigned[-1].value
+    if isinstance(value, ast.Name):
+        value = next(
+            (n for n in ast.walk(tree)
+             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == value.id),
+            value,
+        )
+    names = {n.id for n in ast.walk(value) if isinstance(n, ast.Name)}
+    assert "pending" in names, (
+        f"what the runner publishes does not read `pending`: {ast.dump(value)[:120]}"
+    )
+
+
+def test_both_halt_carriers_read_the_same_two_signals():
+    """The Stop hook and the PreToolUse halt must agree, or a run stops for a reason one
+    of them cannot see. Asserted on the wiring rather than on behaviour, because the Stop
+    hook's arm needs a project dir and a nudge budget to reach."""
+    import inspect
+
+    from app.agent import real_agent as ra
+
+    wiring = inspect.getsource(ra._build_hooks)
+    for signal in ("pending_user_message", "session_spend_usd"):
+        assert wiring.count(signal) >= 1, f"{signal} is not wired into the hooks"
+    stop = inspect.getsource(ra.make_stop_hook)
+    assert "pending_user_message=bool(" in stop, "the Stop hook must pass the signal on"
+    assert "SPEND_CAP_USD" in stop, "and must respect the same bound"
