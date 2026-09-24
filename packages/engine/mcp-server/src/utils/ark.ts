@@ -17,6 +17,26 @@ const BARE_PREFIXED_RE = /^\d:\d:[A-Za-z0-9.-]+$/;
 
 const FS_URL_PREFIX_RE = /^https?:\/\/(?:www\.)?familysearch\.org\//i;
 
+// The one spelling of "is this a document-image ARK" (3:1: or 3:2:). It lived
+// in three hand-maintained copies with three different anchorings —
+// fs-image-fetch's DOCUMENT_IMAGE_ARK_PATTERN, its error-message scanner, and
+// record-read's extractImageArk — so widening the set (a new type, a new id
+// character) meant finding all three. Two functions rather than one flag:
+// validating a whole string and finding an ARK inside a URL are different
+// questions, and the callers read better for saying which they mean.
+const DOCUMENT_IMAGE_ARK_CORE = "ark:\\/61903\\/3:[12]:[A-Za-z0-9.-]+";
+
+export function isDocumentImageArk(value: string): boolean {
+  if (typeof value !== "string") return false;
+  return new RegExp(`^${DOCUMENT_IMAGE_ARK_CORE}$`).test(value);
+}
+
+/** Find a document-image ARK anywhere inside a string (e.g. a resolved URL). */
+export function findDocumentImageArk(value: string): string | undefined {
+  if (typeof value !== "string") return undefined;
+  return new RegExp(DOCUMENT_IMAGE_ARK_CORE).exec(value)?.[0];
+}
+
 /**
  * Normalize any form of a FamilySearch ARK to the canonical `ark:/61903/...`
  * form: a resolver URL, an already-bare ARK, or a type-prefixed id like

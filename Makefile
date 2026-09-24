@@ -371,6 +371,21 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: probe-agent-nesting
+probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 6 sessions, ~$5)
+	# Main thread -> probe-driver-<arm> -> probe-leaf. Four arms grant the driver
+	# Task, Agent, both, or neither; the neither arm is the control and must not
+	# spawn. The verdict is read off the message stream, never the agents' prose.
+	#
+	# Answered 2026-09-23 (Claude Code 2.1.220, SDK 0.2.128): yes, at depth 2, and
+	# the tool is Agent -- a Task grant resolves to it. The SDK streams no depth-2
+	# messages. A driver spawning three real record-extractors in parallel ran
+	# them concurrently: 694 s wall against ~1,419 s back to back, every write
+	# landed. Re-run when the CLI or the SDK moves.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_agent_nesting.py
+
 .PHONY: hook-smoke
 hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? (issue #1160; 2 short sessions)
 	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
@@ -1343,7 +1358,7 @@ deploy-preflight:
 deploy: sandbox-image deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs E2B_API_KEY + the e2b CLI; single always-on machine)
 	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
 	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
-	# until init_db moves to a release_command (issue #1127). Secrets +
+	# until init_db moves to a release_command. Secrets +
 	# `fly apps create` are one-time (DEVELOPMENT.md § Deploy to Fly.io).
 	# NOTE: apps/web/dist is baked at build time — redeploy to ship UI changes.
 	# GIT_SHA/BUILD_DATE are stamped into feedback bundles (apps/server/app/config.py).

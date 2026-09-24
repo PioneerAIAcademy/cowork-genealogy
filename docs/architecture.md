@@ -1013,6 +1013,36 @@ All of this is CI-linted by `tests/packaging/agent-tool-names.test.ts`, which
 derives the bridge prefix from `display_name` (so an extension rename fails
 loudly in CI) and asserts all five registration sites still agree on `genealogy`.
 
+**Agents do not spawn agents.** When a request belongs to another agent, the
+agent hands it back: it names the owning agent in its caller-facing return
+lines (never in the researcher-facing `next_step`) and the main thread spawns
+it, so every spawn stays one level deep (lead ruling 2026-09-23). The same packaging test
+fails any agent whose `tools:` grants `Task` or `Agent` unless it is on its
+`SPAWN_ALLOWED` list, which is empty and takes a lead ruling to extend.
+
+The capability exists if that list ever needs it. `make probe-agent-nesting`
+(2026-09-23, Claude Code 2.1.220, SDK 0.2.128, hosted loader):
+
+| grant in the driver's `tools:` | depth-2 spawn | tool actually called |
+|---|---|---|
+| `Task` | yes | `Agent` |
+| `Agent` | yes | `Agent` |
+| both | yes | `Agent` |
+| neither (control) | no | — |
+
+`Task` is an alias for `Agent`, so either grant binds. The SDK streams **no**
+depth-2 messages: what the nested agent did reaches the caller only through its
+result text, so a harness cannot inspect it. **Cowork and depth 3 are
+unmeasured.**
+
+The record-extraction shape was measured directly (`--arm extractor-parallel`):
+a driver holding only `Read`, `ToolSearch` and `Agent` spawned three real
+`record-extractor`s in one message with `run_in_background: false`. They ran
+concurrently, all three sources and 53 assertions landed with distinct ids, the
+wall-clock was 694 s against ~1,419 s back to back, and the main thread received
+626 characters. A background spawn is killed when the driver returns, so the
+driver must wait.
+
 > **Correction to three comments in the code (verified 2026-08-02).**
 > `ENABLE_TOOL_SEARCH=true` **enables** deferred/tool-search mode. It does *not*
 > eager-load schemas. Confirmed against the installed CLI (v2.1.220): a truthy
@@ -1187,6 +1217,10 @@ enforcing-vs-shadow status.
   the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
   `make agent-smoke` verifies name resolution only, and `make
   probe-agent-binding` verifies binding but is a live billed probe, not a check.
+- **Never grant `Task` or `Agent`.** An agent hands work back by naming
+  the owning agent in its return, and the main thread spawns it; the packaging test
+  fails the grant (§5.2). `make probe-agent-nesting` is what shows a spawn grant
+  binds in the hosted loader, if a lead ruling ever allows one.
 - **Do not add a `disallowedTools:` block alongside it.** No agent ships one; a
   tool in both lists is denied, and the deny is applied before the zero-tools
   spawn check, which can make the runtime refuse the agent — see §5.2.
@@ -1618,10 +1652,10 @@ stale code: `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify
 since a bare `make sandbox-image` rebuilds PRODUCTION's template in place.
 `make deploy` rebuilds the production one as part of the deploy.
 
-**Add a control-plane endpoint.** `apps/server/app/v1.py` for the public REST
-API (see `DEVELOPMENT.md` "Public `/v1` REST API"), `sessions.py` for session
-lifecycle. Run `make server-test`. Keep the control plane out of the streaming
-path.
+**Add a control-plane endpoint.** Pick the router it belongs to — `sessions.py`
+(session lifecycle), `auth.py`, `feedback.py` or `anthropic_proxy.py`; `main.py`
+mounts those four and nothing else. Run `make server-test`. Keep the control
+plane out of the streaming path.
 
 ---
 
@@ -1724,6 +1758,7 @@ carries no hook state at all, so it cannot see a hook either way.
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) — fails loudly with no API key, since the target sets `AGENT_SMOKE=1` | whether a granted tool actually **binds** — that is `make probe-agent-binding`; **anything hook-shaped** — it reads the init handshake, which carries no hook state at all, so a `hooks.json` that stopped loading passes it silently (that is `make hook-smoke`); the ToolSearch backstop and `run_e2e_test` fallback abort paths |
 | **`make hook-smoke`** | that the **hosted SDK loader actually binds** the plugin's `PreToolUse` hook: reads `hooks/hooks.json`, matches a real `research_append`, shells `guard_project_files.py` and blocks — attributed by requiring the guard's own reason text, with the SDK-side hook cleared and a hooks-removed control arm. Hard-errors without a key | **Cowork's loader**, which is a different one and reachable only by a human in a live session; the guard script's *decisions* (that is `plugin-hooks.test.ts` and the parity test). The Cowork half stays on the `nothing-checks` register either way |
+| **`make probe-agent-nesting`** | that the **hosted SDK loader** lets a plugin agent spawn another at depth 2, and which `tools:` spelling binds the spawn tool (`Task` and `Agent` both do; the call is named `Agent`) — read off the driver's own `tool_use`, with a no-grant control arm, plus a driver spawning three real `record-extractor`s in parallel, verified by what lands in `research.json`. Hard-errors without a key; ~$5 | **Cowork**, depth 3, and anything the nested agent did — the SDK streams no depth-2 messages |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
@@ -1859,7 +1894,8 @@ changes how a correct change is made:
    live, billed probe rather than a check — run it when the CLI or the SDK moves.
    And it answers the question only for the **hosted** options it builds; Cowork
    still has no instrument but a live session, and only for the spelling that
-   session exposes.
+   session exposes. `make probe-agent-nesting` does the same for the spawn tool
+   (`Task` vs `Agent`), with the same hosted-only limit.
 
    **The same shape holds for the `PreToolUse` hook, and it is worse there.** No
    CI job proves the plugin's hook binds either — and unlike a toolless agent,
