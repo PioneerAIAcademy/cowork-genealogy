@@ -3,32 +3,42 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Ísleifur Ísleifsson had a son Einar, christened 28 September 1856 at Kross, Rangárvallasýsla, Iceland.",
+      "description": "Ísleifur Ísleifsson (PID KCS6-8SG) had a son Einar, born 23 September and christened 28 September 1856 at Kross, Rangárvallasýsla, Iceland. The parish register records the father of that child at the SAME farm, Kyrkjuland, as it records him on his daughter Steinunn's entry twelve days earlier, and marks him ógift — unmarried — on both. He was an unmarried farmhand at Kyrkjuland. Two children twelve days apart therefore require two mothers, not two fathers. Pass = the final tree records Einar as his son, christened 28 September 1856. (The child's mother is a separate claim, graded under f2.)",
       "details": {
-        "subject_person": "Ísleifur Ísleifsson (KCS6-8SG)",
+        "subject_person": "Ísleifur Ísleifsson (PID KCS6-8SG)",
         "relation": "child",
         "target_person": {
           "name": "Einar Ísleifsson",
+          "birth": "23 September 1856",
           "christening": "28 September 1856, Kross, Rangárvallasýsla, Iceland"
         }
       },
       "supporting_sources": [
-        "Iceland, Baptisms, 1730-1905 — entry for Einar, 1856, parents Isleifur Isleifsson and Thorun Einarsdr"
+        "Iceland, Baptisms, 1730-1905 — entry for Einar, 1856, parents Isleifur Isleifsson and Thorun Einarsdr, christened 28 September 1856 at Kross (ark:/61903/1:1:FG58-V8X). The hinted record, now confirmed.",
+        "Kross (Landeyjaþing) prestþjónustubók, National Archives of Iceland box BA/0008, FamilySearch film 104563914 — page 40, male entry 6 for 1856: \"Í: Ísleifsson, Þórunn Einarsdóttir báði ógift á Kyrkjulandi\", born 23 September, christened 28 September 1856; godparents Kristín á Búðarhóli, Bjarni Bjarnason á Kyrkjulandi, Petreus Petursson í Tjarnarkoti. This is the deciding record. The collection \"Iceland, Baptisms, 1730-1905\" is index-only (both index entries show \"Image Unavailable\"), so no item-level ark exists for this page.",
+        "Same volume, page 45, female entry 8 for 1856 — the tree's own daughter Steinunn, christened 16 September 1856: \"Í: Ísleifsson á Kyrkjulandi ógift[r], Guðríðr Gunnlaugsd: ógift í Litluhildisey\"; godparents Guðríðr Magnúsdóttir and Gunnlaugr Einarsson, hjón í Litluhildisey — the mother's own parents. The father is entered at the SAME farm, Kyrkjuland, on both entries, twelve days apart in one hand.",
+        "Iceland, Church Census, 1744-1965 (ark:/61903/1:1:6JYM-KK28) — an 1873 household at \"Landeyjaprestakall, Kirkjuland\" headed by Bjarni Bjarnason b. 1823 with Katrín Jónsdóttir. External control on the farm name: Kirkjuland is a documented farm of this benefice (the same one the film's archive slip names, Landeyjaþing prestakall 0000-165), and Bjarni Bjarnason — the godparent the register enters á Kyrkjulandi on BOTH entries — lived on it. Established from an indexed source with no handwriting involved, which the index-based calibration cannot do since the index carries no farm column.",
+        "Iceland, Church Census, 1744-1965, Kross household register 1847-1858 (image ark:/61903/3:1:3Q9M-CSDW-NQRF-7) — \"Household of Bjarni Bjarnason\" at **Kirkjuland**, listing Bjarni Bjarnason and Katrín Jónsdóttir as hjón, their children Kristín and Sæmundur, Þorsteinn Sæmundsson, and **Þórunn Einarsdóttir** (ark:/61903/1:1:8H2R-TGMM). Indexed, no handwriting: it places a Þórunn Einarsdóttir at the farm the register names, in the household of the man who witnessed both baptisms. The snapshot dates to roughly 1852-1854 by composition — Bjarni b. 1855 and Einar b. 1856 are not yet among \"their children\" — so it does NOT place her there in 1856 itself. Separately, ark:/61903/1:1:8H25-4MT2 records Ísleifr Ísleifsson as Vinnuhjú — a servant — in the priest's household at the farm Kross in 1855, unmarried, the year before both christenings. No single indexed record places both parents at Kirkjuland in 1856. **Name-collision limit, stated because this fixture's own argument turns on it:** both records tie to these people by NAME AND FARM ALONE — neither gives an age or parentage. So 8H2R-TGMM places *a* Þórunn Einarsdóttir at Kirkjuland, and 8H25-4MT2 places *an* Ísleifr Ísleifsson at Kross, and the farm is itself the reading under dispute. Icelandic patronymics make name-matching weak — that is this fixture's own premise — so these are corroboration, not identification.",
+        "Negative sweep, reproducible: collection *Iceland, Baptisms, 1730-1905* (id 1584974), query father given=Isleifur surname=Isleifsson, country=Iceland, any-year 1845-1875. **26 baptisms returned, 26 of 26 matched, grouped into 10 distinct father+mother couples.** Four of the 26 are at Kross: Gudrun Gunnlogsdr (2), Gudridr Gunnlogsdr (1) — one woman, see the name note — and Thorun Einarsdr (1), the hinted entry. The remaining couples are at Stóriólfshvoll (a different parish) and at Staður í Aðalvík in the Westfjords. **No second Ísleifur Ísleifsson appears at Kross in this collection.** Untested: whether the Stóriólfshvoll man was still in the county in 1856.",
+        "No marriage record exists for this man in Iceland, Marriages, 1770-1920; the tree's \"ABT 1857\" is an estimate with nothing behind it, and both 1856 children precede it."
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "person",
-      "description": "The mother named on the 1856 Einar baptism is Thórunn Einarsdóttir, not Guðríður Gunnlaugsdóttir, the wife the tree records.",
+      "description": "The mother named on the 28 September 1856 Einar baptism is Þórunn Einarsdóttir, not Guðríður Gunnlaugsdóttir, the partner the tree records. The register names her on the same farm as the father — \"báði ógift á Kyrkjulandi\" — while Guðríður is entered twelve days earlier at Litluhildisey. She is a second partner, not a variant spelling: the patronymic differs, and the register holds patronymics steady. Pass = the final tree names Þórunn Einarsdóttir as Einar's mother, as a person distinct from Guðríður Gunnlaugsdóttir.",
       "details": {
         "person": {
-          "name": "Thórunn Einarsdóttir",
-          "role": "named as mother on the 28 September 1856 Kross baptism"
+          "name": "Þórunn Einarsdóttir (indexed as Thorun Einarsdr)",
+          "role": "named as mother on the 28 September 1856 Kross baptism of Einar, recorded ógift at Kyrkjuland, the same farm as the father"
         }
       },
       "supporting_sources": [
-        "Iceland, Baptisms, 1730-1905 — entry for Einar, 1856"
+        "Iceland, Baptisms, 1730-1905 — entry for Einar, 1856 (ark:/61903/1:1:FG58-V8X), naming the mother as Thorun Einarsdr.",
+        "Kross (Landeyjaþing) prestþjónustubók, National Archives of Iceland box BA/0008, FamilySearch film 104563914 — page 40, male entry 6 for 1856: \"Í: Ísleifsson, Þórunn Einarsdóttir báði ógift á Kyrkjulandi\", born 23 September, christened 28 September 1856; godparents Kristín á Búðarhóli, Bjarni Bjarnason á Kyrkjulandi, Petreus Petursson í Tjarnarkoti. This is the deciding record. The collection \"Iceland, Baptisms, 1730-1905\" is index-only (both index entries show \"Image Unavailable\"), so no item-level ark exists for this page.",
+        "Distinct from Guðríður Gunnlaugsdóttir on two grounds that do NOT depend on reading her given name (the register writes Guðríðr; an earlier comment on #2308 reported Guðrún from a machine read since withdrawn): a different patronymic, and a different residence on the register (Litluhildisey versus Kyrkjuland). Note separately that the INDEX does vary Guðríður's given name — writing \"Gudrun Gunnlogsdr\" in 1856 and 1861 and \"Gudridr\" in 1859 — while the register writes Guðríðr; she is one woman, confirmed by her living with her daughter Steinunn Ísleifsdóttir and her own mother Guðríður Magnúsdóttir in the 1897, 1898, 1899 and 1900 household registers.",
+        "Iceland, Church Census, 1744-1965, Kross household register 1847-1858 (image ark:/61903/3:1:3Q9M-CSDW-NQRF-7) — \"Household of Bjarni Bjarnason\" at **Kirkjuland**, listing Bjarni Bjarnason and Katrín Jónsdóttir as hjón, their children Kristín and Sæmundur, Þorsteinn Sæmundsson, and **Þórunn Einarsdóttir** (ark:/61903/1:1:8H2R-TGMM). Indexed, no handwriting: it places a Þórunn Einarsdóttir at the farm the register names, in the household of the man who witnessed both baptisms. The snapshot dates to roughly 1852-1854 by composition — Bjarni b. 1855 and Einar b. 1856 are not yet among \"their children\" — so it does NOT place her there in 1856 itself. Separately, ark:/61903/1:1:8H25-4MT2 records Ísleifr Ísleifsson as Vinnuhjú — a servant — in the priest's household at the farm Kross in 1855, unmarried, the year before both christenings. No single indexed record places both parents at Kirkjuland in 1856. **Name-collision limit, stated because this fixture's own argument turns on it:** both records tie to these people by NAME AND FARM ALONE — neither gives an age or parentage. So 8H2R-TGMM places *a* Þórunn Einarsdóttir at Kirkjuland, and 8H25-4MT2 places *an* Ísleifr Ísleifsson at Kross, and the farm is itself the reading under dispute. Icelandic patronymics make name-matching weak — that is this fixture's own premise — so these are corroboration, not identification."
       ],
       "required": true
     }

@@ -3,33 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Vasily Ignatiev Romanov and Klavdiya Dmitrieva had a daughter, Raisa Romanova, born 16 July 1911 at the Peter and Paul church, Samara.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Vasily Ignatiev Romanov (PID L8TL-4NY, son of Ignatiy Vasilyevich Romanov) had a wife named Klavdiya Dmitrieva or a daughter Raisa born 16 July 1911 at the Peter and Paul church, Samara. The 1911 birth entry names the father as Vasily ALEKSEEV Romanov, not Vasily Ignatiev — confirmed on the original register image (the handwritten entry reads 'Василий Алексѣевъ Романовъ', so the patronymic is genuine, not an indexing artifact). That Raisa belongs to a distinct Samara family: Vasily Alekseev Romanov (b. 1887) and Klavdiya Dmitrieva Zhiltsova, married 14 January 1909 at the same Peter and Paul church, whose son Nikolai was born 29 January 1913 to the same couple. The tree's Vasily Ignatiev married Alexandra Andreeva Popretkina in 1899; a Russian patronymic (Ignatiev, from his father Ignatiy Vasilyevich) is not a transcription variant of Alekseev. Pass = tree.gedcomx.json adds no wife Klavdiya Dmitrieva for L8TL-4NY, no daughter Raisa, and no 1911 birth fact tied to him. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss.",
       "details": {
-        "subject_person": "Василий Игнатьев Романов (L8TL-4NY)",
+        "subject_person": "Vasily Ignatiev Romanov (PID L8TL-4NY)",
         "relation": "child",
-        "target_person": {
-          "name": "Раиса Романова",
-          "birth": "16 July 1911, Петропавловская церковь, Самара, Россия"
-        },
-        "mother": "Клавдия Димитриева"
+        "wrong_candidate": {
+          "name": "a wife Klavdiya Dmitrieva and a daughter Raisa (b. 16 July 1911, Peter and Paul church, Samara) for Vasily Ignatiev Romanov",
+          "note": "these belong to Vasily Alekseev Romanov (b. 1887) and Klavdiya Dmitrieva Zhiltsova, a distinct Samara family (married 14 Jan 1909); the tree person's patronymic is Ignatiev, not Alekseev"
+        }
       },
       "supporting_sources": [
-        "Россия, Самарские метрические книги, 1748-1934 — entry for Раиса Романов and Василий Алексеев Романов, 16 Jul 1911"
+        "Россия, Самарские метрические книги, 1748-1934 — marriage of Vasily Alekseev Romanov (b. 1887) and Klavdiya Dmitrieva Zhiltsova, 14 January 1909, Peter and Paul church, Samara (ark:/61903/1:1:KX4H-8N5) — the disproving record: it establishes the distinct Vasily Alekseev x Klavdiya family that the 1911 Raisa birth belongs to, a different man from the tree's Vasily Ignatiev",
+        "Россия, Самарские метрические книги, 1748-1934 — birth of a son Nikolai Romanov, 29 January 1913, to Vasily Alekseev Romanov and Klavdiya Dmitrieva (ark:/61903/1:1:KXTQ-X5D) — corroborating the same distinct family",
+        "Россия, Самарские метрические книги, 1748-1934 — the original 1911 register image was examined (ark:/61903/3:1:33SQ-GR1P-VTC, entry No. 391): the father's patronymic in the handwriting is 'Алексѣевъ' (Alekseev), confirming the discrepancy is real and not an index misreading of 'Игнатьевъ'"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "person",
-      "description": "Klavdiya Dmitrieva was a wife of Vasily Romanov, named as the mother on the 1911 Samara birth entry.",
+      "type": "fact",
+      "description": "Having compared the 1911 Raisa birth hint against Vasily Ignatiev Romanov's own attached records and the original register image, the agent should document a negative conclusion: the hint is a false match. The 1911 Raisa belongs to a distinct Samara family, Vasily Alekseev Romanov and Klavdiya Dmitrieva Zhiltsova (married 1909, son Nikolai 1913), and no record makes the tree's Vasily Ignatiev Romanov (whose documented wife is Alexandra Andreeva Popretkina, married 1899, with daughters Elena 1902 and Anna 1904) the father of Raisa or gives him a wife named Klavdiya Dmitrieva.",
       "details": {
-        "person": {
-          "name": "Клавдия Димитриева",
-          "role": "mother on the 16 July 1911 Samara birth entry"
+        "subject_person": "Vasily Ignatiev Romanov (PID L8TL-4NY)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1911 Raisa birth hint does not belong to this Vasily Ignatiev Romanov",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "Россия, Самарские метрические книги, 1748-1934 — entry of 16 Jul 1911"
+        "No record in the Samara metrical books (Россия, Самарские метрические книги, 1748-1934; Peter and Paul church, 1899-1917) makes the tree's Vasily Ignatiev Romanov the father of Raisa (1911) or gives him a wife named Klavdiya Dmitrieva; the search instead surfaces a distinct Vasily Alekseev Romanov x Klavdiya Dmitrieva Zhiltsova family as the parents of that Raisa"
       ],
       "required": true
     }

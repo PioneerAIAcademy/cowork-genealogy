@@ -30,9 +30,9 @@ class Settings(BaseSettings):
     # objective runs step by step with no click. Both reach the runner as
     # AUTO_CONTINUE / AUTO_CONTINUE_MAX_STEPS in the sandbox env. The budget
     # bounds one unattended chain (consecutive auto turns since the last real
-    # user message), not the session. The public /v1 API opts out per frame
-    # regardless of this setting. Per-session on/off lands with the
-    # experience-level user setting (PR #2649).
+    # user message), not the session. A frame may opt out with
+    # `auto_continue: false` regardless of this setting. Per-session on/off lands
+    # with the experience-level user setting (PR #2649).
     auto_continue: bool = True
     auto_continue_max_steps: int = 30
     # research-as-a-job 1d: the SDK Stop hook's veto cap per turn in the sandbox, which is
@@ -124,38 +124,6 @@ class Settings(BaseSettings):
     # Public base URL (Tailscale Funnel in prod) for OAuth redirects.
     public_url: str = "http://localhost:8000"
 
-    # ── Public /v1 REST API (bearer keys for an external chatbot team) ───
-    # Comma-separated `key:email` pairs. Operator-granted: presence here IS the
-    # grant (NOT subject to the Gmail allowlist — see auth.get_api_client). Each
-    # key maps to the same User row its email would create on the browser path,
-    # so ownership (_owned) isolates one client's sessions from another's. Give
-    # each distinct client a distinct email; two keys sharing an email share a
-    # User (and therefore its sessions).
-    api_keys: str = ""
-    # Sync turn cap. A turn that runs longer ends in 504 turn_timeout. Streaming
-    # (stream:true) has no cap on DURATION — that is the point of it, and a total
-    # cap there would truncate the long tool-running turns callers are steered to
-    # it for. What streaming is capped on is SILENCE: see v1_stream_idle_seconds.
-    v1_turn_timeout_seconds: int = 120
-    # Streaming idle cap. Bounds how long a stream turn may go without a single
-    # frame from the sandbox that is not the Hub's heartbeat, after which the SSE
-    # stream ends with an `error` event and a terminal `done` carrying
-    # finish_reason "error". Before this existed, `_handle_stream` had no bound of
-    # any kind and a turn whose agent went silent held the connection open
-    # indefinitely.
-    #
-    # ON SILENCE, NOT DURATION, and the distinction is what makes it safe: a real
-    # turn is silent of PUBLIC events (text/tool) for minutes while a subagent
-    # works, so a cap measured on those would fire on a healthy turn. It is also
-    # why the clock cannot simply be reset by any frame — the Hub broadcasts
-    # {"type":"ping"} to every client every WS_HEARTBEAT_INTERVAL seconds, so a
-    # naive idle clock is reset forever whether the agent is working or dead.
-    v1_stream_idle_seconds: int = 300
-    # Staleness TTL for the per-session turn lock (Project.turn_locked_at). A lock
-    # older than this is reclaimed by the next caller, so a crashed/killed instance
-    # can't wedge a session forever. Must exceed the longest expected turn.
-    v1_turn_lock_stale_seconds: int = 600
-
     # ── Storage ──────────────────────────────────────────────────
     # LocalProvider per-session sandbox dirs + the SQLite DB live here.
     # (Feedback goes to Google Drive; no other local-disk writes.)
@@ -177,20 +145,6 @@ class Settings(BaseSettings):
     @property
     def allowlist(self) -> set[str]:
         return {e.strip().lower() for e in self.allowed_emails.split(",") if e.strip()}
-
-    @property
-    def api_key_map(self) -> dict[str, str]:
-        """Parse `api_keys` into {key: email}. Malformed pairs are skipped."""
-        out: dict[str, str] = {}
-        for pair in self.api_keys.split(","):
-            pair = pair.strip()
-            if not pair or ":" not in pair:
-                continue
-            key, email = pair.split(":", 1)
-            key, email = key.strip(), email.strip().lower()
-            if key and email:
-                out[key] = email
-        return out
 
     @property
     def familysearch_client_id(self) -> str | None:

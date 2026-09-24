@@ -49,10 +49,10 @@ class AutoContinue:
 
     `max_steps` bounds ONE unattended chain — consecutive auto turns since the
     last real user message — not the session: the counter resets on every
-    `user_msg`. A `user_msg` may also carry `"auto_continue": false`, which the
-    public /v1 API sends on every turn: its callers read the first `turn_done`
-    as their reply, so a `Yes.` turn started behind it would be handed to them
-    as the answer to their next message.
+    `user_msg`. A `user_msg` may also carry `"auto_continue": false`, which opts
+    its whole chain out: a caller that reads the first `turn_done` as its reply
+    would otherwise be handed a `Yes.` turn started behind it as the answer to
+    its next message.
     """
     enabled: bool = True
     max_steps: int = 30
@@ -140,11 +140,6 @@ async def serve(
     sent while busy met the same fate. One tester hit it four times in 38 minutes
     and the agent concluded their screen was broken.
 
-    Queueing is also what `docs/specs/public-rest-api-spec.md` already claimed
-    was happening ("it won't read the next `user_msg` until the current turn
-    emits `turn_done`"), so this makes the code match a contract other reasoning
-    on that page already rests on.
-
     An interrupt CLEARS the backlog. Stop means stop: a person who queued two
     messages and then pressed Stop does not want the second one to start on its
     own a moment later.
@@ -195,28 +190,24 @@ async def serve(
         last_text = None
         # EVERY turn announces itself, queued or not.
         #
-        # Without this, the only frames a turn produces are the agent's own plus
-        # the terminal `turn_done`, so before a turn's first frame there is a
-        # silence the length of a full SDK round trip. Two things read that
-        # silence as "idle":
-        #   * `_drain_replay` (app/v1.py) returns after _DRAIN_IDLE of quiet, so
-        #     a caller could send inside the gap and then read the RUNNING
-        #     turn's `turn_done` as its own reply.
-        #   * `sandbox_server` clears `_turn_active` on every `turn_done`, so
-        #     the UI went idle while messages were still queued - and the
-        #     client's busy gate is what is supposed to stop a backlog forming.
+        # What needs it is the QUEUED turn. `Hub` sets `_turn_active` on the
+        # incoming `user_msg`, but clears it on every `turn_done` - and
+        # `turn_done` fires once per TURN, not once per backlog. Without a
+        # `turn_start` for the next queued turn the gate therefore drops to idle
+        # while messages are still waiting, which is the backlog it exists to
+        # stop; the `turn_start` arm in `sandbox_server` re-arms the flag and
+        # broadcasts `status: turn_active`.
         #
-        # This fired only for QUEUED turns at first, on the reasoning that a
-        # first turn's sender already knows it started. That reasoning is about
-        # the SENDER and the consumer that matters is the DRAIN: a sync
-        # `POST /messages` starts an UNqueued turn, so on its 504 retry there was
-        # no `turn_start`, `in_flight` stayed 0, and the drain returned inside
-        # the running turn. A first turn is quiet for a full SDK round trip
-        # before its first token, so the window is seconds wide, not a race.
-        # `queued` stays on the frame for an EXTERNAL client of the public REST
-        # API -- nothing in this repo reads it. The web client cannot: ChatPane
-        # returns early on turn_start and acts on the `status: turn_active`
-        # frame sandbox_server converts this into.
+        # It fires for UNqueued turns too, and that arm no longer has a reader:
+        # its consumer was the public REST API's replay drain, removed with
+        # `/v1`, and `Hub` has already set `_turn_active` from the `user_msg` by
+        # the time this runs. It stays unconditional so the queued case cannot
+        # regress by someone re-splitting the two, and `test_runner_turn_queue`
+        # pins it.
+        #
+        # `queued` distinguishes the two kinds - nothing in this repo reads it.
+        # The web client cannot: ChatPane returns early on `turn_start` and acts
+        # on the `status: turn_active` frame sandbox_server converts this into.
         emit({"kind": "turn_start", "queued": queued})
         turn_task = asyncio.create_task(_run_turn(agent, text, _observe))
         # Wakes this loop when the turn ends, which is what lets a queued message

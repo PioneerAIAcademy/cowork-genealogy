@@ -350,16 +350,6 @@ that matters here: a redelivered message carries the same `turn_id`, and that cl
 be granted immediately — that *is* the resume path, and refusing it stalls every
 kill-resume iteration at D14 and D17.
 
-**~~The shipped `/v1` lock has a real defect~~ — MOOT, and do not fix it.** It claims a
-bare timestamp with no turn identity inside `POST /sessions/{id}/messages`, with a 600 s
-stale TTL and **no heartbeat anywhere**, against an immovable 1800 s step ceiling and a
-measured p99 segment of 1488 s — so a healthy long turn has its lock reclaimed while it is
-still running. **`/v1` is being removed from the repo** (lead, 2026-09-21): the team it was
-built for never used it and will use the prototype instead, so the defect goes with it.
-`research-as-a-job.md` deleted the phase item that fixed this, and says in as many words
-to disregard this entry — it is left standing only so a reader who arrives here from an
-older link is not sent to build it. Do not file the `nothing-checks` issue.
-
 **Everything else about locking is deferred to R8, deliberately.** An earlier draft
 specified a full protocol here — `claim_epoch` fencing, epoch-conditioned release,
 completion-record-before-claim, a 409 refusal arm and four named residuals. That protocol

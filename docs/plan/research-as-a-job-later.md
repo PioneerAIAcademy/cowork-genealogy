@@ -131,4 +131,4 @@ keep the per-literal assertion inside the loop.
 | issue #1998 | Merge with S5, or sequence it. The plan-item progress bar answers a silent extraction batch |
 | issue #2660 | Its closure cited the Continue button, which phase 2 deletes. Comment when it lands |
 | PR #2695 | Its mechanism is this design's mechanism. Its two D18 findings are phase 0 |
-| **new** | File emission — nothing on any plane can prove a paragraph reached the reader. (The `/v1` lock is moot: `/v1` is being removed.) |
+| **new** | File emission — nothing on any plane can prove a paragraph reached the reader. (The `/v1` lock is moot: `/v1` was removed.) |

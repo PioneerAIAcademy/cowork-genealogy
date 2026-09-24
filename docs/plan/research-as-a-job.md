@@ -100,16 +100,9 @@ Under one turn per step these were rare. Under continuous turns they are on ever
 **Nothing else here can be trusted until 0a lands.**
 
 An earlier draft carried a third item here, fixing the `/v1` lock's missing turn identity and
-heartbeat. **`/v1` is being removed from the repo** (lead, 2026-09-21) — the team it was built
-for never used it and will use the prototype instead — so that defect disappears with it. Do
-not re-add it, and disregard the `/v1` lock entry in the prototype plan's residual-risk
-register.
-
-**That removal is coming while you work, and it lands in a tree you are editing.**
-`apps/server/app/agent/runner.py` carries `/v1`'s behaviour — `AutoContinue` honours the
-`"auto_continue": false` that `/v1` sends — and 1d edits the alpha's agent code beside it, so
-expect a conflict there rather than being surprised by one. The lead owns the removal; check
-with him before you start 1d so you are not both in that file on the same day.
+heartbeat. **`/v1` was removed from the repo** (lead, 2026-09-21) — the team it was built
+for never used it and will use the prototype instead — so that defect went with it, as did
+the `/v1` lock entry in the prototype plan's residual-risk register. Do not re-add it.
 
 ### 0a. A resumed attempt that runs zero model turns is a failure, not a completion
 
@@ -475,7 +468,7 @@ on an already-resolved question. Raise it; do not invent a mechanism.
 | S2 before 1a | Ruled 2026-09-21. Do not unblock by prefixing the flag from the web tier |
 | Eval-slot collisions | Avoid where visible, accept occasionally. Do not block on an empty queue |
 | A spend bound | $35 per session, ruled 2026-09-21. No in-session grant flow |
-| `/v1` | Being removed from the repo. Not in scope, do not fix its lock |
+| `/v1` | Removed from the repo. Not in scope, do not fix its lock |
 
 ## What would show phases 0 and 1 worked
 
