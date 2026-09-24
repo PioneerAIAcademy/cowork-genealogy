@@ -428,6 +428,15 @@ Scope and record-keeping:
   otherwise miss. `fact` stays excluded from the *derivation* on its own
   2026-08-10 measurement, but the drift check still reports its disagreements.
   Whoever proposes widening the derivation again is standing here.
+- **Re-typing a `fact` finding to `relationship`, so the derivation and the
+  relationship rules cover it, is rejected too.** It is the obvious way to
+  bring a marriage-with-date finding under the backstop, and it would reach a
+  real population — but the type lives in
+  `expected-findings.json`, so changing it changes that fixture's
+  `findings_hash`, which the calibration loader treats as a hard error on
+  every annotation for the slug. That buys a re-grade of every graded run
+  across those fixtures, to relocate a grading rule that can instead be
+  stated once in the judge prompt. The date rule in §7.1 is that rule.
 - What was overridden is recorded under
   `judge_output.component_derivation.overrides` (each with `finding_id`,
   the model's `model` label and the `derived` one), the model's original
@@ -1122,6 +1131,37 @@ The judge grades **two axes**:
   for "Robert Smith" rather than matching a hinted one). Recall is
   graded **from the tree only**: a finding that appears only in
   `proof_summaries` and not in the tree does not count.
+
+  **Dates and places are graded by denotation, not by overlap.** Formatting tolerance
+  covers different spellings of the same value (`~1820`, `abt. 1820`,
+  `approximately 1820`); it does not cover a difference in precision or
+  qualification. A tree date is `supported` only when it denotes the claimed
+  date: a bounded or qualified date that merely *contains* the claim is
+  `unsupported`, however tightly, including a range whose endpoint equals the
+  claim. A tree date more precise than the claim and consistent with it
+  (claim `1912`, tree `13 January 1912`) is `supported`. Where the finding
+  itself states an approximate or bounded date, an equivalent approximation
+  in the tree is `supported`. The same rule governs places: a broader
+  jurisdiction that merely contains the claim — `Zulia, Venezuela` against a
+  claimed `Maracaibo, Zulia, Venezuela` — is `unsupported`, and a more
+  specific place consistent with the claim is `supported`. A renamed place at
+  the same level is the same place: a tree carrying the modern
+  `Salt Lake, Salt Lake, Utah` denotes a claimed
+  `Great Salt Lake, Great Salt Lake, Utah Territory` and is `supported`.
+
+  The rule is general, and the prompt states it once for every finding type.
+  It matters most on `fact` findings, which the component derivation (§3.4.2)
+  does not cover: there the judge's own `matched` is final, so the prompt also
+  gives `fact` findings their rollup — every component scores, tagged
+  `kind: "link"`, then any component contradicted makes the finding `"false"`,
+  none supported `"false"`, some supported and some unsupported `"partial"`,
+  all supported `"true"`. That is the same arithmetic the relationship table
+  applies to `link` components; on a `fact` finding there is no `detail` tier
+  to exclude. The rollup is scoped to non-`avoid` findings, as the derivation
+  is (§3.4.2): on an `avoid` finding `matched: "true"` means correctly avoided
+  (§3.4.1), which no component tally expresses.
+  A bounded tree date reading as `supported` is how a run whose agent reached
+  the opposite conclusion from the fixture came back `pass`.
 - **Proof quality (advisory).** Grade the soundness of the agent's
   written proof statement (`proof_summaries`) for the question:
   exhaustiveness of search, conflict resolution, independent
