@@ -2,22 +2,22 @@
   "test": {
     "id": "ut_research_005",
     "skill": "research",
-    "name": "A plain research request proceeds without pausing",
+    "name": "Autonomous mode flag triggers research",
     "type": "positive",
-    "description": "Continuous work is unconditional since research-as-a-job S2: the --autonomous flag that used to gate it is gone from every body. What it gated is now the default, so this grades the ordinary request. Keeping the flag in the message would grade a trigger no body declares any more.",
+    "description": "`--autonomous` is still an explicit TRIGGER in the skill description, and the paid e2e orchestrator sends it on every run (`orchestrator.py`: `/research --autonomous <question>`). research-as-a-job S2 removed what the flag GATED -- continuous work is now unconditional -- not the trigger itself. So this still grades the routing, and the behaviour it expects is now the default rather than a mode.",
     "tags": [
       "core-trigger",
-      "grade:trigger",
-      "continuous-work"
+      "autonomous",
+      "grade:trigger"
     ]
   },
   "input": {
-    "user_message": "Research Patrick Flynn's parentage",
+    "user_message": "Research Patrick Flynn's parentage --autonomous",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
-    "The research orchestrator triggers on an ordinary research request; there is no mode flag",
-    "Should proceed without pausing for clarifying questions — continuous work is the default, and stopping to ask is a stall"
+    "`--autonomous` is a listed trigger for the research orchestrator and still routes here",
+    "Should proceed without pausing for clarifying questions. Since S2 that is the default for every research request, not a mode the flag switches on — so a reply that stops to ask is a stall whether or not the flag is present"
   ],
   "execution": {
     "max_turns": 30,

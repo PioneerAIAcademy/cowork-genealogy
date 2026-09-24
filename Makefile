@@ -577,8 +577,9 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # (research-as-a-job 0b; "the step ceiling: 1,800 s, no test exception"). The export stays
 # because the next line sizes --deadline-s off the name and POSIX arithmetic reads an
 # unset name as 0 -- deleting it gives a 300 s deadline on an hour-long billed run.
-# The deadline spans SIX attempts, not one resume: measured over the 134 committed e2e
-# runs that reached `completed`, the median is 53.5 min and 32% exceed 2 * 1800 + 300,
+# The deadline spans SIX attempts, not one resume: re-measured 2026-09-23 over the 139
+# committed e2e runs that reached `completed`, the median is 53.6 min and 33% exceed
+# 2 * 1800 + 300,
 # which demo.py turns into a hard TimeoutError and a FAIL; the longest in the corpus
 # needed six. elasticmq's visibility timeout (2100 s) must stay above this export, or an
 # attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
