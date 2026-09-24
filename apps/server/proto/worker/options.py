@@ -86,6 +86,25 @@ BLOCKED_DENY_REASON = (
 )
 
 
+# The harness's LIVE_TREE_ARG_TOOLS, held equal to it by an AST read in
+# tests/test_proto_worker.py: tools that read the live tree only when the named argument
+# is truthy (`person_warnings` with `live: true` returns the subject's relatives' names
+# and PIDs), so the bare name cannot decide them. Denied whenever BLOCKED_TOOLS is on.
+LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+
+
+def is_blocked_call(tool_name: str, tool_input: Mapping[str, Any], blocked: frozenset[str]) -> bool:
+    """Whether the tree-read block denies this call: an MCP tool named in ``blocked``,
+    or, while the block is on, a LIVE_TREE_ARG_TOOLS call with its argument truthy."""
+    if not blocked or not tool_name.startswith("mcp__"):
+        return False
+    bare = bare_tool_name(tool_name)
+    if bare in blocked:
+        return True
+    arg = LIVE_TREE_ARG_TOOLS.get(bare)
+    return arg is not None and bool(tool_input.get(arg))
+
+
 def bare_tool_name(tool_name: str) -> str:
     """``mcp__<server>__<name>`` -> ``<name>``, whatever the server spelling; a built-in
     tool's name is returned as is."""
@@ -137,9 +156,10 @@ def tool_server_env(
 
 def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
     """The patron's FamilySearch token for this turn: the message's; else the file
-    ``FS_ACCESS_TOKEN_FILE`` names, read now -- per turn -- so the operator can refresh
-    it under a running worker (FamilySearch access tokens live an hour; proto/env.sh
-    writes it); else the worker env's ``FS_ACCESS_TOKEN``; else empty."""
+    ``FS_ACCESS_TOKEN_FILE`` names, read now -- per attempt -- so the operator can refresh
+    it between turns (proto/env.sh writes it; never refresh while a turn is in flight,
+    since a FamilySearch refresh revokes the previous access token); else the worker
+    env's ``FS_ACCESS_TOKEN``; else empty."""
     if fs_access_token is not None:
         return fs_access_token or ""
     path = worker_env.get("FS_ACCESS_TOKEN_FILE")
@@ -162,6 +182,13 @@ def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> 
 TOOL_SERVER_DEFAULT = "http"
 TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
+# The http entry's per-server `timeout` (ms). Without it CLI 2.1.220 aborts every
+# non-GET HTTP MCP request at 60 s, where the harness's stdio server is cut only by its
+# 1,800,000 ms idle limit (the engine sends no progress notifications, so idle is the
+# whole call). One value sets the http request, hard and idle limits alike, so this
+# gives the prototype the harness's ceiling: 121 harness calls ran past 60 s, the
+# longest 844 s (`image_transcribe`), six of them `research_append`.
+MCP_HTTP_TIMEOUT_MS = 1_800_000
 
 
 def tool_server_headers(
@@ -200,6 +227,7 @@ def tool_server_entry(
             "type": "http",
             "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
             "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
+            "timeout": MCP_HTTP_TIMEOUT_MS,
         }
     if mode != "stdio":
         raise ValueError(f"TOOL_SERVER must be stdio or http, not {mode!r}")
@@ -250,6 +278,24 @@ def _deny(reason: str) -> dict[str, Any]:
     }
 
 
+# Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
+# the main thread's ResultMessage and closes the CLI, so a background agent still running
+# then dies with it -- measured 2026-09-23 (plan D17: both background extractors lost, the
+# patron told their summaries would follow). Forcing the foreground keeps parallelism: several
+# Agent calls in one message still run concurrently. Lead ruling 2026-09-23.
+DELEGATION_TOOLS = frozenset({"Agent", "Task"})
+
+
+def _foregrounded(tool_input: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "updatedInput": {**tool_input, "run_in_background": False},
+        },
+    }
+
+
 def make_pretool_hook(
     *,
     turn_id: str,
@@ -274,7 +320,7 @@ def make_pretool_hook(
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
-            elif tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked:
+            elif is_blocked_call(tool_name, tool_input, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
                 root = config_root() if callable(config_root) else config_root
@@ -304,6 +350,10 @@ def make_pretool_hook(
             if log is not None:
                 log(ev="deny", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id, reason=reason)
             return _deny(reason or "denied")
+        if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is True:
+            if log is not None:
+                log(ev="foregrounded", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id)
+            return _foregrounded(tool_input)
         return {}
 
     return _pretool
