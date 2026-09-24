@@ -207,8 +207,8 @@ UI check side (TypeScript) — they must agree byte-for-byte.
 Rules:
 - **JSON files** (`.json`): parse → re-emit with sorted object keys,
   `indent=2`, trailing newline. Skip cosmetic-only fields in test JSONs
-  (`name`, `description`, `tags`) so they don't trigger active-state
-  drift.
+  (`name`, `description`) so they don't trigger active-state
+  drift. (`tags` is **not** cosmetic — it selects validators; issue #2694.)
 - **Text files** (`.md`, `.txt`, `.yaml`, `.yml`, `.py`, etc.):
   CRLF → LF, ensure trailing newline, no other changes.
 - **Anything else**: exact bytes (no normalization).

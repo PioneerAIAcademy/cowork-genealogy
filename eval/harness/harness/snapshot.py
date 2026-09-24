@@ -51,7 +51,10 @@ _HASH_RE = re.compile(r"^[a-f0-9]{64}$")
 # suppresses a failing test, so changing it changes grading, and a skill whose
 # marker moved owes a re-run. Only the marker's PROSE (`xfail_reason`) is a
 # candidate for this tuple; that is a separate card.
-_COSMETIC_TEST_FIELDS = ("name", "description", "tags")
+# `tags` was removed from this tuple for the same reason (issue #2694): it
+# selects validators and changes outcome computation, so it is grading input,
+# not decoration.
+_COSMETIC_TEST_FIELDS = ("name", "description")
 _JSON_EXTS = {".json"}
 _TEXT_EXTS = {
     ".md",
@@ -76,7 +79,7 @@ def normalize(repo_relative_path: str, content: bytes) -> str:
     Rules:
       - `.json`: parse and re-emit with `sort_keys=True, indent=2`, trailing
         newline. Test JSONs (under `eval/tests/unit/`) also strip the
-        cosmetic top-level `test.{name,description,tags}` fields so typo
+        cosmetic top-level `test.{name,description}` fields so typo
         fixes there don't invalidate the active-state check.
       - Text-ish extensions: CRLF -> LF, ensure trailing newline.
       - Other extensions: best-effort UTF-8 decode; falls back to hex.
