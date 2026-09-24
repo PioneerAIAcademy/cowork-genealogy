@@ -79,12 +79,25 @@ independently evidenced.
 against live FamilySearch via `packages/engine/mcp-server/dev/try-*.ts`. The
 identity judgement is the genealogist's.
 
-**The register image was not read.** `ark:/61903/3:1:3Q9M-CSXW-Q7WJ-W` returns
-**403** through both `image_read` and `image_transcribe` (the FamilySearch
-token was otherwise valid — `record_read` succeeded on it throughout). So the
-godparent check the draft recommended, which would have placed the child in the
-right branch directly, was not performed, **and this call rests on index
-evidence alone.** The 403 was not reproduced in a signed-in browser on
-familysearch.org, so it is not established whether the register is
-affiliate-restricted or our image path is at fault; these are materially
-different findings and a reviewer with browser access should settle it.
+**The register image cannot be read — by anyone, not only by our tools.**
+`ark:/61903/3:1:3Q9M-CSXW-Q7WJ-W` returns **403** through both `image_read`
+and `image_transcribe` (the FamilySearch token was otherwise valid —
+`record_read` succeeded on it throughout). A signed-in browser session on
+familysearch.org was then checked directly (2026-09-24) and returns:
+
+> **Image Restricted**
+> Image access is typically determined by local laws or the custodian who has
+> the original document.
+
+So this is a **custodian restriction on the Zürich register, not a defect in
+our image path** — the engine already treats a 403 as a rights-restricted
+image and deliberately withholds the malformed-ark guidance it gives for
+400/404, because re-fetching returns the same ark (issue #2392, shipped).
+
+The consequence for this fixture: the godparent check the draft recommended —
+which would have placed the child in the right branch directly — is
+**unavailable to any researcher without on-site or affiliate access**, not
+merely unavailable to the tooling. **This call therefore rests on index
+evidence alone, and no amount of retrying will change that.** A reviewer
+should weigh the conclusion on that basis rather than expect the image to
+settle it.
