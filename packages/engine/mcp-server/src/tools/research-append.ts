@@ -2985,11 +2985,11 @@ function applyOne(
     // inline non-empty `items` as one of two satisfying shapes "both already in
     // use", so this is a documented route, not a corner.
     //
-    // Measured at 937f6a6bb: of 367 tracked `plans` append ops, 356 omit
-    // `items`, 6 carry non-empty inline `items` and 5 send `[]`; all 6 carry
-    // only `planned` items, and 0 `plans` update ops write `items` at all. So
-    // this arm refuses nothing the corpus contains — it closes the bypass
-    // before a call takes it, rather than after.
+    // Measured at 4791ea9cb: of 376 tracked `plans` append ops, 363 omit
+    // `items`, 8 carry non-empty inline `items` and 5 send `[]`; 6 of the 8
+    // carry only `planned` items, and the other 2 carry a `completed` item on
+    // calls already refused for other reasons. 0 `plans` update ops write
+    // `items` at all. So this arm changes no outcome the corpus contains.
     //
     // Gated on the ops that can SET an item's status, the same discipline as
     // every arm around it: an unrelated update to a plan whose items were
