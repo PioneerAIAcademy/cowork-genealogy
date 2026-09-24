@@ -182,4 +182,34 @@ describe("questionStates", () => {
     expect(questionStates({})).toEqual([]);
     expect(questionStates(null)).toEqual([]);
   });
+
+  // storedStatus (#2108 / #2031). `state` is DERIVED from the documents,
+  // `storedStatus` is REPORTED from the question. The pair disagreeing is the
+  // case the field exists for, so the first test is the one that matters.
+  it("storedStatus reports questions[].status even when state disagrees with it", () => {
+    const d = doc({ proof_summaries: [{ id: "ps_001", question_id: Q }] });
+    const s = questionStatus(d, question({ status: "in_progress" }));
+    // Derived from the summary...
+    expect(s.state).toBe("concluded");
+    // ...while the question itself still says otherwise. Both are correct.
+    expect(s.storedStatus).toBe("in_progress");
+  });
+
+  it("storedStatus is null when the question carries no status key", () => {
+    // A literal, NOT the `question()` helper: the helper always sets
+    // `status: "open"`, and spreading `{ status: undefined }` over it leaves the
+    // key present, which is the not-a-string case below rather than this one.
+    expect(questionStatus(doc(), { id: Q }).storedStatus).toBeNull();
+  });
+
+  it("storedStatus is null when status is present but not a string", () => {
+    expect(questionStatus(doc(), question({ status: 42 })).storedStatus).toBeNull();
+    expect(questionStatus(doc(), question({ status: {} })).storedStatus).toBeNull();
+    expect(questionStatus(doc(), question({ status: null })).storedStatus).toBeNull();
+  });
+
+  it("storedStatus is present on a resolved question, not only open ones", () => {
+    const s = questionStatus(doc(), question({ status: "resolved" }));
+    expect(s.storedStatus).toBe("resolved");
+  });
 });
