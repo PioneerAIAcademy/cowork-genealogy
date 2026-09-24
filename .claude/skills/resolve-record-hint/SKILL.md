@@ -62,8 +62,8 @@ the hint record's or any other, by `image_transcribe`,
 reading is checked first: read two other entries on the same page that the
 FamilySearch index already holds and compare child, father, mother and date.
 Both match: the reading is licensed for those fields. Either differs: discard
-everything that transcription read from the page. No indexed entries
-on the page: the reading is unlicensed, and the README says so. The check never
+everything that transcription read from the page. Fewer than two other
+indexed entries on the page: the reading is unlicensed, and the README says so. The check never
 licenses a farm, residence or occupation; those need a separate indexed source
 such as a church-census household. A higher-resolution image does not rescue a
 reading that failed the check. The README names the two entries checked and the

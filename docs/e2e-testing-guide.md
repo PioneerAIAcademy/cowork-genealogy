@@ -197,12 +197,12 @@ this research, not only the hint record's, and any reader: `image_transcribe`,
 2. **Both match:** the reading is licensed for those fields. **Either one
    differs:** discard everything that transcription read from the page. Don't
    correct it and carry on.
-3. **The page has no indexed entries:** the reading is unlicensed. Say so in
-   the README, and don't fall back to trusting it.
-4. **Farm, residence and occupation are not covered.** The index has no farm
-   column, so a passing check does not license those words. Confirm them from a
-   separate indexed source, such as a church-census household placing that
-   person on that farm.
+3. **The page has fewer than two other indexed entries:** the reading is
+   unlicensed. Say so in the README, and don't fall back to trusting it.
+4. **Farm, residence and occupation are not covered.** A passing check does not
+   license those words; the index usually has no farm column to check them
+   against. Confirm them from a separate indexed source, such as a
+   church-census household placing that person on that farm.
 5. **A sharper image is not the fix.** On issue #2308 a full-resolution scan of
    one page still gave different wrong answers.
 
