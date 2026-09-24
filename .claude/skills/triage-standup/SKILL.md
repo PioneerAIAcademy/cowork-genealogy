@@ -337,7 +337,8 @@ gh issue create --label developer|genealogist [--label icebox] \
 
 **Never `--label high-priority`.** It is Ready-only, applied and removed by
 `/fill-ready` from criteria it re-derives each run. A row the lead calls urgent
-files without it and says so in the body.
+files without it and says so in the body; only the lead writes the `lead:` line
+that makes a card rank first.
 
 **A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
 

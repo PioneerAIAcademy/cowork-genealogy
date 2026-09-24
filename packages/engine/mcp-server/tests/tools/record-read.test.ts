@@ -561,3 +561,54 @@ describe("#2367 resolveCoveragePlaces", () => {
     expect(sd?.coverage?.standard_place).toBeUndefined();
   });
 });
+
+describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-stage-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("stages the live record when projectPath is given, and record_read reads it back from the sidecar", async () => {
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "ark:/61903/1:1:QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.staged).not.toBeNull();
+    expect(live.staged!.returnedCount).toBe(1);
+    expect(live.stagingError).toBeUndefined();
+
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(await readFile(join(dir, live.staged!.resultsRef), "utf8"));
+    expect(envelope.tool).toBe("record_read");
+    expect(envelope.returned_count).toBe(1);
+    expect(envelope.payload.query).toEqual({ recordId: "ark:/61903/1:1:QVS9-DHDB" });
+    expect(envelope.payload.results[0].recordId).toBe("QVS9-DHDB");
+    expect(envelope.payload.results[0].gedcomx.persons?.[0]?.id).toBe("QVS9-DHDB");
+
+    // Sidecar mode finds it by the same id, with no second fetch.
+    const again = await recordReadTool(
+      { recordId: "QVS9-DHDB", resultsRef: live.staged!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(again.persons?.[0]?.id).toBe("QVS9-DHDB");
+    expect(again.staged).toBeUndefined(); // a sidecar read stages nothing
+  });
+
+  it("does not stage without projectPath", async () => {
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
+    expect("staged" in live).toBe(false);
+  });
+
+  it("a staging failure is non-fatal: the record still returns, with staged: null and the reason", async () => {
+    const { writeFile } = await import("fs/promises");
+    await writeFile(join(dir, "results"), "not a directory");
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.persons?.[0]?.id).toBe("QVS9-DHDB");
+    expect(live.staged).toBeNull();
+    expect(live.stagingError).toMatch(/ENOTDIR|not a directory|EEXIST/i);
+  });
+});

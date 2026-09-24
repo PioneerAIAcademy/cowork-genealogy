@@ -1,11 +1,17 @@
 // MCP tool: person_warnings
 // See `docs/specs/person-warnings-tool-spec.md`.
 //
-// Reads tree.gedcomx.json from a project directory and runs deterministic
-// data-quality checks from the point of view of a required anchor person.
-// No network, no auth — operates entirely on local file data.
+// Runs deterministic data-quality checks from the point of view of a required
+// anchor person. Two sources for that person's tree:
+//   - default: tree.gedcomx.json from a project directory. No network, no auth.
+//   - `live: true`: the person and their one-hop relatives fetched from
+//     FamilySearch via `personReadTool`, which authenticates through
+//     `getValidToken`. Opt-in by the flag only, never by omitting projectPath.
+// The checks themselves are identical; only where the tree comes from differs.
 
 import { getProjectStore } from "../store/project-store.js";
+import type { Principal } from "../auth/principal.js";
+import { personReadTool } from "./person-read.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedGedcomX,
@@ -47,6 +53,7 @@ import {
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
+import { preferredName } from "../utils/name-helpers.js";
 import { getSimilarNamePairs } from "../utils/name-pairs.js";
 import {
   getEarliest,
@@ -111,34 +118,49 @@ async function loadAnchor(
 export const personWarningsToolSchema = {
   name: "person_warnings",
   description:
-    "Check a person in tree.gedcomx.json for impossible or unlikely genealogical " +
-    "data (e.g., death before birth, parent too young, event after death). Reads " +
-    "the local project file — no authentication or network access required. " +
-    "personId is the anchor person; warnings are evaluated over that person and " +
-    "their one-hop relatives.",
+    "Check a person for impossible or unlikely genealogical data (e.g., death " +
+    "before birth, parent too young, event after death). Two modes. Default: " +
+    "reads tree.gedcomx.json from the local project — pass projectPath, no " +
+    "authentication or network access required. Live: pass live=true and no " +
+    "projectPath to fetch the person from FamilySearch and run the same checks " +
+    "in memory, for auditing a profile with no local project — this mode does " +
+    "require authentication. personId is the anchor person; warnings are " +
+    "evaluated over that person and their one-hop relatives.",
   inputSchema: {
     type: "object" as const,
     properties: {
       projectPath: {
         type: "string",
         description:
-          "Absolute path to the directory containing tree.gedcomx.json",
+          "Required unless live=true. Absolute path to the directory containing " +
+          "tree.gedcomx.json. Must be omitted when live=true — the two modes read " +
+          "different trees, so passing both is an error rather than a preference.",
       },
       personId: {
         type: "string",
         description:
           "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
       },
+      live: {
+        type: "boolean",
+        description:
+          "Fetch the person from FamilySearch instead of reading a local project, " +
+          "and evaluate the same checks against the fetched tree. Defaults to false. " +
+          "Requires authentication, and omits projectPath. Use when auditing a live " +
+          "profile that has no local project; note it sees parents, spouses and " +
+          "children but not siblings, which the local mode does see.",
+      },
     },
-    required: ["projectPath", "personId"],
+    // projectPath is conditionally required — enforced at runtime, because the
+    // MCP input schema cannot express "required unless another field is set".
+    required: ["personId"],
   },
 } as const;
 
 // Returns the display name for a person:
 // preferred name → first name → "Unknown (id)" fallback.
 export function getPersonName(person: SimplifiedPerson): string {
-  const names = person.names ?? [];
-  const chosen = names.find((n) => n.preferred) ?? names[0];
+  const chosen = preferredName(person.names);
   if (!chosen) return `Unknown (${person.id ?? "?"})`;
   const given = chosen.given?.trim() ?? "";
   const surname = chosen.surname?.trim() ?? "";
@@ -3520,14 +3542,73 @@ export function calculateWarnings(
 // Single-person mode: read tree.gedcomx.json, build a Mob anchored on the
 // requested person, then call calculateWarnings with `isFinalWarnings=true`.
 
+// Fetch the anchor and their one-hop relatives from FamilySearch and shape them
+// into the tree the checks already read. `PersonReadResult` is structurally a
+// `SimplifiedGedcomX`, so no conversion layer is needed.
+//
+// `relatives: true` is load-bearing: person_read defaults it to false, and with
+// the anchor alone every relative check returns false — a profile with a
+// father-died-before-child in it would be reported clean.
+async function loadLiveAnchor(
+  personId: string,
+  principal: Principal,
+): Promise<{ tree: SimplifiedGedcomX; anchorId: string }> {
+  const tree = await personReadTool(
+    { personId, relatives: true },
+    principal,
+  );
+  const persons = tree.persons ?? [];
+  if (persons.some((p) => p.id === personId)) {
+    return { tree, anchorId: personId };
+  }
+  // person_read follows a 301 for a merged-away profile and returns the
+  // surviving person under its NEW id, without reporting the redirect. Anchor on
+  // that instead of letting Mob throw "anchor person not found", which names
+  // neither the merge nor where the person went.
+  const survivor = persons.find((p) => p.id !== undefined);
+  if (persons.length === 1 && survivor?.id) {
+    return { tree, anchorId: survivor.id };
+  }
+  throw new Error(
+    `Person '${personId}' was not in the FamilySearch response. It may have ` +
+      "been merged into another profile — open it on familysearch.org to find " +
+      "the surviving ID, then check that one.",
+  );
+}
+
 export async function personWarningsTool(
   input: PersonWarningsInput,
+  principal: Principal,
 ): Promise<PersonWarningsResult> {
-  if (!input?.projectPath || typeof input.projectPath !== "string") {
-    throw new Error("projectPath is required");
-  }
-  if (!input.personId || typeof input.personId !== "string") {
+  if (!input?.personId || typeof input.personId !== "string") {
     throw new Error("personId is required");
+  }
+
+  // Live mode is opt-in by `live === true` exactly — never by a falsy or
+  // absent projectPath. check-warnings has the model COMPUTE the path, so a
+  // truthiness branch would turn an empty string into a silent network call on
+  // the user's token instead of today's loud error.
+  if (input.live === true) {
+    if (input.projectPath !== undefined) {
+      throw new Error(
+        "Pass either projectPath or live=true, not both — they read different " +
+          "trees (the local project file versus the live FamilySearch profile), " +
+          "so the caller has to say which one is meant.",
+      );
+    }
+    const { tree, anchorId } = await loadLiveAnchor(input.personId, principal);
+    const liveMob = new Mob(tree, anchorId);
+    const liveWarnings = calculateWarnings(
+      liveMob,
+      liveMob,
+      liveMob,
+      /* isFinalWarnings */ true,
+    );
+    return { warningCount: liveWarnings.length, warnings: liveWarnings };
+  }
+
+  if (!input.projectPath || typeof input.projectPath !== "string") {
+    throw new Error("projectPath is required");
   }
 
   // The one tool outside the readProjectJson seam that still owes the

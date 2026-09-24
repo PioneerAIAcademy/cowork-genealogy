@@ -9,7 +9,20 @@ import {
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
+import { STAGING_CAPABLE_TOOLS, STAGING_SEARCH_TOOLS } from "../../src/utils/results-staging.js";
+
 describe("results-staging", () => {
+  describe("the two producer sets (#2048)", () => {
+    it("every search producer is a capable producer, and the two acquisition producers are capable too", () => {
+      for (const t of STAGING_SEARCH_TOOLS) expect(STAGING_CAPABLE_TOOLS.has(t)).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("image_transcribe")).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("record_read")).toBe(true);
+      // The notes stay search semantics: the acquisition producers are NOT search-shaped.
+      expect(STAGING_SEARCH_TOOLS.has("image_transcribe")).toBe(false);
+      expect(STAGING_SEARCH_TOOLS.has("record_read")).toBe(false);
+    });
+  });
+
   let dir: string;
 
   beforeEach(async () => {
@@ -113,6 +126,24 @@ describe("results-staging", () => {
       await stage();
       await stage();
       expect(await unloggedStagedSearches(dir)).toHaveLength(2);
+    });
+
+    it("does not count a staged acquisition file with no log entry", async () => {
+      // record-extraction logs an upload as `user_provided` and a record_read with
+      // no stagedResultsRef, so neither file can ever pair; counting it would nag
+      // the next search about a read that was logged correctly.
+      await writeResearch([]);
+      await stage("image_transcribe");
+      await stage("record_read");
+      expect(await unloggedStagedSearches(dir)).toEqual([]);
+    });
+
+    it("still counts an unlogged search staged beside an acquisition file", async () => {
+      await writeResearch([]);
+      await stage("image_transcribe");
+      await stage("record_search");
+      const unlogged = await unloggedStagedSearches(dir);
+      expect(unlogged.map((u) => u.tool)).toEqual(["record_search"]);
     });
 
     it("returns handles the model can hand straight back as stagedResultsRef", async () => {

@@ -1,6 +1,6 @@
 import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile } from "fs/promises";
+import { mkdtemp, rm, readFile, mkdir, writeFile, readdir } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -24,11 +24,28 @@ vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => {
 import {
   imageTranscribeTool,
   __clearBrowseBudgetForTests,
+  MAX_OCR_INPUT_BYTES,
+  sniffContentType,
 } from "../../src/tools/image-transcribe.js";
 import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import {
+  runWithProjectStore,
+  type ProjectStore,
+} from "../../src/store/project-store.js";
+import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
+
+/** The tool's return is `ImageTranscribeResult | NoProjectResult` (#2048); every
+ *  test here expects a transcription, so the no-project arm is a failure. */
+async function transcribe(
+  ...args: Parameters<typeof imageTranscribeTool>
+): Promise<ImageTranscribeResult> {
+  const r = await imageTranscribeTool(...args);
+  if ("ok" in r) throw new Error(`unexpected no-project answer: ${r.errors.join(" ")}`);
+  return r;
+}
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -112,7 +129,7 @@ describe("imageTranscribeTool — request + happy path", () => {
   it("POSTs the image to OpenRouter with the OCR prompt, model, temperature 0, and data_collection deny", async () => {
     mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
 
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -136,6 +153,7 @@ describe("imageTranscribeTool — request + happy path", () => {
     expect(result.transcription).toBe("Johann Schreck, b. 1801, Bayern");
     expect(result.metadata).toEqual({
       imageId: "004884748_02613",
+      contentType: "image/jpeg",
       model: MODEL,
       sizeBytes: 3,
     });
@@ -146,7 +164,7 @@ describe("imageTranscribeTool — request + happy path", () => {
     mockOpenRouterOk("Johann Schreck");
     const dir = await mkdtemp(join(tmpdir(), "imgt-"));
     try {
-      const result = await imageTranscribeTool({
+      const result = await transcribe({
         imageId: "004884748_02613",
         projectPath: dir,
       }, LOCAL);
@@ -175,7 +193,7 @@ describe("imageTranscribeTool — request + happy path", () => {
     mockOpenRouterOk("Last will and testament of Almon Clegg");
     const dir = await mkdtemp(join(tmpdir(), "imgt-pdf-"));
     try {
-      const result = await imageTranscribeTool({
+      const result = await transcribe({
         memoryArtifactUrl: "https://sg30p0.familysearch.org/x/dist.pdf",
         projectPath: dir,
       }, LOCAL);
@@ -189,13 +207,13 @@ describe("imageTranscribeTool — request + happy path", () => {
 
   it("omits imageRef when projectPath is not given", async () => {
     mockOpenRouterOk("Johann Schreck");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.imageRef).toBeUndefined();
   });
 
   it("reports ark (not imageId) in metadata for ark input", async () => {
     mockOpenRouterOk("some text");
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M",
     }, LOCAL);
     expect(result.metadata.ark).toBe("ark:/61903/3:1:3Q9M-CSNL-S98H-M");
@@ -217,7 +235,7 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
     const url =
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112&cc=1858355&groupId=1858355";
 
-    await imageTranscribeTool({ ark: url }, LOCAL);
+    await transcribe({ ark: url }, LOCAL);
 
     expect(fetchFsImageBytesMock.mock.calls[0]).toEqual([
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
@@ -233,7 +251,7 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
 describe("imageTranscribeTool — lookingFor", () => {
   it("sets found=FOUND from the marker and keeps the full transcription", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family\nFOUND");
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
@@ -243,7 +261,7 @@ describe("imageTranscribeTool — lookingFor", () => {
 
   it("sets found=NOT FOUND when the marker says so", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Weber\nNOT FOUND");
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
@@ -252,7 +270,7 @@ describe("imageTranscribeTool — lookingFor", () => {
 
   it("does not spoof found from body text — only the final-line marker counts", async () => {
     mockOpenRouterOk("Entry: infant found abandoned, no surname given.");
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
@@ -263,7 +281,7 @@ describe("imageTranscribeTool — lookingFor", () => {
 describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", () => {
   it("flags a finish_reason=length read as truncated with a tool-voiced notice", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
     // The transcription stays verbatim — the notice is a sibling field, never
@@ -274,14 +292,14 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
 
   it("does not flag a finish_reason=stop read as truncated", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBeUndefined();
     expect(result.truncationNotice).toBeUndefined();
   });
 
   it("suppresses found on a truncated read — a half-read page is never a clean NOT FOUND", async () => {
     mockOpenRouterOk("Row 1: Weber\nRow 2: Braun\nNOT FOUND", "length");
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
@@ -291,7 +309,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
 
   it("sends an explicit max_tokens so the cap is ours and reproducible", async () => {
     mockOpenRouterOk("Row 1: Anna");
-    await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    await transcribe({ imageId: "004884748_02613" }, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(init.body as string);
     expect(body.max_tokens).toBe(16000);
@@ -301,14 +319,14 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // Top-level finish_reason is "stop"; the cap shows up as the provider's
     // native "MAX_TOKENS". Detection must still flag it.
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "stop", "MAX_TOKENS");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
   });
 
   it("catches a native_finish_reason=length even when top-level is stop", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "stop", "length");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBe(true);
   });
 
@@ -316,17 +334,17 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // A model reachable via the openRouterModel override may spell the marker
     // differently or set it on the top-level field. Both must still be caught.
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut", "stop", "max_tokens");
-    const lower = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const lower = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(lower.truncated).toBe(true);
 
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut", "MAX_TOKENS");
-    const topCap = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const topCap = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(topCap.truncated).toBe(true);
   });
 
   it("does not flag when neither field marks a cap, even with a native stop reason present", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family", "stop", "STOP");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBeUndefined();
   });
 
@@ -334,7 +352,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // The type allows string | null; OpenRouter can send null. null !== any
     // marker, so this must read as a complete, non-truncated success.
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family", null);
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBeUndefined();
     expect(result.found).toBeUndefined();
   });
@@ -343,7 +361,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // The NOT-FOUND suppression is the harm case, but FOUND must be suppressed
     // too: on a half-read page even a positive marker is untrustworthy.
     mockOpenRouterOk("Row 1: Schreck family\nFOUND", "length");
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
@@ -358,27 +376,27 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // learns a budget bound, not an unreadable scan.
     mockOpenRouterOk("", "length", "MAX_TOKENS");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/output-token limit/i);
   });
 
   it("still throws the plain empty error when content is empty and no cap fired", async () => {
     mockOpenRouterOk("", "stop");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/empty transcription/i);
   });
 
   it("throws the empty error on an empty choices array (@yinkid28)", async () => {
     mockOpenRouterRaw({ choices: [] });
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/empty transcription/i);
   });
 
   it("truncationNotice pins the safety meaning: remainder UNREAD/not-blank and no absence inference (not just the keyword)", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "length");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     const notice = result.truncationNotice ?? "";
     // Required claims.
     expect(notice).toMatch(/unread/i);
@@ -399,7 +417,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
       mockOpenRouterRaw({
         choices: [{ message: { content: "Row 1: Anna" }, finish_reason: bad }],
       });
-      const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+      const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
       expect(result.truncated).toBeUndefined();
       expect(result.transcription).toBe("Row 1: Anna");
     }
@@ -416,7 +434,7 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
     mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
     const dir = await mkdtemp(join(tmpdir(), "imgt-cap-"));
     try {
-      const result = await imageTranscribeTool({
+      const result = await transcribe({
         imageId: "004884748_02613",
         projectPath: dir,
       }, LOCAL);
@@ -433,7 +451,7 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
     const dir = await mkdtemp(join(tmpdir(), "imgt-nocap-"));
     try {
-      const result = await imageTranscribeTool({
+      const result = await transcribe({
         imageId: "004884748_02613",
         projectPath: dir,
       }, LOCAL);
@@ -452,13 +470,13 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
     try {
       // Read 1: capped.
       mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
-      const r1 = await imageTranscribeTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+      const r1 = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
       expect(r1.truncated).toBe(true);
       expect(sourceImageCapState(dir, r1.imageRef!)).toBe(true);
       // Read 2: same image, narrower lookingFor, comes back uncapped — being add-only
       // it records nothing, so it cannot clear read 1's partial.
       mockOpenRouterOk("Anna");
-      const r2 = await imageTranscribeTool({ imageId: "004884748_02613", lookingFor: "Anna", projectPath: dir }, LOCAL);
+      const r2 = await transcribe({ imageId: "004884748_02613", lookingFor: "Anna", projectPath: dir }, LOCAL);
       expect(r2.truncated).toBeUndefined();
       expect(sourceImageCapState(dir, r2.imageRef!)).toBe(true); // sticky — still partial
     } finally {
@@ -475,7 +493,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
       )
     );
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/No OpenRouter API key/);
     expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
@@ -484,13 +502,13 @@ describe("imageTranscribeTool — key / auth errors", () => {
   it("maps a 401 to a re-configure instruction", async () => {
     mockOpenRouterStatus(401);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/rejected \(401\)/);
   });
 
   it("sends the 401 to the config file, never to the chat", async () => {
     mockOpenRouterStatus(401);
-    const message = await imageTranscribeTool({
+    const message = await transcribe({
       imageId: "004884748_02613",
     }, LOCAL).then(
       () => "",
@@ -506,7 +524,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
   it("maps a 402 to an out-of-credits message", async () => {
     mockOpenRouterStatus(402);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/out of credits \(402\)/);
   });
 });
@@ -515,14 +533,14 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
   it("throws a clean error on a non-2xx response", async () => {
     mockOpenRouterStatus(500, "upstream boom");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/OpenRouter OCR failed: 500/);
   });
 
   it("throws a friendly error when OpenRouter is unreachable", async () => {
     mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter/);
   });
 
@@ -534,7 +552,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     mockFetch.mockRejectedValueOnce(new TypeError("fetch failed"));
     mockOpenRouterOk("Anno 1762, Henckelstorp");
 
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
 
     expect(result.transcription).toBe("Anno 1762, Henckelstorp");
     expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -543,7 +561,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
   it("retries at most once, and says so when the retry also fails", async () => {
     mockFetch.mockRejectedValue(new TypeError("fetch failed"));
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter \(2 attempts\)/);
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
@@ -557,7 +575,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     mockFetch.mockRejectedValue(timeout);
 
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/timed out after 180000ms/);
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
@@ -573,7 +591,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     // the classification this carries is lost exactly when it is needed.
     mockFetch.mockRejectedValue(fetchFailed);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter.*ECONNRESET/s);
   });
 
@@ -586,22 +604,22 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     const fetchFailed = Object.assign(new TypeError("fetch failed"), { cause });
     mockFetch.mockRejectedValue(fetchFailed);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter.*ENOTFOUND/s);
   });
 
   it("throws rather than fabricate on empty OCR content", async () => {
     mockOpenRouterOk("   ");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
+      transcribe({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/empty transcription/i);
   });
 });
 
 describe("imageTranscribeTool — input validation", () => {
   it("rejects when neither imageId nor ark is given (before any fetch)", async () => {
-    await expect(imageTranscribeTool({}, LOCAL)).rejects.toThrow(
-      /image_transcribe requires one of imageId, ark, or memoryArtifactUrl/
+    await expect(transcribe({}, LOCAL)).rejects.toThrow(
+      /image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file/
     );
     expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
@@ -609,11 +627,11 @@ describe("imageTranscribeTool — input validation", () => {
 
   it("rejects when both imageId and ark are given", async () => {
     await expect(
-      imageTranscribeTool({
+      transcribe({
         imageId: "004884748_02613",
         ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M",
       }, LOCAL)
-    ).rejects.toThrow(/exactly one of imageId, ark, or memoryArtifactUrl/);
+    ).rejects.toThrow(/exactly one of imageId, ark, memoryArtifactUrl, or file — not imageId and ark/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -637,7 +655,7 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
   it("does not attach browseBudget for the first 20 distinct images in one group/project", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 20; i++) {
-      const result = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
+      const result = await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
       expect(result.browseBudget).toBeUndefined();
     }
   });
@@ -645,9 +663,9 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
   it("attaches browseBudget on the 21st distinct image, naming the count, group, and pivot actions", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 20; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
+      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
-    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" }, LOCAL);
+    const result = await transcribe({ imageId: img(21), projectPath: "/p" }, LOCAL);
 
     expect(result.browseBudget).toBeDefined();
     expect(result.browseBudget?.imageGroup).toBe(GROUP);
@@ -667,9 +685,9 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     const dir = await mkdtemp(join(tmpdir(), "imgt-budget-"));
     try {
       for (let i = 1; i <= 20; i++) {
-        await imageTranscribeTool({ imageId: img(i), projectPath: dir }, LOCAL);
+        await transcribe({ imageId: img(i), projectPath: dir }, LOCAL);
       }
-      const result = await imageTranscribeTool({ imageId: img(21), projectPath: dir }, LOCAL);
+      const result = await transcribe({ imageId: img(21), projectPath: dir }, LOCAL);
 
       expect(result.browseBudget?.distinctImagesRead).toBe(21);
       // Everything else is exactly the un-noticed path's output.
@@ -678,6 +696,7 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
       expect(result.imageRef).toBe(`images/${img(21)}.jpg`);
       expect(result.metadata).toEqual({
         imageId: img(21),
+        contentType: "image/jpeg",
         model: MODEL,
         sizeBytes: 3,
       });
@@ -694,9 +713,9 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     for (let i = 1; i <= 20; i++) mockOpenRouterOk("page text", "stop");
     mockOpenRouterOk("page 21, cut off", "length");
     for (let i = 1; i <= 20; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
+      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
-    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" }, LOCAL);
+    const result = await transcribe({ imageId: img(21), projectPath: "/p" }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
     expect(result.browseBudget?.distinctImagesRead).toBe(21);
@@ -706,34 +725,67 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
   it("does not carry the budget to a different image group in the same process", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 21; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
+      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
-    const other = await imageTranscribeTool({ imageId: "999999999_00001", projectPath: "/p" }, LOCAL);
+    const other = await transcribe({ imageId: "999999999_00001", projectPath: "/p" }, LOCAL);
     expect(other.browseBudget).toBeUndefined();
   });
 
   it("keys by project: the same group under a different projectPath starts fresh", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 21; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p1" }, LOCAL);
+      await transcribe({ imageId: img(i), projectPath: "/p1" }, LOCAL);
     }
-    const p2 = await imageTranscribeTool({ imageId: img(1), projectPath: "/p2" }, LOCAL);
+    const p2 = await transcribe({ imageId: img(1), projectPath: "/p2" }, LOCAL);
     expect(p2.browseBudget).toBeUndefined();
   });
 
   it("does not advance the count when an already-read image is re-read", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 20; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
+      await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
     // Re-read all 20 — the set does not grow, so still no notice.
     for (let i = 1; i <= 20; i++) {
-      const r = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
+      const r = await transcribe({ imageId: img(i), projectPath: "/p" }, LOCAL);
       expect(r.browseBudget).toBeUndefined();
     }
     // The 21st DISTINCT image trips it at exactly 21, proving re-reads did not inflate.
-    const r21 = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" }, LOCAL);
+    const r21 = await transcribe({ imageId: img(21), projectPath: "/p" }, LOCAL);
     expect(r21.browseBudget?.distinctImagesRead).toBe(21);
+  });
+
+  it("isolates patrons under a shared-process store binding — same anchor path, different projectId, no collision (#2771, same class as #2457 B2)", async () => {
+    mockOcrAlwaysOk();
+    // Under http.ts every request presents the SAME anchor projectPath (`/project`);
+    // the bound store's projectId is the real identity. Keying the budget on projectId
+    // (not the anchor) keeps patron A's count out of patron B's fresh read, while still
+    // carrying A's own count across A's turns. saveSourceImage throws on this method-
+    // less mock and is swallowed, so imageRef is undefined and the budget still counts.
+    const store = (projectId: string) => ({ projectId }) as unknown as ProjectStore;
+
+    // Patron A drives the group past the budget under the shared /project anchor.
+    await runWithProjectStore(store("proj-A"), async () => {
+      for (let i = 1; i <= 20; i++) {
+        const r = await transcribe({ imageId: img(i), projectPath: "/project" }, LOCAL);
+        expect(r.browseBudget).toBeUndefined();
+      }
+      const r21 = await transcribe({ imageId: img(21), projectPath: "/project" }, LOCAL);
+      expect(r21.browseBudget?.distinctImagesRead).toBe(21);
+    });
+
+    // Patron B: identical anchor path and group, must NOT inherit A's count.
+    await runWithProjectStore(store("proj-B"), async () => {
+      const rB = await transcribe({ imageId: img(1), projectPath: "/project" }, LOCAL);
+      expect(rB.browseBudget).toBeUndefined();
+    });
+
+    // A still carries its own count (the across-turns join survives the B turn):
+    // a 22nd distinct image under A trips the budget at exactly 22.
+    await runWithProjectStore(store("proj-A"), async () => {
+      const r22 = await transcribe({ imageId: img(22), projectPath: "/project" }, LOCAL);
+      expect(r22.browseBudget?.distinctImagesRead).toBe(22);
+    });
   });
 });
 
@@ -741,7 +793,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("expands a recognized given name in the OCR prompt", async () => {
     mockOpenRouterOk("Betty Martin, christened 1 November 1812\nFOUND");
 
-    await imageTranscribeTool({
+    await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Elizabeth Martin",
     }, LOCAL);
@@ -757,7 +809,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("does not expand when lookingFor has no recognized given name", async () => {
     mockOpenRouterOk("Patrick Flynn, witness\nFOUND");
 
-    await imageTranscribeTool({
+    await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Patrick Flynn",
     }, LOCAL);
@@ -772,7 +824,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("FOUND/NOT FOUND parsing still works with expanded prompt", async () => {
     mockOpenRouterOk("Betty Martin, christened 1812\nFOUND");
 
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Elizabeth Martin",
     }, LOCAL);
@@ -783,7 +835,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("leaves the prompt unchanged when lookingFor is absent", async () => {
     mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
 
-    await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    await transcribe({ imageId: "004884748_02613" }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     const prompt: string = body.messages[0].content[0].text;
@@ -794,7 +846,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("includes nameExpansion in response when expansion fires", async () => {
     mockOpenRouterOk("Betty Martin, christened 1 November 1812\nFOUND");
 
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Elizabeth Martin",
     }, LOCAL);
@@ -808,7 +860,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("omits nameExpansion when no recognized given name", async () => {
     mockOpenRouterOk("Patrick Flynn, witness\nFOUND");
 
-    const result = await imageTranscribeTool({
+    const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Patrick Flynn",
     }, LOCAL);
@@ -819,7 +871,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("omits nameExpansion when lookingFor is absent", async () => {
     mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
 
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
 
     expect(result.nameExpansion).toBeUndefined();
   });
@@ -837,7 +889,7 @@ describe("imageTranscribeTool — memory artifacts", () => {
 
   it("accepts a memory artifact URL and returns its text", async () => {
     mockOpenRouterOk("Last Will and Testament of Almon G. Clegg");
-    const result = await imageTranscribeTool({ memoryArtifactUrl: ARTIFACT }, LOCAL);
+    const result = await transcribe({ memoryArtifactUrl: ARTIFACT }, LOCAL);
     expect(result.transcription).toBe("Last Will and Testament of Almon G. Clegg");
     // passed through untouched, and flagged as the memory shape so the fetcher
     // skips the token and accepts a PDF
@@ -857,7 +909,7 @@ describe("imageTranscribeTool — memory artifacts", () => {
       resolvedUrl: ARTIFACT,
     });
     mockOpenRouterOk("Things I learned From My Father");
-    const result = await imageTranscribeTool(
+    const result = await transcribe(
       { memoryArtifactUrl: ARTIFACT.replace("dist.jpg", "dist.pdf") },
       LOCAL,
     );
@@ -880,3 +932,272 @@ describe("imageTranscribeTool — memory artifacts", () => {
   });
 });
 
+// ─── issue #2048: uploaded files, the payload cap, and the staging channel ───
+
+/** A directory that classifies as a project (both files), with `uploads/`. */
+async function makeProject(): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), "imgt-file-"));
+  await writeFile(join(dir, "research.json"), "{}");
+  await writeFile(join(dir, "tree.gedcomx.json"), "{}");
+  await mkdir(join(dir, "uploads"));
+  return dir;
+}
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00]);
+const PDF = Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n");
+
+function sentDataUrl(): string {
+  const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+  return body.messages[0].content.find((p: any) => p.type === "image_url").image_url.url;
+}
+
+describe("imageTranscribeTool — `file` input (#2048)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await makeProject();
+    getOpenRouterApiKeyMock.mockResolvedValue("sk-test");
+    getOpenRouterModelMock.mockResolvedValue(MODEL);
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("transcribes an uploaded JPEG by project-relative `file` with no FamilySearch fetch and no token", async () => {
+    await writeFile(join(dir, "uploads", "ancestry-scan.jpg"), JPEG);
+    mockOpenRouterOk("Mays, David Albert — father: William");
+    const result = await transcribe({ file: "uploads/ancestry-scan.jpg", projectPath: dir }, LOCAL);
+
+    expect(result.transcription).toBe("Mays, David Albert — father: William");
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled(); // the FS leg (and its getValidToken) never runs
+    expect(sentDataUrl()).toBe(`data:image/jpeg;base64,${JPEG.toString("base64")}`);
+    expect(result.metadata).toEqual({
+      file: "uploads/ancestry-scan.jpg",
+      contentType: "image/jpeg",
+      model: MODEL,
+      sizeBytes: JPEG.length,
+    });
+    // Already retained at its own path — no copy under images/, no imageRef.
+    expect(result.imageRef).toBeUndefined();
+    await expect(readdir(join(dir, "images"))).rejects.toThrow();
+  });
+
+  it("sends an uploaded PDF as application/pdf — the type is the file's bytes, not its name", async () => {
+    await writeFile(join(dir, "uploads", "record.jpg"), PDF); // misnamed on purpose
+    mockOpenRouterOk("Last will and testament of John Mays");
+    const result = await transcribe({ file: "uploads/record.jpg", projectPath: dir }, LOCAL);
+    expect(sentDataUrl().startsWith("data:application/pdf;base64,")).toBe(true);
+    expect(result.metadata.contentType).toBe("application/pdf");
+  });
+
+  it("reads PNG too, and refuses a file that is neither an image nor a PDF without calling OpenRouter", async () => {
+    await writeFile(join(dir, "uploads", "chart.png"), PNG);
+    mockOpenRouterOk("a chart");
+    expect((await transcribe({ file: "uploads/chart.png", projectPath: dir }, LOCAL)).metadata.contentType).toBe("image/png");
+
+    mockFetch.mockReset();
+    await writeFile(join(dir, "uploads", "notes.txt"), "just some notes");
+    await expect(transcribe({ file: "uploads/notes.txt", projectPath: dir }, LOCAL)).rejects.toThrow(
+      /not an image or a PDF \(by its content, not its name\).*sidecar_read/,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("names a missing file, and rejects a directory", async () => {
+    await expect(transcribe({ file: "uploads/nope.jpg", projectPath: dir }, LOCAL)).rejects.toThrow(
+      /'uploads\/nope.jpg' was not found under the project folder/,
+    );
+    await expect(transcribe({ file: "uploads", projectPath: dir }, LOCAL)).rejects.toThrow(/is a directory/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["/etc/passwd", /absolute path/],
+    ["C:/scans/x.jpg", /absolute path/],
+    ["uploads\\x.jpg", /backslash/],
+    ["uploads/../research.json", /'\.' or '\.\.' segment/],
+    ["uploads//x.jpg", /segment/],
+    ["", /requires one of imageId, ark, memoryArtifactUrl, or file/], // empty = not provided
+  ])("rejects the ref shape %s before any I/O", async (file, pattern) => {
+    await expect(transcribe({ file, projectPath: dir }, LOCAL)).rejects.toThrow(pattern);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a ref that escapes the project through a symlink (the store's containment guard)", async () => {
+    const outside = await mkdtemp(join(tmpdir(), "imgt-outside-"));
+    try {
+      await writeFile(join(outside, "secret.jpg"), JPEG);
+      const { symlink } = await import("fs/promises");
+      await symlink(join(outside, "secret.jpg"), join(dir, "uploads", "link.jpg"));
+      await expect(transcribe({ file: "uploads/link.jpg", projectPath: dir }, LOCAL)).rejects.toThrow(
+        /escapes the project directory/,
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+    } finally {
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  it("requires projectPath with `file`, using the shared loud messages", async () => {
+    await expect(transcribe({ file: "uploads/x.jpg" }, LOCAL)).rejects.toThrow(/projectPath is required/);
+    await expect(
+      transcribe({ file: "uploads/x.jpg", projectPath: join(dir, "no-such-folder") }, LOCAL),
+    ).rejects.toThrow(/projectPath does not exist/);
+  });
+
+  it("answers no_project (not an error) for a folder holding neither project file", async () => {
+    const plain = await mkdtemp(join(tmpdir(), "imgt-plain-"));
+    try {
+      const r = await imageTranscribeTool({ file: "uploads/x.jpg", projectPath: plain }, LOCAL);
+      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
+    } finally {
+      await rm(plain, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects two input forms, `file` included", async () => {
+    await expect(
+      transcribe({ file: "uploads/x.jpg", imageId: "004884748_02613", projectPath: dir }, LOCAL),
+    ).rejects.toThrow(/exactly one of imageId, ark, memoryArtifactUrl, or file — not imageId and file/);
+  });
+});
+
+describe("imageTranscribeTool — payload cap (#2048, spec §7)", () => {
+  beforeEach(() => {
+    getOpenRouterApiKeyMock.mockResolvedValue("sk-test");
+    getOpenRouterModelMock.mockResolvedValue(MODEL);
+  });
+
+  it("refuses an uploaded file over MAX_OCR_INPUT_BYTES before calling OpenRouter, naming the remedy", async () => {
+    const dir = await makeProject();
+    try {
+      const big = Buffer.alloc(MAX_OCR_INPUT_BYTES + 1, 0x00);
+      JPEG.copy(big, 0);
+      await writeFile(join(dir, "uploads", "huge.jpg"), big);
+      await expect(transcribe({ file: "uploads/huge.jpg", projectPath: dir }, LOCAL)).rejects.toThrow(
+        /14\.0 MiB, over the 14 MiB.*not sent.*lower quality/,
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("applies the same cap to a FamilySearch scan (wiring — nothing in the corpus is that large)", async () => {
+    fetchFsImageBytesMock.mockResolvedValueOnce({
+      bytes: new Uint8Array([1, 2, 3]),
+      contentType: "image/jpeg",
+      sizeBytes: 15 * 1024 * 1024,
+    });
+    await expect(transcribe({ imageId: "004884748_02613" }, LOCAL)).rejects.toThrow(/over the 14 MiB/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("MAX_OCR_INPUT_BYTES base64-encodes under the documented 20 MB request limit", () => {
+    expect(Math.ceil((MAX_OCR_INPUT_BYTES / 3) * 4)).toBeLessThan(20_000_000);
+    expect(MAX_OCR_INPUT_BYTES).toBe(14 * 1024 * 1024);
+  });
+});
+
+describe("sniffContentType", () => {
+  it.each([
+    [JPEG, "image/jpeg"],
+    [PNG, "image/png"],
+    [Buffer.from("GIF89a......"), "image/gif"],
+    [Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBPVP8 ")]), "image/webp"],
+    [PDF, "application/pdf"],
+    [Buffer.from("plain text"), null],
+    [Buffer.alloc(0), null],
+  ])("classifies %o as %s", (bytes, expected) => {
+    expect(sniffContentType(new Uint8Array(bytes))).toBe(expected);
+  });
+});
+
+describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await makeProject();
+    getOpenRouterApiKeyMock.mockResolvedValue("sk-test");
+    getOpenRouterModelMock.mockResolvedValue(MODEL);
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("stages the transcription and returns a non-null staged.resultsRef with a one-element results[]", async () => {
+    await writeFile(join(dir, "uploads", "obit.jpg"), JPEG);
+    mockOpenRouterOk("Obituary text\nFOUND");
+    const result = await transcribe(
+      { file: "uploads/obit.jpg", projectPath: dir, lookingFor: "Mays" },
+      LOCAL,
+    );
+
+    expect(result.staged).not.toBeNull();
+    expect(result.staged!.resultsRef).toMatch(/^results\/\.staging\/[0-9a-f-]+\.json$/);
+    expect(result.staged!.returnedCount).toBe(1);
+    expect(result.stagingError).toBeUndefined();
+
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.tool).toBe("image_transcribe");
+    expect(envelope.returned_count).toBe(1);
+    expect(envelope.payload.query).toEqual({ file: "uploads/obit.jpg", lookingFor: "Mays" });
+    expect(envelope.payload.results).toHaveLength(1);
+    expect(envelope.payload.results[0]).toMatchObject({
+      id: "capture:obit",
+      source: { file: "uploads/obit.jpg" },
+      content_type: "image/jpeg",
+      size_bytes: JPEG.length,
+      model: MODEL,
+      transcription: "Obituary text\nFOUND",
+      found: "FOUND",
+    });
+
+    expect(result.digest).toEqual({
+      id: "capture:obit",
+      chars: "Obituary text\nFOUND".length,
+      excerpt: "Obituary text\nFOUND",
+      found: "FOUND",
+    });
+  });
+
+  it("stages a FamilySearch read too, keyed by its imageId, alongside the retained scan", async () => {
+    mockOpenRouterOk("Johann Schreck");
+    const result = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(result.staged).not.toBeNull();
+    expect(result.imageRef).toBe("images/004884748_02613.jpg");
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0]).toMatchObject({
+      id: "004884748_02613",
+      source: { imageId: "004884748_02613" },
+    });
+    expect(result.digest?.id).toBe("004884748_02613");
+  });
+
+  it("bounds the digest excerpt and carries the truncation marker", async () => {
+    await writeFile(join(dir, "uploads", "long.jpg"), JPEG);
+    const long = "x".repeat(1_000);
+    mockOpenRouterOk(long, "length");
+    const result = await transcribe({ file: "uploads/long.jpg", projectPath: dir }, LOCAL);
+    expect(result.digest).toEqual({ id: "capture:long", chars: 1_000, excerpt: "x".repeat(300), truncated: true });
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].truncated).toBe(true);
+  });
+
+  it("does not stage or digest without projectPath", async () => {
+    mockOpenRouterOk("Johann Schreck");
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
+    expect(result.staged).toBeUndefined();
+    expect(result.digest).toBeUndefined();
+  });
+
+  it("a staging failure is non-fatal: the text still returns, with staged: null and the reason", async () => {
+    await writeFile(join(dir, "uploads", "scan.jpg"), JPEG);
+    await writeFile(join(dir, "results"), "not a directory"); // results/.staging cannot be created
+    mockOpenRouterOk("still read");
+    const result = await transcribe({ file: "uploads/scan.jpg", projectPath: dir }, LOCAL);
+    expect(result.transcription).toBe("still read");
+    expect(result.staged).toBeNull();
+    expect(result.stagingError).toMatch(/ENOTDIR|not a directory|EEXIST/i);
+    expect(result.digest?.id).toBe("capture:scan");
+  });
+});
