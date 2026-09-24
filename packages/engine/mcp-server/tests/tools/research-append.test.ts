@@ -6237,6 +6237,202 @@ describe("research_append — person_evidence epistemic gate", () => {
   });
 });
 
+// ─── DETECTED core-identifier contradiction caps the tier (#2272) ───────────
+//
+// The detected arm, as opposed to the declared one below. It reads the record's
+// own stated birthplace against what the tree person attests, so it binds
+// without the agent volunteering anything -- which is what the declared field
+// could not do: the agent set it to null and kept `probable`.
+//
+// Both gates on it are genealogical, not engineering. Without them the arm
+// refuses 38 of 323 committed confident/probable entries, and all 38 were read
+// individually (ADR-0011 limit 2): 35 are a death record's birthplace at
+// `secondary`/`family_not_present`, 3 are a christening PLACE against a birth
+// place. With them it refuses 0 of 323.
+
+describe("research_append — detected core-identifier contradiction", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-contradiction-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** The tree person attests Ireland; the record states somewhere else. */
+  async function write(stated: Record<string, unknown>) {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      {
+        ...validAssertion("a_050"),
+        record_id: "rec_bapt",
+        fact_type: "birth",
+        value: "Born at Trier",
+        place: "Trier, Rhine Province, Germany",
+        information_quality: "indeterminate",
+        informant_proximity: "official_duty",
+        ...stated,
+      },
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const link = (confidence: string) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_050", person_id: "I1", confidence,
+      rationale: "Name matches; same_person 0.85.", match_score: 0.85,
+      created: "2026-09-24", superseded_by: null,
+    },
+  });
+
+  it("refuses 'confident' when the record states a contradicting birthplace", async () => {
+    await write({});
+    const r = await researchAppend(link("confident"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/Trier/);
+  });
+
+  it("refuses 'probable' too", async () => {
+    await write({});
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  it("allows 'speculative' — the escape the rule intends", async () => {
+    await write({});
+    expect((await researchAppend(link("speculative"))).ok).toBe(true);
+  });
+
+  // The 35-of-38 class. A death record's birthplace comes from an informant
+  // with no firsthand knowledge of the birth (senior genealogist, 2026-09-23),
+  // so it must not veto a sound identity link.
+  it("does NOT cap on a secondary informant with no proximity to the birth", async () => {
+    await write({ information_quality: "secondary", informant_proximity: "family_not_present" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap on a researcher-sourced claim", async () => {
+    await write({ informant_proximity: "researcher" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // The other 3 of 38. You are christened where the church is.
+  it("does NOT compare a christening PLACE against a birth place", async () => {
+    await write({ fact_type: "christening", place: "Church of St Michael, Ashton-under-Lyne, Lancashire, England" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap when the stated place agrees with the tree", async () => {
+    await write({ place: "Ireland" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap when the record states no place at all", async () => {
+    await write({ place: null });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+});
+
+// ─── Declared core-identifier conflict caps the tier (#2272) ────────────────
+//
+// The prose form of this rule was in the agent body twice — once stating the
+// cap with the same 0.85 figure as the test that kept failing, once as a Step 3
+// forcing function that made the agent WRITE the verdict. It wrote the verdict
+// and argued past it in the next clause (ut_person_evidence_012 and _024,
+// 2026-09-23). What binds is the declaration, which is what these pin.
+
+describe("research_append — declared core-identifier conflict", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-pe-conflict-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function write() {
+    const r = baseResearch();
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const link = (confidence: string, conflict: unknown) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_001",
+      person_id: "I1",
+      confidence,
+      rationale: "Names match the subject.",
+      core_identifier_conflict: conflict,
+      match_score: 0.85,
+      created: "2026-07-18",
+      superseded_by: null,
+    },
+  });
+
+  // ── fires ──
+  it("rejects 'confident' when a conflict is declared", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "record says Germany; tree attests Ireland"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/core-identifier conflict/i);
+  });
+
+  it("rejects 'probable' too — the cap is not confident-only", async () => {
+    await write();
+    const r = await researchAppend(link("probable", "christening 1858 vs birth ~1845"));
+    expect(r.ok).toBe(false);
+  });
+
+  it("fires on a declaration padded with whitespace", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "   birthplace contradicts   "));
+    expect(r.ok).toBe(false);
+  });
+
+  // ── does not fire: legitimate writes must still land ──
+  it("allows 'speculative' with the same declared conflict", async () => {
+    await write();
+    const r = await researchAppend(link("speculative", "record says Germany; tree attests Ireland"));
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows 'confident' when the field is null", async () => {
+    await write();
+    const r = await researchAppend(link("confident", null));
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows 'confident' when the field is absent entirely", async () => {
+    await write();
+    const op = link("confident", null) as any;
+    delete op.entry.core_identifier_conflict;
+    const r = await researchAppend(op);
+    expect(r.ok).toBe(true);
+  });
+
+  it("treats a whitespace-only declaration as no declaration", async () => {
+    await write();
+    const r = await researchAppend(link("confident", "   "));
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not cap on a non-string value — the validator owns that", async () => {
+    await write();
+    const r = await researchAppend(link("confident", 5 as any));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/core_identifier_conflict/i);
+    expect(failure(r).errors?.join(" ")).not.toMatch(/caps the link/i);
+  });
+});
+
+
 // ─── Worked examples (#697) ─────────────────────────────────────────────────
 //
 // The point of the registry is that a rejected append is handed a shape the
@@ -7630,30 +7826,51 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
   });
 
-  it("warns and names the record_read route when the assertion came from record_read", async () => {
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
+  // Since #1731 the warning names ONE call whatever the provenance, because
+  // `same_person`'s project-relative arm resolves the record itself. The three
+  // tests these replace pinned a per-route retrieval recipe (record_read /
+  // sidecar / record_persona_id), and each told the agent to hand-build a
+  // `primaryId1` — the expensive shape the 94% skip rate was a symptom of.
+  // Still pinned: the warning names the CALL, not just the absence. A warning
+  // that only says "missing" is what the agent talked its way past.
+  for (const [name, entry] of [
+    ["record_read", { id: "log_001", tool: "record_read", results_ref: null }],
+    ["a retained sidecar", { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" }],
+  ] as const) {
+    it(`names the project-relative call when the assertion came from ${name}`, async () => {
+      await writeProjectWithProvenance(entry as any);
+      const r = await researchAppend(link({ match_score: null }));
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const w = r.validation.warnings.join(" ");
+      expect(w).toMatch(/records no usable match_score/);
+      expect(w).toMatch(/call same_person\(/);
+      expect(w).toMatch(/assertionId: 'a_010'/);
+      expect(w).toMatch(/treePersonId: 'I1'/);
+      // The retired shape must not come back: naming it steers the agent
+      // straight back to the cost this card exists to remove.
+      expect(w).not.toMatch(/primaryId1/);
+      expect(w).not.toMatch(/gedcomx1/);
+    });
+  }
+
+  it("tells a two-party assertion to name which party the link is about", async () => {
+    await writeProjectWithProvenance(
+      { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
+      { record_persona_id: "p_293161675629", fact_type: "relationship", record_role: "groom" },
+    );
     const r = await researchAppend(link({ match_score: null }));
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/records no usable match_score/);
-    // The route, not just the absence — a warning that only says "missing" is
-    // what the agent talked its way past.
-    expect(w).toMatch(/came from record_read/);
-    expect(w).toMatch(/1:1:MXHY-TP4/);
+    expect(w).toMatch(/recordRole/);
+    expect(w).toMatch(/'groom'/);
   });
 
-  it("warns and names the sidecar route when a record_search retained its results", async () => {
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_search", results_ref: "results/log_001.json" });
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/records no usable match_score/);
-    expect(w).toMatch(/results\/log_001\.json/);
-  });
-
-  it("warns when the assertion carries a record_persona_id, and names it", async () => {
+  it("does NOT ask a single-party assertion to name a party", async () => {
+    // The other direction: the recordRole sentence is noise on an assertion
+    // that names only one person, and noise in a warning is how the whole
+    // warning stops being read.
     await writeProjectWithProvenance(
       { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
       { record_persona_id: "p_293161675629" },
@@ -7661,7 +7878,7 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     const r = await researchAppend(link({ match_score: null }));
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/p_293161675629/);
+    expect(r.validation.warnings.join(" ")).not.toMatch(/recordRole/);
   });
 
   it("warns on unresolvable provenance — an absent log_entry_id is not an exemption", async () => {

@@ -927,7 +927,7 @@ authors (its ad-hoc names are exempt above). `merge-tree-persons.test.ts` is
 **The ESM citation string is out of scope here.** The tree S-entry's
 `citation` stays populated by `proof-conclusion` at upload time (copied from
 `research.json` `sources[].citation`), per existing doctrine. This spec owns
-the **source-ref (pointer)**; the `citation` skill / proof-conclusion own the
+the **source-ref (pointer)**; the `citation` agent / proof-conclusion own the
 **ESM string**. The two must not be conflated (the §1.2 mis-framing).
 
 ---
