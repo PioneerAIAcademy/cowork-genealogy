@@ -1358,7 +1358,7 @@ deploy-preflight:
 deploy: sandbox-image deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs E2B_API_KEY + the e2b CLI; single always-on machine)
 	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
 	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
-	# until init_db moves to a release_command (issue #1127). Secrets +
+	# until init_db moves to a release_command. Secrets +
 	# `fly apps create` are one-time (DEVELOPMENT.md § Deploy to Fly.io).
 	# NOTE: apps/web/dist is baked at build time — redeploy to ship UI changes.
 	# GIT_SHA/BUILD_DATE are stamped into feedback bundles (apps/server/app/config.py).
