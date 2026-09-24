@@ -37,7 +37,8 @@
     "The user explicitly asks to 'write the conclusion', which names proof-conclusion. But the project has only an objective — no questions, no evidence, no plan. SKILL.md § 'Direct user requests name a destination, not a shortcut' requires the router to re-derive state and walk the table from the top. Row 1 (objective but no questions) fires first.",
     "COMPLIANT: the router recognizes preconditions are unmet, explains what is missing, and invokes question-selection. It MAY mention that a conclusion cannot be written yet before routing.",
     "NON-COMPLIANT: the router invokes proof-conclusion (or any other downstream skill) directly because the user asked for it. This is the specific failure this test guards against.",
-    "question-selection is stubbed. Grade only the router's own work: state derivation and the gap explanation."
+    "question-selection is stubbed. Grade only the router's own work: state derivation and the gap explanation.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry, and reading it as the first has already failed a run whose routing the validator confirmed correct. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation and gap explanation are sound."
   ],
   "judge_reads_files": true
 }

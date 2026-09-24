@@ -18,16 +18,23 @@
     "max_turns": 20,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
-      "question-selection", "locality-guide", "research-plan",
-      "search-records", "record-extraction", "person-evidence",
-      "research-exhaustiveness", "proof-conclusion", "gps-mentor"
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-extraction",
+      "person-evidence",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
     ]
   },
   "judge_context": [
     "This is a ROUTING test. The only assertion that matters is whether Skill('question-selection') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
     "The project has an objective but no questions yet. The routing table's first applicable row is 'Objective but no questions -> question-selection'. Any other first Skill call is wrong.",
     "question-selection is stubbed and returns a bare denial with 'do not retry'. The router may attempt a second routing pass; that is expected behavior, not a defect. Grade only the quality of the router's own work: state derivation, logging, and narration.",
-    "Do not penalize the router for not completing the full research cycle — the stub prevents meaningful progress beyond the first routing decision."
+    "Do not penalize the router for not completing the full research cycle — the stub prevents meaningful progress beyond the first routing decision.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry, and reading it as the first has already failed a run whose routing the validator confirmed correct. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation and gap explanation are sound."
   ],
   "judge_reads_files": true
 }
