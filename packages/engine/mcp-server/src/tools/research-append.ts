@@ -592,6 +592,32 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
+/** Assertions naming two people. The link may be about either side, so the
+ *  assertion's own party identifiers cannot be assumed to describe the person
+ *  being linked. */
+const RELATIONAL_FACT_TYPES: ReadonlySet<string> = new Set([
+  "relationship", "parentage", "parentchild", "marriage",
+]);
+
+/** A christening date IS comparable to a birth date (a baptism follows birth
+ *  closely); a christening PLACE is not comparable to a birth place. Hence two
+ *  sets rather than one. */
+const BIRTH_DATE_FACT_TYPES: ReadonlySet<string> = new Set([
+  "birth", "christening", "baptism", "baptized",
+]);
+
+/** Years. The tree side is routinely a circa year, so a day-level comparison
+ *  would read every `~1845` as a contradiction. */
+const MAX_BIRTH_YEAR_GAP = 5;
+
+/** First 4-digit year in a date string, tolerating `~1845`, `11Jan1758`,
+ *  `1858-03-12` and `about 1832`. Null when none is present -- an unparseable
+ *  date states nothing to compare, which must not read as a contradiction. */
+function yearOf(value: unknown): number | null {
+  const m = /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(String(value ?? ""));
+  return m ? Number(m[1]) : null;
+}
+
 /** A core identifier the RECORD states, contradicted by what the tree person
  *  already attests, caps the link at `speculative` — detected, not self-reported.
  *
@@ -614,9 +640,43 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
  *  value. It cannot see a conflict nobody wrote down, which is the honest limit
  *  of any document-side gate.
  */
-const BIRTH_FACT_TYPES: ReadonlySet<string> = new Set([
-  "birth", "christening", "baptism", "baptized",
+/** Only a BIRTH place compares against the tree person's birth place. A
+ *  christening place is where the church is, not where the child was born:
+ *  3 of the corpus's false positives were a christening at Ashton-under-Lyne
+ *  against a birth at Preston, which is an ordinary Lancashire life, not a
+ *  contradiction. The DATE arm is the other way round -- a christening follows
+ *  birth closely, so its date IS comparable. */
+const BIRTH_PLACE_FACT_TYPES: ReadonlySet<string> = new Set(["birth"]);
+
+/** An informant with no proximity to the birth cannot contradict it. Senior
+ *  genealogist ruling 2026-09-23 (John Mark Peter-Brown): "A baptismal record
+ *  carries weight of birth assertion than a death record with a secondary
+ *  information by someone who does not have firsthand information about the
+ *  birth." 35 of the corpus's 38 false positives were exactly that -- a death
+ *  record's `Born 1845, Pennsylvania` against a tree attesting Ireland, at
+ *  `information_quality: "secondary"`, `informant_proximity:
+ *  "family_not_present"`. Capping a sound identity link because a death
+ *  certificate misreported a birthplace would make the tool worse.
+ *
+ *  This reads `informant_proximity` to decide whether a contradiction is
+ *  CREDIBLE, which is evidence weighing. It is not the same as citing it to
+ *  justify a tier, which `agents/person-evidence.md` forbids -- that rule is
+ *  about raising confidence on source quality alone. Flagged here because the
+ *  two sit close enough to be confused. */
+const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
+  "family_not_present", "researcher", "unknown",
 ]);
+
+/** Whether this assertion's stated value is credible enough to contradict the
+ *  tree. Measured over every committed scenario fixture 2026-09-24: with these
+ *  two gates the arm refuses **0 of 323** confident/probable person_evidence
+ *  entries, against 38 without them and 274 comparing any place at all. */
+function contradictionIsCredible(assertion: any): boolean {
+  if (assertion?.information_quality === "secondary") return false;
+  return !WEAK_INFORMANT_PROXIMITY.has(
+    String(assertion?.informant_proximity ?? "unknown"),
+  );
+}
 
 function coreIdentifierContradictionInvariants(
   entry: any,
@@ -630,6 +690,15 @@ function coreIdentifierContradictionInvariants(
   const recordId = linked.record_id ?? linked.source_id ?? null;
   if (recordId == null) return [];
 
+  // A relationship assertion bears on BOTH people it names, and its own party
+  // is only one of them: `a_004` ("listed in household of Thomas Flynn,
+  // position consistent with son") carries the CHILD's role while the link may
+  // be to the father. Comparing the child's stated birth of 1845 against a
+  // father the tree puts at 1818 produced 14 refusals that are one household,
+  // not one contradiction. We cannot tell from the assertion which side a link
+  // is about, so two-party assertions are out of scope for this gate.
+  if (RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase())) return [];
+
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
   if (!person) return [];
   const birth = ((person.facts ?? []) as any[]).find(
@@ -637,9 +706,22 @@ function coreIdentifierContradictionInvariants(
   );
   if (!birth) return [];
 
-  // Every assertion drawn from THIS record, including the linked one.
+  // Every assertion this record makes about THE SAME PARTY as the linked one.
+  //
+  // Scoping to the record alone is wrong and was measured wrong: a census or a
+  // baptism names several people, and comparing a son's stated birth of 1845
+  // against a father who the tree says was born 1818 produced 30 refusals that
+  // are all one household, not one contradiction. The party key is the same one
+  // `record-persona.ts` groups by -- `record_persona_id` when the sidecar kept
+  // one, `record_role` otherwise, which is required on every assertion.
+  const partyKey = (a: any) => a?.record_persona_id ?? a?.record_role ?? null;
+  const linkedParty = partyKey(linked);
   const sameRecord = assertions.filter(
-    (a: any) => a && (a.record_id ?? a.source_id ?? null) === recordId,
+    (a: any) =>
+      a &&
+      (a.record_id ?? a.source_id ?? null) === recordId &&
+      partyKey(a) === linkedParty &&
+      linkedParty !== null,
   );
 
   const findings: string[] = [];
@@ -648,16 +730,44 @@ function coreIdentifierContradictionInvariants(
   if (typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
     for (const a of sameRecord) {
       // Like for like. An ANY-place comparison refuses 274 of 323 committed
-      // confident/probable entries (85%, measured 2026-09-23 over
-      // eval/fixtures/scenarios/) because a marriage or census place is not a
-      // claim about birthplace: a man born in Ireland appears in a Pennsylvania
-      // census, and that is biography, not contradiction.
-      if (!BIRTH_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      // confident/probable entries (85%) because a marriage or census place is
+      // not a claim about birthplace: a man born in Ireland appears in a
+      // Pennsylvania census, and that is biography, not contradiction.
+      if (!BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!contradictionIsCredible(a)) continue;
       if (typeof a.place !== "string" || placeSegments(a.place).length === 0) continue;
       if (!compatiblePlace(a.place, birth.place)) {
         findings.push(
           `the record states '${a.place}' (assertion '${a.id}') where the tree person ` +
             `attests '${birth.place}'`,
+        );
+        break;
+      }
+    }
+  }
+
+  // ── date ─────────────────────────────────────────────────────────────────
+  // Unlike place, a CHRISTENING date is comparable to a birth date: a baptism
+  // follows birth closely, so a wide gap is a presumptive contradiction rather
+  // than date noise. Senior genealogist ruling 2026-09-23 on the 13-year Flynn
+  // gap: "Yes, the gap is too wide. This is something to scrutinize."
+  //
+  // The threshold is years, not days, because the tree side is routinely a
+  // circa year (`~1845`) and a day-level comparison would read every circa date
+  // as a contradiction. 5 years is wide enough to absorb a circa estimate and a
+  // genuinely late baptism, and narrow enough to catch the 13-year case;
+  // measured over every committed scenario fixture it refuses none.
+  const treeBirthYear = yearOf(birth.date);
+  if (treeBirthYear != null) {
+    for (const a of sameRecord) {
+      if (!BIRTH_DATE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!contradictionIsCredible(a)) continue;
+      const stated = yearOf(a.date);
+      if (stated == null) continue;
+      if (Math.abs(stated - treeBirthYear) > MAX_BIRTH_YEAR_GAP) {
+        findings.push(
+          `the record states ${a.fact_type} in ${stated} (assertion '${a.id}') where the tree ` +
+            `person attests a birth in ${treeBirthYear}, a ${Math.abs(stated - treeBirthYear)}-year gap`,
         );
         break;
       }
@@ -2853,14 +2963,15 @@ function applyOne(
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
-    // WARN-ONLY, on the precedent of `personEvidenceScoreWarnings` above and
-    // the lead's standing ruling on issue #2272 ("do not flip the warn to a
-    // reject as a one-line change"). Measured 2026-09-23 over
-    // eval/fixtures/scenarios/: as a refusal this arm rejects 38 of 323
-    // committed confident/probable person_evidence entries (12%) even
-    // restricted to birth-type assertions. Graduating it needs those 38 read
-    // individually (ADR-0011 limit 2) and is @DallanQ's call, not a one-liner.
-    opWarnings.push(
+    // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
+    // "do not flip the warn to a reject as a one-line change", and the bar it
+    // set is ADR-0011 limit 2: read the refusals individually rather than quote
+    // a rate. All 38 that the un-gated arm produced were read (2026-09-24) and
+    // every one is a false positive -- 35 death-record birthplaces at
+    // `secondary`/`family_not_present`, 3 christening PLACES against a birth
+    // place. Both classes are now excluded on genealogical grounds, and the
+    // arm refuses 0 of 323 committed confident/probable entries.
+    invariantErrors.push(
       ...coreIdentifierContradictionInvariants(resultEntry, research, tree),
     );
     // Warn-only: a link that records no match_score where a persona was

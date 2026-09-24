@@ -5875,6 +5875,107 @@ describe("research_append — person_evidence epistemic gate", () => {
   });
 });
 
+// ─── DETECTED core-identifier contradiction caps the tier (#2272) ───────────
+//
+// The detected arm, as opposed to the declared one below. It reads the record's
+// own stated birthplace against what the tree person attests, so it binds
+// without the agent volunteering anything -- which is what the declared field
+// could not do: the agent set it to null and kept `probable`.
+//
+// Both gates on it are genealogical, not engineering. Without them the arm
+// refuses 38 of 323 committed confident/probable entries, and all 38 were read
+// individually (ADR-0011 limit 2): 35 are a death record's birthplace at
+// `secondary`/`family_not_present`, 3 are a christening PLACE against a birth
+// place. With them it refuses 0 of 323.
+
+describe("research_append — detected core-identifier contradiction", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-contradiction-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** The tree person attests Ireland; the record states somewhere else. */
+  async function write(stated: Record<string, unknown>) {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      {
+        ...validAssertion("a_050"),
+        record_id: "rec_bapt",
+        fact_type: "birth",
+        value: "Born at Trier",
+        place: "Trier, Rhine Province, Germany",
+        information_quality: "indeterminate",
+        informant_proximity: "official_duty",
+        ...stated,
+      },
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const link = (confidence: string) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_050", person_id: "I1", confidence,
+      rationale: "Name matches; same_person 0.85.", match_score: 0.85,
+      created: "2026-09-24", superseded_by: null,
+    },
+  });
+
+  it("refuses 'confident' when the record states a contradicting birthplace", async () => {
+    await write({});
+    const r = await researchAppend(link("confident"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/Trier/);
+  });
+
+  it("refuses 'probable' too", async () => {
+    await write({});
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  it("allows 'speculative' — the escape the rule intends", async () => {
+    await write({});
+    expect((await researchAppend(link("speculative"))).ok).toBe(true);
+  });
+
+  // The 35-of-38 class. A death record's birthplace comes from an informant
+  // with no firsthand knowledge of the birth (senior genealogist, 2026-09-23),
+  // so it must not veto a sound identity link.
+  it("does NOT cap on a secondary informant with no proximity to the birth", async () => {
+    await write({ information_quality: "secondary", informant_proximity: "family_not_present" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap on a researcher-sourced claim", async () => {
+    await write({ informant_proximity: "researcher" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // The other 3 of 38. You are christened where the church is.
+  it("does NOT compare a christening PLACE against a birth place", async () => {
+    await write({ fact_type: "christening", place: "Church of St Michael, Ashton-under-Lyne, Lancashire, England" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap when the stated place agrees with the tree", async () => {
+    await write({ place: "Ireland" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap when the record states no place at all", async () => {
+    await write({ place: null });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+});
+
 // ─── Declared core-identifier conflict caps the tier (#2272) ────────────────
 //
 // The prose form of this rule was in the agent body twice — once stating the

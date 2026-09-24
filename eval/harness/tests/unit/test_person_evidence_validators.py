@@ -127,6 +127,40 @@ def test_scored_accepts_the_project_relative_call_shape():
     )
 
 
+def test_scored_credits_the_second_party_named_by_role():
+    """`recordRole` names the OTHER party of a relationship assertion, so the
+    party being scored is not the assertion's own persona.
+
+    Measured live on `ut_person_evidence_n7v`: scoring the father as the second
+    party of the groom's relationship assertion resolved the GROOM's persona
+    (`G1`) against the required `F1`, so a correct call went uncredited and the
+    validator gate judge-skipped the run. `rubric.md` Score discipline
+    prescribes exactly this call shape for a second party, so the check has to
+    honour it.
+
+    The converse is pinned below: a role no assertion on the record holds must
+    still not credit the pairing.
+    """
+    by_role = [
+        {"id": "a_004", "record_id": "r1", "record_role": "groom",
+         "record_persona_id": "G1"},
+        {"id": "a_006", "record_id": "r1", "record_role": "father_of_groom",
+         "record_persona_id": "F1"},
+    ]
+    from validators.test_person_evidence import _same_person_pairs
+
+    assertions = {a["id"]: a for a in by_role}
+    call = {"tool": "mcp__genealogy__same_person",
+            "args": {"projectPath": "/p", "assertionId": "a_004",
+                     "treePersonId": "I1", "recordRole": "father_of_groom"}}
+    assert ("F1", "I1") in _same_person_pairs([call], assertions)
+
+    unheld = {"tool": "mcp__genealogy__same_person",
+              "args": {"projectPath": "/p", "assertionId": "a_004",
+                       "treePersonId": "I1", "recordRole": "witness"}}
+    assert ("F1", "I1") not in _same_person_pairs([unheld], assertions)
+
+
 def test_fts_accepts_a_score_backed_by_a_project_relative_call():
     """The live false-positive this replaced.
 
