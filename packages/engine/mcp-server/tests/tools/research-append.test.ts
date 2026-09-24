@@ -4577,20 +4577,47 @@ describe("research_append (batch ops)", () => {
     expect(msg).not.toMatch(/no log\[\] entry names/);
   });
 
-  it("(d4-logattr) tolerates a non-array `items` on a plans op — the §5 rule owns that", async () => {
+  it.each([[{ a: 1 }], [7], ["nope"]])(
+    "(d4-logattr) tolerates a non-array `items` (%j) on a plans op — the §5 rule owns that",
+    async (items) => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "plans", op: "append", entry: { ...noId(validPlan("x", "q_001", "active")), items } },
+        ],
+      } as any);
+      // Refused for its shape by the plans `items` rule. An object or a number is
+      // what a dropped Array.isArray guard would throw on — a string iterates
+      // its characters and cannot tell the two apart.
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/must be an array of plan items/);
+    },
+  );
+
+  it("(d4-logattr) skips an item whose id is the empty string, the same as no id", async () => {
     const research = baseResearch();
     research.questions = [validQuestion("q_001")];
+    research.log = [logNaming("log_001", "pli_001")] as any;
     await writeProject(research);
+
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "plans", op: "append", entry: { ...noId(validPlan("x", "q_001", "active")), items: "nope" } },
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...validPlanItem(), id: "", status: "completed" }],
+          },
+        },
       ],
     } as any);
-    // Refused for its shape by the plans `items` rule, never a TypeError from
-    // this arm iterating a string.
     expect(r.ok).toBe(false);
-    expect((errorsOf(r) ?? []).join("\n")).toMatch(/must be an array of plan items/);
+    expect((errorsOf(r) ?? []).join("\n")).not.toMatch(/no log\[\] entry names/);
   });
 
   it("(d4-logattr) refuses an APPEND carrying status: completed — the id is tool-assigned", async () => {
@@ -4850,6 +4877,49 @@ describe("research_append (batch ops)", () => {
     expect(msg).toMatch(/names pli_002/);
     expect(msg).toMatch(/names pli_003/);
     expect(msg).not.toMatch(/names pli_001/);
+  });
+
+  it("(d4-logattr) ACCEPTS a plans update re-sending an item already completed in the stored plan", async () => {
+    // The item did not change in this call. Refusing it would strand a plan
+    // completed before this rule existed, whose log names nothing.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: { items: [{ ...seededPlanItem("pli_001"), status: "completed" }] },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("(d4-logattr) still refuses the item a re-sent items[] NEWLY completes, and only that one", async () => {
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: {
+            items: [
+              { ...seededPlanItem("pli_001"), status: "completed" },
+              { ...seededPlanItem("pli_002"), sequence: 2, status: "completed" },
+            ],
+          },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/no log\[\] entry names pli_002/);
+    expect(msg).not.toMatch(/no log\[\] entry names pli_001/);
   });
 
   it("(d4-logattr) ACCEPTS a plans update that leaves items[] alone", async () => {

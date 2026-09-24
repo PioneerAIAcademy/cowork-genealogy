@@ -1355,8 +1355,8 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
  *
  *  **An append carrying `status: "completed"` is always refused.** The id is
  *  assigned by this tool, so no log entry can already name it. That is not a
- *  false deny — it is the same defect in a different shape, and the corpus
- *  contains 0 such appends in the unit plane.
+ *  false deny — it is the same defect in a different shape. Measured at
+ *  4791ea9cb, the corpus holds 1 such append in the unit plane and 4 in e2e.
  *
  *  Forward direction only: the entry must END at `completed`. An item already
  *  sitting there when an unrelated field is edited is untouched, the same
@@ -2993,12 +2993,27 @@ function applyOne(
     //
     // Gated on the ops that can SET an item's status, the same discipline as
     // every arm around it: an unrelated update to a plan whose items were
-    // already completed in an earlier call is untouched.
+    // already completed in an earlier call is untouched. And an update that
+    // re-sends `items[]` whole checks only the items it newly completes — one
+    // already `completed` in the stored plan before this call did not change,
+    // and refusing it would strand a plan completed before this rule existed.
     const planFields = op.fields ?? {};
     const itemsTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(planFields, "items");
     if (itemsTouchedThisOp) {
+      const storedPlan =
+        op.op === "update"
+          ? (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []).find(
+              (pl: any) => pl && pl.id === resultEntry?.id,
+            )
+          : undefined;
+      const alreadyCompleted = new Set(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && it.status === "completed")
+          .map((it: any) => it.id),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
+        if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
       }
     }
