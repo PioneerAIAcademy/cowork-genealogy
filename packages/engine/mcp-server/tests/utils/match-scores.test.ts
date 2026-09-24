@@ -53,7 +53,7 @@ describe("match-scores", () => {
     await recordMatchScore(dir, score());
     const file = await readMatchScores(dir, ARK);
     expect(file?.record_id).toBe(ARK);
-    expect(findRecordedScore(file, "I1", { role: "principal" })?.score).toBe(0.87);
+    expect(findRecordedScore(file, "a_005", "I1")?.score).toBe(0.87);
   });
 
   it("lands under results/.scores/, invisible to the orphan check", async () => {
@@ -79,9 +79,9 @@ describe("match-scores", () => {
 
     await recordMatchScore(dir, score({ record_id: persona }));
     await recordMatchScore(dir, score({ record_id: "ark:/61903/1:2:ABCD-123", score: 0.1 }));
-    expect(findRecordedScore(await readMatchScores(dir, persona), "I1", { role: "principal" })?.score).toBe(0.87);
+    expect(findRecordedScore(await readMatchScores(dir, persona), "a_005", "I1")?.score).toBe(0.87);
     expect(
-      findRecordedScore(await readMatchScores(dir, "ark:/61903/1:2:ABCD-123"), "I1", { role: "principal" })?.score,
+      findRecordedScore(await readMatchScores(dir, "ark:/61903/1:2:ABCD-123"), "a_005", "I1")?.score,
     ).toBe(0.1);
   });
 
@@ -96,22 +96,25 @@ describe("match-scores", () => {
 
   it("keeps two personas of ONE record apart — ADR-0009 constraint 3", async () => {
     // Both against the SAME tree person, deliberately. With different tree
-    // persons the pairings stay apart even under a record-level key, so that
-    // version of this test passed a break-test that collapsed the party out of
-    // the key — which is the exact failure constraint 3 names: "a record-level
-    // exemption lets a second persona of an already-linked record attach
-    // unscored."
-    await recordMatchScore(dir, score({ record_role: "principal", tree_person_id: "I1" }));
+    // persons the pairings stay apart under any key, so that version of this
+    // test passes a break-test that collapses the discriminator out — which is
+    // the exact failure constraint 3 names: "a record-level exemption lets a
+    // second persona of an already-linked record attach unscored."
+    //
+    // The discriminator is now the ASSERTION, because an assertion carries one
+    // `record_role` and one `record_persona_id` and so IS a (record, party)
+    // pair. Two personas of one record are two assertions.
+    await recordMatchScore(dir, score({ assertion_id: "a_005", record_role: "principal" }));
     await recordMatchScore(
       dir,
-      score({ record_role: "wife", tree_person_id: "I1", score: 0.4 }),
+      score({ assertion_id: "a_006", record_role: "wife", score: 0.4 }),
     );
     const file = await readMatchScores(dir, ARK);
     expect(Object.keys(file!.scores).sort()).toEqual(
-      [scoreKey("principal", "I1"), scoreKey("wife", "I1")].sort(),
+      [scoreKey("a_005", "I1"), scoreKey("a_006", "I1")].sort(),
     );
-    expect(findRecordedScore(file, "I1", { role: "principal" })?.score).toBe(0.87);
-    expect(findRecordedScore(file, "I1", { role: "wife" })?.score).toBe(0.4);
+    expect(findRecordedScore(file, "a_005", "I1")?.score).toBe(0.87);
+    expect(findRecordedScore(file, "a_006", "I1")?.score).toBe(0.4);
   });
 
   it("keeps two tree persons scored against ONE persona apart", async () => {
@@ -119,24 +122,31 @@ describe("match-scores", () => {
     await recordMatchScore(dir, score({ tree_person_id: "I2", score: 0.4 }));
     const file = await readMatchScores(dir, ARK);
     expect(Object.keys(file!.scores)).toHaveLength(2);
-    expect(findRecordedScore(file, "I2", { role: "principal" })?.score).toBe(0.4);
+    expect(findRecordedScore(file, "a_005", "I2")?.score).toBe(0.4);
   });
 
-  it("prefers the persona id over the role when the record named one", async () => {
-    await recordMatchScore(dir, score({ record_persona_id: "p_9", record_role: "principal" }));
+  it("keys on the assertion whatever party the call resolved", async () => {
+    // The party is NOT stable across routes: the fetched route resolves a real
+    // persons[].id where the assertion carries null. Keying on it filed the
+    // score under what was resolved while every reader computes the key from
+    // the assertion, so a legitimate score became unfindable and the gate
+    // refused the links whose call HAD been made.
+    await recordMatchScore(dir, score({ record_persona_id: "PERSON1", record_role: "principal" }));
     const file = await readMatchScores(dir, ARK);
-    expect(Object.keys(file!.scores)).toEqual([scoreKey("p_9", "I1")]);
-    expect(findRecordedScore(file, "I1", { personaId: "p_9" })?.score).toBe(0.87);
+    expect(Object.keys(file!.scores)).toEqual([scoreKey("a_005", "I1")]);
+    expect(findRecordedScore(file, "a_005", "I1")?.score).toBe(0.87);
   });
 
-  it("is still findable by tree person alone — the only token both sides always have", async () => {
-    // A person_evidence link carries (assertion_id, person_id). For the SECOND
-    // party of a relationship assertion the assertion names the first party, so
-    // neither the persona id nor the role identifies this link's party.
-    await recordMatchScore(dir, score({ record_persona_id: "p_9", record_role: "principal" }));
+  it("is NOT findable by tree person alone", async () => {
+    // The old reader had a tree-person-only fallback. It returned ANY entry for
+    // that person, which is ADR-0009 constraint 3 verbatim — a second persona of
+    // an already-linked record riding the first one's score. Removed with the
+    // re-key, and pinned here so it cannot come back as a convenience.
+    await recordMatchScore(dir, score({ assertion_id: "a_005" }));
     const file = await readMatchScores(dir, ARK);
-    expect(findRecordedScore(file, "I1", { personaId: null, role: null })?.score).toBe(0.87);
-    expect(findRecordedScore(file, "I-nope", {})).toBeNull();
+    expect(findRecordedScore(file, "a_999", "I1")).toBeNull();
+    expect(findRecordedScore(file, null, "I1")).toBeNull();
+    expect(findRecordedScore(file, "a_005", "I-nope")).toBeNull();
   });
 
   it("a later score for the same pairing replaces the earlier one", async () => {
@@ -144,19 +154,19 @@ describe("match-scores", () => {
     await recordMatchScore(dir, score({ score: 0.9 }));
     const file = await readMatchScores(dir, ARK);
     expect(Object.keys(file!.scores)).toHaveLength(1);
-    expect(findRecordedScore(file, "I1", { role: "principal" })?.score).toBe(0.9);
+    expect(findRecordedScore(file, "a_005", "I1")?.score).toBe(0.9);
   });
 
-  it("writes nothing when no party identifies the score", async () => {
-    // Neither a persona id nor a role: nothing could ever look it up, so a file
-    // would be dead weight rather than an attestation.
-    await recordMatchScore(dir, score({ record_persona_id: null, record_role: null }));
+  it("writes nothing when no assertion identifies the score", async () => {
+    // The explicit two-document arm has no assertion, so nothing could ever look
+    // it up: a file would be dead weight rather than an attestation.
+    await recordMatchScore(dir, score({ assertion_id: null }));
     expect(await readMatchScores(dir, ARK)).toBeNull();
   });
 
   it("reads an absent or corrupt file as 'no attestation', never throwing", async () => {
     expect(await readMatchScores(dir, ARK)).toBeNull();
-    expect(findRecordedScore(null, "I1", { role: "principal" })).toBeNull();
+    expect(findRecordedScore(null, "a_005", "I1")).toBeNull();
   });
 
   it("treats a `scores: null` file as no attestation rather than throwing", async () => {
@@ -171,8 +181,8 @@ describe("match-scores", () => {
 
   it("findRecordedScore survives a hand-built file with a bad scores field", () => {
     for (const bad of [{ scores: null }, { scores: [] }, { scores: "x" }] as any[]) {
-      expect(() => findRecordedScore(bad, "I1", { role: "principal" })).not.toThrow();
-      expect(findRecordedScore(bad, "I1", { role: "principal" })).toBeNull();
+      expect(() => findRecordedScore(bad, "a_005", "I1")).not.toThrow();
+      expect(findRecordedScore(bad, "a_005", "I1")).toBeNull();
     }
   });
 });
