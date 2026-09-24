@@ -299,8 +299,8 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
       arrive — but on the PID path below, which shells out to the live tool,
       it can no longer fire;
     * de-duplicates identical relationships;
-    * warns on duplicate incoming ids — preserved verbatim, so a duplicate
-      makes `strip`'s selectors ambiguous (and `apply_strip` refuses).
+    * warns on duplicate incoming ids — person and relationship ids
+      globally, fact ids per holder (matching `apply_strip`'s scope).
 
     Returns the tree and a list of WARN strings. Lenient by design — it
     warns rather than raising on structurally odd but iterable input; the
@@ -315,13 +315,24 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     for kind, id_list in (
         ("person", [str(p.get("id")) for p in persons_in if isinstance(p, dict) and p.get("id")]),
         ("relationship", [str(r.get("id")) for r in rels_in if isinstance(r, dict) and r.get("id")]),
-        ("fact", [str(f.get("id")) for f in _all_facts(raw) if isinstance(f, dict) and f.get("id")]),
     ):
         for dup, n in sorted(Counter(id_list).items()):
             if n > 1:
                 warnings.append(
                     f"duplicate {kind} id {dup!r} appears {n} times — ids must be "
                     f"unique, and strip will refuse this tree until they are"
+                )
+    for holder in persons_in + rels_in:
+        if not isinstance(holder, dict):
+            continue
+        hid = holder.get("id", "?")
+        fact_ids = [str(f.get("id")) for f in holder.get("facts") or []
+                    if isinstance(f, dict) and f.get("id")]
+        for dup, n in sorted(Counter(fact_ids).items()):
+            if n > 1:
+                warnings.append(
+                    f"duplicate fact id {dup!r} on {hid} appears {n} times — "
+                    f"strip will refuse this tree until they are unique"
                 )
     name_ids = _backfill_ids("N", _ids_in(n for p in persons_in for n in p.get("names") or []))
     fact_ids = _backfill_ids("F", _ids_in(_all_facts(raw)))
