@@ -301,7 +301,7 @@ the caller may be about to supply in the next call.
 This is not a blanket rule against preconditions on this tool — §8.2 is one that
 does block, and the distinction is what makes it legitimate.
 
-- **Unretained results:** a `STAGING_CAPABLE_TOOLS` search that reported
+- **Unretained results:** a `STAGING_SEARCH_TOOLS` search that reported
   `resultsAvailable > 0` but passed no `stagedResultsRef` discarded its verbatim
   response. Fires per offending entry.
 - **Logging without persistence:** once **≥3** positive-outcome
@@ -399,7 +399,7 @@ not pin this one, so nothing in production refuses it.
   flags it; a re-run allocates a fresh `log_id` and succeeds with no orphan left.
 - **camelCase→snake_case** — persisted entry uses snake_case keys throughout.
 - **Non-blocking warnings (§8.1)** — the unretained-results warning fires when a
-  staging-capable search reports `resultsAvailable > 0` with no `stagedResultsRef`
+  staging search tool reports `resultsAvailable > 0` with no `stagedResultsRef`
   and stays silent for a nil search; the logging-without-persistence nudge fires
   once ≥3 positive searches are logged with zero sources and zero assertions,
   stays silent below the threshold, and stays silent once any source or assertion

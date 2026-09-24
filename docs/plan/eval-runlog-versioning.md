@@ -1,5 +1,9 @@
 # Eval run log versioning + active/release semantics — design
 
+**Status:** Shipped; nothing is pending. The senior-onboarding note (§ Open
+items 2) is `eval/SENIOR-WALKTHROUGH.md`. Kept because 19 other files cite it as
+the contract and its rationale has not been folded into `docs/specs/eval-crud-ui-spec.md`.
+
 > Implementation plan for a redesign of the eval test harness, CRUD UI,
 > and PR review process. Supersedes parts of `docs/specs/eval-crud-ui-spec.md`
 > and `docs/per-pr-review-workflow.md` (see "Supersessions" below).
@@ -203,8 +207,8 @@ UI check side (TypeScript) — they must agree byte-for-byte.
 Rules:
 - **JSON files** (`.json`): parse → re-emit with sorted object keys,
   `indent=2`, trailing newline. Skip cosmetic-only fields in test JSONs
-  (`name`, `description`, `tags`) so they don't trigger active-state
-  drift.
+  (`name`, `description`) so they don't trigger active-state
+  drift. (`tags` is **not** cosmetic — it selects validators; issue #2694.)
 - **Text files** (`.md`, `.txt`, `.yaml`, `.yml`, `.py`, etc.):
   CRLF → LF, ensure trailing newline, no other changes.
 - **Anything else**: exact bytes (no normalization).

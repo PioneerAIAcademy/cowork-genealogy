@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 19, hint-samples.csv row 602, flag adds_son, confidence 3). Draft transcribed from an 1879 Irish civil birth registration; unverified. The tree may already carry the same birth from a different collection."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 19, hint-samples.csv row 602, flag adds_son, confidence 3). Resolved 2026-09-23 as a false match: the 1879 Downpatrick birth (hint ark:/61903/1:1:QPKB-8F6F) is the same event as church entry ark:/61903/1:1:FRQS-TZ1, already attached to a different William McFerran (GQ96-96N, 1831-1913, Killinchy, Co. Down). Findings are an avoid guard plus a required documented-rejection finding; see README Notes for reviewers."
 }
