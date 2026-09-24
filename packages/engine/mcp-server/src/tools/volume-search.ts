@@ -277,8 +277,8 @@ export async function volumeSearchTool(
     throw new Error(
       `"${input.standardPlace}" matches more than one place: ` +
         `${resolution.candidates.join("; ")}. ` +
-        "Pass the exact full name of the one you mean as standardPlace, " +
-        "or call place_search to see the full list."
+        "Pass one of these exactly as listed, including the parenthesised type, " +
+        "as standardPlace, or call place_search to see the full list."
     );
   }
   if (resolution.kind === "unresolved") {

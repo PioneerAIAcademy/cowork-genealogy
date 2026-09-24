@@ -292,6 +292,80 @@ describe("resolveStandardPlaceToPlaceId", () => {
     const r = await resolveStandardPlaceToPlaceId("Gamma");
     expect(r).toEqual({ kind: "ambiguous", candidates: ["Alpha, X", "Beta, Y"] });
   });
+
+  // ── (Type) suffix disambiguation (issue #2886) ──────────────────────────
+
+  it("resolves when the input carries a (Type) suffix matching one candidate", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (County)")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+  });
+
+  it("resolves each member of a same-fullName pair to its own placeId", async () => {
+    const entries = [
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ];
+    mockSearchPlace.mockResolvedValue(entries);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (County)")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+
+    __clearPlaceResolverCachesForTests();
+    mockSearchPlace.mockResolvedValue(entries);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (Independent City)")
+    ).toEqual({ kind: "resolved", placeId: "P2" });
+  });
+
+  it("returns unresolved when the (Type) suffix matches no candidate", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (Township)")
+    ).toEqual({ kind: "unresolved" });
+  });
+
+  it("matches the (Type) suffix case-insensitively", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Rattvik, Kopparberg, Sweden", type: "Lutheran Parish", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Rattvik, Kopparberg, Sweden", type: "District", score: 0.9 }),
+      entry({ placeRepId: "3", placeId: "P3", fullName: "Rattvik, Kopparberg, Sweden", type: "Municipality", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Rattvik, Kopparberg, Sweden (lutheran parish)")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+  });
+
+  it("strips the (Type) suffix before calling the search API", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (County)");
+    expect(mockSearchPlace).toHaveBeenCalledWith(
+      "Franklin, Virginia, United States",
+      expect.anything(),
+    );
+  });
+
+  it("returns unresolved when the suffixed input has no exact-fullName matches", async () => {
+    // No entry's fullName matches "Gamma, Z", so exact is empty. The fallback
+    // pool must not be type-filtered — it can hold unrelated places of that type.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Alpha, X", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Beta, Y", type: "County", score: 0.8 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Gamma, Z (County)")
+    ).toEqual({ kind: "unresolved" });
+  });
 });
 
 describe("empty / whitespace input short-circuits without a network search", () => {
