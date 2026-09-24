@@ -28,19 +28,55 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 29, `hint-samples.csv` row 938,
-flag `adds_mother`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Uruguay, registro civil, 1879-2020", an entry dated 17 June 1879 for Rufino Moreira and Adela Martínez, naming his parents as Fortunato Morera and Francisca Cuez and hers as Juan Martínez and Dolores Bilares.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Dolores Bilares as her mother, plus a `required` finding that the report documents
-the rejection.
+**RESOLVED — FALSE MATCH (Outcome c).** The hint (`ark:/61903/1:1:XS6N-1GXK`,
+the Adela Martínez persona on an 1896 Rufino Moreira marriage) does **not**
+belong to Adelaida (Adela Natividad) Martínez `GRS9-MCH`. Her mother is **Josefa
+Segovia**, not Dolores Bilares.
 
-Start with the date, because it does not work. The entry is dated **17 June 1879**, but the subject was born on 25 December 1871 and married Rufino Moreira Cruz on **9 April 1896**. She was seven years old in 1879. So whatever this record is, it is not the marriage of this couple, and a reviewer who treats it as one will get the parentage question wrong for the right-sounding reason. Read the register page and establish the record type first — a civil-registration entry naming a couple and both sets of parents can be a marriage, a legitimation, or a birth registration of a child, and the date belongs to the event, not to the couple.
+**Her mother is settled by contemporaneous baptism.** Adelaida was baptized
+11 February 1872 at Dolores (b. 25 December 1871). Both 1872 baptismal indexes
+name her parents **Juan Martínez and Josefa Segovia** (`ark:/61903/1:1:F2BL-3XN`
+and `ark:/61903/1:1:FLSQ-VWB`), and Josefa Segovia married Juan Martínez on
+26 December 1866. A mother named at a child's own baptism outweighs one recited
+on a marriage a quarter-century later.
 
-The parentage question sits behind that. The father agrees — **Juan Martínez** on both sides — while the mother does not: the tree says **Josefa Segovia**, married to Juan Martínez on 26 December 1866 at Dolores, and the hint says **Dolores Bilares**. If the record turns out to concern a different Adela Martínez, that disagreement evaporates.
+**The date is not the disproof.** The hint is indexed "17 June 1879", which is an
+artifact of the collection's start year ("Uruguay, registro civil, 1879-2020");
+the record's own indexed coverage gives 17 June 1896, and the register image
+reads the same. The real event is the **17 June 1896 civil marriage
+registration** of Rufino Moreira and Adela Martínez at Villa de Dolores — not an
+1879 event, and the impossibility of "1879 vs a subject born 1871" is **not**
+what settles the match.
 
-The tree is a strong document here, which is what makes the fixture worth running: **19 sources** across Uruguayan civil registration, parish registers and Argentine records, including "Adela Martinez in entry for Rufino Moreyra, Uruguay, Marriages, 1840-1900" — quite possibly this very record under another index. Check that first. Note also that the subject appears throughout as both Adelaida and Adela Natividad, so name-form variance is normal for her and is not evidence either way.
+**The hint concerns a different Adela Martínez.** Both 1896 marriage records —
+the church marriage of 9 April 1896 (`ark:/61903/1:1:XS61-CNF3`, already a tree
+source) and the civil registration of 17 June 1896 (the hint) — describe a bride
+**born about 1876** whose mother was named **Dolores** (indexed Vidal on the
+church record, Bilares/Milans on the civil one), daughter of Juan Martínez. That
+is a systematic, two-record disagreement with the subject's 1872 baptisms
+(b. 1871, mother Josefa Segovia) — a different woman, not a lone indexing slip.
+The independent second opinion (below) identifies her as **Valentina Adelaida
+Martines (`9NDQ-JQ7`)**. Correcting the live tree's apparent conflation is **out
+of scope** for this resolve-only fixture and was not done.
+
+The father agreeing (Juan Martínez, a common name) and the shared surname, town
+and 1896 year are the bait; the mother and the bride's birth year are the tell.
+
+**Independent second opinion.** Isaac Boateng (an independent genealogist; not a
+senior genealogist, and not the adjudicator) reviewed the evidence separately and
+concluded that Adela Natividad Martínez `GRS9-MCH` (b. 25 Dec 1871, parents Juan
+Martínez and Josefa Segovia) is a different woman from the 1896 Rufino-Moreira
+bride, whom he identifies as Valentina Adelaida Martines `9NDQ-JQ7` (b. ~1875/76,
+daughter of Juan Martínez and Dolores Milán); he recommends rejecting the hint
+for `GRS9-MCH` and not merging the two women.
+
+**Provenance.** Retrieval was tool-assisted via the genealogy MCP read tools
+(`record_read`, `record_search`, `image_transcribe`); **no `dev/try-*.ts`
+scripts were used.** The 17 June 1896 civil-registration image
+(`ark:/61903/3:1:3Q9M-CS24-69RJ-5`) was examined and reads consistently with the
+1896 civil marriage, but under the page cross-check rule it carried only one
+other indexed entry, so that image transcription is **not licensed** and no
+image-only field is relied upon: every load-bearing fact (the 1896 date, the
+bride's ~1876 birth, and the mother named Dolores vs Josefa Segovia) rests on
+FamilySearch **index** records (`XS6N-1GXK`, `XS61-CNF3`, `F2BL-3XN`,
+`FLSQ-VWB`). The hint's own ark is not used as corroboration.

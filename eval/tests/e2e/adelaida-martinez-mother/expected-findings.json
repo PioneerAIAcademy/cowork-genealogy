@@ -3,16 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Adelaida (Adela) Martínez was the daughter of Juan Martínez and Dolores Bilares.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Adelaida (Adela Natividad) Martínez (PID GRS9-MCH, b. 25 December 1871, christened 11 February 1872 at Dolores) was the daughter of Juan Martínez and Dolores Bilares. Her mother, named on her two contemporaneous 1872 baptismal records, is Josefa Segovia (who married Juan Martínez on 26 December 1866). The hint's 'Dolores Bilares' comes from an 1896 Rufino Moreira marriage that concerns a different Adela Martínez — born about 1876, daughter of Juan Martínez and a mother named Dolores — not this 1871-baptized subject. Pass = tree.gedcomx.json assigns GRS9-MCH no mother Dolores Bilares (Vidal/Milans) and does not merge her with the 1896 Rufino-Moreira bride. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss.",
       "details": {
-        "subject_person": "Adelaida Martinez (GRS9-MCH)",
+        "subject_person": "Adelaida Martinez (PID GRS9-MCH)",
         "relation": "parents",
-        "target_person": {
-          "name": "Juan Martínez and Dolores Bilares"
+        "wrong_candidate": {
+          "name": "Dolores Bilares (also indexed Vidal or Milans), the mother the 1896 hint assigns to the subject",
+          "note": "GRS9-MCH's mother is Josefa Segovia per her 1872 baptisms; the 1896 marriage that names a mother 'Dolores' concerns a different Adela Martínez born ~1876"
         }
       },
       "supporting_sources": [
-        "Uruguay, registro civil, 1879-2020 — entry for Rufino Moreira and Adela Martínez, 17 Jun 1879, naming her parents Juan Martínez and Dolores Bilares"
+        "Uruguay, bautismos, 1750-1900 — baptism of Adela Natividad Martinez, christened 11 Feb 1872 (b. 25 Dec 1871), Dolores, naming her parents Juan Martínez and Josefa Segovia (ark:/61903/1:1:F2BL-3XN) — a disproving record: it fixes the subject's mother as Josefa Segovia, not Dolores Bilares",
+        "Uruguay, bautismos, 1750-1900 — a second, independent index of the same 1872 baptism, again naming the mother Josefa Segovia (ark:/61903/1:1:FLSQ-VWB)",
+        "Uruguay, registros parroquiales, 1726-2000 — the 9 April 1896 church marriage of Rufino Moreira and Adela Martínez, which records the bride as born about 1876 with mother Dolores (Vidal) (ark:/61903/1:1:XS61-CNF3) — independent evidence that the 1896 Rufino-Moreira bride is a different Adela Martínez from the 1871-baptized subject"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having weighed the 1896 marriage hint against Adelaida Martínez's own contemporaneous baptismal records, the agent should document a negative conclusion: the hint is a false match for GRS9-MCH. Her mother is Josefa Segovia (named on her 1872 baptisms; married Juan Martínez in 1866). The 1896 Rufino Moreira marriage records — the civil registration of 17 June 1896 and the church marriage of 9 April 1896 — name a bride Adela Martínez born about 1876 whose mother was named Dolores, a distinct woman; no record establishes Dolores Bilares as the mother of the 1871-baptized Adelaida.",
+      "details": {
+        "subject_person": "Adelaida Martinez (PID GRS9-MCH)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1896 Dolores-Bilares mother hint does not belong to this 1871-baptized Adelaida Martínez",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No record establishes Dolores Bilares as the mother of the Adela Natividad Martínez baptized 11 February 1872 at Dolores; her mother is named Josefa Segovia on both 1872 baptismal indexes, while the mother 'Dolores' appears only on the 1896 Rufino Moreira marriage records, which describe a bride born about 1876 — a different Adela Martínez"
       ],
       "required": true
     }

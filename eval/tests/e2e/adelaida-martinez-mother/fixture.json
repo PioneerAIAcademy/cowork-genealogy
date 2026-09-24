@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 29, hint-samples.csv row 938, flag adds_mother, confidence 3). Draft transcribed from an 1879 Uruguayan civil registration entry; unverified. The record's date is impossible for this couple, so establish what the record is before ruling on the mother."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 29, hint-samples.csv row 938, flag adds_mother, confidence 3). Resolved FALSE MATCH: GRS9-MCH's mother is Josefa Segovia per her two 1872 baptisms (ark:/61903/1:1:F2BL-3XN, ark:/61903/1:1:FLSQ-VWB), not Dolores Bilares. The hint (ark:/61903/1:1:XS6N-1GXK) is the 17 June 1896 civil marriage of Rufino Moreira and an Adela Martínez born ~1876 with mother Dolores — a different woman (church marriage ark:/61903/1:1:XS61-CNF3 corroborates b.1876/mother Dolores). The indexed '17 June 1879' is a collection-start artifact; the real date is 1896. Independent second opinion by Isaac Boateng. expected-findings.json is an avoid guard plus a required documented-negative finding."
 }
