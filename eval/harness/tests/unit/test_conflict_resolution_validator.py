@@ -1731,14 +1731,17 @@ def test_v4_catches_the_specs_own_worked_example_in_the_corpus():
     """The spec quotes one violation by name. It is in `text_response`, so a
     check reading only the persisted fields fires on none of it — which is what
     the first version of this plan would have shipped."""
-    quote = "almost certainly Thomas Flynn, Patrick's father"
-    hits = [(n, t) for n, t, msg in _replay_v4() if quote in msg]
+    quote = "almost certainly Thomas Flynn himself"
+    hits = [
+        (n, t) for n, t, msg in _replay_v4()
+        if quote in msg and msg.lstrip().startswith("the reply text")
+    ]
     assert hits, (
         "V4 no longer reports the spec's own worked example. It lives in "
-        "ut_conflict_resolution_008's text_response in v1_2026-08-19_15-24-31 — "
+        "ut_conflict_resolution_001's text_response in v1_2026-09-01_18-38-25 — "
         "if that log has rotated out, re-point this test rather than deleting it"
     )
-    assert any(t.endswith("008") for _, t in hits), hits
+    assert any(t.endswith("001") for _, t in hits), hits
 
 
 def test_v4_reports_the_reply_text_as_well_as_the_persisted_fields():
