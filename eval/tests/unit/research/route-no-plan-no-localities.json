@@ -18,16 +18,23 @@
     "max_turns": 20,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
-      "question-selection", "locality-guide", "research-plan",
-      "search-records", "record-extraction", "person-evidence",
-      "research-exhaustiveness", "proof-conclusion", "gps-mentor"
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-extraction",
+      "person-evidence",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
     ]
   },
   "judge_context": [
     "This is a ROUTING test. The only assertion that matters is whether Skill('locality-guide') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
     "The project has a question (in_progress) but no plan and no localities entry for its jurisdiction. The routing table says: 'A question with no plan, and no localities entry yet for its target jurisdiction -> locality-guide'. Any other first Skill call is wrong.",
     "locality-guide is stubbed and returns a bare denial. The router may attempt further routing after the stub; that is expected. Grade only the quality of the router's own work.",
-    "Do not penalize the router for not completing the full research cycle."
+    "Do not penalize the router for not completing the full research cycle.",
+    "ROUTING TEST, graded on the hand-off and nothing downstream. The tag is routes-to:locality-guide; what is under test is that the router reaches locality-guide. research-plan, search-records and every other callee are in stub_skills, which means the harness DENIES them execution, so no plan, log entry or source can be persisted in this run by construction. Do not mark Correctness or Completeness down for '(no research.json changes)' or for a plan that was not written: the skill that would write one was deliberately prevented from running. Grade only whether the router handed off correctly and whether its narration is honest about what it delegated."
   ],
   "judge_reads_files": true
 }
