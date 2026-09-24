@@ -494,22 +494,43 @@ def test_unlogged_refs_shown_has_not_drifted_from_the_typescript_source():
 
 
 def test_staging_tool_sets_agree_across_the_two_copies():
-    """`STAGING_SEARCH_TOOLS` here vs `STAGING_CAPABLE_TOOLS` in the engine.
+    """`STAGING_SEARCH_TOOLS` here vs `STAGING_SEARCH_TOOLS` in the engine.
 
     The engine consolidated its own two copies for exactly this reason ("a second
     copy would drift"); this is the third, and it lives in another language.
+
+    Compared against the engine's SEARCH set, not its wider `STAGING_CAPABLE_TOOLS`
+    (issue #2048): `image_transcribe` and `record_read` stage in production but
+    their canned fixtures carry no `results[]`, and the mock's nil-search /
+    unlogged-search notes are search semantics — keying them on the wider set
+    would stamp `nilSearchNeedsLog` onto every transcription fixture. The second
+    assertion pins the relation the split relies on: every search producer is a
+    capable producer. That parity gap is recorded in eval/CLAUDE.md, "Eval vs
+    production parity".
     """
     from harness.mock_mcp import STAGING_SEARCH_TOOLS
 
     src = (
         REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
     ).read_text(encoding="utf-8")
-    decl = re.search(
+    search_decl = re.search(
+        r"export const STAGING_SEARCH_TOOLS = new Set\(\[(.*?)\]\)", src, re.DOTALL
+    )
+    assert search_decl, "STAGING_SEARCH_TOOLS is gone from results-staging.ts"
+    ts_search = set(re.findall(r'"([a-z_]+)"', search_decl.group(1)))
+    assert ts_search == STAGING_SEARCH_TOOLS
+
+    capable_decl = re.search(
         r"export const STAGING_CAPABLE_TOOLS = new Set\(\[(.*?)\]\)", src, re.DOTALL
     )
-    assert decl, "STAGING_CAPABLE_TOOLS is gone from results-staging.ts"
-    ts_tools = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
-    assert ts_tools == STAGING_SEARCH_TOOLS
+    assert capable_decl, "STAGING_CAPABLE_TOOLS is gone from results-staging.ts"
+    capable_body = capable_decl.group(1)
+    assert "...STAGING_SEARCH_TOOLS" in capable_body, (
+        "STAGING_CAPABLE_TOOLS must be built from STAGING_SEARCH_TOOLS (spread), "
+        "so the search producers cannot drop out of the capable set"
+    )
+    ts_extra = set(re.findall(r'"([a-z_]+)"', capable_body))
+    assert ts_extra == {"image_transcribe", "record_read"}
 
 
 def test_nil_search_carries_the_negative_log_note(tmp_path):
@@ -955,6 +976,43 @@ def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
     warnings = _build_warnings([upstream])
     assert not any(w["kind"] == "harness_node_timeout" for w in warnings)
 
+
+def test_compiled_tool_live_mode_is_refused_without_running_node():
+    """The unit suite is hermetic — every response is a fixture. A compiled
+    tool's live mode is real code that makes an authenticated FamilySearch
+    request, and `_COMPILED_TOOLS` runs real code, so nothing else stops it:
+    measured, it really does fetch and return live warnings.
+
+    Injecting `projectPath` instead would be worse than refusing. person_warnings
+    rejects projectPath and live together (they read different trees), so a skill
+    that called live mode correctly would be handed an error the judge scores
+    against the skill. The refusal names the harness as the limitation.
+
+    No workspace and no build are passed: reaching either branch means the
+    refusal did not fire first.
+    """
+    import asyncio
+
+    from harness.mock_mcp import (
+        _COMPILED_TOOLS,
+        _COMPILED_TOOLS_WITH_PRINCIPAL,
+        _make_compiled_tool_handler,
+    )
+
+    assert "person_warnings" in _COMPILED_TOOLS_WITH_PRINCIPAL
+    js, sym = _COMPILED_TOOLS["person_warnings"]
+    handler = _make_compiled_tool_handler("person_warnings", js, sym, None, [])
+
+    result = asyncio.run(handler({"personId": "KD96-TV2", "live": True}))
+    text = result["content"][0]["text"]
+    assert "live mode is not available in the unit harness" in text
+    # Not the "workspace not provided" branch — that would mean the refusal
+    # did not fire and only the missing workspace saved us.
+    assert "workspace not provided" not in text
+
+    # A non-live call still falls through to the ordinary path.
+    plain = asyncio.run(handler({"personId": "I1"}))
+    assert "workspace not provided" in plain["content"][0]["text"]
 
 def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
     """The `except` arm must ABSORB a node failure, not become one.

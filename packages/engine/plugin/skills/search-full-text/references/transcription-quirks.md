@@ -45,14 +45,21 @@ They help interpret transcripts.
 
 ## Era-specific handwriting issues
 
+Where the transcription mis-reads a hand is where the wildcard goes. These
+are error profiles of the transcription, not palaeography:
+
 - **Secretary hand (16th–17th c. English):** Errors concentrate
   in word endings (-ed, -es, -eth). `e` looks like a backwards-c.
+  Anchor the wildcard at the stem and let the ending vary.
 - **Copperplate (18th–19th c. legal):** Stylized capitals (S, F,
-  T, L) confuse recognition. "Gasper" vs. "Casper" confusion.
-- **German Kurrent/Sütterlin:** NOT well-supported as of 2026.
-  H/Y, e/n, B/L most confused. Search English transliterations.
+  T, L) confuse recognition. "Gasper" vs. "Casper" confusion. A
+  surname's first letter is the least reliable character to require.
+- **German Kurrent/Sütterlin:** NOT well-supported. H/Y, e/n, B/L
+  most confused. Search English transliterations too, and read a nil
+  as a fact about coverage rather than about the person.
 - **Spanish Procesal/colonial:** Abbreviations (`q'`=que,
-  `dho`=dicho) frequently truncated or expanded inconsistently.
+  `dho`=dicho) frequently truncated or expanded inconsistently —
+  search the contracted AND expanded form as separate queries.
 
 ## Content quirks
 
@@ -69,30 +76,21 @@ They help interpret transcripts.
 - **~10% error rate** in user-perceived results (empirically
   observed). Always verify against the original image.
 
-## Coverage (as of mid-2026)
+## Coverage
 
-~6,665 searchable auto-collections; ~1.95 billion result-records.
-Coverage is opaque and dynamic — collections grow by ~4–6 per week.
+The `fulltext_search` tool description states the coverage shape, and it
+is the only copy: an incomplete and continuously growing subset, strongest
+on English-language records from the Americas, the UK and Australasia,
+weaker on non-Latin scripts and continental Europe. Do not restate a
+collection count or a record total here — the precise values move with
+every upstream re-run and live in `docs/specs/fulltext-search-tool-spec.md`
+for the humans who need them.
 
-**Strong coverage:**
-- US deeds and wills 1750–1900
-- US Legal, Vitals, Migrations, Land/Probate, Military
-- UK Military and Legal
-- Latin American notarial protocols (17th–19th c.)
-- Revolutionary War Pension files
-- Australian and New Zealand probate
-- Italian civil records (growing rapidly)
-
-**Weak/absent:**
-- Continental European records in non-Latin scripts (German
-  Kurrent, Cyrillic, Greek)
-- East Asian (Chinese, Japanese, Korean — models under development)
-- Arabic, Hebrew
-- Eastern European (Polish, Czech, Hungarian)
-
-**Coverage mismatch:** FamilySearch's internal count is "8,000+"
-auto-collection definitions; the user-searchable surface is ~6,665.
-Agents should not assume all collections are searchable.
+The consequence for searching is the part that matters: a collection
+existing at FamilySearch does not mean FTS can reach it, so **a nil is
+not an absence until coverage is checked**. Where a volume's own metadata
+reports it as not full-text searchable, `fulltext_search` says so on the
+nil itself.
 
 ## Important behaviors
 

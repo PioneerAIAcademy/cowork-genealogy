@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import pytest
+from datetime import date, timedelta
 import re
 from pathlib import Path
 
@@ -341,6 +343,26 @@ def _make_present_skill(tmp_path, monkeypatch, name: str = "present-skill"):
     return f"packages/engine/plugin/skills/{name}/SKILL.md"
 
 
+def _stage_runlog_dir(tmp_path, monkeypatch, skill="present-skill", candidates=()):
+    """Point RUNLOGS_DIR at a tmp tree and populate `<skill>/` with the given
+    candidate run-log filenames. Rule 7 recomputes the prunable set from the
+    names on disk, so a skill whose deletions must read as a legitimate prune
+    needs its surviving newer candidates staged here. Returns the skill's dir."""
+    runlogs = tmp_path / "runlogs-unit"
+    d = runlogs / skill
+    d.mkdir(parents=True)
+    for name in candidates:
+        (d / name).write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs)
+    return d
+
+
+def _five_newer_candidates() -> list[str]:
+    """Five v1 candidates all newer than 2026-06-01, so a deleted 2026-06-01
+    pair falls outside the keep-newest-5 window and reads as a real prune."""
+    return [f"v1_2026-07-0{i}_00-00-00.json" for i in range(1, 6)]
+
+
 def test_non_exempt_skill_without_runlogs_still_fails(monkeypatch, capsys, tmp_path):
     """The gate still bites for a non-exempt skill with no runlog dir — proof
     the exemption didn't widen into a blanket pass."""
@@ -367,8 +389,14 @@ def test_runlog_modify_or_delete_does_not_touch_skill(monkeypatch, capsys, tmp_p
     """Rewriting or pruning a committed run log is housekeeping, not evidence.
     A run log is not an input to its own snapshot, so a non-AR change under
     eval/runlogs/unit/<skill>/ must not gate rules 2 + 3 — otherwise a rehash
-    or prune sweep fails every skill on drift it did not cause."""
+    or prune sweep fails every skill on drift it did not cause.
+
+    The deleted pair must read as a real prune under rule 7, so the five newer
+    candidates that survive it are staged on disk (before rule 7 this test left
+    RUNLOGS_DIR empty and the lone deletion recomputed to an empty prunable set,
+    which rule 7 correctly flags)."""
     _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=_five_newer_candidates())
     monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
     pruned = [
         "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
@@ -789,16 +817,171 @@ def test_edited_annotation_still_gates_rule3(monkeypatch, capsys, tmp_path):
 
 
 def test_deleted_annotation_does_not_gate(monkeypatch, capsys, tmp_path):
-    """The prune deletes an annotation with its run log; that must stay green."""
+    """A prune drops an annotation ALONGSIDE its run log; that stays green.
+
+    The premise this test carried before rule 7 — deleting a lone `.ann.json`
+    with no run-log deletion — is now exactly the destroy-grading shape rule 7
+    flags (see the next test). A real prune deletes the pair, and only when the
+    keep-newest-5 window has moved past it: the five newer candidates that
+    survive are staged so the deleted 2026-06-01 pair recomputes as prunable."""
     _make_present_skill(tmp_path, monkeypatch)
-    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=_five_newer_candidates())
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
+    ]
     monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
-    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
-    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
 
     rc = check_runlogs.main()
     assert rc == 0
     assert "no run logs" not in capsys.readouterr().out
+
+
+# --- Rule 7: deletion of grading / run logs beyond the prune rule ----------
+#
+# The keep-newest-K set is recomputed from filenames (prunable_candidates over
+# head ∪ deleted candidates), so no frozen baseline is needed. Broken two ways
+# below: drop the recompute and a hand-deletion passes; drop --no-renames (its
+# own argv test) and a rename-masked prune never reaches the rule. Green
+# variants — legit prune, promotion, deleted skill — prove the other direction.
+
+
+def test_rule7_lone_annotation_deletion_blocks(monkeypatch, capsys, tmp_path):
+    """The #2737 core: deleting an `.ann.json` while its run log survives at
+    head destroys committed grading with no prune to justify it — must block."""
+    _make_present_skill(tmp_path, monkeypatch)
+    # The run log survives on disk; only its annotation is deleted.
+    _stage_runlog_dir(
+        tmp_path, monkeypatch, candidates=["v1_2026-07-01_00-00-00.json"]
+    )
+    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [ann])
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "still present" in out
+    assert "v1_2026-07-01_00-00-00.ann.json" in out
+
+
+def test_rule7_2579_shape_blocks(monkeypatch, capsys, tmp_path):
+    """The #2579 incident: a candidate `.json` + `.ann.json` pair deleted while
+    only 4 candidates remain on disk (keep is 5), so the recomputed prunable set
+    is empty and the deletion is a hand-deletion, not a prune."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(
+        tmp_path,
+        monkeypatch,
+        candidates=[f"v1_2026-09-0{i}_00-00-00.json" for i in range(4, 8)],  # 4 left
+    )
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-09-03_11-42-59.json",
+        "eval/runlogs/unit/present-skill/v1_2026-09-03_11-42-59.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "not a keep-newest-5 prune" in out
+    assert "v1_2026-09-03_11-42-59.json" in out
+
+
+def test_rule7_genuine_prune_passes(monkeypatch, capsys, tmp_path):
+    """The oldest candidate beyond the newest 5 deleted with its annotation is a
+    real prune and stays green — the direction a break-the-repo proof can't show."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=_five_newer_candidates())
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+def test_rule7_promotion_passes(monkeypatch, tmp_path):
+    """Promoting a candidate to a release is a rename read as delete(candidate) +
+    add(v{N}.json) under --no-renames. The added release exempts the deleted
+    candidate of the same version — even when it was the only candidate.
+
+    Exercises `rule7_deletions` directly: through `main()` the added `v2.json`
+    would (correctly) trip rules 2/3/6 for its own missing annotation, a
+    different contract than the deletion guard under test."""
+    _make_present_skill(tmp_path, monkeypatch)  # skill dir exists → not skipped
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=["v2.json"])  # only the release left
+    deleted = {
+        "eval/runlogs/unit/present-skill/v2_2026-07-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v2_2026-07-01_00-00-00.ann.json",
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v2.json"]}) == 0
+    # Without the promotion the same deletion is a within-K hand-deletion and
+    # blocks — proof the exemption, not the deleted-skill skip, is what passes it.
+    assert check_runlogs.rule7_deletions(deleted, {}) == 1
+
+
+def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):
+    """A released `v{N}.json` is canonical and never prunable — deleting it (or
+    its annotation) must block."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=["v2_2026-07-01_00-00-00.json"])
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1.json",
+        "eval/runlogs/unit/present-skill/v1.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "canonical" in out
+    assert "v1.json" in out
+
+
+def test_rule7_deleted_skill_skips(monkeypatch, capsys, tmp_path):
+    """A wholly-deleted skill (skill dir AND test dir absent) has nothing left to
+    protect — rule 7 skips it, the same skip rules 2 + 3 apply."""
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests-unit")
+    _stage_runlog_dir(tmp_path, monkeypatch, skill="gone-skill", candidates=[])
+    pruned = [
+        "eval/runlogs/unit/gone-skill/v1.json",
+        "eval/runlogs/unit/gone-skill/v1.ann.json",
+    ]
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(pruned))
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: list(pruned))
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+def test_rule7_deleted_paths_passes_no_renames(monkeypatch):
+    """git_diff_deleted_paths must pass --no-renames, or a prune's delete+add
+    pair is read as a rename and --diff-filter=D omits the deletion entirely —
+    rule 7 (and rule 3's deleted-annotation arm) would then never see it."""
+    monkeypatch.setenv("BASE_SHA", "base123")
+    monkeypatch.setenv("HEAD_SHA", "head456")
+    captured: dict = {}
+
+    def fake_check_output(cmd, *args, **kwargs):
+        captured["cmd"] = cmd
+        return "eval/runlogs/unit/s/v1_2026-06-01_00-00-00.json\n"
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", fake_check_output)
+    paths = check_runlogs.git_diff_deleted_paths()
+    assert paths == ["eval/runlogs/unit/s/v1_2026-06-01_00-00-00.json"]
+    assert "--no-renames" in captured["cmd"]
+    assert "base123...head456" in captured["cmd"]
 
 
 # --- Rule 2 against a schema_version 3 (digest) snapshot -------------------
@@ -833,9 +1016,9 @@ def test_rule2_passes_on_hash_snapshot_when_disk_matches(tmp_path, monkeypatch, 
     assert "SKILL.md" in out  # names the drifted path, not just the count
 
 
-def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatch):
-    """`normalize()` runs BEFORE hashing, so stripping test.{name,description,
-    tags} still makes a cosmetic edit a no-op.
+def test_rule2_tolerates_a_cosmetic_name_description_edit(tmp_path, monkeypatch):
+    """`normalize()` runs BEFORE hashing, so stripping test.{name,description}
+    still makes a cosmetic edit a no-op.
 
     Undocumented invariant otherwise: hashing the raw bytes instead would turn
     every rename of a test's display name into a forced paid re-run, and
@@ -855,12 +1038,39 @@ def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatc
 
     log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
 
+    # Name and description are cosmetic — changing them should not invalidate.
     body["test"]["name"] = "RENAMED"
-    body["test"]["tags"] = ["z"]
+    body["test"]["description"] = "NEW description"
     (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
     assert check_runlogs.rule2_active("s1", log, "v1.json") == 0
 
     body["input"]["user_message"] = "SUBSTANTIVE"
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
+
+
+def test_rule2_treats_tag_edit_as_substantive(tmp_path, monkeypatch):
+    """Tags select validators and change outcome computation (issue #2694).
+
+    A tag edit must invalidate the snapshot — unlike name/description, tags
+    are NOT cosmetic.
+    """
+    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
+    tests_dir = tmp_path / "eval/tests/unit/s1"
+    tests_dir.mkdir(parents=True)
+    body = {
+        "test": {"id": "ut_1", "skill": "s1", "name": "n",
+                 "description": "d", "tags": ["a"], "type": "positive"},
+        "input": {"user_message": "m"},
+    }
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
+
+    # Changing tags must invalidate the snapshot (returns 1).
+    body["test"]["tags"] = ["z"]
     (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
     assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
 
@@ -1029,6 +1239,309 @@ def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys)
     )
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     assert "no comment" in capsys.readouterr().out
+
+
+# --- rule 6: the outcome gate ---------------------------------------------------
+#
+# Zero reds, not zero new reds (lead ruling 2026-09-22). No carry list, no
+# review-by date, no per-entry exemption. Direct unit calls, because the shapes
+# worth pinning are per-test; the main() wiring is covered further down.
+
+
+def _t(test_id, outcomes, *, expected="pass"):
+    return {
+        "test_id": test_id,
+        "expected_outcome": expected,
+        "runs": [{"outcome": o} for o in outcomes],
+    }
+
+
+def _rule6(tests, closed=None, markers=None):
+    return check_runlogs.rule6_outcomes(
+        "s", {"tests": tests}, "v1.json", closed, markers
+    )
+
+
+def test_rule6_blocks_a_fail(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"])]) == 1
+    assert "may not carry a red" in capsys.readouterr().out
+
+
+def test_rule6_blocks_an_abort(capsys):
+    assert _rule6([_t("ut_s_1", ["pass", "aborted"])]) == 1
+    assert "resolved to `aborted`" in capsys.readouterr().out
+
+
+def test_rule6_blocks_a_red_that_predates_the_pr(capsys):
+    """The whole point of the 2026-09-22 reversal: there is no "already red"
+    exemption, so an old red and a new one are the same failure."""
+    assert _rule6([_t("ut_s_1", ["fail"]), _t("ut_s_2", ["fail"])]) == 2
+
+
+def test_rule6_does_not_block_a_partial(capsys):
+    assert _rule6([_t("ut_s_1", ["partial"])]) == 0
+
+
+def test_rule6_uses_the_modal_aggregate_not_any_run(capsys):
+    """[pass, fail, pass] is a passing test. Blocking on "any run failed" would be
+    a second definition, and stricter than the runner's."""
+    assert _rule6([_t("ut_s_1", ["pass", "fail", "pass"])]) == 0
+
+
+def test_rule6_suppressed_fail_does_not_block(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail")]) == 0
+
+
+def test_rule6_suppressed_abort_blocks(capsys):
+    """A marker declares a known FAILURE; an abort is an ungraded run."""
+    assert _rule6([_t("ut_s_1", ["aborted"], expected="xfail")]) == 1
+    assert "but ABORTED" in capsys.readouterr().out
+
+
+def test_rule6_suppressed_pass_warns_but_does_not_block(capsys):
+    assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")]) == 0
+    assert "but PASSED" in capsys.readouterr().out
+
+
+def test_rule6_names_a_closed_owner_on_a_stale_marker(capsys):
+    """A marker whose removal condition cites a closed issue can never be met.
+    Three of the five live markers are in that state."""
+    assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")],
+                  closed={2173}, markers={"ut_s_1": 2173}) == 0
+    assert "issue #2173, which is CLOSED" in capsys.readouterr().out
+
+
+def test_rule6_a_test_with_no_runs_blocks(capsys):
+    """Schema forbids it, so this is a hand-edit guard — it must not resolve to
+    green by falling through."""
+    assert _rule6([{"test_id": "ut_s_1", "expected_outcome": "pass", "runs": []}]) == 1
+    assert "has no runs" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "runs",
+    [
+        [{}],
+        [{"outcome": None}],
+        [{"outcome": "FAIL"}],
+        [{"outcome": "failed"}],
+        [{"outcome": "pass"}, {"outcome": "skipped"}],
+    ],
+    ids=["missing", "null", "uppercase", "misspelled", "one-bad-of-two"],
+)
+def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
+    entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
+    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json") == 1
+    assert "outside the schema's" in capsys.readouterr().out
+
+
+def test_rule6_accepts_every_value_the_schema_allows(capsys):
+    """The other direction — the guard must not reject a legitimate enum member."""
+    for outcome in ("pass", "partial"):
+        assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
+
+
+def test_rule6_an_all_suppressed_log_is_allowed(capsys):
+    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail"),
+                   _t("ut_s_2", ["fail"], expected="xfail")]) == 0
+
+
+def test_rule6_an_empty_tests_array_is_allowed():
+    """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
+    second definition. Rules 1 and 3 own "a PR must carry a real run log"."""
+    assert _rule6([]) == 0
+
+
+# --- marker owners, read from the committed test corpus --------------------------
+
+
+def test_marker_owners_reads_the_issue_out_of_an_xfail_reason(tmp_path):
+    d = tmp_path / "some-skill"
+    d.mkdir()
+    (d / "t.json").write_text(json.dumps({"test": {
+        "id": "ut_x_1", "expected_outcome": "xfail",
+        "xfail_reason": "Remove this marker once #2173 lands.",
+    }}), encoding="utf-8")
+    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2173}
+
+
+def test_marker_owners_ignores_unmarked_tests_and_reasonless_markers(tmp_path):
+    d = tmp_path / "some-skill"
+    d.mkdir()
+    (d / "a.json").write_text(json.dumps({"test": {
+        "id": "ut_x_1", "expected_outcome": "pass",
+        "xfail_reason": "mentions #999 but is not a marker"}}), encoding="utf-8")
+    (d / "b.json").write_text(json.dumps({"test": {
+        "id": "ut_x_2", "expected_outcome": "xfail",
+        "xfail_reason": "no issue cited, so nothing to check"}}), encoding="utf-8")
+    assert check_runlogs.marker_owners(tmp_path) == {}
+
+
+def test_marker_owners_survives_an_unreadable_file(tmp_path):
+    """It scans the whole corpus, so one bad file must not take the gate down."""
+    d = tmp_path / "some-skill"
+    d.mkdir()
+    (d / "bad.json").write_text("{ not json", encoding="utf-8")
+    (d / "good.json").write_text(json.dumps({"test": {
+        "id": "ut_x_1", "expected_outcome": "xfail",
+        "xfail_reason": "owned by #2030"}}), encoding="utf-8")
+    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2030}
+
+
+def _clean_log(test_id="ut_ip_1", outcome="pass"):
+    return {
+        "snapshot": {},
+        "tests": [{"test_id": test_id, "expected_outcome": "pass",
+                   "runs": [{"outcome": outcome}]}],
+    }
+
+
+def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
+    """A released `v1.json` beside candidates — the shape `init-project` has on
+    main, and the one `latest_full_skill_runlog` resolves backwards."""
+    runlogs = tmp_path / "runlogs"
+    skill_dir = runlogs / skill
+    skill_dir.mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs)
+    (tmp_path / "skills" / skill).mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    (tmp_path / "tests" / skill).mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests")
+    return skill_dir
+
+
+def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, capsys):
+    """`latest_full_skill_runlog` returns ANY released `v{N}.json` in preference to
+    every candidate, whatever the date. So a PR adding a red candidate beside a
+    clean released log would be read as clean if rule 6 used that resolution.
+    It reads the log the PR ADDED instead."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    added = "v2_2026-09-22_09-00-00.json"
+    (skill_dir / added).write_text(
+        json.dumps(_clean_log("ut_ip_2", "fail")), encoding="utf-8"
+    )
+    _write_ann(skill_dir, added, [])
+    _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "ut_ip_2" in out and "resolved to `fail`" in out
+
+
+def test_rule6_does_not_grade_the_baseline_on_an_annotation_only_pr(
+    tmp_path, monkeypatch, capsys
+):
+    """An annotation-only PR adds no run log, so it is not accountable for the
+    committed baseline's reds. Without this, a red skill could satisfy neither
+    rule 3 nor rule 6 and its annotations could never land."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    (skill_dir / "v1.json").write_text(
+        json.dumps(_clean_log("ut_ip_9", "fail")), encoding="utf-8"
+    )
+    _write_ann(skill_dir, "v1.json", [])
+    _patch_diffs(monkeypatch, ["eval/runlogs/unit/init-project/v1.ann.json"])
+
+    check_runlogs.main()
+    assert "resolved to `fail`" not in capsys.readouterr().out
+
+
+def test_rule6_grades_every_added_log_when_a_pr_adds_two(tmp_path, monkeypatch, capsys):
+    """Rule 1 caps RELEASED logs at one per skill and never short-circuits main(),
+    so two added candidates reach rule 6 — any red in any of them blocks."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    for name, tid, outcome in (
+        ("v1_2026-09-22_08-00-00.json", "ut_ip_a", "pass"),
+        ("v1_2026-09-22_09-00-00.json", "ut_ip_b", "fail"),
+    ):
+        (skill_dir / name).write_text(json.dumps(_clean_log(tid, outcome)), encoding="utf-8")
+        _write_ann(skill_dir, name, [])
+    _patch_diffs(
+        monkeypatch,
+        [f"eval/runlogs/unit/init-project/v1_2026-09-22_08-00-00.json",
+         f"eval/runlogs/unit/init-project/v1_2026-09-22_09-00-00.json"],
+    )
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    # NOT just `"ut_ip_b" in out` -- rule 3 also names it (empty corrections), so that
+    # alone stays green under a `break` that grades only the first added log.
+    assert rc == 1
+    assert "`ut_ip_b` resolved to `fail`" in out
+
+
+def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch, capsys):
+    """`added_runlog_paths` holds every added path — `.ann.json` siblings included,
+    because RUNLOG_PATH_RE matches anything ending `.json`. Parsing one as a run log
+    would crash the gate. `classify()` is what actually excludes both an annotation
+    and a `scratch_` log; assert the OUTCOME (nothing graded) rather than trusting
+    either guard, since a bare `main()` call with no assertion passes even with rule
+    6 deleted."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    scratch = "scratch_2026-09-22_09-00-00.json"
+    (skill_dir / scratch).write_text(
+        json.dumps(_clean_log("ut_ip_scratch", "fail")), encoding="utf-8"
+    )
+    _patch_diffs(monkeypatch, [
+        "eval/runlogs/unit/init-project/v1.ann.json",
+        f"eval/runlogs/unit/init-project/{scratch}",
+    ])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert "rule 6: graded 0 added run log(s)" in out
+    assert "ut_ip_scratch" not in out
+    assert rc == 0
+
+
+# --- rule 6: shapes that used to fall through as green ---------------------------
+#
+# The `has no runs` guard was added for hand-edited logs; four adjacent hand-edit
+# shapes walked straight past it, because an unrecognized string aggregates to
+# itself and matches neither "fail" nor "pass". CLAUDE.md names this exact pattern:
+# "each made the tool exit 0 having done nothing, past a guard added beside it."
+
+
+@pytest.mark.parametrize(
+    "runs",
+    [
+        [{}],                        # entry missing `outcome` entirely
+        [{"outcome": None}],
+        [{"outcome": "FAIL"}],       # right word, wrong case
+        [{"outcome": "failed"}],     # near-miss spelling
+        [{"outcome": "pass"}, {"outcome": "skipped"}],
+    ],
+    ids=["missing", "null", "uppercase", "misspelled", "one-bad-of-two"],
+)
+def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
+    entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
+    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json", {}) == 1
+    assert "outside the schema's" in capsys.readouterr().out
+
+
+def test_rule6_accepts_every_value_the_schema_allows(capsys):
+    """The other direction — the guard must not reject a legitimate enum member."""
+    for outcome in ("pass", "partial"):
+        assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
+
+
+def test_rule5_names_an_unparseable_annotation_outside_the_repo(tmp_path, monkeypatch, capsys):
+    """Direct regression test for rule 5's path handling. It used to call
+    `relative_to(REPO_ROOT)` unguarded, so pointing RUNLOGS_DIR at a tmp dir raised
+    ValueError instead of reporting the bad file — which is why rule 5 had no
+    main()-level test at all. Named after rule 5 so a reverter sees the right rule
+    fail."""
+    skill_dir = tmp_path / "runlogs" / "some-skill"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "v1.ann.json").write_text("{ broken", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path / "runlogs")
+
+    assert check_runlogs.rule5_annotations_parse(tmp_path / "runlogs") == 1
+    assert "v1.ann.json" in capsys.readouterr().out
 
 
 # --- An agent's OWN agent-keyed suite (issue #1253) ------------------------
