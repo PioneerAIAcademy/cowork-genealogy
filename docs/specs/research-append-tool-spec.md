@@ -428,7 +428,8 @@ the tree `S` entry it cites. In paths 1–2 nothing touches the tree, so the
 call is a research-only write (`filesWritten: ["research.json"]`, no
 `sourceDescriptionId`). The §3.4 reuse-or-create precondition still backstops
 path 2: a stamped `S` id must exist in the tree or the batch is rejected
-op-indexed.
+op-indexed. A fold makes re-extracting the *source* safe; it does not license a
+second copy of an extracted *assertion* — §3.4.3.
 
 ### 3.4.2 Composite persist (`verdict`) — evaluations sidecar
 
@@ -459,6 +460,70 @@ more than one evaluations append in a batch, and an entry missing the `focus` /
 
 The consumer is the `gps-mentor` agent, which holds no filesystem write tool; see
 `docs/specs/gps-mentor-agent-spec.md` §8.
+
+### 3.4.3 Re-extraction guard — one pass writes a fact once
+
+§3.4.1 folds a re-extracted record's `sources` append onto the existing source, which
+makes re-running an extraction safe for the *source*. It did nothing for the
+assertions: a second pass appended a full second set, and in this domain a duplicated
+assertion reads as **independent corroboration** — the failure a proof conclusion
+cannot see. The D17 live run (2026-09-23, `docs/plan/search-agent-prototype.md`) wrote
+one record three times onto one `src_`: the killed attempt's write committed after its
+worker died, the resumed turn re-delegated and wrote again, and every batch took the
+`updated_existing` fold. `record-extractor.md` already says "never a second assertion
+for the same fact"; this makes it a precondition (ADR-0011).
+
+**When it engages.** Only on a batch that **re-persists a record already persisted on
+the same source** — §3.4.1 returned `sourceReuse.action: "updated_existing"`. That shape
+is what a re-extraction is: the extractor re-sends the whole record, source included.
+A later call that appends one more fact to an extracted record (a second parentage
+"son of Charlotte" after "son of John") re-sends no source and is never compared, nor
+is a §3.4.1 path-2 different-repository batch, nor a batch whose sources op names an
+explicit `gedcomx_source_description_id` (detection bypassed).
+
+**The key.** In such a batch, an `assertions` append is refused, op-indexed, when an
+assertion in the **pre-call** document shares its (`source_id`,
+`arkToBareId(record_id)`, `log_entry_id`, person, canonical `fact_type`):
+
+- **person** is `record_persona_id` when set, else `record_role`;
+- **canonical `fact_type`** is the §3.7 alias fold (`FACT_TYPE_ALIASES`), so `Birth`
+  and `birthplace` both key as `birth`;
+- **`log_entry_id`** scopes the key to one logged pass. A re-run that reuses its log
+  entry — a resumed or re-delegated extractor, D17's shape — collides. A pass logged
+  under its own entry does not, which is what lets an `image_transcribe` reading that
+  disagrees with the index be recorded as a second, conflicting assertion rather than
+  overwrite it — **when the caller logs the image pass separately**, which nothing
+  enforces today.
+
+`source_id` is read after every stamping step, and the guard runs after the D2 persona
+auto-fill, so it compares the values the write would persist. It lives in
+`reextractionKey` / `reextractionCollisions` (`src/tools/research-append.ts`).
+
+**What it deliberately does not compare.** Batch-internal pairs: two `birth`
+assertions in one pass, a date and a place, are ordinary extraction — so a batch that
+repeats its own ops is not caught either. Values: a re-run re-decides its wording
+(D17's first copy split facts differently from the other two; the prototype plan
+measured a content key matching 0 of 86 re-decided assertions), so a value key misses
+the duplicate this exists for. `record_role: "absent"`: negative evidence names no
+persona, so its key cannot tell two absent people apart.
+
+**Accepted costs (lead ruling 2026-09-23: a new fact TYPE may still be appended).**
+
+- A re-persist of an extracted record cannot add a second assertion of a type the
+  person already has on it under that log entry. If the new value is a re-reading,
+  the error's advice holds — `update` the existing assertion. If it is a genuinely
+  distinct fact (a second relationship, a date or place half recorded separately),
+  append it in a call that does not re-send the source; never `update` over a
+  different value.
+- A re-extraction logged under a **new** log entry is not caught (the key includes the
+  log). The record-extraction router appends a log entry per record fetch, so a later
+  session's re-extraction takes this path. Measured miss (same replay): 27 of the 145 folding calls — 19 because one side carries no
+  `log_entry_id`, 8 a retry logged under a new `record_read` entry; none persisted a
+  duplicate in its run's final file. A retry that names an explicit
+  `gedcomx_source_description_id` or sends several sources appends skips the gate too (20
+  verbatim retries in the corpus, none persisted).
+- A legacy assertion with a null `record_persona_id` keys by role, so a persona-bearing
+  re-append of the same fact does not match it; pinned by a test.
 
 ### 3.5 Persona/record-id enforcement matrix — D2
 
@@ -805,6 +870,8 @@ audit's recommendation #5):
 | `person_evidence` revision | revision is an `append` of the new entry **plus** an `update` setting `superseded_by` on the old one; never a field-overwrite-in-place that loses the prior link | `research-schema-spec.md:427–431` |
 | `project` update → `status: "completed"` | **no unresolved blocking conflict** — reject while any `conflicts[]` entry has `status: "unresolved"` AND **any of three arms** holds: (a) non-empty `blocks_question_ids`, (b) a non-empty `identity_question` string, or (c) some member of `competing_assertion_ids` is an assertion whose `extracted_for_question_ids` is non-empty. Arms (a) and (b) are the *declared* link; arm (c) **derives** it from the evidence, because a conflict competing over an assertion a question was built on bears on that question whether or not the agent wrote the link down. Arm (c) is not narrowed to still-open questions — a conflict bearing on an already-concluded question still means that conclusion rests on unresolved evidence — and does not require the question id to exist in `questions[]`, since nothing reference-checks `extracted_for_question_ids`. `resolved` and `moot` both settle a conflict. Refused on the **union** of the pre-call snapshot and the live document, so a batch cannot settle a blocking conflict and complete in the same call. Tool precondition on the transition only — an already-completed document with such a conflict still loads (not a document-validity rule). The predicate is shared with `utils/question-state.ts`, which computes the per-question form for the router's advisory ladder | wilkins-death-kentucky e2e finding 2026-07-15: agent logged an unresolved identity conflict (wrong-person certificate, 43-year birth mismatch) and completed anyway; GPS Component 4. Arm (c) added because the declared fields are not reliably written — 42 of 75 (56%) corpus conflicts carry neither, and the two-arm gate saw 5 of the 14 unresolved conflicts held by completed runs; measured at f459af71b with `dev/replay_completion_gate.py`. See `guardrail-enforcement-spec.md` §5 for the refusal measurement and its per-refusal inspection |
 | `project` update → `status: "completed"` | **every proof summary backing a resolved question carries a gps-mentor verdict** — reject while any `proof_summaries[]` entry whose `question_id` names a question that is resolved — by `status: "resolved"` **or** by a truthy `resolved` date, the same pair the row above gates — has no `evaluations[]` entry with `focus: "proof-critique"`, a matching `target_id`, and a null `superseded_by`. The critique set is snapshotted **before any op in the call applies**, so a batch cannot append its own verdict and consume it in the same call. A resolved question with **no** proof summary still passes vacuously, but that state is no longer reachable through this tool (the row above refuses the transition) — the vacuous pass now covers only documents seeded that way, so a gate on a transition does not retroactively invalidate a document that predates it | The same rule stated in the research orchestrator's prose did not hold: **23% of completed runs in the committed e2e corpus reach `completed` with at least one uncritiqued summary** — measured 2026-08-15 over 154 runs, corroborated to within 2 runs by an independent count, and re-derived 2026-09-08 as 29 of 128 over 161 run logs. Read the 23% as a blend, not as this rule's failure rate: date-split it is 23/70 before the prose, 6/53 with the prose unenforced, and 0/5 since this precondition shipped, so 23 of the 29 predate the sentence and the live window is n=5 (3/n bound 60%). ADR-0011 |
+| `person_evidence` append/update declaring `core_identifier_conflict` | rejected unless `confidence` is `speculative`. Reads the entry's own field and nothing else — no tree read, no re-reading of the record — which is what makes it a precondition rather than a prompt rule (ADR-0011's first question). The cap applies to `confident` **and** `probable`; a whitespace-only or null value is not a declaration. Clearing the field to null is the escape when the conflict is explained and does not bear on identity | The prose form did not bind, twice: `agents/person-evidence.md` carried "a qualitative conflict caps confidence regardless of score" using the same 0.85 figure as the failing test, and a Step 3 forcing function that made the agent WRITE the verdict still let it argue past the verdict in the next clause (`ut_person_evidence_012`, `_024`; single-test rounds 2026-09-23). **Refuses zero existing writes**: the field is new, so no committed entry carries it — compare `personEvidenceScoreWarnings`, which stays warn-only because `speculative` is 344 of 22,050 committed person_evidence writes (1.6%) and an inferred cap would hit live traffic |
+| `person_evidence` append/update at `confident`/`probable` | rejected when the record's own assertions about the SAME party state a birth place, or a birth/christening date, that contradicts the tree person's birth fact. Place compares `birth` only (a christening place is the church, not the birthplace); date compares birth and christening alike (a baptism follows birth closely) at a 5-year threshold, since the tree side is routinely a circa year. Silent when the contradicting claim is `information_quality: secondary` or an informant with no proximity to the birth, and silent on two-party relationship assertions | Refuses **0 of 323** committed confident/probable entries; the four scopings and what each removed are in `guardrail-enforcement-spec.md` §8. Replaces three prose attempts and one self-declared field, each measured not to bind (`ut_person_evidence_012`, `_024`) |
 | `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `exhaustive_declaration.declared === true` **as of the start of this call** | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
 | `questions` append/update touching **either** `status` or `exhaustive_declaration` | `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true`. Checked on the post-merge entry (**live**, not snapshotted): the declaration and the status are two halves of one author's own step, and 123 of 125 corpus ops set both in the same op. Gated on EITHER field, because the invariant couples two and an op touching one can break it without naming the other — the agent's own re-invocation path lowers `declared` to false and leaves `status` alone | A zero-violation arm: **0 of 125** corpus ops refused. The converse (declared ⇒ status) has been asserted by the unit validator since it shipped and nothing asserted this direction, which is the one that leaves a question looking finished with no declaration behind it. ADR-0011 |
@@ -812,6 +879,7 @@ audit's recommendation #5):
 | `plan_items` **append** | the parent plan must not be **terminal** — `completed` or `superseded`. A retired plan is a settled audit trail; `research-plan`'s own prose forbade writing into one in two places and did not bind, and the plan carries `status`, so this is decidable from the documents alone and belongs here rather than in prose (ADR-0011's first question). **Appends only, never updates.** An update targets an item already inside the plan, and `research-plan` supersedes a plan by flipping `plans.status` alone — its items keep whatever status they held — so denying updates would strand an `in_progress` item in a terminal plan with no route to move it, the unrecoverable false deny ADR-0011's first limit exists to prevent. The parent is read **live**, not snapshotted: a plan created — or flipped terminal — earlier in the same batch is the same author's own prior step and must be seen, and a snapshot cannot see a same-call plan at all. The terminal set is **derived** from `plan_status` (every value but `active`) rather than hand-listed, so a value added to the enum is terminal the moment it exists instead of silently escaping the deny. The refusal names the parent's status and its question, and — when the call also created a plan — prescribes that plan's id: a job it **inherits from the misrouted-items refusal two rows above, which it now preempts**, because this deny throws in `applyOne` and the batch returns before that post-pass runs | Nine `plan_items` ops carrying a hard-coded `pl_001` appended themselves to a completed plan belonging to a different question. **Satisfiability, per ADR-0011 limit 2 — the bar is inspection, not a rate: measured at a85d8f569**, 54 of 2447 `plan_items` append ops name a `completed` parent, over 6 calls in 4 run logs; **0** name a `superseded` parent, and **0** `plan_items` *update* ops name a terminal parent. Every refusal is the same true positive — scenario `flynn-first-plan-surveyed`, `planId: "pl_001"`, completed, attached to `q_002` — so all 54 are the misroute this rule was written for and none is a legitimate write. Traversal: `plan_items` ops in the `args` of each `tool_calls[]` entry over tracked files under `eval/runlogs/` excluding `.ann.json`, joined to `eval/fixtures/scenarios/<scenario>/research.json` for the parent's status; the figure is a **floor**, since a parent created during a run is `active` at creation and only a seeded fixture plan can be terminal. Re-derive before quoting |
 | any section | a **required-object field** holding a primitive is rejected — `exhaustive_declaration`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
+| `assertions` append | **not a second copy of a fact the same extraction pass already wrote** (§3.4.3): in a batch that re-persists an already-persisted record (§3.4.1 `updated_existing`), refused, op-indexed, when the PRE-CALL document holds an assertion with the same (`source_id`, canonical `record_id`, `log_entry_id`, person — `record_persona_id` when set, else `record_role` — canonical `fact_type`). Batch-internal pairs are never compared; values are ignored; `record_role: "absent"` is exempt. Cost on the committed corpus (189 e2e runs, 4,817 writer calls, replayed by `dev/replay-reextraction-guard.ts`, 2026-09-23): of 145 folding calls it refuses 73, every one a re-send of the same pass (60 verbatim, 13 reworded) and none a call that recorded success; 0 image passes refused; the gate spares 26 calls the ungated key would have hit, the distinct later facts (a second parentage) among them | ADR-0011; D17 live run 2026-09-23 (`docs/plan/search-agent-prototype.md`); lead ruling 2026-09-23 |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
 only refuses to persist a structurally incoherent combination.
@@ -891,7 +959,18 @@ It is not an escape hatch: a link that genuinely cannot be scored keeps
 `match_score: null` and the confidence its correlation analysis supports
 (person-evidence/SKILL.md §3), and the warning stays silent there. Two nulls are
 legitimate and the warning names both — no reachable persona, and a candidate
-minted from the very persona being scored, which is circular. Downgrading
+minted from the very persona being scored, which is circular.
+
+**The reachability predicate is now conservative rather than true**, and the
+route the warning names has changed under it. `same_person` gained a
+project-relative arm that resolves the record itself — retained sidecar, fresh
+read, or a persona projected from the record's own extracted assertions — so
+provenance no longer decides scorability and the per-route retrieval recipe this
+warning used to spell out is gone. What it names instead is the single call that
+would produce the score. The predicate itself was left narrow deliberately:
+widening it in the same change that told the agent to adopt the new call would
+make the measurement unreadable, and the widening belongs with the writer-side
+requirement it exists to serve. Downgrading
 confidence no longer silences this warning, though it still slips the link past
 the confident-gated epistemic reject above. `personEvidenceScoreWarnings` in
 `research-append.ts`.
@@ -1089,6 +1168,7 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | sources append referencing a dangling `S` id | op-indexed precondition error naming the existing S ids; write nothing |
 | `record_persona_id` supplied but contradicting the sidecar / supplied with no sidecar (§3.5) | op-indexed hard error naming the expected value; write nothing |
 | `record_id` matching no sidecar result while a persona is claimed (§3.5) | op-indexed hard error naming the sidecar's recordIds; write nothing |
+| assertions append, in a batch that re-persists an already-persisted record, colliding with an assertion the same pass already wrote (§3.4.3) | op-indexed hard error naming the existing ids and telling the caller to refine them with an assertions `update` by id; a distinct same-type fact goes in a call without the sources op, never an `update` to a different fact; a fact type that person has no assertion for yet may still be appended; write nothing |
 | A required-object field holds a primitive (§5) | document-level error naming the field: `<field> must be an object — got <type>`. Absent and null are left to the required-field check so nothing is reported twice. Applies to `exhaustive_declaration`, `external_site` and `citation_detail` |
 | A `plans` entry ends the call with `items` empty, absent or not an array (§5) | document-level error; write nothing. Empty: `is empty — a plan carries at least one plan item. Append the items in the same call: one 'plan_items' op per item, each carrying this plan's id.` Not an array: `must be an array of plan items — got <type>.` A plan that was **already** empty before the call rides along as a warning (the introduced-error diff keys on the entry's own id), so a legacy document does not freeze every writer |
 | A `plans` append whose plan ends the call empty **while the same call carries `plan_items` append ops naming some other plan** (§5) | op-indexed hard error on that `plans` op, opening `plan '<newId>' was created for question '<qid>' and ends this call with no items, which cannot be persisted.` and closing `Do not add "items": [] to the plan shell instead; that is what makes the document schema-invalid.` **Two causes, and the middle clause names whichever applies** — they need opposite fixes. (a) The item ops wrote into a plan the call did **not** create: `this call's plan_items ops wrote into '<other>' (<status> plan for <question>) instead — the items went to a plan this call did not create. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one. Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours.` (b) They named only a **sibling plan this same call created**: `this call's plan_items ops named only '<other>', which this same call also created. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one.` When **more than one** created plan ends the call empty, that single-id prescription is replaced in both branches by `<N> of the plans this call created (<ids>) end it with no items, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.` — because naming one id would empty the others. Prescribing (a)'s fix for (b) would likewise empty the sibling and reproduce the loop with the two plans swapped, which is why the branch exists. A `plan_items` **update** never triggers either: its item already lives in the plan it names. **Branch (a) now reaches only a non-terminal `<other>`** — a `completed` or `superseded` one is refused by the row above before this post-pass runs, so `<status>` renders `active` here. Its same-question form survives only where the created plan is itself terminal, since the one-active-plan rule returns early on a non-active entry; every other same-question input is terminal and refused above. The `plans` worked example is attached, which is the batched call. Write nothing |
@@ -1351,6 +1431,19 @@ not tooling" — #1006 explicitly concedes that a present `match_score` does not
 prove `same_person` ran, and takes the presence check anyway rather than
 over-engineering past it.
 
+**"Do not over-engineer past this" was overturned by the lead on 2026-09-07,
+and half the replacement has shipped.** `same_person` now records every score
+it computes to `results/.scores/`, host-side, keyed by (record, party, tree
+person) — so an attestation that a call happened does exist, and it is not
+caller-fabricable, because the payload never round-trips through the model
+(`same-person-tool-spec.md`, "The recorded score"). What has **not** shipped is
+this tool requiring it: that step is gated on re-measuring once agents are
+calling the cheap form, and on an unanswered question about whether a score
+from an earlier session still counts. So the sentence above still describes
+`research_append` today — `match_score` remains fabricable here — but it no
+longer describes the design, and it must not be cited as a reason not to build
+the check.
+
 ### 11.5 Debug holds — a probe seam, not a feature
 
 Two environment variables, `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS` and
@@ -1365,4 +1458,6 @@ and they ship in the `.mcpb`, so the contract is pinned by
 `tests/tools/extraction-append.test.ts` ("debug holds"): unset, `0`, empty or a
 non-numeric value is inert; `research_append` is never held whatever the value;
 a set value on `extraction_append` waits on both sides of the commit. Nothing
-else may read them.
+else may read them. Keep a hold well under 60 s: the CLI's MCP client times the call out at
+60,013 ms (measured, D17 2026-09-23) while the server still commits when the hold
+ends, so the agent reads a committed write as a failure and retries it.
