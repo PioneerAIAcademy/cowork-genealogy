@@ -508,6 +508,39 @@ def test_normalize_warns_about_duplicate_incoming_ids():
     assert any("duplicate person id 'P1'" in w for w in warnings)
 
 
+def test_cross_holder_duplicate_fact_id_does_not_warn_strip_refuses():
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False, facts=[
+                {"id": "F1", "type": "Birth", "date": "1900"},
+            ]),
+            _person("P2", "Jane", "Doe", living=False, facts=[
+                {"id": "F1", "type": "Birth", "date": "1905"},
+            ]),
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert not any("strip will refuse" in w for w in warnings)
+
+
+def test_same_holder_duplicate_fact_id_warns_strip_refuses():
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False, facts=[
+                {"id": "F1", "type": "Birth", "date": "1900"},
+                {"id": "F1", "type": "Death", "date": "1970"},
+            ]),
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert any("strip will refuse" in w for w in warnings)
+    assert any("duplicate fact id 'F1' on P1" in w for w in warnings)
+
+
 def test_strip_refuses_a_tree_with_duplicate_fact_ids():
     # Two facts sharing an id would BOTH be removed by one selector, and the
     # removals log would list only one — a silent, unrecorded removal from
@@ -1059,3 +1092,18 @@ def test_person_level_sources_are_dropped_with_a_warning():
     tree, warnings = normalize_tree(raw)
     assert "sources" not in tree["persons"][0]
     assert any("'sources'" in w for w in warnings)
+
+
+def test_same_relationship_duplicate_fact_id_warns_strip_refuses():
+    # Relationships are walked too; without this case, dropping them from the
+    # holder loop leaves every test green.
+    raw = {
+        "persons": [_person("P1", "John", "Smith", living=False),
+                    _person("P2", "Jane", "Doe", living=False)],
+        "relationships": [{"id": "R1", "type": "Couple", "person1": "P1", "person2": "P2",
+                           "facts": [{"id": "F1", "type": "Marriage", "date": "1920"},
+                                     {"id": "F1", "type": "Marriage", "date": "1921"}]}],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert any("duplicate fact id 'F1' on R1" in w for w in warnings)

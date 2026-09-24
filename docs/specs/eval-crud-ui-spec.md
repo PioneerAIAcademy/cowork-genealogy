@@ -105,7 +105,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 
 The form displays the skill's rubric dimensions (from rubric.md) in a sidebar or info panel so the genealogist knows what's already covered and can write additional_criteria that don't duplicate the rubric.
 
-**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`, `expected_outcome`, `xfail_reason`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
+**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`, `expected_outcome`, `xfail_reason`, `tags`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
 
 ### Validation
 
@@ -232,6 +232,13 @@ Next.js API routes for:
 - Run log listing and filtering
 - Annotation and adjudication creation
 
+Every mutation in the Tests section invalidates the queries that read it — `['tests']`, and
+`['test', id]` on an edit — with `refetchType: 'all'`, awaited **before** the `router.push`, because
+the pages read through react-query with `staleTime: 5_000` and a `router.push` keeps the
+QueryClient (the default `'active'` refetch only marks an unmounted list stale, so its next mount
+would still paint the pre-save copy first); the results-section mutations get away without it only
+because they navigate with `window.location.href`, a full document load that discards the cache.
+
 ### Testing
 
 Three testing layers, each covering a different failure class:
@@ -240,7 +247,7 @@ Three testing layers, each covering a different failure class:
 
 2. **Playwright (e2e, `npm run test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
 
-3. **Manual browser check** remains necessary for interaction flows (annotation save round-trip, keyboard shortcuts, drag-to-resize) that are not yet automated.
+3. **Manual browser check** remains necessary for interaction flows (annotation save round-trip, keyboard shortcuts, drag-to-resize) that are not yet automated. One interaction flow is automated: `tests/e2e/holdout-persistence.spec.ts` saves, creates and deletes a test through the UI against the temp tree and asserts the list and edit page show the persisted value on their **first render** — by holding the list's refetch behind a 2 s route delay and asserting with a bounded 1 s timeout, since Playwright's `{ timeout: 0 }` means *no* deadline, not "now".
 
 **Why Playwright geometry assertions, not `toBeVisible()`.** An element pushed outside an `overflow: hidden` ancestor (the dimension `Card`) is still "visible" to Playwright and its text is still reachable by locators. Measured 2026-09-14: `isVisible()` returned `true` on a score picker whose bounding box extended 379px past the card's right edge. Only a `boundingBox()` comparison (picker right edge vs. card right edge) separates the clipped state from the correct state.
 
