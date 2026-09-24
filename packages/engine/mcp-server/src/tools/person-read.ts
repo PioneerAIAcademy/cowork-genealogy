@@ -1,4 +1,5 @@
 import type { Principal } from "../auth/principal.js";
+import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -942,18 +943,12 @@ function droppedEdgeNotes(
   if (shaped.length === kept.length) return {};
   const keptSet = new Set(kept);
   const dropped = shaped.filter((r) => !keptSet.has(r));
-  const byType = new Map<string, number>();
-  for (const r of dropped) byType.set(r.type, (byType.get(r.type) ?? 0) + 1);
-  const breakdown = [...byType.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([type, n]) => `${n} ${type}`)
-    .join(", ");
-  const notes = [
-    `Dropped ${dropped.length} relationship(s) whose endpoints are not in ` +
-      `persons[] (${breakdown}). FamilySearch names kin one hop beyond the ` +
-      `persons it returns; such an edge fails the project_create write ` +
-      `outright, so it is not emitted.`,
-  ];
+  // The count-and-type sentence is shared with person_ancestors (tree-graph.ts,
+  // issue #2747) so the two tools cannot drift into two wordings of one fact.
+  // The subject-parentage sentence below stays local: only a tool with a
+  // requested person can say it.
+  const shared = describeDroppedEdges(shaped, kept);
+  const notes = shared ? [shared] : [];
   const ownParentage = dropped.filter(
     (r) => r.type === "ParentChild" && r.child === pid,
   ).length;
@@ -1095,16 +1090,6 @@ function shapePersons(
  * deliberately, now made for every emitted edge rather than only for the ones
  * the sibling fan-out contributes.
  */
-function dropDanglingEdges(
-  relationships: TreeRelationship[],
-  personIds: Set<string>,
-): TreeRelationship[] {
-  return relationships.filter((r) =>
-    [r.parent, r.child, r.person1, r.person2].every(
-      (endpoint) => endpoint === undefined || personIds.has(endpoint),
-    ),
-  );
-}
 
 function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],

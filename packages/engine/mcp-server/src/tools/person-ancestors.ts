@@ -1,4 +1,5 @@
 import type { Principal } from "../auth/principal.js";
+import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
@@ -273,9 +274,22 @@ async function mapResponse(
 
   const result: PersonAncestorsResult = { persons };
   if (marriageDetails) {
-    result.relationships = (simplified.relationships ?? []).map(
-      shapeRelationship,
+    const shaped = (simplified.relationships ?? []).map(shapeRelationship);
+    // Against the EMITTED persons, after the ascendancy filter above — checking
+    // `rawPersons` would re-admit exactly the leak this guards (issue #2747).
+    // Measured on live data 2026-09-23: 11 of 27 edges on LZJW-C31 name a
+    // spouse absent from persons[]; each would fail the project_create write
+    // outright, costing the user the whole project rather than the edge.
+    // `AncestorPerson.id` is optional in the type, so narrow rather than
+    // building a Set<string|undefined> — an undefined in the set would make
+    // `personIds.has(undefined)` meaningless and admit a malformed edge.
+    const emittedIds = new Set(
+      persons.map((p) => p.id).filter((id): id is string => typeof id === "string"),
     );
+    const kept = dropDanglingEdges(shaped, emittedIds);
+    result.relationships = kept;
+    const note = describeDroppedEdges(shaped, kept);
+    if (note) result.notes = [note];
   }
   return result;
 }
@@ -284,6 +298,15 @@ async function mapResponse(
 // (…/persons/<id>); strip to the bare tree ID, same as person_read.
 function shapeRelationship(r: SimplifiedRelationship): SimplifiedRelationship {
   const out: SimplifiedRelationship = { ...r };
+  // ALL FOUR keys, not just the Couple pair. `simplifyRelationship` writes
+  // `parent`/`child` from `stripFragment(resource)`, which passes an absolute
+  // `…/persons/<id>` URL through untouched — and the closure guard below
+  // compares against bare `persons[].id`, so an unbared endpoint would be
+  // dropped even when its person IS returned. Defensive: no probed ancestry
+  // response carries a ParentChild (all `Couple`, measured 2026-09-23), so this
+  // is insurance against a shape the endpoint is not known to return.
+  if (out.parent) out.parent = bareId(out.parent);
+  if (out.child) out.child = bareId(out.child);
   if (out.person1) out.person1 = bareId(out.person1);
   if (out.person2) out.person2 = bareId(out.person2);
   return out;
