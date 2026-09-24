@@ -203,8 +203,8 @@ UI check side (TypeScript) — they must agree byte-for-byte.
 Rules:
 - **JSON files** (`.json`): parse → re-emit with sorted object keys,
   `indent=2`, trailing newline. Skip cosmetic-only fields in test JSONs
-  (`name`, `description`, `tags`) so they don't trigger active-state
-  drift.
+  (`name`, `description`) so they don't trigger active-state
+  drift. (`tags` is **not** cosmetic — it selects validators; issue #2694.)
 - **Text files** (`.md`, `.txt`, `.yaml`, `.yml`, `.py`, etc.):
   CRLF → LF, ensure trailing newline, no other changes.
 - **Anything else**: exact bytes (no normalization).
@@ -462,8 +462,8 @@ Action does not require pruning.
 
 ### C6. GitHub Action enforcement
 
-`.github/workflows/check-runlogs.yml` enforces four rules — rules 1–3
-per skill changed in the PR, rule 4 across the whole test corpus:
+`.github/workflows/check-runlogs.yml` enforces six rules — rules 1–3 and 6
+per skill changed in the PR, rules 4 and 5 across the whole test corpus:
 
 **Rule 1**: At most one **newly added or renamed-into-place**
 `v{N}.json` file per skill subdirectory. Detection uses
@@ -517,6 +517,48 @@ log's snapshot and diffs vs working tree, using the same
 `normalize()` contract as the harness.
 
 ---
+
+**Rule 5** (blocking): every committed `eval/runlogs/unit/**/*.ann.json` parses
+as JSON. Corpus-wide rather than per-skill: an unparseable annotation used to
+abort the whole check with a raw `JSONDecodeError`, naming no file and leaving
+every later skill unchecked.
+
+**Rule 6** (blocking): no **unsuppressed** test in a run log **this PR adds**
+resolves to `fail` or `aborted`.
+
+Each test is resolved from `runs[].outcome` — whose enum is
+`pass|partial|fail|aborted`, so it never meets the aggregate's `xfail`/`xpass`
+remap — and aggregated by `harness.outcomes.aggregate_per_run_outcome`, the same
+function the runner uses, so the gate and `run_tests.py` cannot drift. `partial`
+never blocks (lead ruling 2026-09-18: "tests must pass, or partial,
+consistently").
+
+An `expected_outcome: "xfail"` marker declares a known **failure**, so it
+suppresses `fail` only. A suppressed test that **aborts** blocks — an abort is an
+ungraded run, not evidence of the declared defect. One that **passes** warns, as
+a stale-marker signal.
+
+Rule 6 grades the log the PR **added**, resolved from the AR diff, not the one
+`latest_full_skill_runlog` returns: that helper prefers any released `v{N}.json`
+over every candidate regardless of date, so a PR adding a red `v2_<ts>.json`
+beside a clean released `v1.json` would read as clean. `init-project` has exactly
+that shape. A PR that adds no run log — annotation-only, or SKILL.md-only — is
+not accountable for the committed baseline and is not graded here; without that,
+a skill carrying reds could satisfy neither rule 3 nor rule 6, and its
+annotations could never land.
+
+**Zero reds, not zero new reds** (lead ruling 2026-09-22, reversing the
+2026-09-21 decision). There is no carry list, no review-by date and no per-entry
+exemption. A run log a PR adds must be clean whether or not the red predates the
+PR: "it was already red before my change" is the excuse the rule exists to
+remove, because a suite carrying reds cannot answer "did my refactor break
+something", which is the one question it exists to answer. Cost and elapsed time
+are explicitly not factors in that trade.
+
+A warn-only arm resolves each `expected_outcome: xfail` marker's cited issue and
+says so when it is closed, since a marker whose stated removal condition names a
+closed issue can never be met. It needs the network, so it is inert without `gh`
+or a token, never blocks, and swallows every error.
 
 ## Supersessions
 

@@ -142,6 +142,121 @@ POST_SEARCH_FILTER_KEYS = (
 )
 
 
+def test_wiki_prework_fetch_runs_when_required(tool_calls, test):
+    """A test tagged `wiki-prework` must actually issue the wiki_read calls
+    SKILL.md step 3 declares REQUIRED for it (ADR-0012, "Name the fetch so
+    it runs").
+
+    Tag-gated, not corpus-wide, because the block is CONDITIONAL by design:
+    the triggers are a non-English record, a compound or patronymic surname,
+    a pre-1850 or non-Latin script, and an era place-name. A plain US deed
+    search fires none of them, and asserting a wiki fetch on every
+    search-full-text test would demand an upstream leg that buys nothing and
+    would red the whole suite.
+
+    This asserts only that the call HAPPENED. That is deliberately the weaker
+    half: a call whose page was then ignored passes here. Whether the page's
+    content reached the answer is the judge's, against a fixture marker no
+    model can produce from memory -- the split the locality-guide pair
+    (ut_locality_guide_022/_023) established, and the reason this docstring
+    says so rather than leaving the gap implicit.
+    """
+    if "wiki-prework" not in (test.get("tags") or []):
+        pytest.skip("not a wiki-prework test")
+
+    reads = [
+        tc for tc in (tool_calls or [])
+        if (tc.get("tool") or "").endswith("wiki_read")
+    ]
+    assert reads, (
+        "SKILL.md step 3 declares wiki_read fetches as unconditional members of "
+        "the pre-work block for this search, and none was issued. The query was "
+        "therefore built from memory rather than from the page: a variant that "
+        "was not fetched is a variant that cannot be searched."
+    )
+
+
+# Maps a tagged test id to the topical fixture stems its `mcp_fixtures`
+# name ahead of the wiki-read-any/wiki-search-any catch-alls. Hardcoded
+# rather than read from the test spec: the `test` fixture carries only the
+# inner "test" block, not top-level `mcp_fixtures` (validator_runner.py).
+# Add an entry whenever "topical-fixture-required" is added to a test.
+#
+# Same shape as `test_historical_context.py`'s `_TOPICAL_FIXTURE_BY_TEST_ID`
+# (issue #2283), widened to a tuple because each of these tests declares two
+# topical pages rather than one.
+#
+# `ut_search_full_text_009` lists the word list ONLY. Its subject is "Jose
+# Maria Garcia", a single surname, so SKILL.md's `{Country}_Naming_Customs`
+# bullet -- which triggers on "a compound or patronymic surname" -- does not
+# fire for it. Its one REQUIRED page is the word list, because the record is
+# not in English.
+#
+# It still DECLARES `wiki-read-cuba-naming-customs-not-found`, which is not
+# asserted here. Cuba_Naming_Customs does not exist in the corpus (verified
+# live 2026-09-23), so the fixture's job is to answer truthfully if the model
+# reaches for it, rather than let an over-matching Spain fixture serve another
+# jurisdiction's page as it did in v1_2026-09-22_22-33-05. Declaring is the
+# guard; requiring the call is not, and asserting it here failed the
+# 2026-09-23 09:16 run on a page the test never had reason to fetch.
+_TOPICAL_FIXTURES_BY_TEST_ID = {
+    "ut_search_full_text_009": ("wiki-read-spanish-word-list",),
+    "ut_search_full_text_013": (
+        "wiki-read-spain-naming-customs",
+        "wiki-read-spanish-word-list",
+    ),
+}
+
+
+def test_topical_fixture_actually_used(tool_calls, test):
+    """A test tagged `topical-fixture-required` declares subject-matter wiki
+    fixtures ahead of the `wiki-read-any` / `wiki-search-any` catch-alls.
+
+    `test_wiki_prework_fetch_runs_when_required` above asserts only that SOME
+    `wiki_read` happened, which a fall-through to the catch-all satisfies just
+    as well as the right page does. That is the gap issue #2283 closed for
+    `historical-context` in the reviewer's own words: "If the model's phrasing
+    ever drifts off matching [the predicate], this silently falls back to the
+    generic fixture with no signal anywhere that it happened."
+
+    It was not theoretical here. `wiki-read-spain-naming-customs` matched on
+    `~Naming_Customs`, an unscoped substring, so `ut_search_full_text_009`'s
+    `Cuba_Naming_Customs` call was served Spain's page and the judge scored it
+    3, reasoning it was "correct per the fixture"
+    (`v1_2026-09-22_22-33-05`).
+
+    Asserts every expected stem appears among the run's `response_fixture`
+    values. A miss means the judge graded against catch-all content rather
+    than the page the test exists to exercise.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    # Map -> tag direction BEFORE the skip, or the skip swallows it: a
+    # ValidatorRunResult keeps `passed=True` on a skip, so dropping the tag
+    # from a spec would silently disarm this guard while the run log still
+    # reads `passed`.
+    assert test_id not in _TOPICAL_FIXTURES_BY_TEST_ID or (
+        "topical-fixture-required" in tags
+    ), (
+        f"{test_id} has a _TOPICAL_FIXTURES_BY_TEST_ID entry but no "
+        "'topical-fixture-required' tag - restore the tag or delete the entry"
+    )
+    if "topical-fixture-required" not in tags:
+        pytest.skip("not a topical-fixture-required test")
+    expected = _TOPICAL_FIXTURES_BY_TEST_ID.get(test_id)
+    assert expected, (
+        f"{test_id} carries 'topical-fixture-required' but has no entry in "
+        "_TOPICAL_FIXTURES_BY_TEST_ID -- add one naming its topical fixture stems"
+    )
+    hit = [c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")]
+    missing = [stem for stem in expected if stem not in hit]
+    assert not missing, (
+        f"{test_id}: topical fixture(s) {missing} never matched a tool call -- the "
+        f"model's arguments missed the fixture predicate and fell through to a "
+        f"catch-all instead. Fixtures actually hit: {hit or '(none)'}"
+    )
+
+
 def _fts_tool_calls(tool_calls):
     return [tc for tc in (tool_calls or []) if (tc.get("tool") or "").endswith("fulltext_search")]
 

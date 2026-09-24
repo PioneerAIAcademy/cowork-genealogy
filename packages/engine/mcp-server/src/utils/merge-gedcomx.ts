@@ -347,6 +347,7 @@ export function relationshipKey(r: SimplifiedRelationship): string {
 function mergeNames(names: SimplifiedName[]): SimplifiedName[] {
   if (names.length === 0) return names;
   if (names.length === 1) {
+    // Not preferredName(): names[0] is the only name here, so selection is vacuous.
     const only = structuredClone(names[0]);
     only.preferred = true;
     return [only];
@@ -512,7 +513,16 @@ function validateMerges(
   const targetIds = new Set(targetPersons.map((p) => p.id));
   for (const id of survivors) {
     if (!targetIds.has(id)) {
-      throw new Error(`merge survivor id ${id} not found in target_gedcomx`);
+      const ids = [...targetIds];
+      const sample = ids.slice(0, 10).join(", ");
+      const suffix = ids.length > 10 ? ` …and ${ids.length - 10} more` : "";
+      const hint =
+        candidate !== null
+          ? "; a survivor must already be in the tree — leave a new person's persona out of merges"
+          : "";
+      throw new Error(
+        `merge survivor id ${id} not found in target_gedcomx (tree ids: ${sample}${suffix}${hint})`,
+      );
     }
   }
 

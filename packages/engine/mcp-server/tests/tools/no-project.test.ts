@@ -30,6 +30,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn(async () => null) };
 });
 
+import { LOCAL } from "../../src/auth/principal.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
@@ -40,6 +41,7 @@ import { treeForget } from "../../src/tools/tree-forget.js";
 import { projectContext } from "../../src/tools/project-context.js";
 import { researchQuery } from "../../src/tools/research-query.js";
 import { sidecarRead } from "../../src/tools/sidecar-read.js";
+import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
@@ -51,14 +53,16 @@ import {
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
  *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read"]);
+const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read", "image_transcribe"]);
 
 /** Tools that signal the two loud path states by THROWING rather than
  *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
  *  into `isError`. `person_warnings` classifies the directory itself;
  *  `sidecar_read` reads no project document, so it has no `readProjectJson`
  *  error to flatten into a result and mirrors the thrown messages instead. */
-const THROWERS = new Set(["person_warnings", "sidecar_read"]);
+// `image_transcribe` joined both sets with its `file` input (#2048): it classifies
+// the directory itself, throws the two loud states, and RETURNS the no-project answer.
+const THROWERS = new Set(["person_warnings", "sidecar_read", "image_transcribe"]);
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -141,6 +145,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
     call: (projectPath) => sidecarRead({ projectPath, ref: "uploads/notes.txt" } as any),
   },
   {
+    tool: "image_transcribe",
+    call: (projectPath) => imageTranscribeTool({ projectPath, file: "uploads/scan.jpg" } as any, LOCAL),
+  },
+  {
     tool: "merge_tree_persons",
     call: (projectPath) => mergeTreePersons({ projectPath, merges: [["I1", "I2"]] } as any),
   },
@@ -150,7 +158,7 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   },
   {
     tool: "person_warnings",
-    call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
+    call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any, LOCAL),
   },
 ];
 
