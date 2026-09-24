@@ -1584,3 +1584,125 @@ def test_touched_agent_with_no_suite_is_untouched_by_the_identity_rule(
     rc = check_runlogs.main()
     assert rc == 0
     assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+# --- Rule 8: annotation header integrity -----------------------------------
+
+
+def _make_ann(runlogs_dir: Path, skill: str, corrections: list[dict]) -> None:
+    """Write a unit .ann.json under ``runlogs_dir/<skill>/``."""
+    skill_dir = runlogs_dir / skill
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    (skill_dir / "v1_2026-01-01_00-00-00.ann.json").write_text(
+        json.dumps(
+            {"run_log": "v1_2026-01-01_00-00-00.json", "annotator": "t", "corrections": corrections}
+        ),
+        encoding="utf-8",
+    )
+
+
+def _correction(
+    corrected_score: int | None, comment: str | None, *, test_id: str = "ut_x_001"
+) -> dict:
+    return {
+        "test_id": test_id,
+        "dimension_source": "base",
+        "dimension_name": "Correctness",
+        "llm_score": 1,
+        "corrected_score": corrected_score,
+        "comment": comment,
+    }
+
+
+def test_rule8_multi_header_blocks(tmp_path, capsys):
+    """Arm 1: more than one LLM→Junior header in a single comment blocks."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 1\nsome text\nLLM: 1 → Junior: 3"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "2 LLM→Junior headers" in capsys.readouterr().out
+
+
+def test_rule8_disagreeing_header_blocks(tmp_path, capsys):
+    """Arm 2: header says Junior: 1 but corrected_score is 3."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 1\nActual reasoning here"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 1" in capsys.readouterr().out
+
+
+def test_rule8_na_on_numeric_blocks(tmp_path, capsys):
+    """Arm 2: header says Junior: N/A but corrected_score is 2."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "LLM: 3 → Junior: N/A"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: N/A" in capsys.readouterr().out
+
+
+def test_rule8_numeric_on_null_blocks(tmp_path, capsys):
+    """Arm 2: header says Junior: 3 but corrected_score is null."""
+    _make_ann(tmp_path, "s", [
+        _correction(None, "LLM: 1 → Junior: 3"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 3" in capsys.readouterr().out
+
+
+def test_rule8_stale_header_after_override_blocks(tmp_path, capsys):
+    """Arm 2: score was changed to 2 after the header was pasted (still says 1)."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "LLM: 3 → Junior: 1\nChanged my mind, partial pass"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 1" in capsys.readouterr().out
+
+
+def test_rule8_ascii_arrow_blocks(tmp_path, capsys):
+    """Arm 2: ASCII ``->`` variant with a disagreeing score."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 -> Junior: 1"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 1" in capsys.readouterr().out
+
+
+def test_rule8_agreeing_header_passes(tmp_path):
+    """A header that agrees with corrected_score is fine."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 3\nOverride rationale"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_prose_junior_passes(tmp_path):
+    """Prose containing 'Junior: 3 of the 5 checks' is not a header."""
+    _make_ann(tmp_path, "s", [
+        _correction(1, "Junior: 3 of the 5 checks were skipped"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_cross_test_reference_passes(tmp_path):
+    """A comment mentioning another test id is legitimate."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "See ut_citation_002 for the same pattern"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_na_on_na_passes(tmp_path):
+    """N/A entry with N/A header agrees."""
+    _make_ann(tmp_path, "s", [
+        _correction(None, "LLM: N/A → Junior: N/A"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_no_header_passes(tmp_path):
+    """A comment with no header at all is always fine."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "This is a plain comment with no pasted block"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
