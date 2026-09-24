@@ -191,8 +191,8 @@ and `FEEDBACK.md`, `feedback.json` is authoritative.
 The template above is a **suggestion**, not a requirement. The
 templates in `apps/electron/src/main/feedback.ts` and
 `apps/server/app/feedback.py` use slightly different headings
-(`## What it should have done`, extra metadata bullets, a "Skipped
-files" section). The spec does
+(`## What it should have done`, extra metadata bullets, a
+section listing dropped files). The spec does
 not mandate a specific Markdown layout — render whatever is most
 readable for the human reader. Only `feedback.json` is contractual.
 
