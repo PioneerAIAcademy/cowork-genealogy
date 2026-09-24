@@ -29,6 +29,7 @@ deadLettersQueue or committed_batches is not an offence.
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -520,3 +521,68 @@ def test_proto_test_runs_the_d18_tests():
     assert any(
         "tests/test_proto_d18.py" in line for line in _recipe("proto-test")
     ), "make proto-test must run the D18 tests, or they run nowhere"
+
+
+def test_the_worker_can_actually_reach_a_familysearch_token():
+    """`bearer_token()` has three sources -- the message, FS_ACCESS_TOKEN_FILE, then the
+    worker env's FS_ACCESS_TOKEN -- and compose supplied only the middle one. That one is
+    a host file at mode 600 owned by whoever ran make, bind-mounted into a container that
+    runs as uid 1001, so the read fails with EPERM whenever those uids differ. They ALWAYS
+    differ under rootless docker, where the container uid is mapped through the caller's
+    subuid range.
+
+    `bearer_token` catches the OSError and returns "" -- and an empty token makes
+    `getValidToken` throw HOSTED_REAUTH_INSTRUCTION, whose text is "Your FamilySearch
+    session has expired". So a perfectly valid token is reported as an expired session,
+    and every FamilySearch call in the run fails with a message that sends you to
+    re-authenticate instead of to the mount. Three billed `proto-demo-auto` runs were lost
+    to it; all three tokens were still live when tested afterwards.
+
+    Both paths must be present: the file is what `make proto-token` refreshes under a
+    running worker, and the env var is what works when the uids do not line up."""
+    compose = (PROTO / "docker-compose.yml").read_text(encoding="utf-8")
+    # A real service boundary: `^  <name>:` at exactly two spaces. Splitting on "\n  "
+    # matches every 4-space key inside the block too and yields an empty string, which
+    # makes every assertion below vacuously... fail, but for the wrong reason.
+    blocks = re.split(r"^  (?=\w[\w-]*:)", compose, flags=re.M)
+    worker = next(b for b in blocks if b.startswith("worker:"))
+    assert "FS_ACCESS_TOKEN_FILE:" in worker, "the per-turn refresh path"
+    assert "FS_ACCESS_TOKEN:" in worker, (
+        "the worker service does not pass FS_ACCESS_TOKEN, so bearer_token's documented "
+        "env fallback is always empty and a failed file read has nowhere to fall back to"
+    )
+    # And it must be a passthrough from the caller's environment, not a literal.
+    line = next(ln for ln in worker.splitlines() if ln.strip().startswith("FS_ACCESS_TOKEN:"))
+    assert "${FS_ACCESS_TOKEN" in line, f"must inherit the caller's token, not hardcode one: {line.strip()!r}"
+
+
+def test_bearer_token_falls_back_when_the_file_cannot_be_read(tmp_path):
+    """The behaviour the compose entry above depends on: an unreadable file must fall
+    through to the env var rather than returning empty. A permission error is an OSError,
+    which is what the except clause has to cover -- FileNotFoundError alone would not."""
+    from proto.worker.options import bearer_token
+
+    # A PERMISSION error, not a missing file. That distinction is the whole test: the
+    # production failure is EPERM on a mode-600 mount the container's uid cannot read,
+    # and `except FileNotFoundError` would sail straight past it while still passing a
+    # test written against a nonexistent path. Verified by break test: narrowing the
+    # except clause to FileNotFoundError leaves a missing-path version of this green.
+    unreadable = tmp_path / "fs-token"
+    unreadable.write_text("p0-in-the-file", encoding="utf-8")
+    unreadable.chmod(0o000)
+    if os.access(unreadable, os.R_OK):  # running as root: the mode is not enforced
+        pytest.skip("root can read a 0000 file, so EPERM cannot be reproduced here")
+
+    env = {"FS_ACCESS_TOKEN_FILE": str(unreadable), "FS_ACCESS_TOKEN": "p0-fallback"}
+    assert bearer_token(env, None) == "p0-fallback", (
+        "an unreadable token file must fall through to the env var; this is exactly the "
+        "path that was returning empty and reporting a live token as an expired session"
+    )
+    # The message still wins over both.
+    assert bearer_token(env, "p0-from-message") == "p0-from-message"
+    # And with neither, empty -- the state that produced the misleading "expired" error.
+    assert bearer_token({"FS_ACCESS_TOKEN_FILE": str(unreadable)}, None) == ""
+    # A missing file behaves the same way, but on its own it does NOT prove the clause is
+    # wide enough -- see the comment above.
+    assert bearer_token({"FS_ACCESS_TOKEN_FILE": str(tmp_path / "gone"),
+                         "FS_ACCESS_TOKEN": "p0-fallback"}, None) == "p0-fallback"

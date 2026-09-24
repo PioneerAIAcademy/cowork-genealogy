@@ -119,6 +119,17 @@ services:
       # `make proto-token` rewrites it under the running worker). Empty, and every
       # FamilySearch tool answers with the reconnect instruction.
       FS_ACCESS_TOKEN_FILE: /run/fs-token
+      # The fallback `bearer_token()` documents ("else the worker env's
+      # FS_ACCESS_TOKEN") -- which was never actually supplied, so it was always "".
+      # It matters because the FILE path is not reliable: the mount is a host file owned
+      # by the invoking user at mode 600, and this container runs as uid 1001, so the
+      # read fails with EPERM whenever those uids differ -- always under rootless docker,
+      # where the container uid is mapped through the caller's subuid range. bearer_token
+      # swallows that OSError, returns "", and the engine then answers
+      # HOSTED_REAUTH_INSTRUCTION -- "Your FamilySearch session has expired" -- for a
+      # token that is perfectly valid. Three billed demo runs were lost to that message
+      # before anyone checked the tokens, which were all still live afterwards.
+      FS_ACCESS_TOKEN: ${FS_ACCESS_TOKEN:-}
       # http (default since 2026-09-20, the lead's call): the D16 `tools` service on the
       # SAME store, ONE process for every turn and every patron -- bearer as
       # Authorization, the turn's project id as X-Genealogy-Project-Id, the store bound
