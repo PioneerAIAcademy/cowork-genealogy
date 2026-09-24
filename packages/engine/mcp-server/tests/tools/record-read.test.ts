@@ -23,7 +23,7 @@ vi.mock("../../src/utils/place-api.js");
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { recordReadTool, extractEntityId } from "../../src/tools/record-read.js";
+import { recordReadTool, extractEntityId, extractImageArk } from "../../src/tools/record-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { repIdToStandardPlace } from "../../src/utils/place-resolver.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
@@ -559,5 +559,367 @@ describe("#2367 resolveCoveragePlaces", () => {
     const out = await recordReadTool({ recordId: "P1" }, LOCAL);
     const sd = out.sources?.find((s: any) => s.coverage);
     expect(sd?.coverage?.standard_place).toBeUndefined();
+  });
+});
+
+// ─── extractImageArk unit tests ──────────────────────────────────────────
+
+describe("extractImageArk", () => {
+  it("returns the ark from a DigitalArtifact source with a 3:1: url", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  it("returns the ark from a DigitalArtifact source with a 3:2: url", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:2:77TJ-PXCN",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:2:77TJ-PXCN");
+  });
+
+  it("returns undefined when no sources are present", () => {
+    expect(extractImageArk({})).toBeUndefined();
+    expect(extractImageArk({ sources: [] })).toBeUndefined();
+  });
+
+  it("returns undefined when no DigitalArtifact source exists", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          { id: "sd_c_1", resource_type: "Collection", url: "https://example.com" },
+          { id: "src_r_1", title: "Record", url: "https://example.com/1:2:X" },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("returns undefined when the DigitalArtifact source has no url", () => {
+    expect(
+      extractImageArk({
+        sources: [{ id: "sd_da1", resource_type: "DigitalArtifact" }],
+      }),
+    ).toBeUndefined();
+  });
+
+  // The shape record_search ACTUALLY stages. `simplifySourceDescription`
+  // (gedcomx-convert.ts) sets `resource_type` only when the upstream carries
+  // `resourceType`, and a search-response source description does not — every
+  // sd_da1 in eval/runlogs/e2e/pedro-chaves-spouse and in
+  // eval/fixtures/mcp/record-search-whitfield-1850-household.json is bare
+  // `{ id, url }`. All 8 record_read calls in that run went through the
+  // sidecar, so requiring the label dropped the ark on the one path the
+  // motivating failure used.
+  it("returns the ark when the source carries NO resource_type (the staged sidecar shape)", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  // FamilySearch's own vocabulary variant. `replace(/.*\//, "")` leaves the
+  // fragment on, so an exact !== "DigitalArtifact" test dropped it — see
+  // eval/fixtures/mcp/collection-read-by-id.json.
+  it("returns the ark for the DigitalArtifact#FamilySearch vocabulary variant", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact#FamilySearch",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  // The other direction: dropping the label requirement must not start
+  // returning arks off a source that is explicitly something else.
+  it("still skips a source whose resource_type names a different type", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_r_1",
+            resource_type: "Record",
+            url: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+          },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
+  // 22 of the 538 document-image source urls in the corpus carry a context
+  // param (mostly cc=). toArk() strips the query, and a waypoint ark that
+  // loses its context can resolve to a NEIGHBOURING page with no error — the
+  // agent then OCRs the wrong scan. image_read/image_transcribe accept the
+  // full URL and already fall back to the bare ark.
+  it("preserves i=/cc=/groupId= context params from the source url", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            url: "https://familysearch.org/ark:/61903/3:1:3QS7-89G8-388L?cc=1473014&lang=en",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:3QS7-89G8-388L?cc=1473014");
+  });
+
+  it("returns a bare ark when the source url carries no context params", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            url: "https://familysearch.org/ark:/61903/3:1:3QS7-89G8-388L?lang=en",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:3QS7-89G8-388L");
+  });
+
+  // A household spanning two scans. The corpus carries sd_da2 (55), sd_da3
+  // (26), sd_da4 and one sd_da8, so "several page images on one record" is
+  // real, not hypothetical. Document-order "first" hands a co-resident on
+  // page 2 the ark for page 1 — and nothing errors, so the agent OCRs a scan
+  // its person is not on.
+  const TWO_PAGE_HOUSEHOLD = {
+    persons: [
+      { id: "PAGE1-PERSON", sources: [{ ref: "sd_da1" }] },
+      { id: "PAGE2-PERSON", sources: [{ ref: "sd_da2" }] },
+    ],
+    sources: [
+      {
+        id: "sd_da1",
+        resource_type: "DigitalArtifact",
+        url: "https://www.familysearch.org/ark:/61903/3:1:PAGE-ONE",
+      },
+      {
+        id: "sd_da2",
+        resource_type: "DigitalArtifact",
+        url: "https://www.familysearch.org/ark:/61903/3:1:PAGE-TWO",
+      },
+    ],
+  };
+
+  it("returns the page the REQUESTED persona is on, not document-order first", () => {
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD, "PAGE2-PERSON")).toBe(
+      "ark:/61903/3:1:PAGE-TWO",
+    );
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD, "PAGE1-PERSON")).toBe(
+      "ark:/61903/3:1:PAGE-ONE",
+    );
+  });
+
+  it("matches the persona by ARK as well as by bare id", () => {
+    expect(
+      extractImageArk(TWO_PAGE_HOUSEHOLD, "ark:/61903/1:1:PAGE2-PERSON"),
+    ).toBe("ark:/61903/3:1:PAGE-TWO");
+  });
+
+  it("falls back to document order when the persona has no source refs", () => {
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD, "NOT-IN-THIS-RECORD")).toBe(
+      "ark:/61903/3:1:PAGE-ONE",
+    );
+    expect(extractImageArk(TWO_PAGE_HOUSEHOLD)).toBe("ark:/61903/3:1:PAGE-ONE");
+  });
+
+  // A persona ref pointing at a NON-image source must not short-circuit the
+  // search and return nothing.
+  it("skips a persona ref that names a non-image source and keeps looking", () => {
+    expect(
+      extractImageArk(
+        {
+          persons: [
+            { id: "P1", sources: [{ ref: "sd_r_1" }, { ref: "sd_da1" }] },
+          ],
+          sources: [
+            {
+              id: "sd_r_1",
+              resource_type: "Record",
+              url: "https://www.familysearch.org/ark:/61903/1:2:SOME-RECORD",
+            },
+            {
+              id: "sd_da1",
+              resource_type: "DigitalArtifact",
+              url: "https://www.familysearch.org/ark:/61903/3:1:REAL-PAGE",
+            },
+          ],
+        },
+        "P1",
+      ),
+    ).toBe("ark:/61903/3:1:REAL-PAGE");
+  });
+
+  it("skips a DigitalArtifact whose url is not a 3:1:/3:2: ark", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/1:2:HSJG-CLNF",
+          },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("returns the first matching ark when multiple DigitalArtifact sources exist", () => {
+    expect(
+      extractImageArk({
+        sources: [
+          {
+            id: "sd_da1",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:1:AAAA-BBBB",
+          },
+          {
+            id: "sd_da2",
+            resource_type: "DigitalArtifact",
+            url: "https://www.familysearch.org/ark:/61903/3:1:CCCC-DDDD",
+          },
+        ],
+      }),
+    ).toBe("ark:/61903/3:1:AAAA-BBBB");
+  });
+});
+
+// ─── imageArk integration (live path) ────────────────────────────────────
+
+const RECORD_WITH_IMAGE_SOURCE: GedcomX = {
+  persons: [
+    {
+      id: "P1",
+      gender: { type: "http://gedcomx.org/Male" },
+      names: [{ nameForms: [{ fullText: "Pedro Chaves" }] }],
+    },
+  ],
+  sourceDescriptions: [
+    {
+      id: "src_r_1",
+      titles: [{ value: "Buenos Aires Church Records" }],
+      about: "https://www.familysearch.org/ark:/61903/1:2:QJRM-GV8V",
+    },
+    {
+      id: "sd_da1",
+      resourceType: "http://gedcomx.org/DigitalArtifact",
+      about: "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP",
+    },
+  ],
+};
+
+describe("recordReadTool — imageArk field", () => {
+
+  it("surfaces imageArk when the record has a DigitalArtifact source", async () => {
+    mockOk(RECORD_WITH_IMAGE_SOURCE);
+    const result = await recordReadTool({ recordId: "P1" }, LOCAL);
+    expect(result.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+  });
+
+  it("omits imageArk when no DigitalArtifact source is present", async () => {
+    mockOk(MINIMAL_RECORD);
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
+    expect(result.imageArk).toBeUndefined();
+  });
+});
+
+describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-stage-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("stages the live record when projectPath is given, and record_read reads it back from the sidecar", async () => {
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "ark:/61903/1:1:QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.staged).not.toBeNull();
+    expect(live.staged!.returnedCount).toBe(1);
+    expect(live.stagingError).toBeUndefined();
+
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(await readFile(join(dir, live.staged!.resultsRef), "utf8"));
+    expect(envelope.tool).toBe("record_read");
+    expect(envelope.returned_count).toBe(1);
+    expect(envelope.payload.query).toEqual({ recordId: "ark:/61903/1:1:QVS9-DHDB" });
+    expect(envelope.payload.results[0].recordId).toBe("QVS9-DHDB");
+    expect(envelope.payload.results[0].gedcomx.persons?.[0]?.id).toBe("QVS9-DHDB");
+
+    // Sidecar mode finds it by the same id, with no second fetch.
+    const again = await recordReadTool(
+      { recordId: "QVS9-DHDB", resultsRef: live.staged!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(again.persons?.[0]?.id).toBe("QVS9-DHDB");
+    expect(again.staged).toBeUndefined(); // a sidecar read stages nothing
+  });
+
+  it("does not stage without projectPath", async () => {
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
+    expect("staged" in live).toBe(false);
+  });
+
+  it("a staging failure is non-fatal: the record still returns, with staged: null and the reason", async () => {
+    const { writeFile } = await import("fs/promises");
+    await writeFile(join(dir, "results"), "not a directory");
+    mockOk(MINIMAL_RECORD);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.persons?.[0]?.id).toBe("QVS9-DHDB");
+    expect(live.staged).toBeNull();
+    expect(live.stagingError).toMatch(/ENOTDIR|not a directory|EEXIST/i);
+  });
+
+  // imageArk and staging were built independently and met at a merge. They ride
+  // on the same return, so a record that has both a DigitalArtifact source and a
+  // projectPath must carry both — and what is STAGED stays the plain document,
+  // since the sidecar path re-derives imageArk on the way back out.
+  it("carries imageArk alongside staged, and stages the document without it", async () => {
+    mockOk(RECORD_WITH_IMAGE_SOURCE);
+    const live = await recordReadTool({ recordId: "P1", projectPath: dir }, LOCAL);
+
+    expect(live.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+    expect(live.staged).not.toBeNull();
+
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(
+      await readFile(join(dir, live.staged!.resultsRef), "utf8"),
+    );
+    expect(envelope.payload.results[0].gedcomx.imageArk).toBeUndefined();
+
+    // ...and the sidecar read re-derives it from the staged document.
+    const again = await recordReadTool(
+      { recordId: "P1", resultsRef: live.staged!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+    expect(again.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
   });
 });

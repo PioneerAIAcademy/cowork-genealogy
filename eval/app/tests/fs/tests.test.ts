@@ -313,6 +313,13 @@ describe('tests — hasGradingRelevantChange', () => {
     expect(hasGradingRelevantChange(a, b)).toBe(true);
   });
 
+  it('detects tag edit (tags are no longer cosmetic, issue #2694)', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.test.tags = ['grade:trigger'];
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
   it('detects holdout toggle (it survives snapshot normalization)', () => {
     const a = makeTest({});
     const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;

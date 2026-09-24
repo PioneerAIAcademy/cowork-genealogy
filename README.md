@@ -65,17 +65,17 @@ The MCP server exposes 50 tools.
 | `collections_search` | Lists FamilySearch record collections for a place (returns the derived `scope`); optional `startYear`/`endYear` filter | OAuth |
 | `collection_read` | Full detail for a single FamilySearch collection by `id` (FS Research Wiki page converted to markdown) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
-| `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns full simplified GEDCOMX | OAuth |
+| `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns full simplified GEDCOMX; with `projectPath` the record is also staged (`staged.resultsRef`) so `research_log_append` retains it as a sidecar | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
-| `same_person` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
+| `same_person` | Asks FamilySearch whether two people are the same — match confidence + score. Takes either two GedcomX documents, or project references (`projectPath`, `assertionId`, `treePersonId`) and assembles both sides itself, recording the score it computed | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
 | `person_read` | FamilySearch Family Tree person data — relatives (including **siblings**, fetched via each parent) and attached sources, and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries, family stories), transcribed inline where the read's time budget allowed | OAuth |
-| `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number | OAuth |
+| `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
 | `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
@@ -123,7 +123,7 @@ way project state changes.
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
-| `image_transcribe` | OCR a FamilySearch image by imageId, ark, or memory artifact URL (PDFs included) host-side (Gemini Flash via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
+| `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory artifact URL, or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter) and return **text**; with `projectPath` the transcription is also staged (`staged.resultsRef` + a `digest`). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. The `image-reader` subagent's reader. | OpenRouter (+ OAuth for imageId/ark) |
 | `configure_openrouter` | Save an optional OpenRouter model slug to the per-user config so `image_transcribe` uses a non-default OCR model. Does not accept an API key — the user sets `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads the local tree by default — offline. `live: true` fetches the person from FamilySearch instead, for auditing a profile with no local project | None, or OAuth with `live: true` |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
