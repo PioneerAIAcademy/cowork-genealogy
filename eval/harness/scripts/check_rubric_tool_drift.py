@@ -818,16 +818,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
     },
     {
         "file": "packages/engine/plugin/agents/person-evidence.md",
-        "tool": "record_search",
-        "reason": (
-            "descriptive provenance, not a call - 'A persona is reachable "
-            "when the assertion came from `record_read` ... or from a "
-            "`record_search` with a retained sidecar (`results_ref` present "
-            "in the log entry)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/person-evidence.md",
         "tool": "validate_research_schema",
         "reason": (
             "not-needed - 'The persistence tools validate before writing, "

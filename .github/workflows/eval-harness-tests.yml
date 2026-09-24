@@ -107,7 +107,7 @@ jobs:
           #
           # `^packages/engine/plugin/agents/` (issue #2745): check_rubric_tool_drift.py
           # scans agent bodies, and test_no_stale_suppressions asserts every
-          # SUPPRESSIONS entry still matches a live hit. 14 of the 79 entries name an
+          # SUPPRESSIONS entry still matches a live hit. 13 of the 78 entries name an
           # agent body, so a PR that deletes one of those mentions leaves a stale entry
           # on main -- and the failure then lands on whichever unrelated later PR does
           # match a pattern here. The trailing slash is load-bearing: without it a
