@@ -232,9 +232,14 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, state, nextStep, openConflictIds}] — per question, how far it has got " +
-    "(framed / planned / searching / evidence-gathered / concluded / critiqued) and " +
-    "what it is waiting on. questionStatuses is ADVISORY: it reports what the " +
+    "[{id, state, nextStep, openConflictIds, storedStatus}] — per question, how far it " +
+    "has got (framed / planned / searching / evidence-gathered / concluded / critiqued), " +
+    "what it is waiting on, and storedStatus, the question's own questions[].status " +
+    "verbatim (null when absent or not a string). state is DERIVED from the documents " +
+    "and storedStatus " +
+    "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
+    "proof summary while its storedStatus is still 'in_progress'; that is not a " +
+    "contradiction. questionStatuses is ADVISORY: it reports what the " +
     "documents already show, nothing is gated on it, and a null nextStep means the " +
     "question needs nothing further. One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
