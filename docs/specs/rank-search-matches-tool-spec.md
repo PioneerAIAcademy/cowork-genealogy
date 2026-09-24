@@ -204,7 +204,7 @@ across real searches and a match-score threshold can be chosen later from data.
   `recordId` **verbatim** (e.g. `ark:/61903/1:1:QPRC-WPBZ`). Note the assertion
   side may be stored in any of several forms (resolver URL, full ARK, `1:1:X`,
   bare `X`); the validator matches them by reducing both to a **bare 8-char id**
-  via `arkToBareId` (the `arkToBareId(recordId) === recordKey` join in `validateSidecars`). So the calibration join is **not**
+  via `arkToBareId` (the `arkToBareId(r.recordId) === recordKey` join in `validateSidecars`). So the calibration join is **not**
   string equality — the analysis script must `arkToBareId`-normalize *both* sides.
   Logging the full ARK verbatim is the safe choice (it reduces cleanly); do
   **not** pre-normalize, shorten, or reformat it in the log.

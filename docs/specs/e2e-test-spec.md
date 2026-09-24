@@ -748,8 +748,8 @@ the `max_cost_usd` note in §6 step 5.
    call or runs away across turns (0 pass, ~20 min per test). The pin's known
    cost is ~0.24/3 mean judge score, concentrated in GPS classification nuance —
    the existing "blank columns produce no assertions" rule, and
-   `informant_proximity` / `record_basis` calls; recovering that is separate
-   record-extraction work (the sonnet-4-6 classification-drop recovery).
+   `informant_proximity` / `record_basis` calls; later record-extraction work
+   added classification examples aimed at that drop.
    **Anyone running the reasoning-effort A/B (`gh issue list --state open --search
    "reasoning-effort A/B"`) must account for this**: a
    sweep that lowers effort changes the conditions that forced this pin, and a
