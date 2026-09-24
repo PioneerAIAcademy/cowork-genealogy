@@ -80,11 +80,12 @@ the agent does sound, verifiable GPS research. Full framing: spec §1.
 ## Setup
 
 **Run the preflight first** — it green-lights FamilySearch auth, the built MCP
-server, the Anthropic API key, the harness deps, and **a live MCP connection**,
-so a setup gap fails here instead of deep inside an expensive run. Budget
-**~30 seconds**: the last check starts a real CLI session and waits for the
-genealogy server to report `connected`, because a green light on the *config*
-was what let three runs die with no tools at all (issue #941):
+server, the Anthropic API key, the harness deps, **a live MCP connection**, wiki
+and population services, the OpenRouter API key, and **a live FamilySearch
+search**, so a setup gap fails here instead of deep inside an expensive run.
+Budget **~60 seconds**: two checks start real server sessions — one waits for the
+genealogy server to report `connected` (issue #941), the other makes a live
+`record_search` call to catch WAF blocks before they burn a full run (#2810):
 
 ```bash
 make e2e-preflight                # Windows: eval\CheckSetup.bat
@@ -113,6 +114,16 @@ If it flags something:
   are expected to be reachable, so a WARN here is a per-machine setup problem to
   report before spending an hour on the run — not a normal state to run through.
 - **Harness deps** — `cd eval/harness && uv sync`.
+- **OpenRouter API key** — a WARN means `image_transcribe` will fail for the
+  whole run and image-dependent findings will be unreachable. Set
+  `OPENROUTER_API_KEY` in `eval/.env` (Setup.bat prompts for it) or add
+  `openRouterApiKey` to `~/.familysearch-mcp/config.json`. A run without the
+  key is degraded, not blocked.
+- **FamilySearch search** — a FAIL here means record searches are broken on this
+  machine right now. If it says "WAF-blocked", the issue is environment-specific
+  and will affect the whole run. If it says "session not accepted", re-run
+  `make e2e-login`. A WARN means the search timed out or the server couldn't be
+  spawned — transient, try again.
 
 ---
 
@@ -174,6 +185,28 @@ was matched to them.
    match-strength argument for and against).
 3. **Open the hint record** and look for corroborating or contradicting
    evidence — the same way you would for any genealogical proof.
+
+**If you read an image rather than taking the index's text, check that reading
+against the index before you trust it.** This covers any image you read during
+this research, not only the hint record's, and any reader: `image_transcribe`,
+`dev/try-image-transcribe.ts`, another model, or you reading the scan by eye.
+
+1. Before reading the entries you care about, read **two other entries on the
+   same page** that the FamilySearch index already holds. Compare child,
+   father, mother and date.
+2. **Both match:** the reading is licensed for those fields. **Either one
+   differs:** discard everything that transcription read from the page. Don't
+   correct it and carry on.
+3. **The page has fewer than two other indexed entries:** the reading is
+   unlicensed. Say so in the README, and don't fall back to trusting it.
+4. **Farm, residence and occupation are not covered.** A passing check does not
+   license those words; the index usually has no farm column to check them
+   against. Confirm them from a separate indexed source, such as a
+   church-census household placing that person on that farm.
+5. **A sharper image is not the fix.** On issue #2308 a full-resolution scan of
+   one page still gave different wrong answers.
+
+Name the two entries you checked, and whether they matched, in the README.
 
 **Retrieval may be tool-assisted; the identity judgement may not.** You can use
 the `packages/engine/mcp-server/dev/try-*.ts` scripts against live FamilySearch

@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Excerpt from the live England_Civil_Registration page, probed 2026-09-15 at https://www.familysearch.org/en/wiki/England_Civil_Registration (33415 chars). Verbatim contiguous excerpt anchored on registration-start dates and alternative pre-1837 sources.",
+  "args": {
+    "url": "~England_Civil_Registration"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/England_Civil_Registration",
+    "content": "# England Civil Registration\n\nCivil registration of births, marriages, and deaths in England and Wales began on **1 July 1837**. Before this date, no civil birth certificates exist — the primary sources for births before 1837 are Anglican parish registers recording baptisms.\n\n## Registration Start Date\n\nThe Registration Act 1836 established the system of civil registration that came into force on 1 July 1837. The General Register Office (GRO) was established to oversee registration.\n\n## Before Civil Registration (before 1 July 1837)\n\nFor events before 1837, the main alternatives are:\n\n- **Anglican parish registers** — recording baptisms (not births), marriages, and burials. The oldest date from the 1530s.\n- **Bishop's transcripts** — annual copies of parish registers sent to the diocesan bishop, often surviving where original registers do not.\n- **Nonconformist records** — Baptists, Methodists, Quakers, and other dissenting congregations kept their own registers. Many were deposited at the General Register Office in 1837 and are now at the National Archives (RG 4–8).\n\n## Early Registration (1837–1875)\n\nEarly civil registration was incomplete. The requirement to register was established in law, but enforcement was weak in the early years. Many births, deaths, and marriages were never registered. Parish records remain essential even after 1837 for this reason.\n\n## Finding Civil Registration Records\n\nCivil registration indexes (organized quarterly from 1837) are the finding aid for GRO records. Indexes are available at:\n- **FreeBMD** (free, volunteer-transcribed)\n- **Findmypast** (subscription)\n- **Ancestry** (subscription)\n- **GRO Historical Indexes** (gov.uk, free for births and deaths 1837–1957)"
+  }
+}
