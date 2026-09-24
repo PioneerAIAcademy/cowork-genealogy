@@ -33,16 +33,26 @@ are required.
 
 ## Compound (double) surnames — Iberian / Latin-American names
 
+For the naming convention itself — how the surnames are ordered, what
+`de` and `y` do, whether a wife takes her husband's name, how the
+practice differs by region and how emigrants' names were changed — read
+the jurisdiction's own page rather than working from memory:
+
+```
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Spain_Naming_Customs" })
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Portugal_Naming_Customs" })
+```
+
+What follows is the **query** rule, which is ours: the wiki describes the
+names, not how to search a transcript index for them.
+
 A name of the form `Given Paterno Materno` (e.g. "Francisco **Naveda
 Somarriba**") carries the father's surname *and* the mother's surname.
 To find the **parents**, require the two surnames as a **co-occurrence**,
 not a phrase:
 
-- ✅ `+Naveda +Somarriba` — both must appear, in any position. Matches
-  the child's baptism and the parents' own burial/marriage acts, where
-  the father is named with the paternal surname and the mother with the
-  maternal surname (so the two words are on **different people and not
-  adjacent**).
+- ✅ `+Naveda +Somarriba` — both must appear, in any position. This is
+  the form that reaches the parentage records.
 - ❌ `+"Naveda Somarriba"` — the phrase (even with one-word slop) only
   matches where the *child's own* compound name is written out
   contiguously. It misses the parentage records — exactly the ones you
@@ -50,8 +60,17 @@ not a phrase:
 - Once the mother's fuller form is known, `+"Somarriba González"
   +Naveda` trims noise while still requiring the father's surname.
 
-The same applies to Portuguese and other double-barrelled naming
-systems. When in doubt which word is paternal vs maternal, run the
+**Why the phrase fails, stated precisely.** In the **father's** own
+records he is named with his paternal surname and the mother with hers,
+so the two words sit on different people and are not adjacent. Do not
+generalise that to "the two surnames never appear adjacent" — they can.
+A married woman is routinely written with her own surnames plus her
+husband's ("María Somarriba de Naveda"), so adjacency is available on
+her, and the wiki page above describes the forms that produce it. The
+co-occurrence is still the right query: it matches the adjacent case too,
+and the phrase does not match the non-adjacent one.
+
+When in doubt which word is paternal and which maternal, run the
 co-occurrence — it does not care about order.
 
 ## Do not scope FTS to a record collection ID

@@ -79,6 +79,50 @@ describe("research_log_append", () => {
     expect(research.log[0].query).toEqual(echoed);
   });
 
+  it("finalizes a staged image_transcribe transcription — a one-element results[] — into the sidecar (#2048)", async () => {
+    // The acquisition producers stage through the search channel unchanged: one
+    // element, `returned_count` recomputed to 1, the staged file consumed, and the
+    // log entry's `query` filled from the envelope (no re-serialization by the model).
+    await writeProject(baseResearch());
+    const element = {
+      id: "capture:obit",
+      source: { file: "uploads/obit.jpg" },
+      content_type: "image/jpeg",
+      size_bytes: 46767,
+      model: "google/gemini-3.7-flash",
+      transcription: "Obituary of David Albert Mays, b. 1851",
+      found: "FOUND",
+    };
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: { query: { file: "uploads/obit.jpg", lookingFor: "Mays" }, results: [element] },
+    });
+    expect(handle).not.toBeNull();
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "image_transcribe",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("logId" in result)) throw new Error("expected a single-op success");
+    expect(result.returnedCount).toBe(1);
+    const research = await readJson("research.json");
+    expect(research.log[0].tool).toBe("image_transcribe");
+    expect(research.log[0].results_ref).toBe(`results/${result.logId}.json`);
+    expect(research.log[0].query).toEqual({ file: "uploads/obit.jpg", lookingFor: "Mays" });
+    const sidecar = await readJson(`results/${result.logId}.json`);
+    expect(sidecar.tool).toBe("image_transcribe");
+    expect(sidecar.returned_count).toBe(1);
+    expect(sidecar.payload.results).toEqual([element]);
+    expect(await exists(handle!.resultsRef)).toBe(false); // consumed
+  });
+
   it("prefers an explicit `query` over the staged payload's echo", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({
@@ -851,11 +895,14 @@ describe("research_log_append", () => {
     });
 
     it("stays silent for a non-staging tool", async () => {
+      // `record_read` was this test's example until it became a staging producer
+      // (#2048); `person_read` stages nothing and never will — a tree read has
+      // no sidecar.
       await writeProject(baseResearch());
       const result = await researchLogAppend({
         projectPath: dir,
-        tool: "record_read",
-        query: { recordId: "ark:/61903/1:1:XXXX-XXX" },
+        tool: "person_read",
+        query: { personId: "KWCJ-RN4" },
         outcome: "positive",
         resultsExamined: 1,
         resultsAvailable: 1,
@@ -864,6 +911,26 @@ describe("research_log_append", () => {
 
       expect(result.ok).toBe(true);
       expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("does not warn for image_transcribe or record_read — record-extraction logs both without a stagedResultsRef by instruction", async () => {
+      for (const [tool, query] of [
+        ["image_transcribe", { imageArk: "ark:/61903/3:1:XXXX-XXX" }],
+        ["record_read", { recordId: "ark:/61903/1:1:XXXX-XXX" }],
+      ] as const) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          tool,
+          query,
+          outcome: "positive",
+          resultsExamined: 1,
+          resultsAvailable: 1,
+          planItemId: null,
+        });
+        expect(result.ok).toBe(true);
+        expect(warnOf(result)).not.toMatch(/retained none/);
+      }
     });
 
     it("(batch) surfaces one warning per offending op", async () => {
