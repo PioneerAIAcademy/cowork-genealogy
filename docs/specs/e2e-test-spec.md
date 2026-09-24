@@ -1324,11 +1324,12 @@ A human grade is a per-run annotation committed **beside the run log it grades**
 | `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
 | `annotator` | no | Provenance; git blame on the committed file is the fallback. |
 | `findings_hash` | no | sha256 of the normalized `expected-findings.json` this grade was produced against, so a later edit to a finding's body cannot silently invalidate the grade while its id stays put. Written by `/grade-e2e-run`'s stamp step, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. |
+| `blind_bundle_digest` | no | sha256 of the normalized content of the 4 files the blind grader reads (`expected-findings.json`, `fixture.json`, `final-tree.gedcomx.json`, `final-research.json`), stamped by `/grade-e2e-run`'s step 7, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. Covers the full grading surface: `findings_hash` catches edits to expected-findings only; this catches edits to any of the four. |
 
 There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
 + the findings' `required` flags by the §7.2 rule.
 
-Three integrity rules make the agreement number trustworthy:
+Four integrity rules make the agreement number trustworthy:
 
 - **Never auto-created.** A run does not emit an annotation; a human grades it
   with the `/grade-e2e-run` skill (which reads the fixture + the two `final-*`
@@ -1382,6 +1383,15 @@ Three integrity rules make the agreement number trustworthy:
   > the verdict in both directions. The exit code is retained because a
   > batch shell loop has no other signal for failure. This is a known,
   > accepted residual — not a bug to fix.
+- **Bundle-provenance stamped.** `/grade-e2e-run`'s step 7 stamps
+  `blind_bundle_digest` — a sha256 over the normalized content of the 4 files
+  the blind grader reads (`expected-findings.json`, `fixture.json`,
+  `final-tree.gedcomx.json`, `final-research.json`). The loader checks
+  this digest: a present stamp that no longer matches is a hard error
+  (re-grade or delete); an absent stamp is grandfathered (included but reported
+  unverifiable). This is the wider counterpart to `findings_hash`, which covers
+  only `expected-findings.json`: together, no post-grading edit to any graded
+  file can silently survive.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 

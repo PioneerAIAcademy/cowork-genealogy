@@ -104,11 +104,12 @@ Write `eval/runlogs/e2e/<slug>/run-<ts>.ann.json` with **only** these keys:
 | `notes` | no | `{ "<finding_id>": "text" }` — keys ⊆ `per_finding` keys |
 | `annotator` | no | the grader's team identifier (git blame is the fallback if omitted) |
 
-Hand-write **only** these keys. The one other allowed key, `findings_hash`, is
-added by the stamp command in step 7 — do **not** write it by hand. The loader
-hard-errors on any *other* unknown key — in particular do **not** write
-`llm_score`, `corrected_score`, or `verdict`. Those are the *unit*-annotation
-shape and the derived verdict; neither belongs in an e2e annotation.
+Hand-write **only** these keys. The two other allowed keys, `findings_hash` and
+`blind_bundle_digest`, are added by the stamp commands in step 7 — do **not**
+write them by hand. The loader hard-errors on any *other* unknown key — in
+particular do **not** write `llm_score`, `corrected_score`, or `verdict`. Those
+are the *unit*-annotation shape and the derived verdict; neither belongs in an
+e2e annotation.
 
 ### 7 — Self-check, stamp, then hand off for commit
 
@@ -123,16 +124,22 @@ First verify the file you just wrote — you have every input to do this without
   `expected-findings.json`, so this holds by construction — confirm it);
 - any `notes` key is one of those finding ids.
 
-Then stamp the fixture fingerprint into the annotation:
+Then stamp the provenance fingerprints into the annotation:
 
 ```
 cd eval/harness && uv run python -m e2e.stamp_findings_hash eval/runlogs/e2e/<slug>/run-<ts>.ann.json
 ```
 
-This adds the `findings_hash` key so a later edit to `expected-findings.json`
-cannot silently invalidate this grade. It is **not** `calibrate_judge`, makes no
-judge API calls, and is **exempt** from the "do not run `calibrate_judge`" rule
-below — run it every time.
+```
+cd eval/harness && uv run python -m e2e.stamp_bundle_digest eval/runlogs/e2e/<slug>/run-<ts>.ann.json
+```
+
+The first adds `findings_hash` (fingerprint of `expected-findings.json`); the
+second adds `blind_bundle_digest` (fingerprint of all 4 files the blind grader
+reads). Together they ensure a later edit to any graded file cannot silently
+invalidate this grade. Neither is `calibrate_judge`, neither makes judge API
+calls, and both are **exempt** from the "do not run `calibrate_judge`" rule
+below — run them every time.
 
 Then tell the user to commit the `.ann.json`. **Do not run `calibrate_judge` — not
 even `--dry-run`.** It classifies *every* annotation in the tree, not just this one.
@@ -145,9 +152,10 @@ periodically — documented in `docs/e2e-testing-guide.md` under "Step 6 — Gra
 - **Never open `run-<ts>.json`** or otherwise surface the judge's grades. Grading is
   blind; revealing the judge's labels defeats the calibration.
 - Do not run `calibrate_judge` at all — not even `--dry-run`. (The
-  `stamp_findings_hash` command in step 7 is a *different* tool — run it; it is not
-  `calibrate_judge`.) Self-validate the one file you wrote; whole-set classification
-  and the calibration sweep are the maintainer's job, per the guide.
+  `stamp_findings_hash` and `stamp_bundle_digest` commands in step 7 are
+  *different* tools — run them; they are not `calibrate_judge`.) Self-validate
+  the one file you wrote; whole-set classification and the calibration sweep are
+  the maintainer's job, per the guide.
 - Do not derive or write a `verdict` — the loader derives it from `per_finding`.
 - Do not edit fixtures, skills, the judge prompt, the run log, or the tree.
 - Do not label findings yourself — surface the evidence; the genealogist decides.

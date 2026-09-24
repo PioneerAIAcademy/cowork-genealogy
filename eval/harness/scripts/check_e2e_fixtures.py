@@ -534,13 +534,13 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
 
 # --------------------------------------------------------------------------- #
 # Annotation structural validation (blocking): reimplemented mechanical rungs
-# from calibrate_judge.load_annotated_runs (rungs 1-8)
+# from calibrate_judge.load_annotated_runs (rungs 1-10)
 # --------------------------------------------------------------------------- #
 
 # Hand-kept in sync with calibrate_judge.ALLOWED_ANN_KEYS. This script cannot
 # import calibrate_judge (it pulls in e2e.judge → anthropic, and this script
 # runs on a bare python with no harness venv). Same pattern as derive_matched.
-_ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes", "findings_hash"}
+_ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes", "findings_hash", "blind_bundle_digest"}
 _FINDING_LABELS = {"true", "partial", "false"}
 
 
@@ -559,8 +559,54 @@ def _findings_hash_local(expected_findings_path: Path) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def _hash_file_local(key: str, path: Path) -> str:
+    """Reimplement ``harness.snapshot.hash_file`` using only stdlib.
+
+    Hand-kept in sync — the normalization for ``.json`` is: JSON parse →
+    ``json.dumps(sort_keys=True, indent=2, ensure_ascii=False)`` → trailing
+    newline → sha256. Returns ``""`` for a missing file, matching
+    ``hash_file``. Non-JSON keys would use raw bytes, but the 4 bundle
+    files are all JSON.
+    """
+    import hashlib
+    if not path.exists():
+        return ""
+    raw = path.read_text(encoding="utf-8")
+    parsed = json.loads(raw)
+    normalized = json.dumps(parsed, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _bundle_digest_local(
+    slug: str,
+    stem: str,
+    fixtures_dir: Path,
+    runlogs_dir: Path,
+) -> str:
+    """Reimplement ``e2e.blind_bundle.bundle_digest`` using only stdlib.
+
+    Hand-kept in sync with ``e2e.blind_bundle.bundle_digest`` — hash each
+    of the 4 files via ``hash_file``, build a sorted ``{filename: hash}``
+    map, then sha256 the JSON of that map.
+    """
+    import hashlib
+    fixture_dir = fixtures_dir / slug
+    runlog_dir = runlogs_dir / slug
+    paths = [
+        fixture_dir / "expected-findings.json",
+        fixture_dir / "fixture.json",
+        runlog_dir / f"{stem}.final-tree.gedcomx.json",
+        runlog_dir / f"{stem}.final-research.json",
+    ]
+    file_map: dict[str, str] = {}
+    for p in paths:
+        file_map[p.name] = _hash_file_local(p.name, p)
+    combined = json.dumps(file_map, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+
+
 def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]:
-    """Run mechanical validation (rungs 1-8) over every e2e ``.ann.json``.
+    """Run mechanical validation (rungs 1-10) over every e2e ``.ann.json``.
 
     Returns a list of ``::error::`` messages for structural violations.
     Never calls a model; no API key needed. A clean corpus returns ``[]``.
@@ -639,7 +685,24 @@ def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]
                 )
                 continue
 
-        # 8. enum validation
+        # 8. blind-bundle provenance — blind_bundle_digest
+        stored_bundle = ann.get("blind_bundle_digest")
+        if stored_bundle is not None:
+            try:
+                current_bundle = _bundle_digest_local(
+                    slug, stem, fixtures_dir, runlogs_dir,
+                )
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                errors.append(f"e2e annotation `{rel}`: cannot compute blind_bundle_digest ({e})")
+                continue
+            if stored_bundle != current_bundle:
+                errors.append(
+                    f"e2e annotation `{rel}`: blind_bundle_digest mismatch — "
+                    f"one of the 4 graded files changed since grading; re-grade or delete"
+                )
+                continue
+
+        # 9. enum validation
         bad = {fid: v for fid, v in per_finding.items() if v not in _FINDING_LABELS}
         if bad:
             errors.append(f"e2e annotation `{rel}`: per_finding labels {bad} not in {sorted(_FINDING_LABELS)}")
@@ -748,7 +811,7 @@ def main() -> int:
         return 1
 
     # --- Annotation structural validation (blocking on PR-added, warn corpus) —
-    # --- rungs 1-8 from calibrate_judge.load_annotated_runs, reimplemented
+    # --- rungs 1-10 from calibrate_judge.load_annotated_runs, reimplemented
     # --- stdlib-only (#2487 PR B).
     fixtures_dir = REPO_ROOT / "eval" / "tests" / "e2e"
     ann_errors = validate_e2e_annotations(RUNLOGS_DIR, fixtures_dir)
