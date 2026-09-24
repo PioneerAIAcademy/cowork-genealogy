@@ -3,16 +3,52 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Domingo Olivera y Valadyo's parents were Domingo Oliviery and Francisca Gonzalez.",
+      "description": "Domingo Olivera y Valadyo (GN5K-19C) — recorded in civil registration as Domingo Olivera Albaladejo ('Valadyo' is a mis-transcription of Albaladejo) — was the son of Juan José Olivera Rolón and Concepción Albaladejo.",
       "details": {
         "subject_person": "Domingo Olivera Y Valadyo (GN5K-19C)",
         "relation": "parents",
         "target_person": {
-          "name": "Domingo Oliviery and Francisca Gonzalez"
+          "name": "Juan José Olivera Rolón (also recorded as José Olivera) and Concepción Albaladejo"
         }
       },
       "supporting_sources": [
-        "Puerto Rico, Registro Civil, 1805-2002 — birth registration of Carmen Ester Olivera Martinez, 30 Jun 1925, naming the paternal grandparents"
+        "Puerto Rico, Registro Civil, 1805-2002 — birth registration of Juan Félix Olivera González, 1 Jul 1902, Ciales (index): father Domingo Olivera Albaladejo, mother Francisca (her parents Victoriano Gonsalez and Carlina Maísonet), paternal grandparents Juan José Olivera Rolón and Concepción Albaladejo (ark:/61903/1:1:QVJQ-P1N7; father's persona ark:/61903/1:1:DHD2-RYMM)",
+        "Puerto Rico, Registro Civil, 1805-2002 — death registration of Domingo Olivera Albaladejo, 24 Aug 1926, Vega Baja (index): born 1856, spouse Francisca González, parents José Olivera and Concepción Albaladejo (ark:/61903/1:1:QVJ3-6GZM)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "If the agent adds Carmen Ester Olivera Martínez (b. 30 Jun 1925, Vega Baja) to the tree, she is a child of the subject's son Domingo Olivera y González (GN52-SH9, b. 1897), not of the subject. Her 1925 birth registration names the subject and his wife Francisca González as her paternal grandparents, so the Domingo Olivera it names as father is the son.",
+      "details": {
+        "subject_person": "Domingo Olivera Y Valadyo (GN5K-19C)",
+        "relation": "paternal grandfather of Carmen Ester Olivera Martínez; her father is his son",
+        "target_person": {
+          "name": "Carmen Ester Olivera Martínez, child of Domingo Olivera y González (GN52-SH9)",
+          "birth": "30 Jun 1925, Vega Baja, Puerto Rico"
+        }
+      },
+      "supporting_sources": [
+        "Puerto Rico, Registro Civil, 1805-2002 — birth registration of Carmen Ester Olivera Martínez, 30 Jun 1925, Vega Baja (index): father Domingo Olivera, paternal grandparents Domingo Oliviery and Francisca Gonzalez, maternal grandparents Eloy Martínez and Ubardina Pabón (ark:/61903/1:1:QVJW-7HRB; father's persona ark:/61903/1:1:QVJW-7HR1)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Domingo Olivera y Valadyo's parents were Domingo Oliviery (or Olivera) and Francisca Gonzalez. That pair is the subject himself and his own wife, read one generation too high from the grandparent fields of his granddaughter's 1925 birth registration. Pass = no such parents in tree.gedcomx.json; a rejection of the hint belongs in research.json, never as persons in the tree.",
+      "details": {
+        "subject_person": "Domingo Olivera Y Valadyo (GN5K-19C)",
+        "relation": "parents",
+        "wrong_candidate": {
+          "name": "Domingo Oliviery",
+          "note": "the FamilySearch hint's generation shift: the hinted pair (Domingo Oliviery and his wife) are the paternal grandparents of Carmen Ester Olivera Martínez (1925), i.e. the subject and his wife Francisca González Maysonet (GN5K-L8W). Only the father is named here: the wife legitimately stays in the tree, and asserting the shifted pair requires asserting the father. The index spells the grandfather 'Oliviery'; the tree and the 1902 and 1926 registrations spell him Olivera."
+        }
+      },
+      "supporting_sources": [
+        "Puerto Rico, Registro Civil, 1805-2002 — birth registration of Carmen Ester Olivera Martínez, 30 Jun 1925, Vega Baja (ark:/61903/1:1:QVJW-7HRB) — the hint record (the hinted persona is the father, ark:/61903/1:1:QVJW-7HR1), whose paternal-grandparent fields name the subject and his wife"
       ],
       "required": true
     }
