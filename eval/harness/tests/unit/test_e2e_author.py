@@ -1092,3 +1092,18 @@ def test_person_level_sources_are_dropped_with_a_warning():
     tree, warnings = normalize_tree(raw)
     assert "sources" not in tree["persons"][0]
     assert any("'sources'" in w for w in warnings)
+
+
+def test_same_relationship_duplicate_fact_id_warns_strip_refuses():
+    # Relationships are walked too; without this case, dropping them from the
+    # holder loop leaves every test green.
+    raw = {
+        "persons": [_person("P1", "John", "Smith", living=False),
+                    _person("P2", "Jane", "Doe", living=False)],
+        "relationships": [{"id": "R1", "type": "Couple", "person1": "P1", "person2": "P2",
+                           "facts": [{"id": "F1", "type": "Marriage", "date": "1920"},
+                                     {"id": "F1", "type": "Marriage", "date": "1921"}]}],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert any("duplicate fact id 'F1' on R1" in w for w in warnings)
