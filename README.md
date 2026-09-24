@@ -69,7 +69,7 @@ The MCP server exposes 50 tools.
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
-| `same_person` | Asks FamilySearch whether two record extractions describe the same person — match confidence + score | OAuth |
+| `same_person` | Asks FamilySearch whether two people are the same — match confidence + score. Takes either two GedcomX documents, or project references (`projectPath`, `assertionId`, `treePersonId`) and assembles both sides itself, recording the score it computed | OAuth |
 | `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
