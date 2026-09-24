@@ -435,6 +435,11 @@ describe("the guard script's decisions", () => {
     // agent_id present but agent_type null resolves to an empty caller, which
     // is not the owner either.
     ["agent_id with a null agent_type", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: null }],
+    // The realistic non-`completed` value: 220 `completed` against 1 `active`
+    // in the committed corpus. Subsumed by the falsy rows above against a
+    // `== "completed"` implementation, but it is the value a reader expects to
+    // see covered, and it costs one line.
+    ["main thread, an active status", { section: "project", op: "update", fields: { status: "active" } }, {}],
   ])("denies research_append on project.status — %s", (_label, tool_input, extra) => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
@@ -453,6 +458,10 @@ describe("the guard script's decisions", () => {
     // through from either caller.
     ["an empty fields ping on the main thread", { section: "project", op: "update", fields: {} }, {}],
     ["an empty fields ping from the owner", { section: "project", op: "update", fields: {} }, { agent_id: "a1", agent_type: OWNER }],
+    // project_create writes the whole section at project start and is gated by
+    // `owner_denied`'s research_append check, not by this arm. Low-information
+    // by design — it pins that the gate stays tool-scoped.
+    ["project_create setting status at creation", { section: "project", op: "update", fields: { status: "active" } }, { tool_name: "mcp__genealogy__project_create" }],
   ])("allows research_append on project — %s", (_label, tool_input, extra) => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out.hookSpecificOutput).toBeUndefined();

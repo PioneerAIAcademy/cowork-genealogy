@@ -510,6 +510,24 @@ def test_exhaustive_declaration_claim_is_allowed(payload, label):
     assert main_thread_owned_section(payload) is None, label
 
 
+def test_owned_field_deny_uses_the_shipped_hooks_own_words():
+    """The sibling of the declaration test below, for the presence-keyed arm.
+
+    The arm list in `test_universal_owned_sections.py` asserts only that a
+    reason is non-empty, which pins "does not raise" and nothing about the text.
+    A deny that does not name the route out reproduces the bypass the whole
+    guardrail exists to stop.
+    """
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(("project.status", "owned_field", ""))[
+        "hookSpecificOutput"
+    ]["permissionDecisionReason"]
+    assert "@plugin:proof-conclusion" in reason
+    # It must say what is NOT routed, or a reader concludes the whole section is.
+    assert "updated" in reason
+
+
 def test_declaration_deny_uses_the_shipped_hooks_own_words():
     from harness.context_policy import owned_section_denial
 
