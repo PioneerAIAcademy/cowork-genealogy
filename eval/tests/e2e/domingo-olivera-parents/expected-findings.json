@@ -43,8 +43,8 @@
         "subject_person": "Domingo Olivera Y Valadyo (GN5K-19C)",
         "relation": "parents",
         "wrong_candidate": {
-          "name": "Domingo Oliviery and Francisca Gonzalez",
-          "note": "the FamilySearch hint's generation shift: these are the paternal grandparents of Carmen Ester Olivera Martínez (1925), i.e. the subject and his wife Francisca González Maysonet (GN5K-L8W). The index spells the grandfather 'Oliviery'; the tree and the 1902 and 1926 registrations spell him Olivera."
+          "name": "Domingo Oliviery",
+          "note": "the FamilySearch hint's generation shift: the hinted pair (Domingo Oliviery and his wife) are the paternal grandparents of Carmen Ester Olivera Martínez (1925), i.e. the subject and his wife Francisca González Maysonet (GN5K-L8W). Only the father is named here: the wife legitimately stays in the tree, and asserting the shifted pair requires asserting the father. The index spells the grandfather 'Oliviery'; the tree and the 1902 and 1926 registrations spell him Olivera."
         }
       },
       "supporting_sources": [
