@@ -220,11 +220,12 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   `marriage*` year or place parameter. Twenty distinct calls matched at least
   one of those. Between them they covered the bride's exact indexed surname
   alone, both spouse cross-references, the marriage collection directly, and a
-  1775-1800 window scoped to Hordaland. None returned the record. The agent graded itself
-  `not_proved` with `shortfall: gap` and named the two repositories it did not
-  reach — Digitalarkivet's browse-only pre-1797 Hamre books and Ancestry's
-  "Norway, Select Marriages" — as "the most likely repositories for a direct
-  marriage record", which is the same conclusion this section reached.
+  1775-1800 window scoped to Hordaland. None returned the record. The agent
+  graded itself `not_proved` with `shortfall: gap` and named the two
+  repositories it did not reach — Digitalarkivet's browse-only pre-1797 Hamre
+  books and Ancestry's "Norway, Select Marriages" — as "the most likely
+  repositories for a direct marriage record", which is the same conclusion this
+  section reached.
   `compliance: fail` on the single known bypass (a `proof_summaries` entry
   written without `proof-conclusion` being invoked — issue #1851), as in both
   2026-09 runs.
