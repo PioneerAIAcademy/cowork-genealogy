@@ -13,9 +13,9 @@
 /**
  * Parse a named block-sequence out of YAML frontmatter.
  *
- * Three comment-and-layout shapes cost a naive scan the grants it is meant to
- * read. The first two are live in the tree today; the third is not yet, and is
- * handled because both callers fail OPEN on it:
+ * Four shapes cost a naive scan the grants it is meant to read. The first two
+ * are live in the tree today; the last two are not yet, and are handled because
+ * both callers fail OPEN on them:
  *
  *  - **Comment lines inside the list.** `record-extractor.md` carries a 10-line
  *    `#` comment block between `tools:` and its first entry. A scan that stops
@@ -29,6 +29,10 @@
  *    grant and passes — and on a SKILL.md nothing else reads `allowed-tools:`,
  *    so nothing else would catch it. Comments inside these lists are already
  *    house style (see the first shape), which is what makes this reachable.
+ *  - **A quoted scalar.** `- "tree_forget"` must yield `tree_forget`. Kept
+ *    quoted, it matches no tool and fails open exactly as the trailing comment
+ *    does. Only one matching outer pair is stripped: an unpaired quote, or one
+ *    inside the entry (`Bash(echo "x")`), belongs to the entry.
  *
  * Returns the entries in file order; `[]` when the key is absent. Throws when
  * there is no frontmatter at all, which is a malformed file rather than an
@@ -46,7 +50,7 @@ export function extractList(text: string, key: string): string[] {
   for (let i = start + 1; i < lines.length; i++) {
     if (/^\S/.test(lines[i]) && !/^\s*#/.test(lines[i])) break; // next top-level key
     const item = /^\s*-\s+(.+?)(?:\s+#.*)?\s*$/.exec(lines[i]);
-    if (item) items.push(item[1]);
+    if (item) items.push(item[1].replace(/^(["'])(.*)\1$/, "$2"));
   }
   return items;
 }

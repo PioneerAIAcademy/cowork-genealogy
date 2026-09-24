@@ -70,6 +70,46 @@ describe("extractList — entries survive the shapes that reach these lists", ()
     ]);
   });
 
+  it("unquotes a quoted entry and yields the bare name", () => {
+    // The trailing-comment failure one shape over. `"tree_forget"` kept its
+    // quotes, matched no tool name, and the ownership guard passed: proven on
+    // `search-wikipedia`, where the plain grant reds and the quoted one left
+    // the packaging suite green.
+    const entries = extractList(
+      doc(
+        [
+          "allowed-tools:",
+          '  - "tree_forget"',
+          "  - 'mcp__genealogy__research_append'",
+          '  - "mcp__genealogy__tree_edit"  # quoted and commented',
+        ].join("\n"),
+      ),
+      "allowed-tools",
+    );
+    expect(entries).toEqual([
+      "tree_forget",
+      "mcp__genealogy__research_append",
+      "mcp__genealogy__tree_edit",
+    ]);
+  });
+
+  it("strips only a matching outer pair of quotes", () => {
+    // The over-trim direction. An unpaired or mismatched quote is not a quoted
+    // scalar, and a quote inside an entry belongs to the entry.
+    const entries = extractList(
+      doc(
+        [
+          "tools:",
+          '  - "tree_forget',
+          "  - \"tree_forget'",
+          '  - Bash(echo "x")',
+        ].join("\n"),
+      ),
+      "tools",
+    );
+    expect(entries).toEqual(['"tree_forget', "\"tree_forget'", 'Bash(echo "x")']);
+  });
+
   it("reads past a leading comment block inside the list", () => {
     // `record-extractor.md`'s live shape: a 10-line `#` block sits between
     // `tools:` and the first entry. A scan that stops at the first line which
