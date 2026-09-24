@@ -9,7 +9,7 @@
         "subject_person": "Thomas Werdmüller (9MF3-9S6)",
         "relation": "spouse and child",
         "wrong_candidate": {
-          "name": "Regula Steiner as a wife or partner, and David Werdmüller (baptised 27 March 1698, Zürich) as a son",
+          "name": "Regula Steiner as a wife or partner, and David Werdmüller (baptised 27 March 1698, Zürich) as a son, also spelled David Werdmuller without the umlaut",
           "note": "the 1698 baptism is one of nine by a single couple across 1692-1712; the last two postdate the subject's death, and the subject's own wife was buried in 1735, ruling out both a concurrent second marriage and a successor one"
         }
       },
@@ -25,12 +25,12 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "The agent should document the rejection as a research conclusion, and that conclusion must rest on the named conflicting record — the 21 April 1712 Zürich baptism (ark:/61903/1:1:66JR-7TSH) of a son Thomas to the same Thomas Werdmüller and Regula Steiner couple, postdating the subject's 14 November 1704 death — together with the continuous 1692-1712 run of that couple's baptisms in the same parish. A conclusion resting only on failure to confirm the hint does not satisfy this finding: a run that searched nothing and wrote \"I could not verify this\" has not met the bar. Pass = the rejected identification is recorded in research.json as an explicitly rejected hypothesis carrying that reasoning, and is kept out of tree.gedcomx.json.",
+      "description": "Having weighed the hinted 27 March 1698 baptism against the baptismal run of the Thomas Werdmüller and Regula Steiner family itself, the agent should document a negative conclusion in its proof summary: that baptism cannot belong to this subject, because the same couple was still baptising children on 21 April 1712 (ark:/61903/1:1:66JR-7TSH), seven and a half years after his 14 November 1704 death, and his own wife Dorothea von Muralt was not buried until 1735. The conclusion must rest on that named conflicting record. A conclusion resting only on failure to confirm the hint does not satisfy this finding: a run that searched nothing and wrote \"I could not verify this\" has not met the bar. No credible substitute record makes the subject the father of the 1698 David, and the final tree records no Regula Steiner spouse and no David Werdmüller child for him.",
       "details": {
         "subject_person": "Thomas Werdmüller (9MF3-9S6)",
         "relation": "research conclusion",
         "target_person": {
-          "name": "documented negative conclusion resting on the 21 April 1712 baptism",
+          "name": "documented negative conclusion in the proof summary, resting on the 21 April 1712 baptism",
           "birth": "n/a"
         }
       },
