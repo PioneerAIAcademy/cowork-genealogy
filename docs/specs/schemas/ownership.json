@@ -166,7 +166,7 @@
       "owner": "skill:record-extraction",
       "callers": [
         "skill:record-extraction",
-        "skill:citation"
+        "agent:citation"
       ],
       "writerTools": [
         "research_append",
@@ -175,10 +175,10 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
+      "notes": "citation is an agent (issue #2799), and it is named here because it is the subject of its own unit suite - `writer_sets` resolves an `agent:` caller only when it matches that subject, so this row authorizes citation's own refinements and nothing else. citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
       "requires": "record-extraction creates the entry with a working citation and `source_classification`. citation updates `citation` and `citation_detail` on an entry that already exists.",
       "failure": "A second skill minting sources produces duplicate `src_` entries for one record, and every assertion's `source_id` then points at whichever copy that skill happened to make.",
-      "remedy": "Add a new record through record-extraction; refine an existing citation through citation.",
+      "remedy": "Add a new record through record-extraction; refine an existing citation through the citation agent.",
       "override": "none"
     },
     {

@@ -5,13 +5,21 @@
     "name": "Refine a Find A Grave memorial citation with the reliability half (src_002)",
     "type": "positive",
     "description": "src_002 is a Find A Grave memorial for Bridget Fallon. A memorial is a compiled, contributor-authored page, not an original record — its reliability depends on who made it and what they based it on. The extended FindAGrave template #2542 adds carries the contributor, the created/last-modified date, and the source of the source. The rough before-state citation names FindAGrave.com as creator; the contributor, the last-modified date, and a stated source of the source (an obituary) are all on file.",
-    "tags": ["findagrave", "memorial", "reliability", "src_002"]
+    "tags": [
+      "findagrave",
+      "memorial",
+      "reliability",
+      "src_002",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Refine the citation for src_002, Bridget Fallon's Find A Grave memorial.",
+    "delegation": "Refine the citation on src_002, Bridget Fallon's Find A Grave memorial.\n\nsourceId: src_002\nprojectPath: <workspace>",
     "scenario": "citation-authored-sources"
   },
-  "mcp_fixtures": ["validate-research-schema"],
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
   "judge_context": [
     "The citation must follow the Find A Grave pattern — Find A Grave, memorial [number], [person] ([dates]), [cemetery], [location] — and then carry the reliability half: the contributor (Mark T. Steward), the created/last-modified date (last modified 3 February 2019), and the source of the source (the 1921 obituary in the Dubuque Telegraph-Herald). All three are on file in the before-state and must appear.",
     "who should not be 'FindAGrave.com' (the repository/access point). A memorial is contributor-authored; the citation must make clear who created the page and what it was based on, which is the point of the reliability half.",
