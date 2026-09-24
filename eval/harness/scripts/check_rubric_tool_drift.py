@@ -108,11 +108,23 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
 # is always safe; adding one requires a reason longer than 20 characters.
 #
 # Keys: "file" (repo-relative, matches the file= arg in gh_warning),
-#        "tool" (bare tool name), "reason" (why this is not drift).
+#        "tool" (bare tool name), "reason" (why this is not drift), and
+#        "quotes" (the exact span(s) the reason cites FROM THAT FILE).
+#
+# "quotes" is separate from "reason" so it can be checked mechanically:
+# test_every_suppression_quote_is_verbatim asserts each one still appears
+# in the file the entry names. Six entries once quoted a SIBLING file's
+# wording — the verdict was right but the proof pointed at the wrong
+# text, and nothing caught it. Prose in "reason" may mention a phrase
+# that is deliberately ABSENT (patronymic-drop names "and expected" to
+# say it is not there); only "quotes" is held to the file.
 SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/check-warnings/negative-schema-validation.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Should route to validate-schema (or whatever skill owns the validate_research_schema MCP tool)",
+        ],
         "reason": (
             "cross-owner: names the destination skill of a routing test - "
             "'Should route to validate-schema (or whatever skill owns the "
@@ -122,6 +134,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
         "tool": "person_quality",
+        "quotes": [
+            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
+        ],
         "reason": (
             "cross-owner: both are check-warnings' tools, and "
             "check-warnings is a stub_skill in this test's execution block "
@@ -134,6 +149,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
         "tool": "person_warnings",
+        "quotes": [
+            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
+        ],
         "reason": (
             "cross-owner: both are check-warnings' tools, and "
             "check-warnings is a stub_skill in this test's execution block "
@@ -146,6 +164,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
+        "quotes": [
+            "init-project has no schema-validation tool in its `allowed-tools`, so this is graded by reading the file against the schema, not by expecting a `validate_research_schema` call",
+        ],
         "reason": (
             "not-needed, and says so explicitly - 'init-project has no "
             "schema-validation tool in its `allowed-tools`, so this is "
@@ -156,6 +177,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/locality-guide/ut_locality_guide_009.json",
         "tool": "collection_read",
+        "quotes": [
+            "Citing collection ids that came from a correctly-matched collections_search call, without independently re-verifying them through collection_read, is not a fabrication given this fixture's known limitation - do not penalize Correctness for it",
+        ],
         "reason": (
             "not-needed: permissive fixture-limitation note, no expectation "
             "of a call - 'Citing collection ids that came from a "
@@ -168,6 +192,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/locality-guide/ut_locality_guide_020.json",
         "tool": "collection_read",
+        "quotes": [
+            "is the fixture's known limitation, not a Tool Arguments error - do not penalize Tool Arguments for the mismatch between the requested id and the returned collection",
+        ],
         "reason": (
             "not-needed: permissive fixture-limitation note - 'is the "
             "fixture's known limitation, not a Tool Arguments error - do "
@@ -178,6 +205,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
         "tool": "tree_correct",
+        "quotes": [
+            "nothing in this skill's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
+        ],
         "reason": (
             "negative mention: names the tool to say the skill lacks it - "
             "'nothing in this skill's toolset can raise the gender "
@@ -188,6 +218,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
         "tool": "record_search",
+        "quotes": [
+            "this assertion is record_search-sourced (record_persona_id CP1 is non-null), so same_person is available here",
+        ],
         "reason": (
             "descriptive provenance, not a call: names where the assertion "
             "came from - 'this assertion is record_search-sourced "
@@ -198,6 +231,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json",
         "tool": "record_read",
+        "quotes": [
+            "record_read was never called to check for a digitized image",
+        ],
         "reason": (
             "descriptive ground truth about a call that was NOT made "
             "upstream - 'record_read was never called to check for a "
@@ -207,6 +243,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json",
         "tool": "record_search",
+        "quotes": [
+            "Its notes and log_001 explicitly state that record_search returned no imageId/artifacts field for this hit",
+        ],
         "reason": (
             "descriptive ground truth about an upstream skill's call - 'Its "
             "notes and log_001 explicitly state that record_search returned "
@@ -216,6 +255,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/question-selection/ut_question_selection_005.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3",
+        ],
         "reason": (
             "not-needed: a purely conditional score-UP rule that never "
             "penalizes an absence - 'if the skill calls "
@@ -227,6 +269,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/question-selection/ut_question_selection_006.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3",
+        ],
         "reason": (
             "not-needed: a purely conditional score-UP rule that never "
             "penalizes an absence - 'if the skill calls "
@@ -238,6 +283,11 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/census-1850-subject-as-child-creates-sibling-stubs.json",
         "tool": "tree_edit",
+        "quotes": [
+            "record-extraction is ASSERTION-ONLY",
+            "`mcp__genealogy__tree_edit` is not in its frontmatter; it makes ZERO tree_edit / tree_correct calls",
+            "Do NOT expect, or reward, any tree person/edge write in this run",
+        ],
         "reason": (
             "negative mention - 'record-extraction is ASSERTION-ONLY ... "
             "`mcp__genealogy__tree_edit` is not in its frontmatter; it "
@@ -248,6 +298,11 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/census-1850-subject-as-child-creates-sibling-stubs.json",
         "tool": "tree_correct",
+        "quotes": [
+            "record-extraction is ASSERTION-ONLY",
+            "`mcp__genealogy__tree_edit` is not in its frontmatter; it makes ZERO tree_edit / tree_correct calls",
+            "Do NOT expect, or reward, any tree person/edge write in this run",
+        ],
         "reason": (
             "negative mention - 'record-extraction is ASSERTION-ONLY ... "
             "`mcp__genealogy__tree_edit` is not in its frontmatter; it "
@@ -258,6 +313,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/census-1850-subject-as-child-creates-sibling-stubs.json",
         "tool": "materialize_facts",
+        "quotes": [
+            "Minting the sibling person stubs (Bridget, John)",
+            "is person-evidence's household-skeleton step (materialize_facts create-or-enrich + tree_edit add_relationship), reached later - not extraction's job",
+        ],
         "reason": (
             "cross-owner: names person-evidence's tool - 'Minting the "
             "sibling person stubs (Bridget, John) ... is person-evidence's "
@@ -269,6 +328,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/census-sex-assertion-for-gender.json",
         "tool": "materialize_facts",
+        "quotes": [
+            "WHY it matters (context for the judge, not a second check): materialize_facts reads a persona's sex/gender assertions to set the gender of any tree person person-evidence later mints from this record",
+        ],
         "reason": (
             "cross-owner, and flagged as non-grading by its own first "
             "clause - 'WHY it matters (context for the judge, not a second "
@@ -280,6 +342,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/positive-extract-and-route-image-ark.json",
         "tool": "image_read",
+        "quotes": [
+            "Do NOT grade whether the router called image_read directly in the main context - that guard is enforced mechanically by the harness",
+        ],
         "reason": (
             "negative mention, and explicitly out of the judge's remit - "
             "'Do NOT grade whether the router called image_read directly in "
@@ -290,6 +355,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/suspect-required-name-confirm-via-image.json",
         "tool": "image_read",
+        "quotes": [
+            "The router must NOT call image_read directly in the main context - image reading is the image-reader subagent's job",
+        ],
         "reason": (
             "negative mention - 'The router must NOT call image_read "
             "directly in the main context - image reading is the "
@@ -299,6 +367,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/sets-record-persona-id.json",
         "tool": "record_search",
+        "quotes": [
+            "search-records already logged this search as log_001 (a record_search entry whose sidecar holds the gedcomx)",
+        ],
         "reason": (
             "descriptive provenance, another skill's call - 'search-records "
             "already logged this search as log_001 (a record_search entry "
@@ -308,26 +379,37 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/record-extraction/rubric.md",
         "tool": "tree_edit",
+        "quotes": [
+            "does **not** hold `tree_edit`/`tree_correct`. It writes **no** tree persons, names, or relationships",
+            "do not reward, and do not penalize the absence of, a tree stub or edge",
+        ],
         "reason": (
-            "negative mention - 'record-extraction ... does **not** hold "
-            "`tree_edit`/`tree_correct`. It writes **no** tree persons, "
-            "names, or relationships ... do not reward, and do not penalize "
-            "the absence of, a tree stub or edge'"
+            "negative mention, in record-extraction's own rubric - 'does "
+            "**not** hold `tree_edit`/`tree_correct`. It writes **no** tree "
+            "persons, names, or relationships ... do not reward, and do not "
+            "penalize the absence of, a tree stub or edge'"
         ),
     },
     {
         "file": "eval/tests/unit/record-extraction/rubric.md",
         "tool": "tree_correct",
+        "quotes": [
+            "does **not** hold `tree_edit`/`tree_correct`. It writes **no** tree persons, names, or relationships",
+            "do not reward, and do not penalize the absence of, a tree stub or edge",
+        ],
         "reason": (
-            "negative mention - 'record-extraction ... does **not** hold "
-            "`tree_edit`/`tree_correct`. It writes **no** tree persons, "
-            "names, or relationships ... do not reward, and do not penalize "
-            "the absence of, a tree stub or edge'"
+            "negative mention, in record-extraction's own rubric - 'does "
+            "**not** hold `tree_edit`/`tree_correct`. It writes **no** tree "
+            "persons, names, or relationships ... do not reward, and do not "
+            "penalize the absence of, a tree stub or edge'"
         ),
     },
     {
         "file": "eval/tests/unit/record-extraction/rubric.md",
         "tool": "materialize_facts",
+        "quotes": [
+            "Minting a household's sibling stubs and writing their `ParentChild`/spouse edges is **person-evidence's** household-skeleton step (`materialize_facts` create-or-enrich + `tree_edit add_relationship`), not extraction's",
+        ],
         "reason": (
             "cross-owner: names person-evidence's tool - 'Minting a "
             "household's sibling stubs and writing their "
@@ -339,6 +421,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/declare-exhaustive-complete.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
+            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
+        ],
         "reason": (
             "not-needed, naming the allowed-tools fact outright - 'Claude "
             "does not need to call validate_research_schema - it is not in "
@@ -351,6 +437,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/direct-declare-exhaustive-complete.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
+            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
+        ],
         "reason": (
             "not-needed, naming the allowed-tools fact outright - 'Claude "
             "does not need to call validate_research_schema - it is not in "
@@ -363,6 +453,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/honest-early-termination.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
+            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
+        ],
         "reason": (
             "not-needed, naming the allowed-tools fact outright - 'Claude "
             "does not need to call validate_research_schema - it is not in "
@@ -375,6 +469,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/child-link-marriage-not-sufficient.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: this is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
         "reason": (
             "not-needed - 'Tool Arguments: this is a decline/review "
             "response - Claude is not expected to call "
@@ -384,6 +481,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/tentative-value-alternative-record-gate.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: this is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
         "reason": (
             "not-needed - 'Tool Arguments: this is a decline/review "
             "response - Claude is not expected to call "
@@ -393,6 +493,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/decline-incomplete-research.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: This is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
         "reason": (
             "not-needed - 'Tool Arguments: This is a decline/review "
             "response - Claude is not expected to call "
@@ -402,6 +505,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/exhaustiveness-decisive-record-gate.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: This is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
         "reason": (
             "not-needed - 'Tool Arguments: This is a decline/review "
             "response - Claude is not expected to call "
@@ -411,6 +517,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/direct-refuse-while-in-progress.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",
+        ],
         "reason": (
             "not-needed - 'If Claude does call validate_research_schema "
             "that is acceptable but not required since no changes were "
@@ -420,6 +529,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/refuse-while-in-progress.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",
+        ],
         "reason": (
             "not-needed - 'If Claude does call validate_research_schema "
             "that is acceptable but not required since no changes were "
@@ -429,6 +541,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/already-declared-no-redeclare.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Since no changes are being made to research.json, calling validate_research_schema is not required",
+        ],
         "reason": (
             "not-needed - 'Since no changes are being made to "
             "research.json, calling validate_research_schema is not "
@@ -438,6 +553,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/sealed-record-not-a-gap.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "if the skill declares, it writes via research_append (and may call validate_research_schema)",
+        ],
         "reason": (
             "not-needed, permissive 'may' - 'if the skill declares, it "
             "writes via research_append (and may call "
@@ -447,6 +565,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-exhaustiveness/ut_research_exhaustiveness_011.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "The correct outcome is routing to proof-conclusion, with no exhaustive_declaration changes and no validate_research_schema call",
+        ],
         "reason": (
             "negative mention in a triggering-boundary test - 'The correct "
             "outcome is routing to proof-conclusion, with no "
@@ -457,6 +578,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
         "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
@@ -468,6 +592,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
         "tool": "wiki_place_page",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
@@ -479,6 +606,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
         "tool": "place_population",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
@@ -490,6 +620,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json",
         "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+        ],
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
@@ -500,6 +633,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json",
         "tool": "wiki_place_page",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+        ],
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
@@ -510,6 +646,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json",
         "tool": "place_population",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+        ],
         "reason": (
             "negative mention naming the retirement outright - 'it should "
             "NOT call wiki_search / wiki_place_page / place_population "
@@ -520,6 +659,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-full-text/parentage-compound-surname-cooccurrence.json",
         "tool": "record_search",
+        "quotes": [
+            "Should NOT scope the full-text search to a record `collectionId` guessed from record_search or a collections survey",
+        ],
         "reason": (
             "negative mention of another skill's tool - 'Should NOT scope "
             "the full-text search to a record `collectionId` guessed from "
@@ -529,6 +671,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/browse-unindexed-probate.json",
         "tool": "image_read",
+        "quotes": [
+            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
+        ],
         "reason": (
             "negative mention - 'the agent reads pages itself with "
             "image_transcribe - it must NOT call image_read (it has no such "
@@ -539,6 +684,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/image-group-listing.json",
         "tool": "image_read",
+        "quotes": [
+            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
+        ],
         "reason": (
             "negative mention - 'the agent reads pages itself with "
             "image_transcribe - it must NOT call image_read (it has no such "
@@ -549,6 +697,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/volume-selection-multi-candidate.json",
         "tool": "image_read",
+        "quotes": [
+            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
+        ],
         "reason": (
             "negative mention - 'the agent reads pages itself with "
             "image_transcribe - it must NOT call image_read (it has no such "
@@ -559,6 +710,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/volume-split-across-films.json",
         "tool": "image_read",
+        "quotes": [
+            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
+        ],
         "reason": (
             "negative mention - 'the agent reads pages itself with "
             "image_transcribe - it must NOT call image_read (it has no such "
@@ -569,6 +723,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/direct-browse-unindexed-probate.json",
         "tool": "image_read",
+        "quotes": [
+            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
+        ],
         "reason": (
             "negative mention - 'the agent reads pages itself with "
             "image_transcribe - it must NOT call image_read (it has no such "
@@ -578,6 +735,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/direct-happy-path-browse.json",
         "tool": "image_read",
+        "quotes": [
+            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
+        ],
         "reason": (
             "negative mention - 'the agent reads pages itself with "
             "image_transcribe - it must NOT call image_read (it has no such "
@@ -587,6 +747,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/volume-mixed-item-sections.json",
         "tool": "image_read",
+        "quotes": [
+            "Page reading is done by the agent itself with image_transcribe (never image_read, which it does not hold)",
+        ],
         "reason": (
             "negative mention, worded as a parenthetical rather than an "
             "imperative - 'Page reading is done by the agent itself with "
@@ -596,6 +759,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/rubric.md",
         "tool": "image_read",
+        "quotes": [
+            "The agent does not call `image_read` and does not hold it: `image_read` returns the page inline as base64 and a volume browse accumulates enough of it to overflow the transport and crash the run",
+        ],
         "reason": (
             "negative mention - 'The agent does not call `image_read` and "
             "does not hold it: `image_read` returns the page inline as "
@@ -606,6 +772,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-images/negative-indexed-search.json",
         "tool": "record_search",
+        "quotes": [
+            "A log entry from search-records itself (tool: record_search) is the CORRECT route working and is not a violation",
+        ],
         "reason": (
             "cross-owner: names search-records' tool as the correct "
             "alternative route - 'A log entry from search-records itself "
@@ -616,6 +785,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
         "tool": "place_search",
+        "quotes": [
+            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
+            "its tool calls legitimately appear in search-records' transcript",
+        ],
         "reason": (
             "cross-owner, live callee - 'search-external-sites RUNS FOR "
             "REAL here - it is not stubbed. It holds place_search and "
@@ -627,6 +800,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
         "tool": "external_links_search",
+        "quotes": [
+            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
+            "its tool calls legitimately appear in search-records' transcript",
+        ],
         "reason": (
             "cross-owner, live callee - 'search-external-sites RUNS FOR "
             "REAL here - it is not stubbed. It holds place_search and "
@@ -638,6 +815,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
         "tool": "place_search",
+        "quotes": [
+            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
+        ],
         "reason": (
             "negative mention - 'Do NOT penalize the skill for not calling "
             "place_search or collections_search - recordCountry 'Norway' is "
@@ -647,6 +827,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
         "tool": "collections_search",
+        "quotes": [
+            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
+        ],
         "reason": (
             "negative mention - 'Do NOT penalize the skill for not calling "
             "place_search or collections_search - recordCountry 'Norway' is "
@@ -656,6 +839,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "a validate_research_schema call is acceptable if made",
+        ],
         "reason": (
             "not-needed, and the ONLY search-records "
             "validate_research_schema line without the 'and expected' "
@@ -667,6 +853,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-records/pivot-to-fulltext-on-lowindex-probate.json",
         "tool": "fulltext_search",
+        "quotes": [
+            "search-records must NOT run or delegate the full-text search",
+            "Do NOT require `fulltext_search` in the tool calls",
+        ],
         "reason": (
             "negative mention - 'search-records must NOT run or delegate "
             "the full-text search ... Do NOT require `fulltext_search` in "
@@ -676,6 +866,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/search-records/search-continue-authorized-in-message.json",
         "tool": "extraction_append",
+        "quotes": [
+            "this harness's per-test tool allowlist does not extend ToolSearch/extraction_append to a sub-agent invoked this way -- a scoping artifact, not a production behavior",
+        ],
         "reason": (
             "descriptive harness artifact, named as such - 'this harness's "
             "per-test tool allowlist does not extend "
@@ -686,6 +879,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/add-occupation-fact-with-place.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
         "reason": (
             "not-needed, covering BOTH directions - 'Should NOT need a "
             "separate validate_research_schema call ... and the tool is not "
@@ -696,6 +893,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/correct-typo-death-date.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
         "reason": (
             "not-needed, covering BOTH directions - 'Should NOT need a "
             "separate validate_research_schema call ... and the tool is not "
@@ -706,6 +907,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/create-sibling-with-parentchild.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
         "reason": (
             "not-needed, covering BOTH directions - 'Should NOT need a "
             "separate validate_research_schema call ... and the tool is not "
@@ -716,6 +921,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/person-merge-stub-into-fs-person.json",
         "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
         "reason": (
             "not-needed, covering BOTH directions - 'Should NOT need a "
             "separate validate_research_schema call ... and the tool is not "
@@ -726,6 +935,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/create-sibling-with-parentchild.json",
         "tool": "materialize_facts",
+        "quotes": [
+            "materializing sourced facts onto a tree person is person-evidence's materialize_facts (record-extraction is assertion-only), not this ad-hoc tree-edit call",
+        ],
         "reason": (
             "cross-owner - 'materializing sourced facts onto a tree person "
             "is person-evidence's materialize_facts (record-extraction is "
@@ -735,6 +947,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/guardian-after-remarriage-step-hypothesis.json",
         "tool": "project_context",
+        "quotes": [
+            "if the run DOES attempt ANY tool - a writer, or a reader such as `project_context` probing for a project - and the call fails BECAUSE NO PROJECT EXISTS (`no_project`), that attempt is NOT a fault in itself",
+        ],
         "reason": (
             "not-needed: a stateless test where the tool is named only to "
             "exempt a failed probe - 'if the run DOES attempt ANY tool - a "
@@ -746,6 +961,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/rubric.md",
         "tool": "validate_research_schema",
+        "quotes": [
+            "`merge_tree_persons` validates before persisting, so a separate `validate_research_schema` call is neither required nor available to this skill (SKILL.md § Validation)",
+        ],
         "reason": (
             "not-needed, naming unavailability outright - "
             "'`merge_tree_persons` validates before persisting, so a "
@@ -756,6 +974,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "eval/tests/unit/tree-edit/rubric.md",
         "tool": "materialize_facts",
+        "quotes": [
+            "A fact, name, or relationship edge extracted from a source lands on a tree person as research proceeds (at identity-link time, normally via person-evidence's `materialize_facts`)",
+        ],
         "reason": (
             "cross-owner - 'A fact, name, or relationship edge extracted "
             "from a source lands on a tree person as research proceeds (at "
@@ -766,6 +987,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/gps-mentor.md",
         "tool": "record_search",
+        "quotes": [
+            "You do NOT have search tools (`record_search`, `fulltext_search`, `person_read`)",
+        ],
         "reason": (
             "negative mention, the canonical shape - 'You do NOT have "
             "search tools (`record_search`, `fulltext_search`, "
@@ -775,6 +999,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/gps-mentor.md",
         "tool": "fulltext_search",
+        "quotes": [
+            "You do NOT have search tools (`record_search`, `fulltext_search`, `person_read`)",
+        ],
         "reason": (
             "negative mention, the canonical shape - 'You do NOT have "
             "search tools (`record_search`, `fulltext_search`, "
@@ -784,6 +1011,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/gps-mentor.md",
         "tool": "person_read",
+        "quotes": [
+            "You do NOT have search tools (`record_search`, `fulltext_search`, `person_read`)",
+        ],
         "reason": (
             "negative mention, the canonical shape - 'You do NOT have "
             "search tools (`record_search`, `fulltext_search`, "
@@ -793,6 +1023,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/image-reader.md",
         "tool": "record_read",
+        "quotes": [
+            "The pivot recommendation: read the **indexed** record for this image",
+            "Do NOT use for indexed records (use record_read / record_search)",
+        ],
         "reason": (
             "cross-owner: named as the pivot the agent RECOMMENDS to its "
             "caller, never calls - 'The pivot recommendation: read the "
@@ -805,6 +1039,10 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/image-reader.md",
         "tool": "record_search",
+        "quotes": [
+            "The pivot recommendation: read the **indexed** record for this image",
+            "Do NOT use for indexed records (use record_read / record_search)",
+        ],
         "reason": (
             "cross-owner: named as the pivot the agent RECOMMENDS to its "
             "caller, never calls - 'The pivot recommendation: read the "
@@ -817,6 +1055,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/person-evidence.md",
         "tool": "validate_research_schema",
+        "quotes": [
+            "The persistence tools validate before writing, so no separate `validate_research_schema` pass is needed",
+        ],
         "reason": (
             "not-needed - 'The persistence tools validate before writing, "
             "so no separate `validate_research_schema` pass is needed'"
@@ -825,6 +1066,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/proof-conclusion.md",
         "tool": "collections_search",
+        "quotes": [
+            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
+        ],
         "reason": (
             "descriptive provenance of record data the agent READS, not "
             "calls - 'Only describe a source as having an \"accessible\" or "
@@ -837,6 +1081,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/proof-conclusion.md",
         "tool": "volume_search",
+        "quotes": [
+            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
+        ],
         "reason": (
             "descriptive provenance of record data the agent READS, not "
             "calls - 'Only describe a source as having an \"accessible\" or "
@@ -849,6 +1096,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/record-extractor.md",
         "tool": "tree_edit",
+        "quotes": [
+            "Never predict an id; never call `tree_edit` for the source; never write `research.json` or `tree.gedcomx.json` directly",
+        ],
         "reason": (
             "negative mention - 'Never predict an id; never call "
             "`tree_edit` for the source; never write `research.json` or "
@@ -858,6 +1108,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/record-extractor.md",
         "tool": "research_append",
+        "quotes": [
+            "Its `record_role` is the literal `\"absent\"`, which `research_append` enforces",
+        ],
         "reason": (
             "cross-owner: names the broad writer the agent is deliberately "
             "kept off (CLAUDE.md: what keeps record-extractor off the broad "
@@ -869,6 +1122,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/research-exhaustiveness.md",
         "tool": "record_search",
+        "quotes": [
+            "nil across `record_search` / `fulltext_search` / `image_search` / external sites after the bounded search-records attempts",
+        ],
         "reason": (
             "descriptive: names the searches OTHER skills already ran, as "
             "the evidence this agent weighs - 'nil across `record_search` / "
@@ -879,6 +1135,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/research-exhaustiveness.md",
         "tool": "fulltext_search",
+        "quotes": [
+            "nil across `record_search` / `fulltext_search` / `image_search` / external sites after the bounded search-records attempts",
+        ],
         "reason": (
             "descriptive: names the searches OTHER skills already ran, as "
             "the evidence this agent weighs - 'nil across `record_search` / "
@@ -889,6 +1148,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     {
         "file": "packages/engine/plugin/agents/research-exhaustiveness.md",
         "tool": "image_search",
+        "quotes": [
+            "nil across `record_search` / `fulltext_search` / `image_search` / external sites after the bounded search-records attempts",
+        ],
         "reason": (
             "descriptive: names the searches OTHER skills already ran, as "
             "the evidence this agent weighs - 'nil across `record_search` / "
