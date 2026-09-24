@@ -5,7 +5,7 @@ assigned, or author a new one from a FamilySearch person.
 
 | You want to… | Go to |
 |---|---|
-| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, PR. That loop is the same wherever the problem came from, and Step 7 below hands off to it. |
+| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, PR. That loop is the same wherever the problem came from, and Step 8 below hands off to it. |
 | Look up an exact field, contract, or enum | [`specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the authoritative format. This guide stays task-shaped and sends you there for reference detail. |
 
 ---
@@ -34,9 +34,9 @@ Which steps are yours depends on how you got here:
 | 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
 | 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
 | 5 Run | `make e2e-run TEST=<slug>` — one fixture, median 56 min / $7.47 (n=172/147, range 35–108 min / $0.06–$25) | ⌨️ Terminal |
-| 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
-| 7 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
-| 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
+| 6 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) — **grade blind, before reading the result** | 🤖 Claude Code |
+| 7 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
+| 8 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
 | 9 Land | commit fixture + run log + grade; open the PR | ⌨️ Terminal / GitHub |
 
 ## The three places you'll work
@@ -389,100 +389,11 @@ tool.** One fixture at a time:
 make e2e-run TEST=<slug>            # Windows: eval\RunE2E.bat
 ```
 
-## Step 6 — Read the result 🤖 Claude Code
+## Step 6 — Grade the run 🤖 Claude Code
 
-**The easy path — run the interpreter skill** on the run, in a Claude Code
-session in this checkout:
-
-```
-/interpret-e2e-result
-```
-
-It reads the run-log files and explains in plain language: which expected
-findings the tree actually contains and which it doesn't, what proof
-conclusion the agent wrote (described, not scored), any blocked tree-reads
-(did it try to shortcut?), any blocked context calls (a caller wrote a section
-it does not own, or reached a subagent-only tool), whether a finding came from a
-bundled PDF rather
-than live research, the stop reason translated into something actionable,
-any GPS guardrail skills the run bypassed, and — when findings are missing —
-the most likely cause.
-
-It deliberately does **not** report the judge's grade: not the verdict, not
-the `proof_quality` score, not the `outcome` gate. You grade the run blind
-right afterwards with `/grade-e2e-run`, and seeing the judge's labels first
-would corrupt the calibration number. For the same reason `make e2e-run`
-prints only the stop reason, the compliance result, and a
-`[blocked context call] N` count when that array is non-empty, when a run finishes.
-
-If you'd rather read the files yourself, each run writes three:
-
-| File | What's in it |
-|---|---|
-| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, `narration[]` (the agent's prose between tool calls), blocked tree-reads, and `blocked_context_calls[]` — calls the per-context policy refused, a union of two arms (spec §6.1.1, §6.1.2) that `blocked_by` cannot tell apart; only `tool` does. Sparse by construction: of 172 committed runs, 146 predate the field entirely, 26 are eligible, 5 carry any entry and there are 6 in total, all `research_append` (measured 2026-09-14). Any `SUBAGENT_ONLY_TOOLS` or `AGENT_WRITABLE_SECTIONS` change moves that. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
-| `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — what the judge graded |
-| `run-<ts>.final-research.json` | The agent's final `research.json` |
-
-To page through that final state visually instead of in JSON:
-
-```bash
-make e2e-view TEST=<slug>           # Windows: eval\ViewE2E.bat
-```
-
-It copies the newest run's final tree + `research.json` into `eval/e2e-view/`
-for the Research Viewer (`make electron`, Windows: `eval\Viewer.bat`).
-
-**Verdict:** `pass` (all required findings matched) / `partial` (some) / `fail`
-(none) / `ungraded` (the judge raised an exception — tree exists, can be
-re-graded) / `skipped` (the judge never ran).
-
-**Stop reason** — what each one means, as opposed to what triggers it
-(spec §6):
-
-| | |
-|---|---|
-| `completed` | Happy path — proof-conclusion fired and set the project completed |
-| `natural_end` | The agent thought it was done; GPS may or may not agree |
-| `inactivity` / `timeout` | It stalled — the last `narration` entry shows where |
-| `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
-| `cost_cap` | Hit the per-run cost limit |
-| `error` | SDK or harness exception; check `result.error` |
-| `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |
-
-Full field reference: spec §8.
-
-## Step 7 — When it fails ⌨️ / 🤖
-
-Read `narration[]` alongside `tool_calls[]` first — most failures are obvious
-from them. Each narration entry carries `tool_calls_before` — the number of
-tool calls that preceded it — so the two replay as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
-Viewer) and re-run, rather than guessing blind.
-
-**Rule out a tool failure before you blame the skill.** A search that returned
-little because it *failed* reads exactly like one the agent never pushed on,
-and "gave up early" is a common verdict. Scan `tool_calls[]` for failed,
-timed-out or empty searches covering ground the agent then treated as
-exhausted. (Live instance: `record_search` timeouts, #1316.)
-
-One trap worth naming: if the agent found the right answer but recorded it
-*only* in `research.json` and not in the tree, that is an **agent failure, not
-a judge miss** — landing the answer in the tree is a required GPS success
-criterion.
-
-**When it's a skill problem, capture it before you fix it.** In Claude Code:
-
-```
-/mine-unit-test --e2e-run eval/runlogs/e2e/<slug>
-```
-
-That turns the miss into a unit test and drops you into
-[`skill-lifecycle.md`](skill-lifecycle.md) at step 3 — that's where the rest of
-the fix-and-verify loop lives; this guide doesn't repeat it.
-
-When a fixture's behavior shifts meaningfully, add a dated line to its
-`README.md` saying what changed. Next person to run it reads that first.
-
-## Step 8 — Grade the run 🤖 Claude Code
+**Grade blind — before reading the result.** The order matters: if you read
+the judge's verdict first (Step 7), the human grade anchors on it and the
+calibration number becomes a rubber stamp. Grade first, then interpret.
 
 Every committed run gets graded in the same PR — **this one is CI-enforced.**
 The `check-e2e-fixtures` gate blocks any run log *added, or renamed into the
@@ -523,6 +434,97 @@ commit, or a directory that is not a repo) it refuses with an `::error::` rather
 than reporting zero added run logs. And it reds on an ungraded run until the annotation
 is *committed*, which is the gate working, not a regression.
 
+## Step 7 — Read the result 🤖 Claude Code
+
+**The easy path — run the interpreter skill** on the run, in a Claude Code
+session in this checkout:
+
+```
+/interpret-e2e-result
+```
+
+It reads the run-log files and explains in plain language: which expected
+findings the tree actually contains and which it doesn't, what proof
+conclusion the agent wrote (described, not scored), any blocked tree-reads
+(did it try to shortcut?), any blocked context calls (a caller wrote a section
+it does not own, or reached a subagent-only tool), whether a finding came from a
+bundled PDF rather
+than live research, the stop reason translated into something actionable,
+any GPS guardrail skills the run bypassed, and — when findings are missing —
+the most likely cause.
+
+It deliberately does **not** report the judge's grade: not the verdict, not
+the `proof_quality` score, not the `outcome` gate. For the same reason
+`make e2e-run` prints only the stop reason, the compliance result, and a
+`[blocked context call] N` count when that array is non-empty, when a run finishes.
+
+If you'd rather read the files yourself, each run writes three:
+
+| File | What's in it |
+|---|---|
+| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, `narration[]` (the agent's prose between tool calls), blocked tree-reads, and `blocked_context_calls[]` — calls the per-context policy refused, a union of two arms (spec §6.1.1, §6.1.2) that `blocked_by` cannot tell apart; only `tool` does. Sparse by construction: of 172 committed runs, 146 predate the field entirely, 26 are eligible, 5 carry any entry and there are 6 in total, all `research_append` (measured 2026-09-14). Any `SUBAGENT_ONLY_TOOLS` or `AGENT_WRITABLE_SECTIONS` change moves that. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
+| `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — what the judge graded |
+| `run-<ts>.final-research.json` | The agent's final `research.json` |
+
+To page through that final state visually instead of in JSON:
+
+```bash
+make e2e-view TEST=<slug>           # Windows: eval\ViewE2E.bat
+```
+
+It copies the newest run's final tree + `research.json` into `eval/e2e-view/`
+for the Research Viewer (`make electron`, Windows: `eval\Viewer.bat`).
+
+**Verdict:** `pass` (all required findings matched) / `partial` (some) / `fail`
+(none) / `ungraded` (the judge raised an exception — tree exists, can be
+re-graded) / `skipped` (the judge never ran).
+
+**Stop reason** — what each one means, as opposed to what triggers it
+(spec §6):
+
+| | |
+|---|---|
+| `completed` | Happy path — proof-conclusion fired and set the project completed |
+| `natural_end` | The agent thought it was done; GPS may or may not agree |
+| `inactivity` / `timeout` | It stalled — the last `narration` entry shows where |
+| `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
+| `cost_cap` | Hit the per-run cost limit |
+| `error` | SDK or harness exception; check `result.error` |
+| `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |
+
+Full field reference: spec §8.
+
+## Step 8 — When it fails ⌨️ / 🤖
+
+Read `narration[]` alongside `tool_calls[]` first — most failures are obvious
+from them. Each narration entry carries `tool_calls_before` — the number of
+tool calls that preceded it — so the two replay as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
+Viewer) and re-run, rather than guessing blind.
+
+**Rule out a tool failure before you blame the skill.** A search that returned
+little because it *failed* reads exactly like one the agent never pushed on,
+and "gave up early" is a common verdict. Scan `tool_calls[]` for failed,
+timed-out or empty searches covering ground the agent then treated as
+exhausted. (Live instance: `record_search` timeouts, #1316.)
+
+One trap worth naming: if the agent found the right answer but recorded it
+*only* in `research.json` and not in the tree, that is an **agent failure, not
+a judge miss** — landing the answer in the tree is a required GPS success
+criterion.
+
+**When it's a skill problem, capture it before you fix it.** In Claude Code:
+
+```
+/mine-unit-test --e2e-run eval/runlogs/e2e/<slug>
+```
+
+That turns the miss into a unit test and drops you into
+[`skill-lifecycle.md`](skill-lifecycle.md) at step 3 — that's where the rest of
+the fix-and-verify loop lives; this guide doesn't repeat it.
+
+When a fixture's behavior shifts meaningfully, add a dated line to its
+`README.md` saying what changed. Next person to run it reads that first.
+
 ## Step 9 — Land it ⌨️ Terminal / GitHub
 
 Commit the fixture directory, the run log, and its `.ann.json` together, push
@@ -544,7 +546,7 @@ Request** (it opens GitHub in your browser with the branch pre-filled).
 
 **Commit a passing run, from the branch you're landing.** Stripping proves the
 answer isn't *in* the starting tree; only a run proves it's *recoverable from
-live FS*. If you fixed something in Step 7 and re-ran, the earlier run log is
+live FS*. If you fixed something in Step 8 and re-ran, the earlier run log is
 stale — commit the new one. Landing a fixture without a passing run is a
 judgment call you should be able to defend in review.
 
