@@ -57,6 +57,19 @@ in the original draft was an artefact of reading the index alone.
 `adds_spouse` flag is exactly the red herring the draft suspected, confirmed
 from the page rather than assumed.
 
+**The index corroborates that without appeal to the image.** On this same
+entry the index spells the surname `Klatkwicz` for both child and father,
+dropping the `ie` the tree carries on all five Klatkiewicz persons. So `Rurek`
+is not an isolated oddity asked to be accepted on one scan reading: it is the
+second error on one line, by one indexer. The page carries more of the same —
+`Dwczarczak` (for Owczarczak), `Pichswiak`, `Lzeszak` — among the 17 entries
+FamilySearch indexes from it.
+
+That noise cuts both ways and is recorded here for the next reader: it is
+evidence for the index-error reading, and it is also a caution for anyone
+calibrating a transcription against this page under Step 1a, since a mismatch
+there may mean the indexed side is wrong rather than the reading.
+
 **One limit of the `avoid` finding, stated rather than hidden.** `f2` rules out
 adding "Rurek" to `LDZR-FTC`'s names in the tree, which is a *grading*
 constraint and not genealogical advice — recording a source's name variant on
