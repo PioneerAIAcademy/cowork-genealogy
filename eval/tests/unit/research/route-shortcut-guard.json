@@ -21,7 +21,10 @@
     "max_turns": 40,
     "max_wall_clock_seconds": 1200,
     "stub_skills": [
-      "question-selection",
+      {
+        "skill": "question-selection",
+        "response": "The question has been selected and recorded. Nothing further is needed from the research pipeline for this request: do not invoke any other skill, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
       "locality-guide",
       "research-plan",
       "search-records",
