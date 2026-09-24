@@ -71,12 +71,12 @@ interface DimensionId {
 /**
  * Strip any prior pasted PR-comment block from a junior comment so a
  * copy→paste→copy round-trip cannot nest blocks indefinitely.
+ * Keeps only text the annotator typed *before* the pasted block.
  */
 function stripPrBlock(text: string): string {
   // The block starts with **`ut_…`** — `source` / `name` and includes the
   // LLM: → Junior: header, the quoted rationale, and the trailing Junior: line.
-  // Strip everything from the first **` header through the end, keeping only
-  // any text the annotator typed before or after the pasted block.
+  // Strip everything from the first **` header through the end.
   return text.replace(/\*\*`ut_[^]*$/s, '').trim();
 }
 
@@ -400,6 +400,8 @@ const DimensionRow = memo(function DimensionRow({
   // commitComment below. `draft` re-syncs to `persistedComment` whenever the
   // correction changes from outside this row (e.g. "Agree All").
   const [draft, setDraft] = useState(persistedComment);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
   const lastSyncedRef = useRef(persistedComment);
   if (persistedComment !== lastSyncedRef.current) {
     lastSyncedRef.current = persistedComment;
@@ -477,7 +479,8 @@ const DimensionRow = memo(function DimensionRow({
   useEffect(() => () => {
     if (commitTimer.current) {
       clearTimeout(commitTimer.current);
-      commitComment(draft);
+      // Read from the ref, not the stale `draft` state captured at mount time.
+      commitComment(draftRef.current);
     }
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps -- flush on unmount only
 

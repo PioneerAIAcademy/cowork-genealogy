@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { newAnnotation, readAnnotation, upsertCorrection, writeAnnotation } from '@/lib/fs/annotations';
+import { correctionSchema, newAnnotation, readAnnotation, upsertCorrection, writeAnnotation } from '@/lib/fs/annotations';
 import { getIdentity } from '@/lib/identity';
 import path from 'node:path';
 import type { AnnotationCorrection, AnnotationFile } from '@/lib/types';
@@ -48,7 +48,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   // Preserve the existing annotator; stamp identity only on file creation
   // (issue #2487 — re-stamping on every save destroys attribution).
-  const existing = await readAnnotation(runLogId);
+  let existing: Awaited<ReturnType<typeof readAnnotation>>;
+  try {
+    existing = await readAnnotation(runLogId);
+  } catch {
+    // Corrupt existing file — let the PUT overwrite it (the recovery path).
+    existing = null;
+  }
   const annotation: AnnotationFile = {
     run_log: filename,
     annotator: existing?.annotator || identity,
@@ -69,7 +75,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
   const runLogId = id.join('/');
-  const body = (await req.json()) as AnnotationCorrection;
+  const raw = await req.json();
+  const parsed = correctionSchema.safeParse(raw);
+  if (!parsed.success) {
+    const issues = parsed.error.issues
+      .slice(0, 5)
+      .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+      .join('; ');
+    return NextResponse.json(
+      { error: 'invalid_correction', message: `Bad correction: ${issues}` },
+      { status: 400 },
+    );
+  }
+  const body = parsed.data as AnnotationCorrection;
 
   const identity = await getIdentity();
   if (!identity) {
@@ -77,7 +95,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const filename = path.basename(runLogId) + '.json';
-  const existing = await readAnnotation(runLogId);
+  let existing: Awaited<ReturnType<typeof readAnnotation>>;
+  try {
+    existing = await readAnnotation(runLogId);
+  } catch {
+    // Corrupt existing file — treat as absent so the PATCH creates a fresh one
+    // (finding 7: a corrupt annotation should not block a save).
+    existing = null;
+  }
   const base = existing ?? newAnnotation(filename, identity);
   const updated = upsertCorrection(base, body);
 
