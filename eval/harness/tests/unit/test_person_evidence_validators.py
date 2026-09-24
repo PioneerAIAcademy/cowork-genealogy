@@ -161,6 +161,36 @@ def test_scored_credits_the_second_party_named_by_role():
     assert ("F1", "I1") not in _same_person_pairs([unheld], assertions)
 
 
+def test_scored_credits_the_assertions_own_persona_on_a_role_form_call():
+    """A role-form call attests BOTH personas, and which one the consumer asks
+    about depends on the pe_ entry, not on the call.
+
+    Measured live in `v1_2026-09-24_06-11-11`: `ut_person_evidence_013` called
+    `{assertionId: a_003, treePersonId: I2, recordRole: head_of_household}` and
+    linked a_003 (persona VP1) to I2, so the consumer wanted `(VP1, I2)` -- the
+    assertion's OWN persona. Resolving only the role's persona, which is what
+    the n7v fix shipped, produced `(head_of_household, I2)` and failed a correct
+    call. n7v wants the opposite resolution, so both are indexed.
+    """
+    from validators.test_person_evidence import _same_person_pairs
+
+    assertions = {
+        "a_003": {"id": "a_003", "record_id": "r1", "record_role": "visiting_person",
+                  "record_persona_id": "VP1"},
+        "a_009": {"id": "a_009", "record_id": "r1", "record_role": "head_of_household",
+                  "record_persona_id": "HH1"},
+    }
+    call = {"tool": "mcp__genealogy__same_person",
+            "args": {"projectPath": "/p", "assertionId": "a_003",
+                     "treePersonId": "I2", "recordRole": "head_of_household"}}
+    pairs = _same_person_pairs([call], assertions)
+    assert ("VP1", "I2") in pairs, "the assertion's own persona must be credited"
+    assert ("HH1", "I2") in pairs, "the named second party must be credited too"
+    # Neither of them against a tree person the call never named.
+    assert ("VP1", "I9") not in pairs
+    assert ("HH1", "I9") not in pairs
+
+
 def test_fts_accepts_a_score_backed_by_a_project_relative_call():
     """The live false-positive this replaced.
 

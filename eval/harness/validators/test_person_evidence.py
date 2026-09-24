@@ -688,8 +688,26 @@ def _same_person_pairs(tool_calls: list[dict], assertions: dict | None = None) -
                 # Fixed after it was measured missing on
                 # `ut_person_evidence_n7v`; the earlier fallback to the literal
                 # role string missed it for a different reason.
+                # A call names `assertionId` + `treePersonId`, and the tool
+                # scores that assertion's record side against that tree person.
+                # The consumer tests `(assertion.record_persona_id, person_id)`,
+                # so the assertion's OWN persona is always attested by the call.
+                #
+                # `recordRole` additionally names the other party of a
+                # relationship or marriage assertion, and the consumer may ask
+                # about THAT persona instead -- which of the two it wants
+                # depends on which assertion the pe_ entry happened to cite.
+                # Both were measured live and they disagree:
+                #   n7v : pe linked a_006 (F1), call named a_004 + father_of_groom
+                #         -> consumer wants (F1, I1), the ROLE's persona
+                #   _013: pe linked a_003 (VP1), call named a_003 + head_of_household
+                #         -> consumer wants (VP1, I2), the ASSERTION's own
+                # So a role-form call attests both, and indexing only one of
+                # them fails a correct call. Resolving only the role's persona
+                # is what shipped first and failed _013.
                 a = (assertions or {}).get(args.get("assertionId")) or {}
                 role = args.get("recordRole")
+                candidates = [a.get("record_persona_id")]
                 if role:
                     record_id = a.get("record_id") or a.get("source_id")
                     sibling = next(
@@ -702,9 +720,12 @@ def _same_person_pairs(tool_calls: list[dict], assertions: dict | None = None) -
                         ),
                         None,
                     )
-                    p1 = (sibling or {}).get("record_persona_id") or role
-                else:
-                    p1 = a.get("record_persona_id")
+                    candidates.append((sibling or {}).get("record_persona_id") or role)
+                for cand in candidates:
+                    if cand and p2:
+                        pairs.add((cand, p2))
+                        pairs.add((p2, cand))
+                p1 = None
         if p1 and p2:
             pairs.add((p1, p2))
             pairs.add((p2, p1))
