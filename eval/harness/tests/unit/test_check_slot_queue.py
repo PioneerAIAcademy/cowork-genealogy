@@ -122,15 +122,15 @@ def test_a_converted_skills_paths_reach_its_own_suite(repo_root):
     """Skill directory gone, agent and suite kept: slot_of names every path
     `agent:<x>`, and the suite of the same name embeds the agent body."""
     root_agents = repo_root / "packages" / "engine" / "plugin" / "agents"
-    (root_agents / "convert-dates.md").write_text("# convert-dates\n", encoding="utf-8")
-    (repo_root / "eval" / "tests" / "unit" / "convert-dates").mkdir(parents=True)
+    (root_agents / "zz-converted.md").write_text("# zz-converted\n", encoding="utf-8")
+    (repo_root / "eval" / "tests" / "unit" / "zz-converted").mkdir(parents=True)
 
-    for path in ("packages/engine/plugin/skills/convert-dates/SKILL.md",
-                 "eval/tests/unit/convert-dates/ut_cd_001.json",
-                 "packages/engine/plugin/agents/convert-dates.md"):
+    for path in ("packages/engine/plugin/skills/zz-converted/SKILL.md",
+                 "eval/tests/unit/zz-converted/ut_zz_001.json",
+                 "packages/engine/plugin/agents/zz-converted.md"):
         assert check_slot_queue.path_to_skills(
-            path, {"convert-dates": {"research"}}
-        ) == {"convert-dates", "research"}, path
+            path, {"zz-converted": {"zz-embedder"}}
+        ) == {"zz-converted", "zz-embedder"}, path
 
 
 def test_affected_skills_unions_over_paths():

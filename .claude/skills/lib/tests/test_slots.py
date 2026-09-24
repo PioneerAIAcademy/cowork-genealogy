@@ -296,9 +296,10 @@ def test_an_unqueued_unheld_slot_renders_in_no_section(tmp_path):
 
 # --- issue #2823's three miscounts ------------------------------------------------
 #
-# `repo_root` pins touches.REPO_ROOT to a tmp tree; these tests add to it.
+# `repo_root` pins touches.REPO_ROOT to a tmp tree; these tests add to it. The zz-*
+# names exist in no live checkout, so a test passes only if the code read the pin.
 
-GPS = "packages/engine/plugin/agents/gps-mentor.md"
+AGENT = "packages/engine/plugin/agents/zz-agent.md"
 
 
 def _assigned(number, **kw):
@@ -308,13 +309,13 @@ def _assigned(number, **kw):
 def test_a_deleted_skills_cards_queue_on_its_agent(repo_root):
     """Once skills/<x>/ is gone and agents/<x>.md exists, a card still naming the old
     skill path queues on agent:<x>, beside a card naming the suite that stayed."""
-    make_tree(repo_root, agents=["convert-dates"])
-    out = run([issue(11, touches="packages/engine/plugin/skills/convert-dates/SKILL.md"),
-               issue(12, touches="eval/tests/unit/convert-dates/ut_cd_001.json")],
+    make_tree(repo_root, agents=["zz-converted"])
+    out = run([issue(11, touches="packages/engine/plugin/skills/zz-converted/SKILL.md"),
+               issue(12, touches="eval/tests/unit/zz-converted/ut_zz_001.json")],
               tmp_path=repo_root)
 
-    assert depth(out, "agent:convert-dates") == 2
-    assert depth(out, "skill:convert-dates") is None
+    assert depth(out, "agent:zz-converted") == 2
+    assert depth(out, "skill:zz-converted") is None
 
 
 def test_an_assigned_backlog_card_is_in_no_queue(repo_root):
@@ -342,36 +343,37 @@ def test_an_unassigned_backlog_card_is_still_queued(repo_root):
 
 
 def test_an_agent_card_also_queues_on_every_skill_that_embeds_it(repo_root):
-    """research/SKILL.md names @plugin:gps-mentor, so build_snapshot embeds the agent
-    in research's run log. Derived from the scan, not a list: bystander names no agent."""
-    make_tree(repo_root, skills=["research", "bystander"], agents=["gps-mentor"],
-              plugin_refs={"research": ["gps-mentor"]})
-    out = run([issue(11, touches=GPS), issue(12, touches=GPS)], tmp_path=repo_root)
+    """The shape of research naming @plugin:gps-mentor: build_snapshot embeds the agent
+    in the embedder's run log. Derived from the scan, not a list: zz-bystander names
+    no agent."""
+    make_tree(repo_root, skills=["zz-embedder", "zz-bystander"], agents=["zz-agent"],
+              plugin_refs={"zz-embedder": ["zz-agent"]})
+    out = run([issue(11, touches=AGENT), issue(12, touches=AGENT)], tmp_path=repo_root)
 
-    assert depth(out, "agent:gps-mentor") == 2
-    assert depth(out, "skill:research") == 2
-    assert depth(out, "skill:bystander") is None
+    assert depth(out, "agent:zz-agent") == 2
+    assert depth(out, "skill:zz-embedder") == 2
+    assert depth(out, "skill:zz-bystander") is None
 
 
 def test_a_pair_agent_queues_on_its_skill_not_twice(repo_root):
-    """person-evidence names its own agent: the skill slot and the agent are one paid
-    run, so the card queues once there, not also under agent:person-evidence."""
-    make_tree(repo_root, skills=["person-evidence", "research"],
-              agents=["person-evidence"],
-              plugin_refs={"person-evidence": ["person-evidence"],
-                           "research": ["person-evidence"]})
-    pe = "packages/engine/plugin/agents/person-evidence.md"
-    out = run([issue(11, touches=pe), issue(12, touches=pe)], tmp_path=repo_root)
+    """The person-evidence shape: a skill naming its own agent is one paid run, so the
+    card queues once under skill:zz-pair, not also under agent:zz-pair."""
+    make_tree(repo_root, skills=["zz-pair", "zz-embedder"],
+              agents=["zz-pair"],
+              plugin_refs={"zz-pair": ["zz-pair"],
+                           "zz-embedder": ["zz-pair"]})
+    pair = "packages/engine/plugin/agents/zz-pair.md"
+    out = run([issue(11, touches=pair), issue(12, touches=pair)], tmp_path=repo_root)
 
-    assert depth(out, "skill:person-evidence") == 2
-    assert depth(out, "skill:research") == 2
-    assert depth(out, "agent:person-evidence") is None
+    assert depth(out, "skill:zz-pair") == 2
+    assert depth(out, "skill:zz-embedder") == 2
+    assert depth(out, "agent:zz-pair") is None
 
 
 def test_a_pr_on_an_agent_holds_every_embedding_skill(repo_root):
-    make_tree(repo_root, skills=["research"], agents=["gps-mentor"],
-              plugin_refs={"research": ["gps-mentor"]})
-    out = run([], tmp_path=repo_root, prs=[{"number": 900, "files": [{"path": GPS}]}])
+    make_tree(repo_root, skills=["zz-embedder"], agents=["zz-agent"],
+              plugin_refs={"zz-embedder": ["zz-agent"]})
+    out = run([], tmp_path=repo_root, prs=[{"number": 900, "files": [{"path": AGENT}]}])
 
-    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "skill:research")
-    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "agent:gps-mentor")
+    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "skill:zz-embedder")
+    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "agent:zz-agent")

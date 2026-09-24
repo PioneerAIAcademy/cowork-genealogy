@@ -4,8 +4,10 @@
 `agents/<x>.md` exists, and slots.py scans the live skills for `@plugin:`. Against the
 real checkout, every fixture naming `timeline` or `citation` would flip the day that
 skill is converted to an agent, reddening a PR that never touched these tests. So
-each test module here pins `touches.REPO_ROOT` to a tmp tree holding the skills its
-fixtures name, with no agents, via `pin_repo_root`.
+each test module here pins `touches.REPO_ROOT` to a tmp tree via `pin_repo_root`. It
+holds no agents, which is what keeps every skill path on `skill:<x>`; tests that need
+an agent or a `@plugin:` reference add it with `make_tree`, under zz-* names no live
+checkout has.
 
 Not a conftest.py: eval/harness's pytest run collects this directory beside its own
 suites, and an autouse fixture registered from here reached those too.
