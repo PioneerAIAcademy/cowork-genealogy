@@ -12,9 +12,9 @@ argues about *what to move, in what order*.
 **Three skills are exempt from the lead's 2026-09-22 ruling that every skill
 becomes an agent and the skill is deleted:** `research` (the orchestrator),
 `record-extraction` (ruled 2026-09-21), and `forget-and-rederive` (ruled
-2026-09-25, issue #2791), whose confirmation step and its rule never to read the
-FamilySearch tree for the rest of the project must bind the main thread after setup,
-which an agent's single return cannot do.
+2026-09-25, issue #2791), whose confirmation step and its rule never to read
+the FamilySearch tree for the rest of the project must bind the main thread
+after setup, which an agent's single return cannot do.
 
 **Two rationales reach a pair, and they buy different work.** This document was
 written for the first:
