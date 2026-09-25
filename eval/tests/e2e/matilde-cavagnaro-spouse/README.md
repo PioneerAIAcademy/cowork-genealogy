@@ -110,8 +110,8 @@ bride's persona, which is why it is the one cited above.)
 Vaglio parents on the live tree; that is deliberately **not** done here, because
 issue #2314 forbids editing live FamilySearch during adjudication so
 `starting-tree.gedcomx.json` and `unstripped-tree.gedcomx.json` stay
-byte-identical and `snapshot --check` can still audit drift. Worth filing
-separately.
+byte-identical and `snapshot --check` can still audit drift. Tracked in issue
+#2908.
 
 **A birthplace conflict, documented not resolved.** Her birth record
 (`ark:/61903/1:1:QVR6-Q9DC`) gives **20 May 1866 at Genova**. The marriage record
