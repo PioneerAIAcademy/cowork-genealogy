@@ -6,6 +6,10 @@ two conversions (`proof-conclusion`, 2026-08-19/20; `research-exhaustiveness`,
 runs; most of that was avoidable, and this document exists so the next one does
 not repeat it.
 
+The pair framing that follows predates the lead's 2026-09-22 ruling (recorded
+in `docs/specs/unit-test-spec.md`) and is kept for its measured record, not as
+current instruction.
+
 Pairs are still the right instrument. Nothing below argues against pairing — it
 argues about *what to move, in what order*.
 
