@@ -29,12 +29,16 @@ match strength.
 ## Notes for reviewers
 
 **Adjudicated: the hint is a false match** — spec §3.6 outcome (c), no findable
-substitute. Researched on familysearch.org by hand; retrieval was not
-tool-assisted. Second opinion given by **Ikennaya Mbadiwe**, as issue #2314
-requires for this fixture; the identification of the subject's own marriage is
-his finding. The marriage record was afterwards re-read with `record_read`
-against live FamilySearch to confirm its contents (spec §3.6 permits
-tool-assisted *retrieval*; the identity judgement remained the genealogist's).
+substitute. Second opinion given by **Ikennaya Mbadiwe**, as issue #2314 requires
+for this fixture; the identification of the subject's own marriage is his
+finding.
+
+**Retrieval was partly tool-assisted** (§3.6 asks that this be recorded). The
+research was done by hand on familysearch.org; afterwards the marriage record
+`ark:/61903/1:1:X3L8-MFLR` was re-read with the `record_read` MCP tool against
+live FamilySearch to confirm its contents, and `image_read` / `image_transcribe`
+were attempted on the register scan and failed (see below). No other record here
+was tool-retrieved, and the identity judgement was the genealogist's throughout.
 
 The hint record is `ark:/61903/1:1:6BHW-1HG3` — "Italia, Genova, Genova, Stato
 Civile (Tribunale), 1866-1929", a birth entry of 30 August 1883 at Genova for
@@ -49,6 +53,11 @@ directly, the record names the bride **Matilde Carmela Emanuela Cavagnaro**,
 born **1866 at Lima**, *Maestra Elementare*, daughter of **Giuseppe** and
 **Maddalena Bitano** — parents, birth year and birthplace all matching
 `G4Z4-RJ1`. That is a firm identification of the tree person, not a namesake.
+(On birthplace, note what the agreement is worth: the record's *Lima* agrees
+with the **tree's own claim**, which is itself unsourced, not with independent
+record evidence — her birth entry says Genova. The identification rests on the
+parents and the birth year; Lima is corroboration of the tree, not of the
+record. See the birthplace conflict below.)
 The groom is Paolo Andrea Vaglio, b. 1867 Bogliasco, *Segretario Comunale*, son
 of **Angelo** and **Maria Fereccio**.
 
@@ -127,6 +136,30 @@ widen what the benchmark scores beyond the question asked.
 she was 17 years 3 months. That was legal and unremarkable in 1880s Liguria, so
 age never could have disproved the hint on its own — and in the event the call
 turned on her marriage, not her age.
+
+**On the avoid guard and the two WARNs.** `f1` carries `polarity: "avoid"`, which
+is what switches `apply_avoid_guard` on for this fixture — before adjudication it
+had no polarity and the guard returned early, so the exposure below **arrives
+with this fixture's resolution**, it is not pre-existing.
+
+`make e2e-validate` emits a name-overlap WARN on `f2` against `G4Z4-RJ1`. It is
+harmless: the guard exempts `subject_person_ids`, which is `["G4Z4-RJ1"]` in
+`starting-research.json`, and nothing was stripped in this genre so the subject
+legitimately stays in the tree. **That exemption is keyed on PID and spares her
+alone.**
+
+`f1`'s `wrong_candidate.name` is deliberately the bare string `"Pietro Dondero"`.
+`finding_name_tokens` harvests *every* word of a `name` leaf, so a descriptive
+value such as "Pietro Dondero, husband of a Carmela Cavagnaro at Genova" would
+put `carmela` and `cavagnaro` into the avoid bag — and since the exemption
+covers only `G4Z4-RJ1`, a good run that stubs the *other* Carmela Cavagnaro as a
+distinct woman (a reasonable thing to do when the question is whether the two are
+the same, and the agent never sees this file) would be force-failed for it.
+Measured against the shipped guard: with the bare name, a tree stubbing the other
+Carmela returns `f1=true`, a tree over-claiming Dondero onto the subject still
+returns `f1=false`, and a clean tree returns `f1=true`. **Do not re-expand that
+leaf into a description.** Put descriptive text in the sibling `note`, which the
+matcher does not collect.
 
 Note for the corpus: the batch CSV labels this row Peru because she was born in
 Lima; every record involved is Genovese.
