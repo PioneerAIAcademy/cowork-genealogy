@@ -469,6 +469,9 @@
         "person_id": { "type": "string" },
         "confidence": { "$ref": "enums.schema.json#/$defs/person_evidence_confidence" },
         "rationale": { "type": "string" },
+        "core_identifier_conflict": {
+          "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
         "match_score": {
           "anyOf": [
             { "type": "number", "minimum": 0, "maximum": 1 },

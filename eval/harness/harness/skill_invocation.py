@@ -578,8 +578,12 @@ def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
 
 
 def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
-    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far
-    (its `primaryId1`/`primaryId2` args). When one side of a call is the tree,
+    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far.
+
+    Two call shapes, both credited: the explicit form's `primaryId1`/
+    `primaryId2`, and the project-relative form's `treePersonId` (plus whichever
+    of `recordPersonaId`/`recordRole` named the record party). When one side of a
+    call is the tree,
     that side's `primaryId` equals the tree `person_id` (see
     `find_person_evidence_missing_same_person` for the confirmed-live basis of
     that equality), so this doubles as "which tree persons have been scored."
@@ -602,7 +606,18 @@ def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
         if bare_tool_name(entry.get("tool", "")) != "same_person":
             continue
         args = entry.get("args") or {}
+        # The explicit two-document form.
         for key in ("primaryId1", "primaryId2"):
+            v = args.get(key)
+            if isinstance(v, str):
+                scored.add(v)
+        # The project-relative form (issue #1731). It names the two sides by
+        # REFERENCE — the tool assembles both documents itself — so a call in
+        # this shape carries no `primaryId1`/`primaryId2` at all. Without this
+        # arm every such call is invisible here and the detector flags 100% of
+        # newly linked persons the moment the agent adopts the cheap call, which
+        # would also invalidate the corpus re-measurement PR B is gated on.
+        for key in ("treePersonId", "recordPersonaId", "recordRole"):
             v = args.get(key)
             if isinstance(v, str):
                 scored.add(v)
@@ -1038,6 +1053,14 @@ DEDICATED_AGENT_NAMES = frozenset(
         # unnamed-delegate bypass. Do not read its presence here as evidence that
         # a hook route exists.
         "search-images",
+        # Same shape as search-images, and for the same reason (issue #2799):
+        # `citation` is a converted skill, not a hook-routed pair. No hook
+        # routes anything to it. It is listed because the set is asserted equal
+        # to the shipped agent files, and because a `sources` refinement
+        # arriving from it is legitimate -- `ownership.json` names
+        # `agent:citation` on that row -- rather than an unnamed-delegate
+        # bypass. Do not read its presence here as evidence of a hook route.
+        "citation",
     }
 )
 
@@ -1227,7 +1250,12 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
             # ALSO touch an owning_skills section, still checked below. One violation
             # per offending CALL (not per op), matching the sibling arms' granularity
             # so a batch does not inflate the shadow signal.
-            if agent_id is not None and bare_agent_type != "record-extractor":
+            # `citation` joins the exemption because it became an agent and is a
+            # declared caller of `sources` in ownership.json. This branch runs
+            # BEFORE the DEDICATED_AGENT_NAMES check below, so membership there
+            # does not reach it -- every legitimate citation refinement would
+            # otherwise be shadow-reported as an unnamed-delegate bypass.
+            if agent_id is not None and bare_agent_type not in ("record-extractor", "citation"):
                 sections = sorted(
                     {
                         op.get("section")
@@ -1240,7 +1268,8 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
                         f"tool_calls[{i}] research_append to {'/'.join(sections)} was "
                         f"made by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
                         "this is record-extraction/citation's protected write, made "
-                        "by neither the main thread nor the record-extractor agent"
+                        "by neither the main thread nor the record-extractor or "
+                        "citation agent"
                     )
 
         owners = owning_skills(tool, args)

@@ -6,8 +6,19 @@ two conversions (`proof-conclusion`, 2026-08-19/20; `research-exhaustiveness`,
 runs; most of that was avoidable, and this document exists so the next one does
 not repeat it.
 
+The pair framing that follows predates the lead's 2026-09-22 ruling (recorded
+in `docs/specs/unit-test-spec.md`) and is kept for its measured record, not as
+current instruction.
+
 Pairs are still the right instrument. Nothing below argues against pairing — it
 argues about *what to move, in what order*.
+
+**Three skills are exempt from the lead's 2026-09-22 ruling that every skill
+becomes an agent and the skill is deleted:** `research` (the orchestrator),
+`record-extraction` (ruled 2026-09-21), and `forget-and-rederive` (ruled
+2026-09-25, issue #2791), whose confirmation step and its rule never to read
+the FamilySearch tree for the rest of the project must bind the main thread
+after setup, which an agent's single return cannot do.
 
 **Two rationales reach a pair, and they buy different work.** This document was
 written for the first:
@@ -374,6 +385,11 @@ Two things this does NOT close:
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
    pending list.
+   **A request that belongs to another agent is handed back, never spawned**
+   (lead ruling 2026-09-23): the agent does none of that work, names the
+   owning agent in its caller-facing lines, and the main thread spawns it. The
+   `next_step` sentence still names nothing. Do not grant the agent `Task` or
+   `Agent`; `agent-tool-names.test.ts` fails the grant.
 8. Apply the delete-the-skill acceptance check — now mechanically. **Author a
    direct twin**: copy the gate-bearing positive test byte for byte, give it a
    new `test.id` and name, replace `input.user_message` with an

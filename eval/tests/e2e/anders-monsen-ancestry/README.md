@@ -194,3 +194,43 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   cannot perform — is now an open question for whoever next reviews this
   fixture's continued inclusion in the panel, not something a future run
   should be expected to solve with a cleverer FamilySearch query.
+- **Lead ruling (2026-09-22, issue #2709)** — that open question is answered:
+  **run it as filed; the fixture stays in the panel with both findings
+  required.** `f1` still discriminates between runs — run 8 reached 25 Jun 1786
+  from a 1963 family-group-sheet image, run 9 persisted no tree fact at all — so
+  a `partial` or `fail` here is data, not waste. Marking `f2` non-required was
+  considered and rejected: it would error the two stamped annotations at
+  `calibrate_judge` rung 7 and change what the month-over-month number
+  measures. Replacing the fixture was considered and rejected: the panel is
+  fixed by design. Grade `f2: false` as index drift and land the run.
+- **Run 10 (2026-09-24 07:23, post-ruling)** — recovered neither finding;
+  graded `f1: false`, `f2: false`, proof quality 2. `stop_reason: completed`,
+  and it finished well inside every cap: 43.4 min against a 120-minute wall,
+  $7.86 against a $15 ceiling, and **137 MCP calls against the 300-call cap**
+  (210 tool calls in all — the cap counts `mcp__*` only, as run 9's entry
+  notes). That is roughly half the wall-clock of runs 8 and 9, and 55-68% of
+  their cost ($11.58 and $14.26). The `Couple` relationship is unchanged from
+  the starting tree, and the only source added all run is the 1801 census
+  household of Nils Andersen (`1:2:4H6K-B56Z`), which documents no marriage.
+  **The drift is confirmed a third time, against a wider query set than either
+  earlier probe.** Counted by stated criteria over the run's 25 `record_search`
+  calls, so the next reader can re-derive rather than re-guess: **13** carried
+  `recordType: "marriage"`; **14** named the bride in any field (`Unna` or
+  `Halstein*`); **3** were scoped to `collectionId: 1468080`; **3** carried a
+  `marriage*` year or place parameter. Twenty distinct calls matched at least
+  one of those. Between them they covered the bride's exact indexed surname
+  alone, both spouse cross-references, the marriage collection directly, and a
+  1775-1800 window scoped to Hordaland. None returned the record. The agent
+  graded itself `not_proved` with `shortfall: gap` and named the two
+  repositories it did not reach — Digitalarkivet's browse-only pre-1797 Hamre
+  books and Ancestry's "Norway, Select Marriages" — as "the most likely
+  repositories for a direct marriage record", which is the same conclusion this
+  section reached.
+  `compliance: fail` on the single known bypass (a `proof_summaries` entry
+  written without `proof-conclusion` being invoked — issue #1851), as in both
+  2026-09 runs.
+  **One claim in that run's proof summary should not be carried forward:** it
+  states collection 1468080 was "confirmed **not to index** Hamre/Hammer
+  parish." That is a coverage claim inferred from a retrieval failure. The
+  record is in that collection and `record_read ark:/61903/1:1:NW44-PM2`
+  still returns it in full; what fails is `record_search`, not the indexing.

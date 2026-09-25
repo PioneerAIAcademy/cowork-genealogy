@@ -395,7 +395,7 @@ Per-project context about the researcher lives in a `researcher_profile`
 section of `research.json`. `init-project` writes a fixed profile at
 project start (`experience_level: "novice"` and one house-style
 `narration_guidance` string) and asks nothing about the researcher; the
-only opening-turn question is the research objective, non-blocking. 27 of the 28 skills
+only opening-turn question is the research objective, non-blocking. 26 of the 27 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
@@ -673,6 +673,16 @@ check is its own ground truth — `eval/harness/e2e/guardrail_shadow_report.py`.
 When the bug is the **second** instance of a class already fixed, write one
 shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
 per-line greps for exactly this reason.
+
+### A ruling binds only while its premises hold
+
+A ruling (a `**Ruling:**` comment, a `Decided (lead, …)` line, "lead ruling <date>"
+in a doc) is a call made on the facts shown at the time, often answered in one line.
+It is not a rule. When a fact it rested on turns out wrong, or new information bears on
+it, it stops binding: say what changed, and then either decide on the current facts
+(if the call is yours) or put it back to whoever ruled. Never enforce a ruling against
+the evidence, and never cite one as the reason something cannot change. Credit a ruling
+to the person who actually answered; `(lead, …)` means Dallan answered it himself.
 
 ### A measurement that disagrees with belief is re-measured, not reworded
 
