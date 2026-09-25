@@ -2,8 +2,8 @@
   "tool": "same_person",
   "description": "same_person — a strong, unambiguous match: the 1850-census Patrick Flynn persona scored against the tree's Patrick Flynn. High score, no qualitative conflict (case 10).",
   "args": {
-    "primaryId1": "P1",
-    "primaryId2": "I1"
+    "assertionId": "~",
+    "treePersonId": "I1"
   },
   "response": {
     "matched": true,

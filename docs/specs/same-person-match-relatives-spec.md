@@ -1,8 +1,7 @@
 # `same_person` — match-relatives mode — Spec
 
-> **Status:** Draft for implementation (junior dev). Tracks issue
-> [#263](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/263)
-> ("Add match-relatives mode to `same_person`").
+> **Status:** Draft for implementation (junior dev). Adds match-relatives mode
+> to `same_person`.
 >
 > **Read with:** `docs/specs/same-person-tool-spec.md` (the existing single-pair
 > contract this extends) and `docs/specs/match-merge-workflow-spec.md` §9
@@ -83,9 +82,20 @@ Add one optional field to `SamePersonInput`
 | `gedcomx2`, `primaryId2` | as today | yes | The focus person on side 2. |
 | `matchRelatives` | `boolean` | no (default `false`) | When `false`: today's single-pair behavior, unchanged. When `true`: match the focus persons' relatives (§4) instead of the focus persons themselves. |
 
-`primaryId1` / `primaryId2` are **still required** in relatives mode — they
-identify whose relatives to gather on each side. Validation (`validateInput`)
-is unchanged.
+`primaryId1` / `primaryId2` are **still required** in relatives mode *on the
+explicit arm* — they identify whose relatives to gather on each side.
+Validation (`validateInput`) is unchanged for that arm.
+
+On the **project-relative arm** they are absent by construction: the tool
+assembles both documents, so `assertionId` and `treePersonId` identify the two
+focus persons instead, and relatives are gathered around them exactly as below.
+One case has no counterpart on that arm — when the record side had to be
+**projected** from the record's own assertions it carries no `relationships[]`,
+because `record_role` is an open enum and inferring edges from role names is
+guesswork. Relatives mode then returns an explicit `note` and an empty
+`matches`, rather than the silently empty `matches` the gathering code would
+otherwise produce; the two are different answers and the caller must be able to
+tell them apart. See `same-person-tool-spec.md`, "The record side".
 
 ---
 
@@ -105,7 +115,7 @@ Algorithm (all of step 1–3 is local/no-network; only step 4 calls FamilySearch
    Do this for both the target side (`gedcomx1`/`primaryId1`) and the candidate
    side (`gedcomx2`/`primaryId2`). (This is the same relationship walk
    `Mob.collectRelatedIds` / `getParents` / `getChildren` / `getSpouses` already
-   does in `src/utils/mob.ts:299-336` — model on it; do **not** import the
+   does in `Mob.collectRelatedIds` (`src/utils/mob.ts`) — model on it; do **not** import the
    warnings-domain `Mob` class. A small local helper, or a new
    `src/utils/relatives.ts` shared with future callers, is fine.)
    Cap each role list at `MAX_RELATIVES_PER_ROLE = 40` (mirrors Java's
@@ -281,7 +291,7 @@ pair, continue the batch" unless there's a reason not to, and comment it.
 - **`src/utils/place-resolver.ts`** — `mapWithConcurrency` (bound the fan-out),
   `withRetry` (retry transient FS failures).
 - **`src/utils/string-similarity.ts`** — `nameSimilarity`, `normalizeString`.
-- **`src/utils/mob.ts:299-336`** — the canonical relationship walk to model the
+- **`Mob.collectRelatedIds`** (`src/utils/mob.ts`) — the canonical relationship walk to model the
   relative gathering on (do not import `Mob`; lift a small shared helper or
   inline it).
 - **`src/auth/refresh.ts`** — `getValidToken(principal)` once per batch.

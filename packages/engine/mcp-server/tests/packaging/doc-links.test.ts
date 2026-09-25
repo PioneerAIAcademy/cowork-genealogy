@@ -312,11 +312,12 @@ describe("doc and .claude/ tooling links", () => {
  * so the ban below blocks *new* ones without demanding a 56-site sweep in the
  * same PR that introduces the rule.
  *
- * These are not benign. Of three sampled in `research-append-tool-spec.md`,
- * three already pointed at the wrong code — `validator.ts:417` is cited as the
- * `exhaustive_declaration` coupling check and is the `stop_criteria` shape
- * allow-list. Until each is converted to a symbol reference, this list is the
- * honest record of what is known-wrong-shaped.
+ * These were never benign. Of three sampled in `research-append-tool-spec.md`,
+ * three already pointed at the wrong code — `validator.ts:417` was cited as the
+ * `exhaustive_declaration` coupling check and had drifted onto the
+ * `stop_criteria` shape allow-list. Every entry has since been converted to a
+ * symbol reference and this list emptied; the ban below now blocks *all* new
+ * source-line cites under `docs/`.
  *
  * `docs/plan/` is excluded from the walk entirely, not listed here: a plan is
  * deleted when its work ships, so a cite inside one cannot outlive its subject.
@@ -324,66 +325,7 @@ describe("doc and .claude/ tooling links", () => {
  * Removing a cite from a doc without removing it here fails the drift check
  * below, so this list cannot quietly outlive the sweep that empties it.
  */
-const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
-  "docs/adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md": [
-    "scripts/build-mcpb.mjs:26-27",
-  ],
-  "docs/realtime-architecture.md": [
-    "apps/server/app/models.py:45",
-    "local.py:195",
-    "runner.py:65",
-  ],
-  "docs/record-search-compaction-scope.md": ["results-staging.ts:108-124"],
-  "docs/specs/match-merge-workflow-spec.md": ["gedcomx.ts:161"],
-  // Two of the three went symbolic when #2472 rewrote the `SimplifiedFact` row
-  // and the `SimplifiedRelationship` row beside it: both line numbers had
-  // already drifted (`:120` landed inside `SimplifiedName`), which is the exact
-  // failure this list exists to shrink toward.
-  "docs/specs/merge-gedcomx-spec.md": [
-    "packages/engine/mcp-server/src/types/gedcomx.ts:112",
-  ],
-  "docs/specs/rank-search-matches-tool-spec.md": [
-    "relatives.ts:34",
-    "results-staging.ts:108-114",
-    "same-person.ts:199-206",
-    "same-person.ts:22",
-    "same-person.ts:67-91",
-    "validator.ts:1100-1114",
-  ],
-  "docs/specs/research-append-tool-spec.md": [
-    "validator.ts:417",
-    "validator.ts:607",
-    "validator.ts:637",
-  ],
-  "docs/specs/research-log-editor-spec.md": [
-    "src/validation/validator.ts:431",
-    "src/validation/validator.ts:953",
-    "validator.ts:1012",
-    "validator.ts:1022",
-    "validator.ts:1024",
-    "validator.ts:953",
-  ],
-  "docs/specs/same-person-match-relatives-spec.md": ["src/utils/mob.ts:299-336"],
-  "docs/specs/search-result-staging-spec.md": [
-    "src/tools/fulltext-search.ts:206",
-    "src/tools/record-search.ts:511",
-    "src/validation/validator.ts:1034",
-    "src/validation/validator.ts:988",
-  ],
-  "docs/specs/tree-edit-tool-spec.md": [
-    "src/types/gedcomx.ts:104",
-    "tests/tools/tree-edit.test.ts:950",
-  ],
-  "docs/specs/tree-materialization-spec.md": ["merge-warnings.ts:64"],
-  "docs/specs/validate-project-refactor-spec.md": [
-    "packages/engine/mcp-server/src/validation/validator.ts:104",
-    "src/tools/validate-research-schema.ts:20",
-    "validator.ts:104",
-    "validator.ts:236",
-    "validator.ts:737",
-    "validator.ts:988",
-  ],
-};
+const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {};
 
 /** Every `.md` under `docs/`, except `docs/plan/` (see the note above). */
 function docsMarkdown(root: string): string[] {
@@ -483,45 +425,18 @@ describe("docs/ cite symbols, not line numbers", () => {
  *
  * A RATCHET, not a freeze: the count must match exactly, so removing a
  * reference fails until the number here comes down with it, and adding one
- * fails outright. Sweeping a file to zero deletes its entry. The first pass
- * took the two worst offenders from 34 -> 17 and 14 -> 7; what remains in the
- * specs is mostly evidence-shaped ("#702 measured that pattern"), where the
- * citation IS the fact and stays.
+ * fails outright. Sweeping a file to zero deletes its entry.
  *
- * One deliberate exception RAISES this ceiling rather than lowers it (#1639): a
- * census citation — #1341/#1732 in `CLAUDE.md` — is the reader's only check on
- * an observation CI cannot reproduce (a live Cowork session's registrar
- * spelling), so those numbers stay and `CLAUDE.md`'s baseline covers them.
- * `docs/architecture.md` carried the same two and swept them with the rest on
- * 2026-09-01; its prose keeps the dates and the conclusion, which is the part
- * the exception is protecting. That irreproducibility is the sole sanctioned
- * reason to add a reference; every other addition still fails outright.
+ * **The target is zero, and it has been reached: this map is empty.** Every
+ * contract doc now states the fact rather than the ticket. Where the evidence
+ * for a claim is an observation CI cannot reproduce — the census of which
+ * registrar spelling a live Cowork session exposes, or the hosted-path
+ * agent-spawn finding — it lives in a dated ADR (`docs/adrs/`, exempt as
+ * history: ADR-0004 carries both), and the citing prose keeps the dates and the
+ * conclusion. There is no sanctioned reason to add a repo issue reference back
+ * to a contract doc; every addition fails outright.
  */
-const ISSUE_REF_BASELINE: Record<string, number> = {
-  "CLAUDE.md": 5,
-  "docs/specs/e2e-test-spec.md": 10,
-  "docs/specs/feedback-case-spec.md": 1,
-  "docs/specs/gps-mentor-agent-spec.md": 2,
-  "docs/specs/guardrail-enforcement-spec.md": 16,
-  "docs/specs/hosted-web-workbench-spec.md": 4,
-  "docs/specs/image-reader-agent-spec.md": 3,
-  "docs/specs/match-merge-workflow-spec.md": 3,
-  "docs/specs/merge-gedcomx-spec.md": 8,
-  "docs/specs/place-search-tool-spec.md": 1,
-  "docs/specs/record-search-tool-spec-v2.md": 3,
-  "docs/specs/research-append-tool-spec.md": 3,
-  "docs/specs/research-query-tool-spec.md": 5,
-  "docs/specs/research-schema-spec.md": 1,
-  "docs/specs/same-person-match-relatives-spec.md": 1,
-  "docs/specs/sandbox-provider-spec.md": 1,
-  "docs/specs/search-result-staging-spec.md": 1,
-  "docs/specs/skill-rewrites-for-persistence-tools-spec.md": 2,
-  "docs/specs/task-review-spec.md": 5,
-  "docs/specs/tree-forget-tool-spec.md": 1,
-  "docs/specs/tree-materialization-spec.md": 7,
-  "docs/specs/unit-test-spec-v2.md": 1,
-  "docs/specs/unit-test-spec.md": 4,
-};
+const ISSUE_REF_BASELINE: Record<string, number> = {};
 
 /** `#1234`, but not `owner/repo#1234` and not a `#anchor`. */
 function repoIssueRefs(text: string): string[] {

@@ -68,12 +68,18 @@ const EXAMPLES: Record<string, string> = {
   "extracted_for_question_ids": ["q_002"]
 }`,
 
+  // `match_score` carries a real number because #1731 step 3 refuses a link for
+  // a reachable persona that has no recorded same_person score behind it, and
+  // this example is the ORDINARY case. It is not universal: a pairing the tool
+  // can prove circular must keep `match_score: null`, and that refusal says so
+  // in its own text rather than relying on this example, because the example is
+  // appended to EVERY person_evidence rejection and cannot vary by cause.
   person_evidence: `{
   "assertion_id": "a_013",
   "person_id": "I1",
   "confidence": "probable",
-  "rationale": "Death certificate names Patrick Flynn, d. 1908 Schuylkill County — name, place and date match the subject. Father's name is a single uncorroborated reading, so the link is probable rather than confident.",
-  "match_score": null,
+  "rationale": "Death certificate names Patrick Flynn, d. 1908 Schuylkill County — name, place and date match the subject; same_person scored 0.78. Father's name is a single uncorroborated reading, so the link is probable rather than confident.",
+  "match_score": 0.78,
   "created": "2026-07-18",
   "superseded_by": null
 }`,

@@ -9,11 +9,12 @@
       "terminology-guardrail",
       "primary-secondary",
       "src_004",
-      "original-derivative-authored"
+      "original-derivative-authored",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Please update the citation for src_004 to mention that it's a primary source.",
+    "delegation": "Update src_004's citation to mention that it is a primary source.\n\nsourceId: src_004\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

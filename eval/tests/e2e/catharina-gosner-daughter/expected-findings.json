@@ -3,17 +3,39 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Catharina Gosnerin and Joannes Schedler had a daughter, Magdalena Schedler, christened 12 June 1743 at Triesen, Liechtenstein.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Catharina Gosnerin (PID KZS8-RS7) and Joannes Schedler of Triesen, Liechtenstein had a daughter Magdalena Schedler christened 12 June 1743 at Triesen. That baptism names its mother as Catharina Schedlerin, a different woman from Catharina Gosnerin, and the two cannot be reconciled as one person under the Alemannic wife-naming convention: both women bore a son named Josephus in 1751, christened 15 March and 12 November, eight months apart, each to a father named Joannes Schedler in the same parish. The November entry is the source already attached to the tree for the couple's son Josephus. One woman cannot have borne both children, so Catharina Schedlerin and Catharina Gosnerin are two distinct women, and the 1743 daughter belongs to the other couple. Independently and more directly: Joannes Schedler married Catharina Gosnerin at Triesen on 10 August 1751, so no child christened in 1743 can be a daughter of that marriage, and the mother's surname in the index switches from Schedlerin to Gosnerin exactly at that date. Pass = the final tree/research links no Magdalena Schedler to Catharina Gosnerin as her child and attaches no 1743 christening fact to this couple. An unattached person record for Magdalena — or for the whole rival household — is NOT a failure: building out the competing family is legitimate, expected research, and is how the two couples get told apart. What fails is any parent-child relationship, any narrative or proof statement asserting her as Catharina Gosnerin's daughter, or a stub linked into this couple's family group.",
       "details": {
-        "subject_person": "Catharina Gosnerin (KZS8-RS7)",
+        "subject_person": "Catharina Gosnerin (PID KZS8-RS7)",
         "relation": "child",
-        "target_person": {
-          "name": "Magdalena Schedler",
-          "christening": "12 June 1743, Triesen, Liechtenstein"
+        "wrong_candidate": {
+          "name": "Magdalena Schedler, christened 12 June 1743, Triesen, Liechtenstein",
+          "note": "her baptism names Joannes Schedler and Catharina Schedlerin as parents; Catharina Schedlerin is independently documented bearing Christina (25 Jul 1746), Wolfgangus (31 Oct 1748), Adamus (1 Nov 1749) and Josephus (15 Mar 1751) to a Joannes Schedler at Triesen — a sequence running up to, and stopping at, his 10 August 1751 marriage to Catharina Gosnerin, whose own children follow it"
         }
       },
       "supporting_sources": [
-        "Liechtenstein, Births and Baptisms, 1650-1875 — entry for Magdalena Schedler, 1743, parents Joannes Schedler and Catharina Schedlerin"
+        "World Miscellaneous Marriages, 1662-1945 — entry for Joannes Schedler and Catharina Gosnerin, married 10 August 1751, Triesen, Liechtenstein (ark:/61903/1:1:XLG8-6ZS) — the disproving record: the marriage postdates the 1743 christening by eight years, so Magdalena cannot be a daughter of this union, and the mother's surname in the baptismal index switches from Schedlerin to Gosnerin precisely at this date",
+        "Liechtenstein, Births and Baptisms, 1650-1875 — entry for Josephus Schedler, christened 15 March 1751, Triesen, parents Joannes Schedler and Catharina Schedlerin (ark:/61903/1:1:X5C1-98R) — corroborating: Catharina Gosnerin bore a son Josephus at Triesen to a Joannes Schedler only eight months later, 12 November 1751 (ark:/61903/1:1:X5C1-9D3), which no single woman could have done",
+        "Liechtenstein, Births and Baptisms, 1650-1875 — entry for Magdalena Schedler, christened 12 June 1743, Triesen, naming her mother as Catharina Schedlerin rather than Catharina Gosnerin (ark:/61903/1:1:X5CB-RLK) — the hint record itself",
+        "Liechtenstein, Births and Baptisms, 1650-1875 — the entries naming Catharina Gosnerin as mother, christened at Triesen 12 November 1751, 19 January 1754 (ark:/61903/1:1:X5CB-PCM) and 12 June 1756 (ark:/61903/1:1:X5CB-B31), all after the 1751 marriage. A fourth, Antonius christened 7 December 1741 (ark:/61903/1:1:X5CB-B3T), also names her and is attached to the tree, but predates the marriage by ten years and is UNRESOLVED — it does not bear on Magdalena either way, since the 1743 christening falls before the marriage on any reading"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched the Liechtenstein Catholic baptismal index for a 1743 daughter of Catharina Gosnerin and Joannes Schedler at Triesen, the agent should document a negative conclusion: no such baptism exists in the index, and the 12 June 1743 Magdalena Schedler entry belongs to a different couple — Joannes Schedler and an earlier wife indexed as Catharina Schedlerin, his marriage to Catharina Gosnerin falling on 10 August 1751. A documented conclusion is required; leaving the question open as unresolved does not satisfy this finding. The evidence supports an answer: the marriage postdates the christening by eight years, so Magdalena is not this couple's daughter on any reading of the mother's surname. (The separate question of whether Antonius, christened December 1741, can be Catharina Gosnerin's given that same 1751 marriage is genuinely open, and an agent that flags it is not penalised — but it does not block the answer to this question, and must not be used to avoid giving one.)",
+      "details": {
+        "subject_person": "Catharina Gosnerin (PID KZS8-RS7)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no 1743 daughter found for this couple",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No record in \"Liechtenstein, Births and Baptisms, 1650-1875\" (FamilySearch collection 1708589), surname Schedler at Triesen, 1735-1760, names Catharina Gosnerin as the mother of a child christened in 1743; all 750 matching records in that collection, place and date range were enumerated, of which 106 fall at Triesen proper, and Catharina Gosnerin appears as mother in only four entries — 1741, 1751, 1754 and 1756 — none of them in 1743",
+        "The baptismal collection is index-only: the 1743 entry carries no linked image or film reference, so the register page itself could not be consulted and the index is the only witness to the mother's name. The marriage record (ark:/61903/1:1:XLG8-6ZS) is what carries the conclusion past that limit, since it dates the union itself rather than relying on how one indexer rendered a surname"
       ],
       "required": true
     }

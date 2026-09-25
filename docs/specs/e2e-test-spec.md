@@ -135,6 +135,7 @@ Test metadata.
 | `id` | string | yes | Unique slug matching the directory name |
 | `name` | string | yes | Short human-readable name |
 | `genre` | enum | no | `strip` (default) or `record-hint` — see §3.6 |
+| `image_basis` | boolean | no | Record-hint fixtures only. `true` when the resolution rests on reading the original page images; `false`/absent when it rests on indexes alone. When `true`, `expected-findings.json` must cite an image ark — see §3.6.1. A non-boolean value is a hard `ERROR`. |
 | `source_pid` | string | yes | FamilySearch PID the fixture was captured from |
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
@@ -428,6 +429,15 @@ Scope and record-keeping:
   otherwise miss. `fact` stays excluded from the *derivation* on its own
   2026-08-10 measurement, but the drift check still reports its disagreements.
   Whoever proposes widening the derivation again is standing here.
+- **Re-typing a `fact` finding to `relationship`, so the derivation and the
+  relationship rules cover it, is rejected too.** It is the obvious way to
+  bring a marriage-with-date finding under the backstop, and it would reach a
+  real population — but the type lives in
+  `expected-findings.json`, so changing it changes that fixture's
+  `findings_hash`, which the calibration loader treats as a hard error on
+  every annotation for the slug. That buys a re-grade of every graded run
+  across those fixtures, to relocate a grading rule that can instead be
+  stated once in the judge prompt. The date rule in §7.1 is that rule.
 - What was overridden is recorded under
   `judge_output.component_derivation.overrides` (each with `finding_id`,
   the model's `model` label and the `derived` one), the model's original
@@ -500,7 +510,7 @@ stripped:
   fixture README that retrieval was tool-assisted, so the next reader can
   weigh it.
 
-#### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
+#### 3.6.1 Citation shape for documented negatives (decision)
 
 A resolved-negative (outcome (c) above) makes two different claims,
 and they do not take the same citation:
@@ -512,8 +522,8 @@ and they do not take the same citation:
 - **The absence** — "no record in the collection establishes X." By
   definition there is nothing to point an ark at.
 
-Once a resolvable ark is required on record-hint resolutions (issue
-#970), that requirement attaches to the **disproving record only**.
+Once a resolvable ark is required on record-hint resolutions, that
+requirement attaches to the **disproving record only**.
 Write it into the `avoid` finding's or the paired required finding's
 `supporting_sources` as a literal `ark:/61903/...`. The absence claim
 itself is written as plain prose — ideally naming the collection and
@@ -524,7 +534,7 @@ carries the disproving record's ark — the absence sentence riding
 alongside it with no ark is not a gap.
 
 **The ark must be the full `ark:/61903/...` path — not the bare
-`XXXX-XXXX` id** (decision, issue #970, 2026-08-02). A naive
+`XXXX-XXXX` id** (decision, 2026-08-02). A naive
 `\b[A-Z0-9]{4}-[A-Z0-9]{2,4}\b` id-shaped token matches on collection
 date ranges alone (`Czech Republic, Church Books, 1552-1981` reads as
 one), and a FamilySearch tree PID is shape-identical to a record ark
@@ -535,6 +545,26 @@ full-path form for this reason; it cannot verify the ark actually
 resolves to the record claimed (CI holds no FamilySearch token) —
 what it buys is that a false citation becomes checkable in one click
 by a human reviewer instead of invisible.
+
+**When the resolution rests on reading the original page images**, the
+fixture declares it with `"image_basis": true` in `fixture.json`, and
+then the full-ark requirement above is raised to an **image** ark:
+at least one `supporting_sources` entry, on some finding, must carry an
+image ark. The ark taxonomy is settled — image arks are `3:1:` or
+`3:2:` in their two path segments, while `1:1:`, `1:2:`, `2:5:` and
+`4:1:` are indexes, not images (the first segment is what distinguishes
+an image; `1:1:` vs `1:2:` is a difference in indexing, not the
+index/image split). An index ark, or an image ark that appears only in
+the fixture's `README.md`, does not satisfy the flag — the image ark
+must be in `expected-findings.json`, since that is the ground truth the
+judge and a reviewer read. This is a **declared** flag rather than a
+detector run over README prose: a prose claim that an image was read
+can be satisfied in prose, so the author asserts the image basis
+explicitly and the linter checks the citation that backs it. When the
+flag is `false` or absent the bar is unchanged — one full ark anywhere.
+A non-boolean `image_basis` (`"true"`, `1`, `null`) is a hard `ERROR`,
+because truthiness-coercing it would let `"false"` enable the check and
+a typo'd string silently disable it.
 
 ---
 
@@ -739,8 +769,10 @@ the `max_cost_usd` note in §6 step 5.
    call or runs away across turns (0 pass, ~20 min per test). The pin's known
    cost is ~0.24/3 mean judge score, concentrated in GPS classification nuance —
    the existing "blank columns produce no assertions" rule, and
-   `informant_proximity` / `record_basis` calls; recovering that is issue #1131.
-   **Anyone running the reasoning-effort A/B (#1136) must account for this**: a
+   `informant_proximity` / `record_basis` calls; later record-extraction work
+   added classification examples aimed at that drop.
+   **Anyone running the reasoning-effort A/B (`gh issue list --state open --search
+   "reasoning-effort A/B"`) must account for this**: a
    sweep that lowers effort changes the conditions that forced this pin, and a
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
@@ -1047,10 +1079,11 @@ entries in the committed corpus. `research_append` writes a named section, and
 
 **This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
 easy to describe as "the router doing a delegate's job" because that is the
-`routed` rule, and miss that `owner_denied` has **three**. `out_of_lane` fires
+`routed` rule, and miss that `owner_denied` has **four**. `out_of_lane` fires
 for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
-grants it, and `declaration` fires on a routed claim, field-scoped rather than
-section-scoped. Both reach this array — the append happens before the rule
+grants it; `declaration` fires on a routed claim, field-scoped rather than
+section-scoped; and `owned_field` fires on a routed field keyed on presence
+rather than on a claim value (`project.status`). All reach this array — the append happens before the rule
 branch — so an entry here does not imply a main-thread caller. Most committed
 entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
 7315364c).
@@ -1122,6 +1155,37 @@ The judge grades **two axes**:
   for "Robert Smith" rather than matching a hinted one). Recall is
   graded **from the tree only**: a finding that appears only in
   `proof_summaries` and not in the tree does not count.
+
+  **Dates and places are graded by denotation, not by overlap.** Formatting tolerance
+  covers different spellings of the same value (`~1820`, `abt. 1820`,
+  `approximately 1820`); it does not cover a difference in precision or
+  qualification. A tree date is `supported` only when it denotes the claimed
+  date: a bounded or qualified date that merely *contains* the claim is
+  `unsupported`, however tightly, including a range whose endpoint equals the
+  claim. A tree date more precise than the claim and consistent with it
+  (claim `1912`, tree `13 January 1912`) is `supported`. Where the finding
+  itself states an approximate or bounded date, an equivalent approximation
+  in the tree is `supported`. The same rule governs places: a broader
+  jurisdiction that merely contains the claim — `Zulia, Venezuela` against a
+  claimed `Maracaibo, Zulia, Venezuela` — is `unsupported`, and a more
+  specific place consistent with the claim is `supported`. A renamed place at
+  the same level is the same place: a tree carrying the modern
+  `Salt Lake, Salt Lake, Utah` denotes a claimed
+  `Great Salt Lake, Great Salt Lake, Utah Territory` and is `supported`.
+
+  The rule is general, and the prompt states it once for every finding type.
+  It matters most on `fact` findings, which the component derivation (§3.4.2)
+  does not cover: there the judge's own `matched` is final, so the prompt also
+  gives `fact` findings their rollup — every component scores, tagged
+  `kind: "link"`, then any component contradicted makes the finding `"false"`,
+  none supported `"false"`, some supported and some unsupported `"partial"`,
+  all supported `"true"`. That is the same arithmetic the relationship table
+  applies to `link` components; on a `fact` finding there is no `detail` tier
+  to exclude. The rollup is scoped to non-`avoid` findings, as the derivation
+  is (§3.4.2): on an `avoid` finding `matched: "true"` means correctly avoided
+  (§3.4.1), which no component tally expresses.
+  A bounded tree date reading as `supported` is how a run whose agent reached
+  the opposite conclusion from the fixture came back `pass`.
 - **Proof quality (advisory).** Grade the soundness of the agent's
   written proof statement (`proof_summaries`) for the question:
   exhaustiveness of search, conflict resolution, independent
@@ -1195,9 +1259,9 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | `components[]` | The claims the finding makes, each `kind` (`link`/`detail`) and `status` (`supported`/`unsupported`/`contradicted`), marked from the tree. Only `link` entries score; a date the finding requires is tagged `link` (§3.4.2) |
 | `matched_model` | Present only when derivation overrode the judge: the label the model originally emitted |
 | `agent_evidence` | Pointer into `final_tree` showing where the match was found (free text) |
-| `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5) |
-| `recall_total` | Fraction across all findings |
-| `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none |
+| `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5). **Derived by the harness** from `per_finding` on every graded run (`_recall(required_only=True)`), not taken from the judge — see below |
+| `recall_total` | Fraction across all findings. **Derived by the harness** the same way (`_recall(required_only=False)`) — see below |
+| `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none. **Derived by the harness** from `per_finding` (`derive_verdict`), not taken from the judge — see below |
 | `rationale` | Free-text summary |
 
 A fourth verdict value, **`skipped`**, is written by the *harness* rather
@@ -1223,13 +1287,28 @@ downgrade-only. `matched` on a non-`avoid` `relationship` finding is
 therefore a derived field: read `matched_model` to see what the judge
 itself said.
 
+Independent of both guards, the run-level roll-up itself —
+`recall_required`, `recall_total`, `verdict` — is derived by the harness
+from `per_finding` on **every** graded run, inside
+`apply_component_derivation`, whether or not either guard changed a label
+(neither guard fires on a fact-only fixture, so without this step the
+recompute was skipped and the model's self-reported roll-up shipped
+unchecked). When the recompute disagrees with what the model reported, the
+persisted `judge_output` carries `verdict_derivation`
+(`{"model": {...}, "derived": {...}}`, naming only the fields that
+changed — `verdict`, `recall_required` and/or `recall_total`, the two
+recall fractions compared with a `0.011` tolerance so a model's rounded
+`0.67` for an exact 2/3 is not recorded as a disagreement). Runs committed
+before this derivation was added are not rewritten; 19 of 188 committed
+runs carried a verdict the deterministic layer disagrees with.
+
 ### 7.2.1 The three axes
 
 A run is graded on **two independent axes**, and reported with a third field
 that combines them. They are separate because a run can get the genealogy
 completely right while bypassing the process guardrails, and collapsing that
-into one boolean made a correct run and a wrong one read identically
-(GitHub issue #972).
+into one boolean made a correct run and a wrong one read identically —
+which the compliance/correctness axis split fixed.
 
 | field | values | meaning |
 |---|---|---|
@@ -1237,7 +1316,7 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `5` for the current shape. At `5`, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `5` for the current shape. At `5`, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped at main `4541a4c5` without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on logs predating the compliance/correctness axis split. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1485,11 +1564,23 @@ checks over the final project state and the run's tool-call log
    received a **scoreable** `person_evidence` link without a single
    `same_person` call for it. Narrower than check 1 on purpose: a run can
    invoke `person-evidence` somewhere and still skip identity scoring for the
-   person that matters. "Scoreable" means a record persona is reachable — a
-   non-null `record_persona_id`, a `record_read`-sourced assertion, or a search
-   whose sidecar was retained; links that provably cannot be scored are skipped
-   and counted separately (`guardrail-enforcement-spec.md` §4). A null
-   `record_persona_id` alone does **not** exempt a link.
+   person that matters. "Scoreable" is a narrowing the detector still applies
+   from what a run RETAINED — a non-null `record_persona_id`, a
+   `record_read`-sourced assertion, or a search whose sidecar was retained; a
+   null `record_persona_id` alone does **not** exempt a link, and links it
+   treats as unscoreable are skipped and counted separately
+   (`guardrail-enforcement-spec.md` §4).
+
+   **That narrowing is now conservative rather than true.** `same_person`'s
+   project-relative arm derives the record side from the record's own extracted
+   assertions when it cannot fetch a document, so an image-transcribed page, a
+   PDF, an external site and a sidecar-less search are all scorable in practice.
+   The detector has deliberately NOT been widened to match: doing so in the same
+   change that told the agent to adopt the new call would make the resulting
+   measurement unreadable — a rise in flagged links could not be told apart from
+   the agent failing to adopt it. The widening belongs with the writer-side
+   requirement, whose own evidence is a run at the new call shape. Until then
+   this check under-reports, which is the safe direction.
 
 Any violation sets `compliance: fail`, which forces `outcome: fail`. The
 checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
@@ -1649,7 +1740,7 @@ the correct reading — an errored call was never a successful invocation — so
 compliance delta across the boundary is not a regression signal.
 
 **The boundary is a commit, not cleanly a version — check both.** The join
-shipped in PR #1255 (main `4541a4c5`) with `harness_schema_version` left at `2`,
+shipped at main `4541a4c5` with `harness_schema_version` left at `2`,
 on the argument that adding a key is additive. It is not, for a reader: `2` now
 means *no `is_error`* before `4541a4c5` and *`is_error` present* after it, which
 is exactly the keeps-its-name-while-its-meaning-changes case the counter exists
@@ -2129,7 +2220,8 @@ that recovered the answer while bypassing a GPS guardrail skill still proves
 the fixture solvable; it fails the `outcome` gate for a reason that says
 nothing about the fixture.
 
-> **Reading a pre-#972 run log for this:** in logs written before the axis
+> **Reading a run log written before the compliance/correctness axis split for
+> this:** in logs written before the axis
 > split, a guardrail bypass overwrote the top-level `verdict` with `fail`, so
 > four committed runs read `"verdict": "fail"` on disk while being
 > genealogically `pass`. Resolve any log through

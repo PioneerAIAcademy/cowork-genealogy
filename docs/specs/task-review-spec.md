@@ -259,7 +259,7 @@ From the first run, 2026-08-02, over the unassigned `developer` pool:
   questions. Nine issues at three questions each is thirty questions, and he
   stops reading at the fourth — so settling what is already answered somewhere is
   a first-class part of the agent's job, not a nicety.
-- **Two issues asked the same question.** Issues #945 and #1094 both turned on
+- **Two issues asked the same question.** Both turned on
   "blocking, or warn-only against a frozen baseline?", and both agents
   independently recommended warn-only. Merging them was one question and two
   issues unblocked — the clearest evidence for the caller's cross-issue pass.
@@ -270,14 +270,14 @@ Two cases from 2026-08-01 grooming, both of which changed the *disposition*
 rather than a detail. They are why "already built" is a pass of its own and not a
 line in the staleness check:
 
-- **Issue #995** asked for "value-level ground truth" as a new harness mechanism.
+- **A value-matcher request** asked for "value-level ground truth" as a new harness mechanism.
   Reading `test_expected_classifications` showed the matcher already selected on
   `record_role` + `fact_type` + an `attribute` facet enumerated `"date" | "place"`,
   with normalization, list-of-alternatives and an `optional` flag — everything but
   the value comparison. A build became a ~15-line extension, and the *real*
   finding was that the test which motivated it declared no matchers at all
   (10 of 27 did).
-- **Issue #607** asked for diminutive name searching across "search". Reading the
+- **A diminutive-search request** asked for diminutive name searching across "search". Reading the
   four search tools showed `record_search` already ships two candidate mechanisms
   (`.exact` is opt-in, plus unused `givenNameAlt` slots) and Ancestry handles it
   upstream — so half the issue was work nobody needed to do, and the half that
@@ -326,6 +326,6 @@ line in the staleness check:
   derives its query set from `eval/tests/unit/` and resolves skills under
   `packages/engine/plugin/skills/` only, so it cannot see a hand-written set under
   `.claude/skills/`. They document the intended boundary; nothing enforces it.
-  Wiring them is issue #1184, which also asks whether they are worth keeping.
+  Wiring them is unplanned work that also asks whether they are worth keeping.
 - **Nothing checks that a verdict was applied.** The `reviewed` label says an
   issue was looked at, not that the body carries what the agent supplied.

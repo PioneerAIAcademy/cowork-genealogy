@@ -365,7 +365,7 @@ interface ResearchTransport {
 
 ~90% of the renderer (App, 11 sections, shared components, `lib/schema.ts`,
 `progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged. **11 is
-the count that actually moved** (PR #293, 2026-06-07); two sections were added
+the count that actually moved** (2026-06-07); two sections were added
 later, so the package holds **13** today.
 
 > **As built, verified 2026-08-02.** The interface shipped essentially verbatim
@@ -382,7 +382,7 @@ later, so the package holds **13** today.
 >
 > **The "11 sections" above is correct and must not be changed to 13.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
-> in the extraction (PR #293, `371e5db5`). `KnownInformationSection` (2026-06-14)
+> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14)
 > and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
 > directly — they were never part of the migration this sentence describes. The
 > package holds 13 today; the migration moved 11.
@@ -421,15 +421,13 @@ later, so the package holds **13** today.
 > `PUBLIC_URL` scheme). A non-allowlisted account leaves no user row and no
 > persisted token.
 >
-> **Two login paths exist that this section does not describe:**
+> **One login path exists that this section does not describe:**
 > - **dev-login** — enter any email, no round-trip. Guarded twice: only when FS
 >   OAuth is unconfigured *and* `PUBLIC_URL` is not https, so it can never be
 >   exposed by a deploy that forgot to configure FamilySearch.
-> - **`/v1` bearer keys** — a public REST chat API for an external chatbot team
->   (`apps/server/app/v1.py`), authenticated by operator-granted keys in the
->   `API_KEYS` env. Deliberately **not** subject to the allowlist: presence in the
->   key map *is* the grant. This surface postdates the spec entirely and has no
->   section of its own.
+>
+> There were two. `/v1` bearer keys were **removed 2026-09-22: the surface was
+> sandbox-WebSocket-bound and had no live grant.**
 
 ### 5.2 Data auth: per-user FamilySearch OAuth (the big refactor)
 The current MCP auth (`packages/engine/mcp-server/src/auth/`) is **single-user, single-machine**:
@@ -588,8 +586,8 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   Settings: `Settings.auto_continue` (default on) and
 >   `Settings.auto_continue_max_steps`, passed to the sandbox as
 >   `AUTO_CONTINUE` / `AUTO_CONTINUE_MAX_STEPS` by both providers. A `user_msg`
->   frame may carry `auto_continue: false` to opt its whole chain out; the
->   public `/v1` API always does (`public-rest-api-spec.md`). The canonical
+>   frame may carry `auto_continue: false` to opt its whole chain out. The
+>   canonical
 >   literal regex is `HAND_BACK_RE` in `apps/web/src/components/chatEvents.ts`;
 >   the runner's copy in `app/agent/hand_back.py` is pinned to it by
 >   `apps/server/tests/test_hand_back_parity.py`. Per-session on/off lands with
@@ -614,10 +612,11 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 > - **`familysearch_tokens`** — shipped, columns `access_token` / `refresh_token`
 >   / `expires_at` / `updated`. **Encrypted at rest** via `crypto.EncryptedStr` (see §5.2).
 > - **`projects`** — shipped, minus **`objstore_prefix`** (no object store, §6.4)
->   and plus four columns this spec didn't foresee: `model` (the per-session model
->   knob from §0.5), `status` (`active`/`archived`), and `turn_locked_at` — a
->   guarded-UPDATE turn lock that makes the `/v1` API's one-turn-at-a-time rule
->   correct across control-plane instances without any in-memory state.
+>   and plus two columns this spec didn't foresee: `model` (the per-session model
+>   knob from §0.5) and `status` (`active`/`archived`).
+>   `turn_locked_at` was a third until 2026-09-22, when the `/v1` API it locked for
+>   was removed. It is gone from the model; only the live database still carries it,
+>   as a dead nullable, because `create_all` never drops a column.
 > - **`sessions`** — **not built**; the signed cookie is self-contained, which is
 >   the "or stateless JWT" branch this bullet allowed for.
 > - **`usage`** — **not built.** Per-turn cost/tokens are streamed to an
@@ -745,7 +744,7 @@ build time.
 >   plugin (`plugins=[{"type":"local", …}]`) instead, and the plugin's **agents**
 >   are additionally staged into `<project>/.claude/agents/` because plugin
 >   loading registers them only under the namespaced `genealogy-research:<agent>`
->   spelling that no SKILL.md asks for (issue #939).
+>   spelling that no SKILL.md asks for (ADR-0004).
 > - **The FamilySearch token does not arrive by env var.** Option (a) won: the
 >   control plane writes `~/.familysearch-mcp/tokens.json` into the sandbox, and
 >   the operator Anthropic key comes from a per-connect secrets file at
@@ -1045,7 +1044,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 
 > **Progress as of 2026-08-02.**
 >
-> 1. **Done.** Monorepo + `viewer-ui` extraction landed in PR #293
+> 1. **Done.** Monorepo + `viewer-ui` extraction landed
 >    (`371e5db5`, 2026-06-07); Electron works through the IPC adapter.
 > 2. **Done**, with two substitutions: the login is FamilySearch, not Google, and
 >    the read API reads the sandbox rather than durable storage. The "read-only

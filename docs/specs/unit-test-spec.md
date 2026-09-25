@@ -384,7 +384,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "xfail_reason": {
           "type": "string",
-          "description": "Required when expected_outcome is `xfail`. Brief explanation, ideally with an issue/PR link or removal condition (e.g., 'blocked on issue #312; remove this marker when MCP fixture caching lands')."
+          "description": "Required when expected_outcome is `xfail`. Brief explanation, ideally with an issue/PR link or removal condition (e.g., 'blocked on <issue>; remove this marker when MCP fixture caching lands')."
         }
       },
       "allOf": [
@@ -565,7 +565,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
 | `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | `"pass"` (default) or `"xfail"`. Marks a known-failing test. xfail tests still run; their failures aggregate to `outcome: xfail` (expected, not a regression). If an xfail test starts passing, the run reports `outcome: xpass` so the marker can be removed |
-| `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on #312; remove when fixed") |
+| `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on <issue link>; remove when fixed") |
 
 **`holdout` and the gate.** `gate-skill` (`docs/skill-lifecycle.md` §6) once re-ran a
 skill's holdout tests as a no-regression preview; that comparison was **removed**. It
@@ -627,6 +627,32 @@ graded** — a direct test is a separate file with its own `test.id`, not a seco
 arm over an existing one, because a duplicated `test_id` in one envelope corrupts
 annotations, which key on `(test_id, dimension_source, dimension_name)`.
 
+**A converted suite is the one case where the direct test keeps the original
+`test.id`.** Once a skill is deleted outright rather than thinned into a router
+(the lead's ruling of 2026-09-22: every skill becomes an agent and the skill is
+deleted; `citation` is the first), there is no routed arm left to
+grade and no second file to collide with. The routed original is not kept
+alongside the direct one — it is *converted in place*: `input.user_message`
+becomes `input.delegation`, `direct-arm` is appended to `tags`, and `tags`,
+`execution`, `mcp_fixtures`, `judge_reads_files` and `negative` are otherwise
+untouched. Keeping the id is what preserves the suite's annotation history
+across the conversion; minting new ids would orphan every prior grade on the
+`(test_id, dimension_source, dimension_name)` key this section already names.
+The "separate file, own id" rule above still governs a **pair** — a routing
+skill that still ships — because there both arms exist and both are graded.
+
+**A negative converts too, when its outcome does not depend on routing.** The
+conversion doc says negatives get no twin, and for a pair that is right: routing
+is the router's job and a direct test has no router. A negative graded with
+`negative.grade_on_invariant` is the exception — its outcome is decided solely
+by its tag-gated invariant validator, with routing and activation deliberately
+not gated (`orchestrator._compute_outcome`), so nothing it measures was ever the
+router's. `ut_citation_012` (never create a source entry) is the worked case: it
+keeps its `negative` block, its `grade_on_invariant`, its `no-new-source` tag
+and the validator that gates on it, and only the input changes. A negative
+*without* `grade_on_invariant` has no defined outcome path on the direct arm and
+must be deleted or re-shaped, not converted.
+
 On a direct test the harness:
 
 - builds a workspace staging `.claude/agents/` and **no skills at all** — the
@@ -669,6 +695,25 @@ and `check_runlogs.py` marks the suite touched when that file changes. Without
 both, editing the agent leaves the suite's run log **active** and its grades are
 quoted forward against prose that changed. For a paired skill the `@plugin:`
 scan already embeds the same path, so neither rule moves an existing snapshot.
+
+**An `agent:` caller in `ownership.json` is readable here only when it is the
+suite's subject.** `test_ownership_table` compares the sections a run modified
+against `writer_sets`, which resolves bare names and had to refuse an `agent:`
+caller outright: the check reads one frontmatter `name` and cannot see which
+agent made any given call, so resolving an arbitrary agent would authorize
+writes it cannot attribute, and dropping it silently would deny that agent's own
+writes. Converting a skill to an agent makes exactly one agent visible — the
+suite's subject, whose `name` is what `load_suite_frontmatter` reads off
+`agents/<n>.md`. So `writer_sets(artifact, plane, subject=<n>)` resolves
+`agent:<n>` and nothing else; every other `agent:` caller is dropped from the
+resolved set rather than raising, because raising would fire on every other
+suite's run (lead's ruling, 2026-09-23). Dropping is safe only because the
+structural rule below holds: each such agent is authorizable on its own suite. Without this, every positive test in a
+converted suite fails ownership on its own legitimate writes. A row naming an
+agent caller must also ship `agents/<n>.md` **and** own an
+`eval/tests/unit/<n>/` suite — otherwise no one ever passes `<n>` as the subject
+and the row authorizes nobody while reading as though it authorizes someone
+(`test_a_unit_plane_agent_caller_is_a_suite_subject`).
 
 **Never reach the agent with `--agent` / `extra_args={"agent": …}`.** The shipped
 ownership hook keys on the **presence** of `agent_id`, and a session started that
@@ -1383,7 +1428,7 @@ Shared validation code in `eval/harness/validators/`. These run on every test re
 - **Append-only enforcement** — existing log entries were not modified or deleted. Operates on the diff.
 - **No-delete enforcement** — no entries were removed from any section. Operates on the diff.
 - **Enum validation** — all enum fields use values from research-schema-spec.md Section 2. Operates on the full output.
-- **Full reference-integrity validation** (`test_project_files_pass_full_validation`) — beyond jsonschema, drives the compiled TypeScript `validateParsed` (the single source of truth, `packages/engine/mcp-server/src/validation/validator.ts`, via `harness/ts_validator.py`) over `research.json` + `tree.gedcomx.json` together. Catches the integrity jsonschema cannot express: dangling `ParentChild`/`Couple` endpoints, cross-file id references (`subject_person_ids`, `known_holdings.relates_to_person_ids`, `gedcomx_source_description_id`), and ancestry cycles. This is what makes a from-scratch write via the `Write` tool (init-project) safe, where no writer tool ran to validate-before-persist (#987). Called **without** `projectPath`, so it runs research + gedcomx + cross-file checks on the parsed objects with no disk access and no sidecar-integrity blast radius. Drive the compiled validator rather than re-porting it to Python — reference integrity is real logic, and a second copy would drift. **Skips (never fails) only when the compiled `build/` is absent or `node` is not installed**: `build/` is not in the run-log snapshot, so a validation *failure* on an un-built machine would wrongly red the suite; but a validator *crash* (node ran and errored) is surfaced as a failure, never mistaken for a missing build. Operates on the full output.
+- **Full reference-integrity validation** (`test_project_files_pass_full_validation`) — beyond jsonschema, drives the compiled TypeScript `validateParsed` (the single source of truth, `packages/engine/mcp-server/src/validation/validator.ts`, via `harness/ts_validator.py`) over `research.json` + `tree.gedcomx.json` together. Catches the integrity jsonschema cannot express: dangling `ParentChild`/`Couple` endpoints, cross-file id references (`subject_person_ids`, `known_holdings.relates_to_person_ids`, `gedcomx_source_description_id`), and ancestry cycles. This is what makes a from-scratch write via the `Write` tool (init-project) safe, where no writer tool ran to validate-before-persist. Called **without** `projectPath`, so it runs research + gedcomx + cross-file checks on the parsed objects with no disk access and no sidecar-integrity blast radius. Drive the compiled validator rather than re-porting it to Python — reference integrity is real logic, and a second copy would drift. **Skips (never fails) only when the compiled `build/` is absent or `node` is not installed**: `build/` is not in the run-log snapshot, so a validation *failure* on an un-built machine would wrongly red the suite; but a validator *crash* (node ran and errored) is surfaced as a failure, never mistaken for a missing build. Operates on the full output.
 - **Duplicate-id detection** (`test_no_duplicate_tree_ids`) — no two tree `persons` / `relationships` / `sources` share an `id`. Kept **separate** from full validation because the TS `validateGedcomx` does not check it (it only adds ids to a set, never checks membership), and because it is pure Python it runs even when the compiled validator is unavailable. Operates on the full output.
 
 ### Skill-specific validators (per skill)
@@ -2379,7 +2424,7 @@ A companion **static** check — `eval/harness/scripts/check_tool_coverage.py`, 
 
 ### Known risks
 
-- **Skill discovery on Linux:** The testing plan flags issue #268 — hardcoded macOS paths in the SDK's skill discovery. Verify that `.claude/skills/<name>/SKILL.md` is found correctly on Linux before trusting results.
+- **Skill discovery on Linux:** The testing plan flags a known issue — hardcoded macOS paths in the SDK's skill discovery. Verify that `.claude/skills/<name>/SKILL.md` is found correctly on Linux before trusting results.
 - **Session storage pollution:** Temp directories create orphaned session entries in `~/.claude/projects/`. The harness must clean these up or the directory will grow unboundedly.
 - **Hook API stability:** The PreToolUse hook interface may change between SDK versions. Pin the SDK version in `eval/harness/pyproject.toml`.
 

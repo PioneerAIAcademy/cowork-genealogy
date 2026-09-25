@@ -9,7 +9,8 @@
       "boundary-change",
       "west-virginia",
       "civil-war",
-      "jurisdiction"
+      "jurisdiction",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -17,9 +18,11 @@
     "scenario": null
   },
   "mcp_fixtures": [
+    "wiki-read-west-virginia-genealogy",
     "wiki-search-west-virginia-boundary",
     "wikipedia-search-west-virginia-statehood",
     "wiki-search-any",
+    "wiki-read-any",
     "wikipedia-search-any"
   ],
   "judge_context": [
