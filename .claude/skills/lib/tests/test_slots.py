@@ -1,7 +1,7 @@
 """Tests for slot rendering in `/merge-issues`' slots.py.
 
-The bug these exist for (issue #2621): `block()` is reached only from the MUST-CLEAR
-and report-only loops, and `queues` has no key for a slot with nothing queued — so a
+The bug these exist for (issue #2621): `block()` is reached only from the READ-FIRST
+and "then" loops, and `queues` has no key for a slot with nothing queued — so a
 slot held by an In Progress card, a Review card or an open PR, with 0 or 1 mergeable
 cards behind it, rendered nothing at all. An operator reading no block for a slot
 concluded it was free when someone was already working it.
@@ -31,10 +31,20 @@ import sys
 from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_HERE, "..", "..", "merge-issues"))
+sys.path.insert(0, _HERE)
 
 import slots  # noqa: E402
+from _tree import make_tree, pin_repo_root  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def repo_root(tmp_path, monkeypatch):
+    """Every test reads a pinned tmp checkout, never the live one -- see _tree.py."""
+    return pin_repo_root(tmp_path, monkeypatch)
 
 SKILL = "packages/engine/plugin/skills/timeline"
 SLOT = "skill:timeline"
@@ -189,17 +199,17 @@ def test_each_holder_is_attributed_to_its_own_slot(tmp_path):
 
 
 def test_a_held_slot_renders_once_at_every_depth(tmp_path):
-    """`blocks()` raises on a double render. Queue 4 belongs to MUST CLEAR and queue
-    2 to report-only; neither may also appear in the new section."""
+    """`blocks()` raises on a double render. Queue 4 belongs to READ FIRST and queue
+    2 to "then"; neither may also appear in the new section."""
     held4 = [issue(n) for n in (11, 12, 13, 14)] + [
         issue(101, column="In Progress", assignees=[{"login": "x"}])]
     out4 = run(held4, tmp_path)
-    assert section_of(out4, SLOT) == "MUST CLEAR: queue >= 4"
+    assert section_of(out4, SLOT) == "READ FIRST: queue >= 4"
     assert depth(out4, SLOT) == 4
 
     out2 = run(_queued_pair() + [issue(101, column="In Progress",
                                        assignees=[{"login": "x"}])], tmp_path)
-    assert section_of(out2, SLOT) == "report only: queue 2-3"
+    assert section_of(out2, SLOT) == "then: queue 2-3"
     assert depth(out2, SLOT) == 2
 
 
@@ -248,7 +258,7 @@ def test_a_rendered_card_is_not_reported_as_unshown(tmp_path):
     """The other direction: no false positives once the derivation changed."""
     out = run(_queued_pair(), tmp_path)
 
-    assert section_of(out, SLOT) == "report only: queue 2-3"
+    assert section_of(out, SLOT) == "then: queue 2-3"
     assert "in no section above -- READ BY HAND  0" in out
 
 
@@ -282,3 +292,111 @@ def test_an_unqueued_unheld_slot_renders_in_no_section(tmp_path):
     out = run([], tmp_path)
 
     assert "--- held, queue below 2 (0 slots) ---" in out
+
+
+# --- issue #2823's three miscounts ------------------------------------------------
+#
+# `repo_root` pins touches.REPO_ROOT to a tmp tree; these tests add to it. The zz-*
+# names exist in no live checkout, so a test passes only if the code read the pin.
+
+AGENT = "packages/engine/plugin/agents/zz-agent.md"
+
+
+def _assigned(number, **kw):
+    return issue(number, assignees=[{"login": "x"}], **kw)
+
+
+def test_a_deleted_skills_cards_queue_on_its_agent(repo_root):
+    """Once skills/<x>/ is gone and agents/<x>.md exists, a card still naming the old
+    skill path queues on agent:<x>, beside a card naming the suite that stayed."""
+    make_tree(repo_root, agents=["zz-converted"])
+    out = run([issue(11, touches="packages/engine/plugin/skills/zz-converted/SKILL.md"),
+               issue(12, touches="eval/tests/unit/zz-converted/ut_zz_001.json")],
+              tmp_path=repo_root)
+
+    assert depth(out, "agent:zz-converted") == 2
+    assert depth(out, "skill:zz-converted") is None
+
+
+def test_an_assigned_backlog_card_is_in_no_queue(repo_root):
+    """Merge doctrine never merges an assigned card, whatever its column."""
+    out = run(_queued_pair() + [_assigned(13)], tmp_path=repo_root)
+
+    assert depth(out, SLOT) == 2
+    assert not any(ln.startswith("#13 ") for ln in lines_of(out, SLOT))
+    assert "pool: 2 issues" in out
+
+
+def test_an_assigned_backlog_card_shows_as_an_occupant_in_a_rendered_block(repo_root):
+    """The issue's pool/occupancy split: not a merge candidate, not a holder, but
+    visible where the slot's block renders anyway."""
+    out = run(_queued_pair() + [_assigned(13)], tmp_path=repo_root)
+
+    assert "occupant: #13 (Backlog, assigned -- not a merge target)" in lines_of(out, SLOT)
+    assert holders_of(out, SLOT) == set()
+
+
+def test_an_assigned_backlog_card_is_not_named_a_holder(repo_root):
+    """/fill-ready's Gate 4 says Backlog holds nothing. An assigned Backlog card on an
+    otherwise empty slot must not conjure a held block."""
+    out = run([_assigned(13)], tmp_path=repo_root)
+
+    assert section_of(out, SLOT) is None
+    assert "--- held, queue below 2 (0 slots) ---" in out
+
+
+def test_an_unassigned_backlog_card_is_still_queued(repo_root):
+    out = run(_queued_pair() + [issue(13)], tmp_path=repo_root)
+
+    assert depth(out, SLOT) == 3
+
+
+def test_an_agent_card_also_queues_on_every_skill_that_embeds_it(repo_root):
+    """The shape of research naming @plugin:gps-mentor: build_snapshot embeds the agent
+    in the embedder's run log. Derived from the scan, not a list: zz-bystander names
+    no agent."""
+    make_tree(repo_root, skills=["zz-embedder", "zz-bystander"], agents=["zz-agent"],
+              plugin_refs={"zz-embedder": ["zz-agent"]})
+    out = run([issue(11, touches=AGENT), issue(12, touches=AGENT)], tmp_path=repo_root)
+
+    assert depth(out, "agent:zz-agent") == 2
+    assert depth(out, "skill:zz-embedder") == 2
+    assert depth(out, "skill:zz-bystander") is None
+
+
+def test_a_pair_agent_queues_on_its_skill_not_twice(repo_root):
+    """The person-evidence shape: a skill naming its own agent is one paid run, so the
+    card queues once under skill:zz-pair, not also under agent:zz-pair."""
+    make_tree(repo_root, skills=["zz-pair", "zz-embedder"],
+              agents=["zz-pair"],
+              plugin_refs={"zz-pair": ["zz-pair"],
+                           "zz-embedder": ["zz-pair"]})
+    pair = "packages/engine/plugin/agents/zz-pair.md"
+    out = run([issue(11, touches=pair), issue(12, touches=pair)], tmp_path=repo_root)
+
+    assert depth(out, "skill:zz-pair") == 2
+    assert depth(out, "skill:zz-embedder") == 2
+    assert depth(out, "agent:zz-pair") is None
+
+
+def test_a_converted_skills_suite_card_queues_only_on_its_own_slot(repo_root):
+    """A suite file names agent:<x> after a conversion, but no other skill embeds a
+    suite, so it must not reach the agent's embedders."""
+    make_tree(repo_root, skills=["zz-embedder"], agents=["zz-converted"],
+              plugin_refs={"zz-embedder": ["zz-converted"]})
+    suite = "eval/tests/unit/zz-converted/ut_zz_001.json"
+    out = run([issue(11, touches=suite), issue(12, touches=suite)], tmp_path=repo_root,
+              prs=[{"number": 901, "files": [{"path": suite}]}])
+
+    assert depth(out, "agent:zz-converted") == 2
+    assert depth(out, "skill:zz-embedder") is None
+    assert "holder: PR #901 (open, touches the snapshot)" in lines_of(out, "agent:zz-converted")
+
+
+def test_a_pr_on_an_agent_holds_every_embedding_skill(repo_root):
+    make_tree(repo_root, skills=["zz-embedder"], agents=["zz-agent"],
+              plugin_refs={"zz-embedder": ["zz-agent"]})
+    out = run([], tmp_path=repo_root, prs=[{"number": 900, "files": [{"path": AGENT}]}])
+
+    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "skill:zz-embedder")
+    assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "agent:zz-agent")
