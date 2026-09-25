@@ -123,7 +123,6 @@ a batch one person finishes in one sitting.
    startable today. Merging strands the startable half behind the lead's answer.
    `senior` is *not* on this list — it is orthogonal to `needs-decision` and
    never a reason to split a card.
-4. **The two are independent work** that happens to share a snapshot.
 
 ## 3. Merge N-way, not pairwise
 
@@ -139,7 +138,7 @@ non-overlapping list; generate the partition of slots, do not eyeball it. A slot
 appearing in two agents' lists produces two contradictory proposals for the same
 queue.
 
-Report coverage as a number and a rule: how many slots you cleared, how they were
+Report coverage as a number and a rule: how many slots you read, how they were
 chosen, and which agents failed. Never report a sample as the whole pass.
 
 **Validate the returned partition before you act on it.** Agents that share an
