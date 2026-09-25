@@ -38,9 +38,20 @@ function agentWritableSections(): Map<string, string[]> {
   const src = readFileSync(GUARD, "utf-8");
   const body = src.match(/^AGENT_WRITABLE_SECTIONS\s*=\s*\{([\s\S]*?)^\}/m)?.[1] ?? "";
   const out = new Map<string, string[]>();
-  for (const m of body.matchAll(/^\s+["']([^"']+)["']\s*:\s*frozenset\(\{([^}]*)\}\)/gm)) {
+  // Whitespace is allowed around the braces: a formatter wraps a long entry as
+  // `frozenset(\n    {...}\n)`, which Python reads identically.
+  for (const m of body.matchAll(/^\s+["']([^"']+)["']\s*:\s*frozenset\(\s*\{([^}]*)\}\s*\)/gm)) {
     out.set(m[1], [...m[2].matchAll(/["']([^"']+)["']/g)].map((s) => s[1]));
   }
+  // Every key the map carries must have parsed. A shape the entry regex does
+  // not know would otherwise drop that agent from every test reading this —
+  // silently, since the other agents keep the map non-empty.
+  const keys = [...body.matchAll(/^\s+["']([^"']+)["']\s*:/gm)].map((m) => m[1]);
+  expect(
+    [...out.keys()],
+    "an AGENT_WRITABLE_SECTIONS entry parsed to no sections — its shape is one " +
+      "this reader does not handle",
+  ).toEqual(keys);
   return out;
 }
 
@@ -294,18 +305,24 @@ describe("plugin hooks are packaged and wired", () => {
           (r: { artifact: string; section: string }) =>
             r.artifact === "research.json" && r.section === section,
         );
-        const named = new Set<string>([
-          ...(row?.callers ?? []),
-          ...(row?.hookCallers ?? []),
-          ...(row?.agentCallers ?? []).map((a: { agent: string }) => a.agent),
-        ]);
-        if (!named.has(`agent:${agent}`)) missing.push(`research.json#${section}: agent:${agent}`);
+        // Named for `research_append` specifically — the one tool whose
+        // `section` the hook routes. An `agentCallers` entry naming the agent
+        // for some other tool would pass a name-only check while saying it
+        // never writes the section the hook lets it write.
+        const id = `agent:${agent}`;
+        const permitted = [...(row?.callers ?? []), ...(row?.hookCallers ?? [])].includes(id);
+        const observed = (row?.agentCallers ?? []).some(
+          (a: { agent: string; tools: string[] }) =>
+            a.agent === id && a.tools.includes("research_append"),
+        );
+        if (!permitted && !observed) missing.push(`research.json#${section}: ${id}`);
       }
     }
     expect(
       missing,
-      "the hook lets these agents write these sections, and the manifest row names " +
-        "none of them — add the agent to that row's `agentCallers`",
+      "the hook lets these agents `research_append` these sections, and the " +
+        "manifest row does not name them for it — add the agent to that row's " +
+        "`agentCallers` with `research_append` in its `tools`",
     ).toEqual([]);
   });
 
