@@ -8,7 +8,11 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import {
   personQualityTool,
   NOT_FAMILYSEARCH_ID_MESSAGE,
+  notLinkedMessage,
 } from "../../src/tools/person-quality.js";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { getValidToken } from "../../src/auth/refresh.js";
 import {
   renderIssueSentence,
@@ -505,4 +509,77 @@ describe("person_quality — ids that are not FamilySearch person ids", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     },
   );
+});
+
+describe("person_quality — a project's local id, looked up in the project tree", () => {
+  function project(persons: unknown[] | string): string {
+    const dir = mkdtempSync(join(tmpdir(), "pq-"));
+    writeFileSync(
+      join(dir, "tree.gedcomx.json"),
+      typeof persons === "string" ? persons : JSON.stringify({ persons }),
+      "utf-8",
+    );
+    return dir;
+  }
+  const patrick = (extra: Record<string, unknown> = {}) => ({
+    id: "I1",
+    names: [{ given: "Patrick", surname: "Flynn", preferred: true }],
+    ...extra,
+  });
+
+  it.each([
+    ["a bare tree ark", "ark:/61903/4:1:MKVT-7XR"],
+    ["a resolver URL", "https://familysearch.org/ark:/61903/4:1:MKVT-7XR"],
+  ])("scores an imported person under the id in their link (%s)", async (_label, ark) => {
+    mockOk({ isValid: true, personScores: { overallDisplayScore: 0.9, issues: [] } });
+    const projectPath = project([patrick({ ark })]);
+    const result = scored(await personQualityTool({ personId: "I1", projectPath }, LOCAL));
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toContain("/quality/person/MKVT-7XR/scores");
+    expect(result.personId).toBe("MKVT-7XR");
+  });
+
+  it("answers a person with no FamilySearch link truthfully, by name, without a network call", async () => {
+    const projectPath = project([patrick()]);
+    const result = await personQualityTool({ personId: "I1", projectPath }, LOCAL);
+    expect(result).toEqual({
+      ok: false,
+      reason: "not_familysearch_id",
+      errors: [notLinkedMessage("Patrick Flynn")],
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("treats a record-persona (1:1:) link as no tree link", async () => {
+    const projectPath = project([patrick({ ark: "ark:/61903/1:1:QPRC-WPBZ" })]);
+    const result = await personQualityTool({ personId: "I1", projectPath }, LOCAL);
+    expect("reason" in result && result.errors).toEqual([notLinkedMessage("Patrick Flynn")]);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the person's tree link holds an id that is not a FamilySearch id",
+      () => project([patrick({ ark: "https://familysearch.org/ark:/61903/4:1:KWCJ-JAM7" })])],
+    ["the person is not in the tree", () => project([{ id: "I9", names: [] }])],
+    ["the tree file is missing", () => mkdtempSync(join(tmpdir(), "pq-empty-"))],
+    ["the tree file is not JSON", () => project("{not json")],
+    ["the person has no name", () => project([{ id: "I1", names: [] }])],
+  ])("falls back to the neutral sentence when %s, without throwing", async (_label, make) => {
+    const result = await personQualityTool({ personId: "I1", projectPath: make() }, LOCAL);
+    expect(result).toEqual({
+      ok: false,
+      reason: "not_familysearch_id",
+      errors: [NOT_FAMILYSEARCH_ID_MESSAGE],
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("never puts the local id or its type into the sentence", async () => {
+    const result = await personQualityTool({ personId: "I1", projectPath: project([patrick()]) }, LOCAL);
+    const sentence = "reason" in result ? result.errors[0] : "";
+    expect(sentence).not.toMatch(/\bI1\b/);
+    expect(sentence).not.toMatch(/synthetic|local id|project id/i);
+  });
 });

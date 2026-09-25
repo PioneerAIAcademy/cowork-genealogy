@@ -114,6 +114,11 @@ export interface PersonQualityInput {
    * tool serve both without either paying for the other's context.
    */
   detail?: boolean;
+  /**
+   * Absolute path of the project folder. Lets a project's local tree id resolve
+   * to the person's FamilySearch link (`ark`) so an imported person is scored.
+   */
+  projectPath?: string;
 }
 
 // One rendered issue. The sentence is the primary payload; conclusionType +

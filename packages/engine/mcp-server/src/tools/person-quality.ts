@@ -3,15 +3,20 @@
 //
 // Reads a person's FamilySearch data-quality score and returns the live issues
 // to the LLM as interpolated English sentences (plus a compact score summary),
-// keeping the LLM's context lean. Requires authentication — except for an id
-// that is not a FamilySearch person id, which is answered here without a
-// network call or a token (see "Non-FamilySearch ids" in the spec).
+// keeping the LLM's context lean. Requires authentication to score. A project's
+// local id is first resolved to the person's FamilySearch link through the
+// project tree; a person with no link is answered here without a network call
+// or a token (see "Non-FamilySearch ids" in the spec).
 
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
 import { isFamilySearchPersonId } from "../utils/fs-id.js";
+import { toArk } from "../utils/ark.js";
+import { preferredName } from "../utils/name-helpers.js";
+import { getProjectStore } from "../store/project-store.js";
+import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { renderIssueSentence } from "./person-quality-templates.js";
 import type {
   FSCategoryScore,
@@ -141,9 +146,11 @@ export const personQualityToolSchema = {
     "it can be traced to the exact fact. Pass detail=true to also get the " +
     "per-fact breakdown — which attached sources touch each fact and whether " +
     "each agrees, and which sources disagree with each other. Accepts any " +
-    "tree-person id: an id that is not a FamilySearch person id is answered " +
-    "directly, without contacting FamilySearch. For a FamilySearch id this " +
-    "requires authentication — call the login tool first if not logged in.",
+    "tree-person id. With projectPath, a project's own id is looked up in the " +
+    "project's tree and the person is scored under their FamilySearch link; a " +
+    "person with no link gets a one-sentence answer, without contacting " +
+    "FamilySearch. Scoring requires authentication — call the login tool first " +
+    "if not logged in.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -151,9 +158,14 @@ export const personQualityToolSchema = {
         type: "string",
         description:
           'Tree-person id from the project (a FamilySearch id looks like "KD96-TV2"). ' +
-          "An id that is not a FamilySearch person id is answered without " +
-          "contacting FamilySearch. Resolve a name to an id with person_search " +
-          "first if you don't have one.",
+          "Resolve a name to an id with person_search first if you don't have one.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Absolute path of the project folder. Pass it so a project's own tree " +
+          "id is looked up in the project's tree and scored under the person's " +
+          "FamilySearch link.",
       },
       detail: {
         type: "boolean",
@@ -312,37 +324,97 @@ function buildDetail(
   return { facts, conflicts: groupConflicts(scores, titleByUri) };
 }
 
-/** Returned for an id that is not a FamilySearch person id. No id, no id type. */
+/**
+ * Returned when no FamilySearch id could be found for the person — no project to
+ * look in, the person is not in it, or the tree could not be read. States what
+ * was done, not a fact about the person. No id, no id type.
+ */
 export const NOT_FAMILYSEARCH_ID_MESSAGE =
   "No FamilySearch quality score was retrieved for this person.";
 
-function notFamilySearchIdResult(): PersonQualityNotFamilySearchId {
-  return {
-    ok: false,
-    reason: "not_familysearch_id",
-    errors: [NOT_FAMILYSEARCH_ID_MESSAGE],
+/** Returned for a person in the project with no FamilySearch link. True, by name. */
+export function notLinkedMessage(name: string): string {
+  return `${name} isn't linked to FamilySearch, so there's no FamilySearch quality score.`;
+}
+
+function notFamilySearchIdResult(message: string): PersonQualityNotFamilySearchId {
+  return { ok: false, reason: "not_familysearch_id", errors: [message] };
+}
+
+const TREE_FILE = "tree.gedcomx.json";
+const TREE_PERSON_ARK_RE = /^ark:\/61903\/4:1:(.+)$/;
+
+export type PersonQualityTarget =
+  | { kind: "familysearch"; familySearchId: string }
+  | { kind: "answer"; result: PersonQualityNotFamilySearchId };
+
+/**
+ * Decide what to score, with no network call and no token.
+ *
+ * A FamilySearch person id is scored as given. A project's local id (`I1`) is
+ * looked up in the project's tree: init-project gives every person it imports a
+ * local id AND keeps their FamilySearch link in `ark`, so an imported person is
+ * scored under the id inside that link. Only a `4:1:` link is a tree person; a
+ * `1:1:` link is a record persona and has no quality score. A person with no such
+ * link gets a true sentence by name. Anything that cannot be settled — no
+ * projectPath, the person not in the tree, the tree unreadable, no name — gets
+ * the neutral sentence, never a throw: a quality call must not fail because of
+ * project state. Exported so the eval harness runs this exact decision.
+ */
+export async function resolvePersonQualityTarget(
+  input: Pick<PersonQualityInput, "personId" | "projectPath">,
+): Promise<PersonQualityTarget> {
+  const personId = typeof input.personId === "string" ? input.personId.trim() : "";
+  if (isFamilySearchPersonId(personId)) {
+    return { kind: "familysearch", familySearchId: personId };
+  }
+  const neutral: PersonQualityTarget = {
+    kind: "answer",
+    result: notFamilySearchIdResult(NOT_FAMILYSEARCH_ID_MESSAGE),
   };
+  const projectPath = typeof input.projectPath === "string" ? input.projectPath.trim() : "";
+  if (projectPath === "") return neutral;
+
+  let tree: SimplifiedGedcomX;
+  try {
+    tree = JSON.parse(await getProjectStore().readText(projectPath, TREE_FILE)) as SimplifiedGedcomX;
+  } catch {
+    return neutral;
+  }
+  const person = (tree.persons ?? []).find((p) => p?.id === personId);
+  if (!person) return neutral;
+
+  const ark = typeof person.ark === "string" ? toArk(person.ark) : "";
+  const link = ark.match(TREE_PERSON_ARK_RE);
+  if (link) {
+    // A tree link whose id is not a FamilySearch person id cannot be scored,
+    // but it IS a link — "isn't linked" would be false, so say only what was done.
+    return isFamilySearchPersonId(link[1])
+      ? { kind: "familysearch", familySearchId: link[1] }
+      : neutral;
+  }
+
+  const chosen = preferredName(person.names);
+  const name = [chosen?.given?.trim(), chosen?.surname?.trim()].filter(Boolean).join(" ");
+  if (name === "") return neutral;
+  return { kind: "answer", result: notFamilySearchIdResult(notLinkedMessage(name)) };
 }
 
 export async function personQualityTool(
   input: PersonQualityInput,
   principal: Principal,
 ): Promise<PersonQualityToolResult> {
-  const personId =
+  const requestedId =
     typeof input.personId === "string" ? input.personId.trim() : "";
-  if (personId === "") {
+  if (requestedId === "") {
     throw new Error("personId is required.");
   }
 
-  // Answered here, before the token: an id that is not a FamilySearch person id
-  // has no score FamilySearch could return (its quality service refuses such an
-  // id on format), and a researcher who is not logged in must not be told to log
-  // in for it. The message states what was done, not a fact about the person —
-  // init-project gives imported people a local id AND keeps their FamilySearch
-  // link in `ark`, so "not on FamilySearch" would be false for exactly them.
-  if (!isFamilySearchPersonId(personId)) {
-    return notFamilySearchIdResult();
-  }
+  // Settled before the token, with no network call: a researcher who is not
+  // logged in is never told to log in for a person with no FamilySearch id.
+  const target = await resolvePersonQualityTarget(input);
+  if (target.kind === "answer") return target.result;
+  const personId = target.familySearchId;
 
   const token = await getValidToken(principal);
   const url = `${HOST}/service/tree/tree-data/quality/person/${encodeURIComponent(
