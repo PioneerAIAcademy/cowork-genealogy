@@ -2,16 +2,9 @@
   "per_finding": {
     "f1": "true",
     "f2": "true",
-    "f3": "partial",
+    "f3": "true",
     "f4": "true"
   },
   "proof_quality_score": 3,
-  "notes": {
-    "f1": "Mother recovered fully: I1 Josefine/Josephine Weichel (census index spelling Weishel), birth F1 = 7 Sep 1891, linked as Wendel's mother via R7 (sourced to the 1926 census S4).",
-    "f2": "Correctly named the tree's existing placeholder father GX6M-5HT as Jacob (BirthName 'Jacob Weishel', census index spelling, S4) rather than adding a competing father — exactly what the finding requires.",
-    "f3": "Re-graded true -> partial. The 1926 Weyburn No. 67 residence is recovered on the subject (F11, S4), but the 1924 immigration is attached to the mother I1 (F4) rather than the subject and carries the wrong place (Thames Centre, Ontario instead of Saskatchewan). Immigration place is not a graded component, but the immigration fact landed on the wrong person, so partial rather than true.",
-    "f4": "All four siblings created and linked to both parents: Peter (I2, 1919 Russia), Augina (I3, 1922 Germany), Katherina (I4, 1923 Germany), Barbara (I5, 1925 Saskatchewan) — names, years and places all match."
-  },
-  "annotator": "Asimi1234",
-  "findings_hash": "1edd2fa0e8ad698e6198746924bb02cb3b20d2818327c6db0e6582e0ab4dae12"
+  "findings_hash": "5534f15d7bdbb1991d016921d4c3ae17a026cf1c389db87ed7528630453c5e4a"
 }
