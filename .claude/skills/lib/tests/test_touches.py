@@ -207,7 +207,7 @@ def test_every_path_of_a_converted_skill_names_the_agent_slot(repo_root):
 
 
 def test_a_live_skill_with_a_same_named_agent_keeps_its_skill_slot(repo_root):
-    """The other direction: zz-pair has both a skill and an agent today."""
+    """The other direction: a live skill with a same-named agent, as person-evidence has."""
     make_tree(repo_root, skills=["zz-converted"], agents=["zz-converted"])
 
     assert slot_of(CONVERTED[0]) == "skill:zz-converted"

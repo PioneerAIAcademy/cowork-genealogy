@@ -323,8 +323,17 @@ def test_an_assigned_backlog_card_is_in_no_queue(repo_root):
     out = run(_queued_pair() + [_assigned(13)], tmp_path=repo_root)
 
     assert depth(out, SLOT) == 2
-    assert "#13 " not in out
+    assert not any(ln.startswith("#13 ") for ln in lines_of(out, SLOT))
     assert "pool: 2 issues" in out
+
+
+def test_an_assigned_backlog_card_shows_as_an_occupant_in_a_rendered_block(repo_root):
+    """The issue's pool/occupancy split: not a merge candidate, not a holder, but
+    visible where the slot's block renders anyway."""
+    out = run(_queued_pair() + [_assigned(13)], tmp_path=repo_root)
+
+    assert "occupant: #13 (Backlog, assigned -- not a merge target)" in lines_of(out, SLOT)
+    assert holders_of(out, SLOT) == set()
 
 
 def test_an_assigned_backlog_card_is_not_named_a_holder(repo_root):
@@ -368,6 +377,20 @@ def test_a_pair_agent_queues_on_its_skill_not_twice(repo_root):
     assert depth(out, "skill:zz-pair") == 2
     assert depth(out, "skill:zz-embedder") == 2
     assert depth(out, "agent:zz-pair") is None
+
+
+def test_a_converted_skills_suite_card_queues_only_on_its_own_slot(repo_root):
+    """A suite file names agent:<x> after a conversion, but no other skill embeds a
+    suite, so it must not reach the agent's embedders."""
+    make_tree(repo_root, skills=["zz-embedder"], agents=["zz-converted"],
+              plugin_refs={"zz-embedder": ["zz-converted"]})
+    suite = "eval/tests/unit/zz-converted/ut_zz_001.json"
+    out = run([issue(11, touches=suite), issue(12, touches=suite)], tmp_path=repo_root,
+              prs=[{"number": 901, "files": [{"path": suite}]}])
+
+    assert depth(out, "agent:zz-converted") == 2
+    assert depth(out, "skill:zz-embedder") is None
+    assert "holder: PR #901 (open, touches the snapshot)" in lines_of(out, "agent:zz-converted")
 
 
 def test_a_pr_on_an_agent_holds_every_embedding_skill(repo_root):

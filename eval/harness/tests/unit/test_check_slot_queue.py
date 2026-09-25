@@ -118,19 +118,30 @@ def test_an_agent_nothing_references_reaches_no_skill():
     )
 
 
-def test_a_converted_skills_paths_reach_its_own_suite(repo_root):
-    """Skill directory gone, agent and suite kept: slot_of names every path
-    `agent:<x>`, and the suite of the same name embeds the agent body."""
+def _converted(repo_root):
     root_agents = repo_root / "packages" / "engine" / "plugin" / "agents"
     (root_agents / "zz-converted.md").write_text("# zz-converted\n", encoding="utf-8")
     (repo_root / "eval" / "tests" / "unit" / "zz-converted").mkdir(parents=True)
 
-    for path in ("packages/engine/plugin/skills/zz-converted/SKILL.md",
-                 "eval/tests/unit/zz-converted/ut_zz_001.json",
-                 "packages/engine/plugin/agents/zz-converted.md"):
+
+def test_a_converted_skills_agent_body_reaches_its_suite_and_its_embedders(repo_root):
+    """Skill directory gone, agent and suite kept. The agent body is embedded in its
+    own suite (by name) and in every skill naming it via @plugin:."""
+    _converted(repo_root)
+    assert check_slot_queue.path_to_skills(
+        "packages/engine/plugin/agents/zz-converted.md", {"zz-converted": {"zz-embedder"}}
+    ) == {"zz-converted", "zz-embedder"}
+
+
+def test_a_converted_skills_suite_file_reaches_only_its_own_suite(repo_root):
+    """slot_of names the suite `agent:<x>` too, but build_snapshot embeds a skill's
+    own suite and nobody else's, and rule 2 maps a suite edit to <x> alone."""
+    _converted(repo_root)
+    for path in ("eval/tests/unit/zz-converted/ut_zz_001.json",
+                 "packages/engine/plugin/skills/zz-converted/SKILL.md"):
         assert check_slot_queue.path_to_skills(
             path, {"zz-converted": {"zz-embedder"}}
-        ) == {"zz-converted", "zz-embedder"}, path
+        ) == {"zz-converted"}, path
 
 
 def test_affected_skills_unions_over_paths():

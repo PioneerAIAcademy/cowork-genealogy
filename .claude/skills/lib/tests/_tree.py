@@ -2,8 +2,9 @@
 
 `slot_of` names a skill's paths `agent:<x>` once `skills/<x>/` is gone from disk and
 `agents/<x>.md` exists, and slots.py scans the live skills for `@plugin:`. Against the
-real checkout, every fixture naming `timeline` or `citation` would flip the day that
-skill is converted to an agent, reddening a PR that never touched these tests. So
+real checkout, a fixture naming a live skill flips the day that skill is converted to
+an agent (`citation` already was, in PR #2861), reddening a PR that never touched these
+tests. So
 each test module here pins `touches.REPO_ROOT` to a tmp tree via `pin_repo_root`. It
 holds no agents, which is what keeps every skill path on `skill:<x>`; tests that need
 an agent or a `@plugin:` reference add it with `make_tree`, under zz-* names no live

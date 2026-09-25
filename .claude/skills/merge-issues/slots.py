@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join(_HERE, "..", "lib"))
 sys.path.insert(0, os.path.join(_HERE, "..", "..", "..", "eval", "harness", "scripts"))
 
 import touches  # noqa: E402
-from check_runlogs import skills_referencing_agents  # noqa: E402
+from check_runlogs import AGENT_PATH_RE, skills_referencing_agents  # noqa: E402
 from touches import (  # noqa: E402
     in_snapshot,
     paths_from_touches,
@@ -70,12 +70,14 @@ def embedders():
         Path(touches.REPO_ROOT) / "packages" / "engine" / "plugin" / "skills")
 
 
-def expand(slot, embedded_by):
-    """An agent slot, plus the slot of every skill that embeds the agent. A skill
-    naming its own agent (person-evidence) is one paid run, so its skill slot stands
-    for both; any other agent keeps its own slot beside the embedders."""
+def expand(path, slot, embedded_by):
+    """The slots a path's edit reaches. An agent BODY reaches its own slot plus
+    every skill that embeds it; a skill naming its own agent (person-evidence) is
+    one paid run, so its skill slot stands for both. Any other path -- a converted
+    skill's suite file names `agent:<x>` too -- reaches its own slot alone, since
+    build_snapshot embeds a skill's own suite and nobody else's."""
     kind, _, name = slot.partition(":")
-    if kind != "agent":
+    if kind != "agent" or not AGENT_PATH_RE.match(path):
         return {slot}
     out = {f"skill:{s}" for s in embedded_by.get(name, ())}
     if f"skill:{name}" not in out:
@@ -89,7 +91,7 @@ def slots_of(entries, embedded_by):
     for _, p in entries:
         s = slot_of(p)
         if s:
-            out |= expand(s, embedded_by)
+            out |= expand(p, s, embedded_by)
     return out
 
 
@@ -106,7 +108,7 @@ def main(board_path, open_path, prs_path):
               "is then wrong.\n")
 
     embedded_by = embedders()
-    entries, pool, holders = {}, [], {}
+    entries, pool, holders, occupants = {}, [], {}, []
     for n, issue in issues.items():
         col = status.get(n)
         labs = labels_of(issue)
@@ -116,8 +118,13 @@ def main(board_path, open_path, prs_path):
         # The merge pool: nobody is holding these. An unassigned Ready card is in
         # it *and* holds a slot -- it is the natural merge target, being furthest
         # along. An assigned card is someone's work in any column, Backlog included,
-        # and is never a merge candidate.
+        # and is never a merge candidate. An assigned Backlog card holds no slot --
+        # Gate 4 says Backlog holds nothing -- so it is shown as an occupant line
+        # inside a block that renders anyway, never counted in depth and never the
+        # reason a block renders.
         if issue.get("assignees"):
+            if col == "Backlog":
+                occupants.append(n)
             continue
         if col == "Backlog" and "icebox" not in labs:
             pool.append(n)
@@ -142,12 +149,17 @@ def main(board_path, open_path, prs_path):
         for s in slots_of(entries[n], embedded_by):
             held.setdefault(s, []).append((n, col, tag))
 
+    occupied = {}
+    for n in occupants:
+        for s in slots_of(entries[n], embedded_by):
+            occupied.setdefault(s, []).append(n)
+
     pr_slots = {}
     for p in prs:
         for f in p.get("files") or []:
             s = slot_of(f["path"])
             if s and in_snapshot(f["path"]):
-                for slot in expand(s, embedded_by):
+                for slot in expand(f["path"], s, embedded_by):
                     pr_slots.setdefault(slot, set()).add(p["number"])
 
     def describe(n):
@@ -162,6 +174,8 @@ def main(board_path, open_path, prs_path):
             print(f"      holder: #{n} ({col}, {tag})")
         for p in sorted(pr_slots.get(slot, [])):
             print(f"      holder: PR #{p} (open, touches the snapshot)")
+        for n in sorted(occupied.get(slot, [])):
+            print(f"      occupant: #{n} (Backlog, assigned -- not a merge target)")
         for n in sorted(members, key=lambda x: -age_days(issues[x]["createdAt"], now)):
             print(describe(n))
         print()
