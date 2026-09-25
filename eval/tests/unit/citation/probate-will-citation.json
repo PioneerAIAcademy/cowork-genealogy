@@ -10,15 +10,17 @@
       "will",
       "1881",
       "src_006",
-      "pli_006"
+      "pli_006",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Refine the citation for src_006, Thomas Flynn's will.",
+    "delegation": "Refine the citation on src_006, Thomas Flynn's will.\n\nsourceId: src_006\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
-    "validate-research-schema"
+    "validate-research-schema",
+    "wiki-read-pennsylvania-probate-records"
   ],
   "judge_context": [
     "who must be the probating authority, not the courthouse building. In Pennsylvania the county Register of Wills receives, probates and records wills; the Orphans' Court adjudicates estate distribution and guardianship. For a WILL, 'Schuylkill County Register of Wills, Pennsylvania' is the correct creator and is what the tree.gedcomx.json source-description author field for this source records. 'Schuylkill County Orphans' Court, Pennsylvania' names a real probate authority and is not a fabrication, but it is not the body that created this record — score it partial, not pass. A building name like 'Schuylkill County Courthouse' is wrong",

@@ -1053,6 +1053,14 @@ DEDICATED_AGENT_NAMES = frozenset(
         # unnamed-delegate bypass. Do not read its presence here as evidence that
         # a hook route exists.
         "search-images",
+        # Same shape as search-images, and for the same reason (issue #2799):
+        # `citation` is a converted skill, not a hook-routed pair. No hook
+        # routes anything to it. It is listed because the set is asserted equal
+        # to the shipped agent files, and because a `sources` refinement
+        # arriving from it is legitimate -- `ownership.json` names
+        # `agent:citation` on that row -- rather than an unnamed-delegate
+        # bypass. Do not read its presence here as evidence of a hook route.
+        "citation",
     }
 )
 
@@ -1242,7 +1250,12 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
             # ALSO touch an owning_skills section, still checked below. One violation
             # per offending CALL (not per op), matching the sibling arms' granularity
             # so a batch does not inflate the shadow signal.
-            if agent_id is not None and bare_agent_type != "record-extractor":
+            # `citation` joins the exemption because it became an agent and is a
+            # declared caller of `sources` in ownership.json. This branch runs
+            # BEFORE the DEDICATED_AGENT_NAMES check below, so membership there
+            # does not reach it -- every legitimate citation refinement would
+            # otherwise be shadow-reported as an unnamed-delegate bypass.
+            if agent_id is not None and bare_agent_type not in ("record-extractor", "citation"):
                 sections = sorted(
                     {
                         op.get("section")
@@ -1255,7 +1268,8 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
                         f"tool_calls[{i}] research_append to {'/'.join(sections)} was "
                         f"made by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
                         "this is record-extraction/citation's protected write, made "
-                        "by neither the main thread nor the record-extractor agent"
+                        "by neither the main thread nor the record-extractor or "
+                        "citation agent"
                     )
 
         owners = owning_skills(tool, args)
