@@ -1,0 +1,168 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Establish the baptism date of Sarah Hollins of Bolton, Lancashire, daughter of William Hollins, from the parish register and its later transcript",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-05"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was Sarah Hollins baptised at Bolton-le-Moors on 14 February 1746 or 14 February 1747?",
+      "rationale": "Two sources give the same day and month for the baptism but years one apart. Whether this is a genuine disagreement or an artifact of how the year was reckoned must be settled before either date is carried into the tree.",
+      "selection_basis": "unresolved_conflict",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-05-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Bolton-le-Moors, Lancashire, England",
+          "date_range": "1745-1750",
+          "repository": "FamilySearch",
+          "rationale": "The Bolton-le-Moors Anglican register should record the baptism directly; the printed transcript gives a second reading of the same entry.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-02T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "given": "Sarah",
+        "surname": "Hollins",
+        "residence_place": "Bolton-le-Moors, Lancashire, England",
+        "collection": "England Births and Christenings"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "Two readings of one baptism. The register image gives the year as 1746; the printed transcript gives 1747. Same day (14 February), same month, same parish, same father.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Bolton-le-Moors, Lancashire, England, Anglican parish register, baptisms, entry for Sarah Hollins, 14 February 1746; digital image, FamilySearch.org, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "Parish curate",
+        "what": "Anglican parish register, baptisms",
+        "when_created": "1746",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org",
+        "where_within": "Bolton-le-Moors, Lancashire"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:HOLL-1746",
+      "url_archived": null,
+      "notes": "The register's own year, as written by the curate on the page."
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Lancashire Parish Register Society, printed transcript of Bolton-le-Moors baptisms, entry for Sarah Hollins, 14 February 1747; FamilySearch.org, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "Parish register society transcriber",
+        "what": "Printed transcript of the Bolton-le-Moors baptism register",
+        "when_created": "1912",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org",
+        "where_within": "Bolton-le-Moors, Lancashire"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:HOLL-1747",
+      "url_archived": null,
+      "notes": "A later transcript of the same register entry. It gives the year as 1747."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:HOLL-1746",
+      "record_role": "principal",
+      "record_persona_id": "CP1",
+      "fact_type": "christening",
+      "value": "Sarah Hollins, daughter of William Hollins, baptised 14 February 1746, Bolton-le-Moors, Lancashire, England",
+      "structured_value": null,
+      "date": "14 Feb 1746",
+      "date_certainty": "exact",
+      "place": "Bolton-le-Moors, Lancashire, England",
+      "standard_place": "Bolton-le-Moors, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "Parish curate",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The year is the register's own, written on the page at the time of the baptism.",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:HOLL-1747",
+      "record_role": "principal",
+      "record_persona_id": "CP2",
+      "fact_type": "christening",
+      "value": "Sarah Hollins, daughter of William Hollins, baptised 14 February 1747, Bolton-le-Moors, Lancashire, England",
+      "structured_value": null,
+      "date": "14 Feb 1747",
+      "date_certainty": "exact",
+      "place": "Bolton-le-Moors, Lancashire, England",
+      "standard_place": "Bolton-le-Moors, Lancashire, England, United Kingdom",
+      "information_quality": "secondary",
+      "informant": "Parish register society transcriber",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "A transcriber working from the same register page. The day, month, parish and father all match a_001.",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
