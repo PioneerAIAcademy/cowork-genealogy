@@ -4,7 +4,7 @@
   },
   "proof_quality_score": 3,
   "notes": {
-    "f1": "Right relationship and source (R7 sourced to S1, the Vermont death record), but David Bagley (I1) carries no facts — birth date and place absent. Second unlinked David Bagley (I2) also in tree; target person underidentified."
+    "f1": "Two David Bagleys in the tree (I1 linked via R7, I2 unlinked); I1 carries no birth facts. Agent had the birth date and place (22 Feb 1777, Newton, Rockingham, NH) from the supporting sources but did not populate them onto I1. Without facts on I1 the two Davids are indistinguishable in the tree — target person underidentified."
   },
   "annotator": "mercyokum",
   "findings_hash": "679a8f9acedcfd4aa2b25276012b0efbfd855d0eec05a99a8688f0697ab99077"
