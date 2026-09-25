@@ -56,15 +56,28 @@ this out: it holds `9NDQ-JQ7` as a separate person, couples Rufino to **both**
 women (church 9 Apr to `GRS9-MCH`, civil 17 Jun to `9NDQ-JQ7`), and the hint
 record is already attached to `9NDQ-JQ7` — the conflation made visible.
 
-**The correct resolution** is therefore that Rufino's 1896 wife was Valentina
-Adelaida Martines (daughter of Dolores Milan), a distinct person from `GRS9-MCH`
-(daughter of Josefa Segovia), and the starting tree wrongly assigns `GRS9-MCH` the
-1896 marriage and children that belong to the other woman. The hint's "Dolores"
-mother is real — but it belongs to Valentina, not to the 1871-baptized Adela
-Natividad. Correcting the live tree (splitting the two women, moving the marriage
-and children to `9NDQ-JQ7`) is **out of scope** for this resolve-only fixture and
-was not done; `9NDQ-JQ7` appears here only as a reference, never as an evidence
-ark.
+**Independent confirmation from 1914.** In her own later civil marriage — Adela
+Martínez to Francisco Pilar Carmona at Gualeguaychú, Entre Ríos, 12 August 1914
+(`ark:/61903/1:1:DMJK-BWMM`, already a tree source) — the bride is recorded born
+about 1873, daughter of Juan Martínez and **Josefa Segovia**, with marital status
+**single** (soltera). Had `GRS9-MCH` been Rufino Moreira's wife (married 1896;
+Rufino died 1903) she would appear in 1914 as a **widow**, not single. Being single
+in 1914 confirms she never married Rufino — so the 1896 Rufino marriage belongs to
+the other, Dolores-mothered woman, independently of the two-baptism comparison.
+
+**The correct resolution** is therefore that Rufino's 1896 wife was a distinct
+woman — born about 1875/1876, daughter of Juan Martínez and a mother named Dolores
+(Milan/Vidal/Bilares) — separate from `GRS9-MCH` (the 1871-baptized daughter of
+Josefa Segovia), and the starting tree wrongly assigns `GRS9-MCH` the 1896 marriage
+and children that belong to that other woman. **That distinct-woman-with-mother-
+Dolores conclusion is the required finding.** The strongest form — identifying her
+specifically as **Valentina Adelaida Martines** (`9NDQ-JQ7`, baptism
+`ark:/61903/1:1:FLSQ-1NP`, mother Dolores Milan) — is not required for a match, and
+the agent need not discover the exact PID. The hint's "Dolores" mother is real, but
+it belongs to that woman, not to the 1871-baptized Adela Natividad. Correcting the
+live tree (splitting the two women, moving the marriage and children to
+`9NDQ-JQ7`) is **out of scope** for this resolve-only fixture and was not done;
+`9NDQ-JQ7` appears here only as a reference, never as an evidence ark.
 
 **Why the date is not the disproof.** The hint is indexed "17 June 1879", an
 artifact of the collection's start year ("Uruguay, registro civil, 1879-2020");
@@ -89,4 +102,5 @@ women. His identity-separation matches this resolution.
 rule, carried only one other indexed entry, so that image transcription is **not
 licensed** and no image-only field is relied upon: every load-bearing fact rests
 on FamilySearch **index** records (`FLSQ-1NP`, `XS61-CNFW`, `F2BL-3XN`,
-`FLSQ-VWB`). The hint's own ark is not used as independent corroboration.
+`FLSQ-VWB`, `DMJK-BWMM`). The hint's own ark is not used as independent
+corroboration.

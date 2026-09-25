@@ -3,14 +3,14 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Rufino Moreira Cruz's wife (the woman he married at Dolores, Soriano in 1896) was NOT the tree's Adela Natividad Martínez (GRS9-MCH). She was a distinct woman, Valentina Adelaida Martines — born about 15 December 1875 (christened 19 January 1876) at Dolores, daughter of Juan Martínez and Dolores Milan (the mother's surname is also indexed Vidal and Bilares). On FamilySearch this bride is the separate person 9NDQ-JQ7. The agent should identify Rufino's 1896 wife as this distinct woman born about 1875/1876 with mother Dolores Milan, and must not treat her as the same person as GRS9-MCH.",
+      "description": "Rufino Moreira Cruz's wife (the woman he married at Dolores, Soriano in 1896) was NOT the tree's Adela Natividad Martínez (GRS9-MCH). REQUIRED to match: the agent concludes that Rufino's 1896 wife was a DISTINCT woman — born about 1875/1876, with a mother named Dolores (indexed as Dolores Milan, Dolores Vidal, or Dolores Bilares) — separate from GRS9-MCH, and does not treat the two as the same person. STRONGEST form (not required for a match): identifying her specifically as Valentina Adelaida Martines — christened 19 January 1876 at Dolores, daughter of Juan Martínez and Dolores Milan (FamilySearch person 9NDQ-JQ7) — via her baptism (ark:/61903/1:1:FLSQ-1NP). Discovering that exact identity, or the PID 9NDQ-JQ7, is NOT necessary; a distinct woman born about 1875/1876 with a mother named Dolores satisfies the finding.",
       "details": {
         "subject_person": "Adelaida Martinez (GRS9-MCH)",
         "relation": "spouse-identity",
         "target_person": {
-          "name": "Valentina Adelaida Martines (FamilySearch person 9NDQ-JQ7)",
-          "birth": "about 15 December 1875 / christened 19 January 1876, Dolores, Soriano, Uruguay",
-          "mother": "Dolores Milan (also indexed Vidal or Bilares)"
+          "name": "the 1896 bride — a distinct woman born about 1875/1876, mother named Dolores (Milan/Vidal/Bilares); strongest identification (not required): Valentina Adelaida Martines, FamilySearch person 9NDQ-JQ7",
+          "birth": "about 1875/1876, Dolores, Soriano, Uruguay (Valentina Adelaida Martines: christened 19 January 1876)",
+          "mother": "Dolores (indexed Milan, Vidal, or Bilares)"
         }
       },
       "supporting_sources": [
@@ -22,7 +22,7 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "The starting tree conflates two different women of Dolores, Soriano, both daughters of a Juan Martínez. (1) Adela Natividad Martínez (GRS9-MCH), baptized 11 February 1872 (born 25 December 1871), whose mother is Josefa Segovia (who married Juan Martínez on 26 December 1866). (2) Valentina Adelaida Martines (b. ~1875, mother Dolores Milan), who is the woman Rufino Moreira married in 1896. The starting tree wrongly assigns GRS9-MCH the 1896 marriage to Rufino and their children, which belong to the second woman. The agent should recognize this conflation and conclude that GRS9-MCH's own mother is Josefa Segovia — not Dolores — and that the 1896 Rufino-Moreira marriage does not establish Dolores as GRS9-MCH's mother.",
+      "description": "The genuinely recovered conclusion is an identity conflation: GRS9-MCH is the 1871 / Josefa-Segovia woman, while Rufino Moreira's 1896 marriage (and its children) belong to a DISTINCT Dolores-mothered woman — the starting tree wrongly assigns that 1896 marriage to GRS9-MCH. The agent should recover the conflation itself: (1) Adela Natividad Martínez (GRS9-MCH), baptized 11 February 1872 (born 25 December 1871), daughter of Juan Martínez and Josefa Segovia (who married 26 December 1866); (2) a separate woman born about 1875/1876, daughter of Juan Martínez and Dolores (Milan/Vidal/Bilares), who is the woman Rufino married in 1896. Independent confirmation that GRS9-MCH is NOT Rufino's 1896 wife: in her own 1914 civil marriage to Francisco Pilar Carmona at Gualeguaychú, Entre Ríos, Adela Martínez — born about 1873, daughter of Juan Martínez and Josefa Segovia — is recorded as SINGLE (soltera), i.e. never previously married; had she been Rufino's wife (married 1896; Rufino died 1903) she would appear as a widow. So GRS9-MCH's own mother is Josefa Segovia, and the 1896 Rufino-Moreira marriage does not establish Dolores as GRS9-MCH's mother — it belongs to the other woman.",
       "details": {
         "subject_person": "Adelaida Martinez (GRS9-MCH)",
         "relation": "research conclusion",
@@ -32,7 +32,8 @@
         }
       },
       "supporting_sources": [
-        "Uruguay, bautismos, 1750-1900 — two independent baptism indexes for Adela Natividad Martinez, christened 11 February 1872 (born 25 December 1871) at Dolores, naming her parents Juan Martínez and Josefa Segovia (ark:/61903/1:1:F2BL-3XN, ark:/61903/1:1:FLSQ-VWB) — establishing that the subject's own mother is Josefa Segovia, distinct from the Dolores-mothered woman Rufino married in 1896"
+        "Uruguay, bautismos, 1750-1900 — two independent baptism indexes for Adela Natividad Martinez, christened 11 February 1872 (born 25 December 1871) at Dolores, naming her parents Juan Martínez and Josefa Segovia (ark:/61903/1:1:F2BL-3XN, ark:/61903/1:1:FLSQ-VWB) — establishing that the subject's own mother is Josefa Segovia, distinct from the Dolores-mothered woman Rufino married in 1896",
+        "Argentina, Entre Ríos, Civil Registration, 1833-1965 — the 1914 civil marriage of Francisco Pilar Carmona and Adela Martínez at Gualeguaychú (12 Aug 1914), recording the bride born about 1873, daughter of Juan Martínez and Josefa Segovia, with marital status SINGLE (ark:/61903/1:1:DMJK-BWMM) — independent evidence that the subject never married Rufino Moreira (she would be a widow, not single, by 1914), so the 1896 Rufino marriage belongs to a different woman"
       ],
       "required": true
     }
