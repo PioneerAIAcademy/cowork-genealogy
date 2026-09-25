@@ -48,7 +48,6 @@ from .continue_policy import (
     read_research_json,
     should_continue_run,
 )
-from .spend import SPEND_CAP_USD, price_usd, usage_tokens
 from .errors import UNEXPECTED, classify, log_operator
 from .mcp_health import (
     GENEALOGY_TOOL_PREFIX,
@@ -500,7 +499,7 @@ AUTONOMOUS_MAX_NUDGES = _max_nudges()
 
 
 def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
-                   pending_user_message=None, spend_usd=None):
+                   pending_user_message=None):
     """The alpha's ``Stop`` callback (1d): veto the model's voluntary yield while the
     project is unfinished, so one user message runs a whole research job.
 
@@ -518,11 +517,9 @@ def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
         try:
             count = int(tool_count())
             # The shared predicate accepted `pending_user_message` from the start and
-            # this plane passed neither it nor a spend bound -- so a message typed
-            # mid-turn waited a JOB boundary rather than a step, and 1e's dollar bound
-            # never reached the plane 1d had just given continuous work to.
-            over_cap = bool(spend_usd and spend_usd() >= SPEND_CAP_USD)
-            if over_cap or not should_continue_run(
+            # this plane passed it not at all, so a message typed mid-turn waited a JOB
+            # boundary rather than a step.
+            if not should_continue_run(
                 research=read_research_json(project_dir),
                 nudges_used=state["nudges_used"],
                 max_nudges=max_nudges,
@@ -574,9 +571,6 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         counter["tool_calls"] += 1
         if agent is not None:
             try:
-                if agent.session_spend_usd() >= SPEND_CAP_USD:
-                    return {"continue": False,
-                            "stopReason": f"Session spend cap reached (${SPEND_CAP_USD:.2f})."}
                 if agent.pending_user_message():
                     return {"continue": False,
                             "stopReason": "The researcher sent a message; taking it now."}
@@ -602,7 +596,6 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
                     project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
                     tool_count=lambda: counter["tool_calls"],
                     pending_user_message=(agent.pending_user_message if agent else None),
-                    spend_usd=(agent.session_spend_usd if agent else None),
                 )],
                 timeout=_PRETOOL_TIMEOUT_S,
             )
@@ -898,16 +891,6 @@ class RealAgent:
         self._cum_cost = 0.0
         self._cum_in = 0
         self._cum_out = 0
-        # 1e on the alpha. The prototype prices the session off `session_entries`; here
-        # the same data arrives on the stream, because AssistantMessage carries its own
-        # `usage` block. De-duplicated by message id for the same reason the prototype's
-        # SQL is `DISTINCT ON (entry->'message'->>'id')`: a message is re-emitted across
-        # stream events, and summing it twice would fire the cap early.
-        #
-        # Mid-turn is the whole point. ResultMessage's cumulative `total_cost_usd` is the
-        # obvious source and it is useless here: under 1d one user message is one turn, so
-        # exactly one ResultMessage arrives, at the end -- after every dollar is spent.
-        self._usage_by_message: dict[str, tuple] = {}
         # Set by the runner to `lambda: bool(pending)` -- it owns the backlog. Read by
         # both halts so a message typed mid-turn is taken at the next STEP rather than at
         # the end of a job that may run for hours.
@@ -1207,24 +1190,6 @@ class RealAgent:
         await self._client.interrupt()
         return True
 
-    def session_spend_usd(self) -> float:
-        """What this session has cost so far, priced with the shared vector."""
-        totals = [0, 0, 0, 0]
-        for tokens in self._usage_by_message.values():
-            for i, t in enumerate(tokens):
-                totals[i] += t
-        return price_usd(tuple(totals))
-
-    def _record_usage(self, message) -> None:
-        """Fold one streamed message's usage into the session total, if it carries any."""
-        usage = getattr(message, "usage", None)
-        if usage is None:
-            return
-        key = getattr(message, "message_id", None) or getattr(message, "uuid", None)
-        if not key:
-            return
-        self._usage_by_message[str(key)] = usage_tokens(usage)
-
     def _mcp_health_events(self, message) -> list[dict]:
         """Zero or one warning that this session has no genealogy tools.
 
@@ -1301,7 +1266,6 @@ class RealAgent:
             # is a new fact the user needs.
             error_emitted = False
             async for message in client.receive_response():
-                self._record_usage(message)
                 for ev in map_message(
                     message, self._tool_names, self._tasks, self._live_tasks
                 ):

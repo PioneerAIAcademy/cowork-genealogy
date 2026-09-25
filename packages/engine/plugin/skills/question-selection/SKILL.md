@@ -101,7 +101,7 @@ the autonomous stop point. Do **NOT** spawn a new question to
 corroboration, not required for autonomous completion, and chasing it after
 the answer is already in the tree is what runs an autonomous session out of
 its budget. Return the "no further questions — objective answered" signal
-so `/research` writes `project.status = "completed"` and stops.
+so `/research` routes to completion.
 
 This applies **only** to corroboration of a fact on a question **already
 `resolved`**. It does **not** suppress any of: a **genuinely independent,

@@ -322,71 +322,6 @@ def _pretool(agent):
 
     hooks = ra._build_hooks(HookMatcher, Path("/project"), agent)
     return hooks["PreToolUse"][0].hooks[0]
-
-
-def test_the_alpha_prices_its_own_session_from_the_stream():
-    """The prototype prices the session off `session_entries`. The alpha has no such
-    ledger -- and does not need one: AssistantMessage carries its own `usage` block, so
-    the same data arrives on the stream it already consumes.
-
-    ResultMessage's cumulative `total_cost_usd` is the obvious source and is useless for a
-    cap: under 1d one user message is one turn, so exactly one arrives, at the END -- after
-    every dollar is spent."""
-    from app.agent.real_agent import RealAgent
-    from app.agent.spend import price_usd
-
-    agent = RealAgent(Path("/project"))
-    assert agent.session_spend_usd() == 0.0
-
-    agent._record_usage(SimpleNamespace(
-        message_id="msg_1",
-        usage={"input_tokens": 1_000_000, "cache_creation_input_tokens": 0,
-               "cache_read_input_tokens": 0, "output_tokens": 0},
-    ))
-    assert agent.session_spend_usd() == pytest.approx(price_usd((1_000_000, 0, 0, 0)))
-
-    # The SAME message again -- the stream re-emits it. Summing it twice fires the cap
-    # early, which is why the prototype's SQL is DISTINCT ON the message id.
-    agent._record_usage(SimpleNamespace(
-        message_id="msg_1",
-        usage={"input_tokens": 1_000_000, "cache_creation_input_tokens": 0,
-               "cache_read_input_tokens": 0, "output_tokens": 0},
-    ))
-    assert agent.session_spend_usd() == pytest.approx(price_usd((1_000_000, 0, 0, 0))), \
-        "a re-emitted message must not be counted twice"
-
-    agent._record_usage(SimpleNamespace(message_id="msg_2", usage={"output_tokens": 1_000_000}))
-    assert agent.session_spend_usd() == pytest.approx(
-        price_usd((1_000_000, 0, 0, 1_000_000))
-    ), "a field the block omits is 0, never None -- the tuple must stay priceable"
-
-    # A message carrying no usage, and one carrying no id, are both skipped rather than
-    # raising: this runs on every streamed message.
-    agent._record_usage(SimpleNamespace(message_id="msg_3", usage=None))
-    agent._record_usage(SimpleNamespace(usage={"output_tokens": 5}, message_id=None, uuid=None))
-    assert agent.session_spend_usd() == pytest.approx(price_usd((1_000_000, 0, 0, 1_000_000)))
-
-
-def test_the_spend_cap_halts_the_alpha_on_a_tool_call_not_only_at_a_yield():
-    """1e's bound only reached the prototype. The plane 1d had just given continuous work
-    to had no dollar ceiling at all -- one message running up to the 4-hour live window.
-
-    It halts in PreToolUse, not in the Stop hook, for the reason the prototype's does: the
-    Stop hook is consulted at a VOLUNTARY YIELD, a median of once per run, and 31% of runs
-    never yield. A bound carried only there is not a bound."""
-    from app.agent.spend import SPEND_CAP_USD
-
-    under = asyncio.run(_pretool(_FakeAgent(spend=SPEND_CAP_USD - 0.01))({}, None, None))
-    assert under == {}, "under the cap the hook must not interfere with the call"
-
-    over = asyncio.run(_pretool(_FakeAgent(spend=SPEND_CAP_USD))({}, None, None))
-    assert over.get("continue") is False, (
-        "the halt fields are `continue`/`stopReason` -- a permission deny is a tool "
-        "RESULT the model argues with, which is the whole reason 1c chose these"
-    )
-    assert "stopReason" in over and "spend" in over["stopReason"].lower()
-
-
 def test_a_message_typed_mid_turn_is_taken_at_the_next_step_on_the_alpha():
     """`runner.serve` holds a pending message while `turn_task` is not done -- and under
     1d that task is the whole job, so the message waited a JOB boundary. The prototype
@@ -451,7 +386,7 @@ def test_the_runner_is_what_tells_the_agent_a_message_is_waiting():
     )
 
 
-def test_both_halt_carriers_read_the_same_two_signals():
+def test_both_halt_carriers_read_the_pending_message_signal():
     """The Stop hook and the PreToolUse halt must agree, or a run stops for a reason one
     of them cannot see. Asserted on the wiring rather than on behaviour, because the Stop
     hook's arm needs a project dir and a nudge budget to reach."""
@@ -460,8 +395,41 @@ def test_both_halt_carriers_read_the_same_two_signals():
     from app.agent import real_agent as ra
 
     wiring = inspect.getsource(ra._build_hooks)
-    for signal in ("pending_user_message", "session_spend_usd"):
-        assert wiring.count(signal) >= 1, f"{signal} is not wired into the hooks"
+    assert "pending_user_message" in wiring, "pending_user_message is not wired into the hooks"
     stop = inspect.getsource(ra.make_stop_hook)
     assert "pending_user_message=bool(" in stop, "the Stop hook must pass the signal on"
-    assert "SPEND_CAP_USD" in stop, "and must respect the same bound"
+
+
+def test_the_alpha_carries_no_spend_meter():
+    """Lead ruling 2026-09-25: no spend limit on the alpha. E2B is replaced by the
+    search-agent prototype in about two months, so the alpha is not worth hardening -- and
+    the meter this branch briefly added carried three defects of its own:
+
+    1. It DOUBLE-COUNTED. `_record_usage` ran on every streamed message, and
+       `ResultMessage.usage` is CUMULATIVE session totals -- said so in `_usage_delta`'s
+       own docstring, in the same file -- so each turn added the whole running total again
+       on top of the per-message sum.
+    2. It NEVER RESET. `_usage_by_message` lived for the life of the RealAgent, so with the
+       doubling a project locked up permanently at roughly $17.50 of real spend.
+    3. `SESSION_SPEND_CAP_USD=0` halted every tool call, because the comparison was `>=`.
+
+    None of the three was caught by the tests that shipped with it: those drove a fake
+    agent returning a fixed number, so they exercised the HALT'S DECISION and never the
+    METER. That is why this guard is spelled against the module rather than a verdict --
+    what must not come back is the meter.
+
+    The prototype's $35 cap is untouched and stays as built."""
+    import inspect
+
+    from app.agent import real_agent as ra
+
+    src = inspect.getsource(ra)
+    for gone in ("session_spend_usd", "_record_usage", "_usage_by_message",
+                 "SPEND_CAP_USD", "usage_tokens"):
+        assert gone not in src, (
+            f"`{gone}` is back in real_agent.py. The alpha carries no spend meter "
+            f"(lead ruling 2026-09-25); the prototype's cap is the one that ships."
+        )
+    proto = (Path(__file__).resolve().parents[1]
+             / "proto" / "worker" / "worker.py").read_text(encoding="utf-8")
+    assert "SPEND_CAP_USD" in proto, "the prototype's $35 session cap must stay"

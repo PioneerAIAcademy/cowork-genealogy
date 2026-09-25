@@ -405,9 +405,8 @@ Stop when one of:
   then stop
 - **You need something only the user can supply** — a document only they
   hold, access to a repository only they can reach, or a choice that
-  turns on family knowledge no record carries. Emit the decision call
-  naming exactly what you need and what you will do with each answer,
-  then yield
+  turns on family knowledge no record carries. Say exactly what you
+  need and what you will do with each answer, then stop
 
 Do not stop just because a decision is hard. Make the call, log the
 rationale, and continue; the audit trail captures the choice for later

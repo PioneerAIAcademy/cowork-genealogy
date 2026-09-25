@@ -85,8 +85,10 @@ Repeat for each external-site plan item.
 
 ## No user is waiting to capture
 
-Nobody is sitting there to click a link, capture a PDF, or upload it while you
-work — so the click-capture-analyze loop above **cannot complete** mid-run. Do
+When the researcher asked for this search themselves, hand them the URL and
+wait for the capture as above. Otherwise nobody is sitting there to click a
+link, capture a PDF, or upload it while you work — so the click-capture-analyze
+loop above **cannot complete** mid-run. Do
 **not** present a URL and wait for a capture, and do **not** end your turn to ask
 for one: that stalls the run (the orchestrator's rule is that only
 `project.status == "completed"`, a logged blocker, or something only the user can
