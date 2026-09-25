@@ -249,8 +249,8 @@ Everything above that line is yours to act on and must not appear in your
 reply, in any wording: no identifier of any kind — for a source,
 assertion, question, log, tree person or anything else — and no counts,
 tables, tool names or skill names. If you are weighing whether something
-is an identifier, it is. This governs what you relay; it never suspends
-the "N of M" announcement you owe before each delegation.
+is an identifier, it is. The "N of M" announcement you owe before each
+delegation comes earlier in the turn; this rule does not reach it.
 
 Then **keep going in the same turn**: if more records are queued,
 delegate the next one now; if this was the last record, hand off to
