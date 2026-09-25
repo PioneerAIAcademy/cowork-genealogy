@@ -11,7 +11,9 @@
       "new-person",
       "a_005",
       "check-warnings-required"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The defect this marker originally named is FIXED and verified: the agent no longer writes a match_score copied from another pairing. Across three scratch runs and the 2026-09-25 suite it scored a_005 against every tree candidate, got 0.005 each, concluded none matched, and left match_score null. research_append's step-3 refusal (#1731) closes that class, and dev/probe-014.ts stages both mint routes to prove it.\n\nWhat remains is a DIFFERENT failure, and it is why the marker is back. The per-test context requires James to be minted via materialize_facts with a sourced name (a_005 -> src_004 -> S4). The skill sometimes mints via tree_edit add_person instead, which creates the person with no source ref and fails test_stub_person_created_and_linked. That route is also the one place the step-3 guard cannot detect circularity, because the circular walk needs a source ref; 274 of 711 run-added corpus persons are ref-less.\n\nFlaky across seven observations, not a clean regression: partial, pass, partial (committed v1_2026-09-14/15), partial, pass, partial (scratch_2026-09-25_07-35-12 at --runs-per-test 3, flaky: true), fail (v1_2026-09-25_08-47-18). Remove this marker when the skill mints through materialize_facts reliably and the test comes back flaky: false and non-failing on --runs-per-test 3. The mint-route choice is person-evidence craft, not #1731."
   },
   "input": {
     "user_message": "Link assertion a_005 — the will of Thomas Flynn naming 'my son James Flynn' — to the correct person in the tree.",
