@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and no pool target covers the lead. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior or by the lead), and logistics (unlabelled, anyone once cleared). Nothing on the board is ever pre-assigned: every item, multi-week structural bets included, is self-served from Ready. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from four criteria it re-derives every run — a soft "take this first" for whoever picks from the menu. The one exception is a card whose body carries a lead's `lead:` high-priority line: that is a ranking input wherever the card sits — promoted first, never swapped out, and it keeps its eval slot. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and no pool target covers the lead. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior or by the lead), and logistics (unlabelled, anyone once cleared). Nothing on the board is ever pre-assigned: every item, multi-week structural bets included, is self-served from Ready. Promotes items that share a skill's eval snapshot and notes the sharing in both bodies, so whichever lands second knows it re-runs the eval. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from three criteria it re-derives every run — a soft "take this first" for whoever picks from the menu. The one exception is a card whose body carries a lead's `lead:` high-priority line: that is a ranking input wherever the card sits — promoted first and never swapped out. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -35,7 +35,7 @@ Each item carries `id` (the item id you need to move it), `content.number`,
 `status`, `assignees`, `title`, `labels`.
 
 **A closed issue counts for nothing, whatever column its card is in.** It fills
-no pool, holds no eval slot (Gate 4), loses no swap, and is never a blocker.
+no pool, shares no snapshot (Gate 4), loses no swap, and is never a blocker.
 `gh project item-list` reports the *column*, and the column follows the issue's
 state only when `.github/workflows/project-status-sync.yml` gets to it — so a
 just-closed card can still read `Review` for a while. Ready / In Progress /
@@ -76,7 +76,7 @@ and cache it — every board read in that section, in § 3 "The four gates" and 
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
 ```
 
-Take the second when you rebuild the slot map before the first write (Gate 4),
+Take the second when you rebuild the snapshot map before the first write (Gate 4),
 overwriting the same file. After those two, apply the moves you have made to the
 cached snapshot yourself and verify per item.
 
@@ -489,8 +489,6 @@ below. It is the lead's standing order, not a hint:
   the report, and if that blocker is not itself lead-marked, say so.
 - **At target, it takes the slot of the lowest-ranked card without a `lead:`
   line**, which goes back to Backlog in the same pass. It never loses a swap.
-- **It keeps its eval slot** against a junior challenger (Gate 4). When two
-  `lead:` cards want one slot, the one the other is blocked on goes first.
 - It still goes through `/review-ready` before promotion, like every card.
 
 Only Richard or Dallan adds or removes the line, by hand; never propose removing it.
@@ -533,10 +531,11 @@ Deprioritise, explicitly and out loud: anything downstream of a broken
 measurement (assigning it buys numbers nobody can read), and anything whose
 cost is a paid eval run that a nearby issue is about to spend anyway.
 
-## 3. The four gates — nothing enters Ready that fails one
+## 3. The four gates
 
 A Ready item must be startable *today* by one person who reads only that issue.
-Check all four. They fail differently and the distinction matters.
+Check all four. Gates 1 and 2 keep an item out of Ready; Gates 3 and 4 only
+sequence it against other work, and never disqualify it.
 
 ### Gate 1 — hard blocker
 
@@ -598,8 +597,8 @@ Two items that edit the same files are sequenced, not blocked. Promote them — 
 the pairing has to survive into the issues themselves, because the two people who
 pick them up will never read your report.
 
-**Contention over a skill's eval snapshot is the exception and is Gate 4** — that
-one is hard, because the second item cannot land without paying for a second run.
+**A shared skill eval snapshot is Gate 4**, and it is soft the same way — it
+only adds a re-run for whichever lands second.
 
 #### Finding them
 
@@ -647,8 +646,8 @@ container, `eval/runlogs/unit/<skill>` is 11 and a unit.
 as punctuation. That is why the "too broad to pair" list exists and says *read
 these by hand* — it is the honest bucket, not a failure.
 
-The verdict it prints is advisory: a shared **snapshot** path means Gate 4 and is
-hard, anything else is Gate 3 and only needs the notes below. Read the pairs, do
+The verdict it prints is advisory: a shared **snapshot** path means Gate 4,
+anything else Gate 3. Both only need the notes below. Read the pairs, do
 not paste them — the script cannot tell "both edit this file" from "one deletes
 what the other adds".
 
@@ -677,59 +676,47 @@ Match the wording to the relationship:
 
 Then say it in your report as well, so the lead can hand both to one person.
 
-### Gate 4 — the skill's eval slot is already taken
+### Gate 4 — shared eval snapshot (does *not* disqualify)
 
-**At most one item touching a given skill's eval snapshot may be in an active
-column at a time** — Ready, In Progress, or Review. If one is already there, the
-next one is not Ready — leave it in Backlog and name the holder.
+Two items that change one skill's eval snapshot are sequenced, not blocked.
+Whichever lands first makes the other's run log inactive, so the second pays its
+own `make eval-skill` (roughly $8–12 and 45–65 minutes) plus a fresh `.ann.json`
+over its `review_sample`. Re-annotation is cheap (lead, 2026-09-20), so that
+re-run is the whole cost, and it is far smaller than an empty menu. Promote both.
 
-**An unstarted `senior` card yields the slot to a junior challenger** — it goes
-back to Backlog. An assigned or in-progress holder of either kind keeps it, and
-so does any card carrying a `lead:` high-priority line.
+**Then write the reciprocal note at the top of both bodies**, in the same place
+as Gate 3's:
 
-**Only an open issue in one of those three columns holds a slot.** Never test
-"outside Backlog" — that is wrong in both terminal directions, since Done and Not
-planned are outside Backlog too. A closed issue holds nothing: whatever it was
-going to change, it is not going to change it, so nothing is waiting on it and
-the next item can go.
-
-**When the column and the issue's state disagree, the state wins.** Closing an
-issue does not move its card — `.github/workflows/project-status-sync.yml` does,
-and it is a workflow, not an atomic write. So a card can sit in Review for a
-while after its issue closed, and a pass that reads the column alone will hold a
-whole skill shut on an issue nobody is working. Check `state` on any holder
-before you believe it, and say so when you find one:
-
-```sh
-gh issue view <holder> --repo PioneerAIAcademy/cowork-genealogy \
-  --json number,state,stateReason,title
+```
+**IMPORTANT**: Shares the `<skill>` eval snapshot with #N — whichever lands second rebases and re-runs `make eval-skill SKILL=<skill>`.
 ```
 
-It is hard rather than soft because a skill's run log goes inactive the moment
-any file under its snapshot changes. Two such items cannot share a run however
-they are sequenced: each pays its own `make eval-skill` **plus a fresh
-`.ann.json` covering every dimension of the tests its `review_sample` names** —
-3 rotation + 1 targeted + 1 random plus the uncapped mandatory slot, a median of
-5 tests and a maximum of 13, not every test in the suite — and whichever lands
-first invalidates the other's run log. That invalidation is what makes the gate
-hard; the annotation pass is the smaller half. Promoting both produces rework,
-not parallelism.
+When the other side is an open PR rather than an issue, the note goes on the
+issue alone and names the PR.
 
-**The snapshot set — an item takes the slot only if it changes one of these:**
+**A free snapshot is a tiebreaker, never a gate.** Between two items of
+comparable impact, prefer the one nobody else is changing the snapshot of.
+
+**Only an open issue in Ready, In Progress or Review, or an open PR, shares a
+snapshot.** A closed issue shares nothing, whatever column its card still reads —
+`.github/workflows/project-status-sync.yml` moves the card after the close, not
+atomically with it. Check `state` before you write a note naming one.
+
+**The snapshot set — an item shares a skill's snapshot only if it changes one of these:**
 
 - `packages/engine/plugin/skills/<skill>/**` — including `references/` and comments
 - `eval/tests/unit/<skill>/**` — `rubric.md` and the test JSON
 - `packages/engine/plugin/agents/<agent>.md` for an agent the skill references via
-  `@plugin:` — that gates **every** skill naming it, so check the fan-out:
+  `@plugin:` — that is **every** skill naming it, so check the fan-out:
   `grep -rl "@plugin:<agent>" packages/engine/plugin/skills/*/SKILL.md`
 
 **Key it on paths, not on the skill's name in the title.** Two PRs can both be
 titled `record-extraction:` while only one touches the snapshot, and a tool fix
-whose own DoD says *not* to edit the SKILL.md does not take the skill's slot.
+whose own DoD says *not* to edit the SKILL.md shares nothing with it.
 
-**Build the whole map in one pass, before you rank anything.** A per-skill query only
-answers about the skill you thought to ask about, and the slot you miss is the one whose
-holder's title never mentions it. Two inputs, and you need both: the changed paths of
+**Build the whole map in one pass, before you write any notes.** A per-skill query only
+answers about the skill you thought to ask about, and the sharer you miss is the one whose
+title never mentions it. Two inputs, and you need both: the changed paths of
 every open PR (the only input here that is not self-reported), and the `**Touches:**`
 line of every open issue in **Ready, In Progress or Review** — not Review and PRs alone.
 
@@ -780,40 +767,32 @@ PY
 **Read a `body-fallback` row as "unverified", never as "held".** It means the issue has
 no `Touches:` line and the skill name merely appears somewhere in its prose — open it and
 decide. An issue that cites a SKILL.md as *evidence* and edits none of its files is not a
-holder, and treating it as one blocks a free slot. An `AGENT:` row gates **every** skill
+sharer, and treating it as one writes a false note. An `AGENT:` row covers **every** skill
 naming that agent via `@plugin:` — check the fan-out with the grep above.
 
 **Neither shortcut works, and they fail in opposite directions.** Keying on the title
-misses a holder whose title names none of its skills — one issue's `Touches:` line held
-three slots that no title match could see. Keying on any body mention does the reverse
+misses a sharer whose title names none of its skills — one issue's `Touches:` line
+named three snapshots that no title match could see. Keying on any body mention does the reverse
 and manufactures the false positive above. Only the `Touches:` line, with the body as a
 flagged fallback, gets both right.
 
-**Scanning only open PRs and Review misses In Progress**, so a PR-only read reports a
-slot free the day after the deep dive holding it merged, and the next card in is
-un-startable.
+**Scanning only open PRs and Review misses In Progress**, so a PR-only read misses the
+sharer someone is actively working, and neither side gets its note.
 
 **A `**Touches:**` line is a hint, not proof. Where it and real paths disagree, the paths
 win.** Discount a `Touches:` line inherited from an issue since closed `not planned`.
 
 **The map is a snapshot.** It is right for the pass that produced it and stale by the next
 one — rebuild it before you write anything to the board (this is the second of the
-two budgeted `item-list` passes in § 0 "Board facts"), and tell a junior to re-check
-the slot before opening a PR rather than trusting a table in an issue body.
+two budgeted `item-list` passes in § 0 "Board facts").
 
 **This map only sees snapshot paths, and that is correct — but it is not the whole
 collision picture.** `build_snapshot` deliberately excludes
 `packages/engine/mcp-server/src/**`, so two items rewriting one engine file collide
 without ever appearing here. That is Gate 3's detector, above; run both.
 
-**Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
-whole skill. Say so in your report with the assignee and the idle count, and
-propose returning it to Backlog so the next item can go. Do not reclaim
-silently — it is the lead's call.
-
-**A queue three or more deep is a finding, not a schedule.** Report it. The fix is
-to merge those issues into fewer, larger ones so one run carries what would have
-been three — that happens in `/merge-issues`, not here. Note it and move on.
+**Three or more active items on one snapshot is worth a line in the report**, as a
+possible `/merge-issues` candidate — not a reason to hold anything back.
 
 ## 4. Split before you promote
 
@@ -835,15 +814,14 @@ Split when any of these holds:
 Do **not** split for size alone. Three edits to one file by one person is one
 task; splitting it triples the review and merge cost for nothing.
 
-**Do not split one skill-snapshot item into two.** Under Gate 4 the halves cannot
-run in parallel, and landing them sequentially buys a second paid run plus a
-second full annotation pass for work that would have shared one. Split only when
+**Do not split one skill-snapshot item into two.** Both halves would pay their
+own `make eval-skill` run for work that would have shared one. Split only when
 **at most one half touches the snapshot** — which is usually what the criteria
 above already select for. The model is an item whose doctrine question ("is a
 census residence fact primary or indeterminate?") touches no snapshot and is
 answerable by a genealogist today, while its mechanical half — adding the
-matchers once the answer exists — merges into whichever item next takes the
-skill's slot.
+matchers once the answer exists — merges into whichever item next changes the
+skill's snapshot.
 
 How:
 
@@ -898,18 +876,14 @@ reaches you as an ordinary issue and is promoted with this move like any other.)
 After the promotions above, and over every card **in Ready** — nowhere else; the
 signal means something only to someone scanning the menu — decide which carry
 `high-priority`. A card qualifies on **any one**
-of four criteria. Effort is never one.
+of three criteria. Effort is never one.
 
 1. **Critical path.** It gates a milestone and its honest lead time is longer
    than the slack computed above — the same item the previous section already
    sends to the top of its pool.
 2. **Live harm shipping now.** Heuristic 1: silent corruption, a wrong conclusion
    reaching a user, a guardrail hole in a production path.
-3. **Holds a contended skill slot.** Three or more other open issues name the
-   same skill, agent or unit-test directory in their `Touches:` line. Read it
-   off the slot map already built for Gate 4 — do not run a fresh query.
-   Finishing this card is what releases them.
-4. **A lead's call.** Applied by hand by Richard or Dallan, to a card in any
+3. **A lead's call.** Applied by hand by Richard or Dallan, to a card in any
    column, and never proposed for removal here — only by hand. It is also the
    one criterion that ranks: see "The lead's `lead:` line ranks first".
 
@@ -920,13 +894,12 @@ date. It is what tells the next run — and the picker — why the card is marke
 ```
 > **High priority (2026-09-08):** critical path — gates Beta; ~5 wks lead vs 8 wks slack.
 > **High priority (2026-09-08):** live harm — <one clause>.
-> **High priority (2026-09-08):** holds <skill> — #N, #M, #K waiting.
 > **High priority (2026-09-08):** lead: <login>.
 ```
 
-**Re-derive criteria 1–3 every run.** A labelled card whose criterion has lapsed
-— the waiting issues merged or closed, the slack recovered, the harm fixed
-upstream — or that has left Ready, gets a proposed `--remove-label high-priority`
+**Re-derive criteria 1 and 2 every run.** A labelled card whose criterion has
+lapsed — the slack recovered, the harm fixed upstream — or that has left Ready,
+or whose line reads `holds <skill>` (a criterion retired 2026-09-25), gets a proposed `--remove-label high-priority`
 and the body line deleted in the same write. A card whose line reads `lead:` is
 left alone. A card whose criterion changed gets the line rewritten.
 
@@ -1216,11 +1189,9 @@ how issue bodies come to carry figures that do not survive a re-run.
 
 **A paid eval run is the hidden price of most eval fixes.** Editing a skill body,
 a rubric, or a test file flips that skill's run log inactive, so landing it needs
-a fresh `--skill <name>` run plus a genealogist annotation — roughly $8–12 and
-45–65 minutes of machine time, plus real human hours. So:
+a fresh `--skill <name>` run plus a (now cheap) genealogist annotation —
+roughly $8–12 and 45–65 minutes of machine time. So:
 
-- Two Backlog items touching the same skill are **one** promotion, to one person.
-  Say it.
 - A one-line fix that costs a full run should ride along with a run already being
   spent. Name which.
 - Never propose a standalone one-line eval fix without naming its run cost.
@@ -1270,13 +1241,10 @@ list it does not appear in. Add state when it matters.
    Ready for ~30 days or more: its age and its lane. This is where a multi-week
    structural bet nobody takes becomes visible. Skip the heading when there are
    none.
-6b. **Skill slots** — one line per skill whose slot is held by an **open** issue
-   in Ready, In Progress or Review: the holder, its idle days, and how many are
-   queued behind it. Flag a holder idle ~10 days as a reclaim proposal, and a
-   queue three or more deep as a merge candidate for `/merge-issues`. A holder
-   whose issue has closed frees the slot immediately — report it as freed, name
-   what is now promotable behind it, and do not wait for the card to move. Skip
-   the heading when every slot is free.
+6b. **Shared snapshots** — one line per skill snapshot that two or more active
+   items (open issues in Ready, In Progress or Review, or open PRs) change: the
+   items, and whether the reciprocal notes are written. Flag three or more as a
+   possible `/merge-issues` candidate. Skip the heading when none are shared.
 7. **Grooming** — capped, with verdicts.
 
 Then stop and wait for approval. Apply only what he approves, verifying each
