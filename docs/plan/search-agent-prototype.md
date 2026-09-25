@@ -2477,11 +2477,18 @@ gateway from the client's side; what Messages→Converse keeps of the
 `advanced-tool-use` beta, the `tool_reference` blocks, the seven other betas, the haiku
 title call and `count_tokens` is the curl against integ. Native `bedrock-runtime` is
 not a client surface, so the prototype's Bedrock-direct results (P3) describe the
-model, not the production path. *Owner: APT for access and the ≥ v1.6 upgrade; us for
-the parity run through it.*
+model, not the production path. Also on the API surface: requests over agentgateway's 2 MiB default
+`max_buffer_size` get `413 text/plain`, so a session dies at its third page scan unless
+TAP sets `frontendPolicies.http.maxBufferSize` (P3l). *Owner: APT for access, the
+buffer size and the ≥ v1.6 upgrade; us for the parity run through it.*
 
 **R2 — Prompt-cache health, which is also the throughput ceiling. SHARPENED 2026-09-11,
-not closed.** Caching works through the gateway; the 1-hour TTL does not survive it.
+not closed; the TTL loss MEASURED 2026-09-25 (P3j).** Caching works through the gateway;
+the 1-hour TTL does not survive it. On local v1.5.0, a call 6m43s after the write
+re-wrote all 7,214 tokens and read none. The loss is in every agentgateway release to
+date: `CachePointBlock` has no TTL field in v1.6.0-alpha.2 or `main`, and upstream #3670
+is open. So through the gateway the hosted path is on the five-minute window whatever
+TAP's version. The corpus figure below is what that costs.
 agentgateway parses `cache_control` but keeps only its presence — Bedrock's
 `CachePointType` has one variant — so `ttl: "1h"` is silently discarded, and whether
 Bedrock honours 1 h on Converse at all is unconfirmed (P3 measured it honoured on the
@@ -2618,15 +2625,29 @@ document's own first blocker: with no FamilySearch-baked AMI for Python 3.12 / N
 on AL2023, test and prod deploys fail validation. Logistics rather than architecture,
 but it can block for weeks. *Owner: FS platform + DTL.*
 
-**R10 — No client auth on the LLM routes.** Today it is `TODO-TAP(authn)`; the interim
-control is an ALB security-group CIDR allowlist behind an internal ALB, so our workers
-must sit in an allowlisted range. APT-1512 is issuing API keys — ask to be in that
-batch. *Owner: APT; us to ask.*
+**R10 — Client auth on the LLM routes. Built by TAP as of tap-agentgateway #38
+(2026-09-24).** Every data-plane route carries an `apiKey` block, strict in int, plus a
+per-route consumer rule. `/bedrock` admits `claude-code`, `tap` and `foundry-runner`.
+The key goes in `ANTHROPIC_AUTH_TOKEN`, which is the `Authorization` header, not
+`x-api-key`; the worker's `MODEL_PROVIDER=gateway` sends it that way (PR #2920). What is
+left is ours to ask for: the shared `claude-code` key or our own consumer. The ALB
+security-group CIDR allowlist stays as defense in depth, so our workers must still sit
+in an allowlisted range. *Owner: APT; us to ask.*
 
-**R11 — Our prompts are logged.** Full prompts and completions go to Langfuse at 100%
-sampling, gateway-wide; ours carry patron genealogical data and transcribed record
-images. Start the InfoSec conversation rather than discover it in review. *Owner: us
-to raise; InfoSec + APT.*
+**R11 — Our prompts are logged. What leaves MEASURED 2026-09-25 (P3l, against a local
+OTLP collector, not Langfuse).** Prompts and completions go to Langfuse at 100%
+sampling, gateway-wide. TAP decided on 2026-09-21 to capture everything in int.
+- *Exported:* `gen_ai.prompt` carries the full system prompt, skill bodies and every
+  text message, delegation prompts included.
+- *Not exported:* `tool_use` and `tool_result` blocks go out as empty strings, so
+  tool-result JSON and image bytes do not leave.
+- *Patron data still leaves in text:* the patron's names and record details, as the
+  user types them and as the model narrates what it read. About 700k characters left
+  per research turn.
+
+InfoSec's question is therefore about the narration, not raw records or scans. What
+lands in Langfuse itself, and how long it is kept, is still unmeasured. *Owner: us to
+raise; InfoSec + APT.*
 
 **R12 — The SCP and the non-AWS egress.** The SCP denies direct Bedrock invoke to every
 principal in our account except `tap-gateway-invoke` and `bedrock-exception-*` — decide
