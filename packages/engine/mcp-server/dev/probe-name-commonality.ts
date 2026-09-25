@@ -221,8 +221,16 @@ function compareRows(leftRow: Cell[], rightRow: Cell[]): Comparison[] {
   return FLAG_SETTINGS.map((flags, i) => {
     const left = leftRow[i];
     const right = rightRow[i];
+    // Both legs at 0 is not measurable either way — same as an errored cell
+    // (never coerce it to "separated" or "folded"; see magnitudeRatio's
+    // 0/0 = 1 convention above, which verdict 2's < ORDER_OF_MAGNITUDE check
+    // would otherwise misread as evidence of folding).
     const ratio =
-      left.total !== null && right.total !== null ? magnitudeRatio(left.total, right.total) : null;
+      left.total !== null && right.total !== null
+        ? left.total === 0 && right.total === 0
+          ? null
+          : magnitudeRatio(left.total, right.total)
+        : null;
     return { label: flags.label, left, right, ratio };
   });
 }
@@ -281,7 +289,7 @@ async function main(): Promise<void> {
     !misVsRareMeasured
       ? "  -> NOT MEASURED (every mis-indexed/rare comparison errored)"
       : similarSettings.length > 0
-        ? `  -> FUZZY COUNTS MIS-INDEXING AS RARE (within ${ORDER_OF_MAGNITUDE}x under: ${similarSettings
+        ? `  -> MIS-INDEXING FOLDED INTO RARE (within ${ORDER_OF_MAGNITUDE}x under: ${similarSettings
             .map((c) => c.label)
             .join(", ")})`
         : "  -> MIS-INDEXING SEPARATED",
