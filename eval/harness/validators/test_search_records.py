@@ -19,7 +19,11 @@ import re
 
 import pytest
 
+from validators_lib import as_mapping as _as_mapping
+from validators_lib import bare_tool_name as _bare_tool_name
+from validators_lib import filter_claim_findings as _filter_claim_findings
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
 )
@@ -655,3 +659,112 @@ def test_no_permission_ask_before_mandated_lever(tool_calls, text_response, test
         "instead of having already tried it (issue #1642 Finding 3): "
         + repr(text_response)
     )
+
+
+def _staged_ref_by_log_id(tool_calls) -> dict[str, str]:
+    """Log id -> the staged handle its research_log_append op finalized, read
+    from each call's args and its response's logId(s), single-op or `ops[]`."""
+    out: dict[str, str] = {}
+    for c in tool_calls:
+        if _bare_tool_name(c.get("tool")) != "research_log_append":
+            continue
+        args = _as_mapping(c.get("args"))
+        response = c.get("response") if isinstance(c.get("response"), dict) else {}
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        if isinstance(ops, list):
+            ids = [r.get("logId") if isinstance(r, dict) else None for r in response.get("results") or []]
+        else:
+            ops, ids = [args], [response.get("logId")]
+        for op, log_id in zip(ops, ids):
+            ref = _as_mapping(op).get("stagedResultsRef")
+            if isinstance(log_id, str) and isinstance(ref, str):
+                out[log_id] = ref
+    return out
+
+
+def report_log_query_traces_to_record_search_call(before_state, after_state, tool_calls):
+    """A new `record_search` log entry's `query` should name only filters the
+    `record_search` call it documents actually sent.
+
+    Reports two classes, labelled: a claimed filter the call never sent at all,
+    and a value that differs from the one sent. For a STAGED entry the first
+    class is refused by `research_log_append` itself; what is left for this
+    check is the entry with no staged handle — a nil search stages nothing —
+    and the value class,
+    which is mostly place normalization ("Pennsylvania, United States" logged
+    for "Pennsylvania" sent) and must never gate. Filter keys are
+    `record_search`'s own inputs, read from the compiled schema, minus plumbing
+    and paging.
+
+    Paired exactly where it can be: log id -> the staged handle its
+    `research_log_append` op finalized -> the `record_search` call whose
+    response staged that handle. An entry with no handle falls back to
+    surname-keyed positional pairing among calls no entry has claimed, because
+    two calls sharing a surname is the skill's own broad-then-narrow pattern and
+    an any()-style match would hide a claim one of them never sent. An entry
+    past the last call for its surname is left alone.
+
+    **Reporting-only.** The skill carries no "only record a filter actually
+    sent" rule yet; it is promoted to a gate together with that prose rule, in
+    the PR that pays this skill's run. Run logs recorded before the eval mock
+    echoed a search's arguments into its staged `query` fire on entries the tool
+    FILLED from a fixture's recorded query — a harness artifact, not the
+    model's claim (`scripts/replay_log_query_validators.py`).
+    """
+    entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "record_search" and _as_mapping(e.get("query"))
+    ]
+    if not entries:
+        pytest.skip("no new record_search log entries with a query")
+    calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "record_search"]
+    if not calls:
+        pytest.skip("no record_search calls this turn")
+    vocabulary = _tool_input_keys("record_search")
+    if vocabulary is None:
+        pytest.skip("the compiled tool schema is unavailable, so the filter vocabulary is unknown")
+
+    by_ref: dict[str, dict] = {}
+    for c in calls:
+        response = c.get("response") if isinstance(c.get("response"), dict) else {}
+        ref = (response.get("staged") or {}).get("resultsRef") if isinstance(response.get("staged"), dict) else None
+        if isinstance(ref, str):
+            by_ref[ref] = c
+    ref_by_log = _staged_ref_by_log_id(tool_calls)
+
+    pairs: list[tuple[dict, dict, str]] = []
+    claimed: set[int] = set()
+    unpaired: list[dict] = []
+    for e in entries:
+        call = by_ref.get(ref_by_log.get(e.get("id")))
+        if call is not None:
+            pairs.append((e, call, "staged handle"))
+            claimed.add(id(call))
+        else:
+            unpaired.append(e)
+    free: dict[object, list[dict]] = {}
+    for c in calls:
+        if id(c) not in claimed:
+            free.setdefault(_as_mapping(c.get("args")).get("surname"), []).append(c)
+    positions: dict[object, int] = {}
+    for e in unpaired:
+        surname = _as_mapping(e.get("query")).get("surname")
+        i = positions.get(surname, 0)
+        positions[surname] = i + 1
+        pool = free.get(surname, [])
+        if i < len(pool):
+            pairs.append((e, pool[i], f"position {i} among unstaged {surname!r} calls"))
+
+    errors = []
+    for e, call, how in pairs:
+        never_sent, differs = _filter_claim_findings(e.get("query"), call.get("args"), vocabulary)
+        for claim in never_sent:
+            errors.append(f"log entry {e.get('id')} ({how}) claims {claim}, which the call never sent")
+        for claim in differs:
+            errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
+    assert not errors, "record_search log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)

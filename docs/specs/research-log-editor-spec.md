@@ -74,7 +74,9 @@ research_log_append({
   projectPath: string,            // dir holding research.json + results/
   tool: string,                   // "record_search" | "fulltext_search" | "image_search"
                                   //   | "person_read" | "external_site" | ...
-  query: object,                  // freeform — enough to reproduce the search
+  query: object,                  // freeform — enough to reproduce the search; may not name a
+                                  //   filter its staged search never sent (§8.3). Omit it with a
+                                  //   stagedResultsRef and the tool fills it from the staged search
   outcome: "positive" | "negative" | "partial" | "error",
   resultsExamined: number,
   planItemId: string | null,      // pli_ reference, or null for ad-hoc (see planItemId validation below)
@@ -106,9 +108,9 @@ batching does differently from its siblings: finalizing a staged sidecar is a
 mutation held until the final commit — so a batch call tracks every sidecar it
 creates and unlinks all of them (not just the failing op's) on any later
 failure, extending the single-call path's existing orphan-cleanup rather than
-introducing a new invariant. The §8.2 census check is the exception to per-op
-ordering: it runs over every op before any op is applied, so its refusal
-consumes no staged file.
+introducing a new invariant. The §8.2 census check and the §8.3 query check are
+the exceptions to per-op ordering: they run over every op before any op is
+applied, so a refusal consumes no staged file.
 
 **Success response.** `{ ok: true, logId, performed, resultsRef, returnedCount,
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
@@ -269,10 +271,43 @@ rule is no longer needed (under Option B it never applied).
 | `id`, `performed`, `results_ref` | `tool`, `query`, `outcome`, `results_examined` |
 | sidecar `log_id`, `retrieved`, `returned_count` | `results_available`, `notes`, `plan_item_id` |
 | camelCase→snake_case rename; append-only; atomic write + validate | `external_site` details; whether results were retained |
+| `query` when omitted with a staged handle (filled from the staged search) | the **values** in an explicit `query` |
+| no explicit `query` names a filter its staged search never sent (§8.3) | which descriptive, non-filter context to record |
 
 The caller still makes every analytical call (was the outcome negative? is this
 absence meaningful? which plan item?). The tool removes only the error-prone
 clerical work.
+
+**Why the tool owns "no never-sent filter" but not the values** (lead ruling,
+2026-09-22). A log entry is an audit trail, and one claiming a filter the search
+never sent — `recordType: "marriage"` for a call that sent no record type — tells
+the next reader the search was narrower than it was, so a negative result looks
+more conclusive than it is. The staged payload carries the producing tool's own
+echo of what it sent, so the question is decidable from the project documents
+alone, which is ADR-0011's test for a writer-tool precondition, and warn-only is
+foreclosed by ADR-0011's advisory-versus-precondition ruling. Two alternatives
+were set aside:
+
+- **Overwrite `query` with the staged echo.** It would make the defect
+  unproducible, and it would also destroy the evidence of it: once the tool
+  silently corrects the field, the corpus can never again measure how often a
+  caller misstates its filters. It would be the first writer tool to correct
+  model content rather than refuse it, and it demotes a documented parameter.
+- **Refuse any key the staged echo lacks, or any differing value.** Most
+  differing values are place normalization — `residencePlace: "Pennsylvania,
+  United States"` logged for `"Pennsylvania"` sent — not a claim about a filter,
+  and a semantic gate prefers a false allow (ADR-0011 limit 1). The eval's
+  `report_*` observers in `test_search_records.py` and
+  `test_search_external_sites.py` watch that class instead.
+
+**What counts as a filter** (decided 2026-09-24): an input parameter of the
+producing tool's own schema, read from the schema object rather than a hand
+list, so it cannot drift. Descriptive context the tool has no parameter for
+(`name`, `collection`, `note`) is never refused. Nor is host plumbing
+(`projectPath`, `subjectId`) or a paging or response-shape control (`count`,
+`offset`, `includeFacets`), which changes which page comes back but not which
+records match: the corpus replay's one refusal of that kind was `offset: 0`
+logged for a call that sent none, which is the default, not a misstatement.
 
 ---
 
@@ -294,6 +329,7 @@ clerical work.
 | Appended entry introduces a project-validation error | **write nothing** (unlink staged sidecar); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
+| an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 
 ### 8.1 Non-blocking warnings (never fail the op)
 
@@ -305,8 +341,8 @@ into an availability regression. Neither is decidable from the note: both rest
 on project-wide state (what else has been logged, what has been persisted) that
 the caller may be about to supply in the next call.
 
-This is not a blanket rule against preconditions on this tool — §8.2 is one that
-does block, and the distinction is what makes it legitimate.
+This is not a blanket rule against preconditions on this tool — §8.2 and §8.3
+are two that do block, and the distinction is what makes them legitimate.
 
 - **Unretained results:** a `STAGING_SEARCH_TOOLS` search that reported
   `resultsAvailable > 0` but passed no `stagedResultsRef` discarded its verbatim
@@ -342,7 +378,7 @@ A third advisory rides a top-level `escalationDue` string rather than
   the same trigger was measured and made a correct search give up early. A
   call that brings several plan items to the threshold gets one line per item.
 
-### 8.2 The one precondition that does block: undocumented census structure
+### 8.2 A precondition that blocks: undocumented census structure
 
 A note that states the family structure of a census whose schedule has **no
 relationship-to-head column**, without marking it as inferred, is refused and
@@ -429,6 +465,49 @@ failed and the tool allowed. It is refused now when logged with the staged 1850
 census it came from; without a staged response it still passes, and
 `pre1880-census-hedge.test.ts` pins both, as it pins the plural-only hole.
 
+
+### 8.3 A precondition that blocks: a filter the search never sent
+
+An explicit `query` that names a filter its staged search never sent is refused
+and nothing is written. The ground truth is the staged payload's `query`, which
+`record_search` and `fulltext_search` fill with their own echo of the call's
+arguments (`search-result-staging-spec.md` §6), so the caller does not author it.
+Those two are the only producers judged: `external_links_search`,
+`image_transcribe` and `record_read` stage no echo of their arguments, and
+`person_search` does not stage.
+
+A key is refused only when all four hold: it is an input parameter of the
+producing tool's schema; it is a filter (§7); the caller gave it a value (`null`
+and `""` claim nothing); and the staged `query` does not carry it at all. A key
+the search sent with a different value is allowed. No staged handle means no
+ground truth, so a nil search, which stages nothing, is never judged; an omitted
+`query` is filled rather than judged; an unreadable staged file is left for
+finalize to report. The check runs over every op before any op is applied,
+because finalizing a staged handle deletes it, and a refusal after that would
+consume the handle the corrected re-send needs.
+
+Measured at 032a31caa with `dev/measure-log-query-claims.ts`, which pairs each
+logged op to the call whose response staged its handle and judges it with the
+tool's own `neverSentFilterClaims` against that call's arguments. Re-derive
+rather than quote; a re-run replaces a skill's run log. Of the staged ops with an
+explicit query, 344 pair to their search, and the rule refuses 18 of them: 15
+distinct claims, the rest re-sends of a call refused for another reason. Every
+one was read, and every one is a true positive — a claimed `collectionId`,
+`recordType`, `sex` or `recordCountry` the search never sent, a mother-name
+filter logged for a search on the primary name, or a place logged under
+`residencePlace`/`birthPlace` for a search that sent it as `anyPlace`. All 18
+are in e2e and exploratory run logs; the 121 paired unit-eval ops refuse none.
+The unit-eval entries that do misstate a filter are, on inspection, ones whose
+`query` the tool FILLED: the caller omitted it, and the staged payload it was
+filled from had been built by the eval mock from a fixture's recorded query
+rather than the call's arguments. That was a harness artifact, and it is gone
+going forward (next paragraph). Entries with no staged handle — nil searches —
+stay visible only to the eval's `report_*` observers.
+
+The unit harness stages the call's arguments, not a fixture's canned query: the
+eval mock echoes the args into `query` for these two tools, as production does,
+or this check would refuse honest entries in every unit eval whose fixture was
+recorded for different arguments.
 ---
 
 ## 9. Test plan (vitest)
@@ -476,6 +555,15 @@ census it came from; without a staged response it still passes, and
   allowed on an 1850 census; a missing staged file reports finalize's error, not
   the census refusal; a staged handle spelled `./results/.staging/...` or as an
   absolute path is judged the same as the plain one; a batch refusal of op 1 leaves op 0's staged file in place.
+- **Never-sent filter check (§8.3)** — refused, with nothing written and the
+  staged file kept: an explicit `recordType` the staged `record_search` never
+  sent, several keys at once (all named), a stringified `query`, the same in a
+  batch (no op's staged file consumed), and a `fulltext_search` `place`.
+  Allowed: a key sent with a different value, a descriptive key, host plumbing,
+  paging left at its defaults, `null` and `""` values, an empty `query`, a query
+  that echoes the call, an omitted `query` (filled, plumbing stripped), no staged
+  handle, a staged payload with no `query`, and an `external_links_search`
+  handle.
 
 ---
 

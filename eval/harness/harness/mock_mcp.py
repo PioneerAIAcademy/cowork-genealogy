@@ -363,6 +363,20 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
 # source to finalize and errors ("orphan sidecar" / staging error).
 STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
 
+# The search tools whose production response carries `query: echoQuery(input)`
+# (record-search.ts, fulltext-search.ts). person_search echoes too but is
+# served live, never from a fixture here.
+ECHOING_SEARCH_TOOLS: frozenset[str] = frozenset({"record_search", "fulltext_search"})
+
+
+def echo_query(args: dict[str, Any]) -> dict[str, Any]:
+    """Every argument the call sent — `echoQuery`'s semantics
+    (`src/utils/search-helpers.ts`). It drops only `undefined`, which a JSON
+    call cannot carry: an omitted argument is absent here, and one sent as
+    `null` is kept, exactly as production keeps it."""
+    return dict(args)
+
+
 # Verbatim copy of RANKING_SKIPPED_NOTE in
 # packages/engine/mcp-server/src/tools/record-search.ts. The two cannot share a
 # definition — one is TypeScript on the host, the other Python in the harness —
@@ -702,6 +716,18 @@ def create_mock_server(
                         "Add a fixture for this argument shape."
                     ),
                 }
+
+            # Production's record_search and fulltext_search return (and stage)
+            # `query: echoQuery(input)` — every argument the call sent — while a fixture carries whatever query it was recorded
+            # with, and a predicate matches only a subset of the args. Echo the
+            # args, so the staged payload is the ground truth research_log_append
+            # checks an explicit query against, and the query it defaults from.
+            if (
+                _name in ECHOING_SEARCH_TOOLS
+                and isinstance(response, dict)
+                and "error" not in response
+            ):
+                response = {**response, "query": echo_query(args)}
 
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real

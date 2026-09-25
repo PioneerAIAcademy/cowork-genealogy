@@ -1364,3 +1364,142 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(r.escalationDue).toBeUndefined();
   });
 });
+
+describe("research_log_append — a query may not claim a filter its search never sent (#1779)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-1779-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // What record_search's echoQuery stages for a surname + place call, plumbing included.
+  const SENT = {
+    surname: "Flynn",
+    givenName: "Mary",
+    marriagePlace: "Pennsylvania",
+    projectPath: "/tmp/p",
+    subjectId: "I1",
+  };
+  // `null` stages a payload with no `query` at all.
+  async function stage(query: Record<string, unknown> | null = SENT, tool = "record_search") {
+    const response: Record<string, unknown> = { results: [{ recordId: "R1" }] };
+    if (query !== null) response.query = query;
+    const handle = await stageSearchResults({ projectPath: dir, tool, response });
+    return handle!.resultsRef;
+  }
+  const op = (query: unknown, stagedResultsRef: string | null, tool = "record_search") => ({
+    tool,
+    query,
+    outcome: "positive",
+    resultsExamined: 1,
+    resultsAvailable: 1,
+    planItemId: null,
+    stagedResultsRef,
+  });
+  const append = (query: unknown, ref: string | null, tool = "record_search") =>
+    researchLogAppend({ projectPath: dir, ...op(query, ref, tool) } as any);
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+  const logOf = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+  const sidecars = async () => {
+    const { readdir } = await import("fs/promises");
+    try {
+      return (await readdir(join(dir, "results"))).filter((f) => f.endsWith(".json"));
+    } catch {
+      return [];
+    }
+  };
+
+  it("refuses a recordType the staged record_search never sent, writing nothing and keeping the staged file", async () => {
+    const ref = await stage();
+    const r = await append({ surname: "Flynn", givenName: "Mary", recordType: "marriage" }, ref);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain('`recordType: "marriage"`');
+    expect(errorsOf(r)).toMatch(/sent no `recordType` filter/);
+    expect(await fileExists(dir, ref)).toBe(true);
+    expect(await sidecars()).toEqual([]);
+    expect(await logOf()).toHaveLength(0);
+  });
+
+  it("names every never-sent key in one refusal", async () => {
+    const r = await append({ surname: "Flynn", recordType: "marriage", recordCountry: "United States" }, await stage());
+    expect(errorsOf(r)).toContain('`recordType: "marriage"`');
+    expect(errorsOf(r)).toContain('`recordCountry: "United States"`');
+    expect(errorsOf(r)).toMatch(/drop those keys/);
+  });
+
+  it("refuses a stringified query the same way", async () => {
+    const r = await append(JSON.stringify({ surname: "Flynn", recordType: "marriage" }), await stage());
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/sent no `recordType` filter/);
+  });
+
+  it("refuses in a batch before any op is applied, so no op's staged file is consumed", async () => {
+    const good = await stage();
+    const bad = await stage();
+    const r: any = await researchLogAppend({
+      projectPath: dir,
+      ops: [op({ surname: "Flynn" }, good), op({ surname: "Flynn", recordType: "marriage" }, bad)],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/^ops\[1\]: query claims/);
+    expect(await fileExists(dir, good)).toBe(true);
+    expect(await fileExists(dir, bad)).toBe(true);
+    expect(await logOf()).toHaveLength(0);
+  });
+
+  it("refuses a fulltext_search key the staged fulltext_search never sent", async () => {
+    const ref = await stage({ keywords: "Flynn Doyle" }, "fulltext_search");
+    const r = await append({ keywords: "Flynn Doyle", place: "Pennsylvania" }, ref, "fulltext_search");
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/fulltext_search call that staged this response sent no `place` filter/);
+  });
+
+  it.each([
+    ["a key sent with a different value", { surname: "Flynn", marriagePlace: "Pennsylvania, United States" }],
+    ["a descriptive key the tool has no parameter for", { surname: "Flynn", collection: "PA marriages", name: "Mary Flynn" }],
+    ["host plumbing", { surname: "Flynn", projectPath: "/elsewhere", subjectId: "I9" }],
+    ["paging controls the call left at their defaults", { surname: "Flynn", offset: 0, count: 50 }],
+    ["a null value", { surname: "Flynn", recordType: null }],
+    ["an empty-string value", { surname: "Flynn", recordType: "" }],
+    ["an empty query", {}],
+    ["a query that echoes the call", { surname: "Flynn", givenName: "Mary", marriagePlace: "Pennsylvania" }],
+  ])("accepts %s", async (_label, query) => {
+    const r = await append(query, await stage());
+    expect(errorsOf(r)).toBe("");
+    expect(r.ok).toBe(true);
+    expect((await logOf())[0].query).toEqual(query);
+  });
+
+  it("accepts an omitted query and fills it from the staged search, plumbing stripped", async () => {
+    const r = await append(undefined, await stage());
+    expect(r.ok).toBe(true);
+    expect((await logOf())[0].query).toEqual({ surname: "Flynn", givenName: "Mary", marriagePlace: "Pennsylvania" });
+  });
+
+  it("does not judge an entry with no staged handle — a nil search stages nothing", async () => {
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op({ surname: "Flynn", recordType: "marriage" }, null),
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: 0,
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not judge a staged payload that carries no query", async () => {
+    const r = await append({ surname: "Flynn", recordType: "marriage" }, await stage(null));
+    expect(errorsOf(r)).toBe("");
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not judge a producer that stages no echoed inputs", async () => {
+    const ref = await stage({ standardPlace: "Schuylkill" }, "external_links_search");
+    const r = await append({ standardPlace: "Schuylkill", host: "ancestry.com" }, ref, "external_links_search");
+    expect(errorsOf(r)).toBe("");
+  });
+});

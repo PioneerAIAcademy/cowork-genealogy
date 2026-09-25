@@ -26,6 +26,7 @@ from harness.mock_mcp import (
     _fixture_is_nil,
     _tool_envelope,
     create_mock_server,
+    echo_query,
 )
 from harness.orchestrator import _build_warnings
 
@@ -619,6 +620,60 @@ def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
     body = _extract_response_dict(result)
     assert "staged" not in body
     assert "textDocument" in body["results"][0]
+
+
+# --- The search response echoes the call's args (mirrors echoQuery) -----------
+
+_ECHO_ARGS = {
+    "surname": "Flynn",
+    "givenName": "Patrick",
+    "recordType": "census",
+    "residencePlace": "Schuylkill, Pennsylvania, United States",
+    "birthPlace": None,
+}
+
+
+def test_record_search_query_echoes_the_call_not_the_fixture(tmp_path):
+    """Production returns `query: echoQuery(input)`. A fixture's canned query was
+    recorded for other args, and its predicate matches only a subset, so serving
+    it verbatim told the agent it sent filters it did not (and hid ones it did)."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "record_search", dict(_ECHO_ARGS)))
+    assert "error" not in body, body
+    assert body["query"] == _ECHO_ARGS
+
+
+def test_fulltext_search_query_echoes_the_call_not_the_fixture(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = {"keywords": "+Flynn", "place": "Pennsylvania", "yearFrom": None}
+    body = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", args))
+    assert body["query"] == args
+
+
+@pytest.mark.requires_engine_build
+def test_staged_record_search_payload_carries_the_echoed_query(tmp_path):
+    """The staged payload is research_log_append's ground truth for which filters
+    a call sent; it must be the echo, not the fixture's recorded query."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = {**_ECHO_ARGS, "projectPath": str(tmp_path)}
+    body = _extract_response_dict(_invoke(tools_by_name, "record_search", args))
+    assert body.get("staged"), "test assumes staging succeeded — check the build"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["payload"]["query"] == args
+
+
+def test_echo_query_keeps_every_sent_argument_including_null():
+    """echoQuery drops only `undefined`; a JSON null reaches it as null and is kept."""
+    args = {"a": None, "b": 0, "c": "", "d": False, "e": "x"}
+    echoed = echo_query(args)
+    assert echoed == args
+    assert echoed is not args  # a copy: the staged payload must not alias the call log
 
 
 # --- Returned-failure visibility (mirrors src/tool-result.ts) ------------------

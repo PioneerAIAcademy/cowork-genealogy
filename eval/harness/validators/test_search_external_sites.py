@@ -16,8 +16,6 @@ signature contract. The `test` argument is the parsed test JSON dict
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from validators_lib import new_log_entries as _new_log_entries
@@ -28,7 +26,10 @@ from validators_lib import assert_log_append_only as _assert_log_append_only
 from validators_lib import (
     assert_only_writes_to_sections as _assert_only_writes_to_sections,
 )
+from validators_lib import as_mapping as _as_mapping
 from validators_lib import bare_tool_name as _bare_tool_name
+from validators_lib import filter_claim_findings as _filter_claim_findings
+from validators_lib import tool_input_keys as _tool_input_keys
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -84,32 +85,6 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
                 f"{detail.get('capture_received')!r}"
             )
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
-
-
-def _as_mapping(value):
-    """A tool argument a model may have serialized as a JSON string.
-
-    `build_external_search_url` recovers from this itself (`coerceJsonArg`), so
-    the call SUCCEEDS and the URL is built — a rejected value reaches the site
-    exactly as if the argument had been well-formed. Reading it raw here raised
-    `AttributeError` instead of grading, and a crash in a `test_`-prefixed
-    validator is not an observation: `validator_runner` builds the result
-    without `reporting_only`, so it gates and the run scores `fail`. The judge
-    still grades — since #2057 only an aborted run or a raising judge skips it —
-    but it sees an opaque validator NAME in `validator_failures` rather than the
-    graded observation this check exists to produce. So the mis-serialized call
-    was the one shape this check could not survive.
-
-    Anything that is not a mapping after one parse attempt reads as absent,
-    which is the same thing an omitted argument does — this helper never
-    invents a value, so it cannot turn a passing call into a firing one.
-    """
-    if isinstance(value, str):
-        try:
-            value = json.loads(value)
-        except (ValueError, TypeError):
-            return {}
-    return value if isinstance(value, dict) else {}
 
 
 def _place_matches_rejected(birth_place: str, rejected_place: str) -> bool:
@@ -881,3 +856,79 @@ def test_the_log_is_append_only(before_state, after_state, test):
         before_state.get("research_json") or {},
         after_state.get("research_json") or {},
     )
+
+
+def report_log_query_traces_to_url_tool_call(before_state, after_state, tool_calls, test):
+    """A new `external_site` log entry's `query` should name only search
+    attributes the `build_external_search_url` call it documents actually sent.
+
+    Reports two classes, labelled: a claimed attribute the call never sent (the
+    class `research_log_append` refuses for a staged search, which an external
+    site never is), and a value that differs from the one sent (mostly place
+    normalization, never a gate). Only keys in the tool's own `attributes`
+    vocabulary count, read from the compiled schema: most keys in these entries
+    are descriptive context the tool has no parameter for (`recordType`,
+    `collection`), and checking every key flags nearly every test.
+
+    Paired exactly where it can be: the call whose returned `url` is the entry's
+    `external_site.url_generated`, so a step-6 re-log of the same URL pairs with
+    the same call. Otherwise site-keyed and positional among calls no entry has
+    claimed; an entry past the last call for its site is left alone.
+
+    **Reporting-only.** The skill's body is due to be replaced by an agent, and
+    promoting this to a gate without a prose rule to go with it would fail the
+    next paid run for behaviour nobody was asked for.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "external_site" and _as_mapping(e.get("query"))
+    ]
+    if not entries:
+        pytest.skip("no new external_site log entries with a query")
+    calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "build_external_search_url"]
+    if not calls:
+        pytest.skip("no build_external_search_url calls this turn")
+    vocabulary = _tool_input_keys("build_external_search_url", "attributes")
+    if vocabulary is None:
+        pytest.skip("the compiled tool schema is unavailable, so the attribute vocabulary is unknown")
+
+    by_url: dict[str, dict] = {}
+    for c in calls:
+        url = (c.get("response") or {}).get("url") if isinstance(c.get("response"), dict) else None
+        if isinstance(url, str) and url:
+            by_url.setdefault(url, c)
+
+    pairs: list[tuple[dict, dict, str]] = []
+    claimed: set[int] = set()
+    unpaired: list[dict] = []
+    for e in entries:
+        call = by_url.get(_as_mapping(e.get("external_site")).get("url_generated"))
+        if call is not None:
+            pairs.append((e, call, "same url"))
+            claimed.add(id(call))
+        else:
+            unpaired.append(e)
+    free: dict[object, list[dict]] = {}
+    for c in calls:
+        if id(c) not in claimed:
+            free.setdefault(_as_mapping(c.get("args")).get("site"), []).append(c)
+    positions: dict[object, int] = {}
+    for e in unpaired:
+        site = _as_mapping(e.get("external_site")).get("site")
+        i = positions.get(site, 0)
+        positions[site] = i + 1
+        pool = free.get(site, [])
+        if i < len(pool):
+            pairs.append((e, pool[i], f"position {i} among unpaired {site} calls"))
+
+    errors = []
+    for e, call, how in pairs:
+        sent = _as_mapping(_as_mapping(call.get("args")).get("attributes"))
+        never_sent, differs = _filter_claim_findings(e.get("query"), sent, vocabulary)
+        for claim in never_sent:
+            errors.append(f"log entry {e.get('id')} ({how}) claims {claim}, which the call never sent")
+        for claim in differs:
+            errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
+    assert not errors, "external_site log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)
