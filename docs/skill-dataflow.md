@@ -244,13 +244,14 @@ Two consequences worth holding onto:
   `person-evidence` — and three of the eight agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
-- **The hook carries exactly three rules**, in
+- **The hook carries exactly four rules**, in
   `packages/engine/plugin/hooks/guard_project_files.py`, and they are the only ones that
   discriminate by caller: `proof_summaries` is writable only by the proof-conclusion
   agent; a `research_append` op setting `exhaustive_declaration.declared` to `true` is
-  writable only by the research-exhaustiveness agent; and each of those two agents is
-  held to its own section set, which is what keeps the exhaustiveness agent off
-  `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
+  writable only by the research-exhaustiveness agent; `project.status` is writable only
+  by the proof-conclusion agent, field-scoped because the rest of `project` is
+  co-written; and each of those agents is held to its own section set, which is what
+  keeps the exhaustiveness agent off `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
   unit check that runs only inside a paid per-skill eval run.
 
 ---

@@ -144,9 +144,9 @@ entry carries `blocked_by: "context"`, but **two different guards land here and
   corpus is one. **Not** evidence of a spawn failure, and the shipped plugin hook
   holds the same rule, so a user would hit it too. Do not assume the main thread:
   `owner_denied` has four rules — `routed`, `out_of_lane`, `declaration` and
-`owned_field` (a field routed on presence, `project.status`) — and
+  `owned_field` (a field routed on presence, `project.status`) — and
   `out_of_lane` fires for a **named subagent** reaching outside its own lanes.
-  `tool` is `research_append` for all three, so it cannot tell them apart — read
+  `tool` is `research_append` for all four, so it cannot tell them apart — read
   `narration[]` for the rule and `tool_calls[]` for the caller.
 - **`extraction_append`** or **`image_read`** — a subagent-only tool called on the
   main thread, which *does* suggest the owning subagent failed to spawn
