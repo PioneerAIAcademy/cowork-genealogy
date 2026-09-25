@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Right relationship and source (R7 sourced to S1, the Vermont death record), but David Bagley (I1) carries no facts — birth date and place absent. Second unlinked David Bagley (I2) also in tree; target person underidentified."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "679a8f9acedcfd4aa2b25276012b0efbfd855d0eec05a99a8688f0697ab99077"
+}
