@@ -15,12 +15,21 @@ section 7 (the weekly checkpoint). Reach for the appendix only when someone
 challenges a number — section 6 tells you how to re-derive any figure here yourself,
 which matters because you did not measure them.
 
-**Supersedes** the 2026-09-15 instrumentation plan, which is complete. **Also supersedes
-`docs/plan/main-thread-residency-reduction.md`, whose `**Status:**` line still reads "Not
-started" and whose lever 1 is a `cluster:pair-conversion` card (#2117).** Rewrite that
-Status to point here, and mark its levers absorbed or dropped, **in the same PR as
-Phase 0a** — per `CLAUDE.md` the Status line is what tells the next reader whether a
-file describes pending work. Its output is
+**Supersedes four documents. Repoint every one of their Status lines in the same PR as
+Phase 0a** — per `CLAUDE.md` the Status line is what tells the next reader whether a file
+describes pending work, and Promise would otherwise find four live-looking plans on one
+subject:
+
+- `docs/plan/main-thread-residency-reduction.md` — Status still reads "Not started"; its
+  instrumentation half is complete and its lever 1 is a `cluster:pair-conversion` card
+  (issue #2117). Mark its levers absorbed or dropped.
+- `docs/plan/research-latency-reduction-plan.md` — Status "DRAFT, for review".
+- `docs/plan/research-performance-2026-07-27.md` — Status "PARTIALLY SHIPPED"; supersede
+  the unshipped part only, and say which that is.
+- The 2026-09-15 instrumentation plan, which is complete. **It has no path to cite** —
+  it lived in the root `PLAN.md`, which `.gitignore` excludes. Its output is the 13
+  committed runs carrying `result_chars` / `usage.message_usage` /
+  `usage.thread_windows`, and most measurements here rest on them. Its output is
 the 13 committed e2e runs carrying `result_chars` / `usage.message_usage` /
 `usage.thread_windows`, and most measurements here rest on them.
 
@@ -44,12 +53,11 @@ Do not begin Phase 1 without them.
 
 | # | Decision | Why it blocks | Default if unanswered |
 |---|---|---|---|
-| G1 | **Pause `cluster:pair-conversion`?** — **43 open cards, 16 `high-priority`** (`gh issue list --label cluster:pair-conversion --state open`). Do not read this as the four cards an earlier draft named: **#2490 is not in the label at all** (it carries `cluster:acquisition`), so a by-label pause both misses it and sweeps 40 cards nobody has reviewed. Decide whether the pause is by-label or by-hand, and review the 16 `high-priority` titles before ruling | Reverses the standing ruling of 2026-09-22 ("every skill becomes an agent and the skill is deleted"). **Evidence downgraded 2026-09-25 — read A3 item 1 before ruling.** Jul→Sep the corpus lost +20 min and +$2.85/run, but the three conversions' attributable share is **ESTIMATED at 0–25% of the wall** (central ~15%; honest band across three attribution methods is 0–60%) and **20–35% of the cost**. The cost rise does **not** survive a within-fixture control (median ratio 0.98). The conversions are **not statistically identified**: 08-21 carries both the proof-conclusion conversion and the `research_query` router-paging commit, 09-01 carries both person-evidence and the tree-encoding gate, and ~120 other plugin commits landed between | **No pause.** The evidence no longer supports a reversal. Prefer the $40 test in 4.1b first |
-| G2 | **Un-gate `cluster:agent-floor-search`?** | Only coherent if G1 passes. **All FOUR floor searches are gated behind a deletion-and-conversion card, three of which carry `cluster:pair-conversion`** — so G2 is *more* coupled to G1, not less. Verified at the primary bodies: **#2239** (*"a floor read off the suite before that conversion is voided by it"*); **#2268** (*"First delete the thin skill"*); **#2272**, blocked by **#2821** — titled *"person-evidence: **delete the thin routing skill** and convert its suite to delegation"*, carrying `cluster:pair-conversion`, first line a lead note of 2026-09-23: *"blocks the person-evidence floor search (issue #2272)"*; and **#2269**, sequenced behind **#2738** (*"its sweep should run against this card's post-deletion suite, so land this first"*, line 1; *"Order: … before issue #2269"*, line 102). **Un-gating #2272 and #2269 burns two paid eval slots on suites that #2821 and #2738 rewrite — the readings are void on arrival.** A by-label un-gate still misses both: #2269 carries no cluster label, #2272 lacks `cluster:agent-floor-search`.
-*(A previous revision claimed only two were gated, taken from a relayed quotation rather than the bodies. Both halves were wrong: #2269's "This card is startable" is dated 2026-09-09 and clears a different blocker (#2257), two weeks before the 09-23 sequencing; and #2738's "does not block #2269" is scoped to the `_d3c` fixture's fix, not to ordering.)* | **Stays gated.** Existing sequencing stands |
+| G1 | **Pause `cluster:pair-conversion`?** — **43 open cards, 16 `high-priority`** (`gh issue list --label cluster:pair-conversion --state open`). Do not read this as the four cards an earlier draft named: **issue #2490 is not in the label at all** (it carries `cluster:acquisition`), so a by-label pause both misses it and sweeps 40 cards nobody has reviewed. Decide whether the pause is by-label or by-hand, and review the 16 `high-priority` titles before ruling | Reverses the standing ruling of 2026-09-22 ("every skill becomes an agent and the skill is deleted"). **Evidence downgraded 2026-09-25 — read A3 item 1 before ruling.** Jul→Sep the corpus lost +20 min and +$2.85/run, but the three conversions' attributable share is **ESTIMATED at 0–25% of the wall** (central ~15%; honest band across three attribution methods is 0–60%) and **20–35% of the cost**. The cost rise does **not** survive a within-fixture control (median ratio 0.98). The conversions are **not statistically identified**: 08-21 carries both the proof-conclusion conversion and the `research_query` router-paging commit, 09-01 carries both person-evidence and the tree-encoding gate, and ~120 other plugin commits landed between | **No pause.** The evidence no longer supports a reversal. Prefer the $40 test in Phase 1b first |
+| G2 | **Un-gate `cluster:agent-floor-search`?** | Only coherent if G1 passes. **All FOUR floor searches are gated behind a deletion-and-conversion card, three of which carry `cluster:pair-conversion`** — so G2 is *more* coupled to G1, not less. Verified at the primary bodies: **issue #2239** (*"a floor read off the suite before that conversion is voided by it"*); **issue #2268** (*"First delete the thin skill"*); **issue #2272**, blocked by **issue #2821** — titled *"person-evidence: **delete the thin routing skill** and convert its suite to delegation"*, carrying `cluster:pair-conversion`, first line a lead note of 2026-09-23: *"blocks the person-evidence floor search (issue #2272)"*; and **issue #2269**, sequenced behind **issue #2738** (*"its sweep should run against this card's post-deletion suite, so land this first"*, line 1; *"Order: … before issue #2269"*, line 102). **Un-gating issue #2272 and issue #2269 burns two paid eval slots on suites that issue #2821 and issue #2738 rewrite — the readings are void on arrival.** A by-label un-gate still misses both: issue #2269 carries no cluster label, issue #2272 lacks `cluster:agent-floor-search`.
+*(A previous revision claimed only two were gated, taken from a relayed quotation rather than the bodies. Both halves were wrong: issue #2269's "This card is startable" is dated 2026-09-09 and clears a different blocker (issue #2257), two weeks before the 09-23 sequencing; and issue #2738's "does not block issue #2269" is scoped to the `_d3c` fixture's fix, not to ordering.)* | **Stays gated.** Existing sequencing stands |
 | G3 | **The accuracy trade rate.** Proposed: *no skill suite loses more than one dimension against its committed baseline, and no fixture loses more than 10% of expected-finding recovery* | Every Phase 1–2 arm is scored against it. Eleven floor-search cards are already blocked on this one answer | **Ask again.** Do not invent a rate; an arm scored against an invented bar is unfalsifiable |
 | G4 | **What metric catches a run that stops researching early?** | `recall_required` measures recovery of a *planted* finding — largely a first-30-tool-call property. It is blind to the floor's main risk | **Ask again.** Without it every number downstream is decoration |
-
 | G5 | **Reopen ADR-0003's "Cutting prose stays declined" (2026-08)?** | The body-diet rung reverses it. The ADR's reopen trigger is explicit: *"a measurement showing body size costs something material end to end — not on a byte count."* State whether A2's "instruction + agent-body carry $1.41/run, 13%" is that measurement. If it is, the ask is to **amend the ADR in place**, not to ignore it | **Stays declined.** Drop the body-diet rung |
 
 G3, G4 and G5 are questions, not work. Per `CLAUDE.md`, if you can ask, ask.
@@ -61,17 +69,17 @@ issues.**
 
 | item | what to do |
 |---|---|
-| **#2582** token `usage` excludes subagent tokens | **Your first task — this is Phase 0a.** Re-scoped from a card you hold to step one of the plan. No branch or commits exist yet, so scope it to serve the plan: see 4.0a |
-| **#2225** + PR **#2728** (ready) + PR **#2727** (draft) | **Finish.** Real work in flight on two branches. #2681's fix rides inside #2727 |
-| **#2798** validate-schema → agent | **Dropped — but it is a `cluster:pair-conversion` card, so this drop is downstream of G1 and should not land before the lead rules.** No branch, no commits, no PR. Also the weakest card on the merits: `validate-schema` is invoked **0 times in 188 e2e runs** while its tool is called 56 times directly |
-| **#2683** check-warnings narration | **Dropped.** The only commits touching it are the revert that created it. Five rewordings already failed; it is lane-4 prose on a skill that is 0.1% of assistant messages |
+| **issue #2582** token `usage` excludes subagent tokens | **Your first task — this is Phase 0a.** Re-scoped from a card you hold to step one of the plan. No branch or commits exist yet, so scope it to serve the plan: see 4.0a |
+| **issue #2225** + PR **issue #2728** (ready) + PR **issue #2727** (draft) | **Finish.** Real work in flight on two branches. issue #2681's fix rides inside issue #2727 |
+| **issue #2798** validate-schema → agent | **Dropped — but it is a `cluster:pair-conversion` card, so this drop is downstream of G1 and should not land before the lead rules.** No branch, no commits, no PR. Also the weakest card on the merits: `validate-schema` is invoked **0 times in 188 e2e runs** while its tool is called 56 times directly |
+| **issue #2683** check-warnings narration | **Dropped.** The only commits touching it are the revert that created it. Five rewordings already failed; it is lane-4 prose on a skill that is 0.1% of assistant messages |
 
-**Watch item.** #2225 pulls against this plan — it carries *more* data
+**Watch item.** issue #2225 pulls against this plan — it carries *more* data
 (`sourceClusters`, `conclusionScores`, resolved facts, the source-conflict list) on
 two tools the cost programme wants smaller. The lead has ruled it proceeds anyway,
 on the grounds that the gains come from fewer turns, cheaper models and less
 thinking effort, and it can be undone later. **Measure its payload delta after
-#2728 lands** so that "undo it later" stays an informed option rather than a guess.
+issue #2728 lands** so that "undo it later" stays an informed option rather than a guess.
 
 ## 4. The sequence
 
@@ -82,7 +90,7 @@ thinking effort, and it can be undone later. **Measure its payload delta after
 > and state how many runs each needs before it counts. 0b's 5.9% → ? delta is a rate
 > on a small denominator; if one run cannot resolve it, say how many can.
 
-- **0a — #2582, scoped to serve the plan.** Record per-subagent input/cache tokens
+- **0a — issue #2582, scoped to serve the plan.** Record per-subagent input/cache tokens
   and fix the existing `output_tokens` field. **Fold in** per-message wall
   timestamps and a message id on the assistant timeline row: `_usage_key` is already
   in hand at the write site, and both halves edit the same instrumentation in
@@ -103,7 +111,7 @@ thinking effort, and it can be undone later. **Measure its payload delta after
   gap. The guard must land with the wiring for a structural reason: panel runs come
   from this entry point and `:64-66` tells the operator to commit the log. `CONTEXT_1M` is
   backed by `check_added_runlogs_not_1m`
-  (`eval/harness/scripts/check_e2e_fixtures.py:290`); **`EFFORT_LEVEL` has no such
+  (`check_added_runlogs_not_1m` in `eval/harness/scripts/check_e2e_fixtures.py`); **`EFFORT_LEVEL` has no such
   guard** — that file runs four checks and **zero** read effort. Concrete failure: a
   genealogist leaves `EFFORT_LEVEL=low` in their shell, runs a panel fixture,
   commits it as instructed, and every repo-wide median shifts silently — breaking
@@ -113,14 +121,14 @@ thinking effort, and it can be undone later. **Measure its payload delta after
   run the arm from the Makefile, as `CONTEXT_1M` does.
 - **0e — carry `EFFORT` end to end in production.** `effort=` in
   `real_agent.build_options` **plus** an `effort` field on `SandboxSpec`
-  (`apps/server/app/sandbox/base.py:45-49`) **plus** a row in `_agent_env`
-  (`apps/server/app/sandbox/e2b.py:230-236`, which today sets `MODEL` and nothing
+  (`SandboxSpec` in `apps/server/app/sandbox/base.py`) **plus** a row in `_agent_env`
+  (`_agent_env` in `apps/server/app/sandbox/e2b.py`, which today sets `MODEL` and nothing
   else). *Acceptance:* read the **resolved** effort, not the env var. Both harnesses bind
 effort by writing `{"effortLevel": …}` into `.claude/settings.json`
-(`eval/harness/e2e/orchestrator.py:1071-1075`); feeding `ClaudeAgentOptions.effort`
+(the `effortLevel` write in `eval/harness/e2e/orchestrator.py`); feeding `ClaudeAgentOptions.effort`
 from an env var is a path **nothing has exercised**, and the probe 0c runs warns that
 the CLI resolves its own effort from the *setting*, not from `CLAUDE_EFFORT`
-(`try_record_extractor_thinking.py:315-316`). If it silently fails to bind, every
+(the `CLAUDE_EFFORT`-is-output-only note in `try_record_extractor_thinking.py`). If it silently fails to bind, every
 measurement says the cut landed while production is unchanged. Either assert the
 resolved value off the SDK init handshake (the way `make agent-smoke` reads the agent
 list), **or** simply write `effortLevel` into the sandbox's `.claude/settings.json` —
@@ -208,8 +216,8 @@ median on a different fixture mix and a different price basis.
   `cruz-corona-ancestry` 09-21). Pin the sha (`5e14a9967`), list the slugs, and state
   the rule for new panel runs: exclude them, or re-pin and re-state both medians.
 - **State the two medians separately with their own n** — **$10.57 over 24 runs**
-  (4 of the 28 carry no cost) and **75.7 min over 28**. A1 currently reports one
-  "n=28" for a row whose cost half rests on 24.
+  (4 of the 28 carry no cost) and **75.7 min over 28**. The **$10.60** used as the
+  headline throughout this plan rounds that $10.57.
 - **Baseline:** **re-measured at HEAD on that set**, not carried from the corpus.
   `skills_hash` is on 39 of 188 runs, 26 distinct hashes, none HEAD's.
 - **Basis:** both sides on one cache-write rate (see the price-basis note in A1).
@@ -234,15 +242,15 @@ vetter, an implementer and two reviewers — not who happens to do it.** A one-l
 fix stays a current-PR fix even when a genealogist makes it; a half-day deep dive
 earns a card even when you make it yourself.
 
-**Current-PR fixes, never issues:** 0b, and the runlog-root threading — `--runlog-root` **already exists** (`run_e2e.py:209`, with a default); only the `Makefile:911` recipe fails to pass it, so `$(if $(RUNLOG_ROOT),--runlog-root $(RUNLOG_ROOT),)` is the whole fix. That is not a four-person card.
+**Current-PR fixes, never issues:** 0b, and the runlog-root threading — `--runlog-root` **already exists** (the `--runlog-root` argument in `eval/harness/e2e/run_e2e.py`, with a default); only the `Makefile:911` recipe fails to pass it, so `$(if $(RUNLOG_ROOT),--runlog-root $(RUNLOG_ROOT),)` is the whole fix. That is not a four-person card.
 **Now an issue, not a current-PR fix:** 0d — it needs a CI guard, see section 4.
-**Already a card, re-scoped:** 0a (#2582).
+**Already a card, re-scoped:** 0a (issue #2582).
 **Comment on the existing card, do not file:** the effort/model A/B belongs on
-**#1136**, whose own body says *"do not file the A/B as a separate issue"*. It is
+**issue #1136**, whose own body says *"do not file the A/B as a separate issue"*. It is
 iceboxed and held by the lead personally, so it needs an un-icebox ruling, not a new
 issue.
 
-**File these** (six rows; a seventh — corpus pollution via `--runlog-root` — was demoted to a current-PR fix above) — an independent coverage audit (40 agents, every verdict
+**File these** (seven rows; an eighth — corpus pollution via `--runlog-root` — was demoted to a current-PR fix above) — an independent coverage audit (40 agents, every verdict
 adversarially overturned once) found **15 of 20 plan items covered by no existing
 issue, 4 partially, 1 fully**, so this is new work rather than duplication. Its
 coverage verdicts were **not** re-verified item by item here; spot-check before
@@ -250,17 +258,18 @@ filing.
 
 | # | Title | Lane | Measured effect | **Touches** (spec required per `DEVELOPMENT.md:240`) |
 |---|---|---|---|---|
-| 1 | `research_query`: accept `sections[]` instead of a round trip per section | developer | −$1.28/run, −6.5 min. **median 56 calls/run, mean 60.2, 88% inside agents** (September, n=28 at `5e14a9967`; HEAD median is 54 and drifts). The tool **explicitly rejects** `sections` today (`research-query.ts:229-231`) and its own comment at `:225` says *"`sections` is the mistake the model actually makes"* — the demand is already measured in the error path. **Not a free widening:** `SECTION_FILTERS` (`research-query.ts:122+`) allow-lists filter keys **per section** and treats a filter valid elsewhere as a hard error, and `offset` paginates one section — so `sections[]` must decide filter scope, pagination scope, and a section-keyed response shape every caller reads | `docs/specs/research-query-tool-spec.md` |
+| 1 | `research_query`: accept `sections[]` instead of a round trip per section | developer | −$1.28/run, −6.5 min. **median 56 calls/run, mean 60.2, 88% inside agents** (September, n=28 at `5e14a9967`; HEAD median is 54 and drifts). The tool **explicitly rejects** `sections` today (the `sections` rejection in `research-query.ts`) and its own comment at `:225` says *"`sections` is the mistake the model actually makes"* — the demand is already measured in the error path. **Not a free widening:** `SECTION_FILTERS` (`SECTION_FILTERS` in `research-query.ts`) allow-lists filter keys **per section** and treats a filter valid elsewhere as a hard error, and `offset` paginates one section — so `sections[]` must decide filter scope, pagination scope, and a section-keyed response shape every caller reads | `docs/specs/research-query-tool-spec.md` |
 | 2 | Plural args on `record_read` / `wiki_read` / `same_person` / `person_warnings` | developer | −$0.55/run, −3.5 min, net of a measured 28% haircut for calls already issued in parallel | `person-warnings-tool-spec.md`, `same-person-tool-spec.md`, `wiki-page-tool-spec.md` |
 | 3 | `record_search`: cap the **inline stub** at 15, leave all 50 in the sidecar | developer | −$0.62/run. Do **not** cut the `count` default — that shrinks the sidecar too and breaks the cut's own contract | `record-search-tool-spec-v2.md` |
 | 4 | Trim the tool-schema block | developer | −$0.16/run. `record_search`'s schema alone is 18,545 of 129,228 bytes. Trim narrative, never contract | every trimmed tool's spec |
-| 5 | `search-images` has no read route in the **search-agent prototype worker** | developer | `apps/server/proto/worker/deny.py` denies `Read`/`Grep`/`Glob` under the anchor unconditionally (`apps/server/proto/worker/options.py:281`) — and that is correct by design: its docstring says the prototype agent *has no project folder*, `cwd` is an empty anchor and the project lives in Postgres behind the MCP tools, so such a read *is always a mistake*. `search-images` grants `Read` but no `research_query` / `project_context` / `sidecar_read`, while its body orders three `research.json` reads. **The fix is to grant it an MCP read route, not to restore `Read`.** Prototype only — see A7 item 13. **The fix lands in every plane** (Cowork, both harnesses, hosted) for a prototype-only defect, and this is the one row with no cost or latency figure — say why a 10x plan files it, or file it elsewhere | `packages/engine/plugin/agents/search-images.md` (all **three** server spellings) + `packages/engine/mcp-server/tests/packaging/agent-tool-names.test.ts` (`AGENT_PERMISSIONS` snapshot, same commit) |
-| 6 | `recall_required` cannot detect a run that stops researching early | developer, `nothing-checks` | Blocks G4. Every cost cut is otherwise scored against a metric blind to its main risk | `docs/specs/e2e-test-spec.md` |
+| 5 | `search-images` has no read route in the **search-agent prototype worker** | developer | `apps/server/proto/worker/deny.py` denies `Read`/`Grep`/`Glob` under the anchor unconditionally (`make_pretool_hook` in `apps/server/proto/worker/options.py`, via `deny.py`) — and that is correct by design: its docstring says the prototype agent *has no project folder*, `cwd` is an empty anchor and the project lives in Postgres behind the MCP tools, so such a read *is always a mistake*. `search-images` grants `Read` but no `research_query` / `project_context` / `sidecar_read`, while its body orders three `research.json` reads. **The fix is to grant it an MCP read route, not to restore `Read`.** Prototype only — see A7 item 13. **The fix lands in every plane** (Cowork, both harnesses, hosted) for a prototype-only defect, and this is the one row with no cost or latency figure — say why a 10x plan files it, or file it elsewhere | `packages/engine/plugin/agents/search-images.md` (all **three** server spellings) + `packages/engine/mcp-server/tests/packaging/agent-tool-names.test.ts` (`AGENT_PERMISSIONS` snapshot, same commit) |
+| 6 | `eval/RunE2E.bat`: wire `EFFORT_LEVEL` with a paired `check_added_runlogs_effort_high` guard | developer, `nothing-checks` | Unblocks the largest lever for the Windows panel runs. The guard must land with the wiring — the corpus has no effort check, and a stray `EFFORT_LEVEL=low` would shift every repo-wide median silently | `eval/RunE2E.bat`, `eval/harness/scripts/check_e2e_fixtures.py` |
+| 7 | `recall_required` cannot detect a run that stops researching early | developer, `nothing-checks` | Blocks G4. Every cost cut is otherwise scored against a metric blind to its main risk | `docs/specs/e2e-test-spec.md` |
 
 **Costed but not yet filed — it needs its dependency priced first.** Scoped
 extraction (−$2.00/run) reds the suite it would be measured against: **19 of the 31**
 `eval/tests/unit/record-extraction/*.json` fixtures pin `expected_classifications`
-positively, and issues #2654 and #2238 both hold that suite fixed as their pass bar.
+positively, and issues issue #2654 and issue #2238 both hold that suite fixed as their pass bar.
 The lead approved $64 to test scoped extraction before this was known. Re-price
 before filing.
 
@@ -273,6 +282,12 @@ recomputable from `eval/runlogs/e2e/*/run-*.json` at sha `5e14a9967`.
   earlier drafts were wrong because a field was aggregated without being inspected —
   `proof_quality` is a dict with a `.score` key, not a scalar; `tool_calls` is
   all-thread, not main-thread; `.ann.json` `per_finding` is a dict keyed `f1..fn`.
+- **LINE NUMBERS ROT — prefer the symbol.** This plan was written at `5e14a9967` and
+  main moves roughly 50 commits a week. One citation had already drifted by 55 commits
+  (`project_read_denied` moved from line 281 to 327 in
+  `apps/server/proto/worker/options.py`). Citations here name a **function, constant or
+  argument** wherever one exists; where a bare line number survives, re-derive it at the
+  pin before quoting it, and grep the symbol rather than trusting the number.
 - **188 is the count at `5e14a9967`; HEAD is 192 and grows weekly.** Re-derive at
   the pin, or re-pin and restate every figure that depends on it.
 - **Field availability is uneven:** `timeline` 183 runs, `subagents` 98, `skills_hash` 39,
@@ -306,11 +321,11 @@ survive independently and are worth landing on their own.
 
 ## 8. Decision boundary
 
-**Yours:** the order of Phase 0 items; how to scope #2582; which fixtures to
+**Yours:** the order of Phase 0 items; how to scope issue #2582; which fixtures to
 re-select for Phase 2; whether an engine cut is a current-PR fix or a card; when to
 stop a rung that is not paying.
 
-**The lead's:** G1–G5 (G5 reverses ADR-0003, so it is lead-only by this plan's own argument); any reversal of a standing ruling; un-iceboxing #1136;
+**The lead's:** G1–G5 (G5 reverses ADR-0003, so it is lead-only by this plan's own argument); any reversal of a standing ruling; un-iceboxing issue #1136;
 anything that spends more than the phase budget; filing a card that reverses a
 documented decision.
 
@@ -328,7 +343,7 @@ All MEASURED at sha `5e14a9967` over `eval/runlogs/e2e/*/run-*.json` unless note
 
 | quantity | value | n |
 |---|---|---|
-| September regime (current, post-conversion) | **$10.60 median, 75.7 min, 236.5 tool calls** | 28 |
+| September regime (current, post-conversion) | **$10.57 median cost (n=24 — 4 of the 28 carry no cost), 75.7 min, 236.5 tool calls (n=28)** | 24 / 28 |
 | Whole corpus | $7.84–$8.88 median cost, 59.6 min | 164–188 |
 | Runs at or over their own wall cap | **23** | 188 |
 | Runs hitting any cap (wall, cost, tool, turn) | **44** | 188 |
@@ -426,14 +441,14 @@ Context: a run reads **~113,000 tokens of its own instructions** to produce a
    conversion. 88% of September's `research_query` calls are inside agents, so "the
    agents are slow" and "the paging loop is slow" are the same calls seen from two
    angles. Only new runs can separate them.
-   **Superseded claim, for the record:** Median wall
+   **Superseded claim — RETRACTED, kept only as a record of what was believed. Do not quote it; the corrections are A7 items 15–18:** Median wall
    55.0 → 64.9 → 75.7 min (+37.6%). Traced to proof-conclusion (PR #1819, 08-21),
-   research-exhaustiveness (#1847, 08-23), person-evidence (#1853, 09-01).
+   research-exhaustiveness (issue #1847, 08-23), person-evidence (issue #1853, 09-01).
    Delegation is **purely additive**: main-thread tool calls flat 136.5/137/130
    while subagent calls went 0/31/104.5; main-thread generation flat ~43 min while
    subagent wall-time went 7.1 → 22.6 min. Cost: main-thread repriced $5.61 → $6.16
    (+10%) against actual $7.40 → $10.60 (+43%) — the entire increase is subagent
-   spend `usage.usage` does not count (issue #2582). **MEASURED.**
+   spend `usage.usage` does not count (issue #2582).
 2. **Spending more does not buy quality.** Within a fixture, 50 discordant pairs:
    dearer passed 25, cheaper passed 25 (sign test p=1.00). Across 160 costed runs
    split into thirds by cost, median `recall_required` is **1.00 in all three
@@ -483,7 +498,7 @@ Context: a run reads **~113,000 tokens of its own instructions** to produce a
 - **Memoisation of repeat tool calls.** $0.065/run — below noise.
 - **Capping research-exhaustiveness spawns.** No counting mechanism exists anywhere
   (the plugin hook is stateless, `hooks.json` does not match `Task`), and
-  `guard_project_files.py:124` `OWNED_DECLARATIONS` routes `declared: true` to that
+  `OWNED_DECLARATIONS` in `guard_project_files.py` `OWNED_DECLARATIONS` routes `declared: true` to that
   agent alone — a cap makes the run unable to reach `project.status = completed`.
 - **Three-run fresh baselines on three fixtures.** ~$33 to re-establish what the
   corpus already pins.
@@ -588,11 +603,11 @@ A critic should not re-derive these. Each was believed, then measured and found 
    `eval/harness/harness/snapshot.py` folds every `@plugin:<agent>.md` a skill
    delegates to into that skill's run-log snapshot, so one `effort:` line flips
    `record-extraction` inactive and buys a paid `make eval-skill` run plus an
-   annotation pass. Issues #2238 and #1848 both already say so. Only the
+   annotation pass. Issues issue #2238 and issue #1848 both already say so. Only the
    one-minute `make e2e-thinking-probe` is free.
 11. **"One line in `real_agent.py` makes session effort settable in production."**
-   Half a fix. `SandboxSpec` (`base.py:45-49`) carries `model` and no `effort`, and
-   `_agent_env` (`e2b.py:230-236`) sets `MODEL` and nothing else, so the edit would
+   Half a fix. `SandboxSpec` (`SandboxSpec` (`base.py`)) carries `model` and no `effort`, and
+   `_agent_env` (`_agent_env` (`e2b.py`)) sets `MODEL` and nothing else, so the edit would
    read a variable no hosted session ever sets — and `make agent-smoke` would pass
    anyway, because it never boots a sandbox.
 12. **"Pausing the conversions and un-gating the floor searches are scheduling
@@ -649,7 +664,7 @@ A critic should not re-derive these. Each was believed, then measured and found 
 
 - Do the gap buckets in A2 actually sum, and do they reconcile to a
   recorded `total_cost_usd`?
-- Is the floor in section 3 derived from the work, or back-fitted from observed
+- Is the floor in A2 derived from the work, or back-fitted from observed
   runs? Three of its inputs are ESTIMATED (system prompt, instruction slice,
   `record_read` size).
 - Does every file path, line number, Makefile flag and env var named here exist?
