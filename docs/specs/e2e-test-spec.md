@@ -135,6 +135,7 @@ Test metadata.
 | `id` | string | yes | Unique slug matching the directory name |
 | `name` | string | yes | Short human-readable name |
 | `genre` | enum | no | `strip` (default) or `record-hint` — see §3.6 |
+| `image_basis` | boolean | no | Record-hint fixtures only. `true` when the resolution rests on reading the original page images; `false`/absent when it rests on indexes alone. When `true`, `expected-findings.json` must cite an image ark — see §3.6.1. A non-boolean value is a hard `ERROR`. |
 | `source_pid` | string | yes | FamilySearch PID the fixture was captured from |
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
@@ -544,6 +545,26 @@ full-path form for this reason; it cannot verify the ark actually
 resolves to the record claimed (CI holds no FamilySearch token) —
 what it buys is that a false citation becomes checkable in one click
 by a human reviewer instead of invisible.
+
+**When the resolution rests on reading the original page images**, the
+fixture declares it with `"image_basis": true` in `fixture.json`, and
+then the full-ark requirement above is raised to an **image** ark:
+at least one `supporting_sources` entry, on some finding, must carry an
+image ark. The ark taxonomy is settled — image arks are `3:1:` or
+`3:2:` in their two path segments, while `1:1:`, `1:2:`, `2:5:` and
+`4:1:` are indexes, not images (the first segment is what distinguishes
+an image; `1:1:` vs `1:2:` is a difference in indexing, not the
+index/image split). An index ark, or an image ark that appears only in
+the fixture's `README.md`, does not satisfy the flag — the image ark
+must be in `expected-findings.json`, since that is the ground truth the
+judge and a reviewer read. This is a **declared** flag rather than a
+detector run over README prose: a prose claim that an image was read
+can be satisfied in prose, so the author asserts the image basis
+explicitly and the linter checks the citation that backs it. When the
+flag is `false` or absent the bar is unchanged — one full ark anywhere.
+A non-boolean `image_basis` (`"true"`, `1`, `null`) is a hard `ERROR`,
+because truthiness-coercing it would let `"false"` enable the check and
+a typo'd string silently disable it.
 
 ---
 
