@@ -870,7 +870,8 @@ audit's recommendation #5):
 | `person_evidence` revision | revision is an `append` of the new entry **plus** an `update` setting `superseded_by` on the old one; never a field-overwrite-in-place that loses the prior link | `research-schema-spec.md:427–431` |
 | `project` update → `status: "completed"` | **no unresolved blocking conflict** — reject while any `conflicts[]` entry has `status: "unresolved"` AND **any of three arms** holds: (a) non-empty `blocks_question_ids`, (b) a non-empty `identity_question` string, or (c) some member of `competing_assertion_ids` is an assertion whose `extracted_for_question_ids` is non-empty. Arms (a) and (b) are the *declared* link; arm (c) **derives** it from the evidence, because a conflict competing over an assertion a question was built on bears on that question whether or not the agent wrote the link down. Arm (c) is not narrowed to still-open questions — a conflict bearing on an already-concluded question still means that conclusion rests on unresolved evidence — and does not require the question id to exist in `questions[]`, since nothing reference-checks `extracted_for_question_ids`. `resolved` and `moot` both settle a conflict. Refused on the **union** of the pre-call snapshot and the live document, so a batch cannot settle a blocking conflict and complete in the same call. Tool precondition on the transition only — an already-completed document with such a conflict still loads (not a document-validity rule). The predicate is shared with `utils/question-state.ts`, which computes the per-question form for the router's advisory ladder | wilkins-death-kentucky e2e finding 2026-07-15: agent logged an unresolved identity conflict (wrong-person certificate, 43-year birth mismatch) and completed anyway; GPS Component 4. Arm (c) added because the declared fields are not reliably written — 42 of 75 (56%) corpus conflicts carry neither, and the two-arm gate saw 5 of the 14 unresolved conflicts held by completed runs; measured at f459af71b with `dev/replay_completion_gate.py`. See `guardrail-enforcement-spec.md` §5 for the refusal measurement and its per-refusal inspection |
 | `project` update → `status: "completed"` | **every proof summary backing a resolved question carries a gps-mentor verdict** — reject while any `proof_summaries[]` entry whose `question_id` names a question that is resolved — by `status: "resolved"` **or** by a truthy `resolved` date, the same pair the row above gates — has no `evaluations[]` entry with `focus: "proof-critique"`, a matching `target_id`, and a null `superseded_by`. The critique set is snapshotted **before any op in the call applies**, so a batch cannot append its own verdict and consume it in the same call. A resolved question with **no** proof summary still passes vacuously, but that state is no longer reachable through this tool (the row above refuses the transition) — the vacuous pass now covers only documents seeded that way, so a gate on a transition does not retroactively invalidate a document that predates it | The same rule stated in the research orchestrator's prose did not hold: **23% of completed runs in the committed e2e corpus reach `completed` with at least one uncritiqued summary** — measured 2026-08-15 over 154 runs, corroborated to within 2 runs by an independent count, and re-derived 2026-09-08 as 29 of 128 over 161 run logs. Read the 23% as a blend, not as this rule's failure rate: date-split it is 23/70 before the prose, 6/53 with the prose unenforced, and 0/5 since this precondition shipped, so 23 of the 29 predate the sentence and the live window is n=5 (3/n bound 60%). ADR-0011 |
-| `person_evidence` append/update declaring `core_identifier_conflict` | rejected unless `confidence` is `speculative`. Reads the entry's own field and nothing else — no tree read, no re-reading of the record — which is what makes it a precondition rather than a prompt rule (ADR-0011's first question). The cap applies to `confident` **and** `probable`; a whitespace-only or null value is not a declaration. Clearing the field to null is the escape when the conflict is explained and does not bear on identity | The prose form did not bind, twice: `agents/person-evidence.md` carried "a qualitative conflict caps confidence regardless of score" using the same 0.85 figure as the failing test, and a Step 3 forcing function that made the agent WRITE the verdict still let it argue past the verdict in the next clause (`ut_person_evidence_012`, `_024`; single-test rounds 2026-09-23). **Refuses zero existing writes**: the field is new, so no committed entry carries it — compare `personEvidenceScoreWarnings`, which stays warn-only because `speculative` is 344 of 22,050 committed person_evidence writes (1.6%) and an inferred cap would hit live traffic |
+| `person_evidence` **append** requiring a recorded score | rejected when the persona is reachable (`personaReachable`, unchanged) and no `same_person` score is recorded for that pairing in `results/.scores/`. Looked up on **`(assertion_id, tree_person_id)`** -- the pair the writer is called with and the pair a `person_evidence` entry carries, so the two sides cannot disagree. Keying on the PARTY instead was wrong and was caught in review before shipping: the fetched route resolves a real `persons[].id` where the assertion carries `record_persona_id: null`, so a legitimate score was filed under what was resolved while the reader computed the key from the assertion, and the gate refused exactly the links whose call HAD been made. Persona granularity (ADR-0009 constraint 3) survives because an assertion carries one `record_role` and one `record_persona_id` and so IS a (record, party) pair: a second persona of an already-linked record is a different assertion. The assertion is resolved against this call's own batch as well as the document, or ordering the link BEFORE its assertion skips the gate. **Requiring** a score is scoped to `append` (the supersede pattern updates an old entry's `superseded_by`, and refusing that would make an unattested link permanently unretractable); **forbidding** a fabricated one also applies to an `update` that writes `match_score` OR RE-POINTS the link (`assertion_id`, `person_id`), since append-only left the same two-call bypass open and `person_evidence` declares no `allowedFields`: moving an attested link onto an unattested assertion carried the number across untouched. An update's attestation is prefetched through its POST-MERGE assertion, or a legitimate re-point is refused for work that was scored. A pairing the tool can prove CIRCULAR at write time is exempt from needing a score but refused if it CARRIES one. **Reachability excuses a MISSING score, never a fabricated one**: an unreachable link may leave `match_score` null, but one that carries a number still needs an attestation. Gating the whole arm on reachability left `ut_person_evidence_014`'s actual defect open, because a stub minted by `tree_edit add_person` carries no source ref (so the circular walk is false) on a full-text assertion (so reachability is false) and both arms were off at once. Circular means the person was CREATED out of this record: a FamilySearch PID or presence in `starting-tree.gedcomx.json` rules it out before the source-ref walk runs, because a long-standing person with one record attached satisfies the walk too. The check is on the attestation's PRESENCE for the pairing, not on the value written against it. Being a precondition, it fails the WHOLE call: a batch carrying one unattested link lands nothing, including its valid sibling ops, rather than committing an assertion whose link was rejected | Step 3 of the lead's 2026-09-07 ruling, after PR A made the call cheap and made it record. Until it shipped, `match_score` was caller-fabricable and ADR-0009 constraint 2 conceded the point. Measured at 4036bd3184 over 192 committed e2e runs (9,223 links): 7,333 reachable and needing an attestation, 509 unreachable of which **3** carry a score and are still refused, 1,381 circular-exempt of which **26** carry a score and are refused. Re-derivable with `dev/replay-score-gate.ts`. Both narrowing arms were measured, not assumed: without the PID/starting-tree discriminators the circular arm refused 232 links, 206 of them pre-existing people rather than minted stubs (184 caught by both discriminators, 22 by starting-tree membership alone, and 0 by the PID test alone -- on the 191 runs with a committed baseline every PID-shaped person is also in it, so the PID arm earns its place only for a project with no starting tree; the 3 PID-shaped ids absent from a baseline are all in `william-ferber-ancestry`, which commits none, so they are unverifiable rather than counterexamples); and exempting a tree person with no refs at all would cover a further 1,131 links, which ADR-0009 already refuted as a basis. **The assertion key costs redundant calls and that is not reduced here.** A score is a function of (record party, tree person), not of the assertion, so several assertions describing one persona each need their own call for the identical number: measured at 4036bd3184, 9,223 calls for 3,616 distinct (record, party, person) pairings, 1,774 pairings needing more than one call and one needing 14. Left as is deliberately: the party component is what produced the unfindable-score defect this key replaced, and re-introducing it as a lookup arm after two review rounds found key-related blockers trades a measured cost for an unmeasured risk |
+| `person_evidence` append/update declaring `core_identifier_conflict` | rejected unless `confidence` is `speculative`. Reads the entry's own field and nothing else — no tree read, no re-reading of the record — which is what makes it a precondition rather than a prompt rule (ADR-0011's first question). The cap applies to `confident` **and** `probable`; a whitespace-only or null value is not a declaration. Clearing the field to null is the escape when the conflict is explained and does not bear on identity | The prose form did not bind, twice: `agents/person-evidence.md` carried "a qualitative conflict caps confidence regardless of score" using the same 0.85 figure as the failing test, and a Step 3 forcing function that made the agent WRITE the verdict still let it argue past the verdict in the next clause (`ut_person_evidence_012`, `_024`; single-test rounds 2026-09-23). **Refuses zero existing writes**: the field is new, so no committed entry carries it — compare the score requirement in the row above, which was `personEvidenceScoreWarnings` until it graduated on 2026-09-24; the reason a CONTRADICTION cap stays measured-first is that `speculative` is 344 of 22,050 committed person_evidence writes (1.6%) and an inferred cap would hit live traffic |
 | `person_evidence` append/update at `confident`/`probable` | rejected when the record's own assertions about the SAME party state a birth place, or a birth/christening date, that contradicts the tree person's birth fact. Place compares `birth` only (a christening place is the church, not the birthplace); date compares birth and christening alike (a baptism follows birth closely) at a 5-year threshold, since the tree side is routinely a circa year. Silent when the contradicting claim is `information_quality: secondary` or an informant with no proximity to the birth, and silent on two-party relationship assertions | Refuses **0 of 323** committed confident/probable entries; the four scopings and what each removed are in `guardrail-enforcement-spec.md` §8. Replaces three prose attempts and one self-declared field, each measured not to bind (`ut_person_evidence_012`, `_024`) |
 | `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `exhaustive_declaration.declared === true` **as of the start of this call** | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
@@ -973,8 +974,16 @@ widening it in the same change that told the agent to adopt the new call would
 make the measurement unreadable, and the widening belongs with the writer-side
 requirement it exists to serve. Downgrading
 confidence no longer silences this warning, though it still slips the link past
-the confident-gated epistemic reject above. `personEvidenceScoreWarnings` in
-`research-append.ts`.
+the confident-gated epistemic reject above.
+
+**Graduated to a refusal on 2026-09-24.** This was
+`personEvidenceScoreWarnings`, a warning on a successful write, for exactly the
+reason stated above: `match_score` was caller-fabricable, so a rejection bought
+a number rather than a call. PR A removed that premise by making `same_person`
+cheap, project-relative, and self-recording, so the writer can now check a link
+against an attestation the model never touches. The precondition is
+`personEvidenceScoreInvariants` in `research-append.ts`; the row in §5's table
+gives its exact scope.
 
 ### 5.1 Sources-without-assertions nudge (warning, not a precondition)
 
@@ -1425,9 +1434,10 @@ derivable at the tool boundary: `same_person`'s tree side is a hand-curated
 name — scores near zero against everything, since the match engine scores on
 document content. (That is a content signal, not an id artifact: an ARK-less or
 locally-minted person is scorable, measured at `0.9999484` against a `0.999967`
-control.) The *value* therefore cannot be validated here; what can be is its **presence**, which is the warn-only advisory
+control.) The *value* therefore cannot be validated here; what can be is its **presence**, which was the warn-only advisory
 `personEvidenceScoreWarnings` (alongside `personEvidenceInvariants`) decided in
-issue #1006 (2026-08-01). That decision
+issue #1006 (2026-08-01). That advisory was removed on 2026-09-24, when the
+refusal described below replaced it; the symbol no longer exists. That decision
 supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
 not tooling" — #1006 explicitly concedes that a present `match_score` does not
 prove `same_person` ran, and takes the presence check anyway rather than
@@ -1435,16 +1445,51 @@ over-engineering past it.
 
 **"Do not over-engineer past this" was overturned by the lead on 2026-09-07,
 and half the replacement has shipped.** `same_person` now records every score
-it computes to `results/.scores/`, host-side, keyed by (record, party, tree
+it computes to `results/.scores/`, host-side, keyed by (record, assertion, tree
 person) — so an attestation that a call happened does exist, and it is not
 caller-fabricable, because the payload never round-trips through the model
-(`same-person-tool-spec.md`, "The recorded score"). What has **not** shipped is
-this tool requiring it: that step is gated on re-measuring once agents are
-calling the cheap form, and on an unanswered question about whether a score
-from an earlier session still counts. So the sentence above still describes
-`research_append` today — `match_score` remains fabricable here — but it no
-longer describes the design, and it must not be cited as a reason not to build
-the check.
+(`same-person-tool-spec.md`, "The recorded score"). **The other half shipped on 2026-09-24.** This tool now requires
+the attestation: a `person_evidence` append for a reachable persona is refused
+unless `results/.scores/` records a score for that pairing. So the paragraph
+above no longer describes `research_append`, and "do not over-engineer past
+this" is spent — it described a world where the only evidence was a number the
+caller supplied.
+
+Five caveats the implementation carries rather than hides. **A circular pairing
+is only detectable when the minted person carries a source ref.** The walk needs
+one, and `tree_edit add_person` mints without one (274 of 711 run-added corpus
+persons, 38%), so on that route the tool cannot tell a circular pairing from an
+ordinary one: it refuses the fabricated score and then names `same_person` as
+the remedy, which for a stub minted out of that very persona is the circular
+call `agents/person-evidence.md` forbids -- and the resulting attestation is
+accepted, because the gate checks that a call happened, not that it was
+legitimate. The refusal text now names leaving `match_score` null as an equally
+legal answer, but that is prose, not a mechanism: it is the lane-4 escape, and
+lane-4 doctrine says prose will not always hold. Widening the walk to ref-less
+persons is NOT the fix and was measured and refuted: it would exempt a further
+1,131 links. **A second-party link
+whose party the record holds no persona for is refused with no way to satisfy
+it.** `personaReachable` keys on the ASSERTION, so both links of a two-party
+assertion inherit its reachability, while `same_person` refuses that party with
+"record holds no persona for that party, leave match_score null and say so" --
+which this gate then refuses. Whether a persona exists for a given party is not
+decidable from the project documents (the record's `persons[]` is not in
+`research.json`), so it fails ADR-0011's first question and cannot be fixed by
+widening the precondition. Closing it properly needs `same_person` to persist a
+negative verdict the writer can read, which is a new concept and is not in this
+change. **The gate binds the
+attestation's presence for the pairing, not the value written against it**: an
+agent that genuinely called `same_person` and then wrote a different number is
+not caught here, and `research-append.test.ts` pins that rather than leaving it
+implied. Value-binding is a separate decision and was not taken. The score TTL question
+is still unanswered, and the gate ships on option A, "a score recorded in an
+earlier session still counts", which the card marks recommended; option B is no
+longer reachable from what PR A stored, because `RecordedMatchScore` keeps
+`computed` but nothing describing the tree person at score time. And the record
+is **not yet unforgeable**: `guard_project_files.py` protects three filenames by
+basename and `results/.scores/` is not among them, so the residual surface is
+the desktop `.mcpb` main thread and the Cowork main thread. The agent itself has
+no `Write`. See `same-person-tool-spec.md`, "The recorded score".
 
 ### 11.5 Debug holds — a probe seam, not a feature
 

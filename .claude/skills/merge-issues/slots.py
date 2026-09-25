@@ -1,12 +1,9 @@
 """Eval-slot queue depth for /merge-issues.
 
-`/fill-ready`'s Gate 4 answers "is this skill's slot taken?" — one bit per slot.
-This answers the question that decides whether to merge: **how many issues are
-queued behind that holder**, since under Gate 4 they drain one at a time and each
-one pays its own `make eval-skill` run plus a full `.ann.json` re-annotation.
-
-A queue is not a scheduling problem. It is a sizing problem, and the output below
-is what makes that countable instead of arguable.
+How many open issues change each skill's eval snapshot. Every issue that lands
+on a snapshot pays its own `make eval-skill` run, so a deep queue is where
+duplicate and subset scope concentrates and where a merge can buy a run back.
+Depth selects what to read first; it never forces a merge on its own.
 
 Reads `**Touches:**` lines via ../lib/touches.py, shared with collisions.py, so
 the two passes cannot disagree about which slot an issue holds. An issue with no
@@ -32,10 +29,9 @@ from touches import (  # noqa: E402
     under,
 )
 
-# A queue this deep or deeper must leave the pass merged, or with a written reason
-# per survivor. Three is the depth at which one merge still buys a run back; the
-# number is a forcing function, not a measurement, and SKILL.md owns what it means.
-MUST_CLEAR = 4
+# A queue this deep or deeper is read first. The number is a reading order, not a
+# measurement, and SKILL.md owns what it means.
+READ_FIRST = 4
 
 # The --limit every SKILL.md that calls this script passes to `gh project
 # item-list`. A pull is truncated silently iff it returns exactly this many rows,
@@ -139,19 +135,19 @@ def main(board_path, open_path, prs_path):
             print(describe(n))
         print()
 
-    must = {s: m for s, m in queues.items() if len(m) >= MUST_CLEAR}
-    rest = {s: m for s, m in queues.items() if 2 <= len(m) < MUST_CLEAR}
+    must = {s: m for s, m in queues.items() if len(m) >= READ_FIRST}
+    rest = {s: m for s, m in queues.items() if 2 <= len(m) < READ_FIRST}
 
     print(f"=== eval slot queues (pool: {len(pool)} issues -- non-icebox Backlog + "
           "unassigned Ready) ===\n")
-    print(f"--- MUST CLEAR: queue >= {MUST_CLEAR} "
+    print(f"--- READ FIRST: queue >= {READ_FIRST} "
           f"({len(must)} slots) ---\n")
     for s, m in sorted(must.items(), key=lambda x: (-len(x[1]), x[0])):
         block(s, m)
     if not must:
         print("  (none)\n")
 
-    print(f"--- report only: queue 2-{MUST_CLEAR - 1} ({len(rest)} slots) ---\n")
+    print(f"--- then: queue 2-{READ_FIRST - 1} ({len(rest)} slots) ---\n")
     for s, m in sorted(rest.items(), key=lambda x: (-len(x[1]), x[0])):
         block(s, m)
     if not rest:
