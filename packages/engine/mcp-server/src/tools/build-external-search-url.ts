@@ -220,6 +220,55 @@ function usStateFacet(v: unknown): string | undefined {
   return undefined;
 }
 
+// ─── Newspapers.com place and date decomposition (spec §11.2) ────────────────
+
+// Reverse of US_STATE_NAMES. Newspapers.com scopes by `region=us-<postal>`,
+// measured as `region=us-pa` for Pennsylvania.
+const US_STATE_CODES: Record<string, string> = Object.entries(US_STATE_NAMES).reduce(
+  (acc, [code, name]) => {
+    acc[name] = code;
+    return acc;
+  },
+  Object.create(null) as Record<string, string>,
+);
+
+// Reuses `usStateFacet`'s right-to-left segment scan, so the same
+// "Indiana, Pennsylvania" mis-scoping it guards against is guarded here.
+function newspapersRegion(v: unknown): string | undefined {
+  const full = usStateFacet(v);
+  if (full === undefined) return undefined;
+  const code = US_STATE_CODES[full];
+  return code === undefined ? undefined : `us-${code}`;
+}
+
+// The bare county name — measured `county=Schuylkill`, not "Schuylkill County".
+// A place string runs narrow to broad ("Schuylkill, Pennsylvania, United
+// States"), so the county is the segment immediately BEFORE the one that
+// resolved to a state. Emitted only when a region was too: a county without its
+// state is ambiguous across the 31 states that have a Washington County.
+function newspapersCounty(v: unknown): string | undefined {
+  const raw = str(v);
+  if (raw === undefined) return undefined;
+  const segments = raw.split(",").map((s) => s.trim());
+  for (let i = segments.length - 1; i >= 1; i--) {
+    if (usStateFacet(segments[i]) === undefined) continue;
+    const candidate = segments[i - 1].replace(/\s*\bcounty\b\s*/i, " ").trim();
+    return candidate.length > 0 ? candidate : undefined;
+  }
+  return undefined;
+}
+
+// `searchYear` is one attribute; the site takes two parameters. A range splits;
+// a single year sets both ends to it — the range form is what was measured
+// (`date-start=1880&date-end=1905`), the single-year collapse is not, but it is
+// the same shape with from === to and cannot widen the search.
+function newspapersYearWindow(v: unknown): { start: string; end: string } | undefined {
+  const t = yearOrRange(v);
+  if (t === undefined) return undefined;
+  const [from, to] = t.split("-");
+  return { start: from, end: to ?? from };
+}
+
 // The Library of Congress page corpus; a window entirely outside it cannot
 // return a page, and a URL for it would log a nil as evidence of absence.
 const CHRONICLING_AMERICA_COVERAGE = { first: 1798, last: 1963 } as const;
@@ -271,21 +320,48 @@ function siteWideParams(
         mother: positional(a.motherGivenName, a.motherSurname),
         spouse: positional(a.spouseGivenName, a.spouseSurname),
       };
-    case "myheritage":
+    case "myheritage": {
+      // Measured 2026-09-24/25 (spec §11.1). The twelve flat parameters this
+      // tool used to emit appear NOWHERE in the site's vocabulary — that URL
+      // rendered an unfilled search form, never a search. The live site
+      // serializes FORM STATE: a composite `qname`, and events in positional
+      // slots whose names encode insertion order.
+      //
+      // Only one event ships, in slot `qevents-event1` — the one slot name
+      // seen in both captures. The second slot is `qevents-any/1event_1`,
+      // whose `/` `encodeURIComponent` would emit as `%2F`; whether the site
+      // accepts that was never measured, so it is not emitted. A year and a
+      // place are always separate entries on this site (the year under its own
+      // `et.<type>`, the place under `et.any`), so a year displaces a place
+      // rather than joining it.
+      //
+      // Not emitted at all, and reported unused: `marriageYear` (`et.marriage`
+      // was never loaded) and the four parent fields, whose `qrelatives-*` form
+      // needs a pointer into a second parameter and whose only-one-parent
+      // branch was never measured. Guessing either is what produced this bug.
+      const given = str(a.givenName);
+      const surname = str(a.surname);
+      const nameParts = [
+        ...(given !== undefined ? [`fn.${given}`, "fnmo.1"] : []),
+        ...(surname !== undefined ? [`ln.${surname}`, "lnmsrs.false"] : []),
+      ];
+      const birth = numYear(a.birthYear);
+      const death = numYear(a.deathYear);
+      const place = str(a.birthPlace) ?? str(a.deathPlace) ?? str(a.marriagePlace);
+      const event =
+        birth !== undefined
+          ? `Event et.birth ey.${birth}`
+          : death !== undefined
+            ? `Event et.death ey.${death}`
+            : place !== undefined
+              ? `Event et.any ep.${place} epmo.similar`
+              : undefined;
       return {
-        first: str(a.givenName),
-        last: str(a.surname),
-        birth_year: numYear(a.birthYear),
-        birth_place: str(a.birthPlace),
-        marriage_year: numYear(a.marriageYear),
-        marriage_place: str(a.marriagePlace),
-        death_year: numYear(a.deathYear),
-        death_place: str(a.deathPlace),
-        father_first: str(a.fatherGivenName),
-        father_last: str(a.fatherSurname),
-        mother_first: str(a.motherGivenName),
-        mother_last: str(a.motherSurname),
+        qname: nameParts.length > 0 ? `Name ${nameParts.join(" ")}` : undefined,
+        "qevents-event1": event,
+        qevents: event !== undefined ? "List" : undefined,
       };
+    }
     case "findmypast": {
       const yearOfBirth = numYear(a.birthYear);
       const offset = numSmall(a.birthYearOffset);
@@ -322,12 +398,21 @@ function siteWideParams(
         birthyear: numYear(a.birthYear),
         deathyear: numYear(a.deathYear),
       };
-    case "newspapers":
+    case "newspapers": {
+      // Measured 2026-09-24 (spec §11.2). `dr_year` and `dr_place` were
+      // discarded by the live site, which returned the term search unscoped —
+      // 391,309 hits for a search that returns 132 once its year and county
+      // really apply. The site takes a date as TWO parameters and a place as a
+      // region/county pair, on `/search/results/`.
+      const window = newspapersYearWindow(a.searchYear);
       return {
-        query: joinPresent(" ", a.givenName, a.surname, a.keywords),
-        dr_year: yearOrRange(a.searchYear),
-        dr_place: str(a.searchPlace),
+        keyword: joinPresent(" ", a.givenName, a.surname, a.keywords),
+        "date-start": window?.start,
+        "date-end": window?.end,
+        region: newspapersRegion(a.searchPlace),
+        county: newspapersCounty(a.searchPlace),
       };
+    }
     case "chronicling_america": {
       const window = chroniclingAmericaWindow(a);
       const state = usStateFacet(a.usState);
@@ -441,7 +526,10 @@ const SITE_BASE_URL: Record<ExternalSearchSite, string | null> = {
   myheritage: "https://www.myheritage.com/research",
   findmypast: "https://www.findmypast.com/search/results",
   findagrave: "https://www.findagrave.com/memorial/search",
-  newspapers: "https://www.newspapers.com/search/",
+  // `/search/results/`, not `/search/` — the path the live site's own search
+  // produces (spec §11.2). The legacy `/search/?query=` path still serves, but
+  // only its term parameter binds.
+  newspapers: "https://www.newspapers.com/search/results/",
   chronicling_america: "https://www.loc.gov/collections/chronicling-america/",
   archives_gov: "https://catalog.archives.gov/search",
   archive_org: "https://archive.org/search",
@@ -530,7 +618,18 @@ const UK_BASE_URL: Partial<Record<ExternalSearchSite, string>> = {
 
 // Applied on every call, with or without `baseUrl` (spec §3.4).
 const SITE_FIXED_PARAMS: Partial<Record<ExternalSearchSite, Record<string, string>>> = {
-  myheritage: { action: "query" },
+  // The scaffolding the live search form emits alongside the query (spec
+  // §11.1). `exactSearch` is genuinely empty in the measured URL.
+  myheritage: {
+    s: "1",
+    formId: "master",
+    formMode: "1",
+    useTranslation: "1",
+    exactSearch: "",
+    p: "1",
+    action: "query",
+    view_mode: "card",
+  },
   // Without it the search returns newspaper titles, not digitised pages.
   chronicling_america: { dl: "page" },
   // Scopes the catalog to person/org name-authority records, matching
@@ -561,20 +660,16 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
     "this searches the catalog's name-authority index (record creators), not the archival " +
     "descriptions — a nil here is expected for an ordinary person and is not evidence the " +
     "record does not exist; it also has no place filter, so scope by place in the site's own UI",
-  // Measured 2026-09-24 (spec §11.2): `dr_year` and `dr_place` are discarded by
-  // the live site, which returns the unscoped term search — 391,309 hits for a
-  // search that returns 132 once its year and county are really applied. The
-  // parameters still ship pending the ruling on how to replace them, so the note
-  // is what stops a researcher reading the nil-narrowing as a real search. Same
-  // remedy `archives_gov` got in correction #4.
-  newspapers:
-    "this URL's date and place parameters are discarded by the site — it returns the term search " +
-    "unscoped by year or place; tell the user to set the date range and location in the site's own UI",
-  // Measured 2026-09-24 (spec §11.1): every parameter the tool emits for this
-  // site is dead, so the URL opens the search form with nothing filled in.
+  // This site RANKS, it does not filter (spec §11.1): adding a birth year and a
+  // place to a name search moved the count 173,496 -> 173,502, reordering the
+  // hits toward the criteria without narrowing the pool. A researcher who reads
+  // a six-figure count as "the filter did not apply" will re-run the search
+  // forever, so the note has to say what the number means.
   myheritage:
-    "this URL opens MyHeritage's search form UNFILLED — no search runs; tell the user to enter the " +
-    "name, year and place in the form itself, and do not report the link as a search performed",
+    "this site ranks rather than filters — a year or place reorders the results toward your " +
+    "criteria without shrinking the count, so a large number of hits is expected and is not a " +
+    "failed search; marriage year and parent names cannot be expressed in the URL at all and " +
+    "must be entered in the site's own form",
   findagrave: USER_CONTRIBUTED_NOTE,
   billiongraves: USER_CONTRIBUTED_NOTE,
   chronicling_america:
@@ -926,6 +1021,18 @@ function siteNotes(
           str,
         ),
       );
+      break;
+    case "newspapers":
+      // The site scopes place as `region` + `county`, so a place string with no
+      // recognizable US state cannot be expressed at all. Say so: dropping it
+      // silently is the failure this site's measurement (§11.2) exists to end.
+      if (str(a.searchPlace) !== undefined && newspapersRegion(a.searchPlace) === undefined) {
+        notes.push(
+          "'searchPlace' names no US state this site can scope to — it scopes by state and county, so " +
+            "no place filter was applied; qualify the place (\"Schuylkill, Pennsylvania\") or set the " +
+            "location in the site's own UI",
+        );
+      }
       break;
     case "chronicling_america": {
       const window = chroniclingAmericaWindow(a);

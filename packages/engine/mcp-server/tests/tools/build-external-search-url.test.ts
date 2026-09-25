@@ -34,7 +34,9 @@ describe("build_external_search_url", () => {
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.url).toBe(
-        "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Ireland",
+        "https://www.myheritage.com/research?s=1&formId=master&formMode=1&useTranslation=1&exactSearch=" +
+          "&p=1&action=query&view_mode=card&qname=Name+fn.Patrick+fnmo.1+ln.Flynn+lnmsrs.false" +
+          "&qevents-event1=Event+et.birth+ey.1845&qevents=List",
       );
     });
 
@@ -70,15 +72,85 @@ describe("build_external_search_url", () => {
       );
     });
 
-    it("newspapers: query is space-joined (form-encoded as +), dr_year/dr_place are generic", () => {
+    // Spec §11.2/§11.1: these assert the grammar captured from each site's OWN
+    // results URL in a browser, which is the only thing that established these
+    // names. A vitest case still cannot prove a name binds live (§9).
+    it("newspapers: a place strips its 'County' suffix and pairs with its state code", () => {
+      for (const place of ["Schuylkill, Pennsylvania, United States", "Schuylkill County, Pennsylvania"]) {
+        const r = buildExternalSearchUrl({ site: "newspapers", attributes: { surname: "Flynn", searchPlace: place } });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).toContain("region=us-pa");
+        expect(r.url).toContain("county=Schuylkill");
+        expect(r.url).not.toContain("County");
+      }
+    });
+
+    it("newspapers: a place with no US state scopes nothing, and says so", () => {
       const r = buildExternalSearchUrl({
         site: "newspapers",
-        attributes: { givenName: "Patrick", surname: "Flynn", searchYear: "1908", searchPlace: "Schuylkill County" },
+        attributes: { surname: "Flynn", searchPlace: "County Roscommon, Ireland" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("region=");
+      expect(r.url).not.toContain("county=");
+      expect(r.notes.some((n) => /'searchPlace' names no US state/.test(n))).toBe(true);
+    });
+
+    it("newspapers: a state alone scopes the region with no county", () => {
+      const r = buildExternalSearchUrl({ site: "newspapers", attributes: { surname: "Flynn", searchPlace: "Pennsylvania" } });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("region=us-pa");
+      expect(r.url).not.toContain("county=");
+      expect(r.notes.some((n) => /'searchPlace' names no US state/.test(n))).toBe(false);
+    });
+
+    it("myheritage: a year displaces a place — the site takes them as separate event slots", () => {
+      const withYear = buildExternalSearchUrl({
+        site: "myheritage",
+        attributes: { surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" },
+      });
+      expect(withYear.ok).toBe(true);
+      if (!withYear.ok) return;
+      expect(withYear.url).toContain("qevents-event1=Event+et.birth+ey.1845");
+      expect(withYear.url).not.toContain("ep.Ireland");
+      // Only one event slot ships: the second is `qevents-any/1event_1`, whose
+      // `/` would encode as %2F and was never measured that way.
+      expect(withYear.url).not.toContain("any%2F1event_1");
+
+      const placeOnly = buildExternalSearchUrl({
+        site: "myheritage",
+        attributes: { surname: "Flynn", birthPlace: "Ireland" },
+      });
+      expect(placeOnly.ok).toBe(true);
+      if (!placeOnly.ok) return;
+      expect(placeOnly.url).toContain("qevents-event1=Event+et.any+ep.Ireland+epmo.similar");
+    });
+
+    it("myheritage: marriage year and parent names are reported unused, not silently dropped", () => {
+      const r = buildExternalSearchUrl({
+        site: "myheritage",
+        attributes: { surname: "Flynn", marriageYear: 1870, fatherGivenName: "John", motherSurname: "Kenny" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      for (const attr of ["marriageYear", "fatherGivenName", "motherSurname"]) {
+        expect(r.notes.some((n) => n.includes(`'${attr}' is not used by myheritage`))).toBe(true);
+      }
+    });
+
+    it("newspapers: keyword is space-joined (form-encoded as +), date and place decompose", () => {
+      const r = buildExternalSearchUrl({
+        site: "newspapers",
+        attributes: { givenName: "Patrick", surname: "Flynn", searchYear: "1908", searchPlace: "Schuylkill, Pennsylvania" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.url).toBe(
-        "https://www.newspapers.com/search/?query=Patrick+Flynn&dr_year=1908&dr_place=Schuylkill+County",
+        "https://www.newspapers.com/search/results/?keyword=Patrick+Flynn&date-start=1908&date-end=1908" +
+          "&region=us-pa&county=Schuylkill",
       );
     });
 
@@ -333,7 +405,7 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toMatch(/query=Patrick\+Flynn\+obituary/);
+      expect(r.url).toMatch(/keyword=Patrick\+Flynn\+obituary/);
     });
 
     it("appends to chronicling_america's q alongside the name", () => {
@@ -364,7 +436,7 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toMatch(/query=%22Patrick\+Flynn%22/);
+      expect(r.url).toMatch(/keyword=%22Patrick\+Flynn%22/);
     });
 
     it("is not a recognized parameter for structured-name sites (ancestry) — noted, not silently dropped", () => {
@@ -387,7 +459,7 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toMatch(/dr_year=1880-1905/);
+      expect(r.url).toMatch(/date-start=1880&date-end=1905/);
     });
   });
 
@@ -921,7 +993,7 @@ describe("build_external_search_url", () => {
         });
         expect(r.ok).toBe(true);
         if (!r.ok) return;
-        expect(r.url).not.toContain("dr_year=");
+        expect(r.url).not.toContain("date-start=");
         expect(r.notes.some((n) => /'searchYear' was supplied but is not a plain year/.test(n))).toBe(true);
       }
       // The legitimate direction still passes.
@@ -932,7 +1004,8 @@ describe("build_external_search_url", () => {
         });
         expect(r.ok).toBe(true);
         if (!r.ok) return;
-        expect(r.url).toContain(`dr_year=${good}`);
+        const [from, to] = good.split("-");
+        expect(r.url).toContain(`date-start=${from}&date-end=${to ?? from}`);
       }
     });
 
@@ -947,7 +1020,7 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toContain("dr_year=1880");
+      expect(r.url).toContain("date-start=1880&date-end=1880");
       expect(r.notes.some((n) => /'searchYear'/.test(n))).toBe(false);
 
       // The other direction: out of band, non-integer and negative stay
@@ -959,7 +1032,7 @@ describe("build_external_search_url", () => {
         });
         expect(badResult.ok).toBe(true);
         if (!badResult.ok) return;
-        expect(badResult.url).not.toContain("dr_year=");
+        expect(badResult.url).not.toContain("date-start=");
         expect(badResult.notes.some((n) => /'searchYear' was supplied but/.test(n))).toBe(true);
       }
     });
@@ -1454,7 +1527,7 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).not.toContain("dr_year=");
+      expect(r.url).not.toContain("date-start=");
       expect(r.notes.some((n) => /'searchYear' was supplied but is not a plain year or ordered hyphenated range/.test(n))).toBe(true);
     });
 
@@ -1558,7 +1631,7 @@ describe("build_external_search_url", () => {
       });
       expect(bad.ok).toBe(true);
       if (!bad.ok) return;
-      expect(bad.url).not.toContain("dr_year=");
+      expect(bad.url).not.toContain("date-start=");
       expect(bad.notes.some((n) => /'searchYear' was supplied but is not a plain year or ordered hyphenated range/.test(n))).toBe(true);
       const range = buildExternalSearchUrl({
         site: "newspapers",
@@ -1566,7 +1639,7 @@ describe("build_external_search_url", () => {
       });
       expect(range.ok).toBe(true);
       if (!range.ok) return;
-      expect(range.url).toContain("dr_year=1880-1905");
+      expect(range.url).toContain("date-start=1880&date-end=1905");
     });
 
     it("notes an http: baseUrl, which the desktop viewer does not open", () => {
