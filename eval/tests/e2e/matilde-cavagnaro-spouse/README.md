@@ -60,9 +60,10 @@ Maddalena Boitano** (`G9WF-FJQ` / `G4Z4-RJM`), the couple married 28 Apr 1853 at
 Favale di Malvaro. The second parent set in the starting tree — Angelo Vaglio
 (`PQWR-XH7`) and Maria Fereccio (`PQWR-QB9`), who carry no facts at all — is a
 mis-attachment. Three of the tree's four sources (`7PM9-ZQP`, `7PM9-W4L`,
-`7PM9-W5S`) are titled for the subject but index the same entry for *Paolo Andrea
-Vaglio and Angelo, 26 Jul 1900*, and that is what dragged the Vaglio couple onto
-her. The one source that genuinely cites her is `SYXS-SC8`
+`7PM9-W5S`) all index the same entry for *Paolo Andrea Vaglio and Angelo, 26 Jul
+1900*; the first two are **titled** for the subject while `7PM9-W5S` is titled
+for Paolo Andrea Vaglio, and those mis-titles are what dragged the Vaglio couple
+onto her. The one source that genuinely cites her is `SYXS-SC8`
 (`ark:/61903/1:1:QVR6-Q9DC`), the 20 May 1866 Genova entry naming her with
 Giuseppe Cavagnaro. **Nothing was corrected upstream** — the live FamilySearch
 tree was deliberately left untouched so `starting-tree.gedcomx.json` and
