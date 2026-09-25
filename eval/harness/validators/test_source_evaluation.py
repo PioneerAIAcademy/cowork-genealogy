@@ -48,8 +48,14 @@ _DETACH_TERMS = ("detach", "detaching", "detached", "unlink", "unlinking", "unli
 # recommendation in one breath, which is the failure direction that fails
 # SILENTLY and is therefore worse than the false positive it fixes.
 _NEGATORS = (
-    "do not", "don't", "do n't", "never", "not ", "no need to", "rather than",
+    "do not", "don't", "do n't", "never", "not", "no need to", "rather than",
     "instead of", "without", "avoid", "stop short of", "nothing to",
+)
+# A negator counts only when at most one word separates it from the term. Any
+# "not" in the clause was too loose: "the record is not about this man and
+# should be detached" read the "not" of "is not about" as covering the detach.
+_NEGATED_TERM = re.compile(
+    r"(?:" + "|".join(re.escape(n) for n in _NEGATORS) + r")\s+(?:\w+\s+)?$"
 )
 _NEG_WINDOW = 40
 
@@ -75,7 +81,7 @@ def _is_negated(text: str, at: int) -> bool:
     """
     before = text[max(0, at - _NEG_WINDOW):at].lower()
     cut = max((before.rfind(b) + len(b) for b in _CLAUSE_BREAKS if b in before), default=0)
-    return any(n in before[cut:] for n in _NEGATORS)
+    return bool(_NEGATED_TERM.search(before[cut:]))
 
 
 def _recommends_detach(block: str) -> bool:

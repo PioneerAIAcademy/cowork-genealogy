@@ -322,6 +322,21 @@ _DETACH_RECOMMENDED = {
         "Minnesota Death Index: the record is not about this Christian Hole "
         "- detach it."
     ),
+    # A negation elsewhere in the clause, belonging to another verb.
+    "not_about_should_be_detached": (
+        "Minnesota Death Index: the record is not about this man and should "
+        "be detached."
+    ),
+    "would_not_hesitate": (
+        "Minnesota Death Index: I would not hesitate to detach it."
+    ),
+    "cannot_be_his_so_detach": (
+        "Minnesota Death Index cannot be his record so detach it."
+    ),
+    "does_not_fit_recommend_detaching": (
+        "The Minnesota Death Index does not fit him and I recommend detaching "
+        "it."
+    ),
 }
 
 _DETACH_RULED_OUT = {
@@ -333,6 +348,7 @@ _DETACH_RULED_OUT = {
         "Minnesota Death Index: keep it attached rather than detaching it."
     ),
     "never": "Never detach the Minnesota Death Index over one field.",
+    "should_not_be_detached": "Minnesota Death Index should not be detached.",
     "no_detach_term": (
         "Minnesota Death Index: re-read the original and correct the index."
     ),
