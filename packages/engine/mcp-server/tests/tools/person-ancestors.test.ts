@@ -357,6 +357,10 @@ describe("person_ancestors", () => {
     expect(rel.person1).toBe("9VMF-H1F");
     expect(rel.person2).toBe("KN6W-CSY");
     expect(rel.facts?.some((f) => f.type === "Marriage")).toBe(true);
+    // #2747 row 5: both endpoints are returned persons, so endpoint closure
+    // keeps the edge AND reports nothing. The legitimate direction of the
+    // guard — a check that only ever drops is a check nobody can trust.
+    expect(r).not.toHaveProperty("notes");
 
     mockOk(leanResponse());
     const r2 = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
@@ -442,4 +446,98 @@ describe("person_ancestors", () => {
       personAncestorsTool({ personId: "LZJW-C31", generations: 8 }, LOCAL),
     ).rejects.toThrow(/must be less than or equal to 8/);
   });
+
+  // ─── #2747 endpoint closure ────────────────────────────────────────────────
+  // Measured on live data 2026-09-23: 11 of 27 emitted relationships on
+  // LZJW-C31 named a spouse absent from persons[] (13 of 28 with
+  // --descendants). Each would fail the project_create write outright, which
+  // refuses the ENTIRE project rather than the edge.
+
+  // Row 1 — the measured shape: an absolute-URL Couple naming an absent person.
+  it("(#2747) drops a Couple whose endpoint is not a returned person, and says so", async () => {
+    mockOk({
+      ...leanResponse(),
+      relationships: [
+        {
+          id: "REL-GHOST",
+          type: G + "Couple",
+          person1: { resource: "https://api.familysearch.org/platform/tree/persons/9VMF-H1F" },
+          person2: { resource: "https://api.familysearch.org/platform/tree/persons/GHOST-999" },
+        },
+      ],
+    });
+    const r = await personAncestorsTool({ personId: "LZJW-C31", marriageDetails: true }, LOCAL);
+    expect(r.relationships).toEqual([]);
+    expect(r.notes?.[0]).toMatch(/Dropped 1 relationship\(s\)/);
+    expect(r.notes?.[0]).toMatch(/1 Couple/);
+    expect(r.notes?.[0]).toMatch(/project_create/);
+  });
+
+  // Row 2 — a bare id absent from persons[] entirely.
+  it("(#2747) drops a Couple whose bare endpoint is absent from persons[]", async () => {
+    mockOk({
+      ...leanResponse(),
+      relationships: [
+        {
+          id: "REL-BARE",
+          type: G + "Couple",
+          person1: { resource: "#9VMF-H1F" },
+          person2: { resource: "#NOBODY-1" },
+        },
+      ],
+    });
+    const r = await personAncestorsTool({ personId: "LZJW-C31", marriageDetails: true }, LOCAL);
+    expect(r.relationships).toEqual([]);
+    expect(r.notes).toBeDefined();
+  });
+
+  // Row 3 — the path the card was filed for: the person is IN the raw response
+  // but the ascendancy filter removed them, so checking rawPersons would have
+  // wrongly kept this edge.
+  it("(#2747) drops an edge whose person the ascendancy filter removed", async () => {
+    const body = leanResponse();
+    // A person with no ascendancyNumber: present in body.persons, filtered out
+    // of the emitted persons[].
+    body.persons!.push({ id: "NOASC-1", display: {} } as never);
+    mockOk({
+      ...body,
+      relationships: [
+        {
+          id: "REL-FILTERED",
+          type: G + "Couple",
+          person1: { resource: "#9VMF-H1F" },
+          person2: { resource: "#NOASC-1" },
+        },
+      ],
+    });
+    const r = await personAncestorsTool({ personId: "LZJW-C31", marriageDetails: true }, LOCAL);
+    expect(r.persons.some((p) => p.id === "NOASC-1")).toBe(false);
+    expect(r.relationships).toEqual([]);
+    expect(r.notes).toBeDefined();
+  });
+
+  // Row 4 — the ACCEPT side for the parent/child baring. Defensive: no probed
+  // ancestry response carries a ParentChild (all Couple, measured 2026-09-23),
+  // so this guards a shape the endpoint is not known to return. Without baring
+  // parent/child, the absolute URL would not match the bare id and this edge
+  // would be dropped even though its person IS returned.
+  it("(#2747) keeps a ParentChild whose absolute-URL endpoint IS a returned person", async () => {
+    mockOk({
+      ...leanResponse(),
+      relationships: [
+        {
+          id: "REL-PC",
+          type: G + "ParentChild",
+          person1: { resource: "https://api.familysearch.org/platform/tree/persons/9VMF-H1F" },
+          person2: { resource: "https://api.familysearch.org/platform/tree/persons/KN6W-CSY" },
+        },
+      ],
+    });
+    const r = await personAncestorsTool({ personId: "LZJW-C31", marriageDetails: true }, LOCAL);
+    expect(r.relationships?.length).toBe(1);
+    expect(r.relationships![0].parent).toBe("9VMF-H1F");
+    expect(r.relationships![0].child).toBe("KN6W-CSY");
+    expect(r).not.toHaveProperty("notes");
+  });
+
 });

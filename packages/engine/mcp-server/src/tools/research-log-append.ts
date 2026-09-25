@@ -17,6 +17,7 @@
 // on any later failure, exactly mirroring the single-call path's existing
 // orphan-cleanup behavior, just extended to a list.
 
+import { join } from "path";
 import { getProjectStore } from "../store/project-store.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -28,8 +29,10 @@ import {
   withProjectLock,
   NoProjectError,
   noProjectResult,
+  isInsideProject,
+  assertInsideProject,
 } from "../utils/project-io.js";
-import { finalizeStagedResults, STAGING_SEARCH_TOOLS } from "../utils/results-staging.js";
+import { finalizeStagedResults, readStagedResults, STAGING_SEARCH_TOOLS, STAGING_SUBDIR } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
@@ -64,6 +67,102 @@ function logWithoutPersistenceWarning(research: any): string | null {
     `it — the source and the assertions it supports — or record why it could not, ` +
     `so the evidence is not lost when the session ends.`
   );
+}
+
+/** Nil FamilySearch index searches against one plan item before `escalationDue`
+ *  fires, counting the entry being logged. Matches search-records/SKILL.md step 8
+ *  item 7, "nil across 3+ FamilySearch variants". */
+const NIL_ESCALATION_THRESHOLD = 3;
+
+/** The FamilySearch index searches whose nils count toward the threshold. */
+const FS_INDEX_SEARCH_TOOLS = new Set(["record_search", "fulltext_search"]);
+
+/** Question statuses under which the question is still open: every status but
+ *  the two that close it. */
+const OPEN_QUESTION_STATUSES = new Set(
+  [...VALIDATOR_ENUMS.question_status].filter((s) => s !== "resolved" && s !== "exhaustive_declared"),
+);
+
+/**
+ * Returned as `escalationDue` when this call's nil logs bring a census plan
+ * item to the threshold with its question still open (issue #2735, merged from
+ * #2789). The `ut_search_records_018` run logged nine nils and then told a
+ * logged-in user to log in: it had re-read the nils as an expired session, so
+ * in its own reasoning the prose escalation trigger never fired. A prose join
+ * that made the tally explicit was measured and reverted, because it made
+ * `ut_search_records_023` escalate before trying the letter-level surname lever.
+ * A note fires only once the nils are on disk, so it cannot reach that run.
+ *
+ * Census plan items only: a nil on a low-index record type (probate, land) is
+ * an index-coverage gap whose next step is full text, not another site
+ * (`ut_search_records_024`), and the tool cannot see index coverage.
+ */
+export const NIL_ESCALATION_NOTE =
+  "{n} FamilySearch searches for census plan item {planItemId} have returned " +
+  "nothing and its question is still open, so the escalation trigger has fired. " +
+  "The FamilySearch index has no phonetic fallback: a mis-indexed name will not " +
+  "surface under another variant. Hand this plan item to external sites now " +
+  "(`search-external-sites`) with the same person attributes. A zero-result search " +
+  "ran and matched nothing; it is not a sign of an expired session, which throws " +
+  "an authentication error instead.";
+
+/** A search that returned nothing: examined none, and reported none available.
+ *  `results_examined: 0` alone also covers a search whose results were judged
+ *  irrelevant unread, which is not a nil and must not be told it returned nothing. */
+const isNilFsSearch = (e: any): boolean =>
+  FS_INDEX_SEARCH_TOOLS.has(e?.tool) &&
+  e?.outcome === "negative" &&
+  e?.results_examined === 0 &&
+  (e?.results_available === undefined || e?.results_available === null || e?.results_available === 0);
+
+/** Map the literal string "null" to null — the model slip `applyLogAppendOp`
+ *  step 0b describes. Shared so the census preflight reads refs the same way. */
+const asNull = <T,>(v: T): T | null => ((v as unknown) === "null" ? null : v);
+
+/**
+ * "Indexed" beside the role word it qualifies ("Role indexed as 'Head'"). A
+ * copy of the two index markers in the eval validator's `_INFERENCE_MARKERS`
+ * (eval/harness/validators/test_search_records.py), which is the authoritative
+ * copy: tests/packaging/indexed-role-hedge-drift.test.ts fails when they differ.
+ * The payload trigger made the gate reach `ut_search_records_014`'s note, which
+ * the validator accepts on exactly this marker. The role words exclude bare
+ * kinship and "household", as there, so "surname indexed as Flyn, head of
+ * household ..." stays refused.
+ */
+export const INDEXED_ROLE_HEDGES: readonly RegExp[] = [
+  /\bindex\w*\b[^.;,]{0,20}\b(?:heads?|relationships?|co-?residents?|roles?)\b/,
+  /\b(?:heads?|relationships?|co-?residents?|roles?)\b[^.;,]{0,20}\bindex\w*\b/,
+];
+
+/**
+ * The `escalationDue` note for the plan items this call logged nils against,
+ * one line per qualifying plan item, or null. Reads only research.json, so it is decidable from the project documents
+ * (ADR-0011). Silent once the plan item has any positive or partial entry (a
+ * search found something) or any `external_site` entry (already escalated).
+ * Advisory: it never touches `ok`, and anything it cannot resolve yields null.
+ */
+function nilEscalationNote(research: any, newEntries: any[]): string | null {
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const plans: any[] = Array.isArray(research.plans) ? research.plans : [];
+  const questions: any[] = Array.isArray(research.questions) ? research.questions : [];
+  const touched = [...new Set(newEntries.filter(isNilFsSearch).map((e) => e.plan_item_id))]
+    .filter((id): id is string => typeof id === "string");
+  const notes: string[] = [];
+  for (const pli of touched) {
+    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const nils = entries.filter(isNilFsSearch).length;
+    if (nils < NIL_ESCALATION_THRESHOLD) continue;
+    if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial" || e?.tool === "external_site")) {
+      continue;
+    }
+    const plan = plans.find((p) => Array.isArray(p?.items) && p.items.some((i: any) => i?.id === pli));
+    const item = plan?.items.find((i: any) => i?.id === pli);
+    if (String(item?.record_type ?? "").trim().toLowerCase() !== "census") continue;
+    const question = questions.find((q) => q?.id === plan?.question_id);
+    if (!OPEN_QUESTION_STATUSES.has(question?.status)) continue;
+    notes.push(NIL_ESCALATION_NOTE.replaceAll("{n}", String(nils)).replaceAll("{planItemId}", pli));
+  }
+  return notes.length > 0 ? notes.join("\n") : null;
 }
 
 export interface ResearchLogAppendExternalSite {
@@ -111,6 +210,8 @@ export type ResearchLogAppendResult =
       ok: true;
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      /** `NIL_ESCALATION_NOTE`, present only when it fired. */
+      escalationDue?: string;
     } & ResearchLogAppendOpResult)
   | {
       ok: true;
@@ -118,6 +219,7 @@ export type ResearchLogAppendResult =
       results: ResearchLogAppendOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      escalationDue?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -168,13 +270,20 @@ class LogAppendError extends Error {}
  * what moved. That one shape is the whole 20-versus-8 gap. Neither rule is
  * wrong; quoting a split without saying which is.
  *
- * Nothing in that corpus is newly refused. RE-DERIVE RATHER THAN QUOTE these:
- * the corpus moves in both directions as run logs land, because a re-run
- * REPLACES a skill's run log rather than adding one. Four earlier passes of
- * this docstring read 3,275/332/136, 3,392/338/142, 3,490/355/154 and
- * 3,489/355/153 -- it shrank by one between the last two of those and grew by
- * 33 after them. The stamp is there so a reader can tell what the number was
- * true of, per tests/packaging/corpus-figures.test.ts's rule 3.
+ * Nothing in that corpus was newly refused by the binding. Those figures are the
+ * record of what the binding moved and can no longer be reproduced: 414ee3c68
+ * was a branch commit a squash merge discarded. The current figures come from
+ * `dev/measure-census-hedge-refusals.ts`: measured at dc9766b15, 216 of 3,882
+ * distinct notes are refused on note text alone, and the staged-search trigger
+ * newly refuses 4 of the 662 staged `record_search` entries it can pair to their
+ * search response (the `h4k` note twice, and two more flat household claims with
+ * no census word) while freeing none. The "indexed" hedge frees 4 notes and
+ * refuses none. RE-DERIVE RATHER THAN QUOTE these: the corpus moves in both
+ * directions as run logs land, because a re-run REPLACES a skill's run log
+ * rather than adding one. Four earlier passes of this docstring read
+ * 3,275/332/136, 3,392/338/142, 3,490/355/154 and 3,489/355/153 -- it shrank by
+ * one between the last two of those and grew by 33 after them. The stamp is
+ * there so a reader can tell what the number was true of.
  *
  * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
  * leaning on it. `CENSUS_YEAR` spans 1600-1999 while the old gate was
@@ -281,9 +390,35 @@ export function censusMentions(notes: string): CensusMention[] {
  * wrong refusal blocks a researcher mid-write. This fires only where all three
  * parts are unambiguous, and a note that trips it can always be fixed by saying
  * what is true -- so the refusal is always actionable.
+ *
+ * THE STAGED PAYLOAD IS THE SECOND TRIGGER (issue #2735, lead ruling B,
+ * 2026-09-22). A note can describe a pre-1880 census household in full and
+ * never say "census": "1 result returned: Amos Whitfield, b. 1817, Georgia, in
+ * Pike, Kentucky, 1850. Indexed within the Household of Nancy Doss" (the
+ * recorded `ut_search_records_h4k` failure). `stagedCensusYears` carries what
+ * the `record_search` response staged for this entry says, as FamilySearch
+ * wrote it -- the one signal the caller does not author, which is what
+ * separates it from the author-supplied signal refused on 2026-08-27. It is
+ * derived by `stagedPre1880UsCensusYears`, never the envelope itself.
+ *
+ * The payload decides only when EVERY titled row is a pre-1880 US federal
+ * census, only when the note binds no census year of its own (a bound year keeps
+ * precedence, so every note-only verdict is unchanged), and only when the note
+ * contains one of those census years. Two rejected options: "any row is a
+ * pre-1880 US census" refuses a parish-register or 1880-row note whenever the
+ * same search also returned an 1850 row; "the top-ranked row only" trusts
+ * `results[0]`, which is the best match only when ranking ran. The year in the
+ * note is what ties the note to the census it was logged with: without it, a
+ * parish-register note logged against an 1850 census search is refused for a
+ * household the census never showed. A note that omits the year still passes,
+ * which is the same limit the author-supplied year already had.
  */
-export function requirePre1880CensusHedge(notes: string): void {
+export function requirePre1880CensusHedge(
+  notes: string,
+  stagedCensusYears?: readonly number[],
+): void {
   const text = notes.toLowerCase();
+  const payloadYears = stagedCensusYears ?? [];
   // `\bcensus\b`, singular only, KNOWINGLY: a note saying just "censuses"
   // bypasses the rule entirely ("Traced the family across the 1850 and 1860 US
   // censuses ... head of household Thomas Flynn" writes clean today). Widening
@@ -293,7 +428,16 @@ export function requirePre1880CensusHedge(notes: string): void {
   // tell a plan from a claim, which is a pre-existing weakness that fixing the
   // gate merely exposes on more notes, and it is the real objection here. Do
   // not widen this without solving that first.
-  if (!/\bcensus\b/.test(text)) return;
+  //
+  // The payload overrides it deliberately: a note logged against a staged
+  // pre-1880 US census search is about that search's results, not a plan, so
+  // it is judged whatever word it uses. That also closes the word hole -- a note
+  // that never says "census" -- for `record_search` only. A note with no census
+  // payload behind it (every other tool, a nil search) still returns here.
+  // Measured at dc9766b15 (dev/measure-census-hedge-refusals.ts): the override
+  // newly refused no plural-only note in the committed corpus.
+  const saysCensus = /\bcensus\b/.test(text);
+  if (!saysCensus && payloadYears.length === 0) return;
 
   // Tie the year to the census it qualifies. When no year binds to a census
   // mention at all the note is undecidable on that axis, so fall back to the
@@ -309,7 +453,8 @@ export function requirePre1880CensusHedge(notes: string): void {
   const bound = censusMentions(notes);
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
-    : /\b18[0-7]\d\b/.test(text);
+    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes)) ||
+      (saysCensus && /\b18[0-7]\d\b/.test(text));
   if (!namesColumnlessCensus) return;
 
   const describesHousehold =
@@ -332,7 +477,8 @@ export function requirePre1880CensusHedge(notes: string): void {
     /\bimplied\b/.test(text) ||
     /\bpresum\w*/.test(text) ||
     /no\s+relationship\s+(?:to\s+head\s+)?column/.test(text) ||
-    /relationship\s+column[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b/.test(text);
+    /relationship\s+column[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b/.test(text) ||
+    INDEXED_ROLE_HEDGES.some((re) => re.test(text));
   if (hedged) return;
 
   throw new LogAppendError(
@@ -344,6 +490,73 @@ export function requirePre1880CensusHedge(notes: string): void {
       "dwelling; family structure inferred from surname, ages and order, not " +
       "stated.\" Then re-send.",
   );
+}
+
+/**
+ * A US FEDERAL census collection title, and its year. Positive and anchored,
+ * deliberately NOT `censusMentions` over the title: that reads an unqualified
+ * census as US, so "Ecuador, Census, 1737-1990" and "Philippines, Church Census,
+ * 1542-1980" (both real FamilySearch titles in the eval fixtures) would read as
+ * pre-1880 US censuses, and a state census ("New York State Census, 1855", which
+ * carries a relationship column) would too. Shapes seen in fixtures and run logs:
+ * "United States Census, 1850", "United States, Census, 1850", "United States
+ * Census, 1900 (Lancaster County, Pennsylvania)", "1870 United States Federal
+ * Census", "US Census 1910". A title this misses is simply not a trigger.
+ */
+const US_FEDERAL_CENSUS_TITLE = [
+  /^(?:united\s+states|u\.?s\.?),?\s+(?:federal\s+)?census,?\s+(1[6-9]\d\d)\b/i,
+  /^(1[6-9]\d\d)\s+united\s+states\s+federal\s+census\b/i,
+];
+
+/**
+ * The census years a staged `record_search` payload names, when EVERY row that
+ * carries a `collectionTitle` is a US federal census before 1880; otherwise [].
+ * A mixed search (1850 and 1880 rows) or any non-US row returns [], because the
+ * note may be describing the other row. Rows are read per-row: a staged payload
+ * keeps `collectionTitle` on each row and has no `collections` map.
+ */
+export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
+  const years = new Set<number>();
+  let titled = 0;
+  for (const row of rows) {
+    const title = (row as { collectionTitle?: unknown } | null)?.collectionTitle;
+    if (typeof title !== "string") continue;
+    titled++;
+    const m = US_FEDERAL_CENSUS_TITLE.map((re) => re.exec(title.trim())).find(Boolean);
+    const year = m ? Number(m[1]) : NaN;
+    if (!(year < 1880)) return [];
+    years.add(year);
+  }
+  return titled > 0 ? [...years] : [];
+}
+
+/**
+ * Run the census check for one op BEFORE any op is applied. A batch finalizes
+ * each op's sidecar as it goes and unlinks the staged file, so a refusal of op 1
+ * raised inside the loop would already have consumed op 0's staged response,
+ * and a corrected re-send would then fail on op 0. Reading every op up front
+ * keeps "a refusal writes nothing" true for the whole call. `notes` is read raw,
+ * as it always was; only `stagedResultsRef` gets the "null"-string mapping.
+ */
+async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  if (op.notes === undefined || op.notes === null) return;
+  const ref = asNull(op.stagedResultsRef);
+  let years: number[] | undefined;
+  if (op.tool === "record_search" && typeof ref === "string") {
+    try {
+      // Staged handles only, by the same resolved-path test `finalizeStagedResults`
+      // applies, so every ref finalize accepts is judged: `./results/.staging/x`
+      // or an absolute path cannot slip past on its spelling. `readStagedResults`
+      // also reads a finalized sidecar, which finalize rejects, and that error
+      // must reach the caller before a census refusal asks for a rewritten note.
+      if (isInsideProject(join(projectPath, STAGING_SUBDIR), assertInsideProject(projectPath, ref))) {
+        years = stagedPre1880UsCensusYears(await readStagedResults(projectPath, ref));
+      }
+    } catch {
+      years = undefined; // a bad ref is finalize's error to report, not this check's
+    }
+  }
+  requirePre1880CensusHedge(op.notes, years);
 }
 
 /**
@@ -444,7 +657,6 @@ async function applyLogAppendOp(
   //     object. `notes` is deliberately NOT mapped — a note whose text is
   //     "null" is odd but not invalid, and nulling a caller's prose would
   //     discard information rather than recover it.
-  const asNull = <T,>(v: T): T | null => ((v as unknown) === "null" ? null : v);
   const planItemId = asNull(op.planItemId);
   const resultsAvailable = asNull(op.resultsAvailable);
   const stagedResultsRef = asNull(op.stagedResultsRef);
@@ -592,8 +804,8 @@ async function applyLogAppendOp(
     }
     entry.results_available = resultsAvailableCoerced as number;
   }
+  // The census check ran in `preflightCensusHedge`, before any op was applied.
   if (op.notes !== undefined && op.notes !== null) {
-    requirePre1880CensusHedge(op.notes);
     entry.notes = op.notes;
   }
 
@@ -704,6 +916,17 @@ export async function researchLogAppend(
     // is read-only here): block only on errors THIS call introduces, not
     // pre-existing drift in a section it never touched (#1572).
     const beforeResearch = structuredClone(research);
+    const priorLogLength = Array.isArray(beforeResearch.log) ? beforeResearch.log.length : 0;
+    // The nil-escalation note, computed on the committed document. Advisory, so
+    // a failure computing it drops the note rather than the successful write.
+    const escalation = (): { escalationDue?: string } => {
+      try {
+        const note = nilEscalationNote(research, research.log.slice(priorLogLength));
+        return note ? { escalationDue: note } : {};
+      } catch {
+        return {};
+      }
+    };
     const sidecarsCreated: string[] = [];
     // Tool-level warnings (retention gaps), merged with the validator's on success.
     const opWarnings: string[] = [];
@@ -712,6 +935,14 @@ export async function researchLogAppend(
     if (input.ops !== undefined) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
         return { ok: false, errors: ["`ops` must be a non-empty array"] };
+      }
+      for (let i = 0; i < input.ops.length; i++) {
+        try {
+          await preflightCensusHedge(input.ops[i], projectPath);
+        } catch (e) {
+          if (e instanceof LogAppendError) return { ok: false, errors: [`ops[${i}]: ${e.message}`] };
+          throw e;
+        }
       }
       const results: ResearchLogAppendOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
@@ -736,6 +967,7 @@ export async function researchLogAppend(
       return {
         ok: true,
         results,
+        ...escalation(),
         filesWritten: ["research.json", ...sidecarsCreated],
         validation: {
           valid: true,
@@ -752,25 +984,21 @@ export async function researchLogAppend(
     // on — with no recovery, since the staged file it came from is already
     // unlinked. The outer catch below returns the error but cannot know a
     // sidecar was written, so the unwind has to happen here.
+    const singleOp: ResearchLogAppendOp = {
+      tool: input.tool!,
+      query: input.query,
+      outcome: input.outcome!,
+      resultsExamined: input.resultsExamined!,
+      planItemId: input.planItemId,
+      resultsAvailable: input.resultsAvailable,
+      notes: input.notes,
+      externalSite: input.externalSite,
+      stagedResultsRef: input.stagedResultsRef,
+    };
+    await preflightCensusHedge(singleOp, projectPath);
     let result;
     try {
-      result = await applyLogAppendOp(
-        research,
-        {
-          tool: input.tool!,
-          query: input.query,
-          outcome: input.outcome!,
-          resultsExamined: input.resultsExamined!,
-          planItemId: input.planItemId,
-          resultsAvailable: input.resultsAvailable,
-          notes: input.notes,
-          externalSite: input.externalSite,
-          stagedResultsRef: input.stagedResultsRef,
-        },
-        projectPath,
-        sidecarsCreated,
-        opWarnings,
-      );
+      result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings);
     } catch (e) {
       await cleanupSidecars(projectPath, sidecarsCreated);
       throw e;
@@ -787,6 +1015,7 @@ export async function researchLogAppend(
     return {
       ok: true,
       ...result,
+      ...escalation(),
       filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
       validation: {
         valid: true,

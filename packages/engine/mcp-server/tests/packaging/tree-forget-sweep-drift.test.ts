@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SWEPT_SPOUSE_FACT_TYPES, SWEPT_PARENT_FACT_TYPES } from "../../src/tools/tree-forget.js";
-import { EVENT_TREE_TYPES, COUPLE_EVENT_TYPES } from "../../src/tools/materialize-facts.js";
+import { EVENT_TREE_TYPES, COUPLE_EVENT_TYPES } from "../../src/utils/record-persona.js";
 
 /**
  * GedcomX couple-event types — the events, not the documentary-record types

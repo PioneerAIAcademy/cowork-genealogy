@@ -194,13 +194,29 @@ include: "is this the same person?", "link this to [person]",
 "this record mentions multiple people", "should this assertion also
 link to [other person]". Proceed to Step 1.
 
+Every one of those is an instruction to act. A **question about whether
+the links are complete** is not one of them, however close the wording
+gets: "is every role that should be linked actually linked?" asks you to
+check, and asking you to check is review-only mode below. The giveaway
+is the verb, not the object: "link the roles" acts, "is it linked" and
+"audit the links" report.
+
 **Review-only mode:** The user wants you to *evaluate* one or more
 *existing* `person_evidence` entries — checking whether the confidence
 is calibrated appropriately, whether the rationale is sound, whether
 the link should still stand given the current evidence. Triggers
 include: "is the confidence on pe_NNN appropriate?",
 "review/confirm this identity link", "is pe_NNN still warranted?",
-"audit pe_NNN", "audit the person_evidence entries". In this mode:
+"audit pe_NNN", "audit the person_evidence entries",
+"audit the person_evidence links for [record]".
+
+**An audit verb beats a linking object.** "Audit the links for this
+record - is every role that should be linked actually linked?" is
+review-only, even though "every role in this record" is a linking-mode
+trigger on its own. Name the missing link, say what it would rest on,
+and ask. Creating it is the next request, not this one.
+
+In this mode:
 
 - Read the named `pe_` entry (or the entries the user pointed to),
   its assertion(s), its person(s), and the immediate corroborating
@@ -289,101 +305,58 @@ core identifier conflicts. Make the assessment auditable with the
 correlation techniques above (side-by-side chart,
 agreement/disagreement list).
 
-**Call `same_person` BEFORE writing any `pe_` link** whenever a record
-persona is reachable **and** the candidate is a tree person that exists
-independently of this record. A persona is reachable when the assertion
-came from `record_read` (re-open the record; its GedcomX has a persons
-array) or from a `record_search` with a retained sidecar (`results_ref`
-present in the log entry). **A null `record_persona_id` does NOT mean
-the persona is unreachable** — that field only records whether a search
-sidecar was kept; a `record_read`-sourced assertion is always reachable
-regardless. Skipping `same_person` when a reachable persona meets an
-existing tree candidate is a Score discipline failure regardless of how
-compelling the qualitative case is; it also blocks the judge from scoring
-any dimension. Do **not** score a stub you minted from the persona you
-would be scoring: comparing a record persona to a person created out of
-it is circular. Leave `match_score` null there and say so in the
-rationale. A person minted from an *earlier* record is a normal
-candidate — score it. The tool returns a 0.0–1.0 similarity score that
-*informs* the correlation analysis; it never replaces it (see step 3).
-For each serious candidate tree person:
+**Call `same_person` BEFORE writing any `pe_` link**, for every serious
+candidate tree person. Do **not** score a stub you minted from the persona you
+would be scoring: comparing a record persona to a person created out of it is
+circular. Leave `match_score` null there and say so in the rationale. A person
+minted from an *earlier* record is a normal candidate, so score it. The tool
+returns a 0.0-1.0 similarity score that *informs* the correlation analysis; it
+never replaces it (see step 3).
 
-1. **Resolve the record and its persona.** The assertion carries
-   `log_entry_id`, `record_id`, and `record_persona_id`; `log_entry_id`
-   resolves against `research.json`'s `log[]`. When it came from a
-   `record_search` whose log entry has a `results_ref`, open that sidecar
-   (`results/<log_id>.json`) and find the `RecordSearchResult` in
-   `payload.results` whose `recordId` (the canonical ARK) matches
-   `record_id`; that result's `gedcomx` is `gedcomx1`. When it came from
-   `record_read` there is no sidecar — call
-   `record_read({ recordId: <the record_id> })` again; it returns
-   simplified GedcomX, and that document is `gedcomx1`. A full-text
-   entry has a `results_ref` too, but its sidecar holds transcript text
-   and no `gedcomx`: there is nothing to open and no score.
-   `primaryId1` is the `persons[].id` in `gedcomx1` for **the person
-   this link is about** — `record_persona_id` only when the link is
-   about the assertion's own `record_role` party. A relationship
-   assertion names two parties and gets a link for each; for the other
-   party, or when `record_persona_id` is null, find the persona by the
-   name the assertion gives that party (in `structured_value` for a
-   relationship assertion), or from step 2.4's `matchRelatives` mapping
-   on a household record. Never reuse the first party's
-   `record_persona_id` for the second, and never use the sidecar
-   result's top-level `primaryId`: both name only the searched persona.
-   If the record holds no persona for that party, leave `match_score`
-   null and say so in the rationale.
-2. **Build the tree side (the matching mob).** Construct a *subset*
-   simplified-GedcomX of `tree.gedcomx.json` containing the candidate
-   person plus its **matching mob** — focus + parents + spouses +
-   children + **siblings** — and the relationships connecting them.
-   **Not** the whole tree: `same_person` expects a record-sized
-   document; passing a months-long project's full tree may be slow or
-   rejected. That subset is `gedcomx2`; the candidate's tree id is
-   `primaryId2`.
-   - **Siblings** = children of any of the candidate's parents, minus
-     the candidate itself. Gather them by walking `tree.gedcomx.json`:
-     find the candidate's parents (ParentChild rels where `child` is the
-     candidate), then the children of those parents. The simplified
-     format can't always tell half- from full-siblings, so include all
-     children of all parents — the match algorithm tolerates this.
-   - **Cap the mob at 40 people** (mirrors the FS
-     `MAX_CHILDREN_TO_COMPARE` limit) so a very large family doesn't
-     bloat the `same_person` payload. If a family exceeds 40, keep the
-     closest relatives (focus, parents, spouses) and trim the children/
-     siblings to stay under the cap.
-   - **Mirror the same membership on the record side** (`gedcomx1`) when
-     the record carries it — the record persona plus its co-enumerated
-     household — so both sides of `same_person` compare like-for-like
-     relatives. Pass the record's relatives through verbatim; don't
-     hand-build them.
-3. **Call** `same_person({ gedcomx1, primaryId1, gedcomx2, primaryId2 })`.
-   For the focus match the tool is a pass-through — it forwards whatever
-   persons and relationships you include and the FS algorithm uses the
-   relatives; assembling the mob is this skill's job, not a tool change.
-4. **For a household record, pair the relatives in one shot.** When the
-   record is a household (multiple co-enumerated personas — head + spouse
-   + children), after the focus call above, call
-   `same_person({ gedcomx1, primaryId1, gedcomx2, primaryId2, matchRelatives: true })`
-   **once**. Instead of re-deriving each child/spouse/parent pairing by
-   hand, this returns a `matches` array of `{ role, targetId, candidateId,
-   score, confidence?, preScore }` triples — the FS-scored pairing of the
-   record's relatives to the tree person's relatives, computed with local
-   name/date heuristics so only plausible pairs cost an API call.
-   `targetId` is a `persons[].id` on the record side (`gedcomx1`),
-   `candidateId` on the tree side (`gedcomx2`). This is **optional** —
-   only reach for `matchRelatives: true` when there's a household to pair;
-   a single-person match needs only the focus call (the default
-   `matchRelatives: false`). Feed each relative `score`/`confidence` into
-   the threshold policy (step 3) exactly as you do the focus score, and
-   carry the `matches` into the cross-person consistency check (step 7).
+1. **Call it with references, not documents.**
 
-No score is available when no record persona can be reached: a
-full-text hit (its sidecar holds the transcript text, not GedcomX —
-there is no indexed persona to score against), an image-,
-external-site- or PDF-sourced assertion, a search whose `results_ref`
-is null, a record carrying no persona for the party this link is
-about, or an assertion whose provenance cannot be resolved at all.
-Then correlation analysis stands alone.
+   `same_person({ projectPath, assertionId, treePersonId })`
+
+   `assertionId` is the assertion this link cites and `treePersonId` is the
+   candidate. The tool resolves the record itself, builds the tree side as the
+   candidate's matching mob, scores the pair, and records the score to the
+   project. You assemble nothing.
+
+   For the **second party** of a relationship or marriage assertion — the party
+   the assertion names but is not itself about — add `recordRole` (or
+   `recordPersonaId`) naming that party. Never reuse the first party's persona
+   for the second.
+
+2. **Read its refusals as answers.** When it reports that the record holds no
+   persona for that party, or that a role names more than one person, that is
+   the finding: leave `match_score` null and say why in the rationale. Do not
+   retry with hand-built documents to get a number out of it.
+
+3. **For a household record, pair the relatives in one shot.** After the focus
+   call, call
+   `same_person({ projectPath, assertionId, treePersonId, matchRelatives: true })`
+   **once**. It returns a `matches` array of `{ role, targetId, candidateId,
+   score, confidence?, preScore }` triples pairing the record's relatives to the
+   tree person's relatives. `targetId` is on the record side, `candidateId` on
+   the tree side. **Optional** — only for a household; a single-person match
+   needs the focus call alone. If it comes back with a `note` saying the record
+   side carries no relatives, there is nothing to pair; move on. Feed each
+   relative `score`/`confidence` into the threshold policy (step 3) exactly as
+   you do the focus score, and carry the `matches` into the cross-person
+   consistency check (step 7).
+
+Scoring is not optional where the tool can produce a score. Skipping it and
+arguing the identity narratively is a Score discipline failure however
+compelling the qualitative case, and it blocks the judge from scoring any
+dimension.
+
+How the assertion was retrieved does **not** decide whether it can be scored.
+An image-transcribed page, a PDF, an external site and a sidecar-less search
+are all scorable: the tool derives the record side from the record's own
+extracted assertions when it cannot fetch a document. Call it and let it
+answer. The cases where no score exists are the ones it names back to you — no
+persona in the record for that party, or a circular stub — and there
+correlation analysis stands alone.
 
 ### 3. Apply the match threshold policy
 
@@ -395,6 +368,17 @@ wasted research.
 assessment from step 2 — name, dates, places, relationship fit,
 household composition, and the independence of the evidence —
 determines the allowed confidence:
+
+**Before you pick a tier**, decide whether any core identifier —
+birthplace, a birth or christening date, an age, a parent, a spouse —
+*contradicts* what the tree person already attests. If one does, put it
+in the entry's `core_identifier_conflict` field, naming both sides
+("record gives birthplace Germany; tree attests Ireland across three
+censuses"). `research_append` then caps the link at `speculative`; a
+`confident` or `probable` entry carrying that field is refused. Leave
+the field null when nothing contradicts, and clear it to null — saying
+why in the `rationale` — when the conflict is explained and does not
+bear on identity. The score never promotes a declared conflict.
 
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
@@ -680,7 +664,7 @@ counterpart's spouse/parent/child, and **flag** any pairing where they
 don't.
 
 When you ran `same_person` with `matchRelatives: true` for this
-household (step 2.4), its `matches` array **is** this evidence: each
+household (step 2.3), its `matches` array **is** this evidence: each
 `{ role, targetId, candidateId, score }` triple is a household pair the
 tool already scored, so read coherence off it directly instead of
 re-reasoning each pair by hand. A focus-person relative that pairs to
@@ -710,7 +694,7 @@ hands a merge set to proof-conclusion to fold. For a household record:
    from the tree) is **absent from the record**, flag that absence as an
    identity question — it may indicate a death, separation, enumeration
    elsewhere, or a different person entirely. The
-   `matchRelatives` triples from step 2.4 give the persona→tree-person
+   `matchRelatives` triples from step 2.3 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
    step 3.
 2. **Dry-run `merge_warnings` as the coherence gate — before any write
@@ -878,6 +862,11 @@ When multiple candidates share the same name in the same area:
   confirmation. No exceptions.
 - **The match score is an input, not a verdict** — record it in
   `match_score` when one was obtained; the full rule is in Step 3.
+- **You do not own `conflicts`.** A contradiction you find while
+  correlating belongs in your response to the user and in the pe_
+  entry's `rationale`. Do not write a `conflicts` entry for it: that
+  section is conflict-resolution's, and the hook denies the write -
+  taking the whole `research_append` batch it rides in with it.
 - **Transcription variants do not downgrade strength.** When the
   qualitative correlation is strong — age, year, place, household
   composition, and relationships all agree — a low

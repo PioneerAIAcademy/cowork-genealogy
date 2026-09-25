@@ -1530,11 +1530,23 @@ checks over the final project state and the run's tool-call log
    received a **scoreable** `person_evidence` link without a single
    `same_person` call for it. Narrower than check 1 on purpose: a run can
    invoke `person-evidence` somewhere and still skip identity scoring for the
-   person that matters. "Scoreable" means a record persona is reachable — a
-   non-null `record_persona_id`, a `record_read`-sourced assertion, or a search
-   whose sidecar was retained; links that provably cannot be scored are skipped
-   and counted separately (`guardrail-enforcement-spec.md` §4). A null
-   `record_persona_id` alone does **not** exempt a link.
+   person that matters. "Scoreable" is a narrowing the detector still applies
+   from what a run RETAINED — a non-null `record_persona_id`, a
+   `record_read`-sourced assertion, or a search whose sidecar was retained; a
+   null `record_persona_id` alone does **not** exempt a link, and links it
+   treats as unscoreable are skipped and counted separately
+   (`guardrail-enforcement-spec.md` §4).
+
+   **That narrowing is now conservative rather than true.** `same_person`'s
+   project-relative arm derives the record side from the record's own extracted
+   assertions when it cannot fetch a document, so an image-transcribed page, a
+   PDF, an external site and a sidecar-less search are all scorable in practice.
+   The detector has deliberately NOT been widened to match: doing so in the same
+   change that told the agent to adopt the new call would make the resulting
+   measurement unreadable — a rise in flagged links could not be told apart from
+   the agent failing to adopt it. The widening belongs with the writer-side
+   requirement, whose own evidence is a run at the new call shape. Until then
+   this check under-reports, which is the safe direction.
 
 Any violation sets `compliance: fail`, which forces `outcome: fail`. The
 checks are **not** vacuous on a treeless run — check 2 reads no tree at all,

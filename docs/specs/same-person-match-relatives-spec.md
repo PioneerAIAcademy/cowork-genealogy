@@ -83,9 +83,20 @@ Add one optional field to `SamePersonInput`
 | `gedcomx2`, `primaryId2` | as today | yes | The focus person on side 2. |
 | `matchRelatives` | `boolean` | no (default `false`) | When `false`: today's single-pair behavior, unchanged. When `true`: match the focus persons' relatives (§4) instead of the focus persons themselves. |
 
-`primaryId1` / `primaryId2` are **still required** in relatives mode — they
-identify whose relatives to gather on each side. Validation (`validateInput`)
-is unchanged.
+`primaryId1` / `primaryId2` are **still required** in relatives mode *on the
+explicit arm* — they identify whose relatives to gather on each side.
+Validation (`validateInput`) is unchanged for that arm.
+
+On the **project-relative arm** they are absent by construction: the tool
+assembles both documents, so `assertionId` and `treePersonId` identify the two
+focus persons instead, and relatives are gathered around them exactly as below.
+One case has no counterpart on that arm — when the record side had to be
+**projected** from the record's own assertions it carries no `relationships[]`,
+because `record_role` is an open enum and inferring edges from role names is
+guesswork. Relatives mode then returns an explicit `note` and an empty
+`matches`, rather than the silently empty `matches` the gathering code would
+otherwise produce; the two are different answers and the caller must be able to
+tell them apart. See `same-person-tool-spec.md`, "The record side".
 
 ---
 
