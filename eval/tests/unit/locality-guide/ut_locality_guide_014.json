@@ -39,7 +39,8 @@
     "place-search-all-any",
     "collection-read-by-id",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "volume-search-pennsylvania"
   ],
   "judge_context": [
     "Recognize Pittsburgh\u2019s steel industry boom in the late 1800s. Mention employment registers, union lists, city directories, census schedules, and tax rolls. Highlight repositories like Heinz History Center, Pennsylvania State Archives, Carnegie Library, and National Archives. Avoid modern employment databases or HR systems and statewide vital registration as the main source for occupational data."
