@@ -1467,6 +1467,92 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   ];
 }
 
+/** A plan item may not stand at `completed` unless some `log[]` entry carries
+ *  its id in `plan_item_id`. Completing an item asserts the search it names was
+ *  done; the log is where a search is recorded, so an item completed with
+ *  nothing attributed to it claims work no part of the document evidences.
+ *
+ *  Both halves — `plan_items[].status` and `log[].plan_item_id` — live in
+ *  `research.json`, so ADR-0011's first question ("decidable from the documents
+ *  alone?") answers yes and the rule belongs here rather than in a skill body.
+ *  It is not stated in one: the three bodies that instruct the completed write
+ *  document the satisfying call shape (`planItemId: "pli_NNN"`) without stating
+ *  the rule, which is why an eval reviewer left the analogous check
+ *  report-only. That reading was reversed by the 2026-09-22 ruling now recorded
+ *  in ADR-0011's "Rulings that generalize".
+ *
+ *  **Reads LIVE research, and the choice is provably free.** `log` is not a
+ *  `research_append` section — it is absent from `SECTIONS` above, and
+ *  `ownership.json` gives it to `research_log_append` alone, which is
+ *  append-only — so no op in a batch can change `log[]` and the live document
+ *  and the pre-call snapshot carry an identical `log`. Live is what ADR-0011's
+ *  "same author's own prior step" asks for anyway: `research_log_append`
+ *  persists before `research_append` is called in every satisfying corpus run.
+ *
+ *  **An append carrying `status: "completed"` is always refused.** The id is
+ *  assigned by this tool, so no log entry can already name it. That is not a
+ *  false deny — it is the same defect in a different shape. Measured at
+ *  4791ea9cb, the corpus holds 1 such append in the unit plane and 4 in e2e.
+ *
+ *  Forward direction only: the entry must END at `completed`. An item already
+ *  sitting there when an unrelated field is edited is untouched, the same
+ *  discipline as the `questions` and `hypotheses` arms. */
+function planItemLogAttributionInvariants(
+  entry: any,
+  research: any,
+  isAppend = false,
+): string[] {
+  if (entry?.status !== "completed") return [];
+  const pid = entry?.id;
+  // Guarded for shape rather than assumed: this fires BEFORE document
+  // validation, so a hand-edited research.json can reach it with the id absent
+  // — the same reason the terminal-plan deny guards `parent.status`. An item
+  // with no id is the document validator's problem, not this rule's.
+  if (typeof pid !== "string" || pid === "") return [];
+  // `e &&`: a legacy `log: [null]` must not take the writer down — the same
+  // guard planActiveInvariants and hypothesisSupportedInvariants carry.
+  const named = (Array.isArray(research?.log) ? research.log : []).some(
+    (e: any) => e && e.plan_item_id === pid,
+  );
+  if (named) return [];
+  // The remedy names a move the agent can actually make. `research_log_append`
+  // only appends — every op allocates `nextLogId`, there is no update op — so
+  // an entry already written with `planItemId: null` cannot be re-attributed,
+  // and telling the agent to "fix the log entry" would be an instruction it
+  // cannot follow. `planItemId: null` is itself a legitimate documented shape
+  // for an ad-hoc browse, so the message says which of the two it got wrong.
+  //
+  // The second clause resolves the case where the search WAS already logged
+  // unattributed (review-ready ruling 2026-09-22): the item stays
+  // `in_progress`. Re-logging writes a durable duplicate that every reader of
+  // `log[]` counts twice; `skipped` states the search was not done, which is
+  // false. An open item misstates nothing.
+  //
+  // An APPEND gets its own remedy. Its id is assigned inside this call, so "log
+  // it with planItemId first" is impossible, and `in_progress` is the one status
+  // that blocks the question's exhaustive declaration. `planned` is wrong too:
+  // search-records runs the next planned item, which would repeat the search.
+  // A search already done is cited where the declaration reads it instead.
+  if (isAppend) {
+    return [
+      `plan_items[${pid}]: an appended item cannot arrive 'completed' — its id is assigned in ` +
+        `this call, so no log[] entry can name it. Don't add a plan item for a search that ` +
+        `was already done: cite that search's log id in the question's ` +
+        `exhaustive_declaration.log_entry_ids when you declare. If the search has not been ` +
+        `done yet, append the item as 'planned', then complete it after logging the search ` +
+        `with research_log_append({ planItemId: "<its id>", ... }).`,
+    ];
+  }
+  return [
+    `plan_items[${pid}]: no log[] entry names ${pid}, so completing it would claim a search ` +
+      `nothing in the document records. Log the search that satisfies this item with ` +
+      `research_log_append({ planItemId: "${pid}", ... }) before completing it — ` +
+      `planItemId: null is only for an ad-hoc search that matches no plan item. If that ` +
+      `search was already logged with planItemId: null, leave this item 'in_progress' ` +
+      `rather than logging the same search twice.`,
+  ];
+}
+
 /** The two tiers that are a final answer rather than a stalled one: `proved`
  *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
  *  deliberately absent — it is a non-answer, so something IS holding it back. */
@@ -3059,6 +3145,78 @@ function applyOne(
   // (re)sets status to "active"; the helper no-ops for non-active entries.
   if (section === "plans") {
     invariantErrors.push(...planActiveInvariants(resultEntry, research));
+    // Completing an item claims a search the log must evidence — checked HERE
+    // as well as in the `plan_items` arm below, because a plan op can land a
+    // completed item without any `plan_items` op existing. The append branch
+    // spreads the caller's entry wholesale (`{ ...entry }`) and the update
+    // branch copies arbitrary keys, so `entry.items` and `fields: { items }`
+    // both reach `items[]` directly. `research-append-tool-spec.md` §5 names
+    // inline non-empty `items` as one of two satisfying shapes "both already in
+    // use", so this is a documented route, not a corner.
+    //
+    // Measured at 4791ea9cb: of 376 tracked `plans` append ops, 363 omit
+    // `items`, 8 carry non-empty inline `items` and 5 send `[]`; 6 of the 8
+    // carry only `planned` items, and the other 2 carry a `completed` item on
+    // calls already refused for other reasons. 0 `plans` update ops write
+    // `items` at all. So this arm changes no outcome the corpus contains.
+    //
+    // Gated on the ops that can SET an item's status, the same discipline as
+    // every arm around it: an unrelated update to a plan whose items were
+    // already completed in an earlier call is untouched. And an update that
+    // re-sends `items[]` whole checks only the items it newly completes — one
+    // already `completed` in the stored plan before this call did not change,
+    // and refusing it would strand a plan completed before this rule existed.
+    const planFields = op.fields ?? {};
+    const itemsTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(planFields, "items");
+    if (itemsTouchedThisOp) {
+      const storedPlan =
+        op.op === "update"
+          ? (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []).find(
+              (pl: any) => pl && pl.id === resultEntry?.id,
+            )
+          : undefined;
+      const alreadyCompleted = new Set(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && it.status === "completed")
+          .map((it: any) => it.id),
+      );
+      for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
+        if (item && alreadyCompleted.has(item.id)) continue;
+        invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+      }
+    }
+  }
+  // A plan item may only be completed once a log entry names it. Gated on the
+  // ops that can set the status — `append` always sets it, `update` only when
+  // `fields` names it — so an unrelated edit to an item legitimately completed
+  // in an earlier call is not refused. The helper returns [] for every status
+  // but `completed`, so `in_progress` and `skipped` moves are never touched.
+  //
+  // An `append` carrying `status: "completed"` is refused unconditionally: the
+  // id is assigned inside this call, so no log entry can already name it.
+  if (section === "plan_items") {
+    const itemFields = op.fields ?? {};
+    const statusTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "status");
+    // An update re-sending `completed` on an item already completed before this
+    // call changes nothing — the same skip the `plans` arm makes — so a project
+    // completed before this rule existed is not refused for re-stating it.
+    const wasCompleted =
+      op.op === "update" &&
+      (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []).some(
+        (pl: any) =>
+          pl &&
+          Array.isArray(pl.items) &&
+          pl.items.some(
+            (it: any) => it && it.id === resultEntry?.id && it.status === "completed",
+          ),
+      );
+    if (statusTouchedThisOp && !wasCompleted) {
+      invariantErrors.push(
+        ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
+      );
+    }
   }
   // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on
   // the op that SETS the status — the same discipline as the `questions` and
