@@ -53,6 +53,7 @@ from harness.context_policy import (
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
+import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
@@ -116,8 +117,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MCP_SERVER_ENTRY = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
 DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
-DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
-DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
+DEFAULT_PLUGIN_SKILLS = _workspace.DEFAULT_PLUGIN_SKILLS
+DEFAULT_PLUGIN_AGENTS = _workspace.DEFAULT_PLUGIN_AGENTS
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
 # "Task" lets the /research orchestrator delegate to the gps-mentor

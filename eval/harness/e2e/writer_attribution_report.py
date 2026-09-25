@@ -8,25 +8,29 @@ three spellings, called it across the committed corpus, and appeared in no row.
 
 The blocking guard for that lives in
 `packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts` and reads
-the STATIC grants -- each agent's `tools:` and each skill's `allowed-tools:`.
+the DECLARED grants -- each agent's `tools:` and each skill's `allowed-tools:`.
 This is the weaker, complementary pass: what the corpus records an agent
 actually calling. It is weaker because a writer that never fired is invisible
-here, and it is worth having because it catches the case the static side
-structurally cannot -- a body that calls a tool its frontmatter never granted,
-and a delegation to an agent_type that is not a shipped unit at all.
+here, and it is worth having because it catches what a frontmatter read cannot
+-- an agent body calling a tool its `tools:` never declared, and a delegation to
+an agent_type that is not a shipped unit at all. It sees subagents only: a
+skill's own calls carry no `agent_type`, so an undeclared skill call is
+`test_tool_allowlist`'s job (`validators/test_universal.py`), not this one's.
 
 Three classes, and the third is the reason this is a report rather than a gate:
 
 - **listed** -- the caller resolves to a shipped agent or skill and some row
-  listing that tool names it in `callers`, `hookCallers` or `agentCallers`.
+  listing that tool names it: in `callers` or `hookCallers`, or in an
+  `agentCallers` entry that names this tool.
 - **UNLISTED** -- it resolves, and no row listing that tool names it. A manifest
   gap of exactly the shape #2575 is about, or a grant that should come out.
 - **UNBOUND DELEGATION** -- the `agent_type` is neither a shipped agent nor a
-  shipped skill. `general-purpose` is the live instance: the stand-in the model
-  falls back to when a bare-name `@plugin:<agent>` delegation fails to resolve
-  (issue #939). It binds none of the agent's `tools:`/`disallowedTools:`, and it
-  can never be listed in any row -- so it is its own finding, and folding it into
-  the unlisted count would report a manifest gap that no manifest edit can close.
+  shipped skill, so it can never be listed in any row -- which is why it is its
+  own finding: folding it into the unlisted count would report a manifest gap
+  that no manifest edit can close. `general-purpose` is the live instance, the
+  stand-in the model falls back to when a bare-name `@plugin:<agent>` delegation
+  fails to resolve (issue #939), binding none of the agent's `tools:`. Any other
+  name here was renamed, retired, or never shipped.
 
 Adds NO instrumentation to a run (same posture as `agent_tool_usage_report.py`,
 `corpus_report.py`, `latency_report.py`): pure analysis over committed data.
@@ -63,10 +67,11 @@ from e2e.runlog_selection import (
     result_jsons_for,
 )
 from harness.ownership import rows
-from harness.workspace import DEFAULT_PLUGIN_AGENTS
+from harness.workspace import DEFAULT_PLUGIN_AGENTS, DEFAULT_PLUGIN_SKILLS
 
-#: The plugin's skills, beside the agents the harness already resolves.
-DEFAULT_PLUGIN_SKILLS = DEFAULT_PLUGIN_AGENTS.parent / "skills"
+#: The agent_type the model falls back to when a `@plugin:<agent>` delegation
+#: fails to resolve (issue #939).
+GENERAL_PURPOSE = "general-purpose"
 
 
 def writer_tools() -> set[str]:
@@ -77,19 +82,21 @@ def writer_tools() -> set[str]:
 def listed_writers() -> dict[str, set[str]]:
     """`writer tool -> the identifiers some row listing it names as a writer`.
 
-    Unions `callers`, `hookCallers` and `agentCallers` across every row that
-    lists the tool, which is the same permitted set the packaging guard reads.
-    Per tool and unioned across rows, because nothing offline can say which
+    The same listed set the packaging guard reads. `callers` and `hookCallers`
+    are permission fields, so they count for every writer tool on their row; an
+    `agentCallers` entry (`{agent, tools}`) counts only for the tools it names.
+    Still per tool and unioned across rows, because nothing offline can say which
     section a given call went to -- so this finds a caller listed for a tool
-    NOWHERE, not one listed on the wrong row.
+    NOWHERE, not a (caller, tool) written on the wrong row.
     """
     out: dict[str, set[str]] = {}
     for row in rows():
-        names = set(row.get("callers") or [])
-        names |= set(row.get("hookCallers") or [])
-        names |= set(row.get("agentCallers") or [])
+        permitted = set(row.get("callers") or []) | set(row.get("hookCallers") or [])
         for tool in row.get("writerTools") or []:
-            out.setdefault(tool, set()).update(names)
+            out.setdefault(tool, set()).update(permitted)
+        for entry in row.get("agentCallers") or []:
+            for tool in entry["tools"]:
+                out.setdefault(tool, set()).add(entry["agent"])
     return out
 
 
@@ -123,29 +130,43 @@ def identifier_for(agent_type: str, units: set[str]) -> str | None:
 class Pair(NamedTuple):
     """One (caller, writer tool) the corpus recorded, with its verdict."""
 
-    caller: str        # the raw `agent_type` as the runlog carried it
+    caller: str        # every raw `agent_type` spelling seen for it, comma-joined
     identifier: str | None  # `agent:x` / `skill:x`, or None for an unbound delegation
     tool: str
     calls: int
     runs: int
-    verdict: str       # "listed" | "unlisted" | "unbound"
+    verdict: str       # "listed" | "unlisted" | "unbound" (the three classes above)
 
 
 def classify(scan_result, listed: dict[str, set[str]], units: set[str]) -> list[Pair]:
-    """Every (caller, writer tool) pair in the scan, verdict attached."""
+    """Every (caller, writer tool) pair in the scan, verdict attached.
+
+    Keyed on the manifest identifier, not the raw `agent_type`: production
+    reports `genealogy-research:<name>` beside the bare `<name>`, and both are
+    one caller. Calls sum and runs union across the spellings.
+    """
     writers = writer_tools()
-    pairs: list[Pair] = []
     # The union of both keyed sources, not `pair_calls` alone. `pair_runs` is the
     # superset: it is built from the per-file union of captures AND #1027
     # `tool_calls` attribution, while `pair_calls` counts capture blocks only. A
     # pair the capture source missed entirely would otherwise be dropped here —
     # which is the one source that never misses when present.
-    keys = sorted(set(scan_result.pair_calls) | set(scan_result.pair_runs))
-    for caller, tool in keys:
+    grouped: dict[tuple[str, str], dict] = {}
+    for caller, tool in set(scan_result.pair_calls) | set(scan_result.pair_runs):
         if tool not in writers:
             continue
-        calls = scan_result.pair_calls.get((caller, tool), 0)
         identifier = identifier_for(caller, units)
+        slot = grouped.setdefault(
+            (identifier or caller, tool),
+            {"identifier": identifier, "spellings": set(), "calls": 0, "runs": set()},
+        )
+        slot["spellings"].add(caller)
+        slot["calls"] += scan_result.pair_calls.get((caller, tool), 0)
+        slot["runs"] |= set(scan_result.pair_runs.get((caller, tool), ()))
+
+    pairs: list[Pair] = []
+    for (_, tool), slot in sorted(grouped.items()):
+        identifier = slot["identifier"]
         if identifier is None:
             verdict = "unbound"
         elif identifier in listed.get(tool, set()):
@@ -154,11 +175,11 @@ def classify(scan_result, listed: dict[str, set[str]], units: set[str]) -> list[
             verdict = "unlisted"
         pairs.append(
             Pair(
-                caller=caller,
+                caller=", ".join(sorted(slot["spellings"])),
                 identifier=identifier,
                 tool=tool,
-                calls=calls,
-                runs=len(scan_result.pair_runs.get((caller, tool), ())),
+                calls=slot["calls"],
+                runs=len(slot["runs"]),
                 verdict=verdict,
             )
         )
@@ -193,9 +214,18 @@ def format_report(pairs: list[Pair], scan_result) -> str:
         lines.append(f"  {p.caller} -> {p.tool}: {p.calls} call(s) in {p.runs} run(s)")
     if by["unbound"]:
         lines.append(
-            "  Not a manifest gap and not waivable: a stand-in that is not a shipped "
-            "unit cannot be listed in any row. It is the #939 fallback -- a bare-name "
-            "delegation that failed to resolve, binding none of the agent's tools:."
+            "  Not a manifest gap: a name that is not a shipped unit cannot be listed "
+            "in any row."
+        )
+    if any(p.caller == GENERAL_PURPOSE for p in by["unbound"]):
+        lines.append(
+            f"  {GENERAL_PURPOSE} is the #939 fallback -- a bare-name delegation that "
+            "failed to resolve, binding none of the agent's tools:."
+        )
+    if any(p.caller != GENERAL_PURPOSE for p in by["unbound"]):
+        lines.append(
+            "  Any other name here was renamed, retired, or never shipped; its calls "
+            "predate the current plugin."
         )
     lines.append("")
 
@@ -213,8 +243,10 @@ def format_report(pairs: list[Pair], scan_result) -> str:
             "weaker -- a",
             "    writer that never fired in the corpus is invisible here -- and "
             "catches what that",
-            "    one structurally cannot: a body calling a tool its frontmatter never "
-            "granted.",
+            "    one cannot: an agent body calling a tool its `tools:` never "
+            "declared. It sees",
+            "    subagents only; an undeclared SKILL call is test_tool_allowlist's "
+            "job.",
             "  - Attribution is partial. A run with no subagent capture and no "
             "#1027-tagged",
             "    tool_calls contributes nothing, so absence of a pair is not proof "
@@ -234,9 +266,12 @@ def format_report(pairs: list[Pair], scan_result) -> str:
             "row to admit it.",
             "  - Per tool and unioned across rows: this finds a caller listed for a "
             "writer tool",
-            "    NOWHERE, not one listed on the wrong row. Nothing offline can say "
-            "which section",
-            "    a given call went to.",
+            "    NOWHERE, not a (caller, tool) written on the wrong row. Nothing "
+            "offline can say",
+            "    which section a given call went to. An `agentCallers` entry counts "
+            "only for the",
+            "    tools it names; `callers`/`hookCallers` count for every writer tool "
+            "on their row.",
         ]
     )
     return "\n".join(lines)

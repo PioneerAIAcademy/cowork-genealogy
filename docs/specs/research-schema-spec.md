@@ -297,13 +297,24 @@ it to itself and pass green.
 **The check is per tool and unions across rows.** A holder listed for a writer
 tool on any one row counts as listed for it everywhere, because nothing static
 can say which section a given grant will be used on. So it catches a holder
-listed for a writer tool *nowhere*; it does not catch one listed on the wrong
-row. `record-extractor` is the live instance of how loose that can get: it is an
-`agentCallers` entry on tree `persons` for its `extraction_append` write, and
-that row lists all eight tree writer tools, so it already counts as listed for
-every one of them. Narrowing this would mean pairing each `agentCallers` entry
-with the tools it is declared for — a change to the manifest's shape, not to the
-check.
+listed for a writer tool *nowhere*; it does not catch a (holder, tool) written on
+the wrong row. That holds for all three fields.
+
+**What a row lists for a holder differs by field.** `callers` and `hookCallers`
+are permissions, so a name there counts for every writer tool on its row. An
+`agentCallers` entry is `{"agent": …, "tools": […]}` and counts only for the
+tools it names — the agent's writer grants intersected with the row's
+`writerTools`. `record-extractor` on tree `persons` is paired with
+`extraction_append` alone, so the seven other tree writers that row lists do not
+make it count as listed for them: grant it a new tree writer and the guard reds
+until the manifest names that tool for it. A second test fails an entry that
+names no tool, a tool its row does not list, or one the agent is no longer
+granted.
+
+**The skill half reads the declared grant.** `allowed-tools:` is a grant, not a
+restriction, so a skill body calling a tool it never declared is invisible to any
+frontmatter read. `test_tool_allowlist` (`eval/harness/validators/test_universal.py`)
+is what sees that call, and it is advisory in the unit tier.
 
 Three fields make up the listed set, and which one a writer goes in is a single
 rule with no exceptions:
@@ -312,7 +323,7 @@ rule with no exceptions:
 |---|---|---|
 | `callers` | who **may** write the row: every permitted skill, plus the row's own owner when that owner is an agent | the unit plane (`harness/ownership.py`'s `writer_sets`), and the writer tables above |
 | `hookCallers` | the agent the plugin `PreToolUse` hook permits, on a row claiming the `hook` plane | `plugin-hooks.test.ts`, which pins it against the hook's hardcoded map |
-| `agentCallers` | the non-owner **agents** that write the row | the actual-writer direction above, and nothing else |
+| `agentCallers` | the non-owner **agents** that write the row, each paired with the writer tools it writes the row with | the actual-writer direction above, and nothing else |
 
 A non-owner agent therefore never goes in `callers`. On a row claiming the unit
 plane it cannot: that plane keys on the calling skill's `SKILL.md` frontmatter

@@ -29,6 +29,21 @@ const GUARD = join(PLUGIN_DIR, "hooks", "guard_project_files.py");
 type HookEntry = { type: string; command?: string };
 type Matcher = { matcher?: string; hooks: HookEntry[] };
 
+/**
+ * `AGENT_WRITABLE_SECTIONS` read out of the guard script: agent → the
+ * research.json sections it may write. Read, never restated, so the test
+ * follows the shipped map.
+ */
+function agentWritableSections(): Map<string, string[]> {
+  const src = readFileSync(GUARD, "utf-8");
+  const body = src.match(/^AGENT_WRITABLE_SECTIONS\s*=\s*\{([\s\S]*?)^\}/m)?.[1] ?? "";
+  const out = new Map<string, string[]>();
+  for (const m of body.matchAll(/^\s+["']([^"']+)["']\s*:\s*frozenset\(\{([^}]*)\}\)/gm)) {
+    out.set(m[1], [...m[2].matchAll(/["']([^"']+)["']/g)].map((s) => s[1]));
+  }
+  return out;
+}
+
 function loadHooks(): Record<string, Matcher[]> {
   return JSON.parse(readFileSync(HOOKS_JSON, "utf-8")).hooks;
 }
@@ -234,12 +249,7 @@ describe("plugin hooks are packaged and wired", () => {
     // Per-agent behavioural tests catch it one agent at a time and are easy to
     // forget on the next conversion; this catches the CLASS, so a future pair
     // that adds a hookCallers row without a lane reddens here.
-    const src = readFileSync(GUARD, "utf-8");
-    const laneKeys = [
-      ...(src.match(/^AGENT_WRITABLE_SECTIONS\s*=\s*\{([\s\S]*?)^\}/m)?.[1] ?? "").matchAll(
-        /^\s+["']([^"']+)["']\s*:\s*frozenset/gm,
-      ),
-    ].map((m) => m[1]);
+    const laneKeys = [...agentWritableSections().keys()];
     expect(laneKeys.length).toBeGreaterThan(0);
 
     const manifest = JSON.parse(
@@ -260,6 +270,43 @@ describe("plugin hooks are packaged and wired", () => {
           `AGENT_WRITABLE_SECTIONS row — the out-of-lane check is skipped for it entirely`,
       ).toContain(agent);
     }
+  });
+
+  it("names every agent on each section the hook lets it write", () => {
+    // The converse of the lane-row check above. The hook's lane map says which
+    // research.json sections an agent may write; the manifest must name the
+    // agent on each of those rows, or the manifest under-states who writes it.
+    // `proof-conclusion` resolved `questions` and stamped `project` with no row
+    // naming it, and the actual-writer guard stayed green through its
+    // per-tool union — it is `hookCallers` on `proof_summaries`, which lists
+    // `research_append` too.
+    const lanes = agentWritableSections();
+    expect(lanes.size).toBeGreaterThan(0);
+
+    const manifest = JSON.parse(
+      readFileSync(join(REPO_ROOT, "docs", "specs", "schemas", "ownership.json"), "utf-8"),
+    );
+    const missing: string[] = [];
+    for (const [agent, sections] of lanes) {
+      expect(sections.length, `${agent}: lane parsed with no sections`).toBeGreaterThan(0);
+      for (const section of sections) {
+        const row = manifest.rows.find(
+          (r: { artifact: string; section: string }) =>
+            r.artifact === "research.json" && r.section === section,
+        );
+        const named = new Set<string>([
+          ...(row?.callers ?? []),
+          ...(row?.hookCallers ?? []),
+          ...(row?.agentCallers ?? []).map((a: { agent: string }) => a.agent),
+        ]);
+        if (!named.has(`agent:${agent}`)) missing.push(`research.json#${section}: agent:${agent}`);
+      }
+    }
+    expect(
+      missing,
+      "the hook lets these agents write these sections, and the manifest row names " +
+        "none of them — add the agent to that row's `agentCallers`",
+    ).toEqual([]);
   });
 
   it("matches every tool the guard script itself denies", () => {

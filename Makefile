@@ -1027,13 +1027,15 @@ e2e-writer-attribution: ## Which subagent wrote a project document, and whether 
 	# half is static and lives in the vitest packaging suite
 	# (ownership-manifest.test.ts, "names every plugin holder of a writer tool");
 	# this one reads what the corpus records a subagent actually calling, which is
-	# what found the original instance and is the only half that can catch a body
-	# calling a tool its frontmatter never granted.
+	# what found the original instance and is the only half that can catch an
+	# agent body calling a tool its `tools:` never declared. (A skill's own calls
+	# carry no agent_type; an undeclared skill call is test_tool_allowlist's job.)
 	#
 	# Three classes: listed, UNLISTED (a manifest gap), and UNBOUND DELEGATION --
-	# a `general-purpose` stand-in (#939), which is neither a skill nor an agent,
-	# can never be listed in any row, and is therefore its own finding rather than
-	# a manifest gap or a waiver.
+	# an agent_type that is neither a shipped skill nor a shipped agent, can never
+	# be listed in any row, and is therefore its own finding rather than a
+	# manifest gap or a waiver. `general-purpose` is the #939 stand-in; any other
+	# name there was renamed, retired, or never shipped.
 	#
 	# Defaults to the WHOLE corpus, unlike every other e2e reader: a manifest gap
 	# is not a freshness question, and a window reads a strict subset of the same

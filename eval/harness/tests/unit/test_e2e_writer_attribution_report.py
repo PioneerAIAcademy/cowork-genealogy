@@ -9,6 +9,7 @@ gap), and an `agent_type` that is not a shipped unit at all (#939's
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 from e2e.agent_tool_usage_report import scan
@@ -57,11 +58,11 @@ def test_writer_tools_are_read_from_the_manifest_and_non_empty():
     assert "research_query" not in tools
 
 
-def test_listed_writers_unions_all_three_caller_fields():
+def test_listed_writers_reads_all_three_caller_fields():
     listed = listed_writers()
     # `callers` — the five search/extraction skills on research.json#log.
     assert "skill:record-extraction" in listed["research_log_append"]
-    # `agentCallers` — the direction #2575 added.
+    # `agentCallers` — the direction #2575 added, paired with its tool.
     assert "agent:record-extractor" in listed["research_log_append"]
     # `hookCallers` — proof-conclusion is named there on proof_summaries.
     assert "agent:proof-conclusion" in listed["research_append"]
@@ -218,7 +219,64 @@ def test_main_returns_1_and_names_the_branch_scope_on_an_empty_corpus(capsys):
     assert "No committed runs found" in capsys.readouterr().err
 
 
-def test_main_reads_the_whole_corpus_by_default(capsys):
-    """`--since` defaults to `all` here, unlike every other e2e reader."""
+def test_main_reads_the_whole_corpus_by_default(tmp_path: Path, monkeypatch, capsys):
+    """`--since` defaults to `all` here, unlike every other e2e reader.
+
+    On a tmp corpus, not the committed one, and with a run dated years back: a
+    run whose filename carries no date passes any window, so an undated fixture
+    would pass under the 14-day default too and pin nothing.
+    """
+    import e2e.runlog_selection as selection
+
+    payload = {"subagents": [_capture("record-extractor", ["research_log_append"])]}
+    _run(tmp_path, "old-fixture", "run-2020-01-01_00-00-00.json", payload)
+    _run(tmp_path, "new-fixture", f"run-{date.today().isoformat()}_00-00-00.json", payload)
+    monkeypatch.setattr(selection, "E2E_RUNLOGS", tmp_path)
+
     assert main([]) == 0
-    assert "entire corpus" in capsys.readouterr().out
+    assert "entire corpus (2 run(s))" in capsys.readouterr().out
+    # The negative control: the house window on the same corpus drops the old run.
+    assert main(["--since", "14"]) == 0
+    assert "1 of 2 run(s)" in capsys.readouterr().out
+
+
+def test_an_agent_caller_counts_only_for_the_tools_its_entry_names():
+    # `agent:record-extractor` is an `agentCallers` entry on tree `persons`,
+    # whose `writerTools` lists all eight tree writers. Paired with
+    # `extraction_append` alone, it must not come out listed for the others.
+    listed = listed_writers()
+    assert "agent:record-extractor" in listed["extraction_append"]
+    assert "agent:record-extractor" not in listed["tree_forget"]
+    # A permission field still counts for every writer tool on its row.
+    assert "skill:tree-edit" in listed["tree_forget"]
+
+
+def test_two_spellings_of_one_agent_are_one_pair(tmp_path: Path):
+    """Production reports `genealogy-research:<name>` beside the bare name."""
+    p = _run(tmp_path, "ferber-death", "run-1.json", {
+        "subagents": [
+            _capture("record-extractor", ["research_log_append"]),
+            _capture("genealogy-research:record-extractor", ["research_log_append"]),
+        ],
+    })
+    pairs = [
+        pr for pr in classify(scan([p]), listed_writers(), shipped_units())
+        if pr.tool == "research_log_append"
+    ]
+    assert len(pairs) == 1
+    assert pairs[0].identifier == "agent:record-extractor"
+    assert pairs[0].calls == 2
+    assert pairs[0].runs == 1
+
+
+def test_an_unbound_name_other_than_general_purpose_gets_no_939_explanation(tmp_path: Path):
+    # A retired agent is not the #939 fallback; saying it is sends the reader
+    # chasing a delegation-resolution bug that is not there.
+    p = _run(tmp_path, "ferber-death", "run-1.json", {
+        "subagents": [_capture("retired-extractor", ["research_log_append"])],
+    })
+    s = scan([p])
+    out = format_report(classify(s, listed_writers(), shipped_units()), s)
+    assert "retired-extractor -> research_log_append" in out
+    assert "#939" not in out
+    assert "renamed, retired, or never shipped" in out

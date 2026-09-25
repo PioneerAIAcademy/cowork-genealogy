@@ -31,26 +31,51 @@
  *    house style (see the first shape), which is what makes this reachable.
  *  - **A quoted scalar.** `- "tree_forget"` must yield `tree_forget`. Kept
  *    quoted, it matches no tool and fails open exactly as the trailing comment
- *    does. Only one matching outer pair is stripped: an unpaired quote, or one
- *    inside the entry (`Bash(echo "x")`), belongs to the entry.
+ *    does. A quoted scalar is read as a unit, so a ` #` inside the quotes is
+ *    part of the value (`"foo #bar"` → `foo #bar`) and `''` in a single-quoted
+ *    one is an escaped quote. Only a complete matching pair counts: an
+ *    unpaired quote, or one inside a plain entry (`Bash(echo "x")`), belongs to
+ *    the entry. A PLAIN scalar still ends at ` #` wherever it falls — that is
+ *    YAML's own rule, so `Bash(echo "a #b")` really is `Bash(echo "a`.
  *
  * Returns the entries in file order; `[]` when the key is absent. Throws when
  * there is no frontmatter at all, which is a malformed file rather than an
  * empty list.
  */
 export function extractList(text: string, key: string): string[] {
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-  if (!frontmatter) throw new Error("no YAML frontmatter");
+  const frontmatter = frontmatterBlock(text);
+  if (frontmatter === null) throw new Error("no YAML frontmatter");
 
-  const lines = frontmatter[1].split(/\r?\n/);
+  const lines = frontmatter.split(/\r?\n/);
   const start = lines.findIndex((l) => new RegExp(`^${key}:`).test(l));
   if (start === -1) return [];
 
   const items: string[] = [];
   for (let i = start + 1; i < lines.length; i++) {
     if (/^\S/.test(lines[i]) && !/^\s*#/.test(lines[i])) break; // next top-level key
-    const item = /^\s*-\s+(.+?)(?:\s+#.*)?\s*$/.exec(lines[i]);
-    if (item) items.push(item[1].replace(/^(["'])(.*)\1$/, "$2"));
+    const quoted = QUOTED_ENTRY.exec(lines[i]);
+    if (quoted) {
+      items.push(quoted[1] ?? quoted[2].replace(/''/g, "'"));
+      continue;
+    }
+    const plain = PLAIN_ENTRY.exec(lines[i]);
+    if (plain) items.push(plain[1]);
   }
   return items;
+}
+
+/** A `- "…"` or `- '…'` entry, then an optional ` # comment`. */
+const QUOTED_ENTRY = /^\s*-\s+(?:"([^"]*)"|'((?:[^']|'')*)')(?:\s+#.*)?\s*$/;
+
+/** A plain `- …` entry; the value ends at the first ` #`. */
+const PLAIN_ENTRY = /^\s*-\s+(.+?)(?:\s+#.*)?\s*$/;
+
+/**
+ * The text between a file's opening `---` and closing `---`, or `null` when
+ * it has none. The one copy of this regex: every packaging lint that reads
+ * frontmatter goes through it, so a fix here (a BOM, trailing spaces after
+ * `---`) reaches all of them at once.
+ */
+export function frontmatterBlock(text: string): string | null {
+  return /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? null;
 }

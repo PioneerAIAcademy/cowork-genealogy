@@ -93,6 +93,31 @@ describe("extractList — entries survive the shapes that reach these lists", ()
     ]);
   });
 
+  it("reads a quoted scalar as a unit, so a ` #` inside it is not a comment", () => {
+    // YAML ends a PLAIN scalar at ` #`, but a quoted one runs to its closing
+    // quote. Cutting inside the quotes left `"foo` — unpaired, so it kept its
+    // quote and matched nothing.
+    const entries = extractList(
+      doc(
+        [
+          "tools:",
+          '  - "foo #bar"',
+          "  - 'it''s'",
+          "  - 'foo #bar'  # a real comment after the closing quote",
+        ].join("\n"),
+      ),
+      "tools",
+    );
+    expect(entries).toEqual(["foo #bar", "it's", "foo #bar"]);
+  });
+
+  it("still ends a plain scalar at ` #`, as YAML does", () => {
+    // The over-correction to avoid. A plain entry containing quotes is not a
+    // quoted scalar, so YAML's plain-scalar comment rule applies to it.
+    const entries = extractList(doc(['tools:', '  - Bash(echo "a #b")'].join("\n")), "tools");
+    expect(entries).toEqual(['Bash(echo "a']);
+  });
+
   it("strips only a matching outer pair of quotes", () => {
     // The over-trim direction. An unpaired or mismatched quote is not a quoted
     // scalar, and a quote inside an entry belongs to the entry.

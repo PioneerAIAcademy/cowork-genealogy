@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
 import { OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
-import { extractList } from "./frontmatter.js";
+import { extractList, frontmatterBlock } from "./frontmatter.js";
 
 /**
  * The ownership manifest is the shared declaration of who may write each
@@ -56,7 +56,17 @@ interface OwnershipRow {
   override: string;
   notes?: string;
   hookCallers?: string[];
-  agentCallers?: string[];
+  agentCallers?: AgentCaller[];
+}
+
+/**
+ * An observed non-owner agent writer, paired with the writer tools it writes the
+ * row with. The pairing is what stops a row's OTHER writer tools from counting
+ * the agent as listed for them too.
+ */
+interface AgentCaller {
+  agent: string;
+  tools: string[];
 }
 
 const manifest = JSON.parse(
@@ -137,7 +147,7 @@ function readPluginGrants(): PluginGrants {
     entriesParsed.set(holder, entries.length);
     // Read the key's PRESENCE from the frontmatter block only: a body that
     // happens to contain the string would make every holder look like a declarer.
-    const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? "";
+    const frontmatter = frontmatterBlock(text) ?? "";
     if (new RegExp(`^${key}:`, "m").test(frontmatter)) declaresKey.add(holder);
     const held = new Set(entries.map(bareToolName).filter((t) => writers.has(t)));
     if (held.size > 0) byHolder.set(holder, held);
@@ -165,14 +175,19 @@ function readPluginGrants(): PluginGrants {
 
 const pluginGrants = readPluginGrants();
 
-/** Every identifier some row listing `tool` names as a permitted writer. */
+/**
+ * Every identifier some row listing `tool` names as a writer of it.
+ *
+ * `callers` and `hookCallers` are permission fields and count for every writer
+ * tool on their row — that is what they mean. An `agentCallers` entry counts
+ * only for the tools it names.
+ */
 function listedWriters(tool: string): Set<string> {
   const out = new Set<string>();
   for (const r of rows) {
     if (!r.writerTools.includes(tool)) continue;
-    for (const c of [...r.callers, ...(r.hookCallers ?? []), ...(r.agentCallers ?? [])]) {
-      out.add(c);
-    }
+    for (const c of [...r.callers, ...(r.hookCallers ?? [])]) out.add(c);
+    for (const a of r.agentCallers ?? []) if (a.tools.includes(tool)) out.add(a.agent);
   }
   return out;
 }
@@ -293,7 +308,7 @@ describe("ownership manifest — every name resolves", () => {
       for (const [field, list] of [
         ["callers", r.callers],
         ["hookCallers", r.hookCallers ?? []],
-        ["agentCallers", r.agentCallers ?? []],
+        ["agentCallers", (r.agentCallers ?? []).map((a) => a.agent)],
       ] as const) {
         for (const c of list) if (!resolves(c)) bad.push(`${key(r)}: ${field} '${c}'`);
       }
@@ -304,8 +319,8 @@ describe("ownership manifest — every name resolves", () => {
   it("puts only agents in agentCallers", () => {
     const bad: string[] = [];
     for (const r of rows) {
-      for (const c of r.agentCallers ?? []) {
-        if (!c.startsWith("agent:")) bad.push(`${key(r)}: agentCallers '${c}'`);
+      for (const { agent } of r.agentCallers ?? []) {
+        if (!agent.startsWith("agent:")) bad.push(`${key(r)}: agentCallers '${agent}'`);
       }
     }
     expect(
@@ -379,15 +394,21 @@ describe("ownership manifest — every name resolves", () => {
    * **It is per TOOL and unions across rows.** A holder listed for a writer tool
    * on any one row is listed for it everywhere, because nothing static can say
    * which section a grant will be used on. So this catches a holder listed for a
-   * writer tool NOWHERE — not a holder listed on the wrong row.
+   * writer tool NOWHERE — not a (holder, tool) written on the wrong row. That
+   * holds for all three fields.
    *
-   * That is looser than it first reads, and `record-extractor` is the live
-   * instance: it is an `agentCallers` entry on `tree.gedcomx.json#persons` for
-   * its `extraction_append` write, and that row lists all eight tree writer
-   * tools, so the union already counts it as listed for every one of them. A
-   * ninth writer tool granted to THAT agent would not red here. Narrowing it
-   * would mean pairing each `agentCallers` entry with the tools it is declared
-   * for, which is a manifest shape change, not a tightening of this test.
+   * What a row lists for a holder differs by field. `callers` and `hookCallers`
+   * are permissions, so they count for every writer tool on the row. An
+   * `agentCallers` entry names its tools, and counts only for those: an agent
+   * observed writing tree `persons` with `extraction_append` is not thereby
+   * listed for the row's seven other tree writers, so a new tree-writer grant to
+   * it reds here until the manifest names that tool for it.
+   *
+   * The skill half reads the DECLARED grant. `allowed-tools:` is a grant, not a
+   * restriction (CLAUDE.md), so a skill body that calls a tool it never declared
+   * is invisible to any frontmatter read; catching that call is
+   * `test_tool_allowlist`'s job (`eval/harness/validators/test_universal.py`),
+   * advisory in the unit tier.
    */
   it("names every plugin holder of a writer tool", () => {
     // Both readings that can silently return nothing here produce a clean zero
@@ -453,7 +474,7 @@ describe("ownership manifest — every name resolves", () => {
     const bad: string[] = [];
     for (const file of readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"))) {
       const text = readFileSync(join(pluginRoot, "agents", file), "utf8");
-      const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? "";
+      const frontmatter = frontmatterBlock(text) ?? "";
       const declared = /^name:\s*(\S+)\s*$/m.exec(frontmatter)?.[1];
       if (declared !== file.slice(0, -3)) bad.push(`${file}: frontmatter name '${declared}'`);
     }
@@ -464,24 +485,30 @@ describe("ownership manifest — every name resolves", () => {
     ).toEqual([]);
   });
 
-  it("gives every agentCallers entry a grant on one of its row's writer tools", () => {
-    // The stale half of the same declaration. A row keeps naming an agent after
-    // the grant that put it there is gone, and the guard above cannot see it —
-    // that one only walks holders the plugin still has.
+  it("pairs every agentCallers entry with tools it holds and its row lists", () => {
+    // The stale half of the same declaration. A row keeps naming a tool for an
+    // agent after the grant that put it there is gone, and the guard above
+    // cannot see it — that one only walks grants the plugin still has. A tool
+    // the row does not list pairs the agent with nothing it can write here, and
+    // an empty list is an entry that counts for no tool at all.
     const bad: string[] = [];
     for (const r of rows) {
-      for (const c of r.agentCallers ?? []) {
-        const held = pluginGrants.byHolder.get(c) ?? new Set<string>();
-        if (!r.writerTools.some((tool) => held.has(tool))) {
-          bad.push(`${key(r)}: agentCallers '${c}' is granted none of ${r.writerTools.join(", ")}`);
+      for (const { agent, tools } of r.agentCallers ?? []) {
+        if (tools.length === 0) bad.push(`${key(r)}: agentCallers '${agent}' names no tools`);
+        const held = pluginGrants.byHolder.get(agent) ?? new Set<string>();
+        for (const tool of tools) {
+          if (!r.writerTools.includes(tool)) {
+            bad.push(`${key(r)}: agentCallers '${agent}' names ${tool}, which the row does not list`);
+          } else if (!held.has(tool)) {
+            bad.push(`${key(r)}: agentCallers '${agent}' names ${tool}, which it is not granted`);
+          }
         }
       }
     }
     expect(
       bad,
-      "an `agentCallers` entry granted none of its row's writer tools cannot write " +
-        "the row — the grant came out of the agent's `tools:` and the declaration " +
-        "was left behind",
+      "each `agentCallers` entry must name at least one writer tool, and only " +
+        "tools its row lists and the agent's `tools:` still grants",
     ).toEqual([]);
   });
 
