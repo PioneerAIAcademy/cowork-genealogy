@@ -1497,7 +1497,11 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
  *  Forward direction only: the entry must END at `completed`. An item already
  *  sitting there when an unrelated field is edited is untouched, the same
  *  discipline as the `questions` and `hypotheses` arms. */
-function planItemLogAttributionInvariants(entry: any, research: any): string[] {
+function planItemLogAttributionInvariants(
+  entry: any,
+  research: any,
+  isAppend = false,
+): string[] {
   if (entry?.status !== "completed") return [];
   const pid = entry?.id;
   // Guarded for shape rather than assumed: this fires BEFORE document
@@ -1523,6 +1527,22 @@ function planItemLogAttributionInvariants(entry: any, research: any): string[] {
   // `in_progress`. Re-logging writes a durable duplicate that every reader of
   // `log[]` counts twice; `skipped` states the search was not done, which is
   // false. An open item misstates nothing.
+  //
+  // An APPEND gets its own remedy. Its id is assigned inside this call, so "log
+  // it with planItemId first" is impossible, and `in_progress` is the one status
+  // that blocks the question's exhaustive declaration. `planned` is wrong too:
+  // search-records runs the next planned item, which would repeat the search.
+  // A search already done is cited where the declaration reads it instead.
+  if (isAppend) {
+    return [
+      `plan_items[${pid}]: an appended item cannot arrive 'completed' — its id is assigned in ` +
+        `this call, so no log[] entry can name it. Don't add a plan item for a search that ` +
+        `was already done: cite that search's log id in the question's ` +
+        `exhaustive_declaration.log_entry_ids when you declare. If the search has not been ` +
+        `done yet, append the item as 'planned', then complete it after logging the search ` +
+        `with research_log_append({ planItemId: "<its id>", ... }).`,
+    ];
+  }
   return [
     `plan_items[${pid}]: no log[] entry names ${pid}, so completing it would claim a search ` +
       `nothing in the document records. Log the search that satisfies this item with ` +
@@ -3179,8 +3199,23 @@ function applyOne(
     const itemFields = op.fields ?? {};
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "status");
-    if (statusTouchedThisOp) {
-      invariantErrors.push(...planItemLogAttributionInvariants(resultEntry, research));
+    // An update re-sending `completed` on an item already completed before this
+    // call changes nothing — the same skip the `plans` arm makes — so a project
+    // completed before this rule existed is not refused for re-stating it.
+    const wasCompleted =
+      op.op === "update" &&
+      (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []).some(
+        (pl: any) =>
+          pl &&
+          Array.isArray(pl.items) &&
+          pl.items.some(
+            (it: any) => it && it.id === resultEntry?.id && it.status === "completed",
+          ),
+      );
+    if (statusTouchedThisOp && !wasCompleted) {
+      invariantErrors.push(
+        ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
+      );
     }
   }
   // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on

@@ -4699,7 +4699,61 @@ describe("research_append (batch ops)", () => {
     } as any);
 
     expect(r.ok).toBe(false);
-    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_002/);
+    // The append remedy, not the update one: `in_progress` would block the
+    // question's exhaustive declaration, and `planned` would repeat the search.
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/plan_items\[pli_002\]: an appended item cannot arrive 'completed'/);
+    expect(msg).toMatch(/exhaustive_declaration\.log_entry_ids/);
+    expect(msg).not.toMatch(/leave this item 'in_progress'/);
+  });
+
+  it("(d4-logattr) a refused UPDATE keeps the in_progress remedy, not the append one", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/leave this item 'in_progress'/);
+    expect(msg).not.toMatch(/an appended item cannot arrive/);
+  });
+
+  it("(d4-logattr) ACCEPTS an update re-sending status: completed on an item already completed", async () => {
+    // Completed before this call, with no log naming it: re-stating the status
+    // changes nothing, the same skip the plans arm makes.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plan_items",
+          op: "update",
+          planId: "pl_001",
+          entryId: "pli_001",
+          fields: { status: "completed", rationale: "Reworded" },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("(d4-logattr) still refuses completing an item that was in_progress before the call", async () => {
+    // The other direction of the skip: it keys on the item's status BEFORE the
+    // call, so a call that newly completes the item is not waved through.
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plan_items",
+          op: "update",
+          planId: "pl_001",
+          entryId: "pli_001",
+          fields: { status: "completed", rationale: "Reworded" },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
   });
 
   it("(d4-logattr) refuses a batch that appends an item and completes it in the same call", async () => {

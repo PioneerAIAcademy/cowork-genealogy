@@ -978,7 +978,13 @@ append, and says which of the two legitimate shapes was got wrong, because
 was *already* logged unattributed, the settled remedy is to leave the item
 `in_progress`: re-logging writes a durable duplicate that every reader of
 `log[]` counts twice, and `skipped` states the search was not done, which is
-false. An open item misstates nothing.
+false. An open item misstates nothing. A refused **append** gets its own remedy:
+its id is assigned inside the call, so the item cannot be logged first, and
+`in_progress` is the one status that blocks the exhaustive declaration — while
+`planned` would have `search-records` repeat the search. So the message says not
+to add an item for a search already done, and to cite that search's log id in the
+question's `exhaustive_declaration.log_entry_ids` instead. An update re-sending
+`completed` on an item already completed before the call is not refused.
 
 **The same check runs on the `plans` section.** Scoping it to `plan_items` ops
 alone would leave a documented route around it: the `plans` append branch
@@ -1003,10 +1009,10 @@ set `completed` in the unit corpus, measured at 4791ea9cb, and on the one unit
 append that sets `completed`. The update refusal is a true positive:
 `search-images`, scenario `mid-research-flynn`, which wrote two log entries from
 an `image_search` with `plan_item_id: null` and then marked the item completed,
-with every validator passing. The append is the case the remedy cannot serve:
-`research`, `ut_research_002`, builds a plan for `q_003` after the fact and marks
-its first item completed because that search was already logged, as `log_005`,
-under `q_001`. The bar here is inspection rather than a rate.
+with every validator passing. The append is the case the append remedy exists
+for: `research`, `ut_research_002`, builds a plan for `q_003` after the fact and
+marks its first item completed because that search was already logged, as
+`log_005`, under `q_001`. The bar here is inspection rather than a rate.
 
 **The e2e plane is not clear, and the card that scoped this work did not measure
 it.** Measured at 4791ea9cb: **32 of 1254** `plan_items` update ops are refused
@@ -1060,9 +1066,10 @@ not, and a fired one reaches only the judge, as an unnamed observation.
 message breaks the model's retry loop — the gap every row in this section
 records. And nothing observes the interaction with the exhaustiveness gate: an
 item left `in_progress` under the settled remedy blocks
-`exhaustive_declaration.declared` on its question's active plan, so a run whose
-search was already logged with `planItemId: null` has no route to declare that
-question exhaustive. The escape is the message's first clause — log the search
+`exhaustive_declaration.declared` on its question's active plan, so a run that
+tries to complete an EXISTING item whose search was already logged with
+`planItemId: null` has no route to declare that question exhaustive. The append
+form no longer reaches that dead end, since its remedy cites the log id instead. The escape is the message's first clause — log the search
 with `planItemId` — which is available whenever the search was not already
 logged unattributed. Only a paid eval run could show how often the narrow case
 is reached.
