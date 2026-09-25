@@ -33,7 +33,8 @@
     "place-search-all-any",
     "collection-read-by-id",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "volume-search-louisiana-colonial"
   ],
   "judge_context": [
     "Must mention Louisiana under French colonial rule. Must highlight parish registers, land grants, and colonial court records. Must not suggest U.S. state vital records for the 1700s."
