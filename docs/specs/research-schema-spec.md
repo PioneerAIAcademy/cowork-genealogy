@@ -304,7 +304,12 @@ the wrong row. That holds for all three fields.
 are permissions, so a name there counts for every writer tool on its row. An
 `agentCallers` entry is `{"agent": …, "tools": […]}` and counts only for the
 tools it names — the agent's writer grants intersected with the row's
-`writerTools`. `record-extractor` on tree `persons` is paired with
+`writerTools`, minus any tool the plugin hook forbids that agent on that row.
+For `research_append` that means: a research.json row only inside the agent's
+`AGENT_WRITABLE_SECTIONS` lane, and a tree row only through the one section that
+writes it — tree `persons` via an `assertions` update, tree `sources` via a
+`sources` append (`plugin-hooks.test.ts` fails an entry outside that).
+`record-extractor` on tree `persons` is paired with
 `extraction_append` alone, so the seven other tree writers that row lists do not
 make it count as listed for them: grant it a new tree writer and the guard reds
 until the manifest names that tool for it. A second test fails an entry that
@@ -321,9 +326,9 @@ rule with no exceptions:
 
 | Field | Holds | Read by |
 |---|---|---|
-| `callers` | who **may** write the row: every permitted skill, plus the row's own owner when that owner is an agent | the unit plane (`harness/ownership.py`'s `writer_sets`), and the writer tables above |
-| `hookCallers` | the agent the plugin `PreToolUse` hook permits, on a row claiming the `hook` plane | `plugin-hooks.test.ts`, which pins it against the hook's hardcoded map |
-| `agentCallers` | the non-owner **agents** that write the row, each paired with the writer tools it writes the row with | the actual-writer direction above, and nothing else |
+| `callers` | who **may** write the row: every permitted skill, plus the row's own owner when that owner is an agent | the unit plane (`harness/ownership.py`'s `writer_sets`), the writer tables above, the actual-writer direction (`ownership-manifest.test.ts`), `plugin-hooks.test.ts`, and `make e2e-writer-attribution` |
+| `hookCallers` | the agent the plugin `PreToolUse` hook permits, on a row claiming the `hook` plane | `plugin-hooks.test.ts`, which pins it against the hook's hardcoded map; the actual-writer direction; `make e2e-writer-attribution` |
+| `agentCallers` | the non-owner **agents** that write the row, each paired with the writer tools it writes the row with | the actual-writer direction, `plugin-hooks.test.ts` (against the hook's lanes), and `make e2e-writer-attribution` — never as a permission |
 
 A non-owner agent therefore never goes in `callers`. On a row claiming the unit
 plane it cannot: that plane keys on the calling skill's `SKILL.md` frontmatter

@@ -280,7 +280,7 @@ by `research_log_append`, which takes no `section`) and `researcher_profile`;
 keying on the schema alone would drop `plan_items`, the single largest source of
 false denies in the replay above.
 
-**Three writer-set changes, and no others.** `localities` is newly enforced, as
+**Four writer-set changes, and no others.** `localities` is newly enforced, as
 above. `assertions` loses `convert-dates`, a grant that was dead on arrival —
 the skill's only tool is `convert_calendar`, it holds no writer tool, and none of
 its 14 unit tests names `research_append` or `assertions`. A narrowing is the
@@ -292,7 +292,11 @@ questions reached `resolved` across 154 runs from 11 different skill contexts.
 The prose table, the write-boundary gate's remedy text, and the batches that
 write a summary and its resolve together all name `proof-conclusion`. A widening
 cannot newly fail a test; the matching skill-body edit is a separate change,
-gated on that skill's paid run.
+gated on that skill's paid run. And tree `persons` and `relationships` gain
+`forget-and-rederive` (`TREE_WIDENED` in `test_ownership_manifest.py`): it holds
+`tree_forget` and both rows list that tool, so it was a writer of both sections
+that no row named — found by the actual-writer guard. The skill has
+no unit suite, so no graded run reads this writer set.
 
 **Two declared contradictions that turn out not to be defects**, recorded rather
 than repaired:

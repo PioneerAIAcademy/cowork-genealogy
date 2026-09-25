@@ -269,6 +269,28 @@ def test_two_spellings_of_one_agent_are_one_pair(tmp_path: Path):
     assert pairs[0].runs == 1
 
 
+def test_two_spellings_of_an_unbound_name_are_one_pair(tmp_path: Path):
+    # The same merge as a shipped agent's, for a name that no longer ships —
+    # and the #939 note must still key on the bare name after the merge.
+    p = _run(tmp_path, "ferber-death", "run-1.json", {
+        "subagents": [
+            _capture("retired-extractor", ["research_log_append"]),
+            _capture("genealogy-research:retired-extractor", ["research_log_append"]),
+            _capture("general-purpose", ["tree_edit"]),
+            _capture("genealogy-research:general-purpose", ["tree_edit"]),
+        ],
+    })
+    s = scan([p])
+    unbound = [pr for pr in classify(s, listed_writers(), shipped_units()) if pr.verdict == "unbound"]
+    assert sorted((pr.tool, pr.calls) for pr in unbound) == [
+        ("research_log_append", 2),
+        ("tree_edit", 2),
+    ]
+    out = format_report(classify(s, listed_writers(), shipped_units()), s)
+    assert "#939 fallback" in out
+    assert "renamed, retired, or never shipped" in out
+
+
 def test_an_unbound_name_other_than_general_purpose_gets_no_939_explanation(tmp_path: Path):
     # A retired agent is not the #939 fallback; saying it is sends the reader
     # chasing a delegation-resolution bug that is not there.

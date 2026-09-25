@@ -113,6 +113,16 @@ def shipped_units(
     return units
 
 
+def _bare(agent_type: str) -> str:
+    """`genealogy-research:<name>` -> `<name>`; a bare name passes through."""
+    return agent_type.rsplit(":", 1)[-1]
+
+
+def _is_general_purpose(pair: "Pair") -> bool:
+    """True when every spelling grouped into `pair` is the #939 stand-in."""
+    return all(_bare(s) == GENERAL_PURPOSE for s in pair.caller.split(", "))
+
+
 def identifier_for(agent_type: str, units: set[str]) -> str | None:
     """`agent_type` -> the manifest identifier it is, or None if it is neither.
 
@@ -120,7 +130,7 @@ def identifier_for(agent_type: str, units: set[str]) -> str | None:
     bare one, so the tail is taken -- the same normalization the shipped hook's
     `owner_denied` applies to its caller key. `None` means an unbound delegation.
     """
-    bare = agent_type.rsplit(":", 1)[-1]
+    bare = _bare(agent_type)
     for candidate in (f"agent:{bare}", f"skill:{bare}"):
         if candidate in units:
             return candidate
@@ -146,18 +156,18 @@ def classify(scan_result, listed: dict[str, set[str]], units: set[str]) -> list[
     one caller. Calls sum and runs union across the spellings.
     """
     writers = writer_tools()
-    # The union of both keyed sources, not `pair_calls` alone. `pair_runs` is the
-    # superset: it is built from the per-file union of captures AND #1027
-    # `tool_calls` attribution, while `pair_calls` counts capture blocks only. A
-    # pair the capture source missed entirely would otherwise be dropped here —
-    # which is the one source that never misses when present.
+    # `pair_runs`, not `pair_calls`: it is built from the per-file union of
+    # captures AND #1027 `tool_calls` attribution, so it holds every pair
+    # `pair_calls` does plus the ones only attribution saw.
     grouped: dict[tuple[str, str], dict] = {}
-    for caller, tool in set(scan_result.pair_calls) | set(scan_result.pair_runs):
+    for caller, tool in scan_result.pair_runs:
         if tool not in writers:
             continue
         identifier = identifier_for(caller, units)
+        # An unbound caller groups on its bare tail too, so a retired agent's
+        # bare and namespaced spellings are one row, like a shipped one's.
         slot = grouped.setdefault(
-            (identifier or caller, tool),
+            (identifier or _bare(caller), tool),
             {"identifier": identifier, "spellings": set(), "calls": 0, "runs": set()},
         )
         slot["spellings"].add(caller)
@@ -217,12 +227,12 @@ def format_report(pairs: list[Pair], scan_result) -> str:
             "  Not a manifest gap: a name that is not a shipped unit cannot be listed "
             "in any row."
         )
-    if any(p.caller == GENERAL_PURPOSE for p in by["unbound"]):
+    if any(_is_general_purpose(p) for p in by["unbound"]):
         lines.append(
             f"  {GENERAL_PURPOSE} is the #939 fallback -- a bare-name delegation that "
             "failed to resolve, binding none of the agent's tools:."
         )
-    if any(p.caller != GENERAL_PURPOSE for p in by["unbound"]):
+    if any(not _is_general_purpose(p) for p in by["unbound"]):
         lines.append(
             "  Any other name here was renamed, retired, or never shipped; its calls "
             "predate the current plugin."

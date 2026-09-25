@@ -124,6 +124,28 @@ interface PluginGrants {
   entriesParsed: Map<string, number>;
   /** Holders whose frontmatter actually carries the key the scan reads. */
   declaresKey: Set<string>;
+  /** Files the scan could not read at all — each a test failure, not a crash. */
+  problems: string[];
+  /** Tool-list keys spelled some way the runtime and this scan do not read. */
+  misspelledKeys: string[];
+}
+
+/** The tool-list keys each kind of plugin file may carry, spelled exactly. */
+const TOOL_LIST_KEYS = {
+  agent: ["tools", "disallowedTools"],
+  skill: ["allowed-tools", "disallowed-tools"],
+} as const;
+
+/**
+ * Frontmatter keys that are a tool-list key under some other spelling
+ * (`allowedTools:`, `Tools:`, `disallowed_tools:`). The scan reads the exact
+ * key only, so a variant reads as "declares none" and passes the guard.
+ */
+function misspelledToolKeys(frontmatter: string, allowed: readonly string[]): string[] {
+  const wanted = new Set(["tools", "allowedtools", "disallowedtools"]);
+  return [...frontmatter.matchAll(/^([A-Za-z][A-Za-z0-9_-]*):/gm)]
+    .map((m) => m[1])
+    .filter((k) => wanted.has(k.toLowerCase().replace(/[-_]/g, "")) && !allowed.includes(k));
 }
 
 /**
@@ -131,19 +153,33 @@ interface PluginGrants {
  * agent's `tools:` and each skill's `allowed-tools:` frontmatter.
  *
  * This is the reading the manifest is checked AGAINST, so it deliberately
- * touches no part of the manifest. `entriesParsed` is carried alongside because
- * both ways this scan can read nothing are silent — a `tools:` list whose
- * leading `#` comment block stops the parser, and a renamed frontmatter key —
- * and a silent zero here PASSES the guard rather than failing it.
+ * touches no part of the manifest. Two ways this scan can read nothing are
+ * silent, and a silent zero here PASSES the guard rather than failing it: a
+ * `tools:` list the parser reads as empty (`entriesParsed` catches that), and a
+ * tool-list key under another spelling (`misspelledKeys` catches that). A file
+ * that cannot be read at all lands in `problems` rather than throwing, so one
+ * malformed file fails one test instead of the whole module.
  */
 function readPluginGrants(): PluginGrants {
   const writers = new Set<string>(WRITER_TOOLS);
   const byHolder = new Map<string, Set<string>>();
   const entriesParsed = new Map<string, number>();
   const declaresKey = new Set<string>();
+  const problems: string[] = [];
+  const misspelledKeys: string[] = [];
 
   const record = (holder: string, key: string, text: string) => {
-    const entries = extractList(text, key);
+    const kind = holder.startsWith("agent:") ? "agent" : "skill";
+    let entries: string[];
+    try {
+      entries = extractList(text, key);
+    } catch (e) {
+      problems.push(`${holder}: ${(e as Error).message}`);
+      return;
+    }
+    for (const k of misspelledToolKeys(frontmatterBlock(text) ?? "", TOOL_LIST_KEYS[kind])) {
+      misspelledKeys.push(`${holder}: '${k}:'`);
+    }
     entriesParsed.set(holder, entries.length);
     // Read the key's PRESENCE from the frontmatter block only: a body that
     // happens to contain the string would make every holder look like a declarer.
@@ -170,7 +206,7 @@ function readPluginGrants(): PluginGrants {
     record(`skill:${entry.name}`, "allowed-tools", readFileSync(skillMd, "utf8"));
   }
 
-  return { byHolder, entriesParsed, declaresKey };
+  return { byHolder, entriesParsed, declaresKey, problems, misspelledKeys };
 }
 
 const pluginGrants = readPluginGrants();
@@ -410,6 +446,24 @@ describe("ownership manifest — every name resolves", () => {
    * `test_tool_allowlist`'s job (`eval/harness/validators/test_universal.py`),
    * advisory in the unit tier.
    */
+  it("reads every plugin file's frontmatter", () => {
+    expect(
+      pluginGrants.problems,
+      "these plugin files could not be read, so their grants are missing from " +
+        "every comparison below",
+    ).toEqual([]);
+  });
+
+  it("spells every tool-list key the way its reader does", () => {
+    // Agents: `tools` / `disallowedTools`. Skills: `allowed-tools` /
+    // `disallowed-tools`. Anything else reads as "declares none" and passes.
+    expect(
+      pluginGrants.misspelledKeys,
+      "a tool-list key under another spelling is read by nothing — neither the " +
+        "runtime nor this guard",
+    ).toEqual([]);
+  });
+
   it("names every plugin holder of a writer tool", () => {
     // Both readings that can silently return nothing here produce a clean zero
     // rather than an error, so each is asserted non-empty before the comparison.

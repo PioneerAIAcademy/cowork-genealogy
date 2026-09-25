@@ -118,6 +118,33 @@ describe("extractList — entries survive the shapes that reach these lists", ()
     expect(entries).toEqual(['Bash(echo "a']);
   });
 
+  it("reads a block sequence written at the key's own indent", () => {
+    // Valid YAML, and read as empty by a scan that stopped at every
+    // unindented line.
+    const entries = extractList(
+      doc(["tools:", "- Read", "- mcp__genealogy__record_read", "name: x"].join("\n")),
+      "tools",
+    );
+    expect(entries).toEqual(["Read", "mcp__genealogy__record_read"]);
+  });
+
+  it("reads a flow sequence and the comma form on the key line", () => {
+    // `tools: Read, Grep` is the documented subagent form; `[a, b]` is YAML's
+    // flow sequence. Each read as `[]` before, and an empty read passes both
+    // guards that call this.
+    expect(extractList(doc('tools: [Read, "tree_forget"]  # flow'), "tools")).toEqual([
+      "Read",
+      "tree_forget",
+    ]);
+    expect(extractList(doc("tools: Read, mcp__genealogy__tree_forget"), "tools")).toEqual([
+      "Read",
+      "mcp__genealogy__tree_forget",
+    ]);
+    expect(extractList(doc("allowed-tools: tree_forget"), "allowed-tools")).toEqual([
+      "tree_forget",
+    ]);
+  });
+
   it("strips only a matching outer pair of quotes", () => {
     // The over-trim direction. An unpaired or mismatched quote is not a quoted
     // scalar, and a quote inside an entry belongs to the entry.

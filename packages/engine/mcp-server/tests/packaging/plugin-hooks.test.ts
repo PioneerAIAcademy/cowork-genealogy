@@ -326,6 +326,38 @@ describe("plugin hooks are packaged and wired", () => {
     ).toEqual([]);
   });
 
+  it("pairs a laned agent with research_append only where its lane reaches", () => {
+    // The other direction of the check above. `research_append` writes the
+    // research.json section its op names, and reaches the tree only through
+    // two of them: an `assertions` update rewrites the linked tree fact
+    // (tree `persons`), and a `sources` append with `sourceDescription`
+    // creates the tree source (tree `sources`). The hook confines a laned
+    // agent's `research_append` to its lane, so an `agentCallers` entry pairing
+    // the tool anywhere else records a write the hook refuses.
+    const TREE_ROW_VIA: Record<string, string> = { persons: "assertions", sources: "sources" };
+    const lanes = agentWritableSections();
+    const manifest = JSON.parse(
+      readFileSync(join(REPO_ROOT, "docs", "specs", "schemas", "ownership.json"), "utf-8"),
+    );
+    const bad: string[] = [];
+    for (const row of manifest.rows) {
+      for (const a of (row.agentCallers ?? []) as { agent: string; tools: string[] }[]) {
+        const lane = lanes.get(a.agent.slice("agent:".length));
+        if (!lane || !a.tools.includes("research_append")) continue;
+        const via =
+          row.artifact === "research.json" ? row.section : TREE_ROW_VIA[row.section as string];
+        if (via === undefined || !lane.includes(via)) {
+          bad.push(`${row.artifact}#${row.section}: ${a.agent} (lane: ${lane.join(", ")})`);
+        }
+      }
+    }
+    expect(
+      bad,
+      "these agentCallers entries pair research_append on a row the hook never " +
+        "lets that agent reach — drop research_append from the entry's `tools`",
+    ).toEqual([]);
+  });
+
   it("matches every tool the guard script itself denies", () => {
     // A matcher that omits a tool the script would have caught is a hole the
     // script can never close — the hook is not invoked at all.

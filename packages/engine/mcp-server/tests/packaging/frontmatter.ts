@@ -50,9 +50,23 @@ export function extractList(text: string, key: string): string[] {
   const start = lines.findIndex((l) => new RegExp(`^${key}:`).test(l));
   if (start === -1) return [];
 
+  // A value on the key line itself: a flow sequence `[a, "b"]`, or the
+  // comma-separated form Claude Code documents for a subagent's `tools:`
+  // (`tools: Read, Grep`). Read as empty, either one silently drops every grant.
+  const inline = stripComment(lines[start].slice(key.length + 1).trim());
+  if (inline !== "") {
+    const flow = /^\[(.*)\]$/.exec(inline);
+    return (flow ? flow[1] : inline)
+      .split(",")
+      .map((s) => unquote(s.trim()))
+      .filter((s) => s !== "");
+  }
+
   const items: string[] = [];
   for (let i = start + 1; i < lines.length; i++) {
-    if (/^\S/.test(lines[i]) && !/^\s*#/.test(lines[i])) break; // next top-level key
+    // The next top-level key ends the list. An unindented `- ` does not: YAML
+    // allows a block sequence at its key's own indent.
+    if (/^\S/.test(lines[i]) && !/^#/.test(lines[i]) && !/^-\s/.test(lines[i])) break;
     const quoted = QUOTED_ENTRY.exec(lines[i]);
     if (quoted) {
       items.push(quoted[1] ?? quoted[2].replace(/''/g, "'"));
@@ -62,6 +76,20 @@ export function extractList(text: string, key: string): string[] {
     if (plain) items.push(plain[1]);
   }
   return items;
+}
+
+/** A value with its trailing ` # comment` removed, unless the `#` is quoted. */
+function stripComment(value: string): string {
+  if (/^["'\[]/.test(value)) return value.replace(/\s+#[^"'\]]*$/, "").trim();
+  return value.replace(/\s+#.*$/, "").trim();
+}
+
+/** One matching pair of outer quotes removed; anything else returned as is. */
+function unquote(s: string): string {
+  const d = /^"([^"]*)"$/.exec(s);
+  if (d) return d[1];
+  const q = /^'((?:[^']|'')*)'$/.exec(s);
+  return q ? q[1].replace(/''/g, "'") : s;
 }
 
 /** A `- "…"` or `- '…'` entry, then an optional ` # comment`. */
