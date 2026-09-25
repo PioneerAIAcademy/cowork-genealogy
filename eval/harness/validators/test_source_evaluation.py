@@ -57,8 +57,13 @@ _NEG_WINDOW = 40
 # A negation binds only within its own clause. Without this, "do not detach the
 # death index, but detach the 1885 census" reads the leading "do not" as
 # covering BOTH terms and the real recommendation escapes -- the silent-failure
-# direction. Caught by this module's own both-directions check before commit.
-_CLAUSE_BREAKS = (",", ";", ":", ".", "!", "?", " but ", " however ", " though ")
+# direction. Dashes count: this skill writes in em-dashes, so "the record is not
+# about this Christian Hole -- detach it" would otherwise read its "not" as
+# covering the detach. Pinned both ways in test_source_evaluation_validator.py.
+_CLAUSE_BREAKS = (
+    ",", ";", ":", ".", "!", "?", "\u2014", "\u2013", " - ",
+    " but ", " however ", " though ",
+)
 
 
 def _is_negated(text: str, at: int) -> bool:

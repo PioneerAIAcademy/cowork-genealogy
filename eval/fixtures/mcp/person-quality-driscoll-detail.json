@@ -24,8 +24,8 @@
           "field": "Birth Date",
           "values": ["+1814", "+1816"],
           "sources": [
-            { "title": "Baptism register, Skibbereen, County Cork", "uri": "https://familysearch.org/ark:/61903/1:1:DRIS-A01", "agrees": true },
-            { "title": "1861 Census of Canada East, Sherbrooke", "uri": "https://familysearch.org/ark:/61903/1:1:DRIS-E05", "agrees": true }
+            { "title": "Baptism register, Skibbereen, County Cork", "uri": "https://familysearch.org/ark:/61903/1:1:DRIS-A01", "agrees": null },
+            { "title": "1861 Census of Canada East, Sherbrooke", "uri": "https://familysearch.org/ark:/61903/1:1:DRIS-E05", "agrees": null }
           ]
         }
       ]
