@@ -585,3 +585,29 @@ def test_verdict_derivation_is_a_noop_when_output_is_already_consistent():
     out = apply_component_derivation(original, expected_findings=_findings())
     assert out is original
     assert "verdict_derivation" not in out
+
+
+def test_a_rounded_recall_is_within_tolerance_and_records_nothing():
+    """2/3 = 0.666…; a model reporting 0.67 is agreement, not a disagreement."""
+    # Three required findings: two true, one false → recall = 2/3 ≈ 0.666…
+    # The model reports 0.67, which is within the 0.011 tolerance.
+    findings = {
+        "findings": [
+            {"id": "f1", "description": "a", "type": "relationship", "required": True},
+            {"id": "f2", "description": "b", "type": "relationship", "required": True},
+            {"id": "f3", "description": "c", "type": "relationship", "required": True},
+        ]
+    }
+    original = _valid_output(
+        verdict="partial",
+        recall_required=0.67,
+        recall_total=0.67,
+        per_finding=[
+            {"finding_id": "f1", "matched": "true", "agent_evidence": "", "notes": ""},
+            {"finding_id": "f2", "matched": "true", "agent_evidence": "", "notes": ""},
+            {"finding_id": "f3", "matched": "false", "agent_evidence": "", "notes": ""},
+        ],
+    )
+    out = apply_component_derivation(original, expected_findings=findings)
+    assert out is original
+    assert "verdict_derivation" not in out

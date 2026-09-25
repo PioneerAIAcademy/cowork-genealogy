@@ -1276,7 +1276,8 @@ changed — `verdict`, `recall_required` and/or `recall_total`, the two
 recall fractions compared with a `0.011` tolerance so a model's rounded
 `0.67` for an exact 2/3 is not recorded as a disagreement). Runs committed
 before this derivation was added are not rewritten; 19 of 188 committed
-runs carried a verdict the deterministic layer disagrees with.
+runs carried a verdict the deterministic layer disagrees with (the walk
+that reproduces this is recorded in the issue #2849 body).
 
 ### 7.2.1 The three axes
 
