@@ -852,6 +852,59 @@ def test_bedrock_pins_the_model_and_the_cache_flag_explicitly():
         _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "vertex"})
 
 
+GATEWAY_ENV = {**WORKER_ENV, "MODEL_PROVIDER": "gateway",
+               "GATEWAY_BASE_URL": "http://gw.example/bedrock", "GATEWAY_API_KEY": "k-1"}
+
+
+def test_gateway_sends_bedrock_ids_through_the_base_url():
+    opts = _options(worker_env=GATEWAY_ENV)
+    assert opts.model is None
+    assert opts.env["ANTHROPIC_BASE_URL"] == "http://gw.example/bedrock"
+    assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
+    assert "ANTHROPIC_API_KEY" not in opts.env and "CLAUDE_CODE_USE_BEDROCK" not in opts.env
+    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6"
+    assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
+    assert on.env["ENABLE_TOOL_SEARCH"] == "true"
+    with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
+        _options(worker_env={**GATEWAY_ENV, "GATEWAY_BASE_URL": " "})
+
+
+def test_gateway_maps_every_agent_model_to_its_bedrock_id():
+    from claude_agent_sdk import AgentDefinition
+
+    def agents():
+        return {
+            "record-extractor": AgentDefinition(description="d", prompt="p", model="claude-sonnet-4-6"),
+            "gps-mentor": AgentDefinition(description="d", prompt="p", model="claude-sonnet-5"),
+            "custom": AgentDefinition(description="d", prompt="p", model="us.anthropic.claude-opus-5"),
+            "unset": AgentDefinition(description="d", prompt="p"),
+        }
+    got = _options(worker_env=GATEWAY_ENV, agents=agents()).agents
+    assert {n: a.model for n, a in got.items()} == {
+        "record-extractor": "us.anthropic.claude-sonnet-4-6",
+        "gps-mentor": "us.anthropic.claude-sonnet-5",
+        "custom": "us.anthropic.claude-opus-5",
+        "unset": None,
+    }
+    assert got["record-extractor"].prompt == "p", "only the model changes"
+    for provider in ("anthropic", "bedrock"):
+        kept = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": provider}, agents=agents()).agents
+        assert kept["record-extractor"].model == "claude-sonnet-4-6", provider
+
+
+def test_every_shipped_agent_model_has_a_gateway_id():
+    from proto.worker.plugin_agents import load_agent_definitions
+
+    shipped = load_agent_definitions(SERVER.parents[1] / "packages" / "engine" / "plugin")
+    models = {a.model for a in shipped.values() if a.model}
+    assert models, "the plugin declares agent models"
+    unmapped = sorted(m for m in models
+                      if m not in options.GATEWAY_AGENT_MODELS and not m.startswith(("us.", "global.")))
+    assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
+
+
 # ── the container ─────────────────────────────────────────────────────────────────
 
 
@@ -882,6 +935,8 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     assert env["ANTHROPIC_API_KEY"].startswith("${ANTHROPIC_API_KEY"), "never a literal in the compose file"
     assert env["OPENROUTER_API_KEY"].startswith("${OPENROUTER_API_KEY"), "image_transcribe's key, passed through like the model key"
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
+    for key in ("GATEWAY_BASE_URL", "GATEWAY_API_KEY", "GATEWAY_TOOL_SEARCH"):
+        assert env[key].startswith("${" + key), f"{key} is passed through, never a literal"
     # The FS token is a file read per turn (tokens live an hour), never a literal or a build arg.
     assert env["FS_ACCESS_TOKEN_FILE"] == "/run/fs-token" and "FS_ACCESS_TOKEN" not in env
     assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
