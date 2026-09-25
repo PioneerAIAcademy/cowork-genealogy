@@ -1115,7 +1115,8 @@ itself:
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
-   `proof_summaries` to `proof-conclusion`, `OWNED_DECLARATIONS` reserves
+   `proof_summaries` to `proof-conclusion` and `person_evidence` to
+   `person-evidence`, `OWNED_DECLARATIONS` reserves
    `questions.exhaustive_declaration` to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`. The three
    differ in granularity and key: a whole section, a field at a particular claim

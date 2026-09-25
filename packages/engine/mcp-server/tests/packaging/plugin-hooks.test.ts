@@ -435,8 +435,8 @@ describe("the guard script's decisions", () => {
     // agent_id present but agent_type null resolves to an empty caller, which
     // is not the owner either.
     ["agent_id with a null agent_type", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: null }],
-    // The realistic non-`completed` value: 220 `completed` against 1 `active`
-    // in the committed corpus. Subsumed by the falsy rows above against a
+    // The realistic non-`completed` value: the committed corpus is almost all
+    // `completed` with exactly one `active`. Subsumed by the falsy rows above against a
     // `== "completed"` implementation, but it is the value a reader expects to
     // see covered, and it costs one line.
     ["main thread, an active status", { section: "project", op: "update", fields: { status: "active" } }, {}],
