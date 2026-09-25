@@ -46,8 +46,12 @@ Be tolerant of:
 
 - Differing source IDs and ARK URLs (FamilySearch may serve the same
   underlying record under different IDs)
-- Date/place formatting variation (`~1820`, `abt. 1820`, `approximately
-  1820 Virginia, USA`, etc.)
+- Date/place formatting variation — different spellings of the **same**
+  value. `~1820`, `abt. 1820` and `approximately 1820` are one date, an
+  approximation of 1820, and are interchangeable with each other; so are
+  `1820 Virginia, USA` and `Virginia, USA, 1820`. A difference in **precision
+  or qualification** between the claim and the tree is not formatting — see
+  *Dates and places — all finding types*.
 - Person identifier variation — the agent may have created a new
   person record for "Robert Smith" rather than matching one that was
   hinted; that's still a match if the new person has the right name
@@ -141,8 +145,9 @@ Scoping:
   marriage date on a spouse claim — that date is its own component and you must
   tag it `kind: "link"`, never `detail`, which would leave it in the unscored
   pile. Mark it `supported` only when the tree records that date on the
-  relationship. So a spouse link present with no marriage date recorded is
-  `"partial"`, not `"true"`: one link supported, one unsupported.
+  relationship, under the date rule in *Dates and places — all finding types*.
+  So a spouse link present with no marriage date recorded is `"partial"`, not
+  `"true"`: one link supported, one unsupported.
 - **This does not promote a linked person's own biography.** The birth and death
   dates of the parent, spouse or child being linked stay `detail`, even when the
   finding states them precisely — they say *which* person is meant (the John
@@ -160,6 +165,37 @@ Do **not** require that the agent's citations match the
 `supporting_sources` list exactly — `supporting_sources` is provided
 for context only. If the agent found the right answer via different
 sources, that still counts as a match.
+
+### Dates and places — all finding types
+
+A tree date is `supported` only when it **denotes** the claimed date.
+
+- A bounded or qualified date that merely *contains* the claim is
+  `unsupported`, however tightly it brackets it — `after 13 January 1912,
+  before 10 May 1913`, `about 1912`, `between 1911 and 1913` against a claimed
+  13 January 1912. A range whose endpoint equals the claim is `unsupported`.
+- A tree date **more precise** than the claim and consistent with it — claim
+  `1912`, tree `13 January 1912` — is `supported`.
+- When the **finding itself** states an approximate or bounded date, an
+  equivalent approximation in the tree is `supported`. This does not displace
+  the unresolved-detail bullet above.
+- The same rule governs places. A tree place is `supported` only when it
+  denotes the claimed place. A broader jurisdiction that merely *contains*
+  the claim — `Zulia, Venezuela` against a claimed `Maracaibo, Zulia,
+  Venezuela` — is `unsupported`; a more specific place consistent with the
+  claim is `supported`. A **renamed** place at the same level is the same
+  place, not a different one: `Salt Lake, Salt Lake, Utah` denotes a claimed
+  `Great Salt Lake, Great Salt Lake, Utah Territory` and is `supported`.
+
+**Rolling a `fact` finding's components up to `matched`.** Every component of a
+`fact` finding scores — tag each `kind: "link"`; there is no `detail` tier
+here. Then: any component contradicted → `"false"`; none supported →
+`"false"`; some supported and some unsupported → `"partial"`; all supported →
+`"true"`.
+
+This rollup does not apply to `polarity: "avoid"` findings. There
+`matched: "true"` means *correctly avoided*, which is not a component
+tally — see *Negative findings* below.
 
 ### Negative findings (`polarity: "avoid"` — the agent should NOT conclude something)
 

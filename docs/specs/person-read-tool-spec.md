@@ -401,6 +401,14 @@ person records for them. Every such edge is dropped before the response is
 returned, so the tool's output is endpoint-closed on all four endpoint spellings
 (`parent`, `child`, `person1`, `person2`).
 
+**The guard is no longer local to this tool.** `dropDanglingEdges` and the
+count-and-type note sentence live in `utils/tree-graph.ts`, shared with
+`person_ancestors`, which has the same class (measured at 11
+dangling endpoints across 27 relationships on one live pedigree). This tool's
+behaviour is unchanged by the move, and it keeps its own second note sentence —
+the one naming a missing parent of the *requested* person, which only a tool
+with a requested person can say.
+
 Both can be combined in a single call.
 
 ### Response structure (FS-extended GEDCOMX)

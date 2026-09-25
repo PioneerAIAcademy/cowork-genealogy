@@ -393,8 +393,32 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 //   - `normalize` collapses whitespace, so an "excerpt" spanning two paragraphs
 //     would satisfy the quote check. Already true of every pin here, so it is a
 //     property of the mechanism rather than something this adds.
+//
+// THE `citation` ROWS ARE A DIFFERENT SHAPE, and worth reading before adding
+// more like them. `citation` (issue #2799) is the first agent whose name is
+// also an ordinary English word, and `namesAgent` tokenizes and matches any
+// token CONTAINING the name — so "citation", "citations" and "inline citation
+// of individual claims" all trip arm 2 in skills that have nothing to do with
+// the agent. Of the eight below, only `record-extraction` and `translation`
+// mean the agent (both are boundary prose: "format citations (use citation)",
+// "hand off to citation after record-extraction creates the source entry");
+// the other six are the common noun. All eight are bare-name mentions, so all
+// eight take `""` and none can suppress a real delegation.
+//
+// The arm still earns its place for `gps-mentor`, `image-reader` and
+// `record-extractor`, whose names no one writes by accident. It does not
+// discriminate for `citation`, and each further single-word conversion
+// (`translation` is next, issue #2804) adds another block like this one.
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
+  ["historical-context -> citation", ""],
+  ["init-project -> citation", ""],
+  ["project-status -> citation", ""],
+  ["record-extraction -> citation", ""],
+  ["research -> citation", ""],
+  ["search-records -> citation", ""],
+  ["source-evaluation -> citation", ""],
+  ["translation -> citation", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -570,7 +594,12 @@ describe("agent delegation framing", () => {
   // Hand-listed on purpose, and held to set EQUALITY, which is the discipline
   // DELEGATION_EDGES has and PROSE_MENTIONS lacked: a name entering or leaving
   // fails here and the author says in the diff which it was.
-  const PROSE_ARM_COVERS = ["gps-mentor", "image-reader", "record-extractor"];
+  const PROSE_ARM_COVERS = [
+    "citation",
+    "gps-mentor",
+    "image-reader",
+    "record-extractor",
+  ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {
     expect(

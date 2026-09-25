@@ -110,9 +110,9 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
       # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
-      # this file (proto/env.sh writes it; FamilySearch access tokens live an hour, so
-      # `make proto-token` rewrites it under the running worker). Empty, and every
-      # FamilySearch tool answers with the reconnect instruction.
+      # this file (proto/env.sh writes it; `make proto-token` rewrites it between turns --
+      # never during one, since a FamilySearch refresh revokes the previous access token).
+      # Empty, and every FamilySearch tool answers with the reconnect instruction.
       FS_ACCESS_TOKEN_FILE: /run/fs-token
       # http (default since 2026-09-20, the lead's call): the D16 `tools` service on the
       # SAME store, ONE process for every turn and every patron -- bearer as

@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "United_States_Naming_Customs, for the Flynn identity-conflict tests whose records are Pennsylvania-side and which now reach conflict-resolution's unconditional pre-work block (issue #2254). Content excerpted verbatim from the live page on 2026-09-23 (8,016 chars, most of it navigation). The page is deliberately reproduced as what it actually is - a hub of links to variant-spelling and nickname aids, carrying NO naming-system rule. That is the correct and useful answer for a US record set: there is no patronymic or two-surname system to apply, so a surname difference there carries none of the implication it would in a live patronymic jurisdiction. A fixture that invented a US 'system' would teach the skill the opposite of what the page says.",
+  "args": {
+    "url": "~United_States_Naming_Customs"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/United_States_Naming_Customs",
+    "content": "# United States Naming Customs\n\nNaming Customs\n\n## Online Resources\n\n* Abbreviations Found in Genealogy Records\n* Abbreviations Lists for Personal Names (English)\n* Name Variations in United States Indexes and Records\n* Guessing a Name Variation\n* List of Some 18th and 19th Century American Nicknames\n"
+  }
+}
