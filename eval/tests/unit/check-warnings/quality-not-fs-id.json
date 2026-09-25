@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_check_warnings_018",
     "skill": "check-warnings",
-    "name": "Skip person_quality when the id is synthetic (no FamilySearch ID)",
+    "name": "person_quality answers a non-FamilySearch id itself; the report leaves quality out",
     "type": "positive",
-    "description": "User asks to check Patrick Flynn, whose local id is the synthetic 'I1' (not a FamilySearch ID). person_warnings runs offline as usual. Because there is no FamilySearch profile to score, the skill should NOT call person_quality; it should run the warnings check and note that a FamilySearch quality score is not available (no FamilySearch ID).",
-    "tags": ["positive", "person-quality", "skip", "synthetic-id"]
+    "description": "User asks to check Patrick Flynn, whose tree id is 'I1' — a project id, not a FamilySearch person id. The skill runs person_warnings and person_quality for him as for anyone; person_quality answers reason 'not_familysearch_id' without contacting FamilySearch. The report gives the warnings result and leaves the FamilySearch quality section out, never naming the id or its type.",
+    "tags": ["positive", "person-quality", "not-familysearch-id"]
   },
   "input": {
     "user_message": "Check Patrick Flynn for any warnings.",
@@ -14,8 +14,8 @@
   "mcp_fixtures": ["person-warnings-no-warnings"],
   "judge_context": [
     "Should call person_warnings with personId 'I1'",
-    "Should NOT call person_quality -- 'I1' is a synthetic id, not a FamilySearch ID (XXXX-XXX), so there is no profile to score",
+    "Should call person_quality with personId 'I1'. The tool answers {ok: false, reason: 'not_familysearch_id'} without contacting FamilySearch; that answer is not a failure.",
     "Should report the person_warnings result (no impossibilities)",
-    "Should NOT mention FamilySearch quality at all — the id is synthetic, so quality does not apply and a note would just be noise"
+    "Should leave the FamilySearch quality section out, or give at most one plain line such as 'No FamilySearch quality score was retrieved for this person.' Whether the reply names the id or its type is graded by the deterministic validator test_not_fs_reply_names_no_id, not by the judge."
   ]
 }

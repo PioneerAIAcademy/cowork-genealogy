@@ -70,87 +70,91 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
     )
 
 
-# --- V1: No FamilySearch quality mention without a person_quality call ---
+# --- V1: A not-FamilySearch-id answer is reported without naming the id ---
 
-def report_no_fs_quality_mention_without_call(tool_calls, text_response, test):
-    """V1: a run with no person_quality call must not mention FamilySearch quality.
+#: A sentence ends at . ! or ? followed by whitespace, or at a newline. NOT at
+#: ; or : — the skill writes its quality line as "FamilySearch quality: …", and
+#: splitting at the colon would separate that label from an id after it, so
+#: "FamilySearch quality: none for I1." would pass rule (b). Caught by its own
+#: must-fail vector before this landed.
+_SENTENCE_SPLIT = r"(?<=[.!?])\s+|\n+"
 
-    Tier 2 — reports, never gates. SKILL.md states the rule twice: "skip this
-    call silently ... do not mention FamilySearch quality at all for that
-    person" and "Say **nothing** about FamilySearch quality -- do not add a
-    'not available' note." A mention can appear as a standalone note, a
-    routing remark, or even a single clause of an opening sentence — all are
-    violations.
 
-    Skipped on negative tests: the skill body does not run so no quality call
-    is expected by design.
+def _not_fs_person_ids(tool_calls) -> tuple[list[str], int]:
+    """(ids answered with `not_familysearch_id`, total person_quality calls)."""
+    quality = [
+        c for c in (tool_calls or [])
+        if (c.get("tool") or "").endswith("person_quality")
+    ]
+    not_fs = [
+        str((c.get("args") or {}).get("personId", "")).strip()
+        for c in quality
+        if isinstance(c.get("response"), dict)
+        and c["response"].get("reason") == "not_familysearch_id"
+    ]
+    return [i for i in not_fs if i], len(quality)
 
-    Matched per sentence, on co-occurrence of "familysearch" and "quality",
-    rather than on the adjacent phrase "familysearch quality". Once the
-    person_quality check above has returned, ANY pairing of the two in one
-    sentence is a violation, so the loose match has nothing to false-positive
-    on — while the adjacent-phrase form missed every real paraphrase the
-    committed logs contain ("no FamilySearch quality score as ... has a local
-    project ID" matches either way, but "quality score from FamilySearch" and
-    "FamilySearch's quality" do not match the phrase form).
 
-    Two silent-wrong traps to avoid:
-    - tool_calls is pre-resolved as the run's output; reading test["tool_calls"]
-      always returns [] and makes every run look applicable.
-    - Tool names are fully qualified (mcp__genealogy__person_quality), so
-      equality-matching on "person_quality" never hits — use endswith() instead.
+def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
+    """V1: when `person_quality` answers that an id is not a FamilySearch person
+    id, the reply must not turn that into a remark about the id.
+
+    Tier 1 — gates. The tool answers a project's local id (`I1`) itself; the
+    skill is told to leave the FamilySearch quality section out. The leak this
+    replaces a judge dimension for: 8 of 20 replies in `v1_2026-09-21_22-44-38`
+    opened "Patrick Flynn is `I1` — a synthetic ID", and the judge marked down 3.
+
+    Fails if any of:
+      (a) the reply contains "synthetic", anywhere;
+      (b) a sentence mentioning FamilySearch or quality also names such an id as
+          a whole token (`I1`, `(I1)`, `` `I1` ``, `I1.` — not `I10`);
+      (c) every person_quality answer was the not-FamilySearch one, and more than
+          one sentence of the reply mentions FamilySearch.
+
+    Keyed on "FamilySearch"/"quality" only, never "linked": check-warnings uses
+    "linked" for relationships ("Confirm that Thomas Flynn (I2) is genuinely
+    linked as Patrick's relative"), and the report header names the person with
+    their id by design ("WARNINGS FOR: Patrick Flynn (I1)", SKILL.md's template).
+    Measured on every committed synthetic-only reply before this landed: no
+    sentence pairs FamilySearch or quality with an id except the leaks, and no
+    reply has more than one FamilySearch sentence.
+
+    Skipped on negative tests (the skill body does not run) and on runs with no
+    not-FamilySearch-id answer.
     """
     import re as _re
 
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
+    ids, quality_calls = _not_fs_person_ids(tool_calls)
+    if not ids:
+        pytest.skip("no person_quality answer for a non-FamilySearch id")
     response = text_response or ""
-    if not response.strip():
-        pytest.skip("no response text to check")
 
-    has_quality_call = any(
-        (c.get("tool") or "").endswith("person_quality")
-        for c in (tool_calls or [])
-    )
-    if has_quality_call:
-        return  # quality call happened — any mention is legitimate
+    if _re.search(r"synthetic", response, _re.I):
+        hit = next(s for s in _re.split(_SENTENCE_SPLIT, response) if _re.search(r"synthetic", s, _re.I))
+        raise AssertionError(
+            "the reply characterises the id's type ('synthetic') after person_quality "
+            f"answered that the id is not a FamilySearch id: {hit.strip()!r}"
+        )
 
-    # The id-type mention. SKILL.md forbids "a sentence about the id type"
-    # alongside the quality mention, and this half was invisible until
-    # 2026-09-19: the co-occurrence match below requires BOTH "familysearch"
-    # and "quality", so `ut_check_warnings_018` — the test whose whole job is
-    # policing this silence — opened with "Patrick Flynn is `I1` — a synthetic
-    # ID. Now running the offline warnings check.", near-verbatim the sentence
-    # SKILL.md quoted as the forbidden form, and scored 3. Nothing detected it,
-    # so the rule bound by prose alone and drifted for four consecutive runs
-    # (9 -> 3 -> 4 -> 5 violations). Safe to match loosely for the same reason
-    # the co-occurrence match is: person_quality was NOT called on this run, so
-    # the skill has no legitimate reason to characterise the id at all.
-    _ID_TYPE = _re.compile(r"\bsynthetic\b", _re.I)
-    # An absence/skip remark about the quality check, which the co-occurrence
-    # match catches only when the word "familysearch" also appears.
-    _SKIP_WORD = _re.compile(
-        r"\b(skip(?:ped|ping)?|not\s+checked|no\s+\w+\s+data|not\s+available|"
-        r"n/a|does\s*n[o']t\s+apply|doesn't\s+apply)\b",
-        _re.I,
-    )
-
-    for sentence in _re.split(r"(?<=[.!?;:])\s+|\n+", response):
+    sentences = [x for x in _re.split(_SENTENCE_SPLIT, response) if x.strip()]
+    tokens = [_re.compile(rf"(?<![A-Za-z0-9]){_re.escape(i)}(?![A-Za-z0-9])", _re.I) for i in ids]
+    for sentence in sentences:
         low = sentence.lower()
-        why = None
-        if "familysearch" in low and "quality" in low:
-            why = "mentions FamilySearch quality"
-        elif _ID_TYPE.search(sentence):
-            why = "characterises the id's type"
-        elif "quality" in low and _SKIP_WORD.search(sentence):
-            why = "remarks on the skipped quality check"
-        if why:
+        if ("familysearch" in low or "quality" in low) and any(t.search(sentence) for t in tokens):
             raise AssertionError(
-                f"the response {why} but person_quality was never called — "
-                "SKILL.md forbids any mention of FamilySearch quality, the "
-                "id's type, or the skipped call, in any position (opening "
-                "line, closing note, or parenthetical), when the id is "
-                f"synthetic and the tool was skipped: {sentence.strip()!r}"
+                "a sentence about FamilySearch quality names an id person_quality "
+                f"answered as not a FamilySearch id: {sentence.strip()!r}"
+            )
+
+    if len(ids) == quality_calls:
+        fs_sentences = [x.strip() for x in sentences if "familysearch" in x.lower()]
+        if len(fs_sentences) > 1:
+            raise AssertionError(
+                "no person checked has a FamilySearch quality score, so at most one "
+                f"plain line may mention FamilySearch; the reply has {len(fs_sentences)}: "
+                f"{fs_sentences!r}"
             )
 
 

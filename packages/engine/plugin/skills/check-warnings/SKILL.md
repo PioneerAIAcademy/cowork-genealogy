@@ -67,14 +67,15 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
 1. Call `person_warnings({ projectPath, personId })` — the offline impossibility check that runs for every person you check. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
-2. **Additionally, when `personId` is a FamilySearch ID** -- four characters, a hyphen, three characters (e.g. `KWCJ-RN4`, `KD96-TV2`) -- also call `person_quality({ personId })`. In projects built from FamilySearch the tree id *is* the FS ID, so the same id feeds both tools. **When the id is synthetic (e.g. `I1`), skip this call silently** -- there is no FamilySearch profile to score, so do not call the tool, write no narration or preamble about the skip, and do not mention FamilySearch quality at all for that person. Proceed directly to reporting the offline warnings. **The silence begins with the very first word of your response.** Open directly with the warnings output -- never with a sentence about the id type, what you will or will not check, or why you skipped the quality call. The sentence "[name] is in the tree as `I1` -- a synthetic ID, so I'll run the offline warnings check only (no FamilySearch quality call applies here)" is the exact forbidden form.
+2. Also call `person_quality({ personId })` for the same person, with the same id.
 
 `person_quality` needs the user logged in and calls FamilySearch's live quality service. Handle it gracefully -- it must **never** suppress the offline warnings, which are the guardrail and always appear:
 
+- **`reason: "not_familysearch_id"`** -- not an error: leave this person's FamilySearch quality section out, with no note.
 - **Not logged in / auth error** -- skip quality and note it once: "FamilySearch quality score unavailable -- log in to include it." Still report the warnings.
 - **Tool error** (person tombstoned/merged, not found, still calculating, network) -- surface the tool's message as a one-line note in that person's quality section; do not block the warnings report.
 
-The tool returns `{ personId, segment, overallScore, issueCount, categories: [{ scoreType, count, score }], issues: [{ sentence, conclusionType, conclusionId, scoreType }] }`.
+The tool returns `{ personId, segment, overallScore, issueCount, categories: [{ scoreType, count, score }], issues: [{ sentence, conclusionType, conclusionId, scoreType }] }`, or `{ ok: false, reason: "not_familysearch_id", errors }`.
 
 ### 3. Report warnings
 
@@ -159,8 +160,7 @@ When `person_quality` returned data, add a separate **FamilySearch quality** sec
 - These are FamilySearch's *suggestions to improve the profile*, not impossibilities. Phrase next steps as optional improvements ("adding the burial date would raise the completeness score"), never as urgent errors.
 - **Don't invent a quality label or verdict** (no "High Quality" band) -- report the `overallScore` and the sentences as-is. The tool deliberately omits a band.
 - When `issueCount` is 0: "FamilySearch quality: no issues flagged (overall {overallScore})."
-- **Synthetic id (quality not applicable):** the person has no FamilySearch profile, so `person_quality` was never called. Say **nothing** about FamilySearch quality -- no "not available" note, no "not applicable" remark, and no routing narration explaining that you skipped it. (This is the common case for hand-built or record-derived persons; a quality remark there is just noise.)
-- **Quality attempted but failed** (the tool returned an error -- tombstoned/merged, not found, still calculating, or not logged in): add one brief note in the quality section using the tool's message. Never let it abort or suppress the warnings report.
+- **Quality attempted but failed** (the tool returned an error -- tombstoned/merged, not found, still calculating, or not logged in; `reason: "not_familysearch_id"` is not one of these): add one brief note in the quality section using the tool's message. Never let it abort or suppress the warnings report.
 
 **Example:**
 
