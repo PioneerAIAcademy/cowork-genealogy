@@ -265,7 +265,8 @@ assertion catches this and the read-only case: **frames appended > 0 per turn.**
 that no path is writable — it is that **the agent has no route to project state**, which
 lives in Postgres behind validating tools. Be precise about what is and is not denied:
 `disallowed_tools=["Bash", "WebFetch", "WebSearch", "NotebookEdit"]` (the same list the
-unit harness already ships as `DISALLOWED_BACKSTOP`). **`Write` and `Edit` stay
+unit harness already ships as `DISALLOWED_BACKSTOP`), plus `DesignSync`, `Monitor` and
+`PushNotification`, which the CLI adds only for a non-Bedrock base URL (P3g). **`Write` and `Edit` stay
 granted**, because they are whole-tool names and denying them would take the agent's
 ability to write anything at all. So the model *can* write into the ephemeral tmpfs. That is not project state, it is discarded at turn
 end, and the only thing it could corrupt is the run's own transcript. Do not claim the
@@ -1465,7 +1466,7 @@ without whichever Bedrock refuses.
   carrying `text` runs the turn. `session_store.py` is the `SessionStore` on
   `session_entries`, constructor-scoped on the project id with the SDK's `project_key`
   ignored; `options.py` is the option set (cwd `/project`, `setting_sources=[]`, the
-  plugin from disk, `agents=` from `plugin_agents.py`, `disallowed_tools` the four,
+  plugin from disk, `agents=` from `plugin_agents.py`, `disallowed_tools` the seven,
   `hosted-stdio.js` forked per turn as `env -u ANTHROPIC_API_KEY node …` with the store
   variables and the patron's `FS_ACCESS_TOKEN` in the server entry's env — the entry
   written to a 0600 `mcp.json` under the per-turn config dir and passed as a **path**,

@@ -57,7 +57,7 @@ from app.agent import real_agent  # noqa: E402 - needs SERVER_DIR on sys.path
 from .plugin_agents import load_agent_definitions  # noqa: E402
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
-DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
+DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 HOLD_ENV = "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS"
 HOLD_AFTER_ENV = "GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS"
@@ -135,7 +135,7 @@ def build_prototype_options(
 ):
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
-    # disallowed_tools: None = the default four; a list = exactly that list; [] = none.
+    # disallowed_tools: None = DISALLOWED_TOOLS; a list = exactly that list; [] = none.
     denied = list(DISALLOWED_TOOLS) if disallowed_tools is None else list(disallowed_tools)
     # max_turns: None = the SDK default (unbounded; what the driver runs). The
     # probes pass a small cap so a retry loop cannot bill more than a few turns.

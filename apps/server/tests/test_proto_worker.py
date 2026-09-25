@@ -758,7 +758,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.permission_mode == "bypassPermissions"
     assert opts.plugins == [{"type": "local", "path": "/opt/genealogy/plugin"}]
     assert list(opts.agents) == ["gps-mentor"]
-    assert opts.disallowed_tools == ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
+    assert opts.disallowed_tools == ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
     assert opts.session_store_flush == "eager" and opts.session_store is not None
     assert opts.include_partial_messages is True
     assert opts.max_buffer_size == options.MAX_BUFFER_BYTES > 1024 * 1024

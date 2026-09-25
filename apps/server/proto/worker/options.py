@@ -50,7 +50,9 @@ from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import project_read_denied
 
-DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
+# DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
+# (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
+DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
 BEDROCK_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
