@@ -32,7 +32,9 @@ match strength.
 substitute. Researched on familysearch.org by hand; retrieval was not
 tool-assisted. Second opinion given by **Ikennaya Mbadiwe**, as issue #2314
 requires for this fixture; the identification of the subject's own marriage is
-his finding.
+his finding. The marriage record was afterwards re-read with `record_read`
+against live FamilySearch to confirm its contents (spec §3.6 permits
+tool-assisted *retrieval*; the identity judgement remained the genealogist's).
 
 The hint record is `ark:/61903/1:1:6BHW-1HG3` — "Italia, Genova, Genova, Stato
 Civile (Tribunale), 1866-1929", a birth entry of 30 August 1883 at Genova for
@@ -42,23 +44,39 @@ recorded here for the next reader.
 
 **What decided it: the subject has a documented husband, and he is not Pietro
 Dondero.** The Genova civil registration at `ark:/61903/1:1:X3L8-MFLR` records
-the marriage of **Matilde Carmela Emanuela Cavagnaro, daughter of Giuseppe
-Cavagnaro and Maddalena Boitano, to Paolo Andrea Vaglio**. Her parents, birth
-year and birthplace all match the tree person, which makes it a strong
-identification of `G4Z4-RJ1` rather than a namesake.
+her marriage to **Paolo Andrea Vaglio** on **26 Jul 1900 at Bogliasco**. Read
+directly, the record names the bride **Matilde Carmela Emanuela Cavagnaro**,
+born **1866 at Lima**, *Maestra Elementare*, daughter of **Giuseppe** and
+**Maddalena Bitano** — parents, birth year and birthplace all matching
+`G4Z4-RJ1`. That is a firm identification of the tree person, not a namesake.
+The groom is Paolo Andrea Vaglio, b. 1867 Bogliasco, *Segretario Comunale*, son
+of **Angelo** and **Maria Fereccio**.
 
-The Carmela Cavagnaro of the hint is a different woman. She was married to
-Pietro Dondero and bore him children across many years — the 1883 daughter of
-the hint record, and a son Attilio Omero Dondero born 31 May 1891
-(`ark:/61903/1:1:X3TM-QPSS`) — and some records name her **Carmela Rosa
-Cavagnaro**. That is a settled Genovese household distinct from the subject's.
+The Carmela Cavagnaro of the hint is a different woman: married to Pietro
+Dondero and bearing him children at Genova in at least 1883 (the hint record)
+and 1891 (Attilio Omero Dondero, `ark:/61903/1:1:X3TM-QPSS`) — a settled
+Genovese household distinct from the subject's. Some records reportedly name her
+**Carmela Rosa Cavagnaro**; that reading comes from the second opinion and no
+ark for it is recorded here.
 
 The hint identifies its mother only *indirectly*: the 1883 index gives her no
 age, no patronymic and no birthplace, so name alone is all it offers, and the
 name recurs in the district. The subject's own third given name being Carmela is
 what drew the match, and it was never enough. The decisive work was not on the
-hint record at all — it was researching the subject's parents and marriage,
-which separate the two women cleanly.
+hint record at all — it was researching the subject's parents and marriage.
+
+**What this does not establish — read before relying on the fixture.** The
+Vaglio marriage is dated **1900**, seventeen years after the hint birth, and the
+indexed record carries **no *stato civile*** for the bride (*nubile* vs
+*vedova*). So it does not by itself exclude an earlier marriage to Dondero
+followed by widowhood; the rejection rests on the identification and on the
+Dondero household being separately documented, not on chronology. Reading the
+bride's civil status off the register image
+(`ark:/61903/3:1:3QS7-L9WL-JC3N`) would close that gap outright — *nubile* would
+make the rejection airtight. It was attempted here and not completed: the scan
+is 1.8 MB, too large for `image_read`, and no OpenRouter key was configured for
+`image_transcribe`. A reviewer wanting the conclusive form should ask for that
+one field.
 
 **What was searched and came up empty.** Genova birth records were searched for
 an entry linking Giuseppe Andrea Cavagnaro to Matilde Carmela Emanuela
@@ -75,10 +93,18 @@ who carry no facts at all — is wrong, but **not for the reason issue #2314
 assumed**. Those three "Vaglio" sources (`7PM9-ZQP`, `7PM9-W4L`, `7PM9-W5S`) are
 not mis-attached strangers' records: they are the subject's **own marriage
 record**, indexed under the groom's line as *Paolo Andrea Vaglio and Angelo,
-26 Jul 1900*. Angelo Vaglio and Maria Fereccio are **Paolo Andrea Vaglio's**
-parents — the subject's parents-in-law — attached to her in error from that
-record. So the sources belong on her; the parent edges derived from them do not.
-`SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her birth entry, 20 May 1866.
+26 Jul 1900*. Reading the record confirms it — it carries `ParentChild` edges
+from **Angelo** and **Maria Fereccio** to *Paolo Andrea Vaglio*, and separately
+from **Giuseppe** and **Maddalena Bitano** to the bride. So Angelo Vaglio and
+Maria Fereccio are the **groom's** parents, the subject's parents-in-law,
+attached to her in error from that record. The sources belong on her; the parent
+edges derived from them do not. `SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her
+birth entry, 20 May 1866.
+
+(The three cite two ark families — `X3L8-MFL*` and `X3G7-XG5*` — and their
+`url` and `citation` fields disagree on the ark, as issue #2314 noted. They
+resolve to per-person arks on the same 26 Jul 1900 act; `X3L8-MFLR` is the
+bride's persona, which is why it is the one cited above.)
 
 **Nothing was corrected upstream.** Ikennaya's review recommends detaching the
 Vaglio parents on the live tree; that is deliberately **not** done here, because
