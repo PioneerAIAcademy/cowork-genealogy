@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { allToolSchemas } from "../../src/tool-schemas.js";
@@ -104,6 +104,33 @@ export function parseLsTree(stdout: string): Map<string, number> {
     sizes.set(path, Number(size));
   }
   return sizes;
+}
+
+/**
+ * Working-tree prompt sizes, so regenerating the baseline sees an edit before
+ * it is committed. CRLF is counted as LF, which equals git's blob length under
+ * `* text=auto eol=lf` — the same number `lsTree` would report once committed.
+ */
+function workingTreeSizes(): Map<string, number> | null {
+  try {
+    const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
+    const out = execFileSync(
+      "git",
+      ["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", SKILLS_PATH, AGENTS_PATH, ROOT_PROMPT_PATH],
+      { cwd: root, encoding: "utf8" },
+    );
+    const sizes = new Map<string, number>();
+    for (const path of out.split("\0")) {
+      if (!TRACKED.test(path) || !existsSync(join(root, path))) continue;
+      const buf = readFileSync(join(root, path));
+      let crlf = 0;
+      for (let i = 0; i + 1 < buf.length; i++) if (buf[i] === 13 && buf[i + 1] === 10) crlf++;
+      sizes.set(path, buf.length - crlf);
+    }
+    return sizes;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -331,8 +358,7 @@ function toolLabel(d: Delta): string {
 // Build the report
 // ---------------------------------------------------------------------------
 
-const headTree = lsTree("HEAD");
-const headSizes = headTree === null ? new Map<string, number>() : parseLsTree(headTree);
+const headSizes = workingTreeSizes() ?? new Map<string, number>();
 const headToolSizes = computeToolSizes();
 
 const baseRef = baseRefAvailable();
