@@ -1,6 +1,6 @@
 ---
 name: merge-issues
-description: Use when the lead wants the Backlog merged down before anything is promoted — "merge the backlog", "merge issues", "these skills have too many issues", "cut the queue on record-extraction", "what should be merged", or a bare "/merge-issues". Owns merge doctrine for this repo; `/merge-recent-issues` and `/audit-board` both defer to it. Selects by eval-slot queue depth rather than by filing date: a skill whose snapshot has four or more issues waiting behind it pays a separate `make eval-skill` run and a full re-annotation for each one, and those issues are routinely filed weeks apart, so the daily recency pass cannot see them. Runs `slots.py` to compute the queues, then merges N-way — not pairwise — until every queue is at three or fewer or each survivor has a written reason. Inside a slot the burden is reversed: you justify each issue that survives, not each merge. Run it before `/fill-ready`, twice a week. Proposes first and applies only what the lead approves; never starts the work, and never writes the project board.
+description: Use when the lead wants the Backlog merged down before anything is promoted — "merge the backlog", "merge issues", "these skills have too many issues", "cut the queue on record-extraction", "what should be merged", or a bare "/merge-issues". Owns merge doctrine for this repo; `/merge-recent-issues` and `/audit-board` both defer to it. Reads by eval-slot queue depth rather than by filing date: issues filed weeks apart on one skill's snapshot are where duplicate and subset scope piles up, each pays its own `make eval-skill` run, and the daily recency pass cannot see them. Runs `slots.py` to compute the queues, then merges N-way — not pairwise — wherever the issues are one piece of work: a duplicate, a subset, or small edits one person finishes in one sitting under one run. Sharing a snapshot alone is never a reason to merge. Run it before `/fill-ready`, twice a week. Proposes first and applies only what the lead approves; never starts the work, and never writes the project board.
 allowed-tools:
   - Agent
   - Read
@@ -89,11 +89,12 @@ titles. Keep the one further along and carry any detail the loser adds.
 claim, then either close the subset or narrow the superset so exactly one owns
 the scope.
 
-**Batch — separate issues, one paid run.** Use this only where the issues cannot
-be one card. Inside a slot it is usually the wrong answer; see below.
+**Batch — small edits to one snapshot, one card.** Two or more small edits to
+the same skill's snapshot that one person finishes in one sitting. Merging them
+buys back a `make eval-skill` run (roughly $8–12 and 45–65 minutes) per issue
+absorbed. That run is the whole justification, so name it.
 
-**Split the lanes — only when each half finishes without the other**, and only
-outside a slot. One test: can each half be finished, reviewed and merged without
+**Split the lanes — only when each half finishes without the other.** One test: can each half be finished, reviewed and merged without
 waiting on the other? If yes, split at the lane boundary and move the content so
 neither issue points at the other for something it needs. If no, merge and let
 the card carry both labels.
@@ -104,43 +105,16 @@ helper. Do not merge and do not cross-reference. **Edit B's body** so it reads a
 an instruction ("apply the convention issue #A defines") rather than a
 coordination requirement.
 
-## 2. Inside a slot, the burden is reversed
+## 2. Sharing a snapshot is not a reason to merge
 
-Outside a slot you prove the merge. **Inside one you prove each survivor.** Every
-issue left on a queue at the end of this pass needs a written sentence saying why
-it could not join one of the others. That sentence goes in the report.
+Prove every merge the same way, inside a slot or outside one. `/fill-ready`
+promotes issues that share a snapshot side by side (its Gate 4 only sequences
+them), and re-annotation is cheap (lead, 2026-09-20), so two independent issues
+on one snapshot can be worked in parallel and cost one extra run between them.
+A merge has to buy something more than that: the same edit, a strict subset, or
+a batch one person finishes in one sitting.
 
-This is the difference between this pass and the general rule, and it is
-justified by Gate 4 rather than by taste: at most one issue touching a skill's
-snapshot may be in Ready, In Progress or Review at a time, so a queue of eight
-drains as eight sequential `make eval-skill` runs, each with a fresh `.ann.json`
-carrying a correction entry for **every dimension of the tests that run's
-`review_sample` names** — a median of 5 and a maximum of 13, not the whole
-suite. The money is $8–12 a run. The binding cost is still genealogist hours,
-eight times over, on the same suite, but it is a fraction of what it was before
-sampling shipped; price a merge on the sequential runs, not on a full
-re-annotation.
-
-**The lane-split verdict does not apply inside a slot.** It asks whether each
-half can finish without the other — but under Gate 4 neither half can be in an
-active column while the other is, so independence buys no parallelism and costs a
-second run. Two issues on one snapshot that are independent still merge. This is
-the single largest source of false "keep them apart" verdicts.
-
-**Reasons that never keep two issues on one slot apart.** Do not write any of
-these as a survivor's reason:
-
-| Not a reason | Why |
-|---|---|
-| Different lanes (`developer` / `genealogist`) | One card, both labels; the holder asks the other lane for their half |
-| Different reviewer | Reviewers are assigned to PRs, not to issues |
-| Different mechanism — two matchers, two code paths, two tools | An author's aesthetic, not a work boundary |
-| Different acceptance criteria | A merged issue carries both |
-| Different sections of the same SKILL.md | One edit, one run, one annotation pass |
-| Different filers, filed weeks apart | Describes the board's history, not the work |
-| "Related but distinct" / "cross-reference and note it" | Not verdicts |
-
-**Reasons that do keep them apart.** These three, and nothing else:
+**Reasons that keep two issues apart:**
 
 1. **A blocker on one side.** Never park an unblocked issue behind a blocked one
    — check both bodies and resolve the blocker's state
@@ -158,7 +132,7 @@ A queue of fifteen does not come down pairwise in one pass. Read the whole queue
 at once and propose the **partition**: fifteen issues into four, naming which
 issues form each group and which survives as the target.
 
-**Fan out one agent per must-clear slot.** Each gets exactly that slot's issue
+**Fan out one agent per read-first slot.** Each gets exactly that slot's issue
 numbers, the doctrine in this file, and the instruction to return a partition
 with per-group evidence. A slot is the natural boundary — its issues have to be
 in one head, and no agent needs another slot's. Give each an explicit,
@@ -166,7 +140,7 @@ non-overlapping list; generate the partition of slots, do not eyeball it. A slot
 appearing in two agents' lists produces two contradictory proposals for the same
 queue.
 
-Report coverage as a number and a rule: how many slots you cleared, how they were
+Report coverage as a number and a rule: how many slots you read, how they were
 chosen, and which agents failed. Never report a sample as the whole pass.
 
 **Validate the returned partition before you act on it.** Agents that share an
@@ -204,14 +178,11 @@ If a set genuinely wants shared scheduling rather than merging, the tools are th
 `cluster:*` label and the standing `next run: <skill>` issue, both owned by
 `/audit-board`. Say so in the report and let that pass place them.
 
-### The target
+### No depth target
 
-Every slot the script marks **MUST CLEAR** leaves this pass either at three or
-fewer, or with a written survivor reason for each issue above three. State both
-numbers at the top of the report: queues cleared, and queues you could not clear
-with the reason. **A shortfall is a finding, not a silence.**
-
-The target binds what you propose, not what the lead accepts.
+Read every slot the script marks **READ FIRST**, and report how many you read
+and how many runs the merges buy back. A deep queue that comes back with no
+merges is a valid answer when its issues are independent; say so per slot.
 
 ## 4. Prove it before proposing
 
@@ -225,9 +196,9 @@ Per proposed group:
 1. **Same fix site?** Open the file. Quote the lines.
 2. **All unblocked, or all blocked the same way?** Rule 1 above.
 3. **Does one person finish the merged card in one sitting?** Say why.
-4. **How many runs does this buy back?** Group of four into one: three runs and
-   three annotation passes. That number is the proposal's justification — state
-   it per group, and total it.
+4. **How many runs does this buy back?** Group of four into one: three runs.
+   That number is the proposal's justification — state it per group, and total
+   it.
 
 An issue body is **a claim written on a particular day**. Verify any factual
 claim — a path, a line number, a measurement, a tool's behaviour — before
@@ -269,7 +240,7 @@ gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy \
   --reason "not planned" \
   --comment "Merged into issue #<target>.
 
-<why these are one piece of work — the shared snapshot, the run they now share>"
+<why these are one piece of work — the same edit, the run they now share>"
 ```
 
 Write the comment for someone who filed the issue and will wonder where it went.
@@ -295,13 +266,13 @@ substring `close #N` and has no notion of negation.
 
 ## 6. Output shape
 
-Open with the arithmetic: queues at or above the threshold, how many you cleared,
-the runs bought back, and the gap where one remains.
+Open with the arithmetic: read-first queues, how many you read, and the runs
+bought back.
 
 1. **Merges** — one block per group: the members, the target, the shared slot and
    the lines you read, the verdict, runs bought back, assignees and labels moving.
-2. **Survivors** — every issue left on a must-clear queue, one line each, with the
-   reason from the table of three. This section is the one the lead checks.
+2. **Kept apart** — for each read-first queue, one line saying why its remaining
+   issues are independent, citing the reasons above.
 3. **Body edits** — one-way mechanical dependencies, with the exact replacement
    sentence.
 4. **Outside the slots** — merges from the file-convergence section, kept separate

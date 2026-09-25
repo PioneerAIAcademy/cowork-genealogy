@@ -23,6 +23,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { extractionAppend, EXTRACTION_SECTIONS } from "../../src/tools/extraction-append.js";
+import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
@@ -291,6 +292,19 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
 
   it("research_append still accepts person_evidence (the lane is per-tool, not global)", async () => {
     await writeProject();
+    // #1731 step 3 refuses a link with no recorded same_person score. This test
+    // is about the per-tool lane, not the score gate, so satisfy it.
+    await recordMatchScore(dir, {
+      record_id: "rec1",
+      record_persona_id: null,
+      record_role: "principal",
+      tree_person_id: "I1",
+      score: 0.9,
+      matched: true,
+      assertion_id: "a_001",
+      record_source: "record_read",
+      computed: "2026-09-24T00:00:00Z",
+    });
     const r = await researchAppend({
       projectPath: dir,
       section: "person_evidence",

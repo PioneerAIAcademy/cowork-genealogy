@@ -29,7 +29,7 @@ import {
   projectedRecordDocument,
   type RecordPersonaGroup,
 } from "../utils/record-persona.js";
-import { recordMatchScore } from "../utils/match-scores.js";
+import { recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
 import { Mob } from "../utils/mob.js";
 import { arkToBareId, toArk } from "../utils/ark.js";
 
@@ -245,20 +245,20 @@ async function samePersonFromProject(
   let recorded = false;
   try {
     await withProjectLock(projectPath, async () => {
-      await recordMatchScore(projectPath, {
-        record_id: recordId,
-        record_persona_id: personaId,
-        record_role: role ?? null,
-        tree_person_id: treePersonId,
-        score: result.score,
-        ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
-        matched: result.matched,
-        assertion_id: assertionId,
-        record_source: recordSource,
-        computed: new Date().toISOString(),
-      });
+      // `buildRecordedScore` derives every field from the project documents;
+      // the two this call already resolved by fetching are authoritative and
+      // override it. The shared builder exists so the eval harness writes the
+      // same shape on a fixture-served call rather than restating the rule.
+      const derived = buildRecordedScore(research, assertionId, treePersonId, role, result);
+      if (derived !== null) {
+        await recordMatchScore(projectPath, {
+          ...derived,
+          record_persona_id: personaId,
+          record_source: recordSource,
+        });
+        recorded = true;
+      }
     });
-    recorded = true;
   } catch {
     // Best-effort, deliberately: the score is the answer and the agent asked for
     // it. Failing the call because the attestation could not be written would
@@ -276,6 +276,77 @@ interface ResolvedRecordSide {
   recordSource: "record_read" | "projection";
   /** The record persona this score is about, when the record names one. */
   personaId: string | null;
+}
+
+/** The attestation record for one scored pairing, derived from the project
+ *  documents alone.
+ *
+ *  Extracted so the eval harness can write a truthful attestation on a
+ *  fixture-served `same_person` call. `same_person` is not in the unit
+ *  harness's `LIVE_TOOLS`, so this file never executes there and
+ *  `recordMatchScore` never runs — which means no `results/.scores/` file
+ *  exists in a unit run, and any writer-side gate that reads one is untestable.
+ *  `record_search` has the same shape and its mock already stages its sidecar
+ *  by calling the compiled build; this is the same move for this tool.
+ *
+ *  Restating the derivation in Python was the alternative and is forbidden:
+ *  a second implementation is one the drift test cannot see.
+ *
+ *  Pure on purpose. `resolveRecordSide` decides `record_source` by whether the
+ *  fetch actually returned personas, which needs the network, so this derives
+ *  the likely branch from the documents instead: a persona id, a `record_read`
+ *  log entry, or a persona-bearing search with a retained sidecar reads as
+ *  `record_read`; anything else as `projection`.
+ *
+ *  It is NOT `personaReachable`, and the difference is deliberate. That
+ *  predicate answers "could a score be obtained?" and so treats UNRESOLVABLE
+ *  provenance as reachable, on purpose, to stop an assertion shedding the
+ *  requirement by omitting its `log_entry_id`. This answers "which route
+ *  assembled the record side?", where a missing log entry is evidence of
+ *  nothing and `projection` is the honest answer. 257 corpus links are in that
+ *  state, and the new `reads as projection when the log entry is missing
+ *  entirely` test pins the divergence rather than leaving it to be read as a bug.
+ *
+ *  On the production path the value is overridden by what the fetch observed,
+ *  so the derivation is load-bearing only in the harness.
+ *
+ *  Returns null when the pairing has no record side to attest — no such
+ *  assertion, or no `record_id` on it — which is exactly when `samePerson`
+ *  itself refuses. */
+export function buildRecordedScore(
+  research: any,
+  assertionId: string,
+  treePersonId: string,
+  role: string | undefined,
+  result: { score: number; confidence?: number; matched: boolean },
+): RecordedMatchScore | null {
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  const assertion = assertions.find((a) => a?.id === assertionId);
+  if (assertion === undefined) return null;
+  const recordId = String(assertion.record_id ?? "");
+  if (recordId === "") return null;
+
+  const log: any[] = Array.isArray(research?.log) ? research.log : [];
+  const logEntry = log.find((l) => l?.id === assertion.log_entry_id);
+  const fetchable =
+    Boolean(assertion.record_persona_id) ||
+    logEntry?.tool === "record_read" ||
+    (logEntry !== undefined &&
+      PERSONA_BEARING_PRODUCERS.has(logEntry.tool) &&
+      Boolean(logEntry.results_ref));
+
+  return {
+    record_id: recordId,
+    record_persona_id: (assertion.record_persona_id as string | null) ?? null,
+    record_role: (role ?? (assertion.record_role as string | undefined)) ?? null,
+    tree_person_id: treePersonId,
+    score: result.score,
+    ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
+    matched: result.matched,
+    assertion_id: assertionId,
+    record_source: fetchable ? "record_read" : "projection",
+    computed: new Date().toISOString(),
+  };
 }
 
 async function resolveRecordSide(

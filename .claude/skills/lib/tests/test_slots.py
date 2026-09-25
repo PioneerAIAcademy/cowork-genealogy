@@ -1,7 +1,7 @@
 """Tests for slot rendering in `/merge-issues`' slots.py.
 
-The bug these exist for (issue #2621): `block()` is reached only from the MUST-CLEAR
-and report-only loops, and `queues` has no key for a slot with nothing queued — so a
+The bug these exist for (issue #2621): `block()` is reached only from the READ-FIRST
+and "then" loops, and `queues` has no key for a slot with nothing queued — so a
 slot held by an In Progress card, a Review card or an open PR, with 0 or 1 mergeable
 cards behind it, rendered nothing at all. An operator reading no block for a slot
 concluded it was free when someone was already working it.
@@ -199,17 +199,17 @@ def test_each_holder_is_attributed_to_its_own_slot(tmp_path):
 
 
 def test_a_held_slot_renders_once_at_every_depth(tmp_path):
-    """`blocks()` raises on a double render. Queue 4 belongs to MUST CLEAR and queue
-    2 to report-only; neither may also appear in the new section."""
+    """`blocks()` raises on a double render. Queue 4 belongs to READ FIRST and queue
+    2 to "then"; neither may also appear in the new section."""
     held4 = [issue(n) for n in (11, 12, 13, 14)] + [
         issue(101, column="In Progress", assignees=[{"login": "x"}])]
     out4 = run(held4, tmp_path)
-    assert section_of(out4, SLOT) == "MUST CLEAR: queue >= 4"
+    assert section_of(out4, SLOT) == "READ FIRST: queue >= 4"
     assert depth(out4, SLOT) == 4
 
     out2 = run(_queued_pair() + [issue(101, column="In Progress",
                                        assignees=[{"login": "x"}])], tmp_path)
-    assert section_of(out2, SLOT) == "report only: queue 2-3"
+    assert section_of(out2, SLOT) == "then: queue 2-3"
     assert depth(out2, SLOT) == 2
 
 
@@ -258,7 +258,7 @@ def test_a_rendered_card_is_not_reported_as_unshown(tmp_path):
     """The other direction: no false positives once the derivation changed."""
     out = run(_queued_pair(), tmp_path)
 
-    assert section_of(out, SLOT) == "report only: queue 2-3"
+    assert section_of(out, SLOT) == "then: queue 2-3"
     assert "in no section above -- READ BY HAND  0" in out
 
 
