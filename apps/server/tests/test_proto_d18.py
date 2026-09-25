@@ -406,6 +406,31 @@ def test_harness_record_carries_the_tokens_too_under_the_run_logs_own_key_names(
     assert all(key in (data["usage"]["usage"]) for key in compare.HARNESS_TOKEN_KEYS)
 
 
+def test_harness_tokens_sum_every_thread_when_the_log_carries_message_usage():
+    """The ResultMessage's usage is the main thread's alone -- paerai's 2026-09-21 log
+    proves it (its `main` message_usage rows sum to it exactly) -- while the prototype's
+    tokens are every thread's. So with message_usage the harness is summed the same way."""
+    usage = {
+        "usage": {"input_tokens": 74, "cache_creation_input_tokens": 209_918,
+                  "cache_read_input_tokens": 2_902_086, "output_tokens": 44_999},
+        # [thread, input, cache_read, cache_creation]
+        "message_usage": [["main", 70, 2_900_000, 200_000], ["main", 4, 2_086, 9_918],
+                          ["sub", 59, 1_182_935, 223_369]],
+    }
+    subagents = [{"turns": [{"output_tokens": 60_000}, {"output_tokens": 692}]}, {"turns": []}]
+    values, covers = compare.harness_tokens(usage, subagents)
+    assert values == [133, 433_287, 4_085_021, 105_691]
+    assert "main thread + 2 subagents" in covers
+    text = compare.harness_record({"usage": usage, "subagents": subagents})
+    assert "tokens 133/433,287/4,085,021/105,691  (harness tokens: main thread + 2 subagents)" in text
+    # Without message_usage the main thread is all there is, and the line says so.
+    old, covers = compare.harness_tokens({"usage": usage["usage"]}, subagents)
+    assert old == [74, 209_918, 2_902_086, 44_999] and "MAIN THREAD ONLY" in covers
+    # An unknown main output stays unknown rather than becoming the subagents' alone.
+    blank = compare.harness_tokens({"usage": {}, "message_usage": usage["message_usage"]}, subagents)[0]
+    assert blank[-1] is None
+
+
 def test_harness_record_says_unknown_rather_than_guessing():
     text = compare.harness_record({})
     assert "$?" in text and "? s" in text and "0 tool calls" in text
@@ -456,6 +481,40 @@ def test_proto_record_marks_a_turn_that_ran_but_recorded_no_cost():
     honest = compare.proto_record([_turn(1.0, 10, 200_000, 0, (5, 6, 7, 8))], [])
     assert "under-reported" not in honest
     assert "tokens 5/6/7/8" in honest, "both records carry them, marker or not"
+
+
+def test_proto_record_reads_a_never_completed_turns_tokens_off_the_transcript():
+    """D18's paerai, 2026-09-24: both attempts hit the 7,200 s ceiling and the run was
+    stopped, so no attempt completed and every turns column is NULL -- `$? / ? / tokens
+    ?/?/?/?` beside the harness's real row, with ~$32 of tokens spent. The transcript
+    still holds every attempt's usage; it stands in, and the line says where it came from."""
+    paerai = (534, 3_986_380, 18_373_375, 783_114)
+    unfinished = _turn(None, None, None, None, (None,) * 4)
+    text = compare.proto_record([unfinished], [], paerai)
+    assert "tokens 534/3,986,380/18,373,375/783,114" in text
+    assert "never completed" in text and "under-reported" not in text
+    assert "$?" in text and "? SDK turns" in text, "cost stays unknown, not zero"
+    # A completed session keeps its own columns: the transcript is only the fallback.
+    done = compare.proto_record([_turn(1.0, 10, 200_000, 0, (5, 6, 7, 8))], [], paerai)
+    assert "tokens 5/6/7/8" in done and "never completed" not in done
+    # One unfinished turn beside a completed one is enough to need it.
+    mixed = compare.proto_record([_turn(1.0, 10, 200_000, 0, (5, 6, 7, 8)), unfinished], [], paerai)
+    assert "tokens 534/3,986,380/18,373,375/783,114" in mixed and "never completed" in mixed
+    # A completed row missing one sum keeps its own columns: the fallback is for a row
+    # with none, which is what an attempt that never completed leaves.
+    partial = compare.proto_record([_turn(1.0, 10, 200_000, 0, (None, 6, 7, 8))], [], paerai)
+    assert "tokens ?/6/7/8" in partial and "never completed" not in partial
+    # No transcript rows (an all-NULL sum) is still unknown, not a marker over nothing.
+    empty = compare.proto_record([unfinished], [], (None,) * 4)
+    assert "tokens ?/?/?/?" in empty and "never completed" not in empty
+
+
+def test_transcript_tokens_sql_mirrors_the_workers_turn_usage_sql():
+    # The same one-row-per-message rule, keyed on the SDK session the web session names.
+    sql = compare.TRANSCRIPT_TOKENS_SQL
+    assert "DISTINCT ON (e.entry->'message'->>'id')" in sql and "e.seq DESC" in sql
+    assert "e.session_id = s.sdk_session_id" in sql and "s.session_id = %s" in sql
+    assert [f"'{k}'" in sql for k in compare.HARNESS_TOKEN_KEYS] == [True] * 4
 
 
 # ── when the fixture's expected findings last changed ─────────────────────────
@@ -575,6 +634,7 @@ def test_compare_main_grades_both_sides_with_one_instrument_and_names_the_runlog
     monkeypatch.setattr(compare.export, "export", lambda pid, **kw: 0)
     monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [_turn(1.01, 34, 232_000, 0, (9, 90, 900, 9_000))])
     monkeypatch.setattr(compare.audit, "load", lambda dsn, sid: [])
+    monkeypatch.setattr(compare, "transcript_tokens", lambda dsn, sid: None)
 
     graded = {
         "harness": {"verdict": "pass", "per_finding": [{"finding_id": "f1", "matched": "true"}]},
@@ -615,6 +675,35 @@ def test_compare_main_grades_both_sides_with_one_instrument_and_names_the_runlog
     assert "its own log recorded verdict 'pass'" in out
 
 
+def test_compare_main_reads_the_transcript_for_a_turn_that_never_completed(monkeypatch, tmp_path, capsys):
+    # The call site, not only proto_record: run() must pass the session's transcript
+    # sums through, or a never-completed turn prints `tokens ?/?/?/?` again.
+    _runlog(tmp_path / "paerai-teupooihi-spouse", "2026-09-21_16-47-07")
+    monkeypatch.setattr(compare, "RUNLOGS", tmp_path)
+    monkeypatch.setattr(compare, "findings_changed", lambda fixture, **kw: "2026-09-21")
+    monkeypatch.setattr(compare.export, "resolve_project", lambda dsn, sid: "proj_paerai-teupooihi-spouse_1a8734")
+    monkeypatch.setattr(compare.export, "export", lambda pid, **kw: 0)
+    monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [_turn(None, None, None, None, (None,) * 4)])
+    monkeypatch.setattr(compare.audit, "load", lambda dsn, sid: [])
+    asked: list[str] = []
+    monkeypatch.setattr(compare, "transcript_tokens",
+                        lambda dsn, sid: asked.append(sid) or (534, 3_986_380, 18_373_375, 783_114))
+
+    def fake_grade(argv, **kw):
+        out = Path(argv[argv.index("--json") + 1])
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"verdict": "pass", "per_finding": []}), encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    monkeypatch.setattr(compare.grade, "run_grade_files", fake_grade)
+    assert compare.main([
+        "--fixture", "paerai-teupooihi-spouse", "--session", "sess_p", "--out", str(tmp_path / "out")
+    ]) == 0
+    out = capsys.readouterr().out
+    assert asked == ["sess_p"], "the transcript is read for the session being compared"
+    assert "tokens 534/3,986,380/18,373,375/783,114" in out and "never completed" in out
+
+
 def test_compare_main_exits_1_when_one_sides_grading_failed(monkeypatch, tmp_path, capsys):
     _runlog(tmp_path / "bagley-father-1884", "2026-07-31_18-06-28")
     monkeypatch.setattr(compare, "RUNLOGS", tmp_path)
@@ -622,6 +711,7 @@ def test_compare_main_exits_1_when_one_sides_grading_failed(monkeypatch, tmp_pat
     monkeypatch.setattr(compare.export, "export", lambda pid, **kw: 0)
     monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [])
     monkeypatch.setattr(compare.audit, "load", lambda dsn, sid: [])
+    monkeypatch.setattr(compare, "transcript_tokens", lambda dsn, sid: None)
     monkeypatch.setattr(
         compare.grade, "run_grade_files",
         lambda argv, **kw: subprocess.CompletedProcess(argv, 1, "", "the judge failed\n"),
@@ -643,6 +733,7 @@ def test_compare_main_warns_when_the_findings_were_amended_after_the_harness_run
     monkeypatch.setattr(compare.export, "export", lambda pid, **kw: 0)
     monkeypatch.setattr(compare, "turn_rows", lambda dsn, sid: [_turn(1.01, 34, 232_000, 0, (9, 90, 900, 9_000))])
     monkeypatch.setattr(compare.audit, "load", lambda dsn, sid: [])
+    monkeypatch.setattr(compare, "transcript_tokens", lambda dsn, sid: None)
 
     def fake_grade(argv, **kw):
         out = Path(argv[argv.index("--json") + 1])
