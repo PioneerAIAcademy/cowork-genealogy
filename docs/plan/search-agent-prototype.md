@@ -1874,7 +1874,8 @@ without whichever Bedrock refuses.
 
   | | bagley harness, 07-31 | **bagley harness, 09-24** | bagley proto | paerai harness, 09-21 | paerai proto |
   |---|---|---|---|---|---|
-  | verdict, f1 | pass, true | pass, true | pass, true | pass, true | pass, true |
+  | judge: verdict, f1 | pass, true | pass, true | pass, true | pass, true | pass, true |
+  | human blind grade: f1, proof quality | true, 2 | **partial**, 3 | — | true, 2 | — |
   | cost | $5.29 | **$11.85** | $16.29 | $4.94 | ~$32.21 (list, off the transcript) |
   | wall clock | 2,147 s | 4,544 s | 5,151 s, 1 attempt | 1,903 s | >14,400 s, 3 attempts |
   | tool calls / delegations | 93 / 4 | 336 / 13 | 317 / 21 | 140 / 8 | 517 / 46 |
@@ -1945,7 +1946,8 @@ without whichever Bedrock refuses.
     commit (`2a553477f`, same engine and plugin), after the dead `wikiApiUrl` override
     was removed from `~/.familysearch-mcp/config.json` (a first attempt was stopped at
     4 min because every wiki call failed where the prototype's `tools` service had
-    worked): **pass**, f1 true, proof quality 3, **$11.85**, 4,544 s, 336 tool calls,
+    worked): judge **pass**, f1 true, proof quality 3; **blind human grade f1 `partial`**,
+    proof quality 3 (below); **$11.85**, 4,544 s, 336 tool calls,
     184 SDK turns, 13 delegations, 3 nudges; all-thread tokens 283 / 1,030,289 /
     10,631,667 / 260,928, every write at the 1-hour TTL. Against July's $5.29 the plugin
     added **$6.56**; against it the prototype adds **$4.44** — same week, the prototype
@@ -1956,10 +1958,19 @@ without whichever Bedrock refuses.
     (10.0 M against 10.6 M). One run a side, so the delegation count — which drives most
     of the gap — may be sampling rather than substrate. The harness run's `compliance`
     reads FAIL on three guardrail bypasses the detector credits to `Skill` calls only,
-    the artefact paerai's baseline carries too. The run log waits on a blind grade on
-    branch `bagley-harness-run-2026-09-25` (issue #2904): the first grade was anchored on
-    the judge output and was deleted, since `calibrate_judge` counts every complete
-    annotation as blind whatever its notes say. paerai's baseline is three days old, but its
+    the artefact paerai's baseline carries too. **Graded blind 2026-09-25** (issue #2904,
+    PR #2906, `run-2026-09-25_01-42-24.ann.json`), after a first grade anchored on the
+    judge output was deleted (`calibrate_judge` counts every complete annotation as blind
+    whatever its notes say): **f1 `partial`**, proof quality 3. The grader's reasons: two
+    David Bagleys in the tree, the linked one (I1) with no facts, though the agent's own
+    sources gave his birth (22 Feb 1777, Newton, New Hampshire); and R4, the link from
+    Sarah Sally Andrews (LVDV-6MK) to William as his mother, deleted. So the judge
+    over-credited this run's f1 — a recorded judge/human disagreement for the
+    calibration sweep. **The prototype's bagley has a judge grade only.** Read off its
+    export, on the grader's three points: one David Bagley, carrying the 1777 New
+    Hampshire birth, his 1854 death and four census residences; R4 kept, plus a
+    duplicate mother link R8. That is a difference to grade, not a quality result: no
+    human has graded the prototype's tree. paerai's baseline is three days old, but its
     prototype run had image reads the baseline never attempted, so its ratio is not a
     substrate figure either.
 
