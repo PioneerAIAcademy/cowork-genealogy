@@ -151,9 +151,13 @@ residence and occupation outright. Two readings here sit outside that grant:
 
 - **`Rumianek` from the *Locus Nativitatis* column.** No index field was
   compared against it; the index's place is Ceradz, the parish of baptism, a
-  different column. It is corroborated instead by the starting tree, which
-  independently records Rumianek as `LDZR-PH7`'s birthplace — the one element of
-  the tree's entry this resolution does *not* correct.
+  different column. It is *consistent with* the starting tree, which records
+  Rumianek as `LDZR-PH7`'s birthplace — the one element of the tree's entry this
+  resolution does *not* correct. That is agreement, not independent
+  corroboration: `LDZR-PH7` carries no source at all (above), so it cannot
+  confirm a reading it merely matches. Nothing is graded on the place — `f1`
+  passes or fails on the corrected date — so no further indexed source is owed
+  here.
 - **The marginal marriage annotation** (11 Feb 1915, Poznań St Adalbert's). A
   marriage date, place and spouse are none of the four compared fields, so the
   calibration says nothing about it. It is offered as the reason no name-reuse
