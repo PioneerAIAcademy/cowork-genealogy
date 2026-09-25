@@ -99,78 +99,73 @@ def _not_fs_answers(tool_calls) -> tuple[list[str], list[str], int]:
     return ids, sentences, len(quality)
 
 
-def _plain(sentence: str) -> str:
-    """A sentence with markdown emphasis, list markers and outer space removed."""
-    import re as _re
-    return _re.sub(r"^\s*(?:[-*\u2022]\s+)?", "", sentence).strip().strip("*_`").strip()
+#: Wording that characterises an id or its type — the leak itself. Every form
+#: seen in committed or scratch replies: "synthetic ID" (the original 8 of 20),
+#: "local project ID, not a FamilySearch person ID" (after the word "synthetic"
+#: left the skill), and the false "does not have a FamilySearch ID".
+_ID_TYPE_WORDING = (
+    r"\bsynthetic\b|\blocal (?:project |tree )?id\b|\bproject id\b|\btree id\b|"
+    r"\bnot a familysearch (?:person )?id\b|\bno familysearch id\b|"
+    r"\bdoes(?:n't| not) have a familysearch id\b"
+)
+#: A heading line: markdown `#`, a bold-only line, or an all-caps label such as
+#: the report template's "FAMILYSEARCH QUALITY:". A heading labels a section; it
+#: is not a statement about the person.
+_HEADING = r"^\s*(?:#{1,6}\s|\*\*[^*]+\*\*:?\s*$|[A-Z][A-Z ]+:)"
 
 
 def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
-    """V1: when `person_quality` answers that an id is not a FamilySearch person
-    id, the reply must not turn that into a remark about the id.
+    """V1: when `person_quality` answers `not_familysearch_id`, the reply must not
+    turn that into a remark about the id.
 
-    Tier 1 — gates. The tool answers a project's local id (`I1`) itself; the
-    skill is told to leave the FamilySearch quality section out. The leak this
-    replaces a judge dimension for: 8 of 20 replies in `v1_2026-09-21_22-44-38`
-    opened "Patrick Flynn is `I1` — a synthetic ID", and the judge marked down 3.
+    Tier 1 — gates. The tool looks a project id up in the project tree and, for a
+    person with no FamilySearch link, hands back one true sentence by name; the
+    skill relays it. Fails if:
+      (a) the reply characterises an id or its type, anywhere (`_ID_TYPE_WORDING`);
+      (b) a non-heading sentence mentioning FamilySearch or quality names such an
+          id as a whole token (`I1`, `(I1)`, `` `I1` ``, `I1.` — not `I10`).
 
-    Fails if any of:
-      (a) the reply contains "synthetic", anywhere;
-      (b) a sentence mentioning FamilySearch or quality also names such an id as
-          a whole token (`I1`, `(I1)`, `` `I1` ``, `I1.` — not `I10`);
-      (c) every person_quality answer was the not-FamilySearch one, and a sentence
-          mentions FamilySearch that is not one of the tool's own returned
-          sentences. SKILL.md tells the skill to write that sentence exactly —
-          one per person, so two people give two, both allowed.
+    It polices the leak, not the layout. A heading above the sentence and true
+    advice after it ("linking his profile to FamilySearch would give you a score")
+    are allowed: across 15 scratch runs of the relayed-sentence design the skill
+    wrote the tool's sentence verbatim every time and characterised the id in
+    none, while a rule forbidding any extra FamilySearch sentence failed 13 of
+    them for a heading or advice. Replayed before this landed: the design's 18
+    replies pass; all 4 id-type leaks from the neutral-sentence round and all 8
+    original "synthetic ID" leaks fail.
 
-    Keyed on "FamilySearch"/"quality" only, never "linked": check-warnings uses
-    "linked" for relationships ("Confirm that Thomas Flynn (I2) is genuinely
-    linked as Patrick's relative"), and the report header names the person with
-    their id by design ("WARNINGS FOR: Patrick Flynn (I1)", SKILL.md's template).
-    Measured on every committed synthetic-only reply before this landed: no
-    sentence pairs FamilySearch or quality with an id except the leaks, and no
-    reply has more than one FamilySearch sentence.
+    Keyed on "FamilySearch"/"quality", never "linked" (check-warnings uses it for
+    relationships). Splits at . ! ? and newlines, not at colons, so a quality
+    label and an id after it stay in one sentence.
 
-    Skipped on negative tests (the skill body does not run) and on runs with no
-    not-FamilySearch-id answer.
+    Skipped on negative tests and on runs with no not-FamilySearch-id answer.
     """
     import re as _re
 
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
-    ids, tool_sentences, quality_calls = _not_fs_answers(tool_calls)
+    ids, _sentences, _calls = _not_fs_answers(tool_calls)
     if not ids:
         pytest.skip("no person_quality answer for a non-FamilySearch id")
     response = text_response or ""
-
-    if _re.search(r"synthetic", response, _re.I):
-        hit = next(s for s in _re.split(_SENTENCE_SPLIT, response) if _re.search(r"synthetic", s, _re.I))
-        raise AssertionError(
-            "the reply characterises the id's type ('synthetic') after person_quality "
-            f"answered that the id is not a FamilySearch id: {hit.strip()!r}"
-        )
-
     sentences = [x for x in _re.split(_SENTENCE_SPLIT, response) if x.strip()]
+
+    for sentence in sentences:
+        if _re.search(_ID_TYPE_WORDING, sentence, _re.I):
+            raise AssertionError(
+                "the reply characterises an id or its type after person_quality "
+                f"answered that it is not a FamilySearch id: {sentence.strip()!r}"
+            )
+
     tokens = [_re.compile(rf"(?<![A-Za-z0-9]){_re.escape(i)}(?![A-Za-z0-9])", _re.I) for i in ids]
     for sentence in sentences:
+        if _re.match(_HEADING, sentence):
+            continue
         low = sentence.lower()
         if ("familysearch" in low or "quality" in low) and any(t.search(sentence) for t in tokens):
             raise AssertionError(
                 "a sentence about FamilySearch quality names an id person_quality "
                 f"answered as not a FamilySearch id: {sentence.strip()!r}"
-            )
-
-    if len(ids) == quality_calls:
-        allowed = {_plain(t) for t in tool_sentences}
-        extra = [
-            x.strip() for x in sentences
-            if "familysearch" in x.lower() and _plain(x) not in allowed
-        ]
-        if extra:
-            raise AssertionError(
-                "no person checked has a FamilySearch quality score, so the only "
-                "FamilySearch sentences allowed are the tool's own, written as "
-                f"given; the reply adds: {extra!r}"
             )
 
 

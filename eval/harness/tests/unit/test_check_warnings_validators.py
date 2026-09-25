@@ -4,10 +4,11 @@
 collected on its own; a gating validator with no test of its own is a check that
 nobody has watched fail. Same pattern as `test_person_evidence_validators.py`.
 
-The must-fail replies are the eight sentences that leaked in
-`v1_2026-09-21_22-44-38`, copied here verbatim rather than read from the run log
-so the evidence survives the harness pruning that log. None of those runs called
-`person_quality` (the skill skipped it then), so each is paired with a constructed
+Must-fail replies are real leaks, copied verbatim so the evidence survives the
+harness pruning their run logs: the 8 "synthetic ID" openers from
+`v1_2026-09-21_22-44-38`, and the 4 id-type remarks the skill made on
+2026-09-25 when the tool answered with a sentence that gave no reason. None of
+the 2026-09-21 runs called `person_quality`, so each is paired with a constructed
 `not_familysearch_id` answer — the shape the tool returns now.
 """
 
@@ -27,8 +28,6 @@ from test_check_warnings import (  # noqa: E402
 )
 
 POSITIVE = {"type": "positive", "tags": []}
-
-
 NEUTRAL = "No FamilySearch quality score was retrieved for this person."
 
 
@@ -53,28 +52,34 @@ def _scored(person_id: str) -> dict:
     }
 
 
-# (test id, verbatim leaked sentence) from v1_2026-09-21_22-44-38.
-COMMITTED_LEAKS = [
-    ("001", "Patrick Flynn is `I1` — a synthetic ID."),
-    ("002", "Patrick Flynn (I1) and Thomas Flynn (I2) — both synthetic IDs."),
-    ("019", "Cornelius Brady is `I1` — a synthetic ID, so I'll run the offline warnings check now."),
-    ("009", "Found Ambrose Keane at `I1` — a synthetic ID."),
-    ("004", "Cornelius Brady is `I1` — a synthetic ID."),
-    ("005", "Since that's a synthetic ID, I'll run the offline warnings check now."),
-    ("006", "Ambrose Keane is `I1` — a synthetic ID."),
-    ("018", "Patrick Flynn is `I1` — a synthetic ID."),
-]
-
 BODY = (
     "WARNINGS FOR: Patrick Flynn (I1)\n"
     "- Death recorded before a child's birth — Implausible.\n"
     "Check the death date against the burial record first."
 )
 
+# Real leaks, verbatim.
+SYNTHETIC_LEAKS = [  # v1_2026-09-21_22-44-38
+    "Patrick Flynn is `I1` — a synthetic ID.",
+    "Patrick Flynn (I1) and Thomas Flynn (I2) — both synthetic IDs.",
+    "Cornelius Brady is `I1` — a synthetic ID, so I'll run the offline warnings check now.",
+    "Found Ambrose Keane at `I1` — a synthetic ID.",
+    "Cornelius Brady is `I1` — a synthetic ID.",
+    "Since that's a synthetic ID, I'll run the offline warnings check now.",
+    "Ambrose Keane is `I1` — a synthetic ID.",
+    "Patrick Flynn is `I1` — a synthetic ID.",
+]
+ID_TYPE_LEAKS = [  # scratch_2026-09-25_13-4*, the neutral-sentence round
+    "`I1` is a local project ID, not a FamilySearch person ID, so no live quality score was fetched — this is expected, not an error.",
+    "*Note: This person's ID (`I1`) is a local project ID, not a FamilySearch ID, so no live FamilySearch quality score was fetched.*",
+    "**FamilySearch Quality:** Not applicable — Owen Brady does not have a FamilySearch ID, so no live quality score was retrieved.",
+    "*(FamilySearch quality score is not applicable here — `I1` is a local project ID, not a FamilySearch person ID.)*",
+]
 
-@pytest.mark.parametrize("test_id,leak", COMMITTED_LEAKS)
-def test_every_committed_leak_fails(test_id, leak):
-    with pytest.raises(AssertionError, match="synthetic"):
+
+@pytest.mark.parametrize("leak", SYNTHETIC_LEAKS + ID_TYPE_LEAKS)
+def test_every_real_leak_fails(leak):
+    with pytest.raises(AssertionError):
         check_not_fs_reply([_not_fs("I1"), _not_fs("I2")], f"{leak}\n\n{BODY}", POSITIVE)
 
 
@@ -84,33 +89,51 @@ def test_every_committed_leak_fails(test_id, leak):
         "FamilySearch has no quality score for I1.\n\n" + BODY,          # id in a FS sentence
         "No FamilySearch quality score for (I1).\n\n" + BODY,            # parenthesised
         "The quality check skipped `I1` here.\n\n" + BODY,               # code span, "quality"
-        "FamilySearch quality: none for I1.\n\n" + BODY,                 # id then punctuation
+        "FamilySearch quality: none for I1.\n\n" + BODY,                 # mixed-case label is not a heading
         "SYNTHETIC ids have no profile.\n\n" + BODY,                     # capitalised
-        "No FamilySearch score is available.\nFamilySearch was not asked.\n\n" + BODY,  # two FS lines
+        _named("Patrick Flynn") + "\nI1 is a project id, not a FamilySearch id.\n\n" + BODY,
+        "Patrick has no FamilySearch ID, so nothing was scored.\n\n" + BODY,
     ],
 )
 def test_constructed_breaks_fail(reply):
     with pytest.raises(AssertionError):
-        check_not_fs_reply([_not_fs("I1")], reply, POSITIVE)
+        check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn"))], reply, POSITIVE)
 
 
 @pytest.mark.parametrize(
     "reply",
     [
-        BODY,                                                           # quality left out
-        "No FamilySearch quality score was retrieved for this person.\n\n" + BODY,  # one plain line
+        BODY,                                                            # quality left out
+        BODY + "\n\n" + NEUTRAL,                                         # the neutral sentence
+        BODY + "\n\n" + _named("Patrick Flynn"),                         # the named sentence
+        BODY + "\n\n*" + _named("Patrick Flynn") + "*",                  # emphasised
+        # a heading above the sentence — including the report's "(I1)" naming style
+        BODY + "\n\n## FAMILYSEARCH QUALITY: Patrick Flynn (I1)\n" + _named("Patrick Flynn"),
+        BODY + "\n\n**FamilySearch quality score:**\n" + _named("Patrick Flynn"),
+        # true advice after it
+        BODY + "\n\n" + _named("Patrick Flynn") + "\nLinking his profile to FamilySearch would give you a live quality score.",
         "Confirm that Thomas Flynn (I2) is genuinely linked as Patrick's relative.",  # _008, "linked"
-        "WARNINGS FOR: Patrick Flynn (I10)\n" + NEUTRAL,                             # I10 is not I1
-        "Patrick Flynn's dates do not line up; see below.\n\n" + BODY,  # name only
+        "WARNINGS FOR: Patrick Flynn (I10)\n" + NEUTRAL,                  # I10 is not I1
+        "Patrick Flynn's dates do not line up; see below.\n\n" + BODY,   # name only
     ],
 )
 def test_legitimate_replies_pass(reply):
-    check_not_fs_reply([_not_fs("I1"), _not_fs("I2")], reply, POSITIVE)
+    check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn")), _not_fs("I2")], reply, POSITIVE)
+
+
+def test_two_people_two_named_sentences_pass():
+    """ut_check_warnings_002 checks I1 and I2 in one run: one sentence each."""
+    reply = (
+        BODY + "\n\n" + _named("Patrick Flynn") + "\n\n"
+        "WARNINGS FOR: Thomas Flynn (I2)\nNo warnings.\n\n" + _named("Thomas Flynn")
+    )
+    check_not_fs_reply(
+        [_not_fs("I1", _named("Patrick Flynn")), _not_fs("I2", _named("Thomas Flynn"))],
+        reply, POSITIVE,
+    )
 
 
 def test_mixed_run_allows_a_normal_quality_section_for_the_familysearch_person():
-    """Rule (c) applies only when NO person checked has a score; a real
-    FamilySearch person's quality section may mention FamilySearch freely."""
     reply = (
         "WARNINGS FOR: Christian Hole (KD96-TV2)\n"
         "FamilySearch quality: overall 0.97.\n"
@@ -127,43 +150,3 @@ def test_skips_when_no_person_got_the_not_familysearch_answer():
 def test_skips_negative_tests():
     with pytest.raises(pytest.skip.Exception):
         check_not_fs_reply([_not_fs("I1")], "synthetic", {"type": "negative", "tags": []})
-
-
-# --- the tool now hands back a true sentence by name; SKILL.md says write it exactly ---
-
-def test_the_tools_named_sentence_passes():
-    reply = BODY + "\n\n" + _named("Patrick Flynn")
-    check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn"))], reply, POSITIVE)
-
-
-def test_two_people_two_named_sentences_pass():
-    """ut_check_warnings_002 checks I1 and I2 in one run: one sentence each."""
-    reply = (
-        BODY + "\n\n" + _named("Patrick Flynn") + "\n\n"
-        "WARNINGS FOR: Thomas Flynn (I2)\nNo warnings.\n\n" + _named("Thomas Flynn")
-    )
-    check_not_fs_reply(
-        [_not_fs("I1", _named("Patrick Flynn")), _not_fs("I2", _named("Thomas Flynn"))],
-        reply, POSITIVE,
-    )
-
-
-def test_markdown_emphasis_around_the_sentence_still_counts_as_the_sentence():
-    reply = BODY + "\n\n*" + _named("Patrick Flynn") + "*"
-    check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn"))], reply, POSITIVE)
-
-
-@pytest.mark.parametrize(
-    "reply",
-    [
-        # a heading added above the sentence
-        "## FAMILYSEARCH QUALITY: Patrick Flynn\n" + _named("Patrick Flynn") + "\n\n" + BODY,
-        # a reworded sentence instead of the tool's own
-        "Patrick Flynn has no FamilySearch profile to score.\n\n" + BODY,
-        # the tool's sentence plus an added reason naming the id
-        _named("Patrick Flynn") + "\nI1 is a project id, not a FamilySearch id.\n\n" + BODY,
-    ],
-)
-def test_additions_around_the_tools_sentence_fail(reply):
-    with pytest.raises(AssertionError):
-        check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn"))], reply, POSITIVE)

@@ -160,7 +160,7 @@ When `person_quality` returned data, add a separate **FamilySearch quality** sec
 - These are FamilySearch's *suggestions to improve the profile*, not impossibilities. Phrase next steps as optional improvements ("adding the burial date would raise the completeness score"), never as urgent errors.
 - **Don't invent a quality label or verdict** (no "High Quality" band) -- report the `overallScore` and the sentences as-is. The tool deliberately omits a band.
 - When `issueCount` is 0: "FamilySearch quality: no issues flagged (overall {overallScore})."
-- **`reason: "not_familysearch_id"`:** write the sentence in `errors[0]` exactly as given, on its own line -- no heading, nothing added.
+- **`reason: "not_familysearch_id"`:** write the sentence in `errors[0]` exactly as given. Never describe the id or its type.
 - **Quality attempted but failed** (the tool returned an error -- tombstoned/merged, not found, still calculating, or not logged in; `reason: "not_familysearch_id"` is not one of these): add one brief note in the quality section using the tool's message. Never let it abort or suppress the warnings report.
 
 **Example:**

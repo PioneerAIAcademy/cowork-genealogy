@@ -16,6 +16,6 @@
     "Should call person_warnings with personId 'I1'",
     "Should call person_quality with personId 'I1' and projectPath. The tool answers {ok: false, reason: 'not_familysearch_id', errors: ['Patrick Flynn isn't linked to FamilySearch, so there's no FamilySearch quality score.']} without contacting FamilySearch; that answer is not a failure.",
     "Should report the person_warnings result (no impossibilities)",
-    "Should write the tool's sentence as the FamilySearch quality line, exactly, with no heading and nothing added. Whether it does so, and names no id or id type, is graded by the deterministic validator test_not_fs_reply_names_no_id, not by the judge."
+    "Should write the tool's sentence as the FamilySearch quality line. A heading above it or true advice after it (e.g. that linking the person to FamilySearch would give a score) is fine. What must not appear is any description of the id or its type — the deterministic validator test_not_fs_reply_names_no_id grades that, not the judge."
   ]
 }
