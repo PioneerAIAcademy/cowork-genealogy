@@ -6,6 +6,7 @@ allowed-tools:
   - place_distance
   - research_append
   - convert_calendar
+  - wiki_read
 description: >-
   Identifies and resolves conflicting genealogical evidence — both fact-level
   conflicts and identity-level conflicts where multiple candidate persons or
@@ -213,18 +214,23 @@ extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective
 description of "distant locations." As a rule of thumb, events within ~20 miles (32 km) of each other were plausibly the same community. Where origins are farther apart, consider whether a market town, county seat, or transport hub between them could serve as a meeting point. Terrain often constrains movement more than straight-line distance: a river crossing or mountain pass can make 10 miles more limiting than 30 miles of open road.
 
-**For date conflicts that a calendar transition might explain:** when
-you suspect the discrepancy is a Julian→Gregorian artifact rather than a
-genuine error (see the calendar-change pattern in
-`references/historical-contradictions.md`), do not compute the
-10/11/12/13-day offset by hand. Call
-`convert_calendar({ date, corrections: { julianToGregorianDay: true } })`
-on the recorded date and read `applied[].offsetDays` for the
-era-appropriate offset. If the two competing dates differ by exactly that
-offset, the conflict is an artifact of the calendar switch, not a
-substantive disagreement — note that in the weighing analysis. (You still
-decide *whether* a calendar correction applies; the tool only does the
-arithmetic.)
+**For every date conflict, before concluding the informants disagree:**
+call
+
+```
+convert_calendar({ date, jurisdiction, corrections })
+```
+
+once per competing date, with `jurisdiction` set to the place governing
+the record. Do not first judge whether a calendar transition is
+plausible, do not compute an offset by hand, and do not carry an
+adoption date or a year-start from memory. The tool returns a zero
+offset where no transition applies. Read `applied[]` — `offsetDays` for a
+Julian→Gregorian day difference, `yearAdjusted` for a year-start move. If the competing dates
+differ by exactly what the tool returns, they are the same day expressed
+two ways, not a substantive disagreement — say so in the weighing
+analysis. A derivative that has already been modernised by its
+transcriber must not be corrected a second time.
 
 ### 5. Resolve or defer
 
@@ -319,6 +325,26 @@ turned out to be a different individual entirely).
 
 ### 6. Handle identity conflicts
 
+**Before working the protocol below, fetch the naming system.** Run this
+for the jurisdiction the records come from, every time — not only when a
+surname looks odd:
+
+```
+wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Naming_Customs" })
+```
+
+Substitute the country for `{Country}` — `Norway_Naming_Customs`,
+`Sweden_Naming_Customs`, `Denmark_Naming_Customs`, `Iceland_Naming_Customs`,
+`Spain_Naming_Customs`, `Portugal_Naming_Customs`, and so on. Read which
+system that country used, and **when it ended** — patronymics were fixed
+into inherited surnames at different dates in each country, and a rule
+applied past its end date is worse than no rule. If a
+`{Country}_Naming_Customs` page does not exist (`wiki_read` reports no page
+found), or exists but describes no patronymic or multi-surname system, do not
+substitute another country's system or a remembered default —
+record that the naming system could not be retrieved and weigh the surname
+evidence accordingly.
+
 Identity conflicts follow the same analysis but with different
 resolution patterns:
 
@@ -332,11 +358,13 @@ resolution patterns:
    whether events cohere into one life
 4. Check: do the ages fit? Do the locations make sense? Are there
    impossibilities?
-5. A **patronymic mismatch is a different-person signal — never a spelling variant in true patronymic systems.** In patronymic naming (Scandinavian -sen/-datter,
-   -son/-dotter, and similar) the surname encodes the *father's* given
-   name, so two records giving the "same" person different patronymics
-   name different fathers — treat that as evidence of distinct people,
-   not a surname variant to smooth over. (The Americanized/farm surname
+5. A **patronymic mismatch is a different-person signal — never a spelling
+   variant in a true patronymic system.** Where the surname encodes the
+   *father's* given name, two records giving the "same" person different
+   patronymics name different fathers — treat that as evidence of distinct
+   people, not a surname variant to smooth over. **Apply this only where the
+   page fetched above says a patronymic system was in use, and only within the
+   dates it gives** — after a country fixed surnames the signal disappears. (The Americanized/farm surname
    an emigrant later adopts is separate from, and does not resolve, the patronymic. Iberian naming — Spanish and Portuguese two-surname systems — follows different rules: the two surnames are reordered or one is dropped, and on emigration the maternal surname often becomes a middle name, so variation there does not carry the same implication.)
 
 **Do not confirm identity by the absence of an alternative.** Not
@@ -359,10 +387,8 @@ cannot produce the child's is disqualified on that ground alone — both
 parents under the Iberian system, the father only under a
 patronymic — before any record names the parents outright.
 **For the two-surname Iberian systems, surname *order* is
-country-specific — Spanish practice is paternal then maternal (*Juan
-García* + *María Ramos* → *García Ramos*), Portuguese and Brazilian the
-reverse, maternal then paternal (*João Silva* + *Maria Costa* → *Costa
-Silva*) — so treat position as non-load-bearing: disqualify an Iberian
+country-specific — take the order from the page fetched above rather than
+assuming it — so treat position as non-load-bearing: disqualify an Iberian
 candidate only when *neither* of their two surnames appears anywhere in
 the child's, never on position alone.** Weigh this hardest against
 **indexed** parent fields: an

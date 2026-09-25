@@ -16,6 +16,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -350,10 +351,15 @@ def test_suppression_is_selective_end_to_end(monkeypatch) -> None:
     _reset()
     monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", real)
 
-    # Pick a real (file, tool) pair that fires. validate_research_schema
-    # in tree-edit's rubric is the most durable: the rubric documents a
-    # post-edit validation call that tree-edit's own contract says is
-    # unnecessary, i.e. clear drift that won't be "fixed" away.
+    # Pick a real (file, tool) pair that fires. validate_research_schema in
+    # tree-edit's rubric is the most durable — but NOT because it is drift.
+    # It is a suppressed false positive (issue #2745): the rubric says the
+    # call is "neither required nor available to this skill", which is the
+    # not-needed shape, and it has read that way since 2026-07-30. That is
+    # exactly what makes it a stable target: prose already corrected is prose
+    # nobody is coming back to correct again. The baseline above clears
+    # SUPPRESSIONS, so the pair is still visible here despite being
+    # suppressed in the shipped list.
     target = ("eval/tests/unit/tree-edit/rubric.md", "validate_research_schema")
     if target not in all_pairs:
         pytest.skip("expected baseline hit not present — corpus changed")
@@ -420,3 +426,77 @@ def test_every_suppression_carries_a_reason() -> None:
             f'SUPPRESSIONS entry ({s["file"]}, {s["tool"]}) needs a reason '
             f"longer than 20 characters — not a dumping ground"
         )
+
+
+# ── Quote fidelity (PR #2881 review) ─────────────────────────────────
+#
+# Each entry's "quotes" are the evidence for its verdict: the span of the
+# file that makes the mention a false positive. Six entries once carried a
+# SIBLING file's wording — every verdict was right, but a reader checking
+# the entry against the file would not have found the text. Nothing caught
+# it, because the quote lived inside the prose "reason" where no check
+# could reach it. "quotes" exists to be checked.
+
+
+def _normalize(text: str) -> str:
+    """Compare on content, not typography.
+
+    judge_context strings and agent bodies use em/en dashes and curly
+    quotes; a reason retyped with ASCII is not a defect. Whitespace is
+    collapsed because a Markdown body wraps mid-sentence, so a quote that
+    is one line in the entry spans two in the file.
+    """
+    text = unicodedata.normalize("NFKD", text)
+    for fancy, plain in (
+        ("\u2014", "-"), ("\u2013", "-"),
+        ("\u2019", "'"), ("\u2018", "'"),
+        ("\u201c", '"'), ("\u201d", '"'),
+    ):
+        text = text.replace(fancy, plain)
+    return " ".join(text.split())
+
+
+def _searchable_text(rel_path: str) -> str:
+    """The text a suppression's quote must be found in.
+
+    For a test JSON that is the judge_context strings only — the same text
+    the script scans — not the whole file, so a quote cannot be satisfied
+    by an unrelated field.
+    """
+    path = check_rubric_tool_drift.REPO_ROOT / rel_path
+    if rel_path.endswith(".json"):
+        context = json.loads(path.read_text(encoding="utf-8")).get("judge_context", [])
+        return "\n".join(s for s in context if isinstance(s, str))
+    return path.read_text(encoding="utf-8")
+
+
+def test_every_suppression_quote_is_verbatim() -> None:
+    """Every quote must appear in the file its entry names."""
+    missing: list[str] = []
+    for entry in check_rubric_tool_drift.SUPPRESSIONS:
+        haystack = _normalize(_searchable_text(entry["file"]))
+        for quote in entry["quotes"]:
+            if _normalize(quote) not in haystack:
+                missing.append(f'{entry["file"]}:{entry["tool"]}\n      {quote}')
+    assert missing == [], (
+        "SUPPRESSIONS entries whose quote is not in the file they name — the "
+        "verdict may still be right, but the quote is the proof a reviewer "
+        "checks, so it must be the text that is actually there:\n  "
+        + "\n  ".join(missing)
+    )
+
+
+def test_every_suppression_has_a_nonempty_quote() -> None:
+    """A quote-less entry would pass the verbatim test vacuously."""
+    for entry in check_rubric_tool_drift.SUPPRESSIONS:
+        quotes = entry.get("quotes")
+        assert isinstance(quotes, list) and quotes, (
+            f'SUPPRESSIONS entry ({entry["file"]}, {entry["tool"]}) has no '
+            f"quotes — the verbatim check would pass it without reading "
+            f"anything"
+        )
+        for quote in quotes:
+            assert len(quote.strip()) > 20, (
+                f'SUPPRESSIONS entry ({entry["file"]}, {entry["tool"]}) has a '
+                f"quote too short to identify a sentence: {quote!r}"
+            )

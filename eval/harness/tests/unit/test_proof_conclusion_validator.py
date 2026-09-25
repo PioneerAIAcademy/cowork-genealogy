@@ -181,3 +181,50 @@ def test_message_reports_the_conflict_as_resolved_and_points_at_the_ownership_ch
     msg = str(e.value)
     assert "'resolved'" in msg, msg
     assert "test_no_out_of_lane_section_writes" in msg, msg
+
+
+# --- the tier CEILING: `tier-possible-q001` fixes the tier exactly -----------
+#
+# The bounded validator above owns the FLOOR (a bounded finding may not collapse
+# to `not_proved`), and its ACCEPTED set deliberately admits `probable`. Nothing
+# owned the ceiling, so on 2026-09-19 `ut_proof_conclusion_018` wrote
+# `tier: probable` + `shortfall: gap`, passed every deterministic check, and
+# failed its own answer key — which fixes the tier at exactly `possible`
+# (genealogist ruling 2026-08-21). `tier-possible-q001` now carries both
+# fixtures; these cases pin both directions of the assertion (issue #2604).
+
+from test_proof_conclusion import (  # noqa: E402
+    test_q001_possible_tier as possible_tier,
+)
+
+POSSIBLE_TAGGED = {"type": "positive", "tags": ["tier-possible-q001"]}
+
+
+def _summary_state(tier):
+    return {"research_json": {"proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": tier}]}}
+
+
+def test_ceiling_accepts_possible():
+    possible_tier(_summary_state("possible"), POSSIBLE_TAGGED)
+
+
+def test_ceiling_rejects_probable():
+    """The 2026-09-19 failure: a HIGHER tier must fail, not only a lower one."""
+    with pytest.raises(AssertionError, match="'possible' exactly"):
+        possible_tier(_summary_state("probable"), POSSIBLE_TAGGED)
+
+
+def test_ceiling_rejects_not_proved():
+    with pytest.raises(AssertionError, match="'possible' exactly"):
+        possible_tier(_summary_state("not_proved"), POSSIBLE_TAGGED)
+
+
+def test_ceiling_rejects_a_missing_summary():
+    with pytest.raises(AssertionError, match="no proof_summaries entry"):
+        possible_tier({"research_json": {"proof_summaries": []}}, POSSIBLE_TAGGED)
+
+
+def test_ceiling_skips_when_untagged():
+    with pytest.raises(BaseException) as exc:
+        possible_tier(_summary_state("probable"), {"type": "positive", "tags": []})
+    assert "not a tier-possible-q001 scenario" in str(exc.value)
