@@ -23,7 +23,7 @@ code is HTTP-only — it does not import any FamilySearch internal code.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `personId` | string | Yes | FamilySearch tree-person ID (e.g. `"KD96-TV2"`). camelCase at the MCP boundary, per repo convention. |
+| `personId` | string | Yes | Tree-person id. A FamilySearch person id (e.g. `"KD96-TV2"`) is scored; any other id is answered without a network call — see "Non-FamilySearch ids" below. camelCase at the MCP boundary, per repo convention. |
 | `detail` | boolean | No | Opt in to the per-fact and per-source breakdown. Defaults to `false`, and when it is off the response is byte-identical to what it was before the flag existed. |
 
 Example:
@@ -34,6 +34,51 @@ Example:
 
 > Unlike `person_ancestors`, `personId` is **required** — there is no
 > "current user" default. Quality scoring always targets a named person.
+
+---
+
+## Non-FamilySearch ids
+
+An id that is not a FamilySearch person id is answered **before** the token is
+read and **without** a network call:
+
+```json
+{ "ok": false, "reason": "not_familysearch_id",
+  "errors": ["No FamilySearch quality score was retrieved for this person."] }
+```
+
+**What counts as a FamilySearch person id.** Four characters, a hyphen, three
+characters, drawn from A–Z and 0–9 minus the vowels, compared case-insensitively
+after trimming (`isFamilySearchPersonId`, `src/utils/fs-id.ts`, shared with
+`match-engine.ts`). Every FamilySearch-shaped person id across the eval scenarios,
+the e2e fixtures and the person-quality/person-read MCP fixtures passes (846, none
+rejected, 2026-09-24); every reject is a project-local id (`I1`, `P3`) or a
+placeholder.
+
+**Why here, and why before the token.** FamilySearch's quality service scores a
+person it already holds; it does not score data sent to it. Asked for `I1` it
+answers `400 Invalid j-encoded identifier: I1`, and POSTing a person to
+`/quality/person`, `/quality/person/scores` or `/quality` returns 404 (probed
+2026-09-24). So there is nothing to fetch. Answering before `getValidToken` means
+a researcher who is not logged in is never told to log in for such a person, and
+it moves the "is this a FamilySearch id?" decision out of every calling skill's
+prose into one tested function.
+
+**Why the message says what was done, not what the person is.** `init-project`
+gives each person it imports from FamilySearch a local id **and** keeps the
+FamilySearch link in `ark` (`{"id": "I1", "ark": "ark:/61903/4:1:MKVT-7XR"}`), and
+callers pass the local id. A sentence such as "not on FamilySearch" would be false
+for exactly those people. The message names no id and no id type, so a caller that
+relays it cannot leak either.
+
+**Known gap.** Because callers pass the local id, an imported person never gets a
+FamilySearch quality score even though their FamilySearch id sits in `ark`.
+Scoring them means resolving `ark` to the FamilySearch id, which needs the project
+tree — outside this tool's contract today.
+
+**The FamilySearch 400 path is unchanged.** An id that passes the shape check but
+that FamilySearch still refuses (a mistyped real id) keeps the existing error, so
+a researcher's typo is reported as a typo rather than masked as "no score".
 
 ---
 

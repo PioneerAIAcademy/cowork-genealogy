@@ -3,12 +3,15 @@
 //
 // Reads a person's FamilySearch data-quality score and returns the live issues
 // to the LLM as interpolated English sentences (plus a compact score summary),
-// keeping the LLM's context lean. Requires authentication.
+// keeping the LLM's context lean. Requires authentication — except for an id
+// that is not a FamilySearch person id, which is answered here without a
+// network call or a token (see "Non-FamilySearch ids" in the spec).
 
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
+import { isFamilySearchPersonId } from "../utils/fs-id.js";
 import { renderIssueSentence } from "./person-quality-templates.js";
 import type {
   FSCategoryScore,
@@ -17,7 +20,9 @@ import type {
   FSQualityResponse,
   PersonQualityDetail,
   PersonQualityInput,
+  PersonQualityNotFamilySearchId,
   PersonQualityResult,
+  PersonQualityToolResult,
   QualityCategoryOut,
   QualityConflictOut,
   QualityFactOut,
@@ -135,16 +140,20 @@ export const personQualityToolSchema = {
     "overall score. Each issue carries its conclusionType and conclusionId so " +
     "it can be traced to the exact fact. Pass detail=true to also get the " +
     "per-fact breakdown — which attached sources touch each fact and whether " +
-    "each agrees, and which sources disagree with each other. Requires " +
-    "authentication — call the login tool first if not logged in.",
+    "each agrees, and which sources disagree with each other. Accepts any " +
+    "tree-person id: an id that is not a FamilySearch person id is answered " +
+    "directly, without contacting FamilySearch. For a FamilySearch id this " +
+    "requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object" as const,
     properties: {
       personId: {
         type: "string",
         description:
-          'FamilySearch tree-person ID (e.g. "KD96-TV2"). Resolve a name to an ' +
-          "ID with person_search first if you don't have it.",
+          'Tree-person id from the project (a FamilySearch id looks like "KD96-TV2"). ' +
+          "An id that is not a FamilySearch person id is answered without " +
+          "contacting FamilySearch. Resolve a name to an id with person_search " +
+          "first if you don't have one.",
       },
       detail: {
         type: "boolean",
@@ -303,14 +312,36 @@ function buildDetail(
   return { facts, conflicts: groupConflicts(scores, titleByUri) };
 }
 
+/** Returned for an id that is not a FamilySearch person id. No id, no id type. */
+export const NOT_FAMILYSEARCH_ID_MESSAGE =
+  "No FamilySearch quality score was retrieved for this person.";
+
+function notFamilySearchIdResult(): PersonQualityNotFamilySearchId {
+  return {
+    ok: false,
+    reason: "not_familysearch_id",
+    errors: [NOT_FAMILYSEARCH_ID_MESSAGE],
+  };
+}
+
 export async function personQualityTool(
   input: PersonQualityInput,
   principal: Principal,
-): Promise<PersonQualityResult> {
+): Promise<PersonQualityToolResult> {
   const personId =
     typeof input.personId === "string" ? input.personId.trim() : "";
   if (personId === "") {
     throw new Error("personId is required.");
+  }
+
+  // Answered here, before the token: an id that is not a FamilySearch person id
+  // has no score FamilySearch could return (its quality service refuses such an
+  // id on format), and a researcher who is not logged in must not be told to log
+  // in for it. The message states what was done, not a fact about the person —
+  // init-project gives imported people a local id AND keeps their FamilySearch
+  // link in `ark`, so "not on FamilySearch" would be false for exactly them.
+  if (!isFamilySearchPersonId(personId)) {
+    return notFamilySearchIdResult();
   }
 
   const token = await getValidToken(principal);

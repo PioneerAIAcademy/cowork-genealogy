@@ -30,6 +30,11 @@ console.log("---");
 
 try {
   const result = await personQualityTool({ personId, detail }, LOCAL);
+  if ("reason" in result) {
+    // Not a FamilySearch person id: answered without a network call.
+    console.log(`${result.reason}: ${result.errors.join(" ")}`);
+    process.exit(0);
+  }
   console.log(
     `${result.personId}  overall=${result.overallScore}  ` +
       `segment=${result.segment}  issues=${result.issueCount}`,
