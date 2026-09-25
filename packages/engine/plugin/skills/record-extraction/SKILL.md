@@ -190,6 +190,13 @@ score no tool had computed. When a record poses an identity question,
 describe the question neutrally and let the agent surface it in its
 return summary; the linking happens later, in person-evidence.
 
+**Never instruct the agent to extract a relationship the record does not
+state** — "including relationships implied by household co-residence",
+"record the indexed ParentChild as inferred". A pre-1880 census states
+none, and a delegation that ordered one produced exactly the fabrication
+the agent's own rule forbids. Pass the household as the record presents
+it; the agent applies the relationship rules.
+
 One record per invocation; several records = several invocations, each
 carrying its own content. The agent extracts every assertion (including
 relationship-type assertions), writes the source + assertions in one
