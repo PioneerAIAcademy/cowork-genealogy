@@ -11,7 +11,8 @@
       "1840s",
       "pennsylvania",
       "famine",
-      "research-relevant"
+      "research-relevant",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -32,6 +33,8 @@
     "wikipedia-search-philadelphia-immigration",
     "wiki-search-ancient-order-hibernians",
     "wiki-search-any",
+    "wiki-read-united-states-emigration-and-immigration",
+    "wiki-read-any",
     "wikipedia-search-any"
   ],
   "judge_context": [

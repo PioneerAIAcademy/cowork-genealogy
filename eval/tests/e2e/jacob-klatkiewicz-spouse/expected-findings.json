@@ -2,18 +2,39 @@
   "findings": [
     {
       "id": "f1",
+      "type": "fact",
+      "description": "The Stanislaus Klatkwicz baptised 2 May 1886 at Ceradz is the son Jacob Klatkiewicz (LDZR-XPT) already has in the tree as Stanislaw Klatkiewicz (LDZR-PH7) — not an additional child. The register gives his birth as 30 April 1886 at 4pm at Rumianek, baptised 2 May 1886 at Ceradz parish church, correcting the tree's unsourced '1884, Rumianek'. Pass = the EXISTING person LDZR-PH7 carries the corrected birth date of 30 April 1886, and the final tree contains no SECOND son named Stanislaw/Stanislaus for LDZR-XPT. Adding a new child for the 1886 baptism while leaving LDZR-PH7 at 1884 is a fail, not a pass — that is the duplicate this finding exists to catch. The parent-child link between LDZR-XPT and LDZR-PH7 is ALREADY in the starting tree and is not what is being tested; the corrected date is.",
+      "details": {
+        "target_person": {
+          "name": "Stanislaw Klatkiewicz (LDZR-PH7)"
+        },
+        "fact_type": "Birth",
+        "date": "30 April 1886",
+        "place": "Rumianek, Posen West, Posen, Prussia"
+      },
+      "supporting_sources": [
+        "Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998 — entry for Stanislaus Klatkwicz, baptised 2 May 1886 at Ceradz, born 30 April 1886, parents Jacob Klatkwicz and Hedvigis Rurek (ark:/61903/1:1:6FZ9-J8PN). The father persona of the same entry is ark:/61903/1:1:6FZ9-J8PJ and the mother persona ark:/61903/1:1:6FZ9-J8PK.",
+        "The register page behind that index entry, read directly: Ceradz baptisms 1883-1901, image ark:/61903/3:1:3Q9M-CSXV-6JG3, Annus Domini 1886 entry no. 44. It gives Locus Nativitatis as RUMIANEK (the index records Ceradz, which is the parish church of baptism, not the birthplace), the mother as Hedvigis KUREK, and carries a later marginal annotation 'Iniit matr. 11.2.15. Posnan. S. Adalb. cum Ant. Matuszak' — this child married in 1915 and so did not die in infancy.",
+        "No Klatkiewicz baptism appears anywhere in that register for 1884 — the tree's claimed year — nor in 1885, nor in the part of 1883 the volume covers (it opens at 1883 entry 52). Image group 008024989, images 00006-00023 inclusive, read page by page. Several Stanislaus baptisms fall in that span, including some at Rumianek, but none is a child of Jacob Klatkiewicz."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
       "type": "relationship",
-      "description": "Jacob Klatkiewicz and Hedwig Kurek had a son Stanislaus, born 30 April 1886 and baptised 2 May 1886 at Ceradz, Posen West.",
+      "polarity": "avoid",
+      "description": "The agent must NOT add Hedvigis Rurek as a second or additional wife of Jacob Klatkiewicz (LDZR-XPT). 'Rurek' is a one-letter index error for Kurek: the register page behind the index entry plainly reads Hedvigis KUREK, and the tree already records Jacob's wife as Hedvirgis Kurek (LDZR-FTC). They are one woman. Pass = the final tree contains no person representing Hedvigis Rurek as a spouse of LDZR-XPT, and no second couple relationship for him. Recording the spelling variant in research.json, as an explicitly rejected candidate or as an index error against the existing wife, is acceptable. Adding 'Rurek' to LDZR-FTC's names in the tree is not, because the avoid guard matches on names alone and cannot distinguish that alternate name from a newly created second wife.",
       "details": {
         "subject_person": "Jacob Klatkiewicz (LDZR-XPT)",
-        "relation": "child",
-        "target_person": {
-          "name": "Stanislaus Klatkiewicz",
-          "birth": "30 April 1886, Ceradz, Posen West, Posen, Prussia"
+        "relation": "spouse",
+        "wrong_candidate": {
+          "name": "Hedvigis Rurek",
+          "note": "The mother's name as INDEXED on the 1886 baptism. The register itself reads Kurek. The tree's existing wife is Hedvirgis Kurek (LDZR-FTC). NOTE ON SCOPE: this name field is deliberately the indexed form alone, because the avoid guard builds its match tokens from it — a fuller phrase here would drag 'klatkiewicz' into the bag and force this finding false on the subject himself."
         }
       },
       "supporting_sources": [
-        "Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998 — baptism of Stanislaus Klatkwicz, 2 May 1886, parents Jacob Klatkwicz and Hedvigis Rurek"
+        "Ceradz baptisms 1883-1901, image ark:/61903/3:1:3Q9M-CSXV-6JG3, Annus Domini 1886 entry no. 44 — the disproving record: the mother's surname is written Kurek.",
+        "Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998 — the index entry that carries the misreading, mother persona ark:/61903/1:1:6FZ9-J8PK."
       ],
       "required": true
     }
