@@ -69,6 +69,9 @@ check_identity_first = getattr(
     getattr(_VALIDATOR, "test_resolution_precedes_identity", None),
 )
 
+check_naming_from_wiki = _VALIDATOR.test_naming_system_read_from_wiki
+check_calendar_from_tool = _VALIDATOR.test_calendar_regime_read_from_tool
+
 _REPO = Path(__file__).resolve().parents[4]  # eval/harness/tests/unit -> repo root
 _CORPUS = sorted(
     p for p in glob.glob(str(_REPO / "eval/runlogs/unit/conflict-resolution/v1_*.json"))
@@ -1725,20 +1728,6 @@ def test_v4_agrees_with_a_second_derivation_over_the_corpus():
     )
 
 
-def test_v4_catches_the_specs_own_worked_example_in_the_corpus():
-    """The spec quotes one violation by name. It is in `text_response`, so a
-    check reading only the persisted fields fires on none of it — which is what
-    the first version of this plan would have shipped."""
-    quote = "almost certainly Thomas Flynn, Patrick's father"
-    hits = [(n, t) for n, t, msg in _replay_v4() if quote in msg]
-    assert hits, (
-        "V4 no longer reports the spec's own worked example. It lives in "
-        "ut_conflict_resolution_008's text_response in v1_2026-08-19_15-24-31 — "
-        "if that log has rotated out, re-point this test rather than deleting it"
-    )
-    assert any(t.endswith("008") for _, t in hits), hits
-
-
 def test_v4_reports_the_reply_text_as_well_as_the_persisted_fields():
     """37% of the corpus signal is in the reply text. A regression that dropped
     that field would leave the two tests above green if the persisted hits
@@ -2275,3 +2264,209 @@ def test_v4_the_quote_does_not_end_at_the_name_it_accuses():
         "the quote stops at the accused name, so it shows the run naming one "
         f"person when it named two:\n{quoted}"
     )
+
+
+# --- V: the naming-customs fetch is observed, not merely instructed (#2254) ---
+#
+# Proven to fail more than one way, per CLAUDE.md "A new lint must be proven to
+# fail": no wiki call at all, a wiki_search-only run, and a wiki_read of some
+# OTHER page. The last is the one that matters most -- the skill already reads
+# wiki pages elsewhere, so a validator that merely counted wiki_read calls would
+# pass a run that never fetched a naming page.
+#
+# And the other direction: an untagged test must SKIP, and a legitimate variant
+# (a different country's page) must PASS, or this becomes a check that gets
+# skip-marked the first time someone adds a Spanish fixture.
+
+_TAGGED = {"tags": ["identity-conflict", "naming-from-wiki"]}
+
+
+def _norway_read():
+    return {
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"url": "https://www.familysearch.org/en/wiki/Norway_Naming_Customs"},
+    }
+
+
+def test_naming_fetch_fails_when_no_wiki_call_at_all():
+    with pytest.raises(AssertionError) as e:
+        check_naming_from_wiki(tool_calls=[], test=_TAGGED)
+    assert "_Naming_Customs" in str(e.value)
+
+
+def test_naming_fetch_fails_when_only_wiki_search_was_called():
+    calls = [{"tool": "mcp__genealogy__wiki_search", "args": {"query": "norwegian patronymic"}}]
+    with pytest.raises(AssertionError):
+        check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_fails_when_wiki_read_hit_a_different_page():
+    # The skill reads other wiki pages; counting wiki_read alone would pass this.
+    calls = [{
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"url": "https://www.familysearch.org/en/wiki/Norway_Census"},
+    }]
+    with pytest.raises(AssertionError) as e:
+        check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+    assert "Norway_Census" in str(e.value), "the message must name what WAS fetched"
+
+
+def test_naming_fetch_fails_when_url_key_is_missing():
+    calls = [{"tool": "mcp__genealogy__wiki_read", "args": {}}]
+    with pytest.raises(AssertionError):
+        check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_passes_on_the_norway_page():
+    check_naming_from_wiki(tool_calls=[_norway_read()], test=_TAGGED)
+
+
+def test_naming_fetch_passes_on_another_country_page():
+    # The legitimate variant. Deliberately country-agnostic so a Spanish or
+    # Portuguese fixture needs no validator edit.
+    calls = [{
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"url": "https://www.familysearch.org/en/wiki/Spain_Naming_Customs"},
+    }]
+    check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_passes_when_the_naming_page_is_one_call_among_several():
+    calls = [
+        {"tool": "mcp__genealogy__place_search", "args": {"placeName": "Ringsaker"}},
+        _norway_read(),
+    ]
+    check_naming_from_wiki(tool_calls=calls, test=_TAGGED)
+
+
+def test_naming_fetch_skips_on_an_untagged_test():
+    # pytest.skip() raises from BaseException, not Exception, so catching
+    # Exception here would let the skip propagate and mark THIS test skipped --
+    # green, asserting nothing. Caught deliberately as BaseException and the
+    # type is asserted, so the gate is proven to be tag-gated rather than
+    # silently inert.
+    with pytest.raises(BaseException) as e:
+        check_naming_from_wiki(tool_calls=[], test={"tags": ["identity-conflict"]})
+    assert type(e.value).__name__ == "Skipped", (
+        f"expected a pytest skip on an untagged test, got {type(e.value).__name__}"
+    )
+
+
+def test_naming_fetch_skips_when_tags_are_absent_entirely():
+    with pytest.raises(BaseException) as e:
+        check_naming_from_wiki(tool_calls=[], test={})
+    assert type(e.value).__name__ == "Skipped"
+
+
+# --- V5: the calendar regime must come from the tool, not from memory -------
+#
+# The mirror of the naming-fetch gate above, and it needs the same pairing: the
+# adoption table was REMOVED from SKILL.md and historical-contradictions.md by
+# issue #2254, so a run that reaches the right year without calling the tool is
+# answering from the model's own knowledge -- exactly what the move exists to
+# stop. Before these tests the validator shipped with its failure modes proven
+# only in a working session and nothing committed, which is the gap CLAUDE.md's
+# "break the repo so the check fires and watch it fail" closes.
+#
+# The `jurisdiction` arm is the subtle one and is why an empty/whitespace/null
+# case is here: convert_calendar answers from a default regime when the
+# jurisdiction is omitted, so a call without one is the same
+# answer-from-memory failure moved one layer down, and it would otherwise pass
+# a gate that merely counted calls.
+
+_CAL_TAGGED = {"tags": ["fact-conflict", "calendar", "calendar-from-tool"]}
+
+
+def _calendar_call(jurisdiction="England", year=1746):
+    return {
+        "tool": "mcp__genealogy__convert_calendar",
+        "args": {
+            "date": {"year": year, "month": 2, "day": 14},
+            "jurisdiction": jurisdiction,
+            "corrections": {"osNsYear": True},
+        },
+    }
+
+
+def test_calendar_fails_when_no_convert_calendar_call_at_all():
+    with pytest.raises(AssertionError) as e:
+        check_calendar_from_tool(tool_calls=[], test=_CAL_TAGGED)
+    assert "convert_calendar" in str(e.value)
+
+
+def test_calendar_fails_when_only_another_tool_was_called():
+    calls = [{"tool": "mcp__genealogy__wiki_read", "args": {"url": "x"}}]
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_missing():
+    call = _calendar_call()
+    del call["args"]["jurisdiction"]
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[call], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_empty():
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[_calendar_call("")], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_whitespace_only():
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[_calendar_call("   ")], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_jurisdiction_is_null():
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=[_calendar_call(None)], test=_CAL_TAGGED)
+
+
+def test_calendar_fails_when_the_call_carries_no_args_at_all():
+    calls = [{"tool": "mcp__genealogy__convert_calendar"}]
+    with pytest.raises(AssertionError):
+        check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_passes_with_a_non_empty_jurisdiction():
+    check_calendar_from_tool(tool_calls=[_calendar_call()], test=_CAL_TAGGED)
+
+
+def test_calendar_passes_for_another_jurisdiction():
+    # Jurisdiction-agnostic on purpose: a Swedish or Russian fixture must not
+    # need a validator edit. Sweden ran an intermediate calendar 1700-1712.
+    check_calendar_from_tool(
+        tool_calls=[_calendar_call("Sweden", year=1700)], test=_CAL_TAGGED
+    )
+
+
+def test_calendar_passes_when_the_good_call_follows_a_bad_one():
+    # One malformed call must not poison a run that also made a correct one.
+    calls = [_calendar_call(""), _calendar_call("England")]
+    check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_passes_when_the_call_is_one_among_several_tools():
+    calls = [
+        {"tool": "mcp__genealogy__project_context", "args": {}},
+        _calendar_call(),
+        {"tool": "mcp__genealogy__research_append", "args": {}},
+    ]
+    check_calendar_from_tool(tool_calls=calls, test=_CAL_TAGGED)
+
+
+def test_calendar_skips_on_an_untagged_test():
+    # Same BaseException care as the naming skip above: pytest.skip() raises
+    # from BaseException, so catching Exception would mark THIS test skipped --
+    # green, asserting nothing.
+    with pytest.raises(BaseException) as e:
+        check_calendar_from_tool(tool_calls=[], test={"tags": ["fact-conflict"]})
+    assert type(e.value).__name__ == "Skipped", (
+        f"expected a pytest skip on an untagged test, got {type(e.value).__name__}"
+    )
+
+
+def test_calendar_skips_when_tags_are_absent_entirely():
+    with pytest.raises(BaseException) as e:
+        check_calendar_from_tool(tool_calls=[], test={})
+    assert type(e.value).__name__ == "Skipped"

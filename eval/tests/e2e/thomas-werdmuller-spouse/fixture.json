@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 28, hint-samples.csv row 870, flag adds_spouse, confidence 3). Draft transcribed from a 1698 Zürich Reformed baptismal entry; unverified. The recorded wife was alive and married to him at the hinted date."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 28, hint-samples.csv row 870, flag adds_spouse, confidence 3). RESOLVED: false match. The 27 Mar 1698 Zürich baptism belongs to a different Thomas Werdmüller, the one married to Regula Steiner, whose nine children were baptised in the same parish 1692-1712 — the last two after the subject's 1704 death. Disproving record ark:/61903/1:1:66JR-7TSH (21 Apr 1712). The subject's wife Dorothea von Muralt was buried 16 Jan 1735 (ark:/61903/1:1:66JB-RGNM), ruling out a successor marriage. Resolved on index evidence: the register image 403'd and was not read."
 }

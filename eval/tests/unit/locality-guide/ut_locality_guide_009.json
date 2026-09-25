@@ -35,7 +35,8 @@
     "place-search-all-any",
     "collection-read-by-id",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "volume-search-virginia"
   ],
   "judge_context": [
     "Recognize Virginia\u2019s role in the Revolutionary War and mention military service records, pension applications, bounty land warrants, and county court records. Highlight repositories like the Library of Virginia, National Archives, and county courthouses while avoiding statewide vital registration (it didn't exist yet).",

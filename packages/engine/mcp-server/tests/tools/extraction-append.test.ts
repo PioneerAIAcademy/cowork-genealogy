@@ -23,6 +23,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { extractionAppend, EXTRACTION_SECTIONS } from "../../src/tools/extraction-append.js";
+import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
@@ -242,10 +243,68 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     expect(research.assertions[1].source_id).toBe("src_002");
   });
 
+  it("refuses a D17 re-extraction — the same record's facts re-appended under the same log entry (§3.4.3)", async () => {
+    const facts = ["name", "birth", "death", "residence", "occupation", "religion"];
+    const extracted = (role: string, fact: string, value: string) => ({
+      ...noId(validAssertion("x", "src_001")),
+      record_role: role,
+      fact_type: fact,
+      value,
+      log_entry_id: "log_001",
+    });
+    const research = baseResearch();
+    research.log = [
+      {
+        id: "log_001",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00Z",
+        tool: "record_read",
+        query: {},
+        outcome: "positive",
+        results_examined: 1,
+        external_site: null,
+        results_ref: null,
+      },
+    ] as any;
+    research.assertions = [
+      ...facts.map((f) => extracted("principal", f, `${f} of John`)),
+      ...facts.map((f) => extracted("spouse", f, `${f} of Mary`)),
+    ].map((a, i) => ({ id: `a_${String(i + 1).padStart(3, "0")}`, ...a })) as any;
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const rerun = [
+      ...facts.map((f) => extracted("principal", f, `John's ${f}, reworded`)),
+      ...facts.map((f) => extracted("spouse", f, `Mary's ${f}, reworded`)),
+    ].map(({ source_id: _s, ...a }) => ({ section: "assertions", op: "append", entry: a }));
+    const r = await extractionAppend({
+      projectPath: dir,
+      ops: [{ section: "sources", op: "append", entry: sourceNoRef }, ...rerun],
+    } as any);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.filter((e) => /already extracted on src_001 under log_001/.test(e))).toHaveLength(12);
+    expect(r.errors.join(" ")).toMatch(/a_001 already records name .*`update` op/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
   // ─── research_append is untouched ─────────────────────────────────────────
 
   it("research_append still accepts person_evidence (the lane is per-tool, not global)", async () => {
     await writeProject();
+    // #1731 step 3 refuses a link with no recorded same_person score. This test
+    // is about the per-tool lane, not the score gate, so satisfy it.
+    await recordMatchScore(dir, {
+      record_id: "rec1",
+      record_persona_id: null,
+      record_role: "principal",
+      tree_person_id: "I1",
+      score: 0.9,
+      matched: true,
+      assertion_id: "a_001",
+      record_source: "record_read",
+      computed: "2026-09-24T00:00:00Z",
+    });
     const r = await researchAppend({
       projectPath: dir,
       section: "person_evidence",
