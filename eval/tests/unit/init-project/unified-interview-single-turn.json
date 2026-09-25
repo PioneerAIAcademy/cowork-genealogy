@@ -18,8 +18,7 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn"
-  ],
+    "person-read-flynn", "person-quality-clean-LZNY-BRF"],
   "judge_context": [
     "The stored objective should reflect 'identify his parents' -- a specific, user-stated objective, not the generic default.",
     "`researcher_profile.experience_level` should be `novice` and `narration_guidance` the fixed house-style string. Both are validator-checked verbatim; do not re-derive them.",

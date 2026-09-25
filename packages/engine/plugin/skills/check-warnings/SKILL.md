@@ -67,11 +67,11 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
 1. Call `person_warnings({ projectPath, personId })` — the offline impossibility check that runs for every person you check. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
-2. Also call `person_quality({ personId })` for the same person, with the same id.
+2. Also call `person_quality({ personId, projectPath })` for the same person, with the same id and `projectPath`.
 
 `person_quality` needs the user logged in and calls FamilySearch's live quality service. Handle it gracefully -- it must **never** suppress the offline warnings, which are the guardrail and always appear:
 
-- **`reason: "not_familysearch_id"`** -- not an error: leave this person's FamilySearch quality section out, with no note.
+- **`reason: "not_familysearch_id"`** -- not an error; report it as step 3b says.
 - **Not logged in / auth error** -- skip quality and note it once: "FamilySearch quality score unavailable -- log in to include it." Still report the warnings.
 - **Tool error** (person tombstoned/merged, not found, still calculating, network) -- surface the tool's message as a one-line note in that person's quality section; do not block the warnings report.
 
@@ -160,6 +160,7 @@ When `person_quality` returned data, add a separate **FamilySearch quality** sec
 - These are FamilySearch's *suggestions to improve the profile*, not impossibilities. Phrase next steps as optional improvements ("adding the burial date would raise the completeness score"), never as urgent errors.
 - **Don't invent a quality label or verdict** (no "High Quality" band) -- report the `overallScore` and the sentences as-is. The tool deliberately omits a band.
 - When `issueCount` is 0: "FamilySearch quality: no issues flagged (overall {overallScore})."
+- **`reason: "not_familysearch_id"`:** write the sentence in `errors[0]` exactly as given, on its own line -- no heading, nothing added.
 - **Quality attempted but failed** (the tool returned an error -- tombstoned/merged, not found, still calculating, or not logged in; `reason: "not_familysearch_id"` is not one of these): add one brief note in the quality section using the tool's message. Never let it abort or suppress the warnings report.
 
 **Example:**

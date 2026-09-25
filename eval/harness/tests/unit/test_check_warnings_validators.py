@@ -29,15 +29,18 @@ from test_check_warnings import (  # noqa: E402
 POSITIVE = {"type": "positive", "tags": []}
 
 
-def _not_fs(person_id: str) -> dict:
+NEUTRAL = "No FamilySearch quality score was retrieved for this person."
+
+
+def _named(name: str) -> str:
+    return f"{name} isn't linked to FamilySearch, so there's no FamilySearch quality score."
+
+
+def _not_fs(person_id: str, sentence: str = NEUTRAL) -> dict:
     return {
         "tool": "mcp__genealogy__person_quality",
-        "args": {"personId": person_id},
-        "response": {
-            "ok": False,
-            "reason": "not_familysearch_id",
-            "errors": ["No FamilySearch quality score was retrieved for this person."],
-        },
+        "args": {"personId": person_id, "projectPath": "/p"},
+        "response": {"ok": False, "reason": "not_familysearch_id", "errors": [sentence]},
     }
 
 
@@ -97,7 +100,7 @@ def test_constructed_breaks_fail(reply):
         BODY,                                                           # quality left out
         "No FamilySearch quality score was retrieved for this person.\n\n" + BODY,  # one plain line
         "Confirm that Thomas Flynn (I2) is genuinely linked as Patrick's relative.",  # _008, "linked"
-        "WARNINGS FOR: Patrick Flynn (I10)\nFamilySearch quality: not retrieved.",    # I10 is not I1
+        "WARNINGS FOR: Patrick Flynn (I10)\n" + NEUTRAL,                             # I10 is not I1
         "Patrick Flynn's dates do not line up; see below.\n\n" + BODY,  # name only
     ],
 )
@@ -124,3 +127,43 @@ def test_skips_when_no_person_got_the_not_familysearch_answer():
 def test_skips_negative_tests():
     with pytest.raises(pytest.skip.Exception):
         check_not_fs_reply([_not_fs("I1")], "synthetic", {"type": "negative", "tags": []})
+
+
+# --- the tool now hands back a true sentence by name; SKILL.md says write it exactly ---
+
+def test_the_tools_named_sentence_passes():
+    reply = BODY + "\n\n" + _named("Patrick Flynn")
+    check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn"))], reply, POSITIVE)
+
+
+def test_two_people_two_named_sentences_pass():
+    """ut_check_warnings_002 checks I1 and I2 in one run: one sentence each."""
+    reply = (
+        BODY + "\n\n" + _named("Patrick Flynn") + "\n\n"
+        "WARNINGS FOR: Thomas Flynn (I2)\nNo warnings.\n\n" + _named("Thomas Flynn")
+    )
+    check_not_fs_reply(
+        [_not_fs("I1", _named("Patrick Flynn")), _not_fs("I2", _named("Thomas Flynn"))],
+        reply, POSITIVE,
+    )
+
+
+def test_markdown_emphasis_around_the_sentence_still_counts_as_the_sentence():
+    reply = BODY + "\n\n*" + _named("Patrick Flynn") + "*"
+    check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn"))], reply, POSITIVE)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        # a heading added above the sentence
+        "## FAMILYSEARCH QUALITY: Patrick Flynn\n" + _named("Patrick Flynn") + "\n\n" + BODY,
+        # a reworded sentence instead of the tool's own
+        "Patrick Flynn has no FamilySearch profile to score.\n\n" + BODY,
+        # the tool's sentence plus an added reason naming the id
+        _named("Patrick Flynn") + "\nI1 is a project id, not a FamilySearch id.\n\n" + BODY,
+    ],
+)
+def test_additions_around_the_tools_sentence_fail(reply):
+    with pytest.raises(AssertionError):
+        check_not_fs_reply([_not_fs("I1", _named("Patrick Flynn"))], reply, POSITIVE)

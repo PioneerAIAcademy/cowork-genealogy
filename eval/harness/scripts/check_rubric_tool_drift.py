@@ -132,36 +132,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_quality",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_warnings",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [

@@ -1,0 +1,36 @@
+{
+  "tool": "person_quality",
+  "description": "person_quality on LZNY-R4T -- a clean profile: overall 1.0, no issues. init-project imports this person with a local id and their FamilySearch link in ark; check-warnings' person_quality call resolves the local id to LZNY-R4T through that link. Used by ut_init_project_001.",
+  "args": {
+    "personId": "LZNY-R4T"
+  },
+  "response": {
+    "personId": "LZNY-R4T",
+    "segment": null,
+    "overallScore": 1,
+    "issueCount": 0,
+    "categories": [
+      {
+        "scoreType": "COMPLETENESS",
+        "count": 0,
+        "score": 1
+      },
+      {
+        "scoreType": "VERIFIABILITY",
+        "count": 0,
+        "score": 1
+      },
+      {
+        "scoreType": "CONSISTENCY",
+        "count": 0,
+        "score": 1
+      },
+      {
+        "scoreType": "COHERENCE",
+        "count": 0,
+        "score": 1
+      }
+    ],
+    "issues": []
+  }
+}

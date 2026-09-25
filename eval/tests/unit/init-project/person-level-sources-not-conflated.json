@@ -11,7 +11,7 @@
     "user_message": "Start a new research project. Analyze the sources and family structure for Jean Baptiste Moreau (MRQ1-JBM) and look for errors or inconsistencies.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-moreau-person-level-sources"],
+  "mcp_fixtures": ["person-read-moreau-person-level-sources", "person-quality-clean-MRQ1-JBM", "person-quality-clean-MRQ1-K2N", "person-quality-clean-MRQ1-P8R", "person-quality-clean-MRQ1-T4W"],
   "judge_context": [
     "The fixture's top-level `sources` array carries 6 source descriptions. The response must accurately reflect that sources ARE attached (a count at or near 6, or an accurate qualitative statement that sources exist) — never a claim of zero/no sources attached. Reporting zero sources when the tool returned 6 is a Correctness failure, not a minor imprecision.",
     "Every fact on every person in this fixture has NO fact-level `sources` ref at all — this is correct and expected FamilySearch behavior (sources attached at the person level, not linked to a specific claim), not evidence that no sources exist. The skill may reasonably NOTE that sources aren't linked to individual facts (a real, useful observation about traceability) — but that observation must be presented alongside an accurate total count, never in place of one, and never phrased as 'no sources were found.'",

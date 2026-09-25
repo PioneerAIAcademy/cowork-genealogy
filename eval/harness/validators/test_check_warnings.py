@@ -80,19 +80,29 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
 _SENTENCE_SPLIT = r"(?<=[.!?])\s+|\n+"
 
 
-def _not_fs_person_ids(tool_calls) -> tuple[list[str], int]:
-    """(ids answered with `not_familysearch_id`, total person_quality calls)."""
+def _not_fs_answers(tool_calls) -> tuple[list[str], list[str], int]:
+    """(ids answered `not_familysearch_id`, their returned sentences, total
+    person_quality calls)."""
     quality = [
         c for c in (tool_calls or [])
         if (c.get("tool") or "").endswith("person_quality")
     ]
-    not_fs = [
-        str((c.get("args") or {}).get("personId", "")).strip()
-        for c in quality
-        if isinstance(c.get("response"), dict)
-        and c["response"].get("reason") == "not_familysearch_id"
-    ]
-    return [i for i in not_fs if i], len(quality)
+    ids: list[str] = []
+    sentences: list[str] = []
+    for c in quality:
+        resp = c.get("response")
+        if isinstance(resp, dict) and resp.get("reason") == "not_familysearch_id":
+            pid = str((c.get("args") or {}).get("personId", "")).strip()
+            if pid:
+                ids.append(pid)
+            sentences += [str(e) for e in (resp.get("errors") or [])]
+    return ids, sentences, len(quality)
+
+
+def _plain(sentence: str) -> str:
+    """A sentence with markdown emphasis, list markers and outer space removed."""
+    import re as _re
+    return _re.sub(r"^\s*(?:[-*\u2022]\s+)?", "", sentence).strip().strip("*_`").strip()
 
 
 def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
@@ -108,8 +118,10 @@ def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
       (a) the reply contains "synthetic", anywhere;
       (b) a sentence mentioning FamilySearch or quality also names such an id as
           a whole token (`I1`, `(I1)`, `` `I1` ``, `I1.` — not `I10`);
-      (c) every person_quality answer was the not-FamilySearch one, and more than
-          one sentence of the reply mentions FamilySearch.
+      (c) every person_quality answer was the not-FamilySearch one, and a sentence
+          mentions FamilySearch that is not one of the tool's own returned
+          sentences. SKILL.md tells the skill to write that sentence exactly —
+          one per person, so two people give two, both allowed.
 
     Keyed on "FamilySearch"/"quality" only, never "linked": check-warnings uses
     "linked" for relationships ("Confirm that Thomas Flynn (I2) is genuinely
@@ -126,7 +138,7 @@ def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
 
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
-    ids, quality_calls = _not_fs_person_ids(tool_calls)
+    ids, tool_sentences, quality_calls = _not_fs_answers(tool_calls)
     if not ids:
         pytest.skip("no person_quality answer for a non-FamilySearch id")
     response = text_response or ""
@@ -149,12 +161,16 @@ def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
             )
 
     if len(ids) == quality_calls:
-        fs_sentences = [x.strip() for x in sentences if "familysearch" in x.lower()]
-        if len(fs_sentences) > 1:
+        allowed = {_plain(t) for t in tool_sentences}
+        extra = [
+            x.strip() for x in sentences
+            if "familysearch" in x.lower() and _plain(x) not in allowed
+        ]
+        if extra:
             raise AssertionError(
-                "no person checked has a FamilySearch quality score, so at most one "
-                f"plain line may mention FamilySearch; the reply has {len(fs_sentences)}: "
-                f"{fs_sentences!r}"
+                "no person checked has a FamilySearch quality score, so the only "
+                "FamilySearch sentences allowed are the tool's own, written as "
+                f"given; the reply adds: {extra!r}"
             )
 
 

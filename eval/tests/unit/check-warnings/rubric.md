@@ -37,7 +37,7 @@ Does each warning suggest what to investigate? "Birth year conflict between cens
 
 Does the skill handle the `person_quality` tool correctly -- calling it for every person it checks, reporting its answer as a concern distinct from the offline impossibilities, and degrading gracefully? Judge only from the tool calls, the tool responses, and the skill's text -- not from the tree.
 
-When `person_quality` answers `reason: "not_familysearch_id"` (the id is not a FamilySearch person id), the tool has already settled that there is no score; the reply's handling of that answer is graded by a deterministic validator, not here.
+When `person_quality` answers `reason: "not_familysearch_id"`, the tool has already settled that there is no score and hands back the one sentence to write; whether the reply writes exactly that and nothing about the id is graded by a deterministic validator, not here. An imported person is scored under their FamilySearch link, so a real score for a person the project knows by a local id is correct, not a mismatch.
 
 - **N/A:** Every `person_quality` answer in the run was `reason: "not_familysearch_id"`. Score this dimension `null`.
 - **pass:** `person_quality` was called for every person the skill checked. For each person with a score, its issues are reported in a section distinct from the impossibilities, sentences taken from the tool verbatim, framed as optional improvements (never escalated to contradiction/Critical), with no invented quality band. Zero-issue and tombstoned/error responses are reported honestly, and a quality failure never suppresses the `person_warnings` result.
