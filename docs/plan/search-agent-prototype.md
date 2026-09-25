@@ -412,7 +412,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for two things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Also a heads-up, not an ask: if their planned model allowlist lands, the `us.anthropic.*` ids our worker sends (main thread and subagents, P3h) must be on it. Note for them: `tool-search-tool-2025-10-19` in the default Bedrock beta allowlist (read in v1.4.1 source) is a 400 on Converse.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for three things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Also a heads-up, not an ask: if their planned model allowlist lands, the `us.anthropic.*` ids our worker sends (main thread and subagents, P3h) must be on it. Also ask them to set `frontendPolicies.http.maxBufferSize` (32 MiB was measured to work): at the 2 MiB default a session dies with 413 at its third page scan (P3l). Notes for them: `tool-search-tool-2025-10-19` in the default Bedrock beta allowlist (read in v1.4.1 source) is a 400 on Converse; forced `tool_choice` does not reach the model (P3l); and the 1-hour cache TTL is dropped on every agentgateway release (upstream #3670, P3j).** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -1049,6 +1049,51 @@ worker process, and all 14 checks passed:
 This covers P3j's open point: resume from the store, not only from the CLI's disk
 transcript. The CLI's `HEAD /bedrock/api/hello` check returns 400 on v1.5.0 (an empty
 body parsed as an LLM request) and is harmless.
+
+**P3l — measured 2026-09-25 on local v1.5.0 with TAP's `/bedrock` route and tracing
+block: a session dies at its third page scan, compaction works, and the trace export
+carries every text message.**
+- *2 MiB request limit.* agentgateway buffers each request body up to
+  `max_buffer_size`, which defaults to 2,097,152 bytes, and answers anything larger
+  with `413 text/plain` ("failed to process LLM request: request was too large"),
+  not an Anthropic error. tap-agentgateway does not set it. A session keeps every
+  `image_read` result's base64 in its history, and the 1888 directory PNG is 743 KB
+  (≈ 990 KB encoded). A conversation holding one or two scans passed (991,527 and
+  1,982,678 bytes). The third failed with 413 at 2,973,829 bytes, and so would every
+  later call in that session. Adding `frontendPolicies.http.maxBufferSize: 33554432`
+  let 3 and 6 scans through (5,947,282 bytes, 200). That one config line is an APT
+  ask. A long text-only session reaches the limit too: the 269k-token prompt of P3j
+  was 1.18 MB.
+- *Compaction.* `/compact` on a resumed session: the summarisation call ("Respond with
+  TEXT ONLY…") returned 200, and the next resumed turn started from the 3-message
+  summary and recalled the converted date correctly. Autocompact makes the same call.
+  It was not forced here.
+- *Stop reasons and errors.* `max_tokens` and `stop_sequence` map to the right
+  `stop_reason`, plain and streamed. `stop_sequence` itself comes back `null` rather
+  than the matched string, which the CLI does not read. An unknown model is a
+  Messages-shaped 400 `invalid_request_error` on both paths.
+- *Forced `tool_choice` is lost.* `{"type":"tool"}` and `{"type":"any"}` both got a
+  text reply on v1.5.0 and v1.6.0-alpha.2. The same `toolChoice` sent straight to
+  Converse returned `stop_reason: tool_use`. The source maps it, so the loss is
+  somewhere after that. None of 115 CLI/SDK requests recorded today sends
+  `tool_choice`, and nothing in `apps/server` or the engine does, so it is theirs to
+  know about, not ours to fix.
+- *What the trace export carries (R11).* This was checked against a local Jaeger on
+  OTLP/HTTP, not Langfuse, with a record-extraction turn (the inline 1850 Flynn
+  household) and one image call.
+  - Each LLM span's `gen_ai.prompt` holds the system prompt (Claude Code's plus the
+    worker note), the loaded skill bodies, and every **text** message, delegation
+    prompts included. `gen_ai.completion` holds the reply.
+  - `tool_use` and `tool_result` blocks are exported as empty strings (17 of 48
+    messages). Tool-result JSON and image bytes do not leave.
+  - Patron data leaves in text all the same. The household's names, places and
+    occupations appear 31 times, from the user's message and the model's own
+    narration of what it extracted. A FamilySearch record returned by a tool would
+    not be exported raw, but the model's summary of it would.
+  - No device, session or account id and no bearer token appeared. The
+    `x-anthropic-billing-header` line of the system prompt did.
+  - Volume: the turn's 11 LLM spans carried 696,705 characters of prompt, because
+    every call re-exports the whole system prompt.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
