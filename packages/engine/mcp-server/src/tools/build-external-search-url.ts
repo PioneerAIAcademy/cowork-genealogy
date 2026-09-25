@@ -561,6 +561,20 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
     "this searches the catalog's name-authority index (record creators), not the archival " +
     "descriptions — a nil here is expected for an ordinary person and is not evidence the " +
     "record does not exist; it also has no place filter, so scope by place in the site's own UI",
+  // Measured 2026-09-24 (spec §11.2): `dr_year` and `dr_place` are discarded by
+  // the live site, which returns the unscoped term search — 391,309 hits for a
+  // search that returns 132 once its year and county are really applied. The
+  // parameters still ship pending the ruling on how to replace them, so the note
+  // is what stops a researcher reading the nil-narrowing as a real search. Same
+  // remedy `archives_gov` got in correction #4.
+  newspapers:
+    "this URL's date and place parameters are discarded by the site — it returns the term search " +
+    "unscoped by year or place; tell the user to set the date range and location in the site's own UI",
+  // Measured 2026-09-24 (spec §11.1): every parameter the tool emits for this
+  // site is dead, so the URL opens the search form with nothing filled in.
+  myheritage:
+    "this URL opens MyHeritage's search form UNFILLED — no search runs; tell the user to enter the " +
+    "name, year and place in the form itself, and do not report the link as a search performed",
   findagrave: USER_CONTRIBUTED_NOTE,
   billiongraves: USER_CONTRIBUTED_NOTE,
   chronicling_america:
