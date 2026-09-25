@@ -409,7 +409,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half answered by us 2026-09-25 (P3c, P3d): the host we curled was our own 0.12.0 test bed, now Messages-capable. The route map and aliases the P3c ask named are already in tap-agentgateway `master`, so that ask is withdrawn. New asks: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run, and a plan and date for moving to agentgateway ≥ v1.6.0 (P3e: `tool_reference` does not parse before it, so tool search fails on its second turn). Also flag that `tool-search-tool-2025-10-19` in v1.4.1's default beta allowlist is a 400 on Converse.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; access and upgrade asks not yet sent | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for two things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; and a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Note for them: `tool-search-tool-2025-10-19` in the default Bedrock beta allowlist (read in v1.4.1 source) is a 400 on Converse.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -827,8 +827,8 @@ gateway, on two env vars.** The integ host above is not APT's gateway. It is
 source read here was v1.4.1's, and P3f re-measured on v1.5.0), and its `/bedrock` route already maps `/v1/messages` → `messages` and
 `/v1/messages/count_tokens` → `anthropicTokenCount` (deliberately no `"*": passthrough`),
 aliases the bare Claude ids to `us.*` profiles, and gates callers by API-key consumer
-(`claude-code`, `tap`, `foundry-runner`). So the P3c route ask to APT is already done in
-their `master`; what we need from them is the URL and a key. On the test bed,
+(`claude-code`, `tap`, `foundry-runner`). So the route map is already in their `master`;
+what we need from them is the URL and a key. On the test bed,
 search-fulltext-agentgateway #5 added the same route map and the haiku alias, and #6
 added `overrides: {metadata: null}`. Then Claude Code 2.1.282 with `ANTHROPIC_BASE_URL`
 at `/bedrock`, `ANTHROPIC_MODEL=us.anthropic.claude-sonnet-4-6`,
@@ -923,6 +923,35 @@ generation), locally:
 
 So `debug_vars: variables()` in the test bed's tracing fields forces 0.12.0 to buffer
 the whole response. It is not int's network, and TAP's config does not have the field.
+
+**P3g — measured 2026-09-25: a gateway adds about 0.35 s of time to first byte per call,
+and a gateway session sends four tools a Bedrock-mode session does not.**
+- *Latency.* Five measured rounds after a warm-up, interleaved. Each round was a bare
+  `claude -p "Reply with exactly: ok"` with `ENABLE_TOOL_SEARCH=false` in every arm, all
+  prompt-cache hits. Median first byte, from the CLI's `[API:timing] first byte after`:
+
+  | Arm | Median | Added |
+  |---|---|---|
+  | Bedrock mode (`CLAUDE_CODE_USE_BEDROCK=1`) from the laptop | 1,194 ms | — |
+  | Local v1.5.0 | 1,523 ms | +329 ms |
+  | Local v1.6.0-alpha.2 | 1,543 ms | +349 ms |
+  | int 0.12.0 over VPN, ALB, ECS | 1,744 ms | +550 ms |
+
+  The local figure includes colima's NAT, so it is an upper bound on the gateway's own
+  cost. A research turn of 20–40 model calls pays it 20–40 times, about 7–14 s at
+  +0.35 s. The deployed TAP path is not measured.
+- *What the CLI sends through a gateway.* Full request bodies were recorded with a
+  local stub for both providers.
+  - With `ENABLE_TOOL_SEARCH` unset, Bedrock mode turns tool search on by default (12
+    tools, built-ins deferred). A gateway base URL turns it off, which is the P3b gate,
+    so 17 built-ins go in full (≈ 13k tokens).
+  - With the variable set to `false` in both modes, the gateway request still carries
+    `DesignSync` (9.3k chars), `Monitor` (7.7k), `PushNotification` (1.8k) and
+    `WebSearch` (1.9k), which Bedrock mode omits: about 5.5k tokens per call. The
+    system prompt is the same size (28.2k chars) in both.
+  - The prototype's `DISALLOWED_TOOLS` (`apps/server/dev/p1/options.py`) already denies
+    `WebSearch` but not the other three. On the v1.5.0 fallback (tool search off) they
+    ride on every call. With tool search on they would be deferred.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
