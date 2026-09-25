@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_014",
+    "skill": "conflict-resolution",
+    "name": "Fetch the naming system from the wiki before ruling on a patronymic identity conflict",
+    "type": "positive",
+    "description": "An 1875 Norwegian census entry for 'Anders Pedersen', age 7, matches the subject Anders Hansen (b. ~1868 Ringsaker) on given name, age and district — but the patronymic differs. Tests whether the skill runs the identity-conflict pre-work block and calls wiki_read on Norway_Naming_Customs before ruling, rather than applying a remembered Scandinavian rule. The page supplies both halves the SKILL.md no longer hardcodes: that Norwegian patronymics encode the father's given name, and when fixed surnames displaced them (end of the 19th century; first naming law 1923), which is what places an 1875 record inside the patronymic era and makes the mismatch a different-father signal.",
+    "tags": [
+      "identity-conflict",
+      "patronymic",
+      "naming-from-wiki"
+    ]
+  },
+  "input": {
+    "user_message": "An 1875 Norway census entry for an Anders Pedersen, age 7, in the same district keeps coming up as a match for my Anders Hansen (assertions a_001 and a_002). Same given name, same age, same place — but the patronymic is different. Are these the same person? Analyse the identity conflict and either resolve it or say what would decide it.",
+    "scenario": "norwegian-patronymic-conflict-link"
+  },
+  "judge_context": [
+    "Must call wiki_read on a {Country}_Naming_Customs URL — Norway_Naming_Customs — BEFORE ruling on the patronymic. The skill's identity-conflict step opens with an unconditional pre-work block naming that fetch; applying a remembered Scandinavian -sen/-datter rule without the call fails Tool Arguments, even if the conclusion happens to be right. The rule was deliberately removed from SKILL.md (issue #2254) precisely so that a correct answer reached without the fetch is not credited.",
+    "The ruling must use BOTH halves of what the page supplies: that a Norwegian patronymic encodes the father's given name (so Hansen and Pedersen name different fathers), AND that the system was still in use in 1875 — the page dates fixed surnames to the end of the 19th century and the first naming law to 1923. A conclusion that cites the suffix rule but never establishes that the era was patronymic is incomplete, because the same mismatch after the changeover would carry no such implication.",
+    "The correct reading is that the patronymic mismatch is a different-person signal, not a spelling variant: the tree establishes the subject's father as Hans Olsen, so a son recorded as 'Pedersen' names a father Peder. Given name, age and district aligning does not outweigh it — that combination is common in a single Norwegian parish.",
+    "Should not resolve by asserting the census is simply mis-indexed without evidence. If the skill defers, the rationale must name what would decide it — the 1875 census image itself, a christening entry naming the father, or a household listing placing the boy with Hans Olsen.",
+    "A farm name is residence, not identity: if the skill reaches for one to explain the difference, it must say so rather than treating a farm surname as resolving the patronymic. Do not penalise the skill for NOT raising farm names — the scenario supplies none."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  },
+  "mcp_fixtures": [
+    "wiki-read-norway-naming-customs"
+  ]
+}
