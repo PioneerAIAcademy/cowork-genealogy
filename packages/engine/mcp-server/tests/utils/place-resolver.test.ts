@@ -366,6 +366,31 @@ describe("resolveStandardPlaceToPlaceId", () => {
       await resolveStandardPlaceToPlaceId("Gamma, Z (County)")
     ).toEqual({ kind: "unresolved" });
   });
+
+  it("returns unresolved when a single-candidate pool has a non-matching (Type) suffix", async () => {
+    // Mora has one jurisdiction (Municipality). An agent sending
+    // "(Lutheran Parish)" must not silently resolve to the Municipality.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Mora, Kopparberg, Sweden", type: "Municipality", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Mora, Kopparberg, Sweden (Lutheran Parish)")
+    ).toEqual({ kind: "unresolved" });
+  });
+
+  it("returns unresolved when a real fullName ends in a parenthetical that parseTypeSuffix misreads", async () => {
+    // "Forfarshire (Angus)" is a real fullName (renamed county). The regex
+    // parses it as bareName="Forfarshire", type="Angus". The search for
+    // "Forfarshire" returns one entry whose fullName is "Forfarshire (Angus)",
+    // which does not match "Forfarshire" exactly, so exact is empty and the
+    // type filter returns unresolved rather than silently resolving the bare name.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "PBARE", fullName: "Forfarshire (Angus)", type: "County", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Forfarshire (Angus)")
+    ).toEqual({ kind: "unresolved" });
+  });
 });
 
 describe("empty / whitespace input short-circuits without a network search", () => {

@@ -97,8 +97,8 @@ function normalizeKey(s: string): string {
 }
 
 /** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
- *  `.+?` is deliberately non-greedy so the LAST parenthesised group is
- *  treated as the type, matching the format `describeCandidates` emits. */
+ *  The `\)\s*$` anchor together with `[^)]+` (which cannot cross a `)`)
+ *  is what forces the LAST parenthesised group to be treated as the type. */
 function parseTypeSuffix(
   input: string,
 ): { bareName: string; type: string } | null {
@@ -696,15 +696,9 @@ export async function resolveStandardPlaceToPlaceId(
   const pool = exact.length > 0 ? exact : entries.filter((e) => e.placeId);
   if (pool.length === 0) return { kind: "unresolved" };
 
-  const distinct = new Set(pool.map((e) => e.placeId as string));
-  if (distinct.size === 1) {
-    return { kind: "resolved", placeId: pool[0].placeId as string };
-  }
-
-  // Multiple distinct placeIds. If a type suffix was supplied, narrow the
-  // exact-fullName pool to entries of that type. Only the exact pool is
-  // filtered — the fallback pool can contain different places of the same
-  // type, and filtering it would silently resolve to the wrong jurisdiction.
+  // When the caller supplied a (Type) suffix, honour it before checking whether
+  // the pool is already unambiguous — a single-candidate pool of the wrong type
+  // must not resolve (issue #2886 review: Mora Municipality vs Lutheran Parish).
   if (parsed) {
     if (exact.length === 0) {
       // The bare name matched nothing exactly; the fallback pool must not be
@@ -719,6 +713,11 @@ export async function resolveStandardPlaceToPlaceId(
     }
     // Type matched zero entries, or still ambiguous even within the type.
     return { kind: "unresolved" };
+  }
+
+  const distinct = new Set(pool.map((e) => e.placeId as string));
+  if (distinct.size === 1) {
+    return { kind: "resolved", placeId: pool[0].placeId as string };
   }
 
   return { kind: "ambiguous", candidates: describeCandidates(pool) };
