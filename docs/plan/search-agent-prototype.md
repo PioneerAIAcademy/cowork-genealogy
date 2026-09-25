@@ -27,9 +27,9 @@ then held, and **background delegations turn out to be lost at every turn end, k
 not** — so the worker now forces delegations to the foreground (lead ruling), built the
 same day; **D17 PASSES** on the final run of
 2026-09-23 — criteria 1, 2 and 3 green on one valid run (see D17);
-**D18 run 2026-09-24** — both fixtures pass the fresh judge, at 3× and ~6.5× the
-harness's cost — a same-week harness run puts bagley at 1.37× — the second after two
-ceiling kills and a resume that held (see D18);
+**D18 run 2026-09-24** — both fixtures pass the fresh judge; against a same-week harness
+run on the same commit, bagley costs **1.37×** ($16.29 against $11.85), and paerai ~6.5× its
+three-day-old baseline after two ceiling kills and a resume that held (see D18);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -1867,20 +1867,24 @@ without whichever Bedrock refuses.
   **The runs, 2026-09-24**, on `main` at `2a553477f` (#2850, #2852 and #2859 in), after a
   fresh `make e2e-login`, the first launch with `PROTO_TOKEN_MIN_LIFE=480` so the token
   refreshed once at launch and never under a run, both with `ARGS="--ceiling-s 7200"`.
-  `proto-compare` graded both sides fresh (the fixture's Haiku judge, four calls):
+  `proto-compare` graded both sides fresh (the fixture's Haiku judge, four calls); the
+  bagley harness run of the same day, from the same commit, is the comparison to read —
+  the July column is kept because the gap between the two harness runs is the plugin's
+  (the same-week bullet below):
 
-  | | bagley harness | bagley proto | paerai harness | paerai proto |
-  |---|---|---|---|---|
-  | verdict, f1 | pass, true | pass, true | pass, true | pass, true |
-  | cost | $5.29 | $16.29 | $4.94 | ~$32.21 (list, off the transcript) |
-  | wall clock | 2,147 s | 5,151 s, 1 attempt | 1,903 s | >14,400 s, 3 attempts |
-  | tool calls / delegations | 93 / 4 | 317 / 21 | 140 / 8 | 517 / 46 |
-  | `project.status` | — | `completed` | — | `active` (probable proof written) |
+  | | bagley harness, 07-31 | **bagley harness, 09-24** | bagley proto | paerai harness, 09-21 | paerai proto |
+  |---|---|---|---|---|---|
+  | verdict, f1 | pass, true | pass, true | pass, true | pass, true | pass, true |
+  | cost | $5.29 | **$11.85** | $16.29 | $4.94 | ~$32.21 (list, off the transcript) |
+  | wall clock | 2,147 s | 4,544 s | 5,151 s, 1 attempt | 1,903 s | >14,400 s, 3 attempts |
+  | tool calls / delegations | 93 / 4 | 336 / 13 | 317 / 21 | 140 / 8 | 517 / 46 |
+  | `project.status` | — | — | `completed` | — | `active` (probable proof written) |
 
   **bagley** (`sess_be2d0eaf5ad44d8d`): one attempt, `nudges` 2, 0 reauth hits, the one
   deny a direct `Read` of `tree.gedcomx.json`, conclusion David Bagley at *probable*.
   `OPENROUTER_API_KEY` was not yet in `eval/.env`, so its two `image_transcribe` calls got
-  the no-key error and the model named image confirmation as blocked. **Why 3×**, read
+  the no-key error and the model named image confirmation as blocked. **Why 3× July's
+  run**, read
   off the transcript (`session_entries`, per message its last entry — the sums equal the
   `turns` row exactly): the main thread cost $6.38, the 21 subagents $9.44; output tokens
   are 464 k against 87 k, 360 k of them subagents' (`extraction_append` payloads). Most of
