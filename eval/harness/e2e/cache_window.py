@@ -29,8 +29,11 @@ subscription-run corpus, not against production.
 ## What the run log carries, and what it does not
 
 Per-call cache figures do not exist in a committed run. `usage.usage` is the
-SDK ResultMessage's run TOTAL (`cache_read_input_tokens`,
-`cache_creation_input_tokens`, and the `cache_creation` 5m/1h split); its
+SDK ResultMessage's MAIN-THREAD total (`cache_read_input_tokens`,
+`cache_creation_input_tokens`, and the `cache_creation` 5m/1h split) -- not the
+run's: on paerai-teupooihi-spouse's 2026-09-21 log it equals the `main` rows of
+`message_usage` exactly and the subagents add half as much again, so it is spread
+over main-thread calls only and a sub-thread gap is counted but not priced; its
 `iterations` array is a single entry in every run that carries it (138 of 163,
 measured 2026-09-11), not a per-call ledger; `subagents[].turns[]` carries
 `output_tokens` only. The orchestrator reads per-message usage off the stream
@@ -322,9 +325,13 @@ def analyze_run(doc: dict, *, fixture: str, run: str) -> RunRow | str:
     agnostic_gaps = sum(
         1 for a, b in zip(assistant_times, assistant_times[1:]) if b - a > CACHE_TTL_S
     )
-    lost_avg = cache_read * len(lost) / len(calls) if calls else 0.0
-    total_weight = sum(c.depth + BASE_PREFIX_CALLS for c in calls)
-    lost_weight = sum(c.depth + BASE_PREFIX_CALLS for c in lost)
+    # `cache_read` is the main thread's alone (the module docstring), so it is spread
+    # over main-thread calls only; a sub-thread gap is counted above but not priced.
+    main_calls = [c for c in calls if c.thread == "main"]
+    main_lost = [c for c in lost if c.thread == "main"]
+    lost_avg = cache_read * len(main_lost) / len(main_calls) if main_calls else 0.0
+    total_weight = sum(c.depth + BASE_PREFIX_CALLS for c in main_calls)
+    lost_weight = sum(c.depth + BASE_PREFIX_CALLS for c in main_lost)
     lost_grow = cache_read * lost_weight / total_weight if total_weight else 0.0
 
     cost = usage.get("total_cost_usd")
