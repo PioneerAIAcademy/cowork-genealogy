@@ -1006,6 +1006,33 @@ so it pays more. The four gateway-only built-ins of P3g are not in these figures
 `DISALLOWED_TOOLS` still lacked three of them when this ran. PR #2919 adds them, and
 search-fulltext-agentgateway #7 removes `debug_vars` so the test bed streams.
 
+**P3j — measured 2026-09-25 on local v1.5.0 with TAP's `/bedrock` route as shipped: the
+1M window and images work, resume works, and the 1-hour cache TTL does not survive.**
+- *1M window.* Through a gateway the CLI strips `[1m]` from
+  `us.anthropic.claude-sonnet-4-6[1m]` and sends `context-1m-2025-08-07`, which is on
+  v1.5.0's allowlist. It reports `contextWindow` 1,000,000 with the suffix and 200,000
+  without, and both calls returned 200. Bedrock accepted a 269,029-token prompt with no
+  beta at all and answered correctly, so the 200k limit is the CLI's own sizing, which
+  sets when it compacts. PR #2920 now sends the suffix, as `BEDROCK_MODEL` does.
+- *Images in a tool result.* An `image_read`-shaped `tool_result` carried a PNG scan
+  (the 1888 Brooklyn directory page from an e2e fixture) and a text part. It returned
+  200 plain and streamed (`text/event-stream`), 2,085 input tokens. The model read the
+  page correctly (page 466, the MUL… surnames, no Munson entry), checked against the
+  image.
+- *Resume.* Two turns with `--resume`, default adaptive thinking and the genealogy MCP.
+  Turn 2's requests resent turn 1's thinking blocks with their signatures (2 blocks,
+  both signed) and returned 200, with correct answers. That is `--resume` from the
+  CLI's on-disk transcript, not from the worker's Postgres store.
+- *1-hour TTL.* The CLI marks every cache point `ttl: "1h"` and sends
+  `extended-cache-ttl-2025-04-11` under `ENABLE_PROMPT_CACHING_1H=1`. That flag is not
+  on the allowlist, and v1.5.0's `CachePointBlock` has only a `type`, so each point
+  becomes Bedrock's 5-minute default. Measured: the write at 13:45:40 and the read 1 s
+  later hit; the call at 13:52:23 (6m43s) rewrote all 7,214 tokens and read 0. v1.6.0-
+  alpha.2 and `main` have the same struct, and upstream agentgateway #3670 ("cache_control
+  ttl is ignored, always falls back to 5m") is open. So a patron's pause over five
+  minutes costs a full cache write on any agentgateway today. That is R2 through the
+  gateway, whatever TAP's version.
+
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
 pinned CLI and confirmed from its debug log, never measured against Bedrock; the other
