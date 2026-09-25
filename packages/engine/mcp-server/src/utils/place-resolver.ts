@@ -96,6 +96,17 @@ function normalizeKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
+ *  The `\)\s*$` anchor together with `[^)]+` (which cannot cross a `)`)
+ *  is what forces the LAST parenthesised group to be treated as the type. */
+function parseTypeSuffix(
+  input: string,
+): { bareName: string; type: string } | null {
+  const match = /^(.+?)\s*\(([^)]+)\)\s*$/.exec(input);
+  if (!match) return null;
+  return { bareName: match[1].trim(), type: match[2].trim() };
+}
+
 /**
  * Best single year for a free-text fact date, for the `+date:` qualifier.
  * Reuses the existing date pipeline (`stdDate` -> `earliestYear`) rather than
@@ -655,30 +666,61 @@ function describeCandidates(pool: SearchEntry[]): string[] {
  * jurisdiction — worse than refusing, because nothing downstream can tell.
  * Callers that fan out over all reps (volume_search, place_population) rely on
  * that. See plan §11.
+ *
+ * Accepts the `fullName (Type)` disambiguation grammar the ambiguity error
+ * prints: the `(Type)` suffix is stripped before searching (so it never
+ * reaches FamilySearch) and used to filter the exact-fullName pool by type.
  */
 export async function resolveStandardPlaceToPlaceId(
   standardPlace: string,
   opts: ResolveOpts = {},
 ): Promise<PlaceIdResolution> {
+  // If the input carries a "(Type)" suffix, strip it before searching — the
+  // parentheses would corrupt the FamilySearch name query.
+  const parsed = parseTypeSuffix(standardPlace);
+  const searchName = parsed ? parsed.bareName : standardPlace;
+
   let entries: SearchEntry[];
   try {
-    entries = await getSearchEntries(standardPlace, opts.contextName);
+    entries = await getSearchEntries(searchName, opts.contextName);
   } catch {
     return { kind: "unresolved" };
   }
 
-  const target = normalizeKey(standardPlace);
+  // target must use the bare name so exact-match filtering works for both
+  // suffixed and unsuffixed inputs.
+  const target = normalizeKey(searchName);
   const exact = entries.filter(
     (e) => normalizeKey(e.fullName) === target && e.placeId,
   );
   const pool = exact.length > 0 ? exact : entries.filter((e) => e.placeId);
   if (pool.length === 0) return { kind: "unresolved" };
 
-  const distinct = new Set(pool.map((e) => e.placeId as string));
-  if (distinct.size > 1) {
-    return { kind: "ambiguous", candidates: describeCandidates(pool) };
+  // When the caller supplied a (Type) suffix, honour it before checking whether
+  // the pool is already unambiguous — a single-candidate pool of the wrong type
+  // must not resolve (issue #2886 review: Mora Municipality vs Lutheran Parish).
+  if (parsed) {
+    if (exact.length === 0) {
+      // The bare name matched nothing exactly; the fallback pool must not be
+      // type-filtered (it can contain unrelated places of the same type).
+      return { kind: "unresolved" };
+    }
+    const typeKey = normalizeKey(parsed.type);
+    const typed = exact.filter((e) => normalizeKey(e.type) === typeKey);
+    const typedDistinct = new Set(typed.map((e) => e.placeId as string));
+    if (typedDistinct.size === 1) {
+      return { kind: "resolved", placeId: typed[0].placeId as string };
+    }
+    // Type matched zero entries, or still ambiguous even within the type.
+    return { kind: "unresolved" };
   }
-  return { kind: "resolved", placeId: pool[0].placeId as string };
+
+  const distinct = new Set(pool.map((e) => e.placeId as string));
+  if (distinct.size === 1) {
+    return { kind: "resolved", placeId: pool[0].placeId as string };
+  }
+
+  return { kind: "ambiguous", candidates: describeCandidates(pool) };
 }
 
 /**

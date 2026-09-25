@@ -280,7 +280,7 @@ safety net; persistence belongs to the record-extractor agent's tools.
 - **No searching** — search-records / search-external-sites find
   records; this skill processes ones already found or provided.
 - **No citation polishing** — the agent writes working citations; the
-  citation skill refines them.
+  citation agent refines them.
 
 ## Re-invocation behavior
 

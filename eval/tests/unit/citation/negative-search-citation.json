@@ -10,11 +10,12 @@
       "myheritage",
       "nil-result",
       "log_003",
-      "citation-of-absence"
+      "citation-of-absence",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I need to document the MyHeritage nil result from log_003 as a proper citation so it's on record that I searched there.",
+    "delegation": "Document the MyHeritage nil result recorded as log_003 as a proper citation, so the search is on record.\n\nlogId: log_003\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

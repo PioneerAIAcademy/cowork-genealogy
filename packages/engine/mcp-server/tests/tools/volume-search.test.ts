@@ -810,7 +810,7 @@ describe("volumeSearchTool", () => {
         LOCAL
       )
     ).rejects.toThrow(
-      /matches more than one place: Franklin, Virginia, United States \(County\); Franklin, Virginia, United States \(Independent City\)\./
+      /matches more than one place: Franklin, Virginia, United States \(County\); Franklin, Virginia, United States \(Independent City\)\..*including the parenthesised type/
     );
     expect(mockFetch).not.toHaveBeenCalled();
   });
