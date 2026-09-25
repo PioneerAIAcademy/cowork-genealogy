@@ -250,7 +250,10 @@ Sequence:
 This yields the never-invalid guarantee. Known minor: a crash between steps 2 and 4
 can leave an orphan sidecar (written, not yet referenced on disk); the next
 `validate_research_schema` surfaces it as an orphan error, and a re-run is safe
-(the tool allocates a fresh `log_id`). Acceptable for v1; an in-memory-sidecar
+(the tool allocates a fresh `log_id`). Likewise, on the file backend a crash
+between the step-4 commit and the staged-file removal leaves a staged file whose
+search is already logged; `unloggedStagedSearches` then reports it as unlogged, and
+logging it again would write a duplicate entry. Acceptable for v1; an in-memory-sidecar
 validation path (validate before any disk write) is the future cleanup.
 
 **Validation cost.** Step 3 runs the *full* project validator, and `validateSidecars`
