@@ -16,7 +16,8 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
-    "same-person-flynn-strong"
+    "same-person-flynn-strong",
+    "same-person-flynn-weak"
   ],
   "judge_context": [
     "person-evidence should call same_person in the project-relative form (projectPath, assertionId a_001, treePersonId naming the candidate); the tool resolves the record and builds the tree subset itself",
