@@ -237,7 +237,7 @@ redundancy — SDK plugin loading registers agents **only** under the namespaced
 name `genealogy-research:<agent>`, while every SKILL.md delegates by the bare
 name (`@plugin:record-extractor`), so without the staging the Task call errors
 and the model silently falls back to a general-purpose stand-in that binds none
-of the `tools:`/`disallowedTools:` below (issue #939; skills are unaffected —
+of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
 what the runtime actually resolved, and no CI job covers this path.
@@ -263,11 +263,11 @@ Which spelling a Cowork session exposes has been **observed to move**: three
 censuses found every genealogy tool under
 `mcp__remote-devices__Genealogy_Research__…` ("via your device") with the
 bare `mcp__Genealogy_Research__…` spelling absent — macOS and Windows on
-2026-08-15, and a second Windows session via issue #1732 on 2026-08-19 — yet
-issue #1341 recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
+2026-08-15, and a second Windows session on 2026-08-19 — yet
+an earlier census recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
 bridged spelling among its *unrecognized* entries. The registrar moved
 between those dates (or the configurations differ in a way nobody has
-identified — same conclusion). **Run mode is a per-task setting nothing in
+identified — same conclusion; ADR-0004 keeps the dated census records). **Run mode is a per-task setting nothing in
 the plugin can see, and the spelling exposed is not stable over time.** No
 single spelling resolves everywhere; listing all three is insurance against a
 moving target, not defensive redundancy.
@@ -354,7 +354,7 @@ prefix rather than slicing it against another prefix's length.
 
 **No CI job can verify that a granted tool actually binds.** Only a
 live Cowork session can, and only for the spelling that session exposes — the
-bare form was live in #1341 but absent in the later censuses, so a green check
+bare form was live on 2026-08-04/05 but absent in the later censuses, so a green check
 proves binding for one spelling at one moment, not in general.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
@@ -416,7 +416,7 @@ Three architectural rules made this design necessary:
   `~/.cowork-genealogy/` to write to.
 - **No shared SKILL.md reference loading.** Claude Code's relative-
   path resolution from SKILL.md is unreliable (upstream Claude Code issue
-  #17741). Shared
+  claude-code#17741). Shared
   reference docs across skills are duplicated, not linked from a
   `packages/engine/plugin/references/` location.
 - **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are

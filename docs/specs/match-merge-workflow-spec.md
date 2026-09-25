@@ -9,7 +9,7 @@
 > (pre-merge, "what-if") warnings entry point — plus the data-model additions
 > that capability needs.
 >
-> **Superseded on the write path (2026-07-18, `#701`).** The monolithic "fold
+> **Superseded on the write path (2026-07-18).** The monolithic "fold
 > the candidate document" step is **rewired to the per-persona
 > `materialize_facts` flow** (`tree-materialization-spec.md` §3-§4, §9), and the
 > coherence gate's **invocation owner moves from proof-conclusion to
@@ -27,8 +27,8 @@
 > `simplified-gedcomx-spec.md`, and the skill specs under
 > `packages/engine/plugin/skills/`.
 >
-> Warnings behavior is ported from FamilySearch's `MobWarnings.java` (attached
-> to Issue #250 as the authoritative reference). §7 and §16 map every ported
+> Warnings behavior is ported from FamilySearch's `MobWarnings.java`, the
+> authoritative reference. §7 and §16 map every ported
 > check back to it.
 
 The goal is one reviewable description of how a found record becomes correct
@@ -441,7 +441,7 @@ Each addition updates the **three** places per the repo rule:
 
   **Phase 0 finding (resolved — no schema change needed).** Census collection
   titles already live in the top-level `SimplifiedGedcomX.sources[].title`
-  (`SimplifiedSourceDescription`, `gedcomx.ts:161`), populated by
+  (`SimplifiedSourceDescription` in `src/types/gedcomx.ts`), populated by
   `simplifySourceDescription` from the raw `titles[0].value`. They are reached
   via a `ref → id` join from the anchor's source references — on the **record**
   side typically `person.sources[]`, on the **tree** side typically
@@ -581,7 +581,7 @@ the cost of maintaining reversibility metadata.
 Settled with Dallan over 2026-06-21; recorded so implementation doesn't
 re-litigate.
 
-> **Superseded on the write path (`#701`, 2026-07-18):** decision (8)'s
+> **Superseded on the write path (2026-07-18):** decision (8)'s
 > `merge_warnings`-mirrors-`merge_record_into_tree` design note still stands (the
 > tool is retired only in a later phase), but (9) "whole-fold default" is
 > replaced by the per-persona `materialize_facts` flow and (5)'s stub carry-in is
