@@ -5,7 +5,7 @@
  * MIS-INDEXING of the rare name into the same low-count bucket — which would
  * make `totalMatches` alone an unreliable commonality signal?
  *
- * Three legs, the same shape (surname + givenName + birthPlace + a ~10-year
+ * Four legs, the same shape (surname + givenName + birthPlace + a ~10-year
  * birthYearFrom/birthYearTo range), each run under four increasingly strict
  * flag settings:
  *
@@ -20,6 +20,11 @@
  *                     (folds it into the same low-count bucket), which would
  *                     make a low totalMatches ambiguous between "this name is
  *                     genuinely rare" and "this name is mis-indexed".
+ *   LEG control    — John Wigglesworth, same place/years as LEG rare. An
+ *                     unrelated common given name on the same rare surname.
+ *                     If control returns the same counts as rare, the given
+ *                     name is being ignored under fuzzy matching and the
+ *                     82x separation is surname+place, not name commonality.
  *
  *   SETTING 1 — all fuzzy: no `*Exact` flag at all.
  *   SETTING 2 — `surnameExact: true` only.
@@ -48,7 +53,7 @@
  * Run:  npx tsx dev/probe-name-commonality.ts
  * Needs a live FamilySearch token — run the `login` tool (or `make
  * e2e-login`) first. `getValidToken(LOCAL)` is called once up front purely to
- * fail fast with one clear message before 12 live search calls;
+ * fail fast with one clear message before 16 live search calls;
  * `recordSearchTool` re-checks it on every call regardless.
  */
 
@@ -91,6 +96,15 @@ const MISINDEXED: Leg = {
   label: "mis-indexed — Alorze Wigglesworth",
   surname: "Wigglesworth",
   givenName: "Alorze",
+  birthPlace: "Schuylkill, Pennsylvania, United States",
+  birthYearFrom: 1845,
+  birthYearTo: 1855,
+};
+
+const CONTROL: Leg = {
+  label: "control — John Wigglesworth",
+  surname: "Wigglesworth",
+  givenName: "John",
   birthPlace: "Schuylkill, Pennsylvania, United States",
   birthYearFrom: 1845,
   birthYearTo: 1855,
@@ -245,7 +259,7 @@ function printComparison(title: string, comparisons: Comparison[]): void {
 }
 
 async function main(): Promise<void> {
-  // Fail fast with one clear message before 12 live calls; recordSearchTool
+  // Fail fast with one clear message before 16 live calls; recordSearchTool
   // re-checks this per call regardless (defense in depth, not redundant dead
   // code — see the header comment).
   await getValidToken(LOCAL);
@@ -255,12 +269,14 @@ async function main(): Promise<void> {
   const commonRow = await runLeg(COMMON);
   const rareRow = await runLeg(RARE);
   const misindexedRow = await runLeg(MISINDEXED);
+  const controlRow = await runLeg(CONTROL);
 
   console.log("\nrecord_search totalMatches — issue #2554 name-commonality probe\n");
   printTable([
     { leg: COMMON, cells: commonRow },
     { leg: RARE, cells: rareRow },
     { leg: MISINDEXED, cells: misindexedRow },
+    { leg: CONTROL, cells: controlRow },
   ]);
 
   // ---- Verdict 1: does totalMatches separate common from rare? ----------
@@ -294,6 +310,7 @@ async function main(): Promise<void> {
             .join(", ")})`
         : "  -> MIS-INDEXING SEPARATED",
   );
+
   console.log("");
 }
 
