@@ -28,21 +28,53 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 21, `hint-samples.csv` row 640,
-flag `adds_spouse,adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929", a birth entry of 30 August 1883 at Genova for Maria Clementina Angelica Gentile Dondero, naming parents Pietro Dondero and Carmela Cavagnaro.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Pietro Dondero as her husband and the 1883 daughter as hers, plus a `required` finding that the report documents
-the rejection.
+**Adjudicated: the hint is a false match** (spec §3.6 outcome (c) — no findable
+substitute). Researched on familysearch.org by hand; retrieval was not
+tool-assisted. Second opinion given by **Ikennaya Mbadiwe**, as issue #2314
+requires for this fixture.
 
-The name fits and the age is the question. The subject's own third given name is Carmela and her surname is Cavagnaro, so "Carmela Cavagnaro" is a form she could plausibly be registered under, and the family's records are Genovese throughout even though she was born in Lima. But a daughter born 30 August 1883 makes her **17** at the birth — legal and not rare in 1880s Liguria, yet young enough that it has to be established rather than assumed, and no marriage to a Dondero appears anywhere in the tree.
+The hint record is `ark:/61903/1:1:6BHW-1HG3` — "Italia, Genova, Genova, Stato
+Civile (Tribunale), 1866-1929", a birth entry of 30 August 1883 at Genova for
+Maria Clementina Angelica Gentile Dondero, naming parents Pietro Dondero and
+Carmela Cavagnaro. That ark appears nowhere else in this fixture folder, so it is
+recorded here for the next reader.
 
-The weight against is that Carmela Cavagnaro is an ordinary Ligurian name in the one city where the surname is commonest. The index gives the mother no age, no patronymic and no birthplace, so nothing in the hint itself distinguishes this Carmela from any other.
+**What decided it.** The civil marriage entry for Pietro Dondero and Carmela
+Cavagnaro (`ark:/61903/1:1:X3TM-QPSS`) identifies the Carmela Cavagnaro who was
+Pietro Dondero's wife, and she is not the subject. The 1883 birth entry belongs
+to that couple. The hint rests on name alone: its index gives the mother no age,
+no patronymic and no birthplace, and "Carmela Cavagnaro" is an ordinary Ligurian
+name in the one city where the surname is commonest — so nothing in the hint
+itself distinguishes this Carmela from any other. The subject's own third given
+name being Carmela is what drew the match, and it is not enough.
 
-The reviewer should also resolve a defect in the tree first: the subject is given **two sets of parents** — Giuseppe Cavagnaro and Maddalena Boitano, and Angelo Vaglio and Maria Fereccio — with no indication which is right, and one of the tree's four sources belongs to a Paolo Andrea Vaglio. Until that is settled the tree cannot be used to confirm or refute anything about her.
+**What was searched and came up empty.** Genova birth records were searched for
+an entry linking Giuseppe Andrea Cavagnaro to Matilde Carmela Emanuela
+Cavagnaro; no record was found. So the Carmela Cavagnaro of the Dondero marriage
+cannot be tied to the subject on parentage, and no substitute answer — a real
+husband or a real 1883 child for Matilde — was found to put in the hint's place.
+That absence is why this is outcome (c) rather than (b).
 
-Note for the corpus: the batch CSV labels this row Peru because she was born in Lima; every record involved is Genovese.
+**Parentage, resolved.** The subject's parents are **Giuseppe Cavagnaro and
+Maddalena Boitano** (`G9WF-FJQ` / `G4Z4-RJM`), the couple married 28 Apr 1853 at
+Favale di Malvaro. The second parent set in the starting tree — Angelo Vaglio
+(`PQWR-XH7`) and Maria Fereccio (`PQWR-QB9`), who carry no facts at all — is a
+mis-attachment. Three of the tree's four sources (`7PM9-ZQP`, `7PM9-W4L`,
+`7PM9-W5S`) are titled for the subject but index the same entry for *Paolo Andrea
+Vaglio and Angelo, 26 Jul 1900*, and that is what dragged the Vaglio couple onto
+her. The one source that genuinely cites her is `SYXS-SC8`
+(`ark:/61903/1:1:QVR6-Q9DC`), the 20 May 1866 Genova entry naming her with
+Giuseppe Cavagnaro. **Nothing was corrected upstream** — the live FamilySearch
+tree was deliberately left untouched so `starting-tree.gedcomx.json` and
+`unstripped-tree.gedcomx.json` stay byte-identical and `snapshot --check` can
+still audit drift.
+
+**On the age question.** Issue #2314 asked whether the subject was 16 or 17 on 30
+August 1883, since her tree birth fact is year-only (`1866`). The call did not
+turn on it: identity was settled on the marriage entry, not on whether a birth at
+17 was plausible. If `SYXS-SC8` is read as her birth registration she was 17y3m,
+which would have been legal and unremarkable in 1880s Liguria — so age was never
+going to disprove the hint on its own, and it is left unsettled here.
+
+Note for the corpus: the batch CSV labels this row Peru because she was born in
+Lima; every record involved is Genovese.
