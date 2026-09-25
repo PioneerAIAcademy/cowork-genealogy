@@ -409,7 +409,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for two things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; and a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Note for them: `tool-search-tool-2025-10-19` in the default Bedrock beta allowlist (read in v1.4.1 source) is a 400 on Converse.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for three things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f); and a `modelAliases` entry `claude-sonnet-4-6: us.anthropic.claude-sonnet-4-6`, the id seven plugin agents declare, without which every subagent delegation fails and the turn silently falls back to a general-purpose stand-in (P3h). Note for them: `tool-search-tool-2025-10-19` in the default Bedrock beta allowlist (read in v1.4.1 source) is a 400 on Converse.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -952,6 +952,30 @@ and a gateway session sends four tools a Bedrock-mode session does not.**
   - The prototype's `DISALLOWED_TOOLS` (`apps/server/dev/p1/options.py`) already denies
     `WebSearch` but not the other three. On the v1.5.0 fallback (tool search off) they
     ride on every call. With tool search on they would be deferred.
+
+**P3h — measured 2026-09-25: through TAP's aliases, plugin subagents cannot start, and
+the turn still reports success.** The run used the prototype's own option set
+(`dev.p1.options.build_prototype_options(store=None)`: plugin, staged agents, genealogy
+MCP, `ENABLE_TOOL_SEARCH=true`, `DISALLOWED_TOOLS`) with `dev.p1.driver`'s
+`FIXTURE_MESSAGE` (record-extraction of the inline 1850 Flynn household). The project
+was `empty-project-just-created`, the main model `us.anthropic.claude-sonnet-4-6`, and
+the gateway local v1.6.0-alpha.2 with TAP's `/bedrock` route. Seven plugin agents
+declare `model: claude-sonnet-4-6` and `gps-mentor` declares `claude-sonnet-5`. TAP
+aliases `claude-sonnet-5` but not `claude-sonnet-4-6`, and the CLI sends a subagent's
+frontmatter id verbatim.
+
+| Aliases | record-extractor | What did the extraction | Result | Cost, time |
+|---|---|---|---|---|
+| TAP's as shipped | 3 × `400 The provided model identifier is invalid` | a `general-purpose` stand-in (hook `agent_type`), with validator refusals on sources and `record_persona_id` along the way | reported "fully extracted … 22 assertions" | $1.82, 612 s |
+| + `claude-sonnet-4-6: us.anthropic.claude-sonnet-4-6` | ran, bound (hook `agent_type: record-extractor`), one `extraction_append` accepted | record-extractor | 19 assertions, 1 source, 1 log entry | $0.71, 197 s |
+
+The first row is issue #939's failure: a stand-in that binds none of the agent's
+`tools:`. It arrives by a different road, the model id rather than the agent's name,
+and nothing in the final answer shows it. Both rows had one refusal of the main
+thread's `research_log_append` note (the pre-1880 census relationship rule), which is
+unrelated to the gateway. So the gateway needs an alias for every model id a plugin
+agent declares. The alternative is agents that declare an alias the CLI resolves
+through `ANTHROPIC_DEFAULT_SONNET_MODEL`, which ours do not.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
