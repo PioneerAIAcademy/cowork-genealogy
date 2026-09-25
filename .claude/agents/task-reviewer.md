@@ -107,8 +107,10 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
       cards will cite, an ADR or spec rule change.
    3. Adds surface that is hard to reverse: a persisted `research.json` or tree
       field, an MCP tool parameter, a manifest shape.
-   4. Contradicts or reinterprets an earlier lead ruling, or the two nearest
-      rulings point opposite ways.
+   4. Contradicts or reinterprets an earlier lead ruling whose premises still
+      hold, or the two nearest rulings point opposite ways. If a fact a ruling
+      rested on is now false, name the fact: the ruling no longer binds, and the
+      fork is judged on the current facts like any other.
 
    A fork whose every live option is $0, reversible, precedent-free and clear of
    any prior ruling is not a decision, however well argued the alternatives are.
@@ -120,7 +122,8 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
    The verdict is then `ready` or `ready-after-edit`, not `needs-a-decision`.
 
    **Before escalating, grep the issue's comments for `Ruling` and `Decision`.**
-   A question already ruled in a comment is applied, not re-asked.
+   A question already ruled in a comment is applied, not re-asked, unless a fact
+   it rested on has since changed. Then re-ask, naming the change.
 
    What passes the four-way test → verdict `needs-a-decision`, written to the
    **For the lead** contract below. Do not promote it.
@@ -225,8 +228,9 @@ That last item is the point of the section: the answer comes back "B", and
 applying it is a splice by someone who did not do the reading — because by then
 you are gone, and so is the caller.
 
-Each option's body text records **the decision and the alternative it beat**, in
-one clause — this repo keeps three "do not re-derive" ledgers because settled
+Each option's body text records **the decision, the alternative it beat, and the
+one or two facts it rests on**, in one clause, as `Decided (<who>, <date>)`, where
+<who> is filled in by whoever records the answer — this repo keeps three "do not re-derive" ledgers because settled
 questions get re-opened, and a body stating only the winner invites it again.
 
 **But keep the reasoning out of the issue.** Name the destination it belongs in
