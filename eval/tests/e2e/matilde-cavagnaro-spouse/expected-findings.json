@@ -4,36 +4,36 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Matilde Carmela Emanuela Cavagnaro (PID G4Z4-RJ1, b. 1866, Lima, Peru, daughter of Giuseppe Cavagnaro and Maddalena Boitano) married Pietro Dondero, or that Maria Clementina Angelica Gentile Dondero, born 30 August 1883 at Genova, was her daughter. The evidence does not support it. The hint rests on name alone: the 1883 index gives its mother no age, no patronymic and no birthplace, so it distinguishes this Carmela Cavagnaro from any other, and the name recurs in the district — a further Carmela Cavagnaro was born 14 July 1897 at Lorsica to a different Giuseppe Cavagnaro and a Maria Cavagnaro. Pietro Dondero and Carmela Cavagnaro were a settled Genovese couple still producing children in 1891, and nothing ties that Carmela to a woman born in Lima in 1866 and recorded at Lorsica and Favale di Malvaro. No marriage, and no other record, links the subject to Pietro Dondero. Pass = the agent's final tree.gedcomx.json contains no spouse Pietro Dondero and no daughter Maria Clementina Angelica Gentile Dondero for this subject. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Matilde Carmela Emanuela Cavagnaro (PID G4Z4-RJ1, b. 20 May 1866, daughter of Giuseppe Cavagnaro and Maddalena Boitano) married Pietro Dondero, or that Maria Clementina Angelica Gentile Dondero, born 30 August 1883 at Genova, was her daughter. The subject's own documented marriage is to Paolo Andrea Vaglio: the Genova civil registration for that marriage names the bride as Matilde Carmela Emanuela Cavagnaro, daughter of Giuseppe Cavagnaro and Maddalena Boitano, and her parents, birth year and birthplace all match the tree person — a strong identification. The Carmela Cavagnaro who bore Pietro Dondero's children is a different woman: she was married to Dondero and had multiple children by him across many years, including the 1883 daughter of the hint record and a son, Attilio Omero Dondero, born 31 May 1891, and some records name her Carmela Rosa Cavagnaro. The hint record identifies its mother only indirectly — its index gives her no age, no patronymic and no birthplace — and the name recurs in the district. Pass = the agent's final tree.gedcomx.json contains no spouse Pietro Dondero and no daughter Maria Clementina Angelica Gentile Dondero for this subject. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Matilde Carmela Emanuela Cavagnaro (G4Z4-RJ1)",
         "relation": "spouse",
         "wrong_candidate": {
-          "name": "Pietro Dondero, husband of a Carmela Cavagnaro at Genova",
-          "note": "The Carmela Cavagnaro who bore Pietro Dondero's children at Genova is identified in the records only by name; nothing in them ties her to the subject, and the name recurs in the district."
+          "name": "Pietro Dondero, husband of Carmela Rosa Cavagnaro at Genova",
+          "note": "A different woman from the subject. The subject's documented marriage is to Paolo Andrea Vaglio, on a record naming her parents as Giuseppe Cavagnaro and Maddalena Boitano; the Dondero household is a separate family with children spanning at least 1883-1891."
         },
         "wrong_child": {
           "name": "Maria Clementina Angelica Gentile Dondero, born 30 August 1883 at Genova",
-          "note": "Daughter of Pietro Dondero and a Carmela Cavagnaro whose identity the index does not fix; not shown to be a child of the subject."
+          "note": "Daughter of Pietro Dondero and Carmela Rosa Cavagnaro, not of the subject."
         }
       },
       "supporting_sources": [
-        "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929 — the hint record: birth entry for Maria Clementina Angelica Gentile Dondero, 30 Aug 1883, Genova, naming parents Pietro Dondero and Carmela Cavagnaro (ark:/61903/1:1:6BHW-1HG3). Examined directly: the index gives the mother no age, no patronymic and no birthplace, so it identifies her by name alone",
-        "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929 — birth entry for Attilio Omero Dondero, 31 May 1891, a further child of Pietro Dondero and Carmela Cavagnaro (ark:/61903/1:1:X3TM-QPSS); its index likewise carries no identifying detail for the mother, and it places the couple at Genova as a settled family through 1891",
-        "Birth entry for a Carmela Cavagnaro, 14 Jul 1897, Lorsica, Genova, Liguria, daughter of Giuseppe Cavagnaro and Maria Cavagnaro — a distinct woman of the same name in the same district, born too late to be the 1883 mother, showing the name is not a discriminator",
-        "Italia, Genova, Stato Civile (Archivio di Stato), 1796-1812, 1838-1859, 1866-1899 — entry for Matilde Carmela Emanuela Cavagnaro and Giuseppe Cavagnaro, 20 May 1866 (ark:/61903/1:1:QVR6-Q9DC) — the subject's own attached source, and the only one of the four attached to her that cites her"
+        "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929 — civil registration of the marriage of Matilde Carmela Emanuela Cavagnaro, daughter of Giuseppe Cavagnaro and Maddalena Boitano, to Paolo Andrea Vaglio (ark:/61903/1:1:X3L8-MFLR) — the disproving record: it identifies the subject's own marriage, and the parents and birth year it names match the tree person",
+        "Italia, Genova, Stato Civile (Archivio di Stato), 1796-1812, 1838-1859, 1866-1899 — birth entry for Matilde Carmela Emanuela Cavagnaro, 20 May 1866, Genova, with Giuseppe Cavagnaro (ark:/61903/1:1:QVR6-Q9DC) — fixes the subject's own birth date and parentage",
+        "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929 — the hint record: birth entry for Maria Clementina Angelica Gentile Dondero, 30 Aug 1883, Genova, naming parents Pietro Dondero and Carmela Cavagnaro (ark:/61903/1:1:6BHW-1HG3); its index gives the mother no age, no patronymic and no birthplace, identifying her only indirectly",
+        "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929 — birth entry for Attilio Omero Dondero, 31 May 1891, a further child of Pietro Dondero and Carmela Cavagnaro (ark:/61903/1:1:X3TM-QPSS) — one of several across many years, showing the Dondero household as a distinct, settled family"
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having examined the hint record and the further Dondero birth entry against the sources already attached to the subject, the agent should document a negative/rejected conclusion in research.json: the 30 August 1883 Genovese birth entry is not shown to concern Matilde Carmela Emanuela Cavagnaro, and no record establishes a marriage between her and Pietro Dondero or any child of that union. The conclusion should rest on the identification failing — the index fixes the mother by name alone, and the name recurs in the district — rather than on the hint simply being unverified.",
+      "description": "Having identified the subject's own marriage to Paolo Andrea Vaglio and compared it with the Dondero family of the hint record, the agent should document a negative/rejected conclusion in research.json: the 30 August 1883 Genovese birth entry does not concern Matilde Carmela Emanuela Cavagnaro, whose documented husband was Paolo Andrea Vaglio, and no record establishes a marriage between her and Pietro Dondero or any child of that union. A conclusion that merely reports the hint as unverified does not satisfy this finding — the agent must reach the positive identification of the subject's own marriage, which is what separates the two women.",
       "details": {
         "subject_person": "Matilde Carmela Emanuela Cavagnaro (G4Z4-RJ1)",
         "relation": "research conclusion",
         "target_person": {
-          "name": "documented negative conclusion: the 1883 Dondero birth entry is not shown to be the subject's; no marriage or child established",
+          "name": "documented negative conclusion: the 1883 Dondero birth entry belongs to a different Carmela Cavagnaro; the subject's own husband was Paolo Andrea Vaglio",
           "birth": "n/a"
         }
       },

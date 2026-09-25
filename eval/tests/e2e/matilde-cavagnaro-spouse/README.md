@@ -28,12 +28,11 @@ match strength.
 
 ## Notes for reviewers
 
-**Adjudicated: the hint is rejected** — spec §3.6 outcome (c), no findable
-substitute. The identification fails; the hint is not supportable rather than
-positively refuted, and the distinction is set out under "What decided it"
-below. Researched on familysearch.org by hand; retrieval was not tool-assisted.
-Second opinion given by **Ikennaya Mbadiwe**, as issue #2314 requires for this
-fixture.
+**Adjudicated: the hint is a false match** — spec §3.6 outcome (c), no findable
+substitute. Researched on familysearch.org by hand; retrieval was not
+tool-assisted. Second opinion given by **Ikennaya Mbadiwe**, as issue #2314
+requires for this fixture; the identification of the subject's own marriage is
+his finding.
 
 The hint record is `ark:/61903/1:1:6BHW-1HG3` — "Italia, Genova, Genova, Stato
 Civile (Tribunale), 1866-1929", a birth entry of 30 August 1883 at Genova for
@@ -41,62 +40,67 @@ Maria Clementina Angelica Gentile Dondero, naming parents Pietro Dondero and
 Carmela Cavagnaro. That ark appears nowhere else in this fixture folder, so it is
 recorded here for the next reader.
 
-**What decided it — and what did not.** Be clear about the shape of this call:
-**no record positively refutes the hint.** The verdict rests on the
-identification failing, not on a disproof. Three things carry it:
+**What decided it: the subject has a documented husband, and he is not Pietro
+Dondero.** The Genova civil registration at `ark:/61903/1:1:X3L8-MFLR` records
+the marriage of **Matilde Carmela Emanuela Cavagnaro, daughter of Giuseppe
+Cavagnaro and Maddalena Boitano, to Paolo Andrea Vaglio**. Her parents, birth
+year and birthplace all match the tree person, which makes it a strong
+identification of `G4Z4-RJ1` rather than a namesake.
 
-1. The hint fixes its mother by **name alone**. The index gives her no age, no
-   patronymic and no birthplace, so nothing in it distinguishes this Carmela
-   Cavagnaro from any other. The subject's own third given name being Carmela is
-   what drew the match, and it is not enough.
-2. **The name recurs in the district.** A further Carmela Cavagnaro was born
-   14 Jul 1897 at Lorsica to a different Giuseppe Cavagnaro and a Maria
-   Cavagnaro — born too late to be the 1883 mother, but evidence that the name
-   is not a discriminator. (Note the subject's own father Giuseppe Cavagnaro
-   died at Lorsica in 1886 and was married to Maddalena Boitano, so the 1897
-   couple is a different one.)
-3. **Pietro Dondero and Carmela Cavagnaro were a settled Genovese couple**, still
-   producing children in 1891 — the birth of Attilio Omero Dondero, 31 May 1891
-   (`ark:/61903/1:1:X3TM-QPSS`), is a further child of the same pair. That
-   record's index likewise carries nothing identifying about the mother. Nothing
-   ties that Carmela to a woman born 1866 in Lima whose family is recorded at
-   Lorsica and Favale di Malvaro.
+The Carmela Cavagnaro of the hint is a different woman. She was married to
+Pietro Dondero and bore him children across many years — the 1883 daughter of
+the hint record, and a son Attilio Omero Dondero born 31 May 1891
+(`ark:/61903/1:1:X3TM-QPSS`) — and some records name her **Carmela Rosa
+Cavagnaro**. That is a settled Genovese household distinct from the subject's.
+
+The hint identifies its mother only *indirectly*: the 1883 index gives her no
+age, no patronymic and no birthplace, so name alone is all it offers, and the
+name recurs in the district. The subject's own third given name being Carmela is
+what drew the match, and it was never enough. The decisive work was not on the
+hint record at all — it was researching the subject's parents and marriage,
+which separate the two women cleanly.
 
 **What was searched and came up empty.** Genova birth records were searched for
 an entry linking Giuseppe Andrea Cavagnaro to Matilde Carmela Emanuela
 Cavagnaro; no record was found. No marriage between the subject and Pietro
-Dondero was found, and no substitute answer — a real husband or a real 1883
-child for Matilde — turned up to put in the hint's place. That absence is why
-this is outcome (c) rather than (b).
+Dondero was found, and no substitute answer — a different 1883 child for
+Matilde — turned up to put in the hint's place. That absence is why this is
+outcome (c) rather than (b).
 
-**What would settle it properly, and was not done.** The register *images* for
-the 1883 and 1891 births were not read. An Italian birth act normally states the
-mother's age and names her father (*figlia di…*), which is exactly the
-patronymic the index omits; so is the couple's marriage act. Either would
-convert this from an identification failure into a decision. A reviewer who
-wants the stronger form should ask for those before this fixture is used to
-grade anything.
+**Parentage, and a correction to this fixture's own premise.** The subject's
+parents are **Giuseppe Cavagnaro and Maddalena Boitano** (`G9WF-FJQ` /
+`G4Z4-RJM`), married 28 Apr 1853 at Favale di Malvaro. The second parent set in
+the starting tree — Angelo Vaglio (`PQWR-XH7`) and Maria Fereccio (`PQWR-QB9`),
+who carry no facts at all — is wrong, but **not for the reason issue #2314
+assumed**. Those three "Vaglio" sources (`7PM9-ZQP`, `7PM9-W4L`, `7PM9-W5S`) are
+not mis-attached strangers' records: they are the subject's **own marriage
+record**, indexed under the groom's line as *Paolo Andrea Vaglio and Angelo,
+26 Jul 1900*. Angelo Vaglio and Maria Fereccio are **Paolo Andrea Vaglio's**
+parents — the subject's parents-in-law — attached to her in error from that
+record. So the sources belong on her; the parent edges derived from them do not.
+`SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her birth entry, 20 May 1866.
 
-**Parentage, resolved.** The subject's parents are **Giuseppe Cavagnaro and
-Maddalena Boitano** (`G9WF-FJQ` / `G4Z4-RJM`), the couple married 28 Apr 1853 at
-Favale di Malvaro. The second parent set in the starting tree — Angelo Vaglio
-(`PQWR-XH7`) and Maria Fereccio (`PQWR-QB9`), who carry no facts at all — is a
-mis-attachment. Three of the tree's four sources (`7PM9-ZQP`, `7PM9-W4L`,
-`7PM9-W5S`) all index the same entry for *Paolo Andrea Vaglio and Angelo, 26 Jul
-1900*; the first two are **titled** for the subject while `7PM9-W5S` is titled
-for Paolo Andrea Vaglio, and those mis-titles are what dragged the Vaglio couple
-onto her. The one source that genuinely cites her is `SYXS-SC8`
-(`ark:/61903/1:1:QVR6-Q9DC`), the 20 May 1866 Genova entry naming her with
-Giuseppe Cavagnaro. **Nothing was corrected upstream** — the live FamilySearch
-tree was deliberately left untouched so `starting-tree.gedcomx.json` and
-`unstripped-tree.gedcomx.json` stay byte-identical and `snapshot --check` can
-still audit drift.
+**Nothing was corrected upstream.** Ikennaya's review recommends detaching the
+Vaglio parents on the live tree; that is deliberately **not** done here, because
+issue #2314 forbids editing live FamilySearch during adjudication so
+`starting-tree.gedcomx.json` and `unstripped-tree.gedcomx.json` stay
+byte-identical and `snapshot --check` can still audit drift. Worth filing
+separately.
 
-**On the age question.** Issue #2314 asked whether the subject was 16 or 17 on 30
-August 1883, since her tree birth fact is year-only (`1866`). It is left
-unsettled, deliberately. If `SYXS-SC8` is read as her birth registration she was
-17y3m, which would have been legal and unremarkable in 1880s Liguria — so age was
-never going to disprove the hint on its own, and the call did not turn on it.
+**A birthplace conflict, documented not resolved.** Her birth record
+(`ark:/61903/1:1:QVR6-Q9DC`) gives **20 May 1866 at Genova**. The marriage record
+reports **Lima**, and the tree follows Lima with no day or month. The birth
+record is the stronger evidence, but the conflict is recorded here rather than
+silently resolved. It is deliberately *not* encoded as a graded finding: the
+fixture's question is about her spouse, and grading a birthplace conflict would
+widen what the benchmark scores beyond the question asked.
+
+**On the age question — settled: 17.** Issue #2314 asked whether the subject was
+16 or 17 on 30 August 1883, her tree birth fact being year-only (`1866`).
+`SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her birth entry, **20 May 1866**, so
+she was 17 years 3 months. That was legal and unremarkable in 1880s Liguria, so
+age never could have disproved the hint on its own — and in the event the call
+turned on her marriage, not her age.
 
 Note for the corpus: the batch CSV labels this row Peru because she was born in
 Lima; every record involved is Genovese.
