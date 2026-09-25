@@ -59,9 +59,15 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     fixture can reach it. Its coverage is the unit suite
 #     (`eval/tests/unit/source-evaluation/`), which is where the ruling put it.
 # They are listed rather than exempted so the count stays honest.
+#   - `citation` was on this list until 2026-09-23 and is NOT re-listed: issue
+#     #2799 deleted the skill, so it is no longer a skill that could be dark.
+#     The dark reading was never disproved -- nothing in the corpus reached it
+#     then either -- but this set records skills, and the assertion below is
+#     that every name here still ships as one. Its successor `agents/citation.md`
+#     is reachable by auto-delegation from its own description, which this set
+#     does not measure and never did.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
-        "citation",
         "convert-dates",
         "forget-and-rederive",
         "historical-context",
