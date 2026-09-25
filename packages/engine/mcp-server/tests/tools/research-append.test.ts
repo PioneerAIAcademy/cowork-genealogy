@@ -8019,6 +8019,146 @@ describe("research_append — person_evidence requires a recorded score", () => 
     expect(failure(r).errors?.join(" ")).toMatch(/no same_person score behind it/);
   });
 
+  // A `match_score: null` update is a RETRACTION. Refusing it left a bad score
+  // unremovable on any reachable link, while `confidence` on that same link
+  // stayed escalatable -- the wrong way round.
+  it("allows an update that RETRACTS a score to null", async () => {
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { match_score: null },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("still refuses an update that writes a NUMBER with nothing behind it", async () => {
+    // The other direction: retraction is free, fabrication is not.
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { assertion_id: "a_001" },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  // The refusal used to prescribe only `same_person`. On a person minted out of
+  // the record being cited that is the circular call the agent body forbids, and
+  // the ref-less mint route reaches this message rather than the circular one.
+  it("names leaving match_score null as a legal answer, not only the call", async () => {
+    await writeProject();
+    const msg = failure(await researchAppend(link(0.82) as any)).errors?.join(" ") ?? "";
+    expect(msg).toMatch(/leave match_score null/);
+    expect(msg).toMatch(/created out of this very record/);
+  });
+
+  // `personaReachable` reads the live, partly-applied document while every other
+  // arm reads the batch map, so op ORDER decided the verdict on one batch.
+  //
+  // The fixture is built here rather than from `writeUnreachable`, because on
+  // that richer project BOTH orders are refused by an unrelated composite-source
+  // guard -- so the orders agree with or without the fix and the test pins
+  // nothing. Confirmed by mutation: reverting the fix fails this test only with
+  // the minimal project below.
+  it("gives the same verdict on an unreachable lane whichever order the ops arrive in", async () => {
+    const bare = {
+      ...validAssertion("x"), record_id: "rec_A", record_persona_id: null,
+      log_entry_id: "log_img",
+    };
+    const verdicts: boolean[] = [];
+    for (const linkFirst of [false, true]) {
+      const r = baseResearch();
+      r.log = [{
+        id: "log_img", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+        tool: "image_transcribe", query: {}, outcome: "positive",
+        results_examined: 0, external_site: null, results_ref: null,
+      }] as any;
+      r.assertions = [{ ...bare, id: "a_001" }] as any;
+      await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+      await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+      const aOp = { section: "assertions", op: "append", entry: noId(bare) };
+      const pOp = { section: "person_evidence", op: "append",
+        entry: { ...link(null).entry, assertion_id: "a_002" } };
+      const res = await researchAppend({
+        projectPath: dir, ops: linkFirst ? [pOp, aOp] : [aOp, pOp],
+      } as any);
+      verdicts.push(res.ok);
+    }
+    expect(verdicts[0]).toBe(verdicts[1]);
+    // And the agreed verdict is the CORRECT one: an unreachable lane with a null
+    // score is legal, so pinning agreement alone would still pass on two wrongs.
+    expect(verdicts[0]).toBe(true);
+  });
+
+  // A baseline whose `persons` is not an array reached `.map` and threw a raw
+  // TypeError out of prepareOps -- killing every call, including ones with no
+  // person_evidence op at all.
+  it("survives a malformed starting-tree instead of throwing out of the tool", async () => {
+    await writeProject();
+    await writeFile(
+      join(dir, "starting-tree.gedcomx.json"),
+      JSON.stringify({ persons: { notAnArray: true }, relationships: [], sources: [] }),
+    );
+    await attest();
+    await expect(researchAppend(link(0.82) as any)).resolves.toMatchObject({ ok: true });
+  });
+
+  // --- re-pointing the link, not the number --------------------------------
+  //
+  // `person_evidence` declares no `allowedFields`, so `assertion_id` and
+  // `person_id` are both updatable. Watching only `match_score` left the same
+  // two-call bypass one field over: append an attested link, then move it.
+
+  it("refuses an update that re-points assertion_id onto an unattested record", async () => {
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { assertion_id: "a_001" },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses an update that re-points person_id onto an unattested person", async () => {
+    // I2 must EXIST and be non-circular, or this passes on referential
+    // integrity / the circular arm and never exercises the gate. It carries no
+    // source refs, so `mintedFromThisRecord` returns false for it.
+    const twoPerson = {
+      ...baseTree,
+      persons: [
+        ...(baseTree as any).persons,
+        { id: "I2", names: [{ preferred: true, given: "Other", surname: "Person" }] },
+      ],
+    };
+    await writeProject(twoPerson);
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { person_id: "I2" },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("allows a re-point onto a pairing that IS attested", async () => {
+    // The other direction. Refusing every re-point would block legitimate
+    // correction, and the prefetch has to resolve an update's post-merge
+    // assertion or it loads no attestation and refuses attested work.
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    await attest({ assertion_id: "a_001", record_id: "rec1" });
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { assertion_id: "a_001" },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
   // --- the reachability lanes, carried over from #1429 ----------------------
   async function writeUnreachable(logEntry: Record<string, unknown>) {
     const r = baseResearch();
@@ -8054,6 +8194,17 @@ describe("research_append — person_evidence requires a recorded score", () => 
   // dangling log_entry_id silenced the requirement, dropping the field would be
   // the way out. `personaReachable` treats unresolvable provenance as reachable,
   // so the refusal stands.
+  // ut_person_evidence_014's ACTUAL defect. A stub minted by `tree_edit
+  // add_person` carries no source ref, so the circular walk returns false, and
+  // its assertion is full-text sourced, so reachability returns false too. With
+  // the fabrication arm gated on reachability BOTH arms were off and a score
+  // copied from another pairing landed unchallenged. 274 of 711 run-added
+  // corpus persons (38%) are ref-less, so this is the common mint, not an edge.
+  it("refuses a carried score on an unreachable lane — reachability excuses a MISSING score, not a fabricated one", async () => {
+    await writeUnreachable({ id: "log_001", tool: "fulltext_search", results_ref: null });
+    expect((await researchAppend(link(0.005) as any)).ok).toBe(false);
+  });
+
   it("refuses on unresolvable provenance — a dangling log_entry_id is not an exemption", async () => {
     await writeUnreachable({ id: "log_001", tool: "record_search", results_ref: null });
     const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));

@@ -896,8 +896,29 @@ function personEvidenceScoreInvariants(
     ];
   }
 
-  if (!isAppend) return [];
-  if (!personaReachable(entry, research)) return [];
+  // Append, or an update that leaves a NUMBER behind. A `match_score: null`
+  // update is a RETRACTION -- there is nothing to fabricate and nothing to
+  // prove -- and refusing it left a bad score unremovable on any reachable
+  // link while still letting `confidence` be escalated on it.
+  if (!isAppend && entry.match_score == null) return [];
+  // Reachability excuses a MISSING score, never a fabricated one. Gating the
+  // whole arm on it left ut_person_evidence_014's actual defect open: a stub
+  // minted by `tree_edit add_person` carries no source ref, so the circular walk
+  // returns false, and its assertion is full-text sourced, so this predicate
+  // returns false too -- both arms off, and a 0.005 copied from another pairing
+  // landed unchallenged. 274 of 711 run-added persons (38%) are ref-less, so
+  // that route is not an edge case. Refusing a carried score regardless of
+  // reachability costs 3 refusals across the 192-run corpus.
+  // `personaReachable` resolves the assertion from the live document, which is
+  // only partly applied mid-batch. Every other arm here reads `batchAssertions`,
+  // so without this view the same semantic batch got opposite verdicts from op
+  // ORDER alone -- and the losing order was handed a remedy an unreachable lane
+  // cannot deliver.
+  const reachabilityView =
+    assertion !== undefined && !assertions.some((a: any) => a?.id === entry.assertion_id)
+      ? { ...research, assertions: [...assertions, { ...assertion, id: entry.assertion_id }] }
+      : research;
+  if (entry.match_score == null && !personaReachable(entry, reachabilityView)) return [];
 
   // Exact lookup on (assertion, tree person) -- the pair the writer was called
   // with and the pair this entry carries, so the two sides cannot disagree.
@@ -941,7 +962,9 @@ function personEvidenceScoreInvariants(
       `match_score ${JSON.stringify(entry.match_score)} with no same_person score behind it. ` +
       `Call same_person({ projectPath, assertionId: '${entry.assertion_id}', treePersonId: ` +
       `'${entry.person_id}' }) first, then write the link with the score it returns. The tool ` +
-      `assembles both sides itself, so this costs one call and no payload.${roleHint}`,
+      `assembles both sides itself, so this costs one call and no payload. If that call cannot ` +
+      `score the pairing, or if '${entry.person_id}' was created out of this very record, do NOT ` +
+      `score it: leave match_score null and say why in the rationale.${roleHint}`,
   ];
 }
 
@@ -970,7 +993,7 @@ function personEvidenceScoreInvariants(
  *
  *  Kept in step with `_persona_reachable` in `eval/harness/harness/
  *  skill_invocation.py`, which is the same predicate on the eval side. */
-function personaReachable(entry: any, research: any): boolean {
+export function personaReachable(entry: any, research: any): boolean {
   const assertions: any[] = research.assertions ?? [];
   const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
   if (!assertion) return true; // unresolvable — provenance unknown, not proof
@@ -1005,13 +1028,17 @@ function personaReachable(entry: any, research: any): boolean {
  */
 /** A FamilySearch person id, e.g. `LKFW-9XH`. A person carrying one came FROM
  *  FamilySearch and was therefore not minted here. Measured over the 192
- *  committed e2e final trees: 0 of the 706 persons added during a run carry a
- *  PID-shaped id, and all 1,142 PID-shaped ids belong to starting-tree persons.
- *  So the implication this relies on -- PID-shaped => pre-existing -- has no
- *  counterexample in the corpus. */
+ *  committed e2e final trees: of the 706 run-added persons in the 191 runs that
+ *  have a committed `starting-tree.gedcomx.json`, 0 carry a PID-shaped id, and
+ *  1,139 of the 1,142 PID-shaped ids belong to starting-tree persons. The other
+ *  3 are all in `william-ferber-ancestry`, the one fixture with NO committed
+ *  baseline -- so they cannot be checked either way, and that is precisely the
+ *  fail-open case this test exists to serve. The implication it relies on --
+ *  PID-shaped => pre-existing -- therefore has no confirmed counterexample and
+ *  3 unverifiable cases, rather than none at all. */
 const FS_PERSON_PID = /^[A-Z0-9]{4}-[A-Z0-9]{3,4}$/;
 
-function mintedFromThisRecord(
+export function mintedFromThisRecord(
   personId: string,
   recordId: string,
   research: any,
@@ -1024,7 +1051,8 @@ function mintedFromThisRecord(
   // calling that circular hard-refuses a legitimate score. Two cheap
   // discriminators come first, both measured: a FamilySearch PID, and presence
   // in the write-once starting-tree baseline. Without them the exemption
-  // refused 232 committed links, 184 of which were pre-existing people.
+  // refused 232 committed links, 206 of which were pre-existing people (184
+  // caught by both discriminators, 22 by the starting-tree baseline alone).
   if (FS_PERSON_PID.test(personId)) return false;
   if (startingPersonIds?.has(personId)) return false;
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
@@ -3110,10 +3138,18 @@ function applyOne(
     //    match_score. Not on every update: an update that leaves the field
     //    alone must stay legal or a legacy entry carrying a bad score could
     //    never be superseded, which is the same trap in a new place.
+    // A re-point is a write. `person_evidence` declares no `allowedFields`, so
+    // `assertion_id` and `person_id` are both updatable: moving an attested
+    // link onto an unattested assertion, or onto a minted stub, carried the
+    // score across untouched while the gate watched only `match_score`. Same
+    // two-call shape as the update bypass above, one field over.
+    const scoreFields = ["match_score", "assertion_id", "person_id"];
     const writesScore =
       op.op === "append" ||
       (op.op === "update" &&
-        Object.prototype.hasOwnProperty.call((op as any).fields ?? {}, "match_score"));
+        scoreFields.some((f) =>
+          Object.prototype.hasOwnProperty.call((op as any).fields ?? {}, f),
+        ));
     if (writesScore) {
       invariantErrors.push(
         ...personEvidenceScoreInvariants(
@@ -3122,6 +3158,11 @@ function applyOne(
           tree,
           matchScores ?? new Map<string, MatchScoreFile>(),
           batchAssertions,
+          // Not `op.op === "append"`: an update that writes the score or
+          // re-points the link produces a NEW pairing, which must carry an
+          // attestation exactly as an append does. Passing the raw op kind here
+          // made the extended `writesScore` above inert -- the gate was called
+          // and then returned empty on its first line.
           op.op === "append",
           startingPersonIds,
           createdAssertions,
@@ -3460,10 +3501,21 @@ function createdAssertionIds(research: any, ops: ResearchAppendOp[]): Set<string
 function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set<string> {
   const byId = batchAssertionsById(research, ops);
   const out = new Set<string>();
+  const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
   for (const op of ops) {
     if (op.section !== "person_evidence") continue;
-    const entry = (op as any).entry;
-    const aid = entry?.assertion_id;
+    // An update's assertion is its POST-MERGE one: the field when the op sets
+    // it, else the target entry's. Reading only `entry.assertion_id` loaded no
+    // attestation for an update, so re-point ops refused work that was attested.
+    let aid: unknown;
+    if (op.op === "update") {
+      const fields = (op as any).fields ?? {};
+      aid = Object.prototype.hasOwnProperty.call(fields, "assertion_id")
+        ? fields.assertion_id
+        : live.find((e: any) => e?.id === (op as any).entryId)?.assertion_id;
+    } else {
+      aid = (op as any).entry?.assertion_id;
+    }
     if (typeof aid !== "string") continue;
     const a = byId.get(aid);
     const rec = a?.record_id ?? null;
@@ -3493,8 +3545,13 @@ async function prepareOps(
   // Read once here: `applyOne` is synchronous. Fail-open (an absent baseline
   // yields an empty set) matches `readStartingTree`'s own contract.
   const baseline = await readStartingTree(projectPath);
+  // Array.isArray, not `?? []`: `readStartingTree` is fail-open for a read or
+  // parse failure but returns any parsed object as-is, so a baseline whose
+  // `persons` is not an array reached `.map` and threw a raw TypeError out of
+  // `researchAppend` -- not a ResearchAppendError, and from `prepareOps`, so it
+  // killed every call including ones with no person_evidence op at all.
   const startingPersonIds: ReadonlySet<string> = new Set(
-    ((baseline?.persons ?? []) as any[])
+    ((Array.isArray(baseline?.persons) ? baseline.persons : []) as any[])
       .map((p: any) => p?.id)
       .filter((id: any): id is string => typeof id === "string" && id !== ""),
   );

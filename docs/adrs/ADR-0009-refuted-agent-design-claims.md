@@ -178,9 +178,11 @@ a graduation, must satisfy all six:
    check is now against a host-written record the model never touches.
 
    Three limits the refusal carries rather than resolves. The value-vs-presence
-   gap above is the first. The score-TTL question
-   was never answered, so it ships on option A ("a score from an earlier
-   session still counts"); option B is no longer reachable from what PR A
+   gap above is the first. The score-TTL question was never answered, so it
+   ships on option A ("a score from an earlier session still counts"), which is
+   the option the card itself marks recommended. Recorded plainly because the
+   card named this a ruling needed BEFORE step 3 opened, and it was never put to
+   the lead: the choice is the recommended one, not an obtained ruling; option B is no longer reachable from what PR A
    stored, because `RecordedMatchScore` keeps `computed` but nothing describing
    the tree person at score time. And the gate has TWO rules, only one of which
    is gated on reachability: requiring a score applies where one could have been
@@ -195,8 +197,16 @@ a graduation, must satisfy all six:
    model cannot produce the payload; it can author the file. Extending that list is not a one-line
    change: it is a tuple of BASENAMES matched by `name in ...`, and an
    attestation is `results/.scores/<sha256>.json`, so it needs a path-prefix
-   predicate, and two more copies exist (`eval/harness/e2e/orchestrator.py`, and
-   a test asserting `WATCHED_PROJECT_FILES == PROTECTED_PROJECT_FILES`).
+   predicate, and the tuple has THREE enforcement copies, not one:
+   `packages/engine/plugin/hooks/guard_project_files.py`,
+   `eval/harness/e2e/orchestrator.py` and
+   `apps/server/app/agent/real_agent.py` (the hosted control plane), all
+   registered in `eval/harness/tests/unit/test_write_lockdown_parity.py`, which
+   fails on an unregistered fourth. `eval/harness/e2e/corpus_report.py` carries a
+   read-only `WATCHED_PROJECT_FILES` mirror of the same names. An earlier draft
+   of this paragraph said "two more copies" and counted the parity TEST in place
+   of the hosted implementation -- which is the very copy the next paragraph
+   argues is out of scope, so the miscount undercut its own reasoning.
 
    **Step 3 shipped without it, deliberately, with the threat model scoped
    rather than treated as one binary.** The hook ships in the plugin, so it
@@ -204,7 +214,10 @@ a graduation, must satisfy all six:
    hosted path the store is `PgS3ProjectStore` and no file-write tool reaches
    it. The residual forgery surface is the desktop `.mcpb` main thread and the
    Cowork main thread. The `person-evidence` agent itself has no `Write`. The
-   prefix-deny remains worth doing and is tracked separately.
+   prefix-deny remains worth doing and is **not currently tracked by any open
+   issue** -- searched 2026-09-24 and there is none, so this paragraph is the
+   only record of it. Stated plainly rather than as "tracked separately", which
+   is what it said until the claim was checked and found false.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.

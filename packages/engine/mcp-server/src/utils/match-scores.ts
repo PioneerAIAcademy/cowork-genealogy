@@ -1,5 +1,5 @@
 // match-scores — the `same_person` attestation: a project-local record of a
-// score the tool actually computed, keyed by (record, party, tree person).
+// score the tool actually computed, keyed by (record, assertion, tree person).
 //
 // Step 2 of issue #1731's 2026-09-07 lead ruling: "the tool writes its score to
 // a project-local record keyed by (persona, tree person) — shape is the
@@ -22,8 +22,13 @@
 // tree.gedcomx.json and starting-tree.gedcomx.json only, so a raw Write to
 // results/.scores/ from inside the VM is unguarded: the model cannot produce
 // the payload, but it can author the file. Extending that list touches
-// ADR-0005, which owns it, and is a precondition for the refusal step trusting
-// this record.
+// ADR-0005, which owns it. This was written as a PRECONDITION for the refusal
+// step; that step shipped on 2026-09-24 without it, deliberately and with the
+// threat model scoped instead (ADR-0009 constraint 2: the hook binds in Cowork
+// and on the hosted path, the hosted store is `PgS3ProjectStore` which no
+// file-write tool reaches, and the residual surface is the desktop `.mcpb` main
+// thread and the Cowork main thread). Read the ADR, not this paragraph, for
+// what was actually decided.
 //
 // WHY UNDER results/.scores/ AND NOT results/*.json. The validator's orphan
 // check lists results/ NON-recursively and errors on any top-level *.json no log

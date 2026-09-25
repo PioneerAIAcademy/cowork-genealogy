@@ -42,5 +42,28 @@ async function main(): Promise<void> {
   await writeFile(join(dir2, "tree.gedcomx.json"), JSON.stringify(t2, null, 2), "utf8");
   r = await researchAppend({ ...link(null), projectPath: dir2 } as any);
   console.log(`  leaves match_score null              -> ${r.ok ? "ACCEPTED" : "REFUSED"}`);
+
+  // BOTH mint routes, because staging only the sourced one is what let the
+  // reachability-gated version of this guard read as closing ut_014 when it did
+  // not. `tree_edit add_person` mints a person with NO source ref, so the
+  // circular walk returns false; a_005 is full-text sourced, so reachability
+  // returns false too. 274 of 711 run-added corpus persons are ref-less.
+  for (const [label, sources] of [
+    ["sourced mint   (materialize_facts)", [{ ref: "S4" }]],
+    ["UNSOURCED mint (tree_edit add_person)", undefined],
+  ] as const) {
+    for (const score of [0.005, null]) {
+      const d = await mkdtemp(join(tmpdir(), "probe014c-"));
+      await cp(SCEN, d, { recursive: true });
+      const t = JSON.parse(await readFile(join(d, "tree.gedcomx.json"), "utf8"));
+      const name: any = { id: "N9", preferred: true, given: "James", surname: "Flynn" };
+      if (sources) name.sources = sources;
+      t.persons.push({ id: "I4", names: [name] });
+      await writeFile(join(d, "tree.gedcomx.json"), JSON.stringify(t, null, 2), "utf8");
+      const out: any = await researchAppend({ ...link(score), projectPath: d } as any);
+      const s = String(score).padEnd(5);
+      console.log(`  ${label}, score ${s} -> ${out.ok ? "ACCEPTED" : "REFUSED"}`);
+    }
+  }
 }
 main().catch((e) => { console.error(e); process.exit(1); });
