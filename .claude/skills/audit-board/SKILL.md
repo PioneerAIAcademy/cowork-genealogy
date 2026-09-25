@@ -376,7 +376,7 @@ Every run, produce the tax table — one row per skill with anything pending:
 | Skill | Active on the snapshot | Idle days | Backlog issues on it | Already stale? |
 |---|---|---|---|---|
 
-**Take "queued behind it" from `/merge-issues`, not from a scan of your own.**
+**Take "Backlog issues on it" from `/merge-issues`, not from a scan of your own.**
 Its `slots.py` computes queue depth per slot from `**Touches:**` lines, and a
 second derivation here — grepping bodies for `eval-skill`, `run log inactive`,
 `rule 2`, `annotation` — produces a different number for the same board:
@@ -448,10 +448,10 @@ trains people to bypass it on exactly the edits that are not neutral.
 
 Give each mature skill with a real queue **one open issue** — titled
 `next run: <skill>`, labelled `cluster:next-run` plus the skill's lane — listing
-the issues waiting on that skill's slot, in order, one line each.
+the Backlog issues on that skill's snapshot, in the order they should land, one line each.
 
-It is the queue made visible. Without it, an issue that is merely *waiting its
-turn* looks identical to one nobody wants, and the person who filed it has no way
+It is the queue made visible. Without it, an issue meant to ride along with the
+next run looks identical to one nobody wants, and the person who filed it has no way
 to see which. It holds pointers only — `#N — one clause` — never content.
 
 Rules that keep it from becoming a queue file:
