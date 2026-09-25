@@ -53,9 +53,10 @@ Current live tools:
   same live-registration rationale. Kept as a separate tool so a skill's
   allowed-tools can grant additions without granting identity rewrites (the
   record-extractor authority split).
-- person_quality: calls the compiled TS tool, but only for an id that is not a
-  FamilySearch person id — the tool answers those itself with no network call.
-  A FamilySearch-shaped id is refused before the tool runs; declare a fixture.
+- person_quality: runs the compiled tool's no-network resolution step against
+  the workspace tree. A person with no FamilySearch link gets the tool's real
+  answer; one that resolves to a FamilySearch id gets the test's fixture keyed on
+  that id, or a refusal naming the missing fixture.
 - project_context: calls the compiled TS tool to project the workspace's
   research.json + tree.gedcomx.json into the compact read-only shape the
   record-extractor agent consumes instead of reading project files. A
@@ -112,17 +113,14 @@ LIVE_TOOLS: set[str] = {
     # person-evidence run log since August reported the tool missing -- the
     # skill launched, the check never ran.
     "person_warnings",
-    # Live for ids that are NOT FamilySearch person ids only. For those the tool
-    # answers `{ok: false, reason: "not_familysearch_id"}` before reading a
-    # token or touching the network, so the real code is safe to run and is the
-    # only faithful answer: every skill that runs check-warnings on a project's
-    # local ids (`I1`) now calls it for every person, and without a live answer
-    # each such call would need a fixture in that skill's suite. A
-    # FamilySearch-shaped id is REFUSED before the export runs (see
-    # `_COMPILED_TOOLS_FS_ID_REFUSED`), exactly as person_warnings' `live: true`
-    # is — that path is a real authenticated request. A test that declares a
-    # person_quality fixture keeps it: fixture-backed tools skip live
-    # registration.
+    # Served by its own handler (`_make_person_quality_handler`), registered
+    # outside both loops below. The tool first decides what to score with no
+    # network call: a project's local id is looked up in the workspace tree and
+    # resolved to the person's FamilySearch link; a person with no link gets the
+    # tool's own sentence, which is safe and faithful to run for real. A call that
+    # resolves to a FamilySearch id is answered from the test's person_quality
+    # fixtures keyed on THAT id, or refused. Kept in this set because
+    # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
     "person_quality",
     "project_context",
     # Read-only projection over the workspace's own research.json — same shape
@@ -773,6 +771,8 @@ def create_mock_server(
 
     tools = []
     for tool_name, bucket in manifest.items():
+        if tool_name == "person_quality":
+            continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
@@ -1004,7 +1004,7 @@ def create_mock_server(
     # reason this is a skip rather than a precedence rule -- fixtures are
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
-    for live_tool_name in sorted(LIVE_TOOLS - fixture_backed):
+    for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
         live_handler = _make_live_handler(live_tool_name, workspace, call_log)
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
@@ -1018,6 +1018,22 @@ def create_mock_server(
         )
         decorated = tool(live_tool_name, description, input_schema)(live_handler)
         tools.append(decorated)
+
+    # person_quality: one handler whether or not the test declared fixtures — it
+    # needs both the real resolution step and the test's fixtures keyed on the
+    # FamilySearch id that step finds.
+    pq_handler = _make_person_quality_handler(
+        workspace,
+        call_log,
+        list((manifest.get("person_quality") or {}).get("predicated") or []),
+    )
+    tools.append(
+        tool(
+            "person_quality",
+            tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
+            (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
+        )(pq_handler)
+    )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
     tools_by_name = {t.name: t for t in tools}
@@ -1037,7 +1053,6 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "materialize_facts": ("materialize-facts.js", "materializeFacts"),
     "merge_warnings": ("merge-warnings.js", "mergeWarnings"),
     "person_warnings": ("person-warnings.js", "personWarningsTool"),
-    "person_quality": ("person-quality.js", "personQualityTool"),
     "project_context": ("project-context.js", "projectContext"),
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
@@ -1053,16 +1068,6 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
 _COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"person_warnings"})
-
-#: Compiled tools refused for a FamilySearch-shaped `personId`, decided in the
-#: node step by the compiled `isFamilySearchPersonId` (build/utils/fs-id.js) so
-#: there is no Python copy of the grammar to drift. person_quality's answer for
-#: such an id is an authenticated FamilySearch request; its answer for any other
-#: id is local and safe to run. It is DELIBERATELY absent from
-#: `_COMPILED_TOOLS_WITH_PRINCIPAL`: its `principal` stays `undefined`, so if the
-#: refusal ever let a FamilySearch id through, `getValidToken` throws on
-#: `principal.kind` instead of reading the developer's own tokens — fails closed.
-_COMPILED_TOOLS_FS_ID_REFUSED: frozenset[str] = frozenset({"person_quality"})
 
 
 def _make_live_handler(
@@ -1279,6 +1284,95 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
     return handler
 
 
+PERSON_QUALITY_REFUSAL = (
+    "person_quality: this person resolves to a FamilySearch id ({fsid}), and the "
+    "unit harness does not contact FamilySearch. Declare a person-quality fixture "
+    "keyed on that id."
+)
+
+
+def _make_person_quality_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    predicated: list,
+):
+    """Build person_quality's handler.
+
+    (a) Run the compiled tool's `resolvePersonQualityTarget` against the
+    workspace tree — no network, no token, no principal. (b) A person with no
+    FamilySearch link gets that real answer. (c) A person who resolves to a
+    FamilySearch id is answered from the test's person_quality fixtures matched
+    on `{...args without projectPath, personId: <resolved id>}`, so a fixture
+    answers for a FamilySearch person whatever local id reached it; with no match
+    the call is refused.
+
+    Every answer is logged `matched.kind = "live"` with `expected_args = None`:
+    the judge is shown `args` beside `expected_args` and fails a wrong
+    identifier, so a fixture keyed `LZNY-BRF` answering a call made with `I1`
+    must not be presented as an expected-argument mismatch. A refusal is logged
+    `kind = "none"` so the uncovered-call warning names the missing fixture.
+    """
+    pq_js = _MCP_BUILD / "tools" / "person-quality.js"
+
+    async def handler(args, _ws=workspace, _js=pq_js, _pred=predicated):
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__person_quality",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:person_quality",
+        }
+        response: dict[str, Any]
+        if not _js.exists():
+            response = {"ok": False, "errors": [f"person_quality: build not found: {_js}"]}
+        else:
+            js_posix = str(_js).replace("\\", "/").replace("'", "\\'")
+            js_url = ("file:///" + js_posix) if sys.platform == "win32" else js_posix
+            input_obj = dict(args)
+            if _ws is not None:
+                input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            script = (
+                f"import {{ resolvePersonQualityTarget }} from '{js_url}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const r = await resolvePersonQualityTarget(input);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            failure: str | None = None
+            target: Any = None
+            try:
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    target = json.loads(proc.stdout)
+                else:
+                    failure = (proc.stderr or "").strip()[:500] or f"no output (exit {proc.returncode})"
+            except Exception as e:  # surfaced to the run as an error response
+                failure = str(e)
+            if not isinstance(target, dict):
+                response = {
+                    "ok": False,
+                    "errors": [f"person_quality: resolution failed: {failure or 'unrecognised output'}"],
+                }
+            elif target.get("kind") == "answer":
+                response = target["result"]
+            else:
+                fsid = target.get("familySearchId", "")
+                query = {k: v for k, v in args.items() if k != "projectPath"}
+                query["personId"] = fsid
+                hit = next(((resp, src) for (pred, resp, src) in _pred if matches(pred, query)), None)
+                if hit is not None:
+                    response, entry["response_fixture"] = hit
+                else:
+                    entry["matched"] = {"kind": "none", "index": None}
+                    entry["response_fixture"] = None
+                    response = {"ok": False, "errors": [PERSON_QUALITY_REFUSAL.format(fsid=fsid)]}
+        entry["response"] = response
+        call_log.append(entry)
+        return _tool_envelope("person_quality", response)
+
+    return handler
+
+
 def _make_compiled_tool_handler(
     tool_name: str,
     js_filename: str,
@@ -1355,35 +1449,11 @@ def _make_compiled_tool_handler(
             )
             call_args = "input, LOCAL" if takes_principal else "input"
 
-            # FamilySearch-shaped ids are refused inside the node step, using the
-            # compiled predicate, and trimmed first exactly as the tool trims.
-            fs_id_import = ""
-            fs_id_guard = ""
-            if tool_name in _COMPILED_TOOLS_FS_ID_REFUSED:
-                fsid_js = str(_MCP_BUILD / "utils" / "fs-id.js").replace("\\", "/")
-                fsid_url = ("file:///" + fsid_js) if sys.platform == "win32" else fsid_js
-                refusal = json.dumps({
-                    "ok": False,
-                    "errors": [
-                        f"{tool_name}: a FamilySearch person id is not answered in "
-                        "the unit harness (it makes a real FamilySearch request and "
-                        "this suite is hermetic). Declare a person-quality fixture "
-                        "for this id."
-                    ],
-                })
-                fs_id_import = f" import {{ isFamilySearchPersonId }} from '{fsid_url}';"
-                fs_id_guard = (
-                    " if (isFamilySearchPersonId(String(input.personId ?? '').trim())) {"
-                    f" process.stdout.write({json.dumps(refusal)}); process.exit(0); }}"
-                )
-
             script = (
                 f"import {{ {export_symbol} }} from '{tool_url}';"
                 f"{principal_import}"
-                f"{fs_id_import}"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                f"{fs_id_guard}"
                 f" const r = await {export_symbol}({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )

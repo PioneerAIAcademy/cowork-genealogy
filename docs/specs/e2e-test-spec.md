@@ -866,6 +866,10 @@ The harness **denies these tools for the entire run**:
   PID with no searching
 - `person_person_matches` — surfaces tree persons matched to the subject
   (can leak a stripped relative in a parents/siblings fixture)
+- `person_quality` — reads FamilySearch's quality issues for the subject's
+  live profile; several issue sentences interpolate values off that profile
+  (`{originalDate}`, `{originalPlace}`), so a stripped date or place can be
+  returned verbatim
 
 The agent must recover everything through **records** (`record_search`,
 `record_read`, `fulltext_search`, `image_search`, `image_read`,

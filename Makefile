@@ -551,7 +551,7 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 # machine: make proto-demo PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"
 .PHONY: proto-demo
 proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
-	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches}"; \
+	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches,person_quality}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
