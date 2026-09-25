@@ -412,7 +412,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half answered by us 2026-09-25 (P3c): reachable from VPN, Claude routed, but the route is chat-completions only. New ask: map `/v1/messages` and `/v1/messages/count_tokens` to the Messages format, and alias or document the Bedrock haiku id.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; route ask not yet sent | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half answered by us 2026-09-25 (P3c, P3d): the host we curled was our own 0.12.0 test bed, now Messages-capable. The route map and aliases the P3c ask named are already in tap-agentgateway `master`, so that ask is withdrawn. New ask: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; access ask not yet sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -821,6 +821,40 @@ tool search, the seven betas, the haiku call, caching and the fourth cache point
 proxy still needs its HTTP/port/prefix option to run that pass. Bedrock request ids:
 sonnet 767e50a9-d1cc-4a58-9cb1-9917cb541dfa, haiku bare 13b78316-c02f-4c19-885f-2c985ad1e7d2,
 streamed 50e0e943-de3a-45ad-8e80-49952bb28952, block body a6298e77-366a-4823-8131-1d6b0e17a69a.
+
+**P3d — measured 2026-09-25, same day: the CLI runs end to end through the integ
+gateway, on two env vars.** The integ host above is not APT's gateway. It is
+`fs-eng/search-fulltext-agentgateway`, which we administer, running agentgateway
+**0.12.0** as a temporary test bed. APT's permanent gateway is `fs-eng/tap-agentgateway`
+on v1.4.1, and its `/bedrock` route already maps `/v1/messages` → `messages` and
+`/v1/messages/count_tokens` → `anthropicTokenCount` (deliberately no `"*": passthrough`),
+aliases the bare Claude ids to `us.*` profiles, and gates callers by API-key consumer
+(`claude-code`, `tap`, `foundry-runner`). So the P3c route ask to APT is already done in
+their `master`; what we need from them is the URL and a key. On the test bed,
+search-fulltext-agentgateway #5 added the same route map and the haiku alias, and #6
+added `overrides: {metadata: null}`. Then Claude Code 2.1.282 with `ANTHROPIC_BASE_URL`
+at `/bedrock`, `ANTHROPIC_MODEL=us.anthropic.claude-sonnet-4-6`,
+`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` and `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1`
+completed a `-p` run with one Bash tool call (2 streamed turns, 37,272 tokens written to
+cache then 37,146 read, $0.15). Five 0.12.0 defects stood in the way, each found by
+recording the CLI's request with a local stub and replaying it. v1.4.1 source has a fix
+for each, so none is expected on the permanent gateway:
+
+| 0.12.0 defect | Symptom | v1.4.1 | Test-bed handling |
+|---|---|---|---|
+| No `ai.routes` → everything is Completions | `chat.completion` bodies | route map in tap config | #5 |
+| Anthropic `metadata` copied into Converse `requestMetadata` | bodiless 400; Bedrock rejects `user_id`'s JSON against `[a-zA-Z0-9\s:_@$#=/+,-.]{0,256}` | copy removed | #6 |
+| `thinking.type: adaptive` unknown | 503 `unknown variant adaptive`, 11 retries | `Adaptive` variant | `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` |
+| Every `anthropic-beta` forwarded | 400 `invalid beta flag` for `prompt-caching-scope-2026-01-05` and `advisor-tool-2026-03-01` (the other six pass) | allowlist, `AGENTGATEWAY_BEDROCK_ANTHROPIC_BETA_HEADERS` | `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` |
+| `count_tokens` prompt capture `unimplemented!()` (the Langfuse `llm.prompt` field) | worker panic, empty reply | guarded by `supports_prompt_guard()` | none; tap measured count_tokens 502 on `us.*` ids anyway and saw no CLI call to it |
+
+The stream's `Content-Type: application/vnd.amazon.eventstream` (v1.4.1 normalizes it to
+`text/event-stream`) did not stop the CLI. Still unmeasured through any gateway: the
+haiku session-title call (a `-p` run makes none), tool search's `advanced-tool-use` beta
+and `tool_reference` blocks, a multi-turn session, and what the two disabling env vars
+cost. v1.4.1's default beta allowlist also omits `claude-code-20250219`,
+`thinking-token-count-2026-05-13` and `afk-mode-2026-01-31`, all of which Bedrock
+accepted here.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
@@ -2298,10 +2332,13 @@ emails rather than engineering.
 
 ### Could kill it
 
-**R1 — The Agent Gateway's API surface. REOPENED 2026-09-25 (P3c).** The deployed integ
-route answers every path, `/v1/messages` included, as OpenAI chat completions. The CLI
-cannot run through it until APT maps the Messages path, and it has to send the Bedrock
-haiku id or get an alias for it. What follows is the 2026-09-11 reading of the source,
+**R1 — The Agent Gateway's API surface. NARROWED 2026-09-25 (P3c, P3d).** The integ host
+P3c measured is our own 0.12.0 test bed, not APT's gateway. With #5 and #6 there and two
+CLI env vars, the CLI completes a tool-using run through it (P3d). APT's v1.4.1
+`tap-agentgateway` already carries the Messages route map and model aliases. What is
+left is access (its URL and a consumer key) and one parity run through it without the
+env vars: the haiku title call, tool search, a multi-turn session. What follows is the
+2026-09-11 reading of the source,
 which still describes what the route *can* do. It is Anthropic-Messages-
 compatible (agentgateway v1.4.1, `POST /bedrock/v1/messages`, Messages→Converse both
 ways including streaming and errors), so the SDK runs unmodified with
@@ -2314,8 +2351,8 @@ gateway from the client's side; what Messages→Converse keeps of the
 `advanced-tool-use` beta, the `tool_reference` blocks, the seven other betas, the haiku
 title call and `count_tokens` is the curl against integ. Native `bedrock-runtime` is
 not a client surface, so the prototype's Bedrock-direct results (P3) describe the
-model, not the production path. *Owner: APT for the route change; us for the full
-parity pass (P3c list) once it deploys.*
+model, not the production path. *Owner: APT for access to tap-agentgateway; us for
+the parity run through it.*
 
 **R2 — Prompt-cache health, which is also the throughput ceiling. SHARPENED 2026-09-11,
 not closed.** Caching works through the gateway; the 1-hour TTL does not survive it.
