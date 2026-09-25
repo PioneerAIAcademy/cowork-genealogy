@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 55350,
+    "CLAUDE.md": 55398,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/gps-mentor.md": 40878,
     "packages/engine/plugin/agents/image-reader.md": 9101,

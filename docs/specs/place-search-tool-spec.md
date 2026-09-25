@@ -86,7 +86,7 @@ Steps:
    A single-token `placeName` derives nothing. Keep only search entries whose
    `fullName` contains the effective context (case-insensitive substring).
    **If nothing matches, keep the unfiltered list** — better to return extra
-   results than zero (closes #609: a bare "Bristol" search ranks Bristol,
+   results than zero (fixes the bug where a bare "Bristol" search ranked Bristol,
    Virginia above Bristol, England). The fallback guarantees the result is never
    *empty* when a bare search had hits, but a derived context is not strictly
    safe: if the intended place's `fullName` lacks the derived token while a

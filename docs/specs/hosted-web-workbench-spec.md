@@ -365,7 +365,7 @@ interface ResearchTransport {
 
 ~90% of the renderer (App, 11 sections, shared components, `lib/schema.ts`,
 `progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged. **11 is
-the count that actually moved** (PR #293, 2026-06-07); two sections were added
+the count that actually moved** (2026-06-07); two sections were added
 later, so the package holds **13** today.
 
 > **As built, verified 2026-08-02.** The interface shipped essentially verbatim
@@ -382,7 +382,7 @@ later, so the package holds **13** today.
 >
 > **The "11 sections" above is correct and must not be changed to 13.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
-> in the extraction (PR #293, `371e5db5`). `KnownInformationSection` (2026-06-14)
+> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14)
 > and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
 > directly — they were never part of the migration this sentence describes. The
 > package holds 13 today; the migration moved 11.
@@ -744,7 +744,7 @@ build time.
 >   plugin (`plugins=[{"type":"local", …}]`) instead, and the plugin's **agents**
 >   are additionally staged into `<project>/.claude/agents/` because plugin
 >   loading registers them only under the namespaced `genealogy-research:<agent>`
->   spelling that no SKILL.md asks for (issue #939).
+>   spelling that no SKILL.md asks for (ADR-0004).
 > - **The FamilySearch token does not arrive by env var.** Option (a) won: the
 >   control plane writes `~/.familysearch-mcp/tokens.json` into the sandbox, and
 >   the operator Anthropic key comes from a per-connect secrets file at
@@ -1044,7 +1044,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 
 > **Progress as of 2026-08-02.**
 >
-> 1. **Done.** Monorepo + `viewer-ui` extraction landed in PR #293
+> 1. **Done.** Monorepo + `viewer-ui` extraction landed
 >    (`371e5db5`, 2026-06-07); Electron works through the IPC adapter.
 > 2. **Done**, with two substitutions: the login is FamilySearch, not Google, and
 >    the read API reads the sandbox rather than durable storage. The "read-only

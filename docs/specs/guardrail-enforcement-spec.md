@@ -43,7 +43,7 @@ the user looking exactly like one that was.
 
 Prose was tried three times and failed three times: the routing-table mandate in
 `research/SKILL.md`, the "MANDATORY… invoke the skill, never a generic subagent"
-contract added in PR #893, and the earlier per-skill fix recorded in
+contract, and the earlier per-skill fix recorded in
 `docs/diagnoses/wilkins-death-kentucky-headless-runs2-3.md`. Each produced an
 identical bypass on re-run.
 
@@ -1451,10 +1451,11 @@ carry `"hooks"`) and the two upstream reports that do **not** reproduce.
 
 **Why the hosted copy still exists.** Redundant in principle — the hosted path
 also loads the plugin — but "the plugin loader does what you'd expect in the
-hosted path" is exactly the assumption issue #939 disproved for agents. Both
+hosted path" is exactly the assumption the hosted-path agent-spawn finding
+disproved for agents (ADR-0004). Both
 fire until one hosted run confirms otherwise; they deny the same thing with the
 same reason, so the redundancy is harmless. Deleting the SDK copy was declined
-(issue #1129, closed not-planned) — all three stay. The three copies are
+(the delete was closed not-planned) — all three stay. The three copies are
 `packages/engine/plugin/hooks/guard_project_files.py`,
 `apps/server/app/agent/real_agent.py`, and
 `eval/harness/e2e/orchestrator.py`, and
@@ -2015,8 +2016,8 @@ Design points that were paid for and should not be re-derived:
 - **Harness-tracked, never model-supplied.** A `caller_id` argument the router
   fills in itself is attested by the party we don't trust at the moment it
   matters. Direct precedent: `person-evidence`'s `match_score` was meant to
-  attest that `same_person` was consulted, and its provenance guard was cut in
-  #695 for zero observed true positives across **every**
+  attest that `same_person` was consulted, and its provenance guard was cut
+  for zero observed true positives across **every**
   `eval/tests/unit/person-evidence/` case as of that PR, against a real
   false-positive class.
 - **Success-gated, off the joined `tool_calls[].is_error` — but only to the
@@ -2045,7 +2046,7 @@ Design points that were paid for and should not be re-derived:
     invoke-then-let-it-fail evasion named at the top of this bullet stays open**,
     and the next block explains why it cannot be closed from here.
   - **MCP writer tools — thrown errors, and returned `{ok:false}`.** `src/index.ts`
-    sets `isError` from its `catch`, and since #1282 also from a returned
+    sets `isError` from its `catch`, and also from a returned
     `{ok:false}` on the writer arms listed in `src/tool-result.ts`'s
     `OK_FALSE_IS_FAILURE` — so `research_append`'s `fail()` helper, which
     *returns* rather than throws, now records `is_error: true`. Runs predating
@@ -2057,7 +2058,7 @@ Design points that were paid for and should not be re-derived:
 
   Violation counts and the §8 `compliance`/`outcome` verdict are not comparable
   across that join. The boundary is the commit, not cleanly a version number —
-  #1255 shipped it at `harness_schema_version` 2 and the bump to 3 came after, so
+  the join shipped at `harness_schema_version` 2 and the bump to 3 came after, so
   a `2` log means either thing depending on its date; `docs/specs/e2e-test-spec.md`
   §7.5 has the table. The measured delta on the committed corpus is two entries.
 - **Keyed by `(skill, question_id)` where a question id is derivable**, not by
@@ -2143,8 +2144,8 @@ this section before reopening one.
 
 - **Converting the four skills to agents** (which would give a real `agent_id`
   and make hook attribution trivial). All four do mandatory on-demand `Read` of
-  their own `references/*.md`, and issue #702 measured that pattern from an
-  agent as unreliable *and silent* — read on some tests, ignored on others,
+  their own `references/*.md`, and that on-demand-`Read` pattern was measured
+  from an agent as unreliable *and silent* — read on some tests, ignored on others,
   over-applied on others; 6/19 against a 12–14/19 baseline. The only sanctioned
   fix is full inlining (`CLAUDE.md`, "No playbook/reference files for agents"),
   and inlined, `person-evidence` (974 lines) and `conflict-resolution` (1007)
@@ -2227,11 +2228,12 @@ this section before reopening one.
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
   carries an `agent_id`, which is what §7's success gate has never had. Weigh
-  that against #702 before dismissing it as attribution-only plumbing — but weigh
-  #702 seriously too: it is a measured regression, not a theoretical risk.
+  that against the on-demand-`Read` measurement before dismissing it as
+  attribution-only plumbing — but weigh that measurement seriously too: it is a
+  measured regression, not a theoretical risk.
 - **A thin agent whose only action is `Skill('<name>')`** — keeps SKILL.md as
   the single source of truth while buying a real `agent_id`. Plausible, because
-  #702's failure was a *conditional, secondary* fetch whereas this would be
+  that measurement's failure was a *conditional, secondary* fetch whereas this would be
   unconditional and first. Untested, and `AgentDefinition.skills` is not
   surfaced in this repo's agent frontmatter format. Wants a small controlled
   experiment before anyone commits to it.
@@ -2243,7 +2245,7 @@ this section before reopening one.
   agent conversion — an agent's `tools:` binds even under `bypassPermissions`
   (measured 2026-08-30) but is tool-name-granular only — not a substitute for
   any layer here.
-- **Per-turn scoping for a production detector** — proposed for #1054 and dead.
+- **Per-turn scoping for a production detector** — proposed for the hosted tool-call ledger port and dead.
   Three of `find_effects_without_invocation`'s arms read whole-document state
   with no baseline — research-exhaustiveness, conflict-resolution, and
   proof-conclusion's `proof_summaries` half — so at turn scope they latch
@@ -2252,8 +2254,8 @@ this section before reopening one.
   (proof-conclusion's tree half and the person-evidence arm are
   `starting_tree`-baselined — a run-level baseline, which does not help at turn
   scope.)
-- **Enforcing coherence at the write boundary instead of provenance** — PR #997,
-  closed with review. Replayed over 113 committed runs it flagged 3 where the
+- **Enforcing coherence at the write boundary instead of provenance** — a
+  proposal closed after review. Replayed over 113 committed runs it flagged 3 where the
   shipped provenance check flagged 63, with an empty set difference: it detects
   nothing the existing check misses, and is evadable via `moot` status or a
   `probable` tier.
@@ -2486,7 +2488,7 @@ that outlive any one of them.
   open work; correcting the stale stub guidance is separate skill-prose work.
 - **`Skill`-tool content injection under compaction is unverified.** All four
   guardrail skills `Read` their own `references/*.md` on demand, in-session. If
-  that read is as unreliable as #702 found the agent case to be, the failure
+  that read is as unreliable as the on-demand-`Read` measurement found the agent case to be, the failure
   looks identical to the original bug and nothing here catches it — §8 detects
   "skill never invoked," not "skill invoked, its own reference silently
   skipped."
@@ -2509,7 +2511,7 @@ completion instrument — it keys on the caller's `agent_id`/`agent_type`, a fac
 the PreToolUse hook stamps per call ("Why this needs no window", below). So the
 finding that closes §7's graduation says nothing about this one. What it does
 need is a sample, and the sample is thin: attribution rides only on runs made
-after PR #1027, which is 6 of 145 committed runs, one of them carrying any
+after the tool_calls-ledger attribution landed, which is 6 of 145 committed runs, one of them carrying any
 violation at all. Graduate on an accumulated count decided in advance — not on a
 date, and not on that single run.
 
@@ -2564,7 +2566,7 @@ compliant. Under this rule it is a bypass.
 
 1. A `general-purpose` subagent binds **none** of the `tools:` /
    `disallowedTools:` declarations that every other capability restriction in
-   this system depends on (`CLAUDE.md`, issue #939). It is precisely the shape
+   this system depends on (`CLAUDE.md`; ADR-0004). It is precisely the shape
    that escapes them, so "it read the doctrine" guarantees nothing enforceable.
 2. It cannot bind in production. A `PreToolUse` hook can see *who is calling*;
    it cannot see *whether doctrine was loaded*. A rule that is uncheckable at
@@ -2620,5 +2622,7 @@ DETECTOR=lane-check`. It is no longer read only inline.
 - `docs/architecture.md` §5 — the three capability-binding surfaces and which
   of them bind in production; §9.4 points at what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
-- Issue #1054 — retain a hosted tool-call ledger, then port §8. The one open
-  dependency named on this page; §8 cannot reach production without it.
+- **Retaining a hosted tool-call ledger, then porting §8, is not planned** — that
+  dependency was closed not-planned. §8 cannot reach production without it, so
+  reaching production would require reopening that decision
+  (`gh issue list --state all --search "hosted tool-call ledger"`).
