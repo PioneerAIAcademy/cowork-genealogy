@@ -30,7 +30,8 @@
     "wiki-search-pennsylvania-probate",
     "wiki-place-page-pennsylvania-research-tips",
     "wiki-place-page-pennsylvania-online-records",
-    "volume-search-schuylkill"
+    "volume-search-schuylkill",
+    "collections-search-us-national"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: when the invoking message already carries an execute/continue-authorization phrase in the same turn as the plan request, research-plan must hand off toward execution without an additional round-trip. This is not specific to Bridget Halloran or this question -- the same rule applies to any first-plan request phrased as a compound 'plan AND execute/continue' instruction.",

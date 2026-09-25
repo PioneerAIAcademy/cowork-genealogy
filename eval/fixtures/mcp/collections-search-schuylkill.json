@@ -1,6 +1,6 @@
 {
   "tool": "collections_search",
-  "description": "collections_search — FamilySearch record collections for Schuylkill County, Pennsylvania. The tool derives the state-level scope (\"Pennsylvania\") from the standardPlace and matches collection titles at that scope, returning it as `scope`.",
+  "description": "collections_search — FamilySearch record collections for Schuylkill County, Pennsylvania. The tool derives the state-level scope (\"Pennsylvania\") from the standardPlace and matches collection titles at that scope, returning it as `scope`. Collection 1999196 (Pennsylvania, Probate Records) is served identically in collections-search-pennsylvania.json: measured live 2026-09-24 with the collections_search tool (engine build 0.1.0+2026-09-21.22e7d814) for both 'Pennsylvania, United States' and 'Schuylkill, Pennsylvania, United States' as recordCount 0, personCount 52, imageCount 3200560. personCount is deliberately rounded down to 0 here, making it a browse-only image collection for grading. Re-measure with `cd packages/engine/mcp-server && npx tsx dev/try-collections-search.ts`.",
   "args": {
     "standardPlace": "~Schuylkill"
   },
@@ -24,9 +24,9 @@
         "id": "1999196",
         "title": "Pennsylvania, Probate Records, 1683-1994",
         "dateRange": "1683-1994",
-        "recordCount": 2304118,
+        "recordCount": 0,
         "personCount": 0,
-        "imageCount": 2304118,
+        "imageCount": 3200560,
         "url": "https://www.familysearch.org/search/collection/1999196"
       }
     ]

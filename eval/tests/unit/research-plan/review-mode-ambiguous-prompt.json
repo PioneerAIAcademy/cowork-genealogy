@@ -13,7 +13,9 @@
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
-    "collections-search-schuylkill"
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "collections-search-us-national"
   ],
   "judge_context": [
     "Should narrate the existing plan pl_002 and its items without creating a new plan — the active plan has pli_006 still in_progress",
