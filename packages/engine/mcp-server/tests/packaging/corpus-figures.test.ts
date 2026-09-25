@@ -50,6 +50,17 @@ const SPECS = [
   "docs/specs/guardrail-enforcement-spec.md",
   "docs/specs/research-append-tool-spec.md",
   "docs/specs/e2e-test-spec.md",
+  // #2521 Half 2. Added with a narrowly-keyed FIGURE alternative below rather
+  // than relying on the generic arms: measured when it was added, this spec
+  // produced zero matches against all four existing alternatives and both
+  // ABSENCE regexes, so it entered the list guarding nothing until its own
+  // alternative went in beside it.
+  // NOTE: the matcher below runs over text with [*`_] stripped, so a figure
+  // naming a snake_case symbol must be keyed to the FLATTENED spelling —
+  // `external_links_search` reads as `externallinkssearch` here. Keying it to
+  // the source spelling matches nothing and the figure ships unguarded, which
+  // is how this one was first written.
+  "docs/specs/build-external-search-url-tool-spec.md",
 ] as const;
 
 /** Tools a subagent may call but the main thread may not. The harness gates
@@ -371,7 +382,7 @@ describe("the specs' corpus claims survive main moving", () => {
     // for THIS shape only, widening reach without loosening proximity for the
     // figures already guarded.
     const FIGURE =
-      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plan(?:s|items) append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)|\bover (?:the )?[\d,]{1,7} committed e2e runs\b|\b[\d,]{1,7} of [\d,]{1,7} eligible runs\b/gi;
+      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plan(?:s|items) append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)|\bover (?:the )?[\d,]{1,7} committed e2e runs\b|\b[\d,]{1,7} of [\d,]{1,7} eligible runs\b|\b[\d,]{1,7} of [\d,]{1,7} collection-scoped entries\b|\b[\d,]{1,7} of [\d,]{1,7} committed external_?links_?search calls\b/gi;
     const STAMP = /measured at [0-9a-f]{7,40}\b/i;
     const missing: string[] = [];
     for (const [rel, text] of Object.entries(specText)) {
