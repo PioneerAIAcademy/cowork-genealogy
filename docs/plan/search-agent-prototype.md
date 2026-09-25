@@ -977,6 +977,23 @@ unrelated to the gateway. So the gateway needs an alias for every model id a plu
 agent declares. The alternative is agents that declare an alias the CLI resolves
 through `ANTHROPIC_DEFAULT_SONNET_MODEL`, which ours do not.
 
+**P3i — measured 2026-09-25: the v1.5.0 fallback costs about a fifth more on a real
+turn.** Same fixture and option set as P3h, with TAP's route plus the
+`claude-sonnet-4-6` alias, on local v1.5.0 with `ENABLE_TOOL_SEARCH=false`:
+
+| Gateway, tool search | Main-thread tools per call | Main cache read / write | Cost | Time |
+|---|---|---|---|---|
+| v1.6.0-alpha.2, on | deferred | 184,031 / 77,427 | $0.71 | 197 s |
+| v1.5.0, off | 75 | 404,190 / 83,813 | $0.84 | 220 s |
+
+Both runs bound `record-extractor` and ended with 1 source, 19 assertions and 1 log
+entry. The subagent's own calls are about the same (≈ $0.32–0.37), since it declares
+only eight tools. The difference is the main thread carrying every tool schema. One
+run per arm, so the figures are indicative. A longer turn has more main-thread calls,
+so it pays more. The four gateway-only built-ins of P3g are not in these figures:
+`DISALLOWED_TOOLS` still lacked three of them when this ran. PR #2919 adds them, and
+search-fulltext-agentgateway #7 removes `debug_vars` so the test bed streams.
+
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
 pinned CLI and confirmed from its debug log, never measured against Bedrock; the other
