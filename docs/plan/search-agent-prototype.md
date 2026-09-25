@@ -1036,6 +1036,20 @@ search-fulltext-agentgateway #7 removes `debug_vars` so the test bed streams.
   minutes costs a full cache write on any agentgateway today. That is R2 through the
   gateway, whatever TAP's version.
 
+**P3k — measured 2026-09-25: the real worker container runs on the gateway provider.**
+`make proto-up` from PR #2920's branch with `MODEL_PROVIDER=gateway` against local
+v1.5.0 on TAP's route as shipped, then `proto/turn.py`. Two turns ran through web tier,
+queue, shim and worker, the second resuming the first from `PgSessionStore` in a fresh
+worker process, and all 14 checks passed:
+- **Gateway:** 5 model calls, all 200, on `us.anthropic.*` ids (3 Sonnet, 2 Haiku
+  title calls).
+- **Turn 1:** $0.34, 82k tokens written to cache.
+- **Turn 2:** $0.10, 60k tokens read from cache.
+
+This covers P3j's open point: resume from the store, not only from the CLI's disk
+transcript. The CLI's `HEAD /bedrock/api/hello` check returns 400 on v1.5.0 (an empty
+body parsed as an LLM request) and is harmless.
+
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
 pinned CLI and confirmed from its debug log, never measured against Bedrock; the other
