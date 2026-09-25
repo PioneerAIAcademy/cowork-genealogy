@@ -363,8 +363,8 @@ skill weekly.
 Editing a `packages/engine/plugin/skills/<skill>/SKILL.md`, an agent body, a
 `eval/tests/unit/<skill>/` file, or a scenario fixture flips that skill's run log
 inactive under `check_runlogs.py` rule 2. Landing it then costs a fresh
-`make eval-skill SKILL=<name>` run plus a genealogist annotation — call it
-$8–12 and 45–65 minutes of machine time, plus genealogist hours.
+`make eval-skill SKILL=<name>` run plus a (now cheap) genealogist annotation —
+call it $8–12 and 45–65 minutes of machine time.
 
 Individually, issues handle this correctly: most say "batch this with the next
 <skill> change rather than spending a run on it alone." **Collectively, nothing
@@ -373,10 +373,10 @@ full price.
 
 Every run, produce the tax table — one row per skill with anything pending:
 
-| Skill | Slot held by | Idle days | Queued behind it | Already stale? |
+| Skill | Active on the snapshot | Idle days | Backlog issues on it | Already stale? |
 |---|---|---|---|---|
 
-**Take "queued behind it" from `/merge-issues`, not from a scan of your own.**
+**Take "Backlog issues on it" from `/merge-issues`, not from a scan of your own.**
 Its `slots.py` computes queue depth per slot from `**Touches:**` lines, and a
 second derivation here — grepping bodies for `eval-skill`, `run log inactive`,
 `rule 2`, `annotation` — produces a different number for the same board:
@@ -387,10 +387,10 @@ gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
 python3 .claude/skills/merge-issues/slots.py /tmp/board.json /tmp/issues.json /tmp/prs.json
 ```
 
-A queue still three or more deep after that pass has run means it judged those
-issues irreducible. Do not re-propose merging them. What this pass owes the table
-is the *other* three columns — who holds each slot, how long they have sat on it,
-and which skills are already stale.
+A queue still deep after that pass has run means it judged those issues
+independent. Do not re-propose merging them. What this pass owes the table is the
+*other* three columns — which items are active on each snapshot, how long they
+have sat, and which skills are already stale.
 
 Order matters within a queue: some issues are gated on a free harness-side change
 that should land first so the authoring only happens once. #1108 before #995 is
@@ -404,25 +404,20 @@ state**, and the snapshot covers every file under the skill dir — "including a
 run log goes stale the moment the *next* edit lands. Six issues landing as six
 sequential PRs is six runs, however carefully they are ordered.
 
-**The money is not the binding cost.** A run is $8–12, but rule 3 requires the
-`.ann.json` to carry a correction entry for **every dimension of every test** in
-the suite — 27 tests for `record-extraction` — and that pass is genealogist hours.
-Six runs means six full re-annotations of the same suite.
+Re-annotation is cheap (lead, 2026-09-20), so the run itself is the cost: six
+runs is $50–70 and five-plus hours of machine time.
 
-### One active issue per skill
+### Shared snapshots are sequenced, not locked
 
-**No more than one issue that touches a given skill's snapshot is in Ready, In
-Progress or Review at a time.** The rest wait in Backlog.
-
-`/fill-ready` enforces this daily as its Gate 4 and owns the snapshot-set
-definition; `/merge-issues` sizes the queues behind it. This pass is the weekly
-audit of the result — which slots are held, and which holders have gone quiet.
+Several issues may be active on one skill's snapshot at once. `/fill-ready`'s
+Gate 4 promotes them side by side with a reciprocal note in each body, and
+whichever lands second rebases and re-runs the eval. This pass is the weekly
+audit of the result.
 
 **Check open PRs against the snapshot set too, not just issue columns.** A PR
-holds a skill's slot whether or not the issue that spawned it ever sits in
-Ready/In Progress/Review as a separate card — the PR's own file list is what
-collides, and an issue-column-only read misses every pair whose second occupant
-is a PR.
+changes a skill's snapshot whether or not the issue that spawned it ever sits in
+Ready/In Progress/Review as a separate card, and an issue-column-only read misses
+every pair whose second occupant is a PR.
 
 ```sh
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
@@ -430,45 +425,20 @@ gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
   --jq '.[] | select(.files[].path | test("packages/engine/plugin/skills/<skill>/|eval/tests/unit/<skill>/")) | "\(.number) \(.title)"'
 ```
 
-Run this per skill with anything in the paid-run tax table. Two PRs (or a
-PR plus an issue) against one slot is the same "who rebases last" problem the
-converging-cluster check names — report it as a reconciliation finding, not a
-merge, since the fix is usually sequencing the two PRs, not combining their
-issues.
-
-This is a *collision* rule, not a cost rule, and the distinction matters when
-reporting on it. It stops two people editing one SKILL.md at once and
-invalidating each other's run. It does **not** by itself reduce the number of
-runs.
-
-Three things this pass owes the rule:
-
-**1. Key the lock on paths, not on the skill's name.** An issue holds a skill's
-slot only if its work lands under that skill's snapshot set:
+**Key it on paths, not on the skill's name.** An issue is on a skill's snapshot
+only if its work lands under that skill's snapshot set:
 
 - `packages/engine/plugin/skills/<skill>/**`
 - `eval/tests/unit/<skill>/**`
-- a plugin agent the skill references via `@plugin:` — `record-extractor.md` gates
-  every skill naming it, so one agent edit can hold several slots at once
+- a plugin agent the skill references via `@plugin:` — `record-extractor.md` is
+  on every skill naming it, so one agent edit can touch several snapshots at once
 
-Issues that only touch tool or harness code do **not** take the lock even when
-their title names the skill. #1073 is about `record-search.ts` and says in its own
-DoD *not* to edit `search-records/SKILL.md`; locking search-records for it would
-be wrong. The `**Touches:**` line is what makes this decidable.
+Issues that only touch tool or harness code are **not** on the snapshot even when
+their title names the skill. The `**Touches:**` line is what makes this decidable.
 
-**2. Reclaim a stalled slot.** A held slot blocks a whole skill, so a card that
-has not moved in ~10 days hands its slot back to Backlog and the next issue is
-promoted. Report every reclaim with the assignee and the idle days.
-
-**3. Make the queue's size the finding, and then stop.** A skill whose queue is
-five deep is not a scheduling problem, it is a sizing problem — and sizing it is
-`/merge-issues`, which ran before this one. Report the depth and who holds the
-slot. Do not propose the merges; if a queue is still deep, that pass has already
-judged those issues irreducible and written a reason per survivor.
-
-The exception is a queue that grew **since** that pass ran, or one whose survivor
-reasons this read contradicts — the body turns out to be obsolete, or its blocker
-closed. Say which, and hand it back rather than merging it here.
+**Report missing notes.** Two active items on one snapshot where either body lacks
+the other's reciprocal note is a finding: whoever lands second will be surprised
+by the re-run.
 
 Do **not** reach for `eval-cosmetic-skip` to squeeze a second edit past the gate.
 It is for behavior-neutral changes only, and a gate too expensive to satisfy
@@ -478,10 +448,10 @@ trains people to bypass it on exactly the edits that are not neutral.
 
 Give each mature skill with a real queue **one open issue** — titled
 `next run: <skill>`, labelled `cluster:next-run` plus the skill's lane — listing
-the issues waiting on that skill's slot, in order, one line each.
+the Backlog issues on that skill's snapshot, in the order they should land, one line each.
 
-It is the queue made visible. Without it, an issue that is merely *waiting its
-turn* looks identical to one nobody wants, and the person who filed it has no way
+It is the queue made visible. Without it, an issue meant to ride along with the
+next run looks identical to one nobody wants, and the person who filed it has no way
 to see which. It holds pointers only — `#N — one clause` — never content.
 
 Rules that keep it from becoming a queue file:
@@ -571,13 +541,17 @@ print('  of which senior-pool cards in Ready (expected, not a finding):',
       [n for n in _unass if onboard[n]=='Ready' and _senior(n)])
 
 # `high-priority` — /fill-ready applies it to Ready cards only. Anywhere else
-# it is a filing that slipped past the recipe or a card that moved with it on.
+# it is a filing that slipped past the recipe or a card that moved with it on —
+# except a card whose body carries the lead's `lead:` line, which ranks from
+# any column (fill-ready, "The lead's `lead:` line ranks first").
 # The body line is what /fill-ready re-derives against.
+import re
+def _lead(n): return re.search(r'^> \*\*High priority \([^)]*\):\*\* lead:', issues[n]['body'] or '', re.M)
 def _hp(n): return any(l['name']=='high-priority' for l in issues[n]['labels'])
 def _lane(n, lane): return any(l['name']==lane for l in issues[n]['labels'])
 hp=[n for n in issues if _hp(n)]
 print('high-priority outside Ready (Ready-only label):',
-      [(n, onboard.get(n)) for n in hp if onboard.get(n)!='Ready'])
+      [(n, onboard.get(n)) for n in hp if onboard.get(n)!='Ready' and not _lead(n)])
 print('high-priority without a `> **High priority (` body line:',
       [n for n in hp if '> **High priority (' not in (issues[n]['body'] or '')])
 for lane in ('developer','genealogist'):

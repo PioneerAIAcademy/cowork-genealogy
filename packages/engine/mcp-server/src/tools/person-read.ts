@@ -1,4 +1,5 @@
 import type { Principal } from "../auth/principal.js";
+import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -274,6 +275,9 @@ async function transcribeMemories(
         // 90s budget -- which is why the phase-level stop below exists too.
         { ocrTimeoutMs: remaining, imageKey: m.id },
       );
+      // The widened return (issue #2048) carries a no-project answer only on
+      // the `file` input, which this leg never sends; narrow so tsc can see it.
+      if ("ok" in out) throw new Error(out.errors.join(" "));
       finished.set(m.id, {
         ...(out.transcription.trim() ? { text: out.transcription } : {}),
         ...(out.imageRef ? { image_ref: out.imageRef } : {}),
@@ -939,18 +943,12 @@ function droppedEdgeNotes(
   if (shaped.length === kept.length) return {};
   const keptSet = new Set(kept);
   const dropped = shaped.filter((r) => !keptSet.has(r));
-  const byType = new Map<string, number>();
-  for (const r of dropped) byType.set(r.type, (byType.get(r.type) ?? 0) + 1);
-  const breakdown = [...byType.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([type, n]) => `${n} ${type}`)
-    .join(", ");
-  const notes = [
-    `Dropped ${dropped.length} relationship(s) whose endpoints are not in ` +
-      `persons[] (${breakdown}). FamilySearch names kin one hop beyond the ` +
-      `persons it returns; such an edge fails the project_create write ` +
-      `outright, so it is not emitted.`,
-  ];
+  // The count-and-type sentence is shared with person_ancestors (tree-graph.ts,
+  // issue #2747) so the two tools cannot drift into two wordings of one fact.
+  // The subject-parentage sentence below stays local: only a tool with a
+  // requested person can say it.
+  const shared = describeDroppedEdges(shaped, kept);
+  const notes = shared ? [shared] : [];
   const ownParentage = dropped.filter(
     (r) => r.type === "ParentChild" && r.child === pid,
   ).length;
@@ -1068,40 +1066,6 @@ function shapePersons(
 }
 
 // ─── Shape relationships ─────────────────────────────────────────────────
-
-/**
- * Drop any relationship with an endpoint that is not a returned person.
- *
- * FamilySearch's relationship arrays reach ONE HOP FURTHER than its persons
- * array: a read names the subject's great-grandparents, a child's spouse, or a
- * non-spouse co-parent without returning a person record for them. Its refs even
- * carry an absolute-URL form used, in this file's own words, "when the person
- * isn't in this response".
- *
- * Emitting those edges is not free. `validate_research_schema` treats an
- * unresolvable endpoint as a HARD error on all four spellings -- `parent` and
- * `child` (validator.ts:1847/1852), `person1` and `person2` (1873/1878) -- and
- * `project_create`, alone among the tree writers in never calling
- * `sanitizeTree`, refuses the ENTIRE write on any error. So one edge pointing a
- * hop past the data costs the user their whole project, and the failure names a
- * person they never asked about.
- *
- * Dropping the edge loses nothing a caller could have used: the far endpoint is
- * not in `persons[]`, so there is no person to link to. What is lost is the hint
- * that some further relative exists -- the trade the card's rule 4 makes
- * deliberately, now made for every emitted edge rather than only for the ones
- * the sibling fan-out contributes.
- */
-function dropDanglingEdges(
-  relationships: TreeRelationship[],
-  personIds: Set<string>,
-): TreeRelationship[] {
-  return relationships.filter((r) =>
-    [r.parent, r.child, r.person1, r.person2].every(
-      (endpoint) => endpoint === undefined || personIds.has(endpoint),
-    ),
-  );
-}
 
 function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],

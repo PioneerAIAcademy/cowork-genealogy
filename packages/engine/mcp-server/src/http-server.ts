@@ -91,8 +91,10 @@ export interface ToolServerOptions {
   /** The process-wide config (~/.familysearch-mcp/config.json or the hosted
    *  equivalent) every request's bearer principal is built over. */
   baseConfig: AppConfig;
-  /** The store for one project id, built per request. */
-  bindStore: (projectId: string) => ProjectStore;
+  /** The store for one project id, built per request. `signal` aborts when
+   *  that request's client disconnects before its response is written; a store
+   *  that writes transactionally rolls back rather than commit after it. */
+  bindStore: (projectId: string, signal: AbortSignal) => ProjectStore;
 }
 
 async function handleMcpPost(
@@ -108,9 +110,16 @@ async function handleMcpPost(
     sendJson(res, 400, INVALID_PROJECT_ID);
     return;
   }
+  // A killed worker closes its socket but sends nothing; without this its
+  // in-flight write would commit after the caller that could read the result
+  // is gone, and the resumed turn would write the same thing again.
+  const disconnected = new AbortController();
+  res.on("close", () => {
+    if (!res.writableEnded) disconnected.abort();
+  });
   const store =
     projectId.kind === "present"
-      ? options.bindStore(projectId.id)
+      ? options.bindStore(projectId.id, disconnected.signal)
       : unboundProjectStore(NO_PROJECT_BOUND_MESSAGE);
 
   const server = createServer(principalFromHeaders(req.headers, options.baseConfig));

@@ -106,7 +106,14 @@ batching does differently from its siblings: finalizing a staged sidecar is a
 mutation held until the final commit — so a batch call tracks every sidecar it
 creates and unlinks all of them (not just the failing op's) on any later
 failure, extending the single-call path's existing orphan-cleanup rather than
-introducing a new invariant.
+introducing a new invariant. The §8.2 census check is the exception to per-op
+ordering: it runs over every op before any op is applied, so its refusal
+consumes no staged file.
+
+**Success response.** `{ ok: true, logId, performed, resultsRef, returnedCount,
+filesWritten, validation: { valid: true, warnings } }` for a single call, or
+`{ ok: true, results: [...], filesWritten, validation }` for a batch. Either may
+carry `escalationDue: string`, present only when §8.1's nil-escalation note fires.
 
 **camelCase at the boundary; snake_case on disk.** The tool renames on persist
 (`planItemId → plan_item_id`, `resultsExamined → results_examined`,
@@ -286,7 +293,7 @@ clerical work.
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink staged sidecar); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
-| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it | input error; write nothing. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
+| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
 
 ### 8.1 Non-blocking warnings (never fail the op)
 
@@ -301,7 +308,7 @@ the caller may be about to supply in the next call.
 This is not a blanket rule against preconditions on this tool — §8.2 is one that
 does block, and the distinction is what makes it legitimate.
 
-- **Unretained results:** a `STAGING_CAPABLE_TOOLS` search that reported
+- **Unretained results:** a `STAGING_SEARCH_TOOLS` search that reported
   `resultsAvailable > 0` but passed no `stagedResultsRef` discarded its verbatim
   response. Fires per offending entry.
 - **Logging without persistence:** once **≥3** positive-outcome
@@ -316,6 +323,25 @@ does block, and the distinction is what makes it legitimate.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
+A third advisory rides a top-level `escalationDue` string rather than
+`validation.warnings`, the shape of `record_search`'s `rankingSkipped` and
+`nilSearchNeedsLog`, and like them it never touches `ok`:
+
+- **Nil escalation:** once a call's nil entries bring a plan item to **3** nil
+  `record_search` / `fulltext_search` entries (`outcome: negative`,
+  `results_examined: 0`, no `results_available` above 0, counting this call's),
+  `escalationDue` says the
+  escalation trigger has fired, that the plan item goes to external sites next,
+  and that a zero-result search is not a sign of an expired session. It fires
+  only when the plan item's `record_type` is `census`, its plan's question is
+  `open` or `in_progress`, and no entry for the plan item is `positive`,
+  `partial` or an `external_site` search. The census scope is deliberate: a nil
+  on a low-index record type (probate) is an index-coverage gap whose next step
+  is full text, and index coverage is not in `research.json`. Everything it
+  reads is, which is why this is a tool note and not prose — a prose version of
+  the same trigger was measured and made a correct search give up early. A
+  call that brings several plan items to the threshold gets one line per item.
+
 ### 8.2 The one precondition that does block: undocumented census structure
 
 A note that states the family structure of a census whose schedule has **no
@@ -323,11 +349,13 @@ relationship-to-head column**, without marking it as inferred, is refused and
 nothing is written.
 
 This clears the §8.1 bar for a reason the other two cannot: it is decidable from
-the note alone, which is ADR-0011's test for a writer-tool precondition. No
-project state, no prior call and no later call can change the answer. The
-refusal is also always actionable — the note becomes compliant by saying what is
-true ("family structure inferred from surname, ages and order, not stated"), so
-it costs a turn rather than losing work.
+the note and the staged search response the entry is logged with, both already
+in the project folder, which is ADR-0011's test for a writer-tool precondition.
+No later call can change the answer. The refusal is also always actionable — the
+note becomes compliant by saying what is true ("family structure inferred from
+surname, ages and order, not stated"), so it costs a turn rather than losing
+work. A batch runs the check on every op before any op is applied, so a refusal
+consumes no op's staged file and a corrected re-send still finds them all.
 
 Scope, and why it is this narrow:
 
@@ -344,13 +372,37 @@ Scope, and why it is this narrow:
   Ireland"), which stays refused.
 - **Undecidable inputs keep the prior behaviour** rather than failing open: when
   no year binds to a census at all, the whole-note test still applies.
+- **The staged search decides when the note does not.** For a `record_search`
+  entry with a `stagedResultsRef`, the check reads the staged rows'
+  `collectionTitle` — FamilySearch's own words, which the caller does not author.
+  When every titled row is a US federal census before 1880 (matched by title
+  shape, never by the note's census patterns, which read an unqualified census as
+  US and would take "Ecuador, Census, 1737-1990" for one), the note is judged
+  whatever word it uses, provided it binds no census year of its own and
+  contains one of those census years. A bound year keeps precedence, so no
+  note-only verdict moves. A mixed search (1850 and 1880 rows) does not decide,
+  because the note may describe the other row; nor does "the top-ranked row",
+  which is the best match only when ranking ran. The year in the note is what
+  ties it to that census: a parish-register note logged against an 1850 census
+  search is not refused for a household the census never showed. Other search
+  tools carry no collection title and keep the note-only rule.
+- **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
+  is in the eval-plane validator. Flagging a *name* as indexed is not.
 
-Measured over the 3,522 distinct `notes` arguments in the committed run logs
-(measured at 414ee3c68; re-derive rather than quote — the corpus moves with every
-committed run, and shrinks as well as grows, because a re-run replaces a skill's
-run log), the rule refuses 202 (5.7%), down from 355 (10.1%) before the
-binding. Nothing in that corpus is newly refused; the one shape that would be
-is a census named before 1800, which the old whole-note year test (`18[0-7]\d`)
+Measured over the 3,882 distinct `notes` arguments in the committed run logs
+(measured at dc9766b15; re-derive with `dev/measure-census-hedge-refusals.ts`
+rather than quote — the corpus moves with every committed run, and shrinks as
+well as grows, because a re-run replaces a skill's run log), the note-only rule
+refuses 216 (5.6%). Against the rule before the staged-search trigger (the
+script's `--baseline` flag, given a copy of the earlier module), 4 notes
+are newly allowed, all by the "indexed" hedge, and none newly refused. Of the
+1,789 staged `record_search` entries with a note, 662 pair to the search
+response that staged them (e2e run logs keep only a truncated summary, so the
+rest cannot be paired); the staged search newly refuses 4 of those 662 and
+frees none. Two are the `ut_search_records_h4k` note quoted below and the other two
+are different notes of the same shape, a flat household claim with no census
+word. A census named before
+1800 is refused too, which the pre-binding whole-note year test (`18[0-7]\d`)
 could not see and which the rule is squarely for -- the 1790-1840 US schedules
 name only the head of household.
 
@@ -359,19 +411,23 @@ a 41% refusal rate, non-generalizability outside the US, and the signal being
 author-supplied and optional. `requirePre1880CensusHedge`'s docstring in
 `research-log-append.ts` carries the second verbatim, with the issue it was
 ruled on. The binding above answers the first two — the rate
-is 5.7% of notes, and non-US censuses that carry the column are excluded. **The
-third stands**: a caller that omits the census year from `notes` is not refused,
-so this narrows a common failure rather than closing a hole.
+is 5.6% of notes, and non-US censuses that carry the column are excluded. The
+staged search answers most of the third for `record_search`: the census is read
+from FamilySearch's response, not from the caller. What still stands is the tie:
+a note that omits the census year is not refused, and neither is a note logged
+by any other tool or with no staged response. This narrows a common failure
+rather than closing a hole.
 
-The same is true of the trigger word, and more broadly. The rule fires on
-`census`, so a note that describes a pre-1880 census household without ever
-using the word is not refused. That is not hypothetical: "1 result returned:
-Amos Whitfield, b. 1817, Georgia, in Pike, Kentucky, 1850. Indexed within the
-Household of Nancy Doss" is a real note, the recorded `ut_search_records_h4k`
-failure in the 2026-09-15 17:48 `search-records` run. Only the eval-plane
-validator `test_pre1880_census_structure_marked_inferred` covers that shape --
-`pre1880-census-hedge.test.ts` pins the plural-only hole deliberately and does
-not pin this one, so nothing in production refuses it.
+The trigger word was the same hole, and more broadly. On note text alone the
+rule fires on `\bcensus\b`, so a note that describes a pre-1880 census household
+without ever using the word passed. That is not hypothetical: "1 result
+returned: Amos Whitfield, b. 1817, Georgia, in Pike, Kentucky, 1850. Indexed
+within the Household of Nancy Doss" is a real note, the recorded
+`ut_search_records_h4k` failure in the 2026-09-15 17:48 `search-records` run,
+which the eval-plane validator `test_pre1880_census_structure_marked_inferred`
+failed and the tool allowed. It is refused now when logged with the staged 1850
+census it came from; without a staged response it still passes, and
+`pre1880-census-hedge.test.ts` pins both, as it pins the plural-only hole.
 
 ---
 
@@ -399,11 +455,27 @@ not pin this one, so nothing in production refuses it.
   flags it; a re-run allocates a fresh `log_id` and succeeds with no orphan left.
 - **camelCase→snake_case** — persisted entry uses snake_case keys throughout.
 - **Non-blocking warnings (§8.1)** — the unretained-results warning fires when a
-  staging-capable search reports `resultsAvailable > 0` with no `stagedResultsRef`
+  staging search tool reports `resultsAvailable > 0` with no `stagedResultsRef`
   and stays silent for a nil search; the logging-without-persistence nudge fires
   once ≥3 positive searches are logged with zero sources and zero assertions,
   stays silent below the threshold, and stays silent once any source or assertion
   exists. Both keep `ok: true` and leave the log entry written.
+- **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
+  census plan item with an open question, single or batched; stays absent at two,
+  for a probate plan item, once the plan item has a positive or partial entry or
+  an `external_site` entry, when the question is resolved or declared exhaustive,
+  for a null `planItemId`, for nil `external_links_search` fetches, for a
+  search whose results were left unexamined, and when the call itself logs no
+  nil; a batch reaching the threshold on two plan items names both.
+- **Census check on the staged search (§8.2)** — every payload staged by
+  `stageSearchResults` from the real `record_search` fixture shape, never
+  hand-built: an unhedged household note with no census word is refused on a
+  staged 1850 US census (no sidecar written, staged file kept) and allowed on an
+  England and Wales 1851 census, a mixed 1850/1880 search, `fulltext_search` and
+  `external_links_search` payloads, and a nil search; a parish-register note is
+  allowed on an 1850 census; a missing staged file reports finalize's error, not
+  the census refusal; a staged handle spelled `./results/.staging/...` or as an
+  absolute path is judged the same as the plain one; a batch refusal of op 1 leaves op 0's staged file in place.
 
 ---
 

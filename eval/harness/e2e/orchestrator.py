@@ -161,7 +161,8 @@ BASELINE_ALLOWED_TOOLS = [
 # records itself); record_person_matches / record_record_matches (keyed
 # off a RECORD the agent already found, not the subject); source_attachments
 # (confirms a found record's attachment — real GPS work); person_warnings
-# (reads the local stripped tree, not the live one).
+# WITHOUT `live` (it then reads the local stripped tree, not the live one —
+# a `live: true` call is blocked below, see LIVE_TREE_ARG_TOOLS).
 #
 # See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
 # `mcp__<server>__` prefix).
@@ -196,15 +197,32 @@ def is_turn_cap_error(detail: str | None) -> bool:
     return "maximum number of turns" in str(detail or "").lower()
 
 
-def is_blocked_tree_tool(tool_name: str) -> bool:
+# Tools that read the live tree only in one MODE, so the bare name cannot decide
+# it. `person_warnings` is local by default and fetches the subject plus their
+# parents, spouses and children from the live tree when called with `live: true`
+# — and each warning carries `personId`, `personName` and `relatedPersonId`, so
+# on a parents fixture the live mode hands back a stripped relative's name and
+# PID. That is the read `person_read` heads BLOCKED_TREE_TOOLS for.
+LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+
+
+def is_blocked_tree_tool(
+    tool_name: str, tool_input: dict[str, Any] | None = None
+) -> bool:
     """Whether a tool call should be denied as a live-tree answer-read.
 
     Only MCP genealogy tools are candidates; baseline tools (Read, Skill,
-    …) are never blocked. Matched on the bare advertised name.
+    …) are never blocked. Matched on the bare advertised name, except for
+    LIVE_TREE_ARG_TOOLS, where the deciding argument is inspected too — pass
+    `tool_input` for those or a live call reads as legitimate research.
     """
     if not tool_name.startswith("mcp__"):
         return False
-    return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
+    bare = _bare_tool_name(tool_name)
+    if bare in BLOCKED_TREE_TOOLS:
+        return True
+    arg = LIVE_TREE_ARG_TOOLS.get(bare)
+    return arg is not None and bool((tool_input or {}).get(arg))
 
 
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
@@ -704,47 +722,47 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
         # person, and the agent believes it DID call same_person. The cause is an
         # id mismatch, so the reason has to name the one shape that satisfies the
         # gate. See docs/specs/guardrail-enforcement-spec.md §4's last row.
-        f"These are LOCAL tree ids minted by tree_edit (which rejects "
-        f"caller-supplied ids), not FamilySearch ids, so score them by passing "
-        f"the TREE side as `gedcomx2` — a subset simplified-GedcomX holding the "
-        f"person plus their matching mob — with `primaryId2: \"{example}\"`, and "
-        "the record side as `gedcomx1`/`primaryId1` (person-evidence/SKILL.md, "
-        "'Score the match with same_person'). "
+        # The satisfying shape, restated for the project-relative arm (#1731).
+        # It is what ADR-0009 constraint 6 requires this text to name, and the
+        # old hand-assembled recipe is now the SLOW path: naming it here would
+        # steer the agent straight back to the cost that caused the skipped
+        # call this gate fires on.
+        f"Score them with the project-relative form, which assembles both "
+        f"documents for you: `same_person({{ projectPath, assertionId, "
+        f"treePersonId: \"{example}\" }})`. `assertionId` is the assertion the "
+        "link cites. The tool resolves the record itself and builds the tree "
+        "side as that person's matching mob, so you hand-build nothing "
+        "(person-evidence, 'Call it with references, not documents'). "
         # A PreToolUse deny is all-or-nothing on the call, and the batches this
         # fires on have a median of 17 ops (max 152), 11% of which carry ops in
         # OTHER sections. Without this sentence the agent cannot tell what it lost.
         "If this call was denied, the entire batch was rejected — including any "
         "ops in other sections — and must be re-issued after the same_person "
         "call. "
-        # The old escape ("not record_search-sourced, so no record_persona_id")
-        # is gone: the check no longer flags a link whose provenance lane cannot
-        # yield a persona from what the run retained, so no flagged link is that case. What replaces
-        # it is the retrieval recipe, because the reason has to tell the agent
-        # HOW to get the persona it is being asked to score.
-        #
-        # Branch on the LOG ENTRY'S TOOL, not on record_persona_id being null:
-        # a sidecar-backed search with a null persona already has its gedcomx in
-        # `results/<log_id>.json`, so branching on nullity would send the agent
-        # to record_read for a document it is holding.
-        "Get the record persona and score it: from the log entry's sidecar "
-        "(`results/<log_id>.json`) when the entry has a `results_ref`, or by "
-        "re-opening the record with `record_read({ recordId })` when the "
-        "assertion came from `record_read`. `primaryId1` is the persona for the "
-        "person THIS link is about: `record_persona_id` when it is set AND the "
-        "link is about the assertion's own `record_role` party, otherwise the "
-        "`persons[].id` matching that party's name — a relationship assertion "
-        "names two parties and gets a link for each, and reusing the first "
-        "party's persona for the second is how a near-zero score gets "
-        "manufactured and then explained away. "
+        # The retrieval recipe this used to spell out is now the TOOL's job
+        # (#1731): it tries the retained sidecar, then a fresh read, then a
+        # persona projected from the record's own extracted assertions. So the
+        # reason no longer teaches the agent how to fetch a document — only how
+        # to name the party, which is the one thing the tool cannot infer.
+        "A relationship or marriage assertion names two parties and gets a link "
+        "for each. The call is about the assertion's own `record_role` party by "
+        "default; for the OTHER party add `recordRole` (or `recordPersonaId`) "
+        "naming it. Reusing the first party's persona for the second is how a "
+        "near-zero score gets manufactured and then explained away. "
         # The narrower exit that survives. NOT the refuted escape: that one
         # excused a REACHABLE persona. This one covers the only case the check
         # still flags without one — provenance it could not resolve at all —
         # which the predicate deliberately does not exempt, because exempting on
         # an absent field would let an assertion written with no log_entry_id
         # shed the requirement entirely.
-        "If the assertion or its log entry cannot be resolved at all, say so in "
-        "the link's `rationale` and proceed — the gap is still recorded; the "
-        "rationale is the record of why, not a waiver. "
+        "If the tool answers that the record holds no persona for that party, "
+        "or that the candidate is a stub minted from the very persona you would "
+        "be scoring (circular), say so in the link's `rationale` and proceed — "
+        "the gap is still recorded; the rationale is the record of why, not a "
+        "waiver. How the assertion was RETRIEVED is not such a case: a "
+        "full-text hit, an image, a PDF and a sidecar-less search are all "
+        "scorable, because the tool derives the record side from the record's "
+        "own assertions when it cannot fetch a document. "
         # There is deliberately NO escape for "the id is a locally-minted stub".
         # person-evidence/SKILL.md said such an id returns a degenerate score to
         # be treated as "no score available", but that guidance (2026-07-02)
@@ -1876,7 +1894,7 @@ async def _run_agent(
         # call never runs, so it shouldn't consume the budget. The run
         # continues (no stopReason); the agent must find a records path.
         bare = _bare_tool_name(tool_name)
-        if is_blocked_tree_tool(tool_name):
+        if is_blocked_tree_tool(tool_name, dict(input_data.get("tool_input") or {})):
             blocked_tree_reads.append(
                 {
                     "tool": bare,

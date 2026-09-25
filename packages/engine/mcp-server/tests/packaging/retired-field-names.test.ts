@@ -105,6 +105,10 @@ const ALLOWED: Record<string, string> = {
     "the engine's back-compat reader for research.json documents written before the rename",
   "packages/engine/mcp-server/tests/utils/record-basis.test.ts":
     "tests the back-compat reader, so it must name the retired spelling",
+  "packages/engine/mcp-server/tests/utils/record-persona.test.ts":
+    "one case feeds the record-side projection a legacy-spelled assertion, to " +
+    "prove it is still excluded from a projected persona; without the retired " +
+    "spelling that case cannot be written",
   "packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts":
     "this file — it names the retired token in order to ban it",
 

@@ -627,6 +627,32 @@ graded** — a direct test is a separate file with its own `test.id`, not a seco
 arm over an existing one, because a duplicated `test_id` in one envelope corrupts
 annotations, which key on `(test_id, dimension_source, dimension_name)`.
 
+**A converted suite is the one case where the direct test keeps the original
+`test.id`.** Once a skill is deleted outright rather than thinned into a router
+(the lead's ruling of 2026-09-22: every skill becomes an agent and the skill is
+deleted; `citation` is the first), there is no routed arm left to
+grade and no second file to collide with. The routed original is not kept
+alongside the direct one — it is *converted in place*: `input.user_message`
+becomes `input.delegation`, `direct-arm` is appended to `tags`, and `tags`,
+`execution`, `mcp_fixtures`, `judge_reads_files` and `negative` are otherwise
+untouched. Keeping the id is what preserves the suite's annotation history
+across the conversion; minting new ids would orphan every prior grade on the
+`(test_id, dimension_source, dimension_name)` key this section already names.
+The "separate file, own id" rule above still governs a **pair** — a routing
+skill that still ships — because there both arms exist and both are graded.
+
+**A negative converts too, when its outcome does not depend on routing.** The
+conversion doc says negatives get no twin, and for a pair that is right: routing
+is the router's job and a direct test has no router. A negative graded with
+`negative.grade_on_invariant` is the exception — its outcome is decided solely
+by its tag-gated invariant validator, with routing and activation deliberately
+not gated (`orchestrator._compute_outcome`), so nothing it measures was ever the
+router's. `ut_citation_012` (never create a source entry) is the worked case: it
+keeps its `negative` block, its `grade_on_invariant`, its `no-new-source` tag
+and the validator that gates on it, and only the input changes. A negative
+*without* `grade_on_invariant` has no defined outcome path on the direct arm and
+must be deleted or re-shaped, not converted.
+
 On a direct test the harness:
 
 - builds a workspace staging `.claude/agents/` and **no skills at all** — the
@@ -670,6 +696,25 @@ both, editing the agent leaves the suite's run log **active** and its grades are
 quoted forward against prose that changed. For a paired skill the `@plugin:`
 scan already embeds the same path, so neither rule moves an existing snapshot.
 
+**An `agent:` caller in `ownership.json` is readable here only when it is the
+suite's subject.** `test_ownership_table` compares the sections a run modified
+against `writer_sets`, which resolves bare names and had to refuse an `agent:`
+caller outright: the check reads one frontmatter `name` and cannot see which
+agent made any given call, so resolving an arbitrary agent would authorize
+writes it cannot attribute, and dropping it silently would deny that agent's own
+writes. Converting a skill to an agent makes exactly one agent visible — the
+suite's subject, whose `name` is what `load_suite_frontmatter` reads off
+`agents/<n>.md`. So `writer_sets(artifact, plane, subject=<n>)` resolves
+`agent:<n>` and nothing else; every other `agent:` caller is dropped from the
+resolved set rather than raising, because raising would fire on every other
+suite's run (lead's ruling, 2026-09-23). Dropping is safe only because the
+structural rule below holds: each such agent is authorizable on its own suite. Without this, every positive test in a
+converted suite fails ownership on its own legitimate writes. A row naming an
+agent caller must also ship `agents/<n>.md` **and** own an
+`eval/tests/unit/<n>/` suite — otherwise no one ever passes `<n>` as the subject
+and the row authorizes nobody while reading as though it authorizes someone
+(`test_a_unit_plane_agent_caller_is_a_suite_subject`).
+
 **Never reach the agent with `--agent` / `extra_args={"agent": …}`.** The shipped
 ownership hook keys on the **presence** of `agent_id`, and a session started that
 way carries `agent_type` but no `agent_id` — so it reads as the main thread and
@@ -698,7 +743,7 @@ single green one is not yet a proof.
 
 Two consequences worth inheriting rather than rediscovering:
 
-- **`xfail_reason` is snapshot-tracked** (only `name`, `description` and `tags`
+- **`xfail_reason` is snapshot-tracked** (only `name` and `description`
   are stripped), so a measured rate written into it is falsified by the very run
   log that ships beside it, and correcting it buys a fresh full-skill run. Cite a
   dated scratch measurement that later runs cannot move, say plainly that the
@@ -766,11 +811,11 @@ Only present when `test.type` is `"negative"`.
 
 ### 5.6 `runs_per_test`
 
-**POLICY: always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call), and that budget goes on covering more tests rather than on re-running the same one. **This is standing policy, not a stage** — do not plan around it being lifted.
+**POLICY: a test FILE's `runs_per_test` is always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call), and that budget goes on covering more tests rather than on re-running the same one. **This is standing policy, not a stage** — do not plan around the file pin being lifted.
 
-**The pin decides what the harness measures, not what the suite tolerates.** We deliberately do not *detect* single-run variance. We do not accept it either. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test. Never re-run one until it happens to come back green, and never read the absent `flaky` flag as evidence that a test is stable.
+**The file pin decides what a committed run log measures, not what the suite tolerates.** A committed run log deliberately does not *detect* single-run variance. We do not accept it either. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test. Never re-run one until it happens to come back green, and never read the absent `flaky` flag as evidence that a test is stable.
 
-The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") stays in the code but is unreachable under this policy. Treat `runs_per_test > 1` as a mistake. The JSON Schema pins `maximum: 1` to enforce it.
+The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") is reachable **only** through the `run_tests.py --runs-per-test N` CLI override, which sets the value after load without touching the test file. The JSON Schema pins `maximum: 1` on the file, so `runs_per_test > 1` in a test definition is a mistake; the override lives at the CLI, and any `N > 1` run is non-releasable (it writes a `scratch_` log), so it never enters the committed corpus.
 
 ### 5.7 `execution`
 
@@ -1295,12 +1340,12 @@ Models are nondeterministic even at `temperature=0` — tool-selection and struc
 
 **Default: N=1 run per test.** Combined with `temperature=0` (Section 15), this gives stable, low-cost regression catching for day-to-day iteration. A single run is the right grain for PR gating, dev-time iteration, and the suite-level dashboard.
 
-**N=3 (or higher) would serve two specific cases** — both ruled out by the standing pin ("Overrides" below), and recorded here only so the aggregation rules that follow have a stated purpose:
+**N=3 (or higher) serves two specific cases** — reachable only through the `run_tests.py --runs-per-test N` CLI override ("Overrides" below), never from a test file, and always as a non-releasable scratch run (a committed ×3 log would let one unrelated flapper block every card, since a per-PR gate grades every test in the log):
 
 - **Description-optimizer passes.** When the optimizer compares two SKILL.md descriptions, it relies on pass-rate deltas across the test set (e.g., 60% → 70%). At N=1 those deltas are dominated by sampling noise, so `runs_per_test: 3` on the tests being scored would be the right instrument for an optimization pass, reverting to N=1 afterward.
 - **Golden-set calibration.** Tests under active senior-genealogist calibration benefit from variance detection (`flaky: true` signals an unstable test) to identify rubric items that need tightening.
 
-For everything else, N=1 is the right choice — the cost saving is ~2.5x, and what is lost is flakiness *detection*, not the obligation to fix flakiness. Re-run a suspect test yourself (`run_tests.py --test <id> --runlogs-root <tmp>`, twice or more) and fix whatever differs between the runs before trusting it again.
+For everything else, N=1 is the right choice — the cost saving is ~2.5x, and what is lost is flakiness *detection* in the committed corpus, not the obligation to fix flakiness. Surface a suspect test's flakiness deliberately (`run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`), read `flaky` / `per_run_outcomes` off the scratch log, and fix whatever differs between the runs before trusting it again.
 
 The harness executes the test N times (one for N=1, three for N=3, etc.) and stores every run in the run log (Section 10).
 
@@ -1333,12 +1378,12 @@ This composition cleanly handles all edge cases:
 
 **Per-run aggregation of judge dimensions.** Within a single run, the judge produces one integer score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`1` < `2` < `3`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-`3` aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all scored `3`."
 
-**There are no overrides.** The schema pins `runs_per_test` to `maximum: 1` and the loader rejects anything higher (`InvalidTestError`, "maximum of 1"), so neither multi-run case below can be requested from a test definition. The pin is standing policy — do not propose lifting it as the fix for a flaky test:
+**Overrides live at the CLI, never in a test file.** The schema pins `runs_per_test` to `maximum: 1` and the loader rejects anything higher (`InvalidTestError`, "maximum of 1"), so neither multi-run case below can be requested from a test definition. The file pin is standing policy — do not propose lifting it as the fix for a flaky test. The one way to run N > 1 is the `run_tests.py --runs-per-test N` flag, which sets the value after load and makes the run non-releasable (a `scratch_` log); the cases it serves:
 
 - `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
 
-So `flaky` never fires and no dashboard surfaces a flapping test. **That is the instrument being permanently blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. Manual re-running is therefore not a stopgap; it is the mechanism. To check a test you suspect, re-run it yourself: `run_tests.py --test <id> --runlogs-root <tmp>`, twice or more, comparing the outcome and the per-dimension scores. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
+So `flaky` never fires in a *committed* run log and no cross-PR dashboard surfaces a flapping test. **That is the committed instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
 **Cost impact.** Running N=3 triples skill-execution cost and judge cost (every non-aborted run is judged). Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
 
@@ -1350,7 +1395,9 @@ At `temperature=0`, Sonnet is documented as not fully deterministic — tool sel
 
 **No regression threshold will be pinned, and none is coming.** Setting one (e.g. "pass rate drop > X% on a skill counts as a regression vs noise") needs an empirical noise characterization, which needs repeated golden-set passes. Nothing prevents running those by hand — the `runs_per_test` pin constrains a test definition, not how often you invoke the suite — and that is exactly why this is a cost decision rather than a mechanical one: five golden-set passes is a standing bill nobody is going to pay for a number that changes with every model, rubric and harness bump. The three things this section once promised — a per-skill pass-rate noise band, a regression threshold derived from it, and a monthly N=5 stability run — are not coming, and should not be planned for.
 
-What that leaves is the rule already in force: **treat any pass-rate drop as a signal to investigate manually.** There is no band to fall inside of, so "probably noise" is never an available conclusion — either you found a real regression, or you found a test that flaps, and both get fixed.
+**None of that scopes a per-test bar, and one now exists.** The refusal above is about a *statistical threshold over pass rates* — a number needing a noise characterization nobody will fund. `check_runlogs.py`'s rule 6 needs no threshold and no baseline: it asks, of each test in a run log the PR adds, whether that test resolved to `fail` or `aborted`. That is a per-test question with a yes/no answer, so the cost argument above does not reach it. It is scoped to the fields that exist today: it reads `runs[].outcome`, whose enum already excludes `xfail`/`xpass`, and consults `expected_outcome` as the suppression field, so it never meets the aggregate remap and needs no schema change, no `eval/app` change and no migration. Retiring the `xfail`/`xpass` enum values is a separate, larger job — roughly 25 edits across 45 files — and is not a precondition for the bar.
+
+What that leaves for *pass rates* is the rule already in force: **treat any pass-rate drop as a signal to investigate manually.** There is no band to fall inside of, so "probably noise" is never an available conclusion — either you found a real regression, or you found a test that flaps, and both get fixed. Rule 6 sits underneath that as the mechanical floor: a red test in a run log the PR adds blocks outright, with no carry list and no exemption. Zero reds, not zero new reds — a suite carrying reds cannot answer whether a refactor broke something, which is the one question it exists to answer.
 
 ---
 

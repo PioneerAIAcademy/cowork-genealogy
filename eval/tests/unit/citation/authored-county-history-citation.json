@@ -5,13 +5,22 @@
     "name": "Refine a compiled county-history citation into authored-work form (src_001)",
     "type": "positive",
     "description": "src_001 is a compiled county history that mentions the Fallon family. Its rough working citation names FamilySearch as creator and lacks Evidence Explained structure. A published/authored work must cite by its publication facts — author, full title, place of publication, publisher, year, page — not as a record, and must carry the 'citing ...' source-of-the-source tail because the book states its source. This is the authored-work template #2542 adds. All publication facts are on file in the before-state.",
-    "tags": ["authored", "county-history", "publication", "1880", "src_001"]
+    "tags": [
+      "authored",
+      "county-history",
+      "publication",
+      "1880",
+      "src_001",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Refine the citation for src_001, the county history that mentions the Fallon family.",
+    "delegation": "Refine the citation on src_001, the county history that mentions the Fallon family.\n\nsourceId: src_001\nprojectPath: <workspace>",
     "scenario": "citation-authored-sources"
   },
-  "mcp_fixtures": ["validate-research-schema"],
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
   "judge_context": [
     "who must be the AUTHOR of the work (Alvina T. Rourke, on file in the before-state citation and in the tree source's author field), not 'FamilySearch' (the repository) and not the publisher. A published work is cited by its author, not by where it was viewed.",
     "what must be the full title of the book (History of Dubuque County, Iowa — on file in the source's notes), not a vague 'Dubuque County history'.",

@@ -11,6 +11,7 @@
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readBuildInfo } from "../utils/build-info.js";
+import { preferredName } from "../utils/name-helpers.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -76,8 +77,8 @@ function truncateQuestion(text: string): string {
 /** Preferred names entry (first entry when none is flagged) as "given surname". */
 function preferredDisplayName(person: any): string | null {
   const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
-  if (names.length === 0) return null;
-  const preferred = names.find((n: any) => n.preferred === true) ?? names[0];
+  const preferred = preferredName(names);
+  if (preferred === undefined) return null;
   const parts = [preferred.given, preferred.surname].filter(
     (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
   );
@@ -231,9 +232,14 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, state, nextStep, openConflictIds}] — per question, how far it has got " +
-    "(framed / planned / searching / evidence-gathered / concluded / critiqued) and " +
-    "what it is waiting on. questionStatuses is ADVISORY: it reports what the " +
+    "[{id, state, nextStep, openConflictIds, storedStatus}] — per question, how far it " +
+    "has got (framed / planned / searching / evidence-gathered / concluded / critiqued), " +
+    "what it is waiting on, and storedStatus, the question's own questions[].status " +
+    "verbatim (null when absent or not a string). state is DERIVED from the documents " +
+    "and storedStatus " +
+    "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
+    "proof summary while its storedStatus is still 'in_progress'; that is not a " +
+    "contradiction. questionStatuses is ADVISORY: it reports what the " +
     "documents already show, nothing is gated on it, and a null nextStep means the " +
     "question needs nothing further. One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +

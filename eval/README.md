@@ -66,7 +66,16 @@ the e2e benchmark; see
   ```
   Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
-  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it. The harness refuses to start without a judge key when any selected test is positive, so a missing link fails in a second rather than after a paid-for suite — override with `--allow-missing-judge` if you deliberately want an ungraded run.
+  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it.
+
+  Both harnesses refuse to start without a judge key, so a missing link fails in a second rather than after a paid-for run — but they take different flags, because the flags mean different things:
+
+  | Harness | Refuses when | Override |
+  |---|---|---|
+  | unit (`run_tests.py`) | any selected test is `positive` (a negative test grades on routing and survives a dead judge) | `--allow-missing-judge` |
+  | e2e (`run_e2e.py`) | always | `--skip-judge` |
+
+  The e2e arm was added 2026-09-23 after a `catharina-gosner-daughter` run cost $4.87 and 28.5 minutes in a fresh worktree and then discarded its own grade. An e2e run started with `--skip-judge` is still committable and can be graded later without re-running the research.
 
 ## Running manually (macOS / Linux)
 
@@ -216,7 +225,7 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate. The harness also **prunes that skill down to its 5 newest candidates**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). Released `v{N}.json` and the newest candidate are never pruned.
 3. Junior opens the CRUD UI and reviews the **sampled** tests on the latest candidate — marked in the sidebar; the rest read `not sampled`. The sample is five chosen tests plus **every test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning**, so a run with a low score anywhere is more than 5 (measured 2026-09-11 over the 117 committed logs carrying a sample: median 5, at most 13 as committed; median 6, at most 15 recomputed with no prior cursor). Every dimension of a sampled test needs an entry, and every one that is not a confirmed pass (judge 3, you agree 3) needs a written comment.
 4. Junior commits the candidate + annotation + any pruned deletions, pushes the PR.
-5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
+5. GH Action enforces (blocking): ≤1 added released file; latest full-skill run log is active on skill-side files (snapshot matches working tree); its `.ann.json` is complete; no two test files share a `test.id`; every committed `.ann.json` parses; and no unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted` (rule 6 — zero reds, no carry list, no exemption). Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.

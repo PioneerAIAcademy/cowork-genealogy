@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Four blocking rules + one warn-only rule per
+Seven blocking rules + two warn-only rules per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -21,11 +21,26 @@ docs/plan/eval-runlog-versioning.md §C6:
              run), each carrying a
              comment unless it is a confirmed pass. A run log with no
              `review_sample` owes every dimension of every test. An edited
-             annotation gates; a pruned (deleted) one does not.
+             annotation gates; a pruned (deleted) one does not — Rule 7 checks
+             that the deletion really is a prune.
     Rule 4   no two unit-test files share a `test.id`.
+    Rule 5   every committed unit .ann.json is valid JSON.
+    Rule 6   no unsuppressed test in a run log THIS PR ADDS resolves to
+             `fail` or `aborted`. Zero reds, not zero new reds: there is no
+             carry list and no exemption, because "it was already red" is the
+             excuse the rule exists to remove.
+    Rule 7   a deleted run log / annotation is a legitimate keep-newest-K prune
+             (or a promotion), not a hand-deletion beyond the prune rule that
+             silently destroys committed genealogist grading. Flags: an
+             annotation deleted while its run log survives; a candidate run log
+             deleted that the recomputed prunable set would have kept; a
+             released `v{N}.json`/`.ann.json` deleted (never prunable).
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
-stdlib + the harness's own `snapshot.py` and `versioning.py` modules.
+stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
+`review_sample`, `outcomes`). Do NOT import `harness.runlog` here: it pulls in
+jsonschema/referencing, and the workflow runs this on a bare interpreter with no
+dependency step, so the import would red every PR (issue #2684).
 """
 
 from __future__ import annotations
@@ -48,7 +63,13 @@ from harness.snapshot import (  # noqa: E402
     hash_file,
 )
 from harness.review_sample import review_dimensions, zero_dimension_test_ids  # noqa: E402
-from harness.versioning import classify  # noqa: E402
+from harness.versioning import (  # noqa: E402
+    DEFAULT_KEEP_CANDIDATES,
+    ann_filename_for,
+    classify,
+    prunable_candidates,
+)
+from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
 
 
 REPO_ROOT = HARNESS_DIR.parents[1]
@@ -60,6 +81,10 @@ TESTS_UNIT_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 
 # Match `eval/runlogs/unit/<skill>/<file>.json`
 RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
+
+# For the closed-owner lookup. Hard-coded rather than derived from the git remote:
+# a fork's `origin` points at the fork, whose issue numbers are not these.
+_REPO_SLUG = "PioneerAIAcademy/cowork-genealogy"
 
 # Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
 # An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
@@ -147,11 +172,23 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
 
 def git_diff_deleted_paths() -> list[str]:
     """Paths the PR DELETED. Used to tell a pruned annotation (housekeeping)
-    apart from an edited one (which must still gate rule 3)."""
+    apart from an edited one (which must still gate rule 3), and by rule 7 to
+    verify a deletion is a legitimate prune.
+
+    `--no-renames` is load-bearing: a harness prune deletes an old candidate in
+    the same commit that adds a new one, and git's rename heuristic pairs the
+    delete+add as a rename, so `--diff-filter=D` omits the deletion entirely.
+    Without this flag rule 7 never sees a real prune's deletions (and the
+    candidate → released promotion, which is also a delete+add pair, would be
+    invisible too), and rule 3's deleted-annotation arm would misread a pruned
+    annotation as an edit. Verified: deleting a 200-line file while adding a
+    199-line near-copy shows nothing under `--diff-filter=D` and shows the
+    deletion under `--diff-filter=D --no-renames`."""
     base = os.environ["BASE_SHA"]
     head = os.environ["HEAD_SHA"]
     out = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=D", f"{base}...{head}"],
+        ["git", "diff", "--name-only", "--diff-filter=D", "--no-renames",
+         f"{base}...{head}"],
         text=True,
         encoding="utf-8",
     )
@@ -639,6 +676,148 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
     return fails
 
 
+# The run-log schema's runs[].outcome enum. Anything else is a hand edit, and the
+# guard exists because an unrecognized string is modal-aggregated straight through
+# and matches neither "fail" nor "pass" -- the exact exit-0-having-done-nothing
+# shape CLAUDE.md names.
+_RUN_OUTCOMES = frozenset({"pass", "partial", "fail", "aborted"})
+_GH_TIMEOUT_SECONDS = 20
+
+def closed_marker_owners(markers: dict[str, int], runner=subprocess.run) -> set[int]:
+    """-> the set of issues cited by an `xfail_reason` that are CLOSED.
+
+    Warn-only and **never raises**: it needs the network, so it is silently inert
+    with no `gh`, no token, or no connection. A gate that hard-fails on a GitHub
+    blip fails work the author was entitled to land.
+
+    It exists because a marker's stated removal condition can cite an issue that
+    is already closed, at which point the condition can never be met and nothing
+    notices. Three of the five live markers are in that state (#2173, #2030,
+    #1967), and `h4k`'s has been stale since 2026-09-02.
+    """
+    closed: set[int] = set()
+    for number in sorted(set(markers.values())):
+        try:
+            proc = runner(
+                ["gh", "api", f"repos/{_REPO_SLUG}/issues/{number}", "--jq", ".state"],
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=_GH_TIMEOUT_SECONDS,
+            )
+            if proc.returncode == 0 and (proc.stdout or "").strip().upper() == "CLOSED":
+                closed.add(number)
+        except Exception:
+            # Blanket, and deliberate: no gh, no token, a 403, a timeout, a shape
+            # change -- all the same non-answer, and none the author's problem.
+            return set()
+    return closed
+
+
+def marker_owners(tests_root: Path) -> dict[str, int]:
+    """-> {test_id: issue number} for every committed `expected_outcome: xfail`
+    marker whose `xfail_reason` cites one. A marker citing no issue is not an
+    error here; it simply cannot be checked."""
+    owners: dict[str, int] = {}
+    for path in sorted(tests_root.rglob("*.json")):
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        test = doc.get("test") or {}
+        if test.get("expected_outcome") != "xfail":
+            continue
+        m = re.search(r"#(\d{3,6})", str(test.get("xfail_reason") or ""))
+        if m and test.get("id"):
+            owners[test["id"]] = int(m.group(1))
+    return owners
+
+
+def rule6_outcomes(
+    skill: str,
+    log: dict,
+    filename: str,
+    closed_owners: set[int] | None = None,
+    marker_issues: dict[str, int] | None = None,
+) -> int:
+    """Rule 6 (blocking): no unsuppressed test in this run log resolves to
+    `fail` or `aborted`.
+
+    **Zero reds, not zero new reds** (lead ruling 2026-09-22, reversing the
+    2026-09-21 decision). A run log a PR adds must be clean whether or not the
+    red predates the PR. There is no carry list, no review-by date and no
+    per-entry exemption: "it was already red" is the excuse the rule exists to
+    remove, because a suite carrying reds cannot answer "did my refactor break
+    something", which is the one question it exists to answer.
+
+    Resolution is from `runs[].outcome`, whose enum is pass/partial/fail/aborted,
+    so this never meets the aggregate's xfail/xpass remap. Aggregation is
+    `harness.outcomes.aggregate_per_run_outcome` -- the same function the runner
+    uses, so the gate and `run_tests.py` cannot drift.
+
+    `partial` never blocks (lead ruling 2026-09-18: "tests must pass, or
+    partial, consistently"). An `expected_outcome: xfail` marker declares a known
+    FAILURE, so it suppresses `fail` only: a suppressed test that aborts blocks,
+    because an abort is an ungraded run rather than evidence of the declared
+    defect, and one that passes warns as a stale-marker signal.
+    """
+    fails = 0
+    for test in log.get("tests") or []:
+        test_id = test.get("test_id", "<no id>")
+        per_run = [r.get("outcome") for r in (test.get("runs") or [])]
+        if not per_run:
+            gh_error(
+                f"skill `{skill}`: `{filename}` test `{test_id}` has no runs, so "
+                f"its outcome cannot be resolved. The schema requires at least "
+                f"one; re-run the harness rather than hand-editing the log.",
+            )
+            fails += 1
+            continue
+        unknown = [o for o in per_run if o not in _RUN_OUTCOMES]
+        if unknown:
+            gh_error(
+                f"skill `{skill}`: `{filename}` test `{test_id}` has run outcome(s) "
+                f"{sorted(set(unknown))!r}, outside the schema's "
+                f"{sorted(_RUN_OUTCOMES)}. A value this gate does not recognise "
+                f"would otherwise resolve to neither fail nor pass and wave the "
+                f"test through.",
+            )
+            fails += 1
+            continue
+        agg = aggregate_per_run_outcome(per_run)
+
+        if test.get("expected_outcome") == "xfail":
+            if agg == "aborted":
+                gh_error(
+                    f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
+                    f"`expected_outcome: xfail` but ABORTED. A marker declares a "
+                    f"known failure; an abort is an ungraded run, not evidence of "
+                    f"it. Re-run, or fix the abort.",
+                )
+                fails += 1
+            elif agg == "pass":
+                owner = (marker_issues or {}).get(test_id)
+                stale = (
+                    f" Its removal condition cites issue #{owner}, which is CLOSED."
+                    if owner and owner in (closed_owners or set())
+                    else ""
+                )
+                gh_warning(
+                    f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
+                    f"`expected_outcome: xfail` but PASSED. The marker may be "
+                    f"stale — check whether its removal condition is met.{stale}",
+                )
+            continue
+
+        if agg in ("fail", "aborted"):
+            gh_error(
+                f"skill `{skill}`: `{filename}` test `{test_id}` resolved to "
+                f"`{agg}`. A run log may not carry a red. Fix the test and re-run "
+                f"before committing the log — a suite carrying reds cannot tell "
+                f"you whether a refactor broke something.",
+            )
+            fails += 1
+    return fails
+
+
 def rule5_annotations_parse(runlogs_dir: Path) -> int:
     """Rule 5 (blocking): every committed unit `.ann.json` is valid JSON.
 
@@ -660,7 +839,7 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
     """
     bad = 0
     for path in sorted(runlogs_dir.rglob("*.ann.json")):
-        rel = path.relative_to(REPO_ROOT).as_posix()
+        rel = _format_path(path)
         try:
             text = path.read_text(encoding="utf-8")
         except OSError as exc:
@@ -682,6 +861,153 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
             gh_error(f"annotation `{rel}` is not valid JSON: {exc}")
             bad += 1
     return bad
+
+
+def rule7_deletions(
+    deleted_paths: set[str], added_by_skill: dict[str, list[str]]
+) -> int:
+    """Rule 7 (blocking): a deleted run log / annotation must be a legitimate
+    keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
+    rule that silently destroys committed genealogist grading.
+
+    The keep set needs no frozen baseline: it is recomputable from filenames.
+    `prunable_candidates(names, keep=DEFAULT_KEEP_CANDIDATES)` is a pure function
+    of the names, and `prune_old_candidates` deletes exactly its output plus each
+    pruned log's `.ann.json` (and `runs/` sidecars). So per skill a deletion is a
+    legitimate prune iff the deleted candidate is in
+    `prunable_candidates(head_candidates ∪ deleted_candidates, keep=K)` — the
+    union reconstructs what the dir held before the prune. The #2579 incident
+    (`v1_2026-09-03_11-42-59.{json,ann.json}` dropped with 4 candidates on disk
+    where the rule keeps 5) recomputes to an empty prunable set and is flagged.
+
+    Flags three shapes:
+      (a) an annotation deleted while its run-log `.json` still exists at head —
+          grading destroyed with no prune to justify it;
+      (b) a candidate `v{N}_<ts>.json` (± its `.ann.json`) deleted that the
+          recomputed prunable set would have kept;
+      (c) a released `v{N}.json` / `v{N}.ann.json` deleted — released logs are
+          canonical and never prunable.
+
+    Exemptions: a candidate `v{N}_<ts>.json` deleted in a PR that ADDS the
+    released `v{N}.json` is a promotion (rename read as delete+add under
+    `--no-renames`), and a wholly-deleted skill has nothing left to protect —
+    the same skip rules 2 + 3 apply.
+    """
+    per_skill: dict[str, set[str]] = {}
+    for path in deleted_paths:
+        m = RUNLOG_PATH_RE.match(path)  # matches `.json` and `.ann.json` alike
+        if m:
+            per_skill.setdefault(m.group(1), set()).add(m.group(2))
+
+    fails = 0
+    for skill in sorted(per_skill):
+        # Wholly-deleted skill: no skill dir AND no test dir left. Same skip as
+        # the "Drop DELETED skills" block for rules 2 + 3 — nothing to re-run,
+        # nothing to protect. A half-deleted skill is still gated.
+        if not (PLUGIN_SKILLS_DIR / skill).is_dir() and not (
+            TESTS_UNIT_DIR / skill
+        ).is_dir():
+            continue
+
+        skill_dir = RUNLOGS_DIR / skill
+        deleted_names = per_skill[skill]
+
+        deleted_candidate_json = {
+            n for n in deleted_names if classify(n).kind == "candidate"
+        }
+        head_candidate_json: set[str] = set()
+        if skill_dir.is_dir():
+            head_candidate_json = {
+                p.name
+                for p in skill_dir.iterdir()
+                if p.is_file() and classify(p.name).kind == "candidate"
+            }
+        prunable = set(
+            prunable_candidates(
+                list(head_candidate_json | deleted_candidate_json),
+                keep=DEFAULT_KEEP_CANDIDATES,
+            )
+        )
+
+        # Promotion exemption, keyed on version. Derived from `added_by_skill`
+        # (the merge-base-intersected added set main() already computed), NOT a
+        # fresh two-dot `git_diff_changes` read: a release that landed on main
+        # since this branch diverged shows as "A" in the two-dot view and would
+        # wrongly exempt a within-K hand-deletion of that version. Version-keyed,
+        # not timestamp-keyed — a real promotion renames exactly one candidate,
+        # so this only over-exempts a hand-deletion of a *different* v{N}
+        # candidate riding alongside a v{N} promotion, which is not a real shape.
+        added_released_versions = {
+            c.version
+            for f in added_by_skill.get(skill, [])
+            if (c := classify(f)).kind == "released" and c.version is not None
+        }
+
+        # Normalize each deletion to its base run-log `.json` name, tracking
+        # whether the `.json`, the `.ann.json`, or both were deleted.
+        bases: dict[str, dict[str, bool]] = {}
+        for name in sorted(deleted_names):
+            if name.endswith(".ann.json"):
+                base = name[: -len(".ann.json")] + ".json"
+                bases.setdefault(base, {})["ann"] = True
+            else:
+                bases.setdefault(name, {})["json"] = True
+
+        for base, flags in sorted(bases.items()):
+            c = classify(base)
+            if c.kind not in ("released", "candidate"):
+                continue  # scratch / unrecognized: gitignored or not ours
+            json_deleted = flags.get("json", False)
+            ann_deleted = flags.get("ann", False)
+            ann_name = ann_filename_for(base)
+
+            if c.kind == "released":
+                legit_removal = False
+            else:
+                legit_removal = (
+                    c.version in added_released_versions or base in prunable
+                )
+
+            # (a) Annotation deleted while its run log survives at head.
+            if ann_deleted and not json_deleted and (skill_dir / base).is_file():
+                gh_error(
+                    f"skill `{skill}`: annotation "
+                    f"`eval/runlogs/unit/{skill}/{ann_name}` was deleted but its "
+                    f"run log `{base}` is still present. Deleting an annotation "
+                    f"on its own destroys committed genealogist grading with no "
+                    f"prune to justify it. Restore it from git "
+                    f"(`git checkout {os.environ.get('BASE_SHA', '<base>')} -- "
+                    f"eval/runlogs/unit/{skill}/{ann_name}`), or delete the run "
+                    f"log too if it is genuinely being pruned.",
+                )
+                fails += 1
+                continue
+
+            # (b)/(c) The run log itself was deleted outside the prune rule.
+            if json_deleted and not legit_removal:
+                also = " and its annotation" if ann_deleted else ""
+                if c.kind == "released":
+                    gh_error(
+                        f"skill `{skill}`: released run log `{base}`{also} was "
+                        f"deleted. Released `v{{N}}.json` are canonical and are "
+                        f"never pruned. Restore it from git "
+                        f"(`git checkout {os.environ.get('BASE_SHA', '<base>')} "
+                        f"-- eval/runlogs/unit/{skill}/{base}`).",
+                    )
+                else:
+                    gh_error(
+                        f"skill `{skill}`: candidate run log `{base}`{also} was "
+                        f"deleted but is not a keep-newest-"
+                        f"{DEFAULT_KEEP_CANDIDATES} prune — the "
+                        f"{DEFAULT_KEEP_CANDIDATES} newest candidates are "
+                        f"retained and this is not among the prunable ones. A "
+                        f"hand-deletion beyond the prune rule destroys committed "
+                        f"grading. Restore it from git, or let the harness prune "
+                        f"it on its next `--skill {skill}` write.",
+                    )
+                fails += 1
+
+    return fails
 
 
 def main() -> int:
@@ -719,8 +1045,30 @@ def main() -> int:
     # not cause (19 of 26 skills are already inactive on main; issues #1217,
     # #1094).
     added_runlog_paths = {p for _, p in changes if p is not None}
+    # Rule 6 resolves its own set rather than reusing `added_runlog_paths`, which
+    # holds every path this PR added -- `.ann.json` siblings included, because
+    # RUNLOG_PATH_RE matches them (see the arm below). It also cannot use
+    # `latest_full_skill_runlog`: that prefers ANY released `v{N}.json` over every
+    # candidate regardless of date, so a PR adding a red `v2_<ts>.json` beside a
+    # clean released `v1.json` would be read as clean (`init-project` has exactly
+    # that shape today). The log a PR ADDS is the one it is accountable for.
     deleted_paths = set(git_diff_deleted_paths())
     touched_paths = git_diff_touched_paths()
+
+    # Intersected with `touched_paths` because the two git views disagree:
+    # `git_diff_changes` is a TWO-dot `A..B` and `git_diff_touched_paths` a THREE-dot
+    # `A...B`. When a branch's base has moved past a prune commit the branch has not
+    # rebased onto, the two-dot view reports that pruned run log as ADDED while the
+    # three-dot view does not see it at all -- so rule 6 would grade, and block on, a
+    # log the PR never touched. Verified against commit 1f8a6001. Rule 1 is insulated
+    # because it counts released logs only and a pruned candidate is never released.
+    added_by_skill: dict[str, list[str]] = {}
+    for path in sorted(added_runlog_paths & set(touched_paths)):
+        m = RUNLOG_PATH_RE.match(path)
+        if not m or path.endswith(".ann.json"):
+            continue
+        if classify(m.group(2)).kind in ("released", "candidate"):
+            added_by_skill.setdefault(m.group(1), []).append(m.group(2))
     touched_skills: set[str] = set()
     touched_agents: set[str] = set()
     touched_fixtures: set[tuple[str, str]] = set()
@@ -844,6 +1192,22 @@ def main() -> int:
     # see its docstring for why per-skill scoping is exactly what hid the bug.
     fails += rule5_annotations_parse(RUNLOGS_DIR)
 
+    # Rule 7 checks that every deleted run log / annotation is a legitimate
+    # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
+    # rule that destroys committed grading. Keyed on the same deleted set rule 3
+    # reads and the merge-base-safe `added_by_skill` main() already computed.
+    fails += rule7_deletions(deleted_paths, added_by_skill)
+
+    graded_logs = graded_tests = 0
+    # Only when there is something to grade. The lookup is network-bound, and a
+    # PR that adds no run log pays up to one `gh` call per marker for a warning it
+    # can never trigger.
+    marker_issues: dict[str, int] = {}
+    closed_owners: set[int] = set()
+    if added_by_skill:
+        marker_issues = marker_owners(TESTS_UNIT_DIR)
+        closed_owners = closed_marker_owners(marker_issues)
+
     for skill in sorted(touched_skills):
         skill_dir = RUNLOGS_DIR / skill
         status, latest = resolve_latest_runlog(skill_dir)
@@ -866,6 +1230,34 @@ def main() -> int:
         fails += rule2_active(skill, log, filename)
         rule2b_judge_prompt(skill, log, filename)
         fails += rule3_completeness(skill, log, filename, skill_dir)
+        # Rule 6 grades the log(s) this PR added. Rule 1 caps released logs at one
+        # per skill but does not bound candidates, and it never short-circuits
+        # main(), so N added logs are all graded -- any red in any of them blocks.
+        # A PR that adds none (an annotation-only or SKILL.md-only change) is not
+        # accountable for the committed baseline, so it is not graded here.
+        for added in sorted(added_by_skill.get(skill, [])):
+            # Guarded for the same reason rules 3 and 5 are: an unguarded parse dies
+            # with a raw traceback naming no file, taking every later skill's checks
+            # down with it. A PR-ADDED run log is the likeliest carrier of an
+            # unresolved conflict marker, since run-log renames collide on any merge
+            # where both sides ran the harness.
+            try:
+                added_log = json.loads(
+                    (skill_dir / added).read_text(encoding="utf-8")
+                )
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                gh_error(
+                    f"skill `{skill}`: added run log `{added}` is not readable JSON "
+                    f"({exc}). If this is a merge conflict marker, re-run the harness "
+                    f"rather than resolving it by hand.",
+                )
+                fails += 1
+                continue
+            graded_logs += 1
+            graded_tests += len(added_log.get("tests") or [])
+            fails += rule6_outcomes(
+                skill, added_log, added, closed_owners, marker_issues
+            )
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See
@@ -890,6 +1282,13 @@ def main() -> int:
         filename, log = latest
         rule2_fixture_touched(skill, log, filename, touched_fixture_paths)
 
+    # Every way rule 6 can end up inert also prints a clean pass, so it reports its
+    # denominator -- the same standard eval/CLAUDE.md sets for conflict_verdict_report.
+    # `rule 6: graded 0 run log(s)` means it proved nothing, not that nothing is wrong.
+    print(
+        f"\nrule 6: graded {graded_logs} added run log(s), "
+        f"{graded_tests} test(s)."
+    )
     if fails:
         print(f"\n{fails} rule violation(s). See annotations above.")
         return 1
