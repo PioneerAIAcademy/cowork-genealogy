@@ -1934,7 +1934,8 @@ without whichever Bedrock refuses.
     TTL is not the lever, though: re-priced under a 1-hour TTL (writes at $6/M, the
     rewrites as reads) bagley costs **+12%** and paerai **−6%**. What costs is the idle
     main thread, not the window length.
-  - **Nothing bounds image browsing** — not the plugin, not the arm.
+  - **Nothing bounds image browsing** — not the plugin, not the arm. Whether to cap it is
+    the lead's decision, deferred on 2026-09-24.
   - **The same-week harness run splits bagley's 3×: 60% plugin, 40% prototype.**
     `make e2e-run TEST=bagley-father-1884` on 2026-09-24, from the prototype runs' own
     commit (`2a553477f`, same engine and plugin), after the dead `wikiApiUrl` override
