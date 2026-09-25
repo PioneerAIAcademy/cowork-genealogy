@@ -57,7 +57,9 @@ from proto.worker.deny import project_read_denied
 DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
 BEDROCK_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
-GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6"
+# [1m] as on Bedrock: the CLI strips it, sends context-1m-2025-08-07 and sizes its window
+# (and so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
 GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 # Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
 # CLI sends an agent's model verbatim, and a gateway without a matching alias answers
