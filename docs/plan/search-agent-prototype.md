@@ -984,7 +984,13 @@ tap-agentgateway #38), so the fix is ours: the hosted worker builds each
 as `options.py` already does for the main model. The plugin frontmatter stays as it is,
 because Cowork and both harnesses read the same files without a gateway. A gateway
 alias would also work but needs no one's time. If TAP adds its planned model allowlist
-(`TODO-TAP(model-allowlist)`), the Bedrock ids we send must be on it.
+(`TODO-TAP(model-allowlist)`), the Bedrock ids we send must be on it. Built as PR #2920: `MODEL_PROVIDER=gateway` in
+`proto/worker/options.py`, with `GATEWAY_AGENT_MODELS` and tool search off unless
+`GATEWAY_TOOL_SEARCH=true`. Its live check ran the worker's own `provider_env` and
+`gateway_agent_models` through local v1.5.0 on TAP's route as shipped, with no
+`claude-sonnet-4-6` alias. All 9 requests carried `us.anthropic.*` ids and returned 200,
+`record-extractor` bound, and the output was the same 1 source and 19 assertions
+($0.90, 244 s).
 
 **P3i — measured 2026-09-25: the v1.5.0 fallback costs about a fifth more on a real
 turn.** Same fixture and option set as P3h, with TAP's route plus the
