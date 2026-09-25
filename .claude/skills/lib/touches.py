@@ -37,8 +37,9 @@ _UNIT_DIRS = (
     re.compile(r"^eval/runlogs/e2e/[a-z0-9-]+$"),
 )
 
-# Paths inside a skill's eval run-log snapshot. A collision here is Gate 4 (hard,
-# costs a second paid run); anything else is Gate 3 (sequence + reciprocal notes).
+# Paths inside a skill's eval run-log snapshot. A collision here is Gate 4 (whichever
+# lands second pays a re-run); anything else is Gate 3. Both only sequence, with
+# reciprocal notes.
 # Mirrors `build_snapshot` in eval/harness/harness/snapshot.py, which deliberately
 # excludes packages/engine/mcp-server/src/** -- an eval run never executes it.
 SNAPSHOT = (
@@ -53,12 +54,12 @@ SNAPSHOT = (
 # the merge pass queues against. An agent is its own slot because one agent body
 # gates every skill that delegates to it via `@plugin:`.
 #
-# These three path shapes and no others, because /fill-ready's Gate 4 defines a slot
-# holder from exactly this set. `eval/runlogs/unit/<skill>/` is deliberately absent:
+# These three path shapes and no others, because /fill-ready's Gate 4 defines a
+# shared snapshot from exactly this set. `eval/runlogs/unit/<skill>/` is deliberately absent:
 # a run log is not in the snapshot it certifies (build_snapshot in
 # eval/harness/harness/snapshot.py embeds neither), so an issue that touches only a
 # run log takes no slot. Widening this set would make the merge pass and Gate 4
-# disagree about who holds what, which is the failure this module exists to prevent.
+# disagree about who shares what, which is the failure this module exists to prevent.
 # `eval/fixtures/{scenarios,mcp}/` is in SNAPSHOT but not here on purpose: a fixture
 # belongs to every skill whose tests reference it, so it names no single slot.
 _SLOT = (
