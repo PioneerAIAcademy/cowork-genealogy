@@ -168,9 +168,12 @@ one holds a piece of the answer. The table below is the split **as ruled** on
 Ruled 2026-08-25 on issue #1335, against a routing table that still says the orchestrator
 writes it. Three planes already match the ruling: the `project` row of the ownership
 manifest, `research_append`'s own comment, and the `PreToolUse` hook, whose
-`AGENT_WRITABLE_SECTIONS` grants the proof-conclusion agent `project`. The hook permits
-that agent; it denies the orchestrator nothing, because `project` is not in
-`OWNED_SECTIONS`.
+`AGENT_WRITABLE_SECTIONS` grants the proof-conclusion agent `project`. Since #2704 the
+hook also *enforces* the ruling rather than merely permitting the owner: `OWNED_FIELDS`
+routes `project.status` to that agent, so the orchestrator's own `status` write is
+denied. The rule is field-scoped, not section-scoped — `project` stays out of
+`OWNED_SECTIONS` because the section is co-written, and every other write to it,
+including the `updated` activity ping, is untouched.
 
 **The condition the agent fires on is not the condition that should close a project.**
 `agents/proof-conclusion.md` step 8 writes `completed` when "ALL questions are now
@@ -221,7 +224,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 
 | Artifact | Section | Owner | Other permitted writers | Writer tool | Enforced by |
 |---|---|---|---|---|---|
-| `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append` | unit — a diff confined to `updated` is exempt, so the activity ping is free to any writer |
+| `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append` | unit + hook — the hook routes `project.status` to the proof-conclusion agent (field-scoped; the rest of the section is co-written and untouched). A diff confined to `updated` is exempt at both, so the activity ping is free to any writer |
 | | `researcher_profile` | `init-project` | any caller, to correct a field | `research_append` | **nothing** |
 | | `known_holdings` | `init-project` | — | `research_append` | **nothing** |
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook keys on the claim `exhaustive_declaration.declared: true`, not on the section |
@@ -251,13 +254,14 @@ Two consequences worth holding onto:
   `person-evidence` — and three of the eight agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
-- **The hook carries exactly three rules**, in
+- **The hook carries exactly four rules**, in
   `packages/engine/plugin/hooks/guard_project_files.py`, and they are the only ones that
   discriminate by caller: `proof_summaries` is writable only by the proof-conclusion
   agent; a `research_append` op setting `exhaustive_declaration.declared` to `true` is
-  writable only by the research-exhaustiveness agent; and each of those two agents is
-  held to its own section set, which is what keeps the exhaustiveness agent off
-  `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
+  writable only by the research-exhaustiveness agent; `project.status` is writable only
+  by the proof-conclusion agent, field-scoped because the rest of `project` is
+  co-written; and each of those agents is held to its own section set, which is what
+  keeps the exhaustiveness agent off `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
   unit check that runs only inside a paid per-skill eval run.
 
 ---

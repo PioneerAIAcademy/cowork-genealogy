@@ -76,6 +76,7 @@ import json
 import re
 import subprocess
 import sys
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -268,7 +269,7 @@ def _run_node_eval(
     """Run a Node ESM ``--eval`` script and return the completed process.
 
     The single choke point for every ``node --input-type=module --eval``
-    invocation in this file (seven call sites as of 2026-09-08 — six raised to
+    invocation in this file (eight call sites as of 2026-09-24 — seven raised to
     ``NODE_EVAL_TIMEOUT_LONG``, the catalog probe left on the default; three
     separate code-review passes flagged the hand-duplicated ``subprocess.run(...,
     capture_output=True, text=True, encoding="utf-8", timeout=...)`` shape).
@@ -438,6 +439,109 @@ _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
     "fulltext_search": "compactStagedFulltextSearch",
 }
+
+
+def _record_match_score(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> bool:
+    """Write the attestation a real `same_person` call would have written.
+
+    `same_person` is not in LIVE_TOOLS -- it calls FamilySearch -- so the
+    compiled tool never executes here and `recordMatchScore` never runs. That
+    left `results/.scores/` empty in every unit run, which makes any
+    writer-side gate that reads it untestable and, worse, makes it refuse
+    everything. Same shape as `_stage_and_compact_search_results` above: a
+    fixture-backed tool still has to produce its real side effect.
+
+    Calls the compiled build rather than restating the derivation, because a
+    Python copy of the pairing rule is a second implementation no drift test
+    can see. `buildRecordedScore` is exported from the tool for exactly this.
+
+    Scoped deliberately:
+      * project-relative arm only -- the explicit two-GedcomX arm records
+        nothing in production, so attesting on it would let a unit run satisfy
+        a gate production would refuse;
+      * matched fixtures only -- a `fixture_not_found` response is not a score;
+      * `buildRecordedScore` returns None when the assertion has no record side,
+        and `recordMatchScore` no-ops when persona id and role are both empty,
+        so both cases simply write nothing and the caller stays silent.
+
+    Returns True when an attestation was written. Never raises: a harness that
+    fails the run over its own bookkeeping is worse than one that does not
+    attest, and the writer-side gate failing loudly is the signal we want.
+    """
+    score = response.get("score")
+    if not isinstance(score, (int, float)):
+        return False
+    assertion_id = args.get("assertionId")
+    tree_person_id = args.get("treePersonId")
+    if not isinstance(assertion_id, str) or not isinstance(tree_person_id, str):
+        # Explicit two-document arm, or a malformed call. Correctness here does
+        # not depend on this line -- `buildRecordedScore` returns null for an
+        # absent assertion, so the write would not happen anyway (confirmed by
+        # mutation: removing this changes no test). It is an early-out that
+        # avoids spawning a node process per two-document call.
+        return False
+
+    sp_js = _MCP_BUILD / "tools" / "same-person.js"
+    ms_js = _MCP_BUILD / "utils" / "match-scores.js"
+    pio_js = _MCP_BUILD / "utils" / "project-io.js"
+    if not (sp_js.exists() and ms_js.exists() and pio_js.exists()):
+        return False
+
+    def _url(path: Path) -> str:
+        posix = str(path).replace("\\", "/").replace("'", "\\'")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    payload = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "assertionId": assertion_id,
+        "treePersonId": tree_person_id,
+        "role": args.get("recordRole"),
+        "result": {
+            "score": score,
+            "matched": bool(response.get("matched")),
+            **({"confidence": response["confidence"]}
+               if isinstance(response.get("confidence"), (int, float)) else {}),
+        },
+    }
+    # `recordMatchScore` is read-modify-write and its docstring requires the
+    # caller to hold the project lock. Production takes it in
+    # `samePersonFromProject`; mirroring that here keeps the mock's side effect
+    # the same operation rather than a near-copy of it.
+    script = (
+        f"import {{ buildRecordedScore }} from '{_url(sp_js)}';"
+        f"import {{ recordMatchScore }} from '{_url(ms_js)}';"
+        f"import {{ readProjectJson, withProjectLock }} from '{_url(pio_js)}';"
+        "let raw='';for await (const c of process.stdin) raw+=c;"
+        "const i=JSON.parse(raw);"
+        "const research=await readProjectJson(i.projectPath,'research.json');"
+        "const rec=buildRecordedScore(research,i.assertionId,i.treePersonId,"
+        "  i.role ?? undefined,i.result);"
+        "if (rec!==null) await withProjectLock(i.projectPath, async () => {"
+        "  await recordMatchScore(i.projectPath,rec); });"
+        "process.stdout.write(JSON.stringify({wrote: rec!==null}));"
+    )
+    try:
+        proc = _run_node_eval(
+            script, input_str=json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG
+        )
+        if proc.returncode != 0:
+            return False
+        return bool(json.loads(proc.stdout or "{}").get("wrote"))
+    except subprocess.TimeoutExpired:
+        # Never raises, by contract -- but a swallowed timeout is indistinguishable
+        # from "no score", and the writer-side gate turns that into a refusal of a
+        # legitimate write halfway through a run. Say so rather than let the
+        # operator debug a refusal with no cause.
+        warnings.warn(
+            f"same_person attestation timed out after {NODE_EVAL_TIMEOUT_LONG}s "
+            f"for assertion {assertion_id}; the link will be refused as unattested",
+            stacklevel=2,
+        )
+        return False
+    except Exception:
+        return False
 
 
 def _stage_and_compact_search_results(
@@ -702,6 +806,16 @@ def create_mock_server(
                         "Add a fixture for this argument shape."
                     ),
                 }
+
+            # Write the attestation a real same_person call would have left.
+            # Fixture-backed tool, real side effect -- same reason the search
+            # tools stage their sidecar below.
+            if (
+                _name == "same_person"
+                and _workspace is not None
+                and "error" not in response
+            ):
+                entry["attested"] = _record_match_score(_workspace, args, response)
 
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real

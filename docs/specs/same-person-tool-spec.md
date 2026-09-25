@@ -76,7 +76,8 @@ about 37 links per call. Identity was being asserted and never scored. The arm i
 
 **Why `assertionId` keys it.** The link about to be written is
 `(assertion_id, person_id)` — that is what `person_evidence` carries and what
-`personEvidenceScoreWarnings` reads. So the two tokens the agent already holds
+`personEvidenceScoreInvariants` reads -- the writer-side gate that refuses an
+unattested link since 2026-09-24, and a warning before that. So the two tokens the agent already holds
 at the call site are exactly these, and `assertionId` resolves `record_id`,
 `record_role`, `record_persona_id` and `log_entry_id` together. The agent
 supplies no record structure at all, which is the point of the 2026-09-11 lead
@@ -319,29 +320,38 @@ not become two files.
 
 ```json
 { "record_id": "ark:/61903/1:1:MARR-8T3",
-  "scores": { "<party>|<tree_person_id>": { "record_persona_id": …, "record_role": …,
+  "scores": { "<assertion_id>|<tree_person_id>": { "record_persona_id": …, "record_role": …,
               "tree_person_id": …, "score": 0.87, "confidence": 5, "matched": true,
               "assertion_id": "a_005", "record_source": "record_read", "computed": "…" } } }
 ```
 
-**Why a per-record map rather than one file per pairing.** The party component is
-not stable for a single pairing: `recordPersonaId` is a caller override, and on
-the fetched route the tool resolves a real `persons[].id` for a second party
-whose assertion carries `record_persona_id: null`. So the identical (record,
-persona, tree person) pairing would hash one way from the assertion and another
-from what was resolved, and a reader computing the key from a `person_evidence`
-entry's `(assertion_id, person_id)` would look under only one of them — with a
-hashed filename there is no recovering the other. A per-record file is one read
-and lets a reader match on persona id, on role, **or** on `tree_person_id`
-alone, which is the only token both sides always have. Read-modify-write is safe
-under `withProjectLock`.
+**Why a per-record map rather than one file per pairing.** One read answers every
+lookup for a record, and a hashed per-pairing filename could not be recovered
+from a slightly different key. Read-modify-write is safe under `withProjectLock`.
 
-**The party key is `record_persona_id` when the record named one, else
-`record_role`** — and the PROJECTION groups on that same key, so the two cannot
-disagree about what identifies a party. ADR-0009 constraint 3 says to key on
-(`record_id`, `record_persona_id`) and not on `record_id`; the fallback exists
-because that field is null on thousands of corpus links, while `record_role` is
-required on every assertion.
+**The map key is `(assertion_id, tree_person_id)`.** Those are the two tokens
+BOTH sides always hold: this tool's project-relative arm is called with them,
+and a `person_evidence` entry carries them as `(assertion_id, person_id)`.
+
+It was **`(party, tree_person_id)`** first, and that was wrong. The party
+component is not stable for a single pairing: `recordPersonaId` is a caller
+override, and on the fetched route the tool resolves a real `persons[].id` for a
+party whose assertion carries `record_persona_id: null`. The score was therefore
+filed under what the fetch RESOLVED while every reader computes the key from what
+the ASSERTION carries, so `research_append`'s gate could not find a legitimate
+score and refused precisely the links whose call had been made — telling the
+agent to repeat the call that wrote the unfindable record. Caught by review
+before it shipped; the `dev/probe-score-refusal.ts` arm `fetched-route
+attestation` is the standing check.
+
+ADR-0009 constraint 3 says to key on (`record_id`, `record_persona_id`) and not
+on `record_id` alone, so that a second persona of an already-linked record
+cannot attach unscored. The assertion key satisfies it structurally: an
+assertion carries one `record_role` and one `record_persona_id` and so IS a
+(record, party) pair, which makes a second persona a second assertion. Including
+`tree_person_id` keeps the two links of a relationship assertion apart. Note
+this is the key for the ATTESTATION only; the PROJECTION still groups parties on
+persona-id-else-role, which is a separate question.
 
 Grouping on the role alone was the first design and it was wrong twice over: it
 merges two personas sharing a role into one projected person (a transcribed

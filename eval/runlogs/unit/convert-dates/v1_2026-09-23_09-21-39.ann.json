@@ -1,17 +1,9 @@
 {
-  "run_log": "v1_2026-09-01_11-26-50.json",
+  "run_log": "v1_2026-09-23_09-21-39.json",
   "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_convert_dates_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -38,6 +30,14 @@
       "test_id": "ut_convert_dates_004",
       "dimension_source": "rubric",
       "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -93,14 +93,6 @@
     {
       "test_id": "ut_convert_dates_014",
       "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_014",
-      "dimension_source": "rubric",
       "dimension_name": "Genealogical presentation",
       "llm_score": 3,
       "corrected_score": 3,
@@ -112,14 +104,6 @@
       "dimension_name": "Tool response interpretation",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
       "comment": null
     },
     {
@@ -140,26 +124,10 @@
     },
     {
       "test_id": "ut_convert_dates_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_008",
       "dimension_source": "rubric",
       "dimension_name": "Conversion accuracy",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": null,
-      "corrected_score": null,
       "comment": null
     },
     {
@@ -171,15 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool response interpretation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
+      "test_id": "ut_convert_dates_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -187,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_005",
+      "test_id": "ut_convert_dates_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -195,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_005",
+      "test_id": "ut_convert_dates_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -203,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_005",
+      "test_id": "ut_convert_dates_006",
       "dimension_source": "rubric",
       "dimension_name": "Conversion accuracy",
       "llm_score": 3,
@@ -211,15 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
+      "test_id": "ut_convert_dates_006",
       "dimension_source": "rubric",
       "dimension_name": "Genealogical presentation",
       "llm_score": 3,
@@ -227,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_005",
+      "test_id": "ut_convert_dates_006",
       "dimension_source": "rubric",
       "dimension_name": "Tool response interpretation",
       "llm_score": 3,
@@ -235,20 +187,124 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_003",
+      "test_id": "ut_convert_dates_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The skill correctly did not invoke the convert-dates skill"
+      "corrected_score": 1,
+      "comment": "Judge correct: model gave a factually wrong response — research.json date fields are freeform strings with no format check, so '15 Feb 1749/50' is valid. The grade_on_invariant pass is determined by test_no_spurious_conversion (was convert_calendar invoked?), not by content quality."
     },
     {
-      "test_id": "ut_convert_dates_003",
+      "test_id": "ut_convert_dates_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The skill correctly did not invoke the convert-dates skill"
+      "corrected_score": 1,
+      "comment": "Judge correct: model did not correctly explain that date fields are freeform strings. Consistent with Correctness=1. Test passes via invariant, not via dimension score."
+    },
+    {
+      "test_id": "ut_convert_dates_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     }
   ]
 }
