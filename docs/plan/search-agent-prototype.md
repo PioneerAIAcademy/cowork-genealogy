@@ -826,7 +826,8 @@ streamed 50e0e943-de3a-45ad-8e80-49952bb28952, block body a6298e77-366a-4823-813
 gateway, on two env vars.** The integ host above is not APT's gateway. It is
 `fs-eng/search-fulltext-agentgateway`, which we administer, running agentgateway
 **0.12.0** as a temporary test bed. APT's permanent gateway is `fs-eng/tap-agentgateway`
-on v1.4.1, and its `/bedrock` route already maps `/v1/messages` → `messages` and
+(its Dockerfile pins v1.5.0, not the v1.4.1 this plan assumed; the
+source read here was v1.4.1's, and P3f re-measured on v1.5.0), and its `/bedrock` route already maps `/v1/messages` → `messages` and
 `/v1/messages/count_tokens` → `anthropicTokenCount` (deliberately no `"*": passthrough`),
 aliases the bare Claude ids to `us.*` profiles, and gates callers by API-key consumer
 (`claude-code`, `tap`, `foundry-runner`). So the P3c route ask to APT is already done in
@@ -893,6 +894,38 @@ the genealogy MCP server.
 So production tool search through the gateway needs tap-agentgateway on ≥ v1.6. The
 alternatives are running without tool search (every tool schema in context on every
 call) or a patched build.
+
+**P3f — measured 2026-09-25 on real Bedrock, with local gateways on the fts-int SSO
+credentials: TAP's v1.5.0 runs the CLI unmodified except for tool search, v1.6 runs it
+unmodified, and the test bed's non-streaming is one tracing field.** tap-agentgateway's
+Dockerfile pins **v1.5.0**. The local config was TAP's `/bedrock` route verbatim (route
+map, `modelAliases`), without its API-key and guardrail blocks. The CLI ran with the
+genealogy MCP server and plugin and no 0.12.0 workaround env vars (default adaptive
+thinking, `metadata`, all eight betas).
+
+| Gateway | `ENABLE_TOOL_SEARCH` | Result | Cache write / read |
+|---|---|---|---|
+| v1.5.0 | true | fails turn 2: `400 … untagged enum ToolResultContent`, not retried | 25,025 / 0 |
+| v1.5.0 | false | correct (convert-dates skill, 4 calls, $0.34) | 76,351 / 148,888 |
+| v1.6.0-alpha.2 | true | correct (3 calls, $0.17) | 40,215 / 37,228 |
+
+So the only production blocker left in the gateway's API surface is `tool_reference`. On
+v1.5.0 the fallback is tool search off, which about triples the first call's context
+(≈ 25k → ≈ 76k tokens cached per session start).
+
+*Streaming.* On int, P3d/P3e streams arrived all at once: a 9,122-token answer sent
+nothing for 163 s and then delivered all 3,962 events in 0.4 s, and chat completions
+behaved the same. Measured as time to first body byte on a 300-line count (≈ 4.2 s
+generation), locally:
+- 0.12.0 with the test bed's config: 4.3 s, the whole body at the end.
+- 0.12.0 with TAP's route and no tracing: 1.1 s.
+- 0.12.0 without `debug_vars: variables()`: 1.2 s.
+- 0.12.0 without `gen_ai.completion`: 5.2 s, still buffered.
+- v1.5.0 and v1.6, with TAP's tracing block including prompt and completion capture:
+  1.1–1.2 s, `text/event-stream`.
+
+So `debug_vars: variables()` in the test bed's tracing fields forces 0.12.0 to buffer
+the whole response. It is not int's network, and TAP's config does not have the field.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
@@ -2373,14 +2406,16 @@ emails rather than engineering.
 **R1 — The Agent Gateway's API surface. NARROWED 2026-09-25 (P3c, P3d), then
 SHARPENED the same day (P3e).** The integ host P3c measured is our own 0.12.0 test bed,
 not APT's gateway. With #5 and #6 there and two CLI env vars, the CLI completes a
-tool-using run through it (P3d). APT's v1.4.1 `tap-agentgateway` already carries the
-Messages route map and model aliases. **But tool search breaks on its second turn on
-every agentgateway before v1.6.0-alpha.1**, because the `tool_reference` block in a
-ToolSearch result does not parse (P3e). That includes v1.4.1. So the risk is now an
-upgrade: tap-agentgateway on ≥ v1.6, or we run without tool search. Also left: access
-(URL and a consumer key) and one parity run through it, covering tool search on the
-upgraded build, a multi-turn session, and the haiku title call on v1.4.1's
-`output_config` mapping. The paragraph below is the 2026-09-11 reading. Its claim that
+tool-using run through it (P3d). APT's `tap-agentgateway` (pinned v1.5.0) already carries
+the Messages route map and model aliases. On a local copy of that route on real Bedrock,
+the unmodified CLI works with tool search off (P3f). **But tool search breaks on its
+second turn on every agentgateway before v1.6.0-alpha.1**, because the `tool_reference`
+block in a ToolSearch result does not parse (P3e, confirmed on v1.5.0 in P3f), and it
+works on v1.6.0-alpha.2 (P3f). So the risk is now an upgrade: tap-agentgateway on ≥ v1.6,
+or we run without tool search at about three times the first call's context. Also left:
+access (URL and a consumer key) and one parity run through the deployed gateway, which
+covers its auth, guardrails and network path, none of which P3f's local copy has. The
+paragraph below is the 2026-09-11 reading. Its claim that
 tool search survives is true of the client gate only. What follows is the
 2026-09-11 reading of the source,
 which still describes what the route *can* do. It is Anthropic-Messages-
