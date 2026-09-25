@@ -22,7 +22,9 @@ import pytest
 from validators_lib import as_mapping as _as_mapping
 from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import filter_claim_findings as _filter_claim_findings
+from validators_lib import hashable_key as _hashable_key
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import record_search_sent as _record_search_sent
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
@@ -747,22 +749,23 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
             claimed.add(id(call))
         else:
             unpaired.append(e)
-    free: dict[object, list[dict]] = {}
+    free: dict[str, list[dict]] = {}
     for c in calls:
         if id(c) not in claimed:
-            free.setdefault(_as_mapping(c.get("args")).get("surname"), []).append(c)
-    positions: dict[object, int] = {}
+            free.setdefault(_hashable_key(_as_mapping(c.get("args")).get("surname")), []).append(c)
+    positions: dict[str, int] = {}
     for e in unpaired:
         surname = _as_mapping(e.get("query")).get("surname")
-        i = positions.get(surname, 0)
-        positions[surname] = i + 1
-        pool = free.get(surname, [])
+        group = _hashable_key(surname)
+        i = positions.get(group, 0)
+        positions[group] = i + 1
+        pool = free.get(group, [])
         if i < len(pool):
             pairs.append((e, pool[i], f"position {i} among unstaged {surname!r} calls"))
 
     errors = []
     for e, call, how in pairs:
-        never_sent, differs = _filter_claim_findings(e.get("query"), call.get("args"), vocabulary)
+        never_sent, differs = _filter_claim_findings(e.get("query"), _record_search_sent(call.get("args")), vocabulary)
         for claim in never_sent:
             errors.append(f"log entry {e.get('id')} ({how}) claims {claim}, which the call never sent")
         for claim in differs:

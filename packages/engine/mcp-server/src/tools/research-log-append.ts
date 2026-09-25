@@ -39,7 +39,7 @@ import {
   STAGING_SEARCH_TOOLS,
   STAGING_SUBDIR,
 } from "../utils/results-staging.js";
-import { recordSearchToolSchema } from "./record-search.js";
+import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
@@ -579,6 +579,15 @@ const ECHOING_PRODUCER_INPUTS: ReadonlyMap<string, ReadonlySet<string>> = new Ma
 ]);
 
 /**
+ * What a producer actually sent, from its staged echo. `record_search` echoes
+ * its input but searches with `applyAltNameAutoPair(input)`, which fills the
+ * missing half of an alternate name, so a log naming that half is true.
+ */
+const SENT_FROM_ECHO: ReadonlyMap<string, (echo: Record<string, unknown>) => Record<string, unknown>> = new Map([
+  ["record_search", (echo) => applyAltNameAutoPair(echo as never) as Record<string, unknown>],
+]);
+
+/**
  * Inputs a producer echoes that are not search filters: host plumbing, and the
  * paging and response-shape controls, which change which page comes back but
  * not which records match. A log `query` naming one claims nothing about a
@@ -592,8 +601,8 @@ const NOT_A_FILTER = new Set(["projectPath", "subjectId", "count", "offset", "in
  * sent at all (research-log-editor-spec.md §8.3). A key counts only when it is
  * an input parameter of the producing tool's own schema, is a filter (not
  * plumbing or paging),
- * carries a value (`null`, `undefined` and `""` claim nothing), and is absent
- * from the staged query. A key the search sent with a different value is not
+ * carries a value (`null`, `undefined`, `""` and an `*Exact: false` claim
+ * nothing), and is absent from what the search sent. A key the search sent with a different value is not
  * returned: that is value normalization, not a claim about a filter.
  */
 export function neverSentFilterClaims(
@@ -604,11 +613,14 @@ export function neverSentFilterClaims(
   const inputs = ECHOING_PRODUCER_INPUTS.get(producer);
   if (!inputs || !stagedQuery) return [];
   if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const sent = SENT_FROM_ECHO.get(producer)?.(stagedQuery) ?? stagedQuery;
   const claims: { key: string; value: unknown }[] = [];
   for (const [key, value] of Object.entries(query as Record<string, unknown>)) {
     if (value === null || value === undefined || value === "") continue;
+    // An `*Exact` flag reaches the search only when true; `false` is the default.
+    if (value === false && key.endsWith("Exact")) continue;
     if (NOT_A_FILTER.has(key) || !inputs.has(key)) continue;
-    if (Object.hasOwn(stagedQuery, key)) continue;
+    if (Object.hasOwn(sent, key)) continue;
     claims.push({ key, value });
   }
   return claims;

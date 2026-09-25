@@ -1463,6 +1463,7 @@ describe("research_log_append — a query may not claim a filter its search neve
     ["a descriptive key the tool has no parameter for", { surname: "Flynn", collection: "PA marriages", name: "Mary Flynn" }],
     ["host plumbing", { surname: "Flynn", projectPath: "/elsewhere", subjectId: "I9" }],
     ["paging controls the call left at their defaults", { surname: "Flynn", offset: 0, count: 50 }],
+    ["an exact-match flag left at its false default", { surname: "Flynn", surnameExact: false, birthYearExact: false }],
     ["a null value", { surname: "Flynn", recordType: null }],
     ["an empty-string value", { surname: "Flynn", recordType: "" }],
     ["an empty query", {}],
@@ -1472,6 +1473,17 @@ describe("research_log_append — a query may not claim a filter its search neve
     expect(errorsOf(r)).toBe("");
     expect(r.ok).toBe(true);
     expect((await logOf())[0].query).toEqual(query);
+  });
+
+  it("accepts the alternate-name half record_search auto-paired, which it did send", async () => {
+    const ref = await stage({ surname: "Smith", givenName: "John", surnameAlt: "Smyth" });
+    const r = await append({ surname: "Smith", givenName: "John", surnameAlt: "Smyth", givenNameAlt: "John" }, ref);
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("still refuses an exact-match flag claimed true that the call never sent", async () => {
+    const r = await append({ surname: "Flynn", surnameExact: true }, await stage());
+    expect(errorsOf(r)).toMatch(/sent no `surnameExact` filter/);
   });
 
   it("accepts an omitted query and fills it from the staged search, plumbing stripped", async () => {

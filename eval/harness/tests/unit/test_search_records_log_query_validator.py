@@ -25,7 +25,8 @@ check = mod.report_log_query_traces_to_record_search_call
 
 VOCAB = frozenset(
     {"surname", "givenName", "recordType", "marriagePlace", "residencePlace", "collectionId",
-     "recordCountry", "count", "offset", "projectPath", "subjectId"}
+     "recordCountry", "count", "offset", "projectPath", "subjectId", "surnameExact", "surnameAlt",
+     "givenNameAlt"}
 )
 
 
@@ -95,6 +96,28 @@ def test_descriptive_keys_plumbing_and_paging_are_not_filter_claims():
     calls += log_call([({"stagedResultsRef": "results/.staging/a.json"}, "log_001")])
     query = {"surname": "Flynn", "note": "ad hoc", "projectPath": "/x", "offset": 0, "count": 50}
     check(BEFORE, state(entry("log_001", query)), calls)
+
+
+def test_an_exact_flag_at_its_false_default_claims_nothing_but_true_does():
+    calls = [search({"surname": "Flynn"}, "results/.staging/a.json")]
+    calls += log_call([({"stagedResultsRef": "results/.staging/a.json"}, "log_001")])
+    check(BEFORE, state(entry("log_001", {"surname": "Flynn", "surnameExact": False})), calls)
+    with pytest.raises(AssertionError, match="surnameExact=True"):
+        check(BEFORE, state(entry("log_001", {"surname": "Flynn", "surnameExact": True})), calls)
+
+
+def test_the_auto_paired_alternate_name_counts_as_sent():
+    calls = [search({"surname": "Smith", "givenName": "John", "surnameAlt": "Smyth"}, "results/.staging/a.json")]
+    calls += log_call([({"stagedResultsRef": "results/.staging/a.json"}, "log_001")])
+    query = {"surname": "Smith", "givenName": "John", "surnameAlt": "Smyth", "givenNameAlt": "John"}
+    check(BEFORE, state(entry("log_001", query)), calls)
+
+
+def test_a_list_valued_surname_does_not_crash_the_fallback():
+    calls = [search({"surname": ["Flynn", "Flinn"]})]
+    after = state(entry("log_001", {"surname": ["Flynn", "Flinn"], "recordType": "birth"}))
+    with pytest.raises(AssertionError, match="recordType='birth'"):
+        check(BEFORE, after, calls)
 
 
 def test_skips_with_zero_record_search_calls():

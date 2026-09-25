@@ -408,6 +408,9 @@ NOT_A_FILTER: frozenset[str] = frozenset({"projectPath", "subjectId", "count", "
 def filter_claim_findings(query: Any, sent: Any, vocabulary: frozenset[str]) -> tuple[list[str], list[str]]:
     """Compare a log entry's `query` with the arguments its call sent.
 
+    `sent` is what reached the search: for `record_search`, pass it through
+    `record_search_sent` first.
+
     Returns `(never_sent, differs)`: filter keys the entry claims with a value
     that the call did not send at all, and keys both carry with different
     values. Only keys in `vocabulary` that are filters count; a `None` or `""`
@@ -421,8 +424,30 @@ def filter_claim_findings(query: Any, sent: Any, vocabulary: frozenset[str]) -> 
     for key, claimed in query.items():
         if claimed is None or claimed == "" or key in NOT_A_FILTER or key not in vocabulary:
             continue
+        # An `*Exact` flag reaches the search only when true; `false` is the default.
+        if claimed is False and key.endswith("Exact"):
+            continue
         if key not in sent:
             never_sent.append(f"{key}={claimed!r}")
         elif sent[key] != claimed:
             differs.append(f"{key}: logged {claimed!r}, sent {sent[key]!r}")
     return never_sent, differs
+
+
+def record_search_sent(args: Any) -> dict:
+    """`record_search`'s arguments as searched: it fills the missing half of an
+    alternate name before building the query. Mirrors `applyAltNameAutoPair` in
+    packages/engine/mcp-server/src/tools/record-search.ts, which the tool's own
+    refusal calls directly; a Python validator cannot, so this is the one copy."""
+    out = dict(as_mapping(args))
+    if out.get("surnameAlt") and not out.get("givenNameAlt") and out.get("givenName"):
+        out["givenNameAlt"] = out["givenName"]
+    if out.get("givenNameAlt") and not out.get("surnameAlt") and out.get("surname"):
+        out["surnameAlt"] = out["surname"]
+    return out
+
+
+def hashable_key(value: Any) -> str:
+    """A grouping key for any JSON value, so a list-valued field cannot crash a
+    validator that groups by it."""
+    return json.dumps(value, sort_keys=True, default=str)

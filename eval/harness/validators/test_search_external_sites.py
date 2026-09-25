@@ -29,6 +29,7 @@ from validators_lib import (
 from validators_lib import as_mapping as _as_mapping
 from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import filter_claim_findings as _filter_claim_findings
+from validators_lib import hashable_key as _hashable_key
 from validators_lib import tool_input_keys as _tool_input_keys
 
 
@@ -910,16 +911,17 @@ def report_log_query_traces_to_url_tool_call(before_state, after_state, tool_cal
             claimed.add(id(call))
         else:
             unpaired.append(e)
-    free: dict[object, list[dict]] = {}
+    free: dict[str, list[dict]] = {}
     for c in calls:
         if id(c) not in claimed:
-            free.setdefault(_as_mapping(c.get("args")).get("site"), []).append(c)
-    positions: dict[object, int] = {}
+            free.setdefault(_hashable_key(_as_mapping(c.get("args")).get("site")), []).append(c)
+    positions: dict[str, int] = {}
     for e in unpaired:
         site = _as_mapping(e.get("external_site")).get("site")
-        i = positions.get(site, 0)
-        positions[site] = i + 1
-        pool = free.get(site, [])
+        group = _hashable_key(site)
+        i = positions.get(group, 0)
+        positions[group] = i + 1
+        pool = free.get(group, [])
         if i < len(pool):
             pairs.append((e, pool[i], f"position {i} among unpaired {site} calls"))
 

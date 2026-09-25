@@ -307,7 +307,11 @@ list, so it cannot drift. Descriptive context the tool has no parameter for
 (`projectPath`, `subjectId`) or a paging or response-shape control (`count`,
 `offset`, `includeFacets`), which changes which page comes back but not which
 records match: the corpus replay's one refusal of that kind was `offset: 0`
-logged for a call that sent none, which is the default, not a misstatement.
+logged for a call that sent none, which is the default, not a misstatement. An
+`*Exact` flag logged as `false` claims nothing either, since `record_search`
+sends it only when true. And "sent" means what reached the search, not the
+bare echo: `record_search` fills the missing half of an alternate name before
+it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 
 ---
 
@@ -477,8 +481,9 @@ Those two are the only producers judged: `external_links_search`,
 `person_search` does not stage.
 
 A key is refused only when all four hold: it is an input parameter of the
-producing tool's schema; it is a filter (§7); the caller gave it a value (`null`
-and `""` claim nothing); and the staged `query` does not carry it at all. A key
+producing tool's schema; it is a filter (§7); the caller gave it a value (`null`,
+`""` and an `*Exact: false` claim nothing); and the search did not send it at all
+— the staged `query`, with `record_search`'s alternate-name pairing applied. A key
 the search sent with a different value is allowed. No staged handle means no
 ground truth, so a nil search, which stages nothing, is never judged; an omitted
 `query` is filled rather than judged; an unreadable staged file is left for
