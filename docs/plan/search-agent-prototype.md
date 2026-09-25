@@ -28,7 +28,8 @@ not** — so the worker now forces delegations to the foreground (lead ruling), 
 same day; **D17 PASSES** on the final run of
 2026-09-23 — criteria 1, 2 and 3 green on one valid run (see D17);
 **D18 run 2026-09-24** — both fixtures pass the fresh judge, at 3× and ~6.5× the
-harness's cost, the second after two ceiling kills and a resume that held (see D18);
+harness's cost — a same-week harness run puts bagley at 1.37× — the second after two
+ceiling kills and a resume that held (see D18);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -1863,7 +1864,7 @@ without whichever Bedrock refuses.
   which #2850 would roll back — so without this the prototype could not run what the
   harness runs. Neither fixture's committed run had one, so the D18 numbers do not hinge
   on it.
-  **The runs, 2026-09-24**, on `main` at `7b9cad7ca` (#2850, #2852 and #2859 in), after a
+  **The runs, 2026-09-24**, on `main` at `2a553477f` (#2850, #2852 and #2859 in), after a
   fresh `make e2e-login`, the first launch with `PROTO_TOKEN_MIN_LIFE=480` so the token
   refreshed once at launch and never under a run, both with `ARGS="--ceiling-s 7200"`.
   `proto-compare` graded both sides fresh (the fixture's Haiku judge, four calls):
@@ -1934,10 +1935,26 @@ without whichever Bedrock refuses.
     rewrites as reads) bagley costs **+12%** and paerai **−6%**. What costs is the idle
     main thread, not the window length.
   - **Nothing bounds image browsing** — not the plugin, not the arm.
-  - **A same-week harness run** (`make e2e-run TEST=bagley-father-1884`) is the only way
-    to split bagley's 3× between plugin drift and substrate; the lead's call. paerai's
-    baseline is three days old, but its prototype run had image reads the baseline never
-    attempted, so its ratio is not a substrate figure either.
+  - **The same-week harness run splits bagley's 3×: 60% plugin, 40% prototype.**
+    `make e2e-run TEST=bagley-father-1884` on 2026-09-24, from the prototype runs' own
+    commit (`2a553477f`, same engine and plugin), after the dead `wikiApiUrl` override
+    was removed from `~/.familysearch-mcp/config.json` (a first attempt was stopped at
+    4 min because every wiki call failed where the prototype's `tools` service had
+    worked): **pass**, f1 true, proof quality 3, **$11.85**, 4,544 s, 336 tool calls,
+    184 SDK turns, 13 delegations, 3 nudges; all-thread tokens 283 / 1,030,289 /
+    10,631,667 / 260,928, every write at the 1-hour TTL. Against July's $5.29 the plugin
+    added **$6.56**; against it the prototype adds **$4.44** — same week, the prototype
+    costs **1.37×** the harness, not 3×. The prototype's extra is where the analysis above
+    puts it: cache writes 1.56 M against 1.03 M (the 272 k main-thread rewrites, and 21
+    delegations against 13, each opening a fresh cache) and output 464 k against 261 k
+    (the eight extra delegations' `extraction_append` payloads); cache reads are level
+    (10.0 M against 10.6 M). One run a side, so the delegation count — which drives most
+    of the gap — may be sampling rather than substrate. The harness run's `compliance`
+    reads FAIL on three guardrail bypasses the detector credits to `Skill` calls only,
+    the artefact paerai's baseline carries too; not committed (the e2e grading gate
+    wants its blind `.ann.json` first). paerai's baseline is three days old, but its
+    prototype run had image reads the baseline never attempted, so its ratio is not a
+    substrate figure either.
 
   Records (gitignored): `apps/server/proto/exports/proj_bagley-father-1884_072ee7/` and
   `proj_paerai-teupooihi-spouse_1a8734/`. The stack was torn down with `proto-down -v`,
