@@ -209,14 +209,14 @@ List every person mentioned and assign a `record_role`:
   relationship while labelling the doubt, and the correlation it belongs
   to happens downstream, not here.** Say what you noticed in your
   summary — that is how the hypothesis reaches the next skill.
-  - **`record_role` labels apparent within-group structure; it asserts
-    nothing.** Use the standard vocabulary — `head_of_household`,
-    `wife`, `child_N` — for a group presented as one household group, on
-    any census year; the pre-1880 relationship ban governs assertions,
-    not labels. A second co-resident family keeps its own
-    `head`/`wife`/`child_N`; an adult too old to be the head's child
-    isn't `child_N` of that head. Unknown tie to the head → label by the
-    person's own role, leave the cross-group link to a hypothesis.
+  - **`record_role` = apparent within-group structure, not raw position
+    after the head.** Don't number everyone after the head `child_1,
+    child_2, …` — that fabricates a parent-child link the record never
+    states (pre-1880 has no relationship column). A co-resident family
+    keeps its own `head`/`wife`/`child_N`; an adult too old to be the
+    head's child isn't `child_N` of that head. Unknown tie to the head →
+    label by the person's own role, leave the cross-group link to a
+    hypothesis.
 - **Obituaries — read the survivor list precisely.** A name with a
   parenthetical follows one of two conventions; disambiguate by *what is in
   the parens*:
