@@ -4,6 +4,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { extractList } from "./frontmatter.js";
+import {
+  BRIDGE_PREFIX,
+  HARNESS_PREFIX,
+  LOCAL_PREFIX,
+  SERVER_PREFIXES,
+  bareName,
+  manifest,
+  sanitizeServerSegment,
+} from "./tool-names.js";
 
 // Plugin-agent `tools:` / `disallowedTools:` frontmatter must name every MCP
 // tool under ALL THREE server spellings.
@@ -136,54 +145,6 @@ function registeredServerKey(site: (typeof SERVER_KEY_SITES)[number]): string | 
   return site.pattern.exec(text)?.[1] ?? null;
 }
 
-const manifest = JSON.parse(
-  readFileSync(join(mcpRoot, "manifest.json"), "utf8"),
-) as { display_name: string };
-
-/** Non-alphanumeric runs collapse to a single underscore; edges trimmed. */
-function sanitizeServerSegment(name: string): string {
-  return name
-    .replace(/[^A-Za-z0-9]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
-const HARNESS_PREFIX = "mcp__genealogy__";
-const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.display_name)}__`;
-// Cowork can instead expose the bare display_name with no `remote-devices` bridge
-// in front of it. Both live Cowork spellings derive from display_name; only the
-// bridged one is namespaced. Which one a session exposes has been observed to move
-// (bare live in #1341, absent in three later censuses — macOS and Windows on
-// 2026-08-15, and a Windows session via #1732). Missing this
-// third registrar was issue #1341: record-extractor was refused there, with all 16
-// of its declared entries named unrecognized. An agent declaring the built-in
-// `Read` bare is exempt from that refusal — `Read` always resolves, so it spawns
-// holding that alone. Today that is proof-conclusion and research-exhaustiveness;
-// every other agent (gps-mentor included) is MCP-only and a registrar miss
-// refuses it, as it did record-extractor.
-const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
-
-// Longest-first so that a prefix which is itself the prefix of another can never
-// shadow it. Inert with today's three (none is a prefix of another — `mcp__genealogy__`
-// and `mcp__Genealogy_Research__` diverge on case at index 5); kept for the next one.
-const SERVER_PREFIXES = [HARNESS_PREFIX, BRIDGE_PREFIX, LOCAL_PREFIX].sort(
-  (a, b) => b.length - a.length,
-);
-
-function bareName(entry: string): string {
-  const prefix = SERVER_PREFIXES.find((p) => entry.startsWith(p));
-  if (prefix === undefined) {
-    // Throw rather than slice blindly. The previous form fell through to
-    // `slice(HARNESS_PREFIX.length)` on anything unrecognized, which turned
-    // `mcp__Genealogy_Research__image_transcribe` into `esearch__image_transcribe`
-    // and reported it as a missing tool instead of a missing prefix (#1341).
-    throw new Error(
-      `${entry} carries no recognized server prefix. Add the registrar's spelling to ` +
-        `SERVER_PREFIXES — do not let it be sliced against another prefix's length.`,
-    );
-  }
-  return entry.slice(prefix.length);
-}
 
 const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith(".md"));
 const knownTools = new Set(allToolSchemas.map((s) => s.name));

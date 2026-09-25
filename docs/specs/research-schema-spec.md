@@ -303,8 +303,12 @@ the wrong row. That holds for all three fields.
 **What a row lists for a holder differs by field.** `callers` and `hookCallers`
 are permissions, so a name there counts for every writer tool on its row. An
 `agentCallers` entry is `{"agent": …, "tools": […]}` and counts only for the
-tools it names — the agent's writer grants intersected with the row's
-`writerTools`, minus any tool the plugin hook forbids that agent on that row.
+tools it names: the writer tools that agent is observed or intended to write the
+row with. Those are always a **subset** of the agent's writer grants intersected
+with the row's `writerTools`, minus any tool the plugin hook forbids that agent
+on that row — the subset is what the tests enforce, not completeness. An agent
+the hook gives no lane (`search-images`, `gps-mentor`) can reach more sections
+with `research_append` than any entry records.
 For `research_append` that means: a research.json row only inside the agent's
 `AGENT_WRITABLE_SECTIONS` lane, and a tree row only through the one section that
 writes it — tree `persons` via an `assertions` update, tree `sources` via a

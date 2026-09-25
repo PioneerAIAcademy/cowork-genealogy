@@ -1,6 +1,6 @@
 /**
- * YAML frontmatter block-sequence parsing, shared by the two packaging lints
- * that read a plugin agent's `tools:` or a skill's `allowed-tools:`.
+ * YAML frontmatter parsing, shared by the packaging lints that read a plugin
+ * agent's `tools:`, a skill's `allowed-tools:`, and an agent's `name:`.
  *
  * It lives here rather than in either test because a bug in it empties BOTH
  * guards at once and neither would say so: `agent-tool-names.test.ts` asserts
@@ -11,92 +11,71 @@
  */
 
 /**
- * Parse a named block-sequence out of YAML frontmatter.
+ * Parse a named sequence out of YAML frontmatter text.
  *
- * Four shapes cost a naive scan the grants it is meant to read. The first two
- * are live in the tree today; the last two are not yet, and are handled because
- * both callers fail OPEN on them:
+ * Every shape below cost an earlier scan the grants it is meant to read. Only
+ * the first two are live in the tree today; the rest are handled because both
+ * callers fail OPEN on a grant they cannot read:
  *
  *  - **Comment lines inside the list.** `record-extractor.md` carries a 10-line
- *    `#` comment block between `tools:` and its first entry. A scan that stops
- *    at the first line which is not `- …` reads zero grants for that agent.
+ *    `#` comment block between `tools:` and its first entry.
  *  - **A later top-level key.** Several skills put `description:` *after*
- *    `allowed-tools:`, so the list has to end at the next unindented key — but
- *    an unindented comment is not one.
+ *    `allowed-tools:`, so the list ends at the next unindented key — but an
+ *    unindented comment is not one, and nor is an unindented `- `: YAML allows a
+ *    block sequence at its key's own indent.
  *  - **A trailing comment on an entry.** `- mcp__genealogy__tree_forget  # …`
- *    must yield the tool name, not the name with the comment glued to it. A
- *    mangled entry matches no tool, so the ownership guard stops seeing the
- *    grant and passes — and on a SKILL.md nothing else reads `allowed-tools:`,
- *    so nothing else would catch it. Comments inside these lists are already
- *    house style (see the first shape), which is what makes this reachable.
- *  - **A quoted scalar.** `- "tree_forget"` must yield `tree_forget`. Kept
- *    quoted, it matches no tool and fails open exactly as the trailing comment
- *    does. A quoted scalar is read as a unit, so a ` #` inside the quotes is
- *    part of the value (`"foo #bar"` → `foo #bar`) and `''` in a single-quoted
- *    one is an escaped quote. Only a complete matching pair counts: an
+ *    yields the tool name, not the name with the comment glued to it.
+ *  - **A quoted scalar.** `- "tree_forget"` yields `tree_forget`, read as a
+ *    unit: a ` #` inside the quotes is part of the value, `''` in a
+ *    single-quoted one is an escaped quote, and a comment after the closing
+ *    quote may contain anything. Only a complete matching pair counts — an
  *    unpaired quote, or one inside a plain entry (`Bash(echo "x")`), belongs to
- *    the entry. A PLAIN scalar still ends at ` #` wherever it falls — that is
- *    YAML's own rule, so `Bash(echo "a #b")` really is `Bash(echo "a`.
+ *    the entry. A PLAIN block entry still ends at ` #` wherever it falls, which
+ *    is YAML's own rule: `- Bash(echo "a #b")` really is `Bash(echo "a`.
+ *  - **A null entry.** `- # note` is an entry with no value; it is skipped,
+ *    never returned as the string `# note`.
+ *  - **A value on the key line.** A flow sequence `tools: [a, "b"]  # c`, or the
+ *    comma form Claude Code documents for a subagent (`tools: Read, Grep`).
+ *    Both are split on commas OUTSIDE quotes, and a trailing comment is found
+ *    outside quotes and brackets, so `[a, b] # don't drop` and
+ *    `a, "Bash(x, y)"` read as two entries each. An unterminated flow sequence
+ *    throws rather than returning a mangled entry nothing would match.
  *
  * Returns the entries in file order; `[]` when the key is absent. Throws when
  * there is no frontmatter at all, which is a malformed file rather than an
  * empty list.
  */
 export function extractList(text: string, key: string): string[] {
-  const frontmatter = frontmatterBlock(text);
-  if (frontmatter === null) throw new Error("no YAML frontmatter");
+  const block = frontmatterBlock(text);
+  if (block === null) throw new Error("no YAML frontmatter");
+  return listFromBlock(block, key);
+}
 
-  const lines = frontmatter.split(/\r?\n/);
+/** `extractList` over an already-extracted frontmatter block. */
+export function listFromBlock(block: string, key: string): string[] {
+  const lines = block.split(/\r?\n/);
   const start = lines.findIndex((l) => new RegExp(`^${key}:`).test(l));
   if (start === -1) return [];
 
-  // A value on the key line itself: a flow sequence `[a, "b"]`, or the
-  // comma-separated form Claude Code documents for a subagent's `tools:`
-  // (`tools: Read, Grep`). Read as empty, either one silently drops every grant.
-  const inline = stripComment(lines[start].slice(key.length + 1).trim());
-  if (inline !== "") {
-    const flow = /^\[(.*)\]$/.exec(inline);
-    return (flow ? flow[1] : inline)
-      .split(",")
-      .map((s) => unquote(s.trim()))
-      .filter((s) => s !== "");
-  }
+  const inline = lines[start].slice(key.length + 1).trim();
+  if (inline !== "" && !inline.startsWith("#")) return inlineItems(inline);
 
   const items: string[] = [];
   for (let i = start + 1; i < lines.length; i++) {
-    // The next top-level key ends the list. An unindented `- ` does not: YAML
-    // allows a block sequence at its key's own indent.
-    if (/^\S/.test(lines[i]) && !/^#/.test(lines[i]) && !/^-\s/.test(lines[i])) break;
-    const quoted = QUOTED_ENTRY.exec(lines[i]);
-    if (quoted) {
-      items.push(quoted[1] ?? quoted[2].replace(/''/g, "'"));
-      continue;
-    }
-    const plain = PLAIN_ENTRY.exec(lines[i]);
-    if (plain) items.push(plain[1]);
+    if (/^\S/.test(lines[i]) && !/^#/.test(lines[i]) && !/^-(\s|$)/.test(lines[i])) break;
+    const entry = /^\s*-(?:\s+(.*))?$/.exec(lines[i]);
+    if (!entry) continue;
+    const value = readScalar((entry[1] ?? "").trim());
+    if (value !== null) items.push(value);
   }
   return items;
 }
 
-/** A value with its trailing ` # comment` removed, unless the `#` is quoted. */
-function stripComment(value: string): string {
-  if (/^["'\[]/.test(value)) return value.replace(/\s+#[^"'\]]*$/, "").trim();
-  return value.replace(/\s+#.*$/, "").trim();
+/** A top-level scalar key's value — comment removed, quotes resolved — or null. */
+export function scalarValue(block: string, key: string): string | null {
+  const line = block.split(/\r?\n/).find((l) => new RegExp(`^${key}:`).test(l));
+  return line === undefined ? null : readScalar(line.slice(key.length + 1).trim());
 }
-
-/** One matching pair of outer quotes removed; anything else returned as is. */
-function unquote(s: string): string {
-  const d = /^"([^"]*)"$/.exec(s);
-  if (d) return d[1];
-  const q = /^'((?:[^']|'')*)'$/.exec(s);
-  return q ? q[1].replace(/''/g, "'") : s;
-}
-
-/** A `- "…"` or `- '…'` entry, then an optional ` # comment`. */
-const QUOTED_ENTRY = /^\s*-\s+(?:"([^"]*)"|'((?:[^']|'')*)')(?:\s+#.*)?\s*$/;
-
-/** A plain `- …` entry; the value ends at the first ` #`. */
-const PLAIN_ENTRY = /^\s*-\s+(.+?)(?:\s+#.*)?\s*$/;
 
 /**
  * The text between a file's opening `---` and closing `---`, or `null` when
@@ -106,4 +85,108 @@ const PLAIN_ENTRY = /^\s*-\s+(.+?)(?:\s+#.*)?\s*$/;
  */
 export function frontmatterBlock(text: string): string | null {
   return /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? null;
+}
+
+/** Entries of a key-line value: a flow sequence, or the comma form. */
+function inlineItems(value: string): string[] {
+  let body: string;
+  if (value.startsWith("[")) {
+    const end = closingBracket(value);
+    if (end === -1) throw new Error(`unterminated flow sequence: ${value}`);
+    const rest = value.slice(end + 1);
+    if (!isCommentOrEmpty(rest)) throw new Error(`text after a flow sequence: ${value}`);
+    body = value.slice(1, end);
+  } else {
+    body = value.slice(0, commentStart(value));
+  }
+  return splitOutsideQuotes(body, ",")
+    .map((s) => readScalar(s.trim()))
+    .filter((s): s is string => s !== null && s !== "");
+}
+
+/**
+ * One scalar: `null` for an empty or comment-only value, the resolved content
+ * of a complete quoted scalar followed by nothing or a comment, and otherwise
+ * a plain scalar cut at its first ` #`.
+ */
+function readScalar(value: string): string | null {
+  if (value === "" || value.startsWith("#")) return null;
+  if (value[0] === '"' || value[0] === "'") {
+    const end = closingQuote(value, 0);
+    if (end !== -1 && isCommentOrEmpty(value.slice(end + 1))) {
+      const inner = value.slice(1, end);
+      return value[0] === "'"
+        ? inner.replace(/''/g, "'")
+        : inner.replace(/\\(["\\])/g, "$1");
+    }
+  }
+  const cut = /\s#/.exec(value);
+  return (cut ? value.slice(0, cut.index) : value).trim();
+}
+
+/** Index of the quote closing the one at `start`, or -1. */
+function closingQuote(s: string, start: number): number {
+  const q = s[start];
+  for (let i = start + 1; i < s.length; i++) {
+    if (q === '"' && s[i] === "\\") {
+      i++;
+      continue;
+    }
+    if (s[i] !== q) continue;
+    if (q === "'" && s[i + 1] === "'") {
+      i++;
+      continue;
+    }
+    return i;
+  }
+  return -1;
+}
+
+/** Index of the `]` closing the `[` at 0, outside quotes, or -1. */
+function closingBracket(s: string): number {
+  for (let i = 1; i < s.length; i++) {
+    if (s[i] === '"' || s[i] === "'") {
+      const end = closingQuote(s, i);
+      if (end === -1) return -1;
+      i = end;
+    } else if (s[i] === "]") {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/** Where a ` #` comment starts outside quotes, or the string's length. */
+function commentStart(s: string): number {
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '"' || s[i] === "'") {
+      const end = closingQuote(s, i);
+      if (end === -1) break;
+      i = end;
+    } else if (s[i] === "#" && (i === 0 || /\s/.test(s[i - 1]))) {
+      return i;
+    }
+  }
+  return s.length;
+}
+
+function isCommentOrEmpty(rest: string): boolean {
+  return rest.trim() === "" || /^\s+#/.test(rest);
+}
+
+/** Split on `sep` wherever it falls outside a quoted run. */
+function splitOutsideQuotes(s: string, sep: string): string[] {
+  const out: string[] = [];
+  let from = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '"' || s[i] === "'") {
+      const end = closingQuote(s, i);
+      if (end !== -1) i = end;
+    } else if (s[i] === sep) {
+      out.push(s.slice(from, i));
+      from = i + 1;
+    }
+  }
+  out.push(s.slice(from));
+  return out;
 }

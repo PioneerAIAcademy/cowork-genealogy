@@ -145,6 +145,30 @@ describe("extractList — entries survive the shapes that reach these lists", ()
     ]);
   });
 
+  it("finds a key-line comment outside quotes and brackets, whatever it says", () => {
+    // The fail-open shape: a comment holding an apostrophe or a `]` was left
+    // glued on, and the fallback comma split mangled every entry.
+    expect(
+      extractList(doc("allowed-tools: [research_append, tree_forget] # don't drop"), "allowed-tools"),
+    ).toEqual(["research_append", "tree_forget"]);
+    expect(extractList(doc("tools: [tree_forget] # see [x]"), "tools")).toEqual(["tree_forget"]);
+    expect(extractList(doc('tools: "tree_forget" # it\'s'), "tools")).toEqual(["tree_forget"]);
+    expect(
+      extractList(doc('allowed-tools: tree_forget, "Bash(a, b)"  # two'), "allowed-tools"),
+    ).toEqual(["tree_forget", "Bash(a, b)"]);
+    expect(() => extractList(doc("tools: [tree_forget"), "tools")).toThrow(
+      "unterminated flow sequence",
+    );
+  });
+
+  it("skips a null entry rather than returning its comment", () => {
+    const entries = extractList(
+      doc(["tools:", "  - # nothing here", "  -", "  - tree_forget"].join("\n")),
+      "tools",
+    );
+    expect(entries).toEqual(["tree_forget"]);
+  });
+
   it("strips only a matching outer pair of quotes", () => {
     // The over-trim direction. An unpaired or mismatched quote is not a quoted
     // scalar, and a quote inside an entry belongs to the entry.

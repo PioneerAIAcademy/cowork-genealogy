@@ -47,7 +47,7 @@ def _run(tmp_path: Path, slug: str, name: str, payload: dict) -> Path:
 # ── the manifest side ────────────────────────────────────────────────────────
 
 
-def test_writer_tools_are_read_from_the_manifest_and_non_empty():
+def test_writer_tools_are_read_from_the_engine_and_non_empty():
     tools = writer_tools()
     # Non-emptiness first: every way this reading can break returns a clean
     # empty set, which would make `classify` drop every pair and report nothing.
@@ -267,6 +267,40 @@ def test_two_spellings_of_one_agent_are_one_pair(tmp_path: Path):
     assert pairs[0].identifier == "agent:record-extractor"
     assert pairs[0].calls == 2
     assert pairs[0].runs == 1
+
+
+def test_writer_tools_come_from_the_engine_not_the_manifest(tmp_path: Path, monkeypatch):
+    # A writer the engine ships but no row lists must still be a writer here,
+    # or its calls are filtered out and the report prints a confident zero.
+    import e2e.writer_attribution_report as report
+
+    real_rows = report.rows()
+    stripped = [
+        {**r, "writerTools": [t for t in r.get("writerTools") or [] if t != "tree_forget"]}
+        for r in real_rows
+    ]
+    monkeypatch.setattr(report, "rows", lambda: stripped)
+    assert "tree_forget" in writer_tools()
+    p = _run(tmp_path, "ferber-death", "run-1.json", {
+        "subagents": [_capture("record-extractor", ["tree_forget"])],
+    })
+    pairs = classify(scan([p]), listed_writers(), shipped_units())
+    assert [(pr.identifier, pr.tool, pr.verdict) for pr in pairs] == [
+        ("agent:record-extractor", "tree_forget", "unlisted")
+    ]
+
+
+def test_an_agent_caller_tool_its_row_does_not_list_counts_for_nothing(monkeypatch):
+    # The same rule the TS guard applies: an entry naming a tool outside its
+    # row's writerTools lists the agent for nothing.
+    import e2e.writer_attribution_report as report
+
+    monkeypatch.setattr(report, "rows", lambda: [{
+        "writerTools": ["research_append"],
+        "callers": [],
+        "agentCallers": [{"agent": "agent:record-extractor", "tools": ["tree_forget"]}],
+    }])
+    assert "agent:record-extractor" not in listed_writers().get("tree_forget", set())
 
 
 def test_two_spellings_of_an_unbound_name_are_one_pair(tmp_path: Path):

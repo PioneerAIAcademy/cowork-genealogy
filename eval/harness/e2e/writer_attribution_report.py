@@ -53,6 +53,7 @@ CLI (from eval/harness/):
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 from typing import NamedTuple
@@ -74,9 +75,31 @@ from harness.workspace import DEFAULT_PLUGIN_AGENTS, DEFAULT_PLUGIN_SKILLS
 GENERAL_PURPOSE = "general-purpose"
 
 
+#: The engine module that owns the writer-tool vocabulary.
+TOOL_RESULT_TS = DEFAULT_PLUGIN_AGENTS.parents[1] / "mcp-server" / "src" / "tool-result.ts"
+
+
+def _ts_string_list(source: str, name: str) -> list[str]:
+    """The string members of `export const <name> = [...] as const;`."""
+    m = re.search(rf"export const {name} = \[(.*?)\] as const;", source, re.S)
+    if m is None:
+        raise RuntimeError(f"`{name}` not found in {TOOL_RESULT_TS}")
+    return re.findall(r'"([^"]+)"', m.group(1))
+
+
 def writer_tools() -> set[str]:
-    """Every tool any ownership row names as a writer of a project document."""
-    return {t for r in rows() for t in (r.get("writerTools") or [])}
+    """Every tool the ENGINE ships that writes a project document.
+
+    `OK_FALSE_IS_FAILURE` minus `NOT_A_DOCUMENT_WRITER`, read out of
+    `src/tool-result.ts` -- the vocabulary the packaging guard uses. Never the
+    manifest's own `writerTools`: a newly shipped writer that no row lists yet
+    would then be filtered out here and read as "0 UNLISTED", which is the one
+    gap this report exists to surface.
+    """
+    source = TOOL_RESULT_TS.read_text(encoding="utf-8")
+    return set(_ts_string_list(source, "OK_FALSE_IS_FAILURE")) - set(
+        _ts_string_list(source, "NOT_A_DOCUMENT_WRITER")
+    )
 
 
 def listed_writers() -> dict[str, set[str]]:
@@ -91,11 +114,15 @@ def listed_writers() -> dict[str, set[str]]:
     """
     out: dict[str, set[str]] = {}
     for row in rows():
+        row_tools = set(row.get("writerTools") or [])
         permitted = set(row.get("callers") or []) | set(row.get("hookCallers") or [])
-        for tool in row.get("writerTools") or []:
+        for tool in row_tools:
             out.setdefault(tool, set()).update(permitted)
         for entry in row.get("agentCallers") or []:
-            for tool in entry["tools"]:
+            # Only a tool the row itself lists, as the packaging guard reads it:
+            # an entry naming one the row does not is a pairing that permits
+            # nothing, and must not make this report disagree with that guard.
+            for tool in set(entry["tools"]) & row_tools:
                 out.setdefault(tool, set()).add(entry["agent"])
     return out
 

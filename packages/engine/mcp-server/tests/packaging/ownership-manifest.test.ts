@@ -1,11 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
-import { OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
-import { extractList, frontmatterBlock } from "./frontmatter.js";
+import { NOT_A_DOCUMENT_WRITER, OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
+import { frontmatterBlock, listFromBlock, scalarValue } from "./frontmatter.js";
+import { grantedTools } from "./tool-names.js";
 
 /**
  * The ownership manifest is the shared declaration of who may write each
@@ -100,22 +110,14 @@ const key = (r: { artifact: string; section: string }) => `${r.artifact}#${r.sec
  * it looks:** `OK_FALSE_IS_FAILURE`'s own rule is "the call could not do what
  * was asked", not "the tool writes", so a writer that reports failure some other
  * way is invisible to this guard exactly as it is to the manifest.
+ *
+ * The list lives in `src/tool-result.ts` beside `OK_FALSE_IS_FAILURE`, so the
+ * corpus report (`writer_attribution_report.py`) reads the same vocabulary.
  */
-const NOT_A_DOCUMENT_WRITER = new Set([
-  "convert_calendar",
-  "build_external_search_url",
-  "research_query",
-  "project_context",
-  "sidecar_read",
-]);
+const READERS = new Set<string>(NOT_A_DOCUMENT_WRITER);
 
 /** Every tool the engine ships that writes research.json or tree.gedcomx.json. */
-const WRITER_TOOLS = OK_FALSE_IS_FAILURE.filter((t) => !NOT_A_DOCUMENT_WRITER.has(t));
-
-/** `mcp__<server>__<tool>` → `<tool>`; a built-in (`Read`) passes through. */
-function bareToolName(entry: string): string {
-  return entry.startsWith("mcp__") ? (entry.split("__").pop() as string) : entry;
-}
+const WRITER_TOOLS: string[] = OK_FALSE_IS_FAILURE.filter((t) => !READERS.has(t));
 
 interface PluginGrants {
   /** `agent:<name>` / `skill:<name>` → the WRITER tools it is granted. */
@@ -128,6 +130,8 @@ interface PluginGrants {
   problems: string[];
   /** Tool-list keys spelled some way the runtime and this scan do not read. */
   misspelledKeys: string[];
+  /** Each holder's frontmatter block, extracted once and shared by every check. */
+  blocks: Map<string, string>;
 }
 
 /** The tool-list keys each kind of plugin file may carry, spelled exactly. */
@@ -160,53 +164,87 @@ function misspelledToolKeys(frontmatter: string, allowed: readonly string[]): st
  * that cannot be read at all lands in `problems` rather than throwing, so one
  * malformed file fails one test instead of the whole module.
  */
-function readPluginGrants(): PluginGrants {
+function readPluginGrants(root: string = pluginRoot): PluginGrants {
   const writers = new Set<string>(WRITER_TOOLS);
   const byHolder = new Map<string, Set<string>>();
   const entriesParsed = new Map<string, number>();
   const declaresKey = new Set<string>();
   const problems: string[] = [];
   const misspelledKeys: string[] = [];
+  const blocks = new Map<string, string>();
+
+  // Every read goes through here, so a file that cannot be read, or a
+  // directory where a file should be, is a `problems` entry — one failing
+  // test — instead of an exception at module load that takes every test here
+  // down with it.
+  const read = (label: string, fn: () => string): string | null => {
+    try {
+      return fn();
+    } catch (e) {
+      problems.push(`${label}: ${(e as Error).message}`);
+      return null;
+    }
+  };
+  const list = (label: string, dir: string) => {
+    try {
+      return readdirSync(dir, { withFileTypes: true });
+    } catch (e) {
+      problems.push(`${label}: ${(e as Error).message}`);
+      return [];
+    }
+  };
 
   const record = (holder: string, key: string, text: string) => {
     const kind = holder.startsWith("agent:") ? "agent" : "skill";
+    // The block is extracted once per file and kept, so the other readings of
+    // this file (tool list, key spellings, the name check) share one parse.
+    const block = frontmatterBlock(text);
+    if (block === null) {
+      problems.push(`${holder}: no YAML frontmatter`);
+      return;
+    }
+    blocks.set(holder, block);
+    let held: Set<string>;
     let entries: string[];
     try {
-      entries = extractList(text, key);
+      entries = listFromBlock(block, key);
+      held = new Set(entries.flatMap((e) => grantedTools(e, WRITER_TOOLS)).filter((t) => writers.has(t)));
     } catch (e) {
       problems.push(`${holder}: ${(e as Error).message}`);
       return;
     }
-    for (const k of misspelledToolKeys(frontmatterBlock(text) ?? "", TOOL_LIST_KEYS[kind])) {
+    for (const k of misspelledToolKeys(block, TOOL_LIST_KEYS[kind])) {
       misspelledKeys.push(`${holder}: '${k}:'`);
     }
     entriesParsed.set(holder, entries.length);
     // Read the key's PRESENCE from the frontmatter block only: a body that
     // happens to contain the string would make every holder look like a declarer.
-    const frontmatter = frontmatterBlock(text) ?? "";
-    if (new RegExp(`^${key}:`, "m").test(frontmatter)) declaresKey.add(holder);
-    const held = new Set(entries.map(bareToolName).filter((t) => writers.has(t)));
+    if (new RegExp(`^${key}:`, "m").test(block)) declaresKey.add(holder);
     if (held.size > 0) byHolder.set(holder, held);
   };
 
-  for (const file of readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"))) {
-    const text = readFileSync(join(pluginRoot, "agents", file), "utf8");
-    record(`agent:${file.slice(0, -3)}`, "tools", text);
+  for (const entry of list("agents/", join(root, "agents"))) {
+    if (!entry.name.endsWith(".md")) continue;
+    const holder = `agent:${entry.name.slice(0, -3)}`;
+    const text = read(holder, () => readFileSync(join(root, "agents", entry.name), "utf8"));
+    if (text !== null) record(holder, "tools", text);
   }
 
-  for (const entry of readdirSync(join(pluginRoot, "skills"), { withFileTypes: true })) {
+  for (const entry of list("skills/", join(root, "skills"))) {
     if (!entry.isDirectory()) continue;
-    const skillMd = join(pluginRoot, "skills", entry.name, "SKILL.md");
+    const skillMd = join(root, "skills", entry.name, "SKILL.md");
     if (!existsSync(skillMd)) continue;
+    const holder = `skill:${entry.name}`;
     // `allowed-tools:` only, never the whole frontmatter. `forget-and-rederive`'s
     // `description:` names `tree_correct` and `merge_tree_persons` in a "do NOT
     // use this, use that" clause, so a frontmatter-wide word match reports it as
     // a holder of two tools it does not hold (proven 2026-09-23: exactly those
     // two false positives).
-    record(`skill:${entry.name}`, "allowed-tools", readFileSync(skillMd, "utf8"));
+    const text = read(holder, () => readFileSync(skillMd, "utf8"));
+    if (text !== null) record(holder, "allowed-tools", text);
   }
 
-  return { byHolder, entriesParsed, declaresKey, problems, misspelledKeys };
+  return { byHolder, entriesParsed, declaresKey, problems, misspelledKeys, blocks };
 }
 
 const pluginGrants = readPluginGrants();
@@ -394,7 +432,7 @@ describe("ownership manifest — every name resolves", () => {
     expect(
       WRITER_TOOLS.length,
       "no writer tools left after subtracting NOT_A_DOCUMENT_WRITER from " +
-        "OK_FALSE_IS_FAILURE — the guard below is comparing against an empty set",
+        "OK_FALSE_IS_FAILURE (both in src/tool-result.ts) — the guard below is comparing against an empty set",
     ).toBeGreaterThan(0);
 
     const declared = new Set<string>(rows.flatMap((r) => r.writerTools));
@@ -403,14 +441,14 @@ describe("ownership manifest — every name resolves", () => {
       [...shipped].filter((tool) => !declared.has(tool)).sort(),
       "these tools write a project document and no ownership row names them as a " +
         "writer of anything — add the row's `writerTools` entry, or add the tool " +
-        "to NOT_A_DOCUMENT_WRITER if it turns out to write neither document",
+        "to NOT_A_DOCUMENT_WRITER in src/tool-result.ts if it turns out to write neither document",
     ).toEqual([]);
     expect(
       [...declared].filter((tool) => !shipped.has(tool)).sort(),
       "the manifest calls these writer tools and the engine does not: each is " +
         "either missing from OK_FALSE_IS_FAILURE in src/tool-result.ts (a " +
         "writer's `ok: false` IS its own failure) or wrongly listed in " +
-        "NOT_A_DOCUMENT_WRITER",
+        "NOT_A_DOCUMENT_WRITER there",
     ).toEqual([]);
   });
 
@@ -452,6 +490,38 @@ describe("ownership manifest — every name resolves", () => {
       "these plugin files could not be read, so their grants are missing from " +
         "every comparison below",
     ).toEqual([]);
+  });
+
+  it("turns every unreadable plugin file into a problem, and reads a wildcard as every writer", () => {
+    // Built on a scratch tree, so the breaks can be real without touching the
+    // shipped plugin — where a directory named `x.md` would crash other suites
+    // at collection before this one could say anything.
+    const root = mkdtempSync(join(tmpdir(), "ownership-grants-"));
+    const md = (...lines: string[]) => ["---", ...lines, "---", ""].join("\n");
+    try {
+      mkdirSync(join(root, "agents", "is-a-dir.md"), { recursive: true });
+      writeFileSync(join(root, "agents", "no-frontmatter.md"), "no frontmatter here");
+      writeFileSync(
+        join(root, "agents", "quoted-name.md"),
+        md('name: "quoted-name"  # a note', "tools:", "  - mcp__genealogy__tree_forget"),
+      );
+      writeFileSync(
+        join(root, "agents", "wildcard.md"),
+        md("name: wildcard", "tools:", "  - mcp__genealogy__*"),
+      );
+      // No `skills/` directory at all.
+      const scan = readPluginGrants(root);
+
+      expect(scan.problems.some((p) => p.startsWith("agent:is-a-dir:"))).toBe(true);
+      expect(scan.problems).toContain("agent:no-frontmatter: no YAML frontmatter");
+      expect(scan.problems.some((p) => p.startsWith("skills/:"))).toBe(true);
+      expect([...(scan.byHolder.get("agent:wildcard") ?? [])].sort()).toEqual(
+        [...WRITER_TOOLS].sort(),
+      );
+      expect(scalarValue(scan.blocks.get("agent:quoted-name") ?? "", "name")).toBe("quoted-name");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("spells every tool-list key the way its reader does", () => {
@@ -525,12 +595,17 @@ describe("ownership manifest — every name resolves", () => {
     // all seven shipped agents and nothing but coincidence made them. Let them
     // diverge and the corpus report misfiles a shipped agent as an UNBOUND
     // DELEGATION — the #939 class it states no manifest edit can ever close.
+    // Reuses the grant scan's one pass over the agents, and reads `name:` the
+    // way YAML does — `name: "x"` and `name: x  # note` are both `x`, as they
+    // are to the Python reader's `yaml.safe_load`.
     const bad: string[] = [];
-    for (const file of readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"))) {
-      const text = readFileSync(join(pluginRoot, "agents", file), "utf8");
-      const frontmatter = frontmatterBlock(text) ?? "";
-      const declared = /^name:\s*(\S+)\s*$/m.exec(frontmatter)?.[1];
-      if (declared !== file.slice(0, -3)) bad.push(`${file}: frontmatter name '${declared}'`);
+    const agents = [...pluginGrants.blocks].filter(([holder]) => holder.startsWith("agent:"));
+    expect(agents.length, "the grant scan read no agent frontmatter").toBeGreaterThan(0);
+    for (const [holder, block] of agents) {
+      const declared = scalarValue(block, "name");
+      if (declared !== holder.slice("agent:".length)) {
+        bad.push(`${holder}: frontmatter name '${declared}'`);
+      }
     }
     expect(
       bad,
