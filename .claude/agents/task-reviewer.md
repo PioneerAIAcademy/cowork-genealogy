@@ -127,7 +127,7 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 8. **Hidden cost.** Editing a skill body, a rubric, or a unit test flips that
    skill's run log inactive, so landing it needs a fresh `make eval-skill
    SKILL=<name>` run plus a genealogist annotation — roughly $8–12 and 45–65
-   minutes, plus human hours, and `check_runlogs.py` blocks the PR until it
+   minutes, and `check_runlogs.py` blocks the PR until it
    lands. A junior handed a "one-line fix" that carries this stalls. Say the cost
    in the body.
 9. **One PR?** If the issue holds two halves different people would do — two

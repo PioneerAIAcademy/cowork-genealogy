@@ -106,7 +106,7 @@ def main(board_path, open_path, prs_path, statuses):
             if not shared:
                 continue
             shown += 1
-            gate = "GATE 4 (hard)" if any(in_snapshot(s) for s in shared) else "GATE 3"
+            gate = "GATE 4" if any(in_snapshot(s) for s in shared) else "GATE 3"
             print(f"  {a} + {b}  [{gate}]")
             # Snapshot paths first: they are what justifies a GATE 4 label, so
             # truncation must never hide them.
