@@ -38,13 +38,15 @@ episode) to be worth a `model:` pin.
 **Leaf agent.** Called by a skill, calls nothing, returns text. `image-reader`,
 `gps-mentor`. They call nothing because no agent here grants `Agent`/`Task`.
 
-**Whether the runtime would honour such a grant is measured only on the Claude
-Code CLI.** A probe there on 2026-09-22 spawned a level-2 subagent, which
-returned a planted token and reported holding the spawning tool itself;
-`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` is unset repo-wide. Cowork, the harness
-SDK path and the hosted control plane stay unmeasured (issue #2817).
-`make agent-smoke` is the check that reaches the live registration path and
-would settle those; no CI job runs it.
+**Whether the runtime would honour such a grant has been measured on two
+paths.** A probe on the Claude Code CLI on 2026-09-22 spawned a level-2
+subagent, which returned a planted token and reported holding the spawning
+tool itself; `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` is unset repo-wide. The
+hosted loader was measured on 2026-09-23 and spawns at depth 2
+(`make probe-agent-nesting`; see `docs/architecture.md`). Cowork, the harness
+SDK path and depth 3 remain unmeasured (issue #2817).
+`make probe-agent-nesting` is the check that would settle those; no CI job
+runs it.
 
 No shipped prompt claims otherwise any more: the "agents cannot nest" wording
 came out of `packages/engine/plugin/agents/record-extractor.md` in PR #2714 and
@@ -53,7 +55,7 @@ It survives only in `docs/lead-themes-2026-09-05.md` (the `record-extraction` /
 #2410 row), deliberately — that file is a dated record of what was believed
 then.
 
-Until the other three paths are measured, **design as if nesting is
+Until those remain unmeasured, **design as if nesting is
 unavailable** — which is what the `search-images` agent does, calling
 `image_transcribe` itself rather than delegating a page read to `image-reader`.
 That choice is correct under either reading, so it does not depend on the
