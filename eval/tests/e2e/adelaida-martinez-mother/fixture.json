@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 29, hint-samples.csv row 938, flag adds_mother, confidence 3). Draft transcribed from an 1879 Uruguayan civil registration entry; unverified. The record's date is impossible for this couple, so establish what the record is before ruling on the mother."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 29, hint-samples.csv row 938, flag adds_mother, confidence 3). Resolved as CONFLATION / different answer (Outcome b): the starting tree conflates two women. GRS9-MCH (Adela Natividad, b. 25 Dec 1871, mother Josefa Segovia per ark:/61903/1:1:F2BL-3XN, ark:/61903/1:1:FLSQ-VWB) is distinct from Rufino Moreira's actual 1896 wife, Valentina Adelaida Martines (FamilySearch 9NDQ-JQ7; b. ~15 Dec 1875, mother Dolores Milan per her baptism ark:/61903/1:1:FLSQ-1NP; corroborated by the 9 Apr 1896 church-marriage bride persona ark:/61903/1:1:XS61-CNFW). The hint (ark:/61903/1:1:XS6N-1GXK, the 17 June 1896 civil marriage; indexed '1879' is a collection-start artifact, real date 1896) belongs to Valentina, not GRS9-MCH. expected-findings.json is two required recover findings that reward discovering the conflation. Independent second opinion by Isaac Boateng."
 }
