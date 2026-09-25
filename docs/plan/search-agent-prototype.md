@@ -412,7 +412,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for three things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Also a heads-up, not an ask: if their planned model allowlist lands, the `us.anthropic.*` ids our worker sends (main thread and subagents, P3h) must be on it. Also ask them to set `frontendPolicies.http.maxBufferSize` (32 MiB was measured to work): at the 2 MiB default a session dies with 413 at its third page scan (P3l). Notes for them: `tool-search-tool-2025-10-19` in the default Bedrock beta allowlist (read in v1.4.1 source) is a 400 on Converse; forced `tool_choice` does not reach the model (P3l); and the 1-hour cache TTL is dropped on every agentgateway release (upstream #3670, P3j).** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for three things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Also a heads-up, not an ask: if their planned model allowlist lands, the `us.anthropic.*` ids our worker sends (main thread and subagents, P3h) must be on it. Also ask them to set `frontendPolicies.http.maxBufferSize` (32 MiB was measured to work): at the 2 MiB default a session dies with 413 at its third page scan (P3l). Notes for them: `tool-search-tool-2025-10-19`, in the default Bedrock beta allowlist, is a 400 on Converse through v1.5.0 (measured, P3l re-run); forced `tool_choice` does not reach the model (P3l); and the 1-hour cache TTL is dropped on every agentgateway release (upstream #3670, P3j).** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -1063,7 +1063,9 @@ carries every text message.**
   later call in that session. Adding `frontendPolicies.http.maxBufferSize: 33554432`
   let 3 and 6 scans through (5,947,282 bytes, 200). That one config line is an APT
   ask. A long text-only session reaches the limit too: the 269k-token prompt of P3j
-  was 1.18 MB.
+  was 1.18 MB. v1.6.0-alpha.2, whose `max_buffer_size` default is the same 2 MiB, took
+  12 scans (11.89 MB, all 200) on its default config, so the ≥ v1.6 upgrade clears this
+  as well. On v1.5.0 the setting is required.
 - *Compaction.* `/compact` on a resumed session: the summarisation call ("Respond with
   TEXT ONLY…") returned 200, and the next resumed turn started from the 3-message
   summary and recalled the converted date correctly. Autocompact makes the same call.
@@ -1094,6 +1096,21 @@ carries every text message.**
     `x-anthropic-billing-header` line of the system prompt did.
   - Volume: the turn's 11 LLM spans carried 696,705 characters of prompt, because
     every call re-exports the whole system prompt.
+
+**Re-running P3c–P3l.** `apps/server/dev/p1/probe_gateway_parity.py --base <route root>`
+repeats the direct-request checks: Messages shape, streaming, model ids, each beta,
+`tool_reference`, an image, the body limit, stop reasons and `tool_choice`. The 269k-token
+prompt (`--context-1m`) and the 1-hour TTL (`--cache-ttl`) are opt-in. It exits 1 on
+any FAIL and writes `--out` evidence. Its first run, 2026-09-25, against local copies of
+TAP's route:
+- v1.5.0: FAIL on `tool_reference`, `body_limit` (413 at 3 scans), `stop_reasons`
+  (`stop_sequence` null) and `tool_choice`.
+- v1.6.0-alpha.2: FAIL on `stop_reasons` and `tool_choice` only.
+- Both: the bare `claude-sonnet-4-6` is 400, and `tool-search-tool-2025-10-19` is 400
+  on Converse. The second was measured this time, not only read.
+
+For what the CLI itself sends, `passthrough_proxy.py --upstream http://host:port` now
+fronts a gateway as well as `api.anthropic.com`.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
