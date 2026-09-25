@@ -288,7 +288,7 @@ def harness_tokens(usage: dict[str, Any], subagents: list[dict[str, Any]]) -> tu
     main_output = nested.get("output_tokens")
     sub_output = sum(int(t.get("output_tokens") or 0) for s in subagents for t in s.get("turns") or [])
     values = [
-        None if main_output is None else main_output + sub_output
+        (None if main_output is None else main_output + sub_output)
         if name == "output_tokens" else sum(int(r[MESSAGE_USAGE_INDEX[name]] or 0) for r in rows)
         for name in HARNESS_TOKEN_KEYS
     ]

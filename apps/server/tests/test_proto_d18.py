@@ -428,7 +428,8 @@ def test_harness_tokens_sum_every_thread_when_the_log_carries_message_usage():
     assert old == [74, 209_918, 2_902_086, 44_999] and "MAIN THREAD ONLY" in covers
     # An unknown main output stays unknown rather than becoming the subagents' alone.
     blank = compare.harness_tokens({"usage": {}, "message_usage": usage["message_usage"]}, subagents)[0]
-    assert blank[-1] is None
+    assert blank[-1] is None and blank[:3] == [133, 433_287, 4_085_021], \
+        "a missing main output blanks output alone, not the three window sums"
 
 
 def test_harness_record_says_unknown_rather_than_guessing():

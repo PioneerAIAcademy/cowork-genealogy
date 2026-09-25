@@ -1956,8 +1956,10 @@ without whichever Bedrock refuses.
     (10.0 M against 10.6 M). One run a side, so the delegation count — which drives most
     of the gap — may be sampling rather than substrate. The harness run's `compliance`
     reads FAIL on three guardrail bypasses the detector credits to `Skill` calls only,
-    the artefact paerai's baseline carries too; not committed (the e2e grading gate
-    wants its blind `.ann.json` first). paerai's baseline is three days old, but its
+    the artefact paerai's baseline carries too. The run log waits on a blind grade on
+    branch `bagley-harness-run-2026-09-25` (issue #2904): the first grade was anchored on
+    the judge output and was deleted, since `calibrate_judge` counts every complete
+    annotation as blind whatever its notes say. paerai's baseline is three days old, but its
     prototype run had image reads the baseline never attempted, so its ratio is not a
     substrate figure either.
 
