@@ -221,12 +221,12 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **28** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **7** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **8** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The seven agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`proof-conclusion`, `research-exhaustiveness`, `person-evidence` and
-`search-images`.
+The eight agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
+`search-images` and `citation`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -350,7 +350,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-19 of the 28 skills carry a `references/` folder, loaded on demand, in-session,
+16 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1115,8 +1115,14 @@ itself:
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
-   `proof_summaries` to `proof-conclusion`, and `OWNED_DECLARATIONS` reserves
-   `questions.exhaustive_declaration` to `research-exhaustiveness`.
+   `proof_summaries` to `proof-conclusion` and `person_evidence` to
+   `person-evidence`, `OWNED_DECLARATIONS` reserves
+   `questions.exhaustive_declaration` to `research-exhaustiveness`, and
+   `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`. The three
+   differ in granularity and key: a whole section, a field at a particular claim
+   value, and a field on presence alone. `project` is co-written — `init-project`
+   authors it and any writer may refresh `updated` — so only the one field is
+   routed.
 3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops an owning agent writing
    *outside* its own set, added after a measured 2026-08-19 incident in which
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
@@ -1297,7 +1303,7 @@ trustworthy rather than merely present:
 | Location | What |
 |---|---|
 | `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it. 24h TTL. |
-| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, party, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
+| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
@@ -1419,8 +1425,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-26 of the 28 skills carry a `**Narration:**` line — 22 of them as the first line
-of the body, the other four further down — instructing Claude to read
+26 of the 27 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 24 of them as the first line of the body,
+the other two further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
 questions it answers from the opening message or from defaults — it **never
@@ -1799,10 +1806,10 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `research-append-examples.test.ts` | the worked `research_append` payloads ↔ their `research.schema.json` `$def` — field names, enum values, and one example per writable section |
 | `field-render-drift.test.ts` | a `research.json` field is not an unexplained outlier among its own siblings in the viewer — if its object is displayed, each field renders or carries a reason it should not |
 | `gps-mentor-craft-doctrine.test.ts` | the four clauses of `gps-mentor`'s craft mode whose silent deletion would be invisible until a user hit it — the required scope sentence, the refusal row, advisory severity, and the `craft: true` marker (`gps-mentor-agent-spec.md` §6.4) |
-| `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` skill, which must quote the wrong phrasing back to correct it |
+| `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` agent, which must quote the wrong phrasing back to correct it |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
-| `prompt-budget.test.ts` | nothing. It **reports** the byte delta a PR introduces to every `SKILL.md` and agent body, one line per changed file written to the `vitest` job log, and is **warn-only — it never fails**. Nothing sets a ceiling, so prompt bodies grow unopposed: the two largest are `search-records/SKILL.md` and `agents/record-extractor.md`, both around 50 KB. Its unit half does assert, over the delta arithmetic only |
+| `prompt-budget.test.ts` | the report is warn-only; the baseline file must be current. `prompt-sizes.json` records byte sizes for every `SKILL.md`, agent body and `CLAUDE.md`, and character sizes for every MCP tool description (`description.length + JSON.stringify(inputSchema).length`). The staleness test fails when the file disagrees with the sizes computed at HEAD; the delta report stays warn-only — no ceiling, no threshold. Regenerate: `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts` |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and

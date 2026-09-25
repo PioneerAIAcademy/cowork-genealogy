@@ -5,7 +5,7 @@
     "unit": "eval/harness/validators/test_universal.py — two checks. test_ownership_table diffs before/after project state against the calling skill's SKILL.md frontmatter name and cannot see an agent caller. test_no_out_of_lane_section_writes (issue #2022) records the shipped hook's own owner_denied verdict from skill_runner's PreToolUse hook, so since 2026-09-02 this plane DOES see the agent caller, and denies rather than merely detecting. Both run only inside a paid per-skill eval run.",
     "e2e": "eval/harness/e2e — whole-run detectors. Eval-only; never reaches production.",
     "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic — it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19) and by questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) and project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "rows": [
     {
@@ -22,12 +22,17 @@
         "merge_tree_persons"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "hook"
       ],
       "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation.",
       "failure": "A skill rewrites the objective, subject persons, or status mid-project, and every later skill plans against a changed goal it never agreed to.",
       "remedy": "Route a status change through proof-conclusion; route an objective change through init-project.",
-      "override": "none"
+      "override": "none",
+      "hookCallers": [
+        "agent:proof-conclusion"
+      ],
+      "notes": "The hook rule is FIELD-scoped, not section-scoped: only `status` is routed, because `project` is co-written — init-project authors the section and every skill refreshes `updated`, so reserving the whole section would deny both. It is keyed on presence rather than on a value (unlike `questions`' `exhaustive_declaration`) because `status` has no honest non-claiming value: any write of it asserts the project's state."
     },
     {
       "artifact": "research.json",
@@ -166,7 +171,7 @@
       "owner": "skill:record-extraction",
       "callers": [
         "skill:record-extraction",
-        "skill:citation"
+        "agent:citation"
       ],
       "writerTools": [
         "research_append",
@@ -175,10 +180,10 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
+      "notes": "citation is an agent (issue #2799), and it is named here because it is the subject of its own unit suite - `writer_sets` resolves an `agent:` caller only when it matches that subject, so this row authorizes citation's own refinements and nothing else. citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
       "requires": "record-extraction creates the entry with a working citation and `source_classification`. citation updates `citation` and `citation_detail` on an entry that already exists.",
       "failure": "A second skill minting sources produces duplicate `src_` entries for one record, and every assertion's `source_id` then points at whichever copy that skill happened to make.",
-      "remedy": "Add a new record through record-extraction; refine an existing citation through citation.",
+      "remedy": "Add a new record through record-extraction; refine an existing citation through the citation agent.",
       "override": "none"
     },
     {

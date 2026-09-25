@@ -1,0 +1,18 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false"
+  },
+  "notes": {
+    "f1": "Graded true. Recorded for calibration: the exact date 22 November 1910 and the place La Union, Montes de Oca, Guerrero do not appear in the final tree. PID-TODO carries the unchanged starting birth (about 1910, near Nueva Italia, Michoacan); I1 carries ~1912 and 1914, Guerrero, Mexico at state level.",
+    "f2": "Graded true. Sostenes Cruz is present as I7 and linked ParentChild to I1 (R1). I7 carries no birth facts, so the expected 27 November 1882, Coahuayutla, Guerrero is absent; the identification of the father is what was recovered.",
+    "f3": "Graded true. Apolinar Corona is present as I2 with birth 1881, Guerrero, Mexico, linked ParentChild to I1 (R2). The expected place Coahuayutla is absent; the year and the identification match.",
+    "f4": "No person named Jesus Cruz, Jose Jesus Maria Cruz Arellano or Donaciana Basurto in the final tree, and no grandparent relationships recorded.",
+    "f5": "No person named Miguel Corona, Rafael Corona, Jesus Mercado or Maria de Jesus Mercado in the final tree, and no maternal grandparent relationships recorded."
+  },
+  "annotator": "clack391",
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140"
+}

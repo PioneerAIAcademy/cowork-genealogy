@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 28 skills and 7 agents. Besides the `research` orchestrator itself, its routing
+There are 27 skills and 8 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 15 fire only when the user asks — see
+name. The remaining 14 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -101,7 +101,7 @@ flowchart TD
 
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
-        U1["timeline · citation · check-warnings<br/>translation · historical-context · convert-dates"]
+        U1["timeline · check-warnings · translation<br/>historical-context · convert-dates"]
         U2["tree-edit · validate-schema · project-status<br/>forget-and-rederive · the two wiki searches"]
     end
 
@@ -158,9 +158,12 @@ one holds a piece of the answer. The table below is the split **as ruled** on
 Ruled 2026-08-25 on issue #1335, against a routing table that still says the orchestrator
 writes it. Three planes already match the ruling: the `project` row of the ownership
 manifest, `research_append`'s own comment, and the `PreToolUse` hook, whose
-`AGENT_WRITABLE_SECTIONS` grants the proof-conclusion agent `project`. The hook permits
-that agent; it denies the orchestrator nothing, because `project` is not in
-`OWNED_SECTIONS`.
+`AGENT_WRITABLE_SECTIONS` grants the proof-conclusion agent `project`. Since #2704 the
+hook also *enforces* the ruling rather than merely permitting the owner: `OWNED_FIELDS`
+routes `project.status` to that agent, so the orchestrator's own `status` write is
+denied. The rule is field-scoped, not section-scoped — `project` stays out of
+`OWNED_SECTIONS` because the section is co-written, and every other write to it,
+including the `updated` activity ping, is untouched.
 
 **The condition the agent fires on is not the condition that should close a project.**
 `agents/proof-conclusion.md` step 8 writes `completed` when "ALL questions are now
@@ -189,7 +192,7 @@ sibling skill.
 |---|---|---|---|---|
 | **`project-status`** | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
-| **`citation`** | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one** | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
+| **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both. Never fixes anything | `person_warnings` (deterministic; offline as the skill calls it, though the tool also has an opt-in live mode), `person_quality` (live FamilySearch); the tree only to resolve a name to an id | Nothing |
 | **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do), and reporting the kind as undecided where the profile alone cannot settle it. A precise source refining a vague conclusion is an improvement, not a finding. A **source-vs-source** disagreement the audit turns up is characterised — both values, both record types, what would settle it — with no winner picked and nothing written; a request to *resolve* one still routes to `conflict-resolution` at the front door. Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`. Reads no images — it holds no image tool, and none of those three returns an image id | Nothing |
 | **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
@@ -211,13 +214,13 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 
 | Artifact | Section | Owner | Other permitted writers | Writer tool | Enforced by |
 |---|---|---|---|---|---|
-| `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append` | unit — a diff confined to `updated` is exempt, so the activity ping is free to any writer |
+| `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append` | unit + hook — the hook routes `project.status` to the proof-conclusion agent (field-scoped; the rest of the section is co-written and untouched). A diff confined to `updated` is exempt at both, so the activity ping is free to any writer |
 | | `researcher_profile` | `init-project` | any caller, to correct a field | `research_append` | **nothing** |
 | | `known_holdings` | `init-project` | — | `research_append` | **nothing** |
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook keys on the claim `exhaustive_declaration.declared: true`, not on the section |
 | | `plans` / `plan_items` | `research-plan` | the four search skills and `record-extraction`, for `items[].status` only | `research_append` | unit (whole-section only — it cannot tell a status flip from a rewritten plan) |
 | | `log` | none by design — append-only, multi-writer | the four search skills and `record-extraction` | `research_log_append` | unit |
-| | `sources` | `record-extraction` | `citation` (refine only, never create) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
+| | `sources` | `record-extraction` | `agent:citation` (refine only, never create) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
 | | `assertions` | `record-extraction` | — | `research_append`, `extraction_append` | unit + tool preconditions |
 | | `person_evidence` | `person-evidence` | — | `research_append` | unit + tool — `extraction_append` does not accept the section, which is what holds the extraction lane off it |
 | | `conflicts` | `conflict-resolution` | — | `research_append` | unit, on two checks since 2026-09-02: `test_ownership_table` (detects, keyed on the calling skill) and `test_no_out_of_lane_section_writes` (denies, keyed on the calling agent — issue #2022). The hook also keeps both writing agents out of the section, but it cannot bind a skill — a section owned by a skill has no agent to permit |
@@ -238,16 +241,17 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `person-evidence` — and three of the seven agents. Everything else that needs project
+  `person-evidence` — and three of the eight agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
-- **The hook carries exactly three rules**, in
+- **The hook carries exactly four rules**, in
   `packages/engine/plugin/hooks/guard_project_files.py`, and they are the only ones that
   discriminate by caller: `proof_summaries` is writable only by the proof-conclusion
   agent; a `research_append` op setting `exhaustive_declaration.declared` to `true` is
-  writable only by the research-exhaustiveness agent; and each of those two agents is
-  held to its own section set, which is what keeps the exhaustiveness agent off
-  `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
+  writable only by the research-exhaustiveness agent; `project.status` is writable only
+  by the proof-conclusion agent, field-scoped because the rest of `project` is
+  co-written; and each of those agents is held to its own section set, which is what
+  keeps the exhaustiveness agent off `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
   unit check that runs only inside a paid per-skill eval run.
 
 ---
@@ -326,10 +330,17 @@ touch either side.
 
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
-`search-full-text` · `timeline` · `citation` · `check-warnings` · `translation` ·
+`search-full-text` · `timeline` · `check-warnings` · `translation` ·
 `historical-context` · `convert-dates` · `tree-edit` · `validate-schema` ·
 `forget-and-rederive` · `project-status` · `search-familysearch-wiki` ·
 `search-wikipedia` · `source-evaluation` · `init-project` (named in prose, not in the table)
+
+`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799). It is
+now an agent, and an agent is auto-delegated from its own `description` rather than
+from a routing-table row — so the row's absence no longer implies it cannot fire.
+**Whether it actually fires in an autonomous run is unmeasured**, and it will stay
+unmeasured until a committed e2e run postdates the conversion. Do not read its removal
+from this list as evidence either way.
 
 The three **thin skill halves** of the paired rows join this list. Rows 7, 10
 and 11 route to `@plugin:<agent>`, so `skills/person-evidence/`,
@@ -347,8 +358,12 @@ are not obviously intentional:
   orchestrator has rows for indexed search, external sites and image browsing, and none
   for this one; `search-records` explicitly names full-text as a next step but will not
   route there. — issue #1860
-- **`citation`** never fires in an autonomous run, so citations stay at the working
-  quality `record-extractor` wrote them at. — issue #1860, the second half
+- **`citation`** did not fire in an autonomous run while it was a skill, so citations
+  stayed at the working quality `record-extractor` wrote them at. Issue #2799 converted
+  it to an agent on 2026-09-23, which removes the cause named here — an agent needs no
+  routing row — without yet demonstrating the cure. The measurement that would settle
+  it is the first committed e2e run after that date: scan its `tool_calls` for an
+  `Agent` spawn with `subagent_type: "citation"`. — issue #1860, the second half
 - **`timeline`** never fires either, so `timelines` stays empty. The ownership manifest
   records zero writes to the section across the committed e2e corpus, which is what you
   would expect from a skill nothing routes to. — issue #1836
