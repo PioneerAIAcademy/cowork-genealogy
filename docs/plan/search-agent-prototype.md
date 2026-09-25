@@ -412,7 +412,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half answered by us 2026-09-25 (P3c, P3d): the host we curled was our own 0.12.0 test bed, now Messages-capable. The route map and aliases the P3c ask named are already in tap-agentgateway `master`, so that ask is withdrawn. New ask: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; access ask not yet sent | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half answered by us 2026-09-25 (P3c, P3d): the host we curled was our own 0.12.0 test bed, now Messages-capable. The route map and aliases the P3c ask named are already in tap-agentgateway `master`, so that ask is withdrawn. New asks: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run, and a plan and date for moving to agentgateway ≥ v1.6.0 (P3e: `tool_reference` does not parse before it, so tool search fails on its second turn). Also flag that `tool-search-tool-2025-10-19` in v1.4.1's default beta allowlist is a 400 on Converse.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; access and upgrade asks not yet sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -855,6 +855,44 @@ and `tool_reference` blocks, a multi-turn session, and what the two disabling en
 cost. v1.4.1's default beta allowlist also omits `claude-code-20250219`,
 `thinking-token-count-2026-05-13` and `afk-mode-2026-01-31`, all of which Bedrock
 accepted here.
+
+**P3e — measured 2026-09-25 on the same test bed: tool search does not survive any
+agentgateway before v1.6, and the haiku title call works.** A logging forwarder
+between the CLI and the gateway recorded every request and could filter
+`anthropic-beta` values, which let one run emulate v1.4.1's default allowlist
+(`DEFAULT_ALLOWED_BETA_HEADERS` in `crates/llm/src/conversion/bedrock.rs`). The query
+was probe_bedrock_parity's `convert_calendar` one, with `ENABLE_TOOL_SEARCH=true` and
+the genealogy MCP server.
+- *Tool search, turn 1* (12 tools, MCP tools named only, `ToolSearch` present) passes
+  only with no tool-search beta at all. Bedrock answers `advanced-tool-use-2025-11-20`,
+  which the CLI sends, with "invalid beta flag". It answers
+  `tool-search-tool-2025-10-19` with "not currently supported on the Converse and
+  ConverseStream APIs". v1.4.1's allowlist admits that second flag, so a caller that
+  sends it through v1.4.1 gets a 400.
+- *Tool search, turn 2* carries the `tool_reference` block in the ToolSearch result and
+  fails 503: "did not match any variant of untagged enum ToolResultContent". The CLI
+  retries 11 times and the run ends in error. v1.4.1's `ToolResultContentPart` has no
+  `tool_reference` variant either. Upstream added it in #3349 (2026-09-08). The first
+  tag that contains it is v1.6.0-alpha.1; v1.5.0 does not. Its golden test
+  (`tool_reference.bedrock.snap`) turns the block into text and sends the requested
+  tool's full schema in `toolConfig`.
+- *The P3d workaround turns tool search off.* With
+  `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` the CLI sends all 77 tools with no
+  deferral and no `ToolSearch` (correct answer, $0.29). Adding the beta back through
+  `ANTHROPIC_BETAS` does not restore deferral, because the client gate follows the
+  env var.
+- *Haiku title call.* The run was interactive, in a pty, since `-p` makes no title
+  call. With `ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-haiku-4-5-20251001` the CLI sent the
+  bare id, and the gateway served it as `us.anthropic.claude-haiku-4-5-20251001-v1:0`
+  (200, 0.9 s, `structured-outputs-2025-12-15` accepted). Without that var,
+  `ANTHROPIC_MODEL` also moves the title call to Sonnet, so the hosted env should set
+  both. 0.12.0 drops `output_config` entirely: the JSON schema is not enforced (the
+  title came back inside a markdown code fence), and neither is `effort`. v1.4.1 maps
+  both (`messages_output_format_to_bedrock_output_config`).
+
+So production tool search through the gateway needs tap-agentgateway on ≥ v1.6. The
+alternatives are running without tool search (every tool schema in context on every
+call) or a patched build.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
@@ -2332,12 +2370,18 @@ emails rather than engineering.
 
 ### Could kill it
 
-**R1 — The Agent Gateway's API surface. NARROWED 2026-09-25 (P3c, P3d).** The integ host
-P3c measured is our own 0.12.0 test bed, not APT's gateway. With #5 and #6 there and two
-CLI env vars, the CLI completes a tool-using run through it (P3d). APT's v1.4.1
-`tap-agentgateway` already carries the Messages route map and model aliases. What is
-left is access (its URL and a consumer key) and one parity run through it without the
-env vars: the haiku title call, tool search, a multi-turn session. What follows is the
+**R1 — The Agent Gateway's API surface. NARROWED 2026-09-25 (P3c, P3d), then
+SHARPENED the same day (P3e).** The integ host P3c measured is our own 0.12.0 test bed,
+not APT's gateway. With #5 and #6 there and two CLI env vars, the CLI completes a
+tool-using run through it (P3d). APT's v1.4.1 `tap-agentgateway` already carries the
+Messages route map and model aliases. **But tool search breaks on its second turn on
+every agentgateway before v1.6.0-alpha.1**, because the `tool_reference` block in a
+ToolSearch result does not parse (P3e). That includes v1.4.1. So the risk is now an
+upgrade: tap-agentgateway on ≥ v1.6, or we run without tool search. Also left: access
+(URL and a consumer key) and one parity run through it, covering tool search on the
+upgraded build, a multi-turn session, and the haiku title call on v1.4.1's
+`output_config` mapping. The paragraph below is the 2026-09-11 reading. Its claim that
+tool search survives is true of the client gate only. What follows is the
 2026-09-11 reading of the source,
 which still describes what the route *can* do. It is Anthropic-Messages-
 compatible (agentgateway v1.4.1, `POST /bedrock/v1/messages`, Messages→Converse both
@@ -2351,7 +2395,7 @@ gateway from the client's side; what Messages→Converse keeps of the
 `advanced-tool-use` beta, the `tool_reference` blocks, the seven other betas, the haiku
 title call and `count_tokens` is the curl against integ. Native `bedrock-runtime` is
 not a client surface, so the prototype's Bedrock-direct results (P3) describe the
-model, not the production path. *Owner: APT for access to tap-agentgateway; us for
+model, not the production path. *Owner: APT for access and the ≥ v1.6 upgrade; us for
 the parity run through it.*
 
 **R2 — Prompt-cache health, which is also the throughput ceiling. SHARPENED 2026-09-11,
