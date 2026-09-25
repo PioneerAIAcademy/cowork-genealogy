@@ -139,14 +139,80 @@ export async function stageSearchResults<TResponse extends { results?: unknown[]
 }
 
 /**
- * Finalize a staged file into the real sidecar results/<logId>.json: guard the
- * ref, read the staged envelope, verify its tool matches the log entry, recompute
- * returned_count from the payload (authoritative), write the sidecar, and unlink
- * the staged file. A host-side byte move — the model never serializes the payload.
+ * Check a staged ref without writing anything: guard the ref, read the staged
+ * envelope, verify its tool matches the log entry, and recompute returned_count
+ * from the payload (authoritative). `research_log_append` runs this for every
+ * op before it applies any, so a bad ref in op[1] is refused before op[0] does
+ * any work; `finalizeStagedResults` runs it again under the same lock.
  *
- * @throws on a traversal/outside-staging ref, a missing/invalid staged file, a
- *   tool mismatch, or a payload with no results[] (all surfaced as log-append
- *   input errors that write nothing).
+ * @throws on a traversal/outside-staging ref, a missing or invalid staged file,
+ *   a tool mismatch, or a payload with no results[].
+ */
+export async function checkStagedResults(args: {
+  projectPath: string;
+  stagedResultsRef: string;
+  expectedTool: string;
+}): Promise<{ envelope: StagingEnvelope; returnedCount: number }> {
+  const { projectPath, stagedResultsRef, expectedTool } = args;
+  const store = getProjectStore();
+
+  // 1. Path-traversal guard, then require the ref to live under results/.staging/.
+  const abs = assertInsideProject(projectPath, stagedResultsRef);
+  const stagingDir = join(projectPath, STAGING_SUBDIR);
+  if (!isInsideProject(stagingDir, abs)) {
+    throw new Error(
+      `stagedResultsRef '${stagedResultsRef}' is not inside ${STAGING_SUBDIR}/`,
+    );
+  }
+
+  // 2. Read the staged envelope. A missing file is the common case (the ref was
+  //    already logged, pruned, or never staged) and gets a message saying which
+  //    move fixes it; an unparseable one is a different fault.
+  let envelope: StagingEnvelope;
+  let text: string;
+  try {
+    text = await store.readText(projectPath, stagedResultsRef);
+  } catch {
+    throw new Error(
+      `stagedResultsRef '${stagedResultsRef}' is not in ${STAGING_SUBDIR}/ — each staged ref can ` +
+        `be logged once, so it was either already finalized by an earlier successful ` +
+        `research_log_append, pruned after 24h, or never staged. If this search already has a ` +
+        `log entry, do not log it again; if it has none, re-run the search to re-stage it.`,
+    );
+  }
+  try {
+    envelope = JSON.parse(text);
+  } catch {
+    throw new Error(`stagedResultsRef '${stagedResultsRef}' is invalid JSON`);
+  }
+
+  // 3. Verify the staged tool matches the log entry's tool.
+  if (envelope.tool !== expectedTool) {
+    throw new Error(
+      `staged file tool '${envelope.tool}' does not match log entry tool '${expectedTool}'`,
+    );
+  }
+
+  // 4. Recompute returned_count from the payload (never trust the staged count).
+  const payload = envelope.payload;
+  if (!payload || !Array.isArray(payload.results)) {
+    throw new Error("staged payload has no 'results' array");
+  }
+  return { envelope, returnedCount: payload.results.length };
+}
+
+/**
+ * Finalize a staged file into the real sidecar results/<logId>.json: check the
+ * ref (`checkStagedResults`), then write the sidecar. A host-side byte move — the
+ * model never serializes the payload.
+ *
+ * It does NOT remove the staged file. The caller removes it with
+ * `consumeStagedResults` only after its research.json commit succeeds, so a call
+ * that is refused after finalizing (a later op in a batch, the query-required
+ * check, the final validation) leaves the staged file for a corrected re-send.
+ *
+ * @throws as `checkStagedResults` does (all surfaced as log-append input errors
+ *   that write nothing).
  */
 export async function finalizeStagedResults(args: {
   projectPath: string;
@@ -164,40 +230,12 @@ export async function finalizeStagedResults(args: {
   payloadQuery?: Record<string, unknown>;
 }> {
   const { projectPath, stagedResultsRef, logId, expectedTool } = args;
-  const store = getProjectStore();
-
-  // 1. Path-traversal guard, then require the ref to live under results/.staging/.
-  const abs = assertInsideProject(projectPath, stagedResultsRef);
-  const stagingDir = join(projectPath, STAGING_SUBDIR);
-  if (!isInsideProject(stagingDir, abs)) {
-    throw new Error(
-      `stagedResultsRef '${stagedResultsRef}' is not inside ${STAGING_SUBDIR}/`,
-    );
-  }
-
-  // 2. Read the staged envelope.
-  let envelope: StagingEnvelope;
-  try {
-    envelope = JSON.parse(await store.readText(projectPath, stagedResultsRef));
-  } catch {
-    throw new Error(
-      `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON`,
-    );
-  }
-
-  // 3. Verify the staged tool matches the log entry's tool.
-  if (envelope.tool !== expectedTool) {
-    throw new Error(
-      `staged file tool '${envelope.tool}' does not match log entry tool '${expectedTool}'`,
-    );
-  }
-
-  // 4. Recompute returned_count from the payload (never trust the staged count).
+  const { envelope, returnedCount } = await checkStagedResults({
+    projectPath,
+    stagedResultsRef,
+    expectedTool,
+  });
   const payload = envelope.payload;
-  if (!payload || !Array.isArray(payload.results)) {
-    throw new Error("staged payload has no 'results' array");
-  }
-  const returnedCount = payload.results.length;
 
   // 5. Write the real sidecar.
   const resultsRef = `results/${logId}.json`;
@@ -208,10 +246,7 @@ export async function finalizeStagedResults(args: {
     returned_count: returnedCount,
     payload,
   };
-  await store.writeJson(projectPath, resultsRef, sidecar);
-
-  // 6. Consume the staged file (best-effort; a lost race is harmless).
-  await store.remove(projectPath, stagedResultsRef);
+  await getProjectStore().writeJson(projectPath, resultsRef, sidecar);
 
   // The producer's echoed query, if it recorded one. Guarded on a plain object
   // so a malformed payload degrades to "no default" rather than persisting a
@@ -219,6 +254,24 @@ export async function finalizeStagedResults(args: {
   const payloadQuery = stripQueryPlumbing((payload as { query?: unknown }).query);
 
   return { resultsRef, returnedCount, payloadQuery };
+}
+
+/**
+ * Remove staged files a committed research_log_append finalized. Called only
+ * after the research.json write succeeds. Best-effort by the store's own
+ * contract (an absent ref or a lost race is not an error), and deliberately NOT
+ * wrapped in a try/catch: on the Postgres backend the whole call is one
+ * transaction still open here, and a swallowed query error would abort it, so
+ * the call would report success while its research.json write rolls back.
+ */
+export async function consumeStagedResults(
+  projectPath: string,
+  stagedResultsRefs: readonly string[],
+): Promise<void> {
+  const store = getProjectStore();
+  for (const ref of stagedResultsRefs) {
+    await store.remove(projectPath, ref);
+  }
 }
 
 /**

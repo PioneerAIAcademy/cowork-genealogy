@@ -33,6 +33,8 @@ import {
   assertInsideProject,
 } from "../utils/project-io.js";
 import {
+  checkStagedResults,
+  consumeStagedResults,
   finalizeStagedResults,
   readStagedEnvelopeQuery,
   readStagedResults,
@@ -539,12 +541,9 @@ export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
 }
 
 /**
- * Run the census check for one op BEFORE any op is applied. A batch finalizes
- * each op's sidecar as it goes and unlinks the staged file, so a refusal of op 1
- * raised inside the loop would already have consumed op 0's staged response,
- * and a corrected re-send would then fail on op 0. Reading every op up front
- * keeps "a refusal writes nothing" true for the whole call. `notes` is read raw,
- * as it always was; only `stagedResultsRef` gets the "null"-string mapping.
+ * Run the census check for one op BEFORE any op is applied, so a refusal is
+ * reported before any op writes a sidecar. `notes` is read raw, as it always
+ * was; only `stagedResultsRef` gets the "null"-string mapping.
  */
 async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   if (op.notes === undefined || op.notes === null) return;
@@ -628,9 +627,8 @@ export function neverSentFilterClaims(
 
 /**
  * Refuse an op whose explicit `query` claims a filter its staged search never
- * sent. Runs for every op before any op is applied, because finalizing a staged
- * handle deletes it: a refusal after that would consume the handle the
- * corrected re-send needs.
+ * sent. Runs for every op before any op is applied, so a refusal is reported
+ * before any op writes a sidecar.
  */
 async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   const ref = asNull(op.stagedResultsRef);
@@ -648,6 +646,46 @@ async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: 
       `from the staged search. If the filter was meant, re-run the search with it and log that ` +
       `response's \`staged.resultsRef\`.`,
   );
+}
+
+/**
+ * Check one op's staged ref BEFORE any op is applied — it exists under
+ * results/.staging/ and its tool matches — so a bad ref in op[1] is refused
+ * before op[0] writes anything. Finalize re-checks under the same lock.
+ */
+async function preflightStagedRef(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if (typeof ref !== "string") return;
+  try {
+    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: op.tool });
+  } catch (e) {
+    throw new LogAppendError(e instanceof Error ? e.message : String(e));
+  }
+}
+
+/**
+ * Refuse a batch naming one staged ref in two ops. Finalize no longer removes
+ * the staged file, so both ops would finalize it — one search, two log entries,
+ * two sidecars. Compared on the resolved path, the same test finalize applies,
+ * so `./results/.staging/x.json` and `results/.staging/x.json` collide; a ref
+ * that does not resolve is compared raw and left to the staged-ref check.
+ */
+function duplicateStagedRefError(ops: readonly ResearchLogAppendOp[], projectPath: string): string | null {
+  const seen = new Map<string, number>();
+  for (let j = 0; j < ops.length; j++) {
+    const ref = asNull(ops[j]?.stagedResultsRef);
+    if (typeof ref !== "string") continue;
+    let key = ref;
+    try {
+      key = assertInsideProject(projectPath, ref);
+    } catch {
+      // compared raw
+    }
+    const i = seen.get(key);
+    if (i !== undefined) return `ops[${j}]: stagedResultsRef '${ref}' is also ops[${i}]'s`;
+    seen.set(key, j);
+  }
+  return null;
 }
 
 /**
@@ -723,6 +761,7 @@ async function applyLogAppendOp(
   projectPath: string,
   sidecarsCreated: string[],
   warnings: string[],
+  stagedConsumed: string[] = [],
 ): Promise<ResearchLogAppendOpResult> {
   // 0. Coerce object-typed args a model may have stringified. Some models
   //    emit `externalSite` / `query` as a JSON string instead of a nested
@@ -921,6 +960,7 @@ async function applyLogAppendOp(
     returnedCount = fin.returnedCount;
     entry.results_ref = resultsRef;
     sidecarsCreated.push(resultsRef);
+    stagedConsumed.push(stagedResultsRef);
 
     // Default `query` from the producing tool's own echo in the staged payload.
     // The search tool already recorded the exact parameters host-side, so making
@@ -1020,6 +1060,9 @@ export async function researchLogAppend(
       }
     };
     const sidecarsCreated: string[] = [];
+    // Staged files this call finalized. Removed only after research.json commits,
+    // so every refusal leaves them for a corrected re-send.
+    const stagedConsumed: string[] = [];
     // Tool-level warnings (retention gaps), merged with the validator's on success.
     const opWarnings: string[] = [];
 
@@ -1028,8 +1071,11 @@ export async function researchLogAppend(
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
         return { ok: false, errors: ["`ops` must be a non-empty array"] };
       }
+      const duplicate = duplicateStagedRefError(input.ops, projectPath);
+      if (duplicate) return { ok: false, errors: [duplicate] };
       for (let i = 0; i < input.ops.length; i++) {
         try {
+          await preflightStagedRef(input.ops[i], projectPath);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
         } catch (e) {
@@ -1041,7 +1087,7 @@ export async function researchLogAppend(
       for (let i = 0; i < input.ops.length; i++) {
         try {
           results.push(
-            await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings),
+            await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings, stagedConsumed),
           );
         } catch (e) {
           await cleanupSidecars(projectPath, sidecarsCreated);
@@ -1056,6 +1102,7 @@ export async function researchLogAppend(
         return { ok: false, errors: formatIssues(validation.errors) };
       }
       await atomicWriteJson(projectPath, "research.json", research);
+      await consumeStagedResults(projectPath, stagedConsumed);
       const persistWarn = logWithoutPersistenceWarning(research);
       return {
         ok: true,
@@ -1074,9 +1121,10 @@ export async function researchLogAppend(
     // throw AFTER it has finalized a sidecar (the `query`-missing check does
     // exactly that), and a sidecar written with no `research.json` entry to
     // reference it is an orphan the next validate_research_schema hard-fails
-    // on — with no recovery, since the staged file it came from is already
-    // unlinked. The outer catch below returns the error but cannot know a
-    // sidecar was written, so the unwind has to happen here.
+    // on. The staged file it came from is still there — it is removed only
+    // after the commit — so the corrected re-send can finalize it again. The
+    // outer catch below returns the error but cannot know a sidecar was
+    // written, so the unwind has to happen here.
     const singleOp: ResearchLogAppendOp = {
       tool: input.tool!,
       query: input.query,
@@ -1088,11 +1136,12 @@ export async function researchLogAppend(
       externalSite: input.externalSite,
       stagedResultsRef: input.stagedResultsRef,
     };
+    await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
     let result;
     try {
-      result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings);
+      result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings, stagedConsumed);
     } catch (e) {
       await cleanupSidecars(projectPath, sidecarsCreated);
       throw e;
@@ -1104,6 +1153,7 @@ export async function researchLogAppend(
       return { ok: false, errors: formatIssues(validation.errors) };
     }
     await atomicWriteJson(projectPath, "research.json", research);
+    await consumeStagedResults(projectPath, stagedConsumed);
 
     const persistWarn = logWithoutPersistenceWarning(research);
     return {
