@@ -908,6 +908,52 @@ describe("research_log_append", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
     expect(await exists("results/log_001.json")).toBe(false);
     expect(await exists(handle!.resultsRef)).toBe(true);
+
+    // The corrected re-send, naming it once, succeeds and consumes it.
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ ...op, stagedResultsRef: handle!.resultsRef }],
+    } as any);
+    expect(retry.ok).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
+  });
+
+  it("a staged file that exists but cannot be read is not told it was already logged", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const inner = new FsProjectStore();
+    const store = new Proxy(inner, {
+      get(target, prop, receiver) {
+        if (prop === "readText") {
+          return async (projectPath: string, ref: string) => {
+            if (ref === handle!.resultsRef) throw new Error("EIO: read failed");
+            return target.readText(projectPath, ref);
+          };
+        }
+        const v = Reflect.get(target, prop, receiver);
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    }) as unknown as ProjectStore;
+    setProjectStore(store);
+    let result;
+    try {
+      result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: {},
+        outcome: "positive",
+        resultsExamined: 1,
+        stagedResultsRef: handle!.resultsRef,
+      });
+    } finally {
+      setProjectStore(null);
+    }
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    const msg = result.errors.join(" ");
+    expect(msg).toMatch(/could not be read: EIO: read failed/);
+    expect(msg).not.toMatch(/each staged ref can be logged once/);
+    expect(await exists(handle!.resultsRef)).toBe(true);
   });
 
   it("(batch) two ops with no staged ref, or a \"null\" one, are not duplicates", async () => {

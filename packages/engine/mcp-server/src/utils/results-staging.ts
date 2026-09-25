@@ -172,7 +172,15 @@ export async function checkStagedResults(args: {
   let text: string;
   try {
     text = await store.readText(projectPath, stagedResultsRef);
-  } catch {
+  } catch (e) {
+    // Only an absent file gets the "logged once" advice; a store fault reading a
+    // file that is there must not tell the agent to re-run a search it already has.
+    if (await store.exists(projectPath, stagedResultsRef)) {
+      throw new Error(
+        `stagedResultsRef '${stagedResultsRef}' could not be read: ` +
+          (e instanceof Error ? e.message : String(e)),
+      );
+    }
     throw new Error(
       `stagedResultsRef '${stagedResultsRef}' is not in ${STAGING_SUBDIR}/ — each staged ref can ` +
         `be logged once, so it was either already finalized by an earlier successful ` +

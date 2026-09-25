@@ -761,7 +761,7 @@ async function applyLogAppendOp(
   projectPath: string,
   sidecarsCreated: string[],
   warnings: string[],
-  stagedConsumed: string[] = [],
+  stagedConsumed: string[],
 ): Promise<ResearchLogAppendOpResult> {
   // 0. Coerce object-typed args a model may have stringified. Some models
   //    emit `externalSite` / `query` as a JSON string instead of a nested
