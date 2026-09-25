@@ -166,29 +166,91 @@ a graduation, must satisfy all six:
    What shipped for it (PR A, #1731 steps 1-2): `same_person` gained a
    project-relative arm and writes every score it computes to
    `results/.scores/`, host-side, so the record never round-trips through the
-   model on the legitimate path. What has NOT shipped is the writer-side
-   requirement (step 3), which is gated on re-measuring after PR A and on the
-   score-TTL question. Until it does, `match_score` remains caller-fabricable:
-   the attestation exists but nothing yet checks a link against it.
+   model on the legitimate path. The writer-side requirement (step 3)
+   shipped on 2026-09-24: `research_append` refuses a `person_evidence` append
+   for a reachable persona with no recorded score for that pairing, so a
+   `match_score` written with no call behind it at all is now rejected. The
+   check is on the attestation's PRESENCE for the pairing, not on the value
+   written against it -- an agent that called `same_person` and then wrote a
+   different number still passes, and a test pins that. The
+   concession this constraint records -- validate presence, concede presence
+   does not prove the call -- is therefore spent on the legitimate path: the
+   check is now against a host-written record the model never touches.
+
+   Three limits the refusal carries rather than resolves. The value-vs-presence
+   gap above is the first. The score-TTL question was never answered, so it
+   ships on option A ("a score from an earlier session still counts"), which is
+   the option the card itself marks recommended. Recorded plainly because the
+   card named this a ruling needed BEFORE step 3 opened, and it was never put to
+   the lead: the choice is the recommended one, not an obtained ruling; option B is no longer reachable from what PR A
+   stored, because `RecordedMatchScore` keeps `computed` but nothing describing
+   the tree person at score time. And the gate has TWO rules, only one of which
+   is gated on reachability: requiring a score applies where one could have been
+   obtained, while forbidding a fabricated score on a provably circular pairing
+   applies everywhere. Conflating them left the fabrication case uncatchable for
+   any full-text-sourced assertion.
 
    **The attestation is not yet unforgeable either, and step 3 must not assume
    it is.** `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers
    `research.json`, `tree.gedcomx.json` and `starting-tree.gedcomx.json` only,
    so a raw `Write` to `results/.scores/` from inside the VM is unguarded. The
-   model cannot produce the payload; it can author the file. Extending that list
-   touches ADR-0005, which owns it, and is a precondition for the refusal step
-   relying on this record.
+   model cannot produce the payload; it can author the file. Extending that list is not a one-line
+   change: it is a tuple of BASENAMES matched by `name in ...`, and an
+   attestation is `results/.scores/<sha256>.json`, so it needs a path-prefix
+   predicate, and the tuple has THREE enforcement copies, not one:
+   `packages/engine/plugin/hooks/guard_project_files.py`,
+   `eval/harness/e2e/orchestrator.py` and
+   `apps/server/app/agent/real_agent.py` (the hosted control plane), all
+   registered in `eval/harness/tests/unit/test_write_lockdown_parity.py`, which
+   fails on an unregistered fourth. `eval/harness/e2e/corpus_report.py` carries a
+   read-only `WATCHED_PROJECT_FILES` mirror of the same names. An earlier draft
+   of this paragraph said "two more copies" and counted the parity TEST in place
+   of the hosted implementation -- which is the very copy the next paragraph
+   argues is out of scope, so the miscount undercut its own reasoning.
+
+   **Step 3 shipped without it, deliberately, with the threat model scoped
+   rather than treated as one binary.** The hook ships in the plugin, so it
+   binds in Cowork and on the hosted path and not at all in the `.mcpb`; on the
+   hosted path the store is `PgS3ProjectStore` and no file-write tool reaches
+   it. The residual forgery surface is the desktop `.mcpb` main thread and the
+   Cowork main thread. The `person-evidence` agent itself has no `Write`. The
+   prefix-deny remains worth doing and is **not currently tracked by any open
+   issue** -- searched 2026-09-24 and there is none, so this paragraph is the
+   only record of it. Stated plainly rather than as "tracked separately", which
+   is what it said until the claim was checked and found false.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.
 
-   **As implemented (#1731 PR A), with a documented deviation.** The attestation
-   keys on (`record_id`, party, `tree_person_id`), where party is
-   `record_persona_id` when non-null and `record_role` otherwise. The fallback
-   exists because `record_persona_id` is null on thousands of corpus links, so
-   it cannot key anything on its own, while `record_role` is required on every
-   assertion and is the field the record-side projection groups by — key and
-   grouping must agree or two calls about one persona land under two keys.
+   **As implemented, after a correction in PR B.** The attestation keys on
+   (`record_id`, `assertion_id`, `tree_person_id`).
+
+   PR A keyed it on (`record_id`, party, `tree_person_id`), party being
+   `record_persona_id` when non-null and `record_role` otherwise. That was
+   wrong, and PR B's writer-side gate is what exposed it: the party is not
+   stable across the two routes. On the FETCHED route the tool resolves a real
+   `persons[].id` for a party whose assertion carries `record_persona_id: null`,
+   so the score was filed under what was resolved while every reader computes
+   the key from what the assertion carries. The gate could not find a legitimate
+   score and refused exactly the links whose call HAD been made, instructing the
+   agent to repeat the call that wrote the unfindable record. Reproduced against
+   the compiled build; `dev/probe-score-refusal.ts` carries the standing arm.
+
+   **The assertion key satisfies this constraint structurally rather than by
+   argument.** An assertion carries one `record_role` and one
+   `record_persona_id`, so it IS a (record, party) pair: a second persona of an
+   already-linked record is a DIFFERENT assertion and needs its own score.
+   `tree_person_id` keeps the two links of a relationship assertion apart.
+   Both sides always hold both tokens, which the party never guaranteed.
+
+   The constraint's own wording — key on (`record_id`, `record_persona_id`) —
+   is met in effect, not literally: `record_persona_id` is null on thousands of
+   corpus links and so cannot key anything on its own, which is what drove PR A
+   to the party fallback in the first place. The assertion is the stable stand-in
+   for it.
+
+   **This is the ATTESTATION key only.** The record-side PROJECTION still groups
+   parties on persona-id-else-role, and must, for the reasons below.
 
    **The projection groups on the same key**, so the two cannot disagree about
    what identifies a party. Grouping on `record_role` alone was the first
