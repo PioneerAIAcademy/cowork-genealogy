@@ -123,6 +123,19 @@ OWNED_SECTIONS = {
 # 131 corpus runs wrote without ever invoking the skill that owns it.
 OWNED_DECLARATIONS = {("questions", "exhaustive_declaration"): "research-exhaustiveness"}
 
+# Field-scoped routing keyed on PRESENCE, not on a claim value: (section, field)
+# -> the BARE agent name that may write it at all. Third granularity, and the
+# reason it is not folded into either map above.
+#
+# `OWNED_SECTIONS` cannot hold it: `project` is co-written. `init-project`
+# authors the section and every skill pings `updated`, so reserving the whole
+# section would deny both. `OWNED_DECLARATIONS` cannot hold it either: that map
+# keys on a claim VALUE (`declared is True`) because a question legitimately
+# carries the field set false. `status` has no such honest non-claiming value --
+# any write of it asserts the project's state, so the write IS the claim and
+# presence is the right key.
+OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
+
 # The reverse direction: the sections each named agent MAY write. Rows come from
 # the same manifest -- every section whose `callers` names that agent's skill.
 #
@@ -161,6 +174,9 @@ AGENT_WRITABLE_SECTIONS = {
     # search-images updates the status of the plan item a browse executed. Its
     # browse log goes through research_log_append, which carries no `section`.
     "search-images": frozenset({"plan_items"}),
+    # citation refines `citation` / `citation_detail` on source entries that
+    # already exist, and writes nothing else in research.json.
+    "citation": frozenset({"sources"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
@@ -185,6 +201,15 @@ DECLARATION_REASON = (
     "call. Only the claim is routed — creating a question with "
     "`declared: false`, and recording an honest `declared: false` termination, "
     "are both unaffected, as is everything else in `{section}`."
+)
+
+OWNED_FIELD_REASON = (
+    "Setting research.json's `{section}.{field}` from here is disabled — it is "
+    "owned by the {agent} agent, which applies the GPS conclusion rules that "
+    "decide whether a project is finished. Delegate it: invoke "
+    "`@plugin:{agent}` and let it make the research_append call. Only this "
+    "field is routed — every other write to `{section}`, including the "
+    "`updated` activity ping, is unaffected."
 )
 
 OUT_OF_LANE_REASON = (
@@ -289,10 +314,15 @@ def _ops(tool_input: dict):
 def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | None:
     """`(section, rule, caller)` for a denied write, or None to allow.
 
-    Two rules, both keyed on the caller and both returning the offending
+    Four rules, all keyed on the caller and all returning the offending
     section: `routed` — a section reserved to an owning agent, reached by
-    someone else; `out_of_lane` — a known agent reaching outside the sections
-    its own skill is a declared caller for.
+    someone else; `declaration` — a routed CLAIM (a field set to a particular
+    value), reached by someone else; `owned_field` — a routed field, keyed on
+    presence rather than value; `out_of_lane` — a known agent reaching outside
+    the sections its own skill is a declared caller for. `declaration` and
+    `owned_field` return a dotted `section.field`, which is a key in neither
+    `OWNED_SECTIONS` nor `AGENT_WRITABLE_SECTIONS`, so every consumer must
+    branch on `rule` and never on the shape of the first element.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -374,6 +404,19 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 value = payload_obj.get(field)
                 if isinstance(value, dict) and value.get("declared") is True:
                     return (f"{section}.{field}", "declaration", caller)
+        # A routed FIELD, reached by anyone but its owning agent. Keyed on
+        # presence: unlike the declaration above there is no honest
+        # non-claiming value to let through, so carrying the key at all is the
+        # claim. Both payload keys for the same reason as that loop -- an empty
+        # `fields` dict beside a populated `entry` is still a dict, and a
+        # missing deny here fails open silently.
+        for (owned_section, field), owner in OWNED_FIELDS.items():
+            if section != owned_section or caller == owner:
+                continue
+            for key in ("fields", "entry"):
+                payload_obj = op.get(key)
+                if isinstance(payload_obj, dict) and field in payload_obj:
+                    return (f"{section}.{field}", "owned_field", caller)
         # A known agent reaching outside its own set.
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)
@@ -400,6 +443,13 @@ def decision(payload: dict) -> dict:
                 section=owned_section,
                 field=field,
                 agent=OWNED_DECLARATIONS[(owned_section, field)],
+            )
+        elif rule == "owned_field":
+            owned_section, _, field = section.partition(".")
+            reason = OWNED_FIELD_REASON.format(
+                section=owned_section,
+                field=field,
+                agent=OWNED_FIELDS[(owned_section, field)],
             )
         else:
             allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))

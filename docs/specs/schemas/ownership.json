@@ -1,11 +1,11 @@
 {
-  "$comment": "Who may write each section of research.json and tree.gedcomx.json. Keyed on the union of both schemas' top-level properties plus the `plan_items` pseudo-section research_append's `section` enum defines, so neither vocabulary can leave a hole. One row per (artifact, section). Contract and adjudication record: docs/specs/research-schema-spec.md section 4 and docs/specs/guardrail-enforcement-spec.md. Shape and exhaustiveness are checked by packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts, which runs BOTH directions: every name a row lists must resolve to something that ships, and for every writer tool the shipped plugin grants, the rows naming the holder for it must equal the rows that tool reaches for that holder. The enforced writer sets are frozen by eval/harness/tests/unit/test_ownership_manifest.py. Three caller fields, read together as the listed set by that second direction and by nothing else: `callers` is who may write, counts for every writer tool on its row, and is the only one the unit plane reads (harness/ownership.py:writer_sets); `hookCallers` names the agent the plugin PreToolUse hook permits on a row claiming the hook plane, and since the hook routes `research_append` alone it counts for that tool only; `agentCallers` records the non-owner AGENTS that write the row, which the unit plane cannot see and must not be given; each entry is `{agent, tools}`, naming the writer tools that agent reaches the row with. `toolAuthorized` names no caller: it lists the writer tools a row authorizes by tool identity for whoever calls them (harness/ownership.py:writer_tool_sets; the unit plane still requires the delta to be that tool's own write), so no holder of such a tool needs naming on that row. Every other writer tool but `research_append` reaches every row whose `writerTools` lists it. An agent's `research_append` reaches only what the plugin hook leaves it: its AGENT_WRITABLE_SECTIONS lane (every agent holding the tool has one), never a section OWNED_SECTIONS routes to another agent, and a tree row only through the one section that writes it — tree `persons` via `assertions`, tree `sources` via `sources`. A skill's `research_append` is confined by nothing static, so for that pair the guard asks only that some row names the skill, and the unit plane enforces the rows at run time. Read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py. An agent in `callers` is that row's own owner or nothing.",
+  "$comment": "Who may write each section of research.json and tree.gedcomx.json. Keyed on the union of both schemas' top-level properties plus the `plan_items` pseudo-section research_append's `section` enum defines, so neither vocabulary can leave a hole. One row per (artifact, section). Contract and adjudication record: docs/specs/research-schema-spec.md section 4 and docs/specs/guardrail-enforcement-spec.md. Shape and exhaustiveness are checked by packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts, which runs BOTH directions: every name a row lists must resolve to something that ships, and for every writer tool the shipped plugin grants, the rows naming the holder for it must equal the rows that tool reaches for that holder. The enforced writer sets are frozen by eval/harness/tests/unit/test_ownership_manifest.py. Three caller fields, read together as the listed set by that second direction and by nothing else: `callers` is who may write, counts for every writer tool on its row, and is the only one the unit plane reads (harness/ownership.py:writer_sets); `hookCallers` names the agent the plugin PreToolUse hook permits on a row claiming the hook plane, and since the hook routes `research_append` alone it counts for that tool only; `agentCallers` records the non-owner AGENTS that write the row, which the unit plane cannot see and must not be given; each entry is `{agent, tools}`, naming the writer tools that agent reaches the row with. `toolAuthorized` names no caller: it lists the writer tools a row authorizes by tool identity for whoever calls them (harness/ownership.py:writer_tool_sets; the unit plane still requires the delta to be that tool's own write), so no holder of such a tool needs naming on that row. Every other writer tool but `research_append` reaches every row whose `writerTools` lists it. An agent's `research_append` reaches only what the plugin hook leaves it: its AGENT_WRITABLE_SECTIONS lane (every agent holding the tool has one), never a section OWNED_SECTIONS routes to another agent, and a tree row only through the one section that writes it — tree `persons` via `assertions`, tree `sources` via `sources`. A skill's `research_append` is confined by nothing static, so for that pair the guard asks only that some row names the skill, and the unit plane enforces the rows at run time. Read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py. An agent in `callers` is that row's own owner, or an agent that owns a unit suite and so can be the unit plane's subject (issue #2799, `writer_sets(..., subject=)`).",
   "version": 1,
   "enforcementPlanes": {
     "unit": "eval/harness/validators/test_universal.py — two checks. test_ownership_table diffs before/after project state against the calling skill's SKILL.md frontmatter name and cannot see an agent caller. test_no_out_of_lane_section_writes (issue #2022) records the shipped hook's own owner_denied verdict from skill_runner's PreToolUse hook, so since 2026-09-02 this plane DOES see the agent caller, and denies rather than merely detecting. Both run only inside a paid per-skill eval run.",
     "e2e": "eval/harness/e2e — whole-run detectors. Eval-only; never reaches production.",
     "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic — it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19) and by questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) and project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "rows": [
     {
@@ -34,12 +34,17 @@
         "merge_tree_persons"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "hook"
       ],
       "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation.",
       "failure": "A skill rewrites the objective, subject persons, or status mid-project, and every later skill plans against a changed goal it never agreed to.",
       "remedy": "Route a status change through proof-conclusion; route an objective change through init-project.",
-      "override": "none"
+      "override": "none",
+      "hookCallers": [
+        "agent:proof-conclusion"
+      ],
+      "notes": "The hook rule is FIELD-scoped, not section-scoped: only `status` is routed, because `project` is co-written — init-project authors the section and every skill refreshes `updated`, so reserving the whole section would deny both. It is keyed on presence rather than on a value (unlike `questions`' `exhaustive_declaration`) because `status` has no honest non-claiming value: any write of it asserts the project's state."
     },
     {
       "artifact": "research.json",
@@ -211,7 +216,7 @@
       "owner": "skill:record-extraction",
       "callers": [
         "skill:record-extraction",
-        "skill:citation"
+        "agent:citation"
       ],
       "agentCallers": [
         {
@@ -228,10 +233,10 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
+      "notes": "citation is an agent (issue #2799), and it is named here because it is the subject of its own unit suite - `writer_sets` resolves an `agent:` caller only when it matches that subject, so this row authorizes citation's own refinements and nothing else. citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
       "requires": "record-extraction creates the entry with a working citation and `source_classification`. citation updates `citation` and `citation_detail` on an entry that already exists.",
       "failure": "A second skill minting sources produces duplicate `src_` entries for one record, and every assertion's `source_id` then points at whichever copy that skill happened to make.",
-      "remedy": "Add a new record through record-extraction; refine an existing citation through citation.",
+      "remedy": "Add a new record through record-extraction; refine an existing citation through the citation agent.",
       "override": "none"
     },
     {
@@ -541,6 +546,12 @@
           "agent": "agent:person-evidence",
           "tools": [
             "tree_edit"
+          ]
+        },
+        {
+          "agent": "agent:citation",
+          "tools": [
+            "research_append"
           ]
         }
       ],

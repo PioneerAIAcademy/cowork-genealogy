@@ -148,11 +148,14 @@ depends on another shipping first.
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
-| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
+| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
+| §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null. ADR-0009 constraint 3 holds because an assertion is a (record, party) pair, so a second persona is a second assertion, and the tree person keeps the two links of a relationship assertion apart |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
+| §6 | Field ownership by caller (`project.status`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic and so gates this arm with no edit | a `project.status` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, from either the `fields` or `entry` key, on append **and** update. Keyed on presence, not on a value: any write of the field asserts the project's state. The co-written rest of `project` — including the `updated` activity ping — is untouched | **enforcing** (since 2026-09-24). **Nothing proves this arm binds in Cowork**, which is true of every hook arm (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
+| §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: it cannot bind a link made through a relationship assertion, because which of the two people the link is about is not decidable from the documents |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `record_basis: "stated"` supporting assertion nor ≥2 at `record_basis: "inferred"` citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
@@ -347,7 +350,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | Check | Stored | Replayed | Status |
 |---|---:|---:|---|
 | §7 caller-attributed recency | 823 (window 40), 130 runs | n/a — windowed replay, see the table above | **retired permanently**, not queued |
-| §8 live `same_person` provenance | 12, across 7 runs | 115 of 149 runs that link a person | the graduation candidate with the largest sample |
+| §8 live `same_person` provenance | 12, across 7 runs | 115 of 149 runs that link a person | **graduated 2026-09-24**, on the writer side rather than as an e2e hook: `research_append` now refuses the append itself. The e2e pre-write hook stays shadow, since it fires on a different plane and catches the ordering rather than the attestation |
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
@@ -604,21 +607,46 @@ to understand before reading either:
 original reason said a brand-new identity "should be scored before it is
 asserted", which the agent believes it did. The cause is an **id mismatch**, not
 laziness: `tree_edit` mints local ids (`I1`) and rejects caller-supplied ones,
-while `same_person` scores `primaryId1`/`primaryId2` *inside the caller's own
-gedcomx documents*. The one satisfying shape is to pass the tree side as
-`gedcomx2` with `primaryId2: "I1"`, which agents produced in 3 of 103 corpus
-runs. The reason text now names that shape, says the **entire batch** is
-rejected (a `PreToolUse` deny is all-or-nothing, and these batches run to a
-median of 17 ops), and states the escape below.
+while `same_person`'s explicit arm scores `primaryId1`/`primaryId2` *inside the
+caller's own gedcomx documents*. Under that arm the one satisfying shape was to
+pass the tree side as `gedcomx2` with `primaryId2: "I1"`, which agents produced
+in 3 of 103 corpus runs.
+
+**The satisfying shape has since changed, and the reason text names the new
+one.** `same_person` gained a project-relative arm that takes
+`{ projectPath, assertionId, treePersonId }` and assembles both documents
+host-side, so the reason now names that call and deliberately stops teaching the
+hand-assembled recipe: naming it would steer the agent straight back to the cost
+that produced the skipped call this gate fires on. The reason still says the
+**entire batch** is rejected (a `PreToolUse` deny is all-or-nothing, and these
+batches run to a median of 17 ops), and states the escape below. The text lives
+in `eval/harness/e2e/orchestrator.py`, and
+`tests/unit/test_e2e_orchestrator.py::test_provenance_gap_reason_names_the_satisfiable_call_shape`
+pins that it names the new shape and not the old.
 
 **One class of write genuinely cannot satisfy the gate — but it is about a tenth
-the size it was long described as.** The check now narrows on whether a **record
-persona is reachable**, not on whether `record_persona_id` is null.
+the size it was long described as, and smaller again since the tool changed.**
+The check narrows on whether a **record persona is reachable**, not on whether
+`record_persona_id` is null.
 
-`same_person` takes two GedcomX documents plus a focus id inside each. It never
-reads `record_persona_id`; that field is a pointer into a retained search
-sidecar, so a null value proves only that no sidecar was kept. What decides
-reachability is the tool that produced the assertion:
+`same_person` never reads `record_persona_id`; that field is a pointer into a
+retained search sidecar, so a null value proves only that no sidecar was kept.
+
+**Read the table below as what the DETECTOR still assumes, not as what is
+true.** `same_person`'s project-relative arm resolves the record itself —
+retained sidecar, fresh read, or, failing both, a persona projected from the
+record's own extracted assertions — so the bottom three rows are scorable in
+practice and only two exemptions survive in the tool: the record holds no
+persona for the party this link is about, and the candidate is a stub minted
+from the very persona being scored. The detector was deliberately not widened in
+the same change that told the agent to adopt the new call, because a rise in
+flagged links would then be unreadable: the agent failing to adopt it and the
+predicate getting stricter look identical from the count, which is the error
+constraint 6 of ADR-0009 exists to prevent. Widening belongs with the
+writer-side requirement, whose own evidence is a recorded run at the new shape.
+Until then the table over-exempts, which is the safe direction.
+
+What the detector currently treats as deciding reachability:
 
 | provenance | reachable? | why |
 |---|---|---|
@@ -2047,8 +2075,13 @@ this section before reopening one.
   either way, and the lead accepted the line-count figure on 2026-08-25.
   Unlike the first two, **no rule moved into the writer tool first**: the
   candidate precondition — that a link cite a computed `same_person` score — is satisfiable by 437 of 6,550 reachable links — 6.7%
+  (measured against the hand-assembled call shape, which is the cost that
+  produced the skip; the tool has since gained a project-relative arm that
+  resolves both documents itself, and the satisfiability of the NEW shape is
+  unmeasured until agents have run against it)
   — so it ships as a warning on the `opWarnings` channel
-  `personEvidenceScoreWarnings` already rides, and the conversion guide's step 3
+  `personEvidenceScoreInvariants` now refuses on (it rode the warnings channel
+  until 2026-09-24), and the conversion guide's step 3
   covers that case explicitly rather than inventing a gate to satisfy the shape.
   Its bypass case is also the weakest of the four: 10% of the runs that write the
   section never invoke the skill, against `conflict-resolution`'s 84%. What it
@@ -2254,6 +2287,39 @@ this section before reopening one.
   an agent leaves no trace in the project documents, so only run-level
   attribution sees it, and that is eval-only. It reaches production for nothing
   today because nothing needs it.
+
+- **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
+  summary's `exhaustive_search_summary` must appear in some `log[].query`." Proposed
+  2026-09-17 against a real defect: in the `pedro-chaves-spouse` run of 2026-09-09, call 182
+  (`agent_type: "proof-conclusion"`) reported `3:1:9Q97-YSRZ-GWP` and `3:1:9Q97-YSRZ-614` as
+  "attempted and returned 400 errors via the MCP transport" when neither was ever called —
+  the two actually called, `3:1:QJRM-GV8V` and `3:1:QP84-TH55`, are recorded correctly at
+  `log_028`/`log_029`. ADR-0011's first question answers *yes* (the log names the real
+  attempts), and `research_append` already carries a cross-check of this shape (D2).
+  **Rejected on measurement anyway.**
+
+  Re-derived over the 185 committed e2e runs carrying a `final-research.json`, measured at
+  df3a8b62e: of **202** `proof_summaries`, 56 name an ark in `exhaustive_search_summary` and
+  **38 of 56 name an ark absent from every `log[].query`** — because citing the record you
+  found is ordinary practice and that ark lives in `sources[]`, not the log. Narrowing to a
+  failure framing leaves 27 summaries and flags 18, and the flagged ones are truthful:
+  `wilkins-death-kentucky` reports "original image NOT READ after two format attempts",
+  `jimmie-jewel-neal` reports three image-agent attempts lost to persistent 529s. **The
+  check denies legitimate writes to catch one false one.**
+
+  (The 2026-09-17 pass reported 198 / 63 / 45 and 21 / 13 on a smaller corpus and a
+  different matcher; the ratio and the conclusion are unchanged. Re-derive rather than
+  quote forward — the corpus grew twice during this card alone.)
+
+  Because it is not mechanizable, the rule is lane 4: a provenance clause in
+  `packages/engine/plugin/agents/proof-conclusion.md` §5 — name the identifier you actually
+  called, never the one you wanted. **Nothing checks that a prose clause changes behaviour** —
+  the gap is on the `nothing-checks` register — so that clause is unmeasured.
+
+  **What would reopen it:** consistent logging of agent-side image attempts. The failure
+  reaches the log in `pedro-chaves-spouse` and not in `jimmie-jewel-neal`, so part of the
+  38 is a logging gap rather than a reporting one, and the false-deny rate is an upper
+  bound on a corpus that cannot currently distinguish the two.
 
 ## 10. Residual risks
 

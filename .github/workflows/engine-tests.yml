@@ -41,12 +41,11 @@ jobs:
       - name: Check out PR
         uses: actions/checkout@v7
 
-      # continue-on-error, because prompt-budget.test.ts is warn-only by design
-      # and a step that can red the job is not. It also makes the test's own
-      # fallback reachable: without it the job dies here and the
-      # "origin/<base> is not available" ::warning:: path can never run.
-      # BASE_REF goes through env rather than into the command text — a ref name
-      # is repo-controlled input.
+      # continue-on-error, because the base-branch fetch is best-effort for the
+      # delta report (both the git ls-tree fallback for prompt files and the
+      # baseline file for tools); the staleness test does not need the base
+      # branch. BASE_REF goes through env rather than into the command text — a
+      # ref name is repo-controlled input.
       - name: Fetch base branch for prompt-budget delta
         continue-on-error: true
         env:

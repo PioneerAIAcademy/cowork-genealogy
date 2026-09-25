@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 24, hint-samples.csv row 738, flags adds_father/adds_mother, confidence 3). Draft transcribed from a 1925 Puerto Rican civil birth registration; unverified. The likely reading is a generation shift — the subject appearing as the grandfather, not the father."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 24, hint-samples.csv row 738, flags adds_father/adds_mother, confidence 3). Resolved (issue #2317): answerable differently. The 1925 hint record names the subject as the child's paternal grandfather, a generation shift; the father is his son Domingo Olivera y González (GN52-SH9). The subject's parents, Juan José Olivera Rolón and Concepción Albaladejo, come from his son Juan Félix's 1902 Ciales birth registration and his own 1926 Vega Baja death registration."
 }

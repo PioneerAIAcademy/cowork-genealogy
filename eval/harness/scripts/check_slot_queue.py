@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: warn when a PR buys a paid eval run that queued work could share.
 
-A `make eval-skill` run costs ~$8-12, 45-65 minutes of machine time, and a full
-annotation pass over every test in the skill. It is bought by whichever PR first
+A `make eval-skill` run costs ~$8-12 and 45-65 minutes of machine time. It is bought by whichever PR first
 touches a snapshot input for that skill. Folding a queued fix in BEFORE the run is
 free; landing it afterwards buys a second run.
 
@@ -346,8 +345,7 @@ def _run() -> None:
             continue
         gh_warning(
             f"this PR touches `{skill}`'s eval snapshot, so it buys a paid run "
-            f"(~$8-12, 45-65 min, plus a full annotation pass over every test in "
-            f"the skill). {len(rows)} open issue(s) name a path in the same "
+            f"(~$8-12, 45-65 min). {len(rows)} open issue(s) name a path in the same "
             f"snapshot and could ride along for free — landing them afterwards buys "
             f"another run: {_listed(rows)}. Folding one in is a judgement call, not "
             f"a requirement; this is warn-only."

@@ -156,6 +156,7 @@ const NON_DOCUMENT_STORE_WRITERS: Readonly<Record<string, string>> = {
   "utils/image-store.ts": "images/ blobs and their pruning",
   "tools/rank-search-matches.ts": "the ranker's score log",
   "tools/research-log-append.ts": "removes the staged result it just logged",
+  "utils/match-scores.ts": "results/.scores/ attestation files",
 };
 
 /**
@@ -513,24 +514,24 @@ describe("ownership manifest — every name resolves", () => {
     ).toEqual([]);
   });
 
-  it("keeps a non-owner agent out of callers", () => {
-    // One rule, not two. `callers` is what `harness/ownership.py:writer_sets`
-    // reads, and an agent there on a unit-plane row raises
-    // OwnershipManifestError outright — so a non-owner agent has to live
-    // elsewhere on those rows anyway. Letting it sit in `callers` on the rows
-    // that claim no plane would make the placement depend on `enforceableAt`,
-    // and a two-rule placement is where the next drift hides. The owner is the
-    // exception because a row must list its own owner among its callers.
+  it("keeps a non-owner agent out of callers unless it owns a unit suite", () => {
+    // `callers` is what `harness/ownership.py:writer_sets` reads, and that plane
+    // can attribute a write to exactly one agent: the suite's own subject
+    // (issue #2799), whose frontmatter `name` is what it reads. So an agent in
+    // `callers` is the row's owner, or an agent with its own unit suite. Any
+    // other non-owner agent goes in `agentCallers` (or `hookCallers`).
+    const suitesDir = join(projectRoot, "eval", "tests", "unit");
     const bad: string[] = [];
     for (const r of rows) {
       for (const c of r.callers) {
-        if (c.startsWith("agent:") && c !== r.owner) bad.push(`${key(r)}: caller '${c}'`);
+        if (!c.startsWith("agent:") || c === r.owner) continue;
+        if (!existsSync(join(suitesDir, c.slice("agent:".length)))) bad.push(`${key(r)}: caller '${c}'`);
       }
     }
     expect(
       bad,
-      "a non-owner agent goes in `agentCallers` (or `hookCallers` where the row " +
-        "claims the hook plane), never in `callers`",
+      "a non-owner agent with no unit suite goes in `agentCallers` (or " +
+        "`hookCallers` where the row claims the hook plane), never in `callers`",
     ).toEqual([]);
   });
 

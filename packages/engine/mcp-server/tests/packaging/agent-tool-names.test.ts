@@ -175,6 +175,21 @@ function grantedAndDenied(text: string): string[] {
     .sort();
 }
 
+/** Agents allowed to spawn another agent. An agent that needs another agent's
+ * work names it in its caller-facing return lines and the main thread spawns it, so every
+ * spawn stays one level deep (`docs/architecture.md`, "Agent frontmatter:
+ * spelled per registrar, exactly matched"). Add an agent here only with a lead
+ * ruling, and only once `make probe-agent-nesting` shows the spawn binds. */
+const SPAWN_ALLOWED = new Set<string>([]);
+
+/** The agent-spawning tools an agent's `tools:` grants. Strips a trailing
+ * comment and quotes, so `- Task  # why` and `- "Agent"` are still caught. */
+function spawnGrants(text: string): string[] {
+  return extractList(text, "tools")
+    .map((e) => e.replace(/\s+#.*$/, "").replace(/^(["'])(.*)\1$/, "$2"))
+    .filter((e) => e === "Task" || e === "Agent");
+}
+
 function overlapMessage(file: string, overlap: string[]): string {
   return (
     `${file} both grants and denies: ${overlap.join(", ")}. The deny wins and is ` +
@@ -333,6 +348,18 @@ describe("plugin agent tool names", () => {
             `restatements of the omission above them (\`make probe-agent-binding\`). ` +
             `If this one earns its place, say why in the frontmatter, give it all ` +
             `three spellings, keep it clear of tools:, and update this test.`,
+        ).toEqual([]);
+      });
+
+      it("grants no agent-spawning tool unless allow-listed", () => {
+        if (SPAWN_ALLOWED.has(file.replace(/\.md$/, ""))) return;
+        expect(
+          spawnGrants(text),
+          `${file} grants an agent-spawning tool. An agent never spawns another ` +
+            `agent: when a request belongs to a different agent, name that agent in ` +
+            `the caller-facing return lines and let the main thread spawn it (docs/architecture.md, "Agent ` +
+            `frontmatter: spelled per registrar, exactly matched"). The exception is ` +
+            `SPAWN_ALLOWED in this file, which takes a lead ruling.`,
         ).toEqual([]);
       });
     });
@@ -504,6 +531,30 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // OCRs host-side and returns text, so nothing accumulates in this agent's
   // context. `image_read` is deliberately NOT granted; it returns the page
   // inline and a volume browse overflows the transport (PR #718).
+  // citation (issue #2799) holds exactly what the skill it replaced declared —
+  // `research_append` and `validate_research_schema` — plus two additions with
+  // a reason each. `wiki_read`: the probate-office lookup that replaced the
+  // Pennsylvania office names in the body (ADR-0012, issue #2262). `Read`: the
+  // skill relied on the built-in, and an agent must list it; Step 1 of the body
+  // reads research.json and tree.gedcomx.json directly and rules out
+  // `project_context` by name, because that projection drops every field this
+  // agent works on. `research_query` is deliberately NOT granted: this agent
+  // reads the two files itself, and an unneeded query tool is capability a
+  // delegation can steer (docs/skill-to-agent-pair-conversion.md, section 2,
+  // measured: a routing skill told in prose not to judge, but handed a query
+  // tool, judged). `research_append` here is the BROAD grant; citation is held
+  // off `sources` creation by the ownership manifest and by its own
+  // preconditions, not by tool identity.
+  "citation.md": {
+    tools: [
+      "Read",
+      "research_append",
+      "validate_research_schema",
+      "wiki_read",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",

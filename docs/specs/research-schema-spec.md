@@ -347,7 +347,7 @@ rule with no exceptions:
 
 | Field | Holds | Read by |
 |---|---|---|
-| `callers` | who **may** write the row: every permitted skill, plus the row's own owner when that owner is an agent | the unit plane (`harness/ownership.py`'s `writer_sets`), the writer tables above, the actual-writer direction (`ownership-manifest.test.ts`), `plugin-hooks.test.ts`, and `make e2e-writer-attribution` |
+| `callers` | who **may** write the row: every permitted skill, the row's own owner when that owner is an agent, and an agent that owns a unit suite (`agent:citation`) | the unit plane (`harness/ownership.py`'s `writer_sets`), the writer tables above, the actual-writer direction (`ownership-manifest.test.ts`), `plugin-hooks.test.ts`, and `make e2e-writer-attribution` |
 | `hookCallers` | the agent the plugin `PreToolUse` hook permits, on a row claiming the `hook` plane | `plugin-hooks.test.ts`, which pins it against the hook's hardcoded map; the actual-writer direction; `make e2e-writer-attribution` |
 | `agentCallers` | the non-owner **agents** that write the row, each paired with the writer tools it reaches the row with | the actual-writer direction, `plugin-hooks.test.ts` (against the hook's lanes), and `make e2e-writer-attribution` — never as a permission |
 
@@ -357,15 +357,15 @@ row authorizes by tool identity, for whoever calls them. The unit plane reads it
 actual-writer direction and `make e2e-writer-attribution` read it to skip that
 (holder, tool) pair on that row.
 
-A non-owner agent therefore never goes in `callers`. On a row claiming the unit
-plane it cannot: that plane keys on the calling skill's `SKILL.md` frontmatter
-name and has no view of which agent made a call, so the loader raises
-`OwnershipManifestError` rather than silently dropping the agent from the
-permitted set. Putting it in `callers` on a row that claims *no* plane — where
-the loader would allow it — was considered and rejected: it makes the placement
-depend on `enforceableAt`, and a two-rule placement is where the next drift
-hides. The one agent in `callers` today is `gps-mentor` on `evaluations`, which
-is that row's owner, and a row must list its own owner among its callers.
+A non-owner agent goes in `callers` only when it owns a unit suite. The unit
+plane keys on the suite subject's frontmatter `name` and has no view of which
+*other* agent made a call, so the one agent it can attribute a write to is the
+suite's own subject: `agent:citation` on `sources`, whose suite
+is `eval/tests/unit/citation/`. `writer_sets(..., subject=)` resolves it there,
+and `test_a_unit_plane_agent_caller_is_a_suite_subject` keeps the exception one
+name wide. Every other non-owner agent goes in `agentCallers` or
+`hookCallers`. The owner is the other exception — `gps-mentor` on
+`evaluations` — because a row must list its own owner among its callers.
 
 **`agentCallers` records who wrote; it does not widen who may.** Nothing reads it
 as a permission: `writer_sets` reads `callers` only and must keep doing so. That
@@ -671,7 +671,7 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`). **Enforced:** `record_basis: "absent"` requires exactly `absent` (validator, both schema trees, and `research_append`); the converse is enforced by `research_append` only. See "Negative evidence" below |
-| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored. `same_person`'s explicit arm takes two GedcomX documents and a focus id inside each and never reads this field, and its project-relative arm resolves the record itself — retained sidecar, fresh read, or a persona projected from the record's own assertions — so how the assertion was retrieved does not decide scorability either. The field is still the fastest way to name the right persona when it is set. |
 | `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `stated`, computed birth year `inferred`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
@@ -755,7 +755,8 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
 | `confidence` | `person_evidence_confidence` | yes | How certain we are that this record's role IS the tree person (identity certainty). This is NOT a measure of the source's informant quality (`information_quality`/`informant_proximity`); those fields classify source reliability and belong on the assertion. A single primary-informant source with no corroborating record is `probable` on this scale, not `confident`. |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
-| `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
+| `core_identifier_conflict` | string or null | no | The core identifier this link contradicts, stated by person-evidence at the moment it writes the link (e.g. "record gives birthplace Germany; tree attests Ireland across three censuses"). Null or absent means none was found. A non-empty value caps `confidence` at `speculative` — enforced by `research_append`, not by prose |
+| `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool for this `(assertion_id, person_id)` pairing. `research_append` REFUSES an append that leaves this null where a record persona is reachable, so null is no longer a free default: it is correct where nothing can be scored (an image-, external-site- or PDF-sourced assertion, a full-text hit, a search that retained no sidecar) and it is REQUIRED where the tree person was minted out of the very record being cited, since scoring a persona against a person created from it only confirms itself |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 
@@ -1079,7 +1080,7 @@ The worked example (§9) shows the evidence layer: the GedcomX birthplace "Irela
 
 ### Source ownership: record-extraction vs. citation
 
-Both `record-extraction` and `citation` write to the `sources` section. The protocol: `record-extraction` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` skill later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` skill never creates new source entries; it only refines entries created by `record-extraction`.
+Both `record-extraction` and `citation` write to the `sources` section. The protocol: `record-extraction` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` agent later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` agent never creates new source entries; it only refines entries created by `record-extraction`.
 
 ---
 

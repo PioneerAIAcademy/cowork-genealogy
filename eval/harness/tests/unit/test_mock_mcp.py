@@ -1045,3 +1045,147 @@ def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
     assert resp == response
     assert unlogged == []
     assert rank == ranked
+
+
+# ─── same_person writes the attestation a real call would leave (#1731 PR B) ──
+#
+# `same_person` is not in LIVE_TOOLS, so the compiled tool never runs here and
+# `recordMatchScore` never fires. That left `results/.scores/` empty in every
+# unit run, which makes any writer-side gate that reads it untestable and makes
+# it refuse everything. Same move as the search tools staging their sidecar.
+#
+# These pin the SCOPING as much as the write: attesting on the explicit
+# two-document arm would let a unit run satisfy a gate production refuses,
+# because that arm records nothing in production.
+
+FIXTURES_DIR = Path(__file__).resolve().parents[3] / "fixtures" / "mcp"
+
+
+def _score_workspace(tmp_path):
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "research.json").write_text(
+        json.dumps(
+            {
+                "assertions": [
+                    {"id": "a_001", "record_id": "1:1:ABCD-123",
+                     "record_persona_id": "P1", "record_role": "principal"},
+                    {"id": "a_002"},
+                    {"id": "a_003", "record_id": "r2", "log_entry_id": "log_1",
+                     "record_role": "principal"},
+                ],
+                "log": [{"id": "log_1", "tool": "fulltext_search",
+                         "results_ref": "results/log_1.json"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (ws / "tree.gedcomx.json").write_text(
+        json.dumps({"persons": [{"id": "I1"}]}), encoding="utf-8"
+    )
+    return ws
+
+
+def _call_same_person(ws, args):
+    _cfg, call_log, tools = mock_mcp.create_mock_server(
+        ["same-person-flynn-degenerate"], FIXTURES_DIR, workspace=ws
+    )
+    asyncio.run(tools["same_person"].handler({"projectPath": str(ws), **args}))
+    scores = ws / "results" / ".scores"
+    written = sorted(scores.glob("*.json")) if scores.exists() else []
+    return call_log, written
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_on_the_project_relative_arm(tmp_path):
+    """The whole point: a fixture-served call leaves a real attestation."""
+    ws = _score_workspace(tmp_path)
+    call_log, written = _call_same_person(ws, {"assertionId": "a_001", "treePersonId": "I1"})
+    assert len(written) == 1, "expected one results/.scores/ file"
+    rec = json.loads(written[0].read_text(encoding="utf-8"))
+    # Keyed on (assertion, tree person): the pair BOTH sides hold. Keying on the
+    # party filed it under what the fetch resolved while the reader computes the
+    # key from the assertion, so a real score became unfindable.
+    entry = rec["scores"]["a_001|I1"]
+    assert entry["record_id"] == "1:1:ABCD-123"
+    assert entry["tree_person_id"] == "I1"
+    assert entry["score"] == 0.005            # the fixture's own number
+    assert entry["record_source"] == "record_read"   # persona id present
+    assert call_log[-1]["attested"] is True
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_does_not_attest_on_the_two_document_arm(tmp_path):
+    """That arm records nothing in production, so attesting here would let a
+    unit run satisfy a gate production would refuse."""
+    ws = _score_workspace(tmp_path)
+    _log, written = _call_same_person(
+        ws,
+        {"gedcomx1": {"persons": []}, "primaryId1": "X",
+         "gedcomx2": {"persons": []}, "primaryId2": "I1"},
+    )
+    assert written == []
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_does_not_attest_without_a_record_side(tmp_path):
+    """No record_id means nothing to attest -- the same case samePerson refuses."""
+    ws = _score_workspace(tmp_path)
+    _log, written = _call_same_person(ws, {"assertionId": "a_002", "treePersonId": "I1"})
+    assert written == []
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_does_not_attest_for_an_unknown_assertion(tmp_path):
+    ws = _score_workspace(tmp_path)
+    _log, written = _call_same_person(ws, {"assertionId": "a_999", "treePersonId": "I1"})
+    assert written == []
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_does_not_attest_when_no_fixture_matched(tmp_path):
+    """A fixture_not_found response is not a score. Uses a fixture whose
+    predicate cannot match, so the handler falls through to the error."""
+    ws = _score_workspace(tmp_path)
+    _cfg, _log, tools = mock_mcp.create_mock_server(
+        ["same-person-flynn-mother-distinctive-surname"], FIXTURES_DIR, workspace=ws
+    )
+    out = asyncio.run(
+        tools["same_person"].handler(
+            {"projectPath": str(ws), "assertionId": "a_001", "treePersonId": "I9"}
+        )
+    )
+    assert "fixture_not_found" in json.dumps(out)
+    scores = ws / "results" / ".scores"
+    assert not scores.exists() or list(scores.glob("*.json")) == []
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_when_the_assertion_names_no_party(tmp_path):
+    """An assertion with neither a persona id nor a role still attests.
+
+    It did not when the key was the party: both empty meant nothing could look
+    the score up, so `recordMatchScore` no-opped and the writer-side gate then
+    refused a link whose call had been made. Keying on the assertion removes
+    that whole class -- the assertion id is always present on this arm."""
+    ws = _score_workspace(tmp_path)
+    (ws / "research.json").write_text(
+        json.dumps({"assertions": [{"id": "a_004", "record_id": "r3"}], "log": []}),
+        encoding="utf-8",
+    )
+    _log, written = _call_same_person(ws, {"assertionId": "a_004", "treePersonId": "I1"})
+    assert len(written) == 1
+    rec = json.loads(written[0].read_text(encoding="utf-8"))
+    assert "a_004|I1" in rec["scores"]
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attestation_records_a_projection_route(tmp_path):
+    """record_source is the one field a mock cannot copy from the fetch, so it
+    is derived. A full-text-sourced assertion is not fetchable."""
+    ws = _score_workspace(tmp_path)
+    _log, written = _call_same_person(ws, {"assertionId": "a_003", "treePersonId": "I1"})
+    assert len(written) == 1
+    rec = json.loads(written[0].read_text(encoding="utf-8"))
+    entry = next(iter(rec["scores"].values()))
+    assert entry["record_source"] == "projection"

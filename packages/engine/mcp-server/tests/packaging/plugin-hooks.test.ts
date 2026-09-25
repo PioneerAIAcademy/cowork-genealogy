@@ -86,11 +86,13 @@ function guardToolNames(): {
 /**
  * Every research.json section the guard routes by caller, from BOTH maps.
  *
- * `OWNED_SECTIONS` routes a whole section; `OWNED_DECLARATIONS` routes one FIELD
- * within a section, keyed on `("<section>", "<field>")`. The manifest records
- * both as `enforceableAt: ["hook", …]` on the section's row, so a helper reading
- * only the first map reports drift the moment a field-scoped row lands — which
- * is exactly what happened when `questions` was added.
+ * `OWNED_SECTIONS` routes a whole section; `OWNED_DECLARATIONS` and
+ * `OWNED_FIELDS` each route one FIELD within a section, keyed on
+ * `("<section>", "<field>")` — the first on a claim value, the second on
+ * presence. The manifest records all three as `enforceableAt: ["hook", …]` on
+ * the section's row, so a helper reading only the first map reports drift the
+ * moment a field-scoped row lands — which is exactly what happened when
+ * `questions` was added.
  */
 function ownedSections(src: string): string[] {
   const body = src.match(/^OWNED_SECTIONS\s*=\s*\{([^}]*)\}/m)?.[1];
@@ -110,6 +112,17 @@ function ownedSections(src: string): string[] {
     );
   }
   for (const [, section] of declBody.matchAll(/\(\s*["']([^"']+)["']\s*,/g)) {
+    if (!sections.includes(section)) sections.push(section);
+  }
+
+  const fieldBody = src.match(/^OWNED_FIELDS\s*=\s*\{([^}]*)\}/m)?.[1];
+  if (fieldBody === undefined) {
+    throw new Error(
+      `OWNED_FIELDS not found in ${GUARD}. If it was renamed, update this ` +
+        `helper — do not hardcode the section names back into the test.`,
+    );
+  }
+  for (const [, section] of fieldBody.matchAll(/\(\s*["']([^"']+)["']\s*,/g)) {
     if (!sections.includes(section)) sections.push(section);
   }
   return sections;
@@ -213,6 +226,11 @@ describe("plugin hooks are packaged and wired", () => {
     const src = readFileSync(GUARD, "utf-8");
     const owners: Record<string, string> = wholeSectionOwners(src);
     for (const m of (src.match(/^OWNED_DECLARATIONS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
+      /\(\s*["']([^"']+)["']\s*,\s*["'][^"']+["']\s*\)\s*:\s*["']([^"']+)["']/g,
+    )) {
+      owners[m[1]] = m[2];
+    }
+    for (const m of (src.match(/^OWNED_FIELDS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
       /\(\s*["']([^"']+)["']\s*,\s*["'][^"']+["']\s*\)\s*:\s*["']([^"']+)["']/g,
     )) {
       owners[m[1]] = m[2];
@@ -484,6 +502,64 @@ describe("the guard script's decisions", () => {
     // guardrail exists to stop.
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
     expect(out.stopReason).toBeUndefined();
+  });
+
+  // `project.status` is FIELD-scoped, not section-scoped: `project` is
+  // co-written (init-project authors it, every skill pings `updated`), so a
+  // section rule would deny both. These run the real SCRIPT rather than calling
+  // `owner_denied`, because that is the only plane where the failure mode shows:
+  // `main()` wraps `json.loads` but not `decision()`, so a rule tag with no
+  // branch raises `KeyError` there and the script exits 1 with empty stdout
+  // (measured). A PreToolUse hook exiting non-zero other than 2 is a
+  // non-blocking error, so the write it was meant to deny proceeds. A test
+  // calling `owner_denied` directly sees the correct triple and passes.
+  it.each([
+    ["main thread, fields", { section: "project", op: "update", fields: { status: "completed" } }, {}],
+    ["main thread, entry", { section: "project", op: "append", entry: { status: "completed" } }, {}],
+    // The empty-dict shape that defeated the declaration arm until it read both keys.
+    ["empty fields beside a populated entry", { section: "project", op: "append", fields: {}, entry: { status: "completed" } }, {}],
+    ["a different agent", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: "genealogy-research:record-extractor" }],
+    // Presence is the key, so a FALSY value is still the claim. A rule written
+    // `if payload_obj.get(field):` lets both of these through — which is why
+    // they are here and not left to the truthy row above.
+    ["a null status", { section: "project", op: "update", fields: { status: null } }, {}],
+    ["an empty-string status", { section: "project", op: "update", fields: { status: "" } }, {}],
+    // The batched form. `_ops` normalises it, and the §4 spec row claims this
+    // arm fires "in either the single-op or `ops[]` form".
+    ["batched ops form", { ops: [{ section: "project", op: "update", fields: { status: "completed" } }] }, {}],
+    // agent_id present but agent_type null resolves to an empty caller, which
+    // is not the owner either.
+    ["agent_id with a null agent_type", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: null }],
+    // The realistic non-`completed` value: the committed corpus is almost all
+    // `completed` with exactly one `active`. Subsumed by the falsy rows above against a
+    // `== "completed"` implementation, but it is the value a reader expects to
+    // see covered, and it costs one line.
+    ["main thread, an active status", { section: "project", op: "update", fields: { status: "active" } }, {}],
+  ])("denies research_append on project.status — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("status");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["the owner, namespaced", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: OWNER }],
+    ["the owner, bare", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: "proof-conclusion" }],
+    // The co-written rest of the section stays open to everyone.
+    ["the `updated` activity ping on the main thread", { section: "project", op: "update", fields: { updated: "2026-09-24" } }, {}],
+    ["init-project authoring the section", { section: "project", op: "update", fields: { objective: "x" } }, {}],
+    // An empty `fields` carries no `status` key, so presence-keying must let it
+    // through from either caller.
+    ["an empty fields ping on the main thread", { section: "project", op: "update", fields: {} }, {}],
+    ["an empty fields ping from the owner", { section: "project", op: "update", fields: {} }, { agent_id: "a1", agent_type: OWNER }],
+    // project_create writes the whole section at project start and is gated by
+    // `owner_denied`'s research_append check, not by this arm. Low-information
+    // by design — it pins that the gate stays tool-scoped.
+    ["project_create setting status at creation", { section: "project", op: "update", fields: { status: "active" } }, { tool_name: "mcp__genealogy__project_create" }],
+  ])("allows research_append on project — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput).toBeUndefined();
   });
 
   it.each([

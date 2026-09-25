@@ -657,7 +657,11 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    owners = writer_sets(RESEARCH_JSON)
+    # `subject` lets a row name this suite's own agent as a caller and still be
+    # enforced here (issue #2799). Any OTHER agent caller is DROPPED, not raised:
+    # it is authorizable on its own suite, where it is the subject, and a
+    # manifest invariant proves every one of them owns such a suite.
+    owners = writer_sets(RESEARCH_JSON, subject=skill_name)
     identity_tools = writer_tool_sets(RESEARCH_JSON)
     called = _tools_called(tool_calls)
     remap = _merge_remap(tool_calls)
@@ -1557,10 +1561,13 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
     """No `research_append` op reached a section its caller does not own.
 
-    Two rules, both from the SHIPPED hook: `routed` — a section reserved to an
+    Four rules, all from the SHIPPED hook: `routed` — a section reserved to an
     owning agent, reached by someone else; `out_of_lane` — a known agent reaching
-    outside the sections its own skill is a declared caller for. Plus
-    `declaration`, a routed claim.
+    outside the sections its own skill is a declared caller for; `declaration` —
+    a routed claim, field-scoped and keyed on the value; `owned_field` — a routed
+    field keyed on presence alone (`project.status`). This check is rule-agnostic
+    and reports whatever `rule` the predicate returns, so a new arm needs no edit
+    here.
 
     This is the unit tier's half of a rule that already binds in Cowork, the
     hosted path and the e2e harness. Until issue #2022 this plane called the
