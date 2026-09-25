@@ -412,7 +412,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18 | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half answered by us 2026-09-25 (P3c): reachable from VPN, Claude routed, but the route is chat-completions only. New ask: map `/v1/messages` and `/v1/messages/count_tokens` to the Messages format, and alias or document the Bedrock haiku id.** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; route ask not yet sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -794,6 +794,33 @@ thinking-token-count); a second model ID — every session opens with one
 `claude-haiku-4-5-20251001` call for the session title, carrying
 `structured-outputs-2025-12-15` — and a `HEAD /api/hello` with no auth header. The proxy shows what the CLI sends, not what agentgateway keeps: that
 half is one curl against integ.
+
+**P3c — measured 2026-09-25 (curl from a laptop on VPN against integ,
+`http://agent-gateway.full-text-search-int.um.fslocal.org/bedrock`, seven one-token
+calls): the deployed route is not Messages-compatible, so the CLI cannot run through it
+yet.** Claude models are routed: `us.anthropic.claude-sonnet-4-6` and
+`us.anthropic.claude-haiku-4-5-20251001-v1:0` both return 200; the bare
+`claude-haiku-4-5-20251001` the CLI sends for the session title is a Bedrock
+`ValidationException` ("The provided model identifier is invalid."), because the model
+field is passed to Bedrock verbatim with no alias map. But every path is read and answered
+as **OpenAI chat completions**. `POST /v1/messages`, `/v1/chat/completions` and a made-up
+`/v1/zzz` return the same `"object":"chat.completion"` body with `choices[]` and
+`prompt_tokens`/`completion_tokens`. A streamed `/v1/messages` returns
+`chat.completion.chunk` events with `Content-Type: application/vnd.amazon.eventstream`.
+An Anthropic-shaped body (a `system` block array, `content` blocks) is misparsed: Bedrock
+answers "A conversation must start with a user message". Request-parse failures come back
+as `503 text/plain` ("processing failed: failed to parse request: …"), not as a
+Messages-shaped 4xx. The `HEAD /api/hello` the CLI sends with no auth header gets 503 too.
+Errors that reach Bedrock *are* Messages-shaped (`{"error":{"type":"invalid_request_error",…}}`),
+and `/v1/messages/count_tokens` also reaches Bedrock rather than a passthrough. The
+agentgateway source read on 2026-09-11 does support Messages, so this is the deployed route's
+config and not a capability gap: the route needs its `/v1/messages` (and `count_tokens`) path
+mapped to the Messages format, which is the "three-line `ai.routes` addition" R1 anticipated.
+Until APT deploys that, none of the rest of the list can be measured: the CLI's request shape,
+tool search, the seven betas, the haiku call, caching and the fourth cache point. The P3b
+proxy still needs its HTTP/port/prefix option to run that pass. Bedrock request ids:
+sonnet 767e50a9-d1cc-4a58-9cb1-9917cb541dfa, haiku bare 13b78316-c02f-4c19-885f-2c985ad1e7d2,
+streamed 50e0e943-de3a-45ad-8e80-49952bb28952, block body a6298e77-366a-4823-8131-1d6b0e17a69a.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
@@ -2271,7 +2298,11 @@ emails rather than engineering.
 
 ### Could kill it
 
-**R1 — The Agent Gateway's API surface. CLOSED 2026-09-11.** It is Anthropic-Messages-
+**R1 — The Agent Gateway's API surface. REOPENED 2026-09-25 (P3c).** The deployed integ
+route answers every path, `/v1/messages` included, as OpenAI chat completions. The CLI
+cannot run through it until APT maps the Messages path, and it has to send the Bedrock
+haiku id or get an alias for it. What follows is the 2026-09-11 reading of the source,
+which still describes what the route *can* do. It is Anthropic-Messages-
 compatible (agentgateway v1.4.1, `POST /bedrock/v1/messages`, Messages→Converse both
 ways including streaming and errors), so the SDK runs unmodified with
 `ANTHROPIC_BASE_URL` at the gateway. Read from upstream source at the pinned tag rather
@@ -2283,7 +2314,8 @@ gateway from the client's side; what Messages→Converse keeps of the
 `advanced-tool-use` beta, the `tool_reference` blocks, the seven other betas, the haiku
 title call and `count_tokens` is the curl against integ. Native `bedrock-runtime` is
 not a client surface, so the prototype's Bedrock-direct results (P3) describe the
-model, not the production path. *Owner: us, one curl when integ access exists.*
+model, not the production path. *Owner: APT for the route change; us for the full
+parity pass (P3c list) once it deploys.*
 
 **R2 — Prompt-cache health, which is also the throughput ceiling. SHARPENED 2026-09-11,
 not closed.** Caching works through the gateway; the 1-hour TTL does not survive it.
