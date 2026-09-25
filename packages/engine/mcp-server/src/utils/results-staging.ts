@@ -216,21 +216,50 @@ export async function finalizeStagedResults(args: {
   // The producer's echoed query, if it recorded one. Guarded on a plain object
   // so a malformed payload degrades to "no default" rather than persisting a
   // string or array into a field the schema types as an object.
-  const rawQuery = (payload as { query?: unknown }).query;
-  let payloadQuery: Record<string, unknown> | undefined;
-  if (rawQuery !== null && typeof rawQuery === "object" && !Array.isArray(rawQuery)) {
-    // `echoQuery` copies EVERY defined input, which includes plumbing the log
-    // entry must not carry: `projectPath` is an absolute host path (it landed
-    // in 11 of 24 entries of a real run before this filter) and `subjectId` is
-    // a tree id, not a search parameter. `research.json` is shared project
-    // state that moves between machines — a `/private/var/folders/...` in it is
-    // meaningless anywhere else. Strip them from the DEFAULT only; a caller who
-    // passes `query` explicitly still owns its contents.
-    const { projectPath: _p, subjectId: _s, ...rest } = rawQuery as Record<string, unknown>;
-    payloadQuery = rest;
-  }
+  const payloadQuery = stripQueryPlumbing((payload as { query?: unknown }).query);
 
   return { resultsRef, returnedCount, payloadQuery };
+}
+
+/**
+ * The producer's echoed query with host plumbing removed, or undefined when the
+ * value is not a plain object (a malformed payload degrades to "no query"
+ * rather than persisting a string or array into an object-typed field).
+ *
+ * `echoQuery` copies EVERY defined input, which includes plumbing a log entry
+ * must not carry: `projectPath` is an absolute host path (it landed in 11 of 24
+ * entries of a real run before this filter) and `subjectId` is a tree id, not a
+ * search parameter. `research.json` moves between machines, so a
+ * `/private/var/folders/...` in it is meaningless anywhere else. Used for the
+ * `query` default and as the ground truth `research_log_append` checks an
+ * explicit `query` against; the caller's explicit `query` is never rewritten.
+ */
+export function stripQueryPlumbing(raw: unknown): Record<string, unknown> | undefined {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const { projectPath: _p, subjectId: _s, ...rest } = raw as Record<string, unknown>;
+  return rest;
+}
+
+/**
+ * Read a staged handle's producing tool and its plumbing-stripped echoed query,
+ * without consuming it. Only a handle under `results/.staging/` is read, by the
+ * same resolved-path test `finalizeStagedResults` applies; anything else, a
+ * missing file or invalid JSON returns undefined, because a bad ref is
+ * finalize's error to report.
+ */
+export async function readStagedEnvelopeQuery(
+  projectPath: string,
+  stagedResultsRef: string,
+): Promise<{ tool: string; query: Record<string, unknown> | undefined } | undefined> {
+  try {
+    const abs = assertInsideProject(projectPath, stagedResultsRef);
+    if (!isInsideProject(join(projectPath, STAGING_SUBDIR), abs)) return undefined;
+    const envelope = JSON.parse(await getProjectStore().readText(projectPath, stagedResultsRef));
+    if (typeof envelope?.tool !== "string") return undefined;
+    return { tool: envelope.tool, query: stripQueryPlumbing(envelope.payload?.query) };
+  } catch {
+    return undefined;
+  }
 }
 
 /**

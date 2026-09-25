@@ -19,6 +19,7 @@ small and lets each validator file decide how to handle missing state.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
@@ -359,3 +360,94 @@ def assert_capture_pending_item_not_terminal(
             f"{site.get('capture_received')!r} — the capture never arrived, so "
             f"the search did not happen. Expected 'in_progress'. See #1226."
         )
+
+
+def as_mapping(value: Any) -> dict:
+    """A tool argument a model may have serialized as a JSON string.
+
+    Production tools recover a stringified object argument themselves
+    (`coerceJsonArg`), so the call SUCCEEDS; reading it raw here raised
+    `AttributeError` instead of grading, and a crash in a validator is not an
+    observation. Anything that is not a mapping after one parse attempt reads as
+    absent, which is what an omitted argument does, so this never invents a
+    value and cannot turn a passing call into a firing one.
+    """
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (ValueError, TypeError):
+            return {}
+    return value if isinstance(value, dict) else {}
+
+
+def tool_input_keys(tool: str, nested: str | None = None) -> frozenset[str] | None:
+    """Input property names of `tool` from the compiled MCP build, the schema
+    production advertises, or of its object property `nested` (e.g.
+    `build_external_search_url`'s `attributes`). None when the build is not
+    readable: a validator that cannot know the vocabulary must skip, not guess.
+
+    Imported lazily: `harness.mock_mcp` pulls in the agent SDK and the fixture
+    loader, and every validator module imports this file.
+    """
+    from harness.mock_mcp import _load_build_tool_catalog
+
+    schema = (_load_build_tool_catalog().get(tool) or {}).get("inputSchema") or {}
+    props = schema.get("properties")
+    if nested is not None:
+        props = ((props or {}).get(nested) or {}).get("properties")
+    return frozenset(props) if isinstance(props, dict) and props else None
+
+
+# Inputs a search tool echoes that are not filters: host plumbing, and paging /
+# response-shape controls. Mirrors NOT_A_FILTER in
+# packages/engine/mcp-server/src/tools/research-log-append.ts; a claim about one
+# of these is not a claim about which records a search matched.
+NOT_A_FILTER: frozenset[str] = frozenset({"projectPath", "subjectId", "count", "offset", "includeFacets"})
+
+
+def filter_claim_findings(query: Any, sent: Any, vocabulary: frozenset[str]) -> tuple[list[str], list[str]]:
+    """Compare a log entry's `query` with the arguments its call sent.
+
+    `sent` is what reached the search: for `record_search`, pass it through
+    `record_search_sent` first.
+
+    Returns `(never_sent, differs)`: filter keys the entry claims with a value
+    that the call did not send at all, and keys both carry with different
+    values. Only keys in `vocabulary` that are filters count; a `None` or `""`
+    claim claims nothing. The `never_sent` class is the one
+    `research_log_append` refuses for a staged entry; `differs` is mostly place
+    normalization and is observed, never refused.
+    """
+    query, sent = as_mapping(query), as_mapping(sent)
+    never_sent: list[str] = []
+    differs: list[str] = []
+    for key, claimed in query.items():
+        if claimed is None or claimed == "" or key in NOT_A_FILTER or key not in vocabulary:
+            continue
+        # An `*Exact` flag reaches the search only when true; `false` is the default.
+        if claimed is False and key.endswith("Exact"):
+            continue
+        if key not in sent:
+            never_sent.append(f"{key}={claimed!r}")
+        elif sent[key] != claimed:
+            differs.append(f"{key}: logged {claimed!r}, sent {sent[key]!r}")
+    return never_sent, differs
+
+
+def record_search_sent(args: Any) -> dict:
+    """`record_search`'s arguments as searched: it fills the missing half of an
+    alternate name before building the query. Mirrors `applyAltNameAutoPair` in
+    packages/engine/mcp-server/src/tools/record-search.ts, which the tool's own
+    refusal calls directly; a Python validator cannot, so this is the one copy."""
+    out = dict(as_mapping(args))
+    if out.get("surnameAlt") and not out.get("givenNameAlt") and out.get("givenName"):
+        out["givenNameAlt"] = out["givenName"]
+    if out.get("givenNameAlt") and not out.get("surnameAlt") and out.get("surname"):
+        out["surnameAlt"] = out["surname"]
+    return out
+
+
+def hashable_key(value: Any) -> str:
+    """A grouping key for any JSON value, so a list-valued field cannot crash a
+    validator that groups by it."""
+    return json.dumps(value, sort_keys=True, default=str)
