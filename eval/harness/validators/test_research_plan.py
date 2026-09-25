@@ -693,8 +693,10 @@ _INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
 # the bare "un-?indexed" forms.
 # ut_research_plan_002, v1_2026-09-24_19-25-44, pli_012: "no indexed name search"
 # ut_research_plan_q7m, v1_2026-09-25_08-29-32, pli_003: "not name-indexed"
+# "not fully indexed" is a PARTIAL-indexing claim (personCount > 0), not a
+# browse-only claim — exclude it with a negative lookahead on "fully".
 _UNINDEXED_RE = re.compile(
-    r"\b(?:un-?indexed|not\s+(?:\w+[\s-])?indexed|no\s+indexed)\b", re.I
+    r"\b(?:un-?indexed|not\s+(?!fully\s)(?:\w+[\s-])?indexed|no\s+indexed)\b", re.I
 )
 _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
 # A browse/unindexed adjective sitting directly on a non-collection noun ("the

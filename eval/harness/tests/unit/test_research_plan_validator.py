@@ -521,6 +521,18 @@ def test_v5_ignores_unindexed_for_this_jurisdiction():
     check_v5(before, after, _SERVED_DK)
 
 
+def test_v5_ignores_not_fully_indexed():
+    # "not fully indexed" is a partial-indexing claim — the collection has some
+    # searchable records (personCount > 0). _UNINDEXED_RE must not match "fully"
+    # as the optional adjective between "not" and "indexed".
+    rationale = (
+        "Collection 2513529 (1880 US Census) is not fully indexed — "
+        "search by name returns personCount 200408 results."
+    )
+    before, after = _states([_item("pli_001", rationale=rationale)])
+    check_v5(before, after, _SERVED_DK)
+
+
 # ===========================================================================
 # Already-attached-FAN-facts validator (issue #1948)
 # ===========================================================================
