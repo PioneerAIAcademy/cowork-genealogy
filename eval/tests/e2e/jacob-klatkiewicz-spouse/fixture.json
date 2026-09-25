@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 22, hint-samples.csv row 677, flag adds_spouse, confidence 3). Draft transcribed from an 1886 Posen Catholic baptismal entry; unverified. The hinted 'new spouse' is almost certainly the recorded wife under a one-letter index error."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 22, hint-samples.csv row 677, flag adds_spouse, confidence 3). RESOLVED 2026-09-24 from issue #2315 as outcome (b), answerable but differently: the hint is a true match to this family, but it documents the son the tree already holds as LDZR-PH7 rather than an additional child, and it corrects his birth from the tree's unsourced '1884, Rumianek' to 30 April 1886 at Rumianek, baptised 2 May at Ceradz. The hinted 'new spouse' Hedvigis Rurek is the recorded wife Hedvirgis Kurek under a one-letter index error, confirmed from the register page; an avoid finding guards against creating her. The index records Ceradz as the place because that is the parish of baptism - the register's Locus Nativitatis column gives Rumianek, matching the tree. No Klatkiewicz baptism appears in the same register for 1884, 1885, or the part of 1883 the volume covers."
 }
