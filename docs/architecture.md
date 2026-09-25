@@ -1303,7 +1303,7 @@ trustworthy rather than merely present:
 | Location | What |
 |---|---|
 | `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it. 24h TTL. |
-| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, party, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
+| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
