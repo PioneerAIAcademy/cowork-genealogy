@@ -19,11 +19,13 @@ skill's own calls carry no `agent_type`, so an undeclared skill call is
 
 Three classes, and the third is the reason this is a report rather than a gate:
 
-- **listed** -- the caller resolves to a shipped agent or skill and some row
-  listing that tool names it: in `callers` or `hookCallers`, or in an
-  `agentCallers` entry that names this tool.
-- **UNLISTED** -- it resolves, and no row listing that tool names it. A manifest
-  gap of exactly the shape #2575 is about, or a grant that should come out.
+- **listed** -- the caller resolves to a shipped agent or skill and the
+  manifest names it on every row the tool reaches for it: in `callers`, in
+  `hookCallers` (for `research_append`), or in an `agentCallers` entry that
+  names this tool.
+- **UNLISTED** -- it resolves, and some row the tool reaches for it does not
+  name it. A manifest gap of exactly the shape #2575 is about, or a grant that
+  should come out.
 - **UNBOUND DELEGATION** -- the `agent_type` is neither a shipped agent nor a
   shipped skill, so it can never be listed in any row -- which is why it is its
   own finding: folding it into the unlisted count would report a manifest gap
@@ -53,7 +55,6 @@ CLI (from eval/harness/):
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from pathlib import Path
 from typing import NamedTuple
@@ -67,7 +68,9 @@ from e2e.runlog_selection import (
     filter_since,
     result_jsons_for,
 )
+from harness.context_policy import _guard
 from harness.ownership import rows
+from harness.ts_consts import ts_string_list
 from harness.workspace import DEFAULT_PLUGIN_AGENTS, DEFAULT_PLUGIN_SKILLS
 
 #: The agent_type the model falls back to when a `@plugin:<agent>` delegation
@@ -75,16 +78,9 @@ from harness.workspace import DEFAULT_PLUGIN_AGENTS, DEFAULT_PLUGIN_SKILLS
 GENERAL_PURPOSE = "general-purpose"
 
 
-#: The engine module that owns the writer-tool vocabulary.
-TOOL_RESULT_TS = DEFAULT_PLUGIN_AGENTS.parents[1] / "mcp-server" / "src" / "tool-result.ts"
-
-
-def _ts_string_list(source: str, name: str) -> list[str]:
-    """The string members of `export const <name> = [...] as const;`."""
-    m = re.search(rf"export const {name} = \[(.*?)\] as const;", source, re.S)
-    if m is None:
-        raise RuntimeError(f"`{name}` not found in {TOOL_RESULT_TS}")
-    return re.findall(r'"([^"]+)"', m.group(1))
+#: The one tool the plugin hook routes by section, and so the one `hookCallers`
+#: permits -- the same reading as `HOOK_ROUTED_TOOL` in the packaging guard.
+HOOK_ROUTED_TOOL = "research_append"
 
 
 def writer_tools() -> set[str]:
@@ -96,34 +92,96 @@ def writer_tools() -> set[str]:
     would then be filtered out here and read as "0 UNLISTED", which is the one
     gap this report exists to surface.
     """
-    source = TOOL_RESULT_TS.read_text(encoding="utf-8")
-    return set(_ts_string_list(source, "OK_FALSE_IS_FAILURE")) - set(
-        _ts_string_list(source, "NOT_A_DOCUMENT_WRITER")
+    return set(ts_string_list("OK_FALSE_IS_FAILURE")) - set(
+        ts_string_list("NOT_A_DOCUMENT_WRITER")
     )
 
 
-def listed_writers() -> dict[str, set[str]]:
-    """`writer tool -> the identifiers some row listing it names as a writer`.
+#: research_append reaches these tree rows only through the research.json
+#: section named -- the same map as `TREE_ROW_VIA` in the packaging guard.
+TREE_ROW_VIA = {"persons": "assertions", "sources": "sources"}
 
-    The same listed set the packaging guard reads. `callers` and `hookCallers`
-    are permission fields, so they count for every writer tool on their row; an
-    `agentCallers` entry (`{agent, tools}`) counts only for the tools it names.
-    Still per tool and unioned across rows, because nothing offline can say which
-    section a given call went to -- so this finds a caller listed for a tool
-    NOWHERE, not a (caller, tool) written on the wrong row.
+
+def _names(row: dict, ident: str, tool: str) -> bool:
+    """Whether `row` names `ident` as a writer of it with `tool`.
+
+    `callers` counts for every writer tool on its row; `hookCallers` for
+    `research_append` only, the one tool the hook routes; an `agentCallers`
+    entry (`{agent, tools}`) for the tools it names.
     """
+    if tool not in (row.get("writerTools") or []):
+        return False
+    if ident in (row.get("callers") or []):
+        return True
+    if tool == HOOK_ROUTED_TOOL and ident in (row.get("hookCallers") or []):
+        return True
+    return any(
+        e["agent"] == ident and tool in e["tools"] for e in row.get("agentCallers") or []
+    )
+
+
+def _reaches(row: dict, ident: str, tool: str) -> bool | None | str:
+    """Whether `ident` can write `row` with `tool`; None when nothing static says.
+
+    `"identity"` when the row's `toolAuthorized` names the tool: it is
+    authorized there for every caller, so the row need name no one for it.
+    Every other writer tool but `research_append` writes the rows its `writerTools`
+    entries name. An agent's `research_append` reaches what the shipped hook
+    leaves it: its lane, minus sections routed to another agent. A skill's is
+    confined by nothing static -- the unit plane checks its rows at run time.
+    """
+    if tool not in (row.get("writerTools") or []):
+        return False
+    if tool in (row.get("toolAuthorized") or []):
+        return "identity"
+    if tool != HOOK_ROUTED_TOOL:
+        return True
+    if not ident.startswith("agent:"):
+        return None
+    agent = ident[len("agent:"):]
+    section = row.get("section")
+    via = section if row.get("artifact") == "research.json" else TREE_ROW_VIA.get(section)
+    if via is None:
+        return False
+    owner = _guard.OWNED_SECTIONS.get(via)
+    if owner is not None and owner != agent:
+        return False
+    return via in _guard.AGENT_WRITABLE_SECTIONS.get(agent, frozenset())
+
+
+def listed_writers() -> dict[str, set[str]]:
+    """`writer tool -> the identifiers the manifest lists for it`, per row.
+
+    The same rule the packaging guard enforces: an identifier is listed for a
+    tool when the manifest names it on EVERY row that tool reaches for it, so a
+    caller named on one row and missing from another it writes is unlisted. A
+    skill's `research_append` reaches rows nothing static decides, so for that
+    pair being named on any row is what counts.
+    """
+    all_rows = rows()
+    tools = {t for r in all_rows for t in r.get("writerTools") or []}
+    idents = {
+        i
+        for r in all_rows
+        for i in [
+            *(r.get("callers") or []),
+            *(r.get("hookCallers") or []),
+            *(e["agent"] for e in r.get("agentCallers") or []),
+        ]
+    }
     out: dict[str, set[str]] = {}
-    for row in rows():
-        row_tools = set(row.get("writerTools") or [])
-        permitted = set(row.get("callers") or []) | set(row.get("hookCallers") or [])
-        for tool in row_tools:
-            out.setdefault(tool, set()).update(permitted)
-        for entry in row.get("agentCallers") or []:
-            # Only a tool the row itself lists, as the packaging guard reads it:
-            # an entry naming one the row does not is a pairing that permits
-            # nothing, and must not make this report disagree with that guard.
-            for tool in set(entry["tools"]) & row_tools:
-                out.setdefault(tool, set()).add(entry["agent"])
+    for tool in tools:
+        for ident in idents:
+            every = [(_names(r, ident, tool), _reaches(r, ident, tool)) for r in all_rows]
+            by_identity = any(v == "identity" for _, v in every)
+            pairs = [(n, v) for n, v in every if v != "identity"]
+            if any(v is None for _, v in pairs):
+                listed = any(n for n, _ in pairs)
+            else:
+                reached = [n for n, v in pairs if v is True]
+                listed = all(reached) and (bool(reached) or by_identity)
+            if listed:
+                out.setdefault(tool, set()).add(ident)
     return out
 
 
@@ -232,9 +290,11 @@ def format_report(pairs: list[Pair], scan_result) -> str:
         "",
     ]
 
-    lines.append(f"UNLISTED -- no ownership row names this writer ({len(by['unlisted'])}):")
+    lines.append(
+        f"UNLISTED -- a row this writer's tool reaches does not name it ({len(by['unlisted'])}):"
+    )
     if not by["unlisted"]:
-        lines.append("  (none) -- every attributed writer is named by a row listing its tool")
+        lines.append("  (none) -- every attributed writer is named on every row its tool reaches")
     for p in by["unlisted"]:
         lines.append(
             f"  {p.identifier} -> {p.tool}: {p.calls} call(s) in {p.runs} run(s)"
@@ -301,14 +361,16 @@ def format_report(pairs: list[Pair], scan_result) -> str:
             "pair can be a write",
             "    that was correctly refused \u2014 check the run before widening a "
             "row to admit it.",
-            "  - Per tool and unioned across rows: this finds a caller listed for a "
-            "writer tool",
-            "    NOWHERE, not a (caller, tool) written on the wrong row. Nothing "
-            "offline can say",
-            "    which section a given call went to. An `agentCallers` entry counts "
-            "only for the",
-            "    tools it names; `callers`/`hookCallers` count for every writer tool "
-            "on their row.",
+            "  - Per row, the packaging guard's rule: a caller is listed for a tool "
+            "only when a row",
+            "    names it on every row that tool reaches for it. A skill's "
+            "`research_append` reaches",
+            "    rows nothing static decides, so for that pair any naming row "
+            "counts. An",
+            "    `agentCallers` entry counts only for the tools it names, "
+            "`hookCallers` for",
+            "    `research_append` only, and `callers` for every writer tool on its "
+            "row.",
         ]
     )
     return "\n".join(lines)

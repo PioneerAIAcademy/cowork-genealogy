@@ -10,8 +10,6 @@ import {
   LOCAL_PREFIX,
   SERVER_PREFIXES,
   bareName,
-  manifest,
-  sanitizeServerSegment,
 } from "./tool-names.js";
 
 // Plugin-agent `tools:` / `disallowedTools:` frontmatter must name every MCP

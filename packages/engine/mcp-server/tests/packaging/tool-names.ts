@@ -80,9 +80,18 @@ const DEVICE_BRIDGE = "mcp__remote-devices";
  */
 export function grantedTools(entry: string, all: readonly string[]): string[] {
   if (!entry.startsWith("mcp__")) return [entry];
-  // Any wildcard is read as everything, a partial one (`…__tree_*`) included:
-  // over-reading a grant fails closed, and under-reading it fails open.
-  if (entry.endsWith("*")) return [...all];
+  if (entry.endsWith("*")) {
+    // A wildcard that can reach this server is read as everything, a partial
+    // one (`…__tree_*`, `mcp__gen*`) included: over-reading fails closed, and
+    // under-reading fails open. One that names another server grants none of
+    // these tools, so it goes through the same strict path as any other entry
+    // under an unrecognized prefix rather than being read as every writer.
+    const head = entry.slice(0, -1);
+    const reaches = [...SERVER_PREFIXES, `${DEVICE_BRIDGE}__`].some(
+      (p) => p.startsWith(head) || head.startsWith(p),
+    );
+    if (reaches) return [...all];
+  }
   const stem = entry.replace(/__$/, "");
   if (stem === DEVICE_BRIDGE) return [...all];
   if (SERVER_PREFIXES.includes(`${stem}__`)) return [...all];

@@ -156,9 +156,7 @@ describe("extractList — entries survive the shapes that reach these lists", ()
     expect(
       extractList(doc('allowed-tools: tree_forget, "Bash(a, b)"  # two'), "allowed-tools"),
     ).toEqual(["tree_forget", "Bash(a, b)"]);
-    expect(() => extractList(doc("tools: [tree_forget"), "tools")).toThrow(
-      "unterminated flow sequence",
-    );
+    expect(() => extractList(doc("tools: [tree_forget"), "tools")).toThrow();
   });
 
   it("skips a null entry rather than returning its comment", () => {
@@ -169,21 +167,50 @@ describe("extractList — entries survive the shapes that reach these lists", ()
     expect(entries).toEqual(["tree_forget"]);
   });
 
-  it("strips only a matching outer pair of quotes", () => {
-    // The over-trim direction. An unpaired or mismatched quote is not a quoted
-    // scalar, and a quote inside an entry belongs to the entry.
-    const entries = extractList(
-      doc(
-        [
-          "tools:",
-          '  - "tree_forget',
-          "  - \"tree_forget'",
-          '  - Bash(echo "x")',
-        ].join("\n"),
+  it("keeps a quote inside a plain entry, and throws on an unpaired one", () => {
+    // The over-trim direction: a quote inside a plain entry belongs to it. An
+    // unpaired leading quote is not an entry at all but malformed YAML, so it
+    // throws rather than returning a string nothing would match.
+    expect(extractList(doc(["tools:", '  - Bash(echo "x")'].join("\n")), "tools")).toEqual([
+      'Bash(echo "x")',
+    ]);
+    expect(() => extractList(doc(["tools:", '  - "tree_forget'].join("\n")), "tools")).toThrow();
+  });
+
+  it("splits the space-delimited and comma forms outside parentheses", () => {
+    // The Agent Skills standard documents `allowed-tools` as space-delimited;
+    // read whole, `tree_forget project_context` matched no tool name and the
+    // grant left both guards.
+    expect(
+      extractList(doc("allowed-tools: tree_forget project_context"), "allowed-tools"),
+    ).toEqual(["tree_forget", "project_context"]);
+    expect(
+      extractList(doc("allowed-tools: Bash(npm run test:*) Read,Grep"), "allowed-tools"),
+    ).toEqual(["Bash(npm run test:*)", "Read", "Grep"]);
+  });
+
+  it("reads a block scalar and a multi-line flow sequence", () => {
+    // `tools: |` once read as the single entry `|`, and a flow sequence
+    // wrapped over two lines threw although it is valid YAML.
+    expect(
+      extractList(
+        doc(["tools: |", "  mcp__genealogy__research_append", "  Read", "name: x"].join("\n")),
+        "tools",
       ),
-      "tools",
+    ).toEqual(["mcp__genealogy__research_append", "Read"]);
+    expect(extractList(doc(["tools: [Read,", "  tree_forget]"].join("\n")), "tools")).toEqual([
+      "Read",
+      "tree_forget",
+    ]);
+  });
+
+  it("throws on a key holding neither a list nor a string", () => {
+    expect(() => extractList(doc(["tools:", "  a: b"].join("\n")), "tools")).toThrow(
+      "expected a list or a string",
     );
-    expect(entries).toEqual(['"tree_forget', "\"tree_forget'", 'Bash(echo "x")']);
+    expect(() => extractList(doc(["tools:", "  - a: b"].join("\n")), "tools")).toThrow(
+      "to be a string",
+    );
   });
 
   it("reads past a leading comment block inside the list", () => {

@@ -247,8 +247,40 @@ def test_an_agent_caller_counts_only_for_the_tools_its_entry_names():
     listed = listed_writers()
     assert "agent:record-extractor" in listed["extraction_append"]
     assert "agent:record-extractor" not in listed["tree_forget"]
-    # A permission field still counts for every writer tool on its row.
+    # `callers` still counts for every writer tool on its row.
     assert "skill:tree-edit" in listed["tree_forget"]
+
+
+def test_a_caller_named_on_one_row_its_tool_reaches_but_not_another_is_unlisted(monkeypatch):
+    # Per row, as the packaging guard reads it: `tree_edit` writes both rows, so
+    # an agent named on only one of them is not listed for it.
+    import e2e.writer_attribution_report as report
+
+    both = {"agent": "agent:person-evidence", "tools": ["tree_edit"]}
+    monkeypatch.setattr(report, "rows", lambda: [
+        {"artifact": "tree.gedcomx.json", "section": "persons", "writerTools": ["tree_edit"],
+         "callers": [], "agentCallers": [both]},
+        {"artifact": "tree.gedcomx.json", "section": "sources", "writerTools": ["tree_edit"],
+         "callers": []},
+    ])
+    assert "agent:person-evidence" not in listed_writers().get("tree_edit", set())
+    monkeypatch.setattr(report, "rows", lambda: [
+        {"artifact": "tree.gedcomx.json", "section": "persons", "writerTools": ["tree_edit"],
+         "callers": [], "agentCallers": [both]},
+        {"artifact": "tree.gedcomx.json", "section": "sources", "writerTools": ["tree_edit"],
+         "callers": [], "agentCallers": [both]},
+    ])
+    assert "agent:person-evidence" in listed_writers()["tree_edit"]
+
+
+def test_a_hook_caller_counts_only_for_research_append():
+    # `agent:person-evidence` is `hookCallers` on research.json#person_evidence,
+    # whose `writerTools` also lists `merge_tree_persons`. The hook routes
+    # `research_append` alone, so the row lists the agent for that tool only —
+    # the same reading as the packaging guard.
+    listed = listed_writers()
+    assert "agent:person-evidence" in listed["research_append"]
+    assert "agent:person-evidence" not in listed["merge_tree_persons"]
 
 
 def test_two_spellings_of_one_agent_are_one_pair(tmp_path: Path):

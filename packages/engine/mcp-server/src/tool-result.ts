@@ -81,7 +81,7 @@ export const NOT_A_DOCUMENT_WRITER = [
   "research_query",
   "project_context",
   "sidecar_read",
-] as const;
+] as const satisfies readonly (typeof OK_FALSE_IS_FAILURE)[number][];
 
 /**
  * Wrap a tool result in the MCP content envelope, setting `isError: true` when

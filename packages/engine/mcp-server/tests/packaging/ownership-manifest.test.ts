@@ -9,12 +9,13 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
 import { NOT_A_DOCUMENT_WRITER, OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
-import { frontmatterBlock, listFromBlock, scalarValue } from "./frontmatter.js";
+import { frontmatterBlock, listFromBlock, parseFrontmatter, scalarValue } from "./frontmatter.js";
+import { HOOK_ROUTED_TOOL, agentWritableSections, researchAppendReaches, wholeSectionOwners } from "./hook-lanes.js";
 import { grantedTools } from "./tool-names.js";
 
 /**
@@ -67,12 +68,18 @@ interface OwnershipRow {
   notes?: string;
   hookCallers?: string[];
   agentCallers?: AgentCaller[];
+  /**
+   * Writer tools the unit plane authorizes on this row by tool identity —
+   * whoever calls them, provided the delta is that tool's own structural write
+   * (`harness/ownership.py:writer_tool_sets`).
+   */
+  toolAuthorized?: string[];
 }
 
 /**
- * An observed non-owner agent writer, paired with the writer tools it writes the
- * row with. The pairing is what stops a row's OTHER writer tools from counting
- * the agent as listed for them too.
+ * A non-owner agent writer, paired with the writer tools it reaches the row
+ * with. The pairing is what stops a row's OTHER writer tools from counting the
+ * agent as listed for them too.
  */
 interface AgentCaller {
   agent: string;
@@ -106,10 +113,11 @@ const key = (r: { artifact: string; section: string }) => `${r.artifact}#${r.sec
  *
  * Adding a tool to `OK_FALSE_IS_FAILURE` therefore forces a decision here —
  * either it writes a project document and needs a manifest row, or it is one of
- * these readers. **That is the floor, and it is one list-membership lower than
- * it looks:** `OK_FALSE_IS_FAILURE`'s own rule is "the call could not do what
- * was asked", not "the tool writes", so a writer that reports failure some other
- * way is invisible to this guard exactly as it is to the manifest.
+ * these readers. A writer that reports failure some other way never enters
+ * `OK_FALSE_IS_FAILURE`, so the vocabulary is also derived from the engine's
+ * code — every tool whose module reaches a document write — and the two are
+ * required to agree ("derives the writer vocabulary from the engine's own
+ * document writes" below).
  *
  * The list lives in `src/tool-result.ts` beside `OK_FALSE_IS_FAILURE`, so the
  * corpus report (`writer_attribution_report.py`) reads the same vocabulary.
@@ -118,6 +126,75 @@ const READERS = new Set<string>(NOT_A_DOCUMENT_WRITER);
 
 /** Every tool the engine ships that writes research.json or tree.gedcomx.json. */
 const WRITER_TOOLS: string[] = OK_FALSE_IS_FAILURE.filter((t) => !READERS.has(t));
+
+const srcRoot = join(mcpRoot, "src");
+
+/** Every `.ts` file under `dir`, recursively. */
+function tsFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? tsFiles(join(dir, e.name)) : e.name.endsWith(".ts") ? [join(dir, e.name)] : [],
+  );
+}
+
+/** The two `project-io.ts` functions every project-document write goes through. */
+const DOCUMENT_WRITE_CALL = /\b(?:atomicWriteJson|atomicWriteBoth)\s*\(/;
+
+/**
+ * `ProjectStore` write methods called outside `src/store/`, by file. Documents
+ * must be written through `project-io.ts`; a store write anywhere else is a path
+ * `DOCUMENT_WRITE_CALL` does not see.
+ */
+const STORE_WRITE_CALL = /\.(?:writeJson|writeJsonBoth|writeBytes|appendText)\s*\(|\.remove\s*\(\s*[A-Za-z_$]/;
+
+/**
+ * Files outside `src/store/` that call a store write method directly, and what
+ * each writes. None of them writes research.json or tree.gedcomx.json.
+ */
+const NON_DOCUMENT_STORE_WRITERS: Readonly<Record<string, string>> = {
+  "utils/project-io.ts": "the document writers themselves (atomicWriteJson, atomicWriteBoth)",
+  "utils/results-staging.ts": "results/ sidecars and their staging files",
+  "utils/image-store.ts": "images/ blobs and their pruning",
+  "tools/rank-search-matches.ts": "the ranker's score log",
+  "tools/research-log-append.ts": "removes the staged result it just logged",
+};
+
+/**
+ * Tool names whose module reaches a project-document write through its imports.
+ * Over-reads by construction — a module that imports a writer counts as one —
+ * which fails closed.
+ */
+async function structuralWriterTools(): Promise<{ tools: string[]; direct: string[] }> {
+  const files = tsFiles(srcRoot);
+  const imports = new Map<string, string[]>();
+  const direct = new Set<string>();
+  for (const f of files) {
+    const text = readFileSync(f, "utf8");
+    const specs = [
+      ...text.matchAll(/(?:import|export)\s[^;]*?\sfrom\s+["'](\.[^"']+)["']/g),
+      ...text.matchAll(/\bimport\(\s*["'](\.[^"']+)["']\s*\)/g),
+    ].map((m) => join(dirname(f), m[1].replace(/\.js$/, ".ts")));
+    imports.set(f, specs);
+    if (DOCUMENT_WRITE_CALL.test(text) && !f.endsWith(join("utils", "project-io.ts"))) direct.add(f);
+  }
+  const reaches = (f: string, seen = new Set<string>()): boolean => {
+    if (direct.has(f)) return true;
+    if (seen.has(f)) return false;
+    seen.add(f);
+    return (imports.get(f) ?? []).some((d) => reaches(d, seen));
+  };
+  const schemas = new Set<unknown>(allToolSchemas);
+  const tools: string[] = [];
+  for (const f of files.filter((f) => f.startsWith(join(srcRoot, "tools")) && reaches(f))) {
+    const mod: Record<string, unknown> = await import(pathToFileURL(f).href);
+    for (const value of Object.values(mod)) {
+      if (schemas.has(value)) tools.push((value as { name: string }).name);
+    }
+  }
+  return {
+    tools: [...new Set(tools)].sort(),
+    direct: [...direct].map((f) => f.slice(srcRoot.length + 1).replace(/\\/g, "/")).sort(),
+  };
+}
 
 interface PluginGrants {
   /** `agent:<name>` / `skill:<name>` → the WRITER tools it is granted. */
@@ -145,11 +222,11 @@ const TOOL_LIST_KEYS = {
  * (`allowedTools:`, `Tools:`, `disallowed_tools:`). The scan reads the exact
  * key only, so a variant reads as "declares none" and passes the guard.
  */
-function misspelledToolKeys(frontmatter: string, allowed: readonly string[]): string[] {
+function misspelledToolKeys(keys: readonly string[], allowed: readonly string[]): string[] {
   const wanted = new Set(["tools", "allowedtools", "disallowedtools"]);
-  return [...frontmatter.matchAll(/^([A-Za-z][A-Za-z0-9_-]*):/gm)]
-    .map((m) => m[1])
-    .filter((k) => wanted.has(k.toLowerCase().replace(/[-_]/g, "")) && !allowed.includes(k));
+  return keys.filter(
+    (k) => wanted.has(k.toLowerCase().replace(/[-_]/g, "")) && !allowed.includes(k),
+  );
 }
 
 /**
@@ -206,20 +283,30 @@ function readPluginGrants(root: string = pluginRoot): PluginGrants {
     blocks.set(holder, block);
     let held: Set<string>;
     let entries: string[];
+    let keys: string[];
     try {
+      keys = Object.keys(parseFrontmatter(block));
       entries = listFromBlock(block, key);
-      held = new Set(entries.flatMap((e) => grantedTools(e, WRITER_TOOLS)).filter((t) => writers.has(t)));
+      // An agent with no `tools:` key inherits every tool the session holds,
+      // so it holds every writer — the broadest grant there is, not none.
+      // A skill with no `allowed-tools:` declares nothing, truthfully.
+      const inherits = kind === "agent" && !keys.includes(key);
+      held = new Set(
+        (inherits ? [...WRITER_TOOLS] : entries.flatMap((e) => grantedTools(e, WRITER_TOOLS))).filter(
+          (t) => writers.has(t),
+        ),
+      );
     } catch (e) {
       problems.push(`${holder}: ${(e as Error).message}`);
       return;
     }
-    for (const k of misspelledToolKeys(block, TOOL_LIST_KEYS[kind])) {
+    for (const k of misspelledToolKeys(keys, TOOL_LIST_KEYS[kind])) {
       misspelledKeys.push(`${holder}: '${k}:'`);
     }
     entriesParsed.set(holder, entries.length);
-    // Read the key's PRESENCE from the frontmatter block only: a body that
-    // happens to contain the string would make every holder look like a declarer.
-    if (new RegExp(`^${key}:`, "m").test(block)) declaresKey.add(holder);
+    // The key's PRESENCE in the parsed frontmatter only: a body that happens to
+    // contain the string would make every holder look like a declarer.
+    if (keys.includes(key)) declaresKey.add(holder);
     if (held.size > 0) byHolder.set(holder, held);
   };
 
@@ -250,20 +337,42 @@ function readPluginGrants(root: string = pluginRoot): PluginGrants {
 const pluginGrants = readPluginGrants();
 
 /**
- * Every identifier some row listing `tool` names as a writer of it.
+ * Whether `row` names `holder` as a writer of it with `tool`.
  *
- * `callers` and `hookCallers` are permission fields and count for every writer
- * tool on their row — that is what they mean. An `agentCallers` entry counts
- * only for the tools it names.
+ * `callers` is a permission field and counts for every writer tool on its row —
+ * that is what it means. `hookCallers` names the agent the plugin hook permits,
+ * and the hook routes `research_append` alone, so it counts for that tool only.
+ * An `agentCallers` entry counts only for the tools it names.
  */
-function listedWriters(tool: string): Set<string> {
-  const out = new Set<string>();
-  for (const r of rows) {
-    if (!r.writerTools.includes(tool)) continue;
-    for (const c of [...r.callers, ...(r.hookCallers ?? [])]) out.add(c);
-    for (const a of r.agentCallers ?? []) if (a.tools.includes(tool)) out.add(a.agent);
-  }
-  return out;
+function listedOn(holder: string, tool: string, row: OwnershipRow): boolean {
+  if (!row.writerTools.includes(tool)) return false;
+  if (row.callers.includes(holder)) return true;
+  if (tool === HOOK_ROUTED_TOOL && (row.hookCallers ?? []).includes(holder)) return true;
+  return (row.agentCallers ?? []).some((a) => a.agent === holder && a.tools.includes(tool));
+}
+
+const hookLanes = agentWritableSections();
+const hookOwners = wholeSectionOwners();
+
+/**
+ * Whether `holder` can write `row` with `tool`, decided from the shipped files.
+ *
+ * A tool the row's `toolAuthorized` names is authorized there for every caller,
+ * so `"identity"`: the row needs to name no holder for it. Every other writer
+ * tool but `research_append` writes the rows its `writerTools` entries name —
+ * the section is the tool's, not the caller's. `research_append` writes the
+ * section its op names: for an agent the hook confines that to its lane and to
+ * sections not routed to another agent; for a skill nothing static confines
+ * it, so `null` — which rows a skill writes with it is the unit plane's runtime
+ * check (`test_ownership_table`), and its `callers` rows are the declaration
+ * that check enforces.
+ */
+function reaches(holder: string, tool: string, row: OwnershipRow): boolean | null | "identity" {
+  if (!row.writerTools.includes(tool)) return false;
+  if ((row.toolAuthorized ?? []).includes(tool)) return "identity";
+  if (tool !== HOOK_ROUTED_TOOL) return true;
+  if (!holder.startsWith("agent:")) return null;
+  return researchAppendReaches(holder.slice("agent:".length), row, hookLanes, hookOwners);
 }
 
 /** Every (artifact, section) pair that must have exactly one row. */
@@ -465,15 +574,21 @@ describe("ownership manifest — every name resolves", () => {
    * guard that derived "actual writers" from the manifest's own `writerTools`
    * would compare the manifest to itself, pass green, and check nothing.
    *
-   * **It is per TOOL and unions across rows.** A holder listed for a writer tool
-   * on any one row is listed for it everywhere, because nothing static can say
-   * which section a grant will be used on. So this catches a holder listed for a
-   * writer tool NOWHERE — not a (holder, tool) written on the wrong row. That
-   * holds for all three fields.
+   * **It is per ROW.** For each (holder, writer tool) the rows the manifest
+   * names the holder on must equal the rows the tool can reach for it. Every
+   * writer tool but `research_append` reaches every row whose `writerTools`
+   * lists it; an agent's `research_append` reaches the rows the plugin hook
+   * leaves it (its lane, minus sections routed to another agent). A skill's
+   * `research_append` is confined by nothing static, so for that pair the
+   * check asks only that some row names it; which rows it writes is the unit
+   * plane's runtime check against `callers`.
    *
-   * What a row lists for a holder differs by field. `callers` and `hookCallers`
-   * are permissions, so they count for every writer tool on the row. An
-   * `agentCallers` entry names its tools, and counts only for those: an agent
+   * What a row lists for a holder differs by field. `callers` is a permission,
+   * so it counts for every writer tool on the row. `hookCallers` is the hook's
+   * permission, and the hook routes `research_append` alone, so it counts for
+   * that tool only: an agent granted `merge_tree_persons` is not listed for it
+   * by a hook row that happens to list it. An `agentCallers` entry names its
+   * tools, and counts only for those: an agent
    * observed writing tree `persons` with `extraction_append` is not thereby
    * listed for the row's seven other tree writers, so a new tree-writer grant to
    * it reds here until the manifest names that tool for it.
@@ -492,7 +607,7 @@ describe("ownership manifest — every name resolves", () => {
     ).toEqual([]);
   });
 
-  it("turns every unreadable plugin file into a problem, and reads a wildcard as every writer", () => {
+  it("turns every unreadable plugin file into a problem, and reads a wildcard or a missing tools: as every writer", () => {
     // Built on a scratch tree, so the breaks can be real without touching the
     // shipped plugin — where a directory named `x.md` would crash other suites
     // at collection before this one could say anything.
@@ -509,6 +624,11 @@ describe("ownership manifest — every name resolves", () => {
         join(root, "agents", "wildcard.md"),
         md("name: wildcard", "tools:", "  - mcp__genealogy__*"),
       );
+      writeFileSync(join(root, "agents", "no-tools-key.md"), md("name: no-tools-key"));
+      writeFileSync(
+        join(root, "agents", "foreign-wildcard.md"),
+        md("name: foreign-wildcard", "tools:", "  - mcp__claude-in-chrome__*"),
+      );
       // No `skills/` directory at all.
       const scan = readPluginGrants(root);
 
@@ -518,6 +638,16 @@ describe("ownership manifest — every name resolves", () => {
       expect([...(scan.byHolder.get("agent:wildcard") ?? [])].sort()).toEqual(
         [...WRITER_TOOLS].sort(),
       );
+      // An agent with no `tools:` inherits every tool, so it holds every writer.
+      expect([...(scan.byHolder.get("agent:no-tools-key") ?? [])].sort()).toEqual(
+        [...WRITER_TOOLS].sort(),
+      );
+      // Another server's wildcard grants none of these tools: it is not read as
+      // every writer, and it fails as an unrecognized prefix like any other entry.
+      expect(scan.byHolder.has("agent:foreign-wildcard")).toBe(false);
+      expect(
+        scan.problems.some((p) => p.startsWith("agent:foreign-wildcard:") && p.includes("no recognized server prefix")),
+      ).toBe(true);
       expect(scalarValue(scan.blocks.get("agent:quoted-name") ?? "", "name")).toBe("quoted-name");
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -572,20 +702,75 @@ describe("ownership manifest — every name resolves", () => {
       "tree_forget",
     );
 
-    const unlisted: string[] = [];
+    const missing: string[] = [];
+    const extra: string[] = [];
     for (const holder of [...pluginGrants.byHolder.keys()].sort()) {
       for (const tool of [...(pluginGrants.byHolder.get(holder) as Set<string>)].sort()) {
-        if (!listedWriters(tool).has(holder)) unlisted.push(`${holder} holds ${tool}`);
+        const reach = rows
+          .map((r) => [r, reaches(holder, tool, r)] as const)
+          .filter(([, v]) => v !== "identity");
+        const listed = reach.filter(([r]) => listedOn(holder, tool, r)).map(([r]) => key(r));
+        if (reach.some(([, v]) => v === null)) {
+          // A skill's research_append: listed somewhere is all a static read can ask.
+          if (listed.length === 0) missing.push(`${holder} holds ${tool}: listed on no row`);
+          continue;
+        }
+        const reachable = reach.filter(([, v]) => v === true).map(([r]) => key(r));
+        for (const k of reachable) if (!listed.includes(k)) missing.push(`${holder} -> ${tool} on ${k}`);
+        for (const k of listed) if (!reachable.includes(k)) extra.push(`${holder} -> ${tool} on ${k}`);
       }
     }
     expect(
-      unlisted,
-      "the plugin grants these writer tools to holders that no row listing the " +
-        "tool names. Either the manifest is missing a writer — a skill goes in " +
-        "`callers`, a non-owner agent in `agentCallers` — or the grant should come " +
-        "out of the frontmatter. Do not close it by dropping the tool from a " +
-        "row's `writerTools`: that widens what the row permits.",
+      missing,
+      "the plugin grants these writer tools, each reaches the row named, and the " +
+        "row does not name the holder for it. Either the manifest is missing a " +
+        "writer — a skill goes in `callers`, a non-owner agent in `agentCallers` " +
+        "with the tool in its `tools` — or the grant should come out of the " +
+        "frontmatter. Do not close it by dropping the tool from a row's " +
+        "`writerTools`: that under-states what the tool writes.",
     ).toEqual([]);
+    expect(
+      extra,
+      "these rows name a holder for a writer tool that cannot reach them — the " +
+        "plugin hook confines the agent's research_append elsewhere. Drop the " +
+        "tool from the entry, or give the agent's lane the section.",
+    ).toEqual([]);
+  });
+
+  it("derives the writer vocabulary from the engine's own document writes", async () => {
+    // `OK_FALSE_IS_FAILURE` minus `NOT_A_DOCUMENT_WRITER` is the vocabulary
+    // every check here reads, and it rests on a rule about failure reporting,
+    // not about writing. This reads writing directly: every tool whose module
+    // reaches an `atomicWriteJson` / `atomicWriteBoth` call through its imports.
+    const { tools, direct } = await structuralWriterTools();
+    expect(direct.length, "found no module that calls a document writer").toBeGreaterThan(0);
+    expect(
+      tools,
+      "the tools whose code writes a project document and the writer-tool " +
+        "vocabulary disagree. A tool here and not in OK_FALSE_IS_FAILURE is a " +
+        "writer this guard cannot see; a tool there and not here writes nothing " +
+        "and belongs in NOT_A_DOCUMENT_WRITER (both in src/tool-result.ts).",
+    ).toEqual([...WRITER_TOOLS].sort());
+  });
+
+  it("writes project state only through the known write paths", () => {
+    // The vocabulary above sees document writes made through project-io.ts. A
+    // store write anywhere else is a write path it does not see, so each one
+    // outside src/store/ has to be named here with what it writes.
+    const found: string[] = [];
+    for (const f of tsFiles(srcRoot)) {
+      const rel = f.slice(srcRoot.length + 1).replace(/\\/g, "/");
+      if (rel.startsWith("store/")) continue;
+      if (STORE_WRITE_CALL.test(readFileSync(f, "utf8"))) found.push(rel);
+    }
+    expect(found.length, "found no store write outside src/store/").toBeGreaterThan(0);
+    expect(
+      found.sort(),
+      "a file outside src/store/ calls a ProjectStore write method. Route a " +
+        "research.json or tree.gedcomx.json write through atomicWriteJson / " +
+        "atomicWriteBoth in utils/project-io.ts; add any other write to " +
+        "NON_DOCUMENT_STORE_WRITERS with what it writes.",
+    ).toEqual(Object.keys(NON_DOCUMENT_STORE_WRITERS).sort());
   });
 
   it("names each agent the same way on both sides of the manifest", () => {
@@ -639,6 +824,23 @@ describe("ownership manifest — every name resolves", () => {
       "each `agentCallers` entry must name at least one writer tool, and only " +
         "tools its row lists and the agent's `tools:` still grants",
     ).toEqual([]);
+  });
+
+  it("authorizes by tool identity only tools the row lists", () => {
+    // `toolAuthorized` exempts every holder of the tool from needing a caller
+    // entry on the row, so a tool there that the row does not list as a writer
+    // would exempt a write the row never declared.
+    const bad: string[] = [];
+    for (const r of rows) {
+      for (const t of r.toolAuthorized ?? []) {
+        if (!r.writerTools.includes(t)) bad.push(`${key(r)}: toolAuthorized '${t}' is not in writerTools`);
+      }
+    }
+    expect(bad).toEqual([]);
+    expect(
+      rows.some((r) => (r.toolAuthorized ?? []).length > 0),
+      "no row declares toolAuthorized — the unit plane's tool-identity paths read nothing",
+    ).toBe(true);
   });
 
   it("lists a non-null owner among its own callers", () => {

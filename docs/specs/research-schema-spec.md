@@ -287,38 +287,55 @@ spellings and called it a dozen times across the committed e2e corpus while
 appearing in no row — for as long as that was true, no check could see it.
 
 `ownership-manifest.test.ts` now runs both directions. The second one reads each
-agent's `tools:` and each skill's `allowed-tools:` frontmatter and requires that
-every holder of a writer tool be named by some row listing that tool. Its
-writer-tool vocabulary comes from the engine (`OK_FALSE_IS_FAILURE` in
-`src/tool-result.ts`, minus a named set of readers), never from the manifest's
-own `writerTools` — a guard that took both sides from the manifest would compare
-it to itself and pass green.
+agent's `tools:` and each skill's `allowed-tools:` frontmatter — parsed as YAML,
+with a string value split on commas and whitespace — and requires the manifest to
+name every holder of a writer tool on every row that tool reaches for it. An
+agent with no `tools:` key inherits every tool, so it is read as holding every
+writer. Its writer-tool vocabulary comes from the engine, never from the
+manifest's own `writerTools` — a guard that took both sides from the manifest
+would compare it to itself and pass green. It is `OK_FALSE_IS_FAILURE` in
+`src/tool-result.ts` minus `NOT_A_DOCUMENT_WRITER`, and a second test requires
+that list to equal the tools whose code writes a document: every tool module
+that reaches an `atomicWriteJson` / `atomicWriteBoth` call through its imports.
+A third fails any `ProjectStore` write made outside `src/store/` and the named
+non-document write sites, so no document write can bypass those two functions.
 
-**The check is per tool and unions across rows.** A holder listed for a writer
-tool on any one row counts as listed for it everywhere, because nothing static
-can say which section a given grant will be used on. So it catches a holder
-listed for a writer tool *nowhere*; it does not catch a (holder, tool) written on
-the wrong row. That holds for all three fields.
+**The check is per row.** For each (holder, writer tool), the rows the manifest
+names the holder on must equal the rows the tool reaches:
 
-**What a row lists for a holder differs by field.** `callers` and `hookCallers`
-are permissions, so a name there counts for every writer tool on its row. An
-`agentCallers` entry is `{"agent": …, "tools": […]}` and counts only for the
-tools it names: the writer tools that agent is observed or intended to write the
-row with. Those are always a **subset** of the agent's writer grants intersected
-with the row's `writerTools`, minus any tool the plugin hook forbids that agent
-on that row — the subset is what the tests enforce, not completeness. An agent
-the hook gives no lane (`search-images`, `gps-mentor`) can reach more sections
-with `research_append` than any entry records.
-For `research_append` that means: a research.json row only inside the agent's
-`AGENT_WRITABLE_SECTIONS` lane, and a tree row only through the one section that
-writes it — tree `persons` via an `assertions` update, tree `sources` via a
-`sources` append (`plugin-hooks.test.ts` fails an entry outside that).
-`record-extractor` on tree `persons` is paired with
-`extraction_append` alone, so the seven other tree writers that row lists do not
-make it count as listed for them: grant it a new tree writer and the guard reds
-until the manifest names that tool for it. A second test fails an entry that
-names no tool, a tool its row does not list, or one the agent is no longer
-granted.
+- A tool a row's `toolAuthorized` names is authorized there by tool identity,
+  for every caller, so the row names no holder for it: `merge_tree_persons` on
+  the research.json rows it repoints ids in, and `research_append` /
+  `extraction_append` on tree `persons`, which they reach only through the
+  assertion-backlink fact rewrite. The unit plane reads the same field
+  (`harness/ownership.py:writer_tool_sets`) and still requires the delta to be
+  that tool's own write. Widening `callers` instead would grant the section by
+  any path, which is why these writers are not callers.
+- Every other writer tool but `research_append` writes the sections it writes
+  whoever calls it, so it reaches every row whose `writerTools` lists it.
+- An agent's `research_append` reaches the rows the plugin hook leaves it: its
+  `AGENT_WRITABLE_SECTIONS` lane, minus any section `OWNED_SECTIONS` routes to
+  another agent, and a tree row only through the one section that writes it —
+  tree `persons` via an `assertions` update, tree `sources` via a `sources`
+  append. Every agent granted `research_append` must have a lane
+  (`plugin-hooks.test.ts`), so this is always decidable.
+- A skill's `research_append` is confined by nothing static — the op names the
+  section, and the hook does not lane the main thread. For that pair the check
+  asks only that some row names the skill; which sections it writes is enforced
+  at run time by the unit plane, against exactly these `callers` rows.
+
+**What a row lists for a holder differs by field.** `callers` is a permission,
+so a name there counts for every writer tool on its row. `hookCallers` is the
+hook's permission, and the hook routes `research_append` alone, so a name there
+counts for that tool only — a hook row that also lists `merge_tree_persons` does
+not list its agent for it. An `agentCallers` entry is
+`{"agent": …, "tools": […]}` and counts only for the tools it names: the writer
+tools that agent reaches the row with. `record-extractor` on tree `persons` is
+paired with `extraction_append` alone, so the seven other tree writers that row
+lists do not make it count as listed for them: grant it a new tree writer and the
+guard reds until the manifest names that tool for it on every row it reaches. A
+second test fails an entry that names no tool, a tool its row does not list, or
+one the agent is no longer granted.
 
 **The skill half reads the declared grant.** `allowed-tools:` is a grant, not a
 restriction, so a skill body calling a tool it never declared is invisible to any
@@ -332,7 +349,13 @@ rule with no exceptions:
 |---|---|---|
 | `callers` | who **may** write the row: every permitted skill, plus the row's own owner when that owner is an agent | the unit plane (`harness/ownership.py`'s `writer_sets`), the writer tables above, the actual-writer direction (`ownership-manifest.test.ts`), `plugin-hooks.test.ts`, and `make e2e-writer-attribution` |
 | `hookCallers` | the agent the plugin `PreToolUse` hook permits, on a row claiming the `hook` plane | `plugin-hooks.test.ts`, which pins it against the hook's hardcoded map; the actual-writer direction; `make e2e-writer-attribution` |
-| `agentCallers` | the non-owner **agents** that write the row, each paired with the writer tools it writes the row with | the actual-writer direction, `plugin-hooks.test.ts` (against the hook's lanes), and `make e2e-writer-attribution` — never as a permission |
+| `agentCallers` | the non-owner **agents** that write the row, each paired with the writer tools it reaches the row with | the actual-writer direction, `plugin-hooks.test.ts` (against the hook's lanes), and `make e2e-writer-attribution` — never as a permission |
+
+A fourth field, `toolAuthorized`, names no caller: it lists the writer tools a
+row authorizes by tool identity, for whoever calls them. The unit plane reads it
+(`writer_tool_sets`, then checks the delta is the tool's own write), and the
+actual-writer direction and `make e2e-writer-attribution` read it to skip that
+(holder, tool) pair on that row.
 
 A non-owner agent therefore never goes in `callers`. On a row claiming the unit
 plane it cannot: that plane keys on the calling skill's `SKILL.md` frontmatter
@@ -374,7 +397,7 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 |---------|-----------|---------|---------------|
 | `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
 | `relationships` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs. **person-evidence is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description |
+| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
