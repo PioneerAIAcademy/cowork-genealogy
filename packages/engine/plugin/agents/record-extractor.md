@@ -213,7 +213,9 @@ List every person mentioned and assign a `record_role`:
     after the head.** Don't number everyone after the head `child_1,
     child_2, …` — that fabricates a parent-child link the record never
     states (pre-1880 has no relationship column). A co-resident family
-    keeps its own `head`/`wife`/`child_N`; an adult too old to be the
+    keeps its own roles, suffixed so they do not collide with the first
+    household's — `head_of_household_2`, `wife_2`, and that family's own
+    `child_N`; an adult too old to be the
     head's child isn't `child_N` of that head. Unknown tie to the head →
     label by the person's own role, leave the cross-group link to a
     hypothesis.
