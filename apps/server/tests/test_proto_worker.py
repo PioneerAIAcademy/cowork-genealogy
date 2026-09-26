@@ -793,13 +793,13 @@ def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_
     assert "UNRELATED" not in env and "ANTHROPIC_API_KEY" not in env
 
 
-@pytest.mark.skipif(not POSIX_MODES, reason="Windows has no POSIX file modes")
 def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
     path = tmp_path / "mcp.json"
     path.write_text("{}", encoding="utf-8")
     path.chmod(0o644)
     assert options.write_mcp_config(str(tmp_path), {"genealogy": {"type": "stdio"}}) == str(path)
-    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    if POSIX_MODES:
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "stdio"}}}
 
 
