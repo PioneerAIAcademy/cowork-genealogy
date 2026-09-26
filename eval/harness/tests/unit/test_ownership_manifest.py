@@ -108,7 +108,26 @@ NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 # `sources` is UNCHANGED at {"record-extraction", "citation"}. The conversion
 # moved how the caller is spelled, not who may write, and this test is what
 # says so.
-SUBJECT = "citation"
+#: Every agent that is both a unit-suite subject and an `agent:` caller in the
+#: manifest. `writer_sets` reads an `agent:` caller ONLY when it is the subject
+#: (ownership.py's agent rule), so no single vantage point can see the whole
+#: manifest any more: from `citation` the `proof-conclusion` rows resolve to
+#: nobody, and vice versa. The union over every subject is the manifest as the
+#: unit plane actually enforces it, one suite at a time.
+#:
+#: The frozen tables below stay unchanged across a conversion, and that is the
+#: point: it proves the conversion moved how a caller is SPELLED, not who may
+#: write. Editing a frozen table to drop a converted skill is the wrong fix --
+#: it makes this free suite green and the paid run red.
+SUBJECTS = ("citation", "proof-conclusion")
+
+
+def _union_writer_sets(artifact: str) -> dict[str, set[str]]:
+    merged: dict[str, set[str]] = {}
+    for subject in SUBJECTS:
+        for section, writers in writer_sets(artifact, UNIT_PLANE, subject=subject).items():
+            merged.setdefault(section, set()).update(writers)
+    return merged
 
 
 #: tree `persons` and `relationships` gain `forget-and-rederive`. It holds
@@ -148,7 +167,7 @@ def expected_research_owners() -> dict[str, set[str]]:
 
 
 def test_research_owners_match_the_frozen_tables():
-    assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT) == expected_research_owners()
+    assert _union_writer_sets(RESEARCH_JSON) == expected_research_owners()
 
 
 def test_tree_owners_match_the_frozen_table():
@@ -163,7 +182,7 @@ def test_the_only_newly_enforced_section_is_localities():
     added to an existing one are different decisions with different costs.
     """
     before = set(FROZEN_OWNERSHIP_TABLE) - NEWLY_ENFORCED
-    after = set(writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT))
+    after = set(_union_writer_sets(RESEARCH_JSON))
     assert after - before == NEWLY_ENFORCED
     assert before - after == set()
 
@@ -177,7 +196,7 @@ def test_no_owner_was_dropped_except_the_declared_one():
     the check — so the drop side gets its own named assertion and its own
     allow-list, which is a place a reviewer can look.
     """
-    actual = writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=SUBJECT)
+    actual = _union_writer_sets(RESEARCH_JSON)
     dropped = {
         section: sorted((frozen - actual.get(section, set())) - NARROWED.get(section, set()))
         for section, frozen in FROZEN_OWNERSHIP_TABLE.items()

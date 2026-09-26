@@ -419,13 +419,32 @@ const pluginGrants = readPluginGrants();
  * Whether `row` names `holder` as a writer of it with `tool`.
  *
  * `callers` is a permission field and counts for every writer tool on its row —
- * that is what it means. `hookCallers` names the agent the plugin hook permits,
- * and the hook routes `research_append` alone, so it counts for that tool only.
- * An `agentCallers` entry counts only for the tools it names.
+ * that is what it means for a SKILL. `hookCallers` names the agent the plugin
+ * hook permits, and the hook routes `research_append` alone, so it counts for
+ * that tool only. An `agentCallers` entry counts only for the tools it names.
+ *
+ * **An `agent:` caller is tool-scoped, and has to be (issue #2822).** A
+ * converted skill's agent must appear in `callers`, because `writer_sets`
+ * (`harness/ownership.py`) reads that field and no other, so the unit plane
+ * cannot authorize the agent's writes on its own suite otherwise. But unlike a
+ * skill, an agent's lane is statically known: the plugin hook confines each
+ * agent's `research_append` to `AGENT_WRITABLE_SECTIONS`, so reading its
+ * `callers` entry as a claim on EVERY `writerTools` entry over-states it.
+ * `proof-conclusion` is the worked case: it writes tree `sources` with
+ * `tree_edit`/`tree_correct` and cannot reach it with `research_append` at all.
+ *
+ * A skill stays whole-row because the opposite is true of it — `reaches` cannot
+ * resolve a skill's `research_append` statically, so a per-tool reading there
+ * would assert something this file cannot see.
  */
 function listedOn(holder: string, tool: string, row: OwnershipRow): boolean {
   if (!row.writerTools.includes(tool)) return false;
-  if (row.callers.includes(holder)) return true;
+  if (row.callers.includes(holder)) {
+    if (!holder.startsWith("agent:") || holder === row.owner) return true;
+    // Tool-scoped: the agent's own `agentCallers` entry says which tools it
+    // actually reaches this row with. Absent an entry, it claims none.
+    return (row.agentCallers ?? []).some((a) => a.agent === holder && a.tools.includes(tool));
+  }
   if (tool === HOOK_ROUTED_TOOL && (row.hookCallers ?? []).includes(holder)) return true;
   return (row.agentCallers ?? []).some((a) => a.agent === holder && a.tools.includes(tool));
 }
