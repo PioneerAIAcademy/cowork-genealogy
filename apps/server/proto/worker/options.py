@@ -161,6 +161,9 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         return None, {
             "ANTHROPIC_BASE_URL": base_url,
             "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
+            # Blank, not absent: the CLI inherits the worker's environment, and an
+            # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
+            "ANTHROPIC_API_KEY": "",
             "ANTHROPIC_MODEL": GATEWAY_MODEL,
             "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
             # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on

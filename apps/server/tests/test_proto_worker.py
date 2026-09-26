@@ -861,7 +861,8 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.model is None
     assert opts.env["ANTHROPIC_BASE_URL"] == "http://gw.example/bedrock"
     assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
-    assert "ANTHROPIC_API_KEY" not in opts.env and "CLAUDE_CODE_USE_BEDROCK" not in opts.env
+    assert opts.env["ANTHROPIC_API_KEY"] == "", "blanked, or the inherited Anthropic key rides to the gateway"
+    assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window, as on Bedrock"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
