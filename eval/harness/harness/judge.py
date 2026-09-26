@@ -715,7 +715,14 @@ def _extract_dimensions(
         raise JudgeError(f"unexpected tool_use name: {tu.name}")
     dims = tu.input.get("dimensions", [])
     if not isinstance(dims, list):
-        raise JudgeError("submit_grading.dimensions is not a list")
+        # Carry the shape into the message: this survives all three resamples
+        # when the mistake is prompt-correlated, and the run log records only
+        # the error string — so without this the next occurrence is as
+        # undiagnosable as the one on 2026-09-25 was.
+        raise JudgeError(
+            f"submit_grading.dimensions is not a list "
+            f"(got {type(dims).__name__}): {str(dims)[:300]}"
+        )
 
     # Project each dimension to the known field set. The grading-tool schema
     # is additionalProperties:False, but that is NOT enforced on tool_use

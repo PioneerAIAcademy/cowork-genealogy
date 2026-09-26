@@ -213,7 +213,9 @@ List every person mentioned and assign a `record_role`:
     after the head.** Don't number everyone after the head `child_1,
     child_2, …` — that fabricates a parent-child link the record never
     states (pre-1880 has no relationship column). A co-resident family
-    keeps its own `head`/`wife`/`child_N`; an adult too old to be the
+    keeps its own roles, suffixed so they do not collide with the first
+    household's — `head_of_household_2`, `wife_2`, and that family's own
+    `child_N`; an adult too old to be the
     head's child isn't `child_N` of that head. Unknown tie to the head →
     label by the person's own role, leave the cross-group link to a
     hypothesis.
@@ -740,7 +742,7 @@ misreadings to avoid, in both directions:
   cover: a birth date or year you computed from the stated age is
   `inferred` however central the subject is.
 
-**Evidence independence (GPS Standard 4):** when two or more assertions
+**Evidence independence (GPS Standard 46):** when two or more assertions
 share the SAME informant — even across different sources — they form one
 evidence unit worth no more than the strongest single item (the same
 son-in-law on a death certificate and a pension affidavit; an index and

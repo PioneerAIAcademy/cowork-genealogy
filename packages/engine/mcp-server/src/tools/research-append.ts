@@ -2462,7 +2462,8 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
  *  be absent from among the living). Neither message may prescribe an edit
  *  another arm refuses: an earlier draft told the caller to flip
  *  `record_basis` to "stated", which the converse role arm then rejected. In
- *  `eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`
+ *  record-extraction run `v1_2026-09-11_18-49-21` (rotated out of the tree by
+ *  the keep-newest-5 prune; recover it from git history)
  *  (`ut_record_extraction_028`) the role arm refused two blank-field negatives;
  *  the agent's very next call re-sent the same two defects with `record_role`
  *  flipped to `"absent"` and they were accepted. A message that names one field

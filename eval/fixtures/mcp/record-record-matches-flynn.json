@@ -16,7 +16,14 @@
       },
       "status": {
         "type": "array",
-        "items": { "type": "string", "enum": ["accepted", "pending", "rejected"] },
+        "items": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "pending",
+            "rejected"
+          ]
+        },
         "description": "Which resolution statuses to return. Default is all three. The upstream API silently defaults to \"pending\" only when omitted — this tool overrides that to \"all\" for a more useful default."
       },
       "includeSummary": {
@@ -30,9 +37,13 @@
         "description": "Max number of matches to return (1..50). Default 20."
       }
     },
-    "required": ["id"]
+    "required": [
+      "id"
+    ]
   },
-  "args": { "id": "MXHY-TP4" },
+  "args": {
+    "id": "~MXHY-TP4"
+  },
   "response": {
     "queryArk": "ark:/61903/1:1:MXHY-TP4",
     "resultCount": 2,

@@ -190,6 +190,13 @@ score no tool had computed. When a record poses an identity question,
 describe the question neutrally and let the agent surface it in its
 return summary; the linking happens later, in person-evidence.
 
+**Never instruct the agent to extract a relationship the record does not
+state** — "including relationships implied by household co-residence",
+"record the indexed ParentChild as inferred". A pre-1880 census states
+none, and a delegation that ordered one produced exactly the fabrication
+the agent's own rule forbids. Pass the household as the record presents
+it; the agent applies the relationship rules.
+
 One record per invocation; several records = several invocations, each
 carrying its own content. The agent extracts every assertion (including
 relationship-type assertions), writes the source + assertions in one
@@ -215,8 +222,8 @@ nothing. If the date is early enough that the question arises, ask.
 
 You hold the record content and the place at this point; the agent does
 not, and cannot get it — `record-extractor` grants neither `Skill` nor
-`Task`, and agents cannot nest — so a calendar question you do not
-resolve here is recorded as written and never revisited.
+`Task` — so a calendar question you do not resolve here is recorded as
+written and never revisited.
 
 What this prevents is a wrong **year**, not a wrong day. A January,
 February or March date in an English colony before 1752 sits inside the
@@ -243,16 +250,22 @@ re-classify inline in this context.
 ## Present and continue
 
 Print to the user exactly the text after the final `---` in the agent's
-return — its two closing paragraphs — verbatim, with no label, heading or
-preamble of your own. Nothing above that line reaches the user: the source
-id, assertion counts and flags are for you. Do not re-print per-assertion
-detail; it is already persisted.
+return — its two closing paragraphs — verbatim. Add nothing after them:
+your reply for this record ends with the agent's second paragraph.
+Everything above that line is yours to act on and must not appear in your
+reply, in any wording: no identifier of any kind — for a source,
+assertion, question, log, tree person or anything else — and no counts,
+tables, tool names or skill names. If you are weighing whether something
+is an identifier, it is. The "N of M" announcement opens the next
+record's cycle rather than extending this one, so this rule does not
+reach it.
 
 Then **keep going in the same turn**: if more records are queued,
 delegate the next one now; if this was the last record, hand off to
-person-evidence or return to the orchestrator that invoked you.
-Presenting a summary and yielding with records still unextracted is a
-failure — the summary is a progress marker, not a stopping point.
+person-evidence or return to the orchestrator that invoked you. Routing
+and hand-off are acts, never text you print. Yielding with records still
+unextracted is a failure — a relayed record is a progress marker, not a
+stopping point.
 
 **Exception — a `record-extractor` spawn failure:** report it and stop;
 do not extract the record yourself or retry another way. This rule assumes
@@ -262,15 +275,15 @@ record is not a reason to keep going.
 ## Tool availability
 
 **If `record_read`, `volume_search`, or `research_log_append` are not
-immediately available** (e.g., shown as deferred), call ToolSearch first.
-**Search by bare tool name, never by a fully-qualified `select:` list** —
-the MCP server prefix differs per deployment, and there are three of them,
-so a hardcoded qualified name resolves to nothing in some environments.
-Use one keyword search per tool, e.g. `query: "+record_read"`, which
-matches whatever prefix this session actually exposes. **Never fall
-back to writing `research.json` or `tree.gedcomx.json` directly** —
-direct writes bypass schema validation, id allocation, and the `.bak`
-safety net; persistence belongs to the record-extractor agent's tools.
+immediately available** (e.g., shown as deferred), call ToolSearch with a
+bare-name query, one tool per call — `query: "+record_read"`. **Never a
+fully-qualified `select:` query** — one naming an `mcp__` prefix — **and
+never batch tools into one `select:` list**: the server prefix differs per
+deployment, so a qualified name resolves to nothing in Cowork. If
+`record_read` still does not resolve and the record content is already in
+hand, use it rather than searching again.
+**Never fall back to writing `research.json` or `tree.gedcomx.json`
+directly** — persistence belongs to the record-extractor agent's tools.
 
 ## What this skill does not do
 
