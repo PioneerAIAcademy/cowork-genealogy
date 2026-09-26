@@ -87,7 +87,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
   const runLogId = id.join('/');
-  const raw = await req.json();
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'invalid_correction', message: 'Request body is not valid JSON.' },
+      { status: 400 },
+    );
+  }
   const parsed = correctionSchema.safeParse(raw);
   if (!parsed.success) {
     const issues = parsed.error.issues
