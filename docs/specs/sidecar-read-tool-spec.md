@@ -286,12 +286,14 @@ the §6 classification is unchanged.
 
 ## 10. Fixture note
 
-No e2e scenario under `eval/fixtures/scenarios/` ships an `evaluations/` or
-`uploads/` directory. On a fixture whose `research.json` carries a
-pre-existing `evaluations[]` entry, `sidecar_read` on its `file_path` returns
-`not_found`, and the mentor's "a missing body counts as not craft" branch is
-what runs. That is the correct answer for the fixture, not a defect: the
-entry's body was never authored.
+One scenario ships an `evaluations/` directory — `flynn-prior-craft-verdict`,
+whose `evaluations[0]` has its verdict body on disk — and `build_workspace`
+stages `evaluations/` and `uploads/` into the unit workspace alongside
+`results/`. Elsewhere in the corpus a `research.json` may carry a pre-existing
+`evaluations[]` entry whose body was never authored; there `sidecar_read` on
+its `file_path` returns `not_found`, and the mentor's "a missing body counts
+as not craft" branch is what runs. That is the correct answer for such a
+fixture, not a defect.
 
 ## 11. Sites
 
