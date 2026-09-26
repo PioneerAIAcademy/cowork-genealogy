@@ -77,14 +77,17 @@ def skill_name(identifier: str) -> str | None:
 
 
 def writer_tool_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[str]]:
-    """`section -> permitted writer TOOL names`, for the rows `plane` can enforce.
+    """`section -> writer TOOLS authorized by tool identity`, for the rows `plane` can enforce.
 
-    The companion to `writer_sets`, which answers "which skill may cause this
-    write". This answers "which tool may perform it", and the two are separate
-    authorizations because some writes are safe *whoever* asks for them: a tool
-    that can only permute person ids cannot assert a `match_score`, rewrite an
-    objective, or regenerate a timeline, so the guarantee the `callers` list
-    protects survives granting it broadly.
+    Read from each row's `toolAuthorized`. The companion to `writer_sets`, which
+    answers "which skill may cause this write". This answers "which tool may
+    perform it", and the two are separate authorizations because some writes are
+    safe *whoever* asks for them: a tool that can only permute person ids cannot
+    assert a `match_score`, rewrite an objective, or regenerate a timeline, so
+    the guarantee the `callers` list protects survives granting it broadly. The
+    validator still checks the delta is that tool's own write. The packaging
+    guard (`ownership-manifest.test.ts`) reads the same field, so a holder of a
+    tool on a row that authorizes it here needs no caller entry there.
 
     The manifest already uses that reasoning one row over — `person_evidence`'s
     `requires` records that the record-extraction lane is held off the section
@@ -98,7 +101,7 @@ def writer_tool_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[st
     for row in rows(artifact):
         if plane not in (row.get("enforceableAt") or []):
             continue
-        sets[row["section"]] = set(row.get("writerTools") or [])
+        sets[row["section"]] = set(row.get("toolAuthorized") or [])
     return sets
 
 

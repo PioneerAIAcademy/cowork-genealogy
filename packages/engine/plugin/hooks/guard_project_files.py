@@ -168,6 +168,15 @@ AGENT_WRITABLE_SECTIONS = {
     # candidate -- is cleared by record-extraction or conflict-resolution, not
     # by this agent editing those sections itself.
     "person-evidence": frozenset({"person_evidence"}),
+    # gps-mentor appends its verdict to `evaluations` and writes nothing else in
+    # research.json; its description says so and every corpus write is there.
+    "gps-mentor": frozenset({"evaluations"}),
+    # search-images updates the status of the plan item a browse executed. Its
+    # browse log goes through research_log_append, which carries no `section`.
+    "search-images": frozenset({"plan_items"}),
+    # citation refines `citation` / `citation_detail` on source entries that
+    # already exist, and writes nothing else in research.json.
+    "citation": frozenset({"sources"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
