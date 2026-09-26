@@ -1,9 +1,9 @@
 # FamilySearch quality issues vs. `person_warnings` — coverage table
 
-**Measured 2026-09-26 against `main` at `d4ee13393`.** Step 2 of issue #2225: every
+**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row.** Step 2 of issue #2225: every
 FamilySearch quality `issueType` set against the `person_warnings` tag catalogue, so
-the uncovered set is counted rather than asserted. Step 3 adds checks only for what
-this table leaves uncovered. The tally is under "The count" below.
+the uncovered set is counted rather than asserted. Step 3 was to add checks only for what
+this table leaves uncovered; it was ruled none (§ Step 3: ruled none). The tally is under "The count" below.
 
 ## What was compared
 
@@ -166,27 +166,20 @@ The 12 partials are mostly **threshold** differences: ours fires at an extreme, 
 FamilySearch compares against a norm it does not publish. Four of the partials are
 marked unsure.
 
-## The question before step 3
+## Step 3: ruled none
 
-Issue #2225 step 3 says to add checks only for what this table leaves uncovered,
-because a hand-rolled check that duplicates a FamilySearch category puts two answers to
-one question in front of the researcher. That warning applies to the 6 conditions too.
-For any person linked to FamilySearch, `person_quality` already reports them, so check-warnings, which
-calls both tools, would show `DELAYED_BURIAL` and a new local burial check side by side.
-A local check only adds something for a person with **no** FamilySearch link. Since
-#2727, that is the only case where `person_quality` has nothing to say.
+**Ruling (Promise, 2026-09-26): add no checks.** For any person linked to FamilySearch,
+`person_quality` already reports all 6 conditions, and check-warnings calls it beside
+`person_warnings`. A local copy would add something only for a person with no
+FamilySearch link. For everyone else it would put two answers to one question in front
+of the researcher, which step 3 of #2225 warns against. So step 3 of #2225 is "none",
+and this table closes the issue.
 
-So step 3 has three honest outcomes, and choosing between them is a lead and genealogist
-call, not a measurement:
-
-- **None.** The link-less case is served by the project tree's own research, and every
-  linked person already gets these from FamilySearch.
-- **Some, reported only when `person_quality` cannot run.** Conditions 1, 4, 5 and 6 are
-  contradictions of the kind check-warnings exists for.
-- **Some, always.** This accepts the two-answer risk.
-
-Condition 3 is the least clear-cut either way. A birth before the parents' marriage is
-common and frequently true, and `warning-checks.md` excludes it on purpose.
+What that leaves: a person with no FamilySearch link gets none of the 6 conditions. If
+that case turns out to matter, the narrowest design is to report them only when
+`person_quality` cannot score the person, and only conditions 1, 4, 5 and 6. Condition 3,
+a birth before the parents' marriage, is common and frequently true, and
+`warning-checks.md` excludes it on purpose.
 
 ## The reverse direction: `person_warnings` checks with no FamilySearch counterpart
 
@@ -209,7 +202,7 @@ Context, not gaps. None of these appears among the 58 templates:
 
 Both are in `packages/engine/plugin/skills/check-warnings/references/warning-checks.md`.
 That file is inside check-warnings' run-log snapshot, so correcting it buys a paid run.
-It belongs with step 3's run rather than a run of its own.
+With step 3 ruled none, it rides with check-warnings' next scheduled run.
 
 - **Its "NOT currently checked" list names child spacing** ("two children born less than
   9 months apart"), but `hasCloseChildBirthsIgnoreSimilarChildren` checks exactly that, at
