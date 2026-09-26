@@ -296,7 +296,9 @@ manifest's own `writerTools` — a guard that took both sides from the manifest
 would compare it to itself and pass green. It is `OK_FALSE_IS_FAILURE` in
 `src/tool-result.ts` minus `NOT_A_DOCUMENT_WRITER`, and a second test requires
 that list to equal the tools whose code writes a document: every tool module
-that reaches an `atomicWriteJson` / `atomicWriteBoth` call through its imports.
+that reaches an `atomicWriteJson` / `atomicWriteBoth` use through its value
+imports, read from each module's TypeScript syntax tree (so comments, strings and
+type-only imports never count).
 A third fails any `ProjectStore` write made outside `src/store/` and the named
 non-document write sites, so no document write can bypass those two functions.
 
@@ -317,8 +319,12 @@ names the holder on must equal the rows the tool reaches:
   `AGENT_WRITABLE_SECTIONS` lane, minus any section `OWNED_SECTIONS` routes to
   another agent, and a tree row only through the one section that writes it —
   tree `persons` via an `assertions` update, tree `sources` via a `sources`
-  append. Every agent granted `research_append` must have a lane
-  (`plugin-hooks.test.ts`), so this is always decidable.
+  append. That tool and that map are the manifest's `hookRouting`, the one
+  copy both the packaging guard and `make e2e-writer-attribution` read, and
+  `plugin-hooks.test.ts` pins the tool to the one the hook gates. Every agent
+  granted `research_append` must have a lane (`plugin-hooks.test.ts`, which
+  reads an agent with no `tools:` key as holding it), so this is always
+  decidable.
 - A skill's `research_append` is confined by nothing static — the op names the
   section, and the hook does not lane the main thread. For that pair the check
   asks only that some row names the skill; which sections it writes is enforced

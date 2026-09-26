@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 // @ts-expect-error -- plain .mjs build helper, no type declarations (tsconfig
 // only compiles src/**, so this import is never typechecked).
 import { resolvePython, describePythonCandidates } from "../../../../../scripts/python-interpreter.mjs";
-import { extractList } from "./frontmatter.js";
+import { extractList, frontmatterBlock, parseFrontmatter } from "./frontmatter.js";
 import {
   HOOK_ROUTED_TOOL,
   TREE_ROW_VIA,
@@ -353,19 +353,35 @@ describe("plugin hooks are packaged and wired", () => {
     ).toEqual([]);
   });
 
+  it("routes by section the one tool the manifest's hookRouting names", () => {
+    // `hookRouting.tool` is what the actual-writer guard and the corpus report
+    // treat as the section-routed writer. It must be the tool owner_denied
+    // actually gates, or both read the lanes against the wrong tool.
+    const src = readFileSync(GUARD, "utf-8");
+    const gated = [...src.matchAll(/_basename\([^)]*\)\)\s*!=\s*["']([a-z_]+)["']/g)].map((m) => m[1]);
+    expect(gated.length, "owner_denied's tool gate was not found in the guard script").toBeGreaterThan(0);
+    expect([...new Set(gated)]).toEqual([HOOK_ROUTED_TOOL]);
+  });
+
   it("gives every agent granted research_append a lane", () => {
     // Without a lane the hook confines an agent's `research_append` to no
     // section, so which rows it reaches is not decidable from the shipped files
     // and the ownership manifest cannot be checked against it.
     const lanes = agentWritableSections();
     const agentsDir = join(PLUGIN_DIR, "agents");
+    // An agent with no `tools:` key inherits every tool, research_append
+    // included — the same reading ownership-manifest.test.ts gives it.
+    const holdsRoutedTool = (text: string): boolean => {
+      const block = frontmatterBlock(text);
+      if (block === null) return false; // reported by ownership-manifest.test.ts
+      if (!("tools" in parseFrontmatter(block))) return true;
+      return extractList(text, "tools")
+        .flatMap((e) => grantedTools(e, [HOOK_ROUTED_TOOL]))
+        .includes(HOOK_ROUTED_TOOL);
+    };
     const holders = readdirSync(agentsDir)
       .filter((f) => f.endsWith(".md"))
-      .filter((f) =>
-        extractList(readFileSync(join(agentsDir, f), "utf-8"), "tools")
-          .flatMap((e) => grantedTools(e, [HOOK_ROUTED_TOOL]))
-          .includes(HOOK_ROUTED_TOOL),
-      )
+      .filter((f) => holdsRoutedTool(readFileSync(join(agentsDir, f), "utf-8")))
       .map((f) => f.slice(0, -3));
     expect(holders.length, "no agent holds research_append — the scan read nothing").toBeGreaterThan(0);
     expect(

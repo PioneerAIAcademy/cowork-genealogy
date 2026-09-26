@@ -69,7 +69,7 @@ from e2e.runlog_selection import (
     result_jsons_for,
 )
 from harness.context_policy import _guard
-from harness.ownership import rows
+from harness.ownership import load_manifest, rows
 from harness.ts_consts import ts_string_list
 from harness.workspace import DEFAULT_PLUGIN_AGENTS, DEFAULT_PLUGIN_SKILLS
 
@@ -78,9 +78,13 @@ from harness.workspace import DEFAULT_PLUGIN_AGENTS, DEFAULT_PLUGIN_SKILLS
 GENERAL_PURPOSE = "general-purpose"
 
 
-#: The one tool the plugin hook routes by section, and so the one `hookCallers`
-#: permits -- the same reading as `HOOK_ROUTED_TOOL` in the packaging guard.
-HOOK_ROUTED_TOOL = "research_append"
+#: The manifest's `hookRouting`, the one copy the packaging guard
+#: (`tests/packaging/hook-lanes.ts`) reads too: the tool the plugin hook routes
+#: by section -- the one `hookCallers` permits -- and each tree row that tool
+#: writes, mapped to the research.json section whose op writes it.
+_HOOK_ROUTING = load_manifest()["hookRouting"]
+HOOK_ROUTED_TOOL: str = _HOOK_ROUTING["tool"]
+TREE_ROW_VIA: dict[str, str] = dict(_HOOK_ROUTING["treeRowsVia"])
 
 
 def writer_tools() -> set[str]:
@@ -95,11 +99,6 @@ def writer_tools() -> set[str]:
     return set(ts_string_list("OK_FALSE_IS_FAILURE")) - set(
         ts_string_list("NOT_A_DOCUMENT_WRITER")
     )
-
-
-#: research_append reaches these tree rows only through the research.json
-#: section named -- the same map as `TREE_ROW_VIA` in the packaging guard.
-TREE_ROW_VIA = {"persons": "assertions", "sources": "sources"}
 
 
 def _names(row: dict, ident: str, tool: str) -> bool:

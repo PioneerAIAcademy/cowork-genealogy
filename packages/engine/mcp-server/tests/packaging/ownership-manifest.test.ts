@@ -9,8 +9,9 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
+import ts from "typescript";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
 import { NOT_A_DOCUMENT_WRITER, OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
@@ -137,14 +138,14 @@ function tsFiles(dir: string): string[] {
 }
 
 /** The two `project-io.ts` functions every project-document write goes through. */
-const DOCUMENT_WRITE_CALL = /\b(?:atomicWriteJson|atomicWriteBoth)\s*\(/;
+const DOCUMENT_WRITERS = new Set(["atomicWriteJson", "atomicWriteBoth"]);
 
 /**
- * `ProjectStore` write methods called outside `src/store/`, by file. Documents
- * must be written through `project-io.ts`; a store write anywhere else is a path
- * `DOCUMENT_WRITE_CALL` does not see.
+ * `ProjectStore` write methods. Documents must be written through
+ * `project-io.ts`; one of these called anywhere else is a write path the
+ * document-writer scan does not see.
  */
-const STORE_WRITE_CALL = /\.(?:writeJson|writeJsonBoth|writeBytes|appendText)\s*\(|\.remove\s*\(\s*[A-Za-z_$]/;
+const STORE_WRITE_METHODS = new Set(["writeJson", "writeJsonBoth", "writeBytes", "appendText", "remove"]);
 
 /**
  * Files outside `src/store/` that call a store write method directly, and what
@@ -159,42 +160,119 @@ const NON_DOCUMENT_STORE_WRITERS: Readonly<Record<string, string>> = {
   "utils/match-scores.ts": "results/.scores/ attestation files",
 };
 
+interface ModuleFacts {
+  /** Resolved relative modules this one imports a VALUE from (type-only imports excluded). */
+  valueImports: string[];
+  /** References `atomicWriteJson` / `atomicWriteBoth`, under any local alias. */
+  usesDocumentWriter: boolean;
+  /** Calls, destructures, or bracket-accesses a `ProjectStore` write method. */
+  usesStoreWrite: boolean;
+}
+
 /**
- * Tool names whose module reaches a project-document write through its imports.
- * Over-reads by construction — a module that imports a writer counts as one —
- * which fails closed.
+ * What one source module imports and writes, read from its TypeScript syntax
+ * tree — so comments and strings never count, a type-only import is not an
+ * edge, and a side-effect import is.
+ */
+function moduleFacts(file: string): ModuleFacts {
+  const sf = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true);
+  const valueImports: string[] = [];
+  const writerNames = new Set(DOCUMENT_WRITERS);
+  let usesDocumentWriter = false;
+  let usesStoreWrite = false;
+  const edge = (spec: ts.Expression | undefined) => {
+    if (spec && ts.isStringLiteralLike(spec) && spec.text.startsWith(".")) {
+      valueImports.push(join(dirname(file), spec.text.replace(/\.js$/, ".ts")));
+    }
+  };
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node)) {
+      const clause = node.importClause;
+      const named = clause?.namedBindings;
+      const typeOnly =
+        clause !== undefined &&
+        (clause.isTypeOnly ||
+          (clause.name === undefined &&
+            named !== undefined &&
+            ts.isNamedImports(named) &&
+            named.elements.length > 0 &&
+            named.elements.every((e) => e.isTypeOnly)));
+      if (!typeOnly) edge(node.moduleSpecifier);
+      if (named && ts.isNamedImports(named)) {
+        for (const e of named.elements) {
+          if (DOCUMENT_WRITERS.has((e.propertyName ?? e.name).text)) writerNames.add(e.name.text);
+        }
+      }
+      return; // the import's own identifiers are not uses
+    }
+    if (ts.isExportDeclaration(node)) {
+      const clause = node.exportClause;
+      const typeOnly =
+        node.isTypeOnly ||
+        (clause !== undefined &&
+          ts.isNamedExports(clause) &&
+          clause.elements.length > 0 &&
+          clause.elements.every((e) => e.isTypeOnly));
+      if (!typeOnly) edge(node.moduleSpecifier);
+    }
+    if (ts.isCallExpression(node)) {
+      if (node.expression.kind === ts.SyntaxKind.ImportKeyword) edge(node.arguments[0]);
+      const callee = node.expression;
+      if (ts.isPropertyAccessExpression(callee) && STORE_WRITE_METHODS.has(callee.name.text)) {
+        // `turndown.remove(["head", …])` is a DOM-style remove, not a store write.
+        const first = node.arguments[0];
+        if (callee.name.text !== "remove" || (first !== undefined && !ts.isArrayLiteralExpression(first))) {
+          usesStoreWrite = true;
+        }
+      }
+      if (
+        ts.isElementAccessExpression(callee) &&
+        ts.isStringLiteralLike(callee.argumentExpression) &&
+        STORE_WRITE_METHODS.has(callee.argumentExpression.text)
+      ) {
+        usesStoreWrite = true;
+      }
+    }
+    if (ts.isBindingElement(node)) {
+      const bound = node.propertyName ?? node.name;
+      if (ts.isIdentifier(bound) && STORE_WRITE_METHODS.has(bound.text)) usesStoreWrite = true;
+    }
+    if (ts.isIdentifier(node) && writerNames.has(node.text)) usesDocumentWriter = true;
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return { valueImports, usesDocumentWriter, usesStoreWrite };
+}
+
+/** Project-relative spelling of a source file, for messages and allow-lists. */
+const srcRel = (f: string) => f.slice(srcRoot.length + 1).split(sep).join("/");
+
+/**
+ * Tool names whose module reaches a project-document write through its value
+ * imports. Over-reads by construction — a module that imports a VALUE from a
+ * writer counts as one — which fails closed.
  */
 async function structuralWriterTools(): Promise<{ tools: string[]; direct: string[] }> {
   const files = tsFiles(srcRoot);
-  const imports = new Map<string, string[]>();
-  const direct = new Set<string>();
-  for (const f of files) {
-    const text = readFileSync(f, "utf8");
-    const specs = [
-      ...text.matchAll(/(?:import|export)\s[^;]*?\sfrom\s+["'](\.[^"']+)["']/g),
-      ...text.matchAll(/\bimport\(\s*["'](\.[^"']+)["']\s*\)/g),
-    ].map((m) => join(dirname(f), m[1].replace(/\.js$/, ".ts")));
-    imports.set(f, specs);
-    if (DOCUMENT_WRITE_CALL.test(text) && !f.endsWith(join("utils", "project-io.ts"))) direct.add(f);
-  }
+  const facts = new Map(files.map((f) => [f, moduleFacts(f)] as const));
+  const direct = new Set(
+    files.filter((f) => facts.get(f)?.usesDocumentWriter && srcRel(f) !== "utils/project-io.ts"),
+  );
   const reaches = (f: string, seen = new Set<string>()): boolean => {
     if (direct.has(f)) return true;
     if (seen.has(f)) return false;
     seen.add(f);
-    return (imports.get(f) ?? []).some((d) => reaches(d, seen));
+    return (facts.get(f)?.valueImports ?? []).some((d) => reaches(d, seen));
   };
   const schemas = new Set<unknown>(allToolSchemas);
   const tools: string[] = [];
-  for (const f of files.filter((f) => f.startsWith(join(srcRoot, "tools")) && reaches(f))) {
+  for (const f of files.filter((f) => srcRel(f).startsWith("tools/") && reaches(f))) {
     const mod: Record<string, unknown> = await import(pathToFileURL(f).href);
     for (const value of Object.values(mod)) {
       if (schemas.has(value)) tools.push((value as { name: string }).name);
     }
   }
-  return {
-    tools: [...new Set(tools)].sort(),
-    direct: [...direct].map((f) => f.slice(srcRoot.length + 1).replace(/\\/g, "/")).sort(),
-  };
+  return { tools: [...new Set(tools)].sort(), direct: [...direct].map(srcRel).sort() };
 }
 
 interface PluginGrants {
@@ -750,8 +828,67 @@ describe("ownership manifest — every name resolves", () => {
       "the tools whose code writes a project document and the writer-tool " +
         "vocabulary disagree. A tool here and not in OK_FALSE_IS_FAILURE is a " +
         "writer this guard cannot see; a tool there and not here writes nothing " +
-        "and belongs in NOT_A_DOCUMENT_WRITER (both in src/tool-result.ts).",
+        "and belongs in NOT_A_DOCUMENT_WRITER (both in src/tool-result.ts). A " +
+        "reader that shows up here only because it imports a constant from a " +
+        "writer module should import it from a module that writes nothing — move " +
+        "the export — rather than be listed as a writer. Type-only imports are " +
+        "not counted.",
     ).toEqual([...WRITER_TOOLS].sort());
+  });
+
+  it("reads imports and writes from the syntax tree, not the text", () => {
+    // Each line a shape the regex scan this replaced got wrong in one direction
+    // or the other. Built on a scratch tree so the breaks can be real.
+    const root = mkdtempSync(join(tmpdir(), "module-facts-"));
+    const file = (name: string, ...lines: string[]) => {
+      const f = join(root, name);
+      writeFileSync(f, lines.join("\n"));
+      return f;
+    };
+    try {
+      const typeOnly = moduleFacts(
+        file(
+          "type-only.ts",
+          'import type { A } from "./w.js";',
+          'import { type B, type C } from "./w2.js";',
+          'export type { D } from "./w3.js";',
+          "// atomicWriteJson(projectPath, x) — a comment is not a call",
+          'const s = "atomicWriteBoth(";',
+        ),
+      );
+      expect(typeOnly.valueImports).toEqual([]);
+      expect(typeOnly.usesDocumentWriter).toBe(false);
+
+      const value = moduleFacts(
+        file(
+          "value.ts",
+          'import "./side-effect.js";',
+          'import { x, type Y } from "./mixed.js";',
+          'export * from "./reexport.js";',
+          'const m = await import("./dynamic.js");',
+          'import { atomicWriteJson as write } from "../utils/project-io.js";',
+          "await write(p, r, o);",
+        ),
+      );
+      expect(value.valueImports.map((f) => relative(root, f).split(sep).join("/")).sort()).toEqual(
+        ["../utils/project-io.ts", "dynamic.ts", "mixed.ts", "reexport.ts", "side-effect.ts"].sort(),
+      );
+      expect(value.usesDocumentWriter).toBe(true);
+
+      for (const [name, line] of [
+        ["destructured.ts", "const { writeJson } = getProjectStore(); await writeJson(p, r, o);"],
+        ["bracket.ts", 'await store["writeJson"](p, r, o);'],
+        ["member.ts", "await getProjectStore().appendText(p, r, t);"],
+        ["remove.ts", "await store.remove(projectPath, ref);"],
+      ] as const) {
+        expect(moduleFacts(file(name, line)).usesStoreWrite, name).toBe(true);
+      }
+      expect(
+        moduleFacts(file("dom-remove.ts", 'turndown.remove(["head", "title"]);')).usesStoreWrite,
+      ).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("writes project state only through the known write paths", () => {
@@ -760,9 +897,9 @@ describe("ownership manifest — every name resolves", () => {
     // outside src/store/ has to be named here with what it writes.
     const found: string[] = [];
     for (const f of tsFiles(srcRoot)) {
-      const rel = f.slice(srcRoot.length + 1).replace(/\\/g, "/");
+      const rel = srcRel(f);
       if (rel.startsWith("store/")) continue;
-      if (STORE_WRITE_CALL.test(readFileSync(f, "utf8"))) found.push(rel);
+      if (moduleFacts(f).usesStoreWrite) found.push(rel);
     }
     expect(found.length, "found no store write outside src/store/").toBeGreaterThan(0);
     expect(

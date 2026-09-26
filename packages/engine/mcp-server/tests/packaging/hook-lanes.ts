@@ -8,29 +8,32 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const GUARD = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "plugin",
-  "hooks",
-  "guard_project_files.py",
-);
+const HERE = dirname(fileURLToPath(import.meta.url));
 
-/** The one tool the hook routes by section. */
-export const HOOK_ROUTED_TOOL = "research_append";
+export const GUARD = join(HERE, "..", "..", "..", "plugin", "hooks", "guard_project_files.py");
+
+const OWNERSHIP_JSON = join(HERE, "..", "..", "..", "..", "..", "docs", "specs", "schemas", "ownership.json");
 
 /**
- * The two tree rows `research_append` writes, each through one research.json
- * section: an `assertions` update rewrites the linked tree fact (tree
- * `persons`), and a `sources` append with `sourceDescription` creates the tree
- * source (tree `sources`).
+ * The manifest's `hookRouting`: the one tool the hook routes by section, and
+ * each tree row that tool writes mapped to the research.json section whose op
+ * writes it. Read from the manifest so this file and
+ * `writer_attribution_report.py` share one copy.
  */
-export const TREE_ROW_VIA: Readonly<Record<string, string>> = {
-  persons: "assertions",
-  sources: "sources",
-};
+const hookRouting = (
+  JSON.parse(readFileSync(OWNERSHIP_JSON, "utf-8")) as {
+    hookRouting?: { tool?: string; treeRowsVia?: Record<string, string> };
+  }
+).hookRouting;
+if (typeof hookRouting?.tool !== "string" || typeof hookRouting.treeRowsVia !== "object") {
+  throw new Error(`${OWNERSHIP_JSON} has no hookRouting.tool / hookRouting.treeRowsVia`);
+}
+
+/** The one tool the hook routes by section. */
+export const HOOK_ROUTED_TOOL: string = hookRouting.tool;
+
+/** Tree row → the research.json section whose `research_append` op writes it. */
+export const TREE_ROW_VIA: Readonly<Record<string, string>> = hookRouting.treeRowsVia;
 
 /**
  * `AGENT_WRITABLE_SECTIONS`: bare agent → the research.json sections it may
