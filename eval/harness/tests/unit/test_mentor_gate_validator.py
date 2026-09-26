@@ -29,7 +29,11 @@ def _validator_mod():
 
 
 def _spawn(name, description="default description", **extra):
-    return {"tool": "Agent", "args": {"subagent_type": name, "prompt": "p", "description": description}, **extra}
+    return {
+        "tool": "Agent",
+        "args": {"subagent_type": name, "prompt": "p", "description": description},
+        **extra,
+    }
 
 
 TAGGED_TEST = {"skill": "research", "tags": ["core-trigger", "requires:gps-mentor"]}
@@ -70,7 +74,9 @@ def test_passes_with_different_description():
 
     The validator gates on ``subagent_type``, not on the description string.
     """
-    calls = [_spawn("gps-mentor", description="Run the mentor gate on the existing proof")]
+    calls = [
+        _spawn("gps-mentor", description="Run the mentor gate on the existing proof")
+    ]
     _validator_mod().test_mentor_gate_spawned(TAGGED_TEST, calls)
 
 
