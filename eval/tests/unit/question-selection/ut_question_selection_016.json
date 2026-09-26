@@ -5,7 +5,13 @@
     "name": "A premise-verification question names the fact sought, not a name-property test",
     "type": "positive",
     "description": "Regression for #1394. The objective is Rosalind Hartwell's parents, but her recorded surname 'Hartwell' is unverified — it may be her maiden name or the married name taken from her husband Thomas Hartwell (quality:1 tree data). Verifying that premise is correct, but the question must be framed so every branch names the fact the objective needs — her maiden name — not a bare maiden-vs-married property test whose 'married' branch names no fact and leaves the objective where it began. Synthetic scenario — no PII. Must coexist with the #1471 confirm-or-refute framing (a different scenario/tag), which this test does not exercise.",
-    "tags": ["question-selection", "from-objective", "first-question", "regression", "premise-question-names-fact"]
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "first-question",
+      "regression",
+      "premise-question-names-fact"
+    ]
   },
   "input": {
     "user_message": "I want to find Rosalind Hartwell's parents. Pick the first research question to investigate.",
@@ -14,6 +20,7 @@
   "judge_context": [
     "The objective is Rosalind Hartwell's parents, but her recorded surname 'Hartwell' is unverified — it may be her birth (maiden) name or a married name taken from her husband. The first research question must verify that premise by NAMING the fact the objective needs — her maiden (birth) name — e.g. 'What was Rosalind Hartwell's maiden name?'. Every branch of that answer yields a fact: if 'Hartwell' is her birth surname, a birth or baptism record confirms it; if not, the marriage record supplies the maiden name.",
     "A bare property test of the name — e.g. 'Was Hartwell her maiden or married name?', 'Was Hartwell the birth surname of Rosalind?', or 'Determine whether she acquired Hartwell through marriage' — is WRONG: its 'married' / 'no' branch names no fact and leaves the objective exactly where it began (issue #1394). What fails is that SHAPE — a yes/no, either/or, or 'whether' classification whose branch can name no fact — not the vocabulary. An OPEN question that asks for the value itself is CORRECT whether it says 'maiden name' or 'birth surname': 'What was the birth surname of Rosalind?' names the gating fact exactly as 'What was her maiden name?' does, and both PASS. Grade the CLASS, not one wording: a premise-verification question fails only when its answer merely confirms, denies, or classifies the recorded name without naming the gating value.",
-    "This is distinct from the #1471 confirm-or-refute framing, which tests a disputed identity assertion already on the tree ('do independent records confirm or refute that X and Y are the parents of Z?') and does name a fact. That framing is correct in its own disputed-parents scenario and is not what this test grades."
+    "This is distinct from the #1471 confirm-or-refute framing, which tests a disputed identity assertion already on the tree ('do independent records confirm or refute that X and Y are the parents of Z?') and does name a fact. That framing is correct in its own disputed-parents scenario and is not what this test grades.",
+    "The surname 'Hartwell' is sourced ONLY to unverified FamilySearch compiled data. The first question must therefore VERIFY THAT PREMISE and must NAME the gating fact (the surname itself) in its text. A parentage question that assumes the surname is correct fails this test, however well-formed it otherwise is."
   ]
 }
