@@ -2,8 +2,8 @@
 """Print the four files a blind grader may read, and their digest.
 
 The ``grade-e2e-run`` skill invokes this instead of listing files, so the
-grader physically cannot see ``run-<ts>.json`` (which holds the judge's
-verdict). The digest (``blind_bundle_digest``) is a sha256 over the
+grader does not see ``run-<ts>.json`` (which holds the judge's
+verdict) because this command only prints the four grading-input paths. The digest (``blind_bundle_digest``) is a sha256 over the
 normalized content of all four files; PR C stamps it into the e2e
 ``.ann.json`` so ``calibrate_judge`` can later verify what the grader saw.
 
@@ -11,7 +11,7 @@ Usage::
 
     cd eval/harness && uv run python -m e2e.blind_bundle <slug> [<stem>]
 
-``<stem>`` is the timestamp portion (e.g. ``2026-09-09_14-30-43``).
+``<stem>`` is the run-log stem (e.g. ``run-2026-09-09_14-30-43``).
 When omitted, the newest ``run-`` prefixed run log is used.
 """
 
