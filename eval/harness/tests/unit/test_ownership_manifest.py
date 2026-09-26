@@ -171,7 +171,7 @@ def test_research_owners_match_the_frozen_tables():
 
 
 def test_tree_owners_match_the_frozen_table():
-    assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == expected_tree_owners()
+    assert _union_writer_sets(TREE_GEDCOMX_JSON) == expected_tree_owners()
 
 
 def test_the_only_newly_enforced_section_is_localities():
@@ -204,7 +204,7 @@ def test_no_owner_was_dropped_except_the_declared_one():
     }
     assert dropped == {}
 
-    tree_actual = writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE)
+    tree_actual = _union_writer_sets(TREE_GEDCOMX_JSON)
     tree_dropped = {
         section: sorted(frozen - tree_actual.get(section, set()))
         for section, frozen in FROZEN_TREE_OWNERSHIP_TABLE.items()
