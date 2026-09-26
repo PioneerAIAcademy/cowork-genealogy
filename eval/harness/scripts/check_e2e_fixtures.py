@@ -856,9 +856,16 @@ def main() -> int:
 
     blocking_ann = []
     for e in ann_errors:
-        # Check if the error names a PR-touched annotation
+        # Check if the error names a PR-touched annotation, or is a
+        # bundle/hash mismatch (a PR that edits a graded file while the
+        # annotation itself is untouched — the case C exists for).
         is_pr_touched = any(str(rel) in e for rel in touched_ann_rels)
-        if is_pr_touched:
+        is_digest_mismatch = (
+            "blind_bundle_digest mismatch" in e
+            or "cannot compute blind_bundle_digest" in e
+            or "findings_hash mismatch" in e
+        )
+        if is_pr_touched or is_digest_mismatch:
             blocking_ann.append(e)
         else:
             print(f"::warning::{e}")

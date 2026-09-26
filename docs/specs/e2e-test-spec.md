@@ -1447,8 +1447,8 @@ Four integrity rules make the agreement number trustworthy:
   this digest: a present stamp that no longer matches is a hard error
   (re-grade or delete); an absent stamp is grandfathered (included but reported
   unverifiable). This is the wider counterpart to `findings_hash`, which covers
-  only `expected-findings.json`: together, no post-grading edit to any graded
-  file can silently survive.
+  only `expected-findings.json`. A stamp is optional: an unstamped annotation,
+  new or old, is accepted and only counted as unverifiable.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 

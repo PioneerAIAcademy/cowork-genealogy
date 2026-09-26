@@ -136,10 +136,9 @@ cd eval/harness && uv run python -m e2e.stamp_bundle_digest eval/runlogs/e2e/<sl
 
 The first adds `findings_hash` (fingerprint of `expected-findings.json`); the
 second adds `blind_bundle_digest` (fingerprint of all 4 files the blind grader
-reads). Together they ensure a later edit to any graded file cannot silently
-invalidate this grade. Neither is `calibrate_judge`, neither makes judge API
-calls, and both are **exempt** from the "do not run `calibrate_judge`" rule
-below — run them every time.
+reads). Neither is `calibrate_judge`, neither makes judge API calls, and both
+are **exempt** from the "do not run `calibrate_judge`" rule below — run them
+every time.
 
 Then tell the user to commit the `.ann.json`. **Do not run `calibrate_judge` — not
 even `--dry-run`.** It classifies *every* annotation in the tree, not just this one.

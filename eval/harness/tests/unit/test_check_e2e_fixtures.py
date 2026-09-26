@@ -1174,3 +1174,70 @@ def test_validate_e2e_annotations_parity_with_calibrate_judge(tmp_path):
     assert ci_names == cj_names, (
         f"CI rungs flagged {sorted(ci_names)}, calibrate_judge flagged {sorted(cj_names)}"
     )
+
+
+def test_main_digest_mismatch_blocks_even_when_ann_untouched(tmp_path, monkeypatch, capsys):
+    """A PR that edits a stamped annotation's final-tree (but not the
+    .ann.json itself) must exit 1 on the blind_bundle_digest mismatch.
+    This is the case PR C exists for."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+
+    # Create a fixture with expected-findings + fixture.json
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    fx = repo / "eval" / "tests" / "e2e" / "smith" / "fixture.json"
+    fx.write_text(json.dumps({"slug": "smith"}), encoding="utf-8")
+
+    # Create a run with tree + research
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    research = str(Path(tree).parent / f"run-{TS}.final-research.json")
+    (repo / research).write_text("{}", encoding="utf-8")
+
+    # Compute the correct digest and stamp the annotation
+    import hashlib
+    def _hash_file(p):
+        if not (repo / p).exists():
+            return ""
+        raw = (repo / p).read_text(encoding="utf-8")
+        parsed = json.loads(raw)
+        normalized = json.dumps(parsed, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    bundle_files = [
+        f"eval/tests/e2e/smith/expected-findings.json",
+        f"eval/tests/e2e/smith/fixture.json",
+        tree,
+        research,
+    ]
+    file_map = {Path(p).name: _hash_file(p) for p in bundle_files}
+    digest = hashlib.sha256(
+        json.dumps(file_map, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+
+    # Write stamped annotation
+    ann_path = repo / ann
+    ann_path.parent.mkdir(parents=True, exist_ok=True)
+    ann_path.write_text(json.dumps({
+        "per_finding": {"f1": "true"},
+        "blind_bundle_digest": digest,
+    }), encoding="utf-8")
+
+    # Commit everything as baseline
+    commit_head = commit(
+        rel.as_posix(), tree, ann, research,
+        f"eval/tests/e2e/smith/expected-findings.json",
+        f"eval/tests/e2e/smith/fixture.json",
+    )
+
+    # Now edit the final-tree (changing the bundle without touching the ann)
+    (repo / tree).write_text(json.dumps({"persons": []}), encoding="utf-8")
+    new_head = commit(tree)
+
+    monkeypatch.setenv("BASE_SHA", commit_head)
+    monkeypatch.setenv("HEAD_SHA", new_head)
+    rc = check_e2e_fixtures.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "blind_bundle_digest mismatch" in out
