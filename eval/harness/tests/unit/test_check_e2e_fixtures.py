@@ -32,7 +32,11 @@ def _make_e2e_run(repo_root: Path, slug: str, ts: str, *, tree: bool, ann: bool)
     if tree:
         (d / f"run-{ts}.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
     if ann:
-        (d / f"run-{ts}.ann.json").write_text("{}", encoding="utf-8")
+        # A valid inert annotation: has per_finding with a null value, so
+        # validate_e2e_annotations skips it at rung 3 (incomplete).
+        (d / f"run-{ts}.ann.json").write_text(
+            json.dumps({"per_finding": {"f1": None}}), encoding="utf-8"
+        )
     return Path("eval/runlogs/e2e") / slug / f"run-{ts}.json"
 
 
@@ -1009,9 +1013,11 @@ def test_main_drift_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys)
         [{"finding_id": "f1", "matched": "partial", "components": [_link("supported")]}],
     )
     # Give it a COMMITTED tree + ann so the blocking gate stays satisfied (exit 0).
+    # The annotation must be valid-inert (per_finding with null) so the new
+    # annotation validation gate doesn't block.
     tree, ann = _siblings(rel)
     (repo / tree).write_text("{}", encoding="utf-8")
-    (repo / ann).write_text("{}", encoding="utf-8")
+    (repo / ann).write_text(json.dumps({"per_finding": {"f1": None}}), encoding="utf-8")
     _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
     # Real BASE_SHA, as above: without it both blocking gates check nothing.
     _write_log(repo, "seed.txt", _ABSENT)
@@ -1044,3 +1050,127 @@ def test_main_drift_warning_prints_even_when_grading_gate_fails(tmp_path, monkey
     assert check_e2e_fixtures.main() == 1
     out = capsys.readouterr().out
     assert "::warning::" in out and "f1" in out
+
+
+# --- Annotation structural validation gate (main()) -------------------------
+
+
+def _make_graded_ann(repo_root: Path, slug: str, ts: str, per_finding: dict) -> None:
+    """Write a graded e2e .ann.json with the given per_finding labels."""
+    d = repo_root / "eval" / "runlogs" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"run-{ts}.ann.json").write_text(
+        json.dumps({"per_finding": per_finding}), encoding="utf-8"
+    )
+
+
+def test_main_annotation_gate_blocks_bad_label(tmp_path, monkeypatch, capsys):
+    """A PR-added annotation with a bad label (e.g. 'yes') must exit 1."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    # Write a graded annotation with a bad label
+    _make_graded_ann(repo, "smith", TS, {"f1": "yes"})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out
+    assert "per_finding labels" in out
+
+
+def test_main_annotation_gate_passes_valid_label(tmp_path, monkeypatch, capsys):
+    """A PR-added annotation with valid labels must exit 0."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    _make_graded_ann(repo, "smith", TS, {"f1": "true"})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 0
+    out = capsys.readouterr().out
+    assert "E2E gates OK" in out
+
+
+# --- Parity test: CI rungs vs calibrate_judge rungs -------------------------
+
+
+def test_validate_e2e_annotations_parity_with_calibrate_judge(tmp_path):
+    """The stdlib CI rungs (check_e2e_fixtures.validate_e2e_annotations) and
+    calibrate_judge.load_annotated_runs must flag the same files as errors.
+
+    This test catches drift between the two implementations without sharing
+    code (the CI script runs on bare python and cannot import calibrate_judge).
+    """
+    try:
+        from e2e.calibrate_judge import load_annotated_runs
+    except ImportError:
+        pytest.skip("calibrate_judge not importable (bare interpreter)")
+
+    runlogs = tmp_path / "runlogs"
+    fixtures = tmp_path / "fixtures"
+
+    def _write(slug: str, ts: str, ann: dict, *, tree: bool = True,
+               expected: list | None = None) -> None:
+        d = runlogs / slug
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"run-{ts}.json").write_text("{}", encoding="utf-8")
+        (d / f"run-{ts}.ann.json").write_text(
+            json.dumps(ann), encoding="utf-8"
+        )
+        if tree:
+            (d / f"run-{ts}.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
+        fx = fixtures / slug
+        fx.mkdir(parents=True, exist_ok=True)
+        if expected is not None:
+            (fx / "expected-findings.json").write_text(
+                json.dumps({"findings": expected}), encoding="utf-8"
+            )
+            (fx / "fixture.json").write_text(
+                json.dumps({"slug": slug}), encoding="utf-8"
+            )
+
+    # Good annotation
+    _write("good", "2026-01-01_00-00-00",
+           {"per_finding": {"f1": "true"}},
+           expected=[{"id": "f1", "type": "source"}])
+    # Bad label
+    _write("bad-label", "2026-01-01_00-00-00",
+           {"per_finding": {"f1": "yes"}},
+           expected=[{"id": "f1", "type": "source"}])
+    # Unknown key
+    _write("unknown-key", "2026-01-01_00-00-00",
+           {"per_finding": {"f1": "true"}, "extra": 1},
+           expected=[{"id": "f1", "type": "source"}])
+    # Missing per_finding
+    _write("no-pf", "2026-01-01_00-00-00",
+           {"annotator": "t"})
+    # Key drift
+    _write("key-drift", "2026-01-01_00-00-00",
+           {"per_finding": {"f99": "true"}},
+           expected=[{"id": "f1", "type": "source"}])
+
+    ci_errors = check_e2e_fixtures.validate_e2e_annotations(runlogs, fixtures)
+    _, cj_problems = load_annotated_runs(runlogs, fixtures)
+    cj_errors = [p for p in cj_problems if p.severity == "error"]
+
+    # Both must flag the same annotation files as errors. Extract the
+    # .ann.json filename (shared between the two since both walk the same dir).
+    def _ann_name(s: str) -> str:
+        """Extract the .ann.json filename from an error string or path."""
+        for part in s.replace("`", " ").replace("'", " ").split():
+            if part.endswith(".ann.json"):
+                return Path(part).name
+        return s
+
+    ci_names = {_ann_name(e) for e in ci_errors}
+    cj_names = {_ann_name(p.file) for p in cj_errors}
+    assert ci_names == cj_names, (
+        f"CI rungs flagged {sorted(ci_names)}, calibrate_judge flagged {sorted(cj_names)}"
+    )
