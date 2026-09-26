@@ -1,21 +1,21 @@
 ---
 name: proof-conclusion
 description: >-
-  Writes ONE GPS-conformant proof conclusion for a question — selects the tier
-  (Proved/Probable/Possible/Not Proved/Disproved), selects the form
-  (Statement/Summary/Argument), writes the self-contained narrative markdown,
-  persists the proof_summaries entry, and encodes the conclusion in
-  tree.gedcomx.json at the tiers §6 names. GPS Step 5. Invoked by the
-  proof-conclusion skill with a questionId and projectPath; also handles
-  re-conclusion of a question that already has a summary, updating it in place.
-  This agent is the ONLY caller permitted to write research.json's
-  proof_summaries section — the plugin PreToolUse hook denies that write to
-  every other caller. Do NOT use to resolve a conflict (use
+  Writes ONE GPS-conformant proof conclusion for a question — GPS Step 5.
+  Selects the tier (Proved/Probable/Possible/Not Proved/Disproved) and the
+  form (Statement/Summary/Argument), writes the self-contained narrative
+  markdown, persists proof_summaries, and encodes the conclusion in
+  tree.gedcomx.json. Use when the user says "write the conclusion", "what's
+  the proof?", "summarize the evidence", "write a proof statement", "write a
+  proof argument", "conclude this question". ALSO for review of an existing
+  proof — "does my proof meet the GPS", "assess ps_NNN". Takes a questionId
+  and projectPath when given, resolves a prose-named question itself, and
+  updates an existing summary in place. It is the ONLY caller permitted to
+  write research.json's proof_summaries section; the plugin PreToolUse hook
+  denies that write to everyone else. Do NOT use to resolve a conflict (use
   conflict-resolution), to declare exhaustiveness (use
-  research-exhaustiveness), to select the next question (use
-  question-selection), or to declare exhaustiveness (research-exhaustiveness
-  owns that field). It resolves a question it concluded, in the same batch as
-  the summary, and leaves it open when the gate blocked it.
+  research-exhaustiveness), or to select the next question (use
+  question-selection).
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__research_append

@@ -22,7 +22,7 @@
       "owner": "skill:init-project",
       "callers": [
         "skill:init-project",
-        "skill:proof-conclusion"
+        "agent:proof-conclusion"
       ],
       "agentCallers": [
         {
@@ -99,7 +99,7 @@
       "callers": [
         "skill:question-selection",
         "skill:research-exhaustiveness",
-        "skill:proof-conclusion"
+        "agent:proof-conclusion"
       ],
       "agentCallers": [
         {
@@ -231,6 +231,12 @@
           "agent": "agent:record-extractor",
           "tools": [
             "extraction_append"
+          ]
+        },
+        {
+          "agent": "agent:citation",
+          "tools": [
+            "research_append"
           ]
         }
       ],
@@ -366,9 +372,9 @@
     {
       "artifact": "research.json",
       "section": "proof_summaries",
-      "owner": "skill:proof-conclusion",
+      "owner": "agent:proof-conclusion",
       "callers": [
-        "skill:proof-conclusion"
+        "agent:proof-conclusion"
       ],
       "writerTools": [
         "research_append",
@@ -381,7 +387,7 @@
         "unit",
         "hook"
       ],
-      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. test_ownership_table cannot see that, because it grades a single skill's own run; test_no_out_of_lane_section_writes has recorded the hook's agent-keyed verdict on this plane since 2026-09-02. Enforced at the hook plane since 2026-08-19: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the proof-conclusion AGENT. `callers` stays skill-only and `writerTools` stays research_append on purpose -- `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name, so naming an agent there raises OwnershipManifestError. That is a property of THAT check, not of the plane: test_no_out_of_lane_section_writes on the same plane does see the agent. The agent caller lives in `hookCallers`, which is the per-plane field a later phase should read.",
+      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. test_ownership_table cannot see that, because it grades a single skill's own run; test_no_out_of_lane_section_writes has recorded the hook's agent-keyed verdict on this plane since 2026-09-02. Enforced at the hook plane since 2026-08-19: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the proof-conclusion AGENT. `owner` and `callers` name the AGENT since the routing skill was deleted (issue #2822). The older note here said naming an agent raised OwnershipManifestError; that stopped being true with issue #2799, which made `writer_sets` resolve an `agent:` caller when it is the suite subject and drop it otherwise. This row is enforceable on the unit plane precisely because proof-conclusion owns `eval/tests/unit/proof-conclusion/`, which `test_a_unit_plane_agent_caller_is_a_suite_subject` checks against the filesystem. `hookCallers` still names the agent for the hook plane, which is a different plane and not a duplicate.",
       "requires": "Only proof-conclusion writes a conclusion, and never more than one summary per `question_id`.",
       "failure": "A summary written outside the skill skips the tier decision rules and the conflict preconditions, and the tree is then encoded from it.",
       "remedy": "Conclude through proof-conclusion.",
@@ -434,7 +440,7 @@
       "callers": [
         "skill:init-project",
         "skill:tree-edit",
-        "skill:proof-conclusion",
+        "agent:proof-conclusion",
         "skill:person-evidence",
         "skill:forget-and-rederive"
       ],
@@ -491,7 +497,7 @@
       "callers": [
         "skill:init-project",
         "skill:tree-edit",
-        "skill:proof-conclusion",
+        "agent:proof-conclusion",
         "skill:person-evidence",
         "skill:forget-and-rederive"
       ],
@@ -533,7 +539,7 @@
       "callers": [
         "skill:init-project",
         "skill:tree-edit",
-        "skill:proof-conclusion",
+        "agent:proof-conclusion",
         "skill:record-extraction"
       ],
       "agentCallers": [
