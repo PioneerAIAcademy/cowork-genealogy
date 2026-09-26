@@ -223,14 +223,14 @@ that fabricated its read does not count) and record the passing scored run
 This agent depends on an `image_read` that accepts document-image **ARKs**
 (`3:1:/3:2:`), because `record-extraction` hands the agent ARKs — the shape
 `fulltext_search` returns. That dependency is now **satisfied**: the
-ARK-accepting `image_read` landed in `main` (#600) and has been merged into
+ARK-accepting `image_read` landed in `main` and has been merged into
 this branch, so the ARK inputs named in the `imageId`/`ark` convention
 (§3.1) work as written.
 
 (Historical context, kept because it explains the §6 guardrail: before
-#600, `image_read` accepted only a bare `NUMBER_NUMBER` Image Group Number
+ARK support landed, `image_read` accepted only a bare `NUMBER_NUMBER` Image Group Number
 and rejected an ARK — and the pre-§6 failure path *fabricated* a reading on
-that rejection instead of erroring. Had this agent shipped ahead of #600,
+that rejection instead of erroring. Had this agent shipped ahead of ARK support,
 every original-scan read would have been broken in production. The §6
 NOT-READ hardening is orthogonal and stands regardless: it turns any future
 `image_read` failure into a clean, visible miss rather than a fabrication.)
