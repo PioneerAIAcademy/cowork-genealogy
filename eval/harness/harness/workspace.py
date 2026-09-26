@@ -24,10 +24,13 @@ _SESSION_STORE_ROOT = Path.home() / ".claude" / "projects"
 
 # Plugin subagents shipped with the Cowork plugin. Staged into every unit
 # workspace so a skill's `@plugin:<name>` delegation resolves to the real
-# agent — mirrors e2e/orchestrator.py's DEFAULT_PLUGIN_AGENTS + staging.
+# agent. The one definition of both plugin paths: e2e/orchestrator.py and the
+# pure-analysis e2e reports import them from here, which keeps the reports free
+# of the orchestrator's module-scope claude_agent_sdk import.
 DEFAULT_PLUGIN_AGENTS = (
     Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin" / "agents"
 )
+DEFAULT_PLUGIN_SKILLS = DEFAULT_PLUGIN_AGENTS.parent / "skills"
 
 # Reasoning effort pinned into every unit workspace. "high" matches both Cowork
 # and the e2e orchestrator's default, so unit and e2e grade the same behavior.
