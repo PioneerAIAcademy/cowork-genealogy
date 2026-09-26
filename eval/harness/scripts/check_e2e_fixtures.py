@@ -864,6 +864,7 @@ def main() -> int:
             "blind_bundle_digest mismatch" in e
             or "cannot compute blind_bundle_digest" in e
             or "findings_hash mismatch" in e
+            or "cannot compute findings_hash" in e
         )
         if is_pr_touched or is_digest_mismatch:
             blocking_ann.append(e)
