@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 23, hint-samples.csv row 719, flag adds_marriage, confidence 3). Draft transcribed from a 1716 Rhineland Catholic marriage entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 23, hint-samples.csv row 719, flag adds_marriage, confidence 3). Resolved 2026-09-25 as a TRUE MATCH: entry 4 on image ark:/61903/3:1:3Q9M-CSJG-4SKS-Y reads \"30. Juni 1716\", Johannes Jacobus Klotten and Maria Magdalena Weber, in the Boppard Catholic marriage register 1711-1794 — the same parish as the 1717 and 1720 christenings. f1's place was corrected from the collection title (\"Rheinland, Bistum Trier\") to the event place the record gives (\"Boppard, Sankt Goar\"). Step 1a image-reading calibration passed on two other indexed entries from the same page. See README \"Notes for reviewers\"."
 }
