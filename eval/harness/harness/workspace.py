@@ -24,10 +24,13 @@ _SESSION_STORE_ROOT = Path.home() / ".claude" / "projects"
 
 # Plugin subagents shipped with the Cowork plugin. Staged into every unit
 # workspace so a skill's `@plugin:<name>` delegation resolves to the real
-# agent — mirrors e2e/orchestrator.py's DEFAULT_PLUGIN_AGENTS + staging.
+# agent. The one definition of both plugin paths: e2e/orchestrator.py and the
+# pure-analysis e2e reports import them from here, which keeps the reports free
+# of the orchestrator's module-scope claude_agent_sdk import.
 DEFAULT_PLUGIN_AGENTS = (
     Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin" / "agents"
 )
+DEFAULT_PLUGIN_SKILLS = DEFAULT_PLUGIN_AGENTS.parent / "skills"
 
 # Reasoning effort pinned into every unit workspace. "high" matches both Cowork
 # and the e2e orchestrator's default, so unit and e2e grade the same behavior.
@@ -101,6 +104,22 @@ def build_workspace(
         results_src = src / "results"
         if results_src.is_dir():
             shutil.copytree(results_src, target / "results", dirs_exist_ok=True)
+        # The two sidecar classes `sidecar_read` serves — a verdict body under
+        # `evaluations/` and a text upload under `uploads/` (mock_mcp.py's
+        # LIVE_TOOLS note). Staged for the same reason as `results/`: the tool
+        # is live and resolves a project-relative ref against the workspace, so
+        # a scenario that declares an `evaluations[]` entry with a `file_path`
+        # but ships no file makes `sidecar_read` answer `not_found` for a file
+        # the fixture says exists.
+        #
+        # Nothing staged these before, which is why no scenario in the corpus
+        # ships one: the gps-mentor craft-supersession path reads a prior
+        # verdict body's `craft` flag through exactly this call
+        # (`agents/gps-mentor.md:308-312`) and could not be exercised at all.
+        for sidecar in ("evaluations", "uploads"):
+            sidecar_src = src / sidecar
+            if sidecar_src.is_dir():
+                shutil.copytree(sidecar_src, target / sidecar, dirs_exist_ok=True)
 
     if stage_skills:
         skills_target = target / ".claude" / "skills"

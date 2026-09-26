@@ -768,25 +768,50 @@ def test_the_url_logged_is_the_url_presented(
     assert not errors, "URL logged but never presented:\n  - " + "\n  - ".join(errors)
 
 
-def report_no_plan_item_status_written_when_no_entry_names_one(
+def test_no_plan_item_status_written_when_no_entry_names_one(
     before_state, after_state, test
 ):
     """V6. When every new log entry has plan_item_id null, no plan item's status
     may change.
 
-    **Reporting-only, deliberately: SKILL.md does not state this rule.** An
-    earlier draft claimed step 7 sets a status only on a turn that names a plan
-    item. It does not — `planItemId` appears twice in the 605-line body,
-    :387 and :418, both as the template literal `"<pli_XXX or null>"`, and
-    step 7 at :541 keys the status write on `planId` and the `entryId`, not on
-    the log entry. The schema puts no description on `plan_item_id` either.
-    Nine of nine corpus runs that moved a status did also write
-    `plan_item_id`, but that is model habit, not a contract (#2345 review).
+    **Gating, and the COMPLEMENT of the writer-tool rule — not its mirror.**
+    `research_append` refuses a `plan_items` write that leaves an item at
+    `completed` when no `log[]` entry carries its id. This predicate is
+    deliberately different on both axes, and must not be rewritten to match:
 
-    Gating on a rule the shipped skill never states would fail runs for
-    behaviour nobody asked for. Landing the rule in SKILL.md first would need
-    a paid run and belongs with the URL-tool work on issue #1980; until then
-    this observes and the judge decides.
+    - **Coarser on attribution.** It skips as soon as any new log entry names
+      any plan item, where the tool asks whether an entry names *this* item.
+    - **Broader on status.** It refuses any status change, where the tool
+      refuses `completed` only. That reach is the point: it covers
+      `in_progress` and `skipped` moves, which the tool rule never refuses —
+      and in this skill, whose 2 corpus `completed` writes both log
+      `planItemId` first, the tool rule refuses nothing.
+
+    ADR-0011's "Production beats eval-only" makes this the complement of the
+    gate rather than a second copy of it: what the tool cannot see from one
+    call's arguments, this sees from the before/after state of a whole run.
+
+    Promoted from `report_` to `test_` by the 2026-09-22 ruling recorded in
+    ADR-0011's "Rulings that generalize": "no SKILL.md states it" does not
+    settle the question. The rule is decidable from the project documents
+    alone, which is what step 1 asks.
+
+    **No committed run can tell you what this would have refused, and that is
+    a stronger caveat than a fire count.** `as_dicts` (`validator_runner.py`)
+    filters on `if not r.reporting_only`, which drops a reporting-only result
+    whether it passed OR fired — and a fired one goes to the judge as an
+    observation, which the run log does not persist either. So its absence from
+    all 5 committed `search-external-sites` run logs (the function name appears
+    0 times under either spelling) is not evidence that it never fired. The unit
+    run logs carry no before/after state, so no replay is possible from anything
+    committed, and the direction that matters for a newly-gating check — does it
+    wrongly fail a correct run? — rests on the three synthetic cases in
+    `eval/harness/tests/unit/test_search_external_sites_validator.py`.
+
+    Promotion also flips `state_derived` to False, which removes its fired
+    findings from the judge's state-observation list. That is correct once it
+    gates — a gating failure is a run failure, not an observation for the judge
+    to weigh — and is recorded here rather than left to be discovered.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")

@@ -64,6 +64,21 @@ TURN_COLUMNS = ("cost_usd", "num_turns", "duration_ms", "nudges", *turn.TOKEN_CO
 #: they are the ONLY honest spend figure either side has in common.
 HARNESS_TOKEN_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
 TURNS_SQL = f"SELECT {', '.join(TURN_COLUMNS)} FROM turns WHERE session_id = %s ORDER BY enqueued_at"
+#: The four token sums over the session's whole SDK transcript, in ``turn.TOKEN_COLUMNS``
+#: order: one row per API message, its last entry (the worker's TURN_USAGE_SQL without the
+#: per-turn seq window). A turn that never completed has NULL token columns -- only a
+#: completing attempt writes them -- so this is its only spend figure. The turns' seq
+#: windows partition the transcript, so over the session it equals the turns' sum.
+TRANSCRIPT_TOKENS_SQL = (
+    "SELECT sum((u->>'input_tokens')::bigint), "
+    "sum((u->>'cache_creation_input_tokens')::bigint), "
+    "sum((u->>'cache_read_input_tokens')::bigint), "
+    "sum((u->>'output_tokens')::bigint) "
+    "FROM (SELECT DISTINCT ON (e.entry->'message'->>'id') e.entry->'message'->'usage' AS u "
+    "FROM session_entries e JOIN sessions s ON e.session_id = s.sdk_session_id "
+    "WHERE s.session_id = %s AND e.entry->>'type' = 'assistant' "
+    "ORDER BY e.entry->'message'->>'id', e.seq DESC) m"
+)
 
 
 @dataclass(frozen=True)
@@ -149,7 +164,7 @@ def findings_changed(fixture: str, *, e2e_dir: Path = E2E_DIR, root: Path = ROOT
         rel = path
     try:
         proc = subprocess.run(
-            ["git", "log", "-1", "--format=%cs", "--", str(rel)],
+            ["git", "log", "-1", "--format=%cs", "--", rel.as_posix()],
             cwd=root, text=True, encoding="utf-8", capture_output=True, timeout=30,
         )
     except (OSError, subprocess.SubprocessError):
@@ -246,16 +261,50 @@ def _tokens(values: list[Any]) -> str:
     return "tokens " + "/".join("?" if v is None else f"{int(v):,}" for v in values)
 
 
+#: The nested ``usage`` is the ResultMessage's, which counts the MAIN THREAD only: on
+#: paerai-teupooihi-spouse's 2026-09-21 log it equals the ``main`` rows of
+#: ``message_usage`` exactly (74 / 209,918 / 2,902,086), and the subagents add
+#: 59 / 223,369 / 1,182,935 on top. The prototype's tokens sum every thread, so the
+#: harness side is summed the same way where its log allows.
+HARNESS_ALL_THREADS = "  (harness tokens: main thread + {n} subagents)"
+HARNESS_MAIN_ONLY = (
+    "  (harness tokens: MAIN THREAD ONLY -- this log predates message_usage, so it is not "
+    "comparable with the prototype's, which sum every subagent too)"
+)
+#: ``message_usage`` rows are ``[thread, input, cache_read, cache_creation]``
+#: (``_thread_usage`` in ``eval/harness/e2e/orchestrator.py``); output is not in them.
+MESSAGE_USAGE_INDEX = {"input_tokens": 1, "cache_read_input_tokens": 2, "cache_creation_input_tokens": 3}
+
+
+def harness_tokens(usage: dict[str, Any], subagents: list[dict[str, Any]]) -> tuple[list[Any], str]:
+    """The harness's four token figures in ``HARNESS_TOKEN_KEYS`` order and the tag that
+    says what they cover. With ``message_usage`` the three window fields are summed over
+    every thread and output adds each captured subagent's turns to the main thread's;
+    without it the ResultMessage's main-thread figures are all there is."""
+    nested = usage.get("usage") or {}
+    rows = usage.get("message_usage")
+    if not rows:
+        return [nested.get(name) for name in HARNESS_TOKEN_KEYS], HARNESS_MAIN_ONLY
+    main_output = nested.get("output_tokens")
+    sub_output = sum(int(t.get("output_tokens") or 0) for s in subagents for t in s.get("turns") or [])
+    values = [
+        (None if main_output is None else main_output + sub_output)
+        if name == "output_tokens" else sum(int(r[MESSAGE_USAGE_INDEX[name]] or 0) for r in rows)
+        for name in HARNESS_TOKEN_KEYS
+    ]
+    return values, HARNESS_ALL_THREADS.format(n=len(subagents))
+
+
 def harness_record(data: dict[str, Any]) -> str:
     """Cost, wall clock, tool calls and tokens, off a committed run log's own usage
-    block; the tokens are in its nested ``usage``."""
+    block; the tokens as ``harness_tokens`` reads them, tagged with what they cover."""
     usage = data.get("usage") or {}
-    nested = usage.get("usage") or {}
+    tokens, covers = harness_tokens(usage, data.get("subagents") or [])
     return (
         f"{_money(usage.get('total_cost_usd'))}  {_seconds(usage.get('duration_ms'))}  "
         f"{len(data.get('tool_calls') or [])} tool calls  "
         f"{usage.get('num_turns', '?')} SDK turns  {usage.get('continue_nudges', '?')} nudges  "
-        f"{_tokens([nested.get(name) for name in HARNESS_TOKEN_KEYS])}"
+        f"{_tokens(tokens)}{covers}"
     )
 
 
@@ -270,24 +319,44 @@ UNDER_REPORTED = (
 )
 
 
-def proto_record(turn_rows: list[tuple], tool_call_rows: list[dict[str, Any]]) -> str:
+#: Appended when a turn never completed and the tokens printed are the transcript's. Its
+#: cost, SDK turns and duration are unknown, not zero: only a completing attempt writes
+#: them, and a run stopped after its last kill (D18's paerai, 2026-09-24) has none.
+NEVER_COMPLETED = (
+    "  (a turn never completed: cost/SDK turns/duration unknown -- "
+    "the tokens are read off the session's transcript, every attempt's)"
+)
+
+
+def proto_record(
+    turn_rows: list[tuple], tool_call_rows: list[dict[str, Any]],
+    transcript: tuple | None = None,
+) -> str:
     """The same four numbers off the prototype's own rows: ``turns`` summed over the
     session, and ``tool_calls`` counted. ``cost_usd`` and ``num_turns`` are each turn's
     COMPLETING attempt, so a turn resumed after a kill reports **0** for both -- not NULL,
     so they render as ``$0.00`` and ``0 SDK turns`` rather than ``$?``. A row with a
-    duration and no cost is marked on the line itself."""
+    duration and no cost is marked on the line itself. A turn that never completed has
+    NULL token columns; ``transcript`` (``TRANSCRIPT_TOKENS_SQL``'s row) then stands in
+    for the session's tokens, and the line says so."""
     a = audit.audit(tool_call_rows, anchor="/project")
 
     def _at(name: str) -> Any:
         return _total(turn_rows, TURN_COLUMNS.index(name))
 
+    token_indices = [TURN_COLUMNS.index(name) for name in turn.TOKEN_COLUMNS]
+    never_completed = any(all(r[i] is None for i in token_indices) for r in turn_rows)
+    from_transcript = never_completed and transcript is not None and any(v is not None for v in transcript)
+    tokens = list(transcript) if from_transcript else [_at(name) for name in turn.TOKEN_COLUMNS]
     cost, turns, nudges = _at("cost_usd"), _at("num_turns"), _at("nudges")
     line = (
         f"{_money(cost)}  {_seconds(_at('duration_ms'))}  "
         f"{a.rows} tool calls  {turns if turns is not None else '?'} SDK turns  "
         f"{nudges if nudges is not None else '?'} nudges  "
-        f"{_tokens([_at(name) for name in turn.TOKEN_COLUMNS])}"
+        f"{_tokens(tokens)}"
     )
+    if from_transcript:
+        return line + NEVER_COMPLETED
     ran_without_cost = any(r[TURN_COLUMNS.index("duration_ms")] and not r[TURN_COLUMNS.index("cost_usd")]
                            for r in turn_rows)
     return line + UNDER_REPORTED if ran_without_cost else line
@@ -345,6 +414,11 @@ def render(fixture: str, expected: dict[str, Any], harness: Side | None, proto: 
 def turn_rows(dsn: str, session_id: str) -> list[tuple]:
     with psycopg.connect(dsn) as conn:
         return conn.execute(TURNS_SQL, (session_id,)).fetchall()
+
+
+def transcript_tokens(dsn: str, session_id: str) -> tuple | None:
+    with psycopg.connect(dsn) as conn:
+        return conn.execute(TRANSCRIPT_TOKENS_SQL, (session_id,)).fetchone()
 
 
 # -- the run ------------------------------------------------------------------------------
@@ -452,6 +526,7 @@ def run(args: argparse.Namespace) -> int:
         record=proto_record(
             turn_rows(args.pg_dsn, args.session),
             audit.load(args.pg_dsn, args.session),
+            transcript_tokens(args.pg_dsn, args.session),
         ),
     )
 
