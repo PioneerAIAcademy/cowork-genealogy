@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { frontmatterBlock } from "./frontmatter.js";
 
 // Length lint for skill and plugin-agent descriptions. The description drives
 // triggering (skills) and orchestrator auto-delegation (agents), and the
@@ -27,10 +28,10 @@ const agentsDir = join(repoRoot, "plugin", "agents");
  * cases differ only in how the first line is read.
  */
 function extractDescription(text: string): string {
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-  if (!frontmatter) throw new Error("no YAML frontmatter");
+  const frontmatter = frontmatterBlock(text);
+  if (frontmatter === null) throw new Error("no YAML frontmatter");
 
-  const lines = frontmatter[1].split(/\r?\n/);
+  const lines = frontmatter.split(/\r?\n/);
   const start = lines.findIndex((l) => /^description:/.test(l));
   if (start === -1) throw new Error("no description key");
 
