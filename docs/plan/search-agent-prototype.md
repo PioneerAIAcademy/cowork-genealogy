@@ -2600,10 +2600,8 @@ works on v1.6.0-alpha.2 (P3f). So the risk is now an upgrade: tap-agentgateway o
 or we run without tool search at about three times the first call's context. Also left:
 access (URL and a consumer key) and one parity run through the deployed gateway, which
 covers its auth, guardrails and network path, none of which P3f's local copy has. The
-paragraph below is the 2026-09-11 reading. Its claim that
-tool search survives is true of the client gate only. What follows is the
-2026-09-11 reading of the source,
-which still describes what the route *can* do. It is Anthropic-Messages-
+paragraph below is the 2026-09-11 reading of the source, which still describes what
+the route *can* do; its claim that tool search survives holds for the client gate only. It is Anthropic-Messages-
 compatible (agentgateway v1.4.1, `POST /bedrock/v1/messages`, Messages→Converse both
 ways including streaming and errors), so the SDK runs unmodified with
 `ANTHROPIC_BASE_URL` at the gateway. Read from upstream source at the pinned tag rather
