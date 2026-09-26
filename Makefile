@@ -1062,6 +1062,29 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	# whole corpus. A report, not a gate (see its own "Limits" footer).
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-writer-attribution
+e2e-writer-attribution: ## Which subagent wrote a project document, and whether an ownership row says it may (issue #2575): make e2e-writer-attribution | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs -- no live run, no API.
+	#
+	# The observed half of the actual-writer-is-listed direction. The BLOCKING
+	# half is static and lives in the vitest packaging suite
+	# (ownership-manifest.test.ts, "names every plugin holder of a writer tool");
+	# this one reads what the corpus records a subagent actually calling, which is
+	# what found the original instance and is the only half that can catch an
+	# agent body calling a tool its `tools:` never declared. (A skill's own calls
+	# carry no agent_type; an undeclared skill call is test_tool_allowlist's job.)
+	#
+	# Three classes: listed, UNLISTED (a manifest gap), and UNBOUND DELEGATION --
+	# an agent_type that is neither a shipped skill nor a shipped agent, can never
+	# be listed in any row, and is therefore its own finding rather than a
+	# manifest gap or a waiver. `general-purpose` is the #939 stand-in; any other
+	# name there was renamed, retired, or never shipped.
+	#
+	# Defaults to the WHOLE corpus, unlike every other e2e reader: a manifest gap
+	# is not a freshness question, and a window reads a strict subset of the same
+	# pairs as "fewer gaps". SINCE=14 for the house window.
+	cd eval/harness && uv run python -m e2e.writer_attribution_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-guardrail-shadow
 e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1 | FEEDBACK_DIR=~/feedback PLATFORMS=<dir>=web,<dir>=darwin
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;

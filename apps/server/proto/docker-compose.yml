@@ -114,6 +114,11 @@ services:
       # copy. env.sh exports it from eval/.env.
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
+      # MODEL_PROVIDER=gateway only: an Anthropic-Messages gateway (tap-agentgateway's
+      # /bedrock), its consumer key, and whether tool search is on (off below v1.6).
+      GATEWAY_BASE_URL: ${GATEWAY_BASE_URL:-}
+      GATEWAY_API_KEY: ${GATEWAY_API_KEY:-}
+      GATEWAY_TOOL_SEARCH: ${GATEWAY_TOOL_SEARCH:-false}
       # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
       # this file (proto/env.sh writes it; `make proto-token` rewrites it between turns --
       # never during one, since a FamilySearch refresh revokes the previous access token).

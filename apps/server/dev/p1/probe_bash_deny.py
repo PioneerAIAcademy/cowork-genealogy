@@ -12,8 +12,8 @@ build_prototype_options`), each on a fresh temp project seeded from
 
     pool-baseline  disallowed_tools=[]   "Reply with the single word READY."
                    -> is Bash in the init SystemMessage's data["tools"]?  (the control)
-    pool-denied    the default four      same query, same read
-    call-denied    the default four      "Use the Bash tool to run `echo p1-probe` …"
+    pool-denied    DISALLOWED_TOOLS      same query, same read
+    call-denied    DISALLOWED_TOOLS      "Use the Bash tool to run `echo p1-probe` …"
                    -> did a Bash tool_use appear, did the hook see Bash, what came back?
 
 The pool read is the CLI's `system`/`init` frame, which the SDK parses as
@@ -90,7 +90,7 @@ _POOL_ABSENCE_RE = re.compile(
 @dataclass(frozen=True)
 class Arm:
     name: str
-    disallowed_tools: list[str] | None   # None = the default four; [] = none
+    disallowed_tools: list[str] | None   # None = DISALLOWED_TOOLS; [] = none
     query: str
 
 
@@ -315,7 +315,7 @@ async def run_all(model: str) -> int:
 
     rows: dict[str, dict[str, Any]] = {}
     for arm in ARMS:
-        denied = "[]" if arm.disallowed_tools == [] else "default four"
+        denied = "[]" if arm.disallowed_tools == [] else "DISALLOWED_TOOLS"
         print(f"... running {arm.name}  disallowed_tools={denied}  query={arm.query!r}", flush=True)
         try:
             rows[arm.name] = await asyncio.wait_for(run_arm(arm, key, model), timeout=ARM_TIMEOUT_S)

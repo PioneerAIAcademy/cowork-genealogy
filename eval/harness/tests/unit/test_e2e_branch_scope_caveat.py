@@ -30,6 +30,7 @@ from e2e import (
     skill_episode_report,
     transcription_join_report,
     wiki_failure_report,
+    writer_attribution_report,
 )
 
 _MISSING_SLUG = "nonexistent-fixture-slug-for-branch-scope-caveat-test"
@@ -47,6 +48,7 @@ _READERS = [
     (skill_episode_report, []),
     (transcription_join_report, []),
     (wiki_failure_report, []),
+    (writer_attribution_report, []),
     (detector_before_after_report, ["--detector", "lane-check"]),
 ]
 

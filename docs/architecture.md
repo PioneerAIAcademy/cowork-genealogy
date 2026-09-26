@@ -749,7 +749,9 @@ Remember the unit suite grades a *single invocation in fresh context* — it wil
 happily bless a cut that removes something only a multi-hour session needs.
 
 **Add a plugin agent.** Write the body self-contained (§3.4), spell every
-tool (§5.2), and pin `model:` deliberately. Then run `make agent-smoke` (§8) —
+tool (§5.2), pin `model:` deliberately, and give it an `AGENT_WRITABLE_SECTIONS`
+lane if it holds `research_append` (plus `agentCallers` rows for every writer
+tool it holds — "Give an agent a new tool", §5). Then run `make agent-smoke` (§8) —
 and note that no CI job runs it.
 
 ---
@@ -1135,8 +1137,9 @@ itself:
    value, and a field on presence alone. `project` is co-written — `init-project`
    authors it and any writer may refresh `updated` — so only the one field is
    routed.
-3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops an owning agent writing
-   *outside* its own set, added after a measured 2026-08-19 incident in which
+3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops every agent that holds
+   `research_append` writing *outside* its own set (a test requires the lane),
+   added after a measured 2026-08-19 incident in which
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
@@ -1231,6 +1234,11 @@ enforcing-vs-shadow status.
   instruction) — dead grants that every lint
   passes. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
+- **A writer tool also needs the ownership manifest.** Name the agent in
+  `agentCallers` (with the tool in its `tools`) on every row that tool reaches,
+  and give an agent that gains `research_append` an `AGENT_WRITABLE_SECTIONS`
+  lane in `hooks/guard_project_files.py`. `ownership-manifest.test.ts` and
+  `plugin-hooks.test.ts` fail until both are done.
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
   the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
   `make agent-smoke` verifies name resolution only, and `make
@@ -1829,7 +1837,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `gps-mentor-craft-doctrine.test.ts` | the four clauses of `gps-mentor`'s craft mode whose silent deletion would be invisible until a user hit it — the required scope sentence, the refusal row, advisory severity, and the `craft: true` marker (`gps-mentor-agent-spec.md` §6.4) |
 | `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` agent, which must quote the wrong phrasing back to correct it |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
-| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 | `prompt-budget.test.ts` | the report is warn-only; the baseline file must be current. `prompt-sizes.json` records byte sizes for every `SKILL.md`, agent body and `CLAUDE.md`, and character sizes for every MCP tool description (`description.length + JSON.stringify(inputSchema).length`). The staleness test fails when the file disagrees with the sizes computed at HEAD; the delta report stays warn-only — no ceiling, no threshold. Regenerate: `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts` |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
@@ -2076,9 +2084,12 @@ and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly lik
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
 `make e2e-corpus` gives the three axes plus violation counts, the per-arm split
 and per-fixture concentration, across the last 14 days of committed runs —
-every run-log reader windows that way, `SINCE=all` to opt out — `make
+most run-log readers window that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
-actually called across those runs, and the
+actually called across those runs, `make e2e-writer-attribution` reports which
+subagent wrote a project document and whether an ownership row says it may
+(the one reader that defaults to the whole corpus, because a manifest gap is not
+a freshness question), and the
 `/interpret-e2e-result` skill exists to read the log for you. `make
 e2e-ranked-reads` reports whether the main thread's `record_read` calls landed
 inside the ranker's **visible** top 3 — visible is the limit, because

@@ -29,7 +29,10 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the model is pinned per ``MODEL_PROVIDER``: ``anthropic`` (default) is
   ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``bedrock`` sets
   ``CLAUDE_CODE_USE_BEDROCK``, ``ANTHROPIC_MODEL`` and the 1 h cache flag explicitly,
-  because an unpinned default is Opus and every cost figure is then wrong by several-fold.
+  because an unpinned default is Opus and every cost figure is then wrong by several-fold;
+  ``gateway`` points the CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``,
+  ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
+  every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
@@ -41,6 +44,7 @@ a closure, never a global.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 from collections.abc import Callable, Mapping
@@ -67,9 +71,23 @@ from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import project_read_denied
 
-DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
+# DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
+# (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
+DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
 BEDROCK_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
+# [1m] as on Bedrock: the CLI strips it, sends context-1m-2025-08-07 and sizes its window
+# (and so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
+GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+# Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
+# CLI sends an agent's model verbatim, and a gateway without a matching alias answers
+# 400 "model identifier is invalid", after which the main thread silently delegates to
+# a general-purpose stand-in (plan P3h).
+GATEWAY_AGENT_MODELS = {
+    "claude-sonnet-4-6": "us.anthropic.claude-sonnet-4-6",
+    "claude-sonnet-5": "us.anthropic.claude-sonnet-5",
+}
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
 # raised so one oversized JSON line cannot end a turn.
@@ -155,7 +173,35 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
             "ANTHROPIC_MODEL": BEDROCK_MODEL,
             "ENABLE_PROMPT_CACHING_1H_BEDROCK": "1",
         }
-    raise ValueError(f"MODEL_PROVIDER must be anthropic or bedrock, not {provider!r}")
+    if provider == "gateway":
+        base_url = (worker_env.get("GATEWAY_BASE_URL") or "").strip()
+        if not base_url:
+            raise ValueError("MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
+        return None, {
+            "ANTHROPIC_BASE_URL": base_url,
+            "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
+            # Blank, not absent: the CLI inherits the worker's environment, and an
+            # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
+            "ANTHROPIC_API_KEY": "",
+            "ANTHROPIC_MODEL": GATEWAY_MODEL,
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
+            # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
+            # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+            "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+        }
+    raise ValueError(f"MODEL_PROVIDER must be anthropic, bedrock or gateway, not {provider!r}")
+
+
+def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
+    """``agents`` with each ``AgentDefinition.model`` in ``GATEWAY_AGENT_MODELS`` replaced
+    by its Bedrock id. Anything that is not a dataclass with a ``model`` passes as is."""
+    out: dict[str, Any] = {}
+    for name, agent in agents.items():
+        model = getattr(agent, "model", None)
+        if dataclasses.is_dataclass(agent) and model in GATEWAY_AGENT_MODELS:
+            agent = dataclasses.replace(agent, model=GATEWAY_AGENT_MODELS[model])
+        out[name] = agent
+    return out
 
 
 def tool_server_env(
@@ -614,6 +660,8 @@ def build_worker_options(
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
     model, model_env = provider_env(env_in)
+    if (env_in.get("MODEL_PROVIDER") or "").strip().lower() == "gateway":
+        agents = gateway_agent_models(agents)
     project_note = (
         "You are the hosted genealogy research agent. The active research project is "
         f"reached through the genealogy MCP tools with projectPath {cwd!r} — it is not "

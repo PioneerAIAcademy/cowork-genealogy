@@ -47,6 +47,7 @@ import pathlib
 import re
 import shutil
 import stat
+import sys
 import tempfile
 import uuid
 from pathlib import Path
@@ -59,6 +60,9 @@ from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage
 
 from proto.worker import deny, options, worker
 from proto.worker.session_store import entry_rows
+
+#: Windows chmod only toggles read-only, so a file mode never reads back as 0o600 there.
+POSIX_MODES = sys.platform != "win32"
 
 SERVER = Path(__file__).resolve().parents[1]
 PROTO = SERVER / "proto"
@@ -773,7 +777,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.permission_mode == "bypassPermissions"
     assert opts.plugins == [{"type": "local", "path": "/opt/genealogy/plugin"}]
     assert list(opts.agents) == ["gps-mentor"]
-    assert opts.disallowed_tools == ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
+    assert opts.disallowed_tools == ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
     assert opts.session_store_flush == "eager" and opts.session_store is not None
     assert opts.include_partial_messages is True
     assert opts.max_buffer_size == options.MAX_BUFFER_BYTES > 1024 * 1024
@@ -794,7 +798,8 @@ def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_
     # A str is handed to the CLI as `--mcp-config <path>`; a dict would be json.dumps'd
     # onto argv, where the bearer and the S3 secret are visible in `ps`.
     assert isinstance(opts.mcp_servers, str) and opts.mcp_servers == str(tmp_path / "mcp.json")
-    assert stat.S_IMODE(Path(opts.mcp_servers).stat().st_mode) == 0o600
+    if POSIX_MODES:
+        assert stat.S_IMODE(Path(opts.mcp_servers).stat().st_mode) == 0o600
     server = _server(opts)
     assert server["type"] == "stdio"
     assert server["command"] == "env", "the fork strips the model key the CLI holds"
@@ -812,7 +817,8 @@ def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
     path.write_text("{}", encoding="utf-8")
     path.chmod(0o644)
     assert options.write_mcp_config(str(tmp_path), {"genealogy": {"type": "stdio"}}) == str(path)
-    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    if POSIX_MODES:
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "stdio"}}}
 
 
@@ -865,6 +871,60 @@ def test_bedrock_pins_the_model_and_the_cache_flag_explicitly():
         _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "vertex"})
 
 
+GATEWAY_ENV = {**WORKER_ENV, "MODEL_PROVIDER": "gateway",
+               "GATEWAY_BASE_URL": "http://gw.example/bedrock", "GATEWAY_API_KEY": "k-1"}
+
+
+def test_gateway_sends_bedrock_ids_through_the_base_url():
+    opts = _options(worker_env=GATEWAY_ENV)
+    assert opts.model is None
+    assert opts.env["ANTHROPIC_BASE_URL"] == "http://gw.example/bedrock"
+    assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
+    assert opts.env["ANTHROPIC_API_KEY"] == "", "blanked, or the inherited Anthropic key rides to the gateway"
+    assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
+    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window, as on Bedrock"
+    assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
+    assert on.env["ENABLE_TOOL_SEARCH"] == "true"
+    with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
+        _options(worker_env={**GATEWAY_ENV, "GATEWAY_BASE_URL": " "})
+
+
+def test_gateway_maps_every_agent_model_to_its_bedrock_id():
+    from claude_agent_sdk import AgentDefinition
+
+    def agents():
+        return {
+            "record-extractor": AgentDefinition(description="d", prompt="p", model="claude-sonnet-4-6"),
+            "gps-mentor": AgentDefinition(description="d", prompt="p", model="claude-sonnet-5"),
+            "custom": AgentDefinition(description="d", prompt="p", model="us.anthropic.claude-opus-5"),
+            "unset": AgentDefinition(description="d", prompt="p"),
+        }
+    got = _options(worker_env=GATEWAY_ENV, agents=agents()).agents
+    assert {n: a.model for n, a in got.items()} == {
+        "record-extractor": "us.anthropic.claude-sonnet-4-6",
+        "gps-mentor": "us.anthropic.claude-sonnet-5",
+        "custom": "us.anthropic.claude-opus-5",
+        "unset": None,
+    }
+    assert got["record-extractor"].prompt == "p", "only the model changes"
+    for provider in ("anthropic", "bedrock"):
+        kept = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": provider}, agents=agents()).agents
+        assert kept["record-extractor"].model == "claude-sonnet-4-6", provider
+
+
+def test_every_shipped_agent_model_has_a_gateway_id():
+    from proto.worker.plugin_agents import load_agent_definitions
+
+    shipped = load_agent_definitions(SERVER.parents[1] / "packages" / "engine" / "plugin")
+    models = {a.model for a in shipped.values() if a.model}
+    assert models, "the plugin declares agent models"
+    unmapped = sorted(m for m in models
+                      if m not in options.GATEWAY_AGENT_MODELS and not m.startswith(("us.", "global.")))
+    assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
+
+
 # ── the container ─────────────────────────────────────────────────────────────────
 
 
@@ -895,6 +955,8 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     assert env["ANTHROPIC_API_KEY"].startswith("${ANTHROPIC_API_KEY"), "never a literal in the compose file"
     assert env["OPENROUTER_API_KEY"].startswith("${OPENROUTER_API_KEY"), "image_transcribe's key, passed through like the model key"
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
+    for key in ("GATEWAY_BASE_URL", "GATEWAY_API_KEY", "GATEWAY_TOOL_SEARCH"):
+        assert env[key].startswith("${" + key), f"{key} is passed through, never a literal"
     # The FS token is a file read per turn, never a literal or a build arg. The FILE stays
     # primary -- `bearer_token` tries it first, and it is what `make proto-token` refreshes
     # under a running worker.
