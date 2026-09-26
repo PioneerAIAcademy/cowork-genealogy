@@ -810,28 +810,55 @@ def main() -> int:
     if grade_violations or beta_violations:
         return 1
 
-    # --- Annotation structural validation (blocking on PR-added, warn corpus) —
+    # --- Annotation structural validation (blocking on PR-added/modified, warn corpus) —
     # --- rungs 1-10 from calibrate_judge.load_annotated_runs, reimplemented
     # --- stdlib-only (#2487 PR B).
     fixtures_dir = REPO_ROOT / "eval" / "tests" / "e2e"
-    ann_errors = validate_e2e_annotations(RUNLOGS_DIR, fixtures_dir)
-    # Scope: PR-added annotation violations block; pre-existing ones warn.
-    added_ann_rels = {
-        Path(p).relative_to(RUNLOGS_DIR)
-        for p in ar_runlogs
-        if str(p).endswith(".ann.json")
-    }
-    # Also include annotations whose sibling run log was added (the annotation
-    # may not appear in the AR set if it was already committed).
+    runlogs_dir = REPO_ROOT / "eval" / "runlogs" / "e2e"
+    ann_errors = validate_e2e_annotations(runlogs_dir, fixtures_dir)
+    # Scope: PR-touched annotation violations block; pre-existing ones warn.
+    # Build the set relative to the repo-relative prefix (not the absolute
+    # RUNLOGS_DIR) so they match the `rel` in the error strings, which are
+    # relative to `runlogs_dir`.
+    e2e_prefix = Path("eval", "runlogs", "e2e")
+    touched_ann_rels: set[Path] = set()
+    # Every run log the PR added or renamed — its annotation is accountable.
     for p in ar_runlogs:
-        if _is_primary_runlog(Path(p).name):
-            ann_rel = Path(p).parent / (Path(p).stem + ".ann.json")
-            added_ann_rels.add(ann_rel.relative_to(RUNLOGS_DIR) if ann_rel.is_relative_to(RUNLOGS_DIR) else ann_rel)
+        ann_path = Path(p).with_name(Path(p).stem + ".ann.json")
+        try:
+            touched_ann_rels.add(ann_path.relative_to(e2e_prefix))
+        except ValueError:
+            pass  # not under e2e prefix — skip
+    # Also catch .ann.json files that are themselves A/R/M in the diff — a PR
+    # that edits an existing annotation or edits expected-findings.json under a
+    # graded run must also block, not just warn (#2487 review finding 2).
+    try:
+        arm_out = subprocess.check_output(
+            ["git", "-c", "diff.renames=true", "diff",
+             "--name-only", "--diff-filter=ARM",
+             os.environ["BASE_SHA"], os.environ["HEAD_SHA"]],
+            text=True, encoding="utf-8", cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+        for line in arm_out.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            p = Path(line)
+            if (
+                len(p.parts) >= 4
+                and p.parts[:3] == ("eval", "runlogs", "e2e")
+                and p.name.endswith(".ann.json")
+            ):
+                touched_ann_rels.add(p.relative_to(e2e_prefix))
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass  # best-effort widening; the AR set above still covers the core case
+
     blocking_ann = []
     for e in ann_errors:
-        # Check if the error names a PR-added annotation
-        is_pr_added = any(str(rel) in e for rel in added_ann_rels)
-        if is_pr_added:
+        # Check if the error names a PR-touched annotation
+        is_pr_touched = any(str(rel) in e for rel in touched_ann_rels)
+        if is_pr_touched:
             blocking_ann.append(e)
         else:
             print(f"::warning::{e}")
