@@ -857,16 +857,19 @@ def main() -> int:
     blocking_ann = []
     for e in ann_errors:
         # Check if the error names a PR-touched annotation, or is a
-        # bundle/hash mismatch (a PR that edits a graded file while the
-        # annotation itself is untouched — the case C exists for).
+        # blind_bundle_digest mismatch. The bundle phrases are safe to
+        # always block because main has 0 stamped annotations — no
+        # pre-existing mismatch can fire. findings_hash mismatches are
+        # NOT in this list: two annotations on main already carry stale
+        # hashes (ignacio-alvarado-daughter, mary-mcandrew-son), so
+        # always-blocking those would red every future e2e PR. They
+        # still block when the annotation is PR-touched (is_pr_touched).
         is_pr_touched = any(str(rel) in e for rel in touched_ann_rels)
-        is_digest_mismatch = (
+        is_bundle_mismatch = (
             "blind_bundle_digest mismatch" in e
             or "cannot compute blind_bundle_digest" in e
-            or "findings_hash mismatch" in e
-            or "cannot compute findings_hash" in e
         )
-        if is_pr_touched or is_digest_mismatch:
+        if is_pr_touched or is_bundle_mismatch:
             blocking_ann.append(e)
         else:
             print(f"::warning::{e}")
