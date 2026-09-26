@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "question-selection",
   "version": 1,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-09-25_20-33-03",
@@ -129,7 +129,7 @@
       },
       "totals": {
         "duration_ms": 82740.64426636323,
-        "duration_api_ms": 81586.0,
+        "duration_api_ms": 81586,
         "judge_duration_ms": 9192.579320631921,
         "wall_clock_ms": 92052.2894859314,
         "num_turns": 15,
@@ -152,7 +152,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 82740.64426636323,
-          "duration_api_ms": 81586.0,
+          "duration_api_ms": 81586,
           "num_turns": 15,
           "skill_attempts": 1,
           "input_tokens": 367,
@@ -184,7 +184,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.20677985000000004,
           "output": {
-            "text_response": "I'll start by reading the reference files and then examining the project state.\n\nNow let me load the project state.\n\nLet me read the research.json directly to get the full objective and project details.\n\nI have a complete picture of the project. This is a fresh project with no questions yet. Let me apply the priority ladder:\n\n- **Priority 1** (unresolved conflicts): None \u2192 skip  \n- **Priority 2** (active hypotheses): None \u2192 skip  \n- **Priority 3** (high-severity timeline gaps): No timelines at all \u2192 skip  \n- **Priority 4** (objective not yet decomposed): **Fires** \u2014 no questions exist\n\nThe objective \u2014 *\"Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\"* \u2014 is a single-fact objective (both parents together are one relational fact; the skill rules prohibit splitting them into a father question and a mother question). The tree person (I1) has no sources attached, but the biographical anchor facts in the objective itself (ca. 1845 PA birth, 1908 Schuylkill County death) define *which* Patrick Flynn is being investigated \u2014 they are the researcher's starting frame, not a load-bearing premise from a suspect compiled source. No unverified premise needs to be cleared first.\n\nThe first question is the objective restated as a single testable question with full identifying detail.\n\nThe first research question has been saved as **`q_001`** \u2014 this project's label for it.\n\n---\n\n**A note on terms:** The *objective* is the overall goal of this project \u2014 identify Patrick Flynn's parents. The *question* (`q_001`) is the single focused fact being pursued next; in this case, since \"parents\" is one relational fact (not two), `q_001` *is* the objective restated as a testable question.\n\n---\n\n**Question `q_001` (saved):**\n> *\"Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania and died 1908 in Schuylkill County, PA?\"*\n\n**Why this question, why now:** No questions existed yet, so Priority 4 (objective decomposition) fires. The objective is a single-fact question \u2014 both parents together constitute one relational fact, so no split is needed. The biographical anchors in the objective (ca. 1845 birth in PA; 1908 death in Schuylkill County) provide enough identifying detail to bound the search. Schuylkill County records from this era are well-represented: U.S. federal censuses (1850\u20131910), Pennsylvania death certificates from 1906 (his 1908 death would name his parents), church records, and county probate and land records all offer plausible direct evidence of parentage.\n\n**Dependencies / unblocks:** No prior questions to depend on, and no downstream questions exist yet to unblock \u2014 both set to `[]`.\n\n**What comes next:** The research plan \u2014 mapping which record sets to search, in what order, to answer `q_001`. That's the job of the research-planning step.",
+            "text_response": "I'll start by reading the reference files and then examining the project state.\n\nNow let me load the project state.\n\nLet me read the research.json directly to get the full objective and project details.\n\nI have a complete picture of the project. This is a fresh project with no questions yet. Let me apply the priority ladder:\n\n- **Priority 1** (unresolved conflicts): None → skip  \n- **Priority 2** (active hypotheses): None → skip  \n- **Priority 3** (high-severity timeline gaps): No timelines at all → skip  \n- **Priority 4** (objective not yet decomposed): **Fires** — no questions exist\n\nThe objective — *\"Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\"* — is a single-fact objective (both parents together are one relational fact; the skill rules prohibit splitting them into a father question and a mother question). The tree person (I1) has no sources attached, but the biographical anchor facts in the objective itself (ca. 1845 PA birth, 1908 Schuylkill County death) define *which* Patrick Flynn is being investigated — they are the researcher's starting frame, not a load-bearing premise from a suspect compiled source. No unverified premise needs to be cleared first.\n\nThe first question is the objective restated as a single testable question with full identifying detail.\n\nThe first research question has been saved as **`q_001`** — this project's label for it.\n\n---\n\n**A note on terms:** The *objective* is the overall goal of this project — identify Patrick Flynn's parents. The *question* (`q_001`) is the single focused fact being pursued next; in this case, since \"parents\" is one relational fact (not two), `q_001` *is* the objective restated as a testable question.\n\n---\n\n**Question `q_001` (saved):**\n> *\"Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania and died 1908 in Schuylkill County, PA?\"*\n\n**Why this question, why now:** No questions existed yet, so Priority 4 (objective decomposition) fires. The objective is a single-fact question — both parents together constitute one relational fact, so no split is needed. The biographical anchors in the objective (ca. 1845 birth in PA; 1908 death in Schuylkill County) provide enough identifying detail to bound the search. Schuylkill County records from this era are well-represented: U.S. federal censuses (1850–1910), Pennsylvania death certificates from 1906 (his 1908 death would name his parents), church records, and county probate and land records all offer plausible direct evidence of parentage.\n\n**Dependencies / unblocks:** No prior questions to depend on, and no downstream questions exist yet to unblock — both set to `[]`.\n\n**What comes next:** The research plan — mapping which record sets to search, in what order, to answer `q_001`. That's the job of the research-planning step.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -307,7 +307,7 @@
                   "op": "append",
                   "entry": {
                     "question": "Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania and died 1908 in Schuylkill County, PA?",
-                    "rationale": "This is the project's first question and directly restates the research objective. Schuylkill County, PA records spanning Patrick's lifetime (ca. 1845\u20131908) include U.S. federal censuses (1850\u20131910), which routinely list household members and relationships; Pennsylvania death certificates (mandatory from 1906, which covers his 1908 death and would name his parents); church baptismal and marriage records; and county land and probate records. These sources collectively offer plausible direct evidence of parentage for an individual in this time and place.",
+                    "rationale": "This is the project's first question and directly restates the research objective. Schuylkill County, PA records spanning Patrick's lifetime (ca. 1845–1908) include U.S. federal censuses (1850–1910), which routinely list household members and relationships; Pennsylvania death certificates (mandatory from 1906, which covers his 1908 death and would name his parents); church baptismal and marriage records; and county land and probate records. These sources collectively offer plausible direct evidence of parentage for an individual in this time and place.",
                     "selection_basis": "objective_decomposition",
                     "priority": "high",
                     "status": "open",
@@ -402,7 +402,7 @@
                       {
                         "id": "q_001",
                         "question": "Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania and died 1908 in Schuylkill County, PA?",
-                        "rationale": "This is the project's first question and directly restates the research objective. Schuylkill County, PA records spanning Patrick's lifetime (ca. 1845\u20131908) include U.S. federal censuses (1850\u20131910), which routinely list household members and relationships; Pennsylvania death certificates (mandatory from 1906, which covers his 1908 death and would name his parents); church baptismal and marriage records; and county land and probate records. These sources collectively offer plausible direct evidence of parentage for an individual in this time and place.",
+                        "rationale": "This is the project's first question and directly restates the research objective. Schuylkill County, PA records spanning Patrick's lifetime (ca. 1845–1908) include U.S. federal censuses (1850–1910), which routinely list household members and relationships; Pennsylvania death certificates (mandatory from 1906, which covers his 1908 death and would name his parents); church baptismal and marriage records; and county land and probate records. These sources collectively offer plausible direct evidence of parentage for an individual in this time and place.",
                         "selection_basis": "objective_decomposition",
                         "priority": "high",
                         "status": "open",
@@ -773,7 +773,7 @@
       },
       "totals": {
         "duration_ms": 39025.13680700213,
-        "duration_api_ms": 0.0,
+        "duration_api_ms": 0,
         "judge_duration_ms": 3659.355435986072,
         "wall_clock_ms": 42828.97400856018,
         "num_turns": 2,
@@ -784,7 +784,7 @@
         "judge_input_tokens": 10533,
         "judge_cached_input_tokens": 0,
         "judge_output_tokens": 308,
-        "skill_cost_usd": 0.0,
+        "skill_cost_usd": 0,
         "judge_cost_usd": 0.012073,
         "total_cost_usd": 0.012073
       },
@@ -796,7 +796,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 39025.13680700213,
-          "duration_api_ms": 0.0,
+          "duration_api_ms": 0,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 0,
@@ -805,7 +805,7 @@
           "output_tokens": 0,
           "model_usage": {},
           "no_result_message": true,
-          "skill_cost_usd": 0.0,
+          "skill_cost_usd": 0,
           "output": {
             "text_response": "",
             "activated": false,
@@ -896,7 +896,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -926,7 +926,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -944,13 +944,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -1128,7 +1128,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All five MCP tool calls used correct arguments: (1) mcp__genealogy__project_context with correct projectPath, (2\u20135) mcp__genealogy__research_query calls with correct projectPath and section parameters (plans, conflicts, hypotheses, timelines). All calls matched expected_args semantically and returned valid responses (matched.kind == 'live'). No fixture_not_found errors occurred."
+            "rationale": "All five MCP tool calls used correct arguments: (1) mcp__genealogy__project_context with correct projectPath, (2–5) mcp__genealogy__research_query calls with correct projectPath and section parameters (plans, conflicts, hypotheses, timelines). All calls matched expected_args semantically and returned valid responses (matched.kind == 'live'). No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
@@ -1154,7 +1154,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All five MCP tool calls used correct arguments: (1) mcp__genealogy__project_context with correct projectPath, (2\u20135) mcp__genealogy__research_query calls with correct projectPath and section parameters (plans, conflicts, hypotheses, timelines). All calls matched expected_args semantically and returned valid responses (matched.kind == 'live'). No fixture_not_found errors occurred."
+            "rationale": "All five MCP tool calls used correct arguments: (1) mcp__genealogy__project_context with correct projectPath, (2–5) mcp__genealogy__research_query calls with correct projectPath and section parameters (plans, conflicts, hypotheses, timelines). All calls matched expected_args semantically and returned valid responses (matched.kind == 'live'). No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
@@ -1166,7 +1166,7 @@
       },
       "totals": {
         "duration_ms": 56209.24072293565,
-        "duration_api_ms": 55650.0,
+        "duration_api_ms": 55650,
         "judge_duration_ms": 6846.4306318201125,
         "wall_clock_ms": 63188.48705291748,
         "num_turns": 11,
@@ -1189,7 +1189,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 56209.24072293565,
-          "duration_api_ms": 55650.0,
+          "duration_api_ms": 55650,
           "num_turns": 11,
           "skill_attempts": 1,
           "input_tokens": 357,
@@ -1221,7 +1221,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.15707185,
           "output": {
-            "text_response": "Now let me load the project state.\n\nNow let me check for in-progress plan items on q_001 and also query for conflicts, hypotheses, and timelines.\n\n**Reviewing project state before selecting.** q_001 has one in-progress plan item \u2014 let me check what it is before deciding whether to proceed.\n\nThe picture is clear. Here's the situation:\n\n---\n\n**q_001 \u2014 \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\"** has one plan item still in flight:\n\n> **`pli_006`** \u2014 Thomas Flynn probate/will search \u00b7 Schuylkill County, PA \u00b7 1870\u20131890 \u00b7 FamilySearch\n\nPer the Step 1a rule, I can't add a new question while `pli_006` is `in_progress` \u2014 the probate search may turn up evidence that changes which question is the highest-value next step, and opening a new question now would churn direction without resolving anything.\n\n**There are no unresolved conflicts** (the birthplace conflict `c_001` was resolved in favor of Ireland), so the blocking-conflict exception doesn't apply.\n\n---\n\n**What to do next \u2014 in order:**\n\n1. **Complete `pli_006`** \u2014 run the Thomas Flynn probate/will search on FamilySearch for Schuylkill County, PA (1870\u20131890). A will naming Patrick as a son would be strong corroborating evidence.\n2. **Run the GPS-mentor proof-critique on `ps_001`** \u2014 the proof summary is written and `q_001` is waiting on that critique before it can be marked resolved.\n3. Once `q_001` is resolved, come back here and I'll select the next question based on what the probate search found and what the timeline gap (1860\u20131908, covering the 1870, 1880, and 1900 censuses) and pedigree reveal.\n\nShall I go ahead and execute the `pli_006` probate search on FamilySearch?",
+            "text_response": "Now let me load the project state.\n\nNow let me check for in-progress plan items on q_001 and also query for conflicts, hypotheses, and timelines.\n\n**Reviewing project state before selecting.** q_001 has one in-progress plan item — let me check what it is before deciding whether to proceed.\n\nThe picture is clear. Here's the situation:\n\n---\n\n**q_001 — \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\"** has one plan item still in flight:\n\n> **`pli_006`** — Thomas Flynn probate/will search · Schuylkill County, PA · 1870–1890 · FamilySearch\n\nPer the Step 1a rule, I can't add a new question while `pli_006` is `in_progress` — the probate search may turn up evidence that changes which question is the highest-value next step, and opening a new question now would churn direction without resolving anything.\n\n**There are no unresolved conflicts** (the birthplace conflict `c_001` was resolved in favor of Ireland), so the blocking-conflict exception doesn't apply.\n\n---\n\n**What to do next — in order:**\n\n1. **Complete `pli_006`** — run the Thomas Flynn probate/will search on FamilySearch for Schuylkill County, PA (1870–1890). A will naming Patrick as a son would be strong corroborating evidence.\n2. **Run the GPS-mentor proof-critique on `ps_001`** — the proof summary is written and `q_001` is waiting on that critique before it can be marked resolved.\n3. Once `q_001` is resolved, come back here and I'll select the next question based on what the probate search found and what the timeline gap (1860–1908, covering the 1870, 1880, and 1900 censuses) and pedigree reveal.\n\nShall I go ahead and execute the `pli_006` probate search on FamilySearch?",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -1252,14 +1252,14 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "nextStep": "gps-mentor (proof-critique) — ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress"
                     },
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved"
                     }
@@ -1460,7 +1460,7 @@
                         "a_009",
                         "a_012"
                       ],
-                      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant \u2014 potentially not fully independent for this fact.",
+                      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant — potentially not fully independent for this fact.",
                       "weighing_analysis": "The census records are contemporary recordings made near the time of Patrick's birth, while the death certificate was created 63 years later. The census informant was likely a household member with firsthand knowledge (primary or indeterminate), while the death certificate informant (son-in-law) is clearly secondary for birth facts. Two contemporary sources outweigh one later recollection by a secondary informant.",
                       "preferred_assertion_id": "a_002",
                       "resolution_rationale": "Ireland is accepted as the birthplace. The 1908 death certificate birthplace of 'Pennsylvania' is rejected as a likely error by the son-in-law informant, who may have confused Patrick's place of residence with his place of birth, or may not have known Patrick was born in Ireland before immigrating as a young child.",
@@ -1500,7 +1500,7 @@
                       "contradicting_assertion_ids": [],
                       "ruled_out": false,
                       "ruled_out_reason": null,
-                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect \u2014 relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
                       "related_question_ids": [
                         "q_001"
                       ]
@@ -1528,7 +1528,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -1900,7 +1900,7 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All five MCP tool calls used correct arguments: (1) mcp__genealogy__project_context with correct projectPath, (2\u20135) mcp__genealogy__research_query calls with correct projectPath and section parameters (plans, conflicts, hypotheses, timelines). All calls matched expected_args semantically and returned valid responses (matched.kind == 'live'). No fixture_not_found errors occurred."
+                "rationale": "All five MCP tool calls used correct arguments: (1) mcp__genealogy__project_context with correct projectPath, (2–5) mcp__genealogy__research_query calls with correct projectPath and section parameters (plans, conflicts, hypotheses, timelines). All calls matched expected_args semantically and returned valid responses (matched.kind == 'live'). No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
@@ -1990,7 +1990,7 @@
       },
       "totals": {
         "duration_ms": 140462.24646409974,
-        "duration_api_ms": 139673.0,
+        "duration_api_ms": 139673,
         "judge_duration_ms": 9801.5421112068,
         "wall_clock_ms": 150423.171043396,
         "num_turns": 14,
@@ -2013,7 +2013,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 140462.24646409974,
-          "duration_api_ms": 139673.0,
+          "duration_api_ms": 139673,
           "num_turns": 14,
           "skill_attempts": 1,
           "input_tokens": 364,
@@ -2045,7 +2045,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.29032990000000003,
           "output": {
-            "text_response": "I'll read the reference files and project state to identify the best next question. Let me start by loading everything I need.\n\nGood. Now let me read the project state.\n\nNow let me query the questions, conflicts, plans, hypotheses, timelines, and log in parallel.\n\nNow let me check the plans for q_001 to look for in-progress items.\n\nI have a clear picture. Let me now analyze the state before selecting the question:\n\n- **q_001** (\"Who were the parents of Patrick Flynn?\"): `in_progress`, plan item **pli_006** (Thomas Flynn probate, FamilySearch) is `in_progress`\n- **pli_006 in-progress rule** would normally block a new question \u2014 but the **blocking-conflict exception applies**: c_001 and c_002 are both `unresolved` and both list `q_001` in `blocks_question_ids`\n- **c_001**: birthplace conflict \u2014 Ireland (1850/1860 censuses) vs. Pennsylvania (1908 death cert)\n- **c_002**: identity conflict \u2014 two Patrick Flynns of similar age in Schuylkill County in 1850 (household 84, age 5 vs. household 197, age 6); the death certificate doesn't disambiguate which one is the decedent\n- **Timeline gap**: high-severity, 1860\u20131908 (missing marriage, 1870/1880/1900 censuses)\n\n**Priority 1 fires** \u2014 unresolved conflicts blocking q_001. Between the two conflicts, **c_002 (identity) is more fundamental**: if we cannot confirm which 1850 Patrick Flynn is our subject, the birthplace dispute in c_001 may be comparing facts from two different people entirely. Resolving c_002 first is the right gatekeeper move.\n\nA question for this conflict doesn't yet exist \u2014 I'll write it now.\n\nSaved as **q_003**.\n\n---\n\n**Next research question:**\n\n> \"Do independent records confirm that the Patrick Flynn enumerated in Thomas Flynn's Schuylkill County household in 1850 (dwelling 84, age 5) is the same individual as the Patrick Flynn who died in Schuylkill County in March 1908, as distinct from the competing Patrick Flynn of similar age in household 197?\"\n\n**Why this question, and why now:**\n\nThe project has two unresolved conflicts \u2014 c_001 (birthplace: Ireland vs. Pennsylvania) and c_002 (identity: which of two 1850 Patrick Flynns is the research subject) \u2014 both of which block the primary question about Patrick's parents (\"Who were the parents of Patrick Flynn?\", q_001). Although plan item pli_006 (the Thomas Flynn probate search) is still in flight, the blocking-conflict exception applies: the probate cannot meaningfully advance while we cannot confirm which Patrick Flynn we are researching. **c_002 (identity) takes precedence over c_001 (birthplace)** because if the wrong Patrick Flynn has been linked to the 1908 death certificate all along, the birthplace comparison in c_001 may be contrasting two different people entirely.\n\n**Links:**\n- **Depends on** \"Where was Patrick Flynn in the 1850 census?\" (q_002, already resolved) \u2014 its findings are what surfaced the two competing households in the first place.\n- **Unblocks** \"Who were the parents of Patrick Flynn?\" (q_001) \u2014 resolving this identity question clears the way for q_001 and re-enables the in-progress probate search (pli_006).\n\n**What comes next:** The research plan for q_003 should target intermediate records that can trace Patrick Flynn forward from 1860 \u2014 primarily the 1870, 1880, and 1900 federal censuses for Schuylkill County \u2014 to establish a continuous thread from Thomas Flynn's household to the 1908 death, ruling out the competing household 197 individual. I'll proceed to build that plan now if you'd like.",
+            "text_response": "I'll read the reference files and project state to identify the best next question. Let me start by loading everything I need.\n\nGood. Now let me read the project state.\n\nNow let me query the questions, conflicts, plans, hypotheses, timelines, and log in parallel.\n\nNow let me check the plans for q_001 to look for in-progress items.\n\nI have a clear picture. Let me now analyze the state before selecting the question:\n\n- **q_001** (\"Who were the parents of Patrick Flynn?\"): `in_progress`, plan item **pli_006** (Thomas Flynn probate, FamilySearch) is `in_progress`\n- **pli_006 in-progress rule** would normally block a new question — but the **blocking-conflict exception applies**: c_001 and c_002 are both `unresolved` and both list `q_001` in `blocks_question_ids`\n- **c_001**: birthplace conflict — Ireland (1850/1860 censuses) vs. Pennsylvania (1908 death cert)\n- **c_002**: identity conflict — two Patrick Flynns of similar age in Schuylkill County in 1850 (household 84, age 5 vs. household 197, age 6); the death certificate doesn't disambiguate which one is the decedent\n- **Timeline gap**: high-severity, 1860–1908 (missing marriage, 1870/1880/1900 censuses)\n\n**Priority 1 fires** — unresolved conflicts blocking q_001. Between the two conflicts, **c_002 (identity) is more fundamental**: if we cannot confirm which 1850 Patrick Flynn is our subject, the birthplace dispute in c_001 may be comparing facts from two different people entirely. Resolving c_002 first is the right gatekeeper move.\n\nA question for this conflict doesn't yet exist — I'll write it now.\n\nSaved as **q_003**.\n\n---\n\n**Next research question:**\n\n> \"Do independent records confirm that the Patrick Flynn enumerated in Thomas Flynn's Schuylkill County household in 1850 (dwelling 84, age 5) is the same individual as the Patrick Flynn who died in Schuylkill County in March 1908, as distinct from the competing Patrick Flynn of similar age in household 197?\"\n\n**Why this question, and why now:**\n\nThe project has two unresolved conflicts — c_001 (birthplace: Ireland vs. Pennsylvania) and c_002 (identity: which of two 1850 Patrick Flynns is the research subject) — both of which block the primary question about Patrick's parents (\"Who were the parents of Patrick Flynn?\", q_001). Although plan item pli_006 (the Thomas Flynn probate search) is still in flight, the blocking-conflict exception applies: the probate cannot meaningfully advance while we cannot confirm which Patrick Flynn we are researching. **c_002 (identity) takes precedence over c_001 (birthplace)** because if the wrong Patrick Flynn has been linked to the 1908 death certificate all along, the birthplace comparison in c_001 may be contrasting two different people entirely.\n\n**Links:**\n- **Depends on** \"Where was Patrick Flynn in the 1850 census?\" (q_002, already resolved) — its findings are what surfaced the two competing households in the first place.\n- **Unblocks** \"Who were the parents of Patrick Flynn?\" (q_001) — resolving this identity question clears the way for q_001 and re-enables the in-progress probate search (pli_006).\n\n**What comes next:** The research plan for q_003 should target intermediate records that can trace Patrick Flynn forward from 1860 — primarily the 1870, 1880, and 1900 federal censuses for Schuylkill County — to establish a continuous thread from Thomas Flynn's household to the 1908 death, ruling out the competing household 197 individual. I'll proceed to build that plan now if you'd like.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -2076,7 +2076,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "conflict-resolution \u2014 unresolved c_001, c_002",
+                      "nextStep": "conflict-resolution — unresolved c_001, c_002",
                       "openConflictIds": [
                         "c_001",
                         "c_002"
@@ -2086,7 +2086,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "conflict-resolution \u2014 unresolved c_001, c_002",
+                      "nextStep": "conflict-resolution — unresolved c_001, c_002",
                       "openConflictIds": [
                         "c_001",
                         "c_002"
@@ -2215,13 +2215,13 @@
                           "log_003"
                         ],
                         "stop_criteria": {
-                          "goal_alignment": "Yes \u2014 Patrick Flynn located in a specific 1850 household, answering the question.",
+                          "goal_alignment": "Yes — Patrick Flynn located in a specific 1850 household, answering the question.",
                           "repository_breadth": "Three major repositories searched (FamilySearch, Ancestry, MyHeritage). No additional known indexes of the 1850 Schuylkill County census exist.",
                           "original_substitution": "FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.",
                           "independent_verification": "FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original.",
-                          "evidence_class": "Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.",
+                          "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
                           "conflict_resolution": "No conflicts on the 1850 census placement question.",
-                          "overturn_risk": "Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
+                          "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
                         }
                       }
                     }
@@ -2269,7 +2269,7 @@
                     {
                       "id": "c_002",
                       "conflict_type": "identity",
-                      "description": "Is the Patrick Flynn in Thomas Flynn's 1850 household the same person as the Patrick Flynn on the 1908 death certificate? Two Patrick Flynns of similar age are recorded in Schuylkill County in 1850 \u2014 household 84 (age 5) and household 197 (age 6) \u2014 and the death certificate does not name a household or earlier residence to disambiguate.",
+                      "description": "Is the Patrick Flynn in Thomas Flynn's 1850 household the same person as the Patrick Flynn on the 1908 death certificate? Two Patrick Flynns of similar age are recorded in Schuylkill County in 1850 — household 84 (age 5) and household 197 (age 6) — and the death certificate does not name a household or earlier residence to disambiguate.",
                       "disputed_attribute": null,
                       "identity_question": "Is the Patrick Flynn enumerated in the Thomas Flynn 1850 household the same person as the Patrick Flynn whose 1908 death certificate is src_004?",
                       "competing_assertion_ids": [
@@ -2317,7 +2317,7 @@
                       "contradicting_assertion_ids": [],
                       "ruled_out": false,
                       "ruled_out_reason": null,
-                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect \u2014 relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
                       "related_question_ids": [
                         "q_001"
                       ]
@@ -2345,7 +2345,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -2963,7 +2963,7 @@
       },
       "totals": {
         "duration_ms": 49980.105803348124,
-        "duration_api_ms": 49197.0,
+        "duration_api_ms": 49197,
         "judge_duration_ms": 6622.943447902799,
         "wall_clock_ms": 56730.25894165039,
         "num_turns": 13,
@@ -2986,7 +2986,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 49980.105803348124,
-          "duration_api_ms": 49197.0,
+          "duration_api_ms": 49197,
           "num_turns": 13,
           "skill_attempts": 1,
           "input_tokens": 358,
@@ -3018,7 +3018,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.156596,
           "output": {
-            "text_response": "Now let me read the project state.\n\nThe project has one open question and a clear next action \u2014 no new question is needed. Here's the state:\n\n---\n\n**Current question \u2014 `q_001` (this project's label for the active research question):**\n\n> *\"Who were the parents of Job Purnell (b. ~1826, Trowbridge, Wiltshire)?\"*\n\nThis question **is** the objective. Job is well anchored as an adult \u2014 married Serena Deacon in 1849, had son Samuel born 1850, all in Trowbridge \u2014 but his parents remain unidentified. The question was correctly formulated as a single question (mother and father together name one parental relationship, never split).\n\n---\n\n**What the plan calls for next \u2014 `pli_001`:**\n\nA search of **parish church records (baptisms/christenings), Trowbridge, Wiltshire, 1824\u20131828, on FamilySearch**. A christening entry for Job around 1826 would directly name his father and mother. This plan item is at `planned` status \u2014 no searches have been run against it yet.\n\n---\n\n**No new question to add.** The priority ladder turns up nothing that would warrant a second question right now \u2014 no conflicts, no active hypotheses, no high-severity timeline gaps, no exhausted direct evidence requiring a FAN pivot. The search under `pli_001` hasn't been executed yet.\n\n**The next step** is to run that FamilySearch parish records search \u2014 say *\"search for Job Purnell's baptism\"* and I'll execute it.",
+            "text_response": "Now let me read the project state.\n\nThe project has one open question and a clear next action — no new question is needed. Here's the state:\n\n---\n\n**Current question — `q_001` (this project's label for the active research question):**\n\n> *\"Who were the parents of Job Purnell (b. ~1826, Trowbridge, Wiltshire)?\"*\n\nThis question **is** the objective. Job is well anchored as an adult — married Serena Deacon in 1849, had son Samuel born 1850, all in Trowbridge — but his parents remain unidentified. The question was correctly formulated as a single question (mother and father together name one parental relationship, never split).\n\n---\n\n**What the plan calls for next — `pli_001`:**\n\nA search of **parish church records (baptisms/christenings), Trowbridge, Wiltshire, 1824–1828, on FamilySearch**. A christening entry for Job around 1826 would directly name his father and mother. This plan item is at `planned` status — no searches have been run against it yet.\n\n---\n\n**No new question to add.** The priority ladder turns up nothing that would warrant a second question right now — no conflicts, no active hypotheses, no high-severity timeline gaps, no exhausted direct evidence requiring a FAN pivot. The search under `pli_001` hasn't been executed yet.\n\n**The next step** is to run that FamilySearch parish records search — say *\"search for Job Purnell's baptism\"* and I'll execute it.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -3596,7 +3596,7 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 3,
-            "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845\u20131870?' is concrete and answerable. It names the specific person (Thomas Flynn), the jurisdiction (Schuylkill County, Pennsylvania), the time period (circa 1845\u20131870), and the specific fact being sought (identity of neighbors and associates). This is sufficiently specific to drive a follow-up search design, unlike vague alternatives like 'Learn more about Thomas Flynn.' The question avoids being record-set-scoped (it is not 'Search the 1850 census neighbors') while remaining precise about what facts are being pursued."
+            "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845–1870?' is concrete and answerable. It names the specific person (Thomas Flynn), the jurisdiction (Schuylkill County, Pennsylvania), the time period (circa 1845–1870), and the specific fact being sought (identity of neighbors and associates). This is sufficiently specific to drive a follow-up search design, unlike vague alternatives like 'Learn more about Thomas Flynn.' The question avoids being record-set-scoped (it is not 'Search the 1850 census neighbors') while remaining precise about what facts are being pursued."
           }
         ],
         "review_dimensions": [
@@ -3622,13 +3622,13 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 3,
-            "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845\u20131870?' is concrete and answerable. It names the specific person (Thomas Flynn), the jurisdiction (Schuylkill County, Pennsylvania), the time period (circa 1845\u20131870), and the specific fact being sought (identity of neighbors and associates). This is sufficiently specific to drive a follow-up search design, unlike vague alternatives like 'Learn more about Thomas Flynn.' The question avoids being record-set-scoped (it is not 'Search the 1850 census neighbors') while remaining precise about what facts are being pursued."
+            "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845–1870?' is concrete and answerable. It names the specific person (Thomas Flynn), the jurisdiction (Schuylkill County, Pennsylvania), the time period (circa 1845–1870), and the specific fact being sought (identity of neighbors and associates). This is sufficiently specific to drive a follow-up search design, unlike vague alternatives like 'Learn more about Thomas Flynn.' The question avoids being record-set-scoped (it is not 'Search the 1850 census neighbors') while remaining precise about what facts are being pursued."
           }
         ]
       },
       "totals": {
         "duration_ms": 124227.97989286482,
-        "duration_api_ms": 123344.0,
+        "duration_api_ms": 123344,
         "judge_duration_ms": 8964.657549746335,
         "wall_clock_ms": 133334.9313735962,
         "num_turns": 14,
@@ -3651,7 +3651,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 124227.97989286482,
-          "duration_api_ms": 123344.0,
+          "duration_api_ms": 123344,
           "num_turns": 14,
           "skill_attempts": 1,
           "input_tokens": 362,
@@ -3683,7 +3683,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.26284435,
           "output": {
-            "text_response": "Now let me read the project files.\n\nI can see q_001 is open (in_progress) with a concluded proof summary awaiting GPS-mentor critique, and q_002 is resolved. Let me check for in-progress plan items and other sections before selecting the next question.\n\nGood \u2014 all plan items for q_001 are completed and no in-progress items. Now let me check conflicts, hypotheses, and timelines.\n\nNow I have everything I need to assess. Let me work through the priority ladder:\n\n- **Priority 1 (conflicts):** c_001 is resolved, no open conflicts.\n- **Priority 2 (hypothesis):** h_001 is \"supported\" and already tied to q_001 \u2014 no separate test question needed.\n- **Priority 3 (timeline gaps):** The only gap is severity \"low\" (1860\u20131908). Doesn't fire.\n- **Priority 4/5 (decomposition / pedigree):** q_001 already covers the objective; q_002 already resolved. No new decomposition needed.\n- **Priority 6 (FAN pivot):** \u2705 **Fires.** q_001's `exhaustive_declaration.declared` is `true`; q_001 is not yet `resolved`. Direct evidence is exhausted; FAN research is the next avenue.\n\nI'll now write the FAN pivot question.\n\nSaved as **q_003**.\n\n---\n\n**Next research question:** *\"Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845\u20131870?\"*\n\nThis is a **FAN pivot** (Family, Associates, and Neighbors) \u2014 the methodology genealogists use when direct records have been exhausted. To clarify the distinction: the **objective** is still the overarching goal \u2014 identify the parents of Patrick Flynn \u2014 while this **question** is the single focused pursuit that can now advance it.\n\n**Why this question, why now:**\nAll direct record types for q_001 have been searched and declared exhausted: both census enumerations, the death certificate, three later censuses (negative), Schuylkill County probate (negative), and Catholic church records (negative). Three independent source types support Thomas Flynn as Patrick's father, but no record yet names that relationship directly. The FAN pivot is the methodologically correct next step \u2014 examining the people *around* Thomas Flynn may surface a land deed witness, a church record associate, or a neighbor whose own records place Patrick Flynn in his household or name Thomas as his father.\n\n**Dependencies and connections:**\n- Depends on q_002 (\"Where was Patrick Flynn in the 1850 census?\"), already resolved \u2014 that question identified the specific Thomas Flynn household that now anchors the FAN search.\n- Unblocks q_001 (the parentage question), which cannot move to `resolved` until evidence is sufficient to meet the GPS standard.\n\n**What comes next:** The research plan for this question will identify specific record sets to search \u2014 1850 and 1860 census neighbors of dwelling 84 and 112, Schuylkill County land records for Thomas Flynn's transactions and their witnesses, and any surviving church membership or burial records for his associates. I'll build that plan now if you'd like to proceed.",
+            "text_response": "Now let me read the project files.\n\nI can see q_001 is open (in_progress) with a concluded proof summary awaiting GPS-mentor critique, and q_002 is resolved. Let me check for in-progress plan items and other sections before selecting the next question.\n\nGood — all plan items for q_001 are completed and no in-progress items. Now let me check conflicts, hypotheses, and timelines.\n\nNow I have everything I need to assess. Let me work through the priority ladder:\n\n- **Priority 1 (conflicts):** c_001 is resolved, no open conflicts.\n- **Priority 2 (hypothesis):** h_001 is \"supported\" and already tied to q_001 — no separate test question needed.\n- **Priority 3 (timeline gaps):** The only gap is severity \"low\" (1860–1908). Doesn't fire.\n- **Priority 4/5 (decomposition / pedigree):** q_001 already covers the objective; q_002 already resolved. No new decomposition needed.\n- **Priority 6 (FAN pivot):** ✅ **Fires.** q_001's `exhaustive_declaration.declared` is `true`; q_001 is not yet `resolved`. Direct evidence is exhausted; FAN research is the next avenue.\n\nI'll now write the FAN pivot question.\n\nSaved as **q_003**.\n\n---\n\n**Next research question:** *\"Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845–1870?\"*\n\nThis is a **FAN pivot** (Family, Associates, and Neighbors) — the methodology genealogists use when direct records have been exhausted. To clarify the distinction: the **objective** is still the overarching goal — identify the parents of Patrick Flynn — while this **question** is the single focused pursuit that can now advance it.\n\n**Why this question, why now:**\nAll direct record types for q_001 have been searched and declared exhausted: both census enumerations, the death certificate, three later censuses (negative), Schuylkill County probate (negative), and Catholic church records (negative). Three independent source types support Thomas Flynn as Patrick's father, but no record yet names that relationship directly. The FAN pivot is the methodologically correct next step — examining the people *around* Thomas Flynn may surface a land deed witness, a church record associate, or a neighbor whose own records place Patrick Flynn in his household or name Thomas as his father.\n\n**Dependencies and connections:**\n- Depends on q_002 (\"Where was Patrick Flynn in the 1850 census?\"), already resolved — that question identified the specific Thomas Flynn household that now anchors the FAN search.\n- Unblocks q_001 (the parentage question), which cannot move to `resolved` until evidence is sufficient to meet the GPS standard.\n\n**What comes next:** The research plan for this question will identify specific record sets to search — 1850 and 1860 census neighbors of dwelling 84 and 112, Schuylkill County land records for Thomas Flynn's transactions and their witnesses, and any surviving church membership or burial records for his associates. I'll build that plan now if you'd like to proceed.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -3714,14 +3714,14 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "nextStep": "gps-mentor (proof-critique) — ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress"
                     },
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved"
                     }
@@ -3813,7 +3813,7 @@
                       "resolution_assertion_ids": [],
                       "exhaustive_declaration": {
                         "declared": true,
-                        "justification": "All planned direct record types searched: 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census (FamilySearch), death certificate (FamilySearch), 1870/1880/1900 census (FamilySearch \u2014 all negative), probate Schuylkill County 1870\u20131900 (FamilySearch \u2014 negative), Catholic church records Schuylkill County 1840\u20131870 (FamilySearch \u2014 negative). No further direct record types remain unsearched for this question. FAN research is the only avenue not yet explored.",
+                        "justification": "All planned direct record types searched: 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census (FamilySearch), death certificate (FamilySearch), 1870/1880/1900 census (FamilySearch — all negative), probate Schuylkill County 1870–1900 (FamilySearch — negative), Catholic church records Schuylkill County 1840–1870 (FamilySearch — negative). No further direct record types remain unsearched for this question. FAN research is the only avenue not yet explored.",
                         "log_entry_ids": [
                           "log_001",
                           "log_002",
@@ -3827,7 +3827,7 @@
                           "log_010"
                         ],
                         "stop_criteria": {
-                          "goal_alignment": "Partially \u2014 Thomas Flynn is a strong candidate as father (three independent source types) but not proved. Exhaustive search has been conducted without producing a definitive record.",
+                          "goal_alignment": "Partially — Thomas Flynn is a strong candidate as father (three independent source types) but not proved. Exhaustive search has been conducted without producing a definitive record.",
                           "repository_breadth": "Census (FamilySearch, Ancestry, MyHeritage), vital records (FamilySearch), probate (FamilySearch), church records (FamilySearch). Major repositories and record types searched.",
                           "original_substitution": "FamilySearch provides original images for census and death certificate records.",
                           "independent_verification": "FamilySearch and Ancestry both confirm the 1850 census household. Three record types independently support Thomas Flynn as father.",
@@ -3864,13 +3864,13 @@
                           "log_003"
                         ],
                         "stop_criteria": {
-                          "goal_alignment": "Yes \u2014 Patrick Flynn located in a specific 1850 household, answering the question.",
+                          "goal_alignment": "Yes — Patrick Flynn located in a specific 1850 household, answering the question.",
                           "repository_breadth": "Three major repositories searched (FamilySearch, Ancestry, MyHeritage). No additional known indexes of the 1850 Schuylkill County census exist.",
                           "original_substitution": "FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.",
                           "independent_verification": "FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original.",
-                          "evidence_class": "Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.",
+                          "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
                           "conflict_resolution": "No conflicts on the 1850 census placement question.",
-                          "overturn_risk": "Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
+                          "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
                         }
                       }
                     }
@@ -3942,7 +3942,7 @@
                           "jurisdiction": "Schuylkill County, Pennsylvania",
                           "date_range": "1880",
                           "repository": "FamilySearch",
-                          "rationale": "1880 census names relationships explicitly \u2014 would provide direct relationship evidence if Patrick is still in Thomas's household.",
+                          "rationale": "1880 census names relationships explicitly — would provide direct relationship evidence if Patrick is still in Thomas's household.",
                           "fallback_for": null,
                           "status": "completed"
                         },
@@ -3953,7 +3953,7 @@
                           "jurisdiction": "Schuylkill County, Pennsylvania",
                           "date_range": "1900",
                           "repository": "FamilySearch",
-                          "rationale": "Search 1900 census for Patrick Flynn in Schuylkill County \u2014 may list parents' birthplaces.",
+                          "rationale": "Search 1900 census for Patrick Flynn in Schuylkill County — may list parents' birthplaces.",
                           "fallback_for": null,
                           "status": "completed"
                         },
@@ -4052,7 +4052,7 @@
                       "contradicting_assertion_ids": [],
                       "ruled_out": false,
                       "ruled_out_reason": null,
-                      "notes": "Three independent pieces of evidence support this hypothesis. All direct record types have been exhausted: 1850 and 1860 census (FamilySearch, Ancestry, MyHeritage), death certificate (FamilySearch), 1870/1880/1900 census (all negative), Schuylkill County probate 1870\u20131900 (negative), Catholic church records Schuylkill County 1840\u20131870 (negative). No additional direct record types remain unsearched. FAN research (neighbors, witnesses, land record co-signatories, church associates of Thomas Flynn) is the next available research avenue.",
+                      "notes": "Three independent pieces of evidence support this hypothesis. All direct record types have been exhausted: 1850 and 1860 census (FamilySearch, Ancestry, MyHeritage), death certificate (FamilySearch), 1870/1880/1900 census (all negative), Schuylkill County probate 1870–1900 (negative), Catholic church records Schuylkill County 1840–1870 (negative). No additional direct record types remain unsearched. FAN research (neighbors, witnesses, land record co-signatories, church associates of Thomas Flynn) is the next available research avenue.",
                       "related_question_ids": [
                         "q_001"
                       ]
@@ -4080,7 +4080,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -4135,7 +4135,7 @@
                           "end": "1908-03-12",
                           "expected_events": [],
                           "severity": "low",
-                          "notes": "1870, 1880, and 1900 censuses searched \u2014 Patrick Flynn not found. 1890 census destroyed. Schuylkill County probate (log_009) and church records (log_010) searched, both negative. Remaining gap involves marriage and occupation records not yet searched."
+                          "notes": "1870, 1880, and 1900 censuses searched — Patrick Flynn not found. 1890 census destroyed. Schuylkill County probate (log_009) and church records (log_010) searched, both negative. Remaining gap involves marriage and occupation records not yet searched."
                         }
                       ]
                     }
@@ -4150,8 +4150,8 @@
                   "section": "questions",
                   "op": "append",
                   "entry": {
-                    "question": "Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845\u20131870?",
-                    "rationale": "Direct evidence for the parentage question (q_001) is exhausted \u2014 exhaustive_declaration.declared is true. Three independent record types support Thomas Flynn as Patrick's father, but none names the relationship directly. FAN research targets people around Thomas Flynn (census neighbors, land-record witnesses, church associates) to find records that corroborate or extend the connection between Thomas Flynn and Patrick Flynn as parent and child.",
+                    "question": "Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845–1870?",
+                    "rationale": "Direct evidence for the parentage question (q_001) is exhausted — exhaustive_declaration.declared is true. Three independent record types support Thomas Flynn as Patrick's father, but none names the relationship directly. FAN research targets people around Thomas Flynn (census neighbors, land-record witnesses, church associates) to find records that corroborate or extend the connection between Thomas Flynn and Patrick Flynn as parent and child.",
                     "selection_basis": "fan_pivot",
                     "priority": "medium",
                     "status": "open",
@@ -4237,8 +4237,8 @@
                     "added": [
                       {
                         "id": "q_003",
-                        "question": "Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845\u20131870?",
-                        "rationale": "Direct evidence for the parentage question (q_001) is exhausted \u2014 exhaustive_declaration.declared is true. Three independent record types support Thomas Flynn as Patrick's father, but none names the relationship directly. FAN research targets people around Thomas Flynn (census neighbors, land-record witnesses, church associates) to find records that corroborate or extend the connection between Thomas Flynn and Patrick Flynn as parent and child.",
+                        "question": "Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845–1870?",
+                        "rationale": "Direct evidence for the parentage question (q_001) is exhausted — exhaustive_declaration.declared is true. Three independent record types support Thomas Flynn as Patrick's father, but none names the relationship directly. FAN research targets people around Thomas Flynn (census neighbors, land-record witnesses, church associates) to find records that corroborate or extend the connection between Thomas Flynn and Patrick Flynn as parent and child.",
                         "selection_basis": "fan_pivot",
                         "priority": "medium",
                         "status": "open",
@@ -4541,7 +4541,7 @@
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845\u20131870?' is concrete and answerable. It names the specific person (Thomas Flynn), the jurisdiction (Schuylkill County, Pennsylvania), the time period (circa 1845\u20131870), and the specific fact being sought (identity of neighbors and associates). This is sufficiently specific to drive a follow-up search design, unlike vague alternatives like 'Learn more about Thomas Flynn.' The question avoids being record-set-scoped (it is not 'Search the 1850 census neighbors') while remaining precise about what facts are being pursued."
+                "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, circa 1845–1870?' is concrete and answerable. It names the specific person (Thomas Flynn), the jurisdiction (Schuylkill County, Pennsylvania), the time period (circa 1845–1870), and the specific fact being sought (identity of neighbors and associates). This is sufficiently specific to drive a follow-up search design, unlike vague alternatives like 'Learn more about Thomas Flynn.' The question avoids being record-set-scoped (it is not 'Search the 1850 census neighbors') while remaining precise about what facts are being pursued."
               }
             ],
             "judge_cost_usd": 0.018857,
@@ -4575,7 +4575,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the high-severity timeline gap (1860\u20131908, covering unsearched 1870, 1880, 1900 censuses) as the priority signal. The selected question targets the mother's identity, which is entirely absent from the tree and sources. The rationale accurately cites the proof summary's explicit flags about unsearched censuses and correctly notes that the 1880 census introduced a relationship column. The question is factually grounded in the project state: Thomas Flynn is identified as father (Probable tier), the mother is completely unidentified, and the 1870/1880 censuses would enumerate Thomas Flynn's household. All claims are supported by the tool responses and project state."
+            "rationale": "The skill correctly identified the high-severity timeline gap (1860–1908, covering unsearched 1870, 1880, 1900 censuses) as the priority signal. The selected question targets the mother's identity, which is entirely absent from the tree and sources. The rationale accurately cites the proof summary's explicit flags about unsearched censuses and correctly notes that the 1880 census introduced a relationship column. The question is factually grounded in the project state: Thomas Flynn is identified as father (Probable tier), the mother is completely unidentified, and the 1870/1880 censuses would enumerate Thomas Flynn's household. All claims are supported by the tool responses and project state."
           },
           {
             "source": "base",
@@ -4593,7 +4593,7 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 3,
-            "rationale": "The selected question 'Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?' is concrete and answerable. It names the specific person (Patrick Flynn with identifying details: birth year, birthplace, death year, death location), the specific fact sought (mother's identity), and the time period (1870\u20131880 censuses). The question is not vague like 'Learn more about Patrick's family' \u2014 it targets a precise, researchable fact. The rationale explains exactly what evidence would answer it (Thomas Flynn's wife appearing in the 1870 or 1880 census)."
+            "rationale": "The selected question 'Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?' is concrete and answerable. It names the specific person (Patrick Flynn with identifying details: birth year, birthplace, death year, death location), the specific fact sought (mother's identity), and the time period (1870–1880 censuses). The question is not vague like 'Learn more about Patrick's family' — it targets a precise, researchable fact. The rationale explains exactly what evidence would answer it (Thomas Flynn's wife appearing in the 1870 or 1880 census)."
           }
         ],
         "review_dimensions": [
@@ -4601,7 +4601,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the high-severity timeline gap (1860\u20131908, covering unsearched 1870, 1880, 1900 censuses) as the priority signal. The selected question targets the mother's identity, which is entirely absent from the tree and sources. The rationale accurately cites the proof summary's explicit flags about unsearched censuses and correctly notes that the 1880 census introduced a relationship column. The question is factually grounded in the project state: Thomas Flynn is identified as father (Probable tier), the mother is completely unidentified, and the 1870/1880 censuses would enumerate Thomas Flynn's household. All claims are supported by the tool responses and project state."
+            "rationale": "The skill correctly identified the high-severity timeline gap (1860–1908, covering unsearched 1870, 1880, 1900 censuses) as the priority signal. The selected question targets the mother's identity, which is entirely absent from the tree and sources. The rationale accurately cites the proof summary's explicit flags about unsearched censuses and correctly notes that the 1880 census introduced a relationship column. The question is factually grounded in the project state: Thomas Flynn is identified as father (Probable tier), the mother is completely unidentified, and the 1870/1880 censuses would enumerate Thomas Flynn's household. All claims are supported by the tool responses and project state."
           },
           {
             "source": "base",
@@ -4619,13 +4619,13 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 3,
-            "rationale": "The selected question 'Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?' is concrete and answerable. It names the specific person (Patrick Flynn with identifying details: birth year, birthplace, death year, death location), the specific fact sought (mother's identity), and the time period (1870\u20131880 censuses). The question is not vague like 'Learn more about Patrick's family' \u2014 it targets a precise, researchable fact. The rationale explains exactly what evidence would answer it (Thomas Flynn's wife appearing in the 1870 or 1880 census)."
+            "rationale": "The selected question 'Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?' is concrete and answerable. It names the specific person (Patrick Flynn with identifying details: birth year, birthplace, death year, death location), the specific fact sought (mother's identity), and the time period (1870–1880 censuses). The question is not vague like 'Learn more about Patrick's family' — it targets a precise, researchable fact. The rationale explains exactly what evidence would answer it (Thomas Flynn's wife appearing in the 1870 or 1880 census)."
           }
         ]
       },
       "totals": {
         "duration_ms": 263663.8287929818,
-        "duration_api_ms": 262780.0,
+        "duration_api_ms": 262780,
         "judge_duration_ms": 8565.01821987331,
         "wall_clock_ms": 272378.2334327698,
         "num_turns": 15,
@@ -4648,7 +4648,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 263663.8287929818,
-          "duration_api_ms": 262780.0,
+          "duration_api_ms": 262780,
           "num_turns": 15,
           "skill_attempts": 1,
           "input_tokens": 363,
@@ -4680,7 +4680,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.40744069999999993,
           "output": {
-            "text_response": "Now let me read the project files.\n\nLet me query the plans, conflicts, hypotheses, and timelines to complete the project state picture.\n\nNow I have a clear picture of the project. Let me query the assertions to confirm whether the mother has been identified.\n\nNow I have the full picture. Let me analyze it:\n\n**State summary:**\n- **q_001** (\"Who were the parents of Patrick Flynn?\") \u2014 `in_progress`, has proof summary **ps_001 at Probable tier**. The proof summary explicitly flags: *\"1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been searched.\"* Only Thomas Flynn is in the tree \u2014 the **mother is entirely unidentified.**\n- **q_002** (\"Where was Patrick Flynn in the 1850 census?\") \u2014 `resolved`, exhaustive_declaration declared.\n- **Plan pl_002** for q_001: all items `completed` (1860 census, 1908 death certificate). \u2705 No in-progress items \u2014 no \"finish what's open\" block.\n- **Conflicts:** c_001 (birthplace) is `resolved`, blocks nothing. \u2705\n- **Hypotheses:** None.\n- **Timeline:** Patrick Flynn has a **high-severity gap from 1860\u20131908** \u2014 the 1870, 1880, and 1900 census years are entirely unsearched.\n\n**Priority 3 fires** \u2014 high-severity timeline gap spanning census years. q_001 is still `in_progress`, so the rule that a defensible-tier proof summary doesn't excuse an unsearched high-severity gap applies in full. The most valuable unsearched fact within the objective's scope: **the mother's identity** (Thomas Flynn is Probable-tier as father; the mother is completely absent from the tree \u2014 zero name, zero source). The 1870 and 1880 census records would enumerate Thomas Flynn's wife.\n\nSaved as **`q_003`** \u2014 the project's label for this question.\n\n---\n\n**Next question selected:**\n\n> *\"Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?\"*\n\n**Why this, why now \u2014 Priority 3 (timeline gap):**\n\nPatrick's timeline carries a **high-severity gap from 1860 to 1908**, covering the 1870, 1880, and 1900 census years \u2014 none searched. Per the GPS standard, a defensible-tier proof summary does not excuse an unsearched high-severity gap while the question is still open.\n\nThe existing proof summary (ps_001, Probable) identifies Thomas Flynn as father from three lines of evidence, but **the mother is completely absent** \u2014 no name, no source, no tree person. The 1870 and 1880 censuses are the primary opportunity: the 1880 census in particular introduced a relationship column and asked for parents' birthplaces, so if Thomas Flynn's wife appears in Patrick's household or nearby, her name answers this question directly.\n\n**Dependencies:**\n- **Depends on `q_001`** (\"Who were the parents of Patrick Flynn?\") \u2014 that question established Thomas Flynn's household in Schuylkill County, making the census search tractable and geographically bounded.\n- **Unblocks `q_001`** \u2014 identifying the mother completes the \"parents, plural\" scope of q_001 and the new evidence may advance the tier from Probable toward Proved, enabling q_001 to be resolved.\n\n**What comes next:** A research plan for q_003 is the logical next step \u2014 the 1870 census (Patrick ~25, likely still near Thomas Flynn) and the 1880 census (relationship column) on FamilySearch and Ancestry are the first searches to stage.",
+            "text_response": "Now let me read the project files.\n\nLet me query the plans, conflicts, hypotheses, and timelines to complete the project state picture.\n\nNow I have a clear picture of the project. Let me query the assertions to confirm whether the mother has been identified.\n\nNow I have the full picture. Let me analyze it:\n\n**State summary:**\n- **q_001** (\"Who were the parents of Patrick Flynn?\") — `in_progress`, has proof summary **ps_001 at Probable tier**. The proof summary explicitly flags: *\"1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been searched.\"* Only Thomas Flynn is in the tree — the **mother is entirely unidentified.**\n- **q_002** (\"Where was Patrick Flynn in the 1850 census?\") — `resolved`, exhaustive_declaration declared.\n- **Plan pl_002** for q_001: all items `completed` (1860 census, 1908 death certificate). ✅ No in-progress items — no \"finish what's open\" block.\n- **Conflicts:** c_001 (birthplace) is `resolved`, blocks nothing. ✅\n- **Hypotheses:** None.\n- **Timeline:** Patrick Flynn has a **high-severity gap from 1860–1908** — the 1870, 1880, and 1900 census years are entirely unsearched.\n\n**Priority 3 fires** — high-severity timeline gap spanning census years. q_001 is still `in_progress`, so the rule that a defensible-tier proof summary doesn't excuse an unsearched high-severity gap applies in full. The most valuable unsearched fact within the objective's scope: **the mother's identity** (Thomas Flynn is Probable-tier as father; the mother is completely absent from the tree — zero name, zero source). The 1870 and 1880 census records would enumerate Thomas Flynn's wife.\n\nSaved as **`q_003`** — the project's label for this question.\n\n---\n\n**Next question selected:**\n\n> *\"Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?\"*\n\n**Why this, why now — Priority 3 (timeline gap):**\n\nPatrick's timeline carries a **high-severity gap from 1860 to 1908**, covering the 1870, 1880, and 1900 census years — none searched. Per the GPS standard, a defensible-tier proof summary does not excuse an unsearched high-severity gap while the question is still open.\n\nThe existing proof summary (ps_001, Probable) identifies Thomas Flynn as father from three lines of evidence, but **the mother is completely absent** — no name, no source, no tree person. The 1870 and 1880 censuses are the primary opportunity: the 1880 census in particular introduced a relationship column and asked for parents' birthplaces, so if Thomas Flynn's wife appears in Patrick's household or nearby, her name answers this question directly.\n\n**Dependencies:**\n- **Depends on `q_001`** (\"Who were the parents of Patrick Flynn?\") — that question established Thomas Flynn's household in Schuylkill County, making the census search tractable and geographically bounded.\n- **Unblocks `q_001`** — identifying the mother completes the \"parents, plural\" scope of q_001 and the new evidence may advance the tier from Probable toward Proved, enabling q_001 to be resolved.\n\n**What comes next:** A research plan for q_003 is the logical next step — the 1870 census (Patrick ~25, likely still near Thomas Flynn) and the 1880 census (relationship column) on FamilySearch and Ancestry are the first searches to stage.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -4711,14 +4711,14 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "nextStep": "gps-mentor (proof-critique) — ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress"
                     },
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved"
                     }
@@ -4861,7 +4861,7 @@
                         "a_009",
                         "a_012"
                       ],
-                      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant \u2014 potentially not fully independent for this fact.",
+                      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant — potentially not fully independent for this fact.",
                       "weighing_analysis": "The census records are contemporary recordings made near the time of Patrick's birth, while the death certificate was created 63 years later. The census informant was likely a household member with firsthand knowledge (primary or indeterminate), while the death certificate informant (son-in-law) is clearly secondary for birth facts. Two contemporary sources outweigh one later recollection by a secondary informant.",
                       "preferred_assertion_id": "a_002",
                       "resolution_rationale": "Ireland is accepted as the birthplace. The 1908 death certificate birthplace of 'Pennsylvania' is rejected as a likely error by the son-in-law informant, who may have confused Patrick's place of residence with his place of birth, or may not have known Patrick was born in Ireland before immigrating as a young child.",
@@ -5047,13 +5047,13 @@
                           "log_003"
                         ],
                         "stop_criteria": {
-                          "goal_alignment": "Yes \u2014 Patrick Flynn located in a specific 1850 household, answering the question.",
+                          "goal_alignment": "Yes — Patrick Flynn located in a specific 1850 household, answering the question.",
                           "repository_breadth": "Three major repositories searched (FamilySearch, Ancestry, MyHeritage). No additional known indexes of the 1850 Schuylkill County census exist.",
                           "original_substitution": "FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.",
                           "independent_verification": "FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original.",
-                          "evidence_class": "Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.",
+                          "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
                           "conflict_resolution": "No conflicts on the 1850 census placement question.",
-                          "overturn_risk": "Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
+                          "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
                         }
                       }
                     }
@@ -5093,8 +5093,8 @@
                       "resolved_conflict_ids": [
                         "c_001"
                       ],
-                      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage \u2014 log_001, log_002, log_003), 1860 census (FamilySearch \u2014 log_004), and death certificate (FamilySearch \u2014 log_005). 1870, 1880, and 1900 censuses and Thomas Flynn's probate records not yet searched \u2014 these are the primary remaining gaps.",
-                      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845\u20131908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact \u2014 he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated \u2014 the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive \u2014 the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been searched. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
+                      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). 1870, 1880, and 1900 censuses and Thomas Flynn's probate records not yet searched — these are the primary remaining gaps.",
+                      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been searched. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
                     }
                   ],
                   "truncated": false
@@ -5108,7 +5108,7 @@
                   "op": "append",
                   "entry": {
                     "question": "Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?",
-                    "rationale": "The proof summary ps_001 concludes Patrick is probably the son of Thomas Flynn but does not identify the mother at all \u2014 no woman is named in any source and no mother appears in the tree. The timeline for Patrick carries a high-severity gap spanning 1860\u20131908, encompassing the 1870, 1880, and 1900 census years \u2014 none of which have been searched. The 1880 census introduced a relationship column and asked for parents' birthplaces; if Thomas Flynn's wife appears there alongside Patrick or nearby, her name answers this question. The 1870 census would similarly enumerate Thomas Flynn's household while Patrick was still a young adult. Identifying the mother satisfies the full scope of q_001 ('parents,' plural) and the additional evidence may also advance the tier of the father conclusion from Probable toward Proved.",
+                    "rationale": "The proof summary ps_001 concludes Patrick is probably the son of Thomas Flynn but does not identify the mother at all — no woman is named in any source and no mother appears in the tree. The timeline for Patrick carries a high-severity gap spanning 1860–1908, encompassing the 1870, 1880, and 1900 census years — none of which have been searched. The 1880 census introduced a relationship column and asked for parents' birthplaces; if Thomas Flynn's wife appears there alongside Patrick or nearby, her name answers this question. The 1870 census would similarly enumerate Thomas Flynn's household while Patrick was still a young adult. Identifying the mother satisfies the full scope of q_001 ('parents,' plural) and the additional evidence may also advance the tier of the father conclusion from Probable toward Proved.",
                     "selection_basis": "timeline_gap",
                     "priority": "high",
                     "status": "open",
@@ -5195,7 +5195,7 @@
                       {
                         "id": "q_003",
                         "question": "Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?",
-                        "rationale": "The proof summary ps_001 concludes Patrick is probably the son of Thomas Flynn but does not identify the mother at all \u2014 no woman is named in any source and no mother appears in the tree. The timeline for Patrick carries a high-severity gap spanning 1860\u20131908, encompassing the 1870, 1880, and 1900 census years \u2014 none of which have been searched. The 1880 census introduced a relationship column and asked for parents' birthplaces; if Thomas Flynn's wife appears there alongside Patrick or nearby, her name answers this question. The 1870 census would similarly enumerate Thomas Flynn's household while Patrick was still a young adult. Identifying the mother satisfies the full scope of q_001 ('parents,' plural) and the additional evidence may also advance the tier of the father conclusion from Probable toward Proved.",
+                        "rationale": "The proof summary ps_001 concludes Patrick is probably the son of Thomas Flynn but does not identify the mother at all — no woman is named in any source and no mother appears in the tree. The timeline for Patrick carries a high-severity gap spanning 1860–1908, encompassing the 1870, 1880, and 1900 census years — none of which have been searched. The 1880 census introduced a relationship column and asked for parents' birthplaces; if Thomas Flynn's wife appears there alongside Patrick or nearby, her name answers this question. The 1870 census would similarly enumerate Thomas Flynn's household while Patrick was still a young adult. Identifying the mother satisfies the full scope of q_001 ('parents,' plural) and the additional evidence may also advance the tier of the father conclusion from Probable toward Proved.",
                         "selection_basis": "timeline_gap",
                         "priority": "high",
                         "status": "open",
@@ -5480,7 +5480,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the high-severity timeline gap (1860\u20131908, covering unsearched 1870, 1880, 1900 censuses) as the priority signal. The selected question targets the mother's identity, which is entirely absent from the tree and sources. The rationale accurately cites the proof summary's explicit flags about unsearched censuses and correctly notes that the 1880 census introduced a relationship column. The question is factually grounded in the project state: Thomas Flynn is identified as father (Probable tier), the mother is completely unidentified, and the 1870/1880 censuses would enumerate Thomas Flynn's household. All claims are supported by the tool responses and project state."
+                "rationale": "The skill correctly identified the high-severity timeline gap (1860–1908, covering unsearched 1870, 1880, 1900 censuses) as the priority signal. The selected question targets the mother's identity, which is entirely absent from the tree and sources. The rationale accurately cites the proof summary's explicit flags about unsearched censuses and correctly notes that the 1880 census introduced a relationship column. The question is factually grounded in the project state: Thomas Flynn is identified as father (Probable tier), the mother is completely unidentified, and the 1870/1880 censuses would enumerate Thomas Flynn's household. All claims are supported by the tool responses and project state."
               },
               {
                 "source": "base",
@@ -5498,7 +5498,7 @@
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The selected question 'Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?' is concrete and answerable. It names the specific person (Patrick Flynn with identifying details: birth year, birthplace, death year, death location), the specific fact sought (mother's identity), and the time period (1870\u20131880 censuses). The question is not vague like 'Learn more about Patrick's family' \u2014 it targets a precise, researchable fact. The rationale explains exactly what evidence would answer it (Thomas Flynn's wife appearing in the 1870 or 1880 census)."
+                "rationale": "The selected question 'Who was the mother of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, Pennsylvania)?' is concrete and answerable. It names the specific person (Patrick Flynn with identifying details: birth year, birthplace, death year, death location), the specific fact sought (mother's identity), and the time period (1870–1880 censuses). The question is not vague like 'Learn more about Patrick's family' — it targets a precise, researchable fact. The rationale explains exactly what evidence would answer it (Thomas Flynn's wife appearing in the 1870 or 1880 census)."
               }
             ],
             "judge_cost_usd": 0.018923,
@@ -5582,7 +5582,7 @@
       },
       "totals": {
         "duration_ms": 57279.47957161814,
-        "duration_api_ms": 56353.0,
+        "duration_api_ms": 56353,
         "judge_duration_ms": 6526.779618114233,
         "wall_clock_ms": 63957.94415473938,
         "num_turns": 13,
@@ -5605,7 +5605,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 57279.47957161814,
-          "duration_api_ms": 56353.0,
+          "duration_api_ms": 56353,
           "num_turns": 13,
           "skill_attempts": 1,
           "input_tokens": 366,
@@ -5637,7 +5637,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.19075270000000003,
           "output": {
-            "text_response": "Let me read the existing questions and check for any conflicts, hypotheses, and timelines.\n\nNow let me check the project objective and timeline section to complete the picture.\n\nThe picture is clear. Both questions are resolved with no in-progress plan items, no blocking conflicts, and the hypothesis notes explicitly flag \"the remaining objective gap is the mother's identity.\" The objective is to identify **both** parents of Patrick Flynn \u2014 the father is done; the mother is an independent, still-open part of that same objective. Priority 4 fires: objective decomposition.\n\nDone. The next research question, saved as **`q_003`**, is:\n\n> **\"Who was the mother of Patrick Flynn, born circa 1845 in Ireland and residing in Schuylkill County, Pennsylvania by 1850?\"**\n\n**Why now:** The objective is to identify Patrick's parents. The father question (`q_001` \u2014 who was the father?) is resolved with Thomas Flynn confirmed. The mother's identity is the remaining independent part of that same objective, so it's the natural next step.\n\n**Rationale:** The Thomas Flynn household in the 1850 and 1860 Schuylkill County censuses is the immediate foothold \u2014 any woman enumerated with Thomas in 1850 is the primary candidate, and her name, age, and birthplace will drive follow-up vital and church-record searches.\n\n**Depends on:** Both resolved questions \u2014 `q_001` (which confirmed Thomas Flynn's household as the anchor) and `q_002` (which placed Patrick in that specific Schuylkill County household in 1850).\n\n**Next step:** Run `research-plan` for `q_003` to stage the searches \u2014 the 1850 census household membership is already in hand, so a research plan can be built immediately.",
+            "text_response": "Let me read the existing questions and check for any conflicts, hypotheses, and timelines.\n\nNow let me check the project objective and timeline section to complete the picture.\n\nThe picture is clear. Both questions are resolved with no in-progress plan items, no blocking conflicts, and the hypothesis notes explicitly flag \"the remaining objective gap is the mother's identity.\" The objective is to identify **both** parents of Patrick Flynn — the father is done; the mother is an independent, still-open part of that same objective. Priority 4 fires: objective decomposition.\n\nDone. The next research question, saved as **`q_003`**, is:\n\n> **\"Who was the mother of Patrick Flynn, born circa 1845 in Ireland and residing in Schuylkill County, Pennsylvania by 1850?\"**\n\n**Why now:** The objective is to identify Patrick's parents. The father question (`q_001` — who was the father?) is resolved with Thomas Flynn confirmed. The mother's identity is the remaining independent part of that same objective, so it's the natural next step.\n\n**Rationale:** The Thomas Flynn household in the 1850 and 1860 Schuylkill County censuses is the immediate foothold — any woman enumerated with Thomas in 1850 is the primary candidate, and her name, age, and birthplace will drive follow-up vital and church-record searches.\n\n**Depends on:** Both resolved questions — `q_001` (which confirmed Thomas Flynn's household as the anchor) and `q_002` (which placed Patrick in that specific Schuylkill County household in 1850).\n\n**Next step:** Run `research-plan` for `q_003` to stage the searches — the 1850 census household membership is already in hand, so a research plan can be built immediately.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -5663,14 +5663,14 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "nextStep": "gps-mentor (proof-critique) — ps_001",
                       "openConflictIds": [],
                       "storedStatus": "resolved"
                     },
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved"
                     }
@@ -5766,7 +5766,7 @@
                       ],
                       "exhaustive_declaration": {
                         "declared": true,
-                        "justification": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census (FamilySearch), death certificate (FamilySearch), and probate records 1870\u20131890 (Schuylkill County via FamilySearch). Thomas Flynn confirmed as father by three independent original source types. Probate search negative but does not undermine the conclusion.",
+                        "justification": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census (FamilySearch), death certificate (FamilySearch), and probate records 1870–1890 (Schuylkill County via FamilySearch). Thomas Flynn confirmed as father by three independent original source types. Probate search negative but does not undermine the conclusion.",
                         "log_entry_ids": [
                           "log_001",
                           "log_002",
@@ -5776,13 +5776,13 @@
                           "log_006"
                         ],
                         "stop_criteria": {
-                          "goal_alignment": "Yes \u2014 Thomas Flynn identified as father across three independent source types.",
+                          "goal_alignment": "Yes — Thomas Flynn identified as father across three independent source types.",
                           "repository_breadth": "Census (FamilySearch, Ancestry, MyHeritage), vital records (FamilySearch), probate (FamilySearch). Major repositories searched.",
                           "original_substitution": "FamilySearch provides original images for census and death certificate.",
                           "independent_verification": "Three independent source types agree: 1850 census, 1860 census, 1908 death certificate.",
                           "evidence_class": "Original sources; death certificate is secondary for parentage facts but corroborated by census evidence.",
                           "conflict_resolution": "Birthplace conflict resolved. No other conflicts.",
-                          "overturn_risk": "Low \u2014 consistent identification across three source types spanning 58 years."
+                          "overturn_risk": "Low — consistent identification across three source types spanning 58 years."
                         }
                       }
                     },
@@ -5813,7 +5813,7 @@
                           "log_003"
                         ],
                         "stop_criteria": {
-                          "goal_alignment": "Yes \u2014 Patrick Flynn located in a specific 1850 household.",
+                          "goal_alignment": "Yes — Patrick Flynn located in a specific 1850 household.",
                           "repository_breadth": "Three major repositories searched.",
                           "original_substitution": "FamilySearch provides original image.",
                           "independent_verification": "FamilySearch and Ancestry confirm same household.",
@@ -6493,7 +6493,7 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 3,
-            "rationale": "The proposed question 'Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?' is concrete and answerable. It names the specific fact being sought (paternity), the specific persons involved (Thomas Flynn and Patrick Flynn with birth/death details), and the method (independent records). It is not vague like 'Learn more about Patrick's early life' \u2014 it precisely targets verification of a single claim. The question drives a clear search strategy: examine original records (census, death certificates, church records, probate) to either corroborate or contradict the online tree assertion."
+            "rationale": "The proposed question 'Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?' is concrete and answerable. It names the specific fact being sought (paternity), the specific persons involved (Thomas Flynn and Patrick Flynn with birth/death details), and the method (independent records). It is not vague like 'Learn more about Patrick's early life' — it precisely targets verification of a single claim. The question drives a clear search strategy: examine original records (census, death certificates, church records, probate) to either corroborate or contradict the online tree assertion."
           }
         ],
         "review_dimensions": [
@@ -6519,13 +6519,13 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 3,
-            "rationale": "The proposed question 'Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?' is concrete and answerable. It names the specific fact being sought (paternity), the specific persons involved (Thomas Flynn and Patrick Flynn with birth/death details), and the method (independent records). It is not vague like 'Learn more about Patrick's early life' \u2014 it precisely targets verification of a single claim. The question drives a clear search strategy: examine original records (census, death certificates, church records, probate) to either corroborate or contradict the online tree assertion."
+            "rationale": "The proposed question 'Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?' is concrete and answerable. It names the specific fact being sought (paternity), the specific persons involved (Thomas Flynn and Patrick Flynn with birth/death details), and the method (independent records). It is not vague like 'Learn more about Patrick's early life' — it precisely targets verification of a single claim. The question drives a clear search strategy: examine original records (census, death certificates, church records, probate) to either corroborate or contradict the online tree assertion."
           }
         ]
       },
       "totals": {
         "duration_ms": 114094.98324198648,
-        "duration_api_ms": 112930.0,
+        "duration_api_ms": 112930,
         "judge_duration_ms": 13293.365749996156,
         "wall_clock_ms": 127519.12260055542,
         "num_turns": 15,
@@ -6548,7 +6548,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 114094.98324198648,
-          "duration_api_ms": 112930.0,
+          "duration_api_ms": 112930,
           "num_turns": 15,
           "skill_attempts": 1,
           "input_tokens": 360,
@@ -6580,7 +6580,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.2501542,
           "output": {
-            "text_response": "Now let me load the genealogy tools and read the project state.\n\nNow let me check the plans, conflicts, hypotheses, timelines, and log sections for q_001.\n\nGood \u2014 I now have what I need. Let me check the log for completeness before proceeding.\n\nI have everything I need. Here's the state of play:\n\n- **q_001** (\"Who were the parents of Patrick Flynn?\") is open, no plan items exist, so no in-progress work to finish first.\n- The only evidence in the project is **a_001** \u2014 an unsourced Ancestry member tree claiming Thomas Flynn (b. ~1815, Ireland) is Patrick's father. The project has correctly flagged this as an untested hypothesis (**h_001**), not an established fact.\n- The tree already has Thomas Flynn assigned as a parent (I2), but sourced solely to that compiled tree \u2014 a disputed parent-child assignment.\n- No conflicts, no timelines, no proof summaries exist yet.\n\n**Priority 2 fires:** an active hypothesis tied to q_001 needs testing. Thomas Flynn's parentage of Patrick is an existing tree assignment backed by nothing but an unsourced tree \u2014 it must be confirmed or refuted by original records before any conclusion is reachable.\n\nSaved as **q_002** (this project's label for the new question).\n\n---\n\n**The objective** is the overall goal: identify Patrick Flynn's parents. **q_001** (\"Who were the parents of Patrick Flynn?\") is the open question pursuing that goal. **q_002** is the single-fact sub-question to tackle next, drilling into the one lead the project has.\n\n> **\"Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?\"**\n\n**Why this, why now:** The only assertion in the project (a_001) comes from an Ancestry member tree whose owner attached zero original source images or records. The project correctly stored that claim as a hypothesis (h_001) rather than a finding. Thomas Flynn already appears in the tree as Patrick's assigned father \u2014 but that assignment rests entirely on the unsourced tree. Before anything else can be concluded, original records must be searched to either corroborate or contradict this. Resolving q_002 directly unblocks q_001.\n\n**What comes next:** The next step is to build a research plan for q_002 \u2014 identifying which record sets (census enumerations, Pennsylvania death records, Catholic church registers, probate files, land records) are most likely to name Patrick Flynn's parentage and should be searched first.",
+            "text_response": "Now let me load the genealogy tools and read the project state.\n\nNow let me check the plans, conflicts, hypotheses, timelines, and log sections for q_001.\n\nGood — I now have what I need. Let me check the log for completeness before proceeding.\n\nI have everything I need. Here's the state of play:\n\n- **q_001** (\"Who were the parents of Patrick Flynn?\") is open, no plan items exist, so no in-progress work to finish first.\n- The only evidence in the project is **a_001** — an unsourced Ancestry member tree claiming Thomas Flynn (b. ~1815, Ireland) is Patrick's father. The project has correctly flagged this as an untested hypothesis (**h_001**), not an established fact.\n- The tree already has Thomas Flynn assigned as a parent (I2), but sourced solely to that compiled tree — a disputed parent-child assignment.\n- No conflicts, no timelines, no proof summaries exist yet.\n\n**Priority 2 fires:** an active hypothesis tied to q_001 needs testing. Thomas Flynn's parentage of Patrick is an existing tree assignment backed by nothing but an unsourced tree — it must be confirmed or refuted by original records before any conclusion is reachable.\n\nSaved as **q_002** (this project's label for the new question).\n\n---\n\n**The objective** is the overall goal: identify Patrick Flynn's parents. **q_001** (\"Who were the parents of Patrick Flynn?\") is the open question pursuing that goal. **q_002** is the single-fact sub-question to tackle next, drilling into the one lead the project has.\n\n> **\"Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?\"**\n\n**Why this, why now:** The only assertion in the project (a_001) comes from an Ancestry member tree whose owner attached zero original source images or records. The project correctly stored that claim as a hypothesis (h_001) rather than a finding. Thomas Flynn already appears in the tree as Patrick's assigned father — but that assignment rests entirely on the unsourced tree. Before anything else can be concluded, original records must be searched to either corroborate or contradict this. Resolving q_002 directly unblocks q_001.\n\n**What comes next:** The next step is to build a research plan for q_002 — identifying which record sets (census enumerations, Pennsylvania death records, Catholic church registers, probate files, land records) are most likely to name Patrick Flynn's parentage and should be searched first.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -6820,7 +6820,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown tree owner (compiled source)",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Compiled online tree with no original sources cited. The basis for this claim is unknown \u2014 it may derive from another unsourced tree, a misidentification, or an unrecorded family tradition. Cannot be treated as evidence until verified against original records.",
+                      "informant_bias_notes": "Compiled online tree with no original sources cited. The basis for this claim is unknown — it may derive from another unsourced tree, a misidentification, or an unrecorded family tradition. Cannot be treated as evidence until verified against original records.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -6860,7 +6860,7 @@
                       },
                       "outcome": "positive",
                       "results_examined": 1,
-                      "notes": "Located the 'Flynn Family Tree' on Ancestry.com. Lists Thomas Flynn (b. ~1815, Ireland) as Patrick Flynn's father. The tree owner has not attached any original source records to support this claim \u2014 no census images, no vital records, no church records. The relationship is asserted without citation.",
+                      "notes": "Located the 'Flynn Family Tree' on Ancestry.com. Lists Thomas Flynn (b. ~1815, Ireland) as Patrick Flynn's father. The tree owner has not attached any original source records to support this claim — no census images, no vital records, no church records. The relationship is asserted without citation.",
                       "external_site": {
                         "site": "ancestry",
                         "url_generated": "https://www.ancestry.com/search/?name=Patrick_Flynn&birth=1845&birth_place=Pennsylvania",
@@ -6880,7 +6880,7 @@
                   "op": "append",
                   "entry": {
                     "question": "Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?",
-                    "rationale": "The sole evidence for Thomas Flynn as Patrick's father is an unsourced Ancestry member tree (src_001, h_001). No original record \u2014 census, death certificate, church record, probate \u2014 has been searched to support or refute this assignment. Until original records either corroborate or contradict the claim, no defensible conclusion on q_001 is possible. A confirm-or-refute search of original records is the logical and methodologically required next step.",
+                    "rationale": "The sole evidence for Thomas Flynn as Patrick's father is an unsourced Ancestry member tree (src_001, h_001). No original record — census, death certificate, church record, probate — has been searched to support or refute this assignment. Until original records either corroborate or contradict the claim, no defensible conclusion on q_001 is possible. A confirm-or-refute search of original records is the logical and methodologically required next step.",
                     "selection_basis": "hypothesis_test",
                     "priority": "high",
                     "status": "open",
@@ -6958,7 +6958,7 @@
                       {
                         "id": "q_002",
                         "question": "Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?",
-                        "rationale": "The sole evidence for Thomas Flynn as Patrick's father is an unsourced Ancestry member tree (src_001, h_001). No original record \u2014 census, death certificate, church record, probate \u2014 has been searched to support or refute this assignment. Until original records either corroborate or contradict the claim, no defensible conclusion on q_001 is possible. A confirm-or-refute search of original records is the logical and methodologically required next step.",
+                        "rationale": "The sole evidence for Thomas Flynn as Patrick's father is an unsourced Ancestry member tree (src_001, h_001). No original record — census, death certificate, church record, probate — has been searched to support or refute this assignment. Until original records either corroborate or contradict the claim, no defensible conclusion on q_001 is possible. A confirm-or-refute search of original records is the logical and methodologically required next step.",
                         "selection_basis": "hypothesis_test",
                         "priority": "high",
                         "status": "open",
@@ -7259,7 +7259,7 @@
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The proposed question 'Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?' is concrete and answerable. It names the specific fact being sought (paternity), the specific persons involved (Thomas Flynn and Patrick Flynn with birth/death details), and the method (independent records). It is not vague like 'Learn more about Patrick's early life' \u2014 it precisely targets verification of a single claim. The question drives a clear search strategy: examine original records (census, death certificates, church records, probate) to either corroborate or contradict the online tree assertion."
+                "rationale": "The proposed question 'Do independent records confirm or refute that Thomas Flynn is the father of Patrick Flynn (b. ~1845, PA, d. 1908)?' is concrete and answerable. It names the specific fact being sought (paternity), the specific persons involved (Thomas Flynn and Patrick Flynn with birth/death details), and the method (independent records). It is not vague like 'Learn more about Patrick's early life' — it precisely targets verification of a single claim. The question drives a clear search strategy: examine original records (census, death certificates, church records, probate) to either corroborate or contradict the online tree assertion."
               }
             ],
             "judge_cost_usd": 0.01456,
@@ -7331,7 +7331,7 @@
       },
       "totals": {
         "duration_ms": 53901.21968090534,
-        "duration_api_ms": 0.0,
+        "duration_api_ms": 0,
         "judge_duration_ms": 3562.6239720731974,
         "wall_clock_ms": 57605.03649711609,
         "num_turns": 2,
@@ -7342,7 +7342,7 @@
         "judge_input_tokens": 10546,
         "judge_cached_input_tokens": 0,
         "judge_output_tokens": 329,
-        "skill_cost_usd": 0.0,
+        "skill_cost_usd": 0,
         "judge_cost_usd": 0.012191,
         "total_cost_usd": 0.012191
       },
@@ -7354,7 +7354,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 53901.21968090534,
-          "duration_api_ms": 0.0,
+          "duration_api_ms": 0,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 0,
@@ -7363,7 +7363,7 @@
           "output_tokens": 0,
           "model_usage": {},
           "no_result_message": true,
-          "skill_cost_usd": 0.0,
+          "skill_cost_usd": 0,
           "output": {
             "text_response": "",
             "activated": false,
@@ -7454,7 +7454,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -7484,7 +7484,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -7502,13 +7502,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -7712,7 +7712,7 @@
       },
       "totals": {
         "duration_ms": 5558.781974948943,
-        "duration_api_ms": 0.0,
+        "duration_api_ms": 0,
         "judge_duration_ms": 4120.73131930083,
         "wall_clock_ms": 9817.082405090332,
         "num_turns": 2,
@@ -7723,7 +7723,7 @@
         "judge_input_tokens": 8890,
         "judge_cached_input_tokens": 0,
         "judge_output_tokens": 339,
-        "skill_cost_usd": 0.0,
+        "skill_cost_usd": 0,
         "judge_cost_usd": 0.010585,
         "total_cost_usd": 0.010585
       },
@@ -7735,7 +7735,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 5558.781974948943,
-          "duration_api_ms": 0.0,
+          "duration_api_ms": 0,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 0,
@@ -7744,7 +7744,7 @@
           "output_tokens": 0,
           "model_usage": {},
           "no_result_message": true,
-          "skill_cost_usd": 0.0,
+          "skill_cost_usd": 0,
           "output": {
             "text_response": "",
             "activated": false,
@@ -7834,7 +7834,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -7864,7 +7864,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -7882,13 +7882,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -8092,7 +8092,7 @@
       },
       "totals": {
         "duration_ms": 4482.362102717161,
-        "duration_api_ms": 0.0,
+        "duration_api_ms": 0,
         "judge_duration_ms": 3737.856152933091,
         "wall_clock_ms": 8360.651969909668,
         "num_turns": 1,
@@ -8103,7 +8103,7 @@
         "judge_input_tokens": 10539,
         "judge_cached_input_tokens": 0,
         "judge_output_tokens": 312,
-        "skill_cost_usd": 0.0,
+        "skill_cost_usd": 0,
         "judge_cost_usd": 0.012099,
         "total_cost_usd": 0.012099
       },
@@ -8115,7 +8115,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 4482.362102717161,
-          "duration_api_ms": 0.0,
+          "duration_api_ms": 0,
           "num_turns": 1,
           "skill_attempts": 1,
           "input_tokens": 0,
@@ -8124,7 +8124,7 @@
           "output_tokens": 0,
           "model_usage": {},
           "no_result_message": true,
-          "skill_cost_usd": 0.0,
+          "skill_cost_usd": 0,
           "output": {
             "text_response": "",
             "activated": false,
@@ -8214,7 +8214,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8244,7 +8244,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8262,13 +8262,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -8472,7 +8472,7 @@
       },
       "totals": {
         "duration_ms": 18931.082783266902,
-        "duration_api_ms": 0.0,
+        "duration_api_ms": 0,
         "judge_duration_ms": 3852.0425837486982,
         "wall_clock_ms": 22908.436059951782,
         "num_turns": 2,
@@ -8483,7 +8483,7 @@
         "judge_input_tokens": 10545,
         "judge_cached_input_tokens": 0,
         "judge_output_tokens": 323,
-        "skill_cost_usd": 0.0,
+        "skill_cost_usd": 0,
         "judge_cost_usd": 0.01216,
         "total_cost_usd": 0.01216
       },
@@ -8495,7 +8495,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18931.082783266902,
-          "duration_api_ms": 0.0,
+          "duration_api_ms": 0,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 0,
@@ -8504,7 +8504,7 @@
           "output_tokens": 0,
           "model_usage": {},
           "no_result_message": true,
-          "skill_cost_usd": 0.0,
+          "skill_cost_usd": 0,
           "output": {
             "text_response": "",
             "activated": false,
@@ -8595,7 +8595,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8625,7 +8625,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8643,13 +8643,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -8865,7 +8865,7 @@
       },
       "totals": {
         "duration_ms": 78200.22287685424,
-        "duration_api_ms": 77302.0,
+        "duration_api_ms": 77302,
         "judge_duration_ms": 8896.813981235027,
         "wall_clock_ms": 87211.92002296448,
         "num_turns": 14,
@@ -8888,7 +8888,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 78200.22287685424,
-          "duration_api_ms": 77302.0,
+          "duration_api_ms": 77302,
           "num_turns": 14,
           "skill_attempts": 1,
           "input_tokens": 410,
@@ -8920,7 +8920,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.19341205,
           "output": {
-            "text_response": "Now let me load the project state.\n\nI can see three persons \u2014 Anton Vogt (I1) with parents Johann (I2) and Maria (I3). Let me pull the remaining sections in parallel before drawing any conclusions.\n\nAll sections are empty \u2014 this is a fresh project with no questions, no conflicts, no log, no timelines. The tree has three persons: Anton Vogt (I1, with one source ref S1), and his attached parents Johann Vogt (I2) and Maria Vogt (I3), neither of whom carries any source references.\n\n**Analysis:**\n\n- No in-progress plan items \u2192 Step 1a: no block.\n- No resolved questions \u2192 Step 1b: objective not answered.\n- The user explicitly doubts the existing parent-child assignment (Johann and Maria). I2 and I3 carry zero source refs, meaning the link almost certainly derives from a compiled/unsourced tree. That makes this a **disputed relationship assertion already on the tree.**\n- Per Step 3 and the skill rules: when the objective signals doubt about an existing tree assignment, the first question is a direct **confirm-or-refute test** of that disputed assignment \u2014 it both verifies the unverified premise *and* pursues the objective in one move.\n- Priority 4 fires (objective not yet decomposed into any question), with the confirm-or-refute framing.\n- The question must name Anton with distinguishing detail: born circa 1860 in Wisconsin, died in Luxembourg.\n\nSaved as **q_001**. Here's the full picture:\n\n---\n\n**The question (q_001):**\n> *\"Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt, born circa 1860 in Wisconsin, who died in Luxembourg?\"*\n\n**Why this question, and why first:**\n\nYour project's *objective* is to identify Anton Vogt's correct parents. The *question* is the single fact pursued right now: whether the current tree assignment (Johann and Maria) holds up under independent scrutiny.\n\nJohann Vogt (I2) and Maria Vogt (I3) carry **zero source references** in the tree \u2014 the link almost certainly came from a compiled or unsourced online tree, not an original record. Under GPS standards, that makes the parentage assignment an unverified lead, not an established fact. Your death record already signals something is off (Luxembourg, not Wisconsin), which makes building further research on this parent-child link a real risk of compounding errors.\n\nThe confirm-or-refute framing means the question has a clean answer no matter which way the evidence falls: records either corroborate these parents, or they point to different ones \u2014 and either outcome names a concrete fact.\n\n**What comes next:** This question needs a research plan \u2014 which record sets (Wisconsin vital records, U.S. census entries placing Anton with a household circa 1860\u20131880, Luxembourg civil registration, etc.) to search and in what order. Ready to plan that whenever you'd like.",
+            "text_response": "Now let me load the project state.\n\nI can see three persons — Anton Vogt (I1) with parents Johann (I2) and Maria (I3). Let me pull the remaining sections in parallel before drawing any conclusions.\n\nAll sections are empty — this is a fresh project with no questions, no conflicts, no log, no timelines. The tree has three persons: Anton Vogt (I1, with one source ref S1), and his attached parents Johann Vogt (I2) and Maria Vogt (I3), neither of whom carries any source references.\n\n**Analysis:**\n\n- No in-progress plan items → Step 1a: no block.\n- No resolved questions → Step 1b: objective not answered.\n- The user explicitly doubts the existing parent-child assignment (Johann and Maria). I2 and I3 carry zero source refs, meaning the link almost certainly derives from a compiled/unsourced tree. That makes this a **disputed relationship assertion already on the tree.**\n- Per Step 3 and the skill rules: when the objective signals doubt about an existing tree assignment, the first question is a direct **confirm-or-refute test** of that disputed assignment — it both verifies the unverified premise *and* pursues the objective in one move.\n- Priority 4 fires (objective not yet decomposed into any question), with the confirm-or-refute framing.\n- The question must name Anton with distinguishing detail: born circa 1860 in Wisconsin, died in Luxembourg.\n\nSaved as **q_001**. Here's the full picture:\n\n---\n\n**The question (q_001):**\n> *\"Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt, born circa 1860 in Wisconsin, who died in Luxembourg?\"*\n\n**Why this question, and why first:**\n\nYour project's *objective* is to identify Anton Vogt's correct parents. The *question* is the single fact pursued right now: whether the current tree assignment (Johann and Maria) holds up under independent scrutiny.\n\nJohann Vogt (I2) and Maria Vogt (I3) carry **zero source references** in the tree — the link almost certainly came from a compiled or unsourced online tree, not an original record. Under GPS standards, that makes the parentage assignment an unverified lead, not an established fact. Your death record already signals something is off (Luxembourg, not Wisconsin), which makes building further research on this parent-child link a real risk of compounding errors.\n\nThe confirm-or-refute framing means the question has a clean answer no matter which way the evidence falls: records either corroborate these parents, or they point to different ones — and either outcome names a concrete fact.\n\n**What comes next:** This question needs a research plan — which record sets (Wisconsin vital records, U.S. census entries placing Anton with a household circa 1860–1880, Luxembourg civil registration, etc.) to search and in what order. Ready to plan that whenever you'd like.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -9494,13 +9494,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that the objective disputes the existing parent assignment and formulated a verification question that tests the assignment against independent records rather than accepting it as given. The question is factually sound: it names the specific persons (Johann and Maria Vogt), the subject (Anton Vogt), the approximate birth date (~1860), location (Wisconsin), and the fact being tested (parentage). The rationale provided is accurate\u2014the parentage is indeed sourced only to FamilySearch (quality 1, unverified compiled data). The skill correctly applied the rule that when an objective signals doubt about an existing assignment, the first question must test it directly. No fabricated material or unsupported claims are present."
+            "rationale": "The skill correctly identified that the objective disputes the existing parent assignment and formulated a verification question that tests the assignment against independent records rather than accepting it as given. The question is factually sound: it names the specific persons (Johann and Maria Vogt), the subject (Anton Vogt), the approximate birth date (~1860), location (Wisconsin), and the fact being tested (parentage). The rationale provided is accurate—the parentage is indeed sourced only to FamilySearch (quality 1, unverified compiled data). The skill correctly applied the rule that when an objective signals doubt about an existing assignment, the first question must test it directly. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required by the input state. It read the project context, identified the disputed parentage, recognized that no questions existed yet, and formulated the appropriate first research question. The user's message asked 'What should I research next?' and the skill provided a concrete, actionable research question with clear rationale and next steps. The skill did not stop to ask for missing evidence (birth coordinates) as the per-test context explicitly states this would be incorrect\u2014the skill should proceed on the objective's statement and the available data. All required work was completed."
+            "rationale": "The skill addressed everything required by the input state. It read the project context, identified the disputed parentage, recognized that no questions existed yet, and formulated the appropriate first research question. The user's message asked 'What should I research next?' and the skill provided a concrete, actionable research question with clear rationale and next steps. The skill did not stop to ask for missing evidence (birth coordinates) as the per-test context explicitly states this would be incorrect—the skill should proceed on the objective's statement and the available data. All required work was completed."
           },
           {
             "source": "base",
@@ -9520,13 +9520,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that the objective disputes the existing parent assignment and formulated a verification question that tests the assignment against independent records rather than accepting it as given. The question is factually sound: it names the specific persons (Johann and Maria Vogt), the subject (Anton Vogt), the approximate birth date (~1860), location (Wisconsin), and the fact being tested (parentage). The rationale provided is accurate\u2014the parentage is indeed sourced only to FamilySearch (quality 1, unverified compiled data). The skill correctly applied the rule that when an objective signals doubt about an existing assignment, the first question must test it directly. No fabricated material or unsupported claims are present."
+            "rationale": "The skill correctly identified that the objective disputes the existing parent assignment and formulated a verification question that tests the assignment against independent records rather than accepting it as given. The question is factually sound: it names the specific persons (Johann and Maria Vogt), the subject (Anton Vogt), the approximate birth date (~1860), location (Wisconsin), and the fact being tested (parentage). The rationale provided is accurate—the parentage is indeed sourced only to FamilySearch (quality 1, unverified compiled data). The skill correctly applied the rule that when an objective signals doubt about an existing assignment, the first question must test it directly. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required by the input state. It read the project context, identified the disputed parentage, recognized that no questions existed yet, and formulated the appropriate first research question. The user's message asked 'What should I research next?' and the skill provided a concrete, actionable research question with clear rationale and next steps. The skill did not stop to ask for missing evidence (birth coordinates) as the per-test context explicitly states this would be incorrect\u2014the skill should proceed on the objective's statement and the available data. All required work was completed."
+            "rationale": "The skill addressed everything required by the input state. It read the project context, identified the disputed parentage, recognized that no questions existed yet, and formulated the appropriate first research question. The user's message asked 'What should I research next?' and the skill provided a concrete, actionable research question with clear rationale and next steps. The skill did not stop to ask for missing evidence (birth coordinates) as the per-test context explicitly states this would be incorrect—the skill should proceed on the objective's statement and the available data. All required work was completed."
           },
           {
             "source": "base",
@@ -9544,7 +9544,7 @@
       },
       "totals": {
         "duration_ms": 83602.93381335214,
-        "duration_api_ms": 81511.0,
+        "duration_api_ms": 81511,
         "judge_duration_ms": 13674.037237185985,
         "wall_clock_ms": 97374.71890449524,
         "num_turns": 15,
@@ -9567,7 +9567,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 83602.93381335214,
-          "duration_api_ms": 81511.0,
+          "duration_api_ms": 81511,
           "num_turns": 15,
           "skill_attempts": 1,
           "input_tokens": 381,
@@ -9599,7 +9599,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.2152704,
           "output": {
-            "text_response": "Good. Now let me read the project state.\n\nLet me check the tree and sources for identifying details on Anton Vogt before formulating the question.\n\nThe picture is clear. Anton Vogt's birth (~1860, Wisconsin) and his entire parentage \u2014 Johann Vogt (I2) and Maria Vogt (I3) \u2014 are sourced exclusively from the FamilySearch Family Tree (S1, quality 1: compiled, unverified). There are no original records behind it. No questions exist yet. The user explicitly doubts the parent assignment.\n\nPer the skill rules: when the objective signals doubt about an existing assignment, the disputed parent-child link is tested directly \u2014 \"Do independent records confirm or refute\u2026\" \u2014 and that *is* the first question. Priority 4 applies (no questions yet). Now writing it.\n\nHere's where things stand and what I've queued up.\n\n---\n\n**The problem with the current tree**\n\nEvery fact supporting the Johann Vogt / Maria Vogt parentage \u2014 the parent-child links and even their marriage \u2014 traces back to a single source: the **FamilySearch Family Tree** (S1, quality 1, compiled, unverified). No original record is behind any of it. That makes the entire assignment an unverified claim, which is exactly the kind of shaky foundation the GPS cautions against building on.\n\n---\n\n**Question written \u2014 saved as `q_001`:**\n\n> *\"Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt, born circa 1860 in Wisconsin?\"*\n\nBecause you've signalled doubt about the existing assignment, this question tests it directly rather than accepting it as a given. Two parents are one fact (one relationship), so this stays as a single question \u2014 not split into father and mother separately.\n\n**Why now:** The parentage is the gating fact for everything downstream. Confirming or replacing it has to come first; building further research on an untested compiled claim risks compounding errors across the whole line.\n\n**Depends on:** nothing \u2014 this is the first question.\n**Unblocks:** any future sub-questions about Anton Vogt's origins once the correct parentage is established.\n\n---\n\n**What comes next:** A research plan for `q_001` is the immediate next step \u2014 identifying which Wisconsin vital, census, and church records from circa 1860\u20131900 are most likely to name Anton Vogt's parents independently. Use the `research-plan` skill (or just say \"plan the research\") to build that out.",
+            "text_response": "Good. Now let me read the project state.\n\nLet me check the tree and sources for identifying details on Anton Vogt before formulating the question.\n\nThe picture is clear. Anton Vogt's birth (~1860, Wisconsin) and his entire parentage — Johann Vogt (I2) and Maria Vogt (I3) — are sourced exclusively from the FamilySearch Family Tree (S1, quality 1: compiled, unverified). There are no original records behind it. No questions exist yet. The user explicitly doubts the parent assignment.\n\nPer the skill rules: when the objective signals doubt about an existing assignment, the disputed parent-child link is tested directly — \"Do independent records confirm or refute…\" — and that *is* the first question. Priority 4 applies (no questions yet). Now writing it.\n\nHere's where things stand and what I've queued up.\n\n---\n\n**The problem with the current tree**\n\nEvery fact supporting the Johann Vogt / Maria Vogt parentage — the parent-child links and even their marriage — traces back to a single source: the **FamilySearch Family Tree** (S1, quality 1, compiled, unverified). No original record is behind any of it. That makes the entire assignment an unverified claim, which is exactly the kind of shaky foundation the GPS cautions against building on.\n\n---\n\n**Question written — saved as `q_001`:**\n\n> *\"Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt, born circa 1860 in Wisconsin?\"*\n\nBecause you've signalled doubt about the existing assignment, this question tests it directly rather than accepting it as a given. Two parents are one fact (one relationship), so this stays as a single question — not split into father and mother separately.\n\n**Why now:** The parentage is the gating fact for everything downstream. Confirming or replacing it has to come first; building further research on an untested compiled claim risks compounding errors across the whole line.\n\n**Depends on:** nothing — this is the first question.\n**Unblocks:** any future sub-questions about Anton Vogt's origins once the correct parentage is established.\n\n---\n\n**What comes next:** A research plan for `q_001` is the immediate next step — identifying which Wisconsin vital, census, and church records from circa 1860–1900 are most likely to name Anton Vogt's parents independently. Use the `research-plan` skill (or just say \"plan the research\") to build that out.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -9756,7 +9756,7 @@
                   "op": "append",
                   "entry": {
                     "question": "Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt, born circa 1860 in Wisconsin?",
-                    "rationale": "The parentage of Anton Vogt rests entirely on the FamilySearch Family Tree (compiled, quality 1) \u2014 a source the user has explicitly flagged as suspect. No original records support the Johann Vogt / Maria Vogt parent-child links. Because the premise itself is under doubt, the first step is to test the existing assignment directly against independent evidence (vital records, census, church records) before any further research builds on it.",
+                    "rationale": "The parentage of Anton Vogt rests entirely on the FamilySearch Family Tree (compiled, quality 1) — a source the user has explicitly flagged as suspect. No original records support the Johann Vogt / Maria Vogt parent-child links. Because the premise itself is under doubt, the first step is to test the existing assignment directly against independent evidence (vital records, census, church records) before any further research builds on it.",
                     "selection_basis": "objective_decomposition",
                     "priority": "high",
                     "status": "open",
@@ -9846,7 +9846,7 @@
                       {
                         "id": "q_001",
                         "question": "Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt, born circa 1860 in Wisconsin?",
-                        "rationale": "The parentage of Anton Vogt rests entirely on the FamilySearch Family Tree (compiled, quality 1) \u2014 a source the user has explicitly flagged as suspect. No original records support the Johann Vogt / Maria Vogt parent-child links. Because the premise itself is under doubt, the first step is to test the existing assignment directly against independent evidence (vital records, census, church records) before any further research builds on it.",
+                        "rationale": "The parentage of Anton Vogt rests entirely on the FamilySearch Family Tree (compiled, quality 1) — a source the user has explicitly flagged as suspect. No original records support the Johann Vogt / Maria Vogt parent-child links. Because the premise itself is under doubt, the first step is to test the existing assignment directly against independent evidence (vital records, census, church records) before any further research builds on it.",
                         "selection_basis": "objective_decomposition",
                         "priority": "high",
                         "status": "open",
@@ -10127,13 +10127,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified that the objective disputes the existing parent assignment and formulated a verification question that tests the assignment against independent records rather than accepting it as given. The question is factually sound: it names the specific persons (Johann and Maria Vogt), the subject (Anton Vogt), the approximate birth date (~1860), location (Wisconsin), and the fact being tested (parentage). The rationale provided is accurate\u2014the parentage is indeed sourced only to FamilySearch (quality 1, unverified compiled data). The skill correctly applied the rule that when an objective signals doubt about an existing assignment, the first question must test it directly. No fabricated material or unsupported claims are present."
+                "rationale": "The skill correctly identified that the objective disputes the existing parent assignment and formulated a verification question that tests the assignment against independent records rather than accepting it as given. The question is factually sound: it names the specific persons (Johann and Maria Vogt), the subject (Anton Vogt), the approximate birth date (~1860), location (Wisconsin), and the fact being tested (parentage). The rationale provided is accurate—the parentage is indeed sourced only to FamilySearch (quality 1, unverified compiled data). The skill correctly applied the rule that when an objective signals doubt about an existing assignment, the first question must test it directly. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required by the input state. It read the project context, identified the disputed parentage, recognized that no questions existed yet, and formulated the appropriate first research question. The user's message asked 'What should I research next?' and the skill provided a concrete, actionable research question with clear rationale and next steps. The skill did not stop to ask for missing evidence (birth coordinates) as the per-test context explicitly states this would be incorrect\u2014the skill should proceed on the objective's statement and the available data. All required work was completed."
+                "rationale": "The skill addressed everything required by the input state. It read the project context, identified the disputed parentage, recognized that no questions existed yet, and formulated the appropriate first research question. The user's message asked 'What should I research next?' and the skill provided a concrete, actionable research question with clear rationale and next steps. The skill did not stop to ask for missing evidence (birth coordinates) as the per-test context explicitly states this would be incorrect—the skill should proceed on the objective's statement and the available data. All required work was completed."
               },
               {
                 "source": "base",
@@ -10179,7 +10179,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 1,
-            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' fails the per-test requirement. The test explicitly states the first research question must verify the unverified surname premise by NAMING the gating fact \u2014 her maiden (birth) name \u2014 e.g., 'What was Rosalind Hartwell's maiden name?'. The skill's question is a bare parentage query that does not address the surname-origin gate. The per-test context clarifies that a yes/no or either/or framing ('Was Hartwell her maiden or married name?') is wrong because its 'married' branch names no fact and leaves the objective unchanged. The skill's question has this exact defect: it asks for parents without first establishing whether 'Hartwell' is her birth surname or married name, making it impossible to act on the answer. The objective cannot be decomposed into this question without first resolving the surname premise."
+            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' fails the per-test requirement. The test explicitly states the first research question must verify the unverified surname premise by NAMING the gating fact — her maiden (birth) name — e.g., 'What was Rosalind Hartwell's maiden name?'. The skill's question is a bare parentage query that does not address the surname-origin gate. The per-test context clarifies that a yes/no or either/or framing ('Was Hartwell her maiden or married name?') is wrong because its 'married' branch names no fact and leaves the objective unchanged. The skill's question has this exact defect: it asks for parents without first establishing whether 'Hartwell' is her birth surname or married name, making it impossible to act on the answer. The objective cannot be decomposed into this question without first resolving the surname premise."
           },
           {
             "source": "base",
@@ -10197,7 +10197,7 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 2,
-            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' is specific in naming a concrete person and a specific relationship fact (parentage), which would normally satisfy the specificity criterion. However, the per-test context overrides this: the question is specific in form but wrong in substance because it fails to address the unverified surname premise. The test requires the first question to name the gating fact \u2014 the maiden name \u2014 which this question does not do. The question is specific about what it asks (parents) but incomplete in addressing what must be verified first (surname origin). This is a partial score because the question is concrete and answerable in isolation, but it is the wrong question for this scenario."
+            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' is specific in naming a concrete person and a specific relationship fact (parentage), which would normally satisfy the specificity criterion. However, the per-test context overrides this: the question is specific in form but wrong in substance because it fails to address the unverified surname premise. The test requires the first question to name the gating fact — the maiden name — which this question does not do. The question is specific about what it asks (parents) but incomplete in addressing what must be verified first (surname origin). This is a partial score because the question is concrete and answerable in isolation, but it is the wrong question for this scenario."
           }
         ],
         "review_dimensions": [
@@ -10205,7 +10205,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 1,
-            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' fails the per-test requirement. The test explicitly states the first research question must verify the unverified surname premise by NAMING the gating fact \u2014 her maiden (birth) name \u2014 e.g., 'What was Rosalind Hartwell's maiden name?'. The skill's question is a bare parentage query that does not address the surname-origin gate. The per-test context clarifies that a yes/no or either/or framing ('Was Hartwell her maiden or married name?') is wrong because its 'married' branch names no fact and leaves the objective unchanged. The skill's question has this exact defect: it asks for parents without first establishing whether 'Hartwell' is her birth surname or married name, making it impossible to act on the answer. The objective cannot be decomposed into this question without first resolving the surname premise."
+            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' fails the per-test requirement. The test explicitly states the first research question must verify the unverified surname premise by NAMING the gating fact — her maiden (birth) name — e.g., 'What was Rosalind Hartwell's maiden name?'. The skill's question is a bare parentage query that does not address the surname-origin gate. The per-test context clarifies that a yes/no or either/or framing ('Was Hartwell her maiden or married name?') is wrong because its 'married' branch names no fact and leaves the objective unchanged. The skill's question has this exact defect: it asks for parents without first establishing whether 'Hartwell' is her birth surname or married name, making it impossible to act on the answer. The objective cannot be decomposed into this question without first resolving the surname premise."
           },
           {
             "source": "base",
@@ -10223,13 +10223,13 @@
             "source": "rubric",
             "name": "Question specificity",
             "score": 2,
-            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' is specific in naming a concrete person and a specific relationship fact (parentage), which would normally satisfy the specificity criterion. However, the per-test context overrides this: the question is specific in form but wrong in substance because it fails to address the unverified surname premise. The test requires the first question to name the gating fact \u2014 the maiden name \u2014 which this question does not do. The question is specific about what it asks (parents) but incomplete in addressing what must be verified first (surname origin). This is a partial score because the question is concrete and answerable in isolation, but it is the wrong question for this scenario."
+            "rationale": "The question 'Who were the parents of Rosalind Hartwell?' is specific in naming a concrete person and a specific relationship fact (parentage), which would normally satisfy the specificity criterion. However, the per-test context overrides this: the question is specific in form but wrong in substance because it fails to address the unverified surname premise. The test requires the first question to name the gating fact — the maiden name — which this question does not do. The question is specific about what it asks (parents) but incomplete in addressing what must be verified first (surname origin). This is a partial score because the question is concrete and answerable in isolation, but it is the wrong question for this scenario."
           }
         ]
       },
       "totals": {
         "duration_ms": 66421.5947529301,
-        "duration_api_ms": 66015.0,
+        "duration_api_ms": 66015,
         "judge_duration_ms": 10381.831612903625,
         "wall_clock_ms": 76915.79270362854,
         "num_turns": 13,
@@ -10252,7 +10252,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 66421.5947529301,
-          "duration_api_ms": 66015.0,
+          "duration_api_ms": 66015,
           "num_turns": 13,
           "skill_attempts": 1,
           "input_tokens": 378,
@@ -10284,7 +10284,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.18471915,
           "output": {
-            "text_response": "Now let me check the project state.\n\nI have a clear picture now. This is a fresh project with:\n- **Rosalind Hartwell** (I1) and **Thomas Hartwell** (I2) in the tree \u2014 Thomas carries no source references\n- No questions, conflicts, hypotheses, timelines, or plans yet\n\n**Priority 4 fires** \u2014 the objective hasn't been decomposed into any question yet. Finding parents is a single-fact objective (a relationship), so the first question *is* the objective restated. I'll now write it.\n\nThe first research question has been saved as **`q_001`**:\n\n> **\"Who were the parents of Rosalind Hartwell?\"**\n\n---\n\nA note on these two terms, since this is the project's first question: the **objective** is the overall goal \u2014 identify Rosalind Hartwell's parents. The **question** is the single fact being pursued next toward that goal. Here, because \"finding parents\" is one relationship fact (not two independent unknowns), the question and the objective are essentially the same thing.\n\n**Rationale:** No prior research exists. Vital records, census household entries, and baptismal registers are the standard opening sources for parentage \u2014 they routinely name both parents in a single entry. Thomas Hartwell (I2) appears in the tree but carries no source references, so he can't be treated as an established fact yet; the research will test whatever candidates emerge.\n\n**Next step:** Build a research plan for `q_001` \u2014 selecting which record sets to search (birth certificates, censuses, church registers, etc.) in order of availability for Rosalind's estimated time and place. Use the research-plan skill when you're ready to do that.",
+            "text_response": "Now let me check the project state.\n\nI have a clear picture now. This is a fresh project with:\n- **Rosalind Hartwell** (I1) and **Thomas Hartwell** (I2) in the tree — Thomas carries no source references\n- No questions, conflicts, hypotheses, timelines, or plans yet\n\n**Priority 4 fires** — the objective hasn't been decomposed into any question yet. Finding parents is a single-fact objective (a relationship), so the first question *is* the objective restated. I'll now write it.\n\nThe first research question has been saved as **`q_001`**:\n\n> **\"Who were the parents of Rosalind Hartwell?\"**\n\n---\n\nA note on these two terms, since this is the project's first question: the **objective** is the overall goal — identify Rosalind Hartwell's parents. The **question** is the single fact being pursued next toward that goal. Here, because \"finding parents\" is one relationship fact (not two independent unknowns), the question and the objective are essentially the same thing.\n\n**Rationale:** No prior research exists. Vital records, census household entries, and baptismal registers are the standard opening sources for parentage — they routinely name both parents in a single entry. Thomas Hartwell (I2) appears in the tree but carries no source references, so he can't be treated as an established fact yet; the research will test whatever candidates emerge.\n\n**Next step:** Build a research plan for `q_001` — selecting which record sets to search (birth certificates, censuses, church registers, etc.) in order of availability for Rosalind's estimated time and place. Use the research-plan skill when you're ready to do that.",
             "activated": true,
             "skills_invoked": [
               "question-selection"
@@ -10780,7 +10780,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 1,
-                "rationale": "The question 'Who were the parents of Rosalind Hartwell?' fails the per-test requirement. The test explicitly states the first research question must verify the unverified surname premise by NAMING the gating fact \u2014 her maiden (birth) name \u2014 e.g., 'What was Rosalind Hartwell's maiden name?'. The skill's question is a bare parentage query that does not address the surname-origin gate. The per-test context clarifies that a yes/no or either/or framing ('Was Hartwell her maiden or married name?') is wrong because its 'married' branch names no fact and leaves the objective unchanged. The skill's question has this exact defect: it asks for parents without first establishing whether 'Hartwell' is her birth surname or married name, making it impossible to act on the answer. The objective cannot be decomposed into this question without first resolving the surname premise."
+                "rationale": "The question 'Who were the parents of Rosalind Hartwell?' fails the per-test requirement. The test explicitly states the first research question must verify the unverified surname premise by NAMING the gating fact — her maiden (birth) name — e.g., 'What was Rosalind Hartwell's maiden name?'. The skill's question is a bare parentage query that does not address the surname-origin gate. The per-test context clarifies that a yes/no or either/or framing ('Was Hartwell her maiden or married name?') is wrong because its 'married' branch names no fact and leaves the objective unchanged. The skill's question has this exact defect: it asks for parents without first establishing whether 'Hartwell' is her birth surname or married name, making it impossible to act on the answer. The objective cannot be decomposed into this question without first resolving the surname premise."
               },
               {
                 "source": "base",
@@ -10798,7 +10798,7 @@
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 2,
-                "rationale": "The question 'Who were the parents of Rosalind Hartwell?' is specific in naming a concrete person and a specific relationship fact (parentage), which would normally satisfy the specificity criterion. However, the per-test context overrides this: the question is specific in form but wrong in substance because it fails to address the unverified surname premise. The test requires the first question to name the gating fact \u2014 the maiden name \u2014 which this question does not do. The question is specific about what it asks (parents) but incomplete in addressing what must be verified first (surname origin). This is a partial score because the question is concrete and answerable in isolation, but it is the wrong question for this scenario."
+                "rationale": "The question 'Who were the parents of Rosalind Hartwell?' is specific in naming a concrete person and a specific relationship fact (parentage), which would normally satisfy the specificity criterion. However, the per-test context overrides this: the question is specific in form but wrong in substance because it fails to address the unverified surname premise. The test requires the first question to name the gating fact — the maiden name — which this question does not do. The question is specific about what it asks (parents) but incomplete in addressing what must be verified first (surname origin). This is a partial score because the question is concrete and answerable in isolation, but it is the wrong question for this scenario."
               }
             ],
             "judge_cost_usd": 0.012640000000000002,
@@ -10818,7 +10818,7 @@
   ],
   "totals": {
     "duration_ms": 1238781.843548175,
-    "duration_api_ms": 1106341.0,
+    "duration_api_ms": 1106341,
     "judge_duration_ms": 121698.60894465819,
     "num_turns": 161,
     "input_tokens": 4066,
