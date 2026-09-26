@@ -10,7 +10,7 @@
       "slash-command"
     ],
     "expected_outcome": "xfail",
-    "xfail_reason": "Slash-command entry records no Skill call, so skills_invoked never holds `research` and the positive-test activation check fails it. The marker only binds when the run reaches that check — an aborted run is not remapped. Remove this marker when the harness records slash entry."
+    "xfail_reason": "research is bypassed entirely -- skills_invoked shows question-selection, research-plan, search-full-text and search-external-sites with research absent, and the inline work exhausts max_tool_calls. Same mechanism as 001/004/012/013/014. Remove when #2927 narrows project-status's description and the test activates research 3/3."
   },
   "input": {
     "user_message": "/research When and where did Patrick Flynn die?",
