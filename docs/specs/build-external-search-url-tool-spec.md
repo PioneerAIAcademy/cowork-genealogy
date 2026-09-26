@@ -136,7 +136,7 @@ build_external_search_url({
 
     // Newspapers.com's generic date-range/place slots (no single named event
     // fits a newspaper search — it could be a birth, marriage, or death notice)
-    searchYear?: string,           // dr_year — a plain year OR a hyphenated range
+    searchYear?: string,           // splits into date-start/date-end (§11.2)
     searchPlace?: string,          // dr_place
 
     // Chronicling America's date window and state
@@ -300,7 +300,7 @@ every call regardless of `baseUrl` (§3.2):
 
 | Site | Fixed parameter | Why |
 |------|-----------------|-----|
-| `myheritage` | `action=query` | Required for the site-wide search form; harmless on a curated link |
+| `myheritage` | `s=1`, `formId=master`, `formMode=1`, `useTranslation=1`, `exactSearch=` (empty), `p=1`, `action=query`, `view_mode=card` | The scaffolding the live search form emits alongside the query (§11.1). `action=query` was the one part the ported prose had right |
 | `chronicling_america` | `dl=page` | Required — without it the search returns newspaper *titles* from the U.S. Newspaper Directory, not digitised pages |
 | `archives_gov` | `dataSource=authority`, `availableOnline=false` | Scopes the catalog to person/org name-authority records, matching `personOrOrg` — without it the same field is read by the archival-description search instead |
 | `library_archives_canada` | `DataSource=Genealogy\|Census`, `ST=SCTB` | Required by the search-form's own client JS to select the census/genealogy dataset before redirecting to the results endpoint |
@@ -426,10 +426,10 @@ here — this section documents the same mapping the implementation embeds.
 | Site | Base URL (Case B) | Fixed params | Parameters |
 |------|--------------------|--------------|------------|
 | `ancestry` | `https://www.ancestry.com/search/` | — | `name` (`givenName`_`surname` — positional: an absent half keeps its underscore, so a surname-only search is `name=_Flynn`), `birth` (`birthYear`), `birthplace` (`birthPlace`), `death` (`deathYear`), `deathplace` (`deathPlace`), `marriage` (`marriageYear`), `residence` (`residenceYear`_`residencePlace`, positional), `father`/`mother`/`spouse` (`{given}_{surname}` per relative, positional) |
-| `myheritage` | `https://www.myheritage.com/research` | `action=query` | `first`, `last`, `birth_year`, `birth_place`, `marriage_year`, `marriage_place`, `death_year`, `death_place`, `father_first`, `father_last`, `mother_first`, `mother_last` |
+| `myheritage` | `https://www.myheritage.com/research` | see §3.4 | `qname` (`Name fn.<givenName> fnmo.1 ln.<surname> lnmsrs.false` — one composite field, not two), `qevents-event1` (**one** event slot: `Event et.birth ey.<birthYear>`, falling back to `et.death ey.<deathYear>`, falling back to `et.any ep.<place> epmo.similar` from `birthPlace`/`deathPlace`/`marriagePlace`), `qevents=List` when an event ships. **The twelve flat parameters this row used to name were measured dead (§11.1)** — they produced an unfilled form. `marriageYear` and the four parent fields are not emitted and are reported unused: `et.marriage` and the `qrelatives-*` pointer form were never measured |
 | `findmypast` | `https://www.findmypast.com/search/results` | — | `firstname`, `lastname`, `yearofbirth` (`birthYear`), `yearofbirth_offset` (`birthYearOffset`, only with `yearofbirth`), `keywordsplace` (`birthPlace`, falling back to `marriagePlace`, `deathPlace`, `residencePlace` — the site's one place field, so a marriage or death search scoped by `eventyear` can still name its place), `keywordsplace_proximity` (`placeProximityMiles`, only with `keywordsplace`), `eventyear` (`eventYear`), `fatherfirstname`, `motherfirstname` — ported exactly: the template names only `fatherfirstname`/`motherfirstname`, no `*lastname` counterpart |
 | `findagrave` | `https://www.findagrave.com/memorial/search` | — | `firstname`, `lastname`, `birthyear` (`birthYear`), `deathyear` (`deathYear`). No place parameter — **removed by live verification**: `location` is a free-text autocomplete box whose real filter keys off a hidden `locationId` resolved from a dropdown, not the text itself; four different `location=` values (absent, a real place, a nonsense string, and the exact address copied from a matching result) all returned byte-identical result sets |
-| `newspapers` | `https://www.newspapers.com/search/` | — | `query` (`givenName`+`surname`+`keywords`, space-joined), `dr_year` (`searchYear` — a year or a range, passed through unparsed), `dr_place` (`searchPlace`) |
+| `newspapers` | `https://www.newspapers.com/search/results/` | — | `keyword` (`givenName`+`surname`+`keywords`, space-joined), `date-start`/`date-end` (both from `searchYear` — a range splits, a single year sets both ends), `region` (`us-<postal>` from the state in `searchPlace`) and `county` (the segment before the state, `County` suffix stripped). **The former `query`/`dr_year`/`dr_place` on `/search/` were measured dead apart from `query` (§11.2).** A `searchPlace` naming no US state scopes nothing and says so in a note |
 | `chronicling_america` | `https://www.loc.gov/collections/chronicling-america/` | `dl=page` (required — without it the search returns newspaper titles, not digitised pages) | `q` (`givenName`+`surname`+`keywords`, space-joined — **correction #2**: the site-wide template's `qs` is dead, `q` is what filters, §9) , `dates` (`searchStartYear`/`searchEndYear` → **`YYYY/YYYY`, correction #1** — not `start_date`/`end_date`), `fa` (`usState` → `location_state:<full lowercase state name>`, a postal abbreviation expanded — **correction #3**: the bare `location_state=` parameter does not filter, §9) |
 | `digital_newspaper_archive` | none — `baseUrl` required (§3.3) | — | `q` (`givenName`+`surname`+`keywords`, space-joined; any one suffices) |
 | `archives_gov` | `https://catalog.archives.gov/search` | `dataSource=authority`, `availableOnline=false` (scopes to person/org name-authority records; without them the same `personOrOrg` field is read by the archival-description search instead) | `personOrOrg` (`givenName`+`surname`, space-joined), `q` (`keywords` only — free text, not the name). No place parameter — **removed by live verification** (§9, correction #4): `geographicReference` is dead in the `authority` scope and empties the result set when combined with `personOrOrg` in either scope |
@@ -458,7 +458,9 @@ notice, obituary) — SKILL.md's own obituary test
 birth. The tool does not guess which event a newspaper search targets; the
 caller passes whatever year/place fits, and — per the same test's review
 finding — the caller may pass a range string rather than a single year when
-the exact year isn't known.
+the exact year isn't known. That input contract is unchanged; what §11.2 changed
+is how it is emitted — a range now splits across `date-start`/`date-end` rather
+than riding in one dead `dr_year`.
 
 **Death/marriage fields on Ancestry.** The tool's `ancestry` case includes
 `death`/`deathplace`/`marriage` as documented parameters, ported from the
@@ -652,8 +654,11 @@ itself. The six sites ported from the original prose (`ancestry`,
 mechanically checked against the live sites. Three of them have since been
 checked (§10): `ancestry` and `findmypast` on their `.co.uk` variants, whose
 parameter names were confirmed to be the `.com` ones, and `findagrave` in the
-`location` fix. `myheritage`, `newspapers` and `digital_newspaper_archive`
-carry the risk unmitigated. The eight sites added in this PR were each checked
+`location` fix. The remaining three — `myheritage`, `newspapers` and
+`digital_newspaper_archive` — were measured on 2026-09-24/25 and are recorded in
+§11. **All three were wrong** — `myheritage` and `newspapers` outright,
+`digital_newspaper_archive` on every Veridian archive though not on Solr ones —
+and the port itself is the finding: see §11's opening. The eight sites added in this PR were each checked
 live once before being written in, at one of the two confidence tiers §10
 records — narrower than a CI-enforced check, but not the same
 unaddressed-risk category as the three unchecked ports.
@@ -714,12 +719,14 @@ returned 59,984, each well below the same query's unfacetted count. The
 form-encoded space binds. The facet is also case-insensitive
 (`Pennsylvania` = `pennsylvania`).
 
-**Still unverified against the live site**, and recorded here rather than
-assumed: Newspapers.com's `dr_year` accepting a hyphenated range
-(`1880-1905`), which the original prose asserted and which sits behind
-Cloudflare. The tool constrains `searchYear` to `YYYY` or `YYYY-YYYY`, each
-half within `isFourDigitYear`'s bound, so nothing else ships, but whether the
-range form filters is a site-behaviour claim with no recorded measurement.
+**Resolved 2026-09-25** (§11.2). This section long carried Newspapers.com's
+`dr_year` hyphenated range (`1880-1905`) as the one claim with no recorded
+measurement. The verdict on what ships is plain: **`dr_year` filters nothing —
+range or single year — and the tool still emits it.** The live site takes
+`date-start` and `date-end` separately, so there is no single date parameter for
+a range to be a shape *of*. The original *question* was therefore also ill-posed,
+worth noting as a class: one that presupposes a parameter exists cannot be
+settled by measuring harder.
 
 **Correction #4 — `archives_gov`'s place parameter is dead in the scope the
 tool ships, and poisons the search in either scope** (2026-09-15, against the
@@ -864,3 +871,186 @@ conditions as a confound (relevant specifically to the sites blocked by
 Cloudflare/WAF challenges here). Each site above is one measurement, by one
 session, on one day (2026-09-11) — the same evidentiary caveat §9 already
 states for Chronicling America applies identically to all of these.
+
+## 11. The three unchecked ports, measured (2026-09-24/25)
+
+Measured in a logged-in browser session on a subscriber's own
+machine, per the 2026-09-18 ruling. `myheritage.com` and `newspapers.com` refuse
+every scripted client tried, so no dev machine reproduces those two. The
+`digital_newspaper_archive` endpoints in §11.3 *do* answer a script, and each
+reading below states whether it came from a browser or a script — §11's own
+first lesson is to attach provenance at capture time.
+
+**Both broken templates were rewritten from these measurements in the same
+change.** §4's tables now name what the live sites accept. What is *not* emitted
+is named per site below, always because the shape was never measured — never
+because it was inconvenient.
+
+**The port is the finding, not the three sites.** Four of the six ported tables
+have now been examined parameter by parameter — `findagrave` (§10) and these
+three — and **every one of the four was wrong in part or in whole**. The other
+two, `ancestry` and `findmypast`, were checked only as `.co.uk` locale variants
+(§10), and there their ported names held; they have never been examined the way
+these four were. `archives_gov`'s dead `geographicReference` (§9, correction #4)
+is **not** a ported table — it is one of the eight checked before shipping — so
+the failure is not confined to the port. The six sites
+carried over from the original SKILL.md prose were never mechanically verified,
+and the defect they share is the dangerous one: a wrong parameter is *ignored*,
+not rejected, so the researcher is handed a broad or empty search wearing the
+appearance of a targeted one. Treat the remaining unchecked tables as suspect
+rather than as probably-fine.
+
+**Method, and why it displaced the protocol.** §10's four-value protocol answers
+*does this parameter filter?* It cannot answer *is this the parameter's name?*,
+and the name was wrong in every case here. What answered it, in one page load per
+site, was reading the site's **own results URL** after a hand-search — ground
+truth about names, which no count comparison can be. Budgeted for `myheritage`:
+58 page loads. Spent: one. Two further lessons, both paid for in wasted
+exchanges:
+
+- **Attach the URL to every reading at capture time.** A results page cannot
+  prove which URL produced it. A CDNC reading was logged as refuting a prediction,
+  then retracted when the page turned out to be hand-searched rather than
+  URL-driven.
+- **Probe with a value that cannot be typed by hand.** `?q=zzqqx` returning a
+  homepage is self-authenticating; `?q=Patrick+Flynn+obituary` returning results
+  is not, because the operator could have produced it either way.
+
+### 11.1 `myheritage` — the four parameters exercised are dead, and the grammar has no slot for the other eight
+
+The tool's URL (`?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Ireland`)
+renders the **unfilled search form**: no count, no results. Not an unfiltered
+search — no search. The same search by hand returns 173,496 (name only) and:
+
+```
+?s=1&formId=master&formMode=1&useTranslation=1&exactSearch=&p=1&action=query&view_mode=card
+&qname=Name+fn.Patrick+fnmo.1+ln.Flynn+lnmsrs.false
+&qevents-event1=Event+et.birth+ey.1845
+&qevents-any/1event_1=Event+et.any+ep.Ireland+epmo.similar
+&qevents=List
+```
+
+| concept | live | shipped |
+|---|---|---|
+| given name | `qname=Name fn.<v> fnmo.1 …` | `first=<v>` |
+| surname | `… ln.<v> lnmsrs.false` | `last=<v>` |
+| birth year | `qevents-event1=Event et.birth ey.<v>` | `birth_year=<v>` |
+| place | `qevents-any/1event_1=Event et.any ep.<v> epmo.similar` | `birth_place=<v>` |
+
+None of the four exercised (`first`, `last`, `birth_year`, `birth_place`) appears
+in the site's vocabulary; values ride in composite, event-indexed fields plus a
+`qevents=List` marker and seven scaffolding parameters the tool never emits. The
+other eight are the same flat `key=value` shape the composite grammar has no slot
+for anywhere — **inferred from the grammar, not separately loaded.** The grammar is value-independent (re-run with a
+different surname, byte-identical but for the value). `action=query` is present
+in the site's own URL, so §3.4's "required" claim is **corroborated** — the one
+thing the table got right.
+
+**This site RANKS; it does not FILTER — so §10's protocol does not apply here.**
+Adding a birth year, a place, a father and a mother to a name search moved the
+count **173,496 → 173,502**: *up* by six. The criteria plainly took effect (the
+hits rerank onto Dublin Flynns of the right period), but the pool does not
+shrink. A nonsense value would therefore return a similar count in a different
+order, and the four-value protocol — which reads "same result set" as "dead" —
+would report every one of these parameters dead whether or not it bound. Judge
+this site by its URL grammar and its ranking shift, never by counts. The tool's
+note says the same to the model, because a six-figure count after a narrow query
+otherwise reads as a failed filter.
+
+**What now ships, and what does not.** `qname` plus **one** event slot,
+`qevents-event1`. Not emitted: `marriageYear` (`et.marriage` was never loaded)
+and the four parent fields, whose form is a pointer indirection across two
+parameters — `qrelatives-relative=Relative rt.father rn.*qrelative_relativeName`
+with the name in `qrelative_relativeName`, the second relative under
+`addRelative_1`. Both are reported unused rather than guessed. Two structural
+reasons this grammar is not worth chasing further:
+
+- **Slot names are positional, not semantic.** In one capture `qevents-event1`
+  held the birth year and `qevents-any/1event_1` the place; in the next,
+  `event1` held the place and `any/1event_1` the death. The parameter name
+  encodes insertion order; the event type rides inside the value as `et.<type>`.
+- **A year and a place are always separate entries**, so expressing both needs
+  the second slot — whose `/` would be emitted as `%2F`, a form never measured.
+  Hence one slot, and a year displaces a place.
+
+This is a serialization of form state, not a query API, and it will rot at the
+next form redesign. That is why only the stable, measured core is emitted.
+
+**A false-positive hazard specific to this site.** `myheritage.com` answers a
+non-browser client **HTTP 200 carrying an Imperva/Incapsula block page**, whose
+body differs by ~3 bytes between a real and a nonsense surname. A scripted
+nonsense-value check reads that as "real and nonsense agree → dead" and is wrong.
+The two-check bar does not catch it: both legs are blocked identically.
+
+### 11.2 `newspapers` — `query` binds, `dr_year` and `dr_place` dead
+
+The tool emits `?query=…&dr_year=1880-1905&dr_place=Schuylkill+County` for this
+search. Setting the same search in the site's own UI:
+
+| search | matches |
+|---|---|
+| terms only | 391,309 |
+| + dates 1880–1905 | 16,500 |
+| + Schuylkill County | **132** |
+
+All 132 are Pottsville / Shenandoah / Pine Grove, Pennsylvania, 1891–1905 — the
+search the tool's URL describes. The tool's URL returns **391,309** spanning
+1809–2026 nationwide, with nothing on the page indicating the year and county
+were discarded.
+
+```
+/search/results/?county=Schuylkill&date-end=1905&date-start=1880&keyword=Patrick+Flynn+obituary&region=us-pa
+```
+
+| concept | live | shipped | verdict |
+|---|---|---|---|
+| path | `/search/results/` | `/search/` | legacy path still serves |
+| terms | `keyword=<v>` | `query=<v>` | **binds** (legacy alias) |
+| dates | `date-start` **+** `date-end` | `dr_year` | **dead** |
+| place | `region=us-<st>` **+** `county=<bare>` | `dr_place` | **dead** |
+
+Non-binding is read from the site rather than inferred: on the tool's URL the UI
+showed "Add a date" and "Add a location" still unset and the date histogram
+spanning the full corpus. Note the place **value** shape also differs —
+`county=Schuylkill`, not `Schuylkill County` — so a corrected parameter name
+alone would still miss.
+
+**The UI's "Filters • 0" counter is not evidence about dates or places.** It
+reads `0` with a date range and a county plainly applied. It was briefly
+mistaken for evidence during this measurement; it counts something else.
+
+### 11.3 `digital_newspaper_archive` — `q` is correct on some archives and inert on others
+
+This "site" is a **family of endpoints, and a single verification of it does not
+exist.** `q` is not right or wrong; it is right *per platform*:
+
+| archive | platform | native parameter | tool's `q` |
+|---|---|---|---|
+| Utah Digital Newspapers | Solr | `q` | **binds** — 49 on-target hits from the tool's own URL (one load; see the caveat below) |
+| CDNC (UC Riverside) | Veridian | `txq` | **dead** — returns the site homepage |
+| NYS Historic Newspapers | Veridian | `txq` (read from its own results URL in a browsing session; the endpoint constructed for it 404'd) | not probed; same platform, so expected dead |
+
+`https://cdnc.ucr.edu/?q=zzqqx` returns CDNC's **homepage** — donor letter, FAQ,
+browse links — with the URL intact in the address bar and no search executed.
+Reproduced on a second load. **The failure is silent**: not a 404, not an error,
+but a plausible archive homepage. A researcher handed that link has no signal
+that their search never ran. Veridian is a common platform for exactly the
+state and university archives this site exists to address.
+
+Utah is the deliberate **positive control**: without an archive where `q` does
+bind, "dead everywhere" could not be distinguished from a protocol that reads
+dead on everything. Its reading is **one URL load returning 49 on-target hits** —
+the nonsense-value leg and the second query §10's protocol asks for were not run,
+which matters more than usual because this row is load-bearing for every other
+row in the table.
+
+**`baseUrl` is not reliably guessable.** Endpoints were constructed for NYS and
+GenealogyBank from knowledge of their platforms; both 404'd, and NYS turned out
+to run Veridian rather than the assumed Open ONI. Only the two endpoints taken
+from a real browsing session were right. This is evidence for SKILL.md's existing
+instruction to source `baseUrl` from a locality guide or curated link rather than
+construct one — recorded as an observation (one operator), not a measurement.
+
+**Not measured, and not to be upgraded without a probe:** NYS's `q` (expected
+dead, not shown dead), and GenealogyBank entirely — no working search endpoint
+was located and no subscription session was available.

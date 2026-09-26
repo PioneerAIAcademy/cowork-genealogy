@@ -70,7 +70,7 @@ const cases: Array<{ label: string; input: Parameters<typeof buildExternalSearch
         givenName: "Patrick",
         surname: "Flynn",
         searchYear: "1908",
-        searchPlace: "Schuylkill County",
+        searchPlace: "Schuylkill, Pennsylvania, United States",
         keywords: "obituary",
       },
     },
