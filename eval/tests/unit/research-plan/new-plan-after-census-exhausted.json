@@ -31,7 +31,8 @@
     "place-population-schuylkill",
     "wiki-place-page-pennsylvania-research-tips",
     "wiki-place-page-pennsylvania-online-records",
-    "volume-search-schuylkill"
+    "volume-search-schuylkill",
+    "collections-search-us-national"
   ],
   "judge_context": [
     "Plan items should propose at least one substantive next source — probate, post-1860 censuses, FAN research, naturalization, immigration records — and explain in `rationale` why each is expected to advance q_001"

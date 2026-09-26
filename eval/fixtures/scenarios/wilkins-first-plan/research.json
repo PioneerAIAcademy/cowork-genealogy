@@ -33,6 +33,60 @@
       }
     }
   ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Kentucky",
+      "for_place": "Muhlenberg County, Kentucky",
+      "time_period": "c. 1870-1890",
+      "jurisdictions": [
+        {
+          "name": "Muhlenberg County, Kentucky",
+          "date_range": "1798-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1417491",
+          "title": "Kentucky Deaths, 1911-1967",
+          "date_range": "1911-1967"
+        },
+        {
+          "id": "1804888",
+          "title": "Kentucky, Deaths and Burials, 1843-1970",
+          "date_range": "1843-1970"
+        },
+        {
+          "id": "1875188",
+          "title": "Kentucky Probate Records, 1727-1990",
+          "date_range": "1727-1990"
+        }
+      ],
+      "quirks": [
+        "Statewide death certificates begin 1 January 1911 — no certificate exists for a death in the 1870s-1880s.",
+        "County death registers (Kentucky, Deaths and Burials, 1843-1970, collection 1804888) exist for 1852-1910 but 1860s-1870s coverage is partial; many counties have no surviving register for those decades.",
+        "For a death before 1911, the primary evidence is probate: administrator bonds (naming the widow or adult son), estate settlements, and probate register entries bracket the death date within months and localize it to the county.",
+        "Muhlenberg County probate records survive well for the 1870s and are in Kentucky Probate Records, 1727-1990 (collection 1875188) — browse-only images organized by county and volume.",
+        "Church burial registers and cemetery records can also bracket the death.",
+        "Census and tax lists establish the last-known-alive date and, combined with the first census without the subject, bracket the death window."
+      ],
+      "guide_markdown": "## Muhlenberg County, Kentucky — c. 1870-1890\n\nStatewide death certificates begin 1911; no certificate can cover a death in the 1870s-1880s. County death registers (1804888) exist but the 1860s-1870s coverage is partial. For this era, **probate records are the primary death evidence**: administrator bonds name the widow or heir, estate settlements are dated, and register entries bracket the death within months. Muhlenberg County probate (1875188) survives well for the 1870s and is browse-only. Supplement with church burials, cemetery records, and census bracketing.",
+      "pages_read": [
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Kentucky_Genealogy",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Kentucky_Online_Genealogy_Records",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-24"
+    }
+  ],
   "plans": [],
   "log": [],
   "sources": [],

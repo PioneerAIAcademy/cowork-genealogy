@@ -23,7 +23,9 @@
     "collections-search-rowan-county",
     "volume-search-rowan-county",
     "external-links-search-rowan-county",
-    "place-search-all-any"
+    "place-search-all-any",
+    "collections-search-us-national",
+    "external-links-search-any"
   ],
   "judge_context": [
     "The plan MUST include at least one probate/estate plan item targeting Caroline's father. Its `date_range` must extend to approximately the father's plausible lifespan — roughly Caroline's birth year (1839) through birth+55 to birth+65 (circa 1894-1904) — not stop at or shortly after Caroline's own circa-1858 marriage or any other subject-centric bound well short of that. How that window is sized is what Record type selection turns on for this test: assess whose plausible lifespan bounds it, the record's creator or the research subject.",

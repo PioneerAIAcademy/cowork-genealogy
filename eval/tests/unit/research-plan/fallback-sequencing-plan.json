@@ -32,7 +32,8 @@
     "place-population-schuylkill",
     "wiki-place-page-pennsylvania-research-tips",
     "wiki-place-page-pennsylvania-online-records",
-    "volume-search-schuylkill"
+    "volume-search-schuylkill",
+    "collections-search-us-national"
   ],
   "judge_context": [
     "The plan must include at least one EXPLICIT fallback_for relationship: an item whose `fallback_for` field references another item's id. The plan for church or probate records in Schuylkill County should have a primary item (e.g., FamilySearch indexed collection) and a fallback item (e.g., diocesan archive or county courthouse) with `fallback_for` pointing to the primary. Whether that contingency structure reaches the persisted `fallback_for` field, rather than living only in rationale prose, is what Sequencing logic turns on for this test.",
