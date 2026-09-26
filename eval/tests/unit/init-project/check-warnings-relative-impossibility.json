@@ -5,19 +5,40 @@
     "name": "Invoke check-warnings on every imported relative and relay a split-point finding",
     "type": "positive",
     "description": "Issue #1827: init-project must call Skill(\"check-warnings\") on the subject and every imported relative after project_create, and fold what it returns into the pedigree-analysis findings using check-warnings' own possible-identity-conflation framing -- never flattened into a plain correctable error on the Obvious error detection list. The flagged fixture returns a wife, Bridget Doyle, whose own record carries a genuine timeline impossibility (Death 1875, Residence 1880) on a NON-subject relative, so the test can grade both that check-warnings was actually launched (stubbed, via skills_invoked) and that its canned finding was relayed with split-point framing rather than reworded into a bare fact-correction.",
-    "tags": ["initialization", "familysearch", "check-warnings", "identity-conflation", "relatives", "delegation"]
+    "tags": [
+      "initialization",
+      "familysearch",
+      "check-warnings",
+      "identity-conflation",
+      "relatives",
+      "delegation"
+    ]
   },
   "input": {
     "user_message": "Start a new research project to identify the origins of Thomas Doyle, born around 1830 in Ireland and died 1895 in Northumberland County, Pennsylvania. His FamilySearch person ID is MKVT-7XR.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-doyle-relative-impossibility"],
+  "mcp_fixtures": [
+    "person-read-doyle-relative-impossibility"
+  ],
   "execution": {
     "max_wall_clock_seconds": 600,
     "stub_skills": [
       {
         "skill": "check-warnings",
         "response": "Checked I1 (Thomas Doyle), I2 (Bridget Doyle), I3 (John Doyle), I4 (Kate Doyle). person_warnings ran for all four (all local ids -- person_quality did not run for any of them, FamilySearch's online quality check was not available in this environment). One finding: I2 (Bridget Doyle) carries hasEventAfterDeath1 -- her Death fact is dated 1875, but her Residence fact (1880 census, Coal Township) is dated four years later, a genuine timeline impossibility on her own record. Two explanations fit: the 1880 household belongs to a different Bridget Doyle, or the 1875 death date is wrong. This is not a posthumous mention -- the 1880 record is a Residence fact describing her directly, not a reference to her by someone else's record. Recommend the researcher build a timeline for I2 and check household continuity (spouse, children, neighbors) across the 1875 death record and the 1880 census entry before treating either date as settled. No other findings on I1, I3, or I4."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]
   },
