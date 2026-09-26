@@ -15,8 +15,18 @@ Norwegian-immigrant data — but the tree facts here are authored, not pulled.)
 - **GedcomX persons (all with FamilySearch-style IDs):**
   - `KD96-TV2` — **Christian P. Hole** (subject). Completeness/sourcing gaps but
     no impossibilities: burial has a place (Fairview Cemetery) but **no date**,
-    a marriage place missing its city, two untagged residences. Quality fixture:
+    a marriage place missing its city, five untagged residences. Quality fixture:
     7 issues, overall 0.97.
+
+    **Two suites read this person through different fixtures, and they do not
+    match each other by design.** `check-warnings` uses the captured
+    `person-quality-hole-christian` (7 issues, the real KD96-TV2 body) against
+    the full tree above. `source-evaluation` uses a reduced `person_read`
+    (`person-read-hole-attached-sources`: four facts — Birth 1875,
+    Marriage 1898, **one** Residence 1900, Death 1945, and no burial) with its
+    own `person-quality-hole-detail` (2 issues, constructed to match those four
+    facts). Grade a `source-evaluation` reply against the four-fact profile and
+    its 2-issue checklist, not against the 7 above.
   - `KD96-TV3` — **Inger Hole** (wife). Fully sourced, clean. Quality fixture:
     0 issues.
   - `KD96-TV4` — **Ole C. Hole** (son). Carries a real impossibility — a

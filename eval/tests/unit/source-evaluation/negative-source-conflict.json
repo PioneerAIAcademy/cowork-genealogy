@@ -21,7 +21,8 @@
     "record-read-hole-mn-death-index",
     "record-read-hole-1885-state-census",
     "source-attachments-hole-1885",
-    "person-read-hole-wx7-otter-tail"
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail"
   ],
   "negative": {
     "correct_skill": [
