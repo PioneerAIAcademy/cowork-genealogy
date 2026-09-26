@@ -1,0 +1,12 @@
+{
+  "tool": "image_transcribe",
+  "description": "Any page of the Stavanger ministerialbok group 013729012. image-search-stavanger-013729012 hands back 340 bare page ids with nothing to say which one covers July 1817, so the search-images route ut_record_extraction_016 sanctions ends in a transcribe of whichever page the agent picks; without this fixture that sanctioned route aborts the run with unmatched_tool_call. Matches any imageId containing the group number, so every page in the volume resolves here. The page returned is a genuine-looking christening opening from 1823 that names nobody the test is hunting: browsing a 340-page volume must cost the agent a turn and leave the Nadnesen/Aadnesen spelling unresolved, which is what judge_context calls a fully compliant attempt. Do NOT make this page resolve the patronymic — the test grades the attempt and the tentative recording, not the resolution.",
+  "args": { "imageId": "~013729012" },
+  "response": {
+    "transcription": "Stavanger Ministerialbog. Døbte Børn, Anno 1823.\n\nNo. 11.  Født 27de Januarii.  Døbt 16de Februarii.\n   Barnets Navn: Berthe Marie.\n   Forældre: Gaardmand Ole Siversen Tasta og Hustrue Anna Kirstine Jansdatter.\n   Faddere: Jens Olsen Hetland, Siri Torsdatter Randeberg, Peder Nielsen.\n\nNo. 12.  Født 3die Februarii.  Døbt 16de Februarii.\n   Barnets Navn: Johannes.\n   Forældre: Husmand Rasmus Torgersen Madla og Hustrue Karen Olsdatter.\n   Faddere: Ole Rasmussen, Marthe [illegible]datter, Lars Endresen Sunde.\n\nNo. 13.  Født 19de Februarii.  Døbt 9de Martii.\n   Barnets Navn: Anne Serine.\n   Forældre: Skipper Gabriel Andersen og Hustrue Elen Margrethe Bergsdatter.\n   Faddere: Anders Gabrielsen, Inger Malene Knudsdatter, [illegible].\n\n[nederste linie beskadiget — ulæselig]",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1421088
+    }
+  }
+}
