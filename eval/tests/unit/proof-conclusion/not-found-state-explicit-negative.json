@@ -5,10 +5,19 @@
     "name": "When the requested record type is not found, state the negative explicitly alongside the indirect evidence",
     "type": "positive",
     "description": "person-a-death-cert-not-indexed: two FamilySearch searches for an indexed South Dakota death certificate returned negative. Two independent indirect sources (a Find a Grave index entry, secondary/derivative, direct; a WPA Grave Registration record, original, secondary, with an age-at-death calculation constraining to a window within 1935) support the death year. The skill must explicitly state that no death certificate was found in accessible FamilySearch-indexed records, identify what indirect evidence is available, state where the certificate could be found (e.g. SD State Archives), and tier the conclusion at the level the available evidence supports — NOT collapse to not_proved or present the result as 'cannot prove or disprove.' Tiering at possible or a bounded probable (indirect-evidence-only) is expected. Mined from alpha feedback case feedback-2026-08-06T22-05-43-863344Z (issue #1474).",
-    "tags": ["from-cowork", "person-a-death-cert-not-indexed", "death", "not-found", "indirect-evidence-only", "explicit-negative", "GPS-step-5"]
+    "tags": [
+      "from-cowork",
+      "person-a-death-cert-not-indexed",
+      "death",
+      "not-found",
+      "indirect-evidence-only",
+      "explicit-negative",
+      "GPS-step-5",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Write the proof conclusion for question q_001 — did Person A leave an accessible South Dakota death certificate, and when did Person A die?",
+    "delegation": "Write the proof conclusion for question q_001 — did Person A leave an accessible South Dakota death certificate, and when did Person A die?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "person-a-death-cert-not-indexed"
   },
   "mcp_fixtures": [],

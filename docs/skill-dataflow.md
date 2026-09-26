@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 27 skills and 8 agents. Besides the `research` orchestrator itself, its routing
+There are 26 skills and 8 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 14 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -23,12 +23,15 @@ likely to surprise you.
 
 **Thin router + agent.** The skill resolves the request to one id, delegates, and relays
 the result. It reads almost nothing and writes nothing; the agent holds the judgment and
-the writer tool. Five pairs today: `record-extraction` → `record-extractor`,
-`research-exhaustiveness` → `research-exhaustiveness`, `proof-conclusion` →
-`proof-conclusion`, `person-evidence` → `person-evidence` (paired 2026-09-09),
-and `search-images` → `search-images` (paired 2026-09-21). The first four split
+the writer tool. Four pairs today: `record-extraction` → `record-extractor`,
+`research-exhaustiveness` → `research-exhaustiveness`,
+`person-evidence` → `person-evidence` (paired 2026-09-09),
+and `search-images` → `search-images` (paired 2026-09-21). The first three split
 because only an agent carries an `agent_id`, which is what lets the `PreToolUse`
-hook route a section's writes to exactly one caller. `search-images` is the first
+hook route a section's writes to exactly one caller. `proof-conclusion` was a
+fifth pair until issue #2822 deleted its skill half on 2026-09-26; the agent is
+now reached from the routing table and from its own `description`, with no skill
+in front of it. `search-images` is the first
 split for **cost and context** instead: it writes no hook-routed section, and what
 it buys is 15 KB off the orchestrator and a step dense enough (55.4 tool calls per
 episode) to be worth a `model:` pin.
@@ -90,10 +93,9 @@ flowchart TD
     EX ==> EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
     EXA -- "gap remains" --> RP
     EXA -- "FAN pivot" --> QS
-    EXA -- "declared" --> PC
+    EXA -- "declared" --> PCA
 
-    PC["proof-conclusion<br/>thin router"]
-    PC ==> PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
+    PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
     PCA --> GM["gps-mentor · agent<br/>evaluations[]"]
     GM --> GATE{"all questions resolved,<br/>tree encoded,<br/>critique on record?"}
     GATE -- no --> QS
@@ -342,11 +344,14 @@ from a routing-table row — so the row's absence no longer implies it cannot fi
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
 from this list as evidence either way.
 
-The three **thin skill halves** of the paired rows join this list. Rows 7, 10
-and 11 route to `@plugin:<agent>`, so `skills/person-evidence/`,
-`skills/research-exhaustiveness/` and `skills/proof-conclusion/` are no longer
+The two **thin skill halves** of the paired rows join this list. Rows 7 and 10
+route to `@plugin:<agent>`, so `skills/person-evidence/` and
+`skills/research-exhaustiveness/` are no longer
 on the in-loop route — they stay on disk as the direct-user entry point and as
 the unit-eval entry point, and an autonomous run never enters them.
+`skills/proof-conclusion/` was a third until issue #2822 deleted it on
+2026-09-26; row 11 already routed to the agent, so the deletion removed the
+direct-user and unit-eval entry point rather than an in-loop one.
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

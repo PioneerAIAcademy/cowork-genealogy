@@ -11,11 +11,12 @@
       "probable",
       "possible",
       "GPS-step-5",
-      "per-claim-tier-split"
+      "per-claim-tier-split",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Write the proof conclusion for the parentage question.",
+    "delegation": "Write the proof conclusion for the parentage question.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-split-parentage-tiers"
   },
   "judge_context": [

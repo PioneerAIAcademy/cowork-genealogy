@@ -11,11 +11,12 @@
       "gps-review",
       "GPS-step-5",
       "no-new-proof-expected",
-      "narrative-self-containment"
+      "narrative-self-containment",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Does my proof for the parentage question (ps_001) meet the Genealogical Proof Standard? Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Treat ps_001 as it stands. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work — flag them and say whether they would change the tier, but do NOT frame them as defects or failures of the current proof.",
+    "delegation": "Assess whether ps_001, the existing proof for the parentage question, meets the Genealogical Proof Standard. Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Treat ps_001 as it stands. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work — flag them and say whether they would change the tier, but do NOT frame them as defects or failures of the current proof.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-proof-bare-ids"
   },
   "judge_context": [
