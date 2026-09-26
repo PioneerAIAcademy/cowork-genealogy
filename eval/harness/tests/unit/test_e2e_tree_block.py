@@ -21,6 +21,7 @@ def test_blocked_set_is_exactly_the_three_tree_readers():
         "person_ancestors",
         "person_record_matches",
         "person_person_matches",
+        "person_quality",
     }
 
 
@@ -38,6 +39,7 @@ def test_subject_keyed_tools_are_blocked():
         "person_ancestors",
         "person_record_matches",  # subjectPID -> the answer records, curated
         "person_person_matches",  # subjectPID -> stripped relatives
+        "person_quality",  # subjectPID -> live-profile values, e.g. {originalDate}
     ):
         assert is_blocked_tree_tool(f"mcp__genealogy__{name}") is True
 

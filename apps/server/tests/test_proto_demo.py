@@ -215,7 +215,7 @@ def test_proto_demo_target_brings_the_stack_up_and_runs_the_script():
     assert "bagley-father-1884" not in body and demo.DEFAULT_FIXTURE == "bagley-father-1884"
     # The harness's tree-read block reaches the worker, and an explicit empty value lifts it.
     assert re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-', body), body  # raw make text: $$ is the shell's $
-    for tool in ("person_read", "person_search", "person_ancestors", "person_record_matches", "person_person_matches"):
+    for tool in ("person_read", "person_search", "person_ancestors", "person_record_matches", "person_person_matches", "person_quality"):
         assert tool in body, tool
 
 

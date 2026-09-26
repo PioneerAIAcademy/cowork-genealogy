@@ -70,59 +70,102 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
     )
 
 
-# --- V1: No FamilySearch quality mention without a person_quality call ---
+# --- V1: A not-FamilySearch-id answer is reported without naming the id ---
 
-def report_no_fs_quality_mention_without_call(tool_calls, text_response, test):
-    """V1: a run with no person_quality call must not mention FamilySearch quality.
+#: A sentence ends at . ! or ? followed by whitespace, or at a newline. NOT at
+#: ; or : — the skill writes its quality line as "FamilySearch quality: …", and
+#: splitting at the colon would separate that label from an id after it, so
+#: "FamilySearch quality: none for I1." would pass rule (b). Caught by its own
+#: must-fail vector before this landed.
+_SENTENCE_SPLIT = r"(?<=[.!?])\s+|\n+"
 
-    Tier 2 — reports, never gates. SKILL.md states the rule twice: "skip this
-    call silently ... do not mention FamilySearch quality at all for that
-    person" and "Say **nothing** about FamilySearch quality -- do not add a
-    'not available' note." A mention can appear as a standalone note, a
-    routing remark, or even a single clause of an opening sentence — all are
-    violations.
 
-    Skipped on negative tests: the skill body does not run so no quality call
-    is expected by design.
+def _not_fs_answers(tool_calls) -> tuple[list[str], list[str], int]:
+    """(ids answered `not_familysearch_id`, their returned sentences, total
+    person_quality calls)."""
+    quality = [
+        c for c in (tool_calls or [])
+        if (c.get("tool") or "").endswith("person_quality")
+    ]
+    ids: list[str] = []
+    sentences: list[str] = []
+    for c in quality:
+        resp = c.get("response")
+        if isinstance(resp, dict) and resp.get("reason") == "not_familysearch_id":
+            pid = str((c.get("args") or {}).get("personId", "")).strip()
+            if pid:
+                ids.append(pid)
+            sentences += [str(e) for e in (resp.get("errors") or [])]
+    return ids, sentences, len(quality)
 
-    Matched per sentence, on co-occurrence of "familysearch" and "quality",
-    rather than on the adjacent phrase "familysearch quality". Once the
-    person_quality check above has returned, ANY pairing of the two in one
-    sentence is a violation, so the loose match has nothing to false-positive
-    on — while the adjacent-phrase form missed every real paraphrase the
-    committed logs contain ("no FamilySearch quality score as ... has a local
-    project ID" matches either way, but "quality score from FamilySearch" and
-    "FamilySearch's quality" do not match the phrase form).
 
-    Two silent-wrong traps to avoid:
-    - tool_calls is pre-resolved as the run's output; reading test["tool_calls"]
-      always returns [] and makes every run look applicable.
-    - Tool names are fully qualified (mcp__genealogy__person_quality), so
-      equality-matching on "person_quality" never hits — use endswith() instead.
+#: Wording that characterises an id or its type — the leak itself. Every form
+#: seen in committed or scratch replies: "synthetic ID" (the original 8 of 20),
+#: "local project ID, not a FamilySearch person ID" (after the word "synthetic"
+#: left the skill), and the false "does not have a FamilySearch ID".
+_ID_TYPE_WORDING = (
+    r"\bsynthetic\b|\blocal (?:project |tree )?id\b|\bproject id\b|\btree id\b|"
+    r"\bnot a familysearch (?:person )?id\b|\bno familysearch id\b|"
+    r"\bdoes(?:n't| not) have a familysearch id\b"
+)
+#: A heading line: markdown `#`, a bold-only line, or an all-caps label such as
+#: the report template's "FAMILYSEARCH QUALITY:". A heading labels a section; it
+#: is not a statement about the person.
+_HEADING = r"^\s*(?:#{1,6}\s|\*\*[^*]+\*\*:?\s*$|[A-Z][A-Z ]+:)"
+
+
+def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
+    """V1: when `person_quality` answers `not_familysearch_id`, the reply must not
+    turn that into a remark about the id.
+
+    Tier 1 — gates. The tool looks a project id up in the project tree and, for a
+    person with no FamilySearch link, hands back one true sentence by name; the
+    skill relays it. Fails if:
+      (a) the reply characterises an id or its type, anywhere (`_ID_TYPE_WORDING`);
+      (b) a non-heading sentence mentioning FamilySearch or quality names such an
+          id as a whole token (`I1`, `(I1)`, `` `I1` ``, `I1.` — not `I10`).
+
+    It polices the leak, not the layout. A heading above the sentence and true
+    advice after it ("linking his profile to FamilySearch would give you a score")
+    are allowed: across 15 scratch runs of the relayed-sentence design the skill
+    wrote the tool's sentence verbatim every time and characterised the id in
+    none, while a rule forbidding any extra FamilySearch sentence failed 13 of
+    them for a heading or advice. Replayed before this landed: the design's 18
+    replies pass; all 4 id-type leaks from the neutral-sentence round and all 8
+    original "synthetic ID" leaks fail.
+
+    Keyed on "FamilySearch"/"quality", never "linked" (check-warnings uses it for
+    relationships). Splits at . ! ? and newlines, not at colons, so a quality
+    label and an id after it stay in one sentence.
+
+    Skipped on negative tests and on runs with no not-FamilySearch-id answer.
     """
     import re as _re
 
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
+    ids, _sentences, _calls = _not_fs_answers(tool_calls)
+    if not ids:
+        pytest.skip("no person_quality answer for a non-FamilySearch id")
     response = text_response or ""
-    if not response.strip():
-        pytest.skip("no response text to check")
+    sentences = [x for x in _re.split(_SENTENCE_SPLIT, response) if x.strip()]
 
-    has_quality_call = any(
-        (c.get("tool") or "").endswith("person_quality")
-        for c in (tool_calls or [])
-    )
-    if has_quality_call:
-        return  # quality call happened — any mention is legitimate
-
-    for sentence in _re.split(r"(?<=[.!?;:])\s+|\n+", response):
-        low = sentence.lower()
-        if "familysearch" in low and "quality" in low:
+    for sentence in sentences:
+        if _re.search(_ID_TYPE_WORDING, sentence, _re.I):
             raise AssertionError(
-                "the response mentions FamilySearch quality but person_quality "
-                "was never called — SKILL.md forbids any mention (standalone "
-                "note, 'not available' remark, or routing narration) when the "
-                f"id is synthetic and the tool was skipped: {sentence.strip()!r}"
+                "the reply characterises an id or its type after person_quality "
+                f"answered that it is not a FamilySearch id: {sentence.strip()!r}"
+            )
+
+    tokens = [_re.compile(rf"(?<![A-Za-z0-9]){_re.escape(i)}(?![A-Za-z0-9])", _re.I) for i in ids]
+    for sentence in sentences:
+        if _re.match(_HEADING, sentence):
+            continue
+        low = sentence.lower()
+        if ("familysearch" in low or "quality" in low) and any(t.search(sentence) for t in tokens):
+            raise AssertionError(
+                "a sentence about FamilySearch quality names an id person_quality "
+                f"answered as not a FamilySearch id: {sentence.strip()!r}"
             )
 
 

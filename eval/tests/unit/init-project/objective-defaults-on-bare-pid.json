@@ -18,8 +18,7 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn"
-  ],
+    "person-read-flynn", "person-quality-clean-LZNY-BRF"],
   "judge_context": [
     "Should ask the user what they want to research (the objective) in the opening turn, alongside proceeding with the rest of initialization -- asking is expected, but it must not be the only thing that happens this turn.",
     "Should NOT ask about experience level, subscriptions, or anything else about the researcher: the profile is fixed (lead ruling 2026-09-18).",

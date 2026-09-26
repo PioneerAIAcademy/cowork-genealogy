@@ -13,12 +13,24 @@
         "severity": "contradiction",
         "personId": "I1",
         "personName": "Patrick Flynn",
-        "factIds": [
-          "F1",
-          "F2",
-          "F3"
-        ],
-        "message": "An event is dated more than 1 year after this person's latest death-like fact."
+        "message": "An event is dated more than 1 year after this person's latest death-like fact.",
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": null
+          },
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "1908-03-12"
+          },
+          {
+            "id": "F3",
+            "type": "Residence",
+            "date": "1925"
+          }
+        ]
       }
     ]
   }

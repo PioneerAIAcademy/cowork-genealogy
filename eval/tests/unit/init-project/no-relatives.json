@@ -11,7 +11,7 @@
     "user_message": "init-project: Start a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF. I want to identify his parents.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-flynn"],
+  "mcp_fixtures": ["person-read-flynn", "person-quality-clean-LZNY-BRF"],
   "judge_context": [
     "person-read-flynn returns no parents, spouse, or children — an isolated person. The project must still initialize: both research.json and tree.gedcomx.json created with the Patrick Flynn stub",
     "An empty `relationships[]` is a fact about this person, not a reason to skip the flags: `relatives` and `sourceDescriptions` both default to false and a call that omits them cannot tell an isolated person from an unasked question. Judge the call arguments, not only the resulting tree.",

@@ -1011,6 +1011,76 @@ def test_compiled_tool_live_mode_is_refused_without_running_node():
     plain = asyncio.run(handler({"personId": "I1"}))
     assert "workspace not provided" in plain["content"][0]["text"]
 
+def _pq_tree(tmp_path, persons):
+    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": persons}), encoding="utf-8")
+
+
+def _pq(tmp_path, fixtures, args):
+    _server, call_log, tools_by_name = create_mock_server(fixtures, FIXTURES_DIR, workspace=tmp_path)
+    text = _invoke(tools_by_name, "person_quality", args)["content"][0]["text"]
+    return json.loads(text), call_log[-1]
+
+
+PATRICK = {"id": "I1", "names": [{"given": "Patrick", "surname": "Flynn", "preferred": True}]}
+
+
+def test_person_quality_registration_and_no_principal():
+    """Served by its own handler; never given LOCAL, so no path can read the
+    developer's own FamilySearch tokens."""
+    from harness.mock_mcp import _COMPILED_TOOLS, _COMPILED_TOOLS_WITH_PRINCIPAL, LIVE_TOOLS
+
+    assert "person_quality" in LIVE_TOOLS  # allowed_tools exempts LIVE_TOOLS members
+    assert "person_quality" not in _COMPILED_TOOLS
+    assert "person_quality" not in _COMPILED_TOOLS_WITH_PRINCIPAL
+
+
+def test_person_quality_registered_with_and_without_fixtures(tmp_path):
+    for fixtures in ([], ["person-quality-hole-christian"]):
+        _server, _log, tools_by_name = create_mock_server(fixtures, FIXTURES_DIR, workspace=tmp_path)
+        assert "person_quality" in tools_by_name, fixtures
+
+
+def test_person_quality_unlinked_person_gets_the_tools_real_sentence(tmp_path):
+    _pq_tree(tmp_path, [PATRICK])
+    response, entry = _pq(tmp_path, [], {"personId": "I1"})
+    assert response["reason"] == "not_familysearch_id"
+    assert response["errors"] == ["Patrick Flynn isn't linked to FamilySearch, so there's no FamilySearch quality score."]
+    assert entry["matched"]["kind"] == "live"
+
+
+def test_person_quality_linked_person_answered_from_a_fixture_keyed_on_the_resolved_id(tmp_path):
+    """The fixture is keyed KD96-TV2; the call is made with I1. It must be
+    logged live with expected_args None — the judge fails a wrong identifier,
+    and I1 is the correct argument here."""
+    _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:KD96-TV2")])
+    response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "I1"})
+    assert "reason" not in response and "overallScore" in response, response
+    assert entry["matched"]["kind"] == "live"
+    assert entry["expected_args"] is None
+    assert entry["response_fixture"] and not str(entry["response_fixture"]).startswith("live:")
+
+
+def test_person_quality_linked_person_without_a_fixture_is_refused_not_crashed(tmp_path):
+    _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:MKVT-7XR")])
+    response, entry = _pq(tmp_path, [], {"personId": "I1"})
+    assert "MKVT-7XR" in response["errors"][0] and "Declare a person-quality fixture" in response["errors"][0]
+    assert "resolution failed" not in response["errors"][0]
+    assert entry["matched"]["kind"] == "none"  # the uncovered-call warning names it
+
+
+def test_person_quality_familysearch_id_uses_its_fixture(tmp_path):
+    """The four check-warnings tests that score a real FS id: unchanged."""
+    response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "KD96-TV2"})
+    assert "overallScore" in response
+    assert entry["expected_args"] is None
+
+
+def test_person_quality_familysearch_id_without_a_fixture_is_refused(tmp_path):
+    response, entry = _pq(tmp_path, [], {"personId": "KD96-TV2"})
+    assert "KD96-TV2" in response["errors"][0]
+    assert entry["matched"]["kind"] == "none"
+
+
 def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
     """The `except` arm must ABSORB a node failure, not become one.
 

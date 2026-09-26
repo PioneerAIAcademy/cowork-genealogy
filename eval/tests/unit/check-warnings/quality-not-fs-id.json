@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_check_warnings_018",
+    "skill": "check-warnings",
+    "name": "person_quality answers a non-FamilySearch id itself; the report leaves quality out",
+    "type": "positive",
+    "description": "User asks to check Patrick Flynn, whose tree id is 'I1' — a project id, not a FamilySearch person id. The skill runs person_warnings and person_quality for him as for anyone; person_quality answers reason 'not_familysearch_id' without contacting FamilySearch. The tool looks Patrick up in the project tree, finds no FamilySearch link, and answers with one sentence by name; the report writes that sentence exactly, never naming the id or its type.",
+    "tags": ["positive", "person-quality", "not-familysearch-id"]
+  },
+  "input": {
+    "user_message": "Check Patrick Flynn for any warnings.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-warnings-no-warnings"],
+  "judge_context": [
+    "Should call person_warnings with personId 'I1'",
+    "Should call person_quality with personId 'I1' and projectPath. The tool answers {ok: false, reason: 'not_familysearch_id', errors: ['Patrick Flynn isn't linked to FamilySearch, so there's no FamilySearch quality score.']} without contacting FamilySearch; that answer is not a failure.",
+    "Should report the person_warnings result (no impossibilities)",
+    "Should write the tool's sentence as the FamilySearch quality line. A heading above it or true advice after it (e.g. that linking the person to FamilySearch would give a score) is fine. What must not appear is any description of the id or its type — the deterministic validator test_not_fs_reply_names_no_id grades that, not the judge."
+  ]
+}

@@ -14,10 +14,22 @@
         "personId": "KD96-TV4",
         "personName": "Ole C. Hole",
         "message": "An event is dated more than 1 year after this person's latest death-like fact.",
-        "factIds": [
-          "F13",
-          "F14",
-          "F15"
+        "facts": [
+          {
+            "id": "F13",
+            "type": "Birth",
+            "date": "1905"
+          },
+          {
+            "id": "F14",
+            "type": "Death",
+            "date": "1960-08-03"
+          },
+          {
+            "id": "F15",
+            "type": "Residence",
+            "date": "1975"
+          }
         ]
       }
     ]
