@@ -373,6 +373,19 @@ describe("the specs' corpus claims survive main moving", () => {
     // it always names the population it measured over. Without this the whole
     // table's `measured at` stamp was voluntary — removing the sha left this
     // file at 4 passed, where a reader assumes the stamp is guarded.
+    // The first alternative covers `update` ops as well as `append` ops. It was
+    // append-only, so a row phrased "of 19 plan_items update ops" carried a
+    // stamp nothing checked — which is what the log-attribution rule's rows
+    // state their figures as. Spelled `plan(?:s|items)`, never
+    // `plan(?:s|_items)`, because the flattening above strips `[*`_]` out of
+    // the text before this runs. Widening costs nothing measured: over the spec
+    // text as it stood BEFORE this change, old and new both yield 14 matches
+    // and 0 unstamped, so no pre-existing figure is newly required to carry a
+    // stamp. Measured at origin/main, not at HEAD — at HEAD the widened form
+    // reaches 23 where the old one reached 17, and all 6 of the difference are
+    // rows this change added, every one stamped. Re-measure against the parent
+    // commit, not the current tree, or the two numbers look like a
+    // contradiction.
     // The fourth alternative reaches the `blocked_context_calls` figure (`0 of
     // 26 eligible runs`). It is keyed to the `eligible runs` phrasing, NOT a
     // generic `N of M`: a generic form reds 36 pre-existing unstamped figures in
@@ -382,7 +395,7 @@ describe("the specs' corpus claims survive main moving", () => {
     // for THIS shape only, widening reach without loosening proximity for the
     // figures already guarded.
     const FIGURE =
-      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plan(?:s|items) append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)|\bover (?:the )?[\d,]{1,7} committed e2e runs\b|\b[\d,]{1,7} of [\d,]{1,7} eligible runs\b|\b[\d,]{1,7} of [\d,]{1,7} collection-scoped entries\b|\b[\d,]{1,7} of [\d,]{1,7} committed external_?links_?search calls\b/gi;
+      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plan(?:s|items) (?:append|update) ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)|\bover (?:the )?[\d,]{1,7} committed e2e runs\b|\b[\d,]{1,7} of [\d,]{1,7} eligible runs\b|\b[\d,]{1,7} of [\d,]{1,7} collection-scoped entries\b|\b[\d,]{1,7} of [\d,]{1,7} committed external_?links_?search calls\b/gi;
     const STAMP = /measured at [0-9a-f]{7,40}\b/i;
     const missing: string[] = [];
     for (const [rel, text] of Object.entries(specText)) {

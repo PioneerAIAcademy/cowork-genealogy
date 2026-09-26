@@ -130,9 +130,9 @@ closed-enum change is in CLAUDE.md's schema-change site list.
 > `record_basis` cannot represent "no evidence" honestly, and a bare enum add
 > buys that honesty at the cost of new exclusion logic in four consumers, none
 > of it validator-caught, plus an under-specified value. The retry loop it was
-> meant to fix was closed instead by a lower-blast-radius prose pin (issue #433:
+> meant to fix was closed instead by a lower-blast-radius prose pin:
 > state the valid values inline, plus "there is no `no_evidence`" and keep the
-> best-effort stated-vs-inferred value). If the honesty is ever judged worth it, do it
+> best-effort stated-vs-inferred value. If the honesty is ever judged worth it, do it
 > deliberately, not as a quick fix: settle the scalar-vs-structural mismatch
 > first, define the structural convention + eval invariant + re-classification
 > trigger, then land all ~6 definition sites, both skills, and the eval
@@ -632,7 +632,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `confidence` | `person_evidence_confidence` | yes | How certain we are that this record's role IS the tree person (identity certainty). This is NOT a measure of the source's informant quality (`information_quality`/`informant_proximity`); those fields classify source reliability and belong on the assertion. A single primary-informant source with no corroborating record is `probable` on this scale, not `confident`. |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
 | `core_identifier_conflict` | string or null | no | The core identifier this link contradicts, stated by person-evidence at the moment it writes the link (e.g. "record gives birthplace Germany; tree attests Ireland across three censuses"). Null or absent means none was found. A non-empty value caps `confidence` at `speculative` — enforced by `research_append`, not by prose |
-| `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
+| `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool for this `(assertion_id, person_id)` pairing. `research_append` REFUSES an append that leaves this null where a record persona is reachable, so null is no longer a free default: it is correct where nothing can be scored (an image-, external-site- or PDF-sourced assertion, a full-text hit, a search that retained no sidecar) and it is REQUIRED where the tree person was minted out of the very record being cited, since scoring a persona against a person created from it only confirms itself |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 

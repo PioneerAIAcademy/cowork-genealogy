@@ -4,7 +4,7 @@
 > sibling of `project_context` (`project-context-tool-spec.md`) — a second
 > read-side tool, not an extension of the first (see §3 for why).
 > **Updated 2026-08-03:** added `offset` pagination so items 51+ are reachable
-> (#1031, tool half; the skill half, #1183, has since landed).
+> (the tool half; the skill half has since landed).
 
 ```
 research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated }
@@ -163,7 +163,7 @@ whole section, one 50-item page at a time.
   magnitude lower in the same runs. Out of scope until evidence says
   otherwise.
 - **50-item page cap + `offset` pagination — not a raised cap, a `fields`
-  projection, or a staged-to-disk fallback (#1031).** The page size stays 50
+  projection, or a staged-to-disk fallback.** The page size stays 50
   (`MAX_ITEMS`); `offset` reaches items 51+. This closes a silent-wrong-answer
   path: proof-conclusion's "collect every assertion" gate once read 50 of 57
   matches and could write a proof summary from the truncated set, with neither
@@ -183,8 +183,8 @@ whole section, one 50-item page at a time.
     here for the same on-disk reason.
 
   `offset` is typed `number` and rejected loudly when it is not a non-negative
-  whole number (§4). The **tool** supports paging, and the **skill half
-  (#1183)** has landed: `research/SKILL.md` and `agents/proof-conclusion.md`
+  whole number (§4). The **tool** supports paging, and the **skill half**
+  has landed: `research/SKILL.md` and `agents/proof-conclusion.md`
   both check `truncated` and page with `offset`. A tool-only fix would not have
   cleared the reported symptom on its own.
 
@@ -200,6 +200,6 @@ whole section, one 50-item page at a time.
 | No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |
 | More than 50 matches, no `offset` | `items` is the first 50; `count` is the true total; `truncated: true` |
-| `offset` present and not a non-negative whole number — **including a string like `"50"`** | `{ ok: false, errors }`, rejected loudly, **not coerced**. `index.ts` passes tool arguments through without type-coercion, so a model that sends `offset: "50"` (as one did — hannah-earnest-children idx 79) reaches the tool as a string and `Number.isInteger` rejects it. This mirrors `person_search.offset`'s validation. The old behavior silently ignored the unknown key and returned the *first* page — a wrong answer wearing `ok: true`; the loud rejection is the fix, and the caller (once #1183 teaches it) sends a real number. |
+| `offset` present and not a non-negative whole number — **including a string like `"50"`** | `{ ok: false, errors }`, rejected loudly, **not coerced**. `index.ts` passes tool arguments through without type-coercion, so a model that sends `offset: "50"` (as one did — hannah-earnest-children idx 79) reaches the tool as a string and `Number.isInteger` rejects it. This mirrors `person_search.offset`'s validation. The old behavior silently ignored the unknown key and returned the *first* page — a wrong answer wearing `ok: true`; the loud rejection is the fix, and the caller (once the skill half teaches it) sends a real number. |
 | `offset` past the last match | `{ ok: true, count: <total>, items: [], truncated: false }` — a legitimate empty page, not an error |
 | `offset` set, matches remain beyond the returned page | `items` is the (≤50) slice at `[offset, offset+50)`; `count` is the true total; `truncated: true` |

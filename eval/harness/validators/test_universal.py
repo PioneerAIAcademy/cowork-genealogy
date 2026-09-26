@@ -1561,10 +1561,13 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
     """No `research_append` op reached a section its caller does not own.
 
-    Two rules, both from the SHIPPED hook: `routed` — a section reserved to an
+    Four rules, all from the SHIPPED hook: `routed` — a section reserved to an
     owning agent, reached by someone else; `out_of_lane` — a known agent reaching
-    outside the sections its own skill is a declared caller for. Plus
-    `declaration`, a routed claim.
+    outside the sections its own skill is a declared caller for; `declaration` —
+    a routed claim, field-scoped and keyed on the value; `owned_field` — a routed
+    field keyed on presence alone (`project.status`). This check is rule-agnostic
+    and reports whatever `rule` the predicate returns, so a new arm needs no edit
+    here.
 
     This is the unit tier's half of a rule that already binds in Cowork, the
     hosted path and the e2e harness. Until issue #2022 this plane called the

@@ -4,8 +4,8 @@
   },
   "proof_quality_score": 2,
   "notes": {
-    "f1": "Couple, place and the bride's parentage all recovered: R7 links Pedro (2761-R34) to Juana Flores (I1), the place names the Asuncion parish at Avellaneda, and Sebastian Flores / Isabel Rivero are attached via R8/R9. Both register entries were found and cited (S1 QJRM-GV8V, S2 QP84-TH55). The marriage fact carries 30 Aug 1859, the informacion matrimonial date; the agent resolved the date conflict backwards, treating the premarital examination as the ceremony and re-casting the 14 Sep 1859 register entry as a secondary anotacion. Wrong date encoded on the relationship, so partial rather than true."
+    "f1": "Couple, place and the bride's parentage all recovered: R7 links Pedro (2761-R34) to Juana Flores (I1), the place names the Asuncion parish at Avellaneda, and Sebastian Flores / Isabel Rivero are attached via R8/R9. Both register entries were found and cited (S1 QJRM-GV8V, S2 QP84-TH55). The marriage fact carries 30 Aug 1859, the informacion matrimonial date; the agent resolved the date conflict backwards, treating the premarital examination as the ceremony and re-casting the 14 Sep 1859 register entry as a secondary anotacion. Wrong date encoded on the relationship, so partial rather than true. Re-confirmed against the amended supporting_sources (image arks added, issue #2877): the labels are unchanged, and the added arks are the same two page images ps_001's own exhaustive_search_summary already cites."
   },
   "annotator": "EdmondOware",
-  "findings_hash": "f81d0ff05165c0c7010b2aeb17b3b8e9689bc5a785bf3f13814891618f695afe"
+  "findings_hash": "12228ed03444bbcc5f4211e5245901cad181d2698b1507308fab681108fac486"
 }
