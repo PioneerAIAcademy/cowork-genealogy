@@ -6,10 +6,10 @@
 > wrapped by **two tools** (§5b) — `merge_record_into_tree` and
 > `merge_tree_persons` — that read the project files off disk, merge, remap
 > `research.json`, validate, and persist atomically. Rev. 2 decisions (Dallan +
-> Richard, PR #254 / Issue #250) are in §4; #2 is amended there. The old §11
+> Richard) are in §4; #2 is amended there. The old §11
 > "remaining clarification" is now resolved.
 >
-> **Update (2026-07-18, tree-materialization #701):** the Mode-1 write tool
+> **Update (2026-07-18, per tree-materialization):** the Mode-1 write tool
 > `merge_record_into_tree` has been **retired** (0 live calls; superseded by
 > `materialize_facts` — see `tree-materialization-spec.md` §9). The pure core
 > and **both** modes are unchanged. **Mode 1 (cross-document) is now reached only
@@ -37,7 +37,7 @@ merge_tree_persons({ projectPath, merges })
 ```
 
 Source issue: <https://github.com/PioneerAIAcademy/cowork-genealogy/issues/250>.
-Review thread: PR #254.
+Reviewed by Dallan / Richard (see §4).
 
 ---
 
@@ -46,9 +46,9 @@ Review thread: PR #254.
 Today the `tree-edit` skill (`packages/engine/plugin/skills/tree-edit/SKILL.md`, "Person
 merging") performs a merge **by hand** — the LLM is instructed to dedup names,
 dedup facts, repoint relationships, and delete the deprecated person (Steps
-1–5). That is error-prone (ID collisions, missed references). #250 replaces the
+1–5). That is error-prone (ID collisions, missed references). This spec replaces the
 hand-done merge with one **deterministic function** so the result is reliable
-and testable. Per Issue #250: *"Make sure that the tree-edit tool calls that
+and testable. The requirement: *"Make sure that the tree-edit tool calls that
 function."*
 
 The **pure core** (`mergeGedcomx`, §5) does the **tree data merge only**. It
@@ -81,7 +81,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 | Fact | Source (seen directly) |
 |------|------------------------|
 | Closest sibling tool operates on **SimplifiedGedcomX** | `packages/engine/mcp-server/src/tools/same-person.ts` |
-| `SimplifiedFact` has `primary?: boolean`; `SimplifiedName` has `preferred?: boolean` (so "keep both, mark 1 preferred" is representable) | `packages/engine/mcp-server/src/types/gedcomx.ts:112,123` |
+| `SimplifiedFact` has `primary?: boolean`; `SimplifiedName` has `preferred?: boolean` (so "keep both, mark 1 preferred" is representable) | `SimplifiedFact.primary` / `SimplifiedName.preferred` in `packages/engine/mcp-server/src/types/gedcomx.ts` |
 | `SimplifiedFact = { id, type, primary?, date?, standard_date?, place?, standard_place?, value?, assertion_id?, sources? }` — `standard_place` is the standardized hierarchical place name (added 2026-06-05); equivalence uses it, falling back to free-text `place`. `assertion_id` is the backlink to the assertion the fact was minted from; `mergeFactGroup` **drops it unless every member carries the same one**, because the merged fact takes its best date and best place from possibly different members and must not claim an assertion whose value it no longer carries. Deliberately conservative: it also drops when one member simply has none, since the winning value may have come from that member and the merge cannot read `research.json` to tell. Unlike `tree_edit`'s equivalent detach it does not warn — `mergeGedcomx` returns a document and has no warnings channel | `SimplifiedFact` in `packages/engine/mcp-server/src/types/gedcomx.ts` |
 | Marriage/couple facts live on the **relationship** (`SimplifiedRelationship.facts`), not the person | `SimplifiedRelationship` in `packages/engine/mcp-server/src/types/gedcomx.ts` |
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
@@ -90,12 +90,12 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 | The hand-done merge protocol this replaces | `packages/engine/plugin/skills/tree-edit/SKILL.md` §"Person merging" |
 
 Richard attached FamilySearch's **`MobMergeUtil.java`** (the match-system merge)
-to #250 as an *ideas* reference — explicitly **not** a straight port. The exact
+to the source issue as an *ideas* reference — explicitly **not** a straight port. The exact
 equivalence/selection logic extracted from it (with line refs) is in §7 and §12.
 
 ---
 
-## 4. Decisions from review (Dallan / Richard on PR #254)
+## 4. Decisions from review (Dallan / Richard)
 
 These were **open questions** in the draft; now answered — recorded verbatim-ish
 so implementation doesn't re-litigate:

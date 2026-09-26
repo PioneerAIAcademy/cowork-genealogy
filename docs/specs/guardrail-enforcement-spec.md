@@ -43,7 +43,7 @@ the user looking exactly like one that was.
 
 Prose was tried three times and failed three times: the routing-table mandate in
 `research/SKILL.md`, the "MANDATORY… invoke the skill, never a generic subagent"
-contract added in PR #893, and the earlier per-skill fix recorded in
+contract, and the earlier per-skill fix recorded in
 `docs/diagnoses/wilkins-death-kentucky-headless-runs2-3.md`. Each produced an
 identical bypass on re-run.
 
@@ -167,6 +167,7 @@ the four objects in this branch’s own record-extraction candidate, so quote th
 | §5 | Plan-item non-emptiness | engine (validator) — so Cowork, hosted, both harnesses | a `plans[]` entry whose `items` is `[]` or not an array. `research.schema.json` has always said `type: array, minItems: 1`; `validateResearch` required only the key, so an empty plan passed the runtime enforcer and failed nothing but the eval harness's jsonschema pass | **enforcing** (since 2026-09-01; measured at 9a0eb98e5, **8 of 295** `plans` append ops in the committed corpus send `items: []`, and each is the *second* half of a retry loop — the shell was sent with `items` absent, refused for a missing field, then re-sent with `[]`. The two calls are observed; the refusal and acceptance between them are deduced, since run logs record no tool responses) |
 | §5 | Misrouted plan items name their cause | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` **append** op writing into a plan other than the one its own call created, leaving that plan empty — whether the other plan pre-existed (the hard-coded-`pl_001` misroute) or was created by the same call (a forgotten sibling, which needs the opposite fix and gets a different sentence). Adds **no** refusal — the call was already refused by the row above, or by `items` being required — it replaces a message naming the symptom with one naming the cause, because the previous message drove the model to `"items": []` and that then validated | **enforcing** (since 2026-09-01; fires on **6** corpus `plans` append ops, measured at 9a0eb98e5 — both halves of the retry loop in each of three unit runs, where nine item ops carry a hard-coded `pl_001`, a **completed** plan for another question, while the plan the same call created ends empty. That is exactly the corruption this arm exists to stop, committed to the corpus, so it is the arm's strongest evidence rather than a gap. It is a derivable **floor**, not a total: the assigned `pl_` id is only recoverable where a scenario fixture seeds the plan ids. The arm still adds no refusal — every call it catches is one the row above or the required-field check already refused — so it changes the message, not the outcome — but no check observes whether the new message actually breaks the loop, and none can outside a paid eval run. **Narrowed by the terminal-plan row below**, which refuses a terminal parent in `applyOne` and returns the batch before this post-pass runs: all 6 measured instances name a `completed` plan and are now preempted, so this arm covers an `active` other plan or a same-call sibling, and the prescription it supplies moved into the earlier refusal. Its same-question form survives only where the created plan is itself terminal, since the one-active-plan rule returns early on a non-active entry — which is why two of its tests now assert the terminal refusal and a third pins the surviving case) |
 | §5 | A terminal plan takes no new items | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` **append** op whose parent plan is `completed` or `superseded` — a settled audit trail. `research-plan`'s prose forbade this in two places and did not bind; the plan carries `status`, so it is decidable from the documents alone and becomes a writer precondition. **Appends only** — an update targets an item already inside the plan, and denying it would strand an `in_progress` item there with no route out | **enforcing** (fires on **54 of 2447** `plan_items` append ops, over 6 calls in 4 run logs, measured at a85d8f569; **0** name a `superseded` parent and **0** *update* ops name a terminal parent. Per ADR-0011 limit 2 the bar is inspection, not a rate: every one of the 54 is the same true positive — scenario `flynn-first-plan-surveyed`, `pl_001`, completed, attached to `q_002`, in `ut_research_plan_005` and `ut_research_plan_014` — so none is a legitimate write. A derivable **floor** for the same reason as the row above: a plan created during a run is `active` at creation, so only a seeded fixture plan can be terminal. Unlike that row this one **does** add refusals; what no check observes is whether the refusal message breaks the model's retry loop, and none can outside a paid eval run) |
+| §5 | A completed plan item needs a log entry naming it | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` op leaving the item at `completed` while no `log[]` entry carries its id in `plan_item_id`, and the same check over `items[]` on a `plans` append or an `items`-bearing `plans` update — on an update, only the items it newly completes. Completing an item asserts its search was done; `log[]` is where a search is recorded. Both halves live in `research.json`, so it is decidable from the documents alone. **Gated on the op that sets the status**, so `in_progress` and `skipped` moves and unrelated edits to an already-completed item are untouched; an `append` carrying `completed` is refused unconditionally, since the id is minted inside the call | **enforcing** (fires on 1 of 24 `plan_items` update ops setting `completed` in the unit corpus, measured at 4791ea9cb — a true positive in `search-images`/`mid-research-flynn` — and on the one unit append setting `completed`, where `research` completes an item whose search was logged earlier under another question. The e2e plane is **not** clear, measured at 4791ea9cb: 32 of 1254 `plan_items` update ops are refused there on an ORDERED replay, plus all 4 `completed`-setting appends — 36 of 1258, over 17 run logs across 15 fixtures. An order-blind join gives 28 of 1254 and is a floor only, since the rule reads live state. 1 of the 58 update ops in the quarantine plane is refused. The `plans` arm changes no corpus outcome, measured at 4791ea9cb — 8 of 376 `plans` append ops carry non-empty inline `items`; 6 carry only `planned` items and the other 2 sit on calls already refused for other reasons — and no `plans` update writes `items`. What no check observes is whether the refusal message breaks the model's retry loop, and none can outside a paid eval run) |
 | n/a | Malformed element reported, not thrown | engine (validator) — so Cowork, hosted, both harnesses, and `validate_research_schema` | a `null` or primitive element in any document array, and a primitive in a required-object field. `checkRequired` tests `field in obj` and `in` THROWS on null and on every primitive, so one stray element took `validateParsed` down with `TypeError: Cannot use 'in' operator` — and because every writer tool validates the whole document, every one of them failed with a message naming no field and no fix, while the read-only reporter crashed instead of saying what to repair. Guarded at the 20 array loops, at **four** further sites outside them that a loop-by-loop patch missed (three dereferences in `person-id-refs.ts`, reached from the cross-file pass, and the cross-file `sources` ref), and at **four** required-object fields — `exhaustive_declaration`, `external_site` and `citation_detail`, whose `typeof X === "object" && X !== null` opening skipped a primitive silently, plus `researcher_profile`, whose `typeof rp !== "object"` opening caught a string and missed `[]`. The four missed cross-file sites are why the tests enumerate every section rather than sampling one. **Arrays are treated differently on the two halves, deliberately:** an array ELEMENT is left alone (`in` does not throw on one, so re-shaping its messages would be an unrelated change riding on a crash fix), while an array in a required-object FIELD is refused, and refused once rather than once per missing key | **enforcing** (since 2026-09-01; reachable by hand edit or a truncated write, and the one persisted itemless plan in the committed corpus arrived exactly that way, from a run that made zero MCP tool calls) |
 | n/a | `assertion_id` is stamped, never supplied | engine (MCP tool) — so Cowork, hosted, both harnesses | a caller passing `assertion_id` on any `tree_edit`/`tree_correct` fact write path (`add_fact`, `update_fact`, `add_person`, `add_relationship`). The backlink means "materialize_facts minted this fact from this assertion"; a forged one would make `research_append` rewrite a hand-entered fact from an assertion it never came from | **enforcing** (a hard refusal, not a warning: nothing legitimate supplies it, so there is no correct call this can deny. Its one cost is that a whole-fact read-modify-write is now rejected; no shipped skill does that) |
 | n/a | Assertion correction reaches its materialized fact | engine (MCP tool) — so Cowork, hosted, both harnesses | a `place`/`standard_place`/`date`/`value` corrected on an assertion never reaching the tree fact already materialized from it | **enforcing as a WRITE, not a refusal** — the write being made is the legitimate one, so there is nothing for a boundary check to refuse, and ADR-0009 constraint 6 rules out a gate no call shape can satisfy. Eight advisories ride it, none blocking: no fact carries the backlink; the fact holds a value this assertion never asserted (another source corroborated it); the assertion's value is malformed rather than withdrawn; the assertion has been re-classified so the fact no longer matches its type; a field was DELETED from the fact; the rewritten fact is `primary` (a concluded value a proof summary may cite); a `place` corrected without its `standard_place`; and a `date` corrected without its `standard_date`. A ninth, the country-contradiction clear, rides the same channel. Every advisory that describes a CHANGE is discarded if the rewrite is rolled back |
@@ -940,6 +941,151 @@ breaks the model's retry loop — the same gap the misroute arm's row records, a
 one only a paid eval run could close. Every figure above describes the eval
 corpus, not production (`docs/architecture.md` §9.4 gap 3).
 
+### A completed plan item needs a log entry naming it
+
+`research_append` refuses a `plan_items` op that leaves the item at
+`status: "completed"` when no `log[]` entry carries its id in `plan_item_id`.
+Completing an item asserts the search it names was done; `log[]` is where a
+search is recorded. An item completed with nothing attributed to it claims work
+no part of the project documents evidences.
+
+Both halves — `plan_items[].status` and `log[].plan_item_id` — live in
+`research.json`, so the question is decidable from the documents alone, which is
+the first test for moving a rule out of prose and into a writer precondition.
+**No skill body states the rule**, and that used to be the argument for leaving
+the analogous eval check report-only. The 2026-09-22 ruling reversed that
+reading: the satisfying call shape is already documented in the three bodies
+that instruct the completed write — `search-full-text/SKILL.md` and
+`agents/search-images.md` both show a literal `planItemId: "pli_NNN"`, and
+`search-external-sites/SKILL.md` shows the template `"<pli_XXX or null>"` — so
+meeting the satisfiability limit did not imply a prose edit or a paid run.
+(`search-records/SKILL.md` names the parameter in prose but misroutes the
+completed write elsewhere, so it is not counted among the three.)
+
+**Gated on the op that sets the status.** `append` always sets it; `update` only
+when `fields` names it. An unrelated edit to an item legitimately completed in
+an earlier call is untouched, and `in_progress` and `skipped` moves are never
+refused — the same forward-direction discipline the `questions` and
+`hypotheses` arms carry.
+
+**An append carrying `completed` is refused unconditionally.** The id is
+assigned inside the call, so no log entry can already name it. That is the same
+defect in a different shape, not a false deny.
+
+**Read live, and the choice is provably free.** `log` is not a `research_append`
+section — it is absent from `SECTIONS`, and the ownership table gives it to
+`research_log_append` alone, which is append-only — so no op in a batch can
+change `log[]`, and the live document and the pre-call snapshot carry an
+identical `log`. This is measured rather than argued: swapping the read to the
+snapshot is behaviour-preserving across the whole unit suite. Live is what the
+snapshot-or-live rule asks for anyway, since `research_log_append` persists
+before `research_append` is called in every satisfying corpus run.
+
+**The refusal names a move the agent can make.** `research_log_append` has no
+update op — every op allocates the next log id — so an entry already written
+with `planItemId: null` cannot be re-attributed, and "fix the log entry" would
+be an instruction the agent cannot follow. The message therefore prescribes an
+append, and says which of the two legitimate shapes was got wrong, because
+`planItemId: null` is itself documented for an ad-hoc browse. Where the search
+was *already* logged unattributed, the settled remedy is to leave the item
+`in_progress`: re-logging writes a durable duplicate that every reader of
+`log[]` counts twice, and `skipped` states the search was not done, which is
+false. An open item misstates nothing. A refused **append** gets its own remedy:
+its id is assigned inside the call, so the item cannot be logged first, and
+`in_progress` is the one status that blocks the exhaustive declaration — while
+`planned` would have `search-records` repeat the search. So the message says not
+to add an item for a search already done, and to cite that search's log id in the
+question's `exhaustive_declaration.log_entry_ids` instead. An update re-sending
+`completed` on an item already completed before the call is not refused.
+
+**The same check runs on the `plans` section.** Scoping it to `plan_items` ops
+alone would leave a documented route around it: the `plans` append branch
+spreads the caller's entry wholesale and the `plans` update branch copies
+arbitrary keys, so `entry.items` and `fields: { items: [...] }` both reach
+`items[]` with no `plan_items` op existing. §5's `plans` append row names inline
+non-empty `items` as one of two satisfying shapes "both already in use", so this
+is a documented call shape, not a corner. The arm changes no corpus outcome, measured at 4791ea9cb:
+8 of 376 `plans` append ops carry non-empty inline `items`. Six carry only
+`planned` items; the other 2, both in one `research` unit run (`ut_research_002`),
+carry a `completed` item on calls already refused for other reasons — an
+unresolved `pl_PLACEHOLDER`, then schema errors. No `plans` update writes `items`.
+
+Implemented as `planItemLogAttributionInvariants` in the invariant-dispatch
+block of `applyOne`, in
+`packages/engine/mcp-server/src/tools/research-append.ts` — a content invariant
+over the whole document, not a structural deny in the nested-section branch
+where the terminal-plan rule above sits.
+
+**Corpus figure.** The rule fires on **1 of 24** `plan_items` update ops that
+set `completed` in the unit corpus, measured at 4791ea9cb, and on the one unit
+append that sets `completed`. The update refusal is a true positive:
+`search-images`, scenario `mid-research-flynn`, which wrote two log entries from
+an `image_search` with `plan_item_id: null` and then marked the item completed,
+with every validator passing. The append is the case the append remedy exists
+for: `research`, `ut_research_002`, builds a plan for `q_003` after the fact and
+marks its first item completed because that search was already logged, as
+`log_005`, under `q_001`. The bar here is inspection rather than a rate.
+
+**The e2e plane is not clear, and the card that scoped this work did not measure
+it.** Measured at 4791ea9cb: **32 of 1254** `plan_items` update ops are refused
+there, plus all 4 `completed`-setting appends — **36 of 1258**, over 17 run logs
+across 15 scenario fixtures. Each is the same defect in shape, so none is a
+false positive, but the production cost is an order of magnitude above the unit
+figure and is stated here so a reader does not take the unit number for the
+whole story.
+
+**Replay the traversal in call order; the ordering is load-bearing.** The rule
+reads live state, so only a log entry written in an EARLIER call satisfies it.
+An order-blind join — asking whether the run appended a naming entry at any
+point — gives 28 of 1254 (32 of 1258, 15 run logs, 13 fixtures) and is a floor,
+not the rate. The 4 it misses are the ones a reviewer should look at hardest,
+because in each the agent *did* log the search, one call too late:
+`bagley-father-1884` completes `pli_005` at calls 131 and 132 and appends the
+naming entry at call 133; `young-marriage-1828` completes `pli_008` at call 109
+and logs it at 110, and `pli_009` likewise. Those runs pay a retry rather than
+being caught in a fabrication, which is the false-deny budget this row exists
+to state.
+
+**Populations.** The two figures above are the unit and e2e planes.
+`eval/runlogs/_2491-exploratory-quarantine/` is counted in neither: it holds 58
+`plan_items` update ops setting `completed`, 1 of them refused. The `plans`
+denominator above (376) spans all three planes, so the two are not directly
+reconcilable — said here rather than left for whoever re-derives.
+
+Traversal: `plan_items` and `plans` ops in the `args` of each `tool_calls[]`
+entry — both the batched `ops` form and the single-op form — over tracked files
+under `eval/runlogs/` excluding `.ann.json`, walked in the order the run's own
+`tool_calls[]` records them, joined to
+`eval/fixtures/scenarios/<scenario>/research.json` for the seeded
+`log[].plan_item_id` set and to the `research_log_append` calls that PRECEDE
+each op for the ones the run added. Re-derive before quoting.
+
+**The eval validator is the complement, not the mirror.**
+`test_no_plan_item_status_written_when_no_entry_names_one` in
+`eval/harness/validators/test_search_external_sites.py` was promoted from
+`report_` to `test_` by the same ruling. Its predicate is deliberately different
+on both axes and must not be rewritten to match the tool's: it skips as soon as
+any new log entry names any plan item (coarser on attribution) and then refuses
+any status change (broader on status). That reach is the point — it covers
+`in_progress` and `skipped` moves, which the tool rule never refuses — in
+`search-external-sites`, whose 2 `completed` writes both log `planItemId` first,
+the tool rule refuses nothing.
+Nothing its 5 committed run logs hold can show whether it ever fired: `as_dicts`
+(`validator_runner.py`) drops every `report_*` result from the run log, fired or
+not, and a fired one reaches only the judge, as an unnamed observation.
+
+**What nothing checks.** Two things. No check observes whether the refusal
+message breaks the model's retry loop — the gap every row in this section
+records. And nothing observes the interaction with the exhaustiveness gate: an
+item left `in_progress` under the settled remedy blocks
+`exhaustive_declaration.declared` on its question's active plan, so a run that
+tries to complete an EXISTING item whose search was already logged with
+`planItemId: null` has no route to declare that question exhaustive. The append
+form no longer reaches that dead end, since its remedy cites the log id instead. The escape is the message's first clause — log the search
+with `planItemId` — which is available whenever the search was not already
+logged unattributed. Only a paid eval run could show how often the narrow case
+is reached.
+
 ### Blocking conflicts before completion
 
 `project.status` may not be set to `"completed"` while any `conflicts[]` entry is
@@ -1316,10 +1462,11 @@ carry `"hooks"`) and the two upstream reports that do **not** reproduce.
 
 **Why the hosted copy still exists.** Redundant in principle — the hosted path
 also loads the plugin — but "the plugin loader does what you'd expect in the
-hosted path" is exactly the assumption issue #939 disproved for agents. Both
+hosted path" is exactly the assumption the hosted-path agent-spawn finding
+disproved for agents (ADR-0004). Both
 fire until one hosted run confirms otherwise; they deny the same thing with the
 same reason, so the redundancy is harmless. Deleting the SDK copy was declined
-(issue #1129, closed not-planned) — all three stay. The three copies are
+(the delete was closed not-planned) — all three stay. The three copies are
 `packages/engine/plugin/hooks/guard_project_files.py`,
 `apps/server/app/agent/real_agent.py`, and
 `eval/harness/e2e/orchestrator.py`, and
@@ -1880,8 +2027,8 @@ Design points that were paid for and should not be re-derived:
 - **Harness-tracked, never model-supplied.** A `caller_id` argument the router
   fills in itself is attested by the party we don't trust at the moment it
   matters. Direct precedent: `person-evidence`'s `match_score` was meant to
-  attest that `same_person` was consulted, and its provenance guard was cut in
-  #695 for zero observed true positives across **every**
+  attest that `same_person` was consulted, and its provenance guard was cut
+  for zero observed true positives across **every**
   `eval/tests/unit/person-evidence/` case as of that PR, against a real
   false-positive class.
 - **Success-gated, off the joined `tool_calls[].is_error` — but only to the
@@ -1910,7 +2057,7 @@ Design points that were paid for and should not be re-derived:
     invoke-then-let-it-fail evasion named at the top of this bullet stays open**,
     and the next block explains why it cannot be closed from here.
   - **MCP writer tools — thrown errors, and returned `{ok:false}`.** `src/index.ts`
-    sets `isError` from its `catch`, and since #1282 also from a returned
+    sets `isError` from its `catch`, and also from a returned
     `{ok:false}` on the writer arms listed in `src/tool-result.ts`'s
     `OK_FALSE_IS_FAILURE` — so `research_append`'s `fail()` helper, which
     *returns* rather than throws, now records `is_error: true`. Runs predating
@@ -1922,7 +2069,7 @@ Design points that were paid for and should not be re-derived:
 
   Violation counts and the §8 `compliance`/`outcome` verdict are not comparable
   across that join. The boundary is the commit, not cleanly a version number —
-  #1255 shipped it at `harness_schema_version` 2 and the bump to 3 came after, so
+  the join shipped at `harness_schema_version` 2 and the bump to 3 came after, so
   a `2` log means either thing depending on its date; `docs/specs/e2e-test-spec.md`
   §7.5 has the table. The measured delta on the committed corpus is two entries.
 - **Keyed by `(skill, question_id)` where a question id is derivable**, not by
@@ -2008,8 +2155,8 @@ this section before reopening one.
 
 - **Converting the four skills to agents** (which would give a real `agent_id`
   and make hook attribution trivial). All four do mandatory on-demand `Read` of
-  their own `references/*.md`, and issue #702 measured that pattern from an
-  agent as unreliable *and silent* — read on some tests, ignored on others,
+  their own `references/*.md`, and that on-demand-`Read` pattern was measured
+  from an agent as unreliable *and silent* — read on some tests, ignored on others,
   over-applied on others; 6/19 against a 12–14/19 baseline. The only sanctioned
   fix is full inlining (`CLAUDE.md`, "No playbook/reference files for agents"),
   and inlined, `person-evidence` (974 lines) and `conflict-resolution` (1007)
@@ -2092,11 +2239,12 @@ this section before reopening one.
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
   carries an `agent_id`, which is what §7's success gate has never had. Weigh
-  that against #702 before dismissing it as attribution-only plumbing — but weigh
-  #702 seriously too: it is a measured regression, not a theoretical risk.
+  that against the on-demand-`Read` measurement before dismissing it as
+  attribution-only plumbing — but weigh that measurement seriously too: it is a
+  measured regression, not a theoretical risk.
 - **A thin agent whose only action is `Skill('<name>')`** — keeps SKILL.md as
   the single source of truth while buying a real `agent_id`. Plausible, because
-  #702's failure was a *conditional, secondary* fetch whereas this would be
+  that measurement's failure was a *conditional, secondary* fetch whereas this would be
   unconditional and first. Untested, and `AgentDefinition.skills` is not
   surfaced in this repo's agent frontmatter format. Wants a small controlled
   experiment before anyone commits to it.
@@ -2108,7 +2256,7 @@ this section before reopening one.
   agent conversion — an agent's `tools:` binds even under `bypassPermissions`
   (measured 2026-08-30) but is tool-name-granular only — not a substitute for
   any layer here.
-- **Per-turn scoping for a production detector** — proposed for #1054 and dead.
+- **Per-turn scoping for a production detector** — proposed for the hosted tool-call ledger port and dead.
   Three of `find_effects_without_invocation`'s arms read whole-document state
   with no baseline — research-exhaustiveness, conflict-resolution, and
   proof-conclusion's `proof_summaries` half — so at turn scope they latch
@@ -2117,8 +2265,8 @@ this section before reopening one.
   (proof-conclusion's tree half and the person-evidence arm are
   `starting_tree`-baselined — a run-level baseline, which does not help at turn
   scope.)
-- **Enforcing coherence at the write boundary instead of provenance** — PR #997,
-  closed with review. Replayed over 113 committed runs it flagged 3 where the
+- **Enforcing coherence at the write boundary instead of provenance** — a
+  proposal closed after review. Replayed over 113 committed runs it flagged 3 where the
   shipped provenance check flagged 63, with an empty set difference: it detects
   nothing the existing check misses, and is evadable via `moot` status or a
   `probable` tier.
@@ -2351,7 +2499,7 @@ that outlive any one of them.
   open work; correcting the stale stub guidance is separate skill-prose work.
 - **`Skill`-tool content injection under compaction is unverified.** All four
   guardrail skills `Read` their own `references/*.md` on demand, in-session. If
-  that read is as unreliable as #702 found the agent case to be, the failure
+  that read is as unreliable as the on-demand-`Read` measurement found the agent case to be, the failure
   looks identical to the original bug and nothing here catches it — §8 detects
   "skill never invoked," not "skill invoked, its own reference silently
   skipped."
@@ -2374,7 +2522,7 @@ completion instrument — it keys on the caller's `agent_id`/`agent_type`, a fac
 the PreToolUse hook stamps per call ("Why this needs no window", below). So the
 finding that closes §7's graduation says nothing about this one. What it does
 need is a sample, and the sample is thin: attribution rides only on runs made
-after PR #1027, which is 6 of 145 committed runs, one of them carrying any
+after the tool_calls-ledger attribution landed, which is 6 of 145 committed runs, one of them carrying any
 violation at all. Graduate on an accumulated count decided in advance — not on a
 date, and not on that single run.
 
@@ -2429,7 +2577,7 @@ compliant. Under this rule it is a bypass.
 
 1. A `general-purpose` subagent binds **none** of the `tools:` /
    `disallowedTools:` declarations that every other capability restriction in
-   this system depends on (`CLAUDE.md`, issue #939). It is precisely the shape
+   this system depends on (`CLAUDE.md`; ADR-0004). It is precisely the shape
    that escapes them, so "it read the doctrine" guarantees nothing enforceable.
 2. It cannot bind in production. A `PreToolUse` hook can see *who is calling*;
    it cannot see *whether doctrine was loaded*. A rule that is uncheckable at
@@ -2485,5 +2633,7 @@ DETECTOR=lane-check`. It is no longer read only inline.
 - `docs/architecture.md` §5 — the three capability-binding surfaces and which
   of them bind in production; §9.4 points at what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
-- Issue #1054 — retain a hosted tool-call ledger, then port §8. The one open
-  dependency named on this page; §8 cannot reach production without it.
+- **Retaining a hosted tool-call ledger, then porting §8, is not planned** — that
+  dependency was closed not-planned. §8 cannot reach production without it, so
+  reaching production would require reopening that decision
+  (`gh issue list --state all --search "hosted tool-call ledger"`).
