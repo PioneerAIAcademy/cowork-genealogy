@@ -69,7 +69,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const annotation: AnnotationFile = {
       run_log: filename,
       annotator: existing?.annotator || identity,
-      corrections: body.corrections,
+      corrections: body.corrections!,
     };
     try {
       const filePath = await writeAnnotation(runLogId, annotation);

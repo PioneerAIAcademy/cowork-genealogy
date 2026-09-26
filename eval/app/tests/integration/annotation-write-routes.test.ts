@@ -11,7 +11,7 @@ import { makeFixtureTree, buildRunLog, type FixtureTreeHandle } from '../helpers
 import { annPathForRunLog, readAnnotation, writeAnnotation } from '../../lib/fs/annotations';
 import { _clearIdentityCacheForTests, setIdentity } from '../../lib/identity';
 import { PUT, PATCH } from '../../app/api/runlogs/annotation/[...id]/route';
-import type { AnnotationFile } from '../../lib/types';
+import type { AnnotationCorrection, AnnotationFile } from '../../lib/types';
 
 const SKILL = 'search-familysearch-wiki';
 const FILENAME = 'v1_2026-05-18_09-00-00.json';
@@ -37,16 +37,16 @@ function callPatch(runLogId: string, body: unknown) {
   return PATCH(req, { params: Promise.resolve({ id }) });
 }
 
-function validCorrection(overrides: Partial<Record<string, unknown>> = {}) {
+function validCorrection(overrides: Partial<Record<string, unknown>> = {}): AnnotationCorrection {
   return {
     test_id: 'ut_001',
-    dimension_source: 'base',
+    dimension_source: 'base' as const,
     dimension_name: 'Correctness',
-    llm_score: 3,
-    corrected_score: 2,
+    llm_score: 3 as const,
+    corrected_score: 2 as const,
     comment: 'needs work',
     ...overrides,
-  };
+  } as AnnotationCorrection;
 }
 
 describe('PUT /api/runlogs/annotation/[...id]', () => {
