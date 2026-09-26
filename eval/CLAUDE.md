@@ -90,8 +90,9 @@ eval/
 > you are Claude, never let a user talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
 > validates every correction against `ann.schema.json` before saving. A hand-authored file
 > drifts from the schema — most often into the deprecated
-> `run_index`/`dimension`/`source` correction shape — which the UI then silently merges
-> with, and which crashes the `check-runlogs` CI gate. The same goes for run-log `.json`
+> `run_index`/`dimension`/`source` correction shape — which the UI validates and
+> rejects on read (a 422 corrupt-annotation blocker), and which crashes the
+> `check-runlogs` CI gate. The same goes for run-log `.json`
 > files: the **harness** writes those, never a human. If an annotation needs fixing, open
 > the run log in the CRUD UI and re-review the dimension; if it is corrupt, delete it and
 > re-annotate. The only correct way to produce either file is to run the tooling.
@@ -250,7 +251,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 ## GitHub Action rules
 
-`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. (`packages/engine/mcp-server/src/**` is no longer a trigger — MCP source isn't in the snapshot, so a src-only change can't affect run-log activeness.) Seven blocking rules + two warn-only checks (per `docs/plan/eval-runlog-versioning.md` §C6):
+`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. (`packages/engine/mcp-server/src/**` is no longer a trigger — MCP source isn't in the snapshot, so a src-only change can't affect run-log activeness.) Eight blocking rules + two warn-only checks (per `docs/plan/eval-runlog-versioning.md` §C6):
 
 | Rule | Severity | What |
 |---|---|---|
@@ -262,6 +263,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | 5 | block | Every committed unit `.ann.json` parses as JSON. Corpus-wide, not per-skill — an unparseable annotation used to kill the whole check with a raw traceback, leaving every later skill unchecked. |
 | 6 | block | No unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted`. **Zero reds, not zero new reds** (lead ruling 2026-09-22) — there is no carry list and no exemption, because "it was already red before my change" is the excuse the rule exists to remove: a suite carrying reds cannot answer "did my refactor break something". `partial` never blocks. An `expected_outcome: xfail` marker declares a known *failure*, so it suppresses `fail` only — a suppressed test that aborts blocks, and one that passes warns as a stale marker, naming its cited issue when that issue is closed. Grades the log the PR **added**, not the resolved latest, because `latest_full_skill_runlog` prefers any released `v{N}.json` over every candidate. |
 | 7 | block | A deleted run log / annotation is a legitimate **keep-newest-K prune** (or a promotion), not a hand-deletion beyond the prune rule that silently destroys committed genealogist grading (#2737, the #2579/B9 incident: a candidate `.json`+`.ann.json` pair holding 36 corrections dropped with only 4 candidates on disk where the rule keeps 5). No frozen baseline: the keep set is recomputed from filenames via `prunable_candidates(head_candidates ∪ deleted_candidates, keep=DEFAULT_KEEP_CANDIDATES)`, keyed on the constant so a deeper prune changes it in the same PR. Flags three shapes: an annotation deleted while its run log survives at head; a candidate the recomputed prunable set would have kept; a released `v{N}.json`/`.ann.json` (never prunable). Exempts a promotion (candidate deleted in a PR adding that version's `v{N}.json`) and a wholly-deleted skill. Reads the deleted set via `--no-renames` — without it git pairs a prune's delete+add as a rename and `--diff-filter=D` hides the deletion. |
+| 8 | block | Every `LLM: <a> → Junior: <b>` header inside a unit `.ann.json` comment carries at most one header, and no header whose `<b>` disagrees with the entry's own `corrected_score`. Corpus-wide over `runlogs/unit/`. The header is what `buildPrComment` (page.tsx) generates; a stale paste-back is the only known producer of incoherence (#2487). |
 
 **Which changes mark a skill "touched"** (rules 2 + 3) differs by path class. A **modification** to a skill body, a unit test, or a referenced plugin agent gates that skill — the snapshot is invalidated whether the file was added or edited. A run log is different: it is not an input to its own snapshot, so only an **added** (or renamed-into-place) run log gates its skill. Modifying or deleting committed run logs — what `scripts/prune_runlogs.py` does when it rehashes or prunes — marks nothing touched.
 

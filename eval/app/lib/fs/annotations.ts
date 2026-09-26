@@ -23,7 +23,7 @@ import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types'
  * If you change the correction shape in ann.schema.json, update this too.
  */
 const scoreSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.null()]);
-const correctionSchema = z
+export const correctionSchema = z
   .object({
     test_id: z.string().regex(/^ut_/),
     dimension_source: z.enum(['base', 'rubric']),

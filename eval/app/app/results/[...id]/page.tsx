@@ -27,7 +27,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { HSplit } from '@/components/layout/HSplit';
 import { JsonViewer } from '@/components/common/JsonViewer';
 import { ScenarioViewer } from '@/components/scenario/ScenarioViewer';
@@ -68,6 +68,18 @@ interface DimensionId {
   name: string;
 }
 
+/**
+ * Strip any prior pasted PR-comment block from a junior comment so a
+ * copy→paste→copy round-trip cannot nest blocks indefinitely.
+ * Keeps only text the annotator typed *before* the pasted block.
+ */
+function stripPrBlock(text: string): string {
+  // The block starts with **`ut_…`** — `source` / `name` and includes the
+  // LLM: → Junior: header, the quoted rationale, and the trailing Junior: line.
+  // Strip everything from the first **` header through the end.
+  return text.replace(/\*\*`ut_[^]*$/s, '').trim();
+}
+
 function buildPrComment(opts: {
   test_id: string;
   source: string;
@@ -78,13 +90,14 @@ function buildPrComment(opts: {
   juniorComment: string;
 }): string {
   const fmt = (s: 1 | 2 | 3 | null) => (s === null ? 'N/A' : String(s));
+  const cleaned = stripPrBlock(opts.juniorComment);
   const lines = [
     `**\`${opts.test_id}\`** — \`${opts.source}\` / \`${opts.name}\``,
     `LLM: ${fmt(opts.llmScore)} → Junior: ${fmt(opts.correctedScore)}`,
     '',
     '> ' + (opts.judgeRationale || '(no rationale)').replace(/\n/g, '\n> '),
     '',
-    `Junior: ${opts.juniorComment || '(no comment)'}`,
+    `Junior: ${cleaned || '(no comment)'}`,
   ];
   return lines.join('\n');
 }
@@ -387,6 +400,8 @@ const DimensionRow = memo(function DimensionRow({
   // commitComment below. `draft` re-syncs to `persistedComment` whenever the
   // correction changes from outside this row (e.g. "Agree All").
   const [draft, setDraft] = useState(persistedComment);
+  const draftRef = useRef(draft);
+  useEffect(() => { draftRef.current = draft; }, [draft]);
   const lastSyncedRef = useRef(persistedComment);
   if (persistedComment !== lastSyncedRef.current) {
     lastSyncedRef.current = persistedComment;
@@ -462,8 +477,12 @@ const DimensionRow = memo(function DimensionRow({
     commitComment(draft);
   };
   useEffect(() => () => {
-    if (commitTimer.current) clearTimeout(commitTimer.current);
-  }, []);
+    if (commitTimer.current) {
+      clearTimeout(commitTimer.current);
+      // Read from the ref, not the stale `draft` state captured at mount time.
+      commitComment(draftRef.current);
+    }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps -- flush on unmount only
 
   const handleFocus = () => onFocus({ test_id, source: dim.source, name: dim.name });
 
@@ -1247,7 +1266,6 @@ export default function RunLogDetailPage({
   // `%252e%252e` into `..` after normalisation has run. The four route handlers
   // were fixed; this fifth site was missed.
   const runLogId = id.join('/');
-  const qc = useQueryClient();
 
   const query = useQuery<Detail>({
     queryKey: ['runlog', runLogId],
@@ -1329,14 +1347,71 @@ export default function RunLogDetailPage({
             setSaving('error');
             return;
           }
+          const body = await res.json();
+          // Render from the server's response instead of triggering a refetch
+          // that would clobber in-progress local edits (issue #2487 step 4).
+          if (body.annotation) {
+            setLocalAnn(body.annotation);
+          }
           setSaving('saved');
-          qc.invalidateQueries({ queryKey: ['runlog', runLogId] });
         } catch {
           setSaving('error');
         }
       }, 400);
     },
-    [runLogId, qc],
+    [runLogId],
+  );
+
+  // Flush the pending save timer on unmount and on tab close.
+  useEffect(() => {
+    const onBeforeUnload = () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        const pending = localAnnRef.current;
+        if (pending) {
+          // Best-effort synchronous send — navigator.sendBeacon cannot set
+          // Content-Type to application/json, so use a keepalive fetch.
+          fetch(`/api/runlogs/annotation/${runLogId}`, {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(pending),
+            keepalive: true,
+          }).catch(() => {});
+        }
+      }
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+    };
+  }, [runLogId]);
+
+  // Per-correction save via PATCH — avoids the full-document race that PUT has
+  // and skips the refetch that clobbers in-progress edits (issue #2487).
+  const patchCorrection = useCallback(
+    async (c: AnnotationCorrection) => {
+      setSaving('saving');
+      try {
+        const res = await fetch(`/api/runlogs/annotation/${runLogId}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(c),
+        });
+        if (!res.ok) {
+          setSaving('error');
+          return;
+        }
+        setSaving('saved');
+      } catch {
+        setSaving('error');
+      }
+    },
+    [runLogId],
   );
 
   const setCorrection = useCallback(
@@ -1351,9 +1426,14 @@ export default function RunLogDetailPage({
         corrections: c ? [...filtered, c] : filtered,
       };
       setLocalAnn(next);
-      persist(next);
+      if (c) {
+        patchCorrection(c);
+      } else {
+        // Deletion — needs full-document PUT since PATCH only upserts.
+        persist(next);
+      }
     },
-    [persist],
+    [patchCorrection, persist],
   );
 
   const agreeAll = (test_id: string) => {
@@ -1392,6 +1472,7 @@ export default function RunLogDetailPage({
       ? tests.findIndex((t) => t.test_id === selectedTestId)
       : -1;
     const nextIdx = currentIdx >= 0 && currentIdx < tests.length - 1 ? currentIdx + 1 : 0;
+    setFocusedDim(null);
     setSelectedTestId(tests[nextIdx].test_id);
   }, [query.data, selectedTestId]);
 
@@ -1569,9 +1650,13 @@ export default function RunLogDetailPage({
           </Group>
         </Stack>
         <Group gap="xs">
-          <Text size="xs" c="dimmed">
-            {saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : saving === 'error' ? '⚠ save failed' : ''}
-          </Text>
+          {saving === 'error' ? (
+            <Badge color="red" variant="filled" size="sm">⚠ save failed</Badge>
+          ) : (
+            <Text size="xs" c="dimmed">
+              {saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : ''}
+            </Text>
+          )}
           <Tooltip label="Keyboard shortcuts (?)">
             <Button size="xs" variant="subtle" onClick={() => setHelpOpen(true)}>?</Button>
           </Tooltip>
@@ -1622,7 +1707,7 @@ export default function RunLogDetailPage({
             annotation={localAnn}
             sampled={sampled}
             selectedTestId={selectedEntry?.test_id ?? null}
-            onSelect={(id) => setSelectedTestId(id)}
+            onSelect={(id) => { setFocusedDim(null); setSelectedTestId(id); }}
           />
           {selectedEntry ? (
             <GradesPane
