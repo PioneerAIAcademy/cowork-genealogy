@@ -27,6 +27,9 @@ then held, and **background delegations turn out to be lost at every turn end, k
 not** — so the worker now forces delegations to the foreground (lead ruling), built the
 same day; **D17 PASSES** on the final run of
 2026-09-23 — criteria 1, 2 and 3 green on one valid run (see D17);
+**D18 run 2026-09-24** — both fixtures pass the fresh judge; against a same-week harness
+run on the same commit, bagley costs **1.37×** ($16.29 against $11.85), and paerai ~6.5× its
+three-day-old baseline after two ceiling kills and a resume that held (see D18);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -813,7 +816,9 @@ near zero without it. 96% of cache-creation tokens in the corpus are 1 h writes,
 4.6× cost multiplier rests on it — but see the corpus cache-window measurement under
 R2: on the autonomous corpus a 5-minute TTL loses 0.4–0.5% of cache reads, 1.5–1.7% of
 run cost, and the corpus's own 1 h writes came from the operator's subscription, which
-production on an API key never gets without the flag.
+production on an API key never gets without the flag. (Corrected 2026-09-24: priced on the main thread alone, as
+`usage.usage` requires, the corpus figure is 2.2–2.3%, and on the arm, whose delegations
+are forced to the foreground, 5.8% and 20.7% — see R2 and D18.)
 
 The last two are real measurements. The CLI does not strip features on Bedrock; it
 moves interleaved thinking, the 1M-context beta and **tool search** (on in production
@@ -1871,6 +1876,120 @@ without whichever Bedrock refuses.
   which #2850 would roll back — so without this the prototype could not run what the
   harness runs. Neither fixture's committed run had one, so the D18 numbers do not hinge
   on it.
+  **The runs, 2026-09-24**, on `main` at `2a553477f` (#2850, #2852 and #2859 in), after a
+  fresh `make e2e-login`, the first launch with `PROTO_TOKEN_MIN_LIFE=480` so the token
+  refreshed once at launch and never under a run, both with `ARGS="--ceiling-s 7200"`.
+  `proto-compare` graded both sides fresh (the fixture's Haiku judge, four calls); the
+  bagley harness run of the same day, from the same commit, is the comparison to read —
+  the July column is kept because the gap between the two harness runs is the plugin's
+  (the same-week bullet below):
+
+  | | bagley harness, 07-31 | **bagley harness, 09-24** | bagley proto | paerai harness, 09-21 | paerai proto |
+  |---|---|---|---|---|---|
+  | judge: verdict, f1 | pass, true | pass, true | pass, true | pass, true | pass, true |
+  | human blind grade: f1, proof quality | true, 2 | **partial**, 3 | — | true, 2 | — |
+  | cost | $5.29 | **$11.85** | $16.29 | $4.94 | ~$32.21 (list, off the transcript) |
+  | wall clock | 2,147 s | 4,544 s | 5,151 s, 1 attempt | 1,903 s | >14,400 s, 3 attempts |
+  | tool calls / delegations | 93 / 4 | 336 / 13 | 317 / 21 | 140 / 8 | 517 / 46 |
+  | `project.status` | — | — | `completed` | — | `active` (probable proof written) |
+
+  **bagley** (`sess_be2d0eaf5ad44d8d`): one attempt, `nudges` 2, 0 reauth hits, the one
+  deny a direct `Read` of `tree.gedcomx.json`, conclusion David Bagley at *probable*.
+  `OPENROUTER_API_KEY` was not yet in `eval/.env`, so its two `image_transcribe` calls got
+  the no-key error and the model named image confirmation as blocked. **Why 3× July's
+  run**, read
+  off the transcript (`session_entries`, per message its last entry — the sums equal the
+  `turns` row exactly): the main thread cost $6.38, the 21 subagents $9.44; output tokens
+  are 464 k against 87 k, 360 k of them subagents' (`extraction_append` payloads). Most of
+  that is the plugin, not the substrate: the harness run is from 2026-07-31, **345 plugin
+  commits** earlier (~4,800 changed lines in `research`, `person-evidence` and `agents/`),
+  and today's plugin delegated 13 extractions where July's did 2. The substrate's own
+  share is the cache: the harness corpus writes at the **1-hour** TTL (subscription OAuth,
+  `eval/harness/e2e/cache_window.py`), the prototype at the **5-minute** one (API key, as
+  production does), and a foreground delegation leaves the main thread idle — three
+  waits of 1,586 s, 436 s and 710 s each came back with `cache_read` 0 and rewrote the
+  context (272 k tokens, 37% of the main thread's writes, ~$1–1.50). Forced foreground
+  delegation (#2852) and the 5-minute TTL are now one measured cost, not two.
+  **paerai** (`sess_9c8d6603b9e54129`), the first run with the OpenRouter key: 108
+  `image_transcribe` calls (the harness run made none) — two delegations browsing the
+  Moorea birth-register volumes, a death record extracted from a transcription — and 46
+  delegations, the longest 1,151 s. Attempt 1 hit the 7,200 s ceiling (`read_timeout`,
+  `killed_worker`, requeued at 0); **the redelivery resumed the same SDK session and did
+  real work** (41 tool calls and 4 delegations in its first 1,825 s, one nudge) — the
+  resume after a ceiling kill on this arm, which 2026-09-20 had seen end in a 0-turn
+  result. Attempt 2 hit the ceiling too; the requeue raced an operator guard that stopped
+  `proto-shim` and `proto-worker` on the second `read_timeout`, so attempt 3 ran ~30 s
+  before the stop (`abandoned` 1), and `demo.py` reported FAIL at its 14,700 s deadline.
+  The answer and a *probable* proof were written; the run spent its last hours looking
+  for more. 0 reauth hits over ~4 h, 3 denied `Read`s of `research.json`, no
+  `person_warnings` with `live: true`, the longest http tool call 32.7 s (so the new
+  timeout was not exercised). **What the runs leave:**
+  - **`proto-compare` printed `$? / ? s / tokens ?/?/?/?` for paerai**: only a completing
+    attempt writes a turn's cost and tokens. Fixed: a turn with every token column NULL
+    now reads the session's transcript sums (`TRANSCRIPT_TOKENS_SQL`, the worker's
+    `TURN_USAGE_SQL` rule over the whole SDK session) and says so on the line; cost, SDK
+    turns and duration stay unknown. Checked against both live sessions before the
+    teardown — bagley's transcript sums equal its `turns` row.
+  - **The two token rows did not measure the same thing** — settled, and fixed. The
+    harness's were `ResultMessage.usage`, which counts the **main thread only**: on
+    paerai's 2026-09-21 log it equals the `main` rows of `usage.message_usage` exactly
+    (74 / 209,918 / 2,902,086), and the subagents add 59 / 223,369 / 1,182,935 on top —
+    `cache_window.py`'s "run TOTAL" is wrong on this point. The prototype's sum every
+    thread. `harness_record` now sums every thread where the log carries
+    `message_usage` (output adds `subagents[].turns[]`), giving paerai's harness
+    133 / 433,287 / 4,085,021 / 105,691, and tags a log without it (bagley's July one)
+    `MAIN THREAD ONLY`. Main thread against main thread, bagley reads 275,964 / 5,404,059 /
+    86,777 (harness) against 741,922 / 6,826,793 / 103,241 (prototype, off its transcript):
+    the output is close, and the cache writes are the 5-minute rewrites above.
+  - **The 5-minute TTL now costs far more than R2 measured.** Exactly, per message off
+    the two transcripts (a call more than 300 s after its thread's previous one, with
+    `cache_read` 0, rewrote its context): bagley 3 rewrites, 271,799 tokens, **5.8%** of
+    the run; paerai 17 rewrites, 1,935,599 tokens, **20.7%** — every one on the main
+    thread, against R2's 1.5–1.7% for the corpus. R2's figure was measured on runs whose
+    delegations went to the background, so the main thread kept calling; #2852 forces
+    them to the foreground, and the main thread now idles for the whole delegation. The
+    TTL is not the lever, though: re-priced under a 1-hour TTL (writes at $6/M, the
+    rewrites as reads) bagley costs **+12%** and paerai **−6%**. What costs is the idle
+    main thread, not the window length.
+  - **Nothing bounds image browsing** — not the plugin, not the arm. Whether to cap it is
+    the lead's decision, deferred on 2026-09-24.
+  - **The same-week harness run splits bagley's 3×: 60% plugin, 40% prototype.**
+    `make e2e-run TEST=bagley-father-1884` on 2026-09-24, from the prototype runs' own
+    commit (`2a553477f`, same engine and plugin), after the dead `wikiApiUrl` override
+    was removed from `~/.familysearch-mcp/config.json` (a first attempt was stopped at
+    4 min because every wiki call failed where the prototype's `tools` service had
+    worked): judge **pass**, f1 true, proof quality 3; **blind human grade f1 `partial`**,
+    proof quality 3 (below); **$11.85**, 4,544 s, 336 tool calls,
+    184 SDK turns, 13 delegations, 3 nudges; all-thread tokens 283 / 1,030,289 /
+    10,631,667 / 260,928, every write at the 1-hour TTL. Against July's $5.29 the plugin
+    added **$6.56**; against it the prototype adds **$4.44** — same week, the prototype
+    costs **1.37×** the harness, not 3×. The prototype's extra is where the analysis above
+    puts it: cache writes 1.56 M against 1.03 M (the 272 k main-thread rewrites, and 21
+    delegations against 13, each opening a fresh cache) and output 464 k against 261 k
+    (the eight extra delegations' `extraction_append` payloads); cache reads are level
+    (10.0 M against 10.6 M). One run a side, so the delegation count — which drives most
+    of the gap — may be sampling rather than substrate. The harness run's `compliance`
+    reads FAIL on three guardrail bypasses the detector credits to `Skill` calls only,
+    the artefact paerai's baseline carries too. **Graded blind 2026-09-25** (issue #2904,
+    PR #2906, `run-2026-09-25_01-42-24.ann.json`), after a first grade anchored on the
+    judge output was deleted (`calibrate_judge` counts every complete annotation as blind
+    whatever its notes say): **f1 `partial`**, proof quality 3. The grader's reasons: two
+    David Bagleys in the tree, the linked one (I1) with no facts, though the agent's own
+    sources gave his birth (22 Feb 1777, Newton, New Hampshire); and R4, the link from
+    Sarah Sally Andrews (LVDV-6MK) to William as his mother, deleted. So the judge
+    over-credited this run's f1 — a recorded judge/human disagreement for the
+    calibration sweep. **The prototype's bagley has a judge grade only.** Read off its
+    export, on the grader's three points: one David Bagley, carrying the 1777 New
+    Hampshire birth, his 1854 death and four census residences; R4 kept, plus a
+    duplicate mother link R8. That is a difference to grade, not a quality result: no
+    human has graded the prototype's tree. paerai's baseline is three days old, but its
+    prototype run had image reads the baseline never attempted, so its ratio is not a
+    substrate figure either.
+
+  Records (gitignored): `apps/server/proto/exports/proj_bagley-father-1884_072ee7/` and
+  `proj_paerai-teupooihi-spouse_1a8734/`. The stack was torn down with `proto-down -v`,
+  which also cleared paerai's abandoned queue message — any later `up` would otherwise
+  have started a fourth, billed attempt.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
   **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
   [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as
@@ -2129,7 +2248,9 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
    gateway path the TTL is five minutes whatever the client asks for (R2), so the
    number to carry is the corpus-derived cost of a five-minute window: **measured
    2026-09-11 over 148 runs — 0.4–0.5% of cache reads become writes, $20–23 on $1,298
-   of runs (1.5–1.7%); human think time between turns is not in the corpus.**
+   of runs (1.5–1.7%); human think time between turns is not in the corpus.** Corrected
+   2026-09-24: 2.2–2.3% on the main-thread pricing `usage.usage` requires, and 5.8% and
+   20.7% on the two D18 runs, whose delegations are forced to the foreground (R2, D18).
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell? **Measured 2026-09-10 on the
@@ -2190,7 +2311,15 @@ unverifiable. Two measurements are ours. The cost of a five-minute window, **mea
 re-priced as a 5-minute write; main-thread gaps over 300 s are median 0 per run, p90 2,
 max 4, in 63 of 148 runs, none over 1,800 s; 0.4–0.5% of cache reads become writes,
 $20–23 against $1,298 of runs (1.5–1.7%), per run median $0 / p90 $0.41–0.55 / max
-$1.01.** That is the whole production delta: the corpus's writes were 1 h only because
+$1.01.** **Superseded for the hosted path on 2026-09-24 (D18):** that corpus delegated to
+the background, and #2852 forces delegations to the foreground, so the main thread now
+idles through each one — measured exactly on the two D18 transcripts, the lost reads are
+5.8% and 20.7% of run cost, all main-thread; the figure here stands as a measurement of
+that corpus, not of the arm. It also rests on `usage.usage`, which is the main thread's
+alone (D18), not the run total: `cache_window.py` spread it over subagent calls too, and
+priced on the main thread only (fixed the same day) the corpus reads 0.7% of reads and
+**2.2–2.3%** of run cost — $34.73–35.75 over 177 costed runs, where the unfixed rule on
+that same corpus reads 1.6–1.7%. That is the whole production delta: the corpus's writes were 1 h only because
 the e2e harness runs on the operator's Claude subscription, whose OAuth allow-list grants
 1 h; on an API key — the hosted path, and P3b's own first-party control — writes are
 5-minute unless `ENABLE_PROMPT_CACHING_1H=1` is set, and asking for 1 h would have cost

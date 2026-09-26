@@ -246,6 +246,31 @@ def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
     return mapping
 
 
+def skills_gated_by_agent(
+    agent: str, referencing: dict[str, set[str]], tests_root: Path | None = None
+) -> set[str]:
+    """The skills whose run-log snapshot embeds `agents/<agent>.md`.
+
+    Every skill whose SKILL.md references `@plugin:<agent>` (`referencing`, from
+    `skills_referencing_agents`), and also the agent's OWN agent-keyed suite
+    (issue #1253). `skills_referencing_agents` scans SKILL.md bodies, so it can only
+    reach suites that have one. An agent-keyed suite has none: `gps-mentor`'s tests
+    live at eval/tests/unit/gps-mentor/ and key on the agent file directly, and a
+    skill converted to an agent keeps its suite while its SKILL.md goes. Without
+    this, editing that agent gates only the skills that happen to name it and
+    leaves the suite that actually grades it ungated.
+
+    Keyed on directory existence rather than a name list, so a suite arms itself
+    when it lands instead of waiting for someone to also remember to edit a
+    constant here — the same discipline as the `exempt_suiteless` filter.
+    """
+    out = set(referencing.get(agent, set()))
+    # Read at call time, not bound as a default: tests monkeypatch TESTS_UNIT_DIR.
+    if (Path(tests_root if tests_root is not None else TESTS_UNIT_DIR) / agent).is_dir():
+        out.add(agent)
+    return out
+
+
 def skills_referencing_fixtures(tests_root: Path) -> dict[tuple[str, str], set[str]]:
     """Map each shared-fixture reference key -> the skills whose unit tests
     reference it, so a changed fixture can mark those skills touched (rule 2).
@@ -1107,30 +1132,13 @@ def main() -> int:
             touched_fixtures.add((m.group(1), m.group(2)))
             touched_fixture_paths.add(path)
 
-    # A touched plugin agent gates every skill whose SKILL.md references
-    # `@plugin:<name>` — the agent body is part of those skills' run-log
-    # snapshots, so editing it outside eval discipline must fail rule 2 — and
-    # also its OWN agent-keyed suite, if it has one.
+    # A touched plugin agent gates every skill whose snapshot embeds it — see
+    # skills_gated_by_agent, shared with check_slot_queue.py so the PR-time slot
+    # warning and this rule cannot disagree about which skills an agent reaches.
     if touched_agents:
         referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
         for agent in sorted(touched_agents):
-            touched_skills |= referencing.get(agent, set())
-            # The agent's own suite (issue #1253). `skills_referencing_agents`
-            # scans SKILL.md bodies for `@plugin:<name>`, so it can only reach
-            # suites that have a SKILL.md. An agent-keyed suite has none:
-            # `gps-mentor`'s tests live at eval/tests/unit/gps-mentor/ and key
-            # on the agent file directly. Without this line, editing
-            # agents/gps-mentor.md gates only `research` — the one skill whose
-            # SKILL.md happens to reference it — and leaves the suite that
-            # actually grades the agent ungated, which is the same staleness
-            # the snapshot rule closes from the other side.
-            #
-            # Keyed on directory existence rather than a name list, so a suite
-            # arms itself when it lands instead of waiting for someone to also
-            # remember to edit a constant here — the same discipline as the
-            # `exempt_suiteless` filter below.
-            if (TESTS_UNIT_DIR / agent).is_dir():
-                touched_skills.add(agent)
+            touched_skills |= skills_gated_by_agent(agent, referencing)
 
     # A touched shared fixture gates every skill whose tests reference it — the
     # fixture is embedded in those skills' run-log snapshots, so editing it

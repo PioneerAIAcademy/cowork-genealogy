@@ -189,7 +189,7 @@ qualified name is equally wrong: `mcp__genealogy__*` resolves under
 `.mcpb` either through a remote-device bridge as
 `mcp__remote-devices__Genealogy_Research__*` or under the bare `display_name` as
 `mcp__Genealogy_Research__*` — and the spelling a Cowork session exposes has been
-observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+observed to move (bare spelling live 2026-08-04/05, absent in the 2026-08-15
 censuses; see ADR-0004). Entries are matched exactly with no fallback, and an
 agent whose entries all miss is refused a spawn outright — which is what happened
 to `record-extractor` when its entries missed the live spelling, before
@@ -226,7 +226,7 @@ does not gather new evidence itself. `research_query`, `project_context` and `si
 are not an exception — the first two are read-only projections of what the researcher
 already recorded, and the third returns only verdicts already written.
 
-**Why the two read tools are on the list (added 2026-07-31, issue #693).** Without
+**Why the two read tools are on the list (added 2026-07-31).** Without
 them the agent's only way to see project state was `Read`, and its body told it to
 read `research.json` directly. Measured across 24 e2e runs (2026-07-25 → 07-30), that
 made the mentor the **largest single reader of `research.json` in the system — 112 of

@@ -28,21 +28,138 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 21, `hint-samples.csv` row 640,
-flag `adds_spouse,adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929", a birth entry of 30 August 1883 at Genova for Maria Clementina Angelica Gentile Dondero, naming parents Pietro Dondero and Carmela Cavagnaro.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Pietro Dondero as her husband and the 1883 daughter as hers, plus a `required` finding that the report documents
-the rejection.
+**Adjudicated: the hint is a false match** — spec §3.6 outcome (c), no findable
+substitute. Second opinion given by **Ikennaya Mbadiwe**, as issue #2314 requires
+for this fixture; the identification of the subject's own marriage is his
+finding.
 
-The name fits and the age is the question. The subject's own third given name is Carmela and her surname is Cavagnaro, so "Carmela Cavagnaro" is a form she could plausibly be registered under, and the family's records are Genovese throughout even though she was born in Lima. But a daughter born 30 August 1883 makes her **17** at the birth — legal and not rare in 1880s Liguria, yet young enough that it has to be established rather than assumed, and no marriage to a Dondero appears anywhere in the tree.
+**Retrieval was partly tool-assisted** (§3.6 asks that this be recorded). The
+research was done by hand on familysearch.org; afterwards the marriage record
+`ark:/61903/1:1:X3L8-MFLR` was re-read with the `record_read` MCP tool against
+live FamilySearch to confirm its contents, and `image_read` / `image_transcribe`
+were attempted on the register scan and failed (see below). No other record here
+was tool-retrieved, and the identity judgement was the genealogist's throughout.
 
-The weight against is that Carmela Cavagnaro is an ordinary Ligurian name in the one city where the surname is commonest. The index gives the mother no age, no patronymic and no birthplace, so nothing in the hint itself distinguishes this Carmela from any other.
+The hint record is `ark:/61903/1:1:6BHW-1HG3` — "Italia, Genova, Genova, Stato
+Civile (Tribunale), 1866-1929", a birth entry of 30 August 1883 at Genova for
+Maria Clementina Angelica Gentile Dondero, naming parents Pietro Dondero and
+Carmela Cavagnaro. That ark appears nowhere else in this fixture folder, so it is
+recorded here for the next reader.
 
-The reviewer should also resolve a defect in the tree first: the subject is given **two sets of parents** — Giuseppe Cavagnaro and Maddalena Boitano, and Angelo Vaglio and Maria Fereccio — with no indication which is right, and one of the tree's four sources belongs to a Paolo Andrea Vaglio. Until that is settled the tree cannot be used to confirm or refute anything about her.
+**What decided it: the subject has a documented husband, and he is not Pietro
+Dondero.** The Genova civil registration at `ark:/61903/1:1:X3L8-MFLR` records
+her marriage to **Paolo Andrea Vaglio** on **26 Jul 1900 at Bogliasco**. Read
+directly, the record names the bride **Matilde Carmela Emanuela Cavagnaro**,
+born **1866 at Lima**, *Maestra Elementare*, daughter of **Giuseppe** and
+**Maddalena Bitano** — parents, birth year and birthplace all matching
+`G4Z4-RJ1`. That is a firm identification of the tree person, not a namesake.
+(On birthplace, note what the agreement is worth: the record's *Lima* agrees
+with the **tree's own claim**, which is itself unsourced, not with independent
+record evidence — her birth entry says Genova. The identification rests on the
+parents and the birth year; Lima is corroboration of the tree, not of the
+record. See the birthplace conflict below.)
+The groom is Paolo Andrea Vaglio, b. 1867 Bogliasco, *Segretario Comunale*, son
+of **Angelo** and **Maria Fereccio**.
 
-Note for the corpus: the batch CSV labels this row Peru because she was born in Lima; every record involved is Genovese.
+The Carmela Cavagnaro of the hint is a different woman: married to Pietro
+Dondero and bearing him children at Genova in at least 1883 (the hint record)
+and 1891 (Attilio Omero Dondero, `ark:/61903/1:1:X3TM-QPSS`) — a settled
+Genovese household distinct from the subject's. Some records reportedly name her
+**Carmela Rosa Cavagnaro**; that reading comes from the second opinion and no
+ark for it is recorded here.
+
+The hint identifies its mother only *indirectly*: the 1883 index gives her no
+age, no patronymic and no birthplace, so name alone is all it offers, and the
+name recurs in the district. The subject's own third given name being Carmela is
+what drew the match, and it was never enough. The decisive work was not on the
+hint record at all — it was researching the subject's parents and marriage.
+
+**What this does not establish — read before relying on the fixture.** The
+Vaglio marriage is dated **1900**, seventeen years after the hint birth, and the
+indexed record carries **no *stato civile*** for the bride (*nubile* vs
+*vedova*). So it does not by itself exclude an earlier marriage to Dondero
+followed by widowhood; the rejection rests on the identification and on the
+Dondero household being separately documented, not on chronology. Reading the
+bride's civil status off the register image
+(`ark:/61903/3:1:3QS7-L9WL-JC3N`) would close that gap outright — *nubile* would
+make the rejection airtight. It was attempted here and not completed: the scan
+is 1.8 MB, too large for `image_read`, and no OpenRouter key was configured for
+`image_transcribe`. A reviewer wanting the conclusive form should ask for that
+one field.
+
+**What was searched and came up empty.** Genova birth records were searched for
+an entry linking Giuseppe Andrea Cavagnaro to Matilde Carmela Emanuela
+Cavagnaro; no record was found. No marriage between the subject and Pietro
+Dondero was found, and no substitute answer — a different 1883 child for
+Matilde — turned up to put in the hint's place. That absence is why this is
+outcome (c) rather than (b).
+
+**Parentage, and a correction to this fixture's own premise.** The subject's
+parents are **Giuseppe Cavagnaro and Maddalena Boitano** (`G9WF-FJQ` /
+`G4Z4-RJM`), married 28 Apr 1853 at Favale di Malvaro. The second parent set in
+the starting tree — Angelo Vaglio (`PQWR-XH7`) and Maria Fereccio (`PQWR-QB9`),
+who carry no facts at all — is wrong, but **not for the reason issue #2314
+assumed**. Those three "Vaglio" sources (`7PM9-ZQP`, `7PM9-W4L`, `7PM9-W5S`) are
+not mis-attached strangers' records: they are the subject's **own marriage
+record**, indexed under the groom's line as *Paolo Andrea Vaglio and Angelo,
+26 Jul 1900*. Reading the record confirms it — it carries `ParentChild` edges
+from **Angelo** and **Maria Fereccio** to *Paolo Andrea Vaglio*, and separately
+from **Giuseppe** and **Maddalena Bitano** to the bride. So Angelo Vaglio and
+Maria Fereccio are the **groom's** parents, the subject's parents-in-law,
+attached to her in error from that record. The sources belong on her; the parent
+edges derived from them do not. `SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her
+birth entry, 20 May 1866.
+
+(The three cite two ark families — `X3L8-MFL*` and `X3G7-XG5*` — and their
+`url` and `citation` fields disagree on the ark, as issue #2314 noted. They
+resolve to per-person arks on the same 26 Jul 1900 act; `X3L8-MFLR` is the
+bride's persona, which is why it is the one cited above.)
+
+**Nothing was corrected upstream.** Ikennaya's review recommends detaching the
+Vaglio parents on the live tree; that is deliberately **not** done here, because
+issue #2314 forbids editing live FamilySearch during adjudication so
+`starting-tree.gedcomx.json` and `unstripped-tree.gedcomx.json` stay
+byte-identical and `snapshot --check` can still audit drift. Tracked in issue
+#2908.
+
+**A birthplace conflict, documented not resolved.** Her birth record
+(`ark:/61903/1:1:QVR6-Q9DC`) gives **20 May 1866 at Genova**. The marriage record
+reports **Lima**, and the tree follows Lima with no day or month. The birth
+record is the stronger evidence, but the conflict is recorded here rather than
+silently resolved. It is deliberately *not* encoded as a graded finding: the
+fixture's question is about her spouse, and grading a birthplace conflict would
+widen what the benchmark scores beyond the question asked.
+
+**On the age question — settled: 17.** Issue #2314 asked whether the subject was
+16 or 17 on 30 August 1883, her tree birth fact being year-only (`1866`).
+`SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her birth entry, **20 May 1866**, so
+she was 17 years 3 months. That was legal and unremarkable in 1880s Liguria, so
+age never could have disproved the hint on its own — and in the event the call
+turned on her marriage, not her age.
+
+**On the avoid guard and the two WARNs.** `f1` carries `polarity: "avoid"`, which
+is what switches `apply_avoid_guard` on for this fixture — before adjudication it
+had no polarity and the guard returned early, so the exposure below **arrives
+with this fixture's resolution**, it is not pre-existing.
+
+`make e2e-validate` emits a name-overlap WARN on `f2` against `G4Z4-RJ1`. It is
+harmless: the guard exempts `subject_person_ids`, which is `["G4Z4-RJ1"]` in
+`starting-research.json`, and nothing was stripped in this genre so the subject
+legitimately stays in the tree. **That exemption is keyed on PID and spares her
+alone.**
+
+`f1`'s `wrong_candidate.name` is deliberately the bare string `"Pietro Dondero"`.
+`finding_name_tokens` harvests *every* word of a `name` leaf, so a descriptive
+value such as "Pietro Dondero, husband of a Carmela Cavagnaro at Genova" would
+put `carmela` and `cavagnaro` into the avoid bag — and since the exemption
+covers only `G4Z4-RJ1`, a good run that stubs the *other* Carmela Cavagnaro as a
+distinct woman (a reasonable thing to do when the question is whether the two are
+the same, and the agent never sees this file) would be force-failed for it.
+Measured against the shipped guard: with the bare name, a tree stubbing the other
+Carmela returns `f1=true`, a tree over-claiming Dondero onto the subject still
+returns `f1=false`, and a clean tree returns `f1=true`. **Do not re-expand that
+leaf into a description.** Put descriptive text in the sibling `note`, which the
+matcher does not collect.
+
+Note for the corpus: the batch CSV labels this row Peru because she was born in
+Lima; every record involved is Genovese.
