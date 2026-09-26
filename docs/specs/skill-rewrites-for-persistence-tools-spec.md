@@ -7,10 +7,10 @@
 >
 > **Do this after the tools land**, not before — a rewrite is only as stable as
 > the tool contract it targets, and the contracts are now shipped:
-> - **Wave 1** (on `main`, #397): `merge_record_into_tree`, `merge_tree_persons`,
+> - **Wave 1** (on `main`): `merge_record_into_tree`, `merge_tree_persons`,
 >   `research_log_append`, and the `record_search`/`fulltext_search` `projectPath`
 >   staging + shared write layer.
-> - **Wave 2** (branch `deterministic-skill-tools`, PR #400): `convert_calendar`,
+> - **Wave 2** (branch `deterministic-skill-tools`): `convert_calendar`,
 >   `tree_edit`, `research_append`.
 
 This is the contract for editing the **`SKILL.md` files and their `references/`**

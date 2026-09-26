@@ -46,6 +46,7 @@ import json
 import re
 import shutil
 import stat
+import sys
 import tempfile
 import uuid
 from pathlib import Path
@@ -58,6 +59,9 @@ from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage
 
 from proto.worker import deny, options, worker
 from proto.worker.session_store import entry_rows
+
+#: Windows chmod only toggles read-only, so a file mode never reads back as 0o600 there.
+POSIX_MODES = sys.platform != "win32"
 
 SERVER = Path(__file__).resolve().parents[1]
 PROTO = SERVER / "proto"
@@ -775,7 +779,8 @@ def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_
     # A str is handed to the CLI as `--mcp-config <path>`; a dict would be json.dumps'd
     # onto argv, where the bearer and the S3 secret are visible in `ps`.
     assert isinstance(opts.mcp_servers, str) and opts.mcp_servers == str(tmp_path / "mcp.json")
-    assert stat.S_IMODE(Path(opts.mcp_servers).stat().st_mode) == 0o600
+    if POSIX_MODES:
+        assert stat.S_IMODE(Path(opts.mcp_servers).stat().st_mode) == 0o600
     server = _server(opts)
     assert server["type"] == "stdio"
     assert server["command"] == "env", "the fork strips the model key the CLI holds"
@@ -788,6 +793,7 @@ def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_
     assert "UNRELATED" not in env and "ANTHROPIC_API_KEY" not in env
 
 
+@pytest.mark.skipif(not POSIX_MODES, reason="Windows has no POSIX file modes")
 def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
     path = tmp_path / "mcp.json"
     path.write_text("{}", encoding="utf-8")

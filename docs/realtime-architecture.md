@@ -105,7 +105,8 @@ to survive a pause, or to detect liveness.
   plane is not in the data path. That is the affinity fix — affinity removed, not
   routed around.
 - **Sandbox = the per-session server.** Today's relay (`ws.py` +
-  `live_session.py` + the `local.py:195` `rglob`-mtime `/project` watch) is
+  `live_session.py` + the `rglob`-mtime `/project` watch, `sandbox_server.py`'s
+  `_watch_loop`) is
   **relocated** to run inside the sandbox as its boot command, exposing one
   authenticated WSS port. Inside the sandbox the relay is *simpler* than on the
   control plane: no `SandboxProvider` indirection, `/project` is local, and a
@@ -288,11 +289,12 @@ Durability splits in two; only one half is deferred.
 - New: a signed session-token mint + verify helper, shared with the sandbox server.
 
 **Sandbox**
-- A thin WSS server (reuse `ws.py` + `live_session.py` + the `local.py:195` watch),
+- A thin WSS server (reuse `ws.py` + `live_session.py` + the `/project` watch,
+  `sandbox_server.py`'s `_watch_loop`),
   set as the sandbox boot command (`apps/server/sandbox/e2b.Dockerfile` `CMD`).
   Verifies the token at handshake. **No Ably SDK** — no broker.
-- `app/agent/runner.py`: implement `interrupt` (currently ignored at `runner.py:65`)
-  — a priority path that cancels the in-flight `ClaudeSDKClient` turn.
+- `app/agent/runner.py`: the `interrupt` priority path (the `mtype == "interrupt"`
+  branch) that cancels the in-flight `ClaudeSDKClient` turn.
 
 **Client (`apps/web`)**
 - `makeSessionConnection` points `WsSessionConnection` at `wssUrl`; reconnect-on-
@@ -398,9 +400,10 @@ the reset.
 
 - `WsSessionConnection`, `makeSessionConnection` (`apps/web/src/transport`) — reused,
   just a different URL.
-- `ws.py` relay + `live_session.py` + `local.py:195` watch — **relocated** into the
+- `ws.py` relay + `live_session.py` + the `/project` watch (`sandbox_server.py`'s
+  `_watch_loop`) — **relocated** into the
   sandbox, not rewritten.
-- `Project.sandbox_id` + `last_active` (`apps/server/app/models.py:45,52`) — the
+- `Project.sandbox_id` + `last_active` (`apps/server/app/models.py`, `class Project`) — the
   janitor's keys; no new persistence.
 - `local_ws` realtime + `/ws/sessions/{id}` — kept for local dev.
 - `viewer-ui` `ResearchTransport` — socket-agnostic, untouched.

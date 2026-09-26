@@ -145,6 +145,12 @@ two reader families handle it differently (`harness/since_window.py`):
   is NOT windowed and prints no window — that corpus is small and hand-collected,
   and a window would discard the sample rather than refresh it. It also ignores
   `TEST`/`WINDOWS`/`SINCE`/`REPLAY`, and says so on stderr (issue #1558).
+  **And one aggregating reader outside that list defaults the other way:**
+  `make e2e-writer-attribution` reads the whole corpus, because it answers a
+  structural question — does the ownership manifest name the writers that exist —
+  rather than tallying a rate. A gap does not become untrue by ageing, and a
+  window reads a strict subset of the same pairs as "fewer gaps". `SINCE=14` for
+  the house window.
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every

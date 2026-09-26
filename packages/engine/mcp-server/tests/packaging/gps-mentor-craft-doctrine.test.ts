@@ -33,9 +33,10 @@ import { fileURLToPath } from "node:url";
 // section first means an incidental mention elsewhere cannot satisfy anything
 // here.
 //
-// This does not test agent BEHAVIOR — nothing here can. The eval harness keys
-// every unit test to a skill directory and gps-mentor is an agent, so it has
-// no suite (issue #1253). This guards the instructions only.
+// This does not test agent BEHAVIOR — nothing here can. Behaviour is covered
+// by eval/tests/unit/gps-mentor/, which reaches the agent through the
+// direct-agent arm rather than a skill directory. This guards the
+// instructions only.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const AGENT = join(here, "..", "..", "..", "plugin", "agents", "gps-mentor.md");

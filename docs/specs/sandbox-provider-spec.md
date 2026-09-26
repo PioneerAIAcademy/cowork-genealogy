@@ -37,7 +37,7 @@ differ on the axes below.
 |---|---|---|---|
 | Isolation primitive (PII) | Firecracker microVM, own guest kernel/tenant | Sysbox container, shared host kernel (+ `Privileged:true`) | **E2B** |
 | Network egress | open by default, no gate | gated behind Tier-3 $500 prepaid top-up | **E2B** |
-| Persistence / resume | pause = FS+memory, indefinite; resume ~1s (bugs #884/#987 closed) | stop/archive + S3 volumes, FS-only; resume-by-id | **E2B** |
+| Persistence / resume | pause = FS+memory, indefinite; resume ~1s (pause/resume bugs fixed) | stop/archive + S3 volumes, FS-only; resume-by-id | **E2B** |
 | Self-host license | Apache-2.0 | AGPL-3.0 (copyleft) | **E2B** |
 | Self-host isolation | keeps Firecracker microVM | stays Sysbox shared-kernel | **E2B** |
 | Compliance **documented today** | contested/unverified (DPA/SOC2/HIPAA not on E2B's own pages) | DPA + HIPAA BAA + SOC2 Type I documented | **Daytona** |
