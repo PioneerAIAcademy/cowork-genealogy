@@ -1,0 +1,222 @@
+{
+  "run_log": "v1_2026-09-25_22-35-39.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the skill’s handling of Patrick Flynn (I1). It accurately reports that no genealogical warnings were found, that the offline consistency checks passed, and that no FamilySearch quality score applies because the individual is not linked to FamilySearch. It also correctly avoids treating the resolved birthplace conflict (c_001) as an active warning, following the per-test requirement. All claims are supported by the available tool responses."
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the request to check Patrick Flynn’s evidence for warnings or impossibilities. It performed the required checks, including the offline person_warnings review and the person_quality assessment, and clearly reported the results. The response correctly stated that no warnings were found and that no FamilySearch quality score was available because the person was not linked to FamilySearch. No required part of the requested review was omitted."
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The project_context call used the correct projectPath, and the person_warnings and person_quality calls correctly used personId: \"I1\". All arguments matched the expected fixture behavior semantically, with no argument errors or mismatches."
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated Patrick Flynn’s record for impossibilities and anomalies. The person_warnings result showed no warnings, and the skill appropriately avoided false positives such as treating the 48-year gap between 1860 and 1908 as an impossibility. The response followed the per-test override and accurately reported that no genuine genealogical anomalies were detected."
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly handles the severity-classification dimension. Since no warnings were found, there are no issues to classify by severity. The skill appropriately reported zero warnings and did not invent severity levels or categories for nonexistent problems. This matches the expected behavior."
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No warnings were found for Patrick Flynn, so there are no actionable items to classify or address. Per the rubric, this dimension applies only when warnings exist that require follow-up actions. Since the project is clean, this dimension should be scored null/N/A."
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill handled the FamilySearch quality check correctly. It used the person_quality result for Patrick Flynn (I1), accurately reported the reason (not_familysearch_id), and clearly separated this from the offline warnings assessment. It did not treat the absence of a FamilySearch quality score as a problem or contradiction, and it preserved the correct conclusion that no warnings were present."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated both Patrick Flynn (I1) and Thomas Flynn (I2). It accurately reported zero genealogical warnings for both individuals based on the tool responses and correctly handled the not_familysearch_id results without treating them as problems. The timeline consistency assessment is supported by the available data, and no unsupported claims or fabricated information were introduced."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the user’s request for final warnings before closing the project. It checked both Patrick Flynn (I1) and Thomas Flynn (I2), ran the required person_warnings and person_quality checks, and clearly reported the results. It correctly identified that there were no offline warnings and that no FamilySearch quality scores were available because neither person was linked to FamilySearch. The response provided a complete and accurate project-status summary with no unsupported claims."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The project_context call used the correct projectPath, the person_warnings calls correctly used personId values I1 and I2, and the person_quality calls used the same valid identifiers. All arguments matched the expected patterns, no fixture_not_found errors occurred, and no unnecessary or incorrect parameters were included."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated the project for genealogical impossibilities and anomalies. The person_warnings results showed warningCount: 0 for both individuals, and the skill appropriately reported no issues. It correctly avoided false positives by recognizing that the birth estimate, census ages, and death date are internally consistent and plausible. No unsupported warnings or fabricated concerns were introduced."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly handles the severity-classification dimension. Since no warnings were found for either person, there are no issues requiring severity levels or action categories. The skill appropriately reported that no genealogical warnings were present and avoided assigning severity tiers where no problems existed. This is the correct handling for a clean project."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No warnings were found in the project, so there are no issues requiring actionability assessment. This dimension applies only when warnings exist and need follow-up actions. Since the skill correctly reported a clean project with zero warnings, there is nothing to make actionable."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the FamilySearch quality checks for both individuals. It accurately reported the not_familysearch_id results separately from the offline warnings, preserved the person_warnings findings, and did not treat the lack of a FamilySearch quality score as a genealogical problem. The response maintained the distinction between warning checks and quality availability, with no fabricated issues or incorrect escalation."
+    },
+    {
+      "test_id": "ut_check_warnings_s6v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is a correctly handled negative test. The skill appropriately declined to perform the check-warnings task and routed the request to source-evaluation, which is the correct skill for evaluating whether attached sources are reliable or appropriate. No tool calls or unnecessary analysis were performed, matching the expected behavior. The routing decision was correct."
+    },
+    {
+      "test_id": "ut_check_warnings_s6v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the negative test. Completeness is based on whether it declined its own task and routed appropriately. It did not run person_warnings or person_quality, and it avoided producing substantive check-warnings output when the request belonged to source-evaluation. The decline/routing behavior was complete and appropriate, with no missing actions required from the skill."
+    },
+    {
+      "test_id": "ut_check_warnings_s6v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and that was the correct behavior for this negative test. Since the request should have been routed to source-evaluation rather than handled by check-warnings, there were no appropriate tool calls for this skill to perform. This dimension is therefore not applicable."
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is a correctly handled negative test. The skill appropriately declined to perform the check-warnings task and routed the request to conflict-resolution, which is the proper skill for handling a birthplace mismatch. It made no unnecessary tool calls and produced no conflicting analysis, allowing the appropriate workflow to handle the issue. The routing behavior was correct."
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the negative test. Completeness is determined by whether it declined to perform the check-warnings task and allowed the appropriate skill (conflict-resolution) to handle the birthplace mismatch. It did not attempt warning checks or produce unrelated analysis, so the handoff behavior was complete and correct."
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and this was the correct behavior for the negative test. Since the skill was expected to decline rather than execute its own workflow, there were no tool arguments to evaluate. Per the base rule, when zero tool calls occur, the Tool Arguments dimension is not applicable."
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated Inger Hole (KD96-TV3). It accurately reported the clean results from both checks: no genealogical warnings and no FamilySearch quality issues. The response reflected the tool outputs accurately, including the overall quality score of 1.0, without adding unsupported claims or fabricated information."
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the user’s request about Inger Hole’s data quality. It used both required checks (person_warnings and person_quality), reported the results from each, and provided a complete assessment of the person’s data status. No required information was omitted, and the response remained consistent with the tool results."
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. Both person_warnings and person_quality calls used the correct personId: \"KD96-TV3\" and included the appropriate projectPath. The arguments matched the expected tool patterns, and no identifier or parameter errors occurred. The tool calls were properly formed and semantically appropriate."
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated Inger Hole’s record for genealogical impossibilities and anomalies. The person_warnings tool returned zero warnings, and the skill accurately reported a clean status. It appropriately avoided false positives such as birth-after-death, marriage-before-age-14, or lifespan-over-120 issues. No unsupported warnings or fabricated concerns were introduced."
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly handles the severity-classification dimension. Since no warnings were found for Inger Hole, there are no issues requiring severity levels or categories. The skill appropriately reported a clean result and avoided creating severity tiers for nonexistent problems. This matches the expected behavior."
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No warnings were found for Inger Hole (KD96-TV3), so there are no issues requiring action or follow-up. Since the Actionability dimension only applies when warnings exist, this dimension is not applicable and should be scored N/A."
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the FamilySearch quality assessment for KD96-TV3. It called person_quality, accurately reported the overall score of 1.0 and the absence of issues across all four categories (Completeness, Verifiability, Consistency, and Coherence). The quality results were clearly separated from the warnings assessment, with no invented scoring categories or unsupported claims. The response truthfully reflected the clean quality result without suppressing or altering other findings."
+    }
+  ]
+}
