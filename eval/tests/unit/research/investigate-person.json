@@ -7,7 +7,8 @@
     "description": "'Investigate [person]' is an explicit trigger in the skill description. The user wants a full GPS investigation, not a single step.",
     "tags": [
       "core-trigger",
-      "grade:trigger"
+      "grade:trigger",
+      "requires:gps-mentor"
     ]
   },
   "input": {
