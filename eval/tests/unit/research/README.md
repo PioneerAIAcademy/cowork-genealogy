@@ -28,6 +28,15 @@ routing test keeps working when its callee is converted from a skill to an
 agent: the hook denies the spawn exactly as it denies a `Skill` call. A name
 that is still a skill is stubbed at its `Skill` call only.
 
+## Mentor gate — `requires:gps-mentor`
+
+Tests tagged `requires:gps-mentor` assert that the main thread spawned a
+`gps-mentor` agent during the run. The deterministic validator
+(`test_mentor_gate_spawned` in `test_research.py`) checks
+`builtin_tool_calls` via the `spawned_agents` helper. Tag a test when its
+scenario has a proof summary with no `proof-critique` evaluation and the
+prompt authorizes continuing research. Issue #2686.
+
 ## What is NOT covered (and why)
 
 Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):

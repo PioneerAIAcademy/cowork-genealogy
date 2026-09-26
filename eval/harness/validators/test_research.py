@@ -125,6 +125,27 @@ def _paired_names() -> set[str]:
     return skills & agents
 
 
+def test_mentor_gate_spawned(test, builtin_tool_calls):
+    """On a ``requires:gps-mentor`` test, the main thread must spawn gps-mentor.
+
+    The research orchestrator's routing table requires a proof-critique via
+    ``gps-mentor`` before continuing research when a proof summary exists with
+    no evaluation.  The judge cannot see ``builtin_tool_calls`` (issue #2686),
+    so it credits a run that narrates the gate without spawning the agent.
+    This validator checks the ground truth directly.
+    """
+    from harness.skill_runner import spawned_agents
+
+    if "requires:gps-mentor" not in test.get("tags", []):
+        pytest.skip("not a requires:gps-mentor test")
+
+    agents = spawned_agents(builtin_tool_calls)
+    assert "gps-mentor" in agents, (
+        "The mentor gate requires a gps-mentor agent spawn, but none was "
+        f"found in builtin_tool_calls. spawned_agents={agents}"
+    )
+
+
 def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
     """On a ``no-shortcut`` test, no paired row may be reached at all.
 
