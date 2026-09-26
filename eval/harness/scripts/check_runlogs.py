@@ -1057,12 +1057,16 @@ def rule8_annotation_headers(runlogs_dir: Path) -> int:
             data = json.loads(ann_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError, OSError):
             continue  # rule 5 already catches unparseable annotations
+        if not isinstance(data, dict):
+            continue  # top-level [] or scalar — not an annotation
         corrections = data.get("corrections", [])
         if not isinstance(corrections, list):
             continue
         for c in corrections:
-            comment = c.get("comment") or ""
-            if not comment:
+            if not isinstance(c, dict):
+                continue  # string, null, or other non-dict correction
+            comment = c.get("comment")
+            if not isinstance(comment, str) or not comment:
                 continue
             headers = _HEADER_RE.findall(comment)
             if not headers:
@@ -1094,8 +1098,8 @@ def rule8_annotation_headers(runlogs_dir: Path) -> int:
                     f"but corrected_score is "
                     f"{'N/A' if corrected is None else corrected}. "
                     f"The header is a stale snapshot from a prior copy. "
-                    f"Open the run log in the CRUD UI and re-save the "
-                    f"correction to update it."
+                    f"Delete the pasted LLM→Junior block from this "
+                    f"comment, keeping your own text."
                 )
                 fails += 1
     return fails

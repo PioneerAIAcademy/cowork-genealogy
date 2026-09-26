@@ -1706,3 +1706,62 @@ def test_rule8_no_header_passes(tmp_path):
         _correction(2, "This is a plain comment with no pasted block"),
     ])
     assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_top_level_list_does_not_crash(tmp_path):
+    """A top-level [] (wrong shape) must not raise."""
+    skill_dir = tmp_path / "s"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    (skill_dir / "v1_2026-01-01_00-00-00.ann.json").write_text("[]", encoding="utf-8")
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_string_correction_does_not_crash(tmp_path):
+    """A string in the corrections list must not raise."""
+    _make_ann(tmp_path, "s", ["not a dict"])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_null_correction_does_not_crash(tmp_path):
+    """A null correction entry must not raise."""
+    _make_ann(tmp_path, "s", [None])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_int_comment_does_not_crash(tmp_path):
+    """An int comment value must not raise."""
+    _make_ann(tmp_path, "s", [{
+        "test_id": "ut_x_001", "dimension_source": "base",
+        "dimension_name": "Correctness", "llm_score": 1,
+        "corrected_score": 3, "comment": 42,
+    }])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_list_comment_does_not_crash(tmp_path):
+    """A list comment value must not raise."""
+    _make_ann(tmp_path, "s", [{
+        "test_id": "ut_x_001", "dimension_source": "base",
+        "dimension_name": "Correctness", "llm_score": 1,
+        "corrected_score": 3, "comment": ["LLM: 1 → Junior: 3"],
+    }])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_pinned_in_main(tmp_path, monkeypatch, capsys):
+    """Rule 8 must be wired into main(). Removing the call leaves tests green
+    without this guard — the other 11 tests call the function directly."""
+    # Point RUNLOGS_DIR at a tmp dir containing a stale-header annotation.
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 1\nStale header"),
+    ])
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    # Suppress all per-skill rules by returning no changes / no touched paths.
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [])
+
+    rc = check_runlogs.main()
+    assert rc == 1
+    captured = capsys.readouterr().out
+    assert "rule 8:" in captured
