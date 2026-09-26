@@ -36,6 +36,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
@@ -292,6 +294,80 @@ def test_missing_index_error_source_still_fails_rather_than_skipping():
         assert "index_error_source" in str(exc)
         return
     raise AssertionError("a tagged test with no protected source must fail loudly")
+
+
+# --- the detach guard's negation scoping, both directions ----------------
+#
+# The corpus replay below cannot test the firing direction: in a replay the
+# guard is its own ground truth. These are the cases that hold it.
+
+_DETACH_RECOMMENDED = {
+    "plain": "Minnesota Death Index: detach it from the profile.",
+    "hedge": "The Minnesota Death Index may belong to someone else; consider detaching it.",
+    "negation_in_earlier_clause": (
+        "Do not trust the Minnesota Death Index, detach it."
+    ),
+    "negation_then_but": (
+        "Minnesota Death Index: do not keep it but detach it."
+    ),
+    "em_dash_1536": (
+        "**Finding 1 \u2014 Minnesota Death Index.** The record is not about "
+        "this Christian Hole \u2014 detach it from the profile."
+    ),
+    "en_dash": (
+        "Minnesota Death Index: the record is not about this Christian Hole "
+        "\u2013 detach it."
+    ),
+    "spaced_hyphen": (
+        "Minnesota Death Index: the record is not about this Christian Hole "
+        "- detach it."
+    ),
+    # A negation elsewhere in the clause, belonging to another verb.
+    "not_about_should_be_detached": (
+        "Minnesota Death Index: the record is not about this man and should "
+        "be detached."
+    ),
+    "would_not_hesitate": (
+        "Minnesota Death Index: I would not hesitate to detach it."
+    ),
+    "cannot_be_his_so_detach": (
+        "Minnesota Death Index cannot be his record so detach it."
+    ),
+    "does_not_fit_recommend_detaching": (
+        "The Minnesota Death Index does not fit him and I recommend detaching "
+        "it."
+    ),
+}
+
+_DETACH_RULED_OUT = {
+    "do_not": (
+        "Minnesota Death Index \u2026 Do not detach \u2014 the source is good "
+        "evidence for this person with one wrong field."
+    ),
+    "rather_than": (
+        "Minnesota Death Index: keep it attached rather than detaching it."
+    ),
+    "never": "Never detach the Minnesota Death Index over one field.",
+    "should_not_be_detached": "Minnesota Death Index should not be detached.",
+    "no_detach_term": (
+        "Minnesota Death Index: re-read the original and correct the index."
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "reply", _DETACH_RECOMMENDED.values(), ids=_DETACH_RECOMMENDED.keys()
+)
+def test_detach_guard_fires_on_a_recommendation(reply):
+    with pytest.raises(AssertionError, match=_PROTECTED):
+        _no_detach(reply, _TEST)
+
+
+@pytest.mark.parametrize(
+    "reply", _DETACH_RULED_OUT.values(), ids=_DETACH_RULED_OUT.keys()
+)
+def test_detach_guard_is_quiet_when_detach_is_ruled_out(reply):
+    _no_detach(reply, _TEST)
 
 
 # --- replay against the committed corpus --------------------------------

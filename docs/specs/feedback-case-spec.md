@@ -210,7 +210,7 @@ Stateless skills (read-only, narration-only, pure query) legitimately say "this
 skill writes no project state; safe to re-invoke."
 
 The section must live **inside SKILL.md**, not a separate file: Claude Code's
-relative-path resolution from SKILL.md is unreliable (issue #17741), and Cowork
+relative-path resolution from SKILL.md is unreliable (claude-code#17741), and Cowork
 does not load `packages/engine/plugin/CLAUDE.md` as context — plugins
 contribute context through skills, agents and hooks rather than CLAUDE.md.
 

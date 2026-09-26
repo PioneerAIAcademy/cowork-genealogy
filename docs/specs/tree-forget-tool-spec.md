@@ -34,7 +34,7 @@ Two properties made it a bad fit for a skill script in the first place:
 - **The path problem is structural.** It was the only script-bearing skill in
   the plugin, so there was no house convention for spelling the invocation, and
   no packaging test to catch the miss. Skill-relative path resolution is already
-  documented as unreliable (issue #17741) — that is why shared `references/` are
+  documented as unreliable (claude-code#17741) — that is why shared `references/` are
   duplicated per skill rather than linked.
 - **Step 1 forced a full tree read.** To turn "his parents" into
   `parents-of:<person_id>` the agent had to `Read tree.gedcomx.json` — tens of

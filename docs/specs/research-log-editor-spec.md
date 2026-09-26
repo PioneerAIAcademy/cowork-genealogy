@@ -28,11 +28,13 @@ exists to kill:
   (`research-log-protocol.md` §"Result sidecar files"). That chunking dance is a
   workaround for LLM serialization stalling — exactly what a tool removes.
 - **`returned_count` integrity is hand-maintained.** The validator hard-fails when
-  `returned_count !== payload.results.length` (`validator.ts:1024`). The LLM must
+  `returned_count !== payload.results.length` (`validateSidecars`, the
+  `"payload may be truncated"` check). The LLM must
   count its own results correctly; a tool computes it.
 - **Three-way id wiring is hand-done and validator-enforced.** `results_ref` =
   `results/<log_id>.json`, sidecar `log_id` = log entry `id` = filename
-  (`validator.ts:1012–1017`). A tool wires all three by construction.
+  (`validateSidecars`, the `"does not match log entry id"` / `"does not match
+  filename"` checks). A tool wires all three by construction.
 - **Append-only is a convention, not a guarantee.** Rule 3 says never modify a log
   entry; nothing structurally prevents a stray `Edit`. A tool that only appends
   makes the rule structural.
@@ -61,8 +63,8 @@ update/delete (forbidden by Rule 3), and `tree.gedcomx.json`.
 | Append-only rule; nil searches still logged; outputs link back via `log_entry_id` | `search-records/references/research-log-protocol.md` |
 | Log entry fields + `external_site` shape | `docs/specs/research-schema-spec.md` §5.4 |
 | Sidecar shape `{ log_id, tool, retrieved, returned_count, payload }`; nil → no sidecar | `research-schema-spec.md` §5.4.1 |
-| Required log fields, `log_outcome` enum, `external_site` required when `tool==="external_site"`, `EXTERNAL_SITE_VALUES` | `src/validation/validator.ts:431–453` |
-| Sidecar checks: `log_id`↔entry↔filename, `returned_count`==`payload.results.length`, orphan detection, path-traversal guard, D5 persona resolution | `src/validation/validator.ts:953–1104` |
+| Required log fields, `log_outcome` enum, `external_site` required when `tool==="external_site"`, `EXTERNAL_SITE_VALUES` | `validateResearch`'s log loop (`"tool is 'external_site' but external_site object is null"`, `EXTERNAL_SITE_VALUES`) |
+| Sidecar checks: `log_id`↔entry↔filename, `returned_count`==`payload.results.length`, orphan detection, path-traversal guard, D5 persona resolution | `validateSidecars` (`src/validation/validator.ts`) |
 | The protocol reference duplicated across the four writing skills | `*/references/research-log-protocol.md` (4 copies) |
 
 ---
@@ -242,7 +244,7 @@ can leave an orphan sidecar (written, not yet referenced on disk); the next
 validation path (validate before any disk write) is the future cleanup.
 
 **Validation cost.** Step 3 runs the *full* project validator, and `validateSidecars`
-(`validator.ts:953`) reads every `results/` sidecar payload and re-resolves every
+(`validateSidecars`) reads every `results/` sidecar payload and re-resolves every
 assertion's persona (D5) on each call. Because `research_log_append` is the
 highest-volume write in the system, each append is therefore O(sidecars +
 assertions) of disk reads — O(n) per append, O(n²) over a project's life. For
@@ -287,7 +289,7 @@ clerical work.
 | `externalSite.urlGenerated` not an absolute `http(s)` URL | input error; write nothing |
 | `resultsExamined` not a non-negative integer (after coercing a numeric string) | input error; write nothing |
 | `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | input error; write nothing — the entry grades the fetch, not the search |
-| Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validator.ts:1022,1029`) |
+| Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validateSidecars`, the `"payload has no 'results' array — cannot verify retrieval integrity"` check) |
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |

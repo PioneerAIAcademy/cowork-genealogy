@@ -54,7 +54,8 @@ since ``num_turns == 0`` means the discarded pass billed no model turn.
 
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
 written), ENGINE_DIR, ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under
-it), MODEL_PROVIDER + ANTHROPIC_API_KEY / the Bedrock variables, the GENEALOGY_* store
+it), MODEL_PROVIDER + ANTHROPIC_API_KEY / the Bedrock variables / GATEWAY_BASE_URL,
+GATEWAY_API_KEY and GATEWAY_TOOL_SEARCH, the GENEALOGY_* store
 variables and FS_ACCESS_TOKEN (see options.py). Startup applies ../sql/*.sql (all
 idempotent) and parses the plugin's agents once. ``GET /healthz`` -> 200.
 ThreadingHTTPServer, so a second POST is served while a turn is running.

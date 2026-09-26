@@ -43,7 +43,7 @@ The sidecar-producing search tools: **`record_search`**, **`fulltext_search`**,
 and **`external_links_search`** (`tool: "external_links_search"`) — the tools whose
 payloads become `results/` sidecars per `research-log-protocol.md`. The staging
 logic is a shared util so adding a producer is a one-line opt-in
-(`external_links_search` was added as the third, 2026-07 — GitHub #696).
+(`external_links_search` was added as the third, 2026-07).
 
 **Two acquisition producers joined them:** **`image_transcribe`**
 and **`record_read`** (a live read given a `projectPath`). Acquisition has the same problem
@@ -89,12 +89,12 @@ any validator rule change.
 
 | Fact | Source |
 |------|--------|
-| `record_search` returns `{ query, totalMatches, returned, offset, hasMore, results[] }`; each result has `recordId`, `primaryId`, `gedcomx` | `src/tools/record-search.ts:511`, `:413` |
-| `fulltext_search` returns `{ query, totalResults, returned, offset, hasMore, results[] }` | `src/tools/fulltext-search.ts:206` |
+| `record_search` returns `{ query, totalMatches, returned, offset, hasMore, results[] }`; each result has `recordId`, `primaryId`, `gedcomx` | `src/tools/record-search.ts`, the `out: RecordSearchToolResponse` return (`totalMatches: data.results`) |
+| `fulltext_search` returns `{ query, totalResults, returned, offset, hasMore, results[] }` | `src/tools/fulltext-search.ts`, the `out: FulltextSearchResponse` return (`totalResults: data.results`) |
 | For both, `returned === results.length` — i.e. the sidecar `returned_count` invariant | record-search.ts:515, fulltext-search.ts:209 |
 | No search tool takes a `projectPath` or writes to the project folder today | `grep writeFile\|mkdir src/tools` → none |
-| `validateSidecars` orphan check reads `results/` **non-recursively** and flags only top-level `*.json` not referenced by a log entry | `src/validation/validator.ts:1034–1043` |
-| Existing path-traversal guard pattern for project-relative refs | `src/validation/validator.ts:988` |
+| `validateSidecars` orphan check reads `results/` **non-recursively** and flags only top-level `*.json` not referenced by a log entry | `validateSidecars`, the `"orphan sidecar — no log entry references it"` check |
+| Existing path-traversal guard pattern for project-relative refs | `validateSidecars`, the `isInsideProject` guard (`"escapes the project directory"`) |
 
 The orphan-check fact is load-bearing: staging files placed in the
 `results/.staging/` **subdirectory** are invisible to that check (it neither
@@ -180,7 +180,7 @@ When the log editor is called with `stagedResultsRef`, it (host-side):
 
 1. Resolves `stagedResultsRef` and **rejects anything not inside
    `projectPath/results/.staging/`** (path-traversal guard, mirroring
-   validator.ts:988).
+   `validateSidecars`'s `isInsideProject` guard).
 2. Reads the staged file. Verifies its `tool` matches the log entry's `tool`.
 3. **Recomputes `returned_count` from `payload.results.length`** — authoritative,
    per `research-log-editor-spec.md` §4 ("never trusted from the caller"); the
