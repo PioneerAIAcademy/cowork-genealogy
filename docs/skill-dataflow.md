@@ -55,7 +55,7 @@ It survives only in `docs/lead-themes-2026-09-05.md` (the `record-extraction` /
 #2410 row), deliberately — that file is a dated record of what was believed
 then.
 
-Until those remain unmeasured, **design as if nesting is
+While those remain unmeasured, **design as if nesting is
 unavailable** — which is what the `search-images` agent does, calling
 `image_transcribe` itself rather than delegating a page read to `image-reader`.
 That choice is correct under either reading, so it does not depend on the
