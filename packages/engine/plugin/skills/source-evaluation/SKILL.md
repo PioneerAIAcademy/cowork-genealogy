@@ -16,6 +16,7 @@ allowed-tools:
   - person_read
   - record_read
   - source_attachments
+  - person_quality
 ---
 
 # Source Evaluation
@@ -46,6 +47,8 @@ If the user gave a name rather than an id, read `tree.gedcomx.json` and match on
 
 An empty `sources[]` is a finished audit with one finding: nothing is attached. Say so and stop.
 
+When the `personId` is a FamilySearch ID — four characters, a hyphen, three characters — also call `person_quality({ personId, detail: true })` **once, for the person named in the request only**. Never for a person you read at step 4(b) to check where else an ARK is attached. Its `detail.conflicts[]` is FamilySearch's own answer to “which two attached sources disagree, and about what”, which step 3's sweep would otherwise find by hand; its `issues[]` are the profile checklist step 5 reports separately. Skip the call for a synthetic id and say nothing about skipping it.
+
 ### 2. Read each attached source's indexed record
 
 For each source whose `url` carries a record-persona ARK (`1:1:`), call `record_read` on it. That returns what FamilySearch actually indexed — the names, dates, places and relationships as transcribed.
@@ -56,11 +59,13 @@ Sources with no readable ARK (a user-uploaded document, an external link, a memo
 
 Sweep the conclusions one at a time — name, birth, christening, marriage, death, burial, residence — and for each, set the indexed values of the sources bearing on it beside the recorded fact. A source bears on a conclusion when its record carries that fact for the person it names: a death index bears on the death, a census on residence, age and household. One source can bear on several conclusions, and one conclusion can have several sources or none.
 
-A conclusion with **no** source bearing on it is a sourcing gap, not a defect in a source. Say so in one line if the sweep meets one, and leave it out of the findings — it is not this audit's to make.
+A conclusion with **no** source bearing on it is a sourcing gap, not a defect in a source. Say so in one line if the sweep meets one, and leave it out of the findings — it is not this audit's to make. Where `person_quality` reported the same gap, let the step 5 checklist block carry it rather than repeating it here. FamilySearch's “no tagged sources” is a tagging state on the profile; your sweep's “no source bearing on it” is an evidence state. They usually agree and are not the same claim.
 
 A disagreement is a **finding**; the next step decides what kind.
 
 ### 4. Classify every finding before recommending anything
+
+An entry in `person_quality`'s `detail.conflicts[]` is a candidate, not a finding. It faces the same ordinary-variance test as a disagreement your own sweep turned up: FamilySearch groups every disagreeing field on every source pair, so a two-year drift between a census age and a baptism arrives there beside a genuine contradiction. Apply the same judgement to both. Its `values` carry GedcomX formal-date syntax with a leading `+` (`+1877`) — render them as ordinary dates; never print the raw form.
 
 Three kinds, and the recommendation follows the kind:
 
@@ -90,7 +95,7 @@ Three kinds, and the recommendation follows the kind:
 
 ### 5. Report
 
-Open with the count of **user-actionable** findings — backend metadata is not in that count. Then, per finding:
+Open with the count of **user-actionable** findings — neither backend metadata nor FamilySearch's profile checklist is in that count. Then, per finding:
 
 - Which source, named by its title and citation, not by its internal id
 - What disagrees with what: the indexed value beside the recorded fact
@@ -99,7 +104,11 @@ Open with the count of **user-actionable** findings — backend metadata is not 
 
 **If the sweep turns up two sources disagreeing with each other** — not with the profile — characterise it and hand it on: name both sources, both values, what kind of record each is, and what would settle it. **Pick no winner and recommend no detach.** Weighing two sources against each other is the conflict workflow's job, and the user takes it there. This is the one finding that carries a route instead of a remedy. Ordinary variance between two records of the kind step 4 describes is not a disagreement worth reporting here either.
 
-Close with the sources you could not check and why. If any backend metadata came up, one closing sentence of context — not a list, not a to-do.
+Close with the sources you could not check and why.
+
+**Then, if `person_quality` returned any `issues[]`, one block after the findings and outside the count.** Head it so the researcher knows whose list it is and that it is not a defect list — these are FamilySearch's suggestions for the profile, not errors in a source, and nothing here carries a recommended action. Group the issues by their `scoreType`, using that code as the heading verbatim, and order the groups **COHERENCE, CONSISTENCY, VERIFIABILITY, COMPLETENESS**, dropping any with no issues. Print each issue's `sentence` as returned. State no score, no band and no percentage. Where several issues share a `sentence` **and** their `conclusionType` matches more than one fact on the profile, collapse them to one line with a count ("Five residences have no tagged sources") — the response carries nothing else to tell them apart. Where the type matches a single fact, name that fact instead. If `issues[]` is empty, print no block at all — not a heading, not "none found".
+
+If any backend metadata came up, one closing sentence of context — not a list, not a to-do — and give the number of **kinds** omitted.
 
 **Example shape:**
 
@@ -125,16 +134,23 @@ SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
 Could not check: 2 user-uploaded documents and 1 FindAGrave
 link, none of which carry a readable record id.
 
+From FamilySearch's own profile checklist — suggestions, not
+errors, and not counted above:
+  VERIFIABILITY
+    · The marriage has no tagged sources.
+  COMPLETENESS
+    · A marriage place is missing a city.
+
 (FamilySearch also stores repeated internal ids across these
 records; that is how the system tracks them and needs nothing
-from you.)
+from you. 1 kind of storage artifact, omitted above.)
 ```
 
 ## Important rules
 
 - **Re-read before detach.** For a fact conflict that looks like a transcription or indexing error, the first-line recommendation is always to re-read the original and correct the index. Detaching is reserved for a source genuinely about a different person.
 - **Never present backend metadata as a to-do.** It is context at most, and usually nothing.
-- **You do not read images.** You hold no image tool, and none of your three tools returns an image id, so there is no scan you could open. Report what the index says and name what the researcher should go back to.
+- **You do not read images.** You hold no image tool, and none of your four tools returns an image id, so there is no scan you could open. Report what the index says and name what the researcher should go back to.
 - **Write nothing.** No `research_append`, no `tree_edit`. If the audit turns up a genuine source-vs-source conflict worth recording, say so in the report and let the user take it to the conflict workflow; do not record it yourself.
 - **Never assert what a source says without having read it.** A source you could not read is reported as unchecked, not as clean.
 
