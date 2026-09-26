@@ -23,7 +23,21 @@
   ],
   "runs_per_test": 1,
   "execution": {
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 480,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
   },
   "judge_context": [
     "Should create a stub for Sarah Hennessy in tree.gedcomx.json (name, approximate birth year, place). Standardizing the user's stated 'Boston, Massachusetts' to a fuller form like 'Boston, Suffolk County, Massachusetts' is acceptable — it is place standardization of a stated fact, not fabrication",

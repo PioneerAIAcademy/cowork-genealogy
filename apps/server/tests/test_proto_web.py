@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import re
 import sys
+import pathlib
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -28,6 +29,7 @@ PROTO = Path(__file__).resolve().parents[1] / "proto"
 sys.path.insert(0, str(PROTO))
 
 from drive import parse_frame  # noqa: E402  (the driver's SSE parser; one parser, two callers)
+from web import app  # noqa: E402  (queue_body / max_nudges: one definition for the fake store too)
 from web.app import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_TITLE,
@@ -64,6 +66,9 @@ class FakeStore:
         self.active: set[str] = set()
         self.failed: list[tuple[str, str]] = []
         self.turns: list[Turn] = []
+        # 1b/1c: held messages, and the sessions the patron pressed Stop on.
+        self.queued: list[Turn] = []
+        self.stopped: set[str] = set()
 
     def seed_session(self, session_id: str = "sess_1", project_id: str = "proj_1") -> SessionRow:
         row = SessionRow(session_id, project_id, DEFAULT_TITLE, DEFAULT_MODEL, T0, T0)
@@ -105,16 +110,19 @@ class FakeStore:
     async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
         return dict(self.docs.get(project_id, {}))
 
-    async def begin_turn(self, session: SessionRow, text: str) -> Turn:
+    async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn:
         turn_id = str(uuid.uuid4())
         seq = self.add_event(session.session_id, "user_msg", {"text": text, "turn_id": turn_id})
-        body = {
-            "turn_id": turn_id, "session_id": session.session_id, "project_id": session.project_id,
-            "text": text, "enqueued_at": T0.isoformat(),
-        }
+        # The real helper, not a hand-rolled copy: a fake that builds its own body would
+        # let the route tests pass while production enqueued a different shape.
+        body = app.queue_body(turn_id, session, text, T0.isoformat(), app.max_nudges())
         turn = Turn(turn_id=turn_id, seq=seq, body=body)
         self.turns.append(turn)
-        self.active.add(session.session_id)
+        if queued:
+            self.queued.append(turn)
+        else:
+            self.active.add(session.session_id)
+            self.stopped.discard(session.session_id)  # 1c: a new message resumes a stopped session
         return turn
 
     async def fail_turn(self, turn_id: str, reason: str) -> None:
@@ -127,7 +135,27 @@ class FakeStore:
         return self.activity_rows.get(session_id)
 
     async def turn_active(self, session_id: str) -> bool:
+        # 1b: a HELD turn is not a running one. The real store excludes it in SQL; the
+        # fake mirrors that, or the hold would latch on after the first queued message.
         return session_id in self.active
+
+    async def has_queued(self, session_id: str) -> bool:
+        return any(t.body["session_id"] == session_id for t in self.queued)
+
+    async def claim_queued_turn(self, session_id: str) -> dict | None:
+        """Oldest-first, and the claim REMOVES it -- the real one is a single UPDATE that
+        can only match a row still carrying the queued outcome, so a fake that left the
+        row in place would let a double-enqueue pass here and fail in production."""
+        for i, t in enumerate(self.queued):
+            if t.body["session_id"] == session_id:
+                self.queued.pop(i)
+                self.active.add(session_id)
+                return t.body
+        return None
+
+    async def request_stop(self, session_id: str) -> bool:
+        self.stopped.add(session_id)
+        return True
 
 
 class FakeQueue:
@@ -267,8 +295,10 @@ async def test_state_reads_documents_and_the_unserved_routes_say_so():
         assert (await c.get(f"/api/sessions/{row.session_id}/sidecar/q_001")).status_code == 404
         for path in ("image?filename=images/a.jpg", "logs"):
             assert (await c.get(f"/api/sessions/{row.session_id}/{path}")).status_code == 501
-        for path in ("interrupt", "files"):
-            assert (await c.post(f"/api/sessions/{row.session_id}/{path}")).status_code == 501
+        assert (await c.post(f"/api/sessions/{row.session_id}/files")).status_code == 501
+        # 1c: interrupt used to be on that list. It is the control surface the whole
+        # design rests on, so a 501 here is the feature missing, not a gap in the tier.
+        assert (await c.post(f"/api/sessions/{row.session_id}/interrupt")).status_code == 202
         auth = (await c.get("/auth/config")).json()
         assert auth == {"familysearch": False, "devLogin": True}
         assert (await c.get("/auth/me")).json()["id"] == "proto"
@@ -286,11 +316,425 @@ async def test_post_message_mints_turn_id_records_user_msg_and_enqueues_the_body
     assert queue.sent == [{
         "turn_id": out["turn_id"], "session_id": row.session_id, "project_id": row.project_id,
         "text": "Find Thomas Flynn", "enqueued_at": T0.isoformat(),
+        # 1a: the cap rides the message, from this tier's environment.
+        "max_nudges": app.DEFAULT_MAX_NUDGES,
     }]
     events = store.events[row.session_id]
     assert [e.kind for e in events] == ["user_msg"]
     assert events[0].payload == {"text": "Find Thomas Flynn", "turn_id": out["turn_id"]}
     assert store.failed == []
+
+
+# ── 1b / 1c: holding a message typed mid-turn, and Stop ──────────────────────────
+
+
+async def test_a_message_typed_while_a_turn_runs_is_held_not_enqueued():
+    """1b. post_message enqueued unconditionally; the turn_active() helper existed but
+    only the SSE replay and session_state ever called it. And choose_sdk_session_id
+    coalesces to ONE sdk_session_id per session, so two concurrent turns resumed the SAME
+    SDK session -- two CLIs appending to one transcript."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        first = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "Find Thomas"})
+        second = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "also the 1881 census"})
+    assert first.status_code == 202 and first.json()["queued"] is False
+    assert second.status_code == 202, "held, not refused: the patron must be able to type at any time"
+    assert second.json()["queued"] is True and second.json()["message_id"] is None
+    assert len(queue.sent) == 1, "only the first reached the queue"
+    assert [t.body["text"] for t in store.queued] == ["also the 1881 census"]
+    # The row is written either way, so the transcript carries it and the UI can show it.
+    assert [e.payload["text"] for e in store.events[row.session_id]] == ["Find Thomas", "also the 1881 census"]
+
+
+async def test_a_held_turn_does_not_itself_count_as_an_active_turn():
+    """The latch bug this design has to avoid: a held row has completed_at NULL too, so a
+    turn_active that did not exclude it would hold every later message behind a turn that
+    is not running."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "one"})
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "two"})
+        store.active.discard(row.session_id)  # the worker finished the running turn
+        third = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "three"})
+    assert third.json()["queued"] is False, "with no turn running the next message goes straight out"
+    assert len(queue.sent) == 2
+
+
+async def test_the_stream_says_a_message_is_waiting_so_a_reload_still_shows_it():
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue, stream_max_polls=1) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "one"})
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "two"})
+        body = (await c.get(f"/api/sessions/{row.session_id}/events/stream")).text
+    states = [f["data"]["state"] for f in parse_frames(body)
+              if isinstance(f["data"], dict) and f["data"].get("type") == "status"]
+    assert states == ["turn_active", "turn_queued"], \
+        "the status follows the replay, and the held message follows the active turn"
+
+
+async def test_the_stream_announces_a_message_arriving_and_leaving_mid_stream():
+    """The frame at OPEN was asserted; the one the POLL LOOP emits on a change was not,
+    and reverting it broke no test. It is the only thing that tells a second tab -- or
+    this one, after the message is picked up -- that the state moved."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue, stream_max_polls=3) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "one"})
+
+        # The stream is consumed lazily, so drive stream_frames directly: hold a message
+        # after the first poll, release it after the second.
+        frames: list[str] = []
+        gen = app.stream_frames(store, row, 0, poll_s=0.0, ping_s=99.0, max_polls=3)
+        async for chunk in gen:
+            frames.append(chunk)
+            if len(frames) == 3:
+                store.queued.append(
+                    app.Turn(turn_id="held", seq=99,
+                             body={"session_id": row.session_id, "text": "two"})
+                )
+            if any("turn_queued" in f for f in frames) and store.queued:
+                store.queued.clear()
+        states = [f for f in frames if '"status"' in f]
+    assert any("turn_queued" in f for f in states), "a message arriving mid-stream is announced"
+    assert any("turn_unqueued" in f for f in states), "and so is its release"
+
+
+async def test_the_poll_read_carries_the_queued_state_too():
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "one"})
+        assert (await c.get(f"/api/sessions/{row.session_id}/events")).json()["turn_queued"] is False
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "two"})
+        out = (await c.get(f"/api/sessions/{row.session_id}/events")).json()
+    assert out["turn_active"] is True and out["turn_queued"] is True
+
+
+async def test_interrupt_raises_the_stop_flag_and_is_no_longer_a_501():
+    """1c. The prototype's interrupt answered 501 -- "the worker owns the turn" -- and the
+    whole design rests on Stop. The worker still owns the turn, so this raises a flag its
+    PreToolUse hook reads before every tool call rather than reaching for a control
+    channel that does not exist."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "go"})
+        r = await c.post(f"/api/sessions/{row.session_id}/interrupt")
+    assert r.status_code == 202 and r.json() == {"ok": True, "stopping": True}
+    assert store.stopped == {row.session_id}
+
+
+async def test_interrupt_on_an_idle_session_is_recorded_but_says_nothing_is_running():
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/interrupt")
+    assert r.status_code == 202 and r.json()["stopping"] is False
+
+
+async def test_interrupt_on_an_unknown_session_is_a_404_not_a_silent_ok():
+    store, queue = FakeStore(), FakeQueue()
+    async with make_client(store, queue) as c:
+        assert (await c.post("/api/sessions/sess_nope/interrupt")).status_code == 404
+    assert store.stopped == set()
+
+
+async def test_the_next_message_clears_the_stop_flag_so_the_session_resumes():
+    """The acceptance line says a later message resumes a stopped session. A flag that
+    outlived its turn would halt the next one at its first tool call -- which looks
+    exactly like Stop being broken, from the other side."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "go"})
+        await c.post(f"/api/sessions/{row.session_id}/interrupt")
+        assert store.stopped == {row.session_id}
+        store.active.discard(row.session_id)  # the worker halted and closed the turn
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "carry on"})
+    assert store.stopped == set()
+
+
+async def test_a_turn_that_ends_mid_post_does_not_strand_the_message():
+    """The window between the turn_active READ and the held-row INSERT -- two round-trips
+    on two connections. The worker releases held messages only at a turn's END, so a turn
+    that finishes inside that window has already looked for held rows and found none, and
+    the next look is not until the NEXT turn ends -- which needs another message from
+    someone who has just been told their message is "picked up at the next step".
+
+    The fix is to confirm after the write rather than trusting the read."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+
+    real_begin = store.begin_turn
+
+    async def begin_then_finish(session, text, *, queued=False):
+        turn = await real_begin(session, text, queued=queued)
+        if queued:  # the worker completes the running turn and finds nothing held
+            store.active.discard(session.session_id)
+        return turn
+
+    store.begin_turn = begin_then_finish  # type: ignore[method-assign]
+    async with make_client(store, queue) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "Find Thomas"})
+        second = await c.post(f"/api/sessions/{row.session_id}/messages",
+                              json={"text": "also the 1881 census"})
+
+    assert second.json()["queued"] is False, \
+        "no turn is running any more, so the message must not be reported as waiting"
+    assert [b["text"] for b in queue.sent] == ["Find Thomas", "also the 1881 census"], \
+        "the second message must reach the queue, not sit in a row nobody will look at"
+    assert store.queued == [], "and it must not be left marked as held as well as sent"
+    assert second.json()["turn_id"] == store.turns[-1].turn_id, \
+        "the response still names the patron's OWN turn: their tab matches its echo on it"
+
+
+async def test_a_rescue_runs_the_oldest_message_first_and_keeps_holding_ours():
+    """The claim is oldest-first, so what a rescue picks up may be a message held BEFORE
+    this one. That one runs; ours stays held and the response says so, rather than
+    reporting ours as sent because something was."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "Find Thomas"})
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "the 1881 census"})
+        # Now the turn ends before the THIRD message is written, so that one rescues --
+        # and finds the second message ahead of it.
+        real_begin = store.begin_turn
+
+        async def begin_then_finish(session, text, *, queued=False):
+            turn = await real_begin(session, text, queued=queued)
+            if queued:
+                store.active.discard(session.session_id)
+            return turn
+
+        store.begin_turn = begin_then_finish  # type: ignore[method-assign]
+        third = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "and his will"})
+
+    assert [b["text"] for b in queue.sent] == ["Find Thomas", "the 1881 census"], "oldest first"
+    assert third.json()["queued"] is True, "ours is still waiting: something else went ahead of it"
+    assert [t.body["text"] for t in store.queued] == ["and his will"]
+
+
+async def test_the_rescue_claim_cannot_double_enqueue_against_the_worker():
+    """Both the worker's release and this rescue can fire for one held row. The claim is a
+    single UPDATE whose WHERE requires the queued outcome, so exactly one of them matches
+    -- which is the only reason it is safe to have two releasers at all. A SELECT followed
+    by an UPDATE would send the patron's words twice."""
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "one"})
+        await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "two"})
+    store.active.discard(row.session_id)
+    first = await store.claim_queued_turn(row.session_id)   # the worker wins the race
+    second = await store.claim_queued_turn(row.session_id)  # the web tier loses it
+    assert first is not None and first["text"] == "two"
+    assert second is None, "the losing claim gets nothing; it must not re-send the same row"
+
+
+async def test_the_rescue_claim_clears_the_stop_flag_too():
+    """The web tier's rescue enqueues a held message, so it inherits the worker's
+    obligation: claiming IS enqueuing, and `begin_turn` deliberately did not clear the
+    flag for a held row. Without this the rescued turn halts at its first tool call with
+    "Stopped by the researcher." -- the patron's words swallowed by a Stop they pressed
+    before they typed them."""
+    conn = RecordingConn()
+    store = app.PgStore("postgresql://unused")
+
+    async def fake_connect():
+        return conn
+
+    store._connect = fake_connect  # type: ignore[method-assign]
+    assert await store.claim_queued_turn("sess_1") == {"turn_id": "t2"}  # RecordingConn answers
+    cleared = [sql for sql in conn.sql if "stop_requested_at = NULL" in sql]
+    assert cleared == [" ".join(app.CLEAR_STOP_SQL.split())], \
+        "a claimed message must resume a stopped session, exactly as the worker's does"
+
+
+async def test_a_rescue_that_finds_nothing_leaves_a_stop_alone():
+    """The other direction: with nothing held there is nothing to enqueue, so a Stop the
+    patron just pressed must stay exactly where it is."""
+    conn = RecordingConn(message=None)
+    store = app.PgStore("postgresql://unused")
+
+    async def fake_connect():
+        return conn
+
+    store._connect = fake_connect  # type: ignore[method-assign]
+    assert await store.claim_queued_turn("sess_1") is None
+    assert not [sql for sql in conn.sql if "stop_requested_at = NULL" in sql]
+
+
+def test_the_rescue_claim_is_the_workers_own_statement():
+    """Two releasers are safe only because both run the SAME single-statement claim. The
+    route tests drive FakeStore, which re-implements it in Python, so the real SQL is
+    checked against the worker's -- if either drifts to a SELECT-then-UPDATE, the patron's
+    message can be enqueued twice and nothing else would notice."""
+    import inspect
+
+    web = " ".join(inspect.getsource(app.PgStore.claim_queued_turn).split())
+    worker_src = (
+        pathlib.Path(__file__).resolve().parents[1] / "proto" / "worker" / "worker.py"
+    ).read_text(encoding="utf-8")
+    claim = " ".join(worker_src.split("def take_queued_turn", 1)[1].split("def ", 1)[0].split())
+    for fragment in (
+        "UPDATE turns SET outcome = NULL WHERE turn_id = (",
+        # The predicate IS the claim. Widened to anything non-null it would match a turn
+        # that already RAN and re-enqueue it; this was unpinned until a break test
+        # swapped it for `outcome IS NOT NULL` and every test stayed green.
+        "SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s",
+        "AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED",
+        ") RETURNING message",
+    ):
+        assert fragment in claim, f"the worker's claim changed shape: {fragment!r}"
+        assert fragment in web, f"the web tier's claim no longer matches the worker's: {fragment!r}"
+    assert web.count("UPDATE turns") == 1, "one statement, or the two releasers can both win"
+
+
+def test_the_real_turn_active_query_excludes_a_held_row():
+    """The latch bug, asserted on the SQL the real store runs rather than on a fake that
+    re-implements the rule in Python. A held row has completed_at NULL too, so without the
+    exclusion the first queued message holds every later one behind a turn that is not
+    running -- and every route test above would still pass."""
+    assert "completed_at IS NULL" in app.TURN_ACTIVE_SQL
+    assert "outcome IS DISTINCT FROM %s" in app.TURN_ACTIVE_SQL, \
+        "a held turn is not a running one"
+    assert "outcome = %s" in app.HAS_QUEUED_SQL and "completed_at IS NULL" in app.HAS_QUEUED_SQL
+    # The two must not be the same question asked twice.
+    assert app.TURN_ACTIVE_SQL != app.HAS_QUEUED_SQL
+
+
+class RecordingConn:
+    """Just enough asyncpg-shaped surface to run `PgStore.begin_turn` with no database.
+
+    The route tests above all drive `FakeStore`, which re-implements the rules in Python
+    — so the SQL the real store runs was only ever string-matched, and a fake that
+    happened to mirror the wrong rule kept every test green. This runs the real method."""
+
+    def __init__(self, message: dict | None = {"turn_id": "t2"}) -> None:
+        self.sql: list[str] = []
+        self.params: list[tuple] = []
+        self.message = message  # what the 1b claim's RETURNING hands back
+
+    async def execute(self, sql, params=()):
+        self.sql.append(" ".join(sql.split()))
+        self.params.append(params)
+        return self
+
+    async def fetchone(self):
+        # Enough for every caller here: begin_turn reads `seq`, has_queued reads
+        # `queued`, turn_active reads `active`, request_stop only checks for a row.
+        if "RETURNING message" in self.sql[-1]:  # the 1b claim
+            return {"message": self.message} if self.message is not None else None
+        return {"seq": 1, "queued": True, "active": True, "stop_requested_at": "now"}
+
+    def transaction(self):
+        conn = self
+
+        class _Tx:
+            async def __aenter__(self): return None
+            async def __aexit__(self, *exc): return False
+        return _Tx()
+
+    async def __aenter__(self): return self
+    async def __aexit__(self, *exc): return False
+
+
+async def _begin(queued: bool) -> RecordingConn:
+    conn = RecordingConn()
+    store = app.PgStore("postgresql://unused")
+
+    async def fake_connect():
+        return conn
+
+    store._connect = fake_connect  # type: ignore[method-assign]
+    row = SessionRow(session_id="sess_1", project_id="proj_1", title="t", model="m",
+                     created_at=T0, updated_at=T0)
+    await store.begin_turn(row, "hello", queued=queued)
+    return conn
+
+
+async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
+    """Both PgStore methods were UNPINNED: every route test drives FakeStore, which
+    re-implements them in Python, so the real bodies could be deleted with the suite
+    green. `request_stop` is the whole of Stop on the server side, and `has_queued` is
+    what tells a reloaded tab a message is still waiting."""
+    conn = RecordingConn()
+    store = app.PgStore("postgresql://unused")
+
+    async def fake_connect():
+        return conn
+
+    store._connect = fake_connect  # type: ignore[method-assign]
+
+    assert await store.has_queued("sess_1") is True  # RecordingConn.fetchone answers truthy
+    assert conn.sql and conn.sql[-1] == " ".join(app.HAS_QUEUED_SQL.split())
+    # ...and the PARAMS, not just the statement. Both queries carry the held-row sentinel
+    # as a bind, so a test that checked only the SQL string let `("sess_1", "nope")`
+    # through -- which silently answers "nothing is held" forever, and on turn_active
+    # recreates the very latch bug the test below exists to prevent, with the suite green.
+    assert conn.params[-1] == ("sess_1", app.QUEUED_OUTCOME)
+
+    conn.sql.clear()
+    assert await store.turn_active("sess_1") is True
+    assert conn.sql[-1] == " ".join(app.TURN_ACTIVE_SQL.split())
+    assert conn.params[-1] == ("sess_1", app.QUEUED_OUTCOME), \
+        "a wrong sentinel here counts a HELD row as a running turn and latches the hold on"
+
+    conn.sql.clear()
+    assert await store.request_stop("sess_1") is True
+    [stop_sql] = conn.sql
+    assert "UPDATE sessions" in stop_sql and "stop_requested_at" in stop_sql
+    # COALESCE, so a second press does not move the timestamp the worker is reading.
+    assert "COALESCE(stop_requested_at, now())" in stop_sql, \
+        "the first press wins; a second must change nothing"
+    assert "RETURNING stop_requested_at" in stop_sql, "a missing session must answer False, not silently pass"
+
+
+async def test_the_real_begin_turn_stamps_the_tiers_cap_and_not_a_literal(monkeypatch):
+    """1a's whole carrier. `queue_body(..., max_nudges())` swapped for `queue_body(..., 0)`
+    survived the suite -- and a 0 turns the nudge budget OFF for every turn this tier
+    enqueues, shipping the stop-at-every-step behaviour the plan exists to remove while
+    looking exactly like the feature simply not working."""
+    monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "37")
+    conn = await _begin(queued=False)
+    inserts = [p for sql, p in zip(conn.sql, conn.params) if sql.startswith("INSERT INTO turns")]
+    assert len(inserts) == 1
+    body = inserts[0][3].obj if hasattr(inserts[0][3], "obj") else inserts[0][3]
+    assert body["max_nudges"] == 37, (
+        f"the row carries max_nudges={body['max_nudges']}; it must come from this tier's "
+        f"own environment, which is 1a's only carrier"
+    )
+
+
+async def test_the_real_begin_turn_clears_the_stop_flag_only_when_it_enqueues():
+    """1c. A HELD message must NOT clear the flag. The patron presses Stop, then types a
+    correction while the turn is still winding down -- which 1b's own UI change
+    encourages, since Send now sits beside Stop -- and clearing it there would cancel the
+    Stop they just pressed: the worker's halt() reads exactly this column on every tool
+    call, would find nothing, and the run would carry on to job end."""
+    enqueued = await _begin(queued=False)
+    assert any("stop_requested_at = NULL" in q for q in enqueued.sql), \
+        "an enqueued message resumes a stopped session"
+
+    held = await _begin(queued=True)
+    assert not any("stop_requested_at = NULL" in q for q in held.sql), \
+        "a HELD message must not cancel the Stop the patron just pressed"
+    # It is still recorded, with the sentinel, so the transcript and the UI have it.
+    assert any("INSERT INTO turns" in q for q in held.sql)
+    assert any("INSERT INTO session_events" in q and "user_msg" in q for q in held.sql)
+
+
+def test_the_real_begin_turn_clears_the_stop_flag():
+    """1c's other half, for the same reason: the fake clears its own set. A flag that
+    outlives its turn halts the NEXT turn at its first tool call."""
+    assert "stop_requested_at = NULL" in app.CLEAR_STOP_SQL
+    import inspect
+    source = inspect.getsource(app.PgStore.begin_turn)
+    assert "CLEAR_STOP_SQL" in source, "begin_turn must clear the flag, or a stopped session never resumes"
 
 
 async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502():

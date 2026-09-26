@@ -115,10 +115,16 @@ def test_each_check_reads_its_row():
     def failed(rows: turn.KillRows, spec: turn.KillSpec = turn.KillSpec()) -> list[str]:
         return [name for name, ok, _ in turn.kill_checks(rows, spec) if not ok]
 
-    assert failed(_rows(turn_row=(1, "t", "ok", 0.1))) == ["kill: the turn was redelivered (receive_count >= 2)"]
-    assert failed(_rows(turn_row=(2, None, None, None))) == ["kill: completed with outcome ok and cost_usd > 0"]
-    assert failed(_rows(turn_row=None)) == ["kill: the turn was redelivered (receive_count >= 2)",
-                                            "kill: completed with outcome ok and cost_usd > 0"]
+    # Read off the checks themselves. This one's wording carries the outcome set, which
+    # grew when 1c made turns.outcome say HOW a run ended -- repeating the sentence here
+    # made the test fail on the wording rather than on the behaviour.
+    REDELIVERED = "kill: the turn was redelivered (receive_count >= 2)"
+    COMPLETED = next(n for n, _, _ in turn.kill_checks(_rows(), turn.KillSpec())
+                     if n.startswith("kill: completed with"))
+
+    assert failed(_rows(turn_row=(1, "t", "ok", 0.1))) == [REDELIVERED]
+    assert failed(_rows(turn_row=(2, None, None, None))) == [COMPLETED]
+    assert failed(_rows(turn_row=None)) == [REDELIVERED, COMPLETED]
     assert failed(_rows(sdk_after="sdk-2")) == ["kill: the same SDK session resumed, not a new one"]
     assert failed(_rows(entries_after=11)) == ["kill: session_entries grew past the kill"]
     assert failed(_rows(kill_calls=[("allow", None)])) == ["kill: a place_search call completed with a duration (criterion 4)"]
@@ -162,6 +168,162 @@ def test_wait_for_tool_call_sees_the_row_by_bare_name_and_reports_a_turn_that_fi
     clock = iter([0.0, 0.0, 0.5, 2.0, 2.0, 2.0])
     monkeypatch.setattr(turn.time, "monotonic", lambda: next(clock))
     assert turn.wait_for_tool_call("dsn", "t", "extraction_append", 1.0) == "timeout"
+
+
+def test_run_kill_uses_the_input_selector_when_one_is_given(monkeypatch):
+    """The whole point of 0a's probe is selecting a BACKGROUND delegation, and the choice
+    between the two waiters is where that happens. Reverting it broke no test: the
+    selector had unit tests, but nothing asserted run_kill ever reaches for it, so the
+    probe would have silently fallen back to the name-only wait that already resumed
+    cleanly on 2026-09-20."""
+    used: list[str] = []
+    monkeypatch.setattr(turn, "wait_for_tool_call",
+                        lambda dsn, tid, tool, dl: used.append("by-name") or "completed")
+    monkeypatch.setattr(turn, "wait_for_tool_input",
+                        lambda dsn, sid, tid, tool, sel, dl: used.append("by-input") or "completed")
+    monkeypatch.setattr(turn, "one", lambda dsn, sql, params: "proj-1")
+    monkeypatch.setattr(turn, "post_message", lambda client, base, sid, text: "turn_x")
+
+    import httpx
+
+    class _Client:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def post(self, *a, **k): raise AssertionError("session creation should not be reached")
+    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+
+    # With a selector -> the input waiter.
+    turn.run_kill("http://x", "dsn", 1.0, turn.KillSpec(
+        kill_on="Agent", kill_on_input={"run_in_background": True}, session_id="sess-1"))
+    assert used == ["by-input"], used
+
+    # Without one -> the original name-only waiter, unchanged.
+    used.clear()
+    turn.run_kill("http://x", "dsn", 1.0, turn.KillSpec(session_id="sess-1"))
+    assert used == ["by-name"], used
+
+
+def test_the_evidence_block_names_the_call_the_probe_actually_waited_for(monkeypatch):
+    """`figures["kill_on"]` is what a reader of a billed probe run sees. Reporting the
+    bare tool name on a run that selected on the INPUT would say the probe killed a
+    delegation it did not kill."""
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    monkeypatch.setattr(turn, "wait_for_tool_input", lambda *a, **k: "seen")
+    import httpx
+
+    class _Client:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+
+    spec = turn.KillSpec(kill_on="Agent", kill_on_input={"run_in_background": True},
+                         session_id="sess-1")
+    checks, figures = turn.run_kill("http://x", "dsn", 1.0, spec)
+    assert figures["kill_on"] == "Agent(run_in_background=true)", figures
+    assert any("Agent(run_in_background=true)" in name for name, _, _ in checks)
+
+
+def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
+    """1c made turns.outcome say HOW a run ended, so the old `== "ok"` literal would have
+    failed the resume probe on a run that WORKED. `budget` is the case that makes the
+    point: proto-probe-resume runs a narrow message with the Stop hook on, so exhausting
+    the nudge cap without finishing the project is its ORDINARY shape -- and the resume
+    still worked, which is the only thing this probe measures.
+
+    Stated as a failure set, so a terminal value added later reads as "the resume worked"
+    unless someone decides otherwise."""
+    def outcome_check(outcome):
+        rows = _rows(turn_row=(2, "done", outcome, 0.42))
+        return [ok for name, ok, _ in turn.kill_checks(rows, turn.KillSpec())
+                if name.startswith("kill: completed with")][0]
+
+    for worked in ("ok", "completed", "queued", "stopped", "budget", "decision", "mcp_unavailable"):
+        assert outcome_check(worked) is True, worked
+    assert outcome_check("no_progress") is False, "a dead resume is the one thing this probe catches"
+    assert outcome_check(None) is False, "no outcome at all is not a completed turn"
+    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress"})
+
+
+# ── 0a: the input selector (--kill-on-input) ────────────────────────────────────────
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("run_in_background=true", {"run_in_background": True}),
+    ("run_in_background=false", {"run_in_background": False}),
+    ("limit=5", {"limit": 5}),
+    ('description="two at once"', {"description": "two at once"}),
+    ("description=two at once", {"description": "two at once"}),
+    ("subagent_type=record-extractor", {"subagent_type": "record-extractor"}),
+    (None, None),
+    ("", None),
+])
+def test_parse_input_selector_reads_json_values_and_falls_back_to_a_bare_string(text, expected):
+    """The first row is the one that matters: the SDK writes a JSON boolean, so a selector
+    carrying the STRING "true" would match nothing and the probe would burn its billed hour
+    looking exactly like "the model never chose a background delegation"."""
+    assert turn.parse_input_selector(text) == expected
+
+
+@pytest.mark.parametrize("bad", ["nokey", "=true", "  =true"])
+def test_a_selector_without_a_key_is_refused(bad):
+    with pytest.raises(ValueError, match="KEY=VALUE"):
+        turn.parse_input_selector(bad)
+
+
+def test_the_selector_reaches_the_spec_and_names_itself_in_the_checks(tmp_path):
+    spec = turn.kill_spec(_args("--kill", "--kill-on", "Agent",
+                                "--kill-on-input", "run_in_background=true"))
+    assert spec.kill_on_input == {"run_in_background": True}
+    assert spec.target == "Agent(run_in_background=true)", "a check line has to say which call it waited for"
+    assert turn.KillSpec().kill_on_input is None and turn.KillSpec().target == "place_search", \
+        "the D14 arm is unchanged when no selector is given"
+
+
+def test_wait_for_tool_input_matches_on_the_call_input_not_the_tool_name(monkeypatch):
+    """The selector reads session_entries, because tool_calls has no input column. The
+    fake here stands in for the jsonb containment: `db` answers only when the fragment the
+    waiter passes is the one the caller asked for."""
+    monkeypatch.setattr(turn, "one", lambda dsn, sql, params: "sdk-1" if "sdk_session_id" in sql else None)
+
+    def fake_db(dsn, sql, params):
+        assert "session_entries" in sql and "tool_use" in sql and "@>" in sql, sql
+        _sdk, fragment = params
+        return [("Agent",)] if fragment == '{"run_in_background": true}' else []
+
+    monkeypatch.setattr(turn, "db", fake_db)
+    assert turn.wait_for_tool_input("dsn", "s", "t", "Agent", {"run_in_background": True}, 1.0) == "seen"
+    # A FOREGROUND Agent call is the case that already resumed cleanly on 2026-09-20 --
+    # the selector must not answer "seen" for it.
+    monkeypatch.setattr(turn.time, "sleep", lambda s: None)
+    clock = iter([0.0, 0.0, 0.5, 2.0, 2.0, 2.0])
+    monkeypatch.setattr(turn.time, "monotonic", lambda: next(clock))
+    assert turn.wait_for_tool_input("dsn", "s", "t", "Agent", {"run_in_background": False}, 1.0) == "timeout"
+
+
+def test_wait_for_tool_input_reports_a_turn_that_finished_without_the_call(monkeypatch):
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [])
+    monkeypatch.setattr(turn, "one", lambda dsn, sql, params: "sdk-1" if "sdk_session_id" in sql else "2026-09-20")
+    assert turn.wait_for_tool_input("dsn", "s", "t", "Agent", {"run_in_background": True}, 1.0) == "completed"
+
+
+def test_wait_for_tool_input_re_reads_the_sdk_session_id_every_poll(monkeypatch):
+    """The worker writes sessions.sdk_session_id at claim time, which can be after this
+    starts. Reading it once would send every later query against NULL and the probe would
+    time out having polled an empty string."""
+    reads = {"n": 0}
+
+    def fake_one(dsn, sql, params):
+        if "sdk_session_id" in sql:
+            reads["n"] += 1
+            return None if reads["n"] == 1 else "sdk-1"
+        return None
+
+    monkeypatch.setattr(turn, "one", fake_one)
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [("Agent",)])
+    monkeypatch.setattr(turn.time, "sleep", lambda s: None)
+    assert turn.wait_for_tool_input("dsn", "s", "t", "Agent", {"run_in_background": True}, 5.0) == "seen"
+    assert reads["n"] >= 2, "a single NULL read must not poison the rest of the poll"
 
 
 # ── the evidence block: a pure function of canned rows ──────────────────────────────

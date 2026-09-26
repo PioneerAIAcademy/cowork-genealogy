@@ -8,7 +8,7 @@ control plane is out of the streaming path (affinity-free on AWS-no-sticky).
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ import logging
 
 from sqlmodel import Session, select
 
-from . import anthropic_proxy, auth, feedback, sessions
+from . import anthropic_proxy, auth, feedback, sandbox_heartbeat, sessions
 from .config import assert_production_config, get_settings
 from .db import get_engine, init_db
 from .models import FamilySearchToken, Project, User, utcnow
@@ -97,9 +97,20 @@ async def lifespan(app: FastAPI):
     app.state.provider = make_provider()
     app.state.anthropic_proxy_client = anthropic_proxy.make_upstream_client()
     await _revoke_sandboxes(app.state.provider)
+    # research-as-a-job 1d: keep a live sandbox's continuous-runtime clock running while
+    # its agent works. E2B's Hobby ceiling is 3600 s and it clocks RUNTIME, not idleness,
+    # so once one user message is a whole research job the session ages out mid-turn --
+    # at or before the corpus p90 of 107.9 minutes. See app/sandbox_heartbeat.py for the
+    # interval and what a missed beat costs.
+    app.state.heartbeat_task = asyncio.create_task(
+        sandbox_heartbeat.run_heartbeat(app.state.provider)
+    )
     try:
         yield
     finally:
+        app.state.heartbeat_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await app.state.heartbeat_task
         if hasattr(app.state.anthropic_proxy_client, "aclose"):
             await app.state.anthropic_proxy_client.aclose()
         await app.state.provider.aclose()

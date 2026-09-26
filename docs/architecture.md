@@ -37,7 +37,7 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Add a field to `research.json` · Add an enum value · Add a tree field | [§6](#if-youre-asked-to-3) |
 | Add a viewer feature · Change what the sandbox runs · Add a control-plane endpoint | [§7](#if-youre-asked-to-4) |
 | Change hosted agent config | [§8](#if-youre-asked-to-5) |
-| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently under `--autonomous`** | [§9](#if-youre-asked-to-6) |
+| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently when no user is present** | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
 > Much of this system has no automated guard, and several of those gaps fail
@@ -789,10 +789,19 @@ There **is** an orchestrator, and it is a skill:
    overrides a direct request for a downstream skill and sends the router back
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
-3. **Two modes.** Interactive surfaces meaningful decisions to the user.
-   `--autonomous` runs the loop in one continuous turn: no clarifying questions
-   and decisions logged to the audit-trail fields. **The router does not yield on
-   a mentor verdict.** The one verdict table in the file is advisory in both modes
+3. **One mode, in the router.** It runs the loop in one continuous turn — no
+   clarifying questions, decisions logged to the audit-trail fields — for every
+   run, with no flag to turn it on. **`--autonomous` gates no branch in any
+   plugin body**: the router's went with S2, and the seven others
+   (`search-external-sites`, `question-selection`, `search-records`,
+   `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`,
+   `agents/person-evidence.md`) were folded in beside it on the lead's call,
+   because the browser never sends the flag and every one of those branches was
+   dead on a hosted run. The string survives in exactly two places: the trigger
+   list in `research/SKILL.md`'s description, and the message the e2e harness and
+   `make proto-demo` still build. So no offline suite sees the difference, and
+   the fold-in owes seven paid eval runs.
+   **The router does not yield on a mentor verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
    resolved question, or force a remediation skill. A second, blocking table
    said the opposite for seven weeks — a merge had restored text that an
@@ -803,12 +812,14 @@ There **is** an orchestrator, and it is a skill:
    **mentor gate** — every `ps_id` a resolved question references must carry a
    `focus: "proof-critique"` verdict in `evaluations[]`, written by
    `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
-   recommendation stays advisory and never forces rework. **Who owns that write
-   is an open question**, not a settled "one direct write": the routing table's
-   last-but-one row has the orchestrator write it, while the same file's
-   "Re-invocation behavior" section says the router writes "nothing directly."
-   The lead has to pick one; until then, do not build a check that assumes
-   either.
+   recommendation stays advisory and never forces rework. **`proof-conclusion`
+   owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` by
+   the research-as-a-job plan. Three surfaces already said so and the router
+   contradicted all three: `docs/specs/schemas/ownership.json` names
+   `skill:init-project` and `skill:proof-conclusion` as the `project` section's
+   only callers, `agents/proof-conclusion.md` §8 makes the call, and the
+   router's own `allowed-tools` grants no writer tool. The router verifies the
+   two gates and re-invokes `proof-conclusion`; it never writes the status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
 
@@ -832,9 +843,10 @@ record), and it never writes identity links or eliminations inline
 > corpus (15 tests) plus stubbed routing tests covering rows 1–4 and the
 > shortcut guard. Row 14 (post-verdict `address_first` handler) is now
 > gradeable — the contradiction it was blocked on is gone (item 3 above).
-> Row 16 (`project.status = "completed"`) stays blocked, on who owns that
-> write rather than on a verdict table. A live e2e run is still the only
-> instrument for routing-table rows the unit suite does not yet cover.
+> Row 16 (`project.status = "completed"`) is no longer blocked on who owns
+> that write — item 4 above settles it — but no unit test covers it yet. A
+> live e2e run is still the only instrument for routing-table rows the unit
+> suite does not yet cover.
 
 ### If you're asked to…
 
@@ -1629,7 +1641,16 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   many hours as it needs. **Do not read the cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once.
   Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured**.
+  measured** — which is exactly why the research-as-a-job ruling of 2026-09-21
+  refused to accept the pause. Since that plan's 1d, `set_timeout` is no longer
+  called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
+  live sandbox on a 300 s loop from the control plane, so a turn cannot age out
+  while it works. That matters now because a turn is a whole research job —
+  median 53.9 minutes, p90 107.9 — so under continuous work one user message
+  would otherwise reach the cap mid-flight on about half of runs. The control
+  plane is deliberately out of the streaming path (`/connect` hands the browser
+  a WSS straight to the sandbox), so the loop beats on **liveness**, the
+  superset of "a turn is active" that it can actually see.
 
 - **The delete-janitor for abandoned sandboxes is unimplemented** — paused
   sandboxes are never reclaimed, by us or by E2B (never reaping them is what
@@ -1983,11 +2004,17 @@ reason it exists.
 remove a *pause*, or a *capability*?**
 
 Removing the pause is correct and is the established shape. `agents/proof-conclusion.md`
-states it for one gate — under `--autonomous`, route to the missing skill
-automatically instead of asking, because "autonomous mode changes who decides, not
-whether the gate runs." **Generalized: it changes who decides, not what the run can
-reach.** `question-selection` applies the same shape — with no user to answer, skip
-the ask and take the action. Production behaviour is preserved; only the prompt is
+states it for one gate — route to the missing skill instead of asking, because who
+decides changes nothing about whether the gate runs. **Generalized: it changes who
+decides, not what the run can reach.** `question-selection` applies the same shape —
+with nobody waiting to answer, skip the ask and take the action.
+
+Since 2026-09-23 this is no longer a *mode* difference at all: no plugin body reads
+`--autonomous`, so the rule is unconditional and the question is only ever "can a human
+act on this right now?". Two bodies keep a genuine two-sided answer because a human
+sometimes CAN — `agents/person-evidence.md` (a user who asked for a link can adjudicate
+it; mid-run nobody can) and `search-external-sites` (a user who named the plan item will
+capture it; mid-run nobody will). Both have eval fixtures on each side. Production behaviour is preserved; only the prompt is
 gone.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
@@ -2004,7 +2031,7 @@ both green in CI for months. The first is fixed; the second stands:
   a second half — the orchestrator's dispatch row is now scoped to the **active** plan,
   because a revision leaves unexecuted items behind on the plan it retired.
 - **External-site captures.** `search-external-sites` marks a plan item `skipped`
-  under `--autonomous` because no user can click a paywalled link. Controlling for
+  when no user is present to click a paywalled link. Controlling for
   fallback items, that produces a 76% skip rate on primary Ancestry items against
   12% on FamilySearch — so corpus breadth on external repositories cannot be read as
   production breadth.
@@ -2041,8 +2068,10 @@ run `make test-all`, which the PR template requires. **If you cannot name the
 check that would have caught your change, say so in the PR** rather than implying
 CI covered you (§9.4).
 
-**Write a rule that behaves differently under `--autonomous`.** Ask which of the two
-things it removes — a pause, or a capability (§9.5). Removing the pause is the
+**Write a rule that behaves differently when no user is present.** Ask which of the two
+things it removes — a pause, or a capability (§9.5). Note that the flag itself is
+retired: no plugin body reads `--autonomous`, so the condition is the situation, not a
+string in the message. Removing the pause is the
 established shape and is fine: decide instead of asking, and log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
 is almost never what you want. If a headless run genuinely cannot perform the step,

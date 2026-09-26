@@ -131,7 +131,6 @@ parameter set:
 |-----------|----------|--------|---------|
 | `focus` | no (defaults — see below) | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | derived from target state |
 | `target_id` | no (defaults — see below) | `q_` ID, `ps_` ID, or `"project"` | derived from research.json state |
-| `mode` | no | `interactive`, `autonomous` | `interactive` |
 | `force_reevaluate` | no | `true` | `false` |
 
 Focus modes select which rubric to apply:
@@ -192,27 +191,16 @@ target_id cannot tell a craft read from an evidentiary one. This exempts
 the *skip*, not the lookup: you still `sidecar_read` the candidate entry's
 `file_path` for its `craft` flag when deciding supersession below.
 
-**Interactive mode (`mode: interactive`).** If an existing verdict
-file is found:
-
-1. Print a brief summary of the prior verdict: file name, timestamp,
-   prior `verdict` value, first strength, and (if any) first
-   `must_address` issue.
-2. Ask the user: "Re-evaluate now, or surface the existing verdict?"
-3. If the user chooses to surface the existing: print the prior
-   `narrative_for_user` and stop. Do not write a new file or append a
-   new entry to `evaluations[]`.
-4. If the user chooses to re-evaluate: proceed normally and persist a
-   new verdict. The timestamp in the filename keeps the files distinct,
-   so the prior verdict is never overwritten.
-
-**Autonomous mode (`mode: autonomous`).** If an existing verdict file
-is found:
+If an existing verdict file is found:
 
 - If the prior verdict was `looks_solid` or `consider_addressing` (not
   blocking), surface the existing verdict and stop. Do not re-evaluate.
 - If the prior verdict was `address_first` or `refused`, re-evaluate —
   the researcher may have addressed the issues since then.
+
+Never stop to ask which of the two to do: nobody is waiting to answer. The
+timestamp in the filename keeps re-evaluations distinct, so a prior verdict is
+never overwritten.
 
 ## Universal principles (apply in every invocation)
 
@@ -404,7 +392,7 @@ question:
 | Verdict | Orchestrator action |
 |---------|---------------------|
 | `looks_solid` / `consider_addressing` | Surface the narrative; log `consider_addressing` items for later review; continue. |
-| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. In interactive mode a watching researcher may choose to act; under `--autonomous`, log and continue. |
+| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. Log it and continue; a watching researcher may choose to act on it. |
 | `refused` | Surface the refusal message; it names the correct target. |
 
 You are not responsible for the routing decision. You write your

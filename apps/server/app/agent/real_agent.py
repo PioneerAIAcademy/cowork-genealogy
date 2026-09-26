@@ -42,6 +42,12 @@ import sys
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from .continue_policy import (
+    CONTINUE_REASON,
+    env_int,
+    read_research_json,
+    should_continue_run,
+)
 from .errors import UNEXPECTED, classify, log_operator
 from .mcp_health import (
     GENEALOGY_TOOL_PREFIX,
@@ -468,7 +474,137 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     return env
 
 
-def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None):
+# research-as-a-job 1d. The alpha's veto cap per turn. Sized like the prototype's on STEP
+# count rather than on the nudge histogram: over the 189 committed e2e runs, Skill/Task/
+# Agent steps per run are median 15, p90 25, p99 51, max 76. 0 turns the hook off.
+_DEFAULT_MAX_NUDGES = 60
+
+
+def _max_nudges(env=None) -> int:
+    """``AUTONOMOUS_MAX_NUDGES``, defensively -- see ``env_int``. This module is imported
+    at agent start inside the sandbox AND by the prototype worker
+    (``proto/worker/options.py``), where ``runner._make_agent``'s ``except ImportError``
+    does not catch a ValueError, so a typo'd variable crash-loops the container.
+    ``AutoContinue.from_env`` in runner.py is the third reader of this same variable."""
+    return env_int(
+        "AUTONOMOUS_MAX_NUDGES", _DEFAULT_MAX_NUDGES, env=env,
+        on_error=lambda name, raw, default: _log(
+            f"[agent] {name}={raw!r} is not an integer; using {default}"
+        ),
+    )
+
+
+AUTONOMOUS_MAX_NUDGES = _max_nudges()
+
+
+
+def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
+                   pending_user_message=None):
+    """The alpha's ``Stop`` callback (1d): veto the model's voluntary yield while the
+    project is unfinished, so one user message runs a whole research job.
+
+    The decision itself is ``continue_policy.should_continue_run`` -- the SAME function the
+    prototype worker binds, imported rather than copied. What differs is only where the
+    state comes from: research.json off the sandbox's own disk here, the ``documents`` row
+    on the turn's Postgres connection there.
+
+    Never raises: any exception allows the stop, exactly like the worker's. A Stop hook
+    that raises ends the turn in ERROR, which is strictly worse than letting it end.
+    """
+    state = {"nudges_used": 0, "tool_count_at_last_nudge": -1}
+
+    async def _stop(_input_data, _tool_use_id, _ctx):
+        try:
+            count = int(tool_count())
+            # The shared predicate accepted `pending_user_message` from the start and
+            # this plane passed it not at all, so a message typed mid-turn waited a JOB
+            # boundary rather than a step.
+            if not should_continue_run(
+                research=read_research_json(project_dir),
+                nudges_used=state["nudges_used"],
+                max_nudges=max_nudges,
+                tool_count=count,
+                tool_count_at_last_nudge=state["tool_count_at_last_nudge"],
+                pending_user_message=bool(pending_user_message and pending_user_message()),
+            ):
+                return {}
+            state["nudges_used"] += 1
+            state["tool_count_at_last_nudge"] = count
+            _log(f"[agent] continue-nudge {state['nudges_used']}/{max_nudges}")
+        except Exception as exc:  # noqa: BLE001 - a raising hook ends the turn in error
+            _log(f"[agent] stop hook failed, allowing the stop: {type(exc).__name__}: {exc}")
+            return {}
+        return {"decision": "block", "reason": CONTINUE_REASON}
+
+    return _stop
+
+
+def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
+    """The session's hooks. PreToolUse is the only restraint on a bypassPermissions
+    session; ``Stop`` (1d) is what makes one user message run a whole research job.
+
+    The tool counter is per SESSION and lives here rather than on a module global, so two
+    sandboxes in one process cannot read each other's progress. It is what
+    ``should_continue_run``'s no-progress arm compares between two stops: without it the
+    second nudge always looks like no progress and the run stops after one."""
+    counter = {"tool_calls": 0}
+
+    async def count_only(_input_data, _tool_use_id, _ctx):
+        """Counts, and does nothing else. Bound with ``matcher=None`` because the count
+        has to see EVERY call -- ``_PRETOOL_MATCHER`` covers five tool names (Write, Edit,
+        NotebookEdit, Bash, device_commit_files) and a research loop runs almost none of
+        them, so counting behind it stays at 0 all run and the Stop hook's no-progress arm
+        ends the job after ONE nudge.
+
+        ``matcher=None`` is what issue #1915 narrowed the DENY hook away from, and the
+        reason was a callback that could go unanswered and time out every tool including
+        ToolSearch. That reason does not transfer: this is a dict increment with no I/O,
+        no await and no way to block. The deny hook keeps its narrow matcher below.
+
+        **It is also the plane's only halt that fires on every step.** The ``Stop`` hook
+        is consulted at a VOLUNTARY YIELD, which the corpus puts at a median of once per
+        run with 31% of runs never yielding at all -- so a bound carried only there is
+        not a bound. Same reasoning, and the same halt fields (``continue`` /
+        ``stopReason``, never a permission deny, which the model argues with), as the
+        prototype's ``PreToolUse`` halt. Both reads are in-memory, so the no-I/O promise
+        above still holds."""
+        counter["tool_calls"] += 1
+        if agent is not None:
+            try:
+                if agent.pending_user_message():
+                    return {"continue": False,
+                            "stopReason": "The researcher sent a message; taking it now."}
+            except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+                _log(f"[agent] halt check failed, allowing: {type(exc).__name__}: {exc}")
+        return {}
+
+    hooks = {
+        "PreToolUse": [
+            HookMatcher(matcher=None, hooks=[count_only], timeout=_PRETOOL_TIMEOUT_S),
+            HookMatcher(
+                matcher=_PRETOOL_MATCHER,
+                hooks=[_pretool_hook],
+                timeout=_PRETOOL_TIMEOUT_S,
+            ),
+        ]
+    }
+    if AUTONOMOUS_MAX_NUDGES > 0:
+        hooks["Stop"] = [
+            HookMatcher(
+                matcher=None,
+                hooks=[make_stop_hook(
+                    project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
+                    tool_count=lambda: counter["tool_calls"],
+                    pending_user_message=(agent.pending_user_message if agent else None),
+                )],
+                timeout=_PRETOOL_TIMEOUT_S,
+            )
+        ]
+    return hooks
+
+
+def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None,
+                  agent=None):
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     # Side effect, deliberately here: the plugin's agents are registered by
@@ -511,15 +647,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # commands that combine credential access with network egress (see
         # _pretool_hook). Scoped to the tools it can actually deny, and given an
         # explicit timeout — see _PRETOOL_MATCHER and _PRETOOL_TIMEOUT_S.
-        hooks={
-            "PreToolUse": [
-                HookMatcher(
-                    matcher=_PRETOOL_MATCHER,
-                    hooks=[_pretool_hook],
-                    timeout=_PRETOOL_TIMEOUT_S,
-                )
-            ]
-        },
+        hooks=_build_hooks(HookMatcher, project_dir, agent),
         # Stream partial assistant content. Without it a block reaches the UI only
         # when its whole message completes, so a long turn — a record-extraction
         # subagent reasoning before its next tool call — shows nothing at all for
@@ -763,6 +891,10 @@ class RealAgent:
         self._cum_cost = 0.0
         self._cum_in = 0
         self._cum_out = 0
+        # Set by the runner to `lambda: bool(pending)` -- it owns the backlog. Read by
+        # both halts so a message typed mid-turn is taken at the next STEP rather than at
+        # the end of a job that may run for hours.
+        self.pending_user_message = lambda: False
         # #941/#1126 — genealogy MCP health, read off the CLI's `system`/`init`
         # message. Session-scoped, not turn-scoped: a re-spawned CLI emits a
         # FRESH init, so both counters have to outlive the turn or the warning
@@ -1006,7 +1138,7 @@ class RealAgent:
             from claude_agent_sdk import ClaudeSDKClient
 
             client = ClaudeSDKClient(
-                options=build_options(self.dir, resume=self._resume_id, api_key=key)
+                options=build_options(self.dir, resume=self._resume_id, api_key=key, agent=self)
             )
             # Assign only after a successful connect, so a failed start is
             # retried next turn instead of caching a client that never opened.

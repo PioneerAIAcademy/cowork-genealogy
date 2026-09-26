@@ -36,7 +36,7 @@ things when the evidence demands it.
 
 | File | Action | Notes |
 |------|--------|-------|
-| `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
+| `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. Also carries `researcher_profile.intended_audience` (§5.1.1), which §6.4's audience check reads. |
 | `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its opening turn asks the objective only; the profile is fixed. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
@@ -74,7 +74,6 @@ The invoker (orchestrator or user) supplies parameters in the delegation message
 ```
 focus: "<focus_mode>"
 target_id: "<id>"
-mode: "interactive" | "autonomous"      # optional, default: interactive
 force_reevaluate: true                  # optional, default: false
 ```
 
@@ -82,7 +81,6 @@ force_reevaluate: true                  # optional, default: false
 |-----------|----------|--------|-------------|
 | `focus` | no (see §3.3) | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | Which rubric to apply |
 | `target_id` | no (see §3.3) | `q_` ID, `ps_` ID, or `"project"` | What to evaluate |
-| `mode` | no | `interactive`, `autonomous` | Controls verdict-handling protocol (§11). Defaults to `interactive`. |
 | `force_reevaluate` | no | `true` | When present and `true`, bypasses the existing-verdict skip logic (§10) and always runs a fresh evaluation. Intended for orchestrator use when the researcher has addressed prior findings. |
 
 ### 3.3 Missing or ambiguous input
@@ -134,7 +132,7 @@ use ("am I ready to conclude?"), but `/research` no longer auto-gates on them: t
 `research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s tier analysis, the
 read-only mentor cannot verify exhaustiveness without search tools, and their forced rework
 starved the proof step (per the e2e latency analysis).
-The single `proof-critique` gate is identical in interactive and `--autonomous` mode and never
+The single `proof-critique` gate never
 blocks the flow — see §11.
 
 ---
@@ -770,20 +768,7 @@ This exempts the *skip*, not all reading of prior verdicts: §12.3 still has the
 run call `sidecar_read` on the candidate entry's `file_path` to check its `craft`
 flag before deciding supersession.
 
-### 10.1 Interactive mode behavior
-
-If an existing verdict file is found:
-
-1. Print a brief summary of the prior verdict:
-   - File name, timestamp, and prior `verdict` value
-   - First strength and (if any) first `must_address` issue
-2. Ask the user: "Re-evaluate now, or surface the existing verdict?"
-3. If the user chooses to surface the existing: print the prior `narrative_for_user` and
-   stop. Do not write a new file.
-4. If the user chooses to re-evaluate: proceed normally and write a new verdict file.
-   Do not overwrite the prior file — the timestamp in the filename keeps them distinct.
-
-### 10.2 Autonomous mode behavior
+### 10.1 Behaviour on an existing verdict
 
 If an existing verdict file is found and the verdict was `looks_solid` or
 `consider_addressing` (not blocking), surface the existing verdict and stop. Do not
@@ -793,19 +778,19 @@ delegation message.
 If the prior verdict was `address_first` or `refused`, re-evaluate — the researcher may
 have addressed the issues since then.
 
-### 10.3 Identifying the mode
+Never stop to ask which of the two to do. The timestamp in the filename keeps
+re-evaluations distinct, so a prior verdict is never overwritten.
 
-The orchestrator sets the mode by including one of the following in the delegation message:
+### 10.2 There is no mode parameter
 
-```
-mode: interactive
-```
-or
-```
-mode: autonomous
-```
+Until research-as-a-job's S2 fold-in (2026-09-23) this section had two halves selected by
+a `mode: interactive | autonomous` parameter, defaulting to `interactive`, whose rule was
+to **ask the user** "Re-evaluate now, or surface the existing verdict?".
 
-If `mode` is absent, default to `interactive`.
+Nothing ever passed that parameter — `grep -rn "mode: *\"\?interactive" packages/engine/`
+returns only the agent body and this spec — so the asking branch was the live path. Under
+continuous work no one is waiting to answer it, so the ask was a stall with no way out.
+The parameter is gone and the former autonomous behaviour above is unconditional.
 
 ---
 
@@ -813,13 +798,13 @@ If `mode` is absent, default to `interactive`.
 
 After the agent returns its verdict, the caller handles the result as follows.
 
-### 11.1 Interactive mode
+### 11.1 What the agent does
 
-The agent prints `narrative_for_user` and stops. The orchestrator surfaces it to the user
-and pauses. The user decides what to do next — resume the `/research` flow, invoke a
-specific skill, or dismiss the review and continue.
+The agent prints `narrative_for_user` and stops. The orchestrator surfaces it and carries
+on; it does not pause for the researcher, who reads the narrative on the feed while the
+run continues.
 
-### 11.2 Verdict handling (advisory — identical in interactive and autonomous)
+### 11.2 Verdict handling (advisory)
 
 The `proof-critique` gate runs *after* the answer is already persisted, so no verdict blocks
 the flow or re-opens the resolved question. After the verdict is returned:
@@ -827,7 +812,7 @@ the flow or re-opens the resolved question. After the verdict is returned:
 | Verdict | Orchestrator action |
 |---------|---------------------|
 | `looks_solid` / `consider_addressing` | Surface the narrative; log `consider_addressing` items for later review; continue. |
-| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. In interactive mode a watching researcher may choose to act; under `--autonomous`, log and continue. |
+| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. Log it and continue; a watching researcher may choose to act on it. |
 | `refused` | Surface the refusal message; it names the correct target. |
 
 The gps-mentor agent is not responsible for the orchestrator routing decision. It writes

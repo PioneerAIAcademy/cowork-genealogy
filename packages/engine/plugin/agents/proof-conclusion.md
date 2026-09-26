@@ -151,11 +151,9 @@ settle it. Do **not** resolve the question, and do **not** write the tree —
 `not_proved` is below the encoding threshold (§6), so no relationship or fact
 is asserted. Then route to `conflict-resolution`. Re-invoked after the
 conflict is resolved, you update that same `ps_NNN` in place.
-Report the exact failing IDs to the user and recommend the specific skill
-for each gap (`record-extraction`, `person-evidence`, or
-`conflict-resolution`). In `--autonomous` mode, route to the missing skill
-automatically instead of asking — autonomous mode changes who decides, not
-whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
+Report the exact failing IDs and route to the missing skill for each gap
+(`record-extraction`, `person-evidence`, or `conflict-resolution`) instead of
+asking — who decides changes nothing about whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
 do **not** stop the gate — surface them as a note and continue.
 
 Only when the blocking checks pass, proceed to Step 1.
@@ -329,6 +327,8 @@ You own the resolution of **the question you actually concluded**: `status: "res
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
 - If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
+- That write is refused while a blocking conflict is unresolved, or while any resolved question's proof summary has no `proof-critique` verdict. Both are pre-call snapshots: settling one in the same batch does not count — do it, then complete in a later call.
+- A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
 
 **Never pass `updated` in `fields`.**

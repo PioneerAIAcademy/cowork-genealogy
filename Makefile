@@ -527,6 +527,27 @@ proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
 	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
+# research-as-a-job 0a: the resume probe the guard was gated on. The 2026-09-20 run that
+# produced the synthetic result had been killed during a BACKGROUND delegation, and
+# `--kill-on Agent` alone lands on a foreground one, which resumes cleanly -- so this
+# selects on the call's INPUT (`run_in_background: true`), read out of session_entries
+# because tool_calls has no input column. Three things have to line up or it kills
+# nothing: the selector, a message that provokes two concurrent extractions
+# (proto/probes/background-delegation.txt), and AUTONOMOUS_MAX_NUDGES > 0, which
+# proto-kill otherwise leaves at 0 so the run ends before a delegation is reached.
+#
+# `run_in_background` is MODEL-CHOSEN -- 19 of 714 committed runs, none of the eight
+# bagley-father-1884 runs -- so this may simply not fire. Billed, roughly an hour a try.
+# Do not spend more than two attempts on it: the plan's accepted fallback is the unit
+# test `test_the_named_fallback_*` in apps/server/tests/test_proto_worker.py, which is
+# already green.
+.PHONY: proto-probe-resume
+proto-probe-resume: ## 0a probe: kill a real turn inside a BACKGROUND delegation and watch the resume — SESSION=<id> (proto-seed first); billed, ~1 h
+	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
+	  ARGS="--kill-on Agent --kill-on-input run_in_background=true --kill-after-s $${KILL_AFTER_S-20} \
+	        --text-file proto/probes/background-delegation.txt --deadline-s $${DEADLINE_S-2400} $(ARGS)"
+
 # D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
 # through PgS3ProjectStore, and a web-tier session on that project. Prints the
 # session id and the fixture's research question. Needs the stack up.
@@ -552,6 +573,7 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 .PHONY: proto-demo
 proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
 	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches}"; \
+	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
@@ -564,17 +586,23 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # the harness's cap (max_continue_nudges, 40) and its no-progress check, so the fixture
 # runs to project.status == "completed" in one turn. `AUTONOMOUS_MAX_NUDGES=5 make
 # proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run. One message
-# is now a whole run, so this arm alone raises the shim's per-attempt ceiling to 7200 s
-# (READ_TIMEOUT_S; the compose default 1800 holds for every other target -- the lead's
-# call, 2026-09-20 -- though the shim this arm recreates stays at 7200 until the next
-# `up` recreates it again) and sizes the demo's wait to span one shim-driven resume.
-# elasticmq's visibility timeout (7500 s) must stay above this export, or an attempt at
-# the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
+# is now a whole run, so the run spans SEVERAL attempts rather than fitting in one. The
+# per-attempt ceiling is the pinned 1800 s -- the 7200 s override of 2026-09-20 was a
+# symptom of the D17/0a resume defect, not a capacity finding, and came back down with it
+# (research-as-a-job 0b; "the step ceiling: 1,800 s, no test exception"). The export stays
+# because the next line sizes --deadline-s off the name and POSIX arithmetic reads an
+# unset name as 0 -- deleting it gives a 300 s deadline on an hour-long billed run.
+# The deadline spans SIX attempts, not one resume: re-measured 2026-09-23 over the 139
+# committed e2e runs that reached `completed`, the median is 53.6 min and 33% exceed
+# 2 * 1800 + 300,
+# which demo.py turns into a hard TimeoutError and a FAIL; the longest in the corpus
+# needed six. elasticmq's visibility timeout (2100 s) must stay above this export, or an
+# attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
-proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) and a 7200 s per-attempt ceiling (READ_TIMEOUT_S) so one turn runs the fixture to completion; FIXTURE=… ARGS=…
+proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
 	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
-	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-7200}"; \
-	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((2 * READ_TIMEOUT_S + 300)) $(ARGS)"
+	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-1800}"; \
+	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((6 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
 # D18: a session's project out of the store into files -- research.json, tree.gedcomx.json,
 # results/ and images/ under OUT/<project_id>/ (OUT default apps/server/proto/exports,
