@@ -25,6 +25,48 @@ export interface ChatMessage {
   // rather than folding onto this one, so each auto-continued step reads as
   // its own reply and its own trailing literal is the one stripped at render.
   handedBack?: boolean
+  // A user message typed WHILE a turn was running (research-as-a-job 1b). The
+  // server holds it rather than enqueueing it -- two turns on one session would
+  // resume the same SDK session -- so the bubble says it is waiting. Cleared at
+  // `turn_done`, which is when the held message becomes the next turn.
+  queued?: boolean
+}
+
+// research-as-a-job 1c: what the browser shows for each `turns.outcome`, carried on
+// the turn_done frame. complete() used to hardcode 'ok', so EVERY way a run ended
+// looked like success -- including the two ways an unattended run actually ends, a
+// spent budget and no progress. To a genealogist a half-finished run then reads as
+// "nothing more was found", which is a correctness bug in the product, not a cosmetic
+// one. `ok` is deliberately absent: an ordinary turn that simply finished says nothing.
+export const TURN_OUTCOME_LABELS: Record<string, string> = {
+  completed: 'Research complete.',
+  stopped: 'Stopped — send a message to carry on.',
+  queued: 'Picking up your message…',
+  budget: 'Paused: this run reached its step budget. Send a message to carry on.',
+  no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
+  decision: 'Waiting on you — see the question above.',
+  mcp_unavailable: 'Paused: the genealogy tools became unavailable.'
+}
+
+// 1e: `budget` covers two different caps, and they need different advice. The nudge cap
+// ends a turn but not the sitting, so another message carries on where it left off. The
+// SPEND cap ends the sitting: the only way on is a new session on the same project, and a
+// run that stops at $35 looking finished is worse than no cap at all.
+export const SPEND_CAP_LABEL =
+  'Stopped: this session reached its spend limit. Everything found so far is saved — ' +
+  'start a new session on this project to carry on.'
+
+export function turnOutcomeLabel(outcome: unknown, limit?: unknown): string | null {
+  if (outcome === 'budget' && limit === 'spend') return SPEND_CAP_LABEL
+  return typeof outcome === 'string' ? (TURN_OUTCOME_LABELS[outcome] ?? null) : null
+}
+
+// `turn_done` is when a held message is picked up, so no bubble should still
+// claim to be waiting after it. Pure and returns the same array when nothing
+// was queued, so it cannot cause a needless re-render.
+export function clearQueued(messages: ChatMessage[]): ChatMessage[] {
+  if (!messages.some((m) => m.queued)) return messages
+  return messages.map((m) => (m.queued ? { ...m, queued: false } : m))
 }
 
 // Two canonical text blocks in one assistant turn are separate paragraphs, but

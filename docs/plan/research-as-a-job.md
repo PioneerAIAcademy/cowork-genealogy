@@ -1,9 +1,46 @@
 # Research as a job — phases 0 and 1
 
-> **Status:** NOT BUILT. Plan of 2026-09-21, for beta in Fall 2026. **This is the whole of
-> what to build now**, and it is several weeks of work. Phases 2 to 5 of the wider design are
+> **Status:** BUILT, pending the billed acceptance runs. Plan of 2026-09-21, revised
+> 2026-09-23 (PR #2722), for beta in Fall 2026. Phases 2 to 5 of the wider design are
 > in `research-as-a-job-later.md` at intent only; they get their own detailed pass once this
 > lands, when the surfaces they touch can actually be opened.
+>
+> **What is built:** S2, 0a, 0b, 1a, 1b, 1c, 1d, 1e — code, offline tests, and a mutation
+> pass proving each new guard fails when broken and still accepts a legitimate variant.
+> 0a's probe gate was already satisfied before this work: `search-agent-prototype.md`
+> records the D17 run of 2026-09-21 observing the synthetic result on background agents
+> for the second time. `make proto-probe-resume` now reproduces it on demand
+> (`--kill-on-input run_in_background=true`), which the older arm could not.
+>
+> **What is NOT done, and cannot be done offline:** every billed run. The
+> `make eval-skill SKILL=research` run plus a genealogist annotation pass that S2's eval
+> slot requires; `make proto-demo-auto` at the restored ceiling; the live
+> `make proto-probe-resume`; 1c's two SDK measurements (whether `continue_: False`
+> suppresses the Stop hook dispatch, and whether a SUBAGENT's halts the parent session);
+> and 1d's alpha acceptance.
+>
+> **Wider than S2, on the lead's call (2026-09-23).** S2 as written covers
+> `research/SKILL.md` only, but the browser never sends `--autonomous`, so every branch
+> gated on it in the other bodies was dead on a hosted run — most consequentially
+> `search-external-sites`, which would present a URL and wait for a capture nobody is
+> there to make. The lead ruled: fold them in. Seven bodies moved beside the router —
+> `search-external-sites`, `question-selection`, `search-records`, `research-plan`,
+> `agents/proof-conclusion.md`, `agents/gps-mentor.md`, `agents/person-evidence.md` — and
+> no plugin body now reads the flag. The worst of them was not flag-shaped at all:
+> `gps-mentor`'s `mode` parameter defaulted to `interactive`, whose rule was to ASK the
+> user, and nothing ever passed the parameter. **That costs seven paid eval runs, not
+> one**, and `check_runlogs.py` names all seven. The instruction and its reasoning are
+> recorded on issue #2292.
+>
+> **One open question for the lead**, raised rather than invented: the
+> `question-selection` path the 2026-09-01 ruling does not settle — see S2 below, and
+> the three candidate mechanisms on issue #2292.
+>
+> **One deviation from the plan as written, and why.** 1b wires `pending_user_message()`
+> into the Stop hook only. It is wired into the `PreToolUse` halt as well, because the
+> plan's own measurement — the model yields a median of once per run, 31% of runs never —
+> is the same figure it uses to rule out a yield-gated Stop, and the UI promises the
+> message is "picked up at the next step". Both carriers read the same row.
 >
 > Hardened over four adversarial review rounds. Supersedes the hand-back literal ruled
 > 2026-09-07 (issues #2292, #1104, #2328) and the regex auto-continue of PR #2667.
@@ -148,17 +185,18 @@ re-point `_exported_ceiling_s` now that the ruling is 1,800 with no exception.
 
 **What it costs, and it is not what an earlier draft said.** The ceiling bounds one queue
 message, and under continuous turns one queue message is a whole run — so the number that
-matters is run length, not segment length. Measured over the 134 committed e2e runs that
-reached `completed`:
+matters is run length, not segment length. Re-measured 2026-09-23 over the 139 committed
+e2e runs that reached `completed` (the corpus grew during the build; the shape did not
+move):
 
 | | |
 |---|---|
-| median | 53.5 min |
-| p90 | 83.3 min |
+| median | 53.6 min |
+| p90 | 85.0 min |
 | longest | 168.8 min |
-| exceed 1,800 s | **94.0%** |
-| exceed 3,600 s, so more than two attempts | 38.8% |
-| exceed 3,900 s, the demo's current deadline | 32.1% |
+| exceed 1,800 s | **94.2%** |
+| exceed 3,600 s, so more than two attempts | 39.6% |
+| exceed 3,900 s, the demo's current deadline | 33.1% |
 
 **Resume is the normal path, not the exception** — the median run needs two attempts, p90
 three, the longest in the corpus six. That is why 0a gates this phase.
@@ -355,8 +393,10 @@ consulted only at a voluntary yield, 31% of runs never yield, and it resets on e
 
 **Per session, not per run or per project.** A `sessions` row carries a `project_id`, so a
 project spans many sessions — the bound caps one sitting, never the research. Sized against
-the corpus: 155 runs with cost data, median $7.84, p90 $14.75, max $25.24. So $35 is about
-four median runs in one sitting, and above the most expensive single run ever recorded.
+the corpus, re-measured 2026-09-23: 161 runs with cost data, median $7.85, p90 $14.26,
+max $25.24. So $35 is about four median runs in one sitting, and above the most expensive
+single run ever recorded. `test_the_spend_cap_clears_the_costliest_run_in_the_corpus`
+re-derives that last clause rather than trusting this line.
 
 **No grant mechanism, deliberately.** When a session reaches the bound it stops, and the way
 to continue is to start a new session on the same project — which is what users already do by

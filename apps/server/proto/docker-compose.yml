@@ -35,8 +35,13 @@ services:
       timeout: 3s
       retries: 30
 
+  # quay.io, not Docker Hub, for both minio images below: `docker pull minio/minio` (any
+  # tag, including :latest) now answers "pull access denied ... repository does not exist
+  # or may require 'docker login'" anonymously, so `make proto-up` fails on any machine
+  # with no cached image -- every fresh clone, every CI runner. quay.io serves the SAME
+  # tags and is MinIO's own second registry. Verified 2026-09-24 for both.
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: proto-minio
     command: server /data --console-address ":9001"
     environment:
@@ -55,7 +60,7 @@ services:
 
   # One-shot: creates the `projects` bucket, then exits 0.
   minio-init:
-    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
     container_name: proto-minio-init
     depends_on:
       minio:
@@ -119,6 +124,17 @@ services:
       # never during one, since a FamilySearch refresh revokes the previous access token).
       # Empty, and every FamilySearch tool answers with the reconnect instruction.
       FS_ACCESS_TOKEN_FILE: /run/fs-token
+      # The fallback `bearer_token()` documents ("else the worker env's
+      # FS_ACCESS_TOKEN") -- which was never actually supplied, so it was always "".
+      # It matters because the FILE path is not reliable: the mount is a host file owned
+      # by the invoking user at mode 600, and this container runs as uid 1001, so the
+      # read fails with EPERM whenever those uids differ -- always under rootless docker,
+      # where the container uid is mapped through the caller's subuid range. bearer_token
+      # swallows that OSError, returns "", and the engine then answers
+      # HOSTED_REAUTH_INSTRUCTION -- "Your FamilySearch session has expired" -- for a
+      # token that is perfectly valid. Three billed demo runs were lost to that message
+      # before anyone checked the tokens, which were all still live afterwards.
+      FS_ACCESS_TOKEN: ${FS_ACCESS_TOKEN:-}
       # http (default since 2026-09-20, the lead's call): the D16 `tools` service on the
       # SAME store, ONE process for every turn and every patron -- bearer as
       # Authorization, the turn's project id as X-Genealogy-Project-Id, the store bound
@@ -138,6 +154,11 @@ services:
       # D18's autonomous arm: the worker's Stop hook vetoes the model's voluntary yield up
       # to this many times per turn (proto-demo-auto exports the harness's 40). 0: off.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
+      # 1b: where a message held during a turn is released to when that turn ends. The
+      # SAME queue the web tier and the shim use. The worker is the only component that
+      # knows a turn finished -- the web tier is stateless and the browser may be closed
+      # -- so the handover is its job. Unset means no release.
+      QUEUE_URL: http://elasticmq:9324/000000000000/turns
       ENGINE_DIR: /opt/genealogy/engine
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project
@@ -154,6 +175,8 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      elasticmq:
         condition: service_healthy
 
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
@@ -176,6 +199,21 @@ services:
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
       POLL_S: "1"
       SSE_PING_S: "15"
+      # research-as-a-job 1a: the Stop hook's veto cap, stamped on every queue message
+      # this tier enqueues (begin_turn -> body.max_nudges) and preferred by run_turn over
+      # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: this
+      # tier has no auth, so a request field would let any client set its own nudge
+      # budget. The worker cannot tell the browser from `make proto-demo` -- there is no
+      # browser path it can see -- so each recipe recreates this container with its own
+      # export instead, and proto-demo exports 0 to stay a one-turn run.
+      #
+      # 60 is sized on STEP count, not on the nudge histogram: measured over the 189
+      # committed e2e runs, Skill/Task/Agent steps per run are median 15, p90 25, p99 51,
+      # max 76 -- so 60 clears p99 with margin. The nudge histogram (median 1, p90 4)
+      # describes runs under a harness that FORBIDS yielding and does not describe this
+      # regime. The cap is not the spend control either; 1e's per-session bound is.
+      # test_proto_config re-derives the p99 from the corpus and fails if this drops below it.
+      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-60}
     depends_on:
       postgres:
         condition: service_healthy
@@ -248,7 +286,8 @@ services:
       WORKER_CONTAINER: proto-worker
       HTTP_CONNECTIONS: "2"
       # The step ceiling: 1800 s unless the `up` environment sets READ_TIMEOUT_S
-      # (proto-demo-auto exports 7200 for the D18 arm; proto-demo, proto-turn and
+      # (proto-demo-auto exports it too, but at the same pinned 1800 since 0b brought
+      # the ceiling back down -- it buys MORE attempts now, not a longer one; proto-demo, proto-turn and
       # proto-kill run at the default). docker-compose.ceiling.yml lowers it for the
       # smoke's ceiling case and changes nothing else.
       READ_TIMEOUT_S: "${READ_TIMEOUT_S:-1800}"

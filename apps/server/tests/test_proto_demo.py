@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import pathlib
 import re
 from pathlib import Path
 
@@ -14,6 +15,8 @@ import httpx
 
 from proto import demo, turn
 from tests.test_proto_config import COMPOSE, MAKEFILE, STEP_CEILING_S, _env, _load, _recipe, _service
+
+PROTO = MAKEFILE.parent / "apps" / "server" / "proto"
 
 IDS = ("turn_x", "sess_y", "proj_z")
 
@@ -246,25 +249,67 @@ def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
     assert f"default {cap.group(1)}" in rule.group(1), \
         f"`make help` says {rule.group(1).strip()!r}, which no longer matches the exported cap"
     assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="[^"]*\$\(ARGS\)"', body), body
-    assert "AUTONOMOUS_MAX_NUDGES" not in "\n".join(_recipe("proto-demo")), "proto-demo itself stays a one-turn run"
+    # 1a moved the DEFAULT: the web service now carries AUTONOMOUS_MAX_NUDGES with a
+    # non-zero interpolation default, so silence no longer means 0 and proto-demo has to
+    # pin its own. `-0` and not `:-0`, so proto-demo-auto's outer export still wins when
+    # it delegates here.
+    demo = "\n".join(_recipe("proto-demo"))
+    assert re.search(r'export AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-0\}"', demo), \
+        "proto-demo must pin 0 itself to stay a one-turn run, now that the compose default is not 0"
+    web_default = _env(_service(_load(COMPOSE), "web")).get("AUTONOMOUS_MAX_NUDGES", "")
+    assert web_default.startswith("${AUTONOMOUS_MAX_NUDGES:-"), \
+        "the web tier carries the cap (1a); proto-demo's pin is only meaningful against it"
+    assert web_default != "${AUTONOMOUS_MAX_NUDGES:-0}", \
+        "a 0 default here would ship the stop-every-step behaviour the plan exists to remove"
 
 
-def test_proto_demo_auto_raises_the_per_attempt_ceiling_and_sizes_its_deadline_to_it():
-    """One message is a whole run on this arm, so it alone exports READ_TIMEOUT_S (7200, the
-    lead's call 2026-09-20) into the `up` that recreates the shim, and passes a deadline
-    spanning one shim-driven resume; every other target runs at the compose default."""
+def test_proto_demo_auto_pins_the_step_ceiling_and_waits_out_six_attempts():
+    """One message is a whole run on this arm, but the per-attempt ceiling is the SAME
+    pinned 1800 s every other target runs at -- the 7200 s override of 2026-09-20 was a
+    symptom of the resume defect, not a capacity finding, and came back down with it
+    (research-as-a-job 0b, "the step ceiling: 1,800 s, no test exception").
+
+    So the arm no longer buys a longer attempt; it waits out MORE of them. The export
+    stays because --deadline-s is sized off the name and POSIX arithmetic reads an unset
+    name as 0 -- deleting the line would give `--deadline-s 300` on an hour-long billed
+    run, which is why that is asserted here and not merely commented."""
     body = "\n".join(_recipe("proto-demo-auto"))
-    # `:-` on both sides: an explicitly empty READ_TIMEOUT_S means 7200 here as it means 1800
-    # in compose's fallback -- never sh arithmetic reading "" as 0 (`--deadline-s 300`)
-    # against a shim compose left at 1800.
+    # `:-` on both sides, so an explicitly empty READ_TIMEOUT_S takes the default here as
+    # it does in compose's fallback -- never sh arithmetic reading "" as 0.
     ceiling = re.search(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:-(\d+)\}"', body)
-    assert ceiling, body
-    assert int(ceiling.group(1)) == 7200 > STEP_CEILING_S
+    assert ceiling, "proto-demo-auto must keep exporting READ_TIMEOUT_S: --deadline-s is sized off the name"
+    assert int(ceiling.group(1)) == STEP_CEILING_S, \
+        f"the ruling is {STEP_CEILING_S} s with no exception; this arm exports {ceiling.group(1)}"
     assert _env(_service(_load(COMPOSE), "shim"))["READ_TIMEOUT_S"].startswith("${READ_TIMEOUT_S:-"), \
         "compose must fall back on an empty READ_TIMEOUT_S too"
-    assert re.search(r'ARGS="--deadline-s \$\$\(\(2 \* READ_TIMEOUT_S \+ 300\)\) \$\(ARGS\)"', body), body
+    # Six attempts, not one resume: 32% of the 134 completed e2e runs exceed 2 * 1800 + 300,
+    # and the longest in the corpus needed six -- demo.py turns the shortfall into a FAIL.
+    assert re.search(r'ARGS="--deadline-s \$\$\(\(6 \* READ_TIMEOUT_S \+ 300\)\) \$\(ARGS\)"', body), body
     for target in ("proto-demo", "proto-turn", "proto-kill"):
         assert "READ_TIMEOUT_S" not in "\n".join(_recipe(target)), f"{target} keeps the pinned 1800 s ceiling"
+
+
+def test_the_resume_probe_target_wires_all_three_missing_pieces():
+    """0a's probe fires only if all three line up, and any one missing looks identical to
+    "the model never chose a background delegation" -- an hour of billed run, no kill, no
+    finding. So the recipe is asserted rather than left to whoever types the command."""
+    body = "\n".join(_recipe("proto-probe-resume"))
+    # 1. the selector: tool NAME alone lands on a foreground delegation, which already
+    #    resumed cleanly on 2026-09-20 -- that is why the probe did not confirm.
+    assert "--kill-on Agent" in body and "--kill-on-input run_in_background=true" in body, body
+    # 2. a message that provokes two concurrent extractions. The path is READ OUT of the
+    #    recipe rather than repeated here, so repointing --text-file at a file that does
+    #    not exist reds this instead of failing an hour into a billed run.
+    named = re.search(r"--text-file (\S+)", body)
+    assert named, body
+    probe = PROTO / pathlib.PurePosixPath(named.group(1)).relative_to("proto")
+    assert probe.is_file(), f"--text-file names {named.group(1)}, which is not in the repo"
+    assert probe.read_text(encoding="utf-8").strip(), f"{named.group(1)} is empty"
+    # 3. the nudge cap: at 0 the run ends before it ever reaches a delegation.
+    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES-\d+\}"', body), body
+    assert re.search(r'test -n "\$\(SESSION\)"', body), "refuse without SESSION rather than probe a fresh project"
+    rule = re.search(r"^proto-probe-resume:.*?##(.*)$", MAKEFILE.read_text(encoding="utf-8"), re.M)
+    assert rule and "billed" in rule.group(1), "`make help` must say this one costs money"
 
 
 def test_proto_export_target_requires_a_session_and_runs_the_script():

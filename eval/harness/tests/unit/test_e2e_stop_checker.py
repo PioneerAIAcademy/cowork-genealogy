@@ -344,12 +344,25 @@ def test_every_shipped_hand_back_literal_classifies():
     """Binds the classifier's literal to the prose the skills actually emit.
 
     Any skill can close the main thread's turn, so every SKILL.md is scanned, not
-    only research/SKILL.md: init-project and question-selection carry the literal
-    since PR #2649, and #2292 adds it to research. It fires when a closing line
-    appears with wording classify_hand_back does not match — markdown emphasis
-    alone (`**Research complete.**`) already fails the literal. That is the case
-    in which `step: 0` looks correct on every surface while the classifier is
+    only research/SKILL.md. It fires when a closing line appears with wording
+    classify_hand_back does not match — markdown emphasis alone
+    (`**Research complete.**`) already fails the literal. That is the case in
+    which `step: 0` looks correct on every surface while the classifier is
     silently broken, and nothing else in the suite can tell the two apart.
+
+    **The expected count is now ZERO, and that is the assertion.** This used to
+    require `seen >= 2`, naming init-project and question-selection, which carried
+    the literal since PR #2649. research-as-a-job retires it outright ("Prose is
+    flaky; the Stop hook is the mechanism", decisions table) and both bodies
+    dropped it, so the old floor pinned exactly the population the ruling deletes.
+    Requiring zero is what makes a re-introduction fail here rather than pass
+    silently.
+
+    The loop above therefore has no input today, so it cannot be this test's
+    coverage of the classifier — `test_classify_hand_back_one_case_per_class` and
+    its siblings own that, and the classifier itself stays, because the committed
+    e2e run logs that predate the ruling still contain the literal and are still
+    read.
     """
     assert SKILLS.is_dir(), SKILLS
     seen = 0
@@ -362,4 +375,8 @@ def test_every_shipped_hand_back_literal_classifies():
                     f"classifier does not match, so `step` will stay 0 and read as "
                     f"expected: {ln!r}"
                 )
-    assert seen >= 2, "init-project and question-selection carry the literal today"
+    assert seen == 0, (
+        f"{seen} shipped SKILL.md still emit the retired `Next: … Continue?` hand-back "
+        f"literal. research-as-a-job retired it — the Stop hook is the mechanism now, and "
+        f"a body that stops to ask is a stall."
+    )

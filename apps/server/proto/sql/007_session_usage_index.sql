@@ -1,0 +1,25 @@
+-- research-as-a-job 1e: the index the live spend cap needs.
+-- Additive and idempotent like 001-006 -- applied by initdb on an empty volume AND by the
+-- worker and the web tier at start, so a volume that predates this file gets the index
+-- without a `make proto-down`.
+--
+-- SESSION_USAGE_SQL prices the session by scanning every assistant entry for one
+-- sdk_session_id, and it runs inside the PreToolUse hook -- so once per tool call, a
+-- median of 2.6 s apart, for the whole of a run that the same plan has just made
+-- continuous. The only index on the table is session_entries_key_idx
+-- (project_key, session_id, subpath, seq), and session_id is NOT its leading column, so
+-- Postgres cannot use it for a session_id-alone predicate: the cap degrades to a
+-- sequential scan of a table that grows all run long, on the hot path, with the cost
+-- rising exactly as the run gets long enough for the cap to matter.
+--
+-- Why (session_id, seq) and not (session_id) alone: TURN_USAGE_SQL -- the same scan
+-- bounded by `seq > entries_seq_before` -- shares this index, and the seq column both
+-- satisfies that bound and feeds the DISTINCT ON ... ORDER BY seq DESC both queries end
+-- with. turn.py's SESSION_OUTPUT_SQL is a third reader.
+--
+-- Not a partial index on `entry->>'type' = 'assistant'`: the jsonb test is not a column,
+-- so a partial index on it would have to be an expression index that every one of the
+-- three queries must spell identically to match. The composite is what the queries
+-- already filter and order by.
+
+CREATE INDEX IF NOT EXISTS session_entries_session_seq_idx ON session_entries (session_id, seq);
