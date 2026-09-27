@@ -117,7 +117,7 @@ describe("person_read — transcription phase", () => {
   });
 
   it("fetches a story's FULL text rather than OCRing it", async () => {
-    route([mem("s1", "text/plain", "Story", "A family story", "txt")], {
+    route([mem("s1", "text/plain", "Story", "Obituary of Almon Clegg", "txt")], {
       storyText: "x".repeat(2592),
     });
     const out = await read();
@@ -126,7 +126,7 @@ describe("person_read — transcription phase", () => {
   });
 
   it("notes a story whose artifact 404s and sets no text (1 of 6 measured)", async () => {
-    route([mem("s1", "text/plain", "Story", "A family story", "txt")], {
+    route([mem("s1", "text/plain", "Story", "Obituary of Almon Clegg", "txt")], {
       storyStatus: 404,
     });
     const s = (await read()).sources.find((x) => x.id === "s1");

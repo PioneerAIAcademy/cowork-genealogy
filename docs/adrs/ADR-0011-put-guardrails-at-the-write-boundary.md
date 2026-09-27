@@ -168,8 +168,16 @@ not restore the `Skill` call to clear it; issue #1851 carries the fix.
 **The thin skill still stays on disk, and neither reason is enforcement.** It is
 the **direct-user entry point** — a researcher who asks for a proof conclusion
 reaches the pair through the skill's own description. And it is the **unit-eval
-entry point**: a unit suite is keyed to a skill directory, and no harness path
-can invoke an agent directly (issue #1253, open).
+entry point**.
+
+**Premise update — the eval half of this no longer holds.** When this was
+written a unit suite was keyed to a skill directory and no harness path could
+invoke an agent directly. Both changed: the direct-agent arm landed, the
+runnability gate accepts an agent file in place of a skill directory, and
+`eval/tests/unit/gps-mentor/` is a suite whose subject is an agent with no
+skill. The direct-user entry point above is unaffected and still stands on its
+own. Whether that alone is reason enough to keep a thin routing skill is the
+lead’s call to revisit, not a fact this ADR can keep asserting.
 
 ### Writing a caller rule — the identifier is not what you expect
 
@@ -394,6 +402,7 @@ issues are already closed, each carrying rulings at that level of decay.
 | **A gate PR owes a corpus refusal measurement before merge**, inspected per limit 2 above. | every gate | 2026-09-02 | #2030, ADR-0009 c6, #1463 |
 | **A precondition beats an advisory field** in the same position. An advisory was rationalized away in `wilkins-death-kentucky`. | choosing between a refusal and a warning on a *state* write | 2026-09-02 | #2030; the `image_transcribe` read-tool carve-out is the scoped exception |
 | **Production beats eval-only.** A gate that could bind at the writer tool does not ship as a harness validator instead. | placement | 2026-09-02 | #2030 — "production is where the tester lost 3h18m" |
+| **"No SKILL.md states it" does not settle the writer-tool question.** A rule decidable from the project documents alone goes to the writer tool under step 1 even where an eval reviewer left the analogous check report-only for want of prose. Limit 2's "name the satisfying call shape" is met by a shape the bodies already document, so it does not imply a prose edit or a paid run. | placement, when the only argument against a gate is that no prose states it | 2026-09-22 | #1779, reversing the #2345 review's read; built as #2819 |
 | **An accepted false-deny cost is a legitimate reason to ship**, when it is stated and the refusals inspect clean. A gate need not be perfect to be correct. | limit 1 balancing | 2026-09-02 | #2030 |
 | **A gate ships with no override mechanism** until a false deny is observed in the field. | every gate | 2026-08-24 | this ADR, "Overridable or not" |
 | **Snapshot when the precondition must be satisfied by someone else; read live when it is the same author's own prior step.** | every gate | — | this ADR, "Snapshot or live" |

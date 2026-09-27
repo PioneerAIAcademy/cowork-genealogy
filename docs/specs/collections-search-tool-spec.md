@@ -11,10 +11,9 @@ place name also works). The tool derives the right collection scope (see
 [Place → collection scope](#place--collection-scope)) and returns the
 matching collections with record, person, and image counts.
 
-This tool is list mode only. To get detailed information about a single
-collection (the FamilySearch search API response with HTML converted to
-markdown), use the separate `collection_read` tool
-(spec: `docs/specs/collection-read-tool-spec.md`).
+This tool is list mode only. There is no single-collection detail tool:
+`collection_read` was retired 2026-09-27 with no caller; the FamilySearch
+Wiki tools cover a collection's research guidance.
 
 ### Place ID mismatch (design note)
 
@@ -144,8 +143,7 @@ overlapping the requested year window:
     "so results come back at that scope; the derived scope is returned in the " +
     "`scope` field (the tool derives it from the place). Optionally pass " +
     "`startYear`/`endYear` to filter the returned collections to those overlapping " +
-    "that year window. For detailed information about a single collection, use the " +
-    "collection_read tool. Requires authentication — call the login tool first if " +
+    "that year window. Requires authentication — call the login tool first if " +
     "not logged in.",
   inputSchema: {
     type: "object",
@@ -376,7 +374,6 @@ run a `dev/try-*.ts` script via Bash. Run Layer 2 in Cowork.
 
 ## Out of Scope
 
-- Single-collection detail — now its own `collection_read` tool
-  (spec: `docs/specs/collection-read-tool-spec.md`).
+- Single-collection detail (the retired `collection_read` tool).
 - Curating the collection shape beyond the documented `Collection`
   fields.

@@ -29,7 +29,10 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the model is pinned per ``MODEL_PROVIDER``: ``anthropic`` (default) is
   ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``bedrock`` sets
   ``CLAUDE_CODE_USE_BEDROCK``, ``ANTHROPIC_MODEL`` and the 1 h cache flag explicitly,
-  because an unpinned default is Opus and every cost figure is then wrong by several-fold.
+  because an unpinned default is Opus and every cost figure is then wrong by several-fold;
+  ``gateway`` points the CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``,
+  ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
+  every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
@@ -41,18 +44,50 @@ a closure, never a global.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from app.agent.continue_policy import (
+    CONTINUE_REASON,
+    env_float,
+    env_int,
+    TERMINAL_BUDGET,
+    TERMINAL_COMPLETED,
+    TERMINAL_DECISION,
+    TERMINAL_MCP_UNAVAILABLE,
+    TERMINAL_NO_PROGRESS,
+    TERMINAL_QUEUED,
+    TERMINAL_STOPPED,
+    project_completed,
+    should_continue_run,
+    terminal_reason,
+)
+from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
+from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import project_read_denied
 
-DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
+# DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
+# (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
+DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
 BEDROCK_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
+# [1m] as on Bedrock: the CLI strips it, sends context-1m-2025-08-07 and sizes its window
+# (and so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
+GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+# Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
+# CLI sends an agent's model verbatim, and a gateway without a matching alias answers
+# 400 "model identifier is invalid", after which the main thread silently delegates to
+# a general-purpose stand-in (plan P3h).
+GATEWAY_AGENT_MODELS = {
+    "claude-sonnet-4-6": "us.anthropic.claude-sonnet-4-6",
+    "claude-sonnet-5": "us.anthropic.claude-sonnet-5",
+}
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
 # raised so one oversized JSON line cannot end a turn.
@@ -138,7 +173,35 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
             "ANTHROPIC_MODEL": BEDROCK_MODEL,
             "ENABLE_PROMPT_CACHING_1H_BEDROCK": "1",
         }
-    raise ValueError(f"MODEL_PROVIDER must be anthropic or bedrock, not {provider!r}")
+    if provider == "gateway":
+        base_url = (worker_env.get("GATEWAY_BASE_URL") or "").strip()
+        if not base_url:
+            raise ValueError("MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
+        return None, {
+            "ANTHROPIC_BASE_URL": base_url,
+            "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
+            # Blank, not absent: the CLI inherits the worker's environment, and an
+            # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
+            "ANTHROPIC_API_KEY": "",
+            "ANTHROPIC_MODEL": GATEWAY_MODEL,
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
+            # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
+            # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+            "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+        }
+    raise ValueError(f"MODEL_PROVIDER must be anthropic, bedrock or gateway, not {provider!r}")
+
+
+def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
+    """``agents`` with each ``AgentDefinition.model`` in ``GATEWAY_AGENT_MODELS`` replaced
+    by its Bedrock id. Anything that is not a dataclass with a ``model`` passes as is."""
+    out: dict[str, Any] = {}
+    for name, agent in agents.items():
+        model = getattr(agent, "model", None)
+        if dataclasses.is_dataclass(agent) and model in GATEWAY_AGENT_MODELS:
+            agent = dataclasses.replace(agent, model=GATEWAY_AGENT_MODELS[model])
+        out[name] = agent
+    return out
 
 
 def tool_server_env(
@@ -278,6 +341,30 @@ def _deny(reason: str) -> dict[str, Any]:
     }
 
 
+# 1c. What Stop returns, and it is NOT `_deny`. A `permissionDecision: "deny"` is a tool
+# RESULT: the model reads it, argues with it, and picks another tool. The SDK's halt
+# fields are separate, and this is the pair that ends the turn.
+STOP_REASON = "Stopped by the researcher."
+
+# 1b. The turn ends so the patron's message becomes the next one. Text the MODEL reads as
+# the turn closes, so the transcript says why it stopped rather than ending mid-thought.
+HANDOVER_REASON = (
+    "The researcher has sent a new message. Stopping here so it can be read; "
+    "everything found so far is saved and the next turn continues from this point."
+)
+
+# 1e. Beside STOP_REASON because both travel the same halt path, and both are text the
+# MODEL reads as the turn ends -- so the transcript says what happened rather than
+# stopping mid-thought.
+SPEND_CAP_REASON = (
+    "This session has reached its ${cap:.0f} spend limit and is stopping here. "
+    "Everything found so far is saved. Start a new session on the same project to carry on."
+)
+
+
+def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
+    return {"continue_": False, "stopReason": reason}
+
 # Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
 # the main thread's ResultMessage and closes the CLI, so a background agent still running
 # then dies with it -- measured 2026-09-23 (plan D17: both background extractors lost, the
@@ -305,10 +392,20 @@ def make_pretool_hook(
     record: Callable[[dict[str, Any]], None],
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
+    halt: Callable[[], str | None] | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
-    resumed turn; ``record`` writes one ``tool_calls`` row and may raise."""
+    resumed turn; ``record`` writes one ``tool_calls`` row and may raise.
+
+    ``halt()`` is 1c's and 1e's carrier: it returns a reason to END THE TURN NOW, or
+    None. It is checked HERE, before anything else, because this hook is bound with
+    ``matcher=None`` and therefore fires on every tool call -- a median of 2.6 s apart --
+    where the Stop hook fires at a voluntary yield, a median of ONCE per run. A Stop
+    button wired to the Stop hook would take 53 minutes to answer.
+
+    A halted call is recorded as a ``tool_calls`` row like any other, with decision
+    ``halt``, so the audit trail shows where the turn was cut."""
 
     async def _pretool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         decision, reason = "allow", None
@@ -316,6 +413,29 @@ def make_pretool_hook(
         tool_name = str(data.get("tool_name") or "")
         tool_input = data.get("tool_input")
         tool_input = tool_input if isinstance(tool_input, dict) else {}
+        stop_now: str | None = None
+        try:
+            if halt is not None:
+                stop_now = halt()
+        except Exception:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
+            stop_now = None
+        if stop_now is not None:
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id,
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name or "unknown",
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            if log is not None:
+                log(ev="halt", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id,
+                    reason=stop_now)
+            return _halt(stop_now)
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
@@ -395,24 +515,6 @@ def make_posttool_hook(
 # deny.py's predicate -- the worker image carries no eval/ -- with the harness's reason
 # text verbatim, so the prototype's autonomous arm and the harness apply one rule.
 
-# The harness's own veto text for a SILENT stop, verbatim (its `stop_hook`'s fallback
-# block dict). Since 2026-09-20 the harness also answers a *well-formed* hand-back —
-# one that names its next step and asks — with the researcher's "Yes." instead
-# (`classify_hand_back` / `hand_back_outcome`, issues #2328 and #2292). The worker does
-# not mirror that branch: it classifies nothing, because the classifier reads the
-# harness's in-process narration list and the prose half of #2292 has not landed, so
-# copying a moving wording would drift the moment it does. Every stop the worker sees
-# therefore takes this text. `test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim`
-# reads it off the orchestrator and goes red when either side moves.
-CONTINUE_REASON = (
-    "You are mid-run in an autonomous /research session and the "
-    "project is not yet complete (project.status is not "
-    "'completed'). Re-read research.json and invoke the next GPS "
-    "sub-skill now; keep going until project.status is "
-    "'completed' or you hit a genuine, logged blocker."
-)
-
-
 # The one continue prompt a redelivered attempt sends when its first result carried no
 # model turn (worker.run_turn's resume rule, D17). Not the Stop hook's veto: that one
 # answers a model that yielded voluntarily mid-run, this one answers a CLI that returned
@@ -426,39 +528,14 @@ RESUME_CONTINUE_TEXT = (
 )
 
 
-def project_completed(research: Mapping[str, Any] | None) -> bool:
-    """Whether research.json says the project is done."""
-    if not research:
-        return False
-    return (research.get("project") or {}).get("status") == "completed"
-
-
-def should_continue_run(
-    *,
-    research: Mapping[str, Any] | None,
-    nudges_used: int,
-    max_nudges: int,
-    tool_count: int,
-    tool_count_at_last_nudge: int,
-    mcp_unavailable: bool = False,
-) -> bool:
-    """Whether to veto an agent's *voluntary* stop and nudge it onward.
-
-    True  -> block the Stop: the run is unfinished and a nudge may help.
-    False -> allow the Stop: the project is complete, the nudge budget is spent, the
-             previous nudge produced no tool call (the agent isn't making progress, so
-             another nudge won't either), or the genealogy MCP surface is gone -- which
-             the worker cannot observe, so its callers leave the default.
-    """
-    if mcp_unavailable:
-        return False
-    if project_completed(research):
-        return False
-    if nudges_used >= max_nudges:
-        return False
-    if nudges_used > 0 and tool_count == tool_count_at_last_nudge:
-        return False
-    return True
+# 1b/1c/1e: the predicate and its terminal vocabulary live in ONE place that both planes
+# import -- ``apps/server/app/agent/continue_policy.py``. The worker already depends on
+# this package (``direct_project_file_write`` above, ``map_message`` in worker.py), so the
+# hosted alpha and the prototype share a copy rather than drifting. ``eval/harness`` keeps
+# its own, deliberately: the worker image carries no ``eval/``, and a test asserts those
+# two trees never import each other. Imported at the TOP of this module rather than
+# redefined, so every existing caller and test keeps reading
+# ``options.should_continue_run``.
 
 
 def make_stop_hook(
@@ -469,24 +546,57 @@ def make_stop_hook(
     tool_count: Callable[[], int],
     on_nudge: Callable[[int], None],
     log: Callable[..., None] | None = None,
+    stopped: Callable[[], bool] | None = None,
+    pending_user_message: Callable[[], bool] | None = None,
+    pending_decision: Callable[[], bool] | None = None,
+    on_allow: Callable[[str], None] | None = None,
+    nudges_used: int = 0,
 ):
     """The worker's ``Stop`` callback: ``research()`` is the project's research.json (or
     None) and ``tool_count()`` the turn's tool-call count so far, both read at each stop;
     ``on_nudge(n)`` is called on each veto. Never raises: any exception allows the stop.
     Bound with ``PRETOOL_TIMEOUT_S``; the harness's matcher has no timeout -- a timed-out
-    hook allows the stop, like ``stop_hook_failed``."""
-    state = {"nudges_used": 0, "tool_count_at_last_nudge": -1}
+    hook allows the stop, like ``stop_hook_failed``.
+
+    ``stopped`` / ``pending_user_message`` / ``pending_decision`` are the three injectable
+    predicates of 1b and 1c, each read on the turn's own Postgres connection at every
+    stop, and each one clause in ``should_continue_run``. Omitted means "never", which is
+    what keeps this a faithful port of the harness's hook for anyone reading both.
+
+    ``on_allow(reason)`` fires when the hook ALLOWS a stop, with ``terminal_reason``'s
+    verdict, so the turn can record WHY it ended. Without it ``complete()`` writes 'ok'
+    for every ending and a budget-capped run is indistinguishable from a finished one --
+    which a genealogist reads as "nothing more was found".
+
+    ``nudges_used`` seeds the counter on a redelivery. The hook's state is created inside
+    ``run_turn``, one per ATTEMPT, while the tool counter spans attempts -- and since 0b
+    makes resume the normal path (median two attempts, longest six in the corpus), an
+    unseeded cap of 60 is 60 PER ATTEMPT. The caller passes ``turns.nudges``."""
+    state = {"nudges_used": max(0, int(nudges_used)), "tool_count_at_last_nudge": -1}
+    ask = lambda f: bool(f()) if f is not None else False  # noqa: E731 - one line, three callers
 
     async def _stop(_input_data: Any, _tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         try:
             count = int(tool_count())
-            if not should_continue_run(
+            verdict = dict(
                 research=research(),
                 nudges_used=state["nudges_used"],
                 max_nudges=max_nudges,
+                stopped=ask(stopped),
+                pending_user_message=ask(pending_user_message),
+                pending_decision=ask(pending_decision),
+            )
+            if not should_continue_run(
                 tool_count=count,
                 tool_count_at_last_nudge=state["tool_count_at_last_nudge"],
+                **verdict,
             ):
+                if on_allow is not None:
+                    # `verdict` is built above from the state keys only; the two count
+                    # arguments are passed separately to should_continue_run and are
+                    # never in it. An earlier filter here stripped a key that cannot be
+                    # present, which reads as though it sometimes is.
+                    on_allow(terminal_reason(**verdict))
                 return {}
             state["nudges_used"] += 1
             state["tool_count_at_last_nudge"] = count
@@ -541,15 +651,18 @@ def build_worker_options(
     stderr: Callable[[str], None] | None = None,
     stop_hook: Callable[..., Any] | None = None,
 ):
-    """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given:
-    the interactive stack passes none, so a browser turn that yields to ask the user
-    still ends."""
+    """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given.
+    The web tier stamps a nudge cap on every browser message, so when that cap is above
+    0 (the default is 60) every browser turn passes one and a yield to ask the user is
+    vetoed like any other."""
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     if resume and session_id:
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
     model, model_env = provider_env(env_in)
+    if (env_in.get("MODEL_PROVIDER") or "").strip().lower() == "gateway":
+        agents = gateway_agent_models(agents)
     project_note = (
         "You are the hosted genealogy research agent. The active research project is "
         f"reached through the genealogy MCP tools with projectPath {cwd!r} — it is not "

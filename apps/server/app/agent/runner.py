@@ -159,6 +159,12 @@ async def serve(
     auto = auto_continue or AutoContinue(enabled=False, max_steps=0)
     turn_task: asyncio.Task | None = None
     pending: list[dict] = []
+    # 1b/1e on the alpha: the agent's two halts read this. `pending` is a local of THIS
+    # function -- the runner owns the backlog -- so the agent cannot see it any other way,
+    # and without the wire a message typed mid-turn waits for the whole job rather than
+    # the next step. Tolerant of a stand-in agent that predates the attribute.
+    if hasattr(agent, "pending_user_message"):
+        agent.pending_user_message = lambda: bool(pending)
     # The finished/running turn's last main-thread `text` (no `agent` label —
     # a subagent's prose never carries the hand-back), reset per turn.
     last_text: str | None = None

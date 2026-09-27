@@ -93,7 +93,7 @@ snake_case envelope it reads.
    resolved path to be **either** under `results/.staging/` (a staged handle)
    **or** a top-level `results/<log_id>.json` (a finalized sidecar). This is a
    *looser* guard than `finalizeStagedResults`, which hard-rejects anything
-   outside `results/.staging/` (`results-staging.ts:108-114`) — reuse
+   outside `results/.staging/` (`finalizeStagedResults` in `src/utils/results-staging.ts`) — reuse
    `assertInsideProject` but write the dual-location check yourself; do **not**
    call finalize's guard. Then `JSON.parse(await readFile(...))`. **Read-only;
    never `unlink`** (so `research_log_append` can still finalize a staged
@@ -108,7 +108,7 @@ snake_case envelope it reads.
    doc `{ persons: [subject] }` (v1), used directly as `gedcomx2`. `same_person`
    is designed to work **without real FS IDs** — it mints a conforming FS id so
    `matchTwoExamples` never chokes on a malformed/absent id, and the score is
-   unaffected because **FS matches on document content** (`same-person.ts:199-206`).
+   unaffected because **FS matches on document content** (`buildRawWithAnchor` in `src/utils/match-engine.ts`).
    The live probe confirmed an ark-less subject scores 0.99999 on the correct
    record. **The determinant is content richness, not the id.**
 
@@ -133,7 +133,7 @@ snake_case envelope it reads.
    signal* (fall back to the manual `same_person` / cross-check path) rather than
    promoting a meaningless order as authoritative.
 3. **Score every candidate.** One `getValidToken(principal)`. Wrap each pair in a per-item
-   `try/catch` (as `same_person`'s relatives mode does, `same-person.ts:67-91`),
+   `try/catch` (as `same_person`'s relatives mode does — the `mapWithConcurrency(pairs, PAIR_CONCURRENCY` loop in `src/tools/same-person.ts`),
    and **skip candidates with no `gedcomx` or no `primaryId`** (both optional on
    `RecordSearchResult`) with `matchScore: null` and **no FS call** — a
    person-less doc is a certain-400 and must not burn three retries. For the
@@ -141,10 +141,10 @@ snake_case envelope it reads.
    token)` via `mapWithConcurrency(results, 10, …)` + `withRetry`
    (`place-resolver.ts`). **Concurrency 10** — confirmed with the
    `matchTwoExamples` developer; it deliberately overrides `same_person`'s
-   conservative `PAIR_CONCURRENCY = 5` (`same-person.ts:22`), and there is no
+   conservative `PAIR_CONCURRENCY = 5` (`PAIR_CONCURRENCY` in `src/tools/same-person.ts`), and there is no
    batch endpoint. **Candidate ceiling:** the pool is bounded by the
    `record_search` `count` the skill passes (**50**, per the design) — higher
-   than relatives-mode's `MAX_PAIR_CALLS = 30` (`relatives.ts:34`), so 50 is the
+   than relatives-mode's `MAX_PAIR_CALLS = 30` (`MAX_PAIR_CALLS` in `src/utils/relatives.ts`), so 50 is the
    deliberate per-rank ceiling; do not rerank an unbounded set. A pair that still
    fails after retries is kept with `matchScore: null` + `scoringErrors++` —
    **never dropped**. **No local pre-filter**: score every candidate in the pool
@@ -204,7 +204,7 @@ across real searches and a match-score threshold can be chosen later from data.
   `recordId` **verbatim** (e.g. `ark:/61903/1:1:QPRC-WPBZ`). Note the assertion
   side may be stored in any of several forms (resolver URL, full ARK, `1:1:X`,
   bare `X`); the validator matches them by reducing both to a **bare 8-char id**
-  via `arkToBareId` (`validator.ts:1100-1114`). So the calibration join is **not**
+  via `arkToBareId` (the `arkToBareId(r.recordId) === recordKey` join in `validateSidecars`). So the calibration join is **not**
   string equality — the analysis script must `arkToBareId`-normalize *both* sides.
   Logging the full ARK verbatim is the safe choice (it reduces cleanly); do
   **not** pre-normalize, shorten, or reformat it in the log.

@@ -1,0 +1,1482 @@
+{
+  "schema_version": 3,
+  "skill": "gps-mentor",
+  "version": 1,
+  "released": true,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-09-26_19-18-45",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "336b49771264743815da14b20b7ebd6f07d132eaa3f01c260dee582823a30daa",
+  "snapshot": {
+    "packages/engine/plugin/agents/gps-mentor.md": "9c9b4f97624d2f24f324d3f68a0529badf3318f2eb49fbcaa00e7547edac960a",
+    "eval/tests/unit/gps-mentor/craft-refusal-no-proof-summary.json": "b1251b6eef225f9bf940b728e0ee8ea95f6a4ebc92ed73de0de05cc53a793753",
+    "eval/tests/unit/gps-mentor/craft-supersedes-prior-craft-verdict.json": "97ede43f64b49fcb9fce3f350161a53d994c8fdc48aee6291cc1d2d6853c286a",
+    "eval/tests/unit/gps-mentor/rubric.md": "e1a3fbb481c9e5d0521750f1a4e955cada73f7212d482480a5040212f086e94c",
+    "eval/fixtures/scenarios/flynn-decisive-record-unsearched/README.md": "3634dac4a108183de4cf96a4b2f35f28652d17772457dca2e26816381debe528",
+    "eval/fixtures/scenarios/flynn-decisive-record-unsearched/research.json": "089d947675724e9546b83b7d79ffca90d2dc34a6f426c9d0c33b254eb3687bfb",
+    "eval/fixtures/scenarios/flynn-decisive-record-unsearched/tree.gedcomx.json": "e21f5c009354ae7940f2f3ccccdb15aa00c39a07116d1cb5802b77402a49d4dd",
+    "eval/fixtures/scenarios/flynn-prior-craft-verdict/README.md": "2f5e08709a2821b571b97d426e28dfe63e6026b8fea8cbcb865a86a85cd4892c",
+    "eval/fixtures/scenarios/flynn-prior-craft-verdict/evaluations/on-demand-ps_001-2026-06-02T09-15-00.json": "926c317824da73ce760fb8026d6d44e0f293bd8840a51c72b622bf56770ee158",
+    "eval/fixtures/scenarios/flynn-prior-craft-verdict/research.json": "d96dd8f459372d15921f4f8d1e608f1f03cdf8975fde0197fea1c87a574ca3f6",
+    "eval/fixtures/scenarios/flynn-prior-craft-verdict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0"
+  },
+  "tests": [
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-decisive-record-unsearched",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that no proof summary exists in the project, verified this by querying proof_summaries (count: 0), and correctly refused the craft review request. The refusal was properly persisted with verdict 'refused' and target_id 'project'. The agent did not evaluate evidence or produce findings it should have declined to make. The narrative accurately describes the precondition failure (no finished prose) and directs the researcher to the correct next step (proof-conclusion)."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent completed all required actions for a refusal: it checked the project state via project_context and proof_summaries queries, determined the precondition was not met, refused the craft review, and persisted the refusal entry to evaluations via research_append. The refusal was recorded with the correct target (project) and all required fields. No further work was required or expected on a refusal."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three MCP tool calls used correct arguments. project_context was called with the correct projectPath. research_query was called with correct section 'proof_summaries' to verify the precondition. research_append was called with correct section 'evaluations', op 'append', and a properly structured verdict object with verdict='refused', target_id='project', target_type='project', and craft=true. No tool calls returned fixture_not_found errors."
+          },
+          {
+            "source": "rubric",
+            "name": "Focus discipline and refusal",
+            "score": 3,
+            "rationale": "The agent correctly refused the craft review request. The precondition for a craft read is a finished proof summary; the agent verified none exists (proof_summaries count: 0) and refused rather than degrading into an evidentiary review. The refusal was persisted with verdict='refused' and target_id='project', not a question id. The agent did not evaluate evidence or produce findings. The refusal narrative is one line of plain language naming the gap (no written proof summary) and the next step (run proof-conclusion first)."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity and citation discipline",
+            "score": 3,
+            "rationale": "This dimension does not apply to a refusal. The agent produced no findings, no must_address items, no consider_addressing items, and no non_blocking_notes. A refusal owes no severity tiers or citations—it is a single-line narrative declining to perform the review. The persisted entry correctly carries no findings arrays."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool work: reading the state the verdict rests on",
+            "score": 3,
+            "rationale": "The agent fetched the facts its refusal decision rested on. It called project_context to read the project state and openQuestions, and called research_query on proof_summaries to verify the precondition (no finished prose exists). Both calls succeeded and returned the state needed to make the refusal decision. The agent did not infer the absence of proof summaries; it read it directly from the tool response (count: 0)."
+          },
+          {
+            "source": "rubric",
+            "name": "Mentor voice and actionability",
+            "score": 3,
+            "rationale": "On a refusal, the deliverable is one line of plain language naming the gap and the next step. The agent's narrative_for_user states clearly: 'There's no written proof summary yet to give a craft read on' (the gap) and 'Run proof-conclusion on whichever question you want to share first' (the next step). The language is plain and actionable—a researcher understands without schema knowledge what is missing and what to do. No internal axis vocabulary surfaces. The refusal owes no audience statement, no preamble, no findings—and provides none."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that no proof summary exists in the project, verified this by querying proof_summaries (count: 0), and correctly refused the craft review request. The refusal was properly persisted with verdict 'refused' and target_id 'project'. The agent did not evaluate evidence or produce findings it should have declined to make. The narrative accurately describes the precondition failure (no finished prose) and directs the researcher to the correct next step (proof-conclusion)."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent completed all required actions for a refusal: it checked the project state via project_context and proof_summaries queries, determined the precondition was not met, refused the craft review, and persisted the refusal entry to evaluations via research_append. The refusal was recorded with the correct target (project) and all required fields. No further work was required or expected on a refusal."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three MCP tool calls used correct arguments. project_context was called with the correct projectPath. research_query was called with correct section 'proof_summaries' to verify the precondition. research_append was called with correct section 'evaluations', op 'append', and a properly structured verdict object with verdict='refused', target_id='project', target_type='project', and craft=true. No tool calls returned fixture_not_found errors."
+          },
+          {
+            "source": "rubric",
+            "name": "Focus discipline and refusal",
+            "score": 3,
+            "rationale": "The agent correctly refused the craft review request. The precondition for a craft read is a finished proof summary; the agent verified none exists (proof_summaries count: 0) and refused rather than degrading into an evidentiary review. The refusal was persisted with verdict='refused' and target_id='project', not a question id. The agent did not evaluate evidence or produce findings. The refusal narrative is one line of plain language naming the gap (no written proof summary) and the next step (run proof-conclusion first)."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity and citation discipline",
+            "score": 3,
+            "rationale": "This dimension does not apply to a refusal. The agent produced no findings, no must_address items, no consider_addressing items, and no non_blocking_notes. A refusal owes no severity tiers or citations—it is a single-line narrative declining to perform the review. The persisted entry correctly carries no findings arrays."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool work: reading the state the verdict rests on",
+            "score": 3,
+            "rationale": "The agent fetched the facts its refusal decision rested on. It called project_context to read the project state and openQuestions, and called research_query on proof_summaries to verify the precondition (no finished prose exists). Both calls succeeded and returned the state needed to make the refusal decision. The agent did not infer the absence of proof summaries; it read it directly from the tool response (count: 0)."
+          },
+          {
+            "source": "rubric",
+            "name": "Mentor voice and actionability",
+            "score": 3,
+            "rationale": "On a refusal, the deliverable is one line of plain language naming the gap and the next step. The agent's narrative_for_user states clearly: 'There's no written proof summary yet to give a craft read on' (the gap) and 'Run proof-conclusion on whichever question you want to share first' (the next step). The language is plain and actionable—a researcher understands without schema knowledge what is missing and what to do. No internal axis vocabulary surfaces. The refusal owes no audience statement, no preamble, no findings—and provides none."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 26341.495549306273,
+        "duration_api_ms": 25475,
+        "judge_duration_ms": 11513.112613931298,
+        "wall_clock_ms": 38200.98257064819,
+        "num_turns": 2,
+        "input_tokens": 560,
+        "cached_input_tokens": 78999,
+        "cache_creation_input_tokens": 40653,
+        "output_tokens": 2306,
+        "judge_input_tokens": 6508,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1020,
+        "skill_cost_usd": 0.35155475,
+        "judge_cost_usd": 0.011608,
+        "total_cost_usd": 0.36316275000000003
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_gps_mentor_k4p_2026-09-26_19-18-45_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 26341.495549306273,
+          "duration_api_ms": 25475,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 560,
+          "cached_input_tokens": 78999,
+          "cache_creation_input_tokens": 40653,
+          "output_tokens": 2306,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 549,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000619,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-5": {
+              "inputTokens": 11,
+              "outputTokens": 2292,
+              "cacheReadInputTokens": 78999,
+              "cacheCreationInputTokens": 40653,
+              "webSearchRequests": 0,
+              "costUSD": 0.35093575,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "skill_cost_usd": 0.35155475,
+          "output": {
+            "text_response": "# Mentor review: how this reads — project\n\nThere's no written proof summary yet to give a craft read on. I checked `proof_summaries` in the project — it's empty (`count: 0`) — and both open questions confirm why:\n\n- **q_001** (Patrick Flynn's parentage, ~1845–1908) is at `evidence-gathered`, with next step `research-exhaustiveness, then proof-conclusion`.\n- **q_002** is also `evidence-gathered` internally, but its stored status reads \"resolved\" — and its own next-step note says \"resolved with no proof summary.\"\n\nA craft review needs finished prose to react to — I read narrative for audience fit, context, engagement, tact, and forward leads, and none of that exists yet. There's good underlying material here (Patrick Flynn and Thomas Flynn are both in the tree with sourced assertions), but it hasn't been shaped into a narrative.\n\n**What I'd suggest:** run `proof-conclusion` on q_001 first, since that's the question framed as the open family story (parentage). Once that narrative is written, bring it back to me and I'll give it the family-share read — checking things like whether an audience with no genealogy background could follow it, whether moves and occupations are explained rather than just listed, and whether it ends by pointing toward what's still worth digging into.\n\nI've recorded this as a refused verdict (`ev_001`, target `project`) so the audit trail shows a craft review was requested before any proof existed — file at `/tmp/eval-ut_gps_mentor_k4p-0-0-dj4d45ii/evaluations/on-demand-project-2026-09-26T00-00-00.json`.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_k4p-0-0-dj4d45ii"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-09-26.d579003e",
+                  "projectStatus": "active",
+                  "openQuestions": [
+                    {
+                      "id": "q_001",
+                      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?"
+                    }
+                  ],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "evidence-gathered",
+                      "nextStep": "research-exhaustiveness, then proof-conclusion",
+                      "openConflictIds": [],
+                      "storedStatus": "in_progress"
+                    },
+                    {
+                      "id": "q_002",
+                      "state": "evidence-gathered",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
+                      "openConflictIds": [],
+                      "storedStatus": "resolved"
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "Patrick Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [
+                        "S1",
+                        "S3"
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Thomas Flynn",
+                      "gender": "Male",
+                      "sourceRefs": []
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ark:/61903/1:1:MXYZ"
+                      ],
+                      "assertionCount": 5
+                    },
+                    {
+                      "id": "src_002",
+                      "repository": "Ancestry",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ancestry:8054:patrick-flynn-1850"
+                      ],
+                      "assertionCount": 2
+                    },
+                    {
+                      "id": "src_003",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S2",
+                      "recordIds": [
+                        "ark:/61903/1:1:MABC"
+                      ],
+                      "assertionCount": 3
+                    }
+                  ],
+                  "localities": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_k4p-0-0-dj4d45ii",
+                  "section": "proof_summaries"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "proof_summaries",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_k4p-0-0-dj4d45ii",
+                  "section": "evaluations",
+                  "op": "append",
+                  "verdict": {
+                    "focus": "on-demand",
+                    "target_id": "project",
+                    "target_type": "project",
+                    "verdict": "refused",
+                    "craft": true,
+                    "strengths": [],
+                    "must_address": [],
+                    "consider_addressing": [],
+                    "non_blocking_notes": [],
+                    "narrative_for_user": "# Mentor review: how this reads — project\n\nThere's no written proof summary yet to give a craft read on. Both open lines of research — q_001 (Patrick Flynn's parentage) and q_002 — have evidence gathered but neither has been carried through `proof-conclusion` into narrative prose. q_002 in particular shows as resolved internally but with no proof summary written.\n\nRun `proof-conclusion` on whichever question you want to share first — most likely q_001, since it's the one still framed as an open question for the family story. Once that narrative exists, bring it back and I'll read it purely for how it flows: whether a relative with no genealogy background could follow it, whether the history around the facts is explained, and whether it reads as a story about people rather than a list of dates and sources."
+                  },
+                  "entry": {
+                    "focus": "on-demand",
+                    "target_id": "project",
+                    "target_type": "project",
+                    "verdict": "refused",
+                    "timestamp": "2026-09-26T00:00:00Z",
+                    "superseded_by": null
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "evaluations",
+                  "op": "append",
+                  "entryId": "ev_001",
+                  "filesWritten": [
+                    "research.json",
+                    "evaluations/on-demand-project-2026-09-26T00-00-00.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "evaluations/on-demand-project-2026-09-26T00-00-00.json"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "GPS mentor craft review",
+                  "prompt": "The researcher wants to share what we have with their family and asked how it reads. Give it a craft review.\n\nfocus: on-demand\nmode: autonomous\nprojectPath: <workspace>",
+                  "subagent_type": "gps-mentor"
+                }
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "evaluations"
+                ],
+                "diff": {
+                  "evaluations": {
+                    "added": [
+                      {
+                        "id": "ev_001",
+                        "focus": "on-demand",
+                        "target_id": "project",
+                        "target_type": "project",
+                        "verdict": "refused",
+                        "timestamp": "2026-09-26T00:00:00Z",
+                        "superseded_by": null,
+                        "file_path": "evaluations/on-demand-project-2026-09-26T00-00-00.json"
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: ev_001, q_001, q_002"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The agent correctly identified that no proof summary exists in the project, verified this by querying proof_summaries (count: 0), and correctly refused the craft review request. The refusal was properly persisted with verdict 'refused' and target_id 'project'. The agent did not evaluate evidence or produce findings it should have declined to make. The narrative accurately describes the precondition failure (no finished prose) and directs the researcher to the correct next step (proof-conclusion)."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The agent completed all required actions for a refusal: it checked the project state via project_context and proof_summaries queries, determined the precondition was not met, refused the craft review, and persisted the refusal entry to evaluations via research_append. The refusal was recorded with the correct target (project) and all required fields. No further work was required or expected on a refusal."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three MCP tool calls used correct arguments. project_context was called with the correct projectPath. research_query was called with correct section 'proof_summaries' to verify the precondition. research_append was called with correct section 'evaluations', op 'append', and a properly structured verdict object with verdict='refused', target_id='project', target_type='project', and craft=true. No tool calls returned fixture_not_found errors."
+              },
+              {
+                "source": "rubric",
+                "name": "Focus discipline and refusal",
+                "score": 3,
+                "rationale": "The agent correctly refused the craft review request. The precondition for a craft read is a finished proof summary; the agent verified none exists (proof_summaries count: 0) and refused rather than degrading into an evidentiary review. The refusal was persisted with verdict='refused' and target_id='project', not a question id. The agent did not evaluate evidence or produce findings. The refusal narrative is one line of plain language naming the gap (no written proof summary) and the next step (run proof-conclusion first)."
+              },
+              {
+                "source": "rubric",
+                "name": "Severity and citation discipline",
+                "score": 3,
+                "rationale": "This dimension does not apply to a refusal. The agent produced no findings, no must_address items, no consider_addressing items, and no non_blocking_notes. A refusal owes no severity tiers or citations—it is a single-line narrative declining to perform the review. The persisted entry correctly carries no findings arrays."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool work: reading the state the verdict rests on",
+                "score": 3,
+                "rationale": "The agent fetched the facts its refusal decision rested on. It called project_context to read the project state and openQuestions, and called research_query on proof_summaries to verify the precondition (no finished prose exists). Both calls succeeded and returned the state needed to make the refusal decision. The agent did not infer the absence of proof summaries; it read it directly from the tool response (count: 0)."
+              },
+              {
+                "source": "rubric",
+                "name": "Mentor voice and actionability",
+                "score": 3,
+                "rationale": "On a refusal, the deliverable is one line of plain language naming the gap and the next step. The agent's narrative_for_user states clearly: 'There's no written proof summary yet to give a craft read on' (the gap) and 'Run proof-conclusion on whichever question you want to share first' (the next step). The language is plain and actionable—a researcher understands without schema knowledge what is missing and what to do. No internal axis vocabulary surfaces. The refusal owes no audience statement, no preamble, no findings—and provides none."
+              }
+            ],
+            "judge_cost_usd": 0.011608,
+            "duration_ms": 11513.112613931298,
+            "error": null,
+            "input_tokens": 6508,
+            "cached_input_tokens": 0,
+            "output_tokens": 1020
+          },
+          "started_at": 1790450325.4008753,
+          "ended_at": 1790450363.601858
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-prior-craft-verdict",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent produced a craft review as requested, correctly reading ps_001 for how it reads rather than evaluating evidence. The verdict is consider_addressing (advisory, not must_address), which is correct for craft findings. The agent fetched the prior sidecar body via sidecar_read, confirmed it was a craft read (craft: true), and correctly superseded it. All findings are factually grounded in the actual prose of ps_001 (proof vocabulary present, Evidence Summary structure confirmed, 1880 relationship column point verified as appearing twice). The narrative accurately reflects the prior June verdict and notes unchanged issues. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent addressed everything the delegation required: a craft review of ps_001 before sending to a cousin. The review covers strengths (opening clarity, closing door), identifies the key issues from the prior verdict that remain (audience calibration, engagement), adds a new finding (context provision), and flags the nit (1880 relationship column mentioned twice). The agent persisted the new verdict with supersession of the prior entry. No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All seven tool calls passed arguments matching the fixture's expected behavior. project_context and research_query calls used correct projectPath and section/targetId parameters. sidecar_read correctly resolved the prior entry's file_path (evaluations/on-demand-ps_001-2026-06-02T09-15-00.json) to fetch the craft flag. research_append calls correctly appended the new verdict and updated ev_001's superseded_by field. No critical identifiers were wrong, no calls landed in fixture_not_found, and no validation errors occurred."
+          },
+          {
+            "source": "rubric",
+            "name": "Focus discipline and refusal",
+            "score": 3,
+            "rationale": "The agent correctly performed a craft read within its delegated focus. The precondition was met (ps_001 exists and has a proof summary). The agent opened with the required §6.4 preamble: 'I read this for how it reads for your cousin, not for whether the evidence holds up — that's what a proof-critique does.' This explicitly names proof-critique as the review that checks evidence and clarifies what was NOT checked. The agent did not refuse, did not degrade into a lighter mode, and did not evaluate evidence. The scope sentence is present and correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity and citation discipline",
+            "score": 3,
+            "rationale": "All findings are filed at correct severity. The two consider_addressing items (audience calibration, engagement) and the new consider_addressing item (context provision) are advisory, not must_address, which is correct for craft findings per §6.4. The non_blocking_notes item (1880 relationship column mentioned twice) is correctly filed as a nit. Each craft finding carries the required 'Craft — <axis>' citation label (Craft — audience calibration, Craft — engagement, Craft — context provision) rather than a numbered Genealogy Standard. No must_address items appear, and the verdict is consider_addressing, not address_first, as required for craft reads."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool work: reading the state the verdict rests on",
+            "score": 3,
+            "rationale": "The agent made the load-bearing sidecar_read call on the prior entry's file_path (evaluations/on-demand-ps_001-2026-06-02T09-15-00.json) before deciding supersession. The call succeeded and returned the prior body with craft: true, confirming this was a craft read. The agent then correctly selected the live entry (superseded_by: null) and appended a new verdict while updating ev_001's superseded_by field. The supersession decision rests on facts actually read from the sidecar, not on guessing from focus and target_id alone. Every fact the verdict depends on was fetched."
+          },
+          {
+            "source": "rubric",
+            "name": "Mentor voice and actionability",
+            "score": 3,
+            "rationale": "The response reads like a colleague and is actionable throughout. Findings name specific artifacts (the proof vocabulary terms by name, the Evidence Summary structure, the 1880 relationship column point) and specific gaps (cousin won't understand 'Original Source,' the catalogue shape doesn't convey Patrick as a person, missing historical context). Each consider_addressing item names a concrete next action: replace proof terms with plain language, reshape Evidence Summary into one thread, add a sentence on the anthracite coal boom. The assumed audience is stated: 'I read it as written for family rather than for a journal.' Prose appears once in narrative_for_user, not restated in JSON fields. No internal axis vocabulary surfaces (no mention of 'audience calibration check' as a process). On the refusal dimension: N/A, as this was not a refusal. The response is specific, actionable, and in plain language a researcher understands."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent produced a craft review as requested, correctly reading ps_001 for how it reads rather than evaluating evidence. The verdict is consider_addressing (advisory, not must_address), which is correct for craft findings. The agent fetched the prior sidecar body via sidecar_read, confirmed it was a craft read (craft: true), and correctly superseded it. All findings are factually grounded in the actual prose of ps_001 (proof vocabulary present, Evidence Summary structure confirmed, 1880 relationship column point verified as appearing twice). The narrative accurately reflects the prior June verdict and notes unchanged issues. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent addressed everything the delegation required: a craft review of ps_001 before sending to a cousin. The review covers strengths (opening clarity, closing door), identifies the key issues from the prior verdict that remain (audience calibration, engagement), adds a new finding (context provision), and flags the nit (1880 relationship column mentioned twice). The agent persisted the new verdict with supersession of the prior entry. No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All seven tool calls passed arguments matching the fixture's expected behavior. project_context and research_query calls used correct projectPath and section/targetId parameters. sidecar_read correctly resolved the prior entry's file_path (evaluations/on-demand-ps_001-2026-06-02T09-15-00.json) to fetch the craft flag. research_append calls correctly appended the new verdict and updated ev_001's superseded_by field. No critical identifiers were wrong, no calls landed in fixture_not_found, and no validation errors occurred."
+          },
+          {
+            "source": "rubric",
+            "name": "Focus discipline and refusal",
+            "score": 3,
+            "rationale": "The agent correctly performed a craft read within its delegated focus. The precondition was met (ps_001 exists and has a proof summary). The agent opened with the required §6.4 preamble: 'I read this for how it reads for your cousin, not for whether the evidence holds up — that's what a proof-critique does.' This explicitly names proof-critique as the review that checks evidence and clarifies what was NOT checked. The agent did not refuse, did not degrade into a lighter mode, and did not evaluate evidence. The scope sentence is present and correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity and citation discipline",
+            "score": 3,
+            "rationale": "All findings are filed at correct severity. The two consider_addressing items (audience calibration, engagement) and the new consider_addressing item (context provision) are advisory, not must_address, which is correct for craft findings per §6.4. The non_blocking_notes item (1880 relationship column mentioned twice) is correctly filed as a nit. Each craft finding carries the required 'Craft — <axis>' citation label (Craft — audience calibration, Craft — engagement, Craft — context provision) rather than a numbered Genealogy Standard. No must_address items appear, and the verdict is consider_addressing, not address_first, as required for craft reads."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool work: reading the state the verdict rests on",
+            "score": 3,
+            "rationale": "The agent made the load-bearing sidecar_read call on the prior entry's file_path (evaluations/on-demand-ps_001-2026-06-02T09-15-00.json) before deciding supersession. The call succeeded and returned the prior body with craft: true, confirming this was a craft read. The agent then correctly selected the live entry (superseded_by: null) and appended a new verdict while updating ev_001's superseded_by field. The supersession decision rests on facts actually read from the sidecar, not on guessing from focus and target_id alone. Every fact the verdict depends on was fetched."
+          },
+          {
+            "source": "rubric",
+            "name": "Mentor voice and actionability",
+            "score": 3,
+            "rationale": "The response reads like a colleague and is actionable throughout. Findings name specific artifacts (the proof vocabulary terms by name, the Evidence Summary structure, the 1880 relationship column point) and specific gaps (cousin won't understand 'Original Source,' the catalogue shape doesn't convey Patrick as a person, missing historical context). Each consider_addressing item names a concrete next action: replace proof terms with plain language, reshape Evidence Summary into one thread, add a sentence on the anthracite coal boom. The assumed audience is stated: 'I read it as written for family rather than for a journal.' Prose appears once in narrative_for_user, not restated in JSON fields. No internal axis vocabulary surfaces (no mention of 'audience calibration check' as a process). On the refusal dimension: N/A, as this was not a refusal. The response is specific, actionable, and in plain language a researcher understands."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 73621.91762961447,
+        "duration_api_ms": 72481,
+        "judge_duration_ms": 17601.513273082674,
+        "wall_clock_ms": 91535.67218780518,
+        "num_turns": 2,
+        "input_tokens": 576,
+        "cached_input_tokens": 137593,
+        "cache_creation_input_tokens": 49976,
+        "output_tokens": 6609,
+        "judge_input_tokens": 13289,
+        "judge_cached_input_tokens": 5374,
+        "judge_output_tokens": 1301,
+        "skill_cost_usd": 0.5467074999999999,
+        "judge_cost_usd": 0.0203314,
+        "total_cost_usd": 0.5670388999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_gps_mentor_m2r_2026-09-26_19-18-45_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 73621.91762961447,
+          "duration_api_ms": 72481,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 576,
+          "cached_input_tokens": 137593,
+          "cache_creation_input_tokens": 49976,
+          "output_tokens": 6609,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 561,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000636,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-5": {
+              "inputTokens": 15,
+              "outputTokens": 6594,
+              "cacheReadInputTokens": 137593,
+              "cacheCreationInputTokens": 49976,
+              "webSearchRequests": 0,
+              "costUSD": 0.5460714999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "skill_cost_usd": 0.5467074999999999,
+          "output": {
+            "text_response": "# Mentor review: how this reads — ps_001\n\nI read this for how it reads for your cousin, not for whether the evidence holds up — that's what a proof-critique does, and this project already has a path for that if you want it later. Nothing in this review is evidentiary.\n\n## What you've done well\nThe opening still does the hard thing right: your cousin will know in the second sentence that you're arguing Patrick is probably Thomas's son, before being asked to follow any evidence. And the Assessment closes with a genuinely useful door — it names exactly what would need to turn up (Thomas's will, another census record) to move this from Probable to Proved, rather than just declaring the case closed.\n\n## Worth considering\nThis reads very close to the version I reviewed back in June (ev_001), and the two things flagged then are still sitting in the text unchanged:\n\n- **Audience calibration.** \"Original Source,\" \"indirect evidence\" (twice), \"secondary informant,\" and \"the GPS preponderance hierarchy\" are proof-standard vocabulary a cousin has no reason to know. Swapping in plain language — \"the original census pages, not a later copy,\" \"James Brown wasn't there for Patrick's birth; he was repeating what he'd been told\" — would carry the same content without stopping a lay reader.\n- **Engagement.** The Evidence Summary is still three numbered records, each opening with a census year and closing with a classification label. It's a catalogue, not yet a story about a boy of five, then fifteen, growing up in his father's house. Leading with the question the three records answer together, and letting the 1850/1860 entries run as one thread, would carry a family reader further.\n- **Context provision** (new this pass): nothing explains why an Irish-born family was in Schuylkill County in 1850. A sentence on the anthracite coal boom pulling Irish immigrants into that county in exactly this period would do more for a cousin than any of the classification language currently does.\n\nOne nit: the note that the 1880 census introduced the relationship column is still made twice (once under the 1860 entry, once again in the Assessment) — one mention is enough.\n\nNone of this is blocking — the argument itself is sound and the closing door is well done. If the goal is a reader who isn't a genealogist, translating those four proof-standard terms and reshaping the Evidence Summary into one continuous narrative thread would be the highest-value edit before you hit send.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_m2r-0-0-zuwfdjc8"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-09-26.d579003e",
+                  "projectStatus": "active",
+                  "openQuestions": [
+                    {
+                      "id": "q_001",
+                      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?"
+                    }
+                  ],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "concluded",
+                      "nextStep": "gps-mentor (proof-critique) — ps_001",
+                      "openConflictIds": [],
+                      "storedStatus": "in_progress"
+                    },
+                    {
+                      "id": "q_002",
+                      "state": "evidence-gathered",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
+                      "openConflictIds": [],
+                      "storedStatus": "resolved"
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "Patrick Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [
+                        "S1",
+                        "S3"
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Thomas Flynn",
+                      "gender": "Male",
+                      "sourceRefs": []
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ark:/61903/1:1:MXYZ"
+                      ],
+                      "assertionCount": 5
+                    },
+                    {
+                      "id": "src_002",
+                      "repository": "Ancestry",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ancestry:8054:patrick-flynn-1850"
+                      ],
+                      "assertionCount": 2
+                    },
+                    {
+                      "id": "src_003",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S2",
+                      "recordIds": [
+                        "ark:/61903/1:1:MABC"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_004",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S3",
+                      "recordIds": [
+                        "ark:/61903/1:1:MDEF"
+                      ],
+                      "assertionCount": 3
+                    }
+                  ],
+                  "localities": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_m2r-0-0-zuwfdjc8",
+                  "section": "evaluations",
+                  "targetId": "ps_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "evaluations",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "ev_001",
+                      "focus": "on-demand",
+                      "target_id": "ps_001",
+                      "target_type": "proof_summary",
+                      "verdict": "consider_addressing",
+                      "file_path": "evaluations/on-demand-ps_001-2026-06-02T09-15-00.json",
+                      "timestamp": "2026-06-02T09:15:00Z",
+                      "superseded_by": null
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__sidecar_read",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_m2r-0-0-zuwfdjc8",
+                  "ref": "evaluations/on-demand-ps_001-2026-06-02T09-15-00.json"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:sidecar_read",
+                "response": {
+                  "ok": true,
+                  "ref": "evaluations/on-demand-ps_001-2026-06-02T09-15-00.json",
+                  "totalChars": 3123,
+                  "offset": 0,
+                  "content": "{\n  \"focus\": \"on-demand\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"consider_addressing\",\n  \"craft\": true,\n  \"strengths\": [\n    \"The conclusion arrives in the second sentence, before any evidence is laid out, so a reader knows what is being argued before being asked to follow it.\"\n  ],\n  \"must_address\": [],\n  \"consider_addressing\": [\n    {\n      \"standard\": \"Craft — audience calibration\",\n      \"issue\": \"The prose leans on proof vocabulary a reader outside genealogy would not have: 'Original Source' on each of the three records, 'indirect evidence' twice in the evidence summary and again in the Assessment, 'secondary informant' for James Brown, and 'the GPS preponderance hierarchy' carrying the whole birthplace argument. No audience is stated on the project, so I read it as written for family rather than for a journal; on that reading these are the terms that would stop someone.\",\n      \"specific_action\": \"Say what each one means in place — that the census pages are the original records rather than later copies, and that a son-in-law reporting his father-in-law's parentage was told it rather than witnessing it.\"\n    },\n    {\n      \"standard\": \"Craft — engagement\",\n      \"issue\": \"The Evidence Summary is three numbered records, each opening with the census year and closing with a classification. The shape is a catalogue rather than an argument, and Patrick appears as a row in a household rather than as a person.\",\n      \"specific_action\": \"Lead the section with the question the three records answer together, and let the 1850 and 1860 entries run as one thread about a boy in his father's household rather than two parallel catalogue rows.\"\n    }\n  ],\n  \"non_blocking_notes\": [\n    \"The point that the relationship column was not introduced until 1880 is made twice in nearly the same words — under the 1860 census and again in the Assessment. One of them is enough.\"\n  ],\n  \"narrative_for_user\": \"I read this for how it reads, not for whether the evidence holds up — that is what a proof-critique does. The opening does the hardest thing right: the conclusion is there in the second sentence, so nobody has to read to the end to find out what you are arguing.\\n\\nTwo things would change the reading. The first is vocabulary: 'Original Source', 'indirect evidence', 'secondary informant' and 'the GPS preponderance hierarchy' are doing real work here, and a reader who has not done genealogy will not know what any of them mean. Nothing on the project says who this is for, so I have assumed family rather than a journal — if that is wrong, tell me and most of this falls away. The second is shape: the Evidence Summary reads as a catalogue of three records rather than an argument, and Patrick comes through as a row in a household rather than as a boy of five and then fifteen in his father's house. Leading with the question the three records answer together would carry the reader further than numbering them does.\\n\\nOne small thing: the note about the relationship column arriving in 1880 is made twice, once under the 1860 census and once in the Assessment.\"\n}\n",
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_m2r-0-0-zuwfdjc8",
+                  "section": "proof_summaries",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "proof_summaries",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "ps_001",
+                      "question_id": "q_001",
+                      "tier": "probable",
+                      "vehicle": "summary",
+                      "shortfall": "gap",
+                      "supporting_assertion_ids": [
+                        "a_004",
+                        "a_010",
+                        "a_013"
+                      ],
+                      "resolved_conflict_ids": [
+                        "c_001"
+                      ],
+                      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
+                      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_m2r-0-0-zuwfdjc8",
+                  "section": "assertions",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 7,
+                  "items": [
+                    {
+                      "id": "a_004",
+                      "source_id": "src_001",
+                      "record_id": "ark:/61903/1:1:MXYZ",
+                      "record_role": "child_1",
+                      "fact_type": "relationship",
+                      "value": "Listed in household of Thomas Flynn (head), position consistent with child",
+                      "structured_value": {
+                        "relationship_type": "child_inferred",
+                        "related_person_role": "head_of_household"
+                      },
+                      "date": "1850",
+                      "date_certainty": "exact",
+                      "place": "Schuylkill County, Pennsylvania",
+                      "information_quality": "indeterminate",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
+                      "informant_proximity": "unknown",
+                      "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
+                      "record_basis": "inferred",
+                      "log_entry_id": "log_001",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_005",
+                      "source_id": "src_001",
+                      "record_id": "ark:/61903/1:1:MXYZ",
+                      "record_role": "head_of_household",
+                      "fact_type": "name",
+                      "value": "Thomas Flynn",
+                      "date": null,
+                      "date_certainty": null,
+                      "place": null,
+                      "information_quality": "indeterminate",
+                      "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
+                      "informant_proximity": "unknown",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
+                      "record_basis": "inferred",
+                      "log_entry_id": "log_001",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_008",
+                      "source_id": "src_003",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "record_role": "child_2",
+                      "fact_type": "name",
+                      "value": "Patrick Flynn",
+                      "date": null,
+                      "date_certainty": null,
+                      "place": null,
+                      "information_quality": "indeterminate",
+                      "informant": "Unknown household member reporting to census enumerator",
+                      "informant_proximity": "unknown",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
+                      "record_basis": "stated",
+                      "log_entry_id": "log_004",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_009",
+                      "source_id": "src_003",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "record_role": "child_2",
+                      "fact_type": "birth",
+                      "value": "age 15",
+                      "date": "~1845",
+                      "date_certainty": "estimated",
+                      "place": "Ireland",
+                      "information_quality": "indeterminate",
+                      "informant": "Unknown household member (likely Thomas Flynn or wife)",
+                      "informant_proximity": "household_member",
+                      "informant_bias_notes": "Age and birthplace require active reporting by a household member (same reasoning as a_002).",
+                      "record_basis": "inferred",
+                      "log_entry_id": "log_004",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_010",
+                      "source_id": "src_003",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "record_role": "child_2",
+                      "fact_type": "relationship",
+                      "value": "Listed in household of Thomas Flynn (head), position and age consistent with son",
+                      "structured_value": {
+                        "relationship_type": "child_inferred",
+                        "related_person_role": "head_of_household"
+                      },
+                      "date": "1860",
+                      "date_certainty": "exact",
+                      "place": "Schuylkill County, Pennsylvania",
+                      "information_quality": "indeterminate",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
+                      "informant_proximity": "unknown",
+                      "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
+                      "record_basis": "inferred",
+                      "log_entry_id": "log_004",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_012",
+                      "source_id": "src_004",
+                      "record_id": "ark:/61903/1:1:MDEF",
+                      "record_role": "deceased",
+                      "fact_type": "birth",
+                      "value": "Born 1845, Pennsylvania",
+                      "structured_value": {
+                        "year": 1845,
+                        "place": "Pennsylvania"
+                      },
+                      "date": "1845",
+                      "date_certainty": "approximate",
+                      "place": "Pennsylvania",
+                      "information_quality": "secondary",
+                      "informant": "James Brown (son-in-law)",
+                      "informant_proximity": "family_not_present",
+                      "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.",
+                      "record_basis": "stated",
+                      "log_entry_id": "log_005",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_013",
+                      "source_id": "src_004",
+                      "record_id": "ark:/61903/1:1:MDEF",
+                      "record_role": "deceased",
+                      "fact_type": "relationship",
+                      "value": "Father: Thomas Flynn",
+                      "structured_value": {
+                        "relationship_type": "father",
+                        "related_person_role": "deceased"
+                      },
+                      "date": null,
+                      "date_certainty": null,
+                      "place": null,
+                      "information_quality": "secondary",
+                      "informant": "James Brown (son-in-law)",
+                      "informant_proximity": "family_not_present",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
+                      "record_basis": "stated",
+                      "log_entry_id": "log_005",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_m2r-0-0-zuwfdjc8",
+                  "section": "evaluations",
+                  "op": "append",
+                  "verdict": {
+                    "focus": "on-demand",
+                    "target_id": "ps_001",
+                    "target_type": "proof_summary",
+                    "verdict": "consider_addressing",
+                    "craft": true,
+                    "strengths": [
+                      "The conclusion still lands in the second sentence — a cousin reading this knows what's being argued before being asked to follow the evidence.",
+                      "The Assessment ends with a real door, not a wall: 'If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to Proved' tells the reader exactly what would move this forward."
+                    ],
+                    "must_address": [],
+                    "consider_addressing": [
+                      {
+                        "standard": "Craft — audience calibration",
+                        "issue": "The same proof-vocabulary flagged on 2026-06-02 is still in the text verbatim: 'Original Source' on all three records, 'indirect evidence' twice, 'secondary informant' for James Brown, and 'the GPS preponderance hierarchy' carrying the birthplace argument. Nothing on the project states an audience, and the researcher has told me this is going to a cousin, so these terms are the ones that will stop a lay reader.",
+                        "specific_action": "Replace the proof-standard terms with what they mean in place — 'the original census pages, not a later copy,' and 'James Brown wasn't there for Patrick's birth; he was repeating what he'd been told.'"
+                      },
+                      {
+                        "standard": "Craft — engagement",
+                        "issue": "The Evidence Summary is unchanged in shape: three numbered records, each opening with a census year and closing with a classification label. Patrick still reads as a row in two households rather than as a boy of five, then fifteen, growing up in his father's house.",
+                        "specific_action": "Open the section with the question the three records answer together, and let the 1850 and 1860 entries run as one continuous thread about the same boy rather than two parallel numbered entries."
+                      },
+                      {
+                        "standard": "Craft — context provision",
+                        "issue": "There is no mention of why an Irish-born family was in Schuylkill County in 1850 — the anthracite coal boom that drew Irish immigrants there in this period is exactly the kind of context that turns a bare fact ('born Ireland,' 'Schuylkill County') into a story a cousin can picture.",
+                        "specific_action": "A sentence of historical context on Irish immigration into the Schuylkill coal region would carry more meaning than the classification labels currently do.",
+                        "suggested_skill": "historical-context"
+                      }
+                    ],
+                    "non_blocking_notes": [
+                      "The point that the 1880 census introduced the relationship column is still made twice — once under the 1860 entry, once again in the Assessment. This was flagged on 2026-06-02 and hasn't been trimmed; one mention is enough."
+                    ],
+                    "narrative_for_user": "I read this for how it reads for your cousin, not for whether the evidence holds up — that's what a proof-critique does, and this project already has one path for that if you want it. Nothing here is evidentiary.\n\nThe good news first: the opening still does the hard thing right. Your cousin will know in the second sentence that you're arguing Patrick is probably Thomas's son, and the Assessment closes with a genuinely useful door — what would need to turn up (Thomas's will, another census) to move this from Probable to Proved.\n\nBut this reads very close to the version I looked at back in June, and the two things I flagged then are still sitting in the text unchanged. 'Original Source,' 'indirect evidence' (twice), 'secondary informant,' and 'the GPS preponderance hierarchy' are proof-standard vocabulary your cousin has no reason to know. And the Evidence Summary is still three numbered records that open with a census year and close with a classification — a catalogue, not yet a story about a boy growing up in his father's house. I'd also add: nothing here explains why an Irish family was in the Schuylkill coal country in 1850, and that context (the anthracite boom pulling in Irish labor in exactly this period) would do more for a family reader than any of the classification language currently does.\n\nNone of this is blocking — the argument is sound and the door at the end is well done. But if the goal is a cousin who isn't a genealogist, translating those four terms into plain language and reshaping the Evidence Summary into one continuous thread would be the highest-value hour you could spend before you hit send."
+                  },
+                  "entry": {
+                    "focus": "on-demand",
+                    "target_id": "ps_001",
+                    "target_type": "proof_summary",
+                    "verdict": "consider_addressing",
+                    "timestamp": "2026-09-26T00:00:00Z",
+                    "superseded_by": null
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "evaluations",
+                  "op": "append",
+                  "entryId": "ev_002",
+                  "filesWritten": [
+                    "research.json",
+                    "evaluations/on-demand-ps_001-2026-09-26T00-00-00.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_gps_mentor_m2r-0-0-zuwfdjc8",
+                  "section": "evaluations",
+                  "op": "update",
+                  "entryId": "ev_001",
+                  "fields": {
+                    "superseded_by": "ev_002"
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "evaluations",
+                  "op": "update",
+                  "entryId": "ev_001",
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "evaluations/on-demand-ps_001-2026-09-26T00-00-00.json"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Craft review of ps_001",
+                  "prompt": "The researcher asked how the proof summary for ps_001 reads before they send it to a cousin. Give it a craft review.\n\nfocus: on-demand\ntarget_id: ps_001\nmode: autonomous\nprojectPath: <workspace>",
+                  "subagent_type": "gps-mentor"
+                }
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "evaluations"
+                ],
+                "diff": {
+                  "evaluations": {
+                    "added": [
+                      {
+                        "id": "ev_002",
+                        "focus": "on-demand",
+                        "target_id": "ps_001",
+                        "target_type": "proof_summary",
+                        "verdict": "consider_addressing",
+                        "timestamp": "2026-09-26T00:00:00Z",
+                        "superseded_by": null,
+                        "file_path": "evaluations/on-demand-ps_001-2026-09-26T00-00-00.json"
+                      }
+                    ],
+                    "modified": [
+                      {
+                        "id": "ev_001",
+                        "changed_fields": {
+                          "superseded_by": {
+                            "before": null,
+                            "after": "ev_002"
+                          }
+                        }
+                      }
+                    ],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: ev_001, ps_001"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The agent produced a craft review as requested, correctly reading ps_001 for how it reads rather than evaluating evidence. The verdict is consider_addressing (advisory, not must_address), which is correct for craft findings. The agent fetched the prior sidecar body via sidecar_read, confirmed it was a craft read (craft: true), and correctly superseded it. All findings are factually grounded in the actual prose of ps_001 (proof vocabulary present, Evidence Summary structure confirmed, 1880 relationship column point verified as appearing twice). The narrative accurately reflects the prior June verdict and notes unchanged issues. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The agent addressed everything the delegation required: a craft review of ps_001 before sending to a cousin. The review covers strengths (opening clarity, closing door), identifies the key issues from the prior verdict that remain (audience calibration, engagement), adds a new finding (context provision), and flags the nit (1880 relationship column mentioned twice). The agent persisted the new verdict with supersession of the prior entry. No required work was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All seven tool calls passed arguments matching the fixture's expected behavior. project_context and research_query calls used correct projectPath and section/targetId parameters. sidecar_read correctly resolved the prior entry's file_path (evaluations/on-demand-ps_001-2026-06-02T09-15-00.json) to fetch the craft flag. research_append calls correctly appended the new verdict and updated ev_001's superseded_by field. No critical identifiers were wrong, no calls landed in fixture_not_found, and no validation errors occurred."
+              },
+              {
+                "source": "rubric",
+                "name": "Focus discipline and refusal",
+                "score": 3,
+                "rationale": "The agent correctly performed a craft read within its delegated focus. The precondition was met (ps_001 exists and has a proof summary). The agent opened with the required §6.4 preamble: 'I read this for how it reads for your cousin, not for whether the evidence holds up — that's what a proof-critique does.' This explicitly names proof-critique as the review that checks evidence and clarifies what was NOT checked. The agent did not refuse, did not degrade into a lighter mode, and did not evaluate evidence. The scope sentence is present and correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Severity and citation discipline",
+                "score": 3,
+                "rationale": "All findings are filed at correct severity. The two consider_addressing items (audience calibration, engagement) and the new consider_addressing item (context provision) are advisory, not must_address, which is correct for craft findings per §6.4. The non_blocking_notes item (1880 relationship column mentioned twice) is correctly filed as a nit. Each craft finding carries the required 'Craft — <axis>' citation label (Craft — audience calibration, Craft — engagement, Craft — context provision) rather than a numbered Genealogy Standard. No must_address items appear, and the verdict is consider_addressing, not address_first, as required for craft reads."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool work: reading the state the verdict rests on",
+                "score": 3,
+                "rationale": "The agent made the load-bearing sidecar_read call on the prior entry's file_path (evaluations/on-demand-ps_001-2026-06-02T09-15-00.json) before deciding supersession. The call succeeded and returned the prior body with craft: true, confirming this was a craft read. The agent then correctly selected the live entry (superseded_by: null) and appended a new verdict while updating ev_001's superseded_by field. The supersession decision rests on facts actually read from the sidecar, not on guessing from focus and target_id alone. Every fact the verdict depends on was fetched."
+              },
+              {
+                "source": "rubric",
+                "name": "Mentor voice and actionability",
+                "score": 3,
+                "rationale": "The response reads like a colleague and is actionable throughout. Findings name specific artifacts (the proof vocabulary terms by name, the Evidence Summary structure, the 1880 relationship column point) and specific gaps (cousin won't understand 'Original Source,' the catalogue shape doesn't convey Patrick as a person, missing historical context). Each consider_addressing item names a concrete next action: replace proof terms with plain language, reshape Evidence Summary into one thread, add a sentence on the anthracite coal boom. The assumed audience is stated: 'I read it as written for family rather than for a journal.' Prose appears once in narrative_for_user, not restated in JSON fields. No internal axis vocabulary surfaces (no mention of 'audience calibration check' as a process). On the refusal dimension: N/A, as this was not a refusal. The response is specific, actionable, and in plain language a researcher understands."
+              }
+            ],
+            "judge_cost_usd": 0.0203314,
+            "duration_ms": 17601.513273082674,
+            "error": null,
+            "input_tokens": 13289,
+            "cached_input_tokens": 5374,
+            "output_tokens": 1301
+          },
+          "started_at": 1790450325.41141,
+          "ended_at": 1790450416.9470823
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 99963.41317892075,
+    "duration_api_ms": 97956,
+    "judge_duration_ms": 29114.62588701397,
+    "num_turns": 4,
+    "input_tokens": 1136,
+    "cached_input_tokens": 216592,
+    "cache_creation_input_tokens": 90629,
+    "output_tokens": 8915,
+    "judge_input_tokens": 19797,
+    "judge_cached_input_tokens": 5374,
+    "judge_output_tokens": 2321,
+    "skill_cost_usd": 0.8982622499999999,
+    "judge_cost_usd": 0.0319394,
+    "total_cost_usd": 0.9302016499999999,
+    "wall_clock_ms": 91546.20695114136
+  },
+  "review_sample": {
+    "tests": [
+      "ut_gps_mentor_k4p",
+      "ut_gps_mentor_m2r"
+    ],
+    "cursor": [],
+    "seed": 2038
+  }
+}
