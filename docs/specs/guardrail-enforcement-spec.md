@@ -208,9 +208,16 @@ Three checks hold it, all free and all running on every push:
 
 - `packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts` — every
   writable section of both schemas has exactly one row; every owner, caller and
-  writer tool resolves to something that ships.
+  writer tool resolves to something that ships; and, in the other direction,
+  for every writer tool the shipped plugin grants, the rows naming the holder
+  for it equal the rows that tool reaches for it. That second direction reads
+  the plugin's own `tools:` / `allowed-tools:` frontmatter, the hook's lanes,
+  and a writer-tool vocabulary the engine's own document writes must agree
+  with, so it cannot be satisfied by the manifest agreeing with itself. A non-owner agent writer is
+  declared in `agentCallers`, which no plane reads as a permission —
+  `research-schema-spec.md` §4, "Who actually writes a row".
 - `eval/harness/tests/unit/test_ownership_manifest.py` — the enforced writer sets
-  still equal the pre-promotion literals, pasted in verbatim, plus the three
+  still equal the pre-promotion literals, pasted in verbatim, plus the four
   declared deltas below. Each delta is a named constant a reviewer can look at.
 - `eval/harness/tests/unit/test_universal_validators.py` — the *validators* still
   behave, called directly. They have to be, because `pyproject.toml` sets
@@ -278,7 +285,7 @@ by `research_log_append`, which takes no `section`) and `researcher_profile`;
 keying on the schema alone would drop `plan_items`, the single largest source of
 false denies in the replay above.
 
-**Three writer-set changes, and no others.** `localities` is newly enforced, as
+**Four writer-set changes, and no others.** `localities` is newly enforced, as
 above. `assertions` loses `convert-dates`, a grant that was dead on arrival —
 the skill's only tool is `convert_calendar`, it holds no writer tool, and none of
 its 14 unit tests names `research_append` or `assertions`. A narrowing is the
@@ -290,7 +297,11 @@ questions reached `resolved` across 154 runs from 11 different skill contexts.
 The prose table, the write-boundary gate's remedy text, and the batches that
 write a summary and its resolve together all name `proof-conclusion`. A widening
 cannot newly fail a test; the matching skill-body edit is a separate change,
-gated on that skill's paid run.
+gated on that skill's paid run. And tree `persons` and `relationships` gain
+`forget-and-rederive` (`TREE_WIDENED` in `test_ownership_manifest.py`): it holds
+`tree_forget` and both rows list that tool, so it was a writer of both sections
+that no row named — found by the actual-writer guard. The skill has
+no unit suite, so no graded run reads this writer set.
 
 **Two declared contradictions that turn out not to be defects**, recorded rather
 than repaired:

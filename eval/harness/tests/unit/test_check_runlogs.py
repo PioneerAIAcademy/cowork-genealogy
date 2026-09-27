@@ -1561,6 +1561,16 @@ def test_touched_agent_gates_its_own_agent_keyed_suite(monkeypatch, capsys, tmp_
     (tests_unit / "gps-mentor").mkdir(parents=True)
     monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
     monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    # RUNLOGS_DIR is isolated too, and must be: this test names a REAL agent,
+    # so left pointing at the repo it reads whatever run logs gps-mentor
+    # happens to have. It passed originally only because that directory did
+    # not exist yet and "touched" surfaced as a no-run-logs error; the moment
+    # the suite gained an active, annotated run log the same rule returned 0
+    # and the assertion collapsed. The observable being asserted is that the
+    # agent edit marks its own suite TOUCHED, which an empty runlogs root
+    # surfaces regardless of corpus state.
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path / "runlogs")
+    (tmp_path / "runlogs").mkdir()
     _patch_diffs(monkeypatch, ["packages/engine/plugin/agents/gps-mentor.md"])
     rc = check_runlogs.main()
     assert rc == 1
@@ -1580,6 +1590,11 @@ def test_touched_agent_with_no_suite_is_untouched_by_the_identity_rule(
     tests_unit.mkdir()
     monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
     monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    # Isolated for the same reason as its sibling above, even though this one
+    # asserts rc == 0: a real agent name plus the repo runlogs root is how the
+    # sibling came to pass for a reason it was not testing.
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path / "runlogs")
+    (tmp_path / "runlogs").mkdir()
     _patch_diffs(monkeypatch, ["packages/engine/plugin/agents/image-reader.md"])
     rc = check_runlogs.main()
     assert rc == 0

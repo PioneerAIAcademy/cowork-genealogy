@@ -164,7 +164,7 @@ def findings_changed(fixture: str, *, e2e_dir: Path = E2E_DIR, root: Path = ROOT
         rel = path
     try:
         proc = subprocess.run(
-            ["git", "log", "-1", "--format=%cs", "--", str(rel)],
+            ["git", "log", "-1", "--format=%cs", "--", rel.as_posix()],
             cwd=root, text=True, encoding="utf-8", capture_output=True, timeout=30,
         )
     except (OSError, subprocess.SubprocessError):

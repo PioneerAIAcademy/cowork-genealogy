@@ -168,8 +168,16 @@ not restore the `Skill` call to clear it; issue #1851 carries the fix.
 **The thin skill still stays on disk, and neither reason is enforcement.** It is
 the **direct-user entry point** — a researcher who asks for a proof conclusion
 reaches the pair through the skill's own description. And it is the **unit-eval
-entry point**: a unit suite is keyed to a skill directory, and no harness path
-can invoke an agent directly (issue #1253, open).
+entry point**.
+
+**Premise update — the eval half of this no longer holds.** When this was
+written a unit suite was keyed to a skill directory and no harness path could
+invoke an agent directly. Both changed: the direct-agent arm landed, the
+runnability gate accepts an agent file in place of a skill directory, and
+`eval/tests/unit/gps-mentor/` is a suite whose subject is an agent with no
+skill. The direct-user entry point above is unaffected and still stands on its
+own. Whether that alone is reason enough to keep a thin routing skill is the
+lead’s call to revisit, not a fact this ADR can keep asserting.
 
 ### Writing a caller rule — the identifier is not what you expect
 

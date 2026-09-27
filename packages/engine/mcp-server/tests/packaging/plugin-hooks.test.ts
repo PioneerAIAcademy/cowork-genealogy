@@ -1,11 +1,20 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 // @ts-expect-error -- plain .mjs build helper, no type declarations (tsconfig
 // only compiles src/**, so this import is never typechecked).
 import { resolvePython, describePythonCandidates } from "../../../../../scripts/python-interpreter.mjs";
+import { extractList, frontmatterBlock, parseFrontmatter } from "./frontmatter.js";
+import {
+  HOOK_ROUTED_TOOL,
+  TREE_ROW_VIA,
+  agentWritableSections,
+  researchAppendReaches,
+  wholeSectionOwners,
+} from "./hook-lanes.js";
+import { grantedTools } from "./tool-names.js";
 
 // The plugin's PreToolUse hook is the ONLY guardrail that reaches Cowork.
 //
@@ -215,11 +224,7 @@ describe("plugin hooks are packaged and wired", () => {
     // owner `undefined` and the assertion fails on a row that is in fact
     // correct.
     const src = readFileSync(GUARD, "utf-8");
-    const owners: Record<string, string> = Object.fromEntries(
-      [...(src.match(/^OWNED_SECTIONS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
-        /["']([^"']+)["']\s*:\s*["']([^"']+)["']/g,
-      )].map((m) => [m[1], m[2]]),
-    );
+    const owners: Record<string, string> = wholeSectionOwners(src);
     for (const m of (src.match(/^OWNED_DECLARATIONS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
       /\(\s*["']([^"']+)["']\s*,\s*["'][^"']+["']\s*\)\s*:\s*["']([^"']+)["']/g,
     )) {
@@ -252,12 +257,7 @@ describe("plugin hooks are packaged and wired", () => {
     // Per-agent behavioural tests catch it one agent at a time and are easy to
     // forget on the next conversion; this catches the CLASS, so a future pair
     // that adds a hookCallers row without a lane reddens here.
-    const src = readFileSync(GUARD, "utf-8");
-    const laneKeys = [
-      ...(src.match(/^AGENT_WRITABLE_SECTIONS\s*=\s*\{([\s\S]*?)^\}/m)?.[1] ?? "").matchAll(
-        /^\s+["']([^"']+)["']\s*:\s*frozenset/gm,
-      ),
-    ].map((m) => m[1]);
+    const laneKeys = [...agentWritableSections().keys()];
     expect(laneKeys.length).toBeGreaterThan(0);
 
     const manifest = JSON.parse(
@@ -278,6 +278,117 @@ describe("plugin hooks are packaged and wired", () => {
           `AGENT_WRITABLE_SECTIONS row — the out-of-lane check is skipped for it entirely`,
       ).toContain(agent);
     }
+  });
+
+  it("names every agent on each section the hook lets it write", () => {
+    // The converse of the lane-row check above. The hook's lane map says which
+    // research.json sections an agent may write; the manifest must name the
+    // agent on each of those rows, or the manifest under-states who writes it.
+    // `proof-conclusion` resolved `questions` and stamped `project` with no row
+    // naming it, and the actual-writer guard stayed green through its
+    // per-tool union — it is `hookCallers` on `proof_summaries`, which lists
+    // `research_append` too.
+    const lanes = agentWritableSections();
+    expect(lanes.size).toBeGreaterThan(0);
+
+    const manifest = JSON.parse(
+      readFileSync(join(REPO_ROOT, "docs", "specs", "schemas", "ownership.json"), "utf-8"),
+    );
+    const missing: string[] = [];
+    for (const [agent, sections] of lanes) {
+      expect(sections.length, `${agent}: lane parsed with no sections`).toBeGreaterThan(0);
+      for (const section of sections) {
+        const row = manifest.rows.find(
+          (r: { artifact: string; section: string }) =>
+            r.artifact === "research.json" && r.section === section,
+        );
+        // Named for `research_append` specifically — the one tool whose
+        // `section` the hook routes. An `agentCallers` entry naming the agent
+        // for some other tool would pass a name-only check while saying it
+        // never writes the section the hook lets it write.
+        const id = `agent:${agent}`;
+        const permitted = [...(row?.callers ?? []), ...(row?.hookCallers ?? [])].includes(id);
+        const observed = (row?.agentCallers ?? []).some(
+          (a: { agent: string; tools: string[] }) =>
+            a.agent === id && a.tools.includes("research_append"),
+        );
+        if (!permitted && !observed) missing.push(`research.json#${section}: ${id}`);
+      }
+    }
+    expect(
+      missing,
+      "the hook lets these agents `research_append` these sections, and the " +
+        "manifest row does not name them for it — add the agent to that row's " +
+        "`agentCallers` with `research_append` in its `tools`",
+    ).toEqual([]);
+  });
+
+  it("pairs an agent with research_append only where the hook lets it reach", () => {
+    // The other direction of the check above. The hook refuses a laned agent
+    // outside its lane, and any agent but the owner on a section
+    // `OWNED_SECTIONS` routes; the tree is reached only through the two
+    // sections in TREE_ROW_VIA. An `agentCallers` entry pairing the tool with a
+    // row outside that records a write the hook refuses.
+    const lanes = agentWritableSections();
+    const owners = wholeSectionOwners();
+    expect(Object.keys(owners).length, "OWNED_SECTIONS parsed empty").toBeGreaterThan(0);
+    expect(Object.keys(TREE_ROW_VIA).length).toBeGreaterThan(0);
+    const manifest = JSON.parse(
+      readFileSync(join(REPO_ROOT, "docs", "specs", "schemas", "ownership.json"), "utf-8"),
+    );
+    const bad: string[] = [];
+    for (const row of manifest.rows) {
+      for (const a of (row.agentCallers ?? []) as { agent: string; tools: string[] }[]) {
+        if (!a.tools.includes("research_append")) continue;
+        const name = a.agent.slice("agent:".length);
+        if (!researchAppendReaches(name, row, lanes, owners)) {
+          bad.push(`${row.artifact}#${row.section}: ${a.agent} (lane: ${(lanes.get(name) ?? []).join(", ") || "none"})`);
+        }
+      }
+    }
+    expect(
+      bad,
+      "these agentCallers entries pair research_append on a row the hook never " +
+        "lets that agent reach — drop research_append from the entry's `tools`",
+    ).toEqual([]);
+  });
+
+  it("routes by section the one tool the manifest's hookRouting names", () => {
+    // `hookRouting.tool` is what the actual-writer guard and the corpus report
+    // treat as the section-routed writer. It must be the tool owner_denied
+    // actually gates, or both read the lanes against the wrong tool.
+    const src = readFileSync(GUARD, "utf-8");
+    const gated = [...src.matchAll(/_basename\([^)]*\)\)\s*!=\s*["']([a-z_]+)["']/g)].map((m) => m[1]);
+    expect(gated.length, "owner_denied's tool gate was not found in the guard script").toBeGreaterThan(0);
+    expect([...new Set(gated)]).toEqual([HOOK_ROUTED_TOOL]);
+  });
+
+  it("gives every agent granted research_append a lane", () => {
+    // Without a lane the hook confines an agent's `research_append` to no
+    // section, so which rows it reaches is not decidable from the shipped files
+    // and the ownership manifest cannot be checked against it.
+    const lanes = agentWritableSections();
+    const agentsDir = join(PLUGIN_DIR, "agents");
+    // An agent with no `tools:` key inherits every tool, research_append
+    // included — the same reading ownership-manifest.test.ts gives it.
+    const holdsRoutedTool = (text: string): boolean => {
+      const block = frontmatterBlock(text);
+      if (block === null) return false; // reported by ownership-manifest.test.ts
+      if (!("tools" in parseFrontmatter(block))) return true;
+      return extractList(text, "tools")
+        .flatMap((e) => grantedTools(e, [HOOK_ROUTED_TOOL]))
+        .includes(HOOK_ROUTED_TOOL);
+    };
+    const holders = readdirSync(agentsDir)
+      .filter((f) => f.endsWith(".md"))
+      .filter((f) => holdsRoutedTool(readFileSync(join(agentsDir, f), "utf-8")))
+      .map((f) => f.slice(0, -3));
+    expect(holders.length, "no agent holds research_append — the scan read nothing").toBeGreaterThan(0);
+    expect(
+      holders.filter((a) => !lanes.has(a)).sort(),
+      "these agents hold research_append and have no AGENT_WRITABLE_SECTIONS lane " +
+        "in guard_project_files.py — give each one the sections it writes",
+    ).toEqual([]);
   });
 
   it("matches every tool the guard script itself denies", () => {
