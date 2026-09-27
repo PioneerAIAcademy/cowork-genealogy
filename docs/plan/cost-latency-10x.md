@@ -1,8 +1,7 @@
 # Cut e2e research cost and latency as far as they go
 
 **Status:** Not started. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
-Nothing here is filed except the extraction-to-tool card; section 9 says what else
-becomes an issue. **No lead gates** — every ruling this plan once waited on has been
+**No lead gates** — every ruling this plan once waited on has been
 made. Update this line as waves land; delete this file when the work ships.
 
 **Target.** A median e2e research run costs **$10.57** and takes **75.7 min**
@@ -34,7 +33,9 @@ Lead's ordering, 2026-09-25/27. Everything in this plan hangs off it.
 1. **Reduce tool output, and eliminate tool calls entirely where possible.**
 2. **Convert skills to agents**, getting their context off the main thread.
 3. **Call agents and tools in parallel** as much as possible, to cut turn count.
-4. **Drop model and reasoning effort as low as they go.**
+4. **Drop model and reasoning effort as low as they go — for the research
+   orchestrator as well as the agents.** The orchestrator's own model and effort is
+   the bigger half: the main thread is **77–80% of wall clock**.
 5. **Record extraction** — not this plan's work. **Issue #2937, John.** Named here
    only so the waves below are read as the rest of the programme, not all of it.
 
@@ -162,9 +163,13 @@ Lever 1's other half: what comes back. Tool-result carry is **24%** of the bill.
 **Wave 1 before Wave 2**: collapsing calls first means the payload work measures
 against fewer, larger results rather than chasing a moving denominator.
 
-## 6. Wave 3 — conversion
+## 6. Wave 3 — conversion (NOT YOURS — others do this)
 
-Runs in parallel with Waves 1–2 from day one, by others.
+> **This wave is not Promise's work.** Others run the skill→agent conversion, in
+> parallel with Waves 1–2 from day one. It is here because **Wave 4 cannot start until
+> it is complete** — a floor search run against a half-converted system measures a
+> moving target, and a floor read taken before a skill's conversion is void. Track it;
+> do not implement it.
 
 **Conversion continues.** The standing ruling of 2026-09-22 stands — every skill
 becomes an agent and the skill is deleted. An earlier revision of this plan asked to
@@ -195,8 +200,24 @@ direction, **issue #2475** owns the precondition join, **issue #2256** the censu
 
 ## 7. Wave 4 — the floor search
 
+> **BLOCKED until Waves 1, 2 and 3 are all complete.** Lead ruling: tool-output
+> reduction *and* skill→agent conversion both finish before the floor search begins.
+> Measuring a model floor against unreduced payloads or a partly-converted skill set
+> gives a number that expires the moment the other work lands.
+
 **Set everything to Haiku with no reasoning effort, see what fails loudly, and raise
-carefully.** Run the unit suites first to find the loud failures, get most passing,
+carefully.** *Everything* includes **the research orchestrator itself**, not just the
+agents — and that is the larger half of the lever, because the main thread is 77–80% of
+wall clock while per-agent pins reach only the ~20–23% that runs inside a subagent.
+Nothing in this product has ever run below effort `high`: `effort_level` is `high` or
+null across all 188 runs.
+
+Context is not the blocker for the orchestrator. Haiku's 200k window gives the same
+167,000 compaction trigger as today, and main peaks at 159–174k across all 18
+instrumented runs. The risk that concentrates there is **routing judgement** — the
+orchestrator decides which skill runs next from `research.json` state — so expect the
+orchestrator to need a higher rung than the mechanical agents, and find out rather than
+assume. Run the unit suites first to find the loud failures, get most passing,
 then e2e against the panel corpus — not against a purpose-built baseline.
 
 **The rungs are model switches, not effort dials.** Haiku 4.5 **rejects** the `effort`
@@ -271,55 +292,24 @@ runlog summary plus a warn-only check makes every future PR's cost visible.
 - **The compaction stall is not where you would look.** The `compact_boundary` row has
   a ~0.1s gap; the 120.8s summarization sits in the **preceding `system:status` gap**.
 
-## 9. What becomes an issue
+## 9. Not in your lane
 
-**The line is `CLAUDE.md`'s four-person test** — is the work big enough to carry a
-vetter, an implementer and two reviewers — **not who happens to do it.** A one-line
-fix stays a current-PR fix even when a genealogist makes it.
+Two items belong to this programme but not to you. They are named so they are not lost,
+and neither blocks a wave.
 
-**Filed:** the extraction-to-tool card (John). **Needs a manual board move to Ready.**
+- **Informant rules for the 8 undocumented record types** — birth registration, probate,
+  obituary, compiled, land, military, immigration, directory. Genealogist work: 10.1% of
+  corpus assertions sit on record types the extractor has no rule for. Half a day per
+  type.
+- **`recall_required` cannot detect a run that stops researching early.** It measures
+  recovery of a *planted* finding, which is largely a first-30-tool-call property, so
+  every cost cut is scored against a metric blind to its main risk. This belongs on the
+  `nothing-checks` register whether or not anyone acts on it.
 
-**Current-PR fixes, never issues:** the `--runlog-root` threading — the flag already
-exists in `eval/harness/e2e/run_e2e.py` and only the `Makefile` recipe fails to pass
-it, so `$(if $(RUNLOG_ROOT),--runlog-root $(RUNLOG_ROOT),)` is the whole fix; and the
-four superseded Status lines.
+**Everything else here is yours to build directly.** File a card only when the work is
+genuinely someone else's or genuinely too big for the PR in front of you — per
+`CLAUDE.md`, an issue costs about four people, and this plan is not a filing exercise.
 
-**Comment, do not file:** the effort/model A/B belongs on **issue #1136**, whose body
-says *"do not file the A/B as a separate issue."* It is iceboxed and held by the lead,
-so Wave 4 needs an un-icebox, not a new card.
-
-**To file** — an independent coverage audit found 15 of 20 plan items covered by no
-existing issue. Its coverage verdicts were **not** re-verified item by item;
-spot-check before filing.
-
-| # | Title | Lane | Measured | Touches |
-|---|---|---|---|---|
-| 1 | `research_query`: accept `sections[]`, and a join/expand parameter | developer | −$1.28/run, −6.5 min. 40.5 calls/run, 88% inside agents, 1,842 back-to-back repeats | `research-query.ts` + schemas, dispatch, manifest, smoke row, `docs/specs/research-query-tool-spec.md` |
-| 2 | Plural args on `record_read` / `wiki_read` / `same_person` / `person_warnings` | developer | −$0.55/run, −3.5 min net of a 28% haircut for calls already parallel | four tool files, `person-warnings-tool-spec.md`, `same-person-tool-spec.md`, `wiki-page-tool-spec.md` |
-| 3 | `tree_query`: a projection for `tree.gedcomx.json` | developer | Tree reads are 64% of remaining project-file reads; no projection exists | new tool + schemas, dispatch, manifest, smoke row, spec |
-| 4 | Shape the wiki cluster's output | developer | 21.9% of main-thread tool bytes, zero affordances; `wiki_search` p50 37,109 chars | `wiki-search.ts`, `wiki-read.ts`, `wiki-place-page.ts`, specs |
-| 5 | `record_search`: cap the inline stub at 15, keep 50 in the sidecar | developer | −$0.62/run | `record-search.ts`, `record-search-tool-spec-v2.md` |
-| 6 | Trim the tool-schema block | developer | −$0.16/run; `record_search`'s schema is 18,545 of 129,279 bytes | `tool-schemas.ts` + per-tool schema exports |
-| 7 | `eval/RunE2E.bat`: wire `EFFORT_LEVEL` with a paired CI guard | developer, `nothing-checks` | Unblocks the largest lever for Windows panel runs | `eval/RunE2E.bat`, `eval/harness/scripts/check_e2e_fixtures.py` |
-| 8 | Carry `EFFORT` into the hosted sandbox | developer | Production cannot take Wave 4's win without all three sites | `real_agent.py`, `apps/server/app/sandbox/base.py`, `apps/server/app/sandbox/e2b.py` |
-| 9 | Informant rules for the 8 undocumented record types | genealogist | 10.1% of assertions; the table scores 35.6% there against 79.8% where rules exist | `packages/engine/plugin/agents/record-extractor.md` |
-| 10 | `recall_required` cannot detect a run that stops researching early | developer, `nothing-checks` | It measures recovery of a *planted* finding — largely a first-30-tool-call property | `eval/harness/e2e/result.py`, `docs/specs/e2e-test-spec.md` |
-
-## 10. Not doing, and why
-
-- **The 1M context window.** Once the context cuts land, compactions go to zero on
-  their own and 1M buys nothing while still charging the carried premium: **+$1.00 to
-  +$2.20/run**, not a saving. `check_added_runlogs_not_1m` also rejects such a run
-  from the corpus, so it is not comparable.
-- **Reverting the three conversions.** The arithmetic favours agents (Wave 3), and the
-  attributable share of the Jul→Sep regression was 0–25% of wall with the cost rise
-  not surviving a within-fixture control.
-- **Memoising repeat tool calls.** $0.065/run — below noise.
-- **Capping research-exhaustiveness spawns.** No counting mechanism exists, and
-  `OWNED_DECLARATIONS` in `guard_project_files.py` routes `declared: true` to that
-  agent alone, so a cap makes the run unable to reach `completed`.
-- **A purpose-built e2e baseline.** The panel corpus is the comparison set.
-- **An invented accuracy trade rate.** Promise's judgement.
 
 ---
 
@@ -429,7 +419,28 @@ variance is process waste with no quality attached.
     stream tagged with `parent_tool_use_id` and did reach users until commit
     `175cded1a` (2026-09-18) started dropping it in the hosted web app.
 
-## A4. Hazards — read before touching these
+## A4. Measured dead ends — do not re-propose these
+
+Each cost real money or real effort to establish. They are recorded so nobody, including
+a future reviewer, spends that again.
+
+- **The 1M context window is a net loss, not a saving.** Once the context cuts land,
+  compactions go to zero on their own and 1M buys nothing while still charging the
+  carried premium: **+$1.00 to +$2.20/run**. `check_added_runlogs_not_1m` also rejects
+  such a run from the committed corpus, so it is not comparable to the panel.
+- **Reverting the three skill→agent conversions.** The arithmetic favours agents
+  (section 6), and the attributable share of the Jul→Sep regression was 0–25% of wall
+  with the cost rise not surviving a within-fixture control.
+- **Memoising repeat tool calls: $0.065/run.** Below noise. The win is in collapsing the
+  calls (Wave 1), not in caching their results.
+- **Capping research-exhaustiveness spawns makes a run unfinishable.** No counting
+  mechanism exists, and `OWNED_DECLARATIONS` in `guard_project_files.py` routes
+  `declared: true` to that agent alone, so a capped question can never be declared and
+  `project.status` never reaches `completed`.
+- **A purpose-built e2e baseline.** The panel corpus is the comparison set.
+- **An invented accuracy trade rate.** Promise's judgement, by lead ruling.
+
+## A5. Hazards — read before touching these
 
 - Deleting `agents/image-reader.md` reds two record-extraction unit fixtures that grade
   the `@plugin:image-reader` delegation **by name**, plus the agent-list equality
@@ -444,7 +455,7 @@ variance is process waste with no quality attached.
   the `AGENT_PERMISSIONS` snapshot in the same commit.
 - Experiment runs write into `eval/runlogs/e2e` by default — corpus pollution.
 
-## A5. Statistical power
+## A6. Statistical power
 
 Pooled within-fixture SD of human per-finding recall **0.269**; judge
 `recall_total` 0.334. At 80% power: 3 runs/arm on one fixture detects a **0.615**
