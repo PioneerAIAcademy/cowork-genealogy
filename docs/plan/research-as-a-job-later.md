@@ -1,7 +1,7 @@
 # Research as a job — phases 2 to 5, at intent only
 
-> **Status:** NOT BUILT, and **deliberately not specified**. Phases 0 and 1 were built by PR
-> #2870, whose body lists each item (S2, 0a, 0b, 1a–1e); their plan is deleted. This file
+> **Status:** NOT BUILT, and **deliberately not specified**. Phases 0 and 1 were built by
+> PR #2870, whose body lists each item (S2, 0a, 0b, 1a–1e); their plan is deleted. This file
 > records where that design goes next, at the level of what and why, with acceptance criteria
 > and nothing else.
 > Revised 2026-09-27 against PR #2870's live run and the alpha feedback.
@@ -30,12 +30,14 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
 - **`turns.outcome` says how a run ended**: `completed`, `stopped`, `queued`, `budget` (the
   nudge cap, or the prototype's $35 spend bound), `no_progress`, `decision`,
   `mcp_unavailable`. Each renders today as one line under the chat. `no_progress` covers
-  two causes that should read differently: an agent that stalled, and a resume that failed
-  twice.
-- **`decision` cannot fire.** The worker passes `pending_decision=lambda: False`; the clause
-  exists and waits for phase 3.
-- **`person-evidence` was not de-gated.** PR #2870 reverted it, so its weak-match pause and
-  its autonomous-only resolve-downward rule are main's.
+  three causes that should read differently: an agent that stalled, a resume that failed
+  twice, and a tool surface that went away.
+- **`decision` and `mcp_unavailable` cannot fire.** The worker passes
+  `pending_decision=lambda: False`, and neither plane can observe a dead tool surface, so both
+  clauses exist and nothing sets them.
+- **`person-evidence` was not de-gated.** PR #2870 reverted it (`a52817767`), so its
+  weak-match pause and its autonomous-only resolve-downward rule are main's. The reverted
+  text keyed the rule on whether a user asked for this link, which the agent can read.
 - **The live run's scale.** One message, 150 minutes, 75 log entries, 311 `person_evidence`
   links, a probable-tier proof — and the agent resolved conflict c_002 itself where the old
   flow handed back about nine times.
@@ -43,9 +45,10 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
 ## Before phase 2 — what continuous work changed
 
 Phase 1 turned continuous work on for every hosted turn. These follow from that and come
-before any new surface. All of them target the prototype. The alpha keeps phase 1's behaviour
-until it is retired — its Stop hook has no decision clause and its turns record no outcome —
-with `auto_continue` as its switch.
+before any new surface. The nudge text and the body edits reach the alpha and Cowork too — one
+constant, one plugin — and only the exit's handler is prototype-only. The alpha's Stop hook has
+no decision clause and its turns record no outcome, and `auto_continue` stays its switch until
+it is retired.
 
 **The default web path never enters the router.** The web client prefixes the first message
 so `init-project` runs; it hands to `question-selection` and `research-plan`, and nothing in
@@ -73,8 +76,7 @@ void on the next message. The agent says it has delivered what was asked with th
 that carries *I need you* (below), and the turn ends with an outcome of its own — `completed`
 means the project is done and reads "Research complete.". "Where are we?" is a bounded request
 whose deliverable is the answer. Whatever re-enters the router must respect this, or every
-question becomes a job. Issue #2292 set this aside and has nothing else left after PR #2870,
-so this file is where it lives.
+question becomes a job. Issue #2813 owns this; its draft item 3 is the same rule.
 
 **Never ask a question you will not wait for.** Since phase 1 the hook overrides every closing
 offer on a hosted turn, so the feed shows a question the run then answers itself:
@@ -84,8 +86,9 @@ offer on a hosted turn, so the feed shows a question the run then answers itself
 becomes a statement followed by the action, or — where only the researcher can answer — the
 decision exit below. `person-evidence`'s weak-match pause is the largest case: its
 resolve-downward rule applies only to "an autonomous `/research` run", which a browser turn
-never is, so once the exit lands every weak match would end the job as a decision. On a hosted
-turn its pause rows resolve downward, as its autonomous branch already does. Where the
+never is, so once the exit lands every weak match would end the job as a decision. Restore the
+"When nobody can adjudicate, resolve downward" text PR #2870 reverted in `a52817767`: it keys on
+whether a user asked for this link, which a subagent can read, where run mode is not. Where the
 researcher bounded the request, stopping at the deliverable is correct and says so as a
 statement. This is issue #2864's "wouldn't pull, extract, or view the record unless
 specifically approved", and it was S4, widened. Each body is a paid eval run, one per skill
@@ -101,28 +104,41 @@ ends `decision` and the answer arrives as the next message. That narrows phase 3
 carried questions to one: which call means *I need you*. The worker's `PreToolUse` hook
 already reads control-plane rows on every call, so the choice is the model's own
 `AskUserQuestion`, intercepted, or one dedicated tool shaped like PR #2702's `hand_back`.
-Pick one; it also carries *delivered what was asked*. `AskUserQuestion` is granted on the
-prototype, handled nowhere in `apps/`, and
-appears unprompted in 14 committed unit run logs, so first record what it does on a
-continuous hosted turn today. The card is phase 3; the exit is not.
+Pick one; it also carries *delivered what was asked*, and it must behave sensibly where nothing
+intercepts it — the alpha and Cowork. `AskUserQuestion` is granted on the prototype, handled
+nowhere in `apps/`, and appears unprompted in 13 committed unit run logs, so first record what
+it does on a continuous hosted turn today. The card is phase 3; the exit is not.
+
+The exit is what makes a stop condition end the job, so two of them are settled before it
+ships. The fourth stop's "a document only they hold" is an errand, not a decision — phase 3's
+handed-to-you state does not stop the job, and `research-plan`'s own rule is that a blocked item
+does not hold up the rest — so that clause goes back to the lead first; until then the exit
+covers only the family-knowledge clause. A genuine blocker ends the way issue #2539 describes:
+the proof at whatever tier the evidence reached, with why the research stopped and what it could
+not reach, so `completed`, never `no_progress`.
 
 **Capture a real feed before specifying phase 2.** No committed run shows what a hosted reader
 sees: every e2e fixture pins `narration_guidance` to "concise", every e2e run enters as
 `/research --autonomous`, the unit harness binds no Stop hook, and the demo's feed events were
 never exported before its stack was dropped. Its 15 vetoed yields are 15 hand-back attempts
-nobody has read. Run `bagley-father-1884` through the browser — its researcher question as the
-first message, no slash command — and commit what the reader saw, including the feed events
-`export.py` does not export today; the exports directory is gitignored. This is also the only
-thing that can prove a paragraph reached the reader.
+nobody has read. `bagley-father-1884` is a strip fixture — its answer sits on the live tree —
+so an unseeded browser session either reads the father straight off the tree or, with the
+demo's tree-read block, cannot find William at all. Seed it with `proto/seed.py`, which opens a
+session on the seeded project, keep the demo's `BLOCKED_TOOLS`, and type its researcher question
+in the browser with no slash command. Record what the opener does to a seeded project as part of
+the capture. Commit what the reader saw, including the feed events `export.py` does not export
+today; the exports directory is gitignored. This is also the only thing that can prove a
+paragraph reached the reader.
 
-*Acceptance:* `bagley-father-1884` entered through the browser with no slash command invokes
-`research` in its first turn and ends `completed` or `decision`, never `budget` or
-`no_progress`, and its feed is committed to the repo; "create a research plan for Mary Hales
+*Acceptance:* seeded `bagley-father-1884`, its question typed in the browser with no slash
+command, invokes `research` in its first turn and ends `completed` or `decision`, never `budget`
+or `no_progress`, and its feed is committed to the repo; "create a research plan for Mary Hales
 but leave it at that" ends with a rendered plan, no research-log entries, and the delivered
 outcome; "where are we?" on an active project ends after the answer with the delivered outcome
 and no new log entry; no shipped skill or agent body ends a reply with an offer to continue; a
-weak match on a hosted turn resolves downward, not to a decision; a stop on the fourth
-condition ends `decision` with no nudge spent after the ask.
+weak match nobody asked about resolves downward, not to a decision; a stop on the
+family-knowledge clause ends `decision` with no nudge spent after the ask; a run whose remaining
+plan items are all unreachable does not end `no_progress`.
 
 ## Phase 2 — the reading experience
 
@@ -148,7 +164,7 @@ notifications wait until the session list proves not enough.
 **The tool chips become navigation, in FamilySearch's words.** The friendly chip in PR #2870's
 screenshot is mock-only; real chips are the wire name plus 160 characters of raw
 `key=value` input. A chip names what happened in the terms a FamilySearch user already knows
-— record hints, possible duplicates, attach — never a wire name or a bare collection number,
+— record hints, possible duplicates, attached sources — never a wire name or a bare collection number,
 and it opens the card it names. The same words go in the tool descriptions the model reads.
 The card shows its identity while collapsed, or two sources with one title cannot be told
 apart. The activity line between plan ticks gets the same words, a state for compaction
@@ -173,11 +189,11 @@ researcher — is a gap. *Searched, nothing matched* is a negative result, worth
 with its scope stated: collection by title, place, years, names, index or images. *Examined the
 record and she is not in it* is negative evidence. Negatives are most of the log and narration
 mentions them rarely, so render them from the log, as a sentence rather than raw JSON. A
-deferred external search is logged today as `negative`. A `negative` with
-`captureReceived: false` is decidable false from the entry alone, so the writer tool refuses
-it rather than the viewer working around it, and a deferred search gets an outcome value of
-its own. Nothing examined is not the tell: a FamilySearch search with no hits is a true
-negative.
+deferred external search is logged today as `negative`, and the entry alone cannot tell it
+apart: a nil the researcher reports before capturing is also `negative` with
+`captureReceived: false`, and a graded test requires it. So a deferred search gets a
+`log_outcome` value of its own, written by `search-external-sites` in place of `negative`, and
+the writer tool does not refuse that pair.
 
 **Show the scans, and let documents in.** On the prototype, sidecar bodies return 404 — every
 "View N results" is dead — and `/image`, `/logs` and `/files` return 501. The web transport
@@ -219,12 +235,13 @@ the researcher, and never re-raised; issue #2864's tester lost days to a film nu
 prose, and one petition was re-raised 7 times in 8 turns. It does not stop the job. It closes
 when the document comes back and enters as a source. It outlives the session, so it lives in
 `research.json`; `plan_item_status` has no waiting value today, and a handed-over capture left
-`in_progress` blocks the exhaustiveness gate. Issue #2539 is the card. The router's fourth stop
-lists "a document only they hold" as a reason to stop the whole job; issue #2864's tester would
-have fetched it "in the office", and `research-plan`'s own rule is that a blocked item does not
-hold up the rest, so that clause goes back to the lead. `search-external-sites`' researcher-asked
-"hand them the URL and wait for the capture" becomes this state: on the prototype the wait is a
-yield the hook vetoes, and uploads return 501.
+`in_progress` blocks the exhaustiveness gate. Issue #2539 is the card. Every external search
+that needs a capture becomes one of these errands — plan-driven, ad hoc, or asked for — raised
+once with its URL, its plan item taking the waiting status instead of `skipped`. Issue #2864's
+Fold3 petition was raised by the agent, not asked for, so a narrower rule would raise it zero
+times or stop the job. It replaces `search-external-sites`' "hand them the URL and wait for the
+capture", which cannot complete on the prototype: the wait is a yield the hook vetoes, and
+uploads return 501.
 
 **A correction is recorded state, not a chat turn.** In issue #2864 the researcher challenged a
 passenger-list assumption and the agent reverted to it, because nothing recorded the rivals;
@@ -353,9 +370,9 @@ which reads old run logs.
   The proof tier and why it is not higher, in a sentence rather than enum badges, is the
   uncertainty display.
 - **No leaf-skill changes beyond the ones above.** `translation` is correct when invoked
-  directly. `search-external-sites` was rewritten by PR #2870: plan-driven external searches are
-  now deferred on every plane, including Cowork and the alpha where a researcher could capture,
-  and its researcher-asked wait becomes phase 3's handed-to-you state.
+  directly. `search-external-sites` was rewritten by PR #2870 to defer plan-driven captures on
+  every plane, Cowork and the alpha included, where a researcher could capture; phase 3's
+  handed-to-you state replaces both the deferral and the researcher-asked wait.
 - **No further cost bounding.** The prototype bounds a session at $35 in the `PreToolUse` hook,
   priced off live token usage; the alpha has no bound (ruled 2026-09-25 — it is replaced by the
   prototype). The nudge cap is not a bound: it is consulted only at a voluntary yield, and 31%
