@@ -783,7 +783,7 @@ re-evaluations distinct, so a prior verdict is never overwritten.
 
 ### 10.2 There is no mode parameter
 
-Until PR #2870's S2 fold-in (2026-09-23) this section had two halves selected by
+Until the continuous-work change to `research/SKILL.md` (2026-09-23) this section had two halves selected by
 a `mode: interactive | autonomous` parameter, defaulting to `interactive`, whose rule was
 to **ask the user** "Re-evaluate now, or surface the existing verdict?".
 

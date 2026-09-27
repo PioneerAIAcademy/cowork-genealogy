@@ -815,8 +815,8 @@ There **is** an orchestrator, and it is a skill:
    `focus: "proof-critique"` verdict in `evaluations[]`, written by
    `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
    recommendation stays advisory and never forces rework. **`proof-conclusion`
-   owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` by
-   PR #2870. Three surfaces already said so and the router
+   owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when
+   continuous work shipped (2026-09-23). Three surfaces already said so and the router
    contradicted all three: `docs/specs/schemas/ownership.json` names
    `skill:init-project` and `skill:proof-conclusion` as the `project` section's
    only callers, `agents/proof-conclusion.md` §8 makes the call, and the
@@ -1643,8 +1643,8 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   many hours as it needs. **Do not read the cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once.
   Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured** — which is exactly why the 2026-09-21 ruling behind PR #2870
-  refused to accept the pause. Since PR #2870's item 1d, `set_timeout` is no longer
+  measured** — which is exactly why the 2026-09-21 continuous-work ruling
+  refused to accept the pause. Since continuous work shipped, `set_timeout` is no longer
   called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
   live sandbox on a 300 s loop from the control plane, so a turn cannot age out
   while it works. That matters now because a turn is a whole research job —
