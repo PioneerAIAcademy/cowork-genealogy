@@ -67,6 +67,6 @@ def stage_openrouter_key(config_path: Path = FS_CONFIG_PATH) -> None:
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     try:
-        config_path.chmod(0o600)  # holds a secret; match the TS saveConfig mode
+        config_path.chmod(0o600)  # holds a secret
     except OSError:
         pass

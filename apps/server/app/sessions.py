@@ -437,7 +437,7 @@ async def connect_session(
     # Same reasoning for the engine's config document: sandboxes are persistent,
     # so a create-time-only write leaves every existing session on whatever the
     # sidecar URLs and OpenRouter key were then. merge_config, not write_config —
-    # configure_openrouter writes openRouterModel into this same file from the VM.
+    # the file may carry keys the control plane does not own (openRouterModel).
     settings = get_settings()
     await fs_oauth.merge_config(
         sandbox,

@@ -423,8 +423,11 @@ audit trail.
 
 ### Verify the narrative-craft path (spec §6.4)
 
-No automated suite covers this today: the unit harness keys every test
-to a skill directory, and `gps-mentor` is an agent. The agent itself is
+An automated suite now covers part of this: `eval/tests/unit/gps-mentor/`
+reaches the agent through the direct-agent arm, so the harness no longer
+requires a skill directory. It exercises the craft refusal and craft
+supersession; the rest of this guide is still the verification for everything
+it does not reach. The agent itself is
 staged and observable in e2e runs (spec §17.1), so this is a missing
 suite rather than an impossible one — but until it exists, a genealogist
 reading real output is the verification. Run **both** halves; the

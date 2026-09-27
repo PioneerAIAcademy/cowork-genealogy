@@ -639,8 +639,8 @@ describe("extractImageArk", () => {
   });
 
   // FamilySearch's own vocabulary variant. `replace(/.*\//, "")` leaves the
-  // fragment on, so an exact !== "DigitalArtifact" test dropped it — see
-  // eval/fixtures/mcp/collection-read-by-id.json.
+  // fragment on, so an exact !== "DigitalArtifact" test dropped it. Seen in a
+  // FamilySearch collection-detail response (the retired collection_read fixture).
   it("returns the ark for the DigitalArtifact#FamilySearch vocabulary variant", () => {
     expect(
       extractImageArk({
