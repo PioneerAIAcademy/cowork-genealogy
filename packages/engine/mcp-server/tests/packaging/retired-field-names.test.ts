@@ -113,6 +113,8 @@ const ALLOWED: Record<string, string> = {
     "this file — it names the retired token in order to ban it",
 
   // ── Dated records: editing them asserts something false about their date ──
+  "docs/plan/cost-latency-10x.md":
+    "measures the unmigrated run-log corpus, which still carries the old field name; it names the rename to explain its counts",
   "docs/adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md":
     "a dated 2026-08 decision record; its options table cites the token as it stood then",
   "docs/record-extraction-judge-audit.md":

@@ -215,17 +215,22 @@ export function hasRecordLanguage(m: Memory): boolean {
  * the response entirely — so a keyword arm able to resurrect one fails an
  * existing criterion.
  *
- * Stage 2 keeps on ANY of: PDF, media kind Document or Story, or record language
- * in the title/description WHATEVER the kind. That last arm is what recovers the
- * record scans uploaders file under Photo — on the probe corpus a WWII draft
- * card, a 1950 census page, a marriage licence, an obituary and two headstones.
+ * Stage 2 keeps on ANY of: PDF, media kind Document, or record language in the
+ * title/description WHATEVER the kind. That last arm is what recovers the record
+ * scans uploaders file under Photo — on the probe corpus a WWII draft card, a 1950
+ * census page, a marriage licence, an obituary and two headstones.
+ *
+ * A Story earns its way in through the record-language arm only, like a Photo
+ * (lead, 2026-09-27): most stories are family recollection, not sources — 1 of 9
+ * on the probe corpus carried record language — and a kept story's full text
+ * (311..12,239 chars measured) lands in `sources[]` on every read.
  */
 export function filterSourceStyle(memories: Memory[], portraitId: string | null): Memory[] {
   return memories.filter((m) => {
     if (isAudioVideo(m)) return false;
     if (portraitId && m.id === portraitId) return false;
     if (m.mediaType.toLowerCase() === "application/pdf") return true;
-    if (m.kind === "Document" || m.kind === "Story") return true;
+    if (m.kind === "Document") return true;
     return hasRecordLanguage(m);
   });
 }
