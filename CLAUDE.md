@@ -380,7 +380,8 @@ bodies are self-contained — do not split them".
 
 ## Handling user feedback submissions
 
-When a user submits a feedback zip via the Cowork viewer, the workflow
+When a user submits a feedback zip (from the hosted web app or the Cowork
+desktop viewer — the issue's `Platform:` line says which), the workflow
 to triage it lives at `docs/alpha-feedback-guide.md` (a worked story,
 start to finish). The skill-improvement half it hands off to is
 `docs/skill-lifecycle.md`. The underlying spec
