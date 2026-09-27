@@ -184,7 +184,13 @@ their input **as arguments**; the expensive ones are handed an id and go fetch. 
 converted agent should be handed the state it needs, not a name to look it up by.**
 Make that an acceptance criterion, not advice.
 
-**Extraction becomes a tool call** — filed as its own card, assigned to John. The
+**Extraction becomes a tool call** — filed as **issue #2937**, assigned to John.
+**Still in Backlog; moving it to Ready is a manual board action.** Related, not
+superseded: **issue #2818** is open and goes the *other* direction (replace the
+`record-extraction` skill with an agent driving the extractor loop), which is why issue
+#2937's title reads "(skill or agent)→tool"; **issue #2475** owns the precondition join
+mechanism; **issue #2256** supplies the census year. Issue #2937 is a natural member of
+`cluster:pair-conversion` and carries only `developer`/`senior` today. The
 seam: **the model does segmentation and role assignment; the tool does classification
 and field expansion.** Evidence and architecture in A3.
 
@@ -228,7 +234,7 @@ the first time it is pulled.
   runs come from that entry point, the operator is told to commit the log, and the
   corpus has no effort check, so a stray `EFFORT_LEVEL=low` would shift every
   repo-wide median silently.
-- **Issue issue #2582** — per-subagent token accounting. `usage.usage` is main-thread only,
+- **Issue #2582** — per-subagent token accounting. `usage.usage` is main-thread only,
   so every cost figure here is priced off a residual. Already Promise's card, and his
   first task. **Fold in** per-message wall timestamps and a message id on the
   assistant timeline row: `_usage_key` is already in hand at the write site, both
@@ -315,7 +321,7 @@ spot-check before filing.
   agent alone, so a cap makes the run unable to reach `completed`.
 - **A purpose-built e2e baseline.** The panel corpus is the comparison set.
 - **An invented accuracy trade rate.** Promise's judgement.
-- **Scoping extraction to the open questions.** Reds 19 of 31 fixtures. Superseded by
+- **Scoping extraction to the open questions.** Reds 19 of 30 fixtures. Superseded by
   the pointer/classification design in A3, which defers nothing.
 - **A deterministic tool that *generates* the assertion skeleton.** Three fatal facts
   in A3.
@@ -402,7 +408,8 @@ is a further instance of a shipped pattern.
 
 - **Pointer expansion.** The caller emits `{from: {persona, fact: <n>}, record_role,
   …}`; the tool expands `fact_type`, `value`, `date`, `standard_date`, `place`,
-  `structured_value` and stamps `record_basis: "stated"` — a pointer at a carried
+  `standard_place` — which `research_append` already lifts via `sidecarStandardPlace` —
+  and stamps `record_basis: "stated"` — a pointer at a carried
   field **is** the provenance bit. Computed values keep today's shape: the caller
   supplies the literal plus `record_basis: "inferred"`.
 - **Call-level defaults**, hoisting per-batch judgement fields.
@@ -419,7 +426,7 @@ for any table on this corpus is 89.8 / 83.7 / 88.1% — the remainder is the age
 contradicting itself, and a table would be right where the corpus is wrong.
 
 **The agent breaks its own documented rules at scale:** **342** pre-1880 census
-relationship assertions where the body says emit zero (stated four times); **228**
+relationship assertions where the body says emit zero (the literal sentence appears once in Layer 3 and the rule is restated at several other sites); **228**
 marriage records assigning `official_duty` to a clerk the body calls a recorder;
 **223** death certs marked `unknown` where the body says look *through* the derivative.
 
@@ -430,11 +437,23 @@ refusal (issue #986 → PR #2601) and is now impossible.
 **Three preconditions to ship with it**, each decidable from the assertion plus its
 source in the same batch, per ADR-0011:
 
-1. `record_basis: "absent"` ⟺ role `absent` ⟹ `researcher` — shipped forward only.
+1. `record_basis: "absent"`, role `absent`, `informant_proximity: "researcher"` —
+   **already shipped, and the two tiers differ: read both before touching it.** In
+   `research_append` the `record_role` arm is bidirectional and the
+   `informant_proximity` arm is forward-only; in `validator.ts` **both** are
+   forward-only, the converse deliberately left as an unexercised branch.
 2. `informant_proximity: "unknown"` ⟹ `information_quality: "indeterminate"` — ruling
    on issue #2173, already made, currently **74.4%** obeyed.
-3. census + `relationship` + pre-column-year ⟹ **refuse**. Issue issue #2256 supplies the
-   per-jurisdiction year.
+3. census + `relationship` + pre-column-year ⟹ **refuse**. Issue #2256 supplies the
+   per-jurisdiction year. **This cannot be a field read:** nothing in `research.json`
+   carries a record type (`source_classification` is only
+   `original|derivative|authored`, and the source object has no record-type or
+   record-date field), so "is this a census" must come from the staged sidecar or the
+   citation — exactly the assertion↔source↔sidecar join that **issue #2475** says
+   preconditions cannot do today. Issue #2475 owns that mechanism and gates this.
+   The rule also holds **even when the sidecar gedcomx carries a `ParentChild`/`Couple`
+   edge**, so the refusal must cover both a pointer aimed at such an edge and the tree
+   write materialized from it.
 
 **Utilisation.** 10,626 assertions across 194 files; **2,633 referenced = 25%**. Per
 run: median 33 extracted, 12 referenced. Per record: **728 sources, median 10
