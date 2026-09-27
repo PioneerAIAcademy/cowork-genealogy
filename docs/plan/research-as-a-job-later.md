@@ -94,8 +94,11 @@ reads only its delegation message, and every router spawn names the assertions t
 rule keys on something the caller states: whether the researcher's own words named this link.
 The router says the link is mid-run with nobody waiting on it; the `person-evidence` skill says
 so only when the researcher did not name it. With nobody waiting, the pause rows resolve
-downward. PR #2870 drafted and dropped a version of this; its "or a question they are watching
-for an answer to" clause fits every hosted job, so it does not come back. Where the researcher
+downward. PR #2870 drafted and dropped a version of this, and neither of its clauses comes back:
+"a message naming an assertion to link" fits every router spawn, and "a question they are
+watching for an answer to" fits every hosted job. `autonomous-weak-match-no-link.json` names its
+assertion in the researcher's words, so it flips under this key; its downward case moves to a
+`research` router test in the same paid slot. Where the researcher
 bounded the request, the turn ends at the deliverable, so an offer there is one the run waits
 for. This is issue #2864's "wouldn't pull, extract, or view the record unless specifically
 approved", and it was S4, widened. Each body is a paid eval run, one per skill at a time —
@@ -120,11 +123,13 @@ The exit is what makes a stop condition end the job, so two of them are settled 
 ships. The fourth stop's "a document only they hold" and "access to a repository only they can
 reach" are errands, not decisions — phase 3's handed-to-you state does not stop the job, and
 `research-plan`'s own rule is that a blocked item does not hold up the rest — so those two clauses
-go back to the lead first; until then the exit covers only the family-knowledge clause. A genuine
-blocker of unreachable records ends the way issue #2539 describes: the proof at whatever tier the
+go back to the lead first; until then the exit covers the family-knowledge clause and an
+irreducible blocking conflict. The router's genuine-blocker list names "missing access to a
+required repository" too; it is the same errand and goes to the lead with them. A genuine blocker
+of unreachable records ends the way issue #2539 describes: the proof at whatever tier the
 evidence reached, with why the research stopped and what it could not reach, so `completed`,
-never `no_progress`. An irreducible conflict cannot end `completed` — the writer refuses
-completion while a blocking conflict is unresolved — so it is a decision.
+never `no_progress`. An irreducible blocking conflict cannot end `completed` — the writer refuses
+completion while one is unresolved — so it is a decision.
 
 **Capture a real feed before specifying phase 2.** No committed run shows what a hosted reader
 sees: every e2e fixture pins `narration_guidance` to "concise", every e2e run enters as
@@ -139,16 +144,18 @@ and a seeded session is opened from the list, so the opener never fires. Which o
 how its answer stays off the tree, is this section's detailed pass. This is also the only thing
 that can prove a paragraph reached the reader.
 
-*Acceptance:* a new browser session under the shipped profile, with no slash command, invokes
-`research` in its first turn and ends `completed` or `decision`, never `budget` or
+*Acceptance:* a new browser session under the shipped profile, on an objective whose answer was
+checked not to be on the live tree before the run, with no slash command, invokes `research` in
+its first turn and ends `completed` or `decision`, never `budget` or
 `no_progress`, and its feed is committed to the repo; "create a research plan for Mary Hales
 but leave it at that" ends with a rendered plan, no research-log entries, and the delivered
 outcome; "where are we?" on an active project ends after the answer with the delivered outcome
 and no new log entry; no shipped skill or agent body ends a reply with an offer the run then
-overrides; a
-weak match nobody asked about resolves downward, not to a decision; a stop on the
+overrides — shown by the committed feeds, where no offer is followed by further work in the same
+turn; a weak match nobody asked about resolves downward, not to a decision; a stop on the
 family-knowledge clause ends `decision` with no nudge spent after the ask; a run whose remaining
-plan items are all unreachable does not end `no_progress`.
+plan items are all unreachable ends `completed`; a run stopped on a blocking conflict no evidence
+resolves ends `decision`.
 
 ## Phase 2 — the reading experience
 
@@ -292,7 +299,7 @@ localities).
 
 *Acceptance:* a wrong person-link is rejected from review in one click, and no later step in
 that or a later session re-links the pair without new evidence; review's first screen on the
-bagley-father-1884 export lists what its proof rests on; a decision reaches the researcher as a
+committed `bagley-father-1884` e2e run's final research lists what its proof rests on; a decision reaches the researcher as a
 card with a *not sure* exit, and a bagley-father-1884 replay shows none; replaying issue
 #2864's Fold3 thread, the petition is raised once with its identifiers and other items keep
 running; replaying its death-certificate dead end, every next action is inside Baltimore City
