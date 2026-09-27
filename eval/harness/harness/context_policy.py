@@ -31,17 +31,18 @@ One scope limit (plan §4.1):
   directly; a global guard would deny those calls and break the skill. Callers
   pass the pre-union set from `allowed_tools.declared_skill_tools`.
 
-  **No skill declares either guarded tool today**, so the exemption is currently
+  **No skill declares any guarded tool today**, so the exemption is currently
   unreachable: `search-images` moved to delegating via `@plugin:image-reader`
   (2026-07-17), and since `image-reader-opus` was retired (issue #2013) NO agent
   declares `image_read` either; `extraction_append` has only ever lived on
-  `agents/record-extractor.md`. Both facts are pinned by tests in
+  `agents/record-extractor.md`; `image_transcribe` lives on `agents/image-reader.md`
+  and `agents/search-images.md`, both subagents. Those facts are pinned by tests in
   `tests/unit/test_context_policy.py`. The clause
   stays because it is the mechanism a future skill would need, not because
   anything depends on it firing.
 
-e2e enforcement covers **both members of `SUBAGENT_ONLY_TOOLS`** (`extraction_append`,
-#942, and `image_read`, #1273). Because no skill declares either, `agent_id`
+e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** (`extraction_append`,
+#942; `image_read`, #1273; and `image_transcribe`, #1636). Because no skill declares any, `agent_id`
 presence alone discriminates a legitimate subagent call from a router
 substitution, which is all e2e can see — its sub-skills run in the same session
 via the `Skill` tool with no `agent_id` to attribute them. The e2e block is
@@ -76,13 +77,24 @@ from typing import Any
 # - `extraction_append` — held only by `agents/record-extractor.md`. When that
 #   agent fails to spawn, the router must re-delegate to it (and skip the record
 #   after a repeat failure), never do the extraction and append itself (issue #942).
+# - `image_transcribe` — declared by `agents/image-reader.md` and
+#   `agents/search-images.md`, by no skill. Its rationale is NOT `image_read`'s:
+#   it returns text from hosted OCR, so it cannot overflow the transport buffer.
+#   It is guarded because `record-extraction/SKILL.md` ("No image reading in
+#   this context — `@plugin:image-reader` only") is the rule the judge grades
+#   against, and prose did not hold it: across nine `ut_record_extraction_016`
+#   runs on 2026-09-27, EVERY run that called it on the main thread scored Tool
+#   Arguments 1 and failed, and every run that did not scored 3. The router also
+#   has no way to know a real `imageId` without routing to search-images first,
+#   so a main-thread call is guessing — the observed calls used a fabricated id
+#   and returned `fixture_not_found`.
 #
-# No skill declares either, so the declared-tools exemption below still runs but
-# can never fire — no special-casing needed.
+# No skill declares any of them, so the declared-tools exemption below still runs
+# but can never fire — no special-casing needed.
 #
-# Keep this a plain set, not a policy engine — two entries still do not justify
+# Keep this a plain set, not a policy engine — three entries still do not justify
 # machinery. Matched on the bare name, so it is transport-agnostic.
-SUBAGENT_ONLY_TOOLS = frozenset({"image_read", "extraction_append"})
+SUBAGENT_ONLY_TOOLS = frozenset({"image_read", "extraction_append", "image_transcribe"})
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -128,7 +140,7 @@ def subagent_only_violation(
     3. The skill did **not** declare the tool in its own `allowed-tools`
        (`declared_tools`, from `allowed_tools.declared_skill_tools`). A skill
        that claimed the tool for itself may call it directly; a skill that
-       holds it only through the agent-union may not. No skill declares either
+       holds it only through the agent-union may not. No skill declares any
        guarded tool today — `search-images` moved to delegating via
        `@plugin:image-reader` on 2026-07-17 — so this exemption is currently
        unreachable, and `agent_id` presence alone decides (see
@@ -167,6 +179,13 @@ _DENIAL_REASONS = {
         "inline base64 that overflows the transport buffer and crashes the "
         "run. Delegate to the image-reader subagent (@plugin:image-reader), "
         "which returns a text transcription."
+    ),
+    "image_transcribe": (
+        "image_transcribe may not be called from the main session — reading a "
+        "page scan is the image-reader subagent's job. Delegate to "
+        "@plugin:image-reader, which OCRs the scan and returns text. If you do "
+        "not already have a specific imageId, route to search-images first to "
+        "find the page rather than guessing one here."
     ),
     "extraction_append": (
         "extraction_append may not be called from the main session — extracting "
