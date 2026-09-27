@@ -53,7 +53,11 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _build_minimal_zip(zip_path: Path, slug: str) -> None:
+_OMIT = object()
+_DROP_KEY = object()
+
+
+def _build_minimal_zip(zip_path: Path, slug: str, user_prompt=_OMIT) -> None:
     """Build a feedback zip matching the shape in
     apps/electron/docs/feedback-json-spec.md §3."""
     feedback = {
@@ -64,10 +68,20 @@ def _build_minimal_zip(zip_path: Path, slug: str) -> None:
         "email": "user@example.com",
         "project_folder_path": "/Users/example/genealogy/smith-family",
         "user_prompt": "Find a marriage record for John Smith born 1850 in Ohio.",
+        # overwritten below when the caller passes one; _OMIT drops the key
         "agent_did": "The agent searched only the 1860 census and stopped.",
         "agent_should_have": "The agent should have tried 1870 and 1880 censuses.",
         "notes": "",
     }
+    # `user_prompt` is optional in the submission dialog, so "" is legitimate,
+    # and a missing key or an explicit null must read the same way. _DROP_KEY
+    # removes the key entirely — something None cannot express, because None is
+    # itself one of the cases under test.
+    if user_prompt is not _OMIT:
+        if user_prompt is _DROP_KEY:
+            del feedback["user_prompt"]
+        else:
+            feedback["user_prompt"] = user_prompt
     research = {"project": {"id": "rp_test", "researcher_profile": {}}}
     tree = {"persons": [], "relationships": [], "sources": []}
 
@@ -78,12 +92,45 @@ def _build_minimal_zip(zip_path: Path, slug: str) -> None:
         z.writestr("_feedback/feedback.json", json.dumps(feedback, indent=2))
 
 
-def _run_script(*args, cwd: Path | None = None, env_overrides: dict | None = None):
+_GIT_IDENTITY_VARS = (
+    "GIT_AUTHOR_NAME",
+    "GIT_AUTHOR_EMAIL",
+    "GIT_COMMITTER_NAME",
+    "GIT_COMMITTER_EMAIL",
+)
+
+
+def _run_script(
+    *args,
+    cwd: Path | None = None,
+    env_overrides: dict | None = None,
+    git_identity: bool = True,
+):
+    """Run the script. `git_identity=False` leaves git with no identity at all.
+
+    The four vars must be POPPED, not merely left un-setdefault-ed: `env` is a
+    copy of the real environment, so an ambient `GIT_AUTHOR_EMAIL` survives.
+    And the pop matters in both directions — measured, `GIT_AUTHOR_EMAIL`
+    OVERRIDES `git -c user.email`, so leaving it set makes the identity test
+    fail after the fix as well as before it.
+
+    `user.useConfigOnly` is what makes the unfixed script actually fail: with no
+    identity and no config, git otherwise guesses one from the hostname and
+    commits successfully, so an exit-0 assertion would pass against the bug.
+    """
     env = os.environ.copy()
-    env.setdefault("GIT_AUTHOR_NAME", "test")
-    env.setdefault("GIT_AUTHOR_EMAIL", "test@example.com")
-    env.setdefault("GIT_COMMITTER_NAME", "test")
-    env.setdefault("GIT_COMMITTER_EMAIL", "test@example.com")
+    if git_identity:
+        env.setdefault("GIT_AUTHOR_NAME", "test")
+        env.setdefault("GIT_AUTHOR_EMAIL", "test@example.com")
+        env.setdefault("GIT_COMMITTER_NAME", "test")
+        env.setdefault("GIT_COMMITTER_EMAIL", "test@example.com")
+    else:
+        for var in _GIT_IDENTITY_VARS:
+            env.pop(var, None)
+        env["GIT_CONFIG_NOSYSTEM"] = "1"
+        env["GIT_CONFIG_COUNT"] = "1"
+        env["GIT_CONFIG_KEY_0"] = "user.useConfigOnly"
+        env["GIT_CONFIG_VALUE_0"] = "true"
     if env_overrides:
         env.update(env_overrides)
     return subprocess.run(
@@ -483,3 +530,156 @@ def test_injected_config_is_stripped_and_claude_md_renamed(tmp_path, monkeypatch
     assert (dest / "CLAUDE.md.submitted").read_text(encoding="utf-8") == "INJECTED\n"
     assert not (dest / "results" / "CLAUDE.md").exists()
     assert (dest / "results" / "CLAUDE.md.submitted").read_text(encoding="utf-8") == "NESTED INJECTED\n"
+
+
+# --- #2878: the baseline commit needs no global git identity ----------
+
+def test_imported_commit_works_with_no_git_identity(tmp_path, monkeypatch):
+    """The script must not need a global git identity to make its baseline.
+
+    The guide tells the Windows-based genealogist team to use GitHub Desktop,
+    which configures no global identity. Under `set -euo pipefail` a failed
+    `git commit` kills the run before the skill links and the closing printout,
+    so the genealogist never sees the prompt block and `reset-feedback-case.sh`
+    has no `imported` commit to reset to.
+
+    Asserts the AUTHOR EMAIL, not the exit code. With no identity and no config
+    git guesses one from the hostname and commits successfully — measured here,
+    author `<user>@<host>.local` — so an exit-0 assertion passes against the
+    unfixed script. `_run_script(git_identity=False)` sets
+    `user.useConfigOnly` to turn that guess off.
+    """
+    slug = "feedback-2026-05-25T18-22-31"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+
+    result = _run_script(
+        str(zip_path),
+        git_identity=False,
+        env_overrides={
+            "HOME": str(home),
+            "XDG_CONFIG_HOME": str(tmp_path / "xdg"),
+        },
+    )
+    assert result.returncode == 0, f"stderr:\n{result.stderr}\nstdout:\n{result.stdout}"
+
+    dest = home / "feedback" / slug
+    author = subprocess.run(
+        ["git", "-C", str(dest), "log", "-1", "--format=%ae"],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    ).stdout.strip()
+    assert author == "feedback-case@localhost", (
+        f"the imported commit was authored by {author!r}. The script must pass "
+        "its own identity with `git -c`, so it never depends on a global one."
+    )
+
+
+# --- #2878: a blank user_prompt is not a failed read ------------------
+
+_LEFT_BLANK = "left blank"
+_SEE_FIELD = "(user_prompt field)"
+
+
+def _import_and_read_stdout(tmp_path, monkeypatch, user_prompt, env_overrides=None):
+    slug = "feedback-2026-05-25T18-22-31"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug, user_prompt=user_prompt)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    result = _run_script(str(zip_path), env_overrides=env_overrides)
+    assert result.returncode == 0, f"stderr:\n{result.stderr}"
+    return result.stdout
+
+
+def test_blank_user_prompt_is_reported_as_blank(tmp_path, monkeypatch):
+    """An empty prompt is legitimate — the submission dialog does not require
+    the box. Pointing the triager at the empty field tells them nothing."""
+    out = _import_and_read_stdout(tmp_path, monkeypatch, "")
+    assert _LEFT_BLANK in out, out
+    assert _SEE_FIELD not in out, out
+
+
+def test_null_user_prompt_reads_as_blank_and_never_prints_None(tmp_path, monkeypatch):
+    """`.get('user_prompt', '')` returns None for an explicit JSON null, and
+    `print(None)` emits the literal string `None` — which a triager would paste
+    into the issue as the tester's words. Git for Windows ships no jq, so the
+    python reader is the genealogist team's default path."""
+    out = _import_and_read_stdout(tmp_path, monkeypatch, None)
+    assert _LEFT_BLANK in out, out
+    assert "None" not in out, out
+
+
+def test_missing_user_prompt_key_reads_as_blank(tmp_path, monkeypatch):
+    """A missing key counts as blank, the same as "" — the feedback-json spec
+    says the field is always present, so its absence is not a failed read."""
+    out = _import_and_read_stdout(tmp_path, monkeypatch, _DROP_KEY)
+    assert _LEFT_BLANK in out, out
+    assert _SEE_FIELD not in out, out
+
+
+def test_unreadable_feedback_json_still_points_at_the_field(tmp_path, monkeypatch):
+    """The other direction. Without this, a script that prints "left blank" for
+    everything passes the three tests above."""
+    slug = "feedback-2026-05-25T18-22-31"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    # Rebuild with an unparseable report.
+    with zipfile.ZipFile(zip_path, "w") as z:
+        z.writestr("research.json", json.dumps({"project": {"id": "rp_test"}}))
+        z.writestr("tree.gedcomx.json", json.dumps({"persons": []}))
+        z.writestr("FEEDBACK.md", "# Feedback\n")
+        z.writestr("_feedback/feedback.json", "NOT JSON AT ALL")
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    result = _run_script(str(zip_path))
+    assert result.returncode == 0, f"stderr:\n{result.stderr}"
+    assert _SEE_FIELD in result.stdout, result.stdout
+    assert _LEFT_BLANK not in result.stdout, result.stdout
+
+
+def test_blank_prompt_is_read_correctly_without_jq(tmp_path, monkeypatch):
+    """The path the Windows team actually runs.
+
+    Every other test here runs with real `jq` — present on macOS and
+    preinstalled on the ubuntu runner — so the python reader is never entered.
+    That branch is where the null-prints-`None` bug lives and where the
+    read-succeeded flag has to be set independently, so without this the suite
+    goes green with both defects shipped.
+
+    The shim keeps `command -v jq` succeeding and makes jq itself fail, which
+    is the shape a Git for Windows box produces. It records that it ran, so a
+    shim that is silently not picked up cannot leave this test passing while
+    exercising the jq path twice.
+    """
+    shim_dir = tmp_path / "shim"
+    shim_dir.mkdir()
+    marker = tmp_path / "jq-ran"
+    (shim_dir / "jq").write_text(
+        f'#!/bin/sh\necho x >> "{marker}"\nexit 127\n', encoding="utf-8"
+    )
+    (shim_dir / "jq").chmod(0o755)
+    overrides = {"PATH": f"{shim_dir}{os.pathsep}{os.environ['PATH']}"}
+
+    for prompt in ("", None, _DROP_KEY):
+        case = tmp_path / f"case-{id(prompt)}"
+        case.mkdir()
+        out = _import_and_read_stdout(case, monkeypatch, prompt, env_overrides=overrides)
+        assert _LEFT_BLANK in out, f"prompt={prompt!r}\n{out}"
+        assert "None" not in out, f"prompt={prompt!r}\n{out}"
+
+    # The other direction, and it is not decoration: without it a python reader
+    # that returned blank for EVERY input would still pass the three cases
+    # above. No other test reaches this branch with real text — the one prompt
+    # assertion in this file runs with real jq on PATH.
+    case = tmp_path / "case-text"
+    case.mkdir()
+    out = _import_and_read_stdout(
+        case, monkeypatch, "Find the 1880 census household.", env_overrides=overrides
+    )
+    assert "Find the 1880 census household." in out, out
+    assert _LEFT_BLANK not in out, out
+
+    assert marker.is_file(), (
+        "the jq shim never ran, so this test exercised the jq path instead of "
+        "the python fallback it exists to cover"
+    )
