@@ -199,6 +199,25 @@ _DENIAL_REASONS = {
     ),
 }
 
+#: The owning subagent per guarded tool, as the bare `@plugin:` reference a
+#: runlog reader can act on. `_DENIAL_REASONS` above is the MODEL's feedback;
+#: this is the READER's — `blocked_context_calls` stores neither, so
+#: `e2e/orchestrator.py` narrates from here. It lives here rather than there
+#: because it was a hand-copy in the orchestrator until #1636, and it was the
+#: copy that went stale when the set grew from two entries to three while
+#: `_DENIAL_REASONS` (which a test pins) did not. Parity is now pinned for both.
+SUBAGENT_ONLY_RECOVERY = {
+    "image_read": "@plugin:image-reader",
+    "image_transcribe": "@plugin:image-reader",
+    "extraction_append": "@plugin:record-extractor",
+}
+
+# The reader-facing fallback, for a guarded tool added without a recovery
+# target. Same discipline as the denial fallback below: it still says something,
+# but it names nobody, so a test keeps it unreachable.
+SUBAGENT_ONLY_RECOVERY_FALLBACK = "the owning subagent"
+
+
 # A fallback that still refuses, for a guarded tool added to SUBAGENT_ONLY_TOOLS
 # without a bespoke reason. Never expected to fire (a test pins parity), but a
 # deny with a vague reason beats a KeyError that crashes the hook.

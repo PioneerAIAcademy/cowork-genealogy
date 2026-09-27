@@ -51,6 +51,8 @@ from harness.context_policy import (
     owned_section_denial,
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
+    SUBAGENT_ONLY_RECOVERY,  # the single definition, not a copy — see its use below
+    SUBAGENT_ONLY_RECOVERY_FALLBACK,
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
@@ -230,14 +232,16 @@ def is_blocked_tree_tool(
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
-    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
+    Every member is declared by NO skill's `allowed-tools`: `extraction_append`
+    lives only on `agents/record-extractor.md` (the #942 case); `image_read`
     is declared by no agent at all since `image-reader-opus` was retired (issue
     #2013) — the deny is kept regardless, because it is what keeps inline base64
-    off the main thread. A call on the main thread (no `agent_id`) is the router
-    substituting for a failed spawn and doing the work itself.
+    off the main thread; and `image_transcribe` lives on `agents/image-reader.md`
+    and `agents/search-images.md`, both subagents (#1636). A call on the main
+    thread (no `agent_id`) is the router substituting for a failed spawn and
+    doing the work itself.
 
-    The policy binds in e2e for both because `agent_id` presence alone is a
+    The policy binds in e2e for all of them because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
@@ -246,8 +250,9 @@ def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     declared-tools exemption at all: a future skill that legitimately declares a
     guarded tool WOULD be denied here, and closing that needs this predicate
     widened by hand. Membership in `SUBAGENT_ONLY_TOOLS` is what
-    generalizes it: a third guarded tool is covered here the moment it joins that
-    set (pinned by a per-member test).
+    generalizes it: a further guarded tool is covered here the moment it joins
+    that set (pinned by a per-member test) — as `image_transcribe` was in #1636,
+    with no edit to this predicate.
     """
     # `or ""` rather than a get() default: a present-but-None `tool_name` would
     # raise AttributeError here, and a raising hook fails a call the agent was
@@ -1803,8 +1808,9 @@ async def _run_agent(
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Both members are enforced here — `extraction_append`
-        # (#942) and `image_read` — since neither is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — `extraction_append`
+        # (#942), `image_read`, and `image_transcribe` (#1636) — since none is
+        # declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
@@ -1821,14 +1827,14 @@ async def _run_agent(
             # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
             # guidance), mirroring each `_DENIAL_REASONS` entry, which
             # `blocked_context_calls` does not store — so a runlog reader can act on
-            # this line alone. For image_read the recovery is the transcription
-            # plugin @plugin:image-reader, which is now also the only image reader
-            # (image-reader-opus retired, issue #2013).
-            # The fallback covers a future third guarded tool.
-            recovery = {
-                "extraction_append": "@plugin:record-extractor",
-                "image_read": "@plugin:image-reader",
-            }.get(bare, "the owning subagent")
+            # this line alone. IMPORTED, not copied: this was a literal here until
+            # #1636, and when the guarded set grew it was the copy that went stale,
+            # degrading the newest tool's line to the nobody-naming fallback while
+            # `_DENIAL_REASONS` (pinned by a test) stayed correct. Both maps are now
+            # pinned to SUBAGENT_ONLY_TOOLS in tests/unit/test_context_policy.py.
+            recovery = SUBAGENT_ONLY_RECOVERY.get(
+                bare, SUBAGENT_ONLY_RECOVERY_FALLBACK
+            )
             narration.append(
                 {
                     "tool_calls_before": len(tool_calls),

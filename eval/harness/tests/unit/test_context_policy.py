@@ -14,6 +14,8 @@ from pathlib import Path
 from harness import context_policy
 from harness.context_policy import (
     _DENIAL_REASONS,
+    SUBAGENT_ONLY_RECOVERY,
+    SUBAGENT_ONLY_RECOVERY_FALLBACK,
     SUBAGENT_ONLY_TOOLS,
     bare_tool_name,
     is_subagent_call,
@@ -396,6 +398,38 @@ def test_every_guarded_tool_has_a_bespoke_denial_reason():
         assert tool in _DENIAL_REASONS, f"{tool} has no bespoke denial reason"
         # The reason should reference the tool it denies.
         assert tool in _DENIAL_REASONS[tool]
+
+
+def test_every_guarded_tool_has_a_named_recovery_target():
+    """The same parity guard for the READER-facing map (#1636).
+
+    `_DENIAL_REASONS` is what the model is told; `SUBAGENT_ONLY_RECOVERY` is
+    what a runlog reader is told, and `blocked_context_calls` stores neither.
+    The orchestrator carried its own literal copy of this map until #1636 —
+    and when the guarded set grew from two entries to three, that copy was the
+    one that went stale, narrating the nobody-naming fallback for the newest
+    tool while the model-facing reason stayed correct. One definition plus this
+    test is what stops the next widening repeating it.
+    """
+    for tool in SUBAGENT_ONLY_TOOLS:
+        assert tool in SUBAGENT_ONLY_RECOVERY, (
+            f"{tool} has no recovery target — a runlog would narrate "
+            f"'{SUBAGENT_ONLY_RECOVERY_FALLBACK}', which names nobody"
+        )
+        assert SUBAGENT_ONLY_RECOVERY[tool].startswith("@plugin:"), (
+            f"{tool}'s recovery target must name a plugin agent the reader can "
+            f"go to, got {SUBAGENT_ONLY_RECOVERY[tool]!r}"
+        )
+
+
+def test_recovery_map_does_not_outgrow_the_guarded_set():
+    """The other direction: an entry for a tool no longer guarded is dead text.
+
+    Without this, dropping a tool from SUBAGENT_ONLY_TOOLS leaves a recovery
+    line that can never be reached, and the next reader takes it as evidence
+    the tool is still guarded.
+    """
+    assert set(SUBAGENT_ONLY_RECOVERY) == set(SUBAGENT_ONLY_TOOLS)
 
 
 # --- grounding against the REAL skill files -------------------------------

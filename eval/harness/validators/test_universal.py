@@ -1209,6 +1209,11 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     the record-extractor subagent's job; a main-thread call is the router
     substituting for a failed spawn and doing the extraction itself (#942).
 
+    `image_transcribe` returns text, not base64, so its rationale is not
+    `image_read`'s: reading a page scan is the image-reader subagent's job,
+    and the router has no way to know a real `imageId` without routing to
+    search-images first — a main-thread call is guessing one (#1636).
+
     This is the deterministic half of what the LLM judge used to grade by
     transcript inference — badly: across the 2026-07-16 runs it caught the
     violation roughly 1-in-8, and a run could pass while violating. The
@@ -1232,6 +1237,11 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         "extraction_append": (
             "extraction_append → @plugin:record-extractor; if that subagent "
             "failed to spawn, report the failure rather than extracting here"
+        ),
+        "image_transcribe": (
+            "image_transcribe → @plugin:image-reader, which OCRs the scan and "
+            "returns text; if no specific imageId was in hand, the route to it "
+            "is search-images, not a guessed id"
         ),
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})
