@@ -179,8 +179,7 @@ while the same body resident in main context for ~55 remaining model calls costs
 ~$0.25 in re-reads — and occupies 9% of the compaction window besides. The agent is
 roughly half the cost, and the crossover is around 4 spawns/run.
 
-**One naming fix:** `cluster:pair-conversion` is a misnomer — there are no stub skills
-any more. Rename the label.
+The conversion cards carry `cluster:agent-conversion`.
 
 **The design rule conversion should follow, with a number on it.** Orientation share
 of an agent's tool budget: `image-reader` **0%**, `record-extractor` **33%**,
@@ -392,7 +391,7 @@ variance is process waste with no quality attached.
     `options.py` matches two files.
 13. **"Four floor searches are void before their skill's deletion" — then "only two"
     — and the second was wrong too.** All four are gated: **issue #2272** by issue #2821
-    (*"delete the thin routing skill"*, `cluster:pair-conversion`), **issue #2269** by issue
+    (*"delete the thin routing skill"*, `cluster:agent-conversion`), **issue #2269** by issue
     issue #2738 (*"land this first"*, *"before issue #2269"*). Its *"This card is startable"*
     is dated two weeks before the sequencing. Moot now that this plan supersedes them.
 14. **"94 runs are censored at the wall cap."** That is the count of runs over an hour.
