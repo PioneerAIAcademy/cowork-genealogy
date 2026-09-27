@@ -20,7 +20,10 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
 - **Rulings that still bind.** No plan-approval gate — Stop is the control surface (2026-09-21).
   `q_` and `ps_` are allowed in user-facing text (2026-09-20). The prototype is production;
   the alpha is backported to and then retired, and Cowork may be degraded. The spend bound has
-  no in-session grant: a capped sitting continues in a new session on the same project.
+  no in-session grant: a capped sitting continues in a new session on the same project. An
+  errand only the researcher can run — a document only they hold, a repository only they can
+  reach, a capture — pauses the job and waits for their response, the same as
+  `search-external-sites`' wait (2026-09-27).
 
 - **The Stop hook binds on every browser turn**, not only on `/research`. The prototype's web
   tier stamps the nudge cap (default 60) on every message; the alpha binds it while
@@ -119,13 +122,10 @@ read sensibly there. `AskUserQuestion` is granted on the prototype, handled
 nowhere in `apps/`, and appears unprompted in 13 committed unit run logs, so first record what
 it does on a continuous hosted turn today. The card is phase 3; the exit is not.
 
-The exit is what makes a stop condition end the job, so two of them are settled before it
-ships. The fourth stop's "a document only they hold" and "access to a repository only they can
-reach" are errands, not decisions — phase 3's handed-to-you state does not stop the job, and
-`research-plan`'s own rule is that a blocked item does not hold up the rest — so those two clauses
-go back to the lead first; until then the exit covers the family-knowledge clause and an
-irreducible blocking conflict. The router's genuine-blocker list names "missing access to a
-required repository" too; it is the same errand and goes to the lead with them. A genuine blocker
+The exit covers every clause of the fourth stop. Its errand clauses — "a document only they
+hold" and "access to a repository only they can reach" — pause the job and wait for the
+researcher's response, the same as `search-external-sites`' wait (ruled 2026-09-27), and so does
+the genuine-blocker list's "missing access to a required repository". A genuine blocker
 of unreachable records ends the way issue #2539 describes: the proof at whatever tier the
 evidence reached, with why the research stopped and what it could not reach, so `completed`,
 never `no_progress`. An irreducible blocking conflict cannot end `completed` — the writer refuses
@@ -152,8 +152,8 @@ but leave it at that" ends with a rendered plan, no research-log entries, and th
 outcome; "where are we?" on an active project ends after the answer with the delivered outcome
 and no new log entry; no shipped skill or agent body ends a reply with an offer the run then
 overrides — shown by the committed feeds, where no offer is followed by further work in the same
-turn; a weak match nobody asked about resolves downward, not to a decision; a stop on the
-family-knowledge clause ends `decision` with no nudge spent after the ask; a run whose remaining
+turn; a weak match nobody asked about resolves downward, not to a decision; a stop on any clause
+of the fourth stop ends `decision` with no nudge spent after the ask; a run whose remaining
 plan items are all unreachable ends `completed`; a run stopped on a blocking conflict no evidence
 resolves ends `decision`.
 
@@ -249,18 +249,19 @@ name. The pending state is control-plane by nature; the resolved outcome already
 errand only the researcher can run — a Fold3 page, a microfilm, a courthouse. It is raised once,
 carrying what to look for and the film, DGS number or URL beside the link, shown as waiting on
 the researcher, and never re-raised; issue #2864's tester lost days to a film number buried in
-prose, and one petition was re-raised 7 times in 8 turns. It does not stop the job. It closes
-when the document comes back and enters as a source. It outlives the session, so it lives in
+prose, and one petition was re-raised 7 times in 8 turns. It pauses the job and waits for the
+researcher's response, the same as `search-external-sites`' wait (ruled 2026-09-27). The reply
+resumes the job: with the document, which enters as a source and closes the errand, or with
+"later" or "I can't", which leaves it recorded as outstanding and never re-raised. It outlives the session, so it lives in
 `research.json`; `plan_item_status` has no waiting value today, and a handed-over capture left
 `in_progress` blocks the exhaustiveness gate. Issue #2539 is the card. Every external search
 that needs a capture becomes one of these errands — plan-driven, ad hoc, or asked for — raised
 once with its URL and logged with phase 2's *not searched* outcome. A plan-driven errand's item
 takes the waiting status instead of `skipped`; an ad-hoc one lives only in the errand record, since
 no plan item is ever invented to hold it. Issue #2864's
-Fold3 petition was raised by the agent, not asked for, so a narrower rule would raise it zero
-times or stop the job. It replaces `search-external-sites`' "hand them the URL and wait for the
-capture", which cannot complete on the prototype: the wait is a yield the hook vetoes, and
-uploads return 501.
+Fold3 petition was raised by the agent, not asked for, so the rule covers agent-raised errands
+too. This is how `search-external-sites`' "hand them the URL and wait for the capture" completes
+on the prototype, where today the wait is a yield the hook vetoes and uploads return 501.
 
 **A correction is recorded state, not a chat turn.** In issue #2864 the researcher challenged a
 passenger-list assumption and the agent reverted to it, because nothing recorded the rivals;
@@ -301,8 +302,8 @@ localities).
 that or a later session re-links the pair without new evidence; review's first screen on the
 committed `bagley-father-1884` e2e run's final research lists what its proof rests on; a decision reaches the researcher as a
 card with a *not sure* exit, and a bagley-father-1884 replay shows none; replaying issue
-#2864's Fold3 thread, the petition is raised once with its identifiers and other items keep
-running; replaying its death-certificate dead end, every next action is inside Baltimore City
+#2864's Fold3 thread, the petition is raised once with its identifiers, the turn ends waiting on
+the researcher, and a reply of "later" resumes the job without re-raising it; replaying its death-certificate dead end, every next action is inside Baltimore City
 and the target years.
 
 ## Phase 4 — the cold start
@@ -371,9 +372,8 @@ where narration is allowed. Getting this wrong costs a second paid slot on the s
 
 **The literal is gone from every body.** PR #2870 removed it from `init-project` and
 `question-selection`, and `test_every_shipped_hand_back_literal_classifies` now asserts zero.
-`apps/web`'s `HAND_BACK_RE`, `stripHandBack` and the Continue button have had no producer since
-PR #2870 and go next, together with `apps/server/tests/test_hand_back_parity.py`, which reads
-that regex out of `chatEvents.ts`. The alpha's remaining carriers die with the alpha. Keep
+`apps/web`'s copy of the regex, its Continue button, and the parity test that pinned the two
+copies together are gone. The alpha's remaining carriers die with the alpha. Keep
 `auto_continue` — it now switches the alpha's continue hook — and keep the harness classifier,
 which reads old run logs.
 
@@ -391,7 +391,7 @@ which reads old run logs.
 - **No leaf-skill changes beyond the ones above.** `translation` is correct when invoked
   directly. `search-external-sites` was rewritten by PR #2870 to defer plan-driven captures on
   every plane, Cowork and the alpha included, where a researcher could capture; phase 3's
-  handed-to-you state replaces both the deferral and the researcher-asked wait.
+  handed-to-you pause replaces the deferral and completes the researcher-asked wait.
 - **No further cost bounding.** The prototype bounds a session at $35 in the `PreToolUse` hook,
   priced off live token usage; the alpha has no bound (ruled 2026-09-25 — it is replaced by the
   prototype). The nudge cap is not a bound: it is consulted only at a voluntary yield, and 31%
