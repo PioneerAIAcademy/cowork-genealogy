@@ -1042,7 +1042,7 @@ def test_person_quality_registered_with_and_without_fixtures(tmp_path):
 
 def test_person_quality_unlinked_person_gets_the_tools_real_sentence(tmp_path):
     _pq_tree(tmp_path, [PATRICK])
-    response, entry = _pq(tmp_path, [], {"personId": "I1"})
+    response, entry = _pq(tmp_path, [], {"personId": "I1", "projectPath": "/p"})
     assert response["reason"] == "not_familysearch_id"
     assert response["errors"] == ["Patrick Flynn isn't linked to FamilySearch, so there's no FamilySearch quality score."]
     assert entry["matched"]["kind"] == "live"
@@ -1053,7 +1053,7 @@ def test_person_quality_linked_person_answered_from_a_fixture_keyed_on_the_resol
     logged live with expected_args None — the judge fails a wrong identifier,
     and I1 is the correct argument here."""
     _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:KD96-TV2")])
-    response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "I1"})
+    response, entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "I1", "projectPath": "/p"})
     assert "reason" not in response and "overallScore" in response, response
     assert entry["matched"]["kind"] == "live"
     assert entry["expected_args"] is None
@@ -1062,10 +1062,21 @@ def test_person_quality_linked_person_answered_from_a_fixture_keyed_on_the_resol
 
 def test_person_quality_linked_person_without_a_fixture_is_refused_not_crashed(tmp_path):
     _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:MKVT-7XR")])
-    response, entry = _pq(tmp_path, [], {"personId": "I1"})
+    response, entry = _pq(tmp_path, [], {"personId": "I1", "projectPath": "/p"})
     assert "MKVT-7XR" in response["errors"][0] and "Declare a person-quality fixture" in response["errors"][0]
     assert "resolution failed" not in response["errors"][0]
     assert entry["matched"]["kind"] == "none"  # the uncovered-call warning names it
+
+
+def test_person_quality_without_projectpath_does_not_read_the_tree(tmp_path):
+    """The workspace replaces a projectPath the skill sent; it is never
+    supplied for one the skill left out. Otherwise a skill that drops the
+    argument passes every eval while production answers every imported person
+    with the neutral sentence instead of a score."""
+    _pq_tree(tmp_path, [dict(PATRICK, ark="ark:/61903/4:1:KD96-TV2")])
+    response, _entry = _pq(tmp_path, ["person-quality-hole-christian"], {"personId": "I1"})
+    assert response["reason"] == "not_familysearch_id"
+    assert response["errors"] == ["No FamilySearch quality score was retrieved for this person."]
 
 
 def test_person_quality_familysearch_id_uses_its_fixture(tmp_path):

@@ -510,6 +510,13 @@ imprecise dates are widened per § Date Parsing Rules.
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
 | `hasCloseChildBirthsIgnoreSimilarChildren` | implausible | Two of this person's children (that are not already flagged as similar) have Birth dates suspiciously close together | Two records of one child attached as two children |
+| `hasCloseChildChristenings6_30` | implausible | Two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
+| `similarChildren` | implausible | Two children look like the same individual recorded twice (similar names and dates) | One child duplicated under two records |
+| `similarChildrenConflictingDates` | implausible | Two children have similar names but conflicting dates | Same child recorded twice with a date discrepancy |
+| `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
+| `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
+| `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
+| `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
 
 **`hasBurialAfterDeath31` diverges from the Java port on purpose — do not
 "restore" the original math.** Java computes
@@ -537,13 +544,6 @@ no true positive that was expressed precisely; what it drops are exactly the
 cases where the recorded precision cannot support the claim. The helper it
 calls, `factDaysDiffLatestEarliest`, exists only for this and has no Java
 counterpart.
-| `hasCloseChildChristenings6_30` | implausible | Two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
-| `similarChildren` | implausible | Two children look like the same individual recorded twice (similar names and dates) | One child duplicated under two records |
-| `similarChildrenConflictingDates` | implausible | Two children have similar names but conflicting dates | Same child recorded twice with a date discrepancy |
-| `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
-| `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
-| `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
-| `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
 
 #### Family structure and names (`implausible`)
 

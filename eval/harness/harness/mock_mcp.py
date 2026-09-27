@@ -1329,7 +1329,10 @@ def _make_person_quality_handler(
             js_posix = str(_js).replace("\\", "/").replace("'", "\\'")
             js_url = ("file:///" + js_posix) if sys.platform == "win32" else js_posix
             input_obj = dict(args)
-            if _ws is not None:
+            # Rebase only a projectPath the skill actually sent: filling one in
+            # would hide a skill that drops it, which in production quietly
+            # reverts every imported person to the neutral sentence.
+            if _ws is not None and "projectPath" in args:
                 input_obj["projectPath"] = str(_ws).replace("\\", "/")
             script = (
                 f"import {{ resolvePersonQualityTarget }} from '{js_url}';"
