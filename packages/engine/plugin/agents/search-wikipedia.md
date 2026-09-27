@@ -151,10 +151,10 @@ paragraphs of plain prose with **no label, heading or field name**:
    what was asked for and why a different kind of help fits it better. **Name no
    file**, no identifier, no tool name and no field name. Do not reproduce the
    article's content here either.
-2. One sentence: what happens next, in plain language, naming no file. Write it
-   as a statement about the work, not as a plan of your own — a sentence opening
-   "Next, I'll …" or "I'm going to …" is a step announcement and breaks the rule
-   at the top of "What to do".
+2. The `next_step`: one sentence on what happens next, in plain language,
+   naming no file. Write it as a statement about the work, not as a plan of your
+   own — a sentence opening "Next, I'll …" or "I'm going to …" is a step
+   announcement and breaks the rule at the top of "What to do".
 
 The caller prints everything after that `---` verbatim and nothing above it. No
 closing essay.
