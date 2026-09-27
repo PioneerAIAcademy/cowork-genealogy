@@ -651,9 +651,9 @@ def build_worker_options(
     stderr: Callable[[str], None] | None = None,
     stop_hook: Callable[..., Any] | None = None,
 ):
-    """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given:
-    the interactive stack passes none, so a browser turn that yields to ask the user
-    still ends."""
+    """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given.
+    The web tier stamps a nudge cap on every browser message, so every browser turn
+    passes one and a yield to ask the user is vetoed like any other."""
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     if resume and session_id:
