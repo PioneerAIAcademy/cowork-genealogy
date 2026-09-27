@@ -602,7 +602,7 @@ button {
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
 }
-/* research-as-a-job 1b: a message typed while a turn is running is HELD, not
+/* PR #2870 item 1b: a message typed while a turn is running is HELD, not
    enqueued -- two turns on one session would resume the same SDK session. The
    label is what stops that reading as "my message was dropped"; it clears at
    turn_done, which is when the held message becomes the next turn. Right-aligned
@@ -614,7 +614,7 @@ button {
   margin-top: 4px;
   font-style: italic;
 }
-/* research-as-a-job 1c: how the last turn ended. complete() used to hardcode
+/* PR #2870 item 1c: how the last turn ended. complete() used to hardcode
    'ok', so a run that hit its step budget or stalled looked exactly like one
    that finished -- and a genealogist reads that as "nothing more was found".
    Sits where the "working… Ns" indicator sits, so the same spot answers both
@@ -842,7 +842,7 @@ button {
 .chatSend:disabled {
   opacity: 0.5;
 }
-/* Shown BESIDE Send while a turn is running (interrupt) — research-as-a-job 1b.
+/* Shown BESIDE Send while a turn is running (interrupt) — PR #2870 item 1b.
    It used to replace Send, which under continuous work meant the composer offered
    only Stop for the length of a whole research job (a median of 53 minutes). Muted
    rather than accented so it still reads as a secondary "abort", not the primary

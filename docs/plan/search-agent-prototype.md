@@ -1697,7 +1697,7 @@ without whichever Bedrock refuses.
   delegation is re-run, background agents are lost to a zero-turn synthetic result — and
   the rule is built (see D17).** What "the rule" means there is D17's RE-QUERY — one
   continue prompt on a zero-turn redelivery — and that is all that was built. The guard
-  `research-as-a-job.md` 0a asks for is a different thing and landed separately: a
+  PR #2870's item 0a built is a different thing and landed separately: a
   redelivered attempt that did no work is a FAILURE rather than a completion, bounded by
   a cap on consecutive zero-progress attempts (`turns.zero_progress_attempts`, N = 2) that
   answers 200 with `outcome = 'no_progress'` on exhaustion, because this queue has no

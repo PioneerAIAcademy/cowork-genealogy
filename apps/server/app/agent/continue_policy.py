@@ -26,7 +26,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-# turns.outcome, and what a reader is told for each (research-as-a-job 1b, 1c, 1e).
+# turns.outcome, and what a reader is told for each (PR #2870 items 1b, 1c, 1e).
 #
 #   completed        the project reached project.status == "completed"
 #   stopped          the patron pressed Stop

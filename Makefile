@@ -527,7 +527,7 @@ proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
 	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
-# research-as-a-job 0a: the resume probe the guard was gated on. The 2026-09-20 run that
+# PR #2870 item 0a: the resume probe the guard was gated on. The 2026-09-20 run that
 # produced the synthetic result had been killed during a BACKGROUND delegation, and
 # `--kill-on Agent` alone lands on a foreground one, which resumes cleanly -- so this
 # selects on the call's INPUT (`run_in_background: true`), read out of session_entries
@@ -589,7 +589,7 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # is now a whole run, so the run spans SEVERAL attempts rather than fitting in one. The
 # per-attempt ceiling is the pinned 1800 s -- the 7200 s override of 2026-09-20 was a
 # symptom of the D17/0a resume defect, not a capacity finding, and came back down with it
-# (research-as-a-job 0b; "the step ceiling: 1,800 s, no test exception"). The export stays
+# (PR #2870 item 0b; "the step ceiling: 1,800 s, no test exception"). The export stays
 # because the next line sizes --deadline-s off the name and POSIX arithmetic reads an
 # unset name as 0 -- deleting it gives a 300 s deadline on an hour-long billed run.
 # The deadline spans SIX attempts, not one resume: re-measured 2026-09-23 over the 139

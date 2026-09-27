@@ -25,14 +25,14 @@ export interface ChatMessage {
   // rather than folding onto this one, so each auto-continued step reads as
   // its own reply and its own trailing literal is the one stripped at render.
   handedBack?: boolean
-  // A user message typed WHILE a turn was running (research-as-a-job 1b). The
+  // A user message typed WHILE a turn was running (PR #2870 item 1b). The
   // server holds it rather than enqueueing it -- two turns on one session would
   // resume the same SDK session -- so the bubble says it is waiting. Cleared at
   // `turn_done`, which is when the held message becomes the next turn.
   queued?: boolean
 }
 
-// research-as-a-job 1c: what the browser shows for each `turns.outcome`, carried on
+// PR #2870 item 1c: what the browser shows for each `turns.outcome`, carried on
 // the turn_done frame. complete() used to hardcode 'ok', so EVERY way a run ended
 // looked like success -- including the two ways an unattended run actually ends, a
 // spent budget and no progress. To a genealogist a half-finished run then reads as

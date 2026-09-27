@@ -295,7 +295,7 @@ describe('auto_continue is a bubble boundary (issue #2653)', () => {
   })
 })
 
-// research-as-a-job 1b: a message typed while a turn runs is HELD by the server
+// PR #2870 item 1b: a message typed while a turn runs is HELD by the server
 // and picked up at the next step boundary. The bubble says so until turn_done.
 describe('clearQueued', () => {
   it('clears the flag on every queued bubble', () => {
@@ -322,7 +322,7 @@ describe('clearQueued', () => {
   })
 })
 
-// research-as-a-job 1c: every way a run ends used to look like success.
+// PR #2870 item 1c: every way a run ends used to look like success.
 describe('turnOutcomeLabel', () => {
   it('names each terminal outcome the worker can write', () => {
     for (const outcome of ['completed', 'stopped', 'queued', 'budget', 'no_progress',

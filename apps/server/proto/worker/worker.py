@@ -52,7 +52,7 @@ redelivery convention), while the token columns above sum every pass from
 ``session_entries`` -- an asymmetry that costs nothing in the shape the rule exists for,
 since ``num_turns == 0`` means the discarded pass billed no model turn.
 
-The resume GUARD (research-as-a-job 0a) is what happens when that re-query does not help.
+The resume GUARD (PR #2870 item 0a) is what happens when that re-query does not help.
 A redelivered attempt whose figures still show no work -- ``attempt_did_work``:
 ``num_turns == 0``, or no ``tool_calls`` row recorded this pass -- is a resume FAILURE,
 not a completion. D17 used to complete such a turn "as it stands", which records a
@@ -172,7 +172,7 @@ _AUTONOMOUS_MAX_NUDGES: int = 0
 OK_OUTCOME = "ok"
 NO_PROGRESS_OUTCOME = "no_progress"
 
-# research-as-a-job 1e: what one SITTING may spend before the worker stops it.
+# PR #2870 item 1e: what one SITTING may spend before the worker stops it.
 #
 # Per SESSION, not per run and not per project: a sessions row carries a project_id, so a
 # project spans many sessions and this caps one sitting, never the research. Sized against
@@ -200,7 +200,7 @@ def _env_float(name: str, default: float) -> float:
 # SPEND_CAP_USD and PRICE_PER_MTOK now live in `app.agent.continue_policy`, imported
 # via options.py: the alpha's cap must fire at the same dollar as this one.
 
-# research-as-a-job 0a: how many CONSECUTIVE zero-progress redeliveries of one turn the
+# PR #2870 item 0a: how many CONSECUTIVE zero-progress redeliveries of one turn the
 # worker will pay for before closing it. Two, per the plan. The counter lives on
 # turns.zero_progress_attempts (005_resume_guard.sql) and NOT on receive_count, which
 # counts healthy ceiling crossings with the same number -- see that file's header.

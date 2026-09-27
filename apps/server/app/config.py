@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # with the experience-level user setting (PR #2649).
     auto_continue: bool = True
     auto_continue_max_steps: int = 30
-    # research-as-a-job 1d: the SDK Stop hook's veto cap per turn in the sandbox, which is
+    # PR #2870 item 1d: the SDK Stop hook's veto cap per turn in the sandbox, which is
     # what makes one user message run a whole research job. Sized on STEP count, not on
     # the nudge histogram: over the 189 committed e2e runs, Skill/Task/Agent steps per run
     # are median 15, p90 25, p99 51, max 76. 0 turns the hook off, and `auto_continue:

@@ -34,7 +34,7 @@ The kill is generalised for the resume probes (D18): ``--kill-on <bare tool name
 ``--text ...`` / ``--text-file <path>`` for the message.
 
 ``--kill-on-input KEY=VALUE`` narrows ``--kill-on`` to a call whose INPUT matches, which
-is what research-as-a-job 0a needs: the case that produced the synthetic result was a
+is what PR #2870 item 0a needs: the case that produced the synthetic result was a
 BACKGROUND delegation (``Agent`` with ``run_in_background: true``), and killing a
 foreground one resumes cleanly, so tool name alone cannot select it. ``tool_calls`` has
 no input column -- 004_worker.sql adds only ``tool_use_id`` -- so the selector reads the
@@ -220,7 +220,7 @@ class KillSpec:
         return self.text == TEXT_KILL
 
 
-# turns.outcome values that mean the resume FAILED. Before research-as-a-job 1c,
+# turns.outcome values that mean the resume FAILED. Before PR #2870 item 1c,
 # complete() hardcoded 'ok' and the check was `outcome == "ok"`; now the column says HOW a
 # run ended, and a kill probe run with the Stop hook on (which proto-probe-resume needs,
 # or the run never reaches a delegation) legitimately lands on `completed` -- or on

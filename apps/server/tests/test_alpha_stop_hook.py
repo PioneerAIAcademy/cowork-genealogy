@@ -1,4 +1,4 @@
-"""The alpha's Stop hook (research-as-a-job 1d).
+"""The alpha's Stop hook (PR #2870 item 1d).
 
 Alpha testers are the feedback loop and should not go quiet for weeks while continuous
 work lands on the prototype, so the hook is backported. The DECISION is not backported --

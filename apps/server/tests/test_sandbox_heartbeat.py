@@ -1,4 +1,4 @@
-"""The sandbox heartbeat (research-as-a-job 1d).
+"""The sandbox heartbeat (PR #2870 item 1d).
 
 ``_RUNNING_TIMEOUT_S`` is E2B's Hobby-tier maximum and it clocks CONTINUOUS RUNTIME, not
 idleness. Until 1d, ``set_timeout`` had exactly one caller -- ``resume()``, on ``/connect``
