@@ -1027,8 +1027,9 @@ describe("imageTranscribeTool — `file` input (#2048)", () => {
     try {
       await writeFile(join(outside, "secret.jpg"), JPEG);
       const { symlink } = await import("fs/promises");
-      await symlink(join(outside, "secret.jpg"), join(dir, "uploads", "link.jpg"));
-      await expect(transcribe({ file: "uploads/link.jpg", projectPath: dir }, LOCAL)).rejects.toThrow(
+      // A directory junction, not a file symlink: Windows creates one without Developer Mode.
+      await symlink(outside, join(dir, "uploads", "link"), "junction");
+      await expect(transcribe({ file: "uploads/link/secret.jpg", projectPath: dir }, LOCAL)).rejects.toThrow(
         /escapes the project directory/,
       );
       expect(mockFetch).not.toHaveBeenCalled();
