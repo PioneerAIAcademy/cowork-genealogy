@@ -570,14 +570,14 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   Whether anyone has to click is a control-plane setting, not a prompt
 >   rule: when a turn's final main-thread text ends with the literal, the
 >   in-sandbox runner (`app/agent/runner.py`, `AutoContinue`) starts the next
->   turn with `Yes.` itself — the same text the web's Continue button sends.
+>   turn with `Yes.` itself.
 >   Two new `agent_event` kinds ride the socket and the replay buffer:
 >   `{kind:"auto_continue", text:"Yes.", step, max_steps}` before each
 >   synthetic turn, and `{kind:"auto_continue_paused", reason:"budget", step,
 >   max_steps}` when the budget is spent. The web folds `auto_continue` as a
 >   bubble boundary (`chatEvents.ts`), so each auto-continued step is its own
->   reply and no `Yes.` bubble ever appears; `auto_continue_paused` renders as a
->   note beside the Continue button. The chain stops when: the turn ends with
+>   reply and no `Yes.` bubble ever appears; the web ignores `auto_continue_paused`.
+>   The chain stops when: the turn ends with
 >   anything but the literal (a real question, `Research complete.`, an error,
 >   an interrupted turn); the budget of **consecutive auto steps since the last
 >   real user message** is spent (`AUTO_CONTINUE_MAX_STEPS`, default 30 — it
@@ -587,10 +587,10 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   `Settings.auto_continue_max_steps`, passed to the sandbox as
 >   `AUTO_CONTINUE` / `AUTO_CONTINUE_MAX_STEPS` by both providers. A `user_msg`
 >   frame may carry `auto_continue: false` to opt its whole chain out. The
->   canonical
->   literal regex is `HAND_BACK_RE` in `apps/web/src/components/chatEvents.ts`;
->   the runner's copy in `app/agent/hand_back.py` is pinned to it by
->   `apps/server/tests/test_hand_back_parity.py`. Per-session on/off lands with
+>   literal regex is `HAND_BACK_RE` in `app/agent/hand_back.py`, pinned by
+>   `apps/server/tests/test_runner_auto_continue.py`. Since continuous work shipped
+>   (2026-09-23) no plugin body emits the literal, so the chain does not start and
+>   the web has no Continue button. Per-session on/off lands with
 >   the experience-level user setting. Cowork desktop has no control plane we
 >   own; the user clicks there.
 

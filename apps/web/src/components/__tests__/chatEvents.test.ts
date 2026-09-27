@@ -3,8 +3,6 @@ import {
   foldChatEvent,
   joinTextBlocks,
   trackLiveTask,
-  endsWithHandBack,
-  stripHandBack,
   withOpeningTurn,
   stripOpeningTurn,
   OPENING_TURN,
@@ -203,30 +201,6 @@ describe('replaying a captured subagent stream through the fold', () => {
     expect(m.tools).toEqual([
       { tool: 'record_read', summary: 'recordId=X', done: false, agent: 'record-extractor' }
     ])
-    expect(endsWithHandBack(m.text)).toBe(true)
-  })
-})
-
-describe('endsWithHandBack', () => {
-  it('matches the ruled literal only at the end', () => {
-    expect(endsWithHandBack('Found her.\n\nNext: search-records. Continue?')).toBe(true)
-    expect(endsWithHandBack('Next: proof-conclusion. Continue?\n')).toBe(true)
-    expect(endsWithHandBack('Next: search-records. Continue? Also note x.')).toBe(false)
-    expect(endsWithHandBack('Research complete.')).toBe(false)
-    expect(endsWithHandBack('Shall I continue?')).toBe(false)
-  })
-})
-
-describe('stripHandBack', () => {
-  it('drops the literal line from the render and keeps the prose', () => {
-    expect(stripHandBack('Found her.\n\nNext: search-records. Continue?')).toBe('Found her.')
-    expect(stripHandBack('Next: choose the first research question. Continue?\n')).toBe('')
-  })
-  it('leaves text that does not end with the literal alone', () => {
-    expect(stripHandBack('Next: search-records. Continue? Also note x.')).toBe(
-      'Next: search-records. Continue? Also note x.'
-    )
-    expect(stripHandBack('Research complete.')).toBe('Research complete.')
   })
 })
 
@@ -245,8 +219,7 @@ describe('opening turn', () => {
 describe('auto_continue is a bubble boundary (issue #2653)', () => {
   // The server answered the hand-back itself, so no user_msg separates the two
   // turns. Without the boundary the second step's text and tool chips would
-  // fold onto the first bubble, and the first literal — which stripHandBack
-  // only removes at the END of a bubble — would render mid-bubble.
+  // fold onto the first bubble.
   const step1 = 'Project set up.\n\nNext: choose the first research question. Continue?'
   const step2 = 'Question chosen.\n\nNext: plan which records to search. Continue?'
 
@@ -267,13 +240,6 @@ describe('auto_continue is a bubble boundary (issue #2653)', () => {
     expect(msgs[2].text).toBe(step2)
     expect(msgs[1].handedBack).toBe(true)
     expect(msgs[2].handedBack).toBeUndefined()
-  })
-
-  it('each bubble strips its own trailing literal, so no literal renders mid-bubble', () => {
-    const msgs = twoSteps()
-    expect(stripHandBack(msgs[1].text)).toBe('Project set up.')
-    expect(stripHandBack(msgs[2].text)).toBe('Question chosen.')
-    expect(stripHandBack(msgs[1].text)).not.toContain('Continue?')
   })
 
   it("the second turn's tool chips land on the second bubble", () => {

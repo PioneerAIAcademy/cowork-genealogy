@@ -6,8 +6,6 @@ import { api, ApiError } from '../api'
 import {
   foldChatEvent,
   trackLiveTask,
-  endsWithHandBack,
-  stripHandBack,
   withOpeningTurn,
   stripOpeningTurn,
   type ChatMessage,
@@ -155,7 +153,6 @@ export default function ChatPane({
   // Lay mode paused its own chain (issue #2653): the runner stopped answering
   // the hand-back after `max_steps` in a row. The literal is still on screen,
   // so the Continue button works; this says why it is waiting.
-  const [autoPaused, setAutoPaused] = useState<{ step: number; max: number } | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -218,13 +215,8 @@ export default function ChatPane({
       setActivity(null)
       return
     }
-    if (kind === 'auto_continue_paused') {
-      setAutoPaused({
-        step: typeof ev.step === 'number' ? ev.step : 0,
-        max: typeof ev.max_steps === 'number' ? ev.max_steps : 0
-      })
-      return
-    }
+    // Not chat content: without this return the fold would open an empty bubble.
+    if (kind === 'auto_continue_paused') return
     if (kind === 'usage') {
       // Per-turn cost/tokens, emitted once just before turn_done. Not a chat
       // message — bubble it up to the (alpha-gated) session cost meter.
@@ -308,7 +300,6 @@ export default function ChatPane({
     startedRef.current = true
     setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [], queued: busy }])
     conn.send({ type: 'user_msg', text: opening ? withOpeningTurn(trimmed) : trimmed })
-    setAutoPaused(null)
     setOutcome(null) // 1c: a new message supersedes how the last turn ended
     setBusy(true)
     setInput('')
@@ -344,10 +335,6 @@ export default function ChatPane({
     }
   }
 
-  const lastMessage = messages[messages.length - 1]
-  const canContinue =
-    lastMessage?.role === 'assistant' && !lastMessage.error && endsWithHandBack(lastMessage.text)
-
   return (
     <div className="chatBody">
       <div className="chatScrollArea">
@@ -382,11 +369,9 @@ export default function ChatPane({
                   </div>
                 </details>
               )}
-              {(m.role === 'user' ? m.text : stripHandBack(m.text)) && (
+              {m.text && (
                 <div className={`msgText ${m.error ? 'msgError' : ''}`}>
-                  <Markdown remarkPlugins={[remarkGfm]}>
-                    {m.role === 'user' ? m.text : stripHandBack(m.text)}
-                  </Markdown>
+                  <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
                 </div>
               )}
               {/* 1b: the agent is mid-turn, so this one waits for the next step
@@ -409,22 +394,6 @@ export default function ChatPane({
               )}
             </div>
           ))}
-          {/* The orchestrator hands back after every completed step with a fixed
-              closing line (issue #2292). One tap answers it; doing nothing is
-              the stop. Cowork renders its own chat UI, so this is hosted-web
-              only and the literal keeps working as typed text everywhere. */}
-          {!busy && ready && canContinue && (
-            <div className="chatContinueRow">
-              <button type="button" className="chatContinue" onClick={() => send('Yes.')}>
-                Continue
-              </button>
-              {autoPaused && (
-                <span className="chatContinueNote">
-                  Paused after {autoPaused.step} steps in a row.
-                </span>
-              )}
-            </div>
-          )}
           {/* One status line, three distinct states. Reconnecting is shown even
               when a turn wasn't running, because a dropped socket is worth knowing
               about; it takes priority over "working" so a stall never masquerades

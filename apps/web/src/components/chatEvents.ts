@@ -23,7 +23,7 @@ export interface ChatMessage {
   // Closed by an `auto_continue` event: the server answered this message's
   // hand-back itself (issue #2653). The next content event opens a new bubble
   // rather than folding onto this one, so each auto-continued step reads as
-  // its own reply and its own trailing literal is the one stripped at render.
+  // its own reply.
   handedBack?: boolean
   // A user message typed WHILE a turn was running (PR #2870 item 1b). The
   // server holds it rather than enqueueing it -- two turns on one session would
@@ -100,26 +100,6 @@ export function trackLiveTask(
   if (kind === 'task_started') next.add(id)
   else next.delete(id)
   return next
-}
-
-// The orchestrator's hand-back closes with a fixed literal (issue #2292, lead
-// ruling 2026-09-07): `Next: <step>. Continue?`. The terminal form is
-// `Research complete.`, which offers nothing to continue.
-//
-// This is the canonical copy. The in-sandbox runner carries the same pattern
-// (apps/server/app/agent/hand_back.py) to answer the literal itself in lay
-// mode; apps/server/tests/test_hand_back_parity.py fails if the two differ.
-export const HAND_BACK_RE = /(?:^|\n)\s*Next: .+\. Continue\?\s*$/
-
-export function endsWithHandBack(text: string): boolean {
-  return HAND_BACK_RE.test(text)
-}
-
-// The literal is a protocol line for the Continue button (and, under issue
-// #2653, the server). It is not user prose — its step slot may carry a skill
-// name — so the transcript keeps it and the render drops it.
-export function stripHandBack(text: string): string {
-  return endsWithHandBack(text) ? text.replace(HAND_BACK_RE, '').trimEnd() : text
 }
 
 // A new session's first message opens the project. The canned opener travels
