@@ -150,9 +150,6 @@ export default function ChatPane({
   // model's private reasoning, and two alpha testers read the collapsed block's
   // label as a cryptic message. The toggle is for whoever wants to look.
   const [showThinking, setShowThinking] = useState(false)
-  // Lay mode paused its own chain (issue #2653): the runner stopped answering
-  // the hand-back after `max_steps` in a row. The literal is still on screen,
-  // so the Continue button works; this says why it is waiting.
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
