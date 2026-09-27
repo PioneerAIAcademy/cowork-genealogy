@@ -35,9 +35,8 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
 - **`decision` and `mcp_unavailable` cannot fire.** The worker passes
   `pending_decision=lambda: False`, and neither plane can observe a dead tool surface, so both
   clauses exist and nothing sets them.
-- **`person-evidence` was not de-gated.** PR #2870 reverted it (`a52817767`), so its
-  weak-match pause and its autonomous-only resolve-downward rule are main's. The reverted
-  text keyed the rule on whether a user asked for this link, which the agent can read.
+- **`person-evidence` was not de-gated.** PR #2870 dropped that change before merging, so its
+  weak-match pause and its autonomous-only resolve-downward rule are main's.
 - **The live run's scale.** One message, 150 minutes, 75 log entries, 311 `person_evidence`
   links, a probable-tier proof — and the agent resolved conflict c_002 itself where the old
   flow handed back about nine times.
@@ -46,9 +45,10 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
 
 Phase 1 turned continuous work on for every hosted turn. These follow from that and come
 before any new surface. The nudge text and the body edits reach the alpha and Cowork too — one
-constant, one plugin — and only the exit's handler is prototype-only. The alpha's Stop hook has
-no decision clause and its turns record no outcome, and `auto_continue` stays its switch until
-it is retired.
+constant, one plugin — and only the exit's handler is prototype-only. The alpha's Stop hook
+passes no decision clause, so it vetoes the exit like any yield and alpha testers keep phase 1's
+behaviour until the alpha is retired, with `auto_continue` as its switch (the alpha is not
+hardened, ruled 2026-09-25).
 
 **The default web path never enters the router.** The web client prefixes the first message
 so `init-project` runs; it hands to `question-selection` and `research-plan`, and nothing in
@@ -76,7 +76,10 @@ void on the next message. The agent says it has delivered what was asked with th
 that carries *I need you* (below), and the turn ends with an outcome of its own — `completed`
 means the project is done and reads "Research complete.". "Where are we?" is a bounded request
 whose deliverable is the answer. Whatever re-enters the router must respect this, or every
-question becomes a job. Issue #2813 owns this; its draft item 3 is the same rule.
+question becomes a job. Issue #2813's draft item 3, not yet approved, raises the same scope
+question from the single-ask side; this section builds the finish line. Its offer to escalate
+at the end of a quick answer is compatible: the turn ends at the deliverable, so the offer is
+one the run waits for.
 
 **Never ask a question you will not wait for.** Since phase 1 the hook overrides every closing
 offer on a hosted turn, so the feed shows a question the run then answers itself:
@@ -86,13 +89,17 @@ offer on a hosted turn, so the feed shows a question the run then answers itself
 becomes a statement followed by the action, or — where only the researcher can answer — the
 decision exit below. `person-evidence`'s weak-match pause is the largest case: its
 resolve-downward rule applies only to "an autonomous `/research` run", which a browser turn
-never is, so once the exit lands every weak match would end the job as a decision. Restore the
-"When nobody can adjudicate, resolve downward" text PR #2870 reverted in `a52817767`: it keys on
-whether a user asked for this link, which a subagent can read, where run mode is not. Where the
-researcher bounded the request, stopping at the deliverable is correct and says so as a
-statement. This is issue #2864's "wouldn't pull, extract, or view the record unless
-specifically approved", and it was S4, widened. Each body is a paid eval run, one per skill
-at a time, landing after PR #2870.
+never is, so once the exit lands every weak match would end the job as a decision. The agent
+reads only its delegation message, and every router spawn names the assertions to link, so the
+rule keys on something the caller states: whether the researcher's own words named this link.
+The router says the link is mid-run with nobody waiting on it; the `person-evidence` skill says
+so only when the researcher did not name it. With nobody waiting, the pause rows resolve
+downward. PR #2870 drafted and dropped a version of this; its "or a question they are watching
+for an answer to" clause fits every hosted job, so it does not come back. Where the researcher
+bounded the request, the turn ends at the deliverable, so an offer there is one the run waits
+for. This is issue #2864's "wouldn't pull, extract, or view the record unless specifically
+approved", and it was S4, widened. Each body is a paid eval run, one per skill at a time —
+the router and the `person-evidence` skill included, for their delegations.
 
 **Give "I need you" an exit.** The router's fourth stop condition ("say exactly what you need
 and what you will do with each answer, then stop") and its genuine-blocker stop are both
@@ -104,38 +111,41 @@ ends `decision` and the answer arrives as the next message. That narrows phase 3
 carried questions to one: which call means *I need you*. The worker's `PreToolUse` hook
 already reads control-plane rows on every call, so the choice is the model's own
 `AskUserQuestion`, intercepted, or one dedicated tool shaped like PR #2702's `hand_back`.
-Pick one; it also carries *delivered what was asked*, and it must behave sensibly where nothing
-intercepts it — the alpha and Cowork. `AskUserQuestion` is granted on the prototype, handled
+Pick one; it also carries *delivered what was asked*. On Cowork nothing intercepts it, so it must
+read sensibly there. `AskUserQuestion` is granted on the prototype, handled
 nowhere in `apps/`, and appears unprompted in 13 committed unit run logs, so first record what
 it does on a continuous hosted turn today. The card is phase 3; the exit is not.
 
 The exit is what makes a stop condition end the job, so two of them are settled before it
-ships. The fourth stop's "a document only they hold" is an errand, not a decision — phase 3's
-handed-to-you state does not stop the job, and `research-plan`'s own rule is that a blocked item
-does not hold up the rest — so that clause goes back to the lead first; until then the exit
-covers only the family-knowledge clause. A genuine blocker ends the way issue #2539 describes:
-the proof at whatever tier the evidence reached, with why the research stopped and what it could
-not reach, so `completed`, never `no_progress`.
+ships. The fourth stop's "a document only they hold" and "access to a repository only they can
+reach" are errands, not decisions — phase 3's handed-to-you state does not stop the job, and
+`research-plan`'s own rule is that a blocked item does not hold up the rest — so those two clauses
+go back to the lead first; until then the exit covers only the family-knowledge clause. A genuine
+blocker of unreachable records ends the way issue #2539 describes: the proof at whatever tier the
+evidence reached, with why the research stopped and what it could not reach, so `completed`,
+never `no_progress`. An irreducible conflict cannot end `completed` — the writer refuses
+completion while a blocking conflict is unresolved — so it is a decision.
 
 **Capture a real feed before specifying phase 2.** No committed run shows what a hosted reader
 sees: every e2e fixture pins `narration_guidance` to "concise", every e2e run enters as
 `/research --autonomous`, the unit harness binds no Stop hook, and the demo's feed events were
 never exported before its stack was dropped. Its 15 vetoed yields are 15 hand-back attempts
-nobody has read. `bagley-father-1884` is a strip fixture — its answer sits on the live tree —
-so an unseeded browser session either reads the father straight off the tree or, with the
-demo's tree-read block, cannot find William at all. Seed it with `proto/seed.py`, which opens a
-session on the seeded project, keep the demo's `BLOCKED_TOOLS`, and type its researcher question
-in the browser with no slash command. Record what the opener does to a seeded project as part of
-the capture. Commit what the reader saw, including the feed events `export.py` does not export
-today; the exports directory is gitignored. This is also the only thing that can prove a
-paragraph reached the reader.
+nobody has read. Run one session the way a browser user does — a new session, so the opener
+fires and `init-project` writes the shipped novice profile, and no slash command — on an
+objective whose answer the run cannot read straight off the live tree. Commit what the reader
+saw, including the feed events `export.py` does not export today; the exports directory is
+gitignored. An e2e fixture does not do this as it stands: seeding copies its "concise" profile,
+and a seeded session is opened from the list, so the opener never fires. Which objective, and
+how its answer stays off the tree, is this section's detailed pass. This is also the only thing
+that can prove a paragraph reached the reader.
 
-*Acceptance:* seeded `bagley-father-1884`, its question typed in the browser with no slash
-command, invokes `research` in its first turn and ends `completed` or `decision`, never `budget`
-or `no_progress`, and its feed is committed to the repo; "create a research plan for Mary Hales
+*Acceptance:* a new browser session under the shipped profile, with no slash command, invokes
+`research` in its first turn and ends `completed` or `decision`, never `budget` or
+`no_progress`, and its feed is committed to the repo; "create a research plan for Mary Hales
 but leave it at that" ends with a rendered plan, no research-log entries, and the delivered
 outcome; "where are we?" on an active project ends after the answer with the delivered outcome
-and no new log entry; no shipped skill or agent body ends a reply with an offer to continue; a
+and no new log entry; no shipped skill or agent body ends a reply with an offer the run then
+overrides; a
 weak match nobody asked about resolves downward, not to a decision; a stop on the
 family-knowledge clause ends `decision` with no nudge spent after the ask; a run whose remaining
 plan items are all unreachable does not end `no_progress`.
@@ -191,9 +201,9 @@ record and she is not in it* is negative evidence. Negatives are most of the log
 mentions them rarely, so render them from the log, as a sentence rather than raw JSON. A
 deferred external search is logged today as `negative`, and the entry alone cannot tell it
 apart: a nil the researcher reports before capturing is also `negative` with
-`captureReceived: false`, and a graded test requires it. So a deferred search gets a
-`log_outcome` value of its own, written by `search-external-sites` in place of `negative`, and
-the writer tool does not refuse that pair.
+`captureReceived: false`, and a graded test requires it. So a search that was not run gets a
+`log_outcome` value of its own — *not searched* — written in place of `negative`, and the writer
+tool does not refuse that pair.
 
 **Show the scans, and let documents in.** On the prototype, sidecar bodies return 404 — every
 "View N results" is dead — and `/image`, `/logs` and `/files` return 501. The web transport
@@ -237,7 +247,9 @@ when the document comes back and enters as a source. It outlives the session, so
 `research.json`; `plan_item_status` has no waiting value today, and a handed-over capture left
 `in_progress` blocks the exhaustiveness gate. Issue #2539 is the card. Every external search
 that needs a capture becomes one of these errands — plan-driven, ad hoc, or asked for — raised
-once with its URL, its plan item taking the waiting status instead of `skipped`. Issue #2864's
+once with its URL and logged with phase 2's *not searched* outcome. A plan-driven errand's item
+takes the waiting status instead of `skipped`; an ad-hoc one lives only in the errand record, since
+no plan item is ever invented to hold it. Issue #2864's
 Fold3 petition was raised by the agent, not asked for, so a narrower rule would raise it zero
 times or stop the job. It replaces `search-external-sites`' "hand them the URL and wait for the
 capture", which cannot complete on the prototype: the wait is a yield the hook vetoes, and
