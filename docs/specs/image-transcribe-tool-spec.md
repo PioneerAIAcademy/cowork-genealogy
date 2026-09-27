@@ -880,7 +880,7 @@ Default model slug lives in `config.ts` (a constant, overridable per-user via
 LLM does not choose the model** — it is not a tool parameter. The researcher
 sets the default from Phase 0 (§10 open q. on exact slug/tier).
 
-## 6.4 Key management (`configure_openrouter`)
+## 6.4 Key management
 
 An OpenRouter key is a **static, non-expiring secret** — unlike the FS OAuth
 flow. Storage follows the existing per-user config convention exactly:
@@ -891,18 +891,17 @@ flow. Storage follows the existing per-user config convention exactly:
   `loadConfig(principal)`, throws the LLM-instruction error in §5.6 when absent. Add
   `getOpenRouterModel(principal)` returning the default slug when unset. **No env-var
   fallback** (repo rule). Stored in `~/.familysearch-mcp/config.json`, mode
-  `0o600` (already enforced by `saveConfig`).
+  `0o600`. Nothing in the engine writes that file.
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
   round-trip the tool drives itself; an API key is a static paste the tool
   cannot obtain on its own. The key is set by the user directly in
   `~/.familysearch-mcp/config.json` as the `openRouterApiKey` field. It
   never passes through a tool-call argument, so it never appears in the
-  session transcript.
-
-  **Tool `configure_openrouter({ model? })`** accepts only an optional model
-  slug. It calls `saveConfig({ openRouterModel })`. Flow: `image_transcribe`
-  errors "no key" → Claude tells the user to set `openRouterApiKey` in
-  `config.json` directly → user edits the file → retry.
+  session transcript. `openRouterModel` is set the same way. There is no
+  configuration tool: `configure_openrouter` lost its key parameter to keep keys out
+  of the transcript, and was retired on 2026-09-27 with no caller. Flow: `image_transcribe` errors
+  "no key" → Claude tells the user to set `openRouterApiKey` in `config.json`
+  directly → user edits the file → retry.
 
 ### 6.5 Key provisioning across runtimes
 
@@ -920,7 +919,7 @@ it per TURN, from the worker, which no file could do:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
-| **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly (the `configure_openrouter` tool sets only `openRouterModel`, not the key) |
+| **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
 | **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service; `build/hosted-stdio.js`, the worker's per-turn fork) | compose passes the stack's `OPENROUTER_API_KEY` to the service, and the worker passes it to each fork; both entrypoints layer it and the other three per-user keys over whatever config they start from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
@@ -1126,13 +1125,12 @@ one, because the key is `image_filename`, not imageId:
 ## 9. Wiring (standard MCP-tool checklist)
 
 - `src/tools/image-transcribe.ts` — tool + `imageTranscribeToolSchema`.
-- `src/tools/configure-openrouter.ts` — key-set tool + schema.
 - `src/types/image-transcribe.ts` — tool I/O + OpenRouter request/response
   types.
-- Register both schemas in `allToolSchemas` (`src/tool-schemas.ts`) — the
+- Register the schema in `allToolSchemas` (`src/tool-schemas.ts`) — the
   single source of truth and the packaging-drift test's reference.
-- Dispatch both in `src/index.ts`.
-- Add both tool names to `manifest.json`'s `tools` array (kept in sync with
+- Dispatch it in `src/server.ts`.
+- Add the tool name to `manifest.json`'s `tools` array (kept in sync with
   `allToolSchemas` by `tests/packaging/manifest.test.ts`).
 - Add the new per-user config keys to the config table in **CLAUDE.md**
   (§ "Secrets/config convention") and `research-schema`-adjacent docs if
@@ -1149,8 +1147,7 @@ one, because the key is `image_filename`, not imageId:
   behavior. Thread `projectPath` through so the subagent's `image_transcribe`
   call can stage the JPEG (§8.5). For desktop setup, when `image_transcribe`
   errors "no key" the error directs the user to set `openRouterApiKey` in
-  `~/.familysearch-mcp/config.json` directly; `configure_openrouter` saves
-  only a model slug override. Preserve the "reserve image transcription for facts that exist only on
+  `~/.familysearch-mcp/config.json` directly. Preserve the "reserve image transcription for facts that exist only on
   the image" guidance. (A Sonnet-5 second-opinion escalation was considered and
   **dropped** — the viewer lets a human verify a cite-worthy read against the
   scan; a user-invoked Opus transcription is parked in §15.9.)
@@ -1235,11 +1232,10 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
 Pre-processing was decided against (§7, PR 723), so there is no `image-prep`
 module to test.
 
-### 13.4 `configure_openrouter` unit tests
+### 13.4 Missing-key message
 
-Saves model to config via `saveConfig` (mock it); schema has no `apiKey`
-property; `OPENROUTER_API_KEY_MISSING_MESSAGE` names the config file path
-and field, and does not instruct Claude to receive the key via the tool.
+`OPENROUTER_API_KEY_MISSING_MESSAGE` names the config file path and field, and
+does not instruct Claude to receive the key via a tool (`image-transcribe.test.ts`).
 
 ### 13.5 e2e validation gate (the real T13 proof)
 
@@ -1263,13 +1259,11 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 **Create**
 - `docs/specs/image-transcribe-tool-spec.md` (this doc)
 - `src/tools/image-transcribe.ts`
-- `src/tools/configure-openrouter.ts`
 - `src/types/image-transcribe.ts`
 - `src/utils/fs-image-fetch.ts` (lifted from `image-read.ts`)
 - `src/utils/image-store.ts` *(image-persistence: save + TTL-GC, §8.5)*
 - `dev/try-image-transcribe.ts` — `--project <dir> --file uploads/<name>`
 - `tests/tools/image-transcribe.test.ts`
-- `tests/tools/configure-openrouter.test.ts`
 - Phase 0 results write-up *(done: PR 723; the model-comparison conclusions live in §5 of this spec — Qwen 67% / Sonnet 5 76% / Sonnet 4.6 60% on hard hands, **superseded by §4.5**, and why an opt-in Sonnet-5 second opinion was dropped)*
 
 **Modify**
@@ -1277,9 +1271,9 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `src/auth/config.ts` — `getOpenRouterApiKey`, `getOpenRouterModel`, default
   slug constant, missing-key message
 - `src/tools/image-read.ts` — use the shared fetcher (dedupe only)
-- `src/tool-schemas.ts` — register both new schemas
-- `src/index.ts` — dispatch both
-- `manifest.json` — add both tool names
+- `src/tool-schemas.ts` — register the new schema
+- `src/server.ts` — dispatch it
+- `manifest.json` — add the tool name
 - `packages/engine/plugin/skills/record-extraction/SKILL.md` — route Image
   path to `image_transcribe`
 - `docs/specs/image-read-spec.md` — cross-reference
@@ -1377,6 +1371,6 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
   (`enhance_for_ocr` — the prep pipeline the spike evaluated and rejected; §7)
 - `src/tools/wiki-search.ts` + `tests/tools/wiki-search.test.ts` (HTTP-tool
   and mocked-`fetch` test patterns to mirror)
-- `src/auth/config.ts` (`loadConfig`/`saveConfig`/`get*` — key-storage
+- `src/auth/config.ts` (`loadConfig`/`get*` — key-storage
   pattern to follow)
 - `docs/skill-lifecycle.md` §5 (lane rule for the SKILL.md migration)

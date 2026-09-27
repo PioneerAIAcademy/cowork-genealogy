@@ -175,34 +175,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/locality-guide/ut_locality_guide_009.json",
-        "tool": "collection_read",
-        "quotes": [
-            "Citing collection ids that came from a correctly-matched collections_search call, without independently re-verifying them through collection_read, is not a fabrication given this fixture's known limitation - do not penalize Correctness for it",
-        ],
-        "reason": (
-            "not-needed: permissive fixture-limitation note, no expectation "
-            "of a call - 'Citing collection ids that came from a "
-            "correctly-matched collections_search call, without "
-            "independently re-verifying them through collection_read, is "
-            "not a fabrication given this fixture's known limitation - do "
-            "not penalize Correctness for it'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/locality-guide/ut_locality_guide_020.json",
-        "tool": "collection_read",
-        "quotes": [
-            "is the fixture's known limitation, not a Tool Arguments error - do not penalize Tool Arguments for the mismatch between the requested id and the returned collection",
-        ],
-        "reason": (
-            "not-needed: permissive fixture-limitation note - 'is the "
-            "fixture's known limitation, not a Tool Arguments error - do "
-            "not penalize Tool Arguments for the mismatch between the "
-            "requested id and the returned collection'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
         "tool": "tree_correct",
         "quotes": [

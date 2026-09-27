@@ -95,12 +95,12 @@ whole cost story. The remaining 5% sits behind issue #2937 and is John's.
 
 ## 4. Wave 1 — plural reads and parallelism
 
-**The finding that makes this the first wave: 16 of the 17 read and lookup tools can
+**The finding that makes this the first wave: 15 of the 16 read and lookup tools can
 only read one thing.** Only `source_attachments` accepts an array. `record_read`,
 `wiki_read`, `person_read`, `same_person`, `person_warnings`, `person_quality`,
 `sidecar_read`, `image_transcribe`, `image_read`, `place_search`, `research_query`,
-`collection_read`, `person_ancestors`, `place_population`, `wiki_place_page` and
-`place_distance` each take exactly one id, url or name.
+`person_ancestors`, `place_population`, `wiki_place_page` and `place_distance` each take
+exactly one id, url or name.
 
 **So the agent has no choice but to iterate.** Only **2.7%** of assistant messages
 emit more than one tool call — that is not the model failing to batch, it is the tool
@@ -159,6 +159,34 @@ Lever 1's other half: what comes back. Tool-result carry is **24%** of the bill.
 - **The write path costs more in args than in results.** `extraction_append`
   generates a median **9,036 chars of arguments** per call — those are output tokens
   at $15/MTok. Results are the cheaper half (result/arg 0.17–0.33).
+
+**Production runs with tool search off, and that alone was measured at 2.2× cost.**
+Every figure in this plan comes from runs with tool search **on**: both harnesses and the
+alpha set `ENABLE_TOOL_SEARCH=true`. The FamilySearch gateway path turns it off:
+`GATEWAY_TOOL_SEARCH` defaults to `false` in `apps/server/proto/worker/options.py`,
+because agentgateway 1.5.0 cannot parse the `tool_reference` blocks tool search returns
+(`search-agent-prototype.md`, P3e/P3f). Off means all 48 tool schemas load eagerly on
+every call. Probe P3b (`make probe-gateway-path`, 2026-09-11) measured the difference:
+the first call rose from 28,722 to 71,524 tokens (+149%), and the arm cost 2.2× its
+control. That probe was short, so re-price it on a full panel run before quoting it
+against the $10.57 baseline.
+
+Two pieces of work, in order:
+
+1. **Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
+   The request to FamilySearch is drafted in `search-agent-prototype.md` "Open asks"
+   and has not been sent. It is the lead's to send. Until it lands, production pays for
+   the whole schema block on every call and Wave 2's schema trim is the only relief.
+2. **Measure one e2e panel fixture with tool search off against the same fixture with
+   it on**, on the harness, so the production gap is priced on this plan's basis. Do
+   this before step 1 lands, because it decides how much of the gap is this lever's.
+   Both harnesses hard-code `"true"` (`env_for_sdk` in `eval/harness/harness/auth.py`
+   and the e2e orchestrator), so the off arm needs a switch.
+
+**Issue #2953 is the other half.** It marks the hot tools always-loaded (per-tool
+`_meta["anthropic/alwaysLoad"]`), which removes most of the corpus's median 12
+`ToolSearch` calls per run while tool search stays on. Tool search on plus a small
+always-loaded set is cheaper than either extreme. Size that set against the off arm.
 
 **Wave 1 before Wave 2**: collapsing calls first means the payload work measures
 against fewer, larger results rather than chasing a moving denominator.

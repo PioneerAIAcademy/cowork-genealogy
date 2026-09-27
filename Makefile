@@ -704,7 +704,7 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and call every offline tool once (no FamilySearch login needed)
 	cd $(ENGINE_DIR) && npx tsx dev/smoke-stdio.ts
 
-# D16 transport smoke: every advertised tool but the four auth exclusions, over Streamable
+# D16 transport smoke: every advertised tool but the three auth exclusions, over Streamable
 # HTTP. build/http.js has no file root: it binds a PgS3ProjectStore per request from the
 # X-Genealogy-Project-Id header, so both arms need the compose postgres + minio and the
 # smoke passes one fresh project id (SMOKE_PROJECT_ID overrides it) with the anchor
@@ -728,7 +728,7 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"
 
 .PHONY: engine-smoke-http
-engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the four auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
+engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the three auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
 ifdef BASE
 	@$(smoke_http_id); status=0; \
 	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project ) || status=$$?; \
