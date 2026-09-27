@@ -660,7 +660,13 @@ def test_blank_prompt_is_read_correctly_without_jq(tmp_path, monkeypatch):
     (shim_dir / "jq").chmod(0o755)
     overrides = {"PATH": f"{shim_dir}{os.pathsep}{os.environ['PATH']}"}
 
-    for prompt in ("", None, _DROP_KEY):
+    # "   \n\t " pins the whitespace-only rule spec row 7 now guarantees.
+    # Without it, reverting the [[:space:]] strip to a plain emptiness test
+    # leaves the suite at 20/20 while a whitespace-only prompt prints a
+    # heading and two rules with nothing between them — defect 3 exactly.
+    # It is also the only thing keeping the .sh in step with the .bat's
+    # IsNullOrWhiteSpace; nothing else in the repo pins that parity.
+    for prompt in ("", None, _DROP_KEY, "   \n\t "):
         case = tmp_path / f"case-{id(prompt)}"
         case.mkdir()
         out = _import_and_read_stdout(case, monkeypatch, prompt, env_overrides=overrides)
