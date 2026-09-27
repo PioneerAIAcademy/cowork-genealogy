@@ -352,8 +352,8 @@ def test_every_shipped_hand_back_literal_classifies():
 
     **The expected count is now ZERO, and that is the assertion.** This used to
     require `seen >= 2`, naming init-project and question-selection, which carried
-    the literal since PR #2649. research-as-a-job retires it outright ("Prose is
-    flaky; the Stop hook is the mechanism", decisions table) and both bodies
+    the literal since PR #2649. PR #2870 retired it outright ("Prose is
+    flaky; the Stop hook is the mechanism") and both bodies
     dropped it, so the old floor pinned exactly the population the ruling deletes.
     Requiring zero is what makes a re-introduction fail here rather than pass
     silently.
@@ -377,6 +377,6 @@ def test_every_shipped_hand_back_literal_classifies():
                 )
     assert seen == 0, (
         f"{seen} shipped SKILL.md still emit the retired `Next: … Continue?` hand-back "
-        f"literal. research-as-a-job retired it — the Stop hook is the mechanism now, and "
+        f"literal. PR #2870 retired it — the Stop hook is the mechanism now, and "
         f"a body that stops to ask is a stall."
     )

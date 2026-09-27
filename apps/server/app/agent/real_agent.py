@@ -474,7 +474,7 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     return env
 
 
-# research-as-a-job 1d. The alpha's veto cap per turn. Sized like the prototype's on STEP
+# PR #2870 item 1d. The alpha's veto cap per turn. Sized like the prototype's on STEP
 # count rather than on the nudge histogram: over the 189 committed e2e runs, Skill/Task/
 # Agent steps per run are median 15, p90 25, p99 51, max 76. 0 turns the hook off.
 _DEFAULT_MAX_NUDGES = 60

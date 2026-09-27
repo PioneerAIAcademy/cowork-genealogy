@@ -792,15 +792,17 @@ There **is** an orchestrator, and it is a skill:
 3. **One mode, in the router.** It runs the loop in one continuous turn — no
    clarifying questions, decisions logged to the audit-trail fields — for every
    run, with no flag to turn it on. **`--autonomous` gates no branch in any
-   plugin body**: the router's went with S2, and the seven others
+   plugin body**: the router's went with S2, and six others
    (`search-external-sites`, `question-selection`, `search-records`,
-   `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`,
-   `agents/person-evidence.md`) were folded in beside it on the lead's call,
-   because the browser never sends the flag and every one of those branches was
-   dead on a hosted run. The string survives in exactly two places: the trigger
-   list in `research/SKILL.md`'s description, and the message the e2e harness and
-   `make proto-demo` still build. So no offline suite sees the difference, and
-   the fold-in owes seven paid eval runs.
+   `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`) were
+   folded in beside it on the lead's call, because the browser never sends the
+   flag and every one of those branches was dead on a hosted run.
+   `agents/person-evidence.md` was left out: its resolve-downward rule still
+   applies only to "an autonomous `/research` run", in words rather than the
+   flag, which a browser turn never is. The string survives in exactly two
+   places: the trigger list in `research/SKILL.md`'s description, and the
+   message the e2e harness and `make proto-demo` still build. So no offline suite
+   sees the difference; only the paid eval runs do.
    **The router does not yield on a mentor verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
    resolved question, or force a remediation skill. A second, blocking table
@@ -814,7 +816,7 @@ There **is** an orchestrator, and it is a skill:
    `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
    recommendation stays advisory and never forces rework. **`proof-conclusion`
    owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` by
-   the research-as-a-job plan. Three surfaces already said so and the router
+   PR #2870. Three surfaces already said so and the router
    contradicted all three: `docs/specs/schemas/ownership.json` names
    `skill:init-project` and `skill:proof-conclusion` as the `project` section's
    only callers, `agents/proof-conclusion.md` §8 makes the call, and the
@@ -1641,8 +1643,8 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   many hours as it needs. **Do not read the cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once.
   Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured** — which is exactly why the research-as-a-job ruling of 2026-09-21
-  refused to accept the pause. Since that plan's 1d, `set_timeout` is no longer
+  measured** — which is exactly why the 2026-09-21 ruling behind PR #2870
+  refused to accept the pause. Since PR #2870's item 1d, `set_timeout` is no longer
   called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
   live sandbox on a 300 s loop from the control plane, so a turn cannot age out
   while it works. That matters now because a turn is a whole research job —

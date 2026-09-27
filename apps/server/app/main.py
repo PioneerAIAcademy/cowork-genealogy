@@ -97,7 +97,7 @@ async def lifespan(app: FastAPI):
     app.state.provider = make_provider()
     app.state.anthropic_proxy_client = anthropic_proxy.make_upstream_client()
     await _revoke_sandboxes(app.state.provider)
-    # research-as-a-job 1d: keep a live sandbox's continuous-runtime clock running while
+    # PR #2870 item 1d: keep a live sandbox's continuous-runtime clock running while
     # its agent works. E2B's Hobby ceiling is 3600 s and it clocks RUNTIME, not idleness,
     # so once one user message is a whole research job the session ages out mid-turn --
     # at or before the corpus p90 of 107.9 minutes. See app/sandbox_heartbeat.py for the

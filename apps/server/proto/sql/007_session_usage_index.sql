@@ -1,4 +1,4 @@
--- research-as-a-job 1e: the index the live spend cap needs.
+-- PR #2870 item 1e: the index the live spend cap needs.
 -- Additive and idempotent like 001-006 -- applied by initdb on an empty volume AND by the
 -- worker and the web tier at start, so a volume that predates this file gets the index
 -- without a `make proto-down`.

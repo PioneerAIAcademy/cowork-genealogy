@@ -596,7 +596,7 @@ user message of the form:
 /research --autonomous <researcher_question>
 ```
 
-The harness still sends `--autonomous`, but since the research-as-a-job
+The harness still sends `--autonomous`, but since PR #2870's
 fold-in (2026-09-23) **no plugin body reads it**: proceeding without pausing
 is now what every run does, with or without the string. It is kept in the
 message because it is a listed trigger in `research/SKILL.md`'s description,
