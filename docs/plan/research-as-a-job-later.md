@@ -1,8 +1,9 @@
 # Research as a job — phases 2 to 5, at intent only
 
-> **Status:** NOT BUILT, and **deliberately not specified**. `research-as-a-job.md` is the
-> buildable plan and covers phases 0 and 1, built by PR #2870. This file records where that
-> design goes next, at the level of what and why, with acceptance criteria and nothing else.
+> **Status:** NOT BUILT, and **deliberately not specified**. Phases 0 and 1 were built by PR
+> #2870, whose body lists each item (S2, 0a, 0b, 1a–1e); their plan is deleted. This file
+> records where that design goes next, at the level of what and why, with acceptance criteria
+> and nothing else.
 > Revised 2026-09-27 against PR #2870's live run and the alpha feedback.
 >
 > **Do not build from this file.** Each phase gets its own detailed pass, written when the
@@ -14,7 +15,12 @@
 
 ## What phases 0 and 1 leave for these phases
 
-Facts the later passes build on, kept here because the companion plan is deleted once it ships.
+Facts the later passes build on, kept here because the plan for phases 0 and 1 is deleted.
+
+- **Rulings that still bind.** No plan-approval gate — Stop is the control surface (2026-09-21).
+  `q_` and `ps_` are allowed in user-facing text (2026-09-20). The prototype is production;
+  the alpha is backported to and then retired, and Cowork may be degraded. The spend bound has
+  no in-session grant: a capped sitting continues in a new session on the same project.
 
 - **The Stop hook binds on every browser turn**, not only on `/research`. The prototype's web
   tier stamps the nudge cap (default 60) on every message; the alpha binds it while

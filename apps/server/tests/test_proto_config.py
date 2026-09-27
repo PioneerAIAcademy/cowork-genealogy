@@ -377,7 +377,7 @@ def test_elasticmq_visibility_timeout_exceeds_the_ceiling():
     attempt longer than the visibility timeout is redelivered mid-flight and the worker
     runs the same turn twice at once on one SDK session. The literal must therefore top
     every ceiling the shim can run at -- the compose default and the one proto-demo-auto
-    exports. Both are 1800 s since research-as-a-job 0b, but this still takes the LARGER
+    exports. Both are 1800 s since PR #2870 item 0b, but this still takes the LARGER
     of the two, so raising either one again without raising the literal reds this test."""
     match = _DURATION.search(_turns_block())
     assert match, "turns needs a defaultVisibilityTimeout with a seconds/minutes unit"

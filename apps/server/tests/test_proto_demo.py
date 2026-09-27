@@ -267,7 +267,7 @@ def test_proto_demo_auto_pins_the_step_ceiling_and_waits_out_six_attempts():
     """One message is a whole run on this arm, but the per-attempt ceiling is the SAME
     pinned 1800 s every other target runs at -- the 7200 s override of 2026-09-20 was a
     symptom of the resume defect, not a capacity finding, and came back down with it
-    (research-as-a-job 0b, "the step ceiling: 1,800 s, no test exception").
+    (PR #2870 item 0b, "the step ceiling: 1,800 s, no test exception").
 
     So the arm no longer buys a longer attempt; it waits out MORE of them. The export
     stays because --deadline-s is sized off the name and POSIX arithmetic reads an unset

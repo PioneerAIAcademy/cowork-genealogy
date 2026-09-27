@@ -156,7 +156,7 @@ class SandboxProvider(ABC):
     async def resume(self, sandbox_id: str) -> Sandbox: ...
 
     async def heartbeat(self, sandbox_id: str) -> bool:
-        """Restart the sandbox's continuous-runtime clock (research-as-a-job 1d).
+        """Restart the sandbox's continuous-runtime clock (PR #2870 item 1d).
 
         NOT abstract: a provider with no such clock is correct to do nothing, and the
         default says so once rather than in every implementation. True means a clock was

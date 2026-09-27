@@ -1,4 +1,4 @@
-"""The continue-policy copies must agree (research-as-a-job 1b/1c/1d).
+"""The continue-policy copies must agree (PR #2870 items 1b/1c/1d).
 
 "Whether to veto the model's voluntary stop" exists in **two** implementations, in two
 packages that cannot import each other:

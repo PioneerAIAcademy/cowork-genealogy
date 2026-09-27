@@ -1,4 +1,4 @@
-"""Keep a live sandbox's clock running while its agent works (research-as-a-job 1d).
+"""Keep a live sandbox's clock running while its agent works (PR #2870 item 1d).
 
 THE PROBLEM. ``_RUNNING_TIMEOUT_S = 3600`` in ``sandbox/e2b.py`` is E2B's Hobby-tier
 maximum, and it clocks **continuous runtime, not idleness**. Until now ``set_timeout``

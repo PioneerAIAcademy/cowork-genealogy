@@ -629,7 +629,7 @@ def _env_float(name: str, default: float) -> float:
     return value if value > 0 else default
 
 
-# research-as-a-job 1a. Sized on STEP count, not on the nudge histogram: over the 189
+# PR #2870 item 1a. Sized on STEP count, not on the nudge histogram: over the 189
 # committed e2e runs, Skill/Task/Agent steps per run are median 15, p90 25, p99 51,
 # max 76, so this clears p99 with margin. The nudge histogram (median 1, p90 4) describes
 # runs under a harness that FORBIDS yielding and does not describe this regime; the plan

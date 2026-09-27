@@ -4,7 +4,7 @@ import ChatPane from '../ChatPane'
 import type { SessionConnection, Listener, WsMessage } from '../../transport/SessionConnection'
 import { TURN_OUTCOME_LABELS, SPEND_CAP_LABEL } from '../chatEvents'
 
-// research-as-a-job 1b and 1c, through the real component.
+// PR #2870 items 1b and 1c, through the real component.
 //
 // WHY THIS FILE EXISTS. The mutation check reverted all eight ChatPane.tsx hunks of that
 // work INDIVIDUALLY and no test noticed a single one — including the line that IS the

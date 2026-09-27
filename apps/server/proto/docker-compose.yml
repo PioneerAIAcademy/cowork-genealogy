@@ -199,7 +199,7 @@ services:
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
       POLL_S: "1"
       SSE_PING_S: "15"
-      # research-as-a-job 1a: the Stop hook's veto cap, stamped on every queue message
+      # PR #2870 item 1a: the Stop hook's veto cap, stamped on every queue message
       # this tier enqueues (begin_turn -> body.max_nudges) and preferred by run_turn over
       # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: this
       # tier has no auth, so a request field would let any client set its own nudge

@@ -1,4 +1,4 @@
-"""What a session has cost, and the bound on it (research-as-a-job 1e).
+"""What a session has cost, and the bound on it (PR #2870 item 1e).
 
 ONE copy for two planes, for the same reason ``continue_policy`` is: the prototype's cap
 and the alpha's must fire at the same dollar, and two hand-kept price tables is the one
