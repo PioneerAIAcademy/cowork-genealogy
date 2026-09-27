@@ -525,7 +525,8 @@ Two distinct config sources:
 2. **Per-user, on the user's machine:** `~/.familysearch-mcp/`
    directory, `mode: 0o600`. Holds `tokens.json` (OAuth tokens from
    `login`) and `config.json` (per-user tunables like `wikiApiUrl`).
-   `loadConfig` / `saveConfig` read and write the per-user JSON.
+   `loadConfig` reads the per-user JSON. Nothing in the engine writes
+   it: the user, the e2e harness or the hosted control plane does.
    **Do not** introduce env-var fallbacks — the files are the sole
    sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
    and are read via `loadConfig(principal)`.
@@ -537,7 +538,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl(principal)` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required

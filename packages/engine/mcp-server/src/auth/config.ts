@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile } from "node:fs/promises";
 import type { AppConfig } from "../types/auth.js";
 import type { Principal } from "./principal.js";
 
@@ -92,25 +92,8 @@ export async function ensureStorageDir(): Promise<void> {
   await chmod(STORAGE_DIR, 0o700);
 }
 
-export const HOSTED_CONFIG_READ_ONLY_MESSAGE =
-  "Per-user settings are managed by the web app in a hosted session and cannot be changed from here.";
-
 export const HOSTED_SESSION_MANAGED_MESSAGE =
   "The FamilySearch session is managed by the web app in a hosted session; sign out there.";
-
-export async function saveConfig(patch: Partial<AppConfig>, principal: Principal): Promise<void> {
-  if (principal.kind === "bearer") {
-    throw new Error(HOSTED_CONFIG_READ_ONLY_MESSAGE);
-  }
-  const existing = await loadConfig(principal);
-  const merged: AppConfig = { ...existing, ...patch };
-  await ensureStorageDir();
-  await writeFile(
-    CONFIG_STORAGE_PATH,
-    JSON.stringify(merged, null, 2),
-    { mode: 0o600 }
-  );
-}
 
 export async function getClientId(): Promise<string> {
   let raw: string;

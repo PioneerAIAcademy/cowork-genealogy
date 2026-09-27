@@ -2411,7 +2411,7 @@ smaller one with a make target.
 
 **The prototype is a second entrypoint, never a replacement.** `src/index.ts` keeps
 stdio and every tool — 49 with `sidecar_read`, 50 if PR #2397 lands first — including
-`login`/`logout`/`auth_status`/`configure_openrouter`,
+`login`/`logout`/`auth_status`,
 which are the only way a desktop `.mcpb` user authenticates. Until PR #2405 no shipped
 artifact was built by any CI job — `mcpb` appeared in the workflows exactly once, in a
 comment saying not to fire it — so a break surfaced at release time rather than in a
