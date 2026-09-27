@@ -1130,7 +1130,7 @@ one, because the key is `image_filename`, not imageId:
 - Register the schema in `allToolSchemas` (`src/tool-schemas.ts`) — the
   single source of truth and the packaging-drift test's reference.
 - Dispatch it in `src/server.ts`.
-- Add both tool names to `manifest.json`'s `tools` array (kept in sync with
+- Add the tool name to `manifest.json`'s `tools` array (kept in sync with
   `allToolSchemas` by `tests/packaging/manifest.test.ts`).
 - Add the new per-user config keys to the config table in **CLAUDE.md**
   (§ "Secrets/config convention") and `research-schema`-adjacent docs if
@@ -1271,9 +1271,9 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `src/auth/config.ts` — `getOpenRouterApiKey`, `getOpenRouterModel`, default
   slug constant, missing-key message
 - `src/tools/image-read.ts` — use the shared fetcher (dedupe only)
-- `src/tool-schemas.ts` — register both new schemas
-- `src/index.ts` — dispatch both
-- `manifest.json` — add both tool names
+- `src/tool-schemas.ts` — register the new schema
+- `src/server.ts` — dispatch it
+- `manifest.json` — add the tool name
 - `packages/engine/plugin/skills/record-extraction/SKILL.md` — route Image
   path to `image_transcribe`
 - `docs/specs/image-read-spec.md` — cross-reference
@@ -1371,6 +1371,6 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
   (`enhance_for_ocr` — the prep pipeline the spike evaluated and rejected; §7)
 - `src/tools/wiki-search.ts` + `tests/tools/wiki-search.test.ts` (HTTP-tool
   and mocked-`fetch` test patterns to mirror)
-- `src/auth/config.ts` (`loadConfig`/`saveConfig`/`get*` — key-storage
+- `src/auth/config.ts` (`loadConfig`/`get*` — key-storage
   pattern to follow)
 - `docs/skill-lifecycle.md` §5 (lane rule for the SKILL.md migration)
