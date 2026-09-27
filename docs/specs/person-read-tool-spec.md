@@ -298,7 +298,7 @@ fetched for the id the redirect landed on, not the id the caller passed.
     "Set relatives=true to include parents, siblings, spouses, and children. " +
     "Set sourceDescriptions=true to include attached sources — for a " +
     "non-living subject this also returns source-style memories (scanned " +
-    "wills, certificates, obituaries, family stories), transcribed where the " +
+    "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -749,8 +749,12 @@ throws on the final hop. Each kept memory converts to the same source shape:
 | — | `image_ref` | Set only when `projectPath` was given and the scan was retained. Retention covers `image/*` ONLY, and the file is keyed by the **memory id** (`images/<memory id>.jpg`). A PDF is transcribed but not retained: `imageFilenameFor` writes `.jpg` and `gcUnreferencedImages` sweeps `images/*.jpg`, so a retained PDF would sit under a name the viewer cannot render and the GC mis-handles. Its `url` always leads back to the artifact. |
 | — | `notes` | The tool's own note when a memory was not transcribed. |
 
-**Kept:** `application/pdf`; anything of media kind `Document` or `Story`; and
-anything whose title or description preview matches record-document language.
+**Kept:** `application/pdf`; anything of media kind `Document`; and anything
+whose title or description preview matches record-document language. A `Story`
+is kept only through that last arm, like a `Photo` (lead, 2026-09-27): most
+stories are family recollection rather than sources (1 of 9 on the probe corpus
+carried record language), and a kept story's full text, up to 12,239 characters
+measured, lands in `sources[]` on every read.
 **Dropped:** `audio/*` and `video/*` unconditionally, and the person's
 designated portrait (`/tree/persons/{pid}/portrait`). The media kind comes from
 `artifactMetadata[].qualifiers[].name`

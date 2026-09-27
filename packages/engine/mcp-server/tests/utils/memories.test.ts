@@ -54,12 +54,21 @@ describe("filterSourceStyle — stage 2 keeps on any arm", () => {
     expect(filterSourceStyle([m], null)).toHaveLength(1);
   });
 
-  it("keeps Document and Story on kind alone, with no record language", () => {
+  it("keeps a Document on kind alone, with no record language", () => {
     const doc = mem({ id: "44005158", title: "Almon G. Clegg Poems.pdf", kind: "Document", mediaType: "application/pdf" });
-    const story = mem({ id: "228755097", title: "UNITY IN THE TRACES", kind: "Story", mediaType: "text/plain" });
     expect(hasRecordLanguage(doc)).toBe(false);
+    expect(filterSourceStyle([doc], null)).toHaveLength(1);
+  });
+
+  it("drops a Story with no record language — stories earn their way in like photos", () => {
+    const story = mem({ id: "228755097", title: "UNITY IN THE TRACES", kind: "Story", mediaType: "text/plain" });
     expect(hasRecordLanguage(story)).toBe(false);
-    expect(filterSourceStyle([doc, story], null)).toHaveLength(2);
+    expect(filterSourceStyle([story], null)).toEqual([]);
+  });
+
+  it("keeps a Story whose title carries record language", () => {
+    const story = mem({ id: "s-obit", title: "Obituary of Almon Clegg", kind: "Story", mediaType: "text/plain" });
+    expect(filterSourceStyle([story], null)).toHaveLength(1);
   });
 
   it("keeps the record scans uploaders file under Photo — the trade the ruling bought", () => {
