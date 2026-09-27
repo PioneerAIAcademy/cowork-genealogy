@@ -55,7 +55,7 @@ describe("filterSourceStyle — stage 2 keeps on any arm", () => {
   });
 
   it("keeps a Document on kind alone, with no record language", () => {
-    const doc = mem({ id: "44005158", title: "Almon G. Clegg Poems.pdf", kind: "Document", mediaType: "application/pdf" });
+    const doc = mem({ id: "44005158", title: "Almon G. Clegg Poems", kind: "Document", mediaType: "image/jpeg" });
     expect(hasRecordLanguage(doc)).toBe(false);
     expect(filterSourceStyle([doc], null)).toHaveLength(1);
   });
