@@ -103,11 +103,15 @@ def _not_fs_answers(tool_calls) -> tuple[list[str], list[str], int]:
 #: seen in committed or scratch replies: "synthetic ID" (the original 8 of 20),
 #: "local project ID, not a FamilySearch person ID" (after the word "synthetic"
 #: left the skill), and the false "does not have a FamilySearch ID".
-_ID_TYPE_WORDING = (
-    r"\bsynthetic\b|\blocal (?:project |tree )?id\b|\bproject id\b|\btree id\b|"
+_ID_TYPE_WORDING_ANY_RUN = (
+    r"\bsynthetic\b|\blocal (?:project |tree )?id\b|"
     r"\bnot a familysearch (?:person )?id\b|\bno familysearch id\b|"
     r"\bdoes(?:n't| not) have a familysearch id\b"
 )
+#: Once the tool has answered not_familysearch_id, "project id" and "tree id"
+#: can only be about that id. Without such an answer they are not: a run that
+#: scored KD96-TV2 wrote "the project ID for Christian P. Hole is `KD96-TV2`".
+_ID_TYPE_WORDING = _ID_TYPE_WORDING_ANY_RUN + r"|\bproject id\b|\btree id\b"
 #: A heading line: markdown `#`, a bold-only line, or an all-caps label such as
 #: the report template's "FAMILYSEARCH QUALITY:". A heading labels a section; it
 #: is not a statement about the person.
@@ -138,17 +142,26 @@ def test_not_fs_reply_names_no_id(tool_calls, text_response, test):
     relationships). Splits at . ! ? and newlines, not at colons, so a quality
     label and an id after it stay in one sentence.
 
-    Skipped on negative tests and on runs with no not-FamilySearch-id answer.
+    On a run with no not-FamilySearch-id answer — including one that never
+    called `person_quality`, which is where all 30 committed "synthetic ID"
+    leaks came from — only (a) applies, with the narrower
+    `_ID_TYPE_WORDING_ANY_RUN`: (b) needs the answered ids to look for.
+
+    Skipped on negative tests.
     """
     import re as _re
 
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
     ids, _sentences, _calls = _not_fs_answers(tool_calls)
-    if not ids:
-        pytest.skip("no person_quality answer for a non-FamilySearch id")
     response = text_response or ""
     sentences = [x for x in _re.split(_SENTENCE_SPLIT, response) if x.strip()]
+
+    if not ids:
+        for sentence in sentences:
+            if _re.search(_ID_TYPE_WORDING_ANY_RUN, sentence, _re.I):
+                raise AssertionError(f"the reply characterises an id or its type: {sentence.strip()!r}")
+        return
 
     for sentence in sentences:
         if _re.search(_ID_TYPE_WORDING, sentence, _re.I):

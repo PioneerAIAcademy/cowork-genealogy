@@ -142,9 +142,39 @@ def test_mixed_run_allows_a_normal_quality_section_for_the_familysearch_person()
     check_not_fs_reply([_scored("KD96-TV2"), _not_fs("I1")], reply, POSITIVE)
 
 
-def test_skips_when_no_person_got_the_not_familysearch_answer():
-    with pytest.raises(pytest.skip.Exception):
-        check_not_fs_reply([_scored("KD96-TV2")], "Patrick is a synthetic ID.", POSITIVE)
+def _no_skip(tool_calls, reply):
+    """A skip here is a regression — it is how V1 once missed every committed
+    leak — and pytest reports a skip as green, so turn it into a failure."""
+    try:
+        check_not_fs_reply(tool_calls, reply, POSITIVE)
+    except pytest.skip.Exception:
+        pytest.fail("V1 skipped a positive run with no not_familysearch_id answer")
+
+
+@pytest.mark.parametrize("leak", SYNTHETIC_LEAKS)
+def test_real_leak_fails_when_person_quality_was_never_called(leak):
+    """The 2026-09-21 leaks came from runs that skipped person_quality; V1 once
+    skipped such runs, so it could not see the failure it was written for."""
+    with pytest.raises(AssertionError):
+        _no_skip([], f"{leak}\n\n{BODY}")
+
+
+def test_id_type_leak_fails_beside_a_scored_familysearch_person():
+    with pytest.raises(AssertionError):
+        _no_skip([_scored("KD96-TV2")], "Patrick is a synthetic ID.\n\n" + BODY)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        # v1_2026-09-25_16-03-09 _014, verbatim: a FamilySearch id called a project id
+        "Good — the project ID for Christian P. Hole is `KD96-TV2`. Running both checks in parallel now.",
+        BODY,
+    ],
+)
+def test_no_not_familysearch_answer_passes_without_id_type_wording(reply):
+    _no_skip([_scored("KD96-TV2")], reply)
+    _no_skip([], reply)
 
 
 def test_skips_negative_tests():
