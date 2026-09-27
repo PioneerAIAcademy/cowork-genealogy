@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_008",
+    "skill": "search-wikipedia",
+    "name": "Out-of-scope request — decline, search nothing, write nothing",
+    "type": "positive",
+    "description": "The delegation carries a request entirely outside the genealogy toolkit's scope. The agent must recognise it is not an encyclopedia article lookup, decline in one sentence, and neither call wikipedia_search nor save a file — it must not coerce the request into a lookup ('look up CSV on Wikipedia' is a contorted reading that ignores the actual ask). Converted from a routed out-of-scope negative to a direct decline test on the lead's ruling of 2026-09-24 (issue #2795): with the skill deleted there is no router, and a direct negative has no defined outcome path — `activated` is derived from the spawn plus a substantive reply, and the agent's return contract makes every reply substantive, so a routed `correct_skill: []` reading would abort `skill not found` and an activation reading would be vacuous. The verdict is therefore the deterministic no-harm invariant plus the judge's base dimensions. The 'wikipedia-search-any' fixture stays declared so the zero-calls assertion is falsifiable and is expected to go UNUSED (#1788, #1662 finding F6). Do not remove it as an unused fixture.",
+    "tags": [
+      "out-of-scope",
+      "no-wiki-no-write",
+      "scope-decline",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Help me write a Python function that parses a CSV file",
+    "scenario": null
+  },
+  "judge_context": [
+    "The agent should reply briefly that the request is outside the genealogy toolkit's scope, rather than coercing it into an encyclopedia lookup. It has no lane to hand this back to — historical-context, locality-guide and search-familysearch-wiki are all genealogy lanes and none of them owns a programming question — so a plain decline is the whole correct answer and naming another agent would be wrong.",
+    "A no-wiki-no-write invariant validator also runs on this test: no wikipedia_search call and no saved .md file. The registered fixture exists only to make that clause falsifiable; do not read it as a hint that a lookup is expected.",
+    "Grade the reply's economy exactly as on a saved-file run: the decline sentence, then the two summary paragraphs. No file is named because none exists."
+  ],
+  "mcp_fixtures": [
+    "wikipedia-search-any"
+  ]
+}

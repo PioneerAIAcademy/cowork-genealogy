@@ -396,15 +396,20 @@ Per-project context about the researcher lives in a `researcher_profile`
 section of `research.json`. `init-project` writes a fixed profile at
 project start (`experience_level: "novice"` and one house-style
 `narration_guidance` string) and asks nothing about the researcher; the
-only opening-turn question is the research objective, non-blocking. 26 of the 27 skills
-carry a one-line `**Narration:**` instruction that tells Claude to read
-`researcher_profile.narration_guidance` and apply it as the narration
-style for that invocation. `search-wikipedia` is the deliberate
+only opening-turn question is the research objective, non-blocking. Every
+shipped skill carries a one-line `**Narration:**` instruction that tells Claude
+to read `researcher_profile.narration_guidance` and apply it as the narration
+style for that invocation. The `search-wikipedia` **agent** is the deliberate
 exception — the line's own fallback is "a one-line preamble per action",
 and that preamble is exactly what its
 `test_reply_does_not_narrate_pending_step` validator fails it for. Do
-not add the line to it; re-derive the exception list with
-`grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md`.
+not add the line to it. The exception moved from the skills to the agents when
+that skill was replaced by an agent on 2026-09-27; re-derive both lists with
+`grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
+`grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
+three other agents also carry no line — `search-wikipedia` is the one whose
+absence is a *rule*, pinned by
+`tests/packaging/search-wikipedia-no-narration.test.ts`.
 
 Three architectural rules made this design necessary:
 
@@ -879,8 +884,10 @@ templates directly:
 - **A new MCP tool** — copy `src/tools/wikipedia.ts` and its sibling four files.
   The full site list is in `DEVELOPMENT.md` → "How to add a new feature" and
   `docs/architecture.md` → "The engine's three-way decomposition".
-- **A new skill** — copy `packages/engine/plugin/skills/search-wikipedia/`, and
-  keep its rule: **no network in skill `scripts/`.**
+- **A new capability** — under the lead's 2026-09-22 ruling a new capability is
+  an **agent**, not a skill: copy `packages/engine/plugin/agents/search-wikipedia.md`.
+  If you are editing one of the skills that remain, keep their rule: **no
+  network in skill `scripts/`.**
 - **Checking an implementation against its spec** — read it against
   `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent
   to, quoting both sides. The spec is the source of truth.
@@ -908,11 +915,13 @@ reviews on the PR.
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
-## Working reference skill
+## Working reference agent
 
-The `search-wikipedia` skill in `packages/engine/plugin/` is the canonical minimal
+`packages/engine/plugin/agents/search-wikipedia.md` is the canonical minimal
 example of the full plugin pipeline — it calls the `wikipedia_search`
-MCP tool, populates a markdown template, and saves the result to a
-file. Copy this structure when wiring a new skill to one of the other
-tools. Don't mutate `search-wikipedia` itself; create a new skill
-folder.
+MCP tool, fills a markdown template inlined in its own body, and saves the
+result to a file. It is the smallest file that shows every part an agent needs:
+the three tool spellings, a scope section that hands work back by name rather
+than spawning it, and the `summary_for_user` return contract. Copy this
+structure when wiring a new agent to one of the other tools. Don't mutate
+`search-wikipedia` itself; create a new agent file.

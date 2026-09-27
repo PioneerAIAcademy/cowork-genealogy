@@ -39,7 +39,7 @@ COPY packages/engine/mcp-server/build             /opt/genealogy/engine/build
 COPY packages/engine/mcp-server/config            /opt/genealogy/engine/config
 RUN cd /opt/genealogy/engine && npm ci --omit=dev --ignore-scripts
 
-# Plugin: 28 skills + 6 agents + the shipped PreToolUse hook (python3 runs it).
+# Plugin: 26 skills + 9 agents + the shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
 
 # The worker and what it imports: app.agent.real_agent (map_message) and proto/sql,

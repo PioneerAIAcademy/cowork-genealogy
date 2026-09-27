@@ -200,7 +200,7 @@ sibling skill.
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
 | **`convert-dates`** | Julian/Gregorian, Old Style, Quaker months, double dating | Identifying the calendar regime; the arithmetic belongs to the tool | `convert_calendar` | Nothing — and **nothing downstream persists the converted date** |
 | **`search-familysearch-wiki`** | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API) | `<topic-slug>.md` in the working folder. **Not logged to `log[]`** |
-| **`search-wikipedia`** | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
+| **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`validate-schema`** | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
 
@@ -333,11 +333,12 @@ No routing-table row names these, so an autonomous `/research` run never enters 
 `search-full-text` · `timeline` · `check-warnings` · `translation` ·
 `historical-context` · `convert-dates` · `tree-edit` · `validate-schema` ·
 `forget-and-rederive` · `project-status` · `search-familysearch-wiki` ·
-`search-wikipedia` · `source-evaluation` · `init-project` (named in prose, not in the table)
+`source-evaluation` · `init-project` (named in prose, not in the table)
 
-`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799). It is
-now an agent, and an agent is auto-delegated from its own `description` rather than
-from a routing-table row — so the row's absence no longer implies it cannot fire.
+`citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799), and
+`search-wikipedia` on 2026-09-27 (issue #2795). Both are now agents, and an agent is
+auto-delegated from its own `description` rather than from a routing-table row — so
+the row's absence no longer implies either cannot fire.
 **Whether it actually fires in an autonomous run is unmeasured**, and it will stay
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
 from this list as evidence either way.

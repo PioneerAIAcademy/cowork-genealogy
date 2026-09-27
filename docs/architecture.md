@@ -716,8 +716,11 @@ Architecturally:
 > canonical template was one of the non-FS tools — which is part of why it and
 > its two siblings were removed.
 
-**Add a skill.** Copy `packages/engine/plugin/skills/search-wikipedia/` — the
-canonical minimal example of the full pipeline. Don't mutate it. Then:
+**Add a skill.** Note first that under the lead's 2026-09-22 ruling a new
+capability is an **agent**, not a skill — copy
+`packages/engine/plugin/agents/search-wikipedia.md`, the canonical minimal
+example of the full pipeline, and see "Agent frontmatter" below. What follows
+applies to the skills that remain. Don't mutate the reference file. Then:
 `docs/skill-authoring-guide.md` for the body; the `description` is linted twice
 at 1024 chars (§3.2); a skill meant to run inside `/research` also needs a
 **routing row** (§4) or it will never be reached; no network in `scripts/`; no

@@ -1,8 +1,22 @@
 # search-wikipedia — prohibition list (Step 1 of the deep-dive guide)
 
+> **Subject moved 2026-09-27 (issue #2795).** `search-wikipedia` is now an
+> **agent**, `packages/engine/plugin/agents/search-wikipedia.md`, and the skill
+> directory this list was built from no longer exists. Every rule below still
+> describes the shipped behaviour, with three changes the reader has to carry:
+> the template is inlined in the agent body rather than read from
+> `templates/wiki-summary.md`; the scope guard's second arm is now a **hand-back**
+> that names the owning agent rather than a decline; and the old "step 5, one
+> sentence only" is the agent's `## Return contract`, one caller-facing line
+> followed by `---` and the two `summary_for_user` paragraphs. Rule 18's
+> no-narration instrument is unchanged and still the reason this agent carries no
+> `**Narration:**` line. Section and rule numbering is left as it was — this is a
+> dated audit record, not a live spec.
+
 Built from `packages/engine/plugin/skills/search-wikipedia/SKILL.md` and
-`templates/wiki-summary.md` as this PR leaves them (branched from `main` at
-`fde53f1b`; step 4 gains the transliteration clause here, see rule 15). Every line
+`templates/wiki-summary.md` as they stood when this list was written (branched
+from `main` at `fde53f1b`; step 4 gains the transliteration clause here, see
+rule 15). Every line
 below is checkable by eye against a run-log transcript (`output.text_response`,
 `output.tool_calls`, `output.files_created`) or against the workspace snapshot the
 validators receive (`after_state["files"]`, which holds the saved file's **full
@@ -90,8 +104,9 @@ rebuilding it.**
     The no-narration half of this rule is now **explicit in the body**, in two
     places rather than inferred from "One sentence only": a standalone line at
     the top of `## What to do` ("Do not announce a step before doing it") and a
-    clause in step 5 ("it is the only thing you say in this invocation — no
-    preamble before the search, the fill, or the write"). It sits in both
+    clause under `## Return contract` (since #2795: the return is "the only
+    thing you say", and the `next_step` sentence is forbidden the step-announcing
+    shape outright). It sits in both
     because every observed violation is a `Now I'll …` preamble emitted while
     executing steps 3–4, i.e. before the model reaches step 5.
 
@@ -103,5 +118,5 @@ rebuilding it.**
 
 ## F. State
 
-19. This skill writes no project state. No `research.json` write, no
+19. This agent writes no project state. No `research.json` write, no
     `tree.gedcomx.json` write, no `results/` sidecar. Safe to re-invoke.

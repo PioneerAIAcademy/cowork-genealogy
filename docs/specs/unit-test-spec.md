@@ -653,6 +653,25 @@ and the validator that gates on it, and only the input changes. A negative
 *without* `grade_on_invariant` has no defined outcome path on the direct arm and
 must be deleted or re-shaped, not converted.
 
+**An out-of-scope negative (`correct_skill: []`) is re-shaped into a positive
+decline test.** `ut_search_wikipedia_008` is the worked case (lead ruling
+2026-09-24): `type` becomes `positive`, the off-topic prompt moves
+into `input.delegation`, the `negative` block is deleted, and the test gains
+`scope-decline` beside `direct-arm`. Its verdict is then the tag-gated no-harm
+validator (no `wikipedia_search` call, no new `.md`) plus the base dimensions,
+which is what the routed version's `grade_on_invariant` sibling would have had.
+
+Converting it as a negative was considered and does not work, in either
+reading. As a *routed* negative it aborts `skill not found` the moment the
+skill directory is deleted. As a *direct* negative it grades nothing: a direct
+test's outcome is decided on the spawn, `activated` is derived from that spawn
+plus a substantive reply, and an agent's return contract makes **every** reply
+substantive -- one caller-facing line plus two `summary_for_user` paragraphs --
+so `activated` is true whatever the agent decided, including on the correct
+decline. The workflow validators that would otherwise fail such a test skip on
+`scope-decline`; `test_reply_does_not_narrate_pending_step` deliberately does
+not, because a decline is graded for narration like any other reply.
+
 On a direct test the harness:
 
 - builds a workspace staging `.claude/agents/` and **no skills at all** — the
@@ -1955,7 +1974,10 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 }
 ```
 
-### 13.3 Positive test: search-wikipedia (stateless skill)
+### 13.3 Positive test: search-wikipedia (stateless, direct-agent)
+
+`search-wikipedia` became an agent on 2026-09-27, so `test.skill` names
+`agents/search-wikipedia.md` and the input is a `delegation` (§5.2.1).
 
 ```json
 {
@@ -1965,18 +1987,20 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "name": "Simple topic lookup",
     "type": "positive",
     "description": "Basic Wikipedia lookup for a genealogically relevant topic.",
-    "tags": ["wikipedia", "simple"]
+    "tags": ["wikipedia", "simple", "direct-arm"]
   },
 
   "input": {
-    "user_message": "Look up Schuylkill County, Pennsylvania on Wikipedia",
+    "delegation": "Look up Schuylkill County, Pennsylvania on Wikipedia
+
+topic: Schuylkill County, Pennsylvania",
     "scenario": null
   },
 
   "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
   "judge_context": [
-    "Should save the summary to a file in the user's working folder, not just display it"
+    "Should save the summary to a file in the working folder, not just display it"
   ]
 }
 ```
