@@ -217,9 +217,13 @@ class E2eResult:
     # Calls the per-context policy denied. TWO arms, and only `tool` tells them
     # apart — `blocked_by` is "context" for both:
     #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: an `extraction_append`
-    #     (the record-extractor's write, #942) or, since #1273 Item 1, an
-    #     `image_read` (whose base64 would overflow the transport). Neither has
-    #     been observed in the committed corpus.
+    #     (the record-extractor's write, #942); since #1273 Item 1, an
+    #     `image_read` (whose base64 would overflow the transport); and since
+    #     #1636, an `image_transcribe` (which returns text, so its reason is
+    #     not the buffer but that the router cannot know a real `imageId`
+    #     without routing to search-images first). Only `image_read` has been
+    #     observed in the committed corpus — 4 fires across two fixtures,
+    #     measured 2026-09-27; see guardrail-enforcement-spec.md.
     #   - an owned-section `research_append` (#1273): a caller wrote a section it
     #     does not own. NOT main-thread-only — `owner_denied`'s `out_of_lane` rule
     #     fires for a named subagent reaching outside its own sections. Every

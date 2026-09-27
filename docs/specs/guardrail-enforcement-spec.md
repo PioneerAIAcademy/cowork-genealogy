@@ -407,13 +407,16 @@ measured — the same split `find_protected_writes_by_unnamed_delegate`'s docstr
 records.
 
 The e2e `blocked_context_calls` array was considered for the compliance axis and
-is not part of it today: the subagent-only arm is now at 2 of 41 eligible runs,
-both fires `image_read` on the main thread in `anders-monsen-ancestry`, while the
+is not part of it today: the subagent-only arm is now at 2 of 48 eligible runs —
+four fires, every one `image_read` on the main thread, across two fixtures
+(`anders-monsen-ancestry` and `spriggs-parents-1898`) — while the
 owned-section fires the unit harness sees are gated separately, through
 `blocked_owned_section_writes` and `test_no_out_of_lane_section_writes`
 (see the §6 rows above). So the two planes differ in where they put this event,
-not in whether they enforce it — measured at 63f7a6f2e. Whether these two
+not in whether they enforce it — measured at e1a9d9538. Whether these
 subagent-only fires now warrant folding the array into the compliance axis is open.
+`image_transcribe` joined `SUBAGENT_ONLY_TOOLS` after this measurement and has
+no fire in the committed corpus, so it does not move these figures yet.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only
