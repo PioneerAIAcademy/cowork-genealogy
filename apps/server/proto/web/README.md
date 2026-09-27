@@ -16,7 +16,8 @@ It serves the paths `apps/web` already calls, so the SPA is reused verbatim with
 | `GET /api/sessions/{id}/events/stream?after=N` | `text/event-stream`. `retry: 1000`; the catch-up rows after the cursor; the current documents once; then `status turn_active` if a turn is in flight; then a 1 s poll. `: ping` after 15 s idle. |
 | `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST …/resume`, `GET …/state` | Session CRUD in the SPA's `SessionSummary` shape; `/state` reads `documents` (`research.json`, `tree.gedcomx.json`). |
 | `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout` | Stubs: a fixed prototype user. **There is no auth on this tier** — identity is out of the prototype's scope and it binds to localhost. |
-| `GET …/sidecar/{log_id}` → 404; `GET …/image`, `GET …/logs`, `POST …/files`, `POST …/interrupt` → 501 | Not in the prototype; each says why. |
+| `GET …/sidecar/{log_id}` → 404; `GET …/image`, `GET …/logs`, `POST …/files` → 501 | Not in the prototype; each says why. |
+| `POST …/interrupt` → 202 | Stop (research-as-a-job 1c). The worker owns the turn and no control channel reaches it, so this raises a flag on a control-plane row that the worker's `PreToolUse` hook reads before every tool call. |
 
 ## The row → wire contract (what the worker writes, what the SPA reads)
 

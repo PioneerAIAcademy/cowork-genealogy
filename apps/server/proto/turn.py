@@ -31,7 +31,18 @@ reply names Nauvoo. ``--session <id>`` runs it on a seeded session (proto/seed.p
 The kill is generalised for the resume probes (D18): ``--kill-on <bare tool name>``
 (default ``place_search``; ``Agent`` lands it during a delegation), ``--kill-after-s
 <n>`` (default 0, the moment the row appears; ~15 s puts a subagent mid-work) and
-``--text ...`` / ``--text-file <path>`` for the message. The two checks that are about
+``--text ...`` / ``--text-file <path>`` for the message.
+
+``--kill-on-input KEY=VALUE`` narrows ``--kill-on`` to a call whose INPUT matches, which
+is what research-as-a-job 0a needs: the case that produced the synthetic result was a
+BACKGROUND delegation (``Agent`` with ``run_in_background: true``), and killing a
+foreground one resumes cleanly, so tool name alone cannot select it. ``tool_calls`` has
+no input column -- 004_worker.sql adds only ``tool_use_id`` -- so the selector reads the
+``tool_use`` block out of ``session_entries.entry``, the SDK's own transcript. Pair it
+with ``--text-file`` (``probes/background-delegation.txt`` asks for two record
+extractions at once) and ``AUTONOMOUS_MAX_NUDGES > 0``, which ``make proto-kill`` leaves
+at 0: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
+none of the eight ``bagley-father-1884`` runs, so it has to be provoked. The two checks that are about
 the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
 Whatever the checks say, an evidence block follows ``turn_done``: the ``turns`` row, the
 ``tool_calls`` and ``session_entries`` rows written after the kill (the CLI's own words
@@ -42,6 +53,7 @@ before the kill and after ``turn_done``, and the ``text`` events after the kill.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -192,10 +204,35 @@ class KillSpec:
     text: str = TEXT_KILL
     session_id: str | None = None
     container: str = "proto-worker"
+    # 0a: the jsonb fragment the call's input must CONTAIN, or None for name-only.
+    kill_on_input: dict[str, Any] | None = None
+
+    @property
+    def target(self) -> str:
+        """How the selected call reads in a check line."""
+        if not self.kill_on_input:
+            return self.kill_on
+        pairs = ", ".join(f"{k}={json.dumps(v)}" for k, v in self.kill_on_input.items())
+        return f"{self.kill_on}({pairs})"
 
     @property
     def default_text(self) -> bool:
         return self.text == TEXT_KILL
+
+
+# turns.outcome values that mean the resume FAILED. Before research-as-a-job 1c,
+# complete() hardcoded 'ok' and the check was `outcome == "ok"`; now the column says HOW a
+# run ended, and a kill probe run with the Stop hook on (which proto-probe-resume needs,
+# or the run never reaches a delegation) legitimately lands on `completed` -- or on
+# `budget`, when the probe's narrow message exhausts the nudge cap without finishing the
+# project, which is the ordinary shape of a probe run and not a failure of the RESUME.
+#
+# Stated as the failure set rather than the success set on purpose: a new terminal value
+# added later is then a resume that WORKED unless someone says otherwise, which is the
+# safe default for a check whose job is to catch one specific defect. `no_progress` is
+# 0a's terminal failure -- the resume did nothing, twice -- which is exactly what a resume
+# probe exists to catch.
+RESUMED_FAILED_OUTCOMES = frozenset({"no_progress"})
 
 
 def bare_name(tool_name: str) -> str:
@@ -227,6 +264,62 @@ def wait_for_tool_call(dsn: str, turn_id: str, tool: str, deadline_s: float) -> 
     return "timeout"
 
 
+def parse_input_selector(text: str | None) -> dict[str, Any] | None:
+    """``--kill-on-input KEY=VALUE`` -> the jsonb fragment a call's input must contain.
+
+    VALUE is parsed as JSON when it parses, else taken as a bare string. That distinction
+    is the whole point for ``run_in_background=true``: the SDK writes a JSON boolean, and
+    the string ``"true"`` would match nothing and the probe would hang until its deadline
+    looking like "the model never did it"."""
+    if not text:
+        return None
+    key, sep, raw = text.partition("=")
+    key = key.strip()
+    if not sep or not key:
+        raise ValueError(f"--kill-on-input wants KEY=VALUE, not {text!r}")
+    try:
+        value: Any = json.loads(raw)
+    except ValueError:
+        value = raw
+    return {key: value}
+
+
+# A ``tool_use`` block in the SDK's own transcript, with its input -- which ``tool_calls``
+# cannot answer, having no input column. ``@>`` is jsonb containment, so the fragment need
+# not be the whole input. The CASE guards a non-array ``content`` rather than letting
+# jsonb_array_elements raise mid-poll.
+TOOL_USE_INPUT_SQL = (
+    "SELECT c->>'name' FROM session_entries e "
+    "CROSS JOIN LATERAL jsonb_array_elements("
+    "  CASE WHEN jsonb_typeof(e.entry->'message'->'content') = 'array' "
+    "       THEN e.entry->'message'->'content' ELSE '[]'::jsonb END) c "
+    "WHERE e.session_id = %s AND e.entry->>'type' = 'assistant' "
+    "AND c->>'type' = 'tool_use' AND c->'input' @> %s::jsonb ORDER BY e.seq"
+)
+
+
+def wait_for_tool_input(
+    dsn: str, session_id: str, turn_id: str, tool: str, selector: dict[str, Any], deadline_s: float
+) -> str:
+    """``wait_for_tool_call`` narrowed by the call's INPUT (0a). Same three returns.
+
+    The SDK session id is re-read every poll rather than once up front: the worker writes
+    it at claim time, which can be after this starts, and a single NULL read would send
+    every later query against the empty string."""
+    t0 = time.monotonic()
+    fragment = json.dumps(selector)
+    while time.monotonic() - t0 < deadline_s:
+        sdk = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+        if sdk:
+            names = db(dsn, TOOL_USE_INPUT_SQL, (sdk, fragment))
+            if any(matches_bare(n or "", tool) for (n,) in names):
+                return "seen"
+        if one(dsn, "SELECT completed_at FROM turns WHERE turn_id = %s", (turn_id,)) is not None:
+            return "completed"
+        time.sleep(0.2)
+    return "timeout"
+
+
 def docker(*args: str) -> None:
     subprocess.run(["docker", *args], check=True, capture_output=True, text=True, encoding="utf-8")
 
@@ -250,13 +343,15 @@ def kill_checks(rows: KillRows, spec: KillSpec) -> list[Check]:
     receive_count, completed, outcome, cost = rows.turn_row if rows.turn_row else (None, None, None, None)
     checks: list[Check] = [
         ("kill: the turn was redelivered (receive_count >= 2)", (receive_count or 0) >= 2, f"receive_count={receive_count}"),
-        ("kill: completed with outcome ok and cost_usd > 0",
-         completed is not None and outcome == "ok" and cost is not None and float(cost) > 0, f"row={rows.turn_row}"),
+        (f"kill: completed with cost_usd > 0 and an outcome that is not "
+         f"{'/'.join(sorted(RESUMED_FAILED_OUTCOMES))}",
+         completed is not None and outcome is not None and outcome not in RESUMED_FAILED_OUTCOMES
+         and cost is not None and float(cost) > 0, f"row={rows.turn_row}"),
         ("kill: the same SDK session resumed, not a new one", bool(rows.sdk_before) and rows.sdk_after == rows.sdk_before,
          f"{rows.sdk_before} -> {rows.sdk_after}"),
         ("kill: session_entries grew past the kill", rows.entries_after > rows.entries_at_kill,
          f"{rows.entries_at_kill} -> {rows.entries_after}"),
-        (f"kill: a {spec.kill_on} call completed with a duration (criterion 4)",
+        (f"kill: a {spec.target} call completed with a duration (criterion 4)",
          any(d == "allow" and ms is not None for d, ms in rows.kill_calls), f"calls={rows.kill_calls}"),
     ]
     if spec.default_text:
@@ -416,9 +511,13 @@ def run_kill(base: str, dsn: str, deadline_s: float, spec: KillSpec) -> tuple[li
         project_id = one(dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
         turn_id = post_message(client, base, session_id, spec.text)
         figures["turn_id"] = turn_id
-        outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
-        checks.append((f"kill: the turn reached its first {spec.kill_on} call", outcome == "seen",
-                       "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"))
+        if spec.kill_on_input:
+            outcome = wait_for_tool_input(dsn, session_id, turn_id, spec.kill_on, spec.kill_on_input, deadline_s)
+            missed = "the turn finished without one" if outcome == "completed" else "no matching tool_use block in time"
+        else:
+            outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
+            missed = "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"
+        checks.append((f"kill: the turn reached its first {spec.target} call", outcome == "seen", missed))
         if outcome != "seen":
             return checks, figures
         if spec.kill_after_s > 0:
@@ -429,7 +528,7 @@ def run_kill(base: str, dsn: str, deadline_s: float, spec: KillSpec) -> tuple[li
         t_kill = time.monotonic()
         docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
         docker("start", spec.container)
-        figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.kill_on,
+        figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
                         "kill_after_s": spec.kill_after_s})
         try:
             _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
@@ -499,6 +598,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--kill-on", default=KILL_TOOL,
                    help=f"with --kill: the bare tool name whose PreToolUse row triggers the kill (default {KILL_TOOL}; "
                         "Agent lands it during a delegation)")
+    p.add_argument("--kill-on-input", default=None, metavar="KEY=VALUE",
+                   help="with --kill-on: narrow to a call whose INPUT contains KEY=VALUE, read from "
+                        "session_entries (tool_calls has no input column). 0a's probe uses "
+                        "--kill-on Agent --kill-on-input run_in_background=true")
     p.add_argument("--kill-after-s", type=float, default=0.0,
                    help="with --kill: seconds to wait after that row before the kill (default 0: at once)")
     text = p.add_mutually_exclusive_group()
@@ -521,6 +624,7 @@ def kill_spec(args: argparse.Namespace) -> KillSpec:
     if args.kill_after_s < 0:
         raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
     return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
+                    kill_on_input=parse_input_selector(args.kill_on_input),
                     session_id=args.session, container=args.worker_container)
 
 

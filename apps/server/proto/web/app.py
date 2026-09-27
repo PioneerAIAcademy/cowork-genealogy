@@ -13,11 +13,17 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /api/sessions/{id}/events/stream        text/event-stream; Last-Event-ID resume
   GET/POST /api/sessions, GET/PATCH/DELETE /api/sessions/{id}, POST .../resume, GET .../state
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout   (no auth -- see README)
-  GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files, .../interrupt -> 501
+  GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
+  POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
 
-The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at}``. The
-``turn_id`` is a UUID minted here and travels IN THE BODY -- never the SQS MessageId,
-which the shim holds and the worker never sees.
+The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at,
+max_nudges}``. The ``turn_id`` is a UUID minted here and travels IN THE BODY -- never the
+SQS MessageId, which the shim holds and the worker never sees. ``max_nudges`` (1a) is
+this tier's ``AUTONOMOUS_MAX_NUDGES``, stamped on every message and preferred by the
+worker over its own: the worker serves the browser and ``make proto-demo`` alike and
+cannot tell them apart. It is read from the ENVIRONMENT and never from the request --
+this tier has no auth, so a ``MessageBody`` field would let any client set its own nudge
+budget.
 
 Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads the wire):
 
@@ -36,7 +42,8 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15). Startup applies proto/sql/*.sql (all idempotent).
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). Startup
+applies proto/sql/*.sql (all idempotent).
 
 Run: from apps/server, ``uv run python proto/web/app.py``.
 """
@@ -50,7 +57,7 @@ import os
 import sys
 import time
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -81,6 +88,32 @@ EVENTS_PAGE = 500
 # documents.name -> the wire type the SPA's WsResearchTransport already folds.
 DOC_WIRE = {"research.json": "research_updated", "tree.gedcomx.json": "gedcomx_updated"}
 PROTO_USER = {"id": "proto", "email": "proto@localhost"}
+# 1b: a turns row whose outcome says it has not been enqueued yet -- the message the
+# patron typed while a turn was running. 006_stop_and_queue.sql records why this is a
+# turns row and not a second table.
+QUEUED_OUTCOME = "queued"
+
+# The three statements 1b and 1c turn on, lifted to module level so a TEST can reach them.
+# Every route test drives a fake store, and a fake that implements `turn_active` in Python
+# proves nothing about the SQL the real one runs -- the latch bug below shipped green under
+# exactly that arrangement.
+#
+# TURN_ACTIVE_SQL: a turn is RUNNING. A HELD message (1b) has completed_at NULL too, so it
+# must be excluded, or the very first held message latches the hold on and every later
+# message queues behind a turn that does not exist.
+TURN_ACTIVE_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND completed_at IS NULL "
+    "AND outcome IS DISTINCT FROM %s) AS active"
+)
+HAS_QUEUED_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND completed_at IS NULL "
+    "AND outcome = %s) AS queued"
+)
+# 1c: a new message is how a stopped session resumes, so the flag clears when one is
+# recorded. It must not outlive the turn it stopped -- the PreToolUse hook reads it before
+# every tool call, and a stale flag halts the NEXT turn at its first call, which looks
+# exactly like Stop being broken from the other side.
+CLEAR_STOP_SQL = "UPDATE sessions SET stop_requested_at = NULL WHERE session_id = %s"
 
 
 # ── rows ─────────────────────────────────────────────────────────────────────────
@@ -125,11 +158,14 @@ class Store(Protocol):
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
     async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
-    async def begin_turn(self, session: SessionRow, text: str) -> Turn: ...
+    async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn: ...
     async def fail_turn(self, turn_id: str, reason: str) -> None: ...
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]: ...
     async def activity(self, session_id: str) -> Activity | None: ...
     async def turn_active(self, session_id: str) -> bool: ...
+    async def has_queued(self, session_id: str) -> bool: ...
+    async def claim_queued_turn(self, session_id: str) -> dict[str, Any] | None: ...
+    async def request_stop(self, session_id: str) -> bool: ...
 
 
 class Queue(Protocol):
@@ -171,6 +207,24 @@ def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
     if value < 0:
         raise ValueError("cursor must be >= 0")
     return value
+
+
+def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, nudges: int) -> dict[str, Any]:
+    """The turn message the worker receives. One definition, so a test driving a fake
+    store still asserts the shape production enqueues.
+
+    ``max_nudges`` is 1a's carrier: the worker prefers it over its own
+    ``AUTONOMOUS_MAX_NUDGES`` because one worker serves the browser and
+    ``make proto-demo`` and cannot tell them apart. It comes from ``nudges`` -- this
+    tier's environment -- and never from the request."""
+    return {
+        "turn_id": turn_id,
+        "session_id": session.session_id,
+        "project_id": session.project_id,
+        "text": text,
+        "enqueued_at": enqueued_at,
+        "max_nudges": nudges,
+    }
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
@@ -227,6 +281,11 @@ async def stream_frames(
         yield sse_frame({"type": DOC_WIRE.get(name, "document_updated"), "name": name, "data": doc})
     if await store.turn_active(sid):
         yield sse_frame({"type": "status", "state": "turn_active"})
+    # 1b: a message held while the turn runs. The browser marks it locally when it sends,
+    # but a reload or a second tab has no way to know -- so the state is on the wire.
+    seen_queued = await store.has_queued(sid)
+    if seen_queued:
+        yield sse_frame({"type": "status", "state": "turn_queued"})
     last_sent = time.monotonic()
     polls = 0
     while max_polls is None or polls < max_polls:
@@ -241,6 +300,11 @@ async def stream_frames(
         if activity is not None and activity.updated_at != seen_activity:
             seen_activity = activity.updated_at
             yield sse_frame(activity_to_wire(activity))
+            sent = True
+        queued = await store.has_queued(sid)
+        if queued != seen_queued:
+            seen_queued = queued
+            yield sse_frame({"type": "status", "state": "turn_queued" if queued else "turn_unqueued"})
             sent = True
         versions = await store.document_versions(pid)
         if versions != seen_versions:
@@ -371,25 +435,29 @@ class PgStore:
             cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
             return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
 
-    async def begin_turn(self, session: SessionRow, text: str) -> Turn:
+    async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn:
         from psycopg.types.json import Jsonb
 
         turn_id = str(uuid.uuid4())
         enqueued_at = datetime.now(tz=timezone.utc).isoformat()
-        body = {
-            "turn_id": turn_id,
-            "session_id": session.session_id,
-            "project_id": session.project_id,
-            "text": text,
-            "enqueued_at": enqueued_at,
-        }
+        body = queue_body(turn_id, session, text, enqueued_at, max_nudges())
         async with await self._connect() as conn:
             async with conn.transaction():
                 await conn.execute(
-                    "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at) "
-                    "VALUES (%s, %s, %s, %s, %s::timestamptz)",
-                    (turn_id, session.session_id, session.project_id, Jsonb(body), enqueued_at),
+                    "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
+                    "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
+                    (turn_id, session.session_id, session.project_id, Jsonb(body), enqueued_at,
+                     QUEUED_OUTCOME if queued else None),
                 )
+                # ONLY when this message is actually being enqueued. A HELD message
+                # must not clear the flag: the patron presses Stop, then types a
+                # correction while the turn is still winding down -- which 1b's own UI
+                # change encourages, since Send now sits beside Stop -- and clearing it
+                # here would cancel the Stop they just pressed. The worker's halt() reads
+                # this column on every tool call and would find nothing, so the run would
+                # carry on to job end with the turn recorded as an ordinary close.
+                if not queued:
+                    await conn.execute(CLEAR_STOP_SQL, (session.session_id,))
                 cur = await conn.execute("SELECT next_session_seq(%s) AS seq", (session.session_id,))
                 seq = (await cur.fetchone())["seq"]
                 await conn.execute(
@@ -425,12 +493,57 @@ class PgStore:
         return Activity(updated_at=row["updated_at"], payload=row["payload"] or {}) if row else None
 
     async def turn_active(self, session_id: str) -> bool:
+        """A turn is RUNNING on this session. A held message (1b) has completed_at NULL
+        too, so it must be excluded here or the very first one latches the hold forever
+        and every later message is queued behind a turn that does not exist."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(TURN_ACTIVE_SQL, (session_id, QUEUED_OUTCOME))
+            return bool((await cur.fetchone())["active"])
+
+    async def has_queued(self, session_id: str) -> bool:
+        """Whether a message is held for this session (1b) -- what the SSE stream renders
+        as `turn_queued`, so a reload or a second tab still shows it waiting."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(HAS_QUEUED_SQL, (session_id, QUEUED_OUTCOME))
+            return bool((await cur.fetchone())["queued"])
+
+    async def claim_queued_turn(self, session_id: str) -> dict[str, Any] | None:
+        """Take the session's oldest held message so THIS tier can enqueue it (1b).
+
+        Deliberately the same statement as the worker's ``take_queued_turn``: the UPDATE
+        that clears the outcome IS the claim, so the worker finishing a turn and this
+        tier rescuing a stranded row cannot both enqueue the same message -- exactly one
+        UPDATE finds the row with ``outcome = 'queued'`` and the other returns nothing.
+        That is the whole reason this is not a SELECT followed by an UPDATE."""
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND completed_at IS NULL) AS active",
+                "UPDATE turns SET outcome = NULL WHERE turn_id = ("
+                "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
+                "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
+                ") RETURNING message",
+                (session_id, QUEUED_OUTCOME),
+            )
+            row = await cur.fetchone()
+            body = row["message"] if row else None
+            if body is not None:
+                # Claiming IS enqueuing, so the Stop flag clears here for the same reason
+                # it clears in the worker's `take_queued_turn`. `begin_turn` deliberately
+                # does not clear it for a held message, so without this the rescued turn
+                # halts at its first tool call with "Stopped by the researcher."
+                await conn.execute(CLEAR_STOP_SQL, (session_id,))
+        return body if isinstance(body, dict) else None
+
+    async def request_stop(self, session_id: str) -> bool:
+        """1c: raise the Stop flag. The worker owns the turn and no control channel
+        reaches it, so this is a row both worker hooks read on the turn's own connection.
+        Idempotent -- the first press wins and a second changes nothing."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE sessions SET stop_requested_at = COALESCE(stop_requested_at, now()) "
+                "WHERE session_id = %s RETURNING stop_requested_at",
                 (session_id,),
             )
-            return bool((await cur.fetchone())["active"])
+            return (await cur.fetchone()) is not None
 
 
 # ── queues ───────────────────────────────────────────────────────────────────────
@@ -494,8 +607,63 @@ class DevLoginBody(BaseModel):
 
 
 def _env_float(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    return float(raw) if raw not in (None, "") else default
+    """POLL_S / SSE_PING_S, defensively. A bare ``float()`` raises on ``"1s"`` or a
+    stray space, and both are read while the app is being CONSTRUCTED -- so a typo in one
+    variable takes the whole web tier down at start and keeps it down, with no running
+    service to read the error from.
+
+    This duplicates ``app.agent.continue_policy.env_float``, which the worker and the
+    alpha now share, and it stays duplicated on purpose: the web image copies only
+    ``enqueue.py``, ``sql/`` and ``web/`` (``proto/web/Dockerfile``), so ``app`` is not
+    importable here. Importing it would pass every test -- the suite runs from the repo
+    root, where the whole tree is on the path -- and fail only in the deployed
+    container."""
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        log.warning("%s=%r is not a number; using %s", name, raw, default)
+        return default
+    return value if value > 0 else default
+
+
+# research-as-a-job 1a. Sized on STEP count, not on the nudge histogram: over the 189
+# committed e2e runs, Skill/Task/Agent steps per run are median 15, p90 25, p99 51,
+# max 76, so this clears p99 with margin. The nudge histogram (median 1, p90 4) describes
+# runs under a harness that FORBIDS yielding and does not describe this regime; the plan
+# puts the floor at 30. test_proto_config re-derives the p99 from the corpus.
+DEFAULT_MAX_NUDGES = 60
+
+
+def max_nudges(env: Mapping[str, str] | None = None) -> int:
+    """``AUTONOMOUS_MAX_NUDGES`` for the turns this tier enqueues (1a).
+
+    Read from the tier's OWN environment and stamped on the queue body -- never taken
+    from the request. This tier has no auth, so a field on ``MessageBody`` would let any
+    client set its own nudge budget, and the worker cannot tell the browser from
+    ``make proto-demo``: there is no browser path it can see. Each recipe recreates this
+    container with its own export instead.
+
+    Unset takes ``DEFAULT_MAX_NUDGES``, not 0. A tier that silently enqueued 0 would ship
+    the stop-every-step behaviour the plan exists to remove, and it would look like the
+    feature simply not working. A recipe that needs a one-turn run exports 0 explicitly.
+    A malformed value is a warning and the default, for the same reason: the failure mode
+    of guessing 0 here is invisible."""
+    raw = (os.environ if env is None else env).get("AUTONOMOUS_MAX_NUDGES")
+    text = (raw or "").strip()
+    if not text:
+        return DEFAULT_MAX_NUDGES
+    try:
+        n = int(text)
+    except ValueError:
+        log.warning("AUTONOMOUS_MAX_NUDGES=%r is not an integer; using %d", raw, DEFAULT_MAX_NUDGES)
+        return DEFAULT_MAX_NUDGES
+    if n < 0:
+        log.warning("AUTONOMOUS_MAX_NUDGES=%d is negative; using 0 (the Stop hook off)", n)
+        return 0
+    return n
 
 
 def create_app(
@@ -624,7 +792,6 @@ def create_app(
         "image": "Source images are not served by the prototype web tier (D6-8 blobs)",
         "logs": "There are no sandbox logs on this backend; read the worker's stdout",
         "files": "Uploads have no path into the project on this backend (plan: 'the first unserved class')",
-        "interrupt": "Interrupt is not available in the prototype: the worker owns the turn",
     }
 
     @app.get("/api/sessions/{session_id}/image")
@@ -634,29 +801,78 @@ def create_app(
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
     @app.post("/api/sessions/{session_id}/files")
-    @app.post("/api/sessions/{session_id}/interrupt")
     async def not_in_prototype_post(session_id: str, request: Request) -> None:
         await _session(request, session_id)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
+
+    @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
+    async def interrupt(session_id: str, request: Request) -> dict:
+        """1c: Stop. This used to answer 501 -- "the worker owns the turn" -- and the whole
+        design rests on it, so it is phase-1 work rather than a later nicety.
+
+        The worker DOES own the turn and no control channel reaches it, so this raises a
+        flag on a control-plane row instead. The worker's PreToolUse hook reads it before
+        every tool call (a median of 2.6 s apart) and ends the turn; its Stop hook reads
+        the same row so it cannot immediately veto that ending. 202, not 200: the press is
+        recorded here, and the halt is observed on the feed as turn_done."""
+        row = await _session(request, session_id)
+        store = _store(request)
+        await store.request_stop(row.session_id)
+        return {"ok": True, "stopping": await store.turn_active(row.session_id)}
 
     # -- turns and events ---------------------------------------------------------
 
     @app.post("/api/sessions/{session_id}/messages", status_code=202)
     async def post_message(session_id: str, body: MessageBody, request: Request) -> dict:
         row = await _session(request, session_id)
-        turn = await _store(request).begin_turn(row, body.text)
+        store = _store(request)
+        # 1b: nothing else serializes two turns on one session. post_message enqueued
+        # unconditionally, the turn_active() helper existed but only the SSE replay and
+        # session_state ever called it, and choose_sdk_session_id coalesces to ONE
+        # sdk_session_id per session -- so two concurrent turns resumed the SAME SDK
+        # session, two CLIs appending to one transcript. Hold it instead: the row is
+        # written now (the patron sees their message immediately) and the worker enqueues
+        # it when the turn holding it ends.
+        held = await store.turn_active(row.session_id)
+        turn = await store.begin_turn(row, body.text, queued=held)
+        if held:
+            # The read above and the insert are two round-trips on two connections, and
+            # the worker releases held messages only at a turn's END -- so a turn that
+            # ends between them strands this row: its release found nothing, and the next
+            # one is not until the patron sends another message, which is exactly what
+            # someone who has just been told "picked up at the next step" will not do.
+            #
+            # So confirm after the write rather than trusting the read. If no turn is
+            # running now, claim the oldest held row and enqueue it here. The claim is the
+            # worker's own single-statement UPDATE, so if the worker IS releasing
+            # concurrently exactly one of the two wins and the message is enqueued once.
+            rescued = None if await store.turn_active(row.session_id) else \
+                await store.claim_queued_turn(row.session_id)
+            if rescued is None:
+                return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": None, "queued": True}
+            # Oldest-first, so what got claimed may be a message held BEFORE this one --
+            # in which case that one runs, ours stays held, and the response still says
+            # so. `turn` stays the patron's own turn throughout: it is the id their tab
+            # matches its echo against, and handing back somebody else's would orphan it.
+            sending = rescued
+            held = rescued.get("turn_id") != turn.turn_id
+        else:
+            sending = turn.body
         try:
-            message_id = await request.app.state.queue.send(turn.body)
+            message_id = await request.app.state.queue.send(sending)
         except Exception as exc:  # any queue failure: the row stays, marked, and the UI sees 502
-            await _store(request).fail_turn(turn.turn_id, "enqueue_failed")
-            log.error("enqueue failed for turn %s: %s", turn.turn_id, exc)
+            # Whichever turn we tried to send is the one that failed, and for a rescue
+            # that is not `turn`.
+            failed_id = str(sending.get("turn_id") or turn.turn_id)
+            await _store(request).fail_turn(failed_id, "enqueue_failed")
+            log.error("enqueue failed for turn %s: %s", failed_id, exc)
             # The user_msg row was committed before the send and stays (seqs are dense), so
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": f"queue send failed: {exc}", "turn_id": turn.turn_id, "seq": turn.seq},
+                detail={"message": f"queue send failed: {exc}", "turn_id": failed_id, "seq": turn.seq},
             ) from exc
-        return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id}
+        return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
     @app.get("/api/sessions/{session_id}/events")
     async def get_events(session_id: str, request: Request, after: str | None = None) -> dict:
@@ -672,6 +888,7 @@ def create_app(
             "events": [row_to_wire(r) for r in rows],
             "activity": activity_to_wire(activity) if activity else None,
             "turn_active": await store.turn_active(row.session_id),
+            "turn_queued": await store.has_queued(row.session_id),
             "next_after": rows[-1].seq if rows else cursor,
         }
 
@@ -710,6 +927,6 @@ if __name__ == "__main__":
     # uvicorn's CLI builds the loop before this module is imported, and on Windows that
     # is ProactorEventLoop, which psycopg3 async refuses; loop="none" lets us choose.
     server = uvicorn.Server(uvicorn.Config(
-        app, host=os.environ.get("HOST", "127.0.0.1"), port=int(os.environ.get("PORT", "8085")), loop="none"
+        app, host=os.environ.get("HOST", "127.0.0.1"), port=int(_env_float("PORT", 8085)), loop="none"
     ))
     asyncio.run(server.serve(), loop_factory=asyncio.SelectorEventLoop if sys.platform == "win32" else None)

@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     # with the experience-level user setting (PR #2649).
     auto_continue: bool = True
     auto_continue_max_steps: int = 30
+    # research-as-a-job 1d: the SDK Stop hook's veto cap per turn in the sandbox, which is
+    # what makes one user message run a whole research job. Sized on STEP count, not on
+    # the nudge histogram: over the 189 committed e2e runs, Skill/Task/Agent steps per run
+    # are median 15, p90 25, p99 51, max 76. 0 turns the hook off, and `auto_continue:
+    # false` turns it off too -- that flag already meant "one turn per message", and a new
+    # mechanism that ignored it would take an operator's kill switch away without saying so.
+    autonomous_max_nudges: int = 60
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
     # ANTHROPIC_API_KEY, which is written into the sandbox by
