@@ -284,8 +284,8 @@ runlog summary plus a warn-only check makes every future PR's cost visible.
   July timeouts; reports 16s for a 2,531s resumed run).
 - **188 is the count at `5e14a9967`**; HEAD is larger and grows weekly with panel
   filing. Re-derive at the pin or re-pin and restate.
-- **`record_basis` exists on only 296 assertions.** It was renamed from
-  `evidence_type` on 2026-09-18 and the runlogs are deliberately unmigrated; the
+- **`record_basis` exists on only 296 assertions.** It replaced the old field
+  name on 2026-09-18 and the runlogs are deliberately unmigrated; the
   retired enum was question-relative, so the semantics differ.
 - **Line numbers rot.** Citations here name a function, constant or argument wherever
   one exists. One anchor drifted 46 lines in 55 commits. Grep the symbol.
@@ -413,7 +413,7 @@ variance is process waste with no quality attached.
     classification is ~9% of a record's output. Extraction is a turns, latency and
     determinism item, which is why it is issue #2937 and not a wave here.
 20. **"10,514 assertions."** **10,626** across 194 files. And `record_basis` exists on
-    only **296** — renamed from `evidence_type` on 2026-09-18, runlogs unmigrated, and
+    only **296** — renamed on 2026-09-18, runlogs unmigrated, and
     the retired enum was question-relative.
 21. **"Agent narration never reaches the user."** Subagent text rides the same SDK
     stream tagged with `parent_tool_use_id` and did reach users until commit
