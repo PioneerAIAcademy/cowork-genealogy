@@ -10,9 +10,15 @@
 // across repeat runs of one fixture the model gives the same persona the same
 // role only 62.9% of the time (81.8% by role class), and differs with itself on
 // `record_basis` 15.6%, `informant_proximity` 22.6% and `information_quality`
-// 21.4%. Code is identical every time. The rule below agrees with the model on
-// 80.1% of personas by role class, and a sample of 30 disagreements was mostly
-// the model inventing kin on a pre-1880 census.
+// 21.4%. Code is identical every time.
+//
+// The rule below agrees with the model on **84.6% of personas by role class**
+// (930/1099 comparisons across 319 records), reproducible offline with
+// `npx tsx dev/score-roles.ts`. Agreement is NOT accuracy: the model is not
+// ground truth, and the two largest disagreement clusters were opened and found
+// to be the model's error — `deceased` roled onto a Liechtenstein baptism, and
+// `child_N` assigned from position on a pre-1880 census. Both depress that
+// figure, which is the right direction for the instrument to be wrong in.
 //
 // WHAT IT DOES NOT DO. It never emits the literal `record_role: "absent"` —
 // negative evidence is a claim about a person the record does NOT contain, so
@@ -150,8 +156,14 @@ const TITLE_TO_RECORD: [RegExp, RecordType][] = [
   [/burial|cemeter|interment/i, "burial"],
   [/christen|baptis/i, "christening"],
   [/birth/i, "birth"],
-  [/deed|land|grantor|grantee/i, "land"],
-  [/draft|registration card/i, "draft_registration"],
+  // `land` must NOT be a bare substring. `/land/i` matches Scotland, Ireland,
+  // Maryland, Finland, Poland, Rutland, Cumberland and the Netherlands, and it
+  // did: every "Scotland, Civil Registration" record in the scorer corpus typed
+  // as a land deed, which is not merely a mislabel — it applies the wrong
+  // classification table to a birth record. Match the phrases a land record
+  // actually uses.
+  [/\bdeeds?\b|\bland (grant|record|patent|entr)|\bgrantors?\b|\bgrantees?\b|\btract book/i, "land"],
+  [/\bdraft\b|registration cards?\b/i, "draft_registration"],
 ];
 
 /**
@@ -785,6 +797,17 @@ export function extractRecord(
     for (const [id, r] of principalRoles(ps, gx, "child")) roles.set(id, r);
   } else if (recordType === "draft_registration") {
     for (const [id, r] of principalRoles(ps, gx, "registrant")) roles.set(id, r);
+  } else if (recordType === "land") {
+    // `grantee` for the principal, `grantor_N` for the rest. The record is
+    // indexed under the party ACQUIRING the land — a patentee, a homesteader —
+    // so the principal is the grantee; the other named parties are the
+    // conveying side. Where the index says otherwise there is no field to read
+    // it from, so this is the best available default rather than a reading.
+    const counters = new Map<string, number>();
+    const principal = ps.find((p) => p.person.principal === true)?.id ?? ps[0]?.id;
+    for (const p of ps) {
+      roles.set(p.id, p.id === principal ? "grantee" : numbered("grantor", counters));
+    }
   } else {
     const counters = new Map<string, number>();
     const principal = ps.find((p) => p.person.principal === true)?.id ?? ps[0]?.id;

@@ -416,3 +416,69 @@ describe("helpers", () => {
     expect(() => extractRecord({ recordId: "r", gedcomx: {} }, { logEntryId: "l", questionIds: [] })).not.toThrow();
   });
 });
+
+describe("record-type detection by collection title", () => {
+  const titled = (title: string) => ({
+    recordId: "r",
+    gedcomx: {
+      sources: [{ resource_type: "http://gedcomx.org/Collection", title }],
+      persons: [{ id: "p1", principal: true, names: [{ given: "A", surname: "B" }] }],
+    },
+  });
+
+  it("does not read a place name containing 'land' as a land record", () => {
+    // A real defect the scorer caught, and not merely a mislabel: every
+    // "Scotland, Civil Registration" record in the corpus typed as a land deed,
+    // which applies the death/burial-adjacent `other` table to a BIRTH record.
+    // /land/i matches all of these.
+    for (const t of [
+      "Scotland, Civil Registration, 1855-1875",
+      "Ireland, Catholic Parish Registers",
+      "Maryland, Births and Christenings",
+      "Finland, Church Census",
+      "Netherlands, Civil Registration",
+      "England, Cumberland Parish Registers",
+    ]) {
+      expect(detectRecordType(titled(t).gedcomx), t).not.toBe("land");
+    }
+  });
+
+  it("still detects a real land record", () => {
+    for (const t of [
+      "United States, Bureau of Land Management Tract Books, 1800-c. 1955",
+      "Ohio, Wills and Deeds, ca. 1700s-2017",
+      "Texas, Land Grants",
+      "Kentucky, Land Patents",
+    ]) {
+      expect(detectRecordType(titled(t).gedcomx), t).toBe("land");
+    }
+  });
+
+  it("detects a draft registration without matching every 'registration'", () => {
+    expect(
+      detectRecordType(titled("United States, World War I Draft Registration Cards, 1917-1918").gedcomx),
+    ).toBe("draft_registration");
+    // "Civil Registration" is not a draft card.
+    expect(detectRecordType(titled("Scotland, Civil Registration, 1855-1875").gedcomx)).not.toBe(
+      "draft_registration",
+    );
+  });
+
+  it("gives a land record grantee/grantor roles", () => {
+    const doc = {
+      recordId: "r",
+      gedcomx: {
+        sources: [{ resource_type: "http://gedcomx.org/Collection", title: "Tract Books" }],
+        persons: [
+          { id: "p1", principal: true, names: [{ given: "A", surname: "B" }] },
+          { id: "p2", names: [{ given: "C", surname: "D" }] },
+        ],
+      },
+    };
+    const out = extractRecord(doc, { logEntryId: "l", questionIds: [] });
+    expect(out.recordType).toBe("land");
+    const roles = new Set(out.assertions.map((a) => a.record_role));
+    expect(roles.has("grantee")).toBe(true);
+    expect(roles.has("grantor_1")).toBe(true);
+  });
+});
