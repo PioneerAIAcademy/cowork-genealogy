@@ -9,10 +9,14 @@ import {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
-}));
+const mockResolveStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    resolveStandardPlaceToPlaceId: mockResolveStandardPlaceToPlaceId,
+    ambiguousPlaceError: real.ambiguousPlaceError,
+  };
+});
 
 // The staging util is exercised by tests/utils/results-staging.test.ts; here we
 // only assert the tool calls it correctly and shapes the inline copy around it.
@@ -33,8 +37,8 @@ const mockedUnlogged = vi.mocked(unloggedStagedSearches);
 // Runs before every test (in addition to the per-describe fetch resets);
 // default the resolver to a successful placeId so existing cases reach fetch.
 beforeEach(() => {
-  mockStandardPlaceToPlaceId.mockReset();
-  mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
+  mockResolveStandardPlaceToPlaceId.mockReset();
+  mockResolveStandardPlaceToPlaceId.mockResolvedValue({ kind: "resolved", placeId: "1927089" });
   mockedStage.mockReset();
   mockedUnlogged.mockReset();
   mockedUnlogged.mockResolvedValue([]);
@@ -327,7 +331,7 @@ describe("externalLinksSearchTool — handler-level guards", () => {
       externalLinksSearchTool({ standardPlace: "France", startYear: 1950, endYear: 1880 })
     ).rejects.toThrow(/endYear must be greater than or equal to startYear/i);
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+    expect(mockResolveStandardPlaceToPlaceId).not.toHaveBeenCalled();
   });
 
   it("accepts endYear === startYear (single-year query)", async () => {
@@ -348,15 +352,47 @@ describe("externalLinksSearchTool — handler-level guards", () => {
       externalLinksSearchTool({ standardPlace: "", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(/standardPlace is required/i);
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+    expect(mockResolveStandardPlaceToPlaceId).not.toHaveBeenCalled();
   });
 
   it("rejects an unresolvable standardPlace without hitting the network", async () => {
-    mockStandardPlaceToPlaceId.mockResolvedValueOnce(null);
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "unresolved" });
     await expect(
       externalLinksSearchTool({ standardPlace: "Nowhere", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(/Could not resolve "Nowhere"/i);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("names the candidates when the standard place is ambiguous", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: [
+        "Baltimore, Maryland, United States (Independent City)",
+        "Baltimore, Maryland, United States (County)",
+      ],
+    });
+    await expect(
+      externalLinksSearchTool({ standardPlace: "Baltimore, Maryland, United States" })
+    ).rejects.toThrow(
+      /matches more than one place:.*Independent City.*County.*including the parenthesised type/
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("does not reuse the unresolvable wording for an ambiguous place", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: ["A (County)", "B (City)"],
+    });
+    const err = await externalLinksSearchTool({
+      standardPlace: "Somewhere",
+    }).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+    expect(err, "an ambiguous place must still throw").toBeInstanceOf(Error);
+    expect(err?.message).not.toMatch(/Could not resolve/);
+    expect(err?.message).toContain("A (County)");
   });
 });
 
