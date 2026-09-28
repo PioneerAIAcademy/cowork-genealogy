@@ -58,6 +58,7 @@ import pytest
 import yaml
 from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage, SystemMessage, TextBlock
 
+from app.agent.continue_policy import TERMINAL_DECISION
 from proto.worker import deny, options, worker
 from proto.worker.session_store import entry_rows
 
@@ -1609,6 +1610,130 @@ def test_the_pending_message_lookup_only_sees_a_live_held_row():
     assert "completed_at IS NULL" in src, \
         "a turn must not yield to a held message that has already been released and run"
     assert "outcome = %s" in src
+
+
+# ── Before phase 2: the "I need you" exit ────────────────────────────────────────
+
+
+def test_ask_user_question_ends_the_turn_as_a_decision():
+    """The fourth stop condition ("say exactly what you need … then stop") and the
+    genuine-blocker stop are both VOLUNTARY YIELDS, and phase 1's hook vetoes those. So today
+    an agent that needs the researcher is told to carry on, and the run ends `no_progress` --
+    rendering as the agent failing under its own question.
+
+    The carrier is the model's own `AskUserQuestion`, not a new tool, because the model already
+    reaches for it unprompted: 15 calls across 6 skills in the committed unit corpus
+    (research, research-plan, question-selection, person-evidence, tree-edit, citation), with
+    arguments exactly this shape -- "Who is the person whose parents you want to research?",
+    "Which record has two Patrick Flynns competing for it?". It is granted by omission from
+    DISALLOWED_TOOLS and handled nowhere, and on Cowork it renders natively as a question, which
+    is what the plan requires of an uninter­cepted carrier.
+
+    Decisions are asynchronous: a person answers hours later and an attempt is capped at
+    1,800 s, so the turn ENDS and the answer arrives as the next message."""
+    calls: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=calls.append, halt=lambda: None,
+    )
+    out = asyncio.run(hook(
+        {"tool_name": "AskUserQuestion",
+         "tool_input": {"questions": [{"question": "Which Patrick Flynn?", "header": "Person"}]},
+         "tool_use_id": "tu_1"},
+        None, None,
+    ))
+    # `continue_`, the SDK's spelling, which `_halt` uses. Asserted against the helper's own
+    # output rather than a literal so the two cannot drift.
+    assert out == options._halt(options.DECISION_REASON), (
+        "an ask must END the turn with the halt fields: the answer arrives as the next "
+        "message, and a run that carries on answers its own question"
+    )
+    assert options.DECISION_REASON in out.get("stopReason", ""), out
+    assert any(c.get("decision") == "decision" for c in calls), \
+        "the ask is recorded like any other decision, so the turn's outcome can read it"
+
+
+def test_the_exit_sets_the_turns_outcome_to_decision():
+    """Halting is half the job. Without a callback into the worker's `terminal` dict the run
+    ends on the hook's reason but records `no_progress` -- the very outcome the exit exists to
+    stop the researcher seeing. `on_decision` mirrors the `on_allow` callback the Stop hook
+    already uses."""
+    seen: list[str] = []
+    calls: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=calls.append, halt=lambda: None, on_decision=lambda: seen.append("decision"),
+    )
+    asyncio.run(hook(
+        {"tool_name": "AskUserQuestion", "tool_input": {"questions": []}, "tool_use_id": "tu"},
+        None, None,
+    ))
+    assert seen == ["decision"], "the worker must be told, or the turn records no_progress"
+
+
+def test_a_turn_that_asks_the_researcher_is_recorded_as_a_decision(turn_env):
+    """End to end through the REAL hook, because the hook-level tests above cannot see the
+    worker's closure: a break test that set the closure's outcome to `no_progress` left all of
+    them green. This is the assertion that the researcher sees "waiting on you" rather than
+    "the agent stopped making progress"."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall("AskUserQuestion"),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] == TERMINAL_DECISION, (
+        f"a turn that asked the researcher recorded {summary['outcome']!r}; `no_progress` here "
+        f"renders as the agent failing under its own question"
+    )
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == TERMINAL_DECISION, "and the row says so too"
+
+
+def test_the_exit_callback_never_fails_the_call_it_is_reporting():
+    """This hook runs on every tool call and is not the restraint. A raising callback must not
+    turn an ask into an errored tool call -- the same rule the tool_calls write already follows."""
+    def boom() -> None:
+        raise RuntimeError("control plane went away")
+
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda c: None, halt=lambda: None, on_decision=boom,
+    )
+    out = asyncio.run(hook(
+        {"tool_name": "AskUserQuestion", "tool_input": {}, "tool_use_id": "tu"}, None, None))
+    assert out == options._halt(options.DECISION_REASON), \
+        "the turn still ends cleanly even when the callback fails"
+
+
+def test_a_decision_outranks_the_spend_and_handover_halts_but_not_stop():
+    """Clause order is semantics. Stop is the researcher's own instruction and wins over
+    everything. A decision must outrank the spend cap and the handover, or an agent that asks
+    on its last nudge is recorded as having run out of budget rather than having asked."""
+    calls: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=calls.append, halt=lambda: options.STOP_REASON,
+    )
+    out = asyncio.run(hook(
+        {"tool_name": "AskUserQuestion", "tool_input": {"questions": []}, "tool_use_id": "tu_2"},
+        None, None,
+    ))
+    assert options.STOP_REASON in out.get("stopReason", ""), \
+        "Stop is the researcher's instruction and outranks the agent's own ask"
+
+
+def test_every_other_tool_is_untouched_by_the_exit():
+    """The exit must not change any other call. This is the hook that runs on EVERY tool call."""
+    calls: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=calls.append, halt=lambda: None,
+    )
+    for tool in ("mcp__genealogy__record_search", "Read", "Skill", "Agent"):
+        out = asyncio.run(hook(
+            {"tool_name": tool, "tool_input": {}, "tool_use_id": "x"}, None, None))
+        assert out.get("continue_") is not False, f"{tool} must not be halted by the exit"
 
 
 def test_the_stop_and_queue_schema_is_additive_and_applied():

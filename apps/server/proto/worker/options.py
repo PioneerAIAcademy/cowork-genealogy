@@ -362,6 +362,30 @@ SPEND_CAP_REASON = (
 )
 
 
+# The "I need you" exit. The router's fourth stop ("say exactly what you need … then stop")
+# and its genuine-blocker stop are both VOLUNTARY YIELDS, which phase 1's Stop hook vetoes --
+# so an agent that needs the researcher is told to carry on and the run ends `no_progress`,
+# rendering as the agent failing under its own question.
+#
+# The carrier is the model's own `AskUserQuestion`, not a new tool, and that is measured
+# rather than assumed: it is called 15 times across 6 skills in the committed unit corpus
+# (research, research-plan, question-selection, person-evidence, tree-edit, citation),
+# unprompted, with arguments exactly this shape -- "Who is the person whose parents you want
+# to research?", "Which record has two Patrick Flynns competing for it?". It is granted by
+# omission from DISALLOWED_TOOLS and handled nowhere today. On Cowork nothing intercepts it
+# and it renders natively as a question, which is what an uninter­cepted carrier must do.
+#
+# Decisions are ASYNCHRONOUS: a person answers hours later and an attempt is capped at
+# 1,800 s, so the turn ENDS here and the answer arrives as the next message.
+DECISION_REASON = (
+    "You have asked the researcher something only they can answer. Stopping here so they can "
+    "reply; everything found so far is saved and their answer arrives as the next message."
+)
+
+# The tool the exit reads. One name, so the hook and its test cannot drift.
+DECISION_TOOL = "AskUserQuestion"
+
+
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason}
 
@@ -393,6 +417,7 @@ def make_pretool_hook(
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
     halt: Callable[[], str | None] | None = None,
+    on_decision: Callable[[], None] | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -436,6 +461,37 @@ def make_pretool_hook(
                 log(ev="halt", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id,
                     reason=stop_now)
             return _halt(stop_now)
+        # The exit, AFTER the halt check so Stop keeps precedence: Stop is the researcher's own
+        # instruction, and an ask cannot overrule it. Before the deny and the foreground rewrite
+        # for the same reason those sit after halt -- a turn that is ending should not rewrite a
+        # delegation's input or argue about a write it will never make.
+        if tool_name == DECISION_TOOL:
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id, "tool_name": tool_name,
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    "decision": "decision",
+                    "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            # Tell the worker, or the turn halts on the right reason and still records
+            # `no_progress` -- the exact rendering the exit exists to remove. Mirrors the
+            # Stop hook's `on_allow`. Never raises: this hook is not the restraint, and a
+            # failing callback must not turn an ask into an errored tool call.
+            if on_decision is not None:
+                try:
+                    on_decision()
+                except Exception as exc:  # noqa: BLE001 - reporting must not fail the call
+                    if log is not None:
+                        log(ev="decision_report_failed", turn_id=turn_id,
+                            error=f"{type(exc).__name__}: {exc}")
+            if log is not None:
+                log(ev="decision", turn_id=turn_id, tool_name=tool_name,
+                    tool_use_id=tool_use_id)
+            return _halt(DECISION_REASON)
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:

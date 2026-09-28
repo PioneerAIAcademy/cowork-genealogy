@@ -110,6 +110,7 @@ from proto.worker.options import (  # noqa: E402
     shared_price_usd,
     RESUME_CONTINUE_TEXT,
     HANDOVER_REASON,
+    TERMINAL_DECISION,
     SPEND_CAP_REASON,
     STOP_REASON,
     TERMINAL_BUDGET,
@@ -929,10 +930,18 @@ async def run_turn(
                     return SPEND_CAP_REASON.format(cap=SPEND_CAP_USD)
             return None
 
+        def on_decision() -> None:
+            """The agent asked the researcher something only they can answer. The turn ends
+            `decision`, not `no_progress`: the run did not stall, it is waiting on a person,
+            and the answer arrives as the next message."""
+            terminal["reason"] = TERMINAL_DECISION
+            terminal["halted"] = True
+            log(ev="decision_exit", turn_id=turn_id, session_id=session_id)
+
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt,
+            halt=halt, on_decision=on_decision,
         )
 
         def finish(tool_use_id: str) -> None:
