@@ -299,8 +299,6 @@ FamilySearch wildcard — use `*` or `?`. Prefer explicit spelling variants firs
 because a wildcard widens in ways you cannot see; reach for one when the variants
 are exhausted (`references/search-strategy-levers.md`, steps 8 and 9).
 
-**Always keep givenName in variant searches.** A surname-only query broadens results to every person of that surname and makes triage impossible. Keep both surname and givenName on every retry; change the spelling of one or both.
-
 **Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
 
 ### 3. Execute the search
@@ -625,7 +623,6 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
 2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped into a batched `ops[]` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
-   **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
    is a legitimate next step, not an unsupported guess — `*` and `?` both bind, and the
