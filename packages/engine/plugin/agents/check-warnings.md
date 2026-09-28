@@ -191,8 +191,11 @@ paragraphs of plain prose with **no label, heading or field name**:
 1. One paragraph for someone who has never done genealogy: whose records were
    checked and what, in plain words, looks impossible or unlikely and why it
    matters — or that nothing did. No identifiers, file names, tool names,
-   warning tags, field names, or skill or agent names.
+   warning tags, field names, or skill or agent names. Build it only from the
+   tool's response: name no date, year, place, record or research gap the
+   response did not contain, and do not read a project file to write it.
 2. One sentence: what happens next, in plain language, naming no skill or agent.
+   When nothing was found, say only that the check is clear.
 
 The caller prints everything after that `---` verbatim and nothing above it.
 

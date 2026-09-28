@@ -657,6 +657,11 @@ async def _execute_single_run(
             # the only text the run was handed, so it takes that slot — without
             # the fallback a year the delegation supplied reads as invented.
             "user_message": spec.user_message or (spec.delegation or ""),
+            # Also threaded in: `negative`, so a hand-back validator can read
+            # the owner a direct-arm negative names in `correct_skill`
+            # (test_check_warnings.test_hand_back_names_its_owner, issue #2118).
+            # Without it that validator failed every compliant run.
+            "negative": spec.negative,
         },
     )
     validators_passed = compute_validators_passed(

@@ -1823,6 +1823,7 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
     # here and the assertion below would pass on the wrong value.
     spec.raw["input"].pop("user_message", None)
     spec.user_message = ""
+    spec.negative = {"correct_skill": ["NEGATIVE-SENTINEL"]}
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
@@ -1857,6 +1858,11 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
         timestamp="2026-08-22_00-00-00",
     ))
 
+    assert captured["test"].get("negative") == {"correct_skill": ["NEGATIVE-SENTINEL"]}, (
+        "orchestrator did not thread spec.negative into run_validators' test "
+        "dict; test_hand_back_names_its_owner reads its owner from it and fails "
+        "every compliant hand-back without it (issue #2118)"
+    )
     assert captured["test"].get("delegation") == "DELEGATION-SENTINEL", (
         "orchestrator did not thread spec.delegation into run_validators' test "
         "dict; all three direct-arm validators would skip on every direct test"
