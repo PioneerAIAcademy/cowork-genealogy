@@ -1397,8 +1397,8 @@ edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
 > and an `offset` parameter for paging past 50, and covers
-> **11 of the 15** `research.json` sections — missing `project`,
-> `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
+> **12 of the 15** `research.json` sections — missing `project`,
+> `researcher_profile`, and `known_holdings`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
@@ -1904,8 +1904,11 @@ lead you to them:**
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
   axes: `verdict` (genealogical), `compliance` (guardrail), and
-  `outcome` (the gate) — so a run whose answer is right but whose audit trail was
-  not earned **fails**. The tier is sampled on a **fixed four-fixture panel**,
+  `outcome` (the gate, which carries the genealogical verdict) — so a run whose
+  answer is right but whose audit trail was not earned **passes the gate with the
+  bypass recorded on the compliance axis**. It failed until 2026-09-25, when the
+  §8 detectors were demoted for not discriminating; the accepted costs are in
+  `docs/specs/guardrail-enforcement-spec.md` §8. The tier is sampled on a **fixed four-fixture panel**,
   filed one issue per run by `/file-e2e-panel` (on demand, not on a cadence) and
   read by `make e2e-panel`: the fixtures are held constant because fixture difficulty
   varies enough that a changing mix, not a changing system, would explain most of
