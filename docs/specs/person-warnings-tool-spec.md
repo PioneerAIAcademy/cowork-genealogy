@@ -86,7 +86,7 @@ The shipped shape is `PersonWarning` in
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
 | `message` | string | Human-readable description of the problem |
-| `factIds` | string[]? | Fact IDs involved in the check, for UI highlighting. Optional — MobWarnings carries only the tag; the TS port attaches contributing facts when cheaply retrievable |
+| `facts` | `{id, type, date}[]?` | The facts the check examined, resolved. Optional — MobWarnings carries only the tag; the TS port attaches contributing facts where cheaply retrievable. `date` is the fact's raw `date`, falling back to `standard_date`, and `null` when it has neither — **not** `getStandardDate()`, which inverts that precedence and normalizes through `stdDate()` (a record's `~1818` would come back `Abt 1818`). Three fields exactly: `hasEventAfterDeath1` cites every self fact and `merge_warnings` multiplies that by mob size |
 | `relatedPersonId` | string? | Person ID of the related person, when the check involves a relationship (e.g., the father in `earliestChildBirthToBirthMale14`). Omitted when not applicable |
 | `mobRole` | string? | Merge-mode only (`merge_warnings`): which mob surfaced the warning — `"target"`, `"candidate"`, `"merged"`, or `"relative"`. Single-anchor `person_warnings` never sets it. See `match-merge-workflow-spec.md` §7.5 |
 
@@ -107,7 +107,10 @@ Example output:
       "personId": "I1",
       "personName": "Patrick Flynn",
       "message": "An event is dated more than 1 year after this person's latest death-like fact.",
-      "factIds": ["F1", "F2"]
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1845" },
+        { "id": "F2", "type": "Death", "date": "1908-03-12" }
+      ]
     }
   ]
 }
@@ -265,7 +268,7 @@ if (birthYear != null && deathYear != null && deathYear < birthYear)
 
 **Message:** `"Death year ({deathYear}) is before birth year ({birthYear}) for {personName}."`
 
-**factIds:** `[birthFact.id, deathFact.id]`
+**facts:** the birth-like and death-like facts examined
 
 **relatedPersonId:** omitted
 
@@ -314,7 +317,7 @@ for each relationship where type === "ParentChild"
 
 **Message:** `"Father {parentName} would have been {maxAge} at the birth of {childName} (father born {parentBirthYear}, child born {childBirthYear})."`
 
-**factIds:** `[parentBirthFact.id, childBirthFact.id]`
+**facts:** the parent's and the child's birth-like facts
 
 **relatedPersonId:** `parent.id`
 
@@ -369,7 +372,7 @@ for each fact in anchor.facts:
 
 **Message:** `"{factType} ({eventYear}) is after death year ({deathYear}) for {personName}."`
 
-**factIds:** `[deathFact.id, fact.id]`
+**facts:** the death-like fact and the offending later fact
 
 **relatedPersonId:** omitted
 
@@ -506,7 +509,7 @@ imprecise dates are widened per § Date Parsing Rules.
 | `tooManyBirthDates2` | implausible | Two or more distinct exact-DMY Birth dates spaced more than 30 days apart | Unreconciled conflicting sources, or two identities merged |
 | `tooManyDeathDates2` | implausible | Two or more distinct exact-DMY Death dates spaced more than 14 days apart | As above |
 | `deathRangeGreaterThan2` | implausible | Death-like dates span more than 2 years | Unreconciled conflicting death records |
-| `hasBurialAfterDeath31` | implausible | Earliest Burial is more than 31 days before the latest Death (despite the Java name, fires on burial-before-death outliers; preserved for parity) | Conflicting or mis-typed burial/death dates |
+| `hasBurialAfterDeath31` | implausible | The **latest possible** Burial is more than 31 days before the **earliest possible** Death (despite the Java name, fires on burial-before-death outliers) — see the divergence note below | Conflicting or mis-typed burial/death dates |
 | `hasDelayedBurial365` | implausible | The earliest possible Burial is more than 365 days after the latest possible Death (most-generous bounds, fudge 0) | A funeral delayed about a year (legitimate in some places), a reburial, a later interment of ashes, or a data error |
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
@@ -518,6 +521,34 @@ imprecise dates are widened per § Date Parsing Rules.
 | `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
 | `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
 | `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
+
+**`hasBurialAfterDeath31` diverges from the Java port on purpose — do not
+"restore" the original math.** Java computes
+`latestDeath − earliestBurial > 31`, which pairs the two bounds that
+*maximise* the apparent gap. On a year-only date pair that is guaranteed to
+fire on data that is not contradictory at all: Burial `1938` and Death `1938`
+expand to 1938-01-01 and 1938-12-31, and the tool reports a 364-day
+"violation" from two identical recorded values. Every such warning was false,
+and the genealogist acting on one corrects a record that was right.
+
+The implementation instead compares `earliestDeath − latestBurial`, the
+*conservative* pairing, so the check fires only when the burial precedes the
+death under **every** reading the recorded dates permit:
+
+| Burial | Death | Java pairing | Conservative pairing | Fires now? |
+|---|---|---|---|---|
+| `1938` | `1938` | +364 | −364 | no (was a false positive) |
+| `1961` | `28 Dec 1961` | +361 | −3 | no (was a false positive) |
+| `Jun 1900` | `15 Jun 1900` | +14 | −15 | no |
+| `1937` | `1 Jan 1939` | +730 | +366 | **yes** |
+| `1 Jan 1900` | `2 Feb 1900` | +32 | +32 | **yes** |
+
+Exact dates collapse both pairings to the same number, so the narrowing costs
+no true positive that was expressed precisely; what it drops are exactly the
+cases where the recorded precision cannot support the claim. The helper it
+calls, `factDaysDiffLatestEarliest`, has no Java counterpart.
+`hasDelayedBurial365` and `hasStillbirthConflict` use it too, for the same
+reason (§ The four `person_quality` parity checks).
 
 #### Family structure and names (`implausible`)
 
@@ -609,7 +640,9 @@ data error. But a funeral delayed about a year is legitimate in some places,
 and reburials and a later interment of ashes can also trip it, which is why
 the severity is `implausible`, not `contradiction`. The
 check reads the earliest possible Burial day minus the latest possible
-Death day, with `imperfectDateFudgeDays` at 0 rather than 365: that pairing
+Death day (`factDaysDiffLatestEarliest`, the conservative pairing
+`hasBurialAfterDeath31` uses, with the two sets swapped), with
+`imperfectDateFudgeDays` at 0 rather than 365: that pairing
 is already the most generous reading, and widening it further would swallow
 the whole 1-to-3-year band this check exists to catch, since every
 year-only hit would then already span 4+ years. Burial is in the death-like

@@ -10,13 +10,14 @@
 // This is a *closure*: `scorePair` pulls `throwForBadStatus`, `parseArkFromTitle`,
 // the `URL` const, and the `SamePersonApiResponse`/`SamePersonResult` types;
 // `buildRawWithAnchor` pulls `toValidFsArk`, `randomFsId`, and the
-// `FS_ID_ALPHABET`/`VALID_FS_ID_RE`/`DEFAULT_ARK_TYPE`/`PERSISTENT_ID` consts.
+// `FS_ID_ALPHABET`/`DEFAULT_ARK_TYPE`/`PERSISTENT_ID` consts.
 //
 // Spec: docs/specs/rank-search-matches-tool-spec.md (Files §).
 
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
 import { toGedcomX } from "./gedcomx-convert.js";
+import { isFamilySearchPersonId } from "./fs-id.js";
 import { toArk } from "./ark.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type {
@@ -109,7 +110,6 @@ const PERSISTENT_ID = "http://gedcomx.org/Persistent";
 // score is unaffected — FS matches on the document content, and relatives-mode
 // results report the caller's local ids, not these FS-facing ones.
 const FS_ID_ALPHABET = "BCDFGHJKLMNPQRSTVWXYZ0123456789"; // A-Z0-9 minus AEIOU
-const VALID_FS_ID_RE = /^[BCDFGHJKLMNPQRSTVWXYZ0-9]{4}-[BCDFGHJKLMNPQRSTVWXYZ0-9]{3}$/;
 const DEFAULT_ARK_TYPE = "1:1"; // record-persona type, used when none is known
 
 function randomFsId(): string {
@@ -128,7 +128,7 @@ function toValidFsArk(ark: string): string {
   const m = canonical.match(/^ark:\/61903\/(\d:\d):(.+)$/);
   const type = m ? m[1] : DEFAULT_ARK_TYPE;
   const id = m ? m[2] : canonical;
-  const validId = VALID_FS_ID_RE.test(id.toUpperCase()) ? id : randomFsId();
+  const validId = isFamilySearchPersonId(id) ? id : randomFsId();
   return `ark:/61903/${type}:${validId}`;
 }
 
@@ -136,7 +136,7 @@ function toValidFsArk(ark: string): string {
 // FS persona id — i.e. matchTwoExamples will accept it without minting.
 function isValidFsArk(ark: string): boolean {
   const m = ark.match(/^ark:\/61903\/\d:\d:(.+)$/);
-  return m !== null && VALID_FS_ID_RE.test(m[1].toUpperCase());
+  return m !== null && isFamilySearchPersonId(m[1]);
 }
 
 export function buildRawWithAnchor(

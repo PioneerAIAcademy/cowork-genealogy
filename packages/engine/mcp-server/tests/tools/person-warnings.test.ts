@@ -531,7 +531,7 @@ describe("hasAgeRangeGreaterThan predicate", () => {
 // hasBurialAfterDeath — Java MobWarnings.hasBurialAfterDeath
 // ────────────────────────────────────────────────────────────────────
 
-describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days BEFORE death)", () => {
+describe("hasBurialAfterDeath predicate (fires when burial > N days BEFORE death under EVERY reading of the dates)", () => {
   it("fires when earliest Burial is more than 31 days before latest Death", () => {
     // Burial in 1890, Death in 1900 — burial 10 years BEFORE death.
     // Java's math: latest(Death) − earliest(Burial) = +days → fires.
@@ -594,6 +594,140 @@ describe("hasBurialAfterDeath predicate (Java math: fires when burial > N days B
       ],
     };
     expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  // ── Issue #2681: the ported Java pairing fired on data that is not
+  // contradictory. These pin the narrowing in BOTH directions — the four
+  // below must stay silent, and the genuine violations above must keep
+  // firing. See the KNOWING DIVERGENCE note on hasBurialAfterDeath.
+
+  it("does NOT fire on two year-only dates in the SAME year", () => {
+    // The reported false positive. Java's pairing expands these to
+    // earliest(Burial) = 1938-01-01 and latest(Death) = 1938-12-31 and
+    // reports a 364-day violation from two identical recorded values.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Same", surname: "Year" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1938", standard_date: "1938" },
+            { id: "F2", type: "Death", date: "1938", standard_date: "1938" },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("does NOT fire on a year-only Burial with an exact Death later that year", () => {
+    // Also reported. Burial "1961" cannot be shown to precede a death of
+    // 28 Dec 1961: 31 Dec 1961 is inside the burial's own range.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Only" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1961", standard_date: "1961" },
+            {
+              id: "F2",
+              type: "Death",
+              date: "28 Dec 1961",
+              standard_date: "28 Dec 1961",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("does NOT fire when an imprecise Burial straddles an exact Death", () => {
+    // Month-precision burial containing the death day: the burial could be
+    // the 30th, after the death, so the contradiction is not established.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Straddle", surname: "Month" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Burial",
+              date: "Jun 1900",
+              standard_date: "Jun 1900",
+            },
+            {
+              id: "F2",
+              type: "Death",
+              date: "15 Jun 1900",
+              standard_date: "15 Jun 1900",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(false);
+  });
+
+  it("STILL fires on an imprecise Burial that cannot reach the Death", () => {
+    // The other direction: even the last day of the burial year (1937-12-31)
+    // is 366 days before the death, so every reading is contradictory. A
+    // narrowing that swallowed this one would be too wide.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Real", surname: "Violation" }],
+          facts: [
+            { id: "F1", type: "Burial", date: "1937", standard_date: "1937" },
+            {
+              id: "F2",
+              type: "Death",
+              date: "1 Jan 1939",
+              standard_date: "1 Jan 1939",
+            },
+          ],
+        },
+      ],
+    };
+    expect(hasBurialAfterDeath(new Mob(tree, "I1"), 31)).toBe(true);
+  });
+
+  it("STILL fires on two exact dates 32 days apart, and not on 31", () => {
+    // Exact dates collapse both pairings to the same number, so the
+    // narrowing must not move the 31-day threshold by a single day.
+    const build = (burial: string): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Edge", surname: "Case" }],
+          facts: [
+            { id: "F1", type: "Burial", date: burial, standard_date: burial },
+            {
+              id: "F2",
+              type: "Death",
+              date: "2 Feb 1900",
+              standard_date: "2 Feb 1900",
+            },
+          ],
+        },
+      ],
+    });
+    // 1 Jan → 2 Feb 1900 = 32 days.
+    expect(
+      hasBurialAfterDeath(new Mob(build("1 Jan 1900"), "I1"), 31),
+    ).toBe(true);
+    // 2 Jan → 2 Feb 1900 = 31 days, not strictly greater.
+    expect(
+      hasBurialAfterDeath(new Mob(build("2 Jan 1900"), "I1"), 31),
+    ).toBe(false);
   });
 });
 
@@ -3059,7 +3193,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     );
     expect(w).toBeDefined();
     // Birth-like + death-like facts examined by the check.
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
     // No relative involved — relatedPersonId stays unset.
     expect(w?.relatedPersonId).toBeUndefined();
   });
@@ -3083,7 +3217,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "tooManyBirthDates2",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
   });
 
   it("child-birth warning: earliestChildBirthToBirthMale14 carries anchor + child fact ids and relatedPersonId", () => {
@@ -3115,7 +3249,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     );
     expect(w).toBeDefined();
     // Anchor's birth fact + the contributing child's birth fact.
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
     expect(w?.relatedPersonId).toBe("C");
   });
 
@@ -3148,7 +3282,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     // Anchored on the focal person, but points at the failing relative.
     expect(w?.personId).toBe("I1");
     expect(w?.relatedPersonId).toBe("I2");
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
   });
 
   it("structural warning: tooManyChildren18 carries NO factIds", () => {
@@ -3177,10 +3311,10 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "tooManyChildren18",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toBeUndefined();
+    expect(w?.facts).toBeUndefined();
   });
 
-  it("name warning: hasBlankName carries NO factIds", () => {
+  it("name warning: hasBlankName carries NO facts", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -3194,7 +3328,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "hasBlankName",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toBeUndefined();
+    expect(w?.facts).toBeUndefined();
   });
 });
 
@@ -3848,14 +3982,16 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     );
     expect(w).toBeDefined();
     expect(w?.severity).toBe("contradiction");
-    expect(w?.factIds).toEqual(["NEVER-HAD-CHILDREN-1"]);
+    expect(w?.facts).toEqual([
+      { id: "NEVER-HAD-CHILDREN-1", type: "CoupleNeverHadChildren", date: null },
+    ]);
     expect(w?.relatedPersonId).toBe("C1");
     expect(w?.message).toBe(
       'This person and a spouse have a child together, but have a fact listed as "No Children."',
     );
   });
 
-  it("emits hasNoChildrenConflict (self view) with factIds, relatedPersonId and message", () => {
+  it("emits hasNoChildrenConflict (self view) with facts, relatedPersonId and message", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "NoChildren" }] },
@@ -3868,12 +4004,12 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     );
     expect(w).toBeDefined();
     expect(w?.severity).toBe("contradiction");
-    expect(w?.factIds).toEqual(["F1"]);
+    expect(w?.facts).toEqual([{ id: "F1", type: "NoChildren", date: null }]);
     expect(w?.relatedPersonId).toBe("C");
     expect(w?.message).toBe('This person has children but has a fact listed as "No Children."');
   });
 
-  it("emits hasNoChildrenConflict (parents view) with factIds, relatedPersonId and message", () => {
+  it("emits hasNoChildrenConflict (parents view) with facts, relatedPersonId and message", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         { id: "M1", gender: "Male", names: [{ given: "M1", surname: "S" }] },
@@ -3891,14 +4027,14 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     );
     expect(w).toBeDefined();
     expect(w?.severity).toBe("contradiction");
-    expect(w?.factIds).toEqual(["F1"]);
+    expect(w?.facts).toEqual([{ id: "F1", type: "CoupleNeverHadChildren", date: null }]);
     expect(w?.relatedPersonId).toBe("M1");
     expect(w?.message).toBe(
       'This person was born to a couple who have a fact listed as "No Children."',
     );
   });
 
-  it("emits hasNoCoupleRelationshipsConflict with severity, factIds, relatedPersonId and message", () => {
+  it("emits hasNoCoupleRelationshipsConflict with severity, facts, relatedPersonId and message", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -3916,14 +4052,14 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     );
     expect(w).toBeDefined();
     expect(w?.severity).toBe("contradiction");
-    expect(w?.factIds).toEqual(["F1"]);
+    expect(w?.facts).toEqual([{ id: "F1", type: "NoCoupleRelationships", date: null }]);
     expect(w?.relatedPersonId).toBe("S");
     expect(w?.message).toBe(
       'This person has one or more couple relationships but has a fact listed as "No Couple Relationships."',
     );
   });
 
-  it("emits hasStillbirthConflict (spouse branch) with factIds, relatedPersonId and message", () => {
+  it("emits hasStillbirthConflict (spouse branch) with facts, relatedPersonId and message", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -3941,12 +4077,12 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     );
     expect(w).toBeDefined();
     expect(w?.severity).toBe("contradiction");
-    expect(w?.factIds).toEqual(["F1"]);
+    expect(w?.facts).toEqual([{ id: "F1", type: "Stillbirth", date: null }]);
     expect(w?.relatedPersonId).toBe("S");
     expect(w?.message).toBe("This person is marked as stillborn but has a spouse or marriage recorded.");
   });
 
-  it("emits hasStillbirthConflict (child branch) with factIds, relatedPersonId and message", () => {
+  it("emits hasStillbirthConflict (child branch) with facts, relatedPersonId and message", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "Stillbirth" }] },
@@ -3959,12 +4095,12 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     );
     expect(w).toBeDefined();
     expect(w?.severity).toBe("contradiction");
-    expect(w?.factIds).toEqual(["F1"]);
+    expect(w?.facts).toEqual([{ id: "F1", type: "Stillbirth", date: null }]);
     expect(w?.relatedPersonId).toBe("C");
     expect(w?.message).toBe("This person is marked as stillborn but has a child recorded.");
   });
 
-  it("emits hasStillbirthConflict (age branch) with factIds, no relatedPersonId, and message", () => {
+  it("emits hasStillbirthConflict (age branch) with facts, no relatedPersonId, and message", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -3974,6 +4110,7 @@ describe("calculateWarnings — person_quality parity emitters", () => {
           facts: [
             { id: "F1", type: "Stillbirth", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
             { id: "F2", type: "Death", date: "1 Jan 1905", standard_date: "1 Jan 1905" },
+            { id: "F3", type: "Christening", date: "~1900", standard_date: "1900" },
           ],
         },
       ],
@@ -3983,12 +4120,18 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     );
     expect(w).toBeDefined();
     expect(w?.severity).toBe("contradiction");
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    // The age branch reads every birth-like fact, not only the Stillbirth, so
+    // the Christening it examined is cited too; `date` is the raw value.
+    expect(w?.facts).toEqual([
+      { id: "F1", type: "Stillbirth", date: "1 Jan 1900" },
+      { id: "F3", type: "Christening", date: "~1900" },
+      { id: "F2", type: "Death", date: "1 Jan 1905" },
+    ]);
     expect(w?.relatedPersonId).toBeUndefined();
     expect(w?.message).toBe("This person is marked as stillborn but lived to at least age 1.");
   });
 
-  it("emits hasDelayedBurial365 with implausible severity, factIds and an exact day count", () => {
+  it("emits hasDelayedBurial365 with implausible severity, facts and an exact day count", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -4008,8 +4151,11 @@ describe("calculateWarnings — person_quality parity emitters", () => {
     expect(w).toBeDefined();
     expect(w?.severity).toBe("implausible");
     // selfFactIds(mob, BURIAL, DEATH) unions the Burial family before the
-    // Death family, so the Burial fact id (F2) comes first.
-    expect(w?.factIds).toEqual(["F2", "F1"]);
+    // Death family, so the Burial fact (F2) comes first.
+    expect(w?.facts).toEqual([
+      { id: "F2", type: "Burial", date: "5 Feb 1901" },
+      { id: "F1", type: "Death", date: "1 Jan 1900" },
+    ]);
     expect(w?.message).toBe(
       "The burial date is 400 days after the death date, more than the 365-day threshold — burial usually happens within days of death.",
     );
