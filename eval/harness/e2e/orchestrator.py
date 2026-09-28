@@ -1554,6 +1554,91 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
     }
 
 
+class SleepDetector:
+    """Counts host sleep that `time.monotonic()` did NOT leave out (issue #2983).
+
+    On macOS/Linux monotonic pauses while the machine sleeps, so `real - active`
+    already measures the sleep. On Windows it keeps advancing through Modern
+    Standby, so that difference reads ~0. A heartbeat that should tick every
+    `tick_seconds` sees such a sleep as one monotonic gap far above the interval;
+    `gap - tick_seconds` of it is counted. A sleep monotonic left out shows no
+    monotonic gap and adds nothing, so the two cases never double-count.
+
+    A blocked event loop produces the same gap and is counted as sleep too.
+    Nothing distinguishes the two: the guarantee is structural, via
+    `run_with_heartbeat`, which observes only a window that never blocks.
+    """
+
+    def __init__(
+        self,
+        *,
+        tick_seconds: float = 5.0,
+        gap_threshold_seconds: float = 60.0,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self.tick_seconds = tick_seconds
+        self.gap_threshold_seconds = gap_threshold_seconds
+        self._monotonic = monotonic
+        self._last = monotonic()
+        self.counted_sleep_seconds = 0.0
+
+    def tick(self) -> None:
+        now = self._monotonic()
+        gap = now - self._last
+        self._last = now
+        if gap > self.gap_threshold_seconds:
+            self.counted_sleep_seconds += gap - self.tick_seconds
+
+
+async def run_with_heartbeat(coro, detector: SleepDetector):
+    """Await `coro` with `detector` ticking alongside it, and only alongside it.
+
+    The heartbeat starts here and is cancelled and awaited before this returns,
+    so a gap before or after `coro` (workspace build, the judge) is never
+    observed. The last `tick()` in `finally` counts a sleep that ends as a cap
+    fires, rather than leaving it to timer-heap order.
+    """
+
+    async def _beat() -> None:
+        while True:
+            await asyncio.sleep(detector.tick_seconds)
+            detector.tick()
+
+    beat = asyncio.create_task(_beat())
+    try:
+        return await coro
+    finally:
+        detector.tick()
+        beat.cancel()
+        try:
+            await beat
+        except asyncio.CancelledError:
+            # The heartbeat's own cancel is expected; an outer cancel that
+            # landed during this `finally` must still propagate.
+            current = asyncio.current_task()
+            if current is not None and current.cancelling():
+                raise
+
+
+def sleep_usage_fields(
+    active_seconds: float, real_seconds: float, counted_sleep_seconds: float
+) -> dict[str, float]:
+    """The run log's clock fields (spec §6 "Clocks").
+
+    `active_seconds` is monotonic, `real_seconds` is `time.time()`. Sleep is the
+    part monotonic left out (`real - active`, macOS/Linux) plus the part the
+    heartbeat counted (Windows), and `wall_clock_seconds` is active time with the
+    counted part removed, so it means the same thing on all three platforms.
+    """
+    return {
+        "wall_clock_seconds": active_seconds - counted_sleep_seconds,
+        "real_clock_seconds": real_seconds,
+        "slept_seconds": max(0.0, real_seconds - active_seconds)
+        + counted_sleep_seconds,
+        "counted_sleep_seconds": counted_sleep_seconds,
+    }
+
+
 async def _run_agent(
     *,
     fixture: Fixture,
@@ -2719,8 +2804,14 @@ async def _run_agent(
             )
             last_progress["t"] = time.monotonic()
 
+    # Spans exactly `_consume()`: the judge and workspace build stay outside it,
+    # because a blocked loop there would read as a Windows sleep (issue #2983).
+    sleep_detector = SleepDetector()
     try:
-        await asyncio.wait_for(_consume(), timeout=fixture.caps.wall_clock_seconds)
+        await asyncio.wait_for(
+            run_with_heartbeat(_consume(), sleep_detector),
+            timeout=fixture.caps.wall_clock_seconds,
+        )
     except asyncio.TimeoutError:
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {fixture.caps.wall_clock_seconds}s"
@@ -2760,6 +2851,8 @@ async def _run_agent(
         "message_usage": _message_usage,
         "thread_windows": _thread_windows,
         "continue_nudges": continue_nudges["n"],
+        # Read by run_e2e_test's clock fields (sleep_usage_fields).
+        "counted_sleep_seconds": sleep_detector.counted_sleep_seconds,
         # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING the
         # terminal one, so a hook-terminated run carries one more than
         # continue_nudges — but NOT universally: a run killed by the wall clock, the
@@ -2991,7 +3084,9 @@ async def run_e2e_test(
         )
 
     started_at = time.time()  # real clock (counts system sleep)
-    started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
+    # Pauses during macOS/Linux sleep but NOT Windows Modern Standby; the
+    # heartbeat in _run_agent counts that part (sleep_usage_fields).
+    started_mono = time.monotonic()
     # Provenance (#1091), captured at run start from the repo files this run
     # stages — the prompt identity, so a committed run ties back to what produced
     # it. `agents_dir` MUST match the one `build_workspace` uses below (it takes
@@ -3179,19 +3274,21 @@ async def run_e2e_test(
                 guardrail_shadow_violations + tree_encoding_shadow
             )
 
-        # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
-        # matches the wall-clock cap and the stall watchdog (also monotonic) and
-        # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
-        # elapsed (time.time); `slept_seconds` (their gap) is ≈ time the machine
-        # slept, so a long idle never masquerades as a stall again. `judge_seconds`
-        # is the post-agent judge call, kept separate from the agent run.
-        active_seconds = time.monotonic() - started_mono
-        real_seconds = time.time() - started_at
+        # Clocks: spec §6 "Clocks". `wall_clock_seconds` is active time: monotonic
+        # minus the sleep the heartbeat counted, which matters on Windows, where
+        # monotonic advances through Modern Standby. `slept_seconds` adds the
+        # part monotonic left out (macOS/Linux) to that counted part. The caps
+        # and watchdogs still run on raw monotonic, so on Windows a standby still
+        # consumes them (what a slept run becomes: issue #2974). Sleep during the
+        # workspace build or the judge falls outside the heartbeat and is not
+        # counted. `judge_seconds` is the post-agent judge call.
         usage = {
             **usage,
-            "wall_clock_seconds": active_seconds,
-            "real_clock_seconds": real_seconds,
-            "slept_seconds": max(0.0, real_seconds - active_seconds),
+            **sleep_usage_fields(
+                time.monotonic() - started_mono,
+                time.time() - started_at,
+                usage.get("counted_sleep_seconds") or 0.0,
+            ),
             "judge_seconds": judge_seconds,
             # Reasoning config, so a run is self-describing when A/B'ing effort ×
             # output-budget × model vs subagents[] behavior. `agent_model` is the

@@ -857,12 +857,43 @@ the `max_cost_usd` note in §6 step 5.
    a resume can't double-apply a non-idempotent write. Resumes are recorded in
    `usage.resumes`; the captured `usage.session_id` is what resume reloads.
 
-   **Clocks.** The wall-clock cap, the inactivity/progress timers, and the
-   reported `usage.wall_clock_seconds` all use `time.monotonic()`, which on
-   macOS/Linux does **not** advance while the machine sleeps — so a sleeping
-   laptop can't masquerade as a stall and can't inflate the metric. The literal
-   elapsed `time.time()` is recorded separately as `usage.real_clock_seconds`,
-   and their gap as `usage.slept_seconds` (≈ time asleep). See eval/README.md
+   **Clocks.** The wall-clock cap and the inactivity/progress timers use
+   `time.monotonic()`. On macOS/Linux it does **not** advance while the machine
+   sleeps, so there a sleeping laptop can't masquerade as a stall and can't
+   inflate the metric. On Windows it **does** advance through Modern Standby
+   (S0 low-power idle), so there the caps and timers count standby: a sleep can
+   end a run as `timeout`, or as `inactivity` / a resumed stall. What a slept run
+   should become is not yet decided; the harness only detects and records it.
+
+   Detection is a heartbeat. While `_consume()` runs, a task ticks
+   every 5 s and reads `time.monotonic()`. A gap between ticks above 60 s is
+   sleep monotonic counted (the Windows case), and `gap - 5 s` of it is added to
+   `usage.counted_sleep_seconds`, so one late tick adds nothing. Sleep monotonic
+   left out (macOS/Linux) shows no such gap and is measured instead by the
+   difference between the literal elapsed `time.time()`, recorded as
+   `usage.real_clock_seconds`, and the monotonic elapsed. So:
+
+   - `usage.slept_seconds` = `(real - monotonic) + counted_sleep_seconds`
+     (≈ time asleep, on every platform);
+   - `usage.wall_clock_seconds` = `monotonic - counted_sleep_seconds`, active
+     time on every platform.
+
+   A heartbeat was chosen over a third OS clock. `QueryUnbiasedInterruptTime`
+   through `ctypes` is Windows-only, and whether it pauses in Modern Standby
+   rather than only in S3 is unverified. The Kernel-Power 506/507 standby events
+   need a subprocess and parsing, and are Windows-only too. The heartbeat is
+   stdlib-only and OS-independent, and is unit-tested with injected clocks.
+
+   Limits. A blocked event loop produces the same gap as a sleep, and no
+   heartbeat can tell them apart; the guarantee is structural instead: the
+   heartbeat starts with `_consume()` and is cancelled before `_run_agent`
+   returns, and nothing inside `_consume()` or the SDK hooks it drives blocks
+   for anywhere near 60 s. The one blocking wait there is the MCP-unavailable
+   abort's stderr read (`read_mcp_stderr_lines`, up to nine 0.3 s `time.sleep`
+   retries), which ends the run anyway. A longer blocking call added there later
+   would be counted as sleep. And on Windows a standby **outside**
+   `_consume()`, during workspace build or the judge call, is not detected: it
+   still inflates `wall_clock_seconds` and `judge_seconds`. See eval/README.md
    "Keep the machine awake during a run".
 
 6. **Regardless of which signal fired**, the harness reads the final
@@ -1851,7 +1882,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
 | `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, including a well-formed `step` answered "Yes.". The weak-signal reading belongs to `silent` plus `false_completion` in `hand_back_classes`, not to this total. |
 | `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is 0 until the skill emits the hand-back line. See the Continue-nudge note in §6. |
-| `wall_clock_seconds` | Active/monotonic — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `judge_seconds`. |
+| `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |
 | `subagent_model_override` | Non-null when `--agent-model` forced every staged subagent off its own `.md` pin. Null = each used its pin. |
@@ -1862,7 +1893,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
-| `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
+| `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
 | `subagent_capture_status` | Why `subagents[]` is empty, so `[]` stops meaning three distinct things. `captured` — at least one transcript summarized. `matched_no_transcripts` — the directory resolved but held no subagent transcript. **This is the ordinary "no subagent ran" value**: a session that started always leaves its own parent transcript in that directory, so the directory exists whether or not any subagent was dispatched. It also covers a transcript that is present but unusable. `no_cache_dir` — no candidate spelling of the cache directory exists at all; the cache was cleaned, or the run never reached the agent. `error` — the lookup itself failed; recorded, never raised, because capture must not cost a completed run its log. `unknown` — nobody recorded one; the default, and not a claim that capture succeeded. The field is absent altogether on runs logged before it existed. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |

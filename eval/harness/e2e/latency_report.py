@@ -89,10 +89,16 @@ class LatencyBreakdown:
     stop_reason: str
     source_file: str | None = None
 
-    # Totals (seconds). wall_clock_s prefers the harness monotonic clock
-    # (excludes system sleep); duration_s is the SDK's own total. They differ
-    # only by orchestration overhead outside the SDK loop.
+    # Totals (seconds). wall_clock_s prefers the harness active clock
+    # (monotonic minus detected sleep, spec §6 "Clocks"); duration_s is the SDK's
+    # own total. They differ by orchestration overhead outside the SDK loop, and
+    # on Windows by detected standby too: duration_s (the SDK's figure, or the
+    # monotonic `streamed_fallback` duration_ms) can include Modern Standby.
     wall_clock_s: float = 0.0
+    # Sleep the harness heartbeat counted (Windows Modern Standby). The
+    # timeline's offsets are raw monotonic, so they still include it: compare a
+    # timeline figure against `timeline_clock_s`, never against `wall_clock_s`.
+    counted_sleep_s: float = 0.0
     duration_s: float = 0.0
     api_s: float = 0.0
 
@@ -143,6 +149,11 @@ class LatencyBreakdown:
     # tags (see _skill_phase_breakdown). Empty for a run committed before the
     # tags existed, or a run with no Skill tool-use at all — never an error.
     skill_phases: list[dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def timeline_clock_s(self) -> float:
+        """The run on the timeline's own clock: active time plus counted sleep."""
+        return self.wall_clock_s + self.counted_sleep_s
 
 
 def _timeline_decomposition(timeline: list[list[Any]]) -> dict[str, Any]:
@@ -244,6 +255,7 @@ def analyze_result(result: dict[str, Any], source_file: str | None = None) -> La
     duration_s = (duration_ms / 1000.0) if duration_ms else 0.0
     api_s = (duration_api_ms / 1000.0) if duration_api_ms else 0.0
     wall_clock_s = usage.get("wall_clock_seconds") or duration_s
+    counted_sleep_s = usage.get("counted_sleep_seconds") or 0.0
     api_pct = (
         (duration_api_ms / duration_ms)
         if (duration_api_ms and duration_ms)
@@ -271,6 +283,7 @@ def analyze_result(result: dict[str, Any], source_file: str | None = None) -> La
         stop_reason=result.get("stop_reason", "?"),
         source_file=source_file,
         wall_clock_s=round(float(wall_clock_s), 1),
+        counted_sleep_s=round(float(counted_sleep_s), 1),
         duration_s=round(duration_s, 1),
         api_s=round(api_s, 1),
         api_pct=api_pct,
@@ -296,7 +309,7 @@ def analyze_result(result: dict[str, Any], source_file: str | None = None) -> La
         bd.slowest_gen_gaps = d["slowest_gen_gaps"]
         # Wall-clock beyond the timeline span is stall/resume/judge idle.
         if bd.timeline_span_s is not None:
-            bd.stall_s = round(max(0.0, bd.wall_clock_s - bd.timeline_span_s), 1)
+            bd.stall_s = round(max(0.0, bd.timeline_clock_s - bd.timeline_span_s), 1)
         bd.skill_phases = _skill_phase_breakdown(timeline)
 
     return bd
@@ -334,6 +347,12 @@ def format_breakdown(bd: LatencyBreakdown) -> str:
         lines.append(
             f"  non-tool time:   {_fmt_min(bd.non_tool_time_s)}  (model generation across turns)"
         )
+        if bd.counted_sleep_s:
+            # Only the total is persisted, so where it landed is unknown: the
+            # tool or non-tool gap it interrupted, or stall/idle if it ended the run.
+            lines.append(
+                f"  host sleep:      {_fmt_min(bd.counted_sleep_s)}  (Windows standby; already inside tool, non-tool or stall/idle above, and not model or tool work)"
+            )
         if bd.stall_s and bd.stall_s > 60:
             lines.append(
                 f"  stall/idle:      {_fmt_min(bd.stall_s)}  (outside timeline span — stall/resume/judge, not model or tool)"
@@ -374,8 +393,15 @@ def format_skill_phases(bd: LatencyBreakdown) -> str:
             "(run predates timeline tool-name tagging, or made no Skill tool-use) ==="
         )
     lines = [f"=== {bd.test_id} — per-skill phase breakdown ==="]
+    if bd.counted_sleep_s:
+        lines.append(
+            f"  (shares are of wall-clock plus {_fmt_min(bd.counted_sleep_s)} host sleep, "
+            "the clock phase times are measured on)"
+        )
     for p in bd.skill_phases:
-        share = (p["duration_s"] / bd.wall_clock_s * 100) if bd.wall_clock_s else None
+        share = (
+            (p["duration_s"] / bd.timeline_clock_s * 100) if bd.timeline_clock_s else None
+        )
         share_str = f"{share:.0f}%" if share is not None else "n/a"
         lines.append(
             f"  {p['skill']:<28} {_fmt_min(p['duration_s']):>7}  "
