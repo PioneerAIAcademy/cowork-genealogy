@@ -368,8 +368,8 @@ describe("plugin agent tool names", () => {
 
 describe("plugin agent/skill bodies", () => {
   // The deferred-schema fallback path. Cowork defers the genealogy tool schemas
-  // above a size threshold and offers no control over it, so ToolSearch IS the
-  // load path there — and a hardcoded `select:mcp__genealogy__…` query resolves
+  // above a size threshold, except ALWAYS_LOAD in src/tool-schemas.ts, so
+  // ToolSearch IS the load path there for every other tool — and a hardcoded `select:mcp__genealogy__…` query resolves
   // to nothing. Bodies must search by bare tool name instead.
   //
   // (Both harnesses set ENABLE_TOOL_SEARCH=true, which *enables* deferral rather

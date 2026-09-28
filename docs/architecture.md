@@ -1080,10 +1080,12 @@ driver must wait.
 > correct either way.
 >
 > **Exception: `ALWAYS_LOAD` (`src/tool-schemas.ts`).** Those tools carry
-> `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which exempts them from
-> deferral under every server name. The set is sized from the September e2e corpus.
-> Compaction drops a ToolSearch-loaded schema (76 of 82 `research_append` re-loads
-> follow a `compact_boundary`), and an always-loaded one survives it.
+> `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which the Claude Code
+> CLI honors under any server name (verified on 2.1.139 and 2.1.220; unverified in
+> Cowork). The set is sized from the September e2e corpus. 76 of 82
+> `research_append` re-loads follow a `compact_boundary`, which is consistent with
+> compaction dropping a ToolSearch-loaded schema. An always-loaded one is not
+> dropped.
 > `record_search` stays deferred, because its 18.5 KB schema costs more than the
 > calls it would save. **The unit harness still defers the set**, because
 > `mock_mcp.py` copies only `name`/`description`/`inputSchema` into its catalog

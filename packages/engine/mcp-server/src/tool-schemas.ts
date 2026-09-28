@@ -60,11 +60,11 @@ import { sidecarReadSchema } from "./tools/sidecar-read.js";
 // Tools exempt from ToolSearch deferral: their schemas load up front instead of
 // costing a ToolSearch turn each time. Sized against the September 2026 e2e corpus.
 export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
-  "research_query", // loaded by the first ToolSearch of 34/34 runs
-  "project_context", // loaded by the first ToolSearch of 34/34 runs, beside research_query
-  "research_append", // most-loaded tool; re-loaded after nearly every compaction
-  "research_log_append", // logs every search; re-loaded after nearly every compaction
-  "record_read", // read after most searches; 2.3 KB. record_search stays deferred at 18.5 KB
+  "research_query", // loaded by the first genealogy ToolSearch of 34/34 runs
+  "project_context", // loaded beside research_query in that same first ToolSearch
+  "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
+  "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
+  "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 18.5 KB
 ]);
 
 export const allToolSchemas = [

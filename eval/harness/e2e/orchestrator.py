@@ -2258,8 +2258,8 @@ async def _run_agent(
         #
         # So "true" below means e2e runs WITH tool search: the ~38-tool
         # genealogy server's schemas are deferred (except ALWAYS_LOAD in
-        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
-        # calls across recent runs). Idea 3a of the speedup plan wanted the
+        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
+        # 17x in the spriggs run, ~11% of all tool calls across recent runs). Idea 3a of the speedup plan wanted the
         # opposite; flipping to "false" is a separate, tracked decision that
         # requires re-measuring the tool mix, so the value is left as it has been
         # running. `env` MERGES onto the inherited environment (claude_agent_sdk
@@ -2515,8 +2515,9 @@ async def _run_agent(
                                     # AFTER init, when there is no init message
                                     # left to read. Absence surfaces only as
                                     # ToolSearch finding nothing (the genealogy
-                                    # schemas are deferred under
-                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # schemas outside ALWAYS_LOAD are
+                                    # deferred under ENABLE_TOOL_SEARCH),
+                                    # so count consecutive
                                     # no-match lookups while not one `mcp__`
                                     # call has ever succeeded. Threshold and
                                     # reset rule are calibrated against the
