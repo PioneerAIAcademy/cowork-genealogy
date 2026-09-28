@@ -67,6 +67,23 @@ export const OK_FALSE_IS_FAILURE = [
 ] as const;
 
 /**
+ * The members of `OK_FALSE_IS_FAILURE` that write neither project document.
+ * Everything else in that list is a document writer, which is the writer-tool
+ * vocabulary the ownership guard (`tests/packaging/ownership-manifest.test.ts`)
+ * and `eval/harness/e2e/writer_attribution_report.py` both read from here — the
+ * engine, never the manifest, so neither can be satisfied by the manifest
+ * agreeing with itself. Declared in the same `[...] as const` shape so the
+ * Python report parses both lists with one pattern.
+ */
+export const NOT_A_DOCUMENT_WRITER = [
+  "convert_calendar",
+  "build_external_search_url",
+  "research_query",
+  "project_context",
+  "sidecar_read",
+] as const satisfies readonly (typeof OK_FALSE_IS_FAILURE)[number][];
+
+/**
  * Wrap a tool result in the MCP content envelope, setting `isError: true` when
  * the tool reported failure by returning `{ ok: false }`.
  *

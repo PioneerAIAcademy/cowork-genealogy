@@ -26,7 +26,12 @@ Three gates, in order:
    check it. Per issue #1025, that requirement attaches to whichever
    record does the disproving on a documented-negative resolution, never
    to the absence claim itself (spec §3.6.1); the check is satisfied by a
-   single ark anywhere in the fixture, not one per finding.
+   single ark anywhere in the fixture, not one per finding. When such a
+   fixture declares `"image_basis": true` in `fixture.json` — the
+   resolution rested on reading the original page images — the same check
+   additionally requires an *image* ark (`3:1:`/`3:2:`, not the `1:1:`
+   index form) among those `supporting_sources`, and rejects a non-boolean
+   `image_basis` (issue #2877).
 3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
@@ -436,6 +441,15 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
 # id this check exists to reject.
 _ARK_RE = re.compile(r"ark:/61903/[0-9]+:[0-9]+:[\w-]{4,}")
 
+# An *image* ark, as opposed to an index ark. The ark taxonomy is settled:
+# image arks carry `3:1:` or `3:2:` in the two path segments; `1:1:`, `1:2:`,
+# `2:5:` and `4:1:` are indexes, not images (`src/tools/record-read.ts`,
+# `src/tools/image-read.ts`). The first segment is what distinguishes an image
+# — `1:1:` vs `1:2:` is a difference in indexing, not the index/image split —
+# so the pattern keys on `3:` and accepts both `3:1:` and `3:2:` rather than
+# hardcoding `3:1:`.
+_IMAGE_ARK_RE = re.compile(r"ark:/61903/3:[12]:[\w-]{4,}")
+
 # The existing definition of "unresolved" for a record-hint fixture
 # (eval/harness/scripts/check_e2e_fixtures.py:58) — its presence in the
 # README means the fixture is still a draft pending adjudication and #970's
@@ -455,9 +469,11 @@ def record_hint_citation_errors(
     Applies only when `fixture.json`'s `genre == "record-hint"` and the
     fixture is not still a draft (no `_DRAFT_MARKER` in `README.md`). A
     strip-genre fixture, or a record-hint fixture still pending
-    adjudication, is not checked here.
+    adjudication, is not checked here — the non-record-hint and draft skips
+    precede every check below, so `image_basis` is ignored on a strip
+    fixture and on a draft.
 
-    The bar is deliberately low, per issue #1025: at least one
+    The base bar is deliberately low, per issue #1025: at least one
     `supporting_sources` entry, on at least one finding, anywhere in the
     fixture, must contain a literal `ark:/61903/`. A documented-negative
     resolution has two different claims — the disproving record (real,
@@ -465,6 +481,17 @@ def record_hint_citation_errors(
     definition) — so this does not require every entry to carry an ark,
     only that the disproving record's ark is present *somewhere* in the
     fixture (spec §3.6.1).
+
+    On top of that, `fixture.json`'s `image_basis` is a **declared flag**
+    (issue #2877): a resolution that rests on reading the original page
+    images sets `"image_basis": true`, and then at least one
+    `supporting_sources` entry must cite an *image* ark (`3:1:`/`3:2:`) —
+    an index ark (`1:1:`) or an ark that lives only in `README.md` does not
+    satisfy it. When the flag is `false`/absent the base bar is unchanged.
+    A non-boolean `image_basis` (`"true"`, `1`, `null`) is a hard error:
+    truthiness-coercing it would let `"false"` enable the check and let a
+    typo'd string disable it with CI green. It is read by key presence so a
+    JSON `null` is caught distinct from an absent key.
 
     Silently returns no errors if `fixture.json` or `README.md` is
     missing or unparseable — those are reported by other checks, and this
@@ -489,22 +516,58 @@ def record_hint_citation_errors(
     if _DRAFT_MARKER in readme_text:
         return []
 
-    for finding in expected_findings.get("findings") or []:
-        if not isinstance(finding, dict):
-            continue
-        for source in finding.get("supporting_sources") or []:
-            if isinstance(source, str) and _ARK_RE.search(source):
-                return []
+    errors: list[str] = []
 
-    return [
-        "expected-findings.json: resolved record-hint fixture has no "
-        "`supporting_sources` entry containing a literal `ark:/61903/` on "
-        "any finding — issue #970 requires the disproving record's ark be "
-        "checkable by a reviewer. A bare id (e.g. `QL7X-YN65`) does not "
-        "satisfy this; expand it to the full ark path (issue #1025 / spec "
-        "§3.6.1 covers the disproving-record-vs-absence split for "
-        "documented negatives)."
-    ]
+    # `image_basis` type check — key presence so JSON `null` (-> None) is caught
+    # distinct from an absent key; a truthiness test would silently accept both.
+    image_basis = fixture_meta.get("image_basis", False)
+    if "image_basis" in fixture_meta and not isinstance(image_basis, bool):
+        errors.append(
+            f"fixture.json: `image_basis` must be a boolean (true/false), got "
+            f"{image_basis!r} — coercing it would let \"false\" enable the "
+            f"image-ark check and a typo'd string disable it with CI green "
+            f"(issue #2877)."
+        )
+
+    # Base bar (issue #970 / #1025): a full ark somewhere in the findings.
+    has_ark = any(
+        isinstance(source, str) and _ARK_RE.search(source)
+        for finding in expected_findings.get("findings") or []
+        if isinstance(finding, dict)
+        for source in finding.get("supporting_sources") or []
+    )
+    if not has_ark:
+        errors.append(
+            "expected-findings.json: resolved record-hint fixture has no "
+            "`supporting_sources` entry containing a literal `ark:/61903/` on "
+            "any finding — issue #970 requires the disproving record's ark be "
+            "checkable by a reviewer. A bare id (e.g. `QL7X-YN65`) does not "
+            "satisfy this; expand it to the full ark path (issue #1025 / spec "
+            "§3.6.1 covers the disproving-record-vs-absence split for "
+            "documented negatives)."
+        )
+
+    # `image_basis: true` raises the bar to an image ark. Strict `is True` so a
+    # non-boolean (already errored above) never enables the check.
+    if image_basis is True:
+        has_image_ark = any(
+            isinstance(source, str) and _IMAGE_ARK_RE.search(source)
+            for finding in expected_findings.get("findings") or []
+            if isinstance(finding, dict)
+            for source in finding.get("supporting_sources") or []
+        )
+        if not has_image_ark:
+            errors.append(
+                "expected-findings.json: `image_basis` is true but no "
+                "`supporting_sources` entry cites an image ark "
+                "(`ark:/61903/3:1:` or `3:2:`) — this resolution rests on "
+                "reading the original page images (issue #2877), so the image "
+                "ark must be in expected-findings.json. An index ark "
+                "(`1:1:`/`1:2:`) or an ark that appears only in README.md does "
+                "not satisfy this."
+            )
+
+    return errors
 
 
 @dataclass

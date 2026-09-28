@@ -260,8 +260,7 @@ export const collectionsSearchToolSchema = {
     "so results come back at that scope (the tool derives it and returns it as " +
     "`scope`). Optionally filter by startYear/endYear to keep only collections " +
     "whose date range overlaps that window. Returns the full matched set in one " +
-    "response (no pagination). To fetch full detail for one collection, pass its " +
-    "id to collection_read. " +
+    "response (no pagination). " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",

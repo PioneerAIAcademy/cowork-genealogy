@@ -83,14 +83,16 @@ References to load when the moment arrives:
 
 Repeat for each external-site plan item.
 
-## Autonomous mode — no user to capture
+## No user is waiting to capture
 
-Under `--autonomous` (the research objective was launched with that flag)
-there is **no user** to click a link, capture a PDF, or upload it — so the
-click-capture-analyze loop above **cannot complete**. Do **not** present a
-URL and wait for a capture, and do **not** end your turn to ask the user to
-capture it: that stalls an autonomous run (the orchestrator's rule is that
-only `project.status == "completed"` or a logged blocker ends the run).
+When the researcher asked for this search themselves, hand them the URL and
+wait for the capture as above. Otherwise nobody is sitting there to click a
+link, capture a PDF, or upload it while you work — so the click-capture-analyze
+loop above **cannot complete** mid-run. Do
+**not** present a URL and wait for a capture, and do **not** end your turn to ask
+for one: that stalls the run (the orchestrator's rule is that only
+`project.status == "completed"`, a logged blocker, or something only the user can
+supply ends it).
 
 Instead, for each capture-required external-site plan item:
 
@@ -102,9 +104,9 @@ Instead, for each capture-required external-site plan item:
    — it is a genuine lead worth recording.
 3. **Log it as deferred** in one `research_log_append` call: `outcome:
    "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
-   and `notes` stating the search was **deferred — requires an interactive
-   user capture and is not obtainable in an autonomous run**, with the
-   generated URL recorded so a later interactive session can capture it.
+   and `notes` stating the search was **deferred — requires a user capture,
+   which cannot happen while the run is working**, with the generated URL
+   recorded so the researcher can capture it later.
 4. **If — and only if — the search came from an existing plan item**, mark
    that item `skipped` (step 7): terminal, and honest that nothing was
    searched. For an ad-hoc search with no plan item, stop at the log entry.
@@ -283,10 +285,10 @@ build_external_search_url({
 | `site` | Attributes it reads | Notes |
 |--------|---------------------|-------|
 | `ancestry` | `givenName`/`surname`, `birthYear`/`birthPlace`, `deathYear`/`deathPlace`, `marriageYear`, `residenceYear`/`residencePlace`, `father*`/`mother*`/`spouse*` | |
-| `myheritage` | `givenName`/`surname`, `birthYear`/`birthPlace`, `marriageYear`/`marriagePlace`, `deathYear`/`deathPlace`, `father*`/`mother*` | No residence field |
+| `myheritage` | `givenName`/`surname`, `birthYear` or `deathYear`, one place from `birthPlace`/`deathPlace`/`marriagePlace` | No residence field. `marriageYear` and `father*`/`mother*` are accepted but not expressible in the URL — the tool reports them unused. A year displaces a place, and the site ranks rather than filters, so a large hit count is expected and is not a failed search |
 | `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace` (or `marriagePlace`/`deathPlace`/`residencePlace`)/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) — pass that event's place too; the site has one place field, filled birth-first |
 | `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear` | No place parameter |
-| `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` is a plain year or a hyphenated range (`"1880-1905"`) when the exact year isn't known; any other shape is rejected with a note. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
+| `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` is a plain year or a hyphenated range (`"1880-1905"`) when the exact year isn't known; any other shape is rejected with a note. `searchPlace` must name a US state to scope at all (`"Schuylkill, Pennsylvania"`) — the site scopes by state and county, and a place without one is reported unused. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
 | `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | `usState` is the state's name or postal abbreviation; the tool emits the working facet form. Pass the plan item's whole `date_range` as the window, never one year of it. On `outside_coverage`, say the page corpus does not reach that period and route to the state/regional archive for the place or a paid site |
 | `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
 | `archives_gov` | `givenName`/`surname`, `keywords` | National Archives Catalog — `keywords` is free text (a record type), not the name. No place parameter: a place passed here is ignored and reported in `notes` |
@@ -527,10 +529,10 @@ not mark it `completed` for handing over a URL.
 | User *reports* a nil, no capture | `in_progress` |
 | Site inaccessible **and the user asks to skip it** | `skipped` |
 | Site inaccessible, user has not decided | `in_progress` |
-| `--autonomous` (no user can ever capture) | `skipped` |
+| Capture required, and no user is present to make one | `skipped` |
 
-Outside `--autonomous`, `skipped` requires the user to have asked for it —
-never infer it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
+`skipped` on any other row requires the user to have asked for it — never infer
+it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
 inputs — never hand-edit `research.json`. This skill writes only `log[]`
 entries and the plan-item status; record-extraction writes any
 source/assertion entries when you hand it a single-record capture. Then offer
