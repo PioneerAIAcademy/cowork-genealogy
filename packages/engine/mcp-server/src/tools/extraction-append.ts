@@ -270,7 +270,7 @@ export function buildExtractionOps(
     citation_detail: {
       who: extraction.recordType === "census" ? "the enumerated household" : "the record's parties",
       what: title,
-      when_created: eventYear(gx) ?? "unknown",
+      when_created: eventYear(gx, extraction.recordType) ?? "unknown",
       when_accessed: accessed,
       where: collection ?? "FamilySearch",
       where_within: doc.recordId,
@@ -314,19 +314,53 @@ export function buildExtractionOps(
   return { ops, sourceDescription: url ? { title, url } : { title }, extraction };
 }
 
-/** The record's own event year, for `citation_detail.when_created`. */
-function eventYear(gx: SimplifiedGedcomX): string | undefined {
-  for (const p of gx.persons ?? []) {
-    for (const f of p.facts ?? []) {
-      const y = String(f.standard_date ?? f.date ?? "").match(/\d{4}/)?.[0];
-      if (y) return y;
+/**
+ * The year the RECORD was created, for `citation_detail.when_created`.
+ *
+ * Keyed on the record's own event type, not on the first dated fact found. A
+ * first-fact scan is wrong on essentially every record, because `Birth` sorts
+ * early and rides along on all of them: on the committed fixtures it dated a
+ * 1910 marriage to 1889, an 1870 census to 1845 and an 1879 death to 1854 —
+ * each the subject's birth year, and each written into a required citation
+ * field as the year the record was made.
+ *
+ * A marriage's event fact is on the COUPLE, so relationship facts are searched
+ * for the event type too. Falls back to any dated fact only when the record
+ * carries none of its own event type, which is better than `unknown` and is the
+ * only case where the old behaviour was right.
+ */
+const RECORD_EVENT_FACT: Record<string, RegExp> = {
+  census: /census/i,
+  marriage: /marriage/i,
+  death: /death/i,
+  burial: /burial|cremation/i,
+  christening: /christening|baptism/i,
+  birth: /birth/i,
+  draft_registration: /draft|militaryservice/i,
+  land: /land|property/i,
+};
+
+function eventYear(gx: SimplifiedGedcomX, recordType: string): string | undefined {
+  const wanted = RECORD_EVENT_FACT[recordType];
+  const year = (f: { date?: string; standard_date?: string; type?: string }) =>
+    String(f.standard_date ?? f.date ?? "").match(/\d{4}/)?.[0];
+
+  const allFacts: { type?: string; date?: string; standard_date?: string }[] = [
+    ...(gx.persons ?? []).flatMap((p) => p.facts ?? []),
+    ...(gx.relationships ?? []).flatMap((r) => r.facts ?? []),
+  ];
+
+  if (wanted) {
+    for (const f of allFacts) {
+      if (wanted.test(String(f.type ?? "")) ) {
+        const y = year(f);
+        if (y) return y;
+      }
     }
   }
-  for (const r of gx.relationships ?? []) {
-    for (const f of r.facts ?? []) {
-      const y = String(f.standard_date ?? f.date ?? "").match(/\d{4}/)?.[0];
-      if (y) return y;
-    }
+  for (const f of allFacts) {
+    const y = year(f);
+    if (y) return y;
   }
   return undefined;
 }

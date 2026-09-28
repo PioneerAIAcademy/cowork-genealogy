@@ -575,6 +575,25 @@ describe("extraction_append — extractor mode", () => {
     }
   });
 
+  it("dates the source by the RECORD's event, not by the first fact found", async () => {
+    // `citation_detail.when_created` is the year the record was made. A
+    // first-dated-fact scan is wrong on essentially every record, because
+    // `Birth` sorts early and rides along on all of them: before this was keyed
+    // on the record's own event type it dated a 1910 marriage to 1889, an 1870
+    // census to 1845 and an 1879 death to 1854 — each the subject's birth year,
+    // written into a required citation field as the year of creation.
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+    } as any);
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    // The record is an 1870 census whose personas carry births from 1791 on.
+    expect(research.sources[0].citation_detail.when_created).toBe("1870");
+  });
+
   it("resolves a persona PER assertion from the record_read sidecar", async () => {
     // The auto-fill bug this replaces stamped the searched persona's id onto
     // assertions about someone else, 16 times in the e2e corpus. A record_read
