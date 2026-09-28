@@ -1205,9 +1205,9 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     the run. Image reads must be delegated to the image-reader subagent, which
     absorbs the base64 in a throwaway context and returns text.
 
-    `extraction_append` writes the extracted assertions and sources. That is
-    the record-extractor subagent's job; a main-thread call is the router
-    substituting for a failed spawn and doing the extraction itself (#942).
+    `extraction_append` was the other guarded tool (#942) until issue #2937
+    routed indexed-record extraction through code called from the main thread.
+    It is no longer in `SUBAGENT_ONLY_TOOLS`, so it can no longer appear here.
 
     This is the deterministic half of what the LLM judge used to grade by
     transcript inference — badly: across the 2026-07-16 runs it caught the
@@ -1228,10 +1228,6 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         "image_read": (
             "image_read → @plugin:image-reader, so the base64 never enters the "
             "router's context"
-        ),
-        "extraction_append": (
-            "extraction_append → @plugin:record-extractor; if that subagent "
-            "failed to spawn, report the failure rather than extracting here"
         ),
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})

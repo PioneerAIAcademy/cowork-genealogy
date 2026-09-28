@@ -758,8 +758,11 @@ async def run_skill(
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
-        # context_policy.SUBAGENT_ONLY_TOOLS — image_read, extraction_append) on
-        # the main thread UNLESS this skill declared it itself. Checked BEFORE
+        # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
+        # left the set in issue #2937) on
+        # the main thread UNLESS this skill declared it itself. That exemption is
+        # now REACHED rather than theoretical: record-extraction declares
+        # `extraction_append` and calls it from the main thread. Checked BEFORE
         # the max_tool_calls counter — a denied call never executes, so it
         # shouldn't consume the budget (same ordering rationale as the e2e
         # tree-read block).

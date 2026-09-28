@@ -21,6 +21,7 @@ allowed-tools:
   - record_read
   - volume_search
   - research_log_append
+  - extraction_append
 ---
 
 # Record Extraction (router)
@@ -28,12 +29,21 @@ allowed-tools:
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 This skill is a **thin router**. It acquires and triages record input,
-writes the research-log entry, then delegates each record to the
-`record-extractor` agent (`@plugin:record-extractor`), which owns
-extraction, classification, and persistence in a fresh context. **Inline
-extraction is forbidden** — you never write assertions, sources, or tree
-entries yourself (the persistence tools are not in your allowed-tools),
-and you never re-derive classifications the agent already wrote.
+writes the research-log entry, then routes each record by whether it has a
+results sidecar.
+
+**Sidecar-backed record** (any `record_search` result, and any `record_read`
+given a `projectPath`): call `extraction_append` in extractor mode — pass
+`logEntryId`, `recordId`, the question ids, `evidenceType`, and any
+expected-but-absent persons. Roles, classifications and assertions are decided
+in code from the sidecar. Do not delegate these, and do not restate or re-derive
+what it returns.
+
+**No sidecar** (image, full text, external site, pasted prose, PDF): delegate to
+the `record-extractor` agent (`@plugin:record-extractor`), which owns extraction,
+classification and persistence in a fresh context. **On this path inline
+extraction is forbidden** — you never write assertions, sources, or tree entries
+yourself, and you never re-derive classifications the agent already wrote.
 
 ## Inputs — acquire and triage
 
