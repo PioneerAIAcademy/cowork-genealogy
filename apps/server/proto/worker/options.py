@@ -47,6 +47,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
+import posixpath
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -283,7 +284,7 @@ def tool_server_entry(
         "args": [
             *(flag for name in TOOL_SERVER_ENV_UNSET for flag in ("-u", name)),
             "node",
-            os.path.join(engine_dir, "build", "hosted-stdio.js"),
+            posixpath.join(engine_dir, "build", "hosted-stdio.js"),
         ],
         "env": tool_server_env(worker_env, project_id=project_id, fs_access_token=fs_access_token),
     }
