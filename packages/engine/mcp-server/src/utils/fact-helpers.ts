@@ -26,6 +26,7 @@ import type {
   SimplifiedFact,
   SimplifiedPerson,
 } from "../types/gedcomx.js";
+import type { WarningFact } from "../types/person-warnings.js";
 import {
   earliestYear,
   getDayRange,
@@ -87,28 +88,35 @@ function collectFactDayRanges(
   return out;
 }
 
-// ─── Fact-id collection (for PersonWarning.factIds highlighting) ──────────
+// ─── Fact collection (for PersonWarning.facts) ────────────────────────────
 
 /**
  * Ids of a person's facts whose `type` matches the (factTypes, antiFactTypes)
  * selection — `factTypes = null` means any type; `antiFactTypes = null` means
  * no exclusion. Skips facts with no `id`, preserves source order, and drops
  * duplicate ids. Pure; used by the warning emitters to attach the specific
- * facts a check examined (`PersonWarning.factIds`). Works for the anchor
+ * facts a check examined (`PersonWarning.facts`). Works for the anchor
  * (`mob.getPerson()`) or any relative/child `SimplifiedPerson`.
  */
-export function factIdsOfPersonFacts(
+export function warningFactsOfPerson(
   person: SimplifiedPerson,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
-): string[] {
-  const out: string[] = [];
+): WarningFact[] {
+  const out: WarningFact[] = [];
   const seen = new Set<string>();
   for (const f of person.facts ?? []) {
     if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
     if (f.id === undefined || seen.has(f.id)) continue;
     seen.add(f.id);
-    out.push(f.id);
+    out.push({
+      id: f.id,
+      type: f.type ?? "",
+      // Raw `date` first, `standard_date` second, null when neither. NOT
+      // getStandardDate(): it inverts this precedence and normalizes through
+      // stdDate(), turning a record's "~1818" into "Abt 1818".
+      date: f.date ?? f.standard_date ?? null,
+    });
   }
   return out;
 }
@@ -416,6 +424,38 @@ export function factDaysDiffEarliestLatest(
   );
   if (earliest1 === null || latest2 === null) return null;
   return latest2 - earliest1;
+}
+
+/**
+ * = earliest(set 2) − latest(set 1). No Java counterpart: this is the
+ * CONSERVATIVE pairing, taking the bounds that make a gap look as SMALL as
+ * possible, so a warning built on it fires only when the violation holds under
+ * every reading the recorded dates permit. `factDaysDiffEarliestLatest` is the
+ * opposite pairing and is what the Java ports use. See
+ * `hasBurialAfterDeath` for why one check needed the conservative form.
+ */
+export function factDaysDiffLatestEarliest(
+  mob: Mob,
+  factTypes1: ReadonlySet<string> | null,
+  antiFactTypes1: ReadonlySet<string> | null,
+  factTypes2: ReadonlySet<string> | null,
+  antiFactTypes2: ReadonlySet<string> | null,
+  imperfectDateFudgeDays = 0,
+): number | null {
+  const latest1 = latestDayOfSelfFacts(
+    mob,
+    factTypes1,
+    antiFactTypes1,
+    imperfectDateFudgeDays,
+  );
+  const earliest2 = earliestDayOfSelfFacts(
+    mob,
+    factTypes2,
+    antiFactTypes2,
+    imperfectDateFudgeDays,
+  );
+  if (latest1 === null || earliest2 === null) return null;
+  return earliest2 - latest1;
 }
 
 /** = latest(set 2) − latest(set 1). Java warnings.java:993. Used by W3. */
