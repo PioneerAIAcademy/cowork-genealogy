@@ -77,10 +77,11 @@ from typing import Any
 #       `check_guardrail_compliance` get strictly stricter —
 #       `find_effects_without_invocation` stops crediting a failed `Skill` call,
 #       and `find_person_evidence_missing_same_person` shrinks `scored_ids` — and
-#       both feed `guardrail_bypass_violations`, which sets `compliance: fail` ->
-#       `outcome: fail`. So a run that passed compliance before the join can
-#       hard-fail after it from an identical trace, and `compliance` / `outcome`
-#       are not comparable across it. Measured on the committed corpus, though,
+#       both feed `guardrail_bypass_violations`, which sets `compliance: fail`
+#       (and, through v5 only, `outcome: fail`). So a run that passed compliance
+#       before the join can hard-fail after it from an identical trace, and
+#       `compliance` is not comparable across it. `outcome` IS: since entry 6 it
+#       is the verdict, which these arms never touched. Measured on the committed corpus, though,
 #       that is ~1 entry in 555 runs: see `docs/specs/e2e-test-spec.md` §7.5,
 #       which also explains why `e2e/guardrail_shadow_report.py` does not split
 #       its corpus by version (#911 / #1176 / #1231 read that number).
