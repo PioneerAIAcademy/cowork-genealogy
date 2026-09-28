@@ -446,16 +446,14 @@ Keep the whole per-conflict summary to the 2-4 sentences above, not a
 paragraph of re-argued analysis; the full argument belongs in the
 persisted `conflicts` entry, not echoed here.
 
-Suggest next steps:
-- Resolved conflict → "This conflict is resolved. Would you like
-  me to update the hypothesis?" (hypothesis-tracking) or "Ready
-  for a proof conclusion?" (proof-conclusion)
-- Unresolved → "More evidence is needed to resolve this. Would
-  you like me to create a research question targeting [specific
-  evidence]?" (question-selection)
-- Identity conflict → "Would you like me to build candidate
-  timelines to test whether these records are the same person?"
-  (timeline)
+State the next step and take it:
+- Resolved conflict → update the hypothesis (hypothesis-tracking);
+  when the question is answered, write the proof conclusion
+  (proof-conclusion)
+- Unresolved → create a research question targeting the specific
+  evidence that would resolve it (question-selection)
+- Identity conflict → build candidate timelines to test whether the
+  records are the same person (timeline)
 
 ## Important rules
 

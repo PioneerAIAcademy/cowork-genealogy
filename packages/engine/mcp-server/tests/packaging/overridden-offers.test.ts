@@ -24,8 +24,6 @@ const OFFER = /(Would you like me to|Shall I continue|Let the user confirm|Would
 const KNOWN: Record<string, string> = {
   "skills/search-records/SKILL.md": "PR #2971 owns this file; batched behind it",
   "skills/search-external-sites/SKILL.md": "batched with phase 3's errand — same passage (R5)",
-  "skills/search-full-text/SKILL.md": "batched with the search-records slot",
-  "skills/conflict-resolution/SKILL.md": "batched; a conflict fork becomes the decision exit",
   "agents/person-evidence.md": "PR #2992 owns this file; batched behind it",
 };
 
