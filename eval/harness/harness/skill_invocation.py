@@ -1572,6 +1572,7 @@ _NO_CONFLICT_SUBSTRINGS = (
     "no unresolved conflict",
     "no discrepanc",  # "no discrepancy" / "no discrepancies"
     "without conflict",
+    "no resolution",  # "no resolution was required" — nothing was resolved
 )
 # Whole-field values (stripped, lowercased) that mean the same thing. Matched
 # exactly rather than as substrings so a bare "none"/"n/a" can't false-negative
@@ -1587,19 +1588,26 @@ _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 # language: an opener that negates a resolution is skipped, and a field with no
 # resolution marker at all is skipped. The `\b` on the marker is what stops
 # `resolved` matching inside `unresolved`.
+#
+# ASCII semantics and an explicit whitespace set, on purpose: the research_append
+# port (`unpersistedConflictResolutionInvariants`) runs in JavaScript, whose `\b`
+# and `\d` are ASCII-only, and the two must agree on every input — Python's
+# Unicode-aware defaults made "Naïve … resolved" fire here and not there.
+_ASCII_WHITESPACE = " \t\n\r\f\v"
 _RESOLUTION_MARKER_RE = re.compile(
     r"\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?"
     r"|adjudicated|preferred assertion)\b",
-    re.I,
+    re.I | re.ASCII,
 )
 _NON_RESOLUTION_OPENER_RE = re.compile(
-    r"^\s*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)", re.I
+    r"^[ \t\n\r\f\v]*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)",
+    re.I | re.ASCII,
 )
 # `c_NNN` ids named in a stop-criterion's prose, e.g. "resolved (c_001, preferred
 # a_019 …)". Used to tell a conclusion that names the conflict it relied on from
 # one that names none — a resolved conflicts[] entry the conclusion *names* backs
 # it even when it is not cited on resolved_conflict_ids (senior review, PR #1438).
-_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I)
+_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I | re.ASCII)
 
 
 # A conflict at either status is settled for every gate that reads status, and
@@ -1639,7 +1647,9 @@ def find_unpersisted_conflict_resolutions(
     the proof_summary's ``resolved_conflict_ids`` or names this question in its own
     ``blocks_question_ids``; or a ``c_`` id the stop-criterion prose NAMES exists in
     ``conflicts[]`` at any status; or the prose names no ``c_`` id and ``conflicts[]``
-    holds any entry at all. Each means the conflict was written to ``conflicts[]``,
+    holds any entry at all — an open one, or one about another question, included,
+    which is wider than the pre-graduation rule (a resolved entry). Each means
+    something was written to ``conflicts[]``,
     so the viewer's Conflicts section is populated and this is not the #1317 miss. A
     fire therefore means **nothing in ``conflicts[]`` can be the record of the
     resolution the conclusion relies on**: ``conflicts[]`` is empty, or the prose
@@ -1676,7 +1686,11 @@ def find_unpersisted_conflict_resolutions(
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
-    questions_by_id = {q.get("id"): q for q in questions if isinstance(q, dict) and q.get("id")}
+    # First question with an id wins, as the port's `Array.find` does.
+    questions_by_id: dict[Any, dict[str, Any]] = {}
+    for q in questions:
+        if isinstance(q, dict) and q.get("id"):
+            questions_by_id.setdefault(q.get("id"), q)
 
     def _cid(value: Any) -> str | None:
         return value.lower() if isinstance(value, str) and value else None
@@ -1701,8 +1715,10 @@ def find_unpersisted_conflict_resolutions(
     settled_blocked_qids = {
         q
         for c in conflicts
-        if isinstance(c, dict) and c.get("status") in _SETTLED_CONFLICT_STATUSES
-        for q in (c.get("blocks_question_ids") or [])
+        if isinstance(c, dict)
+        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        and isinstance(c.get("blocks_question_ids"), list)
+        for q in c["blocks_question_ids"]
     }
 
     def _resolution_claimed(question: dict[str, Any]) -> str | None:
@@ -1716,7 +1732,7 @@ def find_unpersisted_conflict_resolutions(
         cr = crit.get("conflict_resolution")
         if not isinstance(cr, str):
             return None
-        crl = cr.strip().lower()
+        crl = cr.strip(_ASCII_WHITESPACE).lower()
         if crl in _NO_CONFLICT_EXACT:
             return None
         if any(s in crl for s in _NO_CONFLICT_SUBSTRINGS):

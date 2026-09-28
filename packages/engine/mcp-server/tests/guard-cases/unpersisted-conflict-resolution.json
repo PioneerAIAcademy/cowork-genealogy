@@ -1373,6 +1373,385 @@
       }
     },
     {
+      "id": "opener-negation-empty-conflicts-01",
+      "expect": "silent",
+      "why": "A stop-criterion opening by negating a resolution, with conflicts[] EMPTY, so only the opener check can silence it — every other backing way is off: 'UNRESOLVED. The census and church dates cannot be resolved with the available records.'.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "UNRESOLVED. The census and church dates cannot be resolved with the available records."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "opener-negation-empty-conflicts-02",
+      "expect": "silent",
+      "why": "A stop-criterion opening by negating a resolution, with conflicts[] EMPTY, so only the opener check can silence it — every other backing way is off: 'Not met — the birthplace conflict remains to be resolved.'.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Not met — the birthplace conflict remains to be resolved."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "opener-negation-empty-conflicts-03",
+      "expect": "silent",
+      "why": "A stop-criterion opening by negating a resolution, with conflicts[] EMPTY, so only the opener check can silence it — every other backing way is off: 'PARTIAL. One of two discrepancies resolved; the other is open.'.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "PARTIAL. One of two discrepancies resolved; the other is open."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "opener-negation-empty-conflicts-04",
+      "expect": "silent",
+      "why": "A stop-criterion opening by negating a resolution, with conflicts[] EMPTY, so only the opener check can silence it — every other backing way is off: 'Partially met: the surname variant is resolved, the date is not.'.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Partially met: the surname variant is resolved, the date is not."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "opener-negation-empty-conflicts-05",
+      "expect": "silent",
+      "why": "A stop-criterion opening by negating a resolution, with conflicts[] EMPTY, so only the opener check can silence it — every other backing way is off: 'N/A — resolution does not arise on a single-record question.'.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "N/A — resolution does not arise on a single-record question."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "opener-negation-empty-conflicts-06",
+      "expect": "silent",
+      "why": "A stop-criterion opening by negating a resolution, with conflicts[] EMPTY, so only the opener check can silence it — every other backing way is off: 'Not applicable; nothing needed to be resolved.'.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Not applicable; nothing needed to be resolved."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "opener-negation-empty-conflicts-07",
+      "expect": "silent",
+      "why": "A stop-criterion opening by negating a resolution, with conflicts[] EMPTY, so only the opener check can silence it — every other backing way is off: 'None resolved; the records were never compared.'.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "not_proved",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "None resolved; the records were never compared."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "no-resolution-was-required",
+      "expect": "silent",
+      "why": "An honest 'nothing to resolve' that carries the marker word 'resolution'; 'no resolution' is on the negative list.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "All five records agree on 1842; no resolution was required."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "duplicate-question-id-first-wins-fires",
+      "expect": "fire",
+      "shape": "prose-resolution-no-conflicts",
+      "why": "Two questions share q_001 (a validator error, but a document can hold it). Both planes read the FIRST, which claims a resolution.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Conflict resolved by preponderance."
+              }
+            }
+          },
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "No conflicts identified."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "duplicate-question-id-first-wins-silent",
+      "expect": "silent",
+      "why": "The same with the order flipped: the first q_001 claims no conflict, so both planes are silent.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "No conflicts identified."
+              }
+            }
+          },
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Conflict resolved by preponderance."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "leading-byte-order-mark",
+      "expect": "fire",
+      "shape": "prose-resolution-no-conflicts",
+      "why": "A resolution claim behind a leading U+FEFF, conflicts[] empty. Both planes trim only ASCII whitespace, so both read the claim.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "﻿Conflict resolved by the parish register."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "let-through-unicode-opener",
+      "expect": "silent",
+      "known_let_through": true,
+      "why": "KNOWN LET-THROUGH: 'Naïve …' opens with n-a followed by a non-ASCII letter, which is an ASCII word boundary, so the 'n/a' opener matches on both planes and the claim is silenced. Kept so both planes stay in step on non-ASCII text.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Naïve index reading of the surname was resolved by the image."
+              }
+            }
+          }
+        ],
+        "conflicts": []
+      }
+    },
+    {
+      "id": "blocks-question-ids-not-a-list",
+      "expect": "fire",
+      "shape": "named-conflict-not-recorded",
+      "why": "blocks_question_ids is an object, not a list, so it links nothing; the prose names c_009, which conflicts[] does not hold.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Surname conflict resolved (c_009)."
+              }
+            }
+          }
+        ],
+        "conflicts": [
+          {
+            "id": "c_001",
+            "status": "resolved",
+            "blocks_question_ids": {
+              "q_001": true
+            }
+          }
+        ]
+      }
+    },
+    {
       "id": "let-through-no-conflicts-remain",
       "expect": "silent",
       "known_let_through": true,

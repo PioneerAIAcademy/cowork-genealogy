@@ -1284,6 +1284,7 @@ const NO_CONFLICT_SUBSTRINGS = [
   "no unresolved conflict",
   "no discrepanc",
   "without conflict",
+  "no resolution",
 ];
 /** Whole-field values (trimmed, lowercased) meaning the same, matched exactly. */
 const NO_CONFLICT_EXACT = new Set(["", "none", "n/a", "na", "not applicable"]);
@@ -1291,13 +1292,16 @@ const NO_CONFLICT_EXACT = new Set(["", "none", "n/a", "na", "not applicable"]);
 const RESOLUTION_MARKER_RE =
   /\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?|adjudicated|preferred assertion)\b/i;
 /** A stop-criterion opening by negating a resolution ("UNRESOLVED.", "Not met —"). */
-const NON_RESOLUTION_OPENER_RE = /^\s*(unresolved|not met|partial|partially met|n\/?a\b|not applicable|none)/i;
+const NON_RESOLUTION_OPENER_RE = /^[ \t\n\r\f\v]*(unresolved|not met|partial|partially met|n\/?a\b|not applicable|none)/i;
+/** The one whitespace set both planes trim: JavaScript's `trim()` and Python's
+ *  `strip()` remove different Unicode characters, and the planes must agree. */
+const ASCII_EDGE_WHITESPACE_RE = /^[ \t\n\r\f\v]+|[ \t\n\r\f\v]+$/g;
 
 /** The stop-criterion text when it claims a conflict was resolved, else null. */
 function claimedConflictResolution(question: any): string | null {
   const cr = question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
   if (typeof cr !== "string") return null;
-  const crl = cr.trim().toLowerCase();
+  const crl = cr.replace(ASCII_EDGE_WHITESPACE_RE, "").toLowerCase();
   if (NO_CONFLICT_EXACT.has(crl)) return null;
   if (NO_CONFLICT_SUBSTRINGS.some((s) => crl.includes(s))) return null;
   if (NON_RESOLUTION_OPENER_RE.test(crl)) return null;
@@ -1335,7 +1339,11 @@ const conflictKey = (value: unknown): string | null =>
  *  text heuristic over one prose field: a stop-criterion containing "no
  *  conflicts remain" is read as "there was no conflict", even beside a
  *  resolution sentence. The same makes rewording the stop-criterion a way to
- *  launder the refusal, which is why the message never suggests it. And a
+ *  launder the refusal, which is why the message never suggests it. When the
+ *  prose names no `c_` id, ANY `conflicts[]` entry backs it — an open conflict,
+ *  or one about another question — so in a multi-question project one recorded
+ *  conflict turns this off for every id-less resolution claim; the harness rule
+ *  before graduation required a resolved one. And a
  *  resolution-claiming stop-criterion written AFTER the summary is not caught,
  *  because the `questions` write is not gated here; in every committed run that
  *  fires, the declaration was written first. */

@@ -36,23 +36,24 @@ REPO = Path(__file__).resolve().parents[4]
 CASES_DIR = REPO / "packages" / "engine" / "mcp-server" / "tests" / "guard-cases"
 GUARD_MODULE = REPO / "eval" / "harness" / "harness" / "skill_invocation.py"
 
-# Guards that predate the rule, and guards that never graduate. Frozen: a new
-# guard is registered with a case file, not added here. Removing a name is the
-# way out of the backlog, and it requires registering the guard.
+# Guards that predate the rule, and guards that never graduate, as exact
+# (detector, kind) pairs. Frozen: a new guard is registered with a case file, not
+# added here, and a new kind cannot ride in on an existing slot. Removing a pair
+# is the way out of the backlog, and it requires registering the guard.
 FROZEN_OWES_CASE_FILE = frozenset(
     {
-        "find_citation_nulling_in_conclusions",
-        "find_citation_nulling_in_tree_sources",
-        "find_relationship_writes_without_warnings_check",
-        "find_conclusions_without_tree_encoding",
-        "find_tree_facts_disagreeing_with_assertions",
-        "find_protected_writes_by_unnamed_delegate",
-        "find_person_evidence_missing_same_person",
-        "find_effects_without_invocation",
-        "find_missing_mentor_verdicts",
+        ("find_citation_nulling_in_conclusions", "CITATION_NULLING_KIND"),
+        ("find_citation_nulling_in_tree_sources", "TREE_CITATION_NULLING_KIND"),
+        ("find_relationship_writes_without_warnings_check", "WARNINGS_UNCHECKED_KIND"),
+        ("find_conclusions_without_tree_encoding", "TREE_ENCODING_KIND"),
+        ("find_tree_facts_disagreeing_with_assertions", "TREE_FACT_ASSERTION_KIND"),
+        ("find_protected_writes_by_unnamed_delegate", None),
+        ("find_person_evidence_missing_same_person", "PERSON_EVIDENCE_DENY_KIND"),
+        ("find_effects_without_invocation", None),
+        ("find_missing_mentor_verdicts", None),
     }
 )
-FROZEN_NOT_A_CANDIDATE = frozenset({"find_unguarded_protected_writes"})
+FROZEN_NOT_A_CANDIDATE = frozenset({("find_unguarded_protected_writes", None)})
 
 
 def _registry() -> dict:
@@ -60,27 +61,51 @@ def _registry() -> dict:
 
 
 def _guard_module_names(source: str) -> tuple[set[str], set[str]]:
-    """(``find_*`` functions, ``*_KIND`` constants) defined at the top level of a
-    guard module's source."""
+    """(``find_*`` detectors, ``*_KIND`` constants) bound at the top level of a
+    guard module's source, however they are bound: ``def``, ``async def``, a
+    plain or annotated assignment."""
     tree = ast.parse(source)
-    detectors = {n.name for n in tree.body if isinstance(n, ast.FunctionDef) and n.name.startswith("find_")}
-    kinds = {
-        t.id
-        for n in tree.body
-        if isinstance(n, ast.Assign)
-        for t in n.targets
-        if isinstance(t, ast.Name) and t.id.endswith("_KIND")
-    }
-    return detectors, kinds
+    bound: set[str] = set()
+    for n in tree.body:
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            bound.add(n.name)
+        elif isinstance(n, ast.Assign):
+            bound.update(t.id for t in n.targets if isinstance(t, ast.Name))
+        elif isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name):
+            bound.add(n.target.id)
+    return {b for b in bound if b.startswith("find_")}, {b for b in bound if b.endswith("_KIND")}
+
+
+def _entries(registry: dict) -> list[dict]:
+    return list(registry["guards"]) + list(registry["owes_case_file"]) + list(registry["not_a_candidate"])
+
+
+def _detector_of(entry: dict) -> str | None:
+    return entry.get("harness_detector") or entry.get("detector")
 
 
 def _accounted(registry: dict) -> tuple[set[str], set[str]]:
-    entries = (
-        list(registry["guards"]) + list(registry["owes_case_file"]) + list(registry["not_a_candidate"])
-    )
-    detectors = {e.get("harness_detector") or e.get("detector") for e in entries} - {None}
+    entries = _entries(registry)
+    detectors = {_detector_of(e) for e in entries} - {None}
     kinds = {e.get("kind") for e in entries} - {None}
     return detectors, kinds
+
+
+def _duplicates(registry: dict) -> list[str]:
+    """A detector or a kind listed in more than one registry entry."""
+    seen_detectors: set[str] = set()
+    seen_kinds: set[str] = set()
+    dupes = []
+    for e in _entries(registry):
+        d, k = _detector_of(e), e.get("kind")
+        if d in seen_detectors:
+            dupes.append(f"{d}: listed twice")
+        if k is not None and k in seen_kinds:
+            dupes.append(f"{k}: listed twice")
+        seen_detectors.add(d)
+        if k is not None:
+            seen_kinds.add(k)
+    return dupes
 
 
 def _unaccounted(source: str, registry: dict) -> list[str]:
@@ -133,14 +158,23 @@ def _replay_mismatches(case_file: dict, detector) -> list[str]:
 # --- the precondition, over the real registry and guard module ---------------
 
 
+def _pairs(entries: list[dict]) -> list[tuple[str | None, str | None]]:
+    return [(_detector_of(e), e.get("kind")) for e in entries]
+
+
 def test_every_guard_in_the_harness_guard_module_is_accounted_for():
     assert _unaccounted(GUARD_MODULE.read_text(encoding="utf-8"), _registry()) == []
 
 
+def test_no_detector_or_kind_is_listed_twice():
+    assert _duplicates(_registry()) == []
+
+
 def test_the_backlog_and_the_exemptions_are_frozen():
     reg = _registry()
-    assert {e["detector"] for e in reg["owes_case_file"]} == FROZEN_OWES_CASE_FILE
-    assert {e["detector"] for e in reg["not_a_candidate"]} == FROZEN_NOT_A_CANDIDATE
+    owes, exempt = _pairs(reg["owes_case_file"]), _pairs(reg["not_a_candidate"])
+    assert sorted(owes, key=str) == sorted(FROZEN_OWES_CASE_FILE, key=str)
+    assert sorted(exempt, key=str) == sorted(FROZEN_NOT_A_CANDIDATE, key=str)
     for e in reg["owes_case_file"] + reg["not_a_candidate"]:
         assert e.get("reason"), f"{e['detector']}: a backlog or exemption entry states why"
 
@@ -148,8 +182,8 @@ def test_the_backlog_and_the_exemptions_are_frozen():
 def test_no_registered_guard_is_also_in_the_backlog():
     reg = _registry()
     registered = {g["harness_detector"] for g in reg["guards"]}
-    assert not registered & FROZEN_OWES_CASE_FILE
-    assert not registered & FROZEN_NOT_A_CANDIDATE
+    frozen = {d for d, _ in FROZEN_OWES_CASE_FILE | FROZEN_NOT_A_CANDIDATE}
+    assert not registered & frozen
 
 
 @pytest.mark.parametrize("guard", _registry()["guards"], ids=lambda g: g["name"])
@@ -193,6 +227,32 @@ def test_accounting_catches_a_new_unregistered_detector_and_kind():
 def test_accounting_catches_a_stale_registry_entry():
     reg = {**_REG, "owes_case_file": [{"detector": "find_gone", "kind": None, "reason": "x"}]}
     assert any(p.startswith("find_gone:") for p in _unaccounted(_SOURCE, reg))
+
+
+@pytest.mark.parametrize(
+    "binding, name",
+    [
+        ("async def find_b(r):\n    return []\n", "find_b"),
+        ("find_b = lambda r: []\n", "find_b"),
+        ("B_KIND: str = 'b'\n", "B_KIND"),
+    ],
+)
+def test_accounting_sees_every_way_a_name_is_bound(binding, name):
+    assert any(p.startswith(f"{name}:") for p in _unaccounted(_SOURCE + "\n" + binding, _REG))
+
+
+def test_duplicates_catch_a_detector_or_kind_listed_twice():
+    reg = {
+        **_REG,
+        "owes_case_file": [
+            {"detector": "find_a", "kind": "NEW_KIND", "reason": "x"},
+            {"detector": "find_c", "kind": "A_KIND", "reason": "x"},
+        ],
+    }
+    dupes = _duplicates(reg)
+    assert "find_a: listed twice" in dupes
+    assert "A_KIND: listed twice" in dupes
+    assert _duplicates(_REG) == []
 
 
 def test_accounting_ignores_nested_and_non_find_names():
