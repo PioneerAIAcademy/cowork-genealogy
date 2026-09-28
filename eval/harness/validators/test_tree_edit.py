@@ -156,6 +156,7 @@ _LEAD_MARKER = re.compile(
 )
 _UNCLE = re.compile(r"uncle", re.I)
 _STEP = re.compile(r"step", re.I)
+_CONDITIONAL_BRANCH = re.compile(r"^[\s|*_>-]*if\b", re.I)
 
 
 def _weighting_units(text: str):
@@ -210,6 +211,13 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
     committed runs plus three scratch runs of 2026-09-22 -- this fires on
     exactly the one inverted run and is clean on the other seven, including
     the two that failed for the unrelated `Tool Arguments` reason.
+
+    A unit that opens with "If" is a hypothesis branch, not a verdict:
+    "If Watts was her maiden name, the children are more likely her
+    brother's orphans" says what follows from the maiden-name premise, not
+    which premise leads. Scratch run `scratch_2026-09-28_11-00-31` run 2
+    wrote its step and uncle branches as two such bullets, led with step
+    in prose, and was red on the uncle bullet alone (issue #2449).
     """
     if "guardianship" not in (test.get("tags") or []):
         pytest.skip("only applies to guardianship tests")
@@ -218,6 +226,7 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
     offenders = [
         u for u in _weighting_units(text_response)
         if _LEAD_MARKER.search(u) and _UNCLE.search(u) and not _STEP.search(u)
+        and not _CONDITIONAL_BRANCH.match(u)
     ]
     assert not offenders, (
         "the uncle-by-marriage reading is marked as the favoured one without "
