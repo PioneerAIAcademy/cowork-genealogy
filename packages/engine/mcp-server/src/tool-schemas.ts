@@ -57,6 +57,16 @@ import { projectCreateSchema } from "./tools/project-create.js";
 import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.js";
 import { sidecarReadSchema } from "./tools/sidecar-read.js";
 
+// Tools exempt from ToolSearch deferral: their schemas load up front instead of
+// costing a ToolSearch turn each time. Sized against the September 2026 e2e corpus.
+export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
+  "research_query", // loaded by the first ToolSearch of 34/34 runs
+  "project_context", // loaded by the first ToolSearch of 34/34 runs, beside research_query
+  "research_append", // most-loaded tool; re-loaded after nearly every compaction
+  "research_log_append", // logs every search; re-loaded after nearly every compaction
+  "record_read", // read after most searches; 2.3 KB. record_search stays deferred at 18.5 KB
+]);
+
 export const allToolSchemas = [
   wikipediaSearchSchema,
   placeSearchToolSchema,
@@ -107,3 +117,10 @@ export const allToolSchemas = [
   buildExternalSearchUrlSchema,
   sidecarReadSchema,
 ];
+
+// Set in place, not copied: ownership-manifest.test.ts matches schemas by object identity.
+for (const name of ALWAYS_LOAD) {
+  const schema = allToolSchemas.find((s) => s.name === name);
+  if (!schema) throw new Error(`ALWAYS_LOAD names unknown tool "${name}"`);
+  Object.assign(schema, { _meta: { "anthropic/alwaysLoad": true } });
+}

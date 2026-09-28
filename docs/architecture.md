@@ -1078,6 +1078,18 @@ driver must wait.
 > percent of all tool calls across the committed e2e corpus *while the flag is
 > set to `true`*. This does not change the bare-name rule above, which is
 > correct either way.
+>
+> **Exception: `ALWAYS_LOAD` (`src/tool-schemas.ts`).** Those tools carry
+> `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which exempts them from
+> deferral under every server name. The set is sized from the September e2e corpus.
+> Compaction drops a ToolSearch-loaded schema (76 of 82 `research_append` re-loads
+> follow a `compact_boundary`), and an always-loaded one survives it.
+> `record_search` stays deferred, because its 18.5 KB schema costs more than the
+> calls it would save. **The unit harness still defers the set**, because
+> `mock_mcp.py` copies only `name`/`description`/`inputSchema` into its catalog
+> and the SDK's `@tool` cannot emit that `_meta` key. So `make eval-skill`
+> diverges from production here. Nothing on the unit plane grades ToolSearch
+> counts.
 
 ### 5.3 Capability restriction by tool identity
 
@@ -1764,8 +1776,10 @@ Other environment differences that bite:
   **shipped** `protected_target` predicate and returns the deny. So the raw-write
   class is gated at call time here too — what differs between the tiers is the
   permission mode, not the lockdown.
-- **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
-  no control over it, so `ToolSearch` is the real load path there (§5.2).
+- **Tool deferral.** Cowork defers tool schemas above a size threshold, so
+  `ToolSearch` is the real load path there (§5.2) for every tool outside
+  `ALWAYS_LOAD` (`src/tool-schemas.ts`), whose `_meta` `anthropic/alwaysLoad` opts
+  it out of deferral. Whether Cowork honors that key is unverified.
 - **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
   repo does not set — no `MCP_TOOL_TIMEOUT`/`MCP_TIMEOUT` or equivalent per-tool
   ceiling is defined anywhere in the code — and cannot change from the plugin or
