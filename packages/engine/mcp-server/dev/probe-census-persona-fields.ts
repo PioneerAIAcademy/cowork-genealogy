@@ -23,6 +23,57 @@
  * the whole point of the year table is that the two differ in the schedule, not
  * in whether an indexer happened to fill a cell.
  *
+ * ## What it measured (2026-09-28)
+ *
+ * Sample sizes are small and stated as such: the presence table below is ONE
+ * household per collection (`runPool` dumps the first entry with >2 persons);
+ * the ordering table is 8 households per collection. Neither is a population
+ * statement.
+ *
+ * **Per-person field presence, raw `record_read` body, 1 household per pool:**
+ *
+ *   label                       US 1880   US 1850   E&W 1861
+ *   PR_RELATIONSHIP_TO_HEAD       6/6       0/8       4/4
+ *   SOURCE_PERSON_NBR_ORIG        6/6       0/8       0/4
+ *   PR_EXT_LINE_NBR_ORIG          6/6       0/8       0/4
+ *   SOURCE_HOUSEHOLD_ID_ORIG      6/6       8/8       4/4
+ *   FS_SORT_KEY                   6/6       8/8       4/4
+ *   relationships[]                0         0         0
+ *
+ * 1. `SOURCE_PERSON_NBR_ORIG` is absent on both no-relationship-column pools —
+ *    i.e. on exactly the schedules a positional rule is for. It cannot be that
+ *    rule's ordering key. `FS_SORT_KEY` is present everywhere and ends in a
+ *    zero-padded person ordinal matching `SOURCE_PERSON_NBR_ORIG` where both
+ *    exist.
+ * 2. A `record_search` response carries `fields[]` for the SEARCHED persona
+ *    only; every co-resident comes back `fields: (none)`. Only the raw
+ *    `record_read` body has them for all. A search sidecar therefore cannot
+ *    feed a per-person role rule.
+ * 3. Zero `relationships[]` on every census read, all pools.
+ *
+ * **Ordering, `--order` mode, 8 households each from US 1850 / 1860 / 1870
+ * (collection ids 1401638 / 1473181 / 1438024, each title-verified):**
+ *
+ *   - `FS_SORT_KEY` present on 24/24 households.
+ *   - Sort-key order differed from array order in **0/24**. The sort is
+ *     therefore harmless but NOT demonstrated necessary on this sample; it is
+ *     kept defensively because the issue reports array order is sometimes
+ *     scrambled, which this sample neither reproduces nor refutes.
+ *   - The record states a `Head`: 0/8 on 1850, 0/8 on 1860, **8/8 on 1870**.
+ *   - Where it states one, that Head is the sort-FIRST person in **8/8**.
+ *
+ * 4. THE 1870 RESULT IS THE IMPORTANT ONE, and it corroborates the lead's
+ *    2026-09-27 decision to hard-code the relationship-column year table rather
+ *    than read the field. The 1870 US schedule has NO relationship column, yet
+ *    FamilySearch's index supplies `PR_RELATIONSHIP_TO_HEAD="Head"` on 8 of 8
+ *    records. So field PRESENCE cannot decide whether the schedule had the
+ *    column — a rule keyed on presence would classify 1870 as a
+ *    stated-relationship census and emit relationship assertions the record
+ *    never made.
+ * 5. It also settles the positional rule's premise from inside the population
+ *    that rule runs on: first-in-sort-order IS the head, 8/8 wherever there is
+ *    a ground truth to check against.
+ *
  * ## What it prints
  *
  * Per pool: the collection titles actually returned (so a wrong collection id
@@ -298,8 +349,175 @@ async function probeRecordRead(entry: any): Promise<void> {
   }
 }
 
+// ── ordering mode ───────────────────────────────────────────────────────────
+//
+// The positional role rule runs ONLY where there is no relationship column —
+// US pre-1880 and E&W 1841. `SOURCE_PERSON_NBR_ORIG` is absent on exactly those
+// records, so `FS_SORT_KEY` has to carry the order. This mode asks the two
+// questions that decides whether it can:
+//
+//   1. Does `FS_SORT_KEY` order differ from array order? (If never, the sort
+//      buys nothing that was demonstrated.)
+//   2. Is that order HEAD-FIRST — i.e. does person 1 look like a household head
+//      (an adult, and the eldest or near-eldest)? If the ordinal is indexing
+//      order rather than schedule order, every pre-1880 role is wrong and
+//      nothing else on the record can contradict it.
+
+const RECAPI = "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
+
+function fieldOf(p: any, label: string): string | undefined {
+  for (const f of p?.fields ?? []) {
+    for (const v of f?.values ?? []) {
+      if (v?.labelId === label && typeof v?.text === "string") return v.text;
+    }
+  }
+  return undefined;
+}
+
+function ageOf(p: any): number | null {
+  const raw = fieldOf(p, "PR_AGE") ?? fieldOf(p, "PR_AGE_ORIG");
+  if (!raw) return null;
+  const m = String(raw).match(/\d+/);
+  return m ? Number(m[0]) : null;
+}
+
+function surnameOf(p: any): string {
+  const full = p?.names?.[0]?.nameForms?.[0]?.fullText ?? "";
+  const toks = String(full).trim().split(/\s+/);
+  return toks.length ? toks[toks.length - 1] : "";
+}
+
+async function rawRecord(entityId: string): Promise<any | null> {
+  await sleep(350);
+  const token = await getValidToken(LOCAL);
+  const res = await fetchRetry(
+    `${RECAPI}/${encodeURIComponent(entityId)}.json`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Accept-Language": "en",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
+    },
+    { maxRetries: 4, baseMs: 8_000, label: "recapi" },
+  );
+  return res.ok ? await res.json() : null;
+}
+
+async function runOrderPool(collectionId: string, surname: string): Promise<void> {
+  console.log(`\n############ ORDERING: collection ${collectionId} ############`);
+  await sleep(400);
+  const token = await getValidToken(LOCAL);
+  const res = await fetchRetry(
+    `${BASE}?f.collectionId=${collectionId}&q.surname=${surname}&count=10&offset=0&m.queryRequireDefault=on`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Accept-Language": "en",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
+    },
+    { maxRetries: 6, baseMs: 10_000, label: `order ${collectionId}` },
+  );
+  if (!res.ok) {
+    console.log(`  HTTP ${res.status} — skipped.`);
+    return;
+  }
+  const body: any = await res.json();
+  const entries: any[] = body?.entries ?? [];
+  const title =
+    entries[0]?.content?.gedcomx?.sourceDescriptions?.find(
+      (sd: any) => sd?.resourceType === "http://gedcomx.org/Collection",
+    )?.titles?.[0]?.value ?? "(unknown)";
+  console.log(`  collection actually returned: ${title}`);
+
+  let households = 0;
+  let differedFromArrayOrder = 0;
+  let headFirstPlausible = 0;
+  let headStated = 0;
+  let sortKeyPresent = 0;
+
+  for (const e of entries.slice(0, 8)) {
+    const id: string | undefined = e?.id;
+    if (!id) continue;
+    const entityId = /^\d:\d:/.test(id) ? id.split(":").slice(2).join(":") : id;
+    const raw = await rawRecord(entityId);
+    const persons: any[] = raw?.persons ?? [];
+    if (persons.length < 3) continue;
+
+    const keys = persons.map((p) => fieldOf(p, "FS_SORT_KEY"));
+    if (keys.some((k) => k === undefined)) {
+      console.log(`\n  ${entityId}: FS_SORT_KEY missing on some person — SKIPPED`);
+      continue;
+    }
+    sortKeyPresent++;
+    households++;
+
+    const arrayOrder = persons.map((p) => p.id);
+    const sorted = [...persons].sort((a, b) =>
+      String(fieldOf(a, "FS_SORT_KEY")).localeCompare(String(fieldOf(b, "FS_SORT_KEY"))),
+    );
+    const sortedOrder = sorted.map((p) => p.id);
+    const differs = arrayOrder.join("|") !== sortedOrder.join("|");
+    if (differs) differedFromArrayOrder++;
+
+    const ages = sorted.map(ageOf);
+    // THE NON-HEURISTIC TEST. An age-based "is person 1 plausibly the head"
+    // guess is worthless here — a head is routinely younger than a resident
+    // parent-in-law or an elderly boarder, and an earlier version of this probe
+    // scored exactly those households as failures. Where the record itself
+    // supplies a `Head` value, ask the only question that matters: is it on the
+    // sort-FIRST person? That is the premise the positional rule stands on.
+    const headIdx = sorted.findIndex((p) =>
+      /^head/i.test(fieldOf(p, "PR_RELATIONSHIP_TO_HEAD") ?? ""),
+    );
+    const statesHead = headIdx !== -1;
+    const plausible = statesHead && headIdx === 0;
+    if (statesHead) headStated++;
+    if (plausible) headFirstPlausible++;
+
+    console.log(
+      `\n  ${entityId}  ${persons.length} persons  sortOrder${differs ? " DIFFERS from" : " == "}arrayOrder  head-first:${plausible ? "PLAUSIBLE" : "NO"}`,
+    );
+    for (let i = 0; i < sorted.length; i++) {
+      const p = sorted[i];
+      const nm = p?.names?.[0]?.nameForms?.[0]?.fullText ?? "(no name)";
+      const rel = fieldOf(p, "PR_RELATIONSHIP_TO_HEAD") ?? "-";
+      console.log(
+        `     ${String(i + 1).padStart(2)}. key=${String(fieldOf(p, "FS_SORT_KEY")).slice(-6)} ` +
+          `age=${String(ages[i] ?? "?").padStart(3)} ${nm.padEnd(24)} rel=${rel}`,
+      );
+    }
+  }
+
+  console.log(
+    `\n  >>> ${collectionId}: ${households} households; FS_SORT_KEY present on ${sortKeyPresent}; ` +
+      `order differed from array order in ${differedFromArrayOrder}; ` +
+      `record states a Head in ${headStated}/${households}; ` +
+      `and where it does, that Head is sort-FIRST in ${headFirstPlausible}/${headStated}`,
+  );
+}
+
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
+  if (argv[0] === "--order") {
+    // Pre-1880 US collections: the population the positional rule actually runs
+    // on. Ids are unverified inputs; each pool prints the title it received.
+    for (const [cid, sn] of [
+      ["1401638", "Miller"], // expected: United States, Census, 1850
+      ["1473181", "Miller"], // expected: United States, Census, 1860
+      ["1438024", "Miller"], // expected: United States, Census, 1870
+    ] as const) {
+      try {
+        await runOrderPool(cid, sn);
+      } catch (e) {
+        console.log(`  ERROR on ${cid}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+    return;
+  }
   const pools = argv.length
     ? argv.map((id) => ({
         label: `collection ${id} (from argv)`,
