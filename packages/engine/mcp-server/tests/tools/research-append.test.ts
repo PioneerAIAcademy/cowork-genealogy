@@ -9753,3 +9753,274 @@ describe("supported evidence floor (#2086)", () => {
   });
 
 });
+
+// ─── Precondition 2: informant_proximity "unknown" ⟹ information_quality
+//     "indeterminate" (issue #2937) ────────────────────────────────────────
+//
+// Prose in `agents/record-extractor.md` from issue #2173's finding (now carried
+// by issue #2484). Prose did not hold: across the committed e2e corpus the model
+// broke the rule on 248 of 982 `unknown` assertions, which is what moved it into
+// code. The document tier mirrors this in `validator.test.ts`.
+
+describe("research_append — informant_proximity 'unknown' requires indeterminate quality", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-prox-floor-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const FLOOR = /informant_proximity "unknown" but information_quality/;
+  const appendAssertion = (overrides: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId({ ...validAssertion("ignored"), ...overrides }),
+    });
+
+  // ── APPEND, broken three ways.
+
+  it("refuses unknown + secondary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses unknown + primary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "primary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("writes NOTHING when it refuses", async () => {
+    // A refusal that half-persisted would be worse than no guard.
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // ── UPDATE. The arm the issue calls out separately, and the one that
+  //    actually produced the corpus violations: flipping proximity to
+  //    "unknown" and leaving a stale `secondary` behind.
+
+  it("refuses an update that flips proximity to unknown, leaving a stale secondary", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant_proximity: "family_not_present",
+        information_quality: "secondary",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { informant_proximity: "unknown" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses an update that flips quality away from indeterminate under an unknown proximity", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant: "unknown",
+        informant_proximity: "unknown",
+        information_quality: "indeterminate",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { information_quality: "primary" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  // ── The other direction. A guard fails two ways; breaking it tests one.
+
+  it("accepts unknown + indeterminate", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts indeterminate at a KNOWN proximity — not a biconditional", async () => {
+    // The decision tree's "CANNOT TELL" branch, reachable only once question 1
+    // answered YES. The ordinary census shape; an `iff` reading refuses it.
+    const r = await appendAssertion({
+      informant: "unknown household member (likely self or spouse)",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a stated 1880+ relationship", async () => {
+    // Named by the issue's Done-means as an explicit must-still-accept.
+    const r = await appendAssertion({
+      fact_type: "relationship",
+      value: "child of Thomas Doyle",
+      informant: "unknown household member",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+      record_basis: "stated",
+      structured_value: { relationship_type: "child", related_person_role: "head_of_household" },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a computed birth date at record_basis 'inferred'", async () => {
+    // The other Done-means must-still-accept: a birth YEAR derived from a
+    // stated age is `inferred`, and that is orthogonal to this rule.
+    const r = await appendAssertion({
+      fact_type: "birth",
+      value: "about 1818",
+      date: "~1818",
+      date_certainty: "approximate",
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+      record_basis: "inferred",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("leaves an out-of-enum quality to the enum error alone", async () => {
+    // Mirrors the validator-tier guard: `mid-research-flynn-bad-enum` a_001 is
+    // unknown + "tertiary", and ut_validate_schema_004 pins ONE error for it.
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "tertiary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(false);
+  });
+});
+
+// ─── Advisory: a transcription with no image_filename (issue #2256 → #2937) ──
+
+describe("research_append — transcription without image_filename is advisory", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-transcription-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const WARN = /records a transcription but no image_filename/;
+  const warned = (ws: string[]) => ws.some((w) => WARN.test(w));
+  const appendSource = (extra: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: noId({ ...validSource("x"), ...extra }),
+    });
+
+  it("warns — and never blocks — for a transcription with a null image_filename", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32, born Ireland.",
+      image_filename: null,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+    // Advisory: the source still persisted.
+    expect(r.filesWritten).toContain("research.json");
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(2);
+  });
+
+  it("warns when image_filename is omitted entirely", async () => {
+    const r = await appendSource({ transcription: "Thomas Doyle, aged 32." });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+  });
+
+  it("names the offending source id, so a batch is actionable", async () => {
+    const r = await appendSource({ transcription: "text", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.find((x) => WARN.test(x))!;
+    expect(w).toMatch(/source 'src_\d+'/);
+  });
+
+  // ── The other direction, both shapes the absorbed text names explicitly.
+
+  it("stays silent for a source with no transcription", async () => {
+    const r = await appendSource({ transcription: null, image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a source that cites a ref", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32.",
+      image_filename: "004022578_00190.jpg",
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a whitespace-only transcription", async () => {
+    // Blank is not a transcription; warning here would nag a no-op field.
+    const r = await appendSource({ transcription: "   ", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("does not nag a write that touches no source", async () => {
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId(validAssertion("ignored")),
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+});

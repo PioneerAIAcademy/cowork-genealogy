@@ -1135,6 +1135,46 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         );
       }
     }
+    // Precondition 2 at the document tier (issue #2937). An unidentified
+    // informant cannot be shown to have witnessed the fact OR to have not
+    // witnessed it, so the Layer-2 decision tree terminates at question 1 and
+    // never reaches the primary/secondary split. `research_append` refuses this
+    // on the way in (`validateInformantQualityFloor`); this tier catches a
+    // document assembled any other way — the same gap that let
+    // `flynn-parentage-not-proved` a_012 carry a negative-evidence violation.
+    //
+    // FORWARD ONLY, for the same reason the arm above is: `indeterminate` does
+    // not imply `unknown`. A NAMED informant whose relationship to the specific
+    // fact cannot be established is `indeterminate` at a known proximity — the
+    // decision tree's "CANNOT TELL" branch, reachable only once question 1 has
+    // answered YES. Checking the converse would refuse the ordinary census
+    // shape.
+    //
+    // Fires ONLY for the two in-enum values that claim a determination was
+    // made. A missing `information_quality` reports as `checkRequired`'s error
+    // alone, and an OUT-OF-ENUM one as `checkEnum`'s alone — in both cases this
+    // rule would name the wrong fix on top of the right one. The out-of-enum
+    // case is not hypothetical: `eval/fixtures/scenarios/mid-research-flynn-bad-enum`
+    // a_001 is `unknown` + `tertiary`, and `ut_validate_schema_004` states that
+    // the validator emits exactly ONE error for it. A blanket `!== "indeterminate"`
+    // made that two and would have silently changed another skill's eval fixture.
+    if (
+      a.informant_proximity === "unknown" &&
+      (a.information_quality === "primary" || a.information_quality === "secondary")
+    ) {
+      addError(
+        report,
+        ap,
+        `informant_proximity 'unknown' requires information_quality ` +
+          `'indeterminate' (got ${JSON.stringify(a.information_quality)}) — if the ` +
+          `informant cannot be identified, neither firsthand knowledge nor its ` +
+          `absence has been established, so the classification stops at ` +
+          `'indeterminate'. If you can name who supplied the fact, set ` +
+          `informant_proximity to what they were instead. Being an index or a ` +
+          `transcript is not a reason to write 'unknown': the original informant ` +
+          `carries through a derivative unchanged`
+      );
+    }
     if ("date_certainty" in a && a.date_certainty !== null) {
       if (!DATE_CERTAINTY_VALUES.has(a.date_certainty)) {
         addError(report, ap, `'${a.date_certainty}' is not a valid date_certainty`);

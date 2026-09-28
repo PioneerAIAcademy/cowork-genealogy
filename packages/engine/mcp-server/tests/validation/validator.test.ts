@@ -3803,3 +3803,203 @@ describe("negative evidence implies absent + researcher (#986)", () => {
     expect(result.valid).toBe(true);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Precondition 2 (issue #2937): informant_proximity "unknown" implies
+// information_quality "indeterminate".
+//
+// Prose in `agents/record-extractor.md` from the finding in issue #2173 (now
+// carried by issue #2484), and prose did not hold: across the committed e2e
+// corpus the model broke it on 248 of 982 `unknown` assertions. `research_append`
+// refuses it on the way in; this tier catches a document assembled any other way.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Validator — informant_proximity 'unknown' implies indeterminate quality", () => {
+  const tree = {
+    persons: [],
+    relationships: [],
+    sources: [{ id: "S1", title: "Test source" }],
+  };
+
+  function researchWithAssertion(overrides: Record<string, unknown>): any {
+    return {
+      project: {
+        id: "rp_001",
+        objective: "Test project",
+        status: "active",
+        created: "2026-01-01",
+        updated: "2026-01-01",
+      },
+      questions: [], plans: [], log: [],
+      sources: [
+        {
+          id: "src_001",
+          gedcomx_source_description_id: "S1",
+          citation: "Test citation.",
+          repository: "FamilySearch",
+          url: null,
+          source_classification: "derivative",
+          access_date: "2026-01-01",
+          log_entry_id: null,
+          citation_detail: {
+            who: "w", what: "w", when_created: "1850",
+            when_accessed: "2026-01-01", where: "w", where_within: "w",
+          },
+        },
+      ],
+      assertions: [
+        {
+          id: "a_001",
+          source_id: "src_001",
+          record_id: "rec1",
+          record_role: "deceased",
+          fact_type: "burial",
+          value: "1883",
+          information_quality: "indeterminate",
+          informant: "unknown",
+          informant_proximity: "unknown",
+          record_basis: "stated",
+          extracted_for_question_ids: [],
+          ...overrides,
+        },
+      ],
+      person_evidence: [], conflicts: [], hypotheses: [],
+      timelines: [], proof_summaries: [], evaluations: [],
+    };
+  }
+
+  const floorErrors = (r: any) =>
+    r.errors.filter((e: any) => /informant_proximity 'unknown' requires/.test(e.message));
+
+  // ── Broken three ways. One break would only test the rule's reach.
+
+  it("rejects unknown + secondary — the committed scenario shape", async () => {
+    // The exact pair carried by wilkins-bounded-death a_001-a_003 and
+    // person-a-death-cert-not-indexed a_001-a_003, all six backfilled by this
+    // change.
+    const result = await validateParsed(
+      researchWithAssertion({ information_quality: "secondary" }),
+      tree,
+    );
+    expect(floorErrors(result)).toHaveLength(1);
+    expect(floorErrors(result)[0].message).toMatch(/got "secondary"/);
+  });
+
+  it("rejects unknown + primary", async () => {
+    const result = await validateParsed(
+      researchWithAssertion({ information_quality: "primary" }),
+      tree,
+    );
+    expect(floorErrors(result)).toHaveLength(1);
+  });
+
+  it("rejects it on a negative-evidence-shaped entry too, so no record type escapes", async () => {
+    // Proves the rule is not scoped to one record type or to a positive
+    // assertion: it keys on the pair alone.
+    const result = await validateParsed(
+      researchWithAssertion({
+        record_role: "witness_1",
+        fact_type: "name",
+        information_quality: "primary",
+      }),
+      tree,
+    );
+    expect(floorErrors(result)).toHaveLength(1);
+  });
+
+  it("stays silent for an OUT-OF-ENUM quality, so the enum error stands alone", async () => {
+    // Regression guard for a real near-miss. `mid-research-flynn-bad-enum`
+    // a_001 is `unknown` + `tertiary`, and `ut_validate_schema_004`
+    // (validate-schema's own eval fixture) states "The validator emits one
+    // error" and has the judge check that the report names the enum violation.
+    // A blanket `!== "indeterminate"` made that TWO errors and would have
+    // changed another skill's eval expectations from inside this PR.
+    const result = await validateParsed(
+      researchWithAssertion({ information_quality: "tertiary" }),
+      tree,
+    );
+    expect(floorErrors(result)).toHaveLength(0);
+    // The enum error is still reported — silence here is not silence overall.
+    expect(
+      result.errors.filter((e: any) => /information_quality/.test(e.message)),
+    ).toHaveLength(1);
+  });
+
+  it("stays silent when information_quality is missing, so the required-field error names the fix", async () => {
+    // Guarded on a string deliberately: reporting this rule for a MISSING
+    // field would name the wrong fix on top of checkRequired's correct one.
+    const research = researchWithAssertion({});
+    delete research.assertions[0].information_quality;
+    const result = await validateParsed(research, tree);
+    expect(floorErrors(result)).toHaveLength(0);
+  });
+
+  it("names both escape routes, not just the field to change", async () => {
+    const msg = floorErrors(
+      await validateParsed(researchWithAssertion({ information_quality: "secondary" }), tree),
+    )[0].message;
+    // Route 1: downgrade the quality.
+    expect(msg).toMatch(/classification stops at 'indeterminate'/);
+    // Route 2: name the informant instead — the fix when `unknown` was the
+    // error, which a message naming only route 1 would train the caller past.
+    expect(msg).toMatch(/name who supplied the fact/);
+    // The derivative trap the doctrine calls out explicitly: an index still
+    // carries the original's informant.
+    expect(msg).toMatch(/index or a transcript is not a reason/);
+  });
+
+  // ── The other direction: legitimate shapes this must still accept.
+
+  it("accepts unknown + indeterminate", async () => {
+    const result = await validateParsed(researchWithAssertion({}), tree);
+    expect(floorErrors(result)).toHaveLength(0);
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepts indeterminate at a KNOWN proximity — the rule is not a biconditional", async () => {
+    // The decision tree's "CANNOT TELL" branch at question 2, reachable only
+    // once question 1 answered YES. This is the ordinary census shape; an
+    // `iff` reading would refuse it.
+    const result = await validateParsed(
+      researchWithAssertion({
+        informant: "unknown household member (likely self or spouse)",
+        informant_proximity: "household_member",
+        information_quality: "indeterminate",
+      }),
+      tree,
+    );
+    expect(floorErrors(result)).toHaveLength(0);
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepts primary and secondary at a known proximity", async () => {
+    for (const [prox, qual] of [
+      ["self", "primary"],
+      ["family_not_present", "secondary"],
+      ["official_duty", "primary"],
+    ] as const) {
+      const result = await validateParsed(
+        researchWithAssertion({
+          informant: "James Brown",
+          informant_proximity: prox,
+          information_quality: qual,
+        }),
+        tree,
+      );
+      expect(floorErrors(result)).toHaveLength(0);
+    }
+  });
+
+  it("accepts researcher + indeterminate on negative evidence", async () => {
+    const result = await validateParsed(
+      researchWithAssertion({
+        record_basis: "absent",
+        record_role: "absent",
+        informant: "the researcher",
+        informant_proximity: "researcher",
+        information_quality: "indeterminate",
+      }),
+      tree,
+    );
+    expect(floorErrors(result)).toHaveLength(0);
+  });
+});

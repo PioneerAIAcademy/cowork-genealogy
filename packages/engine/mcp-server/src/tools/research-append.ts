@@ -1124,6 +1124,46 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
   );
 }
 
+/** ADVISORY ONLY (issue #2256, folded into #2937): a `sources` entry that lands
+ *  a non-empty `transcription` with no `image_filename` is worth a line saying
+ *  where that text came from — a transcription is a claim about a page, and the
+ *  page it came from is normally nameable.
+ *
+ *  **Never a refusal, and the reason matters.** Two legitimate shapes reach here
+ *  with no filename: a PDF capture, and an `image_transcribe` run with no
+ *  `projectPath` (nothing was staged, so there is no file to name). Refusing
+ *  either would block correct work to catch a documentation gap, which is the
+ *  wrong trade for a provenance nudge — `guardrail-enforcement-spec.md` marks it
+ *  advisory in the instrument table for exactly that reason.
+ *
+ *  Returns one warning per offending entry, so a batch sourcing several records
+ *  names each rather than collapsing to a count the caller cannot act on. Fires
+ *  on `update` as well as `append`: a transcription added to an existing source
+ *  by a later op is the same gap. Reads the persisted entry rather than the op's
+ *  `fields`, so an update that sets only `transcription` is judged against the
+ *  `image_filename` already on disk instead of re-warning about one that is
+ *  there. */
+function transcriptionWithoutImageWarnings(research: any, applied: AppliedOp[]): string[] {
+  const sources = Array.isArray(research.sources) ? research.sources : [];
+  const out: string[] = [];
+  for (const a of applied) {
+    if (a.section !== "sources" || a.noop) continue;
+    const entry = sources.find((s: any) => s && s.id === a.entryId);
+    if (!entry) continue;
+    if (factText(entry.transcription) === undefined) continue;
+    if (factText(entry.image_filename) !== undefined) continue;
+    out.push(
+      `source '${a.entryId}' records a transcription but no image_filename — name the ` +
+        `page the text was read from, so a later reader can check it. The value is the ` +
+        `stored image's filename, which image_read/image_transcribe return as ` +
+        `\`imageRef\` when called with a projectPath. Leave it null only when there is ` +
+        `genuinely no stored page (a PDF capture, or a transcribe run without a ` +
+        `projectPath); this is advisory and nothing is blocked either way.`,
+    );
+  }
+  return out;
+}
+
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
@@ -2526,6 +2566,61 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   if (errors.length) throw new ResearchAppendError(errors);
 }
 
+/** PRECONDITION 2 — `informant_proximity: "unknown"` implies
+ *  `information_quality: "indeterminate"`.
+ *
+ *  If you cannot identify the informant, you cannot have established that they
+ *  witnessed the fact, nor that they did not: the Layer-2 decision tree's
+ *  question 1 ("do we know the informant?") answers NO and terminates at
+ *  `indeterminate` without ever reaching question 2. So `unknown` paired with
+ *  `primary` or `secondary` is not a judgment call this tool is second-guessing
+ *  — it is a claim that contradicts its own premise.
+ *
+ *  **Why a writer precondition and not SKILL.md prose.** ADR-0011's first
+ *  question — can this be decided by reading the project documents alone? —
+ *  answers yes: both fields are on the entry in hand, so nothing needs a record
+ *  re-read. It lived as prose (the burial-index paragraph in
+ *  `agents/record-extractor.md`) from the finding in issue #2173, now carried by
+ *  issue #2484, and prose did not hold: across the committed e2e corpus the
+ *  model broke the rule on **248 of 982** `unknown` assertions. That is the
+ *  measurement behind moving it into code (issue #2937).
+ *
+ *  **FORWARD ONLY, and deliberately not a biconditional.** `indeterminate` does
+ *  NOT imply `unknown`: a NAMED informant whose relationship to the specific
+ *  fact cannot be established is `indeterminate` at a known proximity — the
+ *  decision tree's "CANNOT TELL" branch at question 2, which is reached only
+ *  when question 1 answered YES. Tightening this into "iff" would refuse that
+ *  whole branch, which is the ordinary shape of a census record read through
+ *  the table in `research-append-tool-spec.md`.
+ *
+ *  Fires ONLY for the two in-enum values that claim a determination was made.
+ *  A missing `information_quality` is already the schema's `required` error and
+ *  an out-of-enum one is its enum error; reporting this on top of either would
+ *  name the wrong fix. That is not hypothetical — `mid-research-flynn-bad-enum`
+ *  a_001 is `unknown` + `tertiary`, and `ut_validate_schema_004` pins the
+ *  validator at exactly ONE error for it. */
+function validateInformantQualityFloor(entry: Record<string, unknown>): void {
+  if (entry.informant_proximity !== "unknown") return;
+  if (
+    entry.information_quality !== "primary" &&
+    entry.information_quality !== "secondary"
+  ) {
+    return;
+  }
+  throw new ResearchAppendError(
+    `assertion has informant_proximity "unknown" but information_quality ` +
+      `'${entry.information_quality}' — an unidentified informant cannot be shown to ` +
+      `have witnessed the fact OR to have not witnessed it, so the classification ` +
+      `terminates at "indeterminate". Either set information_quality to ` +
+      `"indeterminate", or — if you can in fact name who supplied this fact — set ` +
+      `informant_proximity to what they were (self, witness, household_member, ` +
+      `family_not_present, official_duty) and keep the quality you chose. Do NOT ` +
+      `reach for "unknown" because the SOURCE is an index or a transcript: an index ` +
+      `of a marriage register still carries the register's informant, and indexing ` +
+      `changed who stated the fact not at all.`,
+  );
+}
+
 /** `structured_value.relationship_type` names the record subject's OWN role;
  *  `related_person_role` names the other party's (research-schema-spec.md
  *  §5.6.1). Nothing stated that until issue #2535, and the corpus wrote both
@@ -2986,6 +3081,7 @@ function applyOne(
     normalizeAccessDate(newEntry);
     canonicalizeAssertionLabels(newEntry);
     validateNegativeEvidenceRole(newEntry);
+    validateInformantQualityFloor(newEntry);
     validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
@@ -3051,6 +3147,12 @@ function applyOne(
     normalizeAccessDate(existing);
     canonicalizeAssertionLabels(existing);
     validateNegativeEvidenceRole(existing);
+    // The update arm validates the MERGED entry, so an op that sets only one of
+    // the pair is checked against the value already on disk — which is the case
+    // the rule exists for: flipping `informant_proximity` to "unknown" while
+    // leaving a stale `secondary` behind is exactly how the 248 corpus
+    // violations were reached.
+    validateInformantQualityFloor(existing);
     // Scoped to ops that set one of the three inputs it compares.
     // `fact_type` is one of them because it decides whether the guard
     // applies at all, so a retype INTO `relationship` would otherwise move
@@ -4638,9 +4740,14 @@ export async function researchAppend(
     // Persistence nudge (#1478): sources landing with no assertions drawn.
     // Non-blocking — rides validation.warnings, never touches `ok`.
     const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
+    // Provenance nudge (#2256): a transcription with no page named. Advisory,
+    // like the one above — it rides validation.warnings and never touches `ok`.
+    const transcriptionWarnings = anyMutation
+      ? transcriptionWithoutImageWarnings(research, applied)
+      : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
