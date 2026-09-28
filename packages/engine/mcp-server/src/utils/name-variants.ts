@@ -3,24 +3,27 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeString } from "./string-similarity.js";
 
-// Path resolves to mcp-server/config/given-name-variants.json in both dev
-// (tsx/vitest running from src/) and prod (compiled JS in build/) — same
-// ../../config pattern as BUNDLED_CLIENT_CONFIG_PATH in auth/config.ts.
-const VARIANTS_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../config/given-name-variants.json"
-);
+// Paths resolve to mcp-server/config/*.json in both dev (tsx/vitest running
+// from src/) and prod (compiled JS in build/) — same ../../config pattern as
+// BUNDLED_CLIENT_CONFIG_PATH in auth/config.ts.
+const CONFIG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../config");
+
+/** The table behind fulltext_search / image_transcribe's hidden expansion. */
+export const GIVEN_NAME_VARIANTS_PATH = resolve(CONFIG_DIR, "given-name-variants.json");
+
+/** The table behind get_name_variants (issue #2325). */
+export const NAME_VARIANTS_GIVEN_PATH = resolve(CONFIG_DIR, "name-variants-given.json");
 
 interface VariantEntry {
   form: string;
-  attested: boolean;
+  attested?: boolean;
   source?: string;
 }
 
 interface FormalEntry {
-  period: string;
-  region: string;
-  source: string;
+  period?: string;
+  region?: string;
+  source?: string;
   variants: VariantEntry[];
 }
 
@@ -39,31 +42,38 @@ interface NameExpansionResult {
   expansions: Record<string, string[]>;
 }
 
-// Bidirectional lookup: lowercased name → NameFamily (formal name + all forms).
-// Lazily built on first access, module-level cached (same pattern as
-// browseBudgetSeen in image-transcribe.ts).
-let lookupMap: Map<string, NameFamily> | null = null;
+interface LoadedTable {
+  // Bidirectional lookup: normalized name → NameFamily (formal name + all forms).
+  map: Map<string, NameFamily>;
+  // Why the table could not be used, or null. Only `strict` lookups see it.
+  error: string | null;
+}
 
-function ensureLoaded(): Map<string, NameFamily> {
-  if (lookupMap) return lookupMap;
-  lookupMap = new Map();
+// One lazily built table per path, module-level cached (same pattern as
+// browseBudgetSeen in image-transcribe.ts).
+const tables = new Map<string, LoadedTable>();
+
+function buildTable(tablePath: string): LoadedTable {
+  const map = new Map<string, NameFamily>();
 
   let raw: string;
   try {
-    raw = readFileSync(VARIANTS_PATH, "utf-8");
+    raw = readFileSync(tablePath, "utf-8");
   } catch {
-    return lookupMap; // table missing or unreadable — degrade to no expansion
+    return { map, error: `name-variant table is missing or unreadable: ${tablePath}` };
   }
 
   let table: VariantTable;
   try {
     table = JSON.parse(raw);
   } catch {
-    return lookupMap; // corrupt JSON — degrade to no expansion
+    return { map, error: `name-variant table is not valid JSON: ${tablePath}` };
   }
 
   const en = table.en as Record<string, FormalEntry> | undefined;
-  if (!en) return lookupMap;
+  if (!en || typeof en !== "object" || Array.isArray(en)) {
+    return { map, error: `name-variant table has no "en" object: ${tablePath}` };
+  }
 
   // Collect families, merging entries that share variant forms (e.g.
   // Catherine/Katherine both list Kate → they form one merged family).
@@ -73,6 +83,9 @@ function ensureLoaded(): Map<string, NameFamily> {
 
   const rawFamilies: { formal: string; forms: Set<string> }[] = [];
   for (const [formal, entry] of Object.entries(en)) {
+    if (!Array.isArray(entry?.variants)) {
+      return { map, error: `name-variant table entry "${formal}" has no variants array: ${tablePath}` };
+    }
     const forms = new Set<string>();
     forms.add(formal);
     for (const v of entry.variants) {
@@ -114,24 +127,41 @@ function ensureLoaded(): Map<string, NameFamily> {
     const allForms = [...family.forms];
     const entry: NameFamily = { formal: family.formal, allForms };
     for (const form of allForms) {
-      lookupMap.set(normalizeString(form), entry);
+      map.set(normalizeString(form), entry);
     }
   }
 
-  return lookupMap;
+  return { map, error: null };
 }
 
-/** Test-only reset — the Map is module-level and persists across `it()` blocks. */
+// Cached only once fully built, so a failed build never leaves a partial map.
+function ensureLoaded(tablePath: string): LoadedTable {
+  let loaded = tables.get(tablePath);
+  if (!loaded) {
+    loaded = buildTable(tablePath);
+    tables.set(tablePath, loaded);
+  }
+  return loaded;
+}
+
+/** Test-only reset — the cache is module-level and persists across `it()` blocks. */
 export function __clearVariantCacheForTests(): void {
-  lookupMap = null;
+  tables.clear();
 }
 
 /**
  * Bidirectional lookup: given any name (formal or variant), returns the
- * family of equivalent names, or null if not in the table. Case-insensitive.
+ * family of equivalent names, or null if not in the table. Case- and
+ * diacritic-insensitive. A table that cannot be loaded degrades to null for
+ * every name — unless `strict`, which throws instead.
  */
-export function lookupNameFamily(name: string): NameFamily | null {
-  const map = ensureLoaded();
+export function lookupNameFamily(
+  name: string,
+  tablePath: string = GIVEN_NAME_VARIANTS_PATH,
+  opts: { strict?: boolean } = {}
+): NameFamily | null {
+  const { map, error } = ensureLoaded(tablePath);
+  if (error && opts.strict) throw new Error(error);
   return map.get(normalizeString(name)) ?? null;
 }
 
