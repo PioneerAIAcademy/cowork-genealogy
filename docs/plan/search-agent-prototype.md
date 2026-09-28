@@ -1,6 +1,9 @@
 # Search Agent prototype — hosted architecture, one month
 
-**Status:** IN PROGRESS — P1, the three D1–2 probes, P3 and P2 measured 2026-09-10 (PR
+**Status:** DONE 2026-09-29 — D20 written: results in
+[`search-agent-prototype-report.md`](../search-agent-prototype-report.md), what is left before
+FamilySearch can deploy it in [`familysearch-handoff.md`](./familysearch-handoff.md). Kept as the
+evidence record the report and the prototype code cite. History: P1, the three D1–2 probes, P3 and P2 measured 2026-09-10 (PR
 #2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); the `sidecar_read`
 half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant with `Read`
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
@@ -2350,7 +2353,10 @@ without whichever Bedrock refuses.
   `BLOCKED_TREE_TOOLS` in `eval/harness/e2e/orchestrator.py`); the prototype worker does not, so a
   38-second answer here is the tree talking, not the research workflow. D17's kill must be
   timed on a run that reaches `extraction_append`, which this one never did.
-- **D20** Write-up.
+- **D20** Write-up. **Done 2026-09-29:**
+  [`search-agent-prototype-report.md`](../search-agent-prototype-report.md) (results, the quality
+  gap, the open questions for FamilySearch) and [`familysearch-handoff.md`](./familysearch-handoff.md)
+  (our preconditions, FamilySearch's, and the deployment guide).
 
 **Runs ~22 days after the 2026-09-10 cut, and a few days over is acceptable (lead's
 call, 2026-09-09).** The
