@@ -42,6 +42,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # test_search_familysearch_wiki_validators.py.
 from test_search_wikipedia import (  # noqa: E402
     test_no_wiki_no_write as check_no_wiki_no_write,
+    test_reply_does_not_narrate_pending_step as check_narration,
     test_saved_file_matches_template as check_template,
     test_slug_matches_returned_title as check_slug,
     test_wikipedia_search_called_exactly_once as check_one_call,
@@ -257,4 +258,48 @@ def test_the_file_validators_still_fail_a_bad_saved_file():
         before_state=EMPTY,
         after_state={"files": {"schuylkill-county.md": _SAVED}},
         tool_calls=[WIKI_CALL], test=t,
+    )
+
+
+# --- the narration check reads the agent's return, not the dispatcher's -------
+
+_AGENT_LINE = "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`."
+_NARRATING = "Now I'll write the filled template to a file."
+
+
+def _returns(text, subagent_type="search-wikipedia"):
+    return [{"subagent_type": subagent_type, "text": text}]
+
+
+def test_narration_check_passes_a_clean_agent_return_under_a_narrating_relay():
+    """The dispatcher's relay is not the subject: a clean agent return passes
+    even when `text_response` narrates."""
+    assert _run(
+        check_narration,
+        agent_returns=_returns(_AGENT_LINE),
+        text_response=_NARRATING,
+        test=saved_file_test(),
+    ) == "passed"
+
+
+def test_narration_check_fails_a_narrating_agent_return_under_a_clean_relay():
+    _expect_failure(
+        check_narration, "narrates a pending step",
+        agent_returns=_returns(_NARRATING),
+        text_response=_AGENT_LINE,
+        test=saved_file_test(),
+    )
+
+
+@pytest.mark.parametrize(
+    "agent_returns",
+    [[], _returns(_AGENT_LINE, subagent_type="image-reader"), _returns("")],
+    ids=["no-returns", "other-agent-only", "empty-return"],
+)
+def test_narration_check_falls_back_to_text_response(agent_returns):
+    _expect_failure(
+        check_narration, "narrates a pending step",
+        agent_returns=agent_returns,
+        text_response=_NARRATING,
+        test=saved_file_test(),
     )

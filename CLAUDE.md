@@ -920,8 +920,10 @@ reviews on the PR.
 `packages/engine/plugin/agents/search-wikipedia.md` is the canonical minimal
 example of the full plugin pipeline — it calls the `wikipedia_search`
 MCP tool, fills a markdown template inlined in its own body, and saves the
-result to a file. It is the smallest file that shows every part an agent needs:
-the three tool spellings, a scope section that hands work back by name rather
-than spawning it, and the `summary_for_user` return contract. Copy this
-structure when wiring a new agent to one of the other tools. Don't mutate
-`search-wikipedia` itself; create a new agent file.
+result to a file. It shows the three tool spellings and a scope section that
+hands work back by name rather than spawning it. It does **not** show the
+`summary_for_user` return contract — it is on the PENDING list in
+`tests/packaging/agent-return-contract.test.ts` — so copy that section from
+another agent, or the new agent fails that test. Copy this structure when wiring
+a new agent to one of the other tools. Don't mutate `search-wikipedia` itself;
+create a new agent file.
