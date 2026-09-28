@@ -602,6 +602,28 @@ button {
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
 }
+/* PR #2870 item 1b: a message typed while a turn is running is HELD, not
+   enqueued -- two turns on one session would resume the same SDK session. The
+   label is what stops that reading as "my message was dropped"; it clears at
+   turn_done, which is when the held message becomes the next turn. Right-aligned
+   under the bubble it belongs to, since .msgUser is align-self: flex-end. */
+.msgQueued {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  text-align: right;
+  margin-top: 4px;
+  font-style: italic;
+}
+/* PR #2870 item 1c: how the last turn ended. complete() used to hardcode
+   'ok', so a run that hit its step budget or stalled looked exactly like one
+   that finished -- and a genealogist reads that as "nothing more was found".
+   Sits where the "working… Ns" indicator sits, so the same spot answers both
+   "is it running?" and "why did it stop?". */
+.turnOutcome {
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding: 4px 2px;
+}
 /* Restore paragraph spacing the global reset (viewer-ui global.css) zeroes.
    Without this, two text blocks joined with a blank line render on consecutive
    lines with no gap — the paragraph break #1312 requires never reaches the
@@ -716,32 +738,6 @@ button {
   background: var(--bg-code);
   font-weight: 600;
 }
-/* One-tap answer to the orchestrator's hand-back (issue #2292). Accented like
-   Send: it IS the primary action once a step has completed. */
-.chatContinueRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 4px 0 10px;
-}
-.chatContinueNote {
-  font-size: 12px;
-  color: var(--ink-muted, var(--ink));
-}
-.chatContinue {
-  background: var(--accent);
-  color: var(--bg-primary);
-  border: none;
-  border-radius: 999px;
-  padding: 6px 16px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-}
-.chatContinue:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
 /* Reveals the model's reasoning blocks, hidden by default. */
 .chatAdvanced {
   align-self: center;
@@ -820,8 +816,11 @@ button {
 .chatSend:disabled {
   opacity: 0.5;
 }
-/* Replaces Send while a turn is running (interrupt). Muted rather than accented
-   so it reads as a secondary "abort", not the primary action. */
+/* Shown BESIDE Send while a turn is running (interrupt) — PR #2870 item 1b.
+   It used to replace Send, which under continuous work meant the composer offered
+   only Stop for the length of a whole research job (a median of 53 minutes). Muted
+   rather than accented so it still reads as a secondary "abort", not the primary
+   action. */
 .chatStop {
   align-self: stretch;
   background: var(--bg-card);

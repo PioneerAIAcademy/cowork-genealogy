@@ -223,7 +223,12 @@ def _on_signal(signum, _frame):
 
 def main() -> None:
     host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", "8000"))
+    raw = (os.environ.get("PORT") or "").strip()
+    try:
+        port = int(raw) if raw else 8000
+    except ValueError:  # a typo must not crash-loop the probe before it can say why
+        print(f"PORT={raw!r} is not an integer; using 8000", flush=True)
+        port = 8000
     signal.signal(signal.SIGTERM, _on_signal)
     signal.signal(signal.SIGINT, _on_signal)
     server = make_server(host, port, application, server_class=ThreadingWSGIServer, handler_class=ProbeRequestHandler)

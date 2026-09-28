@@ -3,7 +3,7 @@
  *
  * Prereqs:
  *   - An OpenRouter key in ~/.familysearch-mcp/config.json under
- *     "openRouterApiKey". The configure_openrouter tool does not accept a key.
+ *     "openRouterApiKey".
  *   - For imageId / ark: logged in to FamilySearch (tokens.json in
  *     ~/.familysearch-mcp). The --file form needs no FamilySearch login.
  *

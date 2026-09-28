@@ -14,7 +14,7 @@ Milestone A is complete — `wikipedia_search` and `place_search` tools work thr
 |---|------|--------|
 | 0 | `config/familysearch.json` | **Create (committed to git)** — `{ "clientId": "<dev-key>" }`. Bundled into the `.mcpb` and read by `getClientId()` at runtime. Sole source for the client ID. |
 | 1 | `src/types/auth.ts` | **Create** — Auth interfaces (TokenStore, LoginResult, AuthStatusResult, FSTokenResponse, AppConfig). `AppConfig` covers per-user settings only (e.g. `wikiApiUrl`); it does **not** carry `clientId`. |
-| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, `loadConfig`/`saveConfig` for the per-user `~/.familysearch-mcp/config.json`, and `getClientId()` that reads the bundled `config/familysearch.json` |
+| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, `loadConfig` for the per-user `~/.familysearch-mcp/config.json`, and `getClientId()` that reads the bundled `config/familysearch.json` |
 | 3 | `src/auth/pkce.ts` | **Create** — PKCE code_verifier/code_challenge + state generation |
 | 4 | `src/auth/tokenManager.ts` | **Create** — Save/load/clear tokens from `~/.familysearch-mcp/tokens.json` |
 | 5 | `src/auth/refresh.ts` | **Create** — Token exchange, refresh, and `getValidToken(principal)` |
@@ -98,7 +98,7 @@ Constants + two distinct config sources.
 **Functions:**
 
 - `loadConfig(principal)` -> `AppConfig` — reads the **per-user** JSON config; returns `{}` on missing/corrupt/wrong-shape (never throws). Holds tunables like `wikiApiUrl`. Does not hold the client ID.
-- `saveConfig(patch: Partial<AppConfig>)` — merges `patch` into existing per-user config, `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600`. Preserves any keys the user has set that are not in `patch`.
+- Nothing in the engine writes the per-user config. The user, the e2e harness or the hosted control plane does.
 - `getClientId()` -> `string` — reads the **bundled** `config/familysearch.json` at runtime and returns `clientId` (trimmed). On missing/unreadable/malformed/empty, throws a packaging error:
   ```
   FamilySearch client ID is unavailable. The MCP server's bundled
@@ -138,7 +138,7 @@ The core auth logic. **`getValidToken(principal)` is the single entry point all 
 The `principal` (`src/auth/principal.ts`) says who the call acts as: `LOCAL` reads and
 refreshes the per-user files described here; a bearer principal carries the request's
 access token and per-user config and is used as given — no refresh, no file — because
-in a hosted deployment the web tier owns the grant. `loadConfig`, `saveConfig`,
+in a hosted deployment the web tier owns the grant. `loadConfig`,
 `isHostedMode` and the config getters take the same parameter.
 
 - `exchangeCodeForTokens(code, codeVerifier)` -> `TokenStore` — POST to token URL with `grant_type=authorization_code`
@@ -231,7 +231,6 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - `getClientId` reads the bundled `config/familysearch.json` and returns the trimmed `clientId`
 - `getClientId` throws `CLIENT_ID_PACKAGING_ERROR` on missing / invalid-JSON / wrong-shape / empty / missing-field
 - `CLIENT_ID_PACKAGING_ERROR` is framed as an installation problem, not an LLM-actionable prompt (regression guard: forbids "pass / provide / configure" + "dev key" + "Call the login tool" phrasing)
-- `saveConfig` merges a patch into the per-user config (preserves other keys), writes JSON with `mode: 0o600`
 - **Mock:** `node:fs/promises`
 
 ### `tests/auth/bundled-client-config.test.ts` — 2 tests

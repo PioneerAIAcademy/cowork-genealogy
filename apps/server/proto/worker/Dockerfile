@@ -46,6 +46,10 @@ COPY packages/engine/plugin /opt/genealogy/plugin
 # which the worker applies at start.
 COPY apps/server/app               /opt/genealogy/server/app
 COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
+# 1b: the worker releases a held message when the turn holding it ends, and it is the
+# only component that knows a turn finished. enqueue.py is the repo's one SQS client
+# (stdlib urllib, no boto3), so the handover reuses it rather than growing a second.
+COPY apps/server/proto/enqueue.py  /opt/genealogy/server/proto/enqueue.py
 COPY apps/server/proto/worker      /opt/genealogy/server/proto/worker
 
 ENV PYTHONPATH=/opt/genealogy/server

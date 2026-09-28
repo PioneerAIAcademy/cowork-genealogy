@@ -28,6 +28,7 @@ from harness.mock_mcp import (
     create_mock_server,
 )
 from harness.orchestrator import _build_warnings
+from harness.ts_consts import ts_string_list
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -726,13 +727,9 @@ def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():
     on the TypeScript side and never mirrored, which is the drift that would
     otherwise be silent.
     """
-    src = (
-        REPO_ROOT / "packages/engine/mcp-server/src/tool-result.ts"
-    ).read_text(encoding="utf-8")
-    decl = re.search(r"OK_FALSE_IS_FAILURE = \[(.*?)\]", src, re.DOTALL)
-    assert decl, "OK_FALSE_IS_FAILURE is gone from tool-result.ts"
-    ts_names = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
-    assert ts_names, "parsed an empty list — the declaration's shape changed"
+    # `ts_string_list` raises on a missing or empty declaration, so a renamed or
+    # reshaped constant fails here rather than comparing against nothing.
+    ts_names = set(ts_string_list("OK_FALSE_IS_FAILURE"))
     assert ts_names & LIVE_TOOLS == OK_FALSE_IS_FAILURE_LIVE
 
 
