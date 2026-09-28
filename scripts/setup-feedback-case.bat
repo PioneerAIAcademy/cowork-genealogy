@@ -187,7 +187,7 @@ if exist "!FB_JSON!" (
     set "PS_FB=!FB_JSON:'=''!"
     set "SESSION_LOG=!DEST_DIR!\_feedback\session-log.jsonl"
     set "PS_LOG=!SESSION_LOG:'=''!"
-    powershell -NoProfile -Command "$f='!PS_FB!'; $l='!PS_LOG!'; try { $p=(Get-Content -Raw -LiteralPath $f -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).user_prompt } catch { Write-Host ('User''s prompt: see ' + $f + ' (user_prompt field)'); exit }; if ([string]::IsNullOrWhiteSpace($p)) { Write-Host ('User''s prompt: the tester left blank. Try ' + $l + ' for what they asked for - it is optional (a Cowork submission never has one), and a trimmed log drops its oldest entries, so the prompt goes first.') } else { Write-Host 'User''s prompt to issue first:'; Write-Host '---------------------------------------------'; Write-Host $p; Write-Host '---------------------------------------------' }"
+    powershell -NoProfile -Command "$f='!PS_FB!'; $l='!PS_LOG!'; try { $p=(Get-Content -Raw -Encoding UTF8 -LiteralPath $f -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).user_prompt } catch { Write-Host ('User''s prompt: see ' + $f + ' (user_prompt field)'); exit }; if ([string]::IsNullOrWhiteSpace($p)) { Write-Host ('User''s prompt: the tester left blank. Try ' + $l + ' for what they asked for - it is optional (a Cowork submission never has one), and a trimmed log drops its oldest entries, so the prompt goes first.') } else { Write-Host 'User''s prompt to issue first:'; Write-Host '---------------------------------------------'; Write-Host $p; Write-Host '---------------------------------------------' }"
 ) else (
     echo User's prompt: see !DEST_DIR!\_feedback\feedback.json ^(user_prompt field^)
 )
