@@ -25,7 +25,9 @@
     "place-search-all-feliciana",
     "collections-search-feliciana",
     "volume-search-feliciana",
-    "external-links-search-feliciana"
+    "external-links-search-feliciana",
+    "collections-search-us-national",
+    "external-links-search-any"
   ],
   "judge_context": [
     "The plan MUST include a co-equal plan item for BOTH East Feliciana Parish AND West Feliciana Parish marriage records for the target period (circa 1824-1830) — not one item with the other set as fallback_for. The 1824 split is geographic, not temporal, and the locality entry already says the records could be under either successor's name; that means both are primaries from the start, searched together, not one searched only if the other yields nothing. How the plan relates the two successor parishes to each other is what Jurisdiction accuracy turns on for this test: assess whether each is planned as a primary in its own right, or whether one is made conditional on the other.",

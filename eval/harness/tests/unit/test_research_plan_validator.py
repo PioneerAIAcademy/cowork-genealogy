@@ -321,6 +321,218 @@ def test_v5_skips_multi_collection_sentence():
     check_v5(before, after, _SERVED)  # no fire despite both adjectives being wrong
 
 
+# A browse/unindexed adjective on a non-collection noun is about that volume,
+# not the sentence's one collection id. Recorded false positive:
+# ut_research_plan_016, v1_2026-09-01_17-38-18 (issue #2110), verbatim below;
+# 1804888 is served indexed in collections-search-kentucky.json.
+_SERVED_KY = [_call("collections_search", _collections([
+    {"id": "1804888", "title": "Kentucky, Deaths and Burials", "personCount": 421870},
+]))]
+_UT016_PLI007 = (
+    "Paid fallback if FamilySearch collection 1804888 (item 2) and the browse-only "
+    "volume (item 3) both return nothing for the pre-1911 period."
+)
+
+
+def test_v5_ignores_browse_only_on_a_volume():
+    before, after = _states([_item("pli_007", rationale=_UT016_PLI007)])
+    check_v5(before, after, _SERVED_KY)
+
+
+def test_v5_ignores_unindexed_on_a_volume():
+    rationale = _UT016_PLI007.replace("browse-only volume", "unindexed volume")
+    before, after = _states([_item("pli_007", rationale=rationale)])
+    check_v5(before, after, _SERVED_KY)
+
+
+@pytest.mark.parametrize("phrase", ["image-only film", "browse only register", "not indexed image groups"])
+def test_v5_ignores_adjective_variants_on_a_non_collection_noun(phrase):
+    before, after = _states([_item("pli_007", rationale=(
+        f"Fallback if collection 1804888 and the {phrase} both return nothing."
+    ))])
+    check_v5(before, after, _SERVED_KY)
+
+
+def test_v5_still_fires_on_browse_claim_about_the_collection_itself():
+    # "images" is not a non-collection noun: the collection's own images are
+    # still a claim about the collection.
+    before, after = _states([_item("pli_010", rationale="Collection 1921317 has browse-only images.")])
+    with pytest.raises(AssertionError, match="1921317"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_still_fires_on_indexed_collection_beside_a_browsed_volume():
+    before, after = _states([_item("pli_010", rationale=(
+        "Search the indexed collection 1999196 before browsing volume 007936749."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_fires_on_indexed_collection_beside_a_browse_only_volume():
+    # Before the volume skip, the two adjectives cancelled and the sentence was
+    # skipped as self-contradicting; the volume's adjective no longer masks the
+    # collection's claim.
+    before, after = _states([_item("pli_010", rationale=(
+        "Search the indexed collection 1999196 first, then the browse-only volume 007936749."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+# Verbatim 1999196 rationales from v1_2026-09-17_15-04-52: the two real
+# catches must survive the volume skip, and the volume-shaped third must keep
+# its old verdict.
+_UT007_PLI006 = (
+    "Thomas Flynn (born ~1818 Ireland) was head of household in Schuylkill County in "
+    "both 1850 and 1860. His plausible death window is 1865–1920. A will or "
+    "administration naming Patrick as a son or heir would be direct evidence of "
+    "parentage from a primary source. The locality guide confirms probate records "
+    "have been held by the county Register of Wills since 1811; the FamilySearch "
+    "indexed collection 1999196 (Pennsylvania Probate Records, 1683–1994) covers "
+    "this jurisdiction and period. Search under Flynn, Flin, and Flinn. Date range set "
+    "to Thomas's plausible lifespan (born ~1818), not Patrick's research window."
+)
+_UT010_PLI007 = (
+    "Carry-forward of pli_006 (superseded pl_002) with corrected date range. New "
+    "evidence places Thomas Flynn's death circa 1865, not 1875-1890. A will or estate "
+    "file naming Patrick as a son would be direct parentage evidence. FamilySearch "
+    "collection 'Pennsylvania, Probate Records, 1683-1994' (id: 1999196) is indexed "
+    "and covers this window. Search under Flynn and variant Flinn."
+)
+_UT007_PLI007 = (
+    "Fallback for pli_006 (indexed probate collection). The locality guide flags that "
+    "some Schuylkill County records exist only as browse-only image groups. Volume "
+    "007936749 (Probate Records, 1851–1930) is 0% record-searchable and not indexed "
+    "— browse image-by-image if the indexed collection 1999196 does not return "
+    "Thomas Flynn. Check variant spellings Flynn / Flin / Flinn in margin entries."
+)
+
+
+@pytest.mark.parametrize("rationale", [_UT007_PLI006, _UT010_PLI007], ids=["ut007_pli006", "ut010_pli007"])
+def test_v5_still_fires_on_recorded_indexed_claims(rationale):
+    before, after = _states([_item("pli_006", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_keeps_verdict_on_recorded_volume_fallback():
+    before, after = _states([_item("pli_007", rationale=_UT007_PLI007)])
+    check_v5(before, after, _SERVED)
+
+
+# A coverage percentage is not an availability claim. Recorded false positive:
+# ut_research_plan_007 run 0, scratch run 2026-09-24 (issue #2685), verbatim.
+_UT007_RUN0_PLI006 = (
+    "Thomas Flynn (I2) has no sources attached; his death is unlocated but bracketed "
+    "by the 1860 census (alive) and Patrick's 1908 death certificate (names him as "
+    "father). A will or estate administration listing heirs would directly document "
+    "the father-son relationship and — if Thomas's wife survived him — supply her "
+    "name (still unknown). The Pennsylvania Probate Records collection (1999196) "
+    "returned personCount 0, so this is a browse of image group 007936749 (Schuylkill "
+    "County Probate Records, 1851–1930, 412 images, 0% indexed). Date range is sized "
+    "to Thomas's plausible death window, not Patrick's research window. Search "
+    "variants: Flynn, Flinn."
+)
+
+
+def test_v5_ignores_a_coverage_percentage():
+    before, after = _states([_item("pli_006", rationale=_UT007_RUN0_PLI006)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", ["4% name-indexed", "0 % record-searchable", "12.5%indexed"])
+def test_v5_ignores_coverage_percentage_variants(phrase):
+    before, after = _states([_item("pli_006", rationale=f"Collection 1999196 is only {phrase}.")])
+    check_v5(before, after, _SERVED)
+
+
+def test_v5_still_fires_on_indexed_claim_beside_an_unrelated_percentage():
+    # The strip removes only "N% indexed"; a percentage elsewhere in the sentence
+    # must not shield a real indexed claim.
+    before, after = _states([_item("pli_006", rationale=(
+        "The indexed collection 1999196 covers 40% of counties."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_still_fires_on_indexed_claim_after_a_percentage():
+    before, after = _states([_item("pli_006", rationale=(
+        "Volume 007936749 is 0% indexed, but collection 1999196 is fully indexed."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_002, v1_2026-09-24_19-25-44, pli_012 verbatim (trimmed).
+_UT002_V4_PLI012 = (
+    "Pennsylvania Probate Records (collection 1999196) returned personCount 0 "
+    "→ no indexed name search is possible; this is an image browse. "
+    "Volume 007936749 (Schuylkill County Probate Records 1851–1930, 412 images, "
+    "0% record-searchable) must be paged through manually."
+)
+
+
+def test_v5_ignores_no_indexed_name_search_phrase():
+    # "no indexed name search is possible" negates the indexed claim — do not
+    # fire even though _INDEXED_RE would match "indexed" in the sentence.
+    before, after = _states([_item("pli_012", rationale=_UT002_V4_PLI012)])
+    check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_q7m, v1_2026-09-25_08-29-32, pli_003 verbatim (trimmed).
+_UT_Q7M_V6_PLI003 = (
+    "collections_search returned 'Pennsylvania, Probate Records, 1683–1994' "
+    "(collection 1999196, personCount 0) → images only, not name-indexed. "
+    "volume_search returned image group 007936749 (Probate Records, Schuylkill "
+    "County, 1851–1930, 0% record-searchable). Browse image-by-image for "
+    "John Doyle's will or letters of administration."
+)
+
+
+def test_v5_ignores_not_name_indexed_phrase():
+    # "not name-indexed" is an adjectival compound that negates the indexed
+    # claim just like "not indexed" — do not fire.
+    before, after = _states([_item("pli_003", rationale=_UT_Q7M_V6_PLI003)])
+    check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_015, v1_2026-09-25_09-24-00, pli_003 verbatim (trimmed).
+# Collection 2513529 has personCount 200408 — it IS indexed nationally, but the
+# specific volume for this jurisdiction is unindexed (recordSearchablePercent:0).
+_UT_015_V7_PLI003 = (
+    "The national collection 2513529 (Denmark, Military Levying Rolls, 1789–1861, "
+    "personCount 200K) is indexed at collection level, but volume_search shows image "
+    "group 004748896 (Vestervig/Thisted Amt districts, 1789–1814, 1,204 images, "
+    "recordSearchablePercent: 0) is entirely unindexed for this jurisdiction — "
+    "browse the images rather than searching by name."
+)
+_SERVED_DK = [_call("collections_search", _collections([
+    {"id": "2513529", "title": "Denmark, Military Levying Rolls, 1789-1861", "personCount": 200408},
+]))]
+
+
+def test_v5_ignores_unindexed_for_this_jurisdiction():
+    # "unindexed for this jurisdiction" qualifies the local volume, not the
+    # national collection. The collection IS indexed (personCount 200K), so V5
+    # must not fire.
+    before, after = _states([_item("pli_003", rationale=_UT_015_V7_PLI003)])
+    check_v5(before, after, _SERVED_DK)
+
+
+def test_v5_ignores_not_fully_indexed():
+    # "not fully indexed" is a partial-indexing claim — the collection has some
+    # searchable records (personCount > 0). _UNINDEXED_RE must not match "fully"
+    # as the optional adjective between "not" and "indexed".
+    rationale = (
+        "Collection 2513529 (1880 US Census) is not fully indexed — "
+        "search by name returns personCount 200408 results."
+    )
+    before, after = _states([_item("pli_001", rationale=rationale)])
+    check_v5(before, after, _SERVED_DK)
+
+
 # ===========================================================================
 # Already-attached-FAN-facts validator (issue #1948)
 # ===========================================================================
