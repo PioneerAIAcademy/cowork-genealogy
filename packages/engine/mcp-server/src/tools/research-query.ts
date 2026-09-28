@@ -39,9 +39,41 @@ export const RESEARCH_QUERY_SECTIONS = [
   "timelines",
   "proof_summaries",
   "evaluations",
+  "localities",
 ] as const;
 
 export type ResearchQuerySection = (typeof RESEARCH_QUERY_SECTIONS)[number];
+
+/** Sections the schema does not list as `required`, so absence is legitimate.
+ *
+ *  `localities` postdates most projects: 90 of the 102 committed fixtures have
+ *  no `localities` key at all. Erroring on those reproduces the issue #2864
+ *  failure — an agent that wrote locality findings could not read them back —
+ *  on nearly every real project, so for these sections a missing key answers
+ *  `count: 0` instead of throwing.
+ *
+ *  Narrow on purpose. A section that is PRESENT but not an array is a corrupt
+ *  document and still throws, and so does a `research.json` that is not an
+ *  object at all. See the guard at the read site for why that second case
+ *  needs saying. */
+export const RESEARCH_QUERY_OPTIONAL_SECTIONS: ReadonlySet<string> = new Set([
+  "localities",
+]);
+
+/** Array sections deliberately NOT served, and why.
+ *
+ *  Read by the completeness test, which requires every top-level array section
+ *  of `research.schema.json` to be either queryable or listed here — so a
+ *  section added later cannot be silently unreadable, which is the defect this
+ *  whole card is about.
+ *
+ *  `project` and `researcher_profile` are absent from both lists because they
+ *  are objects, not arrays, and this tool pages arrays. */
+export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
+  known_holdings:
+    "write-only; issue #2069 deletes it from the schema, so exposing it here " +
+    "would create a contract that card then has to remove",
+};
 
 export interface ResearchQueryInput {
   projectPath: string;
@@ -183,6 +215,11 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
     targetId: { field: "target_id", mode: "exact" },
     focus: { field: "focus", mode: "exact" },
   },
+  // No filters, deliberately. No existing filter key maps onto a locality
+  // field, and there is one entry per place-jurisdiction, so the whole section
+  // fits inside a single 50-item page. The empty object routes to the
+  // "(this section takes no filters)" branch below.
+  localities: {},
 };
 
 const FILTER_KEYS: FilterKey[] = [
@@ -275,6 +312,26 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
 
     const arr = research?.[section];
     if (!Array.isArray(arr)) {
+      // An optional section that is simply ABSENT from a real document is an
+      // empty result, not an error — see RESEARCH_QUERY_OPTIONAL_SECTIONS.
+      //
+      // All three conditions are load-bearing. `research?.[section]` is
+      // `undefined` for `null`, `[]`, `"x"` and `42` as well as for a missing
+      // key, because `readProjectJson` throws only on invalid JSON and hands
+      // back whatever else parsed. Keying the empty result on `undefined`
+      // alone would answer a confident `count: 0` on a file that is not a
+      // research document at all — the issue #2864 failure inverted. So the
+      // document must be a non-null, non-array object, and the section must be
+      // genuinely absent from it.
+      //
+      // `in` rather than `Object.hasOwn` walks the prototype chain, which errs
+      // toward the throw here: a collision would refuse rather than silently
+      // answer empty. No section name collides with an Object.prototype key.
+      const isDocument =
+        typeof research === "object" && research !== null && !Array.isArray(research);
+      if (RESEARCH_QUERY_OPTIONAL_SECTIONS.has(section) && isDocument && !(section in research)) {
+        return { ok: true, section, count: 0, items: [], truncated: false };
+      }
       throw new ResearchQueryError(`research.json '${section}' is missing or not an array`);
     }
 
@@ -322,7 +379,7 @@ export const researchQuerySchema = {
     "related_question_ids, assertionId — matches supporting/contradicting_assertion_ids, " +
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
     "(questionId, assertionId — matches supporting_assertion_ids), `evaluations` " +
-    "(targetId, focus). Note for `evaluations`: there is no filter for " +
+    "(targetId, focus), `localities` (no filters). Note for `evaluations`: there is no filter for " +
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
     "\n" +
