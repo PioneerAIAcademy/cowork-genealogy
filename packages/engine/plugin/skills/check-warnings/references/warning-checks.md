@@ -114,7 +114,10 @@ Always investigate.
   own `NoChildren` fact while they have a child; a
   `CoupleNeverHadChildren` fact on one of their couple
   relationships while the couple has a child of both partners; or
-  the person is a child of a couple carrying that fact.
+  the person is a child of a couple carrying that fact. Only a
+  biological or unspecified parent-child link counts -- an
+  adoptive, step, foster, or guardian link does not contradict the
+  marker.
 - Cause: the marker was recorded before research found the child,
   a wrong parent-child link, or the marker belongs to a different
   couple.

@@ -472,7 +472,7 @@ imprecise dates are widened per § Date Parsing Rules.
 | `hasDeathBeforeChildBirthFemale2` | contradiction | Female anchor: the mother's latest Death day is more than 2 days before a child's earliest Birth day (exact Death and Birth fact types, not the death-like/birth-like families; a mother may die the day of birth, not 2+ days before) | Data error or wrong mother attribution |
 | `hasEventsOutsideLifespanFar` | contradiction | Merge-mode only: merging places an event far outside the other record's lifespan (before its birth or after its death) | The two records are not the same person |
 | `hasSameCensus` | contradiction | Merge-mode only: both records cite the same census collection (a census enumerates each person once) | The two records are distinct people captured in one enumeration |
-| `hasNoChildrenConflict` | contradiction | The anchor has a `NoChildren` fact and children of their own; OR a `CoupleNeverHadChildren` fact on a couple the anchor belongs to (or on the anchor's own parents) is contradicted by a child of both partners | FamilySearch's `NO_CHILDREN_CONFLICT`, `COUPLE_NEVER_HAD_CHILDREN_FACT_YET_HAS_CHILDREN`, and `CHILD_OF_CHILDLESS_COUPLE`, folded into one tag — later research added a child the fact predates |
+| `hasNoChildrenConflict` | contradiction | The anchor has a `NoChildren` fact and qualifying children of their own; OR a `CoupleNeverHadChildren` fact on a couple the anchor belongs to (or on the anchor's own parents) is contradicted by a qualifying child of both partners. A qualifying ParentChild edge is biological or unspecified; adoptive, step, foster, and guardian links don't count | FamilySearch's `NO_CHILDREN_CONFLICT`, `COUPLE_NEVER_HAD_CHILDREN_FACT_YET_HAS_CHILDREN`, and `CHILD_OF_CHILDLESS_COUPLE`, folded into one tag — later research added a child the fact predates, or the child is adopted/step/foster/guardian rather than biological |
 | `hasNoCoupleRelationshipsConflict` | contradiction | The anchor has a `NoCoupleRelationships` fact and also has a spouse | A relationship was added after the fact was recorded, or a wrong link |
 | `hasStillbirthConflict` | contradiction | The anchor has a `Stillbirth` fact and also has a spouse, a marriage-like fact, a child, or lived to at least age 1 (most-generous bounds, fudge 0) | The stillbirth fact belongs to a different, similarly-named person, or is simply wrong |
 
@@ -586,11 +586,22 @@ publishes no Java source for these — they are not a warnings.java port.
 
 **Fact-type strings.** `NoChildren` and `NoCoupleRelationships` are person
 facts; `CoupleNeverHadChildren` is a fact on a **Couple relationship**, not
-on either person; `Stillbirth` is GEDCOM X's own
+on either person. All three are defined by FamilySearch's own SDK enum
+`FamilySearchFactType` (`FamilySearch/gedcomx-java`, path
+`extensions/familysearch/familysearch-api-model/src/main/java/org/familysearch/platform/ct/FamilySearchFactType.java`,
+namespace `http://familysearch.org/v1/`): `http://familysearch.org/v1/NoChildren`
+("Person fact type: Person had no children."),
+`http://familysearch.org/v1/NoCoupleRelationships` ("Person fact type:
+Person has no couple relationship."), and
+`http://familysearch.org/v1/CoupleNeverHadChildren` ("Couple fact type:
+Couple never had children."). `Stillbirth` is GEDCOM X's own
 `http://gedcomx.org/Stillbirth`. All four already reach `tree.gedcomx.json`
 — `stripFactTypeUri` keeps the trailing path segment of any fact-type URI,
 and `tree-shape.ts` does not restrict fact-type values — so no converter or
-schema change was needed.
+schema change was needed. A test converts a full GedcomX document carrying
+these exact wire URIs through the real `toSimplified()` and asserts that
+`calculateWarnings` emits the matching tags, guarding the constants against
+a converter or spelling drift.
 
 **Delayed burial: 365-day threshold, most-generous bounds.** Burial
 normally happens within days of death, so a gap over a year is most likely a
@@ -613,17 +624,29 @@ FamilySearch's `NO_CHILDREN_CONFLICT`,
 `CHILD_OF_CHILDLESS_COUPLE` into one issueType, since all three are the same
 shape of contradiction — a "no children" fact somewhere the tree's own
 ParentChild links disagree with: (a) the anchor's own `NoChildren` fact
-contradicted by the anchor's own children; (b) a `CoupleNeverHadChildren`
-fact on a Couple relationship the anchor belongs to, contradicted by a
-child of both partners; (c) the same couple fact on the anchor's own
-parents, contradicted by the anchor itself being their child.
+contradicted by the anchor's own qualifying children; (b) a
+`CoupleNeverHadChildren` fact on a Couple relationship the anchor belongs
+to, contradicted by a qualifying child of both partners; (c) the same
+couple fact on the anchor's own parents, contradicted by the anchor itself
+being their qualifying child.
+
+A ParentChild edge qualifies only when its `subtype`
+(`gedcomx-convert.ts`'s `uriToSubtype`) is undefined or `"Biological"`. A
+couple marked as never having children can still have raised an adopted,
+step, or foster child, so under the spec's most-generous-reading principle
+only a biological or unspecified link contradicts the marker — an
+`"Adoptive"`, `"Step"`, `"Foster"`, or `"Guardian"` edge does not count, on
+either side of view (b) or (c).
 
 **Stillbirth: the same most-generous age reading.** `hasStillbirthConflict`
 fires on a `Stillbirth` fact plus any of: a spouse, or a marriage-like fact
-on the anchor; a child; or living to at least age 1, where "age 1" is read
-the same conservative way as the burial check — the smallest possible gap
-between the latest possible birth-like-or-`Stillbirth` day and the earliest
-possible Death day is still >= 365 days (fudge 0, not 365).
+on the anchor; a child — unfiltered by subtype, unlike the No Children
+views above, since a stillbirth marker is contradicted by any child living
+on, not specifically by a biological one; or living to at least age 1,
+where "age 1" is read the same conservative way as the burial check — the
+smallest possible gap between the latest possible birth-like-or-`Stillbirth`
+day and the earliest possible Death day is still >= 365 days (fudge 0, not
+365).
 
 ---
 
