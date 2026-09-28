@@ -276,7 +276,7 @@ const HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN = "hasCloseChildBirthsIgnor
 const HAS_CLOSE_CHILD_CHRISTENINGS_6_30 = "hasCloseChildChristenings6_30";
 const HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR = "hasDissimilarSpousesWithSameMarriageYear";
 
-// person_quality parity tags (#2967) — model FamilySearch's own issueTypes, not warnings.java.
+// person_quality parity tags — model FamilySearch's own issueTypes, not warnings.java.
 const HAS_DELAYED_BURIAL_365 = "hasDelayedBurial365";
 const HAS_NO_CHILDREN_CONFLICT = "hasNoChildrenConflict";
 const HAS_NO_COUPLE_RELATIONSHIPS_CONFLICT = "hasNoCoupleRelationshipsConflict";
@@ -918,7 +918,7 @@ export function hasDiffSurname(mob: Mob): boolean {
   return false;
 }
 
-// ─── person_quality parity predicates (#2967) ───────────────────────────────
+// ─── person_quality parity predicates ───────────────────────────────────────
 // Not a warnings.java port — FamilySearch publishes no Java source for these.
 
 const NO_CHILDREN: ReadonlySet<string> = new Set(["NoChildren"]);
@@ -1811,7 +1811,7 @@ function checkHasDiffSurnameMale(mob: Mob): PersonWarning | null {
   };
 }
 
-// ─── Self emitters for the four FamilySearch person_quality checks (#2967) ──
+// ─── Self emitters for the four FamilySearch person_quality checks ─────────
 // Each reads only the anchor's own facts and one-hop relationships — no
 // relatives* variant.
 
@@ -1828,7 +1828,7 @@ function checkHasDelayedBurial365(mob: Mob): PersonWarning | null {
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BURIAL, DEATH),
-    message: `The burial date is ${actualDays} days after the death date, more than the 365-day threshold — burial usually happens within days of death.`,
+    message: `The burial date is at least ${actualDays} days after the death date, more than the 365-day threshold — burial usually happens within days of death.`,
   };
 }
 

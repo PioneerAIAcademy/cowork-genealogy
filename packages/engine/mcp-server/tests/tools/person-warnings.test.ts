@@ -3197,7 +3197,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
 });
 
 // ────────────────────────────────────────────────────────────────────
-// person_quality parity checks (#2967): hasDelayedBurial, hasNoChildrenConflict,
+// person_quality parity checks: hasDelayedBurial, hasNoChildrenConflict,
 // hasNoCoupleRelationshipsConflict, hasStillbirthConflict
 // ────────────────────────────────────────────────────────────────────
 
@@ -3376,6 +3376,23 @@ describe("hasNoChildrenConflict predicate", () => {
     expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(false);
   });
 
+  it("does NOT fire: couple fact + child of person1 and another partner only", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }] },
+        { id: "S", gender: "Female", names: [{ given: "S", surname: "T" }] },
+        { id: "Y", gender: "Female", names: [{ given: "Y", surname: "V" }] },
+        { id: "C", gender: "Female", names: [{ given: "C", surname: "S" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "P", person2: "S", facts: [{ id: "F1", type: "CoupleNeverHadChildren" }] },
+        { id: "R2", type: "ParentChild", parent: "P", child: "C" },
+        { id: "R3", type: "ParentChild", parent: "Y", child: "C" },
+      ],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(false);
+  });
+
   it("fires: anchor is a child of a CoupleNeverHadChildren couple", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
@@ -3537,7 +3554,7 @@ describe("hasStillbirthConflict predicate", () => {
   });
 });
 
-describe("calculateWarnings — person_quality parity emitters (#2967)", () => {
+describe("calculateWarnings — person_quality parity emitters", () => {
   it("emits hasDelayedBurial365 alongside deathRangeGreaterThan2 on the bagley-father-1884 LVDV-6MK shape", () => {
     // Death "19 Mar 1847", Burial "Mar 1947" — a 100-year gap. Burial is in
     // the death-like family, so a burial 3+ calendar years late already
