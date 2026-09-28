@@ -659,27 +659,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 27, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=27) == []
+    assert options.check_registration(_info(AGENTS, 26, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=26) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 27, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=27)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 26, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=26)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 26), expected_agents=AGENTS, expected_skills=27)
-    assert problems == ["26 genealogy-research:* commands registered, expected 27"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=27)
+    problems = options.check_registration(_info(AGENTS, 25), expected_agents=AGENTS, expected_skills=26)
+    assert problems == ["25 genealogy-research:* commands registered, expected 26"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=26)
 
 
-def test_the_plugin_ships_eight_agents_and_twenty_seven_skills():
+def test_the_plugin_ships_eight_agents_and_twenty_six_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 27
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 26
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 27\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 26\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -714,24 +714,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Eight agents and 27 skills registered: clean. Seven, or 26: the miss, whatever loaded --
+    # Eight agents and 26 skills registered: clean. Seven, or 25: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 27)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 27, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 26)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 26, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 26)) == ["26 genealogy-research:* commands registered, expected 27"]
+    assert worker.registration_problems(_info(AGENTS, 25)) == ["25 genealogy-research:* commands registered, expected 26"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 26, and a count of that same copy would have expected 26.
+    # registers 25, and a count of that same copy would have expected 25.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 26
+    assert worker.count_skills(str(copy)) == 25
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "26 genealogy-research:* commands registered, expected 27"
+        "25 genealogy-research:* commands registered, expected 26"
     ]
 
 
