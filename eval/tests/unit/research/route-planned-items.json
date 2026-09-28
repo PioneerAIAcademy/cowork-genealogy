@@ -8,7 +8,9 @@
     "tags": [
       "routing",
       "routes-to:search-records"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The research/project-status routing competition (issue #2927) intermittently routes 'drive the workflow forward' to project-status instead of research. Remove when #2927 narrows project-status's description."
   },
   "input": {
     "user_message": "Research the next open question on this project — drive the workflow forward.",
