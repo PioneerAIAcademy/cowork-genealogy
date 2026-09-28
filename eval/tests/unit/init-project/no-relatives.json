@@ -18,7 +18,8 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn"
+    "person-read-flynn",
+    "person-quality-clean-LZNY-BRF"
   ],
   "judge_context": [
     "person-read-flynn returns no parents, spouse, or children — an isolated person. The project must still initialize: both research.json and tree.gedcomx.json created with the Patrick Flynn stub",
