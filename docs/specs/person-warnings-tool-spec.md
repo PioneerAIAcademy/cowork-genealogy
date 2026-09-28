@@ -730,8 +730,8 @@ newly-derived entry must read the predicate, not lean on a test.
 ### This spec is the full catalogue
 
 § Tag Catalogue documents **every** tag the tool emits, and the drift
-lint enforces that. The check-warnings skill's
-`references/warning-checks.md` is a **curated, agent-facing subset** — it
+lint enforces that. The check-warnings agent's
+Appendix A (formerly `references/warning-checks.md`) is a **curated, agent-facing subset** — it
 does not have to list every tag. So a new tag must be documented here
 and need not be added to that reference.
 

@@ -566,6 +566,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
+
+  // The folded check-warnings skill (issue #2118). `person_quality` is absent by
+  // lead ruling 2026-09-27; `Read` resolves a person's name to an id from
+  // tree.gedcomx.json. Writes nothing.
+  "check-warnings.md": {
+    tools: ["Read", "person_warnings"],
+    denies: [],
+  },
 };
 
 /** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */

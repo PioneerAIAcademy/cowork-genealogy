@@ -161,7 +161,7 @@ Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `qualit
 
 **Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
 
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption of exactly the kind `check-warnings/references/assumption-categories.md` names as its canonical example ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption, and the canonical example of one ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
 
 **Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
 
@@ -224,7 +224,7 @@ A memory whose `notes` says it was not transcribed gets **no** `sources` entry �
 
 ### 5. Pedigree analysis and project summary
 
-**First, call `Skill("check-warnings")` once, naming the subject and every
+**First, invoke `@plugin:check-warnings` once, naming the subject and every
 imported relative by their LOCAL tree id from Step 3 (`I1`, `I2`… — never
 the FamilySearch PID or `ark`, even when the tree summary below lists both),
 and asking it to check all of them.** Fold what it returns into the findings
@@ -287,7 +287,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. Build the tree in memory — all persons, relationships, sources (quality: 1).
 4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
-6. `Skill("check-warnings")` for I1, Mary Kelly, James, and Margaret. Pedigree
+6. `@plugin:check-warnings` for I1, Mary Kelly, James, and Margaret. Pedigree
    analysis + summary, folding in whatever it returns. Mary Kelly and the
    children are tree context only — their gaps are noted, not queued. Then name
    the first research question as the next step and go on to it.

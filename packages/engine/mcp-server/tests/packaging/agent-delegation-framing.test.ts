@@ -358,6 +358,50 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
+  "init-project -> check-warnings": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "**The tool is the arbiter; don't re-derive.** The tool's output is ground truth.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
+        "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
+        "moved by delegation wording; the agent-side pin makes that output the ground truth " +
+        "the report is built from. The caller's delegation is specified as person ids " +
+        "only, pinned below; what it can still carry is a verdict in prose, which the " +
+        "pinned sentence does not stop and nothing here measures.",
+      mitigation: {
+        side: "caller",
+        excerpt:
+          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
+      },
+    },
+  },
+
+  "tree-edit -> check-warnings": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "**The tool is the arbiter; don't re-derive.** The tool's output is ground truth.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
+        "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
+        "moved by delegation wording; the agent-side pin makes that output the ground truth " +
+        "the report is built from. The caller body specifies no delegation content at " +
+        "all, so nothing on its side constrains a verdict in prose; nothing here " +
+        "measures whether one travels.",
+    },
+  },
 
 };
 
@@ -419,6 +463,15 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
+  // check-warnings (issue #2118): boundary mentions ("use check-warnings",
+  // "that is check-warnings' job"), none a delegation. The two real callers,
+  // init-project and tree-edit, are registered edges above.
+  ["conflict-resolution -> check-warnings", ""],
+  ["hypothesis-tracking -> check-warnings", ""],
+  ["search-records -> check-warnings", ""],
+  ["source-evaluation -> check-warnings", ""],
+  ["timeline -> check-warnings", ""],
+  ["validate-schema -> check-warnings", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -595,6 +648,7 @@ describe("agent delegation framing", () => {
   // DELEGATION_EDGES has and PROSE_MENTIONS lacked: a name entering or leaving
   // fails here and the author says in the diff which it was.
   const PROSE_ARM_COVERS = [
+    "check-warnings",
     "citation",
     "gps-mentor",
     "image-reader",
