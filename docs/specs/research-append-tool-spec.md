@@ -1706,3 +1706,119 @@ edit, not this tool's guess.
 assertion count, the distinct roles assigned, and any notes. The caller never
 sees the record, so reporting the extraction is its job and `results[]` alone
 would say how many entries landed without saying what they say.
+
+### 11.7 Document mode — an unindexed source extracted in code
+
+> **Status:** specified, not built. Lands after §11.5.
+
+§11.5 extracts a FamilySearch record from its `record_read` sidecar. Document
+mode runs **the same extractor** on a source that has no index: an image
+transcription, a full-text hit, an external site, pasted prose. The
+`record-structurer` agent (`record-structurer-agent-spec.md`) reads the text
+and builds a **document**. This tool validates that document, turns it into an
+`ExtractDocument`, and runs `extractRecord`. So roles, the three classification
+layers, field expansion and the census relationship doctrine all go through one
+code path whether the record was indexed or not.
+
+**Entered on `logEntryId` + `document`.** `logEntryId` with no `document` is
+§11.5. `document` with no `logEntryId` is refused: every extraction cites the
+log entry that produced it. `ops` sent with either is refused, as in §11.5.
+
+**Inline, not staged.** A model cannot stage a sidecar. `results_ref` is
+host-written only (`finalizeStagedResults` in `results-staging.ts`), so the
+document travels as a tool parameter.
+
+#### Inputs added to §11.5's
+
+| Parameter | Required | Meaning |
+|---|---|---|
+| `document` | yes | The document below. |
+| `transcriptionRef` | no | A `results/` ref holding a `StagedTranscription`. When given, the source's `transcription` is copied from that element **by the tool**, so the verbatim text is never re-emitted by a model. The ref can be a staged handle or a finalized sidecar (`readStagedResults` accepts both). |
+| `imageFilename` | no | Written to the source's `image_filename`. It is `image_transcribe`'s `imageRef`, relayed. §5.4's warning still fires when a transcription lands without one. |
+
+`recordId`, `questionIds` and `absentPersons` keep their §11.5 meaning.
+`recordId` is the `capture:<descriptive>`, `ancestry:<collection>:<id>` or
+ARK the router already uses for that source.
+
+#### The document
+
+camelCase at the wire, like every tool parameter. The GedcomX-subset keys are
+chosen to be single words (`type`, `date`, `place`, `value`, `given`,
+`surname`, `gender`), so no key has a casing to get wrong.
+`additionalProperties: false` at **every** level.
+
+```
+document: {
+  recordType:   RecordType,            // closed: record-extract.ts's union, plus "obituary"
+  recordLabel?: string,                // free text for the citation: "probate packet", "county history"
+  documentForm: "page_image" | "verbatim_transcript" | "index_entry" | "abstract" | "compiled_work",
+  census?:      { jurisdiction: string, year: number },   // required iff recordType is "census"
+  source: {
+    title: string, repository: string,
+    creator?: string, created?: string, locator?: string, url?: string, notes?: string,
+  },
+  informant?:   { name: string, relation?: string },       // an informant the text NAMES
+  persons: [{                          // IN SOURCE ORDER — array order is enumeration order
+    id: string,                        // local only; relationships refer to it
+    principal?: true,
+    household?: string,                // only when one text covers several households
+    names:  [{ given?: string, surname?: string, uncertain?: true, note?: string }],
+    gender?: "male" | "female",
+    statedRelation?: string,           // the text's own word: "son", "wife", "daughter-in-law", "consent signer", "neighbor"
+    facts:  [{
+      type: string,                    // "birth", "death", "residence", "occupation", "age", "marital_status", …
+      value?: string, date?: string, place?: string,
+      computed?: ("value" | "date" | "place")[],   // which attributes the text does NOT give
+      uncertain?: true,                // the reading is doubted: [?] stays in the value
+      note?: string,
+    }],
+  }],
+  relationships?: [{ type: "couple" | "parent_child" | "sibling", person1: string, person2: string, note?: string }],
+  absentPersons?: [{ name: string, factType?: string, note?: string }],
+}
+```
+
+**This is a superset of a sidecar, not the same shape.** A sidecar has none of
+`recordType`, `documentForm`, `census`, `computed`, `uncertain` or
+`statedRelation`. It carries a collection title instead, and `SimplifiedFact`
+has no stated/computed field. The adapter builds an `ExtractDocument` and
+passes these fields to `extractRecord` **alongside** it, as a document-mode
+options argument. The shape is never widened to fit them.
+
+**What the document cannot say** is the reason it exists. It has no key for
+`record_role`, `record_basis`, `informant_proximity`, `information_quality`,
+`informant`, `source_classification` or `record_persona_id`, so a model that
+tries to classify is refused by the schema. It is not left to a prompt.
+
+#### Validation — reject, write nothing
+
+`{ ok: false, errors }` names the JSON path, as the ops form does. It refuses:
+
+- any unknown key, at any depth — the classification fields above included;
+- `recordType` or `documentForm` outside its enum;
+- `recordType: "census"` without `census`, or `census` on anything else;
+- a person with no `names[0]`, or a name with neither `given` nor `surname`;
+- a relationship naming an `id` not in `persons`, or naming one person twice;
+- a `computed` entry naming an attribute the fact does not carry;
+- an empty `persons`.
+
+#### What code decides from the document
+
+| Decision | From | Rule |
+|---|---|---|
+| record type | `recordType` | Taken as given. `detectRecordType` is not run: there is no collection title to read. |
+| census column | `census.jurisdiction`, `census.year` | `censusStatedRelationships`, unchanged. When the table says the schedule had no column, every `statedRelation` is **ignored and named in `notes`**. A model cannot bring a relationship in through a column the schedule did not have. |
+| order | array order of `persons` | Replaces `FS_SORT_KEY`. |
+| roles | `recordType`, `principal`, `statedRelation`, relationships | §11.5's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
+| `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.5's birth split, now keyed on the mark and no longer on record type. |
+| `date_certainty` | `computed` includes `date` | `approximate`. |
+| information layer | the §11.5 table | The table keyed on record type × role family × fact class, with two document-only overrides. (1) `informant.name`, when present, replaces the table's generic informant string. (2) `uncertain` lowers `primary` to `indeterminate`: a doubted reading is not firsthand information. |
+| `informant_bias_notes` | `note` | Copied verbatim. |
+| `source_classification` | `documentForm` | `page_image`, `verbatim_transcript` → `original`. `index_entry`, `abstract` → `derivative`. `compiled_work` → `authored`. |
+| relationship assertions | `relationships` | §11.5's arms, plus `sibling`. Census: none from edges, as §11.5. |
+| `record_persona_id` | — | **Never set.** Local ids name nothing outside the document. |
+| negative evidence | both `absentPersons` lists | Merged. The caller's entries come first, and duplicates by `name` are dropped. |
+
+#### Return
+
+§11.5's `extraction` echo, plus `documentMode: true`.
