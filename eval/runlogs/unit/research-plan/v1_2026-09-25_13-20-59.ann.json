@@ -1,5 +1,4 @@
-{
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
+﻿{
   "run_log": "v1_2026-09-25_13-20-59.json",
   "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
@@ -13,13 +12,6 @@
     },
     {
       "test_id": "ut_research_plan_014",
-========
-  "run_log": "v1_2026-09-25_14-59-58.json",
-  "annotator": "eruth937@gmail.com",
-  "corrections": [
-    {
-      "test_id": "ut_search_external_sites_013",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -27,11 +19,7 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_014",
-========
-      "test_id": "ut_search_external_sites_013",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -39,80 +27,47 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_014",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
-========
-      "test_id": "ut_search_external_sites_013",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_014",
       "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
-========
-      "test_id": "ut_search_external_sites_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_014",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
-========
-      "test_id": "ut_search_external_sites_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_014",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
-========
-      "test_id": "ut_search_external_sites_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_014",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
-========
-      "test_id": "ut_search_external_sites_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -120,20 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_007",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -141,11 +83,7 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_007",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -153,75 +91,46 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_007",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "rubric",
-      "dimension_name": "URL generation",
+      "dimension_name": "Record type selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
+      "dimension_name": "Sequencing logic",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_007",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
+      "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_007",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "rubric",
-      "dimension_name": "Log entry",
+      "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_001",
-========
-      "test_id": "ut_search_external_sites_006",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "rubric",
-      "dimension_name": "Log entry",
+      "dimension_name": "Objective scope containment",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -265,45 +174,27 @@
       "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
-========
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
-========
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
-========
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -331,17 +222,11 @@
       "test_id": "ut_research_plan_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-========
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
@@ -351,9 +236,6 @@
     },
     {
       "test_id": "ut_research_plan_003",
-========
-      "test_id": "ut_search_external_sites_006",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -361,7 +243,6 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_bpx",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -379,65 +260,6 @@
     },
     {
       "test_id": "ut_research_plan_bpx",
-========
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_008",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -445,103 +267,41 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_bpx",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
-========
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_bpx",
-========
-      "test_id": "ut_search_external_sites_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_009",
       "dimension_source": "rubric",
-      "dimension_name": "URL generation",
+      "dimension_name": "Objective scope containment",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_009",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_bpx",
-========
-      "test_id": "ut_search_external_sites_009",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Sequencing logic",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_bpx",
-========
-      "test_id": "ut_search_external_sites_009",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
+      "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/research-plan/v1_2026-09-25_13-20-59.ann.json
       "test_id": "ut_research_plan_bpx",
-========
-      "test_id": "ut_search_external_sites_009",
->>>>>>>> origin/main:eval/runlogs/unit/search-external-sites/v1_2026-09-25_14-59-58.ann.json
       "dimension_source": "rubric",
-      "dimension_name": "Log entry",
+      "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
