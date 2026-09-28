@@ -156,7 +156,12 @@ _LEAD_MARKER = re.compile(
 )
 _UNCLE = re.compile(r"uncle", re.I)
 _STEP = re.compile(r"step", re.I)
-_CONDITIONAL_BRANCH = re.compile(r"^[\s|*_>-]*if\b", re.I)
+_CONDITIONAL_BRANCH = re.compile(
+    r"^[\s*_>-]*(?:if|should|were|assuming)\b[^,.;:!?|→]*"
+    r"\b(?:maiden|married|widow\w*|prior)\b",
+    re.I,
+)
+_SENTENCE_END = re.compile(r"[.;!?](?=\s|$)")
 
 
 def _weighting_units(text: str):
@@ -177,9 +182,35 @@ def _weighting_units(text: str):
         if line[:1] in "|-*":
             yield line
             continue
-        for sentence in re.split(r"(?<=[.;:!?])\s+", line):
-            if sentence.strip():
-                yield sentence.strip()
+        sentences = [s.strip() for s in re.split(r"(?<=[.;:!?])\s+", line) if s.strip()]
+        i = 0
+        while i < len(sentences):
+            s = sentences[i]
+            if (s.endswith(":") and i + 1 < len(sentences)
+                    and _CONDITIONAL_BRANCH.match(s)):
+                s = f"{s} {sentences[i + 1]}"
+                i += 1
+            yield s
+            i += 1
+
+
+def _verdict_units(text: str):
+    """`_weighting_units` minus the surname-branch sentences.
+
+    A unit opening with a condition on the surname premise ("If Watts was
+    her maiden name, ...") is exempt only up to its first sentence end;
+    whatever follows it in the same bullet is split and checked like prose.
+    Table rows are never exempt.
+    """
+    for u in _weighting_units(text):
+        if not _CONDITIONAL_BRANCH.match(u):
+            yield u
+            continue
+        end = _SENTENCE_END.search(u)
+        rest = u[end.end():] if end else ""
+        for s in re.split(r"(?<=[.;:!?])\s+", rest):
+            if s.strip():
+                yield s.strip()
 
 
 def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
@@ -212,21 +243,23 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
     exactly the one inverted run and is clean on the other seven, including
     the two that failed for the unrelated `Tool Arguments` reason.
 
-    A unit that opens with "If" is a hypothesis branch, not a verdict:
-    "If Watts was her maiden name, the children are more likely her
-    brother's orphans" says what follows from the maiden-name premise, not
+    A sentence conditioned on the surname premise is a hypothesis branch,
+    not a verdict: "If Watts was her maiden name, the children are more
+    likely her brother's orphans" says what follows from the premise, not
     which premise leads. Scratch run `scratch_2026-09-28_11-00-31` run 2
-    wrote its step and uncle branches as two such bullets, led with step
-    in prose, and was red on the uncle bullet alone (issue #2449).
+    wrote its step and uncle branches as two such bullets, led with step in
+    prose, and was red on the uncle bullet alone (issue #2449). The opener
+    must name the premise (maiden, married, widow, prior) before its first
+    comma, so "If so, the uncle reading is favoured" -- the premise settled
+    in the sentence before -- is still a verdict.
     """
     if "guardianship" not in (test.get("tags") or []):
         pytest.skip("only applies to guardianship tests")
     if not (text_response or "").strip():
         pytest.skip("no reply to weigh")
     offenders = [
-        u for u in _weighting_units(text_response)
+        u for u in _verdict_units(text_response)
         if _LEAD_MARKER.search(u) and _UNCLE.search(u) and not _STEP.search(u)
-        and not _CONDITIONAL_BRANCH.match(u)
     ]
     assert not offenders, (
         "the uncle-by-marriage reading is marked as the favoured one without "

@@ -170,6 +170,38 @@ def test_fires_when_if_appears_mid_unit_not_at_its_head():
         )
 
 
+@pytest.mark.parametrize("reply", [
+    # The premise settled in one sentence, the verdict hung on "If so".
+    "Nancy's maiden name is Watts. If so, the uncle reading is favoured.",
+    "If anything, the uncle-by-marriage reading is stronger.",
+    "If I had to choose, the uncle reading leads.",
+    # A bullet held whole: only its conditioned first sentence is exempt.
+    "- **If Watts was her maiden name**: Ridley is an uncle. The record "
+    "points that way, so the uncle reading is favoured.",
+    # Table rows are never exempt, whatever their first cell says.
+    "| If maiden name (our reading) | **Uncle by marriage** (favoured) |",
+])
+def test_fires_on_a_verdict_that_only_looks_conditional(reply):
+    """RED direction: an opener that does not condition on the surname
+    premise, or a verdict riding after a branch, is still a verdict."""
+    with pytest.raises(AssertionError, match="uncle-by-marriage"):
+        check_leads(reply, TAGS)
+
+
+@pytest.mark.parametrize("reply", [
+    "Should Watts be her maiden name, the uncle reading is more likely.",
+    "Were Watts her maiden name, the uncle reading would be stronger.",
+    "Assuming Watts is her maiden name, the uncle reading is more likely.",
+    "If Watts was her maiden name: the uncle reading is more likely.",
+    "If she was a widow, a stepfather; if never married, the uncle "
+    "reading is more likely.",
+])
+def test_passes_other_spellings_of_a_surname_branch(reply):
+    """GREEN direction: the same branch written without a bare leading
+    "If ...," must not fire, or the exemption gets widened by hand."""
+    check_leads(reply, TAGS)
+
+
 def test_skips_a_test_without_the_guardianship_tag():
     """Tag-gated: no other tree-edit test discusses either reading, so an
     ungated version would scan replies that cannot satisfy it."""
