@@ -1061,6 +1061,20 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # Same shape as search-images and citation, and NOT a hook route
+        # (issue #2115). This conversion is cost- and context-motivated: the
+        # folded body stops occupying the orchestrator's context on every run
+        # that touches question selection, and a cheaper model can be pinned per
+        # agent. No hook routes anything to this agent. It writes `questions`,
+        # which does carry a routed claim -- `exhaustive_declaration.declared:
+        # true` belongs to research-exhaustiveness -- but creating a question
+        # writes `declared: false`, which the guard explicitly permits, so no
+        # route was added and none is needed. It is listed because the set is
+        # asserted equal to the shipped agent files, and so a legitimate
+        # `research_append` of a new question from this agent does not read as
+        # an unnamed-delegate bypass. Do not read its presence here as evidence
+        # of a hook route.
+        "question-selection",
     }
 )
 
