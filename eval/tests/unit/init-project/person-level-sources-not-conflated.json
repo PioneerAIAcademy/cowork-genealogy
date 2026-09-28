@@ -20,7 +20,11 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-moreau-person-level-sources"
+    "person-read-moreau-person-level-sources",
+    "person-quality-clean-MRQ1-JBM",
+    "person-quality-clean-MRQ1-K2N",
+    "person-quality-clean-MRQ1-P8R",
+    "person-quality-clean-MRQ1-T4W"
   ],
   "judge_context": [
     "The fixture's top-level `sources` array carries 6 source descriptions. The response must accurately reflect that sources ARE attached (a count at or near 6, or an accurate qualitative statement that sources exist) — never a claim of zero/no sources attached. Reporting zero sources when the tool returned 6 is a Correctness failure, not a minor imprecision.",

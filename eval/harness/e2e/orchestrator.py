@@ -157,6 +157,12 @@ BASELINE_ALLOWED_TOOLS = [
 #   person_person_matches(subjectPID)
 #       surfaces tree persons matched to the subject — can leak a stripped
 #       relative in a parents/siblings fixture.
+#   person_quality(subjectPID)
+#       reads FamilySearch's quality issues for the subject's live profile.
+#       Its sentences interpolate values straight off that profile ("… is
+#       missing a standardized date for {originalDate}"), so a stripped date or
+#       place can come back verbatim. Committed e2e runs made 39 such calls
+#       across 20 fixtures before this was blocked.
 #
 # NOT blocked (legitimate research): record_search / record_read /
 # fulltext_search / image_* / collections_search (the agent must find
@@ -175,6 +181,7 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_ancestors",
         "person_record_matches",
         "person_person_matches",
+        "person_quality",
     }
 )
 
