@@ -61,6 +61,7 @@ from typing import Any
 from e2e import judge as judge_module
 from e2e.env import ENV_FILE, load_env_file
 from e2e.judge import derive_verdict  # shared with apply_avoid_guard; re-exported for our callers
+from e2e.blind_bundle import bundle_digest, bundle_paths
 from e2e.provenance import findings_hash
 
 
@@ -75,7 +76,7 @@ DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 PER_FINDING_TARGET = 0.80  # ~ human inter-rater agreement
 
 FINDING_LABELS = {"true", "partial", "false"}
-ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes", "findings_hash"}
+ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes", "findings_hash", "blind_bundle_digest"}
 
 
 # Verdict derivation lives in e2e.judge (`derive_verdict`, re-exported above) —
@@ -273,11 +274,14 @@ def load_annotated_runs(
         6. per_finding keys != fixture ids       -> ERROR  (id/key drift; re-grade or delete)
         7. findings_hash present and mismatches  -> ERROR  (content drift; re-grade or delete)
            findings_hash absent                  -> INCLUDE, flagged unverifiable (legacy; grandfathered)
-        8. bad enum (label / proof_quality_score)-> ERROR
-        9. valid, keys match                     -> INCLUDE (derive verdict)
+        8. blind_bundle_digest present+mismatch  -> ERROR  (bundle drift; re-grade or delete)
+           blind_bundle_digest absent            -> INCLUDE, flagged unverifiable (legacy; grandfathered)
+        9. bad enum (label / proof_quality_score)-> ERROR
+       10. valid, keys match                     -> INCLUDE (derive verdict)
 
     Included cases are in the internal shape ``grade_case`` consumes, each with
-    ``findings_hash_present`` recording whether rung 7 could verify it.
+    ``findings_hash_present`` and ``blind_bundle_digest_present`` recording
+    whether rungs 7–8 could verify them.
     """
     cases: list[dict[str, Any]] = []
     problems: list[LoaderProblem] = []
@@ -371,7 +375,25 @@ def load_annotated_runs(
                     "since grading; re-grade or delete")
                 continue
 
-        # 8. enums (filled values)
+        # 8. blind-bundle provenance — a stamped blind_bundle_digest must
+        #    still match the current content of the 4 files the blind grader
+        #    reads (expected-findings, fixture, final-tree, final-research).
+        #    Catches any post-grading edit to those files. Absent = legacy
+        #    grade from before the check: grandfathered (same policy as rung 7).
+        stored_bundle = ann.get("blind_bundle_digest")
+        bundle_digest_present = stored_bundle is not None
+        if bundle_digest_present:
+            paths = bundle_paths(
+                slug, stem,
+                fixtures_root=fixtures_root, runlogs_root=runlog_root,
+            )
+            current_bundle = bundle_digest(paths)
+            if stored_bundle != current_bundle:
+                err("blind_bundle_digest mismatch — one of the 4 graded files "
+                    "changed since grading; re-grade or delete")
+                continue
+
+        # 9. enums (filled values)
         bad = {fid: v for fid, v in per_finding.items() if v not in FINDING_LABELS}
         if bad:
             err(f"per_finding labels {bad} not in {sorted(FINDING_LABELS)}")
@@ -390,7 +412,7 @@ def load_annotated_runs(
                 err(f"notes for unknown finding(s) {sorted(note_unknown)}")
                 continue
 
-        # 9. INCLUDE — assemble the internal case (verdict derived)
+        # 10. INCLUDE — assemble the internal case (verdict derived)
         human: dict[str, Any] = {
             "verdict": derive_verdict(per_finding, findings),
             "per_finding": per_finding,
@@ -422,6 +444,8 @@ def load_annotated_runs(
             # default's only job is to pick a direction, and for a VERIFICATION
             # flag the safe unknown is "not verified".
             "findings_hash_present": findings_hash_present,
+            # rung 8: same policy for blind_bundle_digest.
+            "blind_bundle_digest_present": bundle_digest_present,
         })
 
     return cases, problems
@@ -510,6 +534,10 @@ def main(argv: list[str] | None = None) -> int:
     # against. Counted separately — not a warn (those are excluded) — so the
     # ready count is unaffected and the reader knows the coverage gap.
     unverifiable = [c for c in cases if not c.get("findings_hash_present", False)]
+    # Same for blind_bundle_digest (rung 8).
+    bundle_unverifiable = [
+        c for c in cases if not c.get("blind_bundle_digest_present", False)
+    ]
 
     for w in warnings:
         print(f"WARN: {w.message}", file=sys.stderr)
@@ -520,6 +548,13 @@ def main(argv: list[str] | None = None) -> int:
             f"{len(unverifiable)} of {len(cases)} annotation(s) carry no "
             "findings_hash — graded before the content-drift check, not "
             "verifiable (grandfathered; re-grade to verify).",
+            file=sys.stderr,
+        )
+    if bundle_unverifiable:
+        print(
+            f"{len(bundle_unverifiable)} of {len(cases)} annotation(s) carry no "
+            "blind_bundle_digest — graded before the bundle-provenance check, "
+            "not verifiable (grandfathered; re-grade to verify).",
             file=sys.stderr,
         )
 

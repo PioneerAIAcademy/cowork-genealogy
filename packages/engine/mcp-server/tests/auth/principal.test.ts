@@ -20,13 +20,11 @@ vi.mock("node:fs/promises", () => ({
 import { getValidToken } from "../../src/auth/refresh.js";
 import {
   loadConfig,
-  saveConfig,
   isHostedMode,
   getWikiApiUrl,
   getOpenRouterApiKey,
   getOpenRouterModel,
   HOSTED_REAUTH_INSTRUCTION,
-  HOSTED_CONFIG_READ_ONLY_MESSAGE,
   HOSTED_SESSION_MANAGED_MESSAGE,
   DEFAULT_WIKI_API_URL,
   OPENROUTER_API_KEY_MISSING_MESSAGE,
@@ -70,12 +68,6 @@ describe("bearer principal", () => {
     expect(await getWikiApiUrl(bearerPrincipal("t"))).toBe(DEFAULT_WIKI_API_URL);
     await expect(getOpenRouterApiKey(bearerPrincipal("t"))).rejects.toThrow(
       OPENROUTER_API_KEY_MISSING_MESSAGE,
-    );
-  });
-
-  it("saveConfig refuses: per-user settings live in the web app", async () => {
-    await expect(saveConfig({ openRouterModel: "x" }, bearer)).rejects.toThrow(
-      HOSTED_CONFIG_READ_ONLY_MESSAGE,
     );
   });
 

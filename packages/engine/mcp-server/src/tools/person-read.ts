@@ -54,7 +54,7 @@ export const personReadToolSchema = {
     "Set relatives=true to include parents, siblings, spouses, and children. " +
     "Set sourceDescriptions=true to include attached sources — for a " +
     "non-living subject this also returns source-style memories (scanned " +
-    "wills, certificates, obituaries, family stories), transcribed where the " +
+    "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
