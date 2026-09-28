@@ -3,12 +3,14 @@ import {
   foldChatEvent,
   joinTextBlocks,
   trackLiveTask,
-  endsWithHandBack,
-  stripHandBack,
   withOpeningTurn,
   stripOpeningTurn,
   OPENING_TURN,
-  type ChatMessage
+  type ChatMessage,
+  clearQueued,
+  turnOutcomeLabel,
+  TURN_OUTCOME_LABELS,
+  SPEND_CAP_LABEL
 } from '../chatEvents'
 import subagentStream from './fixtures/subagent-stream.json'
 
@@ -199,30 +201,6 @@ describe('replaying a captured subagent stream through the fold', () => {
     expect(m.tools).toEqual([
       { tool: 'record_read', summary: 'recordId=X', done: false, agent: 'record-extractor' }
     ])
-    expect(endsWithHandBack(m.text)).toBe(true)
-  })
-})
-
-describe('endsWithHandBack', () => {
-  it('matches the ruled literal only at the end', () => {
-    expect(endsWithHandBack('Found her.\n\nNext: search-records. Continue?')).toBe(true)
-    expect(endsWithHandBack('Next: proof-conclusion. Continue?\n')).toBe(true)
-    expect(endsWithHandBack('Next: search-records. Continue? Also note x.')).toBe(false)
-    expect(endsWithHandBack('Research complete.')).toBe(false)
-    expect(endsWithHandBack('Shall I continue?')).toBe(false)
-  })
-})
-
-describe('stripHandBack', () => {
-  it('drops the literal line from the render and keeps the prose', () => {
-    expect(stripHandBack('Found her.\n\nNext: search-records. Continue?')).toBe('Found her.')
-    expect(stripHandBack('Next: choose the first research question. Continue?\n')).toBe('')
-  })
-  it('leaves text that does not end with the literal alone', () => {
-    expect(stripHandBack('Next: search-records. Continue? Also note x.')).toBe(
-      'Next: search-records. Continue? Also note x.'
-    )
-    expect(stripHandBack('Research complete.')).toBe('Research complete.')
   })
 })
 
@@ -241,8 +219,7 @@ describe('opening turn', () => {
 describe('auto_continue is a bubble boundary (issue #2653)', () => {
   // The server answered the hand-back itself, so no user_msg separates the two
   // turns. Without the boundary the second step's text and tool chips would
-  // fold onto the first bubble, and the first literal — which stripHandBack
-  // only removes at the END of a bubble — would render mid-bubble.
+  // fold onto the first bubble.
   const step1 = 'Project set up.\n\nNext: choose the first research question. Continue?'
   const step2 = 'Question chosen.\n\nNext: plan which records to search. Continue?'
 
@@ -265,13 +242,6 @@ describe('auto_continue is a bubble boundary (issue #2653)', () => {
     expect(msgs[2].handedBack).toBeUndefined()
   })
 
-  it('each bubble strips its own trailing literal, so no literal renders mid-bubble', () => {
-    const msgs = twoSteps()
-    expect(stripHandBack(msgs[1].text)).toBe('Project set up.')
-    expect(stripHandBack(msgs[2].text)).toBe('Question chosen.')
-    expect(stripHandBack(msgs[1].text)).not.toContain('Continue?')
-  })
-
   it("the second turn's tool chips land on the second bubble", () => {
     const msgs = twoSteps()
     expect(msgs[1].tools.map((t) => t.tool)).toEqual(['project_create'])
@@ -288,5 +258,78 @@ describe('auto_continue is a bubble boundary (issue #2653)', () => {
     // Replay is the same event list through the same fold; pin that the
     // boundary does not depend on live-only state.
     expect(twoSteps()).toEqual(twoSteps())
+  })
+})
+
+// PR #2870 item 1b: a message typed while a turn runs is HELD by the server
+// and picked up at the next step boundary. The bubble says so until turn_done.
+describe('clearQueued', () => {
+  it('clears the flag on every queued bubble', () => {
+    const before: ChatMessage[] = [
+      { role: 'user', text: 'go', tools: [] },
+      { role: 'assistant', text: 'working', tools: [] },
+      { role: 'user', text: 'also check the 1881 census', tools: [], queued: true }
+    ]
+    const after = clearQueued(before)
+    expect(after[2].queued).toBe(false)
+    expect(after[0]).toEqual(before[0])
+    expect(after[1]).toEqual(before[1])
+  })
+
+  it('returns the SAME array when nothing is queued, so it cannot cause a re-render', () => {
+    const before: ChatMessage[] = [{ role: 'user', text: 'go', tools: [] }]
+    expect(clearQueued(before)).toBe(before)
+  })
+
+  it('does not mutate the input', () => {
+    const before: ChatMessage[] = [{ role: 'user', text: 'x', tools: [], queued: true }]
+    clearQueued(before)
+    expect(before[0].queued).toBe(true)
+  })
+})
+
+// PR #2870 item 1c: every way a run ends used to look like success.
+describe('turnOutcomeLabel', () => {
+  it('names each terminal outcome the worker can write', () => {
+    for (const outcome of ['completed', 'stopped', 'queued', 'budget', 'no_progress',
+                           'decision', 'mcp_unavailable']) {
+      expect(turnOutcomeLabel(outcome)).toBeTruthy()
+    }
+  })
+
+  it('says nothing for an ordinary finish', () => {
+    // `ok` is deliberately unlabelled: a turn that simply ended has nothing to report.
+    expect(turnOutcomeLabel('ok')).toBeNull()
+    expect(turnOutcomeLabel(undefined)).toBeNull()
+    expect(turnOutcomeLabel(null)).toBeNull()
+    expect(turnOutcomeLabel(42)).toBeNull()
+    expect(turnOutcomeLabel('something_new')).toBeNull()
+  })
+
+  it('tells the reader how to carry on wherever carrying on is possible', () => {
+    // The failure this exists to prevent: a capped or stalled run that reads as
+    // "nothing more was found". Each of those three must say what to do next.
+    for (const outcome of ['stopped', 'budget', 'no_progress']) {
+      expect(turnOutcomeLabel(outcome)).toMatch(/carry on/i)
+    }
+    expect(turnOutcomeLabel('completed')).not.toMatch(/carry on/i)
+  })
+
+  it('separates the two budgets, because only one of them ends the sitting', () => {
+    // 1e. The nudge cap ends a TURN -- another message carries on where it left off. The
+    // spend cap ends the SITTING, and the only way on is a new session on the project.
+    expect(turnOutcomeLabel('budget', 'spend')).toBe(SPEND_CAP_LABEL)
+    expect(turnOutcomeLabel('budget', 'spend')).toMatch(/new session/i)
+    expect(turnOutcomeLabel('budget')).not.toBe(SPEND_CAP_LABEL)
+    expect(turnOutcomeLabel('budget')).not.toMatch(/new session/i)
+    // A limit that is not the spend cap must not steal the spend label.
+    expect(turnOutcomeLabel('budget', 'nudges')).not.toBe(SPEND_CAP_LABEL)
+    expect(turnOutcomeLabel('completed', 'spend')).toBe(TURN_OUTCOME_LABELS.completed)
+  })
+
+  it('distinguishes a finished run from every paused one', () => {
+    const labels = ['completed', 'stopped', 'budget', 'no_progress', 'mcp_unavailable']
+      .map((o) => turnOutcomeLabel(o))
+    expect(new Set(labels).size).toBe(labels.length)
   })
 })

@@ -28,11 +28,11 @@ need.
 
 | Fact | Source |
 |------|--------|
-| Sole entry point: `validateProject(projectPath: string): Promise<ValidationResult>` | `packages/engine/mcp-server/src/validation/validator.ts:104` |
-| It reads + `JSON.parse`s both files, reports parse failure, **returns early** if invalid, then runs the checks | `validator.ts:104–153` |
-| Four private check functions: `validateResearch` (pure), `validateGedcomx` (pure), `validateCrossFile` (pure), `validateSidecars` (**async, reads `results/` from disk**) | `validator.ts:236, 737, 871, 953` |
+| Sole entry point: `validateProject(projectPath: string): Promise<ValidationResult>` | `validateProject` (`packages/engine/mcp-server/src/validation/validator.ts`) |
+| It reads + `JSON.parse`s both files, reports parse failure, **returns early** if invalid, then runs the checks | `validateProject` |
+| Four private check functions: `validateResearch` (pure), `validateGedcomx` (pure), `validateCrossFile` (pure), `validateSidecars` (**async, reads `results/` from disk**) | `validateResearch` / `validateGedcomx` / `validateCrossFile` / `validateSidecars` in `validator.ts` |
 | `ValidationResult = { valid, errors[], warnings[] }`; report helpers `createReport` / `addError` / `isValid` | `src/validation/types.ts` |
-| Consumers: the `validate_research_schema` tool and the validator test suite (~35 cases) | `src/tools/validate-research-schema.ts:20`, `tests/validation/validator.test.ts` |
+| Consumers: the `validate_research_schema` tool and the validator test suite (~35 cases) | `validateResearchSchema` (`await validateProject(projectPath)`), `tests/validation/validator.test.ts` |
 | No Python validator port remains in the plugin (the `validator.ts` header comment is historical) | grep `plugin/**/validate*.py` → none |
 
 The key structural fact: of the four checks, **only `validateSidecars` touches the
@@ -195,7 +195,7 @@ shared, **independently unit-tested** utils rather than reimplemented in each to
   window, with validate-on-next-open as the backstop. Test it with an injectable
   failure point between the two renames.
 - `assertInsideProject(projectPath, ref)` — the path-traversal guard currently
-  inlined at `validator.ts:988` and re-described by `research-log-editor-spec.md` §8
+  inlined in `validateSidecars` (the `isInsideProject` guard) and re-described by `research-log-editor-spec.md` §8
   and `search-result-staging-spec.md` §6. One implementation, one test.
 
 These utils own the classification, the error wording and the no-project contract;
@@ -215,7 +215,7 @@ store instance) does under `make proto-store-test`, with `writeJsonBoth` as one
 transaction and `withTransaction` as the advisory lock described above.
 
 Additionally, **export `validateGedcomx`** (today a private function at
-`validator.ts:737`; it already takes a parsed tree + a report and no `projectPath`).
+`validateGedcomx`; it already takes a parsed tree + a report and no `projectPath`).
 `merge_record_into_tree` must validate its inline `candidateGedcomx` argument
 (`merge-gedcomx-spec.md` §8) and should reuse this, not hand-roll a parallel check —
 `validateParsed` validates a research+tree *pair*, so it does not cover the

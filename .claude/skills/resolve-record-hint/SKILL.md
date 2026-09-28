@@ -107,6 +107,12 @@ don't ask the genealogist to invent one, and don't accept a tree PID or the
 fixture's own `source_pid` as a substitute (issue #970's rejected shortcut —
 it carries no record provenance). See spec §3.6.1 (issue #1025).
 
+If the resolution rested on reading the original **page images** (not the
+indexes alone), also ask for the confirming/disproving record's **image** ark —
+`ark:/61903/3:1:...` or `3:2:...`, distinct from the `1:1:` index ark. The
+fixture will declare `"image_basis": true` and that image ark must land in
+`expected-findings.json` (spec §3.6.1, issue #2877).
+
 ## Step 4 — Write the files
 
 - **`expected-findings.json`**
@@ -150,7 +156,12 @@ it carries no record provenance). See spec §3.6.1 (issue #1025).
   distinguishes a resolved fixture from a draft.
 
 - **`fixture.json`** — update `notes` if it still describes the fixture as
-  an unverified draft.
+  an unverified draft. If the resolution rested on reading the original page
+  images, set `"image_basis": true` (a boolean, never the string `"true"`),
+  and make sure the record's image ark (`ark:/61903/3:1:` or `3:2:`) is in an
+  `expected-findings.json` `supporting_sources` entry — `make e2e-validate`
+  hard-fails an `image_basis: true` fixture that cites only index arks
+  (issue #2877). Leave the flag off when the indexes alone settled it.
 
 **Never touch** `starting-tree.gedcomx.json`, `unstripped-tree.gedcomx.json`,
 or `starting-research.json` — this task only edits the three files above;

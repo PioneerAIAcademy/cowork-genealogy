@@ -228,3 +228,64 @@ def test_effort_settings_stay_out_of_the_snapshot(tmp_path):
 
     snap = snapshot_files(tmp_path)
     assert not any(k.startswith(".claude/") for k in snap)
+
+
+def test_scenario_workspace_copies_sidecar_directories(tmp_path):
+    """A scenario's `evaluations/` and `uploads/` subtrees must reach the
+    workspace.
+
+    `sidecar_read` is a LIVE tool in this harness — it resolves a
+    project-relative ref against the workspace rather than returning a fixture
+    — so a scenario declaring an `evaluations[]` entry with a `file_path` but
+    shipping no file makes the call answer `not_found` for a file the fixture
+    says exists. gps-mentor's craft-supersession path reads a prior verdict
+    body's `craft` flag through exactly that call
+    (`agents/gps-mentor.md:308-312`) and was unreachable from a unit test until
+    these directories were staged.
+    """
+    scenarios = tmp_path / "scenarios"
+    scen = scenarios / "with-verdict"
+    (scen / "evaluations").mkdir(parents=True)
+    (scen / "uploads").mkdir(parents=True)
+    (scen / "research.json").write_text(json.dumps({"evaluations": []}), encoding="utf-8")
+    (scen / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
+    (scen / "evaluations" / "on-demand-ps_001-2026-06-02T09-15-00.json").write_text(
+        json.dumps({"focus": "on-demand", "target_id": "ps_001", "craft": True}),
+        encoding="utf-8",
+    )
+    (scen / "uploads" / "notes.txt").write_text("researcher's note\n", encoding="utf-8")
+    target = tmp_path / "ws"
+    target.mkdir()
+    ws = build_workspace(
+        scenario_name="with-verdict",
+        scenarios_dir=scenarios,
+        skills_dir=PLUGIN_SKILLS,
+        target_dir=target,
+    )
+    verdict = ws / "evaluations" / "on-demand-ps_001-2026-06-02T09-15-00.json"
+    assert verdict.exists()
+    # The `craft` flag specifically: it is the only mark separating a craft read
+    # from an evidentiary one, and reading it back is the whole point of staging.
+    assert json.loads(verdict.read_text(encoding="utf-8"))["craft"] is True
+    assert (ws / "uploads" / "notes.txt").read_text(encoding="utf-8") == "researcher's note\n"
+
+
+def test_scenario_workspace_without_sidecar_directories_is_unaffected(tmp_path):
+    """The accept direction: a scenario shipping neither directory stages
+    cleanly and grows no empty ones."""
+    scenarios = tmp_path / "scenarios"
+    scen = scenarios / "plain"
+    scen.mkdir(parents=True)
+    (scen / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+    (scen / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
+    target = tmp_path / "ws"
+    target.mkdir()
+    ws = build_workspace(
+        scenario_name="plain",
+        scenarios_dir=scenarios,
+        skills_dir=PLUGIN_SKILLS,
+        target_dir=target,
+    )
+    assert (ws / "research.json").exists()
+    assert not (ws / "evaluations").exists()
+    assert not (ws / "uploads").exists()
