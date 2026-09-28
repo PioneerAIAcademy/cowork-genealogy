@@ -145,6 +145,10 @@ async def fresh_fs_token(session: Session, user_id: str) -> FamilySearchToken | 
     if row is None:
         return None
     if row.access_token is None:
+        # Undecryptable at rest (legacy plaintext, or written under a different
+        # FS_TOKEN_ENC_KEY) — EncryptedStr soft-fails to None. Treat as expired so
+        # the user reconnects and the row is rewritten as ciphertext, rather than
+        # injecting an empty token into a sandbox.
         logger.warning("undecryptable FS token for user_id=%s — treating as expired", user_id)
         return None
     expires_at = row.expires_at
