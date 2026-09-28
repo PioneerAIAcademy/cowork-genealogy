@@ -32,16 +32,53 @@ match strength.
 register image, not the index alone.
 
 **The verdict.** The hint is the marriage of this tree's Joanni Jacobo Clotten
-(`MZ13-TN6`). Entry 4 on image `ark:/61903/3:1:3Q9M-CSJG-4SKS-Y` reads
-*"30. Juni 1716"*, Johannes Jacobus Klotten and Maria Magdalena Weber. The
-findings stand as drafted, with one field corrected (below).
+(`MZ13-TN6`). Entry 4 on image `ark:/61903/3:1:3Q9M-CSJG-4SKS-Y` reads, in Latin:
+
+> **30 Junij** — *Copulatus est in facie Ecclesiæ honestus viduus Joannes
+> Jacobus Klotten cum virtuosa virgine Maria Magdalena Weber ex Castellaun
+> præsentibus testibus Joanne […]ne graeb, Dno Joe petro Krafft, & Dno Joanne
+> […] vicepræbendato.*
+
+The findings stand as drafted, with one field corrected (below).
+
+**The register is Latin, and an earlier draft of this note misquoted it.** That
+draft gave the date as *"30. Juni 1716"*, which is German. The page reads
+**"30 Junij"**, and every entry on it runs to the Latin formula *Copulatus est
+in facie Ecclesiæ*. The German spelling came from the FamilySearch index of the
+*christening* records, which renders dates that way (`1:1:W66B-R53Z` gives
+"30. September 1717", `1:1:W66Y-2V6Z` gives "7. Februar 1720"); the index of the
+marriage itself gives "30 Jun 1716". Neither is the register's own wording.
 
 **What decided it was the parish, and it matches.** The draft's open question
 was whether the 1716 marriage was in the same parish as the 1717 and 1720
 christenings, since a Trier-diocese marriage forty kilometres away would be a
-different couple. It is not: the register volume is Boppard Catholic marriages
-1711–1794, and the tree places both christenings at Boppard Oberwesel. Same
-parish grouping, same denomination.
+different couple. It is not — but the basis matters, because the tree is
+misleading here. `starting-tree.gedcomx.json` carries both christenings as
+`Roemisch-Katholische,Boppard Oberwesel,Rheinland,Prussia`, which FamilySearch
+standardizes to **Oberwesel**, a separate parish about 15 km up the Rhine. That
+standardization is an artifact of the tree's own place string, not a statement
+by the records.
+
+The records themselves all say Boppard. The place on each one's own event fact:
+
+| record | event | place on the record |
+|---|---|---|
+| `1:1:D6JH-MXW2` | marriage, 30 Jun 1716 | `Boppard, Sankt Goar, Rheinprovinz, Preußen, Deutschland` |
+| `1:1:W66B-R53Z` | christening, 30 Sep 1717 | `Boppard, Sankt Goar, Rhein, Preußen, Deutschland` |
+| `1:1:W66Y-2V6Z` | christening, 7 Feb 1720 | `Boppard, Sankt Goar, Rhein, Preußen, Deutschland` |
+
+The register page corroborates it independently: the marriages around entry 4
+describe parties and witnesses as *Boppardiensis*, *civê boppardiensê* and
+*Judicij Bopp: Scabinus*. Same parish, on the records' own evidence rather than
+on a grouping inferred from the tree.
+
+**Two details the register gives that the index does not.** The groom is
+*honestus **viduus*** — a widower, so he had an earlier wife, and any search for
+his first marriage belongs before 1716. The bride is *Weber **ex Castellaun***,
+that is from Kastellaun, roughly 20 km inland. A bride marrying in the groom's
+parish is ordinary and neither detail disturbs the verdict, but both should be
+on record. A `Wilhelmo Klotten` also witnesses a July 1716 marriage on the same
+page, so the surname is established at Boppard beyond this couple.
 
 **One field corrected, and it was a draft slip rather than a different answer.**
 `f1`'s place read `Rheinland, Bistum Trier`, which is the *collection title*
