@@ -32,7 +32,15 @@ import {
   isInsideProject,
   assertInsideProject,
 } from "../utils/project-io.js";
-import { finalizeStagedResults, readStagedResults, STAGING_SEARCH_TOOLS, STAGING_SUBDIR } from "../utils/results-staging.js";
+import {
+  finalizeStagedResults,
+  readStagedEnvelopeQuery,
+  readStagedResults,
+  STAGING_SEARCH_TOOLS,
+  STAGING_SUBDIR,
+} from "../utils/results-staging.js";
+import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
+import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
@@ -560,6 +568,89 @@ async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string
 }
 
 /**
+ * The staging producers that echo their own inputs into the staged payload's
+ * `query` (`query: echoQuery(input)`), keyed to the input properties of their
+ * own schema. Only these have host-side ground truth for which filters a call
+ * sent; the other producers stage no echoed inputs, so they are never judged.
+ */
+const ECHOING_PRODUCER_INPUTS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  ["record_search", new Set(Object.keys(recordSearchToolSchema.inputSchema.properties))],
+  ["fulltext_search", new Set(Object.keys(fulltextSearchToolSchema.inputSchema.properties))],
+]);
+
+/**
+ * What a producer actually sent, from its staged echo. `record_search` echoes
+ * its input but searches with `applyAltNameAutoPair(input)`, which fills the
+ * missing half of an alternate name, so a log naming that half is true.
+ */
+const SENT_FROM_ECHO: ReadonlyMap<string, (echo: Record<string, unknown>) => Record<string, unknown>> = new Map([
+  ["record_search", (echo) => applyAltNameAutoPair(echo as never) as Record<string, unknown>],
+]);
+
+/**
+ * Inputs a producer echoes that are not search filters: host plumbing, and the
+ * paging and response-shape controls, which change which page comes back but
+ * not which records match. A log `query` naming one claims nothing about a
+ * filter (`offset: 0` logged for a call that sent none is the default, not a
+ * misstatement), so none is ever refused.
+ */
+const NOT_A_FILTER = new Set(["projectPath", "subjectId", "count", "offset", "includeFacets"]);
+
+/**
+ * The filter keys an explicit log `query` claims that the staged search never
+ * sent at all (research-log-editor-spec.md §8.3). A key counts only when it is
+ * an input parameter of the producing tool's own schema, is a filter (not
+ * plumbing or paging),
+ * carries a value (`null`, `undefined`, `""` and an `*Exact: false` claim
+ * nothing), and is absent from what the search sent. A key the search sent with a different value is not
+ * returned: that is value normalization, not a claim about a filter.
+ */
+export function neverSentFilterClaims(
+  producer: string,
+  query: unknown,
+  stagedQuery: Record<string, unknown> | undefined,
+): { key: string; value: unknown }[] {
+  const inputs = ECHOING_PRODUCER_INPUTS.get(producer);
+  if (!inputs || !stagedQuery) return [];
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const sent = SENT_FROM_ECHO.get(producer)?.(stagedQuery) ?? stagedQuery;
+  const claims: { key: string; value: unknown }[] = [];
+  for (const [key, value] of Object.entries(query as Record<string, unknown>)) {
+    if (value === null || value === undefined || value === "") continue;
+    // An `*Exact` flag reaches the search only when true; `false` is the default.
+    if (value === false && key.endsWith("Exact")) continue;
+    if (NOT_A_FILTER.has(key) || !inputs.has(key)) continue;
+    if (Object.hasOwn(sent, key)) continue;
+    claims.push({ key, value });
+  }
+  return claims;
+}
+
+/**
+ * Refuse an op whose explicit `query` claims a filter its staged search never
+ * sent. Runs for every op before any op is applied, because finalizing a staged
+ * handle deletes it: a refusal after that would consume the handle the
+ * corrected re-send needs.
+ */
+async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if (typeof ref !== "string" || op.query === undefined || op.query === null) return;
+  const staged = await readStagedEnvelopeQuery(projectPath, ref);
+  if (!staged || staged.tool !== op.tool) return;
+  const claims = neverSentFilterClaims(staged.tool, coerceObjectArg(op.query, "query"), staged.query);
+  if (claims.length === 0) return;
+  const named = claims.map((c) => `\`${c.key}: ${JSON.stringify(c.value)}\``).join(", ");
+  const keys = claims.map((c) => `\`${c.key}\``).join(", ");
+  throw new LogAppendError(
+    `query claims ${named}, but the ${staged.tool} call that staged this response sent no ` +
+      `${keys} filter. Log only the filters the search actually sent: drop ` +
+      `${claims.length === 1 ? "that key" : "those keys"}, or omit \`query\` so the tool fills it ` +
+      `from the staged search. If the filter was meant, re-run the search with it and log that ` +
+      `response's \`staged.resultsRef\`.`,
+  );
+}
+
+/**
  * Coerce an object-typed tool argument that a model emitted as a JSON string
  * back into an object. Some models stringify nested-object params (observed
  * with `externalSite`: the call arrives as `"{\"site\":...}"` rather than an
@@ -835,7 +926,8 @@ async function applyLogAppendOp(
     // The search tool already recorded the exact parameters host-side, so making
     // the model re-serialize them buys nothing and costs a 20%-failure-rate
     // hand-transcription of an ARK-dense object (see the tool description). An
-    // explicit caller-supplied `query` always wins — this only fills a gap.
+    // explicit `query` is kept as sent, never rewritten; one claiming a filter the
+    // search never sent was already refused by `preflightQueryFilterClaims`.
     if (entry.query === undefined && fin.payloadQuery !== undefined) {
       entry.query = fin.payloadQuery;
     }
@@ -939,6 +1031,7 @@ export async function researchLogAppend(
       for (let i = 0; i < input.ops.length; i++) {
         try {
           await preflightCensusHedge(input.ops[i], projectPath);
+          await preflightQueryFilterClaims(input.ops[i], projectPath);
         } catch (e) {
           if (e instanceof LogAppendError) return { ok: false, errors: [`ops[${i}]: ${e.message}`] };
           throw e;
@@ -996,6 +1089,7 @@ export async function researchLogAppend(
       stagedResultsRef: input.stagedResultsRef,
     };
     await preflightCensusHedge(singleOp, projectPath);
+    await preflightQueryFilterClaims(singleOp, projectPath);
     let result;
     try {
       result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings);
@@ -1091,7 +1185,9 @@ export const researchLogAppendSchema = {
           "InputValidationError that rejects the whole call before this tool " +
           "runs — keep ARKs in a keyed field. Omit entirely when " +
           "`stagedResultsRef` is given and the staged payload already " +
-          "carries the query.",
+          "carries the query. Record only filters the search actually sent: " +
+          "with a `stagedResultsRef`, a `query` naming a filter that search " +
+          "never sent is refused.",
       },
       outcome: {
         type: "string",
