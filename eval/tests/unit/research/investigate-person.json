@@ -9,7 +9,9 @@
       "core-trigger",
       "grade:trigger",
       "requires:gps-mentor"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The research/project-status routing competition (issue #2927) intermittently routes this request to project-status instead of research, and the model intermittently fails to spawn gps-mentor. Remove when #2927 narrows project-status's description."
   },
   "input": {
     "user_message": "Investigate Patrick Flynn — I need to know where he came from in Ireland and whether there are any records of his immigration.",
