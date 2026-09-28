@@ -802,6 +802,7 @@ def _write_expected_findings(repo_root: Path, slug: str, findings: list) -> None
     (d / "expected-findings.json").write_text(
         json.dumps({"findings": findings}), encoding="utf-8"
     )
+    (d / "fixture.json").write_text(json.dumps({"slug": slug}), encoding="utf-8")
 
 
 def test_derive_matched_link_tally():
@@ -1156,6 +1157,22 @@ def test_validate_e2e_annotations_parity_with_calibrate_judge(tmp_path):
            {"per_finding": {"f99": "true"}},
            expected=[{"id": "f1", "type": "source"}])
 
+    ex = [{"id": "f1", "type": "source"}]
+    ts = "2026-01-01_00-00-00"
+    _write("hash-drift", ts, {"per_finding": {"f1": "true"}, "findings_hash": "0" * 64}, expected=ex)
+    _write("bad-pq", ts, {"per_finding": {"f1": "true"}, "proof_quality_score": "2"}, expected=ex)
+    _write("bad-notes", ts, {"per_finding": {"f1": "true"}, "notes": {"f9": "x"}}, expected=ex)
+    _write("no-tree", ts, {"per_finding": {"f1": "true"}}, tree=False, expected=ex)
+    _write("inert", ts, {"per_finding": {"f1": None}}, expected=ex)
+    _write("tree-bad", ts, {"per_finding": {"f1": "true"}}, expected=ex)
+    (runlogs / "tree-bad" / f"run-{ts}.final-tree.gedcomx.json").write_text("{bad", encoding="utf-8")
+    _write("research-bad", ts, {"per_finding": {"f1": "true"}}, expected=ex)
+    (runlogs / "research-bad" / f"run-{ts}.final-research.json").write_text("{bad", encoding="utf-8")
+    _write("no-fixture-json", ts, {"per_finding": {"f1": "true"}}, expected=ex)
+    (fixtures / "no-fixture-json" / "fixture.json").unlink()
+    (runlogs / "bad-json").mkdir(parents=True)
+    (runlogs / "bad-json" / f"run-{ts}.ann.json").write_text("{bad", encoding="utf-8")
+
     ci_errors = check_e2e_fixtures.validate_e2e_annotations(runlogs, fixtures)
     _, cj_problems = load_annotated_runs(runlogs, fixtures)
     cj_errors = [p for p in cj_problems if p.severity == "error"]
@@ -1166,7 +1183,7 @@ def test_validate_e2e_annotations_parity_with_calibrate_judge(tmp_path):
         """Extract the .ann.json filename from an error string or path."""
         for part in s.replace("`", " ").replace("'", " ").split():
             if part.endswith(".ann.json"):
-                return Path(part).name
+                return "/".join(Path(part).parts[-2:])
         return s
 
     ci_names = {_ann_name(e) for e in ci_errors}
@@ -1174,3 +1191,35 @@ def test_validate_e2e_annotations_parity_with_calibrate_judge(tmp_path):
     assert ci_names == cj_names, (
         f"CI rungs flagged {sorted(ci_names)}, calibrate_judge flagged {sorted(cj_names)}"
     )
+
+
+def test_main_annotation_gate_blocks_a_modified_annotation(tmp_path, monkeypatch, capsys):
+    """A PR that edits an already-committed annotation into a bad label must exit 1."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    _make_graded_ann(repo, "smith", TS, {"f1": "true"})
+    fx = "eval/tests/e2e/smith"
+    base = commit(rel.as_posix(), tree, ann, f"{fx}/expected-findings.json", f"{fx}/fixture.json")
+    _make_graded_ann(repo, "smith", TS, {"f1": "yes"})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(ann))
+    assert check_e2e_fixtures.main() == 1
+    assert "per_finding labels" in capsys.readouterr().out
+
+
+def test_main_annotation_gate_blocks_a_fixture_edit_under_a_graded_run(tmp_path, monkeypatch, capsys):
+    """A PR that changes expected-findings.json under a graded run must exit 1."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    _make_graded_ann(repo, "smith", TS, {"f1": "true"})
+    fx = "eval/tests/e2e/smith"
+    base = commit(rel.as_posix(), tree, ann, f"{fx}/expected-findings.json", f"{fx}/fixture.json")
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}, {"id": "f2", "type": "source"}])
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(f"{fx}/expected-findings.json"))
+    assert check_e2e_fixtures.main() == 1
+    assert "per_finding keys" in capsys.readouterr().out

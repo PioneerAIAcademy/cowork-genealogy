@@ -603,6 +603,7 @@ def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]
         ef_path = fixture_dir / "expected-findings.json"
         try:
             expected = json.loads(ef_path.read_text(encoding="utf-8"))
+            json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             errors.append(f"e2e annotation `{rel}`: fixture for slug '{slug}' unreadable ({e})")
             continue
@@ -611,6 +612,14 @@ def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]
         tree_path = ann_path.parent / f"{stem}.final-tree.gedcomx.json"
         if not tree_path.exists():
             errors.append(f"e2e annotation `{rel}`: {tree_path.name} missing — nothing to grade")
+            continue
+        research_path = ann_path.parent / f"{stem}.final-research.json"
+        try:
+            json.loads(tree_path.read_text(encoding="utf-8"))
+            if research_path.exists():
+                json.loads(research_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            errors.append(f"e2e annotation `{rel}`: final tree/research unreadable ({e})")
             continue
 
         # 6. id/key drift
@@ -640,7 +649,7 @@ def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]
                 continue
 
         # 8. enum validation
-        bad = {fid: v for fid, v in per_finding.items() if v not in _FINDING_LABELS}
+        bad = {fid: v for fid, v in per_finding.items() if not isinstance(v, str) or v not in _FINDING_LABELS}
         if bad:
             errors.append(f"e2e annotation `{rel}`: per_finding labels {bad} not in {sorted(_FINDING_LABELS)}")
             continue
@@ -788,6 +797,13 @@ def main() -> int:
                 and p.name.endswith(".ann.json")
             ):
                 touched_ann_rels.add(p.relative_to(e2e_prefix))
+            elif (
+                len(p.parts) == 5
+                and p.parts[:3] == ("eval", "tests", "e2e")
+                and p.name in ("expected-findings.json", "fixture.json")
+            ):
+                for a in (REPO_ROOT / e2e_prefix / p.parts[3]).glob("run-*.ann.json"):
+                    touched_ann_rels.add(a.relative_to(REPO_ROOT / e2e_prefix))
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass  # best-effort widening; the AR set above still covers the core case
 
