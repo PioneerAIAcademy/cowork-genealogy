@@ -230,9 +230,7 @@ the FamilySearch PID or `ark`, even when the tree summary below lists both),
 and asking it to check all of them.** Fold what it returns into the findings
 below exactly as check-warnings frames it — never restate a timeline
 impossibility as one more line on the "Obvious error detection" list below,
-which is a smaller, separate check. `person_quality` will not fire for a
-local id (check-warnings skips it silently); the offline `person_warnings`
-half still runs and still reports.
+which is a smaller, separate check.
 
 Analyze imported data before presenting results:
 
@@ -277,8 +275,8 @@ here, only the framing changes.
   question" on first use — never "use question-selection to…": "Your objective
   is the overall goal — <restate it>. The next step is the first research
   question: the single fact we go after first."
-- Then the hand-back literal as the final line of the reply, exactly:
-  `Next: choose the first research question. Continue?`
+- Then name the next step as a statement and take it in the same turn — never as a
+  question, and never as the last line of a reply that stops there.
 
 ## Example
 
@@ -291,8 +289,8 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
 6. `Skill("check-warnings")` for I1, Mary Kelly, James, and Margaret. Pedigree
    analysis + summary, folding in whatever it returns. Mary Kelly and the
-   children are tree context only — their gaps are noted, not queued. Close
-   with the hand-back literal.
+   children are tree context only — their gaps are noted, not queued. Then name
+   the first research question as the next step and go on to it.
 
 ## Important rules
 

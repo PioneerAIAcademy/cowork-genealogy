@@ -179,6 +179,18 @@ each and dedupe by URL. Let the guide's quirks steer this — e.g. if it
 says the parish is indexed only at county level, weight the county
 collection, not the exact-parish one.
 
+**Availability comes from the response, not from memory.** A collection's
+returned `personCount` decides how you plan and describe it:
+- **Above 0:** name-searchable. Plan a name search; never call it
+  browse-only, image-only, unindexed or not indexed.
+- **0:** browse-only images. Plan an image browse, not a name search; never
+  call it indexed.
+
+Cite a collection or volume id in a rationale only if a tool returned it
+this session or it is in `research.json`. To plan a national collection
+(e.g. a US federal census), first run
+`collections_search({ standardPlace: "United States" })`.
+
 **What you need in hand before writing the plan:**
 - Which record types exist for this place and period
 - Whether records survive (fires, floods, wartime destruction)
@@ -236,7 +248,8 @@ table and contextual factors checklist.
   before-state: a plan item names what to *search for*, not evidence you
   have not found yet. Keep each `collections_search` / `volume_search`
   scoped to the subject's surveyed place and era — do not broaden to a
-  whole country when the locality survey has already localized the goal.
+  whole country when the locality survey has already localized the goal,
+  except the national lookup above for a collection an item will name.
   And breadth **complements** the locality survey — cite that survey's
   facts (its `loc_` entry) in the plan-item rationales; it does not
   replace reading them.
@@ -430,7 +443,7 @@ research_append({
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
         repository: "FamilySearch",
-        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). Schuylkill County probate records 1810-1920 are indexed on FamilySearch. A will naming Patrick as a son would be direct evidence of parentage.",
+        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). collections_search returned the Pennsylvania probate collection with personCount 0, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
       }
@@ -575,8 +588,8 @@ question, default to **review** (recap status and the next item);
 create a **new** plan only when the prior plan is `completed`; mark the
 old plan `superseded` and write a new `pl_` entry whenever new information
 invalidates the active plan's assumptions (Step 1a, supersede mode) — the user
-saying so is one such trigger, not the only one, and under `--autonomous` a
-sub-skill reporting it is another. Never edit a `completed` or `superseded`
+saying so is one such trigger, not the only one; a sub-skill reporting it is
+another. Never edit a `completed` or `superseded`
 plan's items in place.
 
 **Do not duplicate:** never leave two `pl_` entries with

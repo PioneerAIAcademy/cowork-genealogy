@@ -132,36 +132,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_quality",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_warnings",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
@@ -172,34 +142,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "schema-validation tool in its `allowed-tools`, so this is "
             "graded by reading the file against the schema, not by "
             "expecting a `validate_research_schema` call'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/locality-guide/ut_locality_guide_009.json",
-        "tool": "collection_read",
-        "quotes": [
-            "Citing collection ids that came from a correctly-matched collections_search call, without independently re-verifying them through collection_read, is not a fabrication given this fixture's known limitation - do not penalize Correctness for it",
-        ],
-        "reason": (
-            "not-needed: permissive fixture-limitation note, no expectation "
-            "of a call - 'Citing collection ids that came from a "
-            "correctly-matched collections_search call, without "
-            "independently re-verifying them through collection_read, is "
-            "not a fabrication given this fixture's known limitation - do "
-            "not penalize Correctness for it'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/locality-guide/ut_locality_guide_020.json",
-        "tool": "collection_read",
-        "quotes": [
-            "is the fixture's known limitation, not a Tool Arguments error - do not penalize Tool Arguments for the mismatch between the requested id and the returned collection",
-        ],
-        "reason": (
-            "not-needed: permissive fixture-limitation note - 'is the "
-            "fixture's known limitation, not a Tool Arguments error - do "
-            "not penalize Tool Arguments for the mismatch between the "
-            "requested id and the returned collection'"
         ),
     },
     {

@@ -438,10 +438,11 @@ milestone's own question:
   tailnet and 28–35% of those calls fail, silently thinning locality guidance).
   **Speed gates Beta too (lead, 2026-09-23):** a non-expert will not wait out a
   multi-hour run, so work that makes a run faster or cheaper is Beta-gating. Today
-  that is the skill-to-agent conversions (`cluster:pair-conversion`), the
-  model/effort floor searches (`cluster:agent-floor-search`), the baseline-red
-  cards a floor search needs green first (`cluster:baseline-reds`), and every
-  open card those are blocked on. Derive the set from those labels and each
+  that is the skill-to-agent conversions (`cluster:agent-conversion`), the
+  baseline-red cards a conversion needs green first (`cluster:baseline-reds`),
+  and every open card those are blocked on. The model/effort floor search is
+  one system-wide sweep, Wave 4 of `docs/plan/cost-latency-10x.md`. Promise owns
+  it, and it has no card to rank. Derive the set from those labels and each
   card's `Blocked on` lines, not from a list.
 - **Public-launch gate** — *does a stranger's use, at volume and unsupervised,
   break the product or us?* That covers untrusted input reaching a

@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-staging.js";
+import { FsProjectStore } from "../../src/store/fs-project-store.js";
+import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { validateProject } from "../../src/validation/validator.js";
 
 function baseResearch(log: any[] = []) {
@@ -781,6 +783,246 @@ describe("research_log_append", () => {
     // ...and op 0's sidecar (already written to disk before op 1 ran) is cleaned up too —
     // not just "the failing op's own" sidecar.
     expect(await exists("results/log_001.json")).toBe(false);
+    // op 0's STAGED file survives the refusal: it is removed only after a commit.
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    // So the corrected re-send succeeds and only then consumes it.
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: handle!.resultsRef },
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+      ],
+    });
+    expect(retry.ok).toBe(true);
+    expect(await exists("results/log_001.json")).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
+  });
+
+  // ─── #2913: a refused call never destroys a staged search ─────────────────
+
+  /** The file store, recording every writeJson ref; optionally failing the
+   *  research.json write, which stands in for a commit that throws. */
+  function recordingStore(opts: { failResearchWrite?: boolean } = {}) {
+    const inner = new FsProjectStore();
+    const writes: string[] = [];
+    const store = new Proxy(inner, {
+      get(target, prop, receiver) {
+        if (prop === "writeJson") {
+          return async (projectPath: string, ref: string, obj: unknown) => {
+            writes.push(ref);
+            if (opts.failResearchWrite && ref === "research.json") throw new Error("disk full");
+            return target.writeJson(projectPath, ref, obj);
+          };
+        }
+        const v = Reflect.get(target, prop, receiver);
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    }) as unknown as ProjectStore;
+    return { store, writes };
+  }
+
+  it("(batch) a consumed ref in op[1] is refused BEFORE op[0] finalizes, and op[0]'s staged file survives", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { store, writes } = recordingStore();
+    setProjectStore(store);
+    let result;
+    try {
+      result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: handle!.resultsRef },
+          { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: `${STAGING_SUBDIR}/already-logged.json` },
+        ],
+      });
+    } finally {
+      setProjectStore(null);
+    }
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toMatch(/^ops\[1\]: stagedResultsRef '.*already-logged\.json' is not in results\/\.staging\//);
+    // The pre-pass refused it: op[0] never wrote a sidecar at all.
+    expect(writes.filter((w) => w.startsWith("results/log_"))).toEqual([]);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1, stagedResultsRef: handle!.resultsRef }],
+    });
+    expect(retry.ok).toBe(true);
+  });
+
+  it("(single) query omitted with no payload echo is refused after finalize, and the staged file survives", async () => {
+    await writeProject(baseResearch());
+    // No `query` in the staged payload, so finalize has nothing to default from
+    // and the query-required check throws AFTER the sidecar is written.
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      outcome: "positive",
+      resultsExamined: 1,
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/`query` is required/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    expect(await exists("results/log_001.json")).toBe(false);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "positive",
+      resultsExamined: 1,
+      stagedResultsRef: handle!.resultsRef,
+    });
+    expect(retry.ok).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
+  });
+
+  it("(batch) naming one staged ref twice is refused up front and writes nothing", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const op = { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1 };
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      // Two spellings of one path: compared resolved, the way finalize resolves.
+      ops: [
+        { ...op, stagedResultsRef: handle!.resultsRef },
+        { ...op, stagedResultsRef: `./${handle!.resultsRef}` },
+      ],
+    } as any);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors).toEqual([`ops[1]: stagedResultsRef './${handle!.resultsRef}' is also ops[0]'s`]);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    expect(await exists("results/log_001.json")).toBe(false);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+
+    // The corrected re-send, naming it once, succeeds and consumes it.
+    const retry = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ ...op, stagedResultsRef: handle!.resultsRef }],
+    } as any);
+    expect(retry.ok).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
+  });
+
+  it("a staged file that exists but cannot be read is not told it was already logged", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const inner = new FsProjectStore();
+    const store = new Proxy(inner, {
+      get(target, prop, receiver) {
+        if (prop === "readText") {
+          return async (projectPath: string, ref: string) => {
+            if (ref === handle!.resultsRef) throw new Error("EIO: read failed");
+            return target.readText(projectPath, ref);
+          };
+        }
+        const v = Reflect.get(target, prop, receiver);
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    }) as unknown as ProjectStore;
+    setProjectStore(store);
+    let result;
+    try {
+      result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: {},
+        outcome: "positive",
+        resultsExamined: 1,
+        stagedResultsRef: handle!.resultsRef,
+      });
+    } finally {
+      setProjectStore(null);
+    }
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    const msg = result.errors.join(" ");
+    expect(msg).toMatch(/could not be read: EIO: read failed/);
+    expect(msg).not.toMatch(/each staged ref can be logged once/);
+    expect(await exists(handle!.resultsRef)).toBe(true);
+  });
+
+  it("(batch) two ops with no staged ref, or a \"null\" one, are not duplicates", async () => {
+    await writeProject(baseResearch());
+    const op = { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 };
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ ...op, stagedResultsRef: "null" }, { ...op, stagedResultsRef: "null" }, { ...op }, { ...op, stagedResultsRef: null }],
+    } as any);
+    expect(result.ok).toBe(true);
+  });
+
+  it("a commit that throws leaves the staged file, since it is removed only after the commit", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const { store } = recordingStore({ failResearchWrite: true });
+    setProjectStore(store);
+    try {
+      await expect(
+        researchLogAppend({
+          projectPath: dir,
+          tool: "record_search",
+          query: {},
+          outcome: "positive",
+          resultsExamined: 1,
+          stagedResultsRef: handle!.resultsRef,
+        }),
+      ).rejects.toThrow(/disk full/);
+    } finally {
+      setProjectStore(null);
+    }
+    expect(await exists(handle!.resultsRef)).toBe(true);
+  });
+
+  it("(batch) a commit that throws leaves every op's staged file", async () => {
+    await writeProject(baseResearch());
+    const h1 = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const h2 = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "B" }] } });
+    const op = { tool: "record_search", query: {}, outcome: "positive", resultsExamined: 1 };
+    const { store } = recordingStore({ failResearchWrite: true });
+    setProjectStore(store);
+    try {
+      await expect(
+        researchLogAppend({
+          projectPath: dir,
+          ops: [{ ...op, stagedResultsRef: h1!.resultsRef }, { ...op, stagedResultsRef: h2!.resultsRef }],
+        } as any),
+      ).rejects.toThrow(/disk full/);
+    } finally {
+      setProjectStore(null);
+    }
+    expect(await exists(h1!.resultsRef)).toBe(true);
+    expect(await exists(h2!.resultsRef)).toBe(true);
+  });
+
+  it("a successful call consumes the staged file it finalized", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: {},
+      outcome: "positive",
+      resultsExamined: 1,
+      stagedResultsRef: handle!.resultsRef,
+    });
+    expect(result.ok).toBe(true);
+    expect(await exists("results/log_001.json")).toBe(true);
+    expect(await exists(handle!.resultsRef)).toBe(false);
   });
 
   it("(batch) id-allocator continuity: three entries in one call get sequential ids", async () => {
@@ -1169,7 +1411,7 @@ describe("research_log_append — census check on the staged payload (#2735)", (
   it("reports finalize's own error for a missing staged file, not the census refusal", async () => {
     const r = await append(H4K, `${STAGING_SUBDIR}/does-not-exist.json`);
     expect(r.ok).toBe(false);
-    expect(errorsOf(r)).toMatch(/does not exist or is invalid JSON/);
+    expect(errorsOf(r)).toMatch(/is not in results\/\.staging\/ — each staged ref can be logged once/);
     expect(errorsOf(r)).not.toMatch(CENSUS_REFUSAL);
   });
 
@@ -1362,5 +1604,156 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     const r: any = await logNil({ ...nilOp(), tool: "record_read", query: { recordId: "ark:/61903/1:1:X" } });
     expect(r.ok).toBe(true);
     expect(r.escalationDue).toBeUndefined();
+  });
+});
+
+describe("research_log_append — a query may not claim a filter its search never sent (#1779)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-1779-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // What record_search's echoQuery stages for a surname + place call, plumbing included.
+  const SENT = {
+    surname: "Flynn",
+    givenName: "Mary",
+    marriagePlace: "Pennsylvania",
+    projectPath: "/tmp/p",
+    subjectId: "I1",
+  };
+  // `null` stages a payload with no `query` at all.
+  async function stage(query: Record<string, unknown> | null = SENT, tool = "record_search") {
+    const response: Record<string, unknown> = { results: [{ recordId: "R1" }] };
+    if (query !== null) response.query = query;
+    const handle = await stageSearchResults({ projectPath: dir, tool, response });
+    return handle!.resultsRef;
+  }
+  const op = (query: unknown, stagedResultsRef: string | null, tool = "record_search") => ({
+    tool,
+    query,
+    outcome: "positive",
+    resultsExamined: 1,
+    resultsAvailable: 1,
+    planItemId: null,
+    stagedResultsRef,
+  });
+  const append = (query: unknown, ref: string | null, tool = "record_search") =>
+    researchLogAppend({ projectPath: dir, ...op(query, ref, tool) } as any);
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+  const logOf = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+  const sidecars = async () => {
+    const { readdir } = await import("fs/promises");
+    try {
+      return (await readdir(join(dir, "results"))).filter((f) => f.endsWith(".json"));
+    } catch {
+      return [];
+    }
+  };
+
+  it("refuses a recordType the staged record_search never sent, writing nothing and keeping the staged file", async () => {
+    const ref = await stage();
+    const r = await append({ surname: "Flynn", givenName: "Mary", recordType: "marriage" }, ref);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain('`recordType: "marriage"`');
+    expect(errorsOf(r)).toMatch(/sent no `recordType` filter/);
+    expect(await fileExists(dir, ref)).toBe(true);
+    expect(await sidecars()).toEqual([]);
+    expect(await logOf()).toHaveLength(0);
+  });
+
+  it("names every never-sent key in one refusal", async () => {
+    const r = await append({ surname: "Flynn", recordType: "marriage", recordCountry: "United States" }, await stage());
+    expect(errorsOf(r)).toContain('`recordType: "marriage"`');
+    expect(errorsOf(r)).toContain('`recordCountry: "United States"`');
+    expect(errorsOf(r)).toMatch(/drop those keys/);
+  });
+
+  it("refuses a stringified query the same way", async () => {
+    const r = await append(JSON.stringify({ surname: "Flynn", recordType: "marriage" }), await stage());
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/sent no `recordType` filter/);
+  });
+
+  it("refuses in a batch before any op is applied, so no op's staged file is consumed", async () => {
+    const good = await stage();
+    const bad = await stage();
+    const r: any = await researchLogAppend({
+      projectPath: dir,
+      ops: [op({ surname: "Flynn" }, good), op({ surname: "Flynn", recordType: "marriage" }, bad)],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/^ops\[1\]: query claims/);
+    expect(await fileExists(dir, good)).toBe(true);
+    expect(await fileExists(dir, bad)).toBe(true);
+    expect(await logOf()).toHaveLength(0);
+  });
+
+  it("refuses a fulltext_search key the staged fulltext_search never sent", async () => {
+    const ref = await stage({ keywords: "Flynn Doyle" }, "fulltext_search");
+    const r = await append({ keywords: "Flynn Doyle", place: "Pennsylvania" }, ref, "fulltext_search");
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/fulltext_search call that staged this response sent no `place` filter/);
+  });
+
+  it.each([
+    ["a key sent with a different value", { surname: "Flynn", marriagePlace: "Pennsylvania, United States" }],
+    ["a descriptive key the tool has no parameter for", { surname: "Flynn", collection: "PA marriages", name: "Mary Flynn" }],
+    ["host plumbing", { surname: "Flynn", projectPath: "/elsewhere", subjectId: "I9" }],
+    ["paging controls the call left at their defaults", { surname: "Flynn", offset: 0, count: 50 }],
+    ["an exact-match flag left at its false default", { surname: "Flynn", surnameExact: false, birthYearExact: false }],
+    ["a null value", { surname: "Flynn", recordType: null }],
+    ["an empty-string value", { surname: "Flynn", recordType: "" }],
+    ["an empty query", {}],
+    ["a query that echoes the call", { surname: "Flynn", givenName: "Mary", marriagePlace: "Pennsylvania" }],
+  ])("accepts %s", async (_label, query) => {
+    const r = await append(query, await stage());
+    expect(errorsOf(r)).toBe("");
+    expect(r.ok).toBe(true);
+    expect((await logOf())[0].query).toEqual(query);
+  });
+
+  it("accepts the alternate-name half record_search auto-paired, which it did send", async () => {
+    const ref = await stage({ surname: "Smith", givenName: "John", surnameAlt: "Smyth" });
+    const r = await append({ surname: "Smith", givenName: "John", surnameAlt: "Smyth", givenNameAlt: "John" }, ref);
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("still refuses an exact-match flag claimed true that the call never sent", async () => {
+    const r = await append({ surname: "Flynn", surnameExact: true }, await stage());
+    expect(errorsOf(r)).toMatch(/sent no `surnameExact` filter/);
+  });
+
+  it("accepts an omitted query and fills it from the staged search, plumbing stripped", async () => {
+    const r = await append(undefined, await stage());
+    expect(r.ok).toBe(true);
+    expect((await logOf())[0].query).toEqual({ surname: "Flynn", givenName: "Mary", marriagePlace: "Pennsylvania" });
+  });
+
+  it("does not judge an entry with no staged handle — a nil search stages nothing", async () => {
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op({ surname: "Flynn", recordType: "marriage" }, null),
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: 0,
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not judge a staged payload that carries no query", async () => {
+    const r = await append({ surname: "Flynn", recordType: "marriage" }, await stage(null));
+    expect(errorsOf(r)).toBe("");
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not judge a producer that stages no echoed inputs", async () => {
+    const ref = await stage({ standardPlace: "Schuylkill" }, "external_links_search");
+    const r = await append({ standardPlace: "Schuylkill", host: "ancestry.com" }, ref, "external_links_search");
+    expect(errorsOf(r)).toBe("");
   });
 });

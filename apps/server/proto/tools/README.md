@@ -60,13 +60,11 @@ prototype's scope, so the service publishes on **loopback only** (`127.0.0.1:878
 same rule as `../web`. Inside the compose network it is `tools:8787`.
 
 Not built here (cut with the ledger, 2026-09-10): the `turn_id` header, the HTTP re-run of
-the D15 ledger exercise. The four auth tools — `login`, `logout`, `configure_openrouter`,
+the D15 ledger exercise. The three auth tools — `login`, `logout`,
 `auth_status` — are advertised but inert over HTTP: every request is a bearer principal, so
 `login` and `logout` answer the hosted-mode instructions (`isError` false) without touching
-`tokens.json`, `configure_openrouter`'s `saveConfig` throws `HOSTED_CONFIG_READ_ONLY_MESSAGE`
-before any write (the `read_only` rootfs and the `:ro` `config.json` mount are never
-reached), and `auth_status` answers from the bearer alone; it is excluded with them so the
-smoke names all four.
+`tokens.json`, and `auth_status` answers from the bearer alone; it is excluded with them so the
+smoke names all three.
 
 ## Running it
 
@@ -80,7 +78,7 @@ smoke names all four.
 - **Host process**: `cd packages/engine/mcp-server && GENEALOGY_PG_DSN=… GENEALOGY_S3_ENDPOINT=… GENEALOGY_S3_BUCKET=… GENEALOGY_S3_ACCESS_KEY=… GENEALOGY_S3_SECRET_KEY=… node build/http.js [--host 127.0.0.1] [--port 8787]`
   — `make engine-smoke-http` does this against the compose store (`proto-up-store`,
   localhost:5434 / :9000).
-- **The transport smoke** — every advertised tool but the four exclusions, in
+- **The transport smoke** — every advertised tool but the three exclusions, in
   `no-bearer` mode by default (`--bearer <token>`, or an unexpired
   `~/.familysearch-mcp/tokens.json`, switches to `bearer`):
 

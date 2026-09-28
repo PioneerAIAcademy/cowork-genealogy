@@ -23,8 +23,50 @@ export interface ChatMessage {
   // Closed by an `auto_continue` event: the server answered this message's
   // hand-back itself (issue #2653). The next content event opens a new bubble
   // rather than folding onto this one, so each auto-continued step reads as
-  // its own reply and its own trailing literal is the one stripped at render.
+  // its own reply.
   handedBack?: boolean
+  // A user message typed WHILE a turn was running (PR #2870 item 1b). The
+  // server holds it rather than enqueueing it -- two turns on one session would
+  // resume the same SDK session -- so the bubble says it is waiting. Cleared at
+  // `turn_done`, which is when the held message becomes the next turn.
+  queued?: boolean
+}
+
+// PR #2870 item 1c: what the browser shows for each `turns.outcome`, carried on
+// the turn_done frame. complete() used to hardcode 'ok', so EVERY way a run ended
+// looked like success -- including the two ways an unattended run actually ends, a
+// spent budget and no progress. To a genealogist a half-finished run then reads as
+// "nothing more was found", which is a correctness bug in the product, not a cosmetic
+// one. `ok` is deliberately absent: an ordinary turn that simply finished says nothing.
+export const TURN_OUTCOME_LABELS: Record<string, string> = {
+  completed: 'Research complete.',
+  stopped: 'Stopped — send a message to carry on.',
+  queued: 'Picking up your message…',
+  budget: 'Paused: this run reached its step budget. Send a message to carry on.',
+  no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
+  decision: 'Waiting on you — see the question above.',
+  mcp_unavailable: 'Paused: the genealogy tools became unavailable.'
+}
+
+// 1e: `budget` covers two different caps, and they need different advice. The nudge cap
+// ends a turn but not the sitting, so another message carries on where it left off. The
+// SPEND cap ends the sitting: the only way on is a new session on the same project, and a
+// run that stops at $35 looking finished is worse than no cap at all.
+export const SPEND_CAP_LABEL =
+  'Stopped: this session reached its spend limit. Everything found so far is saved — ' +
+  'start a new session on this project to carry on.'
+
+export function turnOutcomeLabel(outcome: unknown, limit?: unknown): string | null {
+  if (outcome === 'budget' && limit === 'spend') return SPEND_CAP_LABEL
+  return typeof outcome === 'string' ? (TURN_OUTCOME_LABELS[outcome] ?? null) : null
+}
+
+// `turn_done` is when a held message is picked up, so no bubble should still
+// claim to be waiting after it. Pure and returns the same array when nothing
+// was queued, so it cannot cause a needless re-render.
+export function clearQueued(messages: ChatMessage[]): ChatMessage[] {
+  if (!messages.some((m) => m.queued)) return messages
+  return messages.map((m) => (m.queued ? { ...m, queued: false } : m))
 }
 
 // Two canonical text blocks in one assistant turn are separate paragraphs, but
@@ -58,26 +100,6 @@ export function trackLiveTask(
   if (kind === 'task_started') next.add(id)
   else next.delete(id)
   return next
-}
-
-// The orchestrator's hand-back closes with a fixed literal (issue #2292, lead
-// ruling 2026-09-07): `Next: <step>. Continue?`. The terminal form is
-// `Research complete.`, which offers nothing to continue.
-//
-// This is the canonical copy. The in-sandbox runner carries the same pattern
-// (apps/server/app/agent/hand_back.py) to answer the literal itself in lay
-// mode; apps/server/tests/test_hand_back_parity.py fails if the two differ.
-export const HAND_BACK_RE = /(?:^|\n)\s*Next: .+\. Continue\?\s*$/
-
-export function endsWithHandBack(text: string): boolean {
-  return HAND_BACK_RE.test(text)
-}
-
-// The literal is a protocol line for the Continue button (and, under issue
-// #2653, the server). It is not user prose — its step slot may carry a skill
-// name — so the transcript keeps it and the render drops it.
-export function stripHandBack(text: string): string {
-  return endsWithHandBack(text) ? text.replace(HAND_BACK_RE, '').trimEnd() : text
 }
 
 // A new session's first message opens the project. The canned opener travels
