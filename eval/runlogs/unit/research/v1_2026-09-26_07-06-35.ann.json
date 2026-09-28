@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-09-26_07-06-35.json",
+  "annotator": "johnpeterbrown@ymail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The skill did the right thing by routing and finding the parent as expected"
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The skill was correct- it routed and successfully found the parent through records"
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The skill did well to recover from initial failure too call"
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill did not resolve the research question as expected. The research slightly deviated, and the answer was not found."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill slightly deviated and didn't answer the research objective."
+    }
+  ]
+}
