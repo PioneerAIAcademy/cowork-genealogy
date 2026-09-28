@@ -687,15 +687,51 @@ def test_research_plan_rationale_identifiers_traceable(
 # --- V5: an availability claim must match the returned personCount ----------
 
 _INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
-_UNINDEXED_RE = re.compile(r"\b(?:un-?indexed|not\s+indexed)\b", re.I)
+# "no indexed name search is possible" and "not name-indexed" both negate the
+# indexed claim.  Allow an optional adjective between "not" and "indexed"
+# (e.g. "not name-indexed", "not record-indexed") and keep "no indexed" and
+# the bare "un-?indexed" forms.
+# ut_research_plan_002, v1_2026-09-24_19-25-44, pli_012: "no indexed name search"
+# ut_research_plan_q7m, v1_2026-09-25_08-29-32, pli_003: "not name-indexed"
+# "not fully indexed" is a PARTIAL-indexing claim (personCount > 0), not a
+# browse-only claim — exclude it with a negative lookahead on "fully".
+_UNINDEXED_RE = re.compile(
+    r"\b(?:un-?indexed|not\s+(?!fully\s)(?:\w+[\s-])?indexed|no\s+indexed)\b", re.I
+)
 _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
+# A browse/unindexed adjective sitting directly on a non-collection noun ("the
+# browse-only volume (item 3)") describes that volume, not the one collection
+# id the sentence names. ut_research_plan_016, v1_2026-09-01_17-38-18 (issue
+# #2110): "Paid fallback if FamilySearch collection 1804888 (item 2) and the
+# browse-only volume (item 3) both return nothing" charged "browse-only" to
+# 1804888 (personCount 421870). The volume's own id is not in that sentence, so
+# keying on a served volume id would not have caught it.
+# "unindexed for this jurisdiction" similarly qualifies a sub-area volume, not
+# the collection itself. ut_research_plan_015, v1_2026-09-25_09-24-00, pli_003:
+# "collection 2513529 (…personCount 200K) is indexed at collection level, but
+# …image group 004748896 …is entirely unindexed for this jurisdiction".
+_ADJ_ON_NON_COLLECTION_RE = re.compile(
+    r"\b(?:(?:browse|image)[\s-]?only|un-?indexed|not\s+indexed)\s+"
+    r"(?:volumes?|films?|microfilms?|image\s+groups?|registers?|items?|"
+    r"for\s+(?:this|the)\s+\w+)\b",
+    re.I,
+)
+# A coverage percentage ("412 images, 0% indexed", "only 4% name-indexed") is
+# neither an indexed nor a browse-only claim. ut_research_plan_007 run 0 on
+# 2026-09-24 (issue #2685) wrote "…returned personCount 0, so this is a browse
+# of image group 007936749 (…, 0% indexed)" and was charged with calling
+# 1999196 "indexed".
+_PERCENT_INDEXED_RE = re.compile(
+    r"\b\d+(?:\.\d+)?\s*%\s*(?:name[\s-]?)?(?:indexed|record[\s-]searchable)\b", re.I
+)
 
 
 def _collection_person_counts(tool_calls) -> dict[str, set[int]]:
     """id -> set of personCounts across every collections_search response
     this run received. An id can be served with different counts in
-    different responses (1999196 is 0 in schuylkill, 893214 in
-    pennsylvania), so key on the response, not the id."""
+    different responses (1999196 was once 0 in schuylkill and 893214 in
+    pennsylvania, reconciled 2026-09-24 under issue #2685), so key on the
+    response, not the id."""
     counts: dict[str, set[int]] = {}
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) != "collections_search":
@@ -714,12 +750,16 @@ def test_research_plan_availability_claim_matches_counts(
 ):
     """A rationale that calls a served collection "indexed" must name one
     whose returned personCount is > 0; "browse-only"/"image-only" must name
-    one whose personCount is 0. Issue #1866 V5, e.g. ut_research_plan_q7m
-    pli_007 calls 1999196 "indexed" against a served personCount of 0.
+    one whose personCount is 0. Issue #1866 V5, e.g. ut_research_plan_010
+    pli_007 (v1_2026-09-17_15-04-52) calls 1999196 "indexed" against a served
+    personCount of 0.
 
     Bind the adjective to the identifier within one sentence and skip any
     sentence naming more than one served collection — a rationale routinely
     describes a browse-only volume and an indexed collection in one breath.
+    A browse/unindexed adjective attached to a non-collection noun ("the
+    browse-only volume") is not a claim about the collection and is ignored,
+    and neither is a coverage percentage ("0% indexed").
     personCount is a property of the response, so key on what was served."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -743,11 +783,13 @@ def test_research_plan_availability_claim_matches_counts(
                     continue  # skip no-collection and multi-collection sentences
                 cid = ids_here[0]
                 pcs = counts[cid]
-                claims_indexed = bool(_INDEXED_RE.search(sentence)) and not (
-                    _UNINDEXED_RE.search(sentence)
+                claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
+                claims_indexed = bool(_INDEXED_RE.search(claim_text)) and not (
+                    _UNINDEXED_RE.search(claim_text)
                 )
-                claims_browse = bool(_BROWSE_ONLY_RE.search(sentence)) or bool(
-                    _UNINDEXED_RE.search(sentence)
+                about_collection = _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                claims_browse = bool(_BROWSE_ONLY_RE.search(about_collection)) or bool(
+                    _UNINDEXED_RE.search(about_collection)
                 )
                 if claims_indexed == claims_browse:
                     continue  # neither claim, or a self-contradicting sentence

@@ -395,7 +395,7 @@ a malformed-merge / unpersistable-merge failure is surfaced rather than thrown:
       scoreType, issueType, severity: "contradiction" | "implausible",
       personId, personName,         // who the warning is about (may be a relative or the survivor)
       message,
-      factIds?, relatedPersonId?,
+      facts?, relatedPersonId?,
       mobRole?: "target" | "candidate" | "merged" | "relative"   // which side surfaced it
     }
   ]

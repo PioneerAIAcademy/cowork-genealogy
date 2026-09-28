@@ -22,7 +22,7 @@ the agent's written GPS proof statement sound, graded from the research
 log (an advisory score that does not gate the verdict). The harness adds a
 third, non-judge axis: **compliance** — did the GPS guardrail skills
 actually run (§7.5). Recall and compliance are reported separately and
-combined into an `outcome` gate (§7.2.1). Per-PR
+reported beside an `outcome` gate that carries the genealogical verdict (§7.2.1). Per-PR
 regression coverage is the job of unit tests (see `unit-test-spec.md`);
 e2e is run on demand, one test at a time.
 
@@ -894,6 +894,10 @@ The harness **denies these tools for the entire run**:
   PID with no searching
 - `person_person_matches` — surfaces tree persons matched to the subject
   (can leak a stripped relative in a parents/siblings fixture)
+- `person_quality` — reads FamilySearch's quality issues for the subject's
+  live profile; several issue sentences interpolate values off that profile
+  (`{originalDate}`, `{originalPlace}`), so a stripped date or place can be
+  returned verbatim
 
 The agent must recover everything through **records** (`record_search`,
 `record_read`, `fulltext_search`, `image_search`, `image_read`,
@@ -1320,8 +1324,8 @@ which the compliance/correctness axis split fixed.
 | `verdict` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **Genealogical.** The judge's recall conclusion (§7.1), `ungraded` when the judge raised an exception (tree exists but was never graded — can be re-graded), or `skipped` when the judge didn't run (no tree). Never modified by anything else. |
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
-| `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `5` for the current shape. At `5`, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped at main `4541a4c5` without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on logs predating the compliance/correctness axis split. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate**, and it is the `verdict` — nothing else. Through `harness_schema_version` 5 it was `fail` whenever `compliance` failed, else the verdict; the §8 post-run compliance detectors were demoted from the gate on 2026-09-25 and now report on the compliance axis alone. The process exit code still keys on this, so a run that bypasses a guardrail exits green and the exit code reveals the verdict — the accepted cost, recorded in `guardrail-enforcement-spec.md` §8. A log at 5 or below stores the old fused value; readers re-derive rather than reading the stored key (`axes_from_runlog`). |
+| `harness_schema_version` | integer | `6` for the current shape. At `6`, `outcome` is the `verdict` alone; at `5` and below it is the old fusion (`fail` whenever `compliance` failed), so a v1–v5 log stores a value this code does not agree with and every reader re-derives it. At `5` **and above**, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped at main `4541a4c5` without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance` and the §7 shadow violation counts are not comparable across that boundary** — `outcome` is, since it is the verdict and those arms never touched it. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on logs predating the compliance/correctness axis split. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1408,11 +1412,12 @@ A human grade is a per-run annotation committed **beside the run log it grades**
 | `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
 | `annotator` | no | Provenance; git blame on the committed file is the fallback. |
 | `findings_hash` | no | sha256 of the normalized `expected-findings.json` this grade was produced against, so a later edit to a finding's body cannot silently invalidate the grade while its id stays put. Written by `/grade-e2e-run`'s stamp step, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. |
+| `blind_bundle_digest` | no | sha256 of the normalized content of the 4 files the blind grader reads (`expected-findings.json`, `fixture.json`, `final-tree.gedcomx.json`, `final-research.json`), stamped by `/grade-e2e-run`'s step 7, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. Covers the full grading surface: `findings_hash` catches edits to expected-findings only; this catches edits to any of the four. |
 
 There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
 + the findings' `required` flags by the §7.2 rule.
 
-Three integrity rules make the agreement number trustworthy:
+Four integrity rules make the agreement number trustworthy:
 
 - **Never auto-created.** A run does not emit an annotation; a human grades it
   with the `/grade-e2e-run` skill (which reads the fixture + the two `final-*`
@@ -1461,11 +1466,21 @@ Three integrity rules make the agreement number trustworthy:
   > ages out as new blind annotations replace them.
   >
   > **Residual leak: the exit code.** `run_e2e.py` still exits non-zero
-  > when the combined gate fails (fail/skipped/ungraded) and zero when it
-  > passes (pass/partial), so with compliance clean, the exit code leaks
+  > when the gate fails (fail/skipped/ungraded) and zero when it
+  > passes (pass/partial). Since the §8 demotion `outcome` IS the verdict, so
+  > unconditionally — not only with compliance clean — the exit code leaks
   > the verdict in both directions. The exit code is retained because a
   > batch shell loop has no other signal for failure. This is a known,
   > accepted residual — not a bug to fix.
+- **Bundle-provenance stamped.** `/grade-e2e-run`'s step 7 stamps
+  `blind_bundle_digest` — a sha256 over the normalized content of the 4 files
+  the blind grader reads (`expected-findings.json`, `fixture.json`,
+  `final-tree.gedcomx.json`, `final-research.json`). The loader checks
+  this digest: a present stamp that no longer matches is a hard error
+  (re-grade or delete); an absent stamp is grandfathered (included but reported
+  unverifiable). This is the wider counterpart to `findings_hash`, which covers
+  only `expected-findings.json`. A stamp is optional: an unstamped annotation,
+  new or old, is accepted and only counted as unverifiable.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 
@@ -1587,7 +1602,8 @@ checks over the final project state and the run's tool-call log
    requirement, whose own evidence is a run at the new call shape. Until then
    this check under-reports, which is the safe direction.
 
-Any violation sets `compliance: fail`, which forces `outcome: fail`. The
+Any violation sets `compliance: fail`. Since the §8 detectors were demoted
+it does not move `outcome`, which is the `verdict`. The
 checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
 and check 1's exhaustiveness arm reads only `research.json` — so every run the
 harness performs gets a real compliance result.
@@ -1732,7 +1748,9 @@ such run in its `regressed` list. No `harness_schema_version` bump: the runlog
 payload shape did not change, and the counter exists for a field whose *meaning*
 shifts while its name does not.
 
-**`compliance` and `outcome` are not comparable across the `is_error` join.**
+**`compliance` is not comparable across the `is_error` join.** (`outcome` no
+longer moves with it: since the §8 demotion the gate is the `verdict`, which the
+join does not touch.)
 Before it, `tool_calls[]` carried no `is_error` key, so the
 `entry.get("is_error") is True` gates in `skill_invocation.py` never fired and an
 **errored** tool call counted as a successful invocation. After it, both hard
@@ -1823,7 +1841,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `verdict` | The judge's **genealogical** conclusion. See §7.2.1. |
 | `compliance` | Whether the GPS guardrail skills actually ran. §7.5. |
 | `guardrail_bypass_violations` | The specific bypasses, when `compliance` is `fail`. |
-| `outcome` | **The gate** — `fail` when compliance failed, else `verdict`. |
+| `outcome` | **The gate** — the `verdict`. It was `fail` when compliance failed until the §8 detectors were demoted (2026-09-25). |
 | `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
 | `stop_reason` | Why the run ended. §6.5. |
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
@@ -1869,7 +1887,7 @@ project reads, is never compared against one that did.
 `ToolResultBlock` arrives, so an entry whose result never arrived — any aborted
 or wall-clock-capped run — carries none of the three. `response_summary` is the
 exception: the entry literal initializes it, so it is present-but-`null` there
-rather than absent. At `harness_schema_version` 5, the tool name
+rather than absent. At `harness_schema_version` 5 and above, the tool name
 (`entry["tool"]`) is threaded into `_summarize_tool_response` so that per-key
 exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
 for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
@@ -2039,33 +2057,28 @@ For totals **across** runs, use `make e2e-corpus`
 (`eval/harness/e2e/corpus_report.py`), which reads each committed run log in
 the window through `axes_from_runlog` and reports all three axes, holding
 `not_checked` compliance separate from clean, then the violation detail
-beneath them:
+beneath them.
+
+Note what the sample below shows: `gate (outcome)` is identical to
+`recall (genealogy)`, because since the §8 detectors were demoted the gate IS
+the genealogical verdict. `compliance` is the axis that still moves on its own
+— 20 of these 21 runs failed it — and it is reported rather than folded in:
 
 ```
 $ make e2e-corpus
-Window: runs on/after 2026-07-21 — 82 of 142 run(s), 60 older run(s) excluded. Pass --since all for the whole corpus.
-82 committed run(s)
-  recall (genealogy): 49 pass / 10 partial / 23 fail
-  compliance:         21 fail / 61 not_checked
-  gate (outcome):     38 pass / 8 partial / 36 fail
-  NOTE: 61 run(s) have unknown compliance — written before the guardrail
-        detector existed, or by a version of it that cannot be pinned. They are
-        NOT counted as clean. See e2e.result.axes_from_runlog.
-  violations:         67 across 21 decidable run(s); 61 unknown recorded none
-    same_person (per person)            50
-    exhaustiveness                       6
-    proof-conclusion                     6
-    conflict-resolution                  5
+Window: runs on/after 2026-09-14 — 21 of 194 run(s), 173 older run(s) excluded. Pass --since all for the whole corpus.
+21 committed run(s)
+  recall (genealogy): 7 pass / 3 partial / 8 fail / 3 ungraded
+  compliance:         1 pass / 20 fail
+  gate (outcome):     7 pass / 3 partial / 8 fail / 3 ungraded
+  violations:         106 across 21 decidable run(s)
+    same_person (per person)            78
+    proof-conclusion                    15
+    exhaustiveness                       9
+    person-evidence (no link)            2
+    conflict-resolution                  2
   concentration:
-    jimmie-jewel-neal                   19  (28% of all violations)
-    elisabetha-sugecz-parents            7  (10% of all violations)
-    cornelius-booysen-death              5  (7% of all violations)
-    … 14 further fixture(s) not shown, 36 violation(s) (54%)
-    NOTE: `jimmie-jewel-neal` alone accounts for 28% of violations (4.8x its even
-          share across 17 contributing fixtures). Any headline is substantially
-          this one fixture's behavior.
-  runs w/ >=1 violation: 21/21 of DECIDABLE runs (100%) — but no run is known
-                         clean, so this is a floor on incidence, not a rate.
+    cruz-corona-ancestry                20  (19% of all violations)
   spend:
     recorded    $1,142.74  over 133 run(s) carrying total_cost_usd
     estimated   $122.62  over 11 null-cost run(s) with token counts (~0.90x recorded, median over 133 calibrating run(s))
@@ -2222,13 +2235,14 @@ log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** Validity
 is a claim about the *fixture* — is this answer recoverable from live
 FamilySearch? — so it keys on the **genealogical** axis (§7.5) alone. A run
 that recovered the answer while bypassing a GPS guardrail skill still proves
-the fixture solvable; it fails the `outcome` gate for a reason that says
+the fixture solvable. Validity is argued from the genealogical axis alone —
+the gate is now that same axis, and `compliance` records the bypass for a reason that says
 nothing about the fixture.
 
 > **Reading a run log written before the compliance/correctness axis split for
 > this:** in logs written before the axis
 > split, a guardrail bypass overwrote the top-level `verdict` with `fail`, so
-> four committed runs read `"verdict": "fail"` on disk while being
+> seventeen committed runs are in this shape; nine read `"verdict": "fail"` on disk while being
 > genealogically `pass`. Resolve any log through
 > `e2e.result.axes_from_runlog` (or just run `make e2e-corpus`) rather than
 > reading the raw field, or the same fixture validates or doesn't depending
@@ -2331,7 +2345,8 @@ changing anything, because the fix differs completely by cause.
    > and every call — including errored ones — read as successful to the
    > guardrail detectors. Diffing `tool_calls` across it shows a new key on every
    > entry; that is a capture change, not a regression. It also moves
-   > `compliance`/`outcome`, which the shadow/violation counts above do not —
+   > `compliance` — but no longer `outcome`, which since the §8 demotion is the
+   > `verdict` — which the shadow/violation counts above do not —
    > though by ~1 entry corpus-wide. The boundary is main `4541a4c5`, not
    > cleanly a version number: see §7.5 "Historical runs" for the table and the
    > measurement.
@@ -2340,14 +2355,14 @@ changing anything, because the fix differs completely by cause.
    > (v4 → v5).** At v4 and below, `response_summary` for `image_transcribe`
    > calls was truncated at 500 chars, well under the length of many
    > transcriptions (`make e2e-transcription-join SINCE=all` reports the
-   > current count of truncated captures over its window). At v5, the
+   > current count of truncated captures over its window). At v5 and above, the
    > `transcription` key is preserved in full, bypassing
    > both the per-string cap and the backstop. The entry shape is unchanged —
    > `response_summary` stays a string — so **branch on
    > `harness_schema_version` before treating a v4 `image_transcribe` summary
    > as a complete transcription**. A v4 summary ending in
    > `[truncated by harness for prompt size; full length N chars]` is confirmed
-   > truncated; one ending in `...` may be backstop-truncated; only a v5 entry
+   > truncated; one ending in `...` may be backstop-truncated; only a v5-or-later entry
    > is guaranteed complete.
    >
    > Two format details that matter when diffing or grepping. Captures at or under
