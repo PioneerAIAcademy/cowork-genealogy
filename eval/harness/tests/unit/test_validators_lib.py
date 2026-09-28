@@ -23,6 +23,26 @@ from validators_lib import (  # noqa: E402
 )
 
 
+def _wrap(section, entries):
+    return {"research_json": {section: entries}}
+
+
+# --- new_section_entries: include_modified (main covers the new-only cases) ---
+
+
+def test_new_section_entries_without_include_modified_ignores_an_inplace_change():
+    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
+    after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
+    assert new_section_entries(before, after, "localities") == []
+
+
+def test_new_section_entries_include_modified_catches_an_inplace_change():
+    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
+    after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
+    got = new_section_entries(before, after, "localities", include_modified=True)
+    assert [e["place"] for e in got] == ["B"]
+
+
 # --- assert_no_section_deletions ------------------------------------------
 
 
@@ -176,10 +196,7 @@ def test_log_append_only_fails_when_entry_deleted():
 # `new_log_entries` had no coverage here at all before #2390, despite four
 # validator files depending on it. It is now a one-line alias for the general
 # form, so both are exercised together.
-
-
-def _wrap(section, entries):
-    return {"research_json": {section: entries}}
+# (`_wrap` is defined once at module top; this section reuses it.)
 
 
 def test_new_section_entries_returns_only_what_is_new():

@@ -319,7 +319,7 @@ export async function nextTestId(skill: string): Promise<string> {
  * "content-changed" warning.
  *
  * `test.holdout` is included because the snapshot normalization strips
- * only the cosmetic `test.{name,description,tags}` — holdout survives
+ * only the cosmetic `test.{name,description}` — holdout survives
  * into the snapshot, so flipping it changes the content hash and flips
  * the active run log inactive (forces a re-run), even though it never
  * changes grading. (It governs only the skill-improver's behavior; see

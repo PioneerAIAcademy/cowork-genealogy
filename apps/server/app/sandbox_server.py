@@ -31,17 +31,20 @@ from pathlib import Path
 
 from websockets.asyncio.server import serve
 
+from .agent.continue_policy import env_float, env_int
 from .agent.errors import classify, operator_log
 from .agent.real_agent import TRANSIENT_KINDS
 
-PORT = int(os.environ.get("WS_PORT", "8080"))
+# Guarded: read at module scope inside the sandbox, so a malformed value would
+# raise before the WS server binds and leave the browser with nothing to connect to.
+PORT = env_int("WS_PORT", 8080)
 SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", "/project"))
 _WATCH_INTERVAL = 0.7
 _HISTORY_MAX = 1000  # transcript events kept for replay-on-reconnect
 # Seconds between keepalive frames (see _heartbeat_loop). Env-overridable so the
 # test can assert the behaviour without a 15s sleep.
-_HEARTBEAT_INTERVAL = float(os.environ.get("WS_HEARTBEAT_INTERVAL", "15"))
+_HEARTBEAT_INTERVAL = env_float("WS_HEARTBEAT_INTERVAL", 15.0)
 # A token-locked client reconnects on a tight loop (and re-arms on every tab
 # focus), so a naive "one line per rejection" fills the 20 KB /logs window with
 # identical lines and evicts the agent activity timeline — which is exactly what
@@ -269,10 +272,9 @@ class Hub:
             # _record as well as broadcast, or history keeps a `turn_start`
             # whose `turn_done` exists nowhere. `turn_start` is not in
             # TRANSIENT_KINDS, so it IS replayed on every reconnect, and
-            # `_history` is never cleared -- only trimmed at _HISTORY_MAX. A
-            # v1 drain counts the orphan as a turn in flight, never sees it
-            # close, and runs to its own ceiling on every later call until 1000
-            # events push the frame out. `broadcast` does not touch `_record`,
+            # `_history` is never cleared -- only trimmed at _HISTORY_MAX, so
+            # the orphan is replayed to every later client until 1000 events
+            # push the frame out. `broadcast` does not touch `_record`,
             # and this is the one turn_done that does not come through the
             # runner's recorded path (runner.py:73 is the sole other source).
             _turn_done = {"type": "agent_event", "event": {"kind": "turn_done"}}
@@ -339,7 +341,30 @@ class Hub:
             except OSError:
                 pass
 
+    @staticmethod
+    def _is_internal(rel: str) -> bool:
+        """Whether a project-relative ref is engine bookkeeping the viewer must
+        never be told about.
+
+        The watch loop walks the project RECURSIVELY (`rglob`), while the
+        hydration snapshot lists `results/` one level deep. So anything the
+        engine keeps in a dot-directory under `results/` is invisible at
+        hydration but broadcast on every write, which reaches the viewer as a
+        `sidecar_updated` naming a log id that does not exist —
+        `.scores/<sha256>`.
+
+        Two such directories exist. `results/.staging/` has leaked this way
+        since staging shipped; it went unnoticed because a staged file is
+        consumed or pruned within 24h. `results/.scores/` (the `same_person`
+        attestation, issue #1731) persists and accumulates one entry per scored
+        record, so the same leak would be permanent. Keyed on a dot SEGMENT
+        rather than either name, so the next one is covered when it lands.
+        """
+        return any(part.startswith(".") for part in rel.replace("\\", "/").split("/"))
+
     async def _emit_change(self, rel: str) -> None:
+        if self._is_internal(rel):
+            return
         if rel == "research.json":
             d = _read_json(PROJECT_DIR / rel)
             if d is not None:

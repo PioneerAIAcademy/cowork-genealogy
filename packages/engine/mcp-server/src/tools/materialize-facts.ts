@@ -72,84 +72,31 @@ import {
 } from "../utils/source-ref-resolver.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 
+import {
+  ASSERTION_FACT_ATTRS,
+  COUPLE_EVENT_TYPES,
+  EVENT_TREE_TYPES,
+  GENDER_TYPES,
+  NAME_TYPES,
+  SKIP_TYPES,
+  assertionFactAttr,
+  assertionTreeFactType,
+  candAsFact,
+  factCandidate,
+  factText,
+  materializesToPersonFact,
+  nameParts,
+  normGender,
+  toTreeFactType,
+  type AssertionFactAttr,
+  type FactCandidate,
+} from "../utils/record-persona.js";
+// The assertion → tree-fact mapping and the name/gender normalisers were lifted
+// verbatim into utils/record-persona.ts (lead ruling 2026-09-11, issue #1731) so
+// `same_person`'s project-relative arm can project a record persona with the
+// same rules.
+
 class MaterializeFactsError extends Error {}
-
-// ─── fact_type → tree fact type (honors the #711 structured-fact model) ───────
-//
-// An event's place/date are ATTRIBUTES of the one event fact, not their own fact
-// types — extraction already folds birthplace/birth-date into a single `birth`
-// assertion (research-append canonicalization), so here we only PascalCase the
-// canonical event type and let date/place/value ride along as attributes. The
-// value is null for event facts (below), which is why fact identity keys on
-// `factsEquivalent` + `value`, never `(type, value)`.
-
-/** Assertion fact_types handled as NON-facts: names, gender, and the ones this
- *  tool deliberately does not materialize (relationship edges are `tree_edit`
- *  add_relationship's job, §4.5; `age` is indirect evidence feeding a birth-year
- *  inference, not a standalone tree fact; `marriage` is a Couple-relationship
- *  event — per tree-edit.ts's own convention, "a Marriage/Divorce fact lives
- *  on the Couple, never duplicated onto each spouse" — so it can never be a
- *  correct PERSON-level write, structurally, not just usually. A caller
- *  wanting the marriage's date/place on the tree writes it via `tree_edit`
- *  `add_relationship`'s Couple `facts`, sourced with the same assertion via
- *  `sourceAssertionId`). Guards the exact mistake ut_person_evidence_022
- *  regression-tests: a `marriage` assertion on an already-existing spouse's
- *  persona getting materialized straight onto that person, leaving the
- *  relationship itself factless.
- *
- *  Skipped here means "not a fact for THIS persona" — it never meant the other
- *  party the assertion names has nowhere to go. That party is minted by the
- *  named-party arm below (§4.6), which writes her a sourced NAME — plus that
- *  persona's own facts where the record gives her a persona it never names AND
- *  the assertion's `related_person_role` corroborates the role — so the Couple
- *  event stays on the edge where it belongs. */
-const NAME_TYPES: ReadonlySet<string> = new Set(["name"]);
-const GENDER_TYPES: ReadonlySet<string> = new Set(["gender", "sex"]);
-const SKIP_TYPES: ReadonlySet<string> = new Set([
-  "relationship",
-  "age",
-  "marriage",
-  // `parentage`/`parentchild` join for the reason the comment above gives for
-  // `marriage`: they establish a link between TWO parties, so they can never be
-  // a correct person-level write, and the shared
-  // RELATIONSHIP_ESTABLISHING_TYPES now says so on the sourcing side. Leaving
-  // them out made the tool treat one fact_type two ways — a two-party link when
-  // sourcing an edge, a person-level fact when materializing a persona. No tree
-  // in the corpus carries a Parentage-like person fact, so nothing depended on
-  // the old behaviour.
-  "parentage",
-  "parentchild",
-]);
-
-/** Couple-relationship event types, broken out so tree-forget.ts can import
- *  the set and sweep all of them without maintaining a parallel list. */
-export const COUPLE_EVENT_TYPES: ReadonlySet<string> = new Set([
-  "Marriage", "Divorce", "Annulment", "Engagement", "MarriageBanns", "Separation",
-]);
-
-/** Tree fact types whose `value` is null (events + place/duration attributes) —
- *  the qualifier `value` field is meaningful only for value-bearing types
- *  (Occupation, Race, Religion, Nationality, …). Exported so
- *  tests/packaging/tree-forget-sweep-drift.test.ts (#1549) can cross-reference
- *  its couple-event members against tree-forget.ts's swept set without
- *  re-declaring this list. */
-export const EVENT_TREE_TYPES: ReadonlySet<string> = new Set([
-  "Birth", "Death", "Christening", "Burial", "Baptism", "Cremation",
-  ...COUPLE_EVENT_TYPES,
-  "Residence", "Census", "MunicipalCensus", "Immigration", "Emigration",
-  "Naturalization", "Will", "Probate", "Adoption",
-]);
-
-/** PascalCase a canonical snake_case fact_type into its tree type spelling:
- *  `birth` → `Birth`, `cause_of_death` → `CauseOfDeath`. Guarantees the
- *  uppercase-initial the tree schema requires. */
-function toTreeFactType(factType: string): string {
-  return factType
-    .split(/[_\s]+/)
-    .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join("");
-}
 
 // ─── small helpers ────────────────────────────────────────────────────────────
 
@@ -164,28 +111,11 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   }
 }
 
-/** The value when it is a string with non-space content, else undefined.
- *  Returns the value UNTRIMMED — the trim decides emptiness, it does not
- *  normalize the result. Exported because `research_append`'s rewrite has to
- *  compare a fact and an assertion the same way this reads them; a second copy
- *  there was a verbatim duplicate. */
-export function factText(v: unknown): string | undefined {
-  return typeof v === "string" && v.trim() !== "" ? v : undefined;
-}
 const str = factText;
 
 /** Normalize a comparison key for a name part (case/space-insensitive). */
 function normNamePart(v: string | undefined): string {
   return (v ?? "").trim().toLowerCase();
-}
-
-/** Normalize a record/persona gender value to the tree enum, else undefined. */
-function normGender(v: unknown): "Male" | "Female" | "Unknown" | undefined {
-  const g = String(v ?? "").trim().toLowerCase();
-  if (g === "male" || g === "m") return "Male";
-  if (g === "female" || g === "f") return "Female";
-  if (g === "unknown" || g === "u") return "Unknown";
-  return undefined;
 }
 
 /** A readable descriptor of a coexisting competing fact (value, or date/place). */
@@ -267,143 +197,9 @@ function upsertName(
   return { namesAdded: 1, refsAttached: 1 };
 }
 
-// ─── build the tree-fact / tree-name candidate from an assertion ──────────────
 
-interface FactCandidate {
-  type: string;
-  date?: string;
-  place?: string;
-  standard_place?: string;
-  value?: string;
-}
 
-function factCandidate(assertion: any): FactCandidate {
-  const type = toTreeFactType(String(assertion.fact_type));
-  const cand: FactCandidate = { type };
-  // Driven by `assertionFactAttr` rather than repeating its rules, so minting a
-  // fact and later rewriting one cannot disagree about which assertion field
-  // becomes which fact field. A second copy here is how the two would drift:
-  // the rewrite's whole purpose is to keep a fact matching what minted it.
-  for (const attr of ASSERTION_FACT_ATTRS) {
-    const action = assertionFactAttr(assertion, attr, type);
-    if (action !== null && "set" in action) cand[attr] = action.set;
-    // `clear` and `malformed` both mean "nothing to mint here", which is what
-    // the pre-shared `str()` call did for both. Minting is unchanged.
-  }
-  return cand;
-}
 
-/**
- * The tree-fact attributes an assertion supplies — the mirrored set a later
- * assertion correction rewrites on the fact it minted (#2472).
- *
- * Deliberately NOT `standard_date`: an assertion has no such field (the
- * research schema stops at `date`), so there is nothing to mirror. And not
- * `fact_type`: retyping an assertion is a re-classification, not an attribute
- * correction, and rewriting a fact's `type` under it would silently change what
- * the fact claims.
- *
- * Two near-neighbours, deliberately separate. `FACT_STRING_FIELDS`
- * (`tools/tree-edit.ts`) is the five fields a tree fact types as strings;
- * `checkTreeFact` (`validation/validator.ts`) passes those five plus
- * `assertion_id` for its type check. This set is the four an ASSERTION can
- * supply, a different question with a different answer, so it is derived from
- * neither. The differences, if they ever need to agree, are `standard_date`
- * (no assertion has one) and `assertion_id` (not an assertion field at all).
- */
-export const ASSERTION_FACT_ATTRS = ["date", "place", "standard_place", "value"] as const;
-export type AssertionFactAttr = (typeof ASSERTION_FACT_ATTRS)[number];
-
-/**
- * What a rewrite should do to one tree-fact attribute, given the assertion the
- * fact was minted from and the fact's own tree type.
- *
- * The single source of that mapping: `factCandidate` below is driven by this
- * function rather than repeating it, so minting a fact and later rewriting one
- * cannot disagree about which assertion field becomes which fact field. `tree-forget.ts` already imports from this module and
- * `research-append.ts` already imports `treeDiff` from a sibling tool, so the
- * cross-tool import is the established shape here rather than a new util.
- *
- *   - `null`  — materialize would never have written this attribute, so leave
- *     whatever is there alone. Exactly one case: `value` on an event type,
- *     which `factCandidate` excludes (#711). An assertion's `value` is a prose
- *     sentence ("Immigrated to Canada, 1924; destination Odessa…"), and writing
- *     that into an Immigration fact's `value` is a fresh defect, not a fix.
- *   - `{ clear: true }` — the assertion asserts nothing here (null, absent or
- *     blank). Delete the key rather than writing `null`: the tree schema types
- *     these `string`, with no null branch, so assigning one makes the fact
- *     invalid.
- *   - `{ malformed: true }` — the assertion holds a NON-STRING here. Distinct
- *     from `clear` on purpose: "withdrawn" and "malformed" are different claims,
- *     and conflating them deletes tree data on a typo. `validator.ts` type-checks
- *     an assertion's `date`/`place`/`standard_place` but not its `value`, so a
- *     `value: 1924` reaches here and must not be read as "the researcher
- *     withdrew this". The caller leaves the fact alone and says so.
- *   - `{ set }` — the assertion's value, to write.
- */
-export function assertionFactAttr(
-  assertion: any,
-  attr: AssertionFactAttr,
-  treeFactType: string | undefined,
-): { set: string } | { clear: true } | { malformed: true } | null {
-  if (attr === "value" && EVENT_TREE_TYPES.has(String(treeFactType ?? ""))) return null;
-  const raw = assertion?.[attr];
-  if (raw === null || raw === undefined) return { clear: true };
-  if (typeof raw !== "string") return { malformed: true };
-  // A blank or whitespace-only string reads as "withdrawn" exactly as `null`
-  // does — but it is also the likelier typo, so the caller WARNS on every clear
-  // rather than trying to tell the two apart here. Deleting tree data is a
-  // destructive edit whatever prompted it, and none of them should be silent.
-  return raw.trim() === "" ? { clear: true } : { set: raw };
-}
-
-/** Whether an assertion of this `fact_type` can ever materialize as a PERSON
- *  fact. `name` becomes a tree name, `gender`/`sex` sets the scalar, and
- *  `SKIP_TYPES` (relationship, marriage, parentage, age, …) are two-party links
- *  or non-facts that never reach `person.facts` at all. Exported so
- *  `research_append` does not tell a caller to go re-check a fact that could
- *  not exist. */
-export function materializesToPersonFact(assertion: any): boolean {
-  // Mirrors the materialize loop's own four skips, in its order: negative
-  // evidence stays an argument and never becomes a positive fact; `gender`/`sex`
-  // set the scalar; `name` becomes a tree name; SKIP_TYPES are two-party links.
-  if (recordBasisOf(assertion) === "absent") return false;
-  const t = String(assertion?.fact_type ?? "").toLowerCase();
-  return t !== "" && !NAME_TYPES.has(t) && !GENDER_TYPES.has(t) && !SKIP_TYPES.has(t);
-}
-
-/** The tree type an assertion's `fact_type` materializes as. Exported so the
- *  rewrite can tell when a fact no longer corresponds to its assertion's type. */
-export function assertionTreeFactType(factType: unknown): string {
-  return toTreeFactType(String(factType ?? ""));
-}
-
-/** A SimplifiedFact view of a candidate for factsEquivalent(). */
-function candAsFact(cand: FactCandidate): SimplifiedFact {
-  const f: SimplifiedFact = { type: cand.type };
-  if (cand.date !== undefined) f.date = cand.date;
-  if (cand.place !== undefined) f.place = cand.place;
-  if (cand.standard_place !== undefined) f.standard_place = cand.standard_place;
-  if (cand.value !== undefined) f.value = cand.value;
-  return f;
-}
-
-/** Given/surname from a name assertion — its structured_value when present, else
- *  parsed from `value` (surname = last token). Both parts are always returned
- *  (empty string, not undefined) so the minted name satisfies the tree schema's
- *  present-and-string given/surname requirement. */
-function nameParts(assertion: any): { given: string; surname: string } {
-  const sv = assertion.structured_value;
-  if (sv && typeof sv === "object" && !Array.isArray(sv)) {
-    const given = typeof sv.given === "string" ? sv.given : "";
-    const surname = typeof sv.surname === "string" ? sv.surname : "";
-    if (given || surname) return { given, surname };
-  }
-  const tokens = String(assertion.value ?? "").trim().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return { given: "", surname: "" };
-  if (tokens.length === 1) return { given: tokens[0], surname: "" };
-  return { given: tokens.slice(0, -1).join(" "), surname: tokens[tokens.length - 1] };
-}
 
 // ─── apply one persona-materialization op to a shared in-memory tree ─────────
 //

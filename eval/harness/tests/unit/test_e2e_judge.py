@@ -479,3 +479,135 @@ def test_derivation_falls_back_when_only_details_are_listed():
     )
     out = apply_component_derivation(original, expected_findings=_findings())
     assert out is original
+
+
+# --- verdict/recall roll-up derivation (issue #2849) ------------------------
+#
+# `apply_component_derivation` used to skip the recompute entirely whenever
+# there were no component overrides — which is most runs, and every run on a
+# `fact`-only fixture, since that type is never eligible for the override
+# loop. These pin that the roll-up (`verdict`, `recall_required`,
+# `recall_total`) is now checked against `per_finding` on every call.
+
+
+def test_verdict_derivation_downgrades_a_fact_only_fixture():
+    """The #2849 case: the model says `pass` but its own required finding is
+    labeled `partial` — no component override can fire (fact type, no
+    relationship components), so only the new roll-up recompute catches it."""
+    out = apply_component_derivation(
+        _valid_output(
+            verdict="pass",
+            recall_required=1.0,
+            recall_total=1.0,
+            per_finding=[
+                {
+                    "finding_id": "f1",
+                    "matched": "partial",
+                    "agent_evidence": "",
+                    "notes": "",
+                }
+            ],
+        ),
+        expected_findings=_findings(ftype="fact"),
+    )
+    assert out["verdict"] == "partial"
+    assert out["recall_required"] == 0.5
+    assert "component_derivation" not in out
+    assert out["verdict_derivation"]["model"] == {
+        "verdict": "pass",
+        "recall_required": 1.0,
+        "recall_total": 1.0,
+    }
+    assert out["verdict_derivation"]["derived"] == {
+        "verdict": "partial",
+        "recall_required": 0.5,
+        "recall_total": 0.5,
+    }
+
+
+def test_verdict_derivation_upgrades_when_the_model_undersells_true_labels():
+    """The other direction: the model says `fail` even though every required
+    finding is labeled `true`. The recompute is not downgrade-only."""
+    out = apply_component_derivation(
+        _valid_output(
+            verdict="fail",
+            recall_required=0.0,
+            recall_total=0.0,
+            per_finding=[
+                {
+                    "finding_id": "f1",
+                    "matched": "true",
+                    "agent_evidence": "",
+                    "notes": "",
+                }
+            ],
+        ),
+        expected_findings=_findings(),
+    )
+    assert out["verdict"] == "pass"
+    assert out["recall_required"] == 1.0
+    assert out["recall_total"] == 1.0
+    assert out["verdict_derivation"]["model"]["verdict"] == "fail"
+    assert out["verdict_derivation"]["derived"]["verdict"] == "pass"
+
+
+def test_verdict_derivation_corrects_recall_even_when_the_verdict_was_right():
+    """The model's verdict can be correct while its recall arithmetic is
+    still wrong — the two are corrected independently, and only the field
+    that actually disagreed is named in `verdict_derivation`."""
+    out = apply_component_derivation(
+        _valid_output(
+            verdict="partial",
+            recall_required=0.8,
+            recall_total=0.5,
+            per_finding=[
+                {
+                    "finding_id": "f1",
+                    "matched": "partial",
+                    "agent_evidence": "",
+                    "notes": "",
+                }
+            ],
+        ),
+        expected_findings=_findings(),
+    )
+    assert out["verdict"] == "partial"
+    assert out["recall_required"] == 0.5
+    assert out["verdict_derivation"]["model"] == {"recall_required": 0.8}
+    assert out["verdict_derivation"]["derived"] == {"recall_required": 0.5}
+
+
+def test_verdict_derivation_is_a_noop_when_output_is_already_consistent():
+    """A model output whose own verdict/recall already agree with the
+    arithmetic — the common case — still returns the identical object, same
+    as before #2849's always-recompute change."""
+    original = _valid_output()
+    out = apply_component_derivation(original, expected_findings=_findings())
+    assert out is original
+    assert "verdict_derivation" not in out
+
+
+def test_a_rounded_recall_is_within_tolerance_and_records_nothing():
+    """2/3 = 0.666…; a model reporting 0.67 is agreement, not a disagreement."""
+    # Three required findings: two true, one false → recall = 2/3 ≈ 0.666…
+    # The model reports 0.67, which is within the 0.011 tolerance.
+    findings = {
+        "findings": [
+            {"id": "f1", "description": "a", "type": "relationship", "required": True},
+            {"id": "f2", "description": "b", "type": "relationship", "required": True},
+            {"id": "f3", "description": "c", "type": "relationship", "required": True},
+        ]
+    }
+    original = _valid_output(
+        verdict="partial",
+        recall_required=0.67,
+        recall_total=0.67,
+        per_finding=[
+            {"finding_id": "f1", "matched": "true", "agent_evidence": "", "notes": ""},
+            {"finding_id": "f2", "matched": "true", "agent_evidence": "", "notes": ""},
+            {"finding_id": "f3", "matched": "false", "agent_evidence": "", "notes": ""},
+        ],
+    )
+    out = apply_component_derivation(original, expected_findings=findings)
+    assert out is original
+    assert "verdict_derivation" not in out

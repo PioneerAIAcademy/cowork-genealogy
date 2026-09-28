@@ -43,6 +43,18 @@ _reset = check_slot_queue.gh_warning.__globals__["reset"]
 
 
 @pytest.fixture(autouse=True)
+def repo_root(tmp_path, monkeypatch):
+    """Pin the checkout `touches.slot_of` and the own-suite arm read. Against the real
+    one, `proof-conclusion` below would change slot the day that skill is converted."""
+    root = tmp_path / "repo"
+    for skill in ("citation", "timeline", "person-evidence", "proof-conclusion"):
+        (root / "packages" / "engine" / "plugin" / "skills" / skill).mkdir(parents=True)
+    (root / "packages" / "engine" / "plugin" / "agents").mkdir(parents=True)
+    monkeypatch.setattr(check_slot_queue.touches, "REPO_ROOT", str(root))
+    return root
+
+
+@pytest.fixture(autouse=True)
 def _clean_warnings():
     _reset()
     yield
@@ -104,6 +116,32 @@ def test_an_agent_nothing_references_reaches_no_skill():
         )
         == set()
     )
+
+
+def _converted(repo_root):
+    root_agents = repo_root / "packages" / "engine" / "plugin" / "agents"
+    (root_agents / "zz-converted.md").write_text("# zz-converted\n", encoding="utf-8")
+    (repo_root / "eval" / "tests" / "unit" / "zz-converted").mkdir(parents=True)
+
+
+def test_a_converted_skills_agent_body_reaches_its_suite_and_its_embedders(repo_root):
+    """Skill directory gone, agent and suite kept. The agent body is embedded in its
+    own suite (by name) and in every skill naming it via @plugin:."""
+    _converted(repo_root)
+    assert check_slot_queue.path_to_skills(
+        "packages/engine/plugin/agents/zz-converted.md", {"zz-converted": {"zz-embedder"}}
+    ) == {"zz-converted", "zz-embedder"}
+
+
+def test_a_converted_skills_suite_file_reaches_only_its_own_suite(repo_root):
+    """slot_of names the suite `agent:<x>` too, but build_snapshot embeds a skill's
+    own suite and nobody else's, and rule 2 maps a suite edit to <x> alone."""
+    _converted(repo_root)
+    for path in ("eval/tests/unit/zz-converted/ut_zz_001.json",
+                 "packages/engine/plugin/skills/zz-converted/SKILL.md"):
+        assert check_slot_queue.path_to_skills(
+            path, {"zz-converted": {"zz-embedder"}}
+        ) == {"zz-converted"}, path
 
 
 def test_affected_skills_unions_over_paths():

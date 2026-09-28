@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 20, hint-samples.csv row 611, flag adds_spouse, confidence 3). Draft transcribed from a 1910 Norwegian church-book entry; unverified. Conflicts with the tree's 1911 marriage to a different woman."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 20, hint-samples.csv row 611, flag adds_spouse, confidence 3). Resolved TRUE MATCH: Julius Edlund Eilertsen married Anne Kathrine Edvardsen on 15 August 1910 in Bodø (the vielse itself, married without banns), corroborated by the Leiranger home-parish register (ark:/61903/1:1:68WM-2WVL) and a parallel-register index (ark:/61903/1:1:68WM-Z75R); Bodø and Leiranger register images examined. The tree's competing 1911 marriage to Petrine Elisabeth Edisdatter is unsourced; the 1911 index date on 68WM-2WVL is the home parish's later recording of the 1910 Bodø marriage."
 }

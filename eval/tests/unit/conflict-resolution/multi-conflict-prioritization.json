@@ -5,7 +5,12 @@
     "name": "Prioritize among multiple unresolved conflicts",
     "type": "positive",
     "description": "Two unresolved conflicts exist simultaneously — a fact conflict (birthplace) and an identity conflict (which Patrick Flynn in 1850 is the subject). Tests whether the skill picks one conflict to work on first rather than tangling both into a single resolution.",
-    "tags": ["conflict-resolution", "prioritization", "multi-conflict", "identity-vs-fact"]
+    "tags": [
+      "conflict-resolution",
+      "prioritization",
+      "multi-conflict",
+      "identity-vs-fact"
+    ]
   },
   "input": {
     "user_message": "There are several unresolved conflicts in this research. Take a look and start working on whichever should come first.",
@@ -18,5 +23,9 @@
   ],
   "execution": {
     "max_wall_clock_seconds": 600
-  }
+  },
+  "mcp_fixtures": [
+    "wiki-read-ireland-naming-customs",
+    "wiki-read-united-states-naming-customs"
+  ]
 }

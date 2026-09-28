@@ -12,17 +12,16 @@
       "reciprocal"
     ]
   },
-
   "input": {
     "user_message": "Add James Flynn of Carbon County as a third possible father, and keep track of what supports and contradicts each of the three candidates.",
     "scenario": "flynn-competing-fathers"
   },
-
   "negative": {
-    "correct_skill": ["hypothesis-tracking"],
+    "correct_skill": [
+      "hypothesis-tracking"
+    ],
     "explanation": "Creating a candidate and maintaining supporting/contradicting assertion links per candidate is hypothesis-tracking's owned workflow, written to the `hypotheses` section (the scenario already holds h_001 supported and h_002 active — this adds a third alongside them). conflict-resolution adjudicates: it performs source-independence analysis and applies the preponderance hierarchy to reach a resolution. The user asks for neither. 'Multiple candidates exist' is the precondition for tracking them, not for resolving anything — a conflict entry with no competing assertions over a disputed attribute and no resolution requested would be a fabricated conflict."
   },
-
   "judge_context": [
     "Should route to hypothesis-tracking rather than opening a conflict entry",
     "Must not write a `conflicts` entry — no attribute is disputed and no resolution was asked for; manufacturing one is the specific failure this test pins",
@@ -30,5 +29,9 @@
   ],
   "execution": {
     "max_wall_clock_seconds": 600
-  }
+  },
+  "mcp_fixtures": [
+    "wiki-read-ireland-naming-customs",
+    "wiki-read-united-states-naming-customs"
+  ]
 }

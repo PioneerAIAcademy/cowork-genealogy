@@ -502,7 +502,7 @@ entries; 154 scored candidate rows reached `results/match-scores.jsonl` while
 `stageSearchResults` writes `results/.staging/<uuid>.json` and
 `research_log_append` unlinks it on finalize, so a surviving file is a candidate
 unlogged search. It is only a candidate: `research_log_append` *warns* rather than
-fails when a staging-capable tool logs `results_available > 0` with no
+fails when a staging search tool logs `results_available > 0` with no
 `stagedResultsRef`, so a logged search can leave its file behind for the full TTL.
 Each staged file therefore consumes at most one such entry — same `tool`,
 `performed` at or after the file's `retrieved` — and only unpaired files count.
@@ -606,7 +606,7 @@ back as the MCP over-limit error.
 
 Two further consumers keep the ordering load-bearing regardless: the model's own
 context window, and anything else that bounds this response without the harness's
-key preservation. #1073's Definition of Done requires the ordering in any case.
+key preservation. The Definition of Done requires the ordering in any case.
 
 The capture side was widened in the same change
 (`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
@@ -636,8 +636,9 @@ in the six committed runs. `run-<ts>.json` is committed to git, so that is the
 price of the change, stated rather than discovered later.
 
 That 2.16x is the whole cost. `_summarize_tool_response` has exactly one caller —
-`tool_calls[].response_summary`. It had a second until #1238, which rendered the
-tool-call `args` into `run-<ts>.transcript.md`; #1238 removed both the transcript
+`tool_calls[].response_summary`. It had a second until the run-log-retention
+change, which rendered the
+tool-call `args` into `run-<ts>.transcript.md`; that change removed both the transcript
 and that call site, so no other artifact grows.
 
 **`response_summary` now has two shapes.** Under the verbatim threshold it keeps

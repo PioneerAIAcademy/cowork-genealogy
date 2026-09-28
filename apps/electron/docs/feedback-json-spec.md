@@ -1,16 +1,18 @@
 # `feedback.json` Submission Spec
 
 **Project:** Cowork Genealogy
-**Repo that implements this spec:** `cowork-genealogy-ui` (the
-Electron viewer). Specifically `src/main/feedback.ts` and the
-submission dialog.
-**Repo that consumes this spec:** `cowork-genealogy` (this repo).
-The feedback workflow (`docs/specs/feedback-case-spec.md`) and two
-Claude Code skills (`/compare-state`, `/mine-unit-test`) read
-`feedback.json` from inside the submitted zip.
 
-This spec is the contract between the two repos. The viewer must
-emit it; the workflow may rely on it.
+This spec is the contract between the two **producers** that emit
+`feedback.json` and the triage workflow that reads it — all in this
+repo. The producers are the Electron viewer
+(`apps/electron/src/main/feedback.ts`), the hosted web workbench
+(`apps/server/app/feedback.py`), and the submission dialog they share
+(`packages/viewer-ui/src/components/shared/FeedbackDialog.tsx`). The
+consumers are the feedback workflow
+(`docs/specs/feedback-case-spec.md`) and two Claude Code skills
+(`/compare-state`, `/mine-unit-test`), which read `feedback.json` from
+inside the submitted zip. The producers must emit it; the consumers may
+rely on it. §3 states the same split ("Two producers, one schema").
 
 ---
 
@@ -187,9 +189,10 @@ If the form's set of fields ever diverges between `feedback.json`
 and `FEEDBACK.md`, `feedback.json` is authoritative.
 
 The template above is a **suggestion**, not a requirement. The
-current `cowork-genealogy-ui` template in `src/main/feedback.ts`
-uses slightly different headings (`## What it should have done`,
-extra metadata bullets, a "Skipped files" section). The spec does
+templates in `apps/electron/src/main/feedback.ts` and
+`apps/server/app/feedback.py` use slightly different headings
+(`## What it should have done`, extra metadata bullets, a
+section listing dropped files). The spec does
 not mandate a specific Markdown layout — render whatever is most
 readable for the human reader. Only `feedback.json` is contractual.
 
@@ -208,7 +211,7 @@ readable for the human reader. Only `feedback.json` is contractual.
   was submitted under. The workflow reads `schema_version` and
   refuses zips it doesn't know how to handle (it'll fail loudly
   rather than silently misinterpret a future schema).
-- Version bumps are coordinated between the two repos via a paired
+- A version bump changes both producers and the triage readers in one
   PR.
 
 ---
@@ -262,7 +265,7 @@ wrong:
 
 - **They are separate optional files, and `schema_version` does not move.**
   §5 bumps on a removed, renamed or re-meaning `feedback.json` field, and a
-  bump is a paired change across two repos.
+  bump changes both producers and every consumer at once.
 - **Merging the sidechain entries into `session-log.jsonl` was rejected.** It
   breaks that file's shape contract above (entries limited to `user` and
   `assistant`, filtered to the submitting project's `cwd`) and would therefore
@@ -390,62 +393,11 @@ when the actual failure categories are observable.
 
 ---
 
-## 8. Implementation checklist for `cowork-genealogy-ui`
-
-Concrete tasks for the UI repo:
-
-1. In `src/main/feedback.ts::buildFeedbackZip`, after the current
-   `FEEDBACK.md` write, also write `_feedback/feedback.json` with
-   the schema in §3. Field values come from the same form state
-   already used to build `FEEDBACK.md`. Sources for the
-   non-form-field values:
-   - `submitted_at`: `new Date().toISOString()`
-   - `viewer_version`: the build stamp from `src/main/build-info.ts`
-     (`app.getVersion()` is only its base)
-   - `platform`: `process.platform`
-   - `project_folder_path`: the same value already used to
-     populate `FEEDBACK.md`'s "Project folder" line
-2. Enforce 10,000-char max on the user-typed text fields
-   (`user_prompt`, `agent_did`, `agent_should_have`, `notes`) in
-   **two** places:
-   - The dialog blocks submit with a clear error message when any
-     field exceeds the limit.
-   - `buildFeedbackZip` validates field lengths and throws on
-     violation, so the limit can't be bypassed by future callers
-     of the function. Single source of truth: the same constant
-     used by both checks.
-3. Add a unit test (or update the existing one) for
-   `buildFeedbackZip` that asserts:
-   - The zip contains `_feedback/feedback.json`.
-   - The JSON parses.
-   - All required fields are present (including `notes`,
-     `project_folder_path`, `platform` — even when empty).
-   - `schema_version` is `1`.
-   - The field values round-trip the form data without
-     transformation (modulo whitespace trim and `email`
-     lowercasing).
-   - Over-length fields throw rather than silently truncate.
-4. `viewer_version` from `app.getVersion()` may report `'0.0.0'` or
-   `'1.0.0'` in unpackaged dev builds. Decide whether that's
-   acceptable (devs can filter on it in triage) or whether dev
-   submissions should be marked distinctly (e.g. append `-dev`).
-   Either is fine for v1; just commit to one.
-5. Coordinate with this repo (`cowork-genealogy`) on the cutover.
-   The dev workflow can't run until at least one zip with
-   `feedback.json` exists, but old zips without it are explicitly
-   not supported (per `feedback-case-spec.md`).
-6. Nothing else in §7 is in scope for v1. If you find yourself
-   wanting any of the deferred items, ping the consuming repo
-   (`cowork-genealogy`) first — most of them have downstream
-   implications for the workflow.
-
----
-
-## 9. Out of scope for this spec
+## 8. Out of scope for this spec
 
 - The zip's overall layout (which project files are included, how
-  they're packaged) — that's already established in the existing
-  `feedback.ts`.
+  they're packaged) — that's already established in
+  `apps/electron/src/main/feedback.ts`.
 - The Drive upload mechanism — already in place.
 - Anything the dev tooling does with `feedback.json` after reading
   it — that's `feedback-case-spec.md`.

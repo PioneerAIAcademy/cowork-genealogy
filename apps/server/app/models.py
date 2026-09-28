@@ -64,8 +64,3 @@ class Project(SQLModel, table=True):
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     updated: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     last_active: datetime = Field(default_factory=utcnow, sa_type=_TZ)
-    # Per-session turn lock for the public /v1 API (one turn at a time). Holds the
-    # timestamp of the in-flight turn, NULL when idle. A guarded UPDATE on this
-    # column is the atomic, cross-instance lock (correct on SQLite + Postgres) —
-    # see app/v1.py.
-    turn_locked_at: datetime | None = Field(default=None, sa_type=_TZ, nullable=True)

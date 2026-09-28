@@ -51,8 +51,10 @@ def test_no_spurious_conversion(tool_calls, test):
     boundary negatives, gated on the `no-spurious-conversion` tag.
 
     Some near-miss inputs look date-shaped but need no calendar conversion:
-    a cosmetic reformatting request (ut_convert_dates_010), or a question
-    about the *history* of a calendar convention (ut_convert_dates_003).
+    a cosmetic reformatting request (ut_convert_dates_010), a question
+    about the *history* of a calendar convention (ut_convert_dates_003), or
+    a question about whether a date string passes the research.json schema
+    (ut_convert_dates_012).
     Whether or not the router loads convert-dates, it must NOT perform a
     calendar conversion on these. Deterministic check: convert_calendar was
     never invoked. This is the real gate that keeps grade_on_invariant from

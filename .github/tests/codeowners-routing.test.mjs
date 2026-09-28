@@ -105,7 +105,7 @@ const TABLE = [
   ['.gitattributes', D],
   ['docs/specs/schemas/research.schema.json', D],
   // Genealogist content, including where it lives in developer-looking files.
-  ['packages/engine/plugin/skills/citation/SKILL.md', G],
+  ['packages/engine/plugin/skills/record-extraction/SKILL.md', G],
   ['packages/engine/plugin/skills/timeline/scripts/build.py', G],
   ['packages/engine/plugin/agents/gps-mentor.md', G],
   ['eval/fixtures/scenarios/x/research.json', G],

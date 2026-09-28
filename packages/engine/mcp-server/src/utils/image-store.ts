@@ -58,28 +58,42 @@ function normalizeImageRef(ref: string): string {
   return posix.normalize(ref.replace(/\\/g, "/"));
 }
 
-function truncatedImageKey(projectPath: string, imageRef: string): string {
-  // Scope by the bound store's projectId when there is one — the patron-isolating
-  // identity under the shared-process `http.ts` entrypoint, where every request
-  // presents the SAME anchor `projectPath` (`/project`), so keying on projectPath
-  // would collide two patrons reading the same image (#2457 B2). getProjectStore()
-  // returns the request-bound store here — every http tool call runs inside
-  // runWithProjectStore — so record and read resolve the same projectId for one
-  // project and distinct ids across patrons. A header-less request instead binds an
-  // *unbound* store, whose projectId is undefined (not a throw), so scope would
-  // fall back to the anchor projectPath — but that store's I/O throws before any
-  // cap is recorded (saveSourceImage) or read (research_append's readText), so the
-  // fallback is never exercised on the shared-process path. On the file backend
-  // projectId is undefined — one process serves one project — so fall back to the
-  // normalized projectPath. Both halves arrive raw from an LLM
-  // relay, so canonicalize: backslashes → `/` and a trailing separator off
-  // projectPath (a Windows caller may record `C:\p` and query `C:/p/`), and
-  // backslashes / leading `./` off imageRef (so `./images/x.jpg` joins
-  // `images/x.jpg`). Without either the record/query symmetry is lost.
-  const scope =
+/** The patron-isolating scope shared by the two process-lifetime caches
+ *  (`sourceImageCaps` here, `browseBudgetSeen` in image-transcribe.ts): the bound
+ *  store's `projectId` when there is one — the patron-isolating identity under the
+ *  shared-process `http.ts` entrypoint, where every request presents the SAME
+ *  anchor `projectPath` (`/project`), so keying on projectPath would collide two
+ *  patrons (#2457 B2, browse budget #2771). getProjectStore() returns the
+ *  request-bound store there — every http tool call runs inside runWithProjectStore
+ *  — so record and read resolve the same projectId for one project and distinct ids
+ *  across patrons. A header-less request instead binds an *unbound* store, whose
+ *  projectId is undefined (not a throw), so scope falls back to the anchor
+ *  projectPath; for the cap that fallback is never reached (the unbound store's I/O
+ *  throws before any cap is recorded or read), but the browse budget performs no
+ *  store I/O, so two header-less patrons share the fallback bucket — the accepted
+ *  known limitation in image-transcribe-tool-spec §5.8. On the file backend
+ *  projectId is undefined — one process serves one project — so fall back to the
+ *  normalized projectPath. When even that is absent (image_transcribe's own
+ *  `projectPath` is optional), fall back to the `<no-project>` sentinel so a bare
+ *  `?? projectPath` never stringifies `undefined` into the key. projectPath arrives
+ *  raw from an LLM relay, so canonicalize it: backslashes → `/` and a trailing
+ *  separator off (a Windows caller may record `C:\p` and query `C:/p/`), or the
+ *  record/query symmetry is lost. */
+export function projectScope(projectPath: string | undefined): string {
+  return (
     getProjectStore().projectId ??
-    posix.normalize(projectPath.replace(/\\/g, "/")).replace(/\/+$/, "");
-  return `${scope}\0${normalizeImageRef(imageRef)}`;
+    (projectPath === undefined
+      ? "<no-project>"
+      : posix.normalize(projectPath.replace(/\\/g, "/")).replace(/\/+$/, ""))
+  );
+}
+
+function truncatedImageKey(projectPath: string, imageRef: string): string {
+  // imageRef also arrives raw from an LLM relay, so canonicalize it the same way
+  // the GC folds its referenced set: backslashes → `/`, a leading `./`, doubled
+  // `//`, interior `/./` (so `./images/x.jpg` joins `images/x.jpg`). Without it the
+  // record/query symmetry is lost.
+  return `${projectScope(projectPath)}\0${normalizeImageRef(imageRef)}`;
 }
 
 /** Record that this project's persisted source image was read PAST the OCR

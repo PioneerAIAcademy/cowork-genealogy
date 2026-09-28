@@ -26,13 +26,20 @@ const MCP_SRC_PREFIX = 'packages/engine/mcp-server/src/';
 // — build_snapshot embeds `packages/engine/plugin/agents/<name>.md` for each
 // match, so the two scanners must agree (shared test vectors in
 // tests/unit/snapshot.test.ts + tests/unit/test_snapshot.py).
+//
+// `build_snapshot` ALSO embeds `packages/engine/plugin/agents/<skill>.md` when
+// one exists, for an agent-keyed suite with no SKILL.md to scan (issue #1253).
+// That rule needs no mirror here: this file only diffs a snapshot it is handed,
+// never builds one — only the scanner contract above is shared.
 const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
 
 // A snapshot value in `schema_version` >= 3 — sha256 hex. Shared shape with
 // `_HASH_RE` in eval/harness/harness/snapshot.py.
 const HASH_RE = /^[a-f0-9]{64}$/;
 
-const COSMETIC_TEST_FIELDS = ['name', 'description', 'tags'] as const;
+// tags is deliberately NOT cosmetic: it selects validators and changes
+// outcome computation. See issue #2694.
+const COSMETIC_TEST_FIELDS = ['name', 'description'] as const;
 const JSON_EXTS = new Set(['.json']);
 const TEXT_EXTS = new Set([
   '.md',

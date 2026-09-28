@@ -1,0 +1,270 @@
+{
+  "run_log": "v1_2026-09-24_10-39-10.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The record says \"Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor.\" The skill wrote \"most plausibly Thomas Flynn himself or his wife… direct familiarity with the family's birth origins,\" dropping the neighbour possibility the record holds open. That isn't firming up a hedge, it's deleting a branch — and the weighing depends on it."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Found the conflict, checked for unmarked ones, addressed all three competing assertions, resolved with every required field."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Four calls, correct sections and ids, nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "This is the dimension that improved, and I'd not dock it. It correctly identified the two censuses as correlated through one household tradition and treated them as a single unit earning no more weight than one report — the exact point the previous run on this test got backwards. The over-certainty about who the informant was is a Correctness and weighing fault; it's already counted twice there."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The hierarchy is applied correctly and the immigration-origin reasoning on the death certificate is sound. But it grounds the census side in an informant's \"direct familiarity\" that the record does not establish — and would not hold at all if the neighbour possibility is the true one."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions addressed by name, with the reasons a reader can follow without opening them."
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge says \"all factual claims are supported.\" They aren't. The persisted resolution_rationale states that \"parish register transcription societies — including the Lancashire Parish Register Society — routinely advanced the year by one for pre-1752 January–March dates.\" Nothing in the scenario or the tool response supports that; it's an invented claim about a named organisation's editorial policy. The calendar reasoning is genuinely correct and the conclusion stands without it."
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answered the question, gave the year and the form to record it in, and pointed at the next step."
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "convert_calendar called with the right date, jurisdiction England, and osNsYear — the correction the year-start question needs rather than the day offset. Ran live."
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Genuinely good: both trace to one register page and one informant, the parish curate, so they form one evidential unit and the transcript is not a second witness."
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correct that the apparent disagreement dissolves on calendar grounds rather than needing the hierarchy at all, and right to prefer the original register."
+    },
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both assertions addressed and the double-dated form 14 February 1746/7 recommended, which is the right answer. Recording that the judge repeated the fabricated editorial-practice claim as its own justification here. Not docking twice — it's counted in Correctness — but it means the judge cannot be relied on to catch invented claims about sources, which is the assumption V4's non-gating design rests on."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The fault is one sentence in the reply: \"almost certainly Thomas Flynn or his wife\". Correcting the judge: the persisted fields do not repeat it — independence_analysis, weighing_analysis and resolution_rationale all say \"unknown household member\" and hedge with \"likely\"/\"most likely\", faithfully. So the project record is clean and only the narration overstates. Still a 2, because the narration is what a researcher acts on."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Resolved c_001, explained the immigration-origin mechanism the user asked about, and addressed all three assertions."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five calls, correct record ids, the Ireland naming page matched, nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge's stated reason doesn't survive reading the field. It says \"both list the informant as an unknown household member — likely Thomas Flynn or his wife\", which is exactly the record's hedge, and then applies GPS Standard 46 correctly: partially independent, one corroborated cluster, not two independent sources. Nothing here asserts the informant's identity as fact."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Three factors, all grounded in specific attributes, and it doesn't contradict the independence finding — it treats the two censuses as one cluster throughout."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions dispositioned with reasons a reader can follow.\n"
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the routing on the merits. The request is an audit of existing links to one known person, which is person-evidence's job; conflict-resolution is for competing candidates, and none is named. Correct hand-off. Noting again that the reply is empty, so the judge's account of the skill \"identifying\" the mismatch is inferred from the recorded hand-off, not read from anything it wrote.\n"
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing more was required of this skill than getting out of the way, and it did. Same caveat about the empty reply."
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, which is right for work this skill shouldn't be doing."
+    },
+    {
+      "test_id": "ut_conflict_resolution_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the routing on the merits. Writing up conclusions from evidence already gathered is GPS Step 5, which is proof-conclusion's; conflict-resolution is Step 4, deciding between sources that disagree, and no disagreement is named in the request. Correct hand-off. Correcting the judge's wording: the skill did not \"produce no output\" — it invoked proof-conclusion. The empty transcript is the harness truncating at the hand-off, not inaction."
+    },
+    {
+      "test_id": "ut_conflict_resolution_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing was required of this skill but to pass the work on, and skills_invoked records that it did."
+    },
+    {
+      "test_id": "ut_conflict_resolution_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, correct for work this skill shouldn't be doing.\n\n\n"
+    },
+    {
+      "test_id": "ut_conflict_resolution_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the routing on the merits. Building a timeline from evidence already gathered is compilation, which is timeline's job; conflict-resolution decides between sources that disagree, and no disagreement is named. Correct hand-off. Noting the judge's wording: the skill didn't \"decline\" — it invoked timeline, and the empty transcript is the harness truncating at the hand-off, not inaction."
+    },
+    {
+      "test_id": "ut_conflict_resolution_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing was required but to pass the work on, and skills_invoked records that it did."
+    },
+    {
+      "test_id": "ut_conflict_resolution_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, correct for work this skill shouldn't be doing."
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both halves against the fetched page. The patronymic rule and the era dating are both present and both attributed to the wiki, which is what this test exists to force — the rule alone would be a right answer for an incomplete reason. Small note: the page says people began adopting fixed surnames at the end of the 19th century and that the first names law passed in 1923; the skill says the system held \"throughout\" the century and that the 1923 law \"fixed inherited surnames.\" Slightly past the source, correct in substance, and nothing turns on it for an 1875 record."
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answered the identity question, created the conflict entry with full analysis, and named three records that would decide it — household composition, a separate 1875 entry under Hans Olsen, and Ringsaker baptismal registers. All three are genuinely decisive."
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "wiki_read hit Norway_Naming_Customs before any ruling, and the append carried a complete conflict entry. Nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right, and subtly so: a_001 and a_002 come from one record persona, so this is not a contest between independent sources at all — it's whether that single persona belongs to the subject. Framing it that way is correct and avoids a false corroboration."
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The patronymic is correctly treated as a structural signal that outweighs given name, age and parish coincidence, and the reason given — that a rural Norwegian parish would readily hold two boys named Anders born around 1868 — is sound. It also flagged a_002 as estimated, which is why the age overlap carries little weight."
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly unresolved with no preferred assertion, because the finding is exclusion rather than identification. The explanation of why the algorithmic match recurs is the most practically useful thing in this run.\n\n"
+    }
+  ]
+}

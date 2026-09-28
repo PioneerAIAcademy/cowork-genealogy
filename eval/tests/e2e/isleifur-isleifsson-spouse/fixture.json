@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 15, hint-samples.csv row 485, flags adds_spouse/adds_son, confidence 3). Draft transcribed from an 1856 Icelandic baptismal index entry; unverified. Twelve days separate it from a christening the tree already has."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 15, hint-samples.csv row 485, flags adds_spouse/adds_son, confidence 3). RESOLVED 2026-09-22: the hint is a TRUE MATCH. The Kross prestþjónustubók (Landeyjaþing BA/0008, FamilySearch film 104563914) enters the father at the SAME farm — á Kyrkjulandi — and marks him ógift on both 1856 entries: Einar on page 40 (b. 23 Sept, chr. 28 Sept, mother Þórunn Einarsdóttir, both parents on that farm) and Steinunn on page 45 (chr. 16 Sept, mother Guðríðr Gunnlaugsdóttir í Litluhildisey). An unmarried farmhand with children by two women needs no second Ísleifur Ísleifsson, and none appears in the Kross baptism index 1845-1875. Both findings stand, enriched. See README \"Notes for reviewers\"."
 }

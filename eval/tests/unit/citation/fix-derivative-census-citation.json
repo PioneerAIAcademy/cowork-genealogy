@@ -11,11 +11,12 @@
       "derivative",
       "fix-path",
       "src_002",
-      "digital-index"
+      "digital-index",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Fix the citation for src_002. It's an Ancestry derivative of the 1850 census and I think there are some problems with it.",
+    "delegation": "Fix the citation on src_002. It is an Ancestry derivative of the 1850 census and the researcher believes it has problems.\n\nsourceId: src_002\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

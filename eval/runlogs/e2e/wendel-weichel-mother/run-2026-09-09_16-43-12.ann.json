@@ -6,5 +6,12 @@
     "f4": "true"
   },
   "proof_quality_score": 3,
-  "findings_hash": "5534f15d7bdbb1991d016921d4c3ae17a026cf1c389db87ed7528630453c5e4a"
+  "notes": {
+    "f1": "Mother recovered exactly: I1 Josephine/Josefine Weichel, F1 Birth 7 Sep 1891 at Selz near Odessa, Russia (S2/S3), linked to the subject by R7 (S4). Date and country both match the finding. Proof quality 3: the exhaustive search documents five collections plus FAN work, and c_001 (manifest \"Joseph\" vs census \"Jacob\") carries a real independence and weighing analysis, resolved by finding a separate Joseph Weichel household in the 1931 census. Tier \"probable\" is right, since the decisive Selz baptism register is genuinely inaccessible.",
+    "f2": "The existing placeholder father GX6M-5HT was named Jacob Weishel with F7 Birth 1890 Russia (S4), and no competing father person was added. That is what the finding asks for.",
+    "f3": "Residence is the graded fact_type and it is recovered on the subject: F11, 1926, Weyburn No. 67, Saskatchewan (S4). The 1924 immigration sits on the mother I1 (F4) at Wellburn, Thames Centre, Ontario, which is not an error — S3 IS the 1924 immigration manifest, and Thames Centre is that record's own stated destination. The finding says the family immigrated to Canada in 1924 and names no immigration place, so a manifest-faithful fact on a family member satisfies it. Graded true.",
+    "f4": "All four siblings created with correct years and places and linked to both parents: Peter I2 (1919 Russia), Augina I3 (1922 Germany), Katherina I4 (1923 Germany), Barbara I5 (1925 Saskatchewan), R9 through R16."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "1edd2fa0e8ad698e6198746924bb02cb3b20d2818327c6db0e6582e0ab4dae12"
 }

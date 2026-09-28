@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { requirePre1880CensusHedge } from "../../src/tools/research-log-append.js";
+import { requirePre1880CensusHedge, stagedPre1880UsCensusYears } from "../../src/tools/research-log-append.js";
 
 /**
  * Issue #1284's rule, enforced where it binds. Both directions matter equally:
@@ -7,8 +7,9 @@ import { requirePre1880CensusHedge } from "../../src/tools/research-log-append.j
  * is why the check is narrower than the eval validator's.
  */
 describe("requirePre1880CensusHedge", () => {
-  const bad = (n: string) => expect(() => requirePre1880CensusHedge(n)).toThrow(/relationship-to-head/);
-  const ok = (n: string) => expect(() => requirePre1880CensusHedge(n)).not.toThrow();
+  const bad = (n: string, years?: number[]) =>
+    expect(() => requirePre1880CensusHedge(n, years)).toThrow(/relationship-to-head/);
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
 
   it("refuses the note that failed ut_search_records_017", () => {
     bad(
@@ -133,5 +134,140 @@ describe("requirePre1880CensusHedge", () => {
     // "searched for George's wife Catherine" is a statement about the TREE, not
     // about what the census stated — the validator's own carve-out.
     ok("Searched the 1860 census for his wife Catherine; she is absent from the return.");
+  });
+
+  // --- "indexed" beside a role word is a hedge, as in the eval validator. ----
+
+  it("accepts ut_search_records_014's note, which says the role was indexed", () => {
+    ok(
+      "One result: Patrick Flynn (CFLT-9K2), matchScore 0.85, birthDate 1845, birthPlace Ireland, " +
+        "residence Branch Township, Schuylkill, PA. Role indexed as 'Head' — logically impossible " +
+        "for a person born 1845 (~age 5 in 1850). No household co-residents returned in record_read.",
+      [1850],
+    );
+  });
+
+  it("still refuses a note that flags only a NAME as indexed", () => {
+    bad("1850 US Census: surname indexed as Flyn, head of household Thomas Flynn.");
+  });
+
+  it("accepts the em-dash variant, the known edge of the validator's own 20-character window", () => {
+    // Only `.`, `;` and `,` end the window, so the dash lets "indexed" reach
+    // "head". Recorded so the edge is met in a test, not inferred.
+    ok("1850 US Census: surname indexed as Flyn — head of household Thomas Flynn.");
+  });
+});
+
+/**
+ * The staged payload as a second trigger (issue #2735). The note never has to
+ * say "census": what the search staged says so. Every payload here names the
+ * census years `stagedPre1880UsCensusYears` would return for it.
+ */
+describe("requirePre1880CensusHedge with a staged census payload", () => {
+  const H4K =
+    "1 result returned: Amos Whitfield, b. 1817, Georgia, in Pike, Kentucky, 1850. " +
+    "Indexed within the Household of Nancy Doss. Birth year and birthplace are exact matches to the subject.";
+  const PARISH = "Parish register 1861: baptism of Sarah, in the household of William Mullen.";
+  const bad = (n: string, years?: number[]) =>
+    expect(() => requirePre1880CensusHedge(n, years)).toThrow(/relationship-to-head/);
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
+
+  it("allows h4k's note with no payload behind it, which is the word hole", () => {
+    ok(H4K);
+    ok(H4K, []);
+  });
+
+  it("refuses h4k's note when the staged search was an 1850 US census", () => {
+    bad(H4K, [1850]);
+  });
+
+  it("allows the parish-register note, whose text names no census year", () => {
+    ok(PARISH, [1850]);
+  });
+
+  it("allows a note that omits the census year, the limit the tie accepts", () => {
+    ok("1 result: Amos Whitfield in the Household of Nancy Doss.", [1850]);
+  });
+
+  it("still allows a hedged note", () => {
+    ok(`${H4K} Family structure inferred from surname, ages and order, not stated.`, [1850]);
+  });
+
+  it("judges a plural-only note by the payload", () => {
+    const plural =
+      "Traced the family across the 1850 and 1860 US censuses, Dodge County: head of household Thomas Flynn, with Mary Flynn.";
+    ok(plural);
+    bad(plural, [1850]);
+  });
+
+  it("does not let a note-only refusal through when the payload year is absent", () => {
+    // Says "census", binds no year, payload year not in the note: the old
+    // whole-note fallback still runs, so nothing refused before is allowed now.
+    bad(
+      "The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.",
+      [1850],
+    );
+  });
+
+  // The lead's standing proof: a year the note binds itself still wins.
+  it.each([
+    "1880 US Census, Bertha, Todd, Minnesota. Household of Henry Bottermiller (head, born 1828 Germany, farmer) and Mary Bottermiller (born 1838 Germany).",
+    "1900 US Census, Ward 6, Chicago: head of household Thomas Flynn, b. Mar 1857 Ireland; wife Mary, b. Jun 1859 Ireland.",
+    "1880 US Census, Cook County: Patrick Gallagher head of household, with wife Bridget and son Michael. Bridget gives her arrival as 1867; they married 1869.",
+    "John Butler, Male, born 1878 County Kilkenny, 1911 census household head.",
+    "1900 US Census, Ward 2: Mary Flynn, head of household, widow, with sons John and James. Her husband Thomas d. 1878.",
+    "US Census 1880, Dodge County: William Mullen head of household with wife Margaret; both parents b. Ireland, 1826 and 1830.",
+    "No results for William Faerber (b. 1869-1870) in 1880 U.S. Census, Hamilton County, Ohio. At age ~10 he would appear in his father's household.",
+    "1871 Scotland Census household (John Miller head, St Mary's, Forfarshire). Susan Miller listed as daughter, born 1865 in Forfarshire.",
+    "Record title: 'Household of Job Purnell, England and Wales Census, 1851'. Household: Job Purnell head, wife Ann, son Samuel.",
+    "1881 England and Wales Census (John Miller household, Barrow-in-Furness, Lancashire). Susan Miller listed as daughter, born 1865 Forfarshire.",
+  ])("still allows a note-bound documented census under an 1850 payload (%#)", (n) => ok(n, [1850]));
+});
+
+describe("stagedPre1880UsCensusYears", () => {
+  const rows = (...titles: (string | undefined)[]) => titles.map((t) => (t === undefined ? {} : { collectionTitle: t }));
+
+  it.each([
+    ["United States Census, 1850", 1850],
+    ["United States, Census, 1850", 1850],
+    ["United States Census, 1860", 1860],
+    ["1870 United States Federal Census", 1870],
+    ["US Census 1870", 1870],
+    ["U.S. Census, 1790", 1790],
+  ])("reads %s as a pre-1880 US federal census", (title, year) => {
+    expect(stagedPre1880UsCensusYears(rows(title))).toEqual([year]);
+  });
+
+  it.each([
+    "United States Census, 1880",
+    "United States Census, 1900 (Lancaster County, Pennsylvania)",
+    "US Census 1910",
+    "England and Wales, Census, 1841",
+    "England and Wales, Census, 1851",
+    "Norway Census, 1875",
+    "Ecuador, Census, 1737-1990",
+    "Philippines, Church Census, 1542-1980",
+    "New York State Census, 1855",
+    "Massachusetts, State Census, 1855",
+    "Kentucky Probate Records, 1727-1990",
+  ])("does not trigger on %s", (title) => {
+    expect(stagedPre1880UsCensusYears(rows(title))).toEqual([]);
+  });
+
+  it("needs EVERY titled row to qualify", () => {
+    expect(stagedPre1880UsCensusYears(rows("United States Census, 1850", "United States Census, 1880"))).toEqual([]);
+    expect(stagedPre1880UsCensusYears(rows("United States Census, 1850", "England and Wales, Census, 1851"))).toEqual([]);
+  });
+
+  it("collects every qualifying year and skips untitled rows", () => {
+    expect(stagedPre1880UsCensusYears(rows("United States Census, 1850", undefined, "United States Census, 1860"))).toEqual([
+      1850, 1860,
+    ]);
+  });
+
+  it("returns nothing when no row carries a title", () => {
+    expect(stagedPre1880UsCensusYears(rows(undefined, undefined))).toEqual([]);
+    expect(stagedPre1880UsCensusYears([])).toEqual([]);
+    expect(stagedPre1880UsCensusYears([null, 7, "x"])).toEqual([]);
   });
 });

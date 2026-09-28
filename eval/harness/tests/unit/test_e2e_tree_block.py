@@ -54,10 +54,30 @@ def test_record_keyed_and_search_tools_are_not_blocked():
         "mcp__genealogy__record_person_matches",  # keyed off a record, not subject
         "mcp__genealogy__record_record_matches",  # keyed off a record
         "mcp__genealogy__source_attachments",  # confirms a found record's attachment
-        "mcp__genealogy__person_warnings",  # reads the local stripped tree, not live
+        "mcp__genealogy__person_warnings",  # local mode only; see the live test below
     ]
     for name in allowed:
         assert is_blocked_tree_tool(name) is False
+
+
+def test_person_warnings_is_blocked_only_in_live_mode():
+    """`person_warnings` reads the LOCAL stripped tree by default, which is
+    legitimate research. With `live: true` it fetches the subject plus their
+    parents, spouses and children from the live tree, and every warning carries
+    `personName` and `relatedPersonId` — so on a parents fixture it hands back a
+    stripped relative's name and PID, which is the read `person_read` heads
+    BLOCKED_TREE_TOOLS for. The bare name cannot tell the two apart.
+    """
+    name = "mcp__genealogy__person_warnings"
+    assert is_blocked_tree_tool(name, {"personId": "X", "live": True}) is True
+    assert (
+        is_blocked_tree_tool(name, {"projectPath": "/w", "personId": "X"}) is False
+    )
+    assert is_blocked_tree_tool(name, {"personId": "X", "live": False}) is False
+    # No tool_input at all must not read as a live call.
+    assert is_blocked_tree_tool(name) is False
+    # An unconditionally blocked tool stays blocked whatever it is passed.
+    assert is_blocked_tree_tool("mcp__genealogy__person_read", {"live": False}) is True
 
 
 def test_baseline_tools_are_never_blocked():

@@ -155,18 +155,127 @@ a graduation, must satisfy all six:
    `materialize_facts` time, and gate there too — the tree write is where the
    violation lands, so a `person_evidence`-append gate alone cannot be the
    enforcement point.
-2. **An attestation — but note the owner has already decided against holding out
-   for a non-fabricable one.** Nothing today persists `same_person` output.
-   `docs/specs/research-append-tool-spec.md` records the 2026-08-01 decision
-   (#1006): validate `match_score`'s **presence** on the
-   `personEvidenceInvariants` path, explicitly conceding that presence does not
-   prove the call happened, and *"do not over-engineer past this."* The stronger
-   counter-design — `same_person` persisting a (person, record, persona)-keyed
-   attestation the writer tools check — is not what was decided; propose it
-   *against* that decision, not into a vacuum.
+2. **An attestation — SUPERSEDED 2026-09-07; the counter-design was adopted.**
+   This constraint told you to propose the attestation *against* the 2026-08-01
+   "do not over-engineer past this" decision (#1006) rather than into a vacuum.
+   The lead then decided the other way: the 2026-09-07 ruling on #1731 is that
+   `same_person` **does** persist what it computed and `research_append` **will**
+   require it. So the argument this constraint asked for has been made and won,
+   and the constraint is kept only as the record of what it displaced.
+
+   What shipped for it (PR A, #1731 steps 1-2): `same_person` gained a
+   project-relative arm and writes every score it computes to
+   `results/.scores/`, host-side, so the record never round-trips through the
+   model on the legitimate path. The writer-side requirement (step 3)
+   shipped on 2026-09-24: `research_append` refuses a `person_evidence` append
+   for a reachable persona with no recorded score for that pairing, so a
+   `match_score` written with no call behind it at all is now rejected. The
+   check is on the attestation's PRESENCE for the pairing, not on the value
+   written against it -- an agent that called `same_person` and then wrote a
+   different number still passes, and a test pins that. The
+   concession this constraint records -- validate presence, concede presence
+   does not prove the call -- is therefore spent on the legitimate path: the
+   check is now against a host-written record the model never touches.
+
+   Three limits the refusal carries rather than resolves. The value-vs-presence
+   gap above is the first. The score-TTL question was never answered, so it
+   ships on option A ("a score from an earlier session still counts"), which is
+   the option the card itself marks recommended. Recorded plainly because the
+   card named this a ruling needed BEFORE step 3 opened, and it was never put to
+   the lead: the choice is the recommended one, not an obtained ruling; option B is no longer reachable from what PR A
+   stored, because `RecordedMatchScore` keeps `computed` but nothing describing
+   the tree person at score time. And the gate has TWO rules, only one of which
+   is gated on reachability: requiring a score applies where one could have been
+   obtained, while forbidding a fabricated score on a provably circular pairing
+   applies everywhere. Conflating them left the fabrication case uncatchable for
+   any full-text-sourced assertion.
+
+   **The attestation is not yet unforgeable either, and step 3 must not assume
+   it is.** `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers
+   `research.json`, `tree.gedcomx.json` and `starting-tree.gedcomx.json` only,
+   so a raw `Write` to `results/.scores/` from inside the VM is unguarded. The
+   model cannot produce the payload; it can author the file. Extending that list is not a one-line
+   change: it is a tuple of BASENAMES matched by `name in ...`, and an
+   attestation is `results/.scores/<sha256>.json`, so it needs a path-prefix
+   predicate, and the tuple has THREE enforcement copies, not one:
+   `packages/engine/plugin/hooks/guard_project_files.py`,
+   `eval/harness/e2e/orchestrator.py` and
+   `apps/server/app/agent/real_agent.py` (the hosted control plane), all
+   registered in `eval/harness/tests/unit/test_write_lockdown_parity.py`, which
+   fails on an unregistered fourth. `eval/harness/e2e/corpus_report.py` carries a
+   read-only `WATCHED_PROJECT_FILES` mirror of the same names. An earlier draft
+   of this paragraph said "two more copies" and counted the parity TEST in place
+   of the hosted implementation -- which is the very copy the next paragraph
+   argues is out of scope, so the miscount undercut its own reasoning.
+
+   **Step 3 shipped without it, deliberately, with the threat model scoped
+   rather than treated as one binary.** The hook ships in the plugin, so it
+   binds in Cowork and on the hosted path and not at all in the `.mcpb`; on the
+   hosted path the store is `PgS3ProjectStore` and no file-write tool reaches
+   it. The residual forgery surface is the desktop `.mcpb` main thread and the
+   Cowork main thread. The `person-evidence` agent itself has no `Write`. The
+   prefix-deny remains worth doing and is **not currently tracked by any open
+   issue** -- searched 2026-09-24 and there is none, so this paragraph is the
+   only record of it. Stated plainly rather than as "tracked separately", which
+   is what it said until the claim was checked and found false.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.
+
+   **As implemented, after a correction in PR B.** The attestation keys on
+   (`record_id`, `assertion_id`, `tree_person_id`).
+
+   PR A keyed it on (`record_id`, party, `tree_person_id`), party being
+   `record_persona_id` when non-null and `record_role` otherwise. That was
+   wrong, and PR B's writer-side gate is what exposed it: the party is not
+   stable across the two routes. On the FETCHED route the tool resolves a real
+   `persons[].id` for a party whose assertion carries `record_persona_id: null`,
+   so the score was filed under what was resolved while every reader computes
+   the key from what the assertion carries. The gate could not find a legitimate
+   score and refused exactly the links whose call HAD been made, instructing the
+   agent to repeat the call that wrote the unfindable record. Reproduced against
+   the compiled build; `dev/probe-score-refusal.ts` carries the standing arm.
+
+   **The assertion key satisfies this constraint structurally rather than by
+   argument.** An assertion carries one `record_role` and one
+   `record_persona_id`, so it IS a (record, party) pair: a second persona of an
+   already-linked record is a DIFFERENT assertion and needs its own score.
+   `tree_person_id` keeps the two links of a relationship assertion apart.
+   Both sides always hold both tokens, which the party never guaranteed.
+
+   The constraint's own wording — key on (`record_id`, `record_persona_id`) —
+   is met in effect, not literally: `record_persona_id` is null on thousands of
+   corpus links and so cannot key anything on its own, which is what drove PR A
+   to the party fallback in the first place. The assertion is the stable stand-in
+   for it.
+
+   **This is the ATTESTATION key only.** The record-side PROJECTION still groups
+   parties on persona-id-else-role, and must, for the reasons below.
+
+   **The projection groups on the same key**, so the two cannot disagree about
+   what identifies a party. Grouping on `record_role` alone was the first
+   design and it was wrong twice over: it merges two personas that share a role
+   into one projected person (a transcribed register page holds many entries at
+   one role each), and it makes `recordPersonaId` useless as a disambiguator,
+   because the two people the caller is choosing between have already been
+   collapsed by the time it is read.
+
+   Measured over 3,093 projected parties on this corpus (1,330 persona-keyed,
+   1,763 role-keyed): **20 hold more than one distinct `name`.** Of those, 14
+   are role-keyed and are **refused** rather than scored as a merge; 6 are
+   persona-keyed and are exempt, because a group the record itself assigned one
+   persona id to is one persona under several spellings (maiden name, scribal
+   variant, "also known as"). Both directions are tested.
+
+   Two honesty notes on that exemption. It trusts the extractor's
+   `record_persona_id`, and by inspection 2 of the 6 exempt groups look like
+   two different people sharing one id (`1:1:MPXD-MZC`: "Charlotte Spriggs" /
+   "John W Spriggs") rather than one person under two spellings — an extraction
+   defect this guard cannot see and does not try to. And an earlier draft of
+   this paragraph claimed "18 of 22 are alias variants, so the guard exempts
+   them": that was a miscount, folding 14 groups carrying *no* persona id in
+   with 4 carrying one. The guard requires exactly one, so it never exempted
+   18.
 4. **Batch semantics.** Keep `proofSummaryInvariants`' pre-call-state discipline
    (`docs/specs/guardrail-enforcement-spec.md` §5, "Prefer this shape") with
    defined handling for an assertion and its link arriving in one batch.

@@ -240,10 +240,9 @@ wrapper's exemption.
   browser, which is the surface the P2 posture removes.
 - **No `results/`.** Served by `record_read` / `rank_search_matches`; a second
   route would let a skill dodge the compaction and ranking those apply.
-- **No images.** `image_read` / `image_transcribe` own the FamilySearch scan
-  class, by imageId or ark — neither takes a path, so an uploaded image has no
-  reader at all. A binary upload is refused as `not_text` and the message says
-  that, rather than pointing at a tool that cannot serve it.
+- **No images.** `image_read` / `image_transcribe` own the scan class. An
+  uploaded image or PDF is read by `image_transcribe({ file: <ref>, projectPath })`, which OCRs it host-side and returns text — so a binary upload is
+  refused as `not_text` and the message points there.
 - **No `research.json`, no tree.** `research_query` / `project_context` own
   those; a `ref` naming either is `invalid_ref` with a pointer.
 - **No spill recovery.** The CLI's oversized-result spill lives in a temp tree
@@ -287,12 +286,14 @@ the §6 classification is unchanged.
 
 ## 10. Fixture note
 
-No e2e scenario under `eval/fixtures/scenarios/` ships an `evaluations/` or
-`uploads/` directory. On a fixture whose `research.json` carries a
-pre-existing `evaluations[]` entry, `sidecar_read` on its `file_path` returns
-`not_found`, and the mentor's "a missing body counts as not craft" branch is
-what runs. That is the correct answer for the fixture, not a defect: the
-entry's body was never authored.
+One scenario ships an `evaluations/` directory — `flynn-prior-craft-verdict`,
+whose `evaluations[0]` has its verdict body on disk — and `build_workspace`
+stages `evaluations/` and `uploads/` into the unit workspace alongside
+`results/`. Elsewhere in the corpus a `research.json` may carry a pre-existing
+`evaluations[]` entry whose body was never authored; there `sidecar_read` on
+its `file_path` returns `not_found`, and the mentor's "a missing body counts
+as not craft" branch is what runs. That is the correct answer for such a
+fixture, not a defect.
 
 ## 11. Sites
 

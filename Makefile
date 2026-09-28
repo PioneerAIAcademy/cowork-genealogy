@@ -371,6 +371,21 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: probe-agent-nesting
+probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 6 sessions, ~$5)
+	# Main thread -> probe-driver-<arm> -> probe-leaf. Four arms grant the driver
+	# Task, Agent, both, or neither; the neither arm is the control and must not
+	# spawn. The verdict is read off the message stream, never the agents' prose.
+	#
+	# Answered 2026-09-23 (Claude Code 2.1.220, SDK 0.2.128): yes, at depth 2, and
+	# the tool is Agent -- a Task grant resolves to it. The SDK streams no depth-2
+	# messages. A driver spawning three real record-extractors in parallel ran
+	# them concurrently: 694 s wall against ~1,419 s back to back, every write
+	# landed. Re-run when the CLI or the SDK moves.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_agent_nesting.py
+
 .PHONY: hook-smoke
 hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? (issue #1160; 2 short sessions)
 	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
@@ -492,8 +507,8 @@ proto-turn: $(ENGINE_BUILD) ## D9–10 acceptance: two real turns through web ti
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
 
 # The worker reads the FamilySearch token per turn from apps/server/proto/.fs-token;
-# a token lives an hour, so run this between turns of a long run (no restart, no lost
-# turn). It FORCES a refresh when under 35 minutes are left (PROTO_TOKEN_MIN_LIFE, default
+# run this between turns of a long run, never during one -- a FamilySearch refresh
+# revokes the previous access token, so the in-flight attempt's calls would 401. It FORCES a refresh when under 35 minutes are left (PROTO_TOKEN_MIN_LIFE, default
 # 30 -- the READ_TIMEOUT_S step ceiling in minutes, so the token outlives a full-length
 # turn -- plus the auth module's 5-minute expiry buffer); getValidToken hands back a token
 # that has not yet expired, so the same call at minute 52 was a no-op. Start the session
@@ -511,6 +526,27 @@ proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker
 .PHONY: proto-kill
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
 	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
+
+# PR #2870 item 0a: the resume probe the guard was gated on. The 2026-09-20 run that
+# produced the synthetic result had been killed during a BACKGROUND delegation, and
+# `--kill-on Agent` alone lands on a foreground one, which resumes cleanly -- so this
+# selects on the call's INPUT (`run_in_background: true`), read out of session_entries
+# because tool_calls has no input column. Three things have to line up or it kills
+# nothing: the selector, a message that provokes two concurrent extractions
+# (proto/probes/background-delegation.txt), and AUTONOMOUS_MAX_NUDGES > 0, which
+# proto-kill otherwise leaves at 0 so the run ends before a delegation is reached.
+#
+# `run_in_background` is MODEL-CHOSEN -- 19 of 714 committed runs, none of the eight
+# bagley-father-1884 runs -- so this may simply not fire. Billed, roughly an hour a try.
+# Do not spend more than two attempts on it: the plan's accepted fallback is the unit
+# test `test_the_named_fallback_*` in apps/server/tests/test_proto_worker.py, which is
+# already green.
+.PHONY: proto-probe-resume
+proto-probe-resume: ## 0a probe: kill a real turn inside a BACKGROUND delegation and watch the resume — SESSION=<id> (proto-seed first); billed, ~1 h
+	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
+	  ARGS="--kill-on Agent --kill-on-input run_in_background=true --kill-after-s $${KILL_AFTER_S-20} \
+	        --text-file proto/probes/background-delegation.txt --deadline-s $${DEADLINE_S-2400} $(ARGS)"
 
 # D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
 # through PgS3ProjectStore, and a web-tier session on that project. Prints the
@@ -537,6 +573,7 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 .PHONY: proto-demo
 proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
 	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches}"; \
+	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
@@ -549,17 +586,23 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # the harness's cap (max_continue_nudges, 40) and its no-progress check, so the fixture
 # runs to project.status == "completed" in one turn. `AUTONOMOUS_MAX_NUDGES=5 make
 # proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run. One message
-# is now a whole run, so this arm alone raises the shim's per-attempt ceiling to 7200 s
-# (READ_TIMEOUT_S; the compose default 1800 holds for every other target -- the lead's
-# call, 2026-09-20 -- though the shim this arm recreates stays at 7200 until the next
-# `up` recreates it again) and sizes the demo's wait to span one shim-driven resume.
-# elasticmq's visibility timeout (7500 s) must stay above this export, or an attempt at
-# the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
+# is now a whole run, so the run spans SEVERAL attempts rather than fitting in one. The
+# per-attempt ceiling is the pinned 1800 s -- the 7200 s override of 2026-09-20 was a
+# symptom of the D17/0a resume defect, not a capacity finding, and came back down with it
+# (PR #2870 item 0b; "the step ceiling: 1,800 s, no test exception"). The export stays
+# because the next line sizes --deadline-s off the name and POSIX arithmetic reads an
+# unset name as 0 -- deleting it gives a 300 s deadline on an hour-long billed run.
+# The deadline spans SIX attempts, not one resume: re-measured 2026-09-23 over the 139
+# committed e2e runs that reached `completed`, the median is 53.6 min and 33% exceed
+# 2 * 1800 + 300,
+# which demo.py turns into a hard TimeoutError and a FAIL; the longest in the corpus
+# needed six. elasticmq's visibility timeout (2100 s) must stay above this export, or an
+# attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
-proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) and a 7200 s per-attempt ceiling (READ_TIMEOUT_S) so one turn runs the fixture to completion; FIXTURE=… ARGS=…
+proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
 	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
-	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-7200}"; \
-	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((2 * READ_TIMEOUT_S + 300)) $(ARGS)"
+	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-1800}"; \
+	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((6 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
 # D18: a session's project out of the store into files -- research.json, tree.gedcomx.json,
 # results/ and images/ under OUT/<project_id>/ (OUT default apps/server/proto/exports,
@@ -661,7 +704,7 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and call every offline tool once (no FamilySearch login needed)
 	cd $(ENGINE_DIR) && npx tsx dev/smoke-stdio.ts
 
-# D16 transport smoke: every advertised tool but the four auth exclusions, over Streamable
+# D16 transport smoke: every advertised tool but the three auth exclusions, over Streamable
 # HTTP. build/http.js has no file root: it binds a PgS3ProjectStore per request from the
 # X-Genealogy-Project-Id header, so both arms need the compose postgres + minio and the
 # smoke passes one fresh project id (SMOKE_PROJECT_ID overrides it) with the anchor
@@ -685,7 +728,7 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"
 
 .PHONY: engine-smoke-http
-engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the four auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
+engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the three auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
 ifdef BASE
 	@$(smoke_http_id); status=0; \
 	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project ) || status=$$?; \
@@ -841,7 +884,7 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	  --model "$(if $(MODEL),$(MODEL),claude-sonnet-4-6)" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: e2e-preflight
-e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection ~30s)
+e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection, OpenRouter key, live FS search ~60s)
 	cd eval/harness && uv run python -m e2e.preflight
 
 .PHONY: e2e-login
@@ -1018,6 +1061,29 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	# binding probe. Windowed to 14 days like every reader; SINCE=all for the
 	# whole corpus. A report, not a gate (see its own "Limits" footer).
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-writer-attribution
+e2e-writer-attribution: ## Which subagent wrote a project document, and whether an ownership row says it may (issue #2575): make e2e-writer-attribution | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs -- no live run, no API.
+	#
+	# The observed half of the actual-writer-is-listed direction. The BLOCKING
+	# half is static and lives in the vitest packaging suite
+	# (ownership-manifest.test.ts, "names every plugin holder of a writer tool");
+	# this one reads what the corpus records a subagent actually calling, which is
+	# what found the original instance and is the only half that can catch an
+	# agent body calling a tool its `tools:` never declared. (A skill's own calls
+	# carry no agent_type; an undeclared skill call is test_tool_allowlist's job.)
+	#
+	# Three classes: listed, UNLISTED (a manifest gap), and UNBOUND DELEGATION --
+	# an agent_type that is neither a shipped skill nor a shipped agent, can never
+	# be listed in any row, and is therefore its own finding rather than a
+	# manifest gap or a waiver. `general-purpose` is the #939 stand-in; any other
+	# name there was renamed, retired, or never shipped.
+	#
+	# Defaults to the WHOLE corpus, unlike every other e2e reader: a manifest gap
+	# is not a freshness question, and a window reads a strict subset of the same
+	# pairs as "fewer gaps". SINCE=14 for the house window.
+	cd eval/harness && uv run python -m e2e.writer_attribution_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
 e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1 | FEEDBACK_DIR=~/feedback PLATFORMS=<dir>=web,<dir>=darwin
@@ -1343,7 +1409,7 @@ deploy-preflight:
 deploy: sandbox-image deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs E2B_API_KEY + the e2b CLI; single always-on machine)
 	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
 	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
-	# until init_db moves to a release_command (issue #1127). Secrets +
+	# until init_db moves to a release_command. Secrets +
 	# `fly apps create` are one-time (DEVELOPMENT.md § Deploy to Fly.io).
 	# NOTE: apps/web/dist is baked at build time — redeploy to ship UI changes.
 	# GIT_SHA/BUILD_DATE are stamped into feedback bundles (apps/server/app/config.py).

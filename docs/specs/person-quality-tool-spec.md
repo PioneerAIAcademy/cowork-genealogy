@@ -24,10 +24,12 @@ code is HTTP-only — it does not import any FamilySearch internal code.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `personId` | string | Yes | FamilySearch tree-person ID (e.g. `"KD96-TV2"`). camelCase at the MCP boundary, per repo convention. |
+| `detail` | boolean | No | Opt in to the per-fact and per-source breakdown. Defaults to `false`, and when it is off the response is byte-identical to what it was before the flag existed. |
 
 Example:
 ```json
 { "personId": "KD96-TV2" }
+{ "personId": "KD96-TV2", "detail": true }
 ```
 
 > Unlike `person_ancestors`, `personId` is **required** — there is no
@@ -91,8 +93,10 @@ Top level: `{ isValid, personScores, visibility }`. All data is under
 | `personScores.overallDisplayScore` / `overallRawScore` | Overall 0–1 score (e.g. `0.97`). |
 | `personScores.segment` | Cohort the score benchmarks against (e.g. `"Norway 1816 - 1920"`). |
 | `personScores.pid`, `lang`, `visibility` | Person ID, language, and visibility (`PUBLIC` for a normal visible person). Not included in the output. |
-| `personScores.conclusionScores[]` | A **per-fact score breakdown**: one entry per conclusion (each NAME, BIRTH, BURIAL, …) giving that single fact's four sub-scores, plus `affectingIssueIds` = which issues are dragging that fact's score down (e.g. the BURIAL conclusion's completeness is lowered by its `MISSING_EVENT_DATE` issue). It's the granular "why" behind the category scores. **Not included in the output.** |
-| `personScores.sourceClusters[]` | The **attached-sources list**: each source (title + ark URI) and which of the person's conclusions it touches, with `agreesWithSource` true/false. It's the evidence behind consistency scoring (does this census/record agree with the tree?). **Excluded from output (decided in review — not important to include).** |
+| `personScores.conclusionScores[]` | A **per-fact score breakdown**: one entry per conclusion (each NAME, BIRTH, BURIAL, …) giving that single fact's four sub-scores, plus `affectingIssueIds` = which issues are dragging that fact's score down (e.g. the BURIAL conclusion's completeness is lowered by its `MISSING_EVENT_DATE` issue). It's the granular "why" behind the category scores. **Included only when `detail: true`** (it was excluded outright until the flag existed). 14 entries on `KD96-TV2`; `relationshipId` is present on the 2 MARRIAGE entries only, and absent from entries 0–2, so a reader sampling the first entry will miss it. Every one of the 7 non-empty `affectingIssueIds` joins onto `issues[].id` with no misses. |
+| `personScores.sourceClusters` | **An object, not an array** — `{ sourceClusters: [...], conflicts: [...] }`. This row read `sourceClusters[]` and was wrong; a type written from the old row does not compile against the live body. Verified against `KD96-TV2` by `dev/probe-person-quality-detail.ts`. **Included only when `detail: true`.** |
+| `personScores.sourceClusters.sourceClusters[]` | The **attached-sources list**: clusters of sources, each source carrying `uri`, `title`, and the conclusions it touches with `agreesWithSource` true/false. It's the evidence behind consistency scoring (does this census/record agree with the tree?). 21 clusters / 28 sources on `KD96-TV2`, sizes `[6, 3, 1×19]`. A single source may repeat the same conclusion id inside its own `conclusions[]` — 13 of the 28 did — so any per-conclusion inversion must dedupe. |
+| `personScores.sourceClusters.conflicts[]` | **Which two attached sources disagree, and about what**: `{ sourceUris: [a, b], conflictingFields: [{ name, values }] }`, e.g. `name: "Birth Date"`, `values: ["+1877", "+1876-10-02"]` (values carry a leading `+`, GedcomX formal-date syntax, not a typo). `sourceUris` is always exactly two. Undocumented upstream, and unmodeled here until the flag existed. **Pairwise and heavily duplicated**: 50 entries on `KD96-TV2` encode 5 real disagreements, since one disagreement is restated once per source pair. **Included only when `detail: true`**, and reduced — see Output. |
 
 Each `issues[]` element carries the fields below. The first six rows were
 **observed** in the `KD96-TV2` sample; the *Use* column is the proposed
@@ -226,6 +230,72 @@ value off as official. Add a band later if the true thresholds are confirmed.
 
 *Alternatives considered, not chosen:* sentences-only (a flat `string[]`, no
 summary or traceability) and this shape + every raw numeric score.
+
+### The opt-in `detail` block
+
+`detail` is **absent** from the result unless the caller passes `detail: true` —
+absent, not empty, so the default payload is byte-identical to what it was before
+the flag existed. That is the whole point of the flag: the summary caller
+(`check-warnings`) wants a lean per-person answer, while a tree audit wants to
+know *which fact* and *which source*, and one tool serves both without either
+paying for the other's context.
+
+```json
+"detail": {
+  "facts": [
+    {
+      "conclusionId": "d57d443f-…",
+      "conclusionType": "BURIAL",
+      "score": 0.86,
+      "issues": ["The burial date is missing."],
+      "sources": [
+        { "title": "Christian Peder Hole, \"Minnesota, Deaths, 1887-2001\"",
+          "uri": "https://familysearch.org/ark:/61903/1:1:…",
+          "agrees": true }
+      ]
+    },
+    { "conclusionId": "…", "conclusionType": "MARRIAGE", "relationshipId": "M5PN-FXR",
+      "score": 1, "issues": [], "sources": [] }
+  ],
+  "conflicts": [
+    { "field": "Birth Date",
+      "values": ["+1876-10-02", "+1877"],
+      "sources": [ { "title": "…", "uri": "…", "agrees": null } ] }
+  ]
+}
+```
+
+**`facts[]` — one entry per `conclusionScores` entry.** `score` is the upstream
+`combinedDisplayScore`. `relationshipId` is present only where upstream sends one
+(the MARRIAGE conclusions). Expect the result to be **sparse**: only 5 of
+`KD96-TV2`'s 14 conclusions have any attached source, so 9 carry `sources: []`.
+
+**`issues[]` inside a fact holds rendered sentences, not ids.** Upstream gives
+`affectingIssueIds`, which join onto `issues[].id` — and `id` is not part of this
+tool's issue output, so passing the ids through would hand the caller keys that
+join to nothing. The join is resolved here and the sentence emitted, which
+extends the existing traceability guarantee above rather than inventing a second one.
+
+**`sources[]` is deduped by source `uri`.** Upstream nests source → conclusions,
+and one source may list the same conclusion id twice (13 of 28 sources on
+`KD96-TV2`). Inverting to conclusion → sources turns that into one source listed
+twice under one fact. Deduping by uri is lossless here: of the 21 duplicate
+`(conclusion, uri)` pairs, **none** disagreed on `agreesWithSource`.
+
+**`conflicts[]` is reduced, not passed through.** Upstream restates a single
+disagreement once per source pair, so the raw list grows quadratically with the
+number of sources holding the field — `KD96-TV2` returns **50** entries encoding
+**5** real disagreements. Entries are grouped by `(field name, sorted value set)`
+and carry every source that took part. Passing the raw list through would flood
+the context, which is the failure the original exclusion was guarding against.
+
+**`agrees: false` has never been observed.** Every `agreesWithSource` on the one
+person probed so far was `true`, so the disagreement branch is **unverified** —
+this spec deliberately says nothing about how it renders. `agrees` is `null`, not
+`false`, when upstream omits the field, so an absent value is never reported as
+disagreement. On `conflicts[].sources` it is always `null`: the conflict list
+names source URIs, not per-conclusion agreement. Probe a person carrying a
+disagreement before writing that branch down.
 
 **OPEN — include friendly category labels?** The API returns only
 `scoreType`. FamilySearch's UI shows friendlier names. Current behavior:

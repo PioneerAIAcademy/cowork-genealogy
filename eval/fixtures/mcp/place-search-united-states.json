@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "place_search — country-level result for the United States, for the call shape where the skill walks the place hierarchy from the top before narrowing (placeName='United States'). Predicate is '~United States' on placeName, which does NOT match a call passing placeName='Pennsylvania' with contextName='United States' — that one falls through to place-search-pennsylvania. Declare this before the catch-all and after any county-specific fixture. Added because the unmatched call was scoring Correctness and Tool Arguments to 1 on ut_search_external_sites_007 (run log v1_2026-09-22_07-05-19), failing the test on a fixture gap rather than on the log-entry behavior it exists to grade.",
+  "args": {
+    "placeName": "~United States"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "United States",
+        "type": "Country",
+        "dateRange": "+1776/",
+        "latitude": 39.8,
+        "longitude": -98.6,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=United%20States&focusedId=1"
+      }
+    ]
+  }
+}

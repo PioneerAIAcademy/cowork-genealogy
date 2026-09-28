@@ -78,13 +78,21 @@ applies only to `keywords` and `place` searches.
 Also search nicknames: Peggy/Margaret, Polly/Mary, Sally/Sarah,
 Bill/William, Dick/Richard, Jack/John, etc.
 
-**Cross-language equivalences (for ecclesiastical/colonial records):**
-- Latin: Joannes↔John, Iacobus↔James, Petrus↔Peter,
-  Henricus↔Henry, Carolus↔Charles
-- Spanish: Diego/Santiago↔James, Catalina↔Catherine,
-  Guillermo↔William
-- German: Johann/Hans↔John, Wilhelm↔William, Heinrich↔Henry,
-  Friedrich↔Frederick
+**Cross-language equivalences (for ecclesiastical/colonial records).**
+Read the word list for the record's language rather than recalling
+equivalents — these lists are long, and a half-remembered handful is how
+a variant search misses the one spelling the clerk used:
+
+```
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Latin_Genealogical_Word_List" })
+wiki_read({ url: "https://www.familysearch.org/en/wiki/Spanish_Genealogical_Word_List" })
+wiki_read({ url: "https://www.familysearch.org/en/wiki/German_Genealogical_Word_List" })
+```
+
+Substitute the language actually in the record; the slug is
+`{Language}_Genealogical_Word_List`. Run each equivalent you take from
+the list as its own query — the `keywords` and `place` fields do not
+expand anything.
 
 ## Phrase and reordering variants
 
@@ -110,21 +118,47 @@ The unique value proposition of FTS. Search for:
 
 When the subject's own name is `Given Paterno Materno` (e.g. "Francisco
 **Naveda Somarriba**"), the two surnames are the father's and the
-mother's. To find the parents, **decompose the compound into a
-co-occurrence** — `+Naveda +Somarriba` — and run it **unscoped** (no
-`collectionId`; the answer often sits in a different FTS collection than
-you'd guess). Do **not** search the adjacent phrase `+"Naveda
-Somarriba"`: in the parents' own records (the child's baptism, a
-parent's burial or marriage) the father carries the paternal surname and
-the mother the maternal one, so the words are on separate people and not
-adjacent — the phrase form matches only where the child's compound name
-is written out and misses the parentage records.
+mother's. The convention itself — ordering, `de` and `y`, regional
+variation, what happened to the name on emigration — is on the
+jurisdiction's `{Country}_Naming_Customs` page; read it rather than
+reciting it.
+
+To find the parents, **decompose the compound into a co-occurrence** —
+`+Naveda +Somarriba` — and run it **unscoped** (no `collectionId`; the
+answer often sits in a different FTS collection than you'd guess). Do
+**not** search the adjacent phrase `+"Naveda Somarriba"`: in the
+**father's** own records he carries the paternal surname and the mother
+the maternal one, so those words sit on separate people and are not
+adjacent, and the phrase form matches only where the child's compound
+name is written out. It is not true that the two surnames never appear
+adjacent — a married woman is often written with her own surnames plus
+her husband's ("María Somarriba de Naveda"). The co-occurrence is still
+the right query, because it matches that case as well.
 
 Escalate precision as you learn the names:
 1. `+Naveda +Somarriba` (both surnames required, unscoped).
 2. `+"Somarriba González" +Naveda` (mother's fuller form once known).
 3. `+Naveda +Somarriba +Limpias` (add the parish once a locality is in
    hand) — or apply the place *filter* rather than a keyword.
+
+**Two register forms, one of which the wiki does not carry.** Measured
+2026-09-23 against the live corpus.
+
+- The maternal surname is often written with the particle **`de la`** —
+  `María de la Somarriba` for `María Somarriba` — and an entry carrying it will
+  not match a query for the bare surname. `Spanish_Genealogical_Word_List`
+  carries the search instruction for this ("prefixes such as *De la Torre* may
+  be ignored in alphabetization... search under both parts of a name"), so take
+  it from the page. What no page states is that the register writes the particle
+  where the modern form of the same name omits it, which is why both forms have
+  to be run rather than only the one the researcher brought.
+- The paternal surname appears in a **plural form** in a minority of entries —
+  `Navedas` for `Naveda`, `Gonzáles` for `González`. Both forms occur for the
+  same household, sometimes in consecutive acts. Neither
+  `Spain_Naming_Customs` nor the word list carries this, so it stays here under
+  ADR-0012's provision for craft the wiki demonstrably lacks.
+
+Search both separately; the singular alone misses the acts that use the other.
 
 This is the single highest-yield move for "where was X from / who were
 X's parents" when X emigrated and the destination records only say
@@ -146,14 +180,21 @@ unindexed.
   Lauderdale"
 - State abbreviations: "Ala.", "Va.", "Virga", "N.C.", "No. Caro."
 - Spelling variants: Pittsburgh/Pittsburg, Worchester/Worcester
-- Historical jurisdictions: "British North America" (pre-1867
-  Canada), "New Spain" (pre-1821 Mexico)
+- Historical jurisdictions: the name the place carried in the record's
+  own era is frequently not its modern one. Read the country's
+  `{Country}_Genealogy` page (and its historical-geography page where it
+  has one) for the names and dates rather than working from memory, then
+  search each name as its own variant.
 
 ## Date variants to try
 
 - Year as keyword: `1834`
 - Written-out: `+"twenty-fifth day"`, `+"day of August"`
-- Quaker dates: `+"first month"`, `+"7th day of the 9th month"`
+- Quaker dates: `+"first month"`, `+"7th day of the 9th month"`. The
+  numbering shifted when the year start moved in 1752, so the same month
+  name maps to two different numbers either side of it — `wiki_search`
+  for "Quaker dates" returns the conversion chart. Do not convert one
+  from memory.
 - Abbreviated: `25 Augt`, `Septr 1834`, `Xber` (December)
 - Use Year Range filter for ranges; do NOT force year as keyword
   unless searching for a specific recorded date
@@ -178,8 +219,11 @@ personal names.
 `"administrator of the estate"`, `"inventory and appraisement"`
 
 **Slavery research** (hurtful content warning — research vocabulary):
-- `+Negr*` (~60% coverage) → `+slave*` (cumulative 83%) →
-  `+Freedm?n` (cumulative 92%)
+- Widen in this order, which is the order of observed yield:
+  `+Negr*` → `+slave*` → `+Freedm?n`. Each adds records the one before
+  it missed, so run them as separate searches rather than stopping at the
+  first. No probe in this repo measures their coverage, so no percentage
+  is quoted here — treat the ordering as a tactic, not a statistic.
 - `+"aged about"`, `+"her child"`, `+Emanc*`, `+Manum*`
 - Spanish: `+esclav*`, `+"de color"`, `+moren*`
 

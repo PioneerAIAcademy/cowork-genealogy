@@ -1,7 +1,8 @@
 # Enforcing the `image_read` context boundary — plan
 
-> **Status:** proposed (2026-07-16), branch `image-read-context-policy`, merged up
-> to main `6829b087` (#715/#712/#714). **Premise probe-verified — see §3.1.** This
+> **Status:** §4 implemented (#717, 2026-07-17, `eval/harness/harness/context_policy.py`);
+> §5's production port declined by lead ruling 2026-08-17 (ADR-0006). Nothing is pending.
+> **Premise probe-verified — see §3.1.** This
 > supersedes an earlier framing from the retired staging queue (the surviving
 > item is issue #1130), whose central premise — *"no environment can
 > currently deny a main session a tool an agent needs"* — is **false as written**.

@@ -49,6 +49,10 @@ export function pluginSkillsDir(): string {
   return path.join(repoRoot(), 'packages', 'engine', 'plugin', 'skills');
 }
 
+export function pluginAgentsDir(): string {
+  return path.join(repoRoot(), 'packages', 'engine', 'plugin', 'agents');
+}
+
 export function testsUnitDir(): string {
   return path.join(evalDir(), 'tests', 'unit');
 }

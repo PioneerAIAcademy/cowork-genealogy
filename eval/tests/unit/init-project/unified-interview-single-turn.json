@@ -27,5 +27,21 @@
     "Should not ask the user anything about themselves -- no experience question, no access question -- and should not mention a default for the objective, since the user stated it.",
     "Should create both research.json and tree.gedcomx.json in this single pass, seeding the Patrick Flynn stub from person-read-flynn.",
     "`researcher_profile.subscriptions` should be **absent** — site access is never asked, and the field is left unwritten rather than defaulted."
-  ]
+  ],
+  "execution": {
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  }
 }

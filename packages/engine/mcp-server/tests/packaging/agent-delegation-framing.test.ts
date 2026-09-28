@@ -393,8 +393,32 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 //   - `normalize` collapses whitespace, so an "excerpt" spanning two paragraphs
 //     would satisfy the quote check. Already true of every pin here, so it is a
 //     property of the mechanism rather than something this adds.
+//
+// THE `citation` ROWS ARE A DIFFERENT SHAPE, and worth reading before adding
+// more like them. `citation` (issue #2799) is the first agent whose name is
+// also an ordinary English word, and `namesAgent` tokenizes and matches any
+// token CONTAINING the name — so "citation", "citations" and "inline citation
+// of individual claims" all trip arm 2 in skills that have nothing to do with
+// the agent. Of the eight below, only `record-extraction` and `translation`
+// mean the agent (both are boundary prose: "format citations (use citation)",
+// "hand off to citation after record-extraction creates the source entry");
+// the other six are the common noun. All eight are bare-name mentions, so all
+// eight take `""` and none can suppress a real delegation.
+//
+// The arm still earns its place for `gps-mentor`, `image-reader` and
+// `record-extractor`, whose names no one writes by accident. It does not
+// discriminate for `citation`, and each further single-word conversion
+// (`translation` is next, issue #2804) adds another block like this one.
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
+  ["historical-context -> citation", ""],
+  ["init-project -> citation", ""],
+  ["project-status -> citation", ""],
+  ["record-extraction -> citation", ""],
+  ["research -> citation", ""],
+  ["search-records -> citation", ""],
+  ["source-evaluation -> citation", ""],
+  ["translation -> citation", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -570,7 +594,12 @@ describe("agent delegation framing", () => {
   // Hand-listed on purpose, and held to set EQUALITY, which is the discipline
   // DELEGATION_EDGES has and PROSE_MENTIONS lacked: a name entering or leaving
   // fails here and the author says in the diff which it was.
-  const PROSE_ARM_COVERS = ["gps-mentor", "image-reader", "record-extractor"];
+  const PROSE_ARM_COVERS = [
+    "citation",
+    "gps-mentor",
+    "image-reader",
+    "record-extractor",
+  ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {
     expect(
@@ -678,7 +707,7 @@ describe("agent delegation framing", () => {
     // instruction actually SHIPS to a denied caller is invisible to both arms:
     // hooks/guard_project_files.py builds "invoke `@plugin:{agent}`" in
     // OWNER_REASON and DECLARATION_REASON, with {agent} filled at runtime from
-    // OWNED_SECTIONS / OWNED_DECLARATIONS. Nothing is wrong today — the text
+    // OWNED_SECTIONS / OWNED_DECLARATIONS / OWNED_FIELDS. Nothing is wrong today — the text
     // carries no conclusion — but a later edit that slanted it would fire
     // nothing, and these are the same three agents the prose arm drops for the
     // name-collision reason, so for them neither arm covers that path.
@@ -700,7 +729,7 @@ describe("agent delegation framing", () => {
     // Agents the hook can name, read from its routing tables rather than
     // hand-listed here.
     const routed = new Set<string>();
-    for (const table of ["OWNED_SECTIONS", "OWNED_DECLARATIONS"]) {
+    for (const table of ["OWNED_SECTIONS", "OWNED_DECLARATIONS", "OWNED_FIELDS"]) {
       const m = hook.match(new RegExp(`${table}\\s*=\\s*\\{[^}]*\\}`));
       expect(m, `${table} not found in guard_project_files.py`).not.toBeNull();
       for (const q of m![0].matchAll(/"([a-z][a-z0-9-]*)"/g)) {
@@ -710,7 +739,7 @@ describe("agent delegation framing", () => {
     expect(
       [...routed].sort(),
       "the hook routes to an agent set this test could not resolve. It reads " +
-        "OWNED_SECTIONS and OWNED_DECLARATIONS; if the routing moved, follow it.",
+        "OWNED_SECTIONS, OWNED_DECLARATIONS and OWNED_FIELDS; if the routing moved, follow it.",
     ).toEqual(["person-evidence", "proof-conclusion", "research-exhaustiveness"]);
 
     // Each routed callee must carry the rule on its own side.

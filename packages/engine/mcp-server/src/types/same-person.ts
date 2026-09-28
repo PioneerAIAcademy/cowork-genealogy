@@ -2,7 +2,40 @@ import type { SimplifiedGedcomX } from "./gedcomx.js";
 
 // ─── Tool input/output ───────────────────────────────────────────────────────
 
-export interface SamePersonInput {
+/**
+ * The project-relative arm (issue #1731 step 1). The caller names references the
+ * project already holds and the tool assembles BOTH documents itself: the record
+ * side from the record's own GedcomX where one is reachable and from the
+ * assertions otherwise, the tree side as the candidate's matching mob.
+ *
+ * It exists because the explicit form below costs the model a hand-assembled
+ * pair of record-sized documents per link, and it was measurably not paying it.
+ * The lead's 2026-09-07 ruling measured 7,526 links across 151 runs against 91
+ * `same_person` calls; the corpus has grown since, so that figure is quoted at
+ * its date. The ratio endures: 8,791 links across 183 committed e2e runs
+ * against 239 calls, about 37 links per call.
+ */
+export interface SamePersonProjectInput {
+  /** The research project directory. */
+  projectPath: string;
+  /** The assertion the `person_evidence` link will cite. Resolves the record,
+   *  the party and the retrieval route in one hop. */
+  assertionId: string;
+  /** The candidate tree person's id in `tree.gedcomx.json`. */
+  treePersonId: string;
+  /** Override: score a DIFFERENT party of the same record than the one the
+   *  assertion's own `record_role` names — the second party of a relationship
+   *  or marriage assertion, which gets its own link. */
+  recordRole?: string;
+  /** Override: name the record persona directly, when the caller knows it and
+   *  the assertion does not carry it. */
+  recordPersonaId?: string;
+  /** As on the explicit form. Unavailable when the record side had to be
+   *  projected from assertions, which carries no relationships. */
+  matchRelatives?: boolean;
+}
+
+export interface SamePersonExplicitInput {
   /** First record's full simplified-GedcomX document. */
   gedcomx1: SimplifiedGedcomX;
   /** The `id` of the focus person in `gedcomx1` (must match a persons[].id). */
@@ -21,6 +54,15 @@ export interface SamePersonInput {
   matchRelatives?: boolean;
 }
 
+/** Either arm. Discriminated on `projectPath`, which only the project arm has. */
+export type SamePersonInput = SamePersonExplicitInput | SamePersonProjectInput;
+
+export function isProjectForm(
+  input: SamePersonInput,
+): input is SamePersonProjectInput {
+  return typeof (input as SamePersonProjectInput)?.projectPath === "string";
+}
+
 export interface SamePersonResult {
   /** True when the API returned a `confidence` field on the entry. */
   matched: boolean;
@@ -36,6 +78,13 @@ export interface SamePersonResult {
   apiTitle: string;
   /** ISO timestamp from the API response. */
   updated: string;
+  /** Project arm only: how the record side was assembled. Optional so the
+   *  explicit form's committed fixtures stay valid. */
+  recordSource?: "record_read" | "projection";
+  /** Project arm only: true when the score was recorded to the project's
+   *  attestation sidecar. The explicit form records nothing — it has no project
+   *  and no record identity. */
+  recorded?: boolean;
 }
 
 /** One scored relative pairing returned by `matchRelatives: true` mode. */
@@ -62,6 +111,11 @@ export interface SamePersonRelativesResult {
   matches: SamePersonRelativeMatch[];
   /** Present and > 0 only when MAX_PAIR_CALLS truncated the work list. */
   droppedForCap?: number;
+  /** Set when relatives mode could not run because the record side carries no
+   *  relationships — the projected route. Distinguishes "nothing to pair" from
+   *  "paired and found nothing", which an empty `matches` cannot. Optional so
+   *  the committed fixtures stay valid. */
+  note?: string;
 }
 
 // ─── Raw upstream API response shape (internal use) ──────────────────────────

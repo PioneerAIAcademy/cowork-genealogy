@@ -842,7 +842,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 |-----------|----------|
 | `standardPlace` not provided | Throw: `"volume_search requires a standardPlace."` |
 | `standardPlace` resolves to NOTHING | Throw: `"Could not resolve \"<name>\" to a single place; use place_search to get a standard place name first."` |
-| `standardPlace` resolves to SEVERAL distinct places | Throw, naming them: `"\"<name>\" matches more than one place: <candidate>; <candidate>. Pass the exact full name of the one you mean as standardPlace, or call place_search to see the full list."` Each candidate is `fullName (type)`, one per distinct placeId, capped at 8 as `record_search` caps its jurisdiction hints — the type qualifier is what separates the real pairs, since Virginia's Franklin County and City of Franklin share a `fullName`. **Never auto-pick**: choosing one silently researches the wrong jurisdiction and nothing downstream can tell. The two rows above were one row until the ambiguous case was found dropping a county from the research while the agent reported having searched it |
+| `standardPlace` resolves to SEVERAL distinct places | Throw, naming them: `"\"<name>\" matches more than one place: <candidate>; <candidate>. Pass one of these exactly as listed, including the parenthesised type, as standardPlace, or call place_search to see the full list."` Each candidate is `fullName (type)`, one per distinct placeId, capped at 8 as `record_search` caps its jurisdiction hints — the type qualifier is what separates the real pairs, since Virginia's Franklin County and City of Franklin share a `fullName`. **The parenthesised `(Type)` suffix is the disambiguation grammar**: passing `"Franklin, Virginia, United States (County)"` resolves to the County's placeId. The resolver strips the suffix before searching (so it never reaches FamilySearch) and filters the exact-fullName pool by type. A suffix matching no candidate returns `unresolved`. A bare name without a suffix still returns `ambiguous` — **never auto-pick**: choosing one silently researches the wrong jurisdiction and nothing downstream can tell |
 | `startYear` not an integer year | Throw: `"startYear must be an integer year (e.g., 1730)."` |
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
@@ -1055,7 +1055,8 @@ images are digitized, indexed, or full-text processed.
 | 17 | Throws on 401 with re-login guidance | Token-expired path |
 | 18 | Throws on network error | Connectivity failure |
 | 19 | Sends correct headers (Authorization, Content-Type, User-Agent, FS-User-Agent-Chain) | Header contract |
-| 20 | An ambiguous `standardPlace` throws naming each candidate as `fullName (type)`, one per distinct placeId, and never resolves to one | Ambiguity, never auto-picked |
+| 20 | An ambiguous `standardPlace` throws naming each candidate as `fullName (type)`, one per distinct placeId, and advises the caller to include the parenthesised type | Ambiguity, never auto-picked |
+| 20a | A `standardPlace` with a `(Type)` suffix resolves to the matching candidate's placeId — the recovery path for the ambiguity error above | Disambiguation recovery |
 | 21 | An unresolvable `standardPlace` keeps its own wording and does not borrow the ambiguity text | The two failures stay distinguishable |
 | 22 | A candidate list longer than 8 is capped at 8 | Hint cap, mirroring `record_search` |
 | 23 | A bodyless 409 carries the re-issue-from-page-1 recovery and never renders as a bare `409 .` | Paging conflict |

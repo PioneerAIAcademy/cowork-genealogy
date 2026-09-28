@@ -957,7 +957,14 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
     `primaryId1`/`primaryId2` inside the caller's own gedcomx documents. So the
     reason has to name the one call shape that satisfies the gate, and — because
     a PreToolUse deny is all-or-nothing on a batch whose median is 17 ops — say
-    that the whole batch was rejected."""
+    that the whole batch was rejected.
+
+    Issue #1731 changed WHICH shape satisfies the gate. `same_person` now takes
+    `{ projectPath, assertionId, treePersonId }` and assembles both documents
+    itself, so naming the hand-built `gedcomx1`/`gedcomx2` recipe here would
+    steer the agent back to the cost that produced the skipped call in the first
+    place. The retrieval recipe moved into the tool with it, so the reason no
+    longer teaches it."""
     reason = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         _pe_append("I1"),
@@ -965,21 +972,21 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
         starting_person_ids=set(),
     )
     assert reason is not None
-    # the satisfiable shape, named explicitly
-    assert "gedcomx2" in reason
-    assert "primaryId2" in reason
+    # the satisfiable shape, named explicitly (#1731)
+    assert "assertionId" in reason
+    assert "treePersonId" in reason
+    assert '"I1"' in reason, "the reason must name the flagged person's own id"
+    # and NOT the retired hand-assembled shape, which is now the slow path
+    assert "gedcomx2" not in reason
+    assert "primaryId2" not in reason
     # the whole batch is lost, not just the flagged op
     assert "entire batch" in reason
-    # Issue #1429. The check no longer flags a link whose provenance lane cannot
-    # yield a persona from what the run retained, so the reason has to say HOW to get the persona it
-    # is demanding a score for -- both retrieval routes, and the per-party rule
-    # that stops the first party's persona being reused for the second.
-    assert "record_read" in reason
-    assert "results_ref" in reason
-    assert "record_role" in reason
-    # The one exit that survives: provenance the check could not resolve at all.
-    # NOT the deleted escape, which excused a REACHABLE persona.
+    # The per-party rule survives: it is the one thing the tool cannot infer.
+    assert "recordRole" in reason
+    # The exits that survive, and the non-exit that does not.
     assert "rationale" in reason
+    assert "circular" in reason.lower()
+    assert "scorable" in reason.lower(), "retrieval must not read as an excuse"
 
 
 def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
@@ -1006,7 +1013,9 @@ def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     assert "degenerate" not in reason.lower()
     assert "unresolvable stub" not in reason.lower()
     # The per-party persona rule still names the field, so this stays pinned.
-    assert "record_persona_id" in reason
+    # Spelled camelCase since #1731: it is an MCP tool PARAMETER on the
+    # project-relative arm, not the research.json field it reads from.
+    assert "recordPersonaId" in reason
 
 
 def _pe_append_with_assertion(person_id="I1", assertion_id="a_001"):

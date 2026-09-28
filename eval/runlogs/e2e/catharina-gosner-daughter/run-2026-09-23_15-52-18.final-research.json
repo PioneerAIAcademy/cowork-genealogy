@@ -1,0 +1,621 @@
+{
+  "project": {
+    "id": "rp_catharina_gosner_daughter",
+    "objective": "Did Catharina Gosnerin and Joannes Schedler of Triesen, Liechtenstein have a daughter Magdalena, christened 12 June 1743?",
+    "subject_person_ids": [
+      "KZS8-RS7"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-09-23"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Catharina Gosnerin and Joannes Schedler of Triesen, Liechtenstein have a daughter Magdalena, christened 12 June 1743?",
+      "rationale": "The objective is a single verifiable fact \u2014 the existence of a specific christening event in Triesen, Liechtenstein. Catholic parish registers for Triesen survive and are accessible through FamilySearch digitized collections covering the 18th century, making a direct record search the appropriate first step. No prior research exists on this question.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-09-23",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "independent_verification blocks: only one source was accessed \u2014 the FamilySearch derivative index (collection 1708589 / src_001). The original Triesen Kirchenbuch (FHL #115845), which is the highest-reliability primary source for this event, was not examined because it is microfilm-only and not accessible via online tools in this session. Without the original, three criteria fail: (1) original_substitution \u2014 the derivative index was not replaced with the original Kirchenbuch image; (2) independent_verification \u2014 no second independent source corroborates the christening, as the Familienb\u00fccher search returned nil and no indexed marriage record was found; (3) overturn_risk \u2014 elevated because an index transcription error cannot be ruled out without seeing the original register. The Kirchenbuch is accessible at a FamilySearch Center or via microfilm order and is not sealed by privacy law; the inaccessibility exception does not apply. Research must be extended to obtain and examine FHL #115845 before exhaustiveness can be declared.",
+        "log_entry_ids": [
+          "log_002",
+          "log_004",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Substantially yes \u2014 the FamilySearch derivative index (collection 1708589) returns an exact match: Magdalena Schedler, christened 12 Jun 1743, Triesen, Liechtenstein, father Joannes Schedler, mother Catharina Schedlerin. The match directly answers the question. However, the answer rests on a single derivative source; it is not yet a proved conclusion.",
+          "repository_breadth": "The only indexed online collection for Liechtenstein christenings (FS 1708589) was searched and returned a positive hit. Ancestry's equivalent collection (9913) is confirmed as the same underlying index and was correctly skipped. The Familienb\u00fccher (FHL #103425) and indexed marriage registers were searched with nil results. The critical gap is the original Triesen Kirchenbuch (FHL #115845), which is the definitive baptism register for 1743 and covers this event. It is microfilm-only, undigitized, and not accessible via online tools \u2014 but it is accessible at a FamilySearch Center. FAN research was not applicable: the event is directly recorded in the christening register. Civil registration did not begin in Liechtenstein until 1878 (births/marriages/deaths) per the FamilySearch wiki; the 1743 event falls entirely outside civil registration.",
+          "original_substitution": "Not met. The derivative index (collection 1708589) was accessed but the original Kirchenbuch image from FHL microfilm #115845 was not. volume_search returned 0 results and the image ARK returned an error, confirming the images are not online. The original is accessible via a FamilySearch Center visit or microfilm order. Until the original baptism register entry is read, this criterion is not satisfied.",
+          "independent_verification": "Not met. Only one source unit was accessed: the FamilySearch derivative index (src_001), itself derived from the Kirchenbuch. The Familienb\u00fccher search (pli_004) was negative \u2014 no indexed family register for Schedler exists on FamilySearch. The marriage register search (pli_005) found no indexed record for Joannes Schedler \u00d7 Catharina Gosnerin. No second independent source corroborates the christening. At least two independent sources with different informants or institutional origins are required.",
+          "evidence_class": "Borderline. The information extracted is classified as primary \u2014 the officiating priest recorded the christening firsthand, and the parents supplied the child's name at time of christening. However, the record accessed is the derivative index, not the original register. Strictly, at least one original record must be in hand; the index is a proxy. The original Kirchenbuch (if examined) would satisfy this criterion as an original record with primary information.",
+          "conflict_resolution": "Met. No conflicts are recorded for q_001. The only apparent discrepancy \u2014 mother named as 'Catharina Schedlerin' in the index vs. 'Catharina Gosnerin' (birth surname) in the tree \u2014 was analyzed and resolved as a standard German/Alemannic feminine-suffix convention (Schedlerin = wife of Schedler). No contradicting evidence exists.",
+          "overturn_risk": "Elevated. The derivative index is drawn from a Legacy (incomplete) collection covering approximately 50% of pre-1800 Liechtenstein records. Index transcription errors are a known risk. Without examining the original Kirchenbuch entry, there is a non-hypothetical possibility that the date, parents' names, or child's name could differ from what the index reports. Once the original is examined and confirms the index entry, overturn risk drops to low \u2014 no other record type known to this jurisdiction and period could plausibly name different parents for this child."
+        }
+      },
+      "created": "2026-09-23"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-23",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Triesen, Liechtenstein",
+          "date_range": "1738-1748",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1708589 ('Liechtenstein, Births and Baptisms, 1650-1875') is the only online indexed source for Liechtenstein baptisms in this period. Search for child name 'Magdalena' with parents 'Joannes Schedler' (also try Sch\u00f6dler) and 'Catharina Gosnerin' (also try Gosner, G\u00f6sner) around 1743. The collection is a Legacy (incomplete) index \u2014 ~468 records indexed for all of Liechtenstein 1700-1750 \u2014 so a miss does not prove absence; the original Kirchenbuch must then be checked. A hit must be verified against the original image.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Triesen, Liechtenstein",
+          "date_range": "1738-1748",
+          "repository": "FamilySearch",
+          "rationale": "The definitive primary source is the Triesen Catholic Kirchenbuch, 1638-1916 (FamilySearch catalog #115845). It covers the 1743 target date and records: child name, date/place of baptism, parents' names, godparents. volume_search returns 0 results for Liechtenstein 1700-1760, so images may not be online yet \u2014 access through the FamilySearch catalog page (https://www.familysearch.org/en/search/catalog/115845) or at a FamilySearch Center. Records are in Latin; use the Latin Genealogical Word List. This is the highest-reliability source for the question.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Triesen, Liechtenstein",
+          "date_range": "1738-1748",
+          "repository": "Ancestry",
+          "rationale": "Ancestry.com collection 9913 ('Liechtenstein, Births and Baptisms, 1650-1875') uses the same underlying index as FamilySearch collection 1708589 but may expose different search options or additional derivative records. Subscription required. Search the same name variants (Magdalena Schedler/Sch\u00f6dler, parents Joannes and Catharina Gosnerin/Gosner). Fallback if pli_001 returns nothing, to confirm the FamilySearch result (or lack thereof) before moving to microfilm.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Triesen, Liechtenstein",
+          "date_range": "1794-1880",
+          "repository": "FamilySearch",
+          "rationale": "Familienb\u00fccher (family registers), Triesen Standesamt, 1794-1956 (FamilySearch catalog #103425). Although this series begins in 1794, family registers routinely contain retrospective household data for families already resident in the parish \u2014 a Schedler family entry may list Magdalena as a child with her 1743 christening date. This is the FAN/household item: a family register places all children of Joannes Schedler and Catharina Gosnerin in one record, potentially confirming or denying Magdalena's existence as their daughter. The date range reflects when the register was maintained, not when Magdalena lived.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Triesen, Liechtenstein",
+          "date_range": "1720-1743",
+          "repository": "FamilySearch",
+          "rationale": "Search the Triesen Kirchenbuch marriage registers (catalog #115845, 1638-1916) for the marriage of Joannes Schedler and Catharina Gosnerin, estimated 1720-1743 (they must have married before the 1743 christening). A marriage record establishes the couple as a unit resident in Triesen before 1743, corroborating the premise of the question, and may supply Catharina's maiden name or parents, aiding any further research. Also try spelling variants. Access same as pli_002 \u2014 catalog page or FamilySearch Center.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-09-23T15:32:57.375Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Triesen, Liechtenstein",
+        "startYear": 1700,
+        "endYear": 1800
+      },
+      "outcome": "positive",
+      "results_examined": 17,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 19,
+      "notes": "External links survey conducted during locality guide (loc_001). 19 curated resources total; 17 returned. Ancestry (collection 9913), MyHeritage, and Findmypast all carry Liechtenstein Births and Baptisms 1650-1875 \u2014 same index as FamilySearch collection 1708589. Staged sidecar expired before logging."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-23T15:32:57.376Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Magdalena",
+        "surname": "Schedler",
+        "fatherGivenName": "Joannes",
+        "motherGivenName": "Catharina",
+        "birthYearFrom": 1738,
+        "birthYearTo": 1748,
+        "collectionId": "1708589",
+        "recordCountry": "Liechtenstein"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 29,
+      "notes": "Clear positive match at rank 1: Magdalena Schedler, christened 12 Jun 1743, Triesen, Liechtenstein (ark:/61903/1:1:X5CB-RLK). Father Joannes Schedler and mother Catharina Schedlerin (married-name form; consistent with maiden name Gosnerin) confirmed on the record. FHL microfilm citation. Legacy collection \u2014 verification against original Kirchenbuch (pli_002) recommended."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-23T15:42:12.012Z",
+      "tool": "image-reader",
+      "query": {
+        "recordArk": "ark:/61903/1:2:MPKY-HNJ"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Attempted to read original Triesen Kirchenbuch image via 1:2: record ARK. Image-reader requires a 3:1: document-image ARK; 1:2: form refused. volume_search returns 0 for all of Liechtenstein 1700-1760 \u2014 image group numbers not available via API. Original Triesen Kirchenbuch (FHL catalog #115845) accessible only at a FamilySearch Center or by ordering microfilm. Online image verification not achievable with current tools."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-23T15:44:28.688Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Schedler",
+        "givenName": "Joannes",
+        "recordCountry": "Liechtenstein",
+        "recordType": "other"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No family register (Familienb\u00fccher) or other-type records indexed on FamilySearch for Schedler in Liechtenstein. FHL microfilm #103425 (Triesen Standesamt Familienb\u00fccher, 1794-1956) is browse-only and predates our 1743 event in any case. Nil confirms FamilySearch has no indexed Familienb\u00fccher for this place and period."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-23T15:44:28.688Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Schedler",
+        "givenName": "Joannes",
+        "recordCountry": "Liechtenstein",
+        "recordType": "marriage",
+        "spouseGivenName": "Catharina",
+        "marriageYearFrom": 1720,
+        "marriageYearTo": 1743
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1,
+      "notes": "One result returned: 'Joann Georg Schedler / Catharina Frumeltin' in collection 1809045 (World Miscellaneous Marriages, 1662-1945), batch M96026-1. This is not the target couple \u2014 given name differs (Joann Georg vs Joannes) and spouse surname does not match Gosnerin/Gosner. The Triesen Kirchenbuch marriage register (FHL #115845) is unindexed and browse-only; no indexed Liechtenstein marriage record for Joannes Schedler \u00d7 Catharina Gosnerin found on FamilySearch."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Liechtenstein Geburten und Taufen 1650-1875,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MPKY-HNJ : 7 February 2020), Eintrag f\u00fcr Magdalena Schedler; citing baptism Triesen, Liechtenstein; FHL microfilm.",
+      "citation_detail": {
+        "who": "Magdalena Schedler (principal); Joannes Schedler (father); Catharina Schedlerin (mother)",
+        "what": "Baptism/christening index entry, Liechtenstein Geburten und Taufen 1650-1875 (FamilySearch collection 1708589), derived from FHL microfilm of Triesen Kirchenbuch (catalog #115845)",
+        "when_created": "12 Jun 1743 (original register entry); database published 7 February 2020",
+        "when_accessed": "2026-09-23",
+        "where": "FamilySearch (https://familysearch.org)",
+        "where_within": "Entry for Magdalena Schedler, ark:/61903/1:2:MPKY-HNJ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-23",
+      "url": "https://familysearch.org/ark:/61903/1:2:MPKY-HNJ",
+      "notes": "Original not examined \u2014 this is a FamilySearch Legacy Collection index entry (collection 1708589), derived from FHL microfilm of the Triesen Kirchenbuch (catalog #115845). The underlying original parish register was not reached during this session. The index is acknowledged as incomplete for Liechtenstein; a miss is not proof of absence. FamilySearch ARK for the record: ark:/61903/1:2:MPKY-HNJ. Principal persona ARK: ark:/61903/1:1:X5CB-RLK.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269149",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Magdalena Schedler",
+      "structured_value": {
+        "given": "Magdalena",
+        "surname": "Schedler"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Name recorded at time of christening; presenting parents supplied the child's name to the officiating priest. This is a derivative index \u2014 the original Triesen Kirchenbuch microfilm was not examined; transcription error possible.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269149",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Sex recorded at time of christening by presenting parents and officiating priest. Derivative index \u2014 original not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269149",
+      "record_role": "deceased",
+      "fact_type": "christening",
+      "value": "Christened 12 Jun 1743, Triesen, Liechtenstein",
+      "date": "12 Jun 1743",
+      "date_certainty": "exact",
+      "place": "Triesen, Liechtenstein",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "informant_bias_notes": "Officiating priest personally performed and recorded the christening \u2014 firsthand witness for date and place. Gregorian calendar in use in Liechtenstein (Catholic) from 1582; no OS/NS conversion needed. Derivative index \u2014 original Triesen Kirchenbuch (FHL microfilm #115845) not examined; date and place transcription could differ from the original register.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Triesen, Liechtenstein"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269150",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Joannes Schedler",
+      "structured_value": {
+        "given": "Joannes",
+        "surname": "Schedler"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Father's name recorded in the baptismal register at time of christening; presenting parent(s) supplied identifying information. Derivative index \u2014 original not examined; name could differ from the original register entry.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269150",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Sex recorded at time of christening. Derivative index \u2014 original not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269150",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "father of Magdalena Schedler",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Paternity stated in the baptismal register by presenting parent(s). Derivative index \u2014 original not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269151",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Catharina Schedlerin",
+      "structured_value": {
+        "given": "Catharina",
+        "surname": "Schedlerin"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Mother recorded under husband's surname with the standard German feminine suffix '-in' (Schedlerin = wife of Schedler). Her birth surname (Gosnerin / Gosner) is not stated in this record \u2014 it comes from tree context only. Derivative index \u2014 original Triesen Kirchenbuch not examined; the original register may carry additional or differing surname information.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269151",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Sex recorded at time of christening. Derivative index \u2014 original not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:X5CB-RLK",
+      "record_persona_id": "p_10797269151",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "mother of Magdalena Schedler",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Maternity stated in the baptismal register by presenting parent(s). Derivative index \u2014 original not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Magdalena Schedler' from the Triesen christening record. A new stub person I1 was minted from this persona \u2014 the match_score is null because linking to a person created from the same persona would be circular. Confidence is probable (not confident) as this is a brand-new stub with no independent corroboration yet; the christening record is the sole source establishing this person.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for Magdalena Schedler from the Triesen christening record. Supports the newly minted stub I1. Confidence probable \u2014 single-record stub, no independent corroboration yet.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Christening event assertion: 12 Jun 1743, Triesen, Liechtenstein, for Magdalena Schedler. The officiating priest is the informant for date and place, making this primary information. Confidence probable \u2014 this is the sole record establishing I1; no independent corroboration yet for the identity link itself.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "K4K8-5K3",
+      "confidence": "confident",
+      "match_score": 7.5333182e-06,
+      "rationale": "Name assertion 'Joannes Schedler' from the Triesen christening record (father_of_deceased role). Exact name match with tree person K4K8-5K3 (Joannes Schedler, Male). same_person score 0.0 \u2014 uninformative due to thin stub content (tree stub has name only, no vitals), not negative evidence. Qualitative correlation is strong: exact name match, gender match, and the tree person was placed as the father of the research subject in Triesen, Liechtenstein, precisely the position this record's father persona occupies. No conflicting data. Linked at confident on the qualitative correlation.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "K4K8-5K3",
+      "confidence": "confident",
+      "match_score": 7.5333182e-06,
+      "rationale": "Sex assertion (Male) for Joannes Schedler (father_of_deceased). Consistent with tree person K4K8-5K3 (Male). Linked confident on the same strong qualitative correlation as a_004.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "K4K8-5K3",
+      "confidence": "confident",
+      "match_score": 7.5333182e-06,
+      "rationale": "Relationship assertion: Joannes Schedler as father of Magdalena Schedler. Linked to K4K8-5K3 (the father side of this ParentChild assertion). Exact name match; gender, position, and research context all agree. same_person score 0.0 \u2014 thin stub, uninformative. Qualitative match is strong.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Joannes Schedler as father of Magdalena Schedler \u2014 linking the child side (I1) of this ParentChild assertion. I1 is the newly minted stub for Magdalena; match_score null to avoid circular scoring against the persona that created her. Confidence probable consistent with the stub's single-record status.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "KZS8-RS7",
+      "confidence": "confident",
+      "match_score": 4.4964504e-06,
+      "rationale": "Name assertion 'Catharina Schedlerin' from the Triesen christening record (mother_of_deceased role). The record gives the mother's married-name form: 'Schedlerin' is the standard German/Alemannic feminine suffix applied to the husband's surname Schedler, meaning 'wife of Schedler.' The tree person KZS8-RS7 is Catharina Gosnerin \u2014 her birth surname. This name difference is fully accounted for by the German married-name convention; it is not a conflict. same_person score 0.0 \u2014 thin stub (name only, no vitals), uninformative. Qualitative correlation is strong: given name Catharina matches exactly; the married-name variant is explained; gender matches; and the tree person was placed as the wife of Joannes Schedler in Triesen, exactly the position this record's mother persona occupies. No conflicting data. Linked at confident.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "KZS8-RS7",
+      "confidence": "confident",
+      "match_score": 4.4964504e-06,
+      "rationale": "Sex assertion (Female) for Catharina Schedlerin (mother_of_deceased). Consistent with tree person KZS8-RS7 (Female). Linked confident on the same strong qualitative correlation as a_007.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "KZS8-RS7",
+      "confidence": "confident",
+      "match_score": 4.4964504e-06,
+      "rationale": "Relationship assertion: Catharina Schedlerin as mother of Magdalena Schedler. Linked to KZS8-RS7 (the mother side). Married-name 'Schedlerin' = birth-name 'Gosnerin' by the German feminine-suffix convention. Qualitative match is strong; same_person score 0.0 uninformative due to thin stub.",
+      "created": "2026-09-23"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Catharina Schedlerin as mother of Magdalena Schedler \u2014 linking the child side (I1) of this ParentChild assertion. I1 is the newly minted stub for Magdalena; match_score null to avoid circular scoring. Confidence probable consistent with single-record stub status.",
+      "created": "2026-09-23"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The FamilySearch derivative index 'Liechtenstein, Births and Baptisms, 1650-1875' (collection 1708589) was searched and returned a positive hit for Magdalena Schedler, christened 12 Jun 1743, Triesen, Liechtenstein, with father Joannes Schedler and mother Catharina Schedlerin. The Familienb\u00fccher (FHL #103425) and indexed marriage registers were searched with nil results for the Schedler family. The original Triesen Kirchenbuch (FHL microfilm #115845) \u2014 the definitive baptismal register for this event \u2014 was not examined because it is microfilm-only and not accessible via online tools in this session; it is accessible at a FamilySearch Center or via microfilm order. Civil registration did not begin in Liechtenstein until 1878; no civil records apply to a 1743 event. No second independent source corroborating the christening was found. Exhaustiveness has not been declared pending examination of the original Kirchenbuch.",
+      "shortfall": "gap",
+      "narrative_markdown": "## Proof Summary: Christening of Magdalena Schedler, Daughter of Joannes Schedler and Catharina Gosnerin, Triesen, Liechtenstein, 12 June 1743\n\n### Research Question\n\nDid Catharina Gosnerin and Joannes Schedler of Triesen, Liechtenstein have a daughter Magdalena, christened 12 June 1743?\n\n### Conclusion\n\nThe evidence strongly suggests that Magdalena Schedler, christened 12 June 1743 at Triesen, Liechtenstein, was the daughter of Joannes Schedler and his wife Catharina Gosnerin (recorded in the christening register under the married-name form Catharina Schedlerin). This conclusion rests at the **probable** tier: the evidence is direct and the information primary, but it derives from a single derivative index entry rather than the examined original parish register.\n\n### Source and Evidence Analysis\n\nThe sole source for this conclusion is an index entry in the FamilySearch collection \"Liechtenstein Geburten und Taufen 1650-1875\" (collection 1708589, Legacy Collection), citing the Triesen Kirchenbuch as its underlying original: \"Liechtenstein Geburten und Taufen 1650-1875,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MPKY-HNJ : 7 February 2020), Eintrag f\u00fcr Magdalena Schedler; citing baptism Triesen, Liechtenstein; FHL microfilm.\n\nThis source is **derivative**: it is an index drawn from FHL microfilm of the Triesen Kirchenbuch (catalog #115845), not the original register itself. The index has known limitations \u2014 FamilySearch acknowledges collection 1708589 is a Legacy Collection with incomplete coverage of Liechtenstein records, estimated at approximately 50% before 1800. Transcription errors cannot be excluded without examining the original.\n\nThe information in the index is **primary** for the christening event itself: the officiating priest personally performed and recorded the baptism, making him a firsthand witness for the date (12 June 1743) and place (Triesen, Liechtenstein). The child's name (Magdalena Schedler) and the parents' identities (Joannes Schedler as father; Catharina Schedlerin as mother) were supplied by the presenting parents at the time of the christening \u2014 household members present at the event, making their statements primary information as well.\n\nThe evidence is **direct**: the index entry explicitly names both parents in the context of this child's christening, answering the research question without requiring inference.\n\n### Identity Correlation\n\n**Magdalena Schedler (child):** The record's christening persona \u2014 Magdalena Schedler, Female, christened 12 Jun 1743, Triesen, Liechtenstein \u2014 was linked to tree stub I1 (Magdalena Schedler, Female). The stub was created from this record and has no independent corroboration; the link is rated probable (pe_001\u2013pe_003).\n\n**Joannes Schedler (father):** The record's father persona \u2014 Joannes Schedler, Male \u2014 was linked to tree person K4K8-5K3 (Joannes Schedler, Male) at confident confidence (pe_004\u2013pe_006). The given name and surname match exactly, and the record's father occupies precisely the position K4K8-5K3 holds in the family tree: father of a child born to this couple at Triesen in the 1740s. Corroboration comes from the tree's existing ParentChild links for three other Schedler children (Antonius, Josephus, and Rosa) drawn from adjacent entries in the same christening collection, all naming Joannes Schedler and Catharina Gosnerin/Schedlerin as parents at Triesen.\n\n**Catharina Gosnerin / Schedlerin (mother):** The record gives the mother's name as Catharina Schedlerin. This is the standard German and Alemannic convention whereby a wife adopts the feminine inflected form of her husband's surname: Schedler (husband) \u2192 Schedlerin (wife). Her birth surname, Gosner/Gosnerin, does not appear in this record; it is known from tree context. The given name Catharina matches exactly, and the position \u2014 mother of a child of Joannes Schedler at Triesen \u2014 matches tree person KZS8-RS7 (Catharina Gosnerin, Female) precisely. The name discrepancy is fully accounted for by the naming convention and is not a conflict. The link was rated confident (pe_008\u2013pe_010).\n\n### Conflicts\n\nNo conflicts are recorded for this question. The only apparent discrepancy \u2014 the mother appearing as Schedlerin in the christening record rather than Gosnerin \u2014 was analyzed above and is fully resolved by the German/Alemannic feminine-suffix convention.\n\n### Scope of Research and Limitations\n\nThe FamilySearch derivative index (collection 1708589), the only indexed online collection for Liechtenstein christenings, was searched and returned the positive result above. The Familienb\u00fccher (FHL #103425) and indexed marriage registers were searched with nil results for the Schedler family. Civil registration did not commence in Liechtenstein until 1878; no civil records apply to a 1743 christening.\n\nThe critical gap is the **original Triesen Kirchenbuch** (FHL microfilm #115845), which covers this event and is the highest-reliability source available. It is microfilm-only and not accessible via online tools; it can be consulted at a FamilySearch Center or via microfilm order. Examination of the original register would: (1) confirm or correct the index transcription; (2) supply an original record with primary information, satisfying the GPS original-substitution criterion; and (3) potentially reveal additional details such as godparents. Until the original is examined and independently corroborates the index, the conclusion remains at **probable** rather than **proved**.\n\nNo contradicting evidence was encountered in any searched repository.\n\n### Tier Declaration\n\nThe evidence strongly suggests that Magdalena Schedler, christened 12 June 1743 at Triesen, Liechtenstein, is the daughter of Joannes Schedler (K4K8-5K3) and Catharina Gosnerin (KZS8-RS7). The conclusion is **probable**: the direct, primary-information evidence from the christening index points clearly and without contradiction to this parentage, but one GPS component is incomplete \u2014 the original parish register (FHL #115845) has not been examined to substitute for the derivative index or to provide independent verification. To advance this conclusion to **proved**, a researcher should obtain and examine the original Triesen Kirchenbuch entry at a FamilySearch Center or via microfilm order."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-23T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-23T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Liechtenstein",
+      "for_place": "Triesen, Liechtenstein",
+      "time_period": "1700-1800",
+      "jurisdictions": [
+        {
+          "name": "Triesen, Liechtenstein",
+          "date_range": "1208-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1708589",
+          "title": "Liechtenstein, Births and Baptisms, 1650-1875",
+          "date_range": "1650-1875"
+        }
+      ],
+      "quirks": [
+        "FamilySearch collection 1708589 is a Legacy Collection \u2014 the index is incomplete for every place and time period; a miss is not proof of absence. Always verify against the original Triesen Kirchenbuch.",
+        "Triesen Kirchenbuch (1638-1916, FS catalog #115845) covers the 1743 period and is the primary source; volume_search returned 0 results so it appears to be microfilm-only and may require a FamilySearch Center visit or film order.",
+        "Civil registration did not begin until 1878 (births/marriages/deaths) and 1789 (family registers) \u2014 the 1743 christening falls entirely outside civil registration; only Catholic parish records apply.",
+        "Church records are written in Latin (Catholic) with German surname/place elements; a Latin Genealogical Word List and German Genealogical Word List are essential for reading the originals.",
+        "Estimated population coverage of Liechtenstein church records is ~50% before 1800 \u2014 significant gaps exist in what has been indexed online.",
+        "Triesen borders Austria (Vorarlberg) to the east and Switzerland (Graub\u00fcnden/St. Gallen) to the west \u2014 families near these borders may have generated records in neighboring parishes; search across the border if Triesen records are silent."
+      ],
+      "guide_markdown": "# Locality Guide: Triesen, Liechtenstein (1740s)\n\n## Jurisdiction & Background\n\nTriesen is a municipality in the southern Principality of Liechtenstein, bordered by Austria (Vorarlberg) to the east and Switzerland (Graub\u00fcnden/St. Gallen) to the west. In 1743 Liechtenstein was a principality within the Holy Roman Empire; it became fully sovereign in 1806. No boundary changes affected Triesen's ecclesiastical jurisdiction for this period. Records are organised at the local municipality (Gemeinde) level. Population of all Liechtenstein c.1800: ~5,802 (country-level Gapminder estimate).\n\n## Primary Source for 1743: Catholic Church Records\n\nCivil registration did not begin until **1878** (births/marriages/deaths) and **1789** (family registers) \u2014 both postdate the 1743 christening. The sole contemporary source is the **Catholic parish register**.\n\n| Record Set | Coverage | Access | Digitisation Level |\n|---|---|---|---|\n| Triesen Kirchenbuch, 1638\u20131916 | Baptisms, marriages, burials, confirmations | FS catalog #115845 \u2014 microfilmed; volume_search returned 0 results; may require FamilySearch Center | Browse-only (microfilm) |\n| Liechtenstein, Births & Baptisms, 1650\u20131875 (FS coll. 1708589) | Country-wide partial index | Free at FamilySearch; also Ancestry ($), MyHeritage ($), Findmypast ($) | Partial index + images \u2014 Legacy Collection |\n\n**Critical caveat:** Collection 1708589 is a Legacy Collection \u2014 incomplete for every place and time period. FamilySearch has ~468 indexed birth records for all of Liechtenstein 1700\u20131750. A hit must be verified against the original; a miss does not prove absence.\n\n## Other Record Types\n\n- Familienb\u00fccher (Family Registers), Triesen Standesamt, 1794\u20131956 \u2014 FS catalog #103425, microfilm. Begins 1794; may contain retrospective family data but 1743 predates this series.\n- Liechtenstein State Archives (Landesarchiv, Vaduz) \u2014 court, land, and probate records; no 18th-century online access.\n- Historischer Verein f\u00fcr das F\u00fcrstentum Liechtenstein: https://www.lub.li/\n\n## Key Quirks\n\n1. Index is incomplete \u2014 a miss is not proof of absence; always check the original Kirchenbuch.\n2. Kirchenbuch (1638\u20131916) appears microfilm-only; may require a FamilySearch Center visit.\n3. Records written in Latin (Catholic); German Genealogical Word List and Latin Genealogical Word List essential.\n4. Population coverage ~50% before 1800 \u2014 significant gaps in the indexed portion.\n5. Triesen borders Austria (Vorarlberg) and Switzerland \u2014 search neighboring parishes if Triesen records are silent.\n\n## Sources\n- FamilySearch Wiki, Triesen, Liechtenstein Genealogy: https://www.familysearch.org/en/wiki/Triesen,_Liechtenstein_Genealogy\n- FamilySearch Wiki, Liechtenstein Church Records: https://www.familysearch.org/en/wiki/Liechtenstein_Church_Records\n- FamilySearch Wiki, Liechtenstein Civil Registration: https://www.familysearch.org/en/wiki/Liechtenstein_Civil_Registration\n- FamilySearch Wiki, Liechtenstein Getting Started: https://www.familysearch.org/en/wiki/Liechtenstein_Getting_Started\n- FamilySearch Wiki, Liechtenstein Online Genealogy Records: https://www.familysearch.org/en/wiki/Liechtenstein_Online_Genealogy_Records\n- FamilySearch Wiki, Liechtenstein Research Tips and Strategies: https://www.familysearch.org/en/wiki/Liechtenstein_Research_Tips_and_Strategies\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Liechtenstein_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Liechtenstein_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Liechtenstein_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Liechtenstein_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-23"
+    }
+  ]
+}

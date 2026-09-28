@@ -5,13 +5,27 @@
     "name": "FAN search — Flynn family as witnesses in Schuylkill County records",
     "type": "positive",
     "description": "Full-text search for Flynn family members appearing as witnesses or associates in Schuylkill County records. Tests the FAN (Family, Associates, Neighbors) research path — searching for the subject not in their own records but as named in other people's records.",
-    "tags": ["fulltext", "FAN", "witnesses", "associates", "indirect-evidence"]
+    "tags": [
+      "fulltext",
+      "FAN",
+      "witnesses",
+      "associates",
+      "indirect-evidence"
+    ]
   },
   "input": {
     "user_message": "Run separate full-text searches for Thomas Flynn AND for Patrick Flynn appearing as witnesses in Schuylkill County records — both names must be queried.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-witnesses-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant", "fulltext-search-flynn-prefix-wildcard-variant"],
+  "mcp_fixtures": [
+    "fulltext-search-flynn-witnesses",
+    "fulltext-search-flynn-witnesses-by-name",
+    "fulltext-search-flynn-flinn-variant",
+    "fulltext-search-flynn-wildcard-variant",
+    "fulltext-search-flynn-prefix-wildcard-variant",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
   "execution": {
     "max_wall_clock_seconds": 600
   },

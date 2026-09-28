@@ -207,7 +207,9 @@ gh issue create --label developer|genealogist [--label icebox] \
 - **Never `--label high-priority`.** That label is a picker signal — *take this
   before other cards in your lane* — applied to Ready cards by `/fill-ready`
   from criteria it re-derives every run, and never at filing. If the item is
-  urgent, say so in the body; the next `/fill-ready` decides.
+  urgent, say so in the body; the next `/fill-ready` decides. The one exception
+  is the lead's own `> **High priority (<date>):** lead: <login>` line, which
+  only the lead writes and which `/fill-ready` ranks first from any column.
 - **Pick the label by who does the work.** `developer` for anything with a
   mechanical pass/fail (lints, CI, validators, harness/Python, MCP tools,
   refactors, tooling bugs). `genealogist` for fixture adjudication, run-log
@@ -383,8 +385,8 @@ other targets trade realism for less setup:
 
 - **`server`** (+ `web`) — **the default.** Real Claude Agent SDK + real
   FamilySearch OAuth on :1837 (`FAMILYSEARCH_WEB_ENABLED=true`; client id from
-  the bundled config; `ANTHROPIC_API_KEY` from your env, falling back to the
-  sibling repo's `../cowork-genealogy-ui/.env`). Local sandboxes.
+  the bundled config; `ANTHROPIC_API_KEY` from your env or `apps/server/.env`).
+  Local sandboxes.
 - **`server-e2b`** (+ `web`) — the full hosted path: identical to `server` but
   **E2B microVM** sandboxes (`SANDBOX_PROVIDER=e2b`).
 - **`server-dev`** (+ `web-dev`) — real agent but **dev-login** (no
@@ -437,121 +439,6 @@ With it on, an open session shows, in the chat header:
 
 Turn it off by clicking the `ALPHA` tag in the header, or with `?alpha=0`. The
 flag is intentionally easy to remove after the alpha test.
-
-## Public `/v1` REST API (hosted control plane)
-
-The hosted web control plane (`apps/server/`, FastAPI / Python / uv —
-**separate from the engine**) exposes a dedicated, versioned,
-**bearer-only** REST surface at `/v1` so an external chatbot client can
-drive sessions over plain HTTP — no browser cookie, no WebSocket.
-Source: `apps/server/app/v1.py`. Design + spec:
-[`docs/specs/public-rest-api-spec.md`](./docs/specs/public-rest-api-spec.md).
-
-Endpoints (all require `Authorization: Bearer <key>`):
-
-- `POST /v1/sessions` → create. Optional body `{title?, familysearch_token?}`. Supply
-  `familysearch_token` (`{access_token, refresh_token?, expires_in?}`) to authenticate the
-  sandbox's FamilySearch tool calls — it's injected into the sandbox's `tokens.json` and is
-  **never** persisted to the DB; with a refresh token the in-sandbox `getValidToken(principal)`
-  self-refreshes for the sandbox's life. Omit it for an FS-tool-less session. Returns
-  `{session_id, title, model, created_at}`.
-- `POST /v1/sessions/{id}/messages` → send a message. Body `{message, stream?}`:
-  sync JSON when `stream` is false/omitted, **Server-Sent Events** when `true`. The sync reply
-  is `{session_id, role:"assistant", text, tool_calls, finish_reason, error?}`; the SSE stream
-  emits `delta` (text), `tool`, and `error` frames, a final `done` frame, and `: keep-alive`
-  heartbeats between.
-- `DELETE /v1/sessions/{id}` → release the sandbox.
-
-Every error uses one envelope: `{"error": {"code": "...", "message": "..."}}`
-(codes: `unauthorized` 401, `session_not_found` 404, `session_busy` 409,
-`validation_error` 422, `turn_timeout` 504, `internal_error` 500).
-
-### Configuring API keys (`API_KEYS`)
-
-Access is granted by `API_KEYS` — a comma-separated list of `key:email`
-pairs (env var; parsed by `Settings.api_key_map`). A request's bearer
-token is constant-time-compared against each key; on a match it resolves
-to the paired **email**, which maps to the same `User` row the browser
-path would create. Empty (the default) → the `/v1` surface is closed
-(every request `401`s).
-
-```bash
-API_KEYS="sk_live_<random>:genealogy-chatbot@yourco.com"
-```
-
-- **The key** is the secret the client presents. Generate a strong random value:
-  ```bash
-  python -c "import secrets; print('sk_live_' + secrets.token_urlsafe(32))"
-  ```
-  The `sk_` prefix is convention; the format is arbitrary (compared verbatim).
-- **The email** is only an identity label. It does **not** need to be a
-  real mailbox and does **not** need to be on the `ALLOWED_EMAILS`
-  allowlist — API keys are operator-granted (presence in `API_KEYS` *is*
-  the grant; the allowlist gates self-service FamilySearch / dev login only).
-- **In production, set it as a Fly _secret_** (it's a credential, like
-  `DATABASE_URL`) — not in `fly.toml` `[env]`:
-  ```bash
-  fly secrets set API_KEYS="sk_live_…:genealogy-chatbot@yourco.com"
-  ```
-
-**One client, many end-users → one key.** If a single chatbot server
-creates and drives sessions on behalf of many of *its own* end-users, use
-**exactly one** `key:email` pair. All those sessions are owned by that one
-`User`, so anything created with the key can be read/messaged with the key.
-That is correct for this model (the chatbot server holds the key
-server-to-server; its end-users never see it) — but it means **isolating
-one end-user's sessions from another's is the chatbot's responsibility**:
-it must track which `session_id` belongs to which of its users and never
-hand a `session_id` to the wrong one. Our `session_id`s are 64-bit random
-(unguessable — defense-in-depth) but within a single key they are **not**
-an authorization boundary.
-
-Use **distinct** `key:email` pairs (distinct emails) only when there are
-genuinely **separate clients** you want isolated from each other — then the
-ownership check (`_owned`) returns `404` across them automatically.
-
-### Other `/v1` knobs
-
-Pydantic settings are env-driven and case-insensitive (`API_KEYS` →
-`api_keys`, etc.):
-
-| Env var | Default | Purpose |
-|---|---|---|
-| `API_KEYS` | `""` | `key:email` pairs — the bearer-key registry (above). |
-| `V1_TURN_TIMEOUT_SECONDS` | `120` | Sync (`stream:false`) turn cap → `504 turn_timeout`. Streaming has no cap on DURATION - that is what it is for - so steer long turns to `stream:true`; it is capped on SILENCE instead, see the row below. |
-| `V1_STREAM_IDLE_SECONDS` | `300` | Streaming (`stream:true`) **silence** cap. The longest a stream may go with no frame from the sandbox other than the Hub's heartbeat, after which it emits an `error` event naming `turn_timeout` and a terminal `done` with `finish_reason:"error"`. Not a duration cap, and deliberately blind to pings - a clock reset by any frame can never fire, since the Hub pings forever whether the agent is alive or not. `docs/specs/public-rest-api-spec.md` § "The streaming contract". |
-| `V1_TURN_LOCK_STALE_SECONDS` | `600` | One turn at a time per session, via a DB-backed lock on `Project.turn_locked_at` (correct across horizontally-scaled instances). A lock older than this is reclaimed, so a crashed instance can't wedge a session. Must exceed the longest expected turn. |
-
-### Run + smoke-test locally
-
-Runs fully on mocks — no E2B / Anthropic / OAuth (first time: `make install`):
-
-```bash
-# terminal 1 — control plane on :8000 with one dev key
-API_KEYS="sk_dev:bot@example.com" make server-mock
-
-# terminal 2 — exercise it. NOTE the explicit JSON content-type: `curl -d`
-# defaults to form-encoding, which would fail validation with a 422.
-K="Authorization: Bearer sk_dev"; J="Content-Type: application/json"
-SID=$(curl -s -H "$K" -H "$J" -XPOST localhost:8000/v1/sessions -d '{"title":"t"}' | jq -r .session_id)
-curl -s  -H "$K" -H "$J" -XPOST localhost:8000/v1/sessions/$SID/messages -d '{"message":"hello"}' | jq           # sync JSON
-curl -sN -H "$K" -H "$J" -XPOST localhost:8000/v1/sessions/$SID/messages -d '{"message":"hello","stream":true}'  # SSE
-curl -s  -H "$K" -H "$J" -XDELETE localhost:8000/v1/sessions/$SID | jq
-```
-
-Send a second message that references the first to confirm cross-turn
-memory — the agent process stays up between turns as long as you reuse the
-`session_id`.
-
-### Tests
-
-```bash
-cd apps/server && uv run pytest -q       # or: make server-test
-```
-
-`tests/test_v1_api.py` covers auth + error envelopes, sync, SSE (incl.
-`tool` frames), `504` timeout, `409 session_busy`, stale-lock reclamation,
-cross-client isolation, and delete — all on mocks.
 
 ## Database backends & deploying to Fly.io
 
@@ -634,7 +521,7 @@ fly secrets set \
   DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… FS_TOKEN_ENC_KEY=… \
   ANTHROPIC_PROXY_SIGNING_KEY="$(openssl rand -hex 32)" \
-  ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
+  ALLOWED_EMAILS="you@familysearch-account-email"
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
 # don't set it here (a secret would shadow the [env] value).
 
@@ -676,11 +563,12 @@ a separate artifact built from its own Dockerfile, but `make deploy` builds and
 pushes it too, so a deploy ships both (`apps/server/sandbox/README.md`).
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
-one-time Fly `release_command` (two Machines otherwise race on `create_all` + the
-allowlist seed); tracked in issue #1127, with the race spelled out in
-[`docs/specs/public-rest-api-spec.md`](./docs/specs/public-rest-api-spec.md)
-§ "Prerequisite for `count > 1`". Sticky routing is
-not an option (production is AWS-no-sticky). Because `fly deploy` provisions two
+one-time Fly `release_command`, and `deploy/fly.toml` has none. Two Machines
+booting together otherwise race: both pass `create_all`'s existence check and both
+`CREATE TABLE`, and both see an allowlist email absent and both `INSERT` the same
+primary key — an `IntegrityError` that crashes a boot. Harmless at `count = 1`; a
+`release_command` runs the schema and seed once, before any Machine starts. Sticky
+routing is not an option (production is AWS-no-sticky). Because `fly deploy` provisions two
 machines by default, always pass `--ha=false` (above); if a deploy ever leaves
 two, run `fly scale count 1` to drop back to one.
 
@@ -786,7 +674,7 @@ any failed:
 |---|---|---|---|
 | Typecheck | whole JS workspace | turbo/tsc | Types — turbo runs this as a task no test suite triggers |
 | JS workspace | `apps/web/`, `apps/electron/`, `packages/viewer-ui/`, `packages/schema/` | vitest | Web + viewer + schema mirror |
-| Control plane | `apps/server/` | pytest | FastAPI auth, sessions, `/v1` |
+| Control plane | `apps/server/` | pytest | FastAPI auth, sessions |
 | MCP server | `packages/engine/mcp-server/` | vitest | Tool code correctness + packaging lints |
 | Eval app | `eval/app/` | vitest | Next.js CRUD UI logic |
 | Eval harness | `eval/harness/` | pytest | Harness internals, **including** the `e2e`-marked contract test (a real billed Anthropic call; skips itself with no key) |

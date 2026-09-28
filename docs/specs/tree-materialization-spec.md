@@ -1,7 +1,7 @@
 # Tree Materialization — Ownership Spec
 
-> **Status:** Shipped 2026-07-18 (#701 → PR #730; batching extended in #897).
-> Owns the decision `#701` asked for:
+> **Status:** Shipped 2026-07-18 (batching extended in a later PR).
+> Owns the ownership decision it was written to settle:
 > **who promotes extracted record facts onto tree persons, and how
 > provenance rides along.** Introduces one new MCP tool
 > (`materialize_facts`), reassigns ownership across the record→tree
@@ -214,7 +214,7 @@ materialize_facts({ projectPath, ops: [ <either form>, ... ] })
 ### 4.2 Behavior, per assertion
 
 1. **Map** `fact_type` → tree fact type, honoring the structured-fact model
-   (`#711`): an event's `place`/`date` are attributes of the event fact, not
+   (the structured-fact model): an event's `place`/`date` are attributes of the event fact, not
    their own types.
 2. **Resolve the source-ref** —
    `assertion.source_id → research.json source → gedcomx_source_description_id
@@ -277,7 +277,7 @@ something was lost.
 - **Idempotent.** Re-running the same persona's materialization (retries are
   common) duplicates neither facts nor refs — the §4.2 fact-identity test
   (`factsEquivalent` + equal `value`) plus ref-set union makes a re-run a
-  no-op. Mirrors the idempotent-skip ratified as correct in `#711`.
+  no-op. Mirrors the idempotent-skip ratified as correct in the structured-fact model.
 - **Conflicts surfaced, not resolved — and only for single-valued types.**
   Conflict surfacing is **gated to single-valued / vital fact types**: reuse
   the existing `VITAL_PRIMARY_TYPES` set (`Birth`, `Death`, `Christening`,
@@ -927,7 +927,7 @@ authors (its ad-hoc names are exempt above). `merge-tree-persons.test.ts` is
 **The ESM citation string is out of scope here.** The tree S-entry's
 `citation` stays populated by `proof-conclusion` at upload time (copied from
 `research.json` `sources[].citation`), per existing doctrine. This spec owns
-the **source-ref (pointer)**; the `citation` skill / proof-conclusion own the
+the **source-ref (pointer)**; the `citation` agent / proof-conclusion own the
 **ESM string**. The two must not be conflated (the §1.2 mis-framing).
 
 ---
@@ -965,7 +965,7 @@ Two conclusion paths for `proof-conclusion`, both of which set `primary` (§7):
 How indirect evidence flows through materialization:
 
 1. **Extraction already classifies it.** An indirect claim lands with
-   `record_basis: inferred` and `date_certainty: calculated` (per `#711`,
+   `record_basis: inferred` and `date_certainty: calculated` (per the structured-fact model,
    which splits a census into a *direct* birthplace assertion and an
    *indirect* computed birth-year). Materialization does not re-derive the
    class; it reads it.
@@ -1036,7 +1036,7 @@ verified phase inside the implementing PR** — not deferred. Scope:
 
 **Retiring `merge_record_into_tree` frees zero shared code.** It deletes no
 `merge-gedcomx.ts` mode and no `merge-shared.ts` helper: `merge_warnings`
-(`merge-warnings.ts:64`) calls `mergeGedcomx(tree, candidate, merges)` with a
+(`src/tools/merge-warnings.ts`) calls `mergeGedcomx(tree, candidate, merges)` with a
 **non-null candidate**, so it independently exercises **Mode 1
 (cross-document)** and `sanitizeCandidate` / `validateCandidateGedcomx`. All
 three **stay**. The deletable set is exactly the tool file, its test, and the

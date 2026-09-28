@@ -2,10 +2,17 @@
 
 ## Overview
 
-A deterministic, offline MCP tool that reads `tree.gedcomx.json` from a
-project directory and checks person data for impossible or unlikely
-genealogical facts. No authentication required — the tool operates
-entirely on local file data.
+A deterministic MCP tool that checks person data for impossible or unlikely
+genealogical facts. It has two modes.
+
+**Local (default).** Reads `tree.gedcomx.json` from a project directory. Offline
+and deterministic; no authentication required, no network access.
+
+**Live (`live: true`).** Fetches the person and their one-hop relatives from
+FamilySearch and evaluates the same checks against that tree in memory, so an
+audit of a profile with no local project still gets the impossibility checks.
+This mode requires an authenticated session and makes network calls. It is
+opt-in by the flag, never by omitting `projectPath` — see *Input*.
 
 Adapted from FamilySearch's `MobWarnings.java`. This spec starts with
 three starter warnings and is designed for easy extension.
@@ -41,7 +48,7 @@ The relative-variant tags in § Warning Definitions are the evidence.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `projectPath` | string | Yes | Absolute path to the directory containing `tree.gedcomx.json` |
+| `projectPath` | string | Local mode only | Absolute path to the directory containing `tree.gedcomx.json`. Required unless `live` is true; passing it **with** `live` is an error, because the two modes read different trees and the caller has to say which is meant. |
 | `personId` | string | Yes | The anchor person to check. Names the target; warnings are evaluated over this person and their one-hop relatives |
 
 Example:
@@ -121,10 +128,14 @@ implementation is checked against.
 {
   name: "person_warnings",
   description:
-    "Check a person in tree.gedcomx.json for impossible or unlikely genealogical " +
-    "data (e.g., death before birth, father too young). Reads the local project " +
-    "file — no authentication or network access required. personId is the anchor " +
-    "person; warnings are evaluated over that person and their one-hop relatives.",
+    "Check a person for impossible or unlikely genealogical data (e.g., death " +
+    "before birth, parent too young, event after death). Two modes. Default: " +
+    "reads tree.gedcomx.json from the local project — pass projectPath, no " +
+    "authentication or network access required. Live: pass live=true and no " +
+    "projectPath to fetch the person from FamilySearch and run the same checks " +
+    "in memory, for auditing a profile with no local project — this mode does " +
+    "require authentication. personId is the anchor person; warnings are " +
+    "evaluated over that person and their one-hop relatives.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -139,7 +150,9 @@ implementation is checked against.
           "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
       },
     },
-    required: ["projectPath", "personId"],
+    // projectPath is conditionally required — enforced at runtime, because the
+    // MCP input schema cannot express "required unless another field is set".
+    required: ["personId"],
   },
 }
 ```
@@ -148,7 +161,12 @@ implementation is checked against.
 
 ## Authentication
 
-None required. The tool reads a local file only.
+**Local mode: none required.** The tool reads a local file only.
+
+**Live mode: a FamilySearch session is required.** `live: true` fetches through
+the same path `person_read` uses, so the token comes from
+`getValidToken(principal)` and an unauthenticated call raises the standard
+LLM-instruction error directing the caller to log in.
 
 ---
 
@@ -586,7 +604,9 @@ is worth recording so it isn't "fixed" back later by mistake:
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` not provided | Throw: `"projectPath is required"` |
+| `projectPath` not provided and `live` is not `true` | Throw: `"projectPath is required"` |
+| `projectPath` **and** `live: true` both provided | Throw: `"Pass either projectPath or live=true, not both…"` |
+| `live: true` and the person is absent from the FamilySearch response | Throw a message naming a possible merge. `person_read` follows a 301 for a merged-away profile and returns the survivor under its **new** id; the tool anchors on that when it is the only person returned, and otherwise says so rather than leaking `Mob: anchor person not found`. |
 | `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
 | `projectPath` is a real directory holding **neither** project file | **Return**, do not throw: `{ ok: false, reason: "no_project", errors }`. The user is not in a research project, which is an answer rather than a failure. This is the one tool that owes this answer without reading through `readProjectJson`, so it calls `classifyProjectPath` itself. Discriminate the result with `"ok" in result` — the success shape has no `ok` field. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
@@ -606,13 +626,13 @@ diagnostic-field alternative to throwing was not adopted.
 
 ### `packages/engine/mcp-server/src/types/person-warnings.ts`
 
-- `PersonWarningsInput` — `{ projectPath: string; personId: string }`
+- `PersonWarningsInput` — `{ projectPath?: string; personId: string; live?: boolean }`
 - `PersonWarning` — the warning object shape
 - `PersonWarningsResult` — the output shape
 
 ### `packages/engine/mcp-server/src/tools/person-warnings.ts`
 
-- `personWarningsTool(input)` — main function
+- `personWarningsTool(input, principal)` — main function. Takes a `Principal` because live mode reads a credential; local mode never uses it.
 - `personWarningsToolSchema` — MCP tool schema
 - `ALL_WARNING_TAGS` — the array of every `issueType` tag the tool emits;
   imported by the drift lint as the shipped source of truth
@@ -777,6 +797,13 @@ npx @modelcontextprotocol/inspector node build/index.js
   — throws file-not-found
 - Call `person_warnings({ projectPath: "/path/to/project", personId: "ZZZZ" })`
   — throws person-not-found
+- Call `person_warnings({ personId: "KD96-TV2", live: true })` — live mode;
+  fetches the person and their one-hop relatives from FamilySearch and checks
+  them. Needs a logged-in session; without one it throws the login instruction
+- Call `person_warnings({ personId: "I1" })` — throws `projectPath is required`.
+  Omitting the path does **not** select live mode; only `live: true` does
+- Call `person_warnings({ projectPath: "/p", personId: "I1", live: true })`
+  — throws (the two modes read different trees)
 
 ### Manual Layer 2 (Claude Code)
 

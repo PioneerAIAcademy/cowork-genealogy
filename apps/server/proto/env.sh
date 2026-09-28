@@ -14,8 +14,12 @@
 #   the FS token       written to $PROTO_TOKEN_FILE (default apps/server/proto/.fs-token,
 #                      always mode 600), which compose mounts at /run/fs-token and the
 #                      worker reads PER TURN -- so `make proto-token` (this file again)
-#                      refreshes it under a running worker. FamilySearch access tokens
-#                      live an hour. The value is the caller's FS_ACCESS_TOKEN, else the
+#                      refreshes it between turns. Never while a turn is in flight: a
+#                      FamilySearch refresh REVOKES the previous access token at once
+#                      (measured 2026-09-23), so the in-flight attempt's calls would 401.
+#                      FamilySearch access tokens live 8 h idle / 24 h max; the engine's
+#                      stored expiry is an assumption, because the token response carries
+#                      no expires_in. The value is the caller's FS_ACCESS_TOKEN, else the
 #                      desktop login's token refreshed through the engine's own path
 #                      (dev/fs-token.ts, which FORCES a refresh when under 35 minutes of
 #                      life are left -- PROTO_TOKEN_MIN_LIFE minutes, default 30, plus the
@@ -57,7 +61,7 @@ proto_tok_err="$(tr '\n' ' ' < "$proto_tok_err_file")"
 rm -f "$proto_tok_err_file"
 if [ -n "$proto_tok" ]; then
   printf '%s' "$proto_tok" > "$PROTO_TOKEN_FILE"
-  proto_tok_status="written to $PROTO_TOKEN_FILE (lives an hour; make proto-token between turns forces a refresh under 35 min left)"
+  proto_tok_status="written to $PROTO_TOKEN_FILE (make proto-token BETWEEN turns only: a refresh revokes the token a running turn holds)"
 elif [ -s "$PROTO_TOKEN_FILE" ]; then
   proto_tok_status="refresh FAILED; the previous token in $PROTO_TOKEN_FILE is kept (it may have expired)${proto_tok_err:+ -- $proto_tok_err}"
 else

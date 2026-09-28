@@ -26,6 +26,7 @@ export const GRADING_RELEVANT_FIELDS = [
   'test.holdout',
   'test.expected_outcome',
   'test.xfail_reason',
+  'test.tags',
   'judge_reads_files',
 ] as const;
 
@@ -43,7 +44,10 @@ export function hasGradingRelevantChange(
   if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
   if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
   if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
-  // holdout survives snapshot normalization (only name/description/tags are
+  // tags select validators and change outcome computation (issue #2694).
+  // They are no longer cosmetic — only name/description are stripped.
+  if (JSON.stringify(before.test.tags ?? []) !== JSON.stringify(after.test.tags ?? [])) return true;
+  // holdout survives snapshot normalization (only name/description are
   // stripped), so toggling it changes the content hash.
   if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
   // judge_reads_files likewise survives normalization and changes what the

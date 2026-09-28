@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_015",
+    "skill": "conflict-resolution",
+    "name": "Call the calendar tool before treating a one-year date difference as a conflict",
+    "type": "positive",
+    "description": "A Bolton-le-Moors parish register gives Sarah Hollins's baptism as 14 February 1746; a printed transcript of the same entry gives 14 February 1747. Same day, same month, same parish, same father. England kept the Julian calendar until September 1752 and began its civil year on 25 March, so a February date carried the previous year number on the page — the two sources agree. Tests whether the skill calls convert_calendar with the jurisdiction instead of carrying an adoption date from memory or declaring a conflict that does not exist. NO mcp_fixtures: convert_calendar is a LIVE_TOOL, so the real compiled implementation answers and a fixture would shadow it (fixtures take precedence over live registration) and hard-code the very answer this test measures. Verified against the live tool: 14 Feb 1746 England osNsYear -> 1747. The calendar route had no test before this one, and zero convert_calendar calls appear anywhere in the committed run logs.",
+    "tags": [
+      "fact-conflict",
+      "calendar",
+      "date-artifact",
+      "calendar-from-tool"
+    ]
+  },
+  "input": {
+    "user_message": "The Bolton-le-Moors register has Sarah Hollins baptised 14 February 1746 (a_001) but the printed transcript of the same register says 14 February 1747 (a_002). Same day, same month, same parish, same father. Is that a real conflict in the evidence, and which year should I record?",
+    "scenario": "english-old-style-date-conflict"
+  },
+  "judge_context": [
+    "Must call convert_calendar and pass a jurisdiction naming England (or Bolton-le-Moors / Lancashire) BEFORE ruling on the two dates. The per-jurisdiction adoption table was deliberately removed from conflict-resolution's SKILL.md and references (issue #2254) and now lives in the tool, so a ruling that states the 1752 changeover or the 25 March year-start from the model's own knowledge fails Tool Arguments even where the stated facts are correct. Reaching the right answer without the call is the specific failure this test exists to catch.",
+    "The correct conclusion is that this is NOT a conflict in the evidence: the two sources record the same day. Under the pre-1752 English civil year, which began on 25 March, a 14 February date fell in the year the register numbered 1746 and which modern reckoning numbers 1747. The skill should say the register and the transcript agree, and that 1747 (or the double-dated form 1746/7) is what to record.",
+    "Should recognise that the printed transcript is a derivative of the same register page, not an independent witness. Two readings of one entry corroborate nothing; if the skill counts them as agreeing sources once it has reconciled the years, that is an independence error even though the date conclusion is right.",
+    "If the skill puts the transcript's 1747 through the tool as well and the tool returns 1748, it must not carry that forward as the answer. The transcript had already modernised the register's year, so applying the correction a second time double-counts it. Recognising this earns credit; being misled by it is a real error, not a tool problem.",
+    "Do not require the skill to create a conflict entry. The honest outcome here is that no conflict exists, and recording one anyway — or resolving a fabricated c_ entry — is worse than declining. Naming the question and answering it in the reply is sufficient.",
+    "The day offset (11 days) is not the issue here and the skill should not need it. A ruling that reaches for the Julian-Gregorian day difference to explain a whole-year gap has misidentified the mechanism, even if it also mentions the year-start."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

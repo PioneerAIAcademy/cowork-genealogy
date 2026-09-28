@@ -64,6 +64,18 @@ describe("preScore", () => {
     expect(preScore(t, far)).toBeCloseTo(0.6 * 1 + 0.4 * 0);
   });
 
+  it("scores on the preferred name, not names[0]", () => {
+    // `fullName` selects the preferred name; with only names[0] scored, this
+    // person reads as Zebediah Xanthopoulos and the match collapses (#1389).
+    const t = person("t", "John", { birthYear: "1815" });
+    t.names = [
+      { id: "N1", given: "Zebediah", surname: "Xanthopoulos" },
+      { id: "N2", given: "John", surname: "Smith", preferred: true },
+    ];
+    const c = person("c", "John", { birthYear: "1815" });
+    expect(preScore(t, c)).toBeCloseTo(1.0);
+  });
+
   it("parses the year from a full standard_date string", () => {
     const t = person("t", "John", { birthYear: "+1815-06-15" });
     const c = person("c", "John", { birthYear: "15 Jun 1815" });

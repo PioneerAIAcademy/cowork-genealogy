@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
  *
  * Forbidden terms (case-insensitive, singular and plural): primary source,
  * secondary source, primary evidence, secondary evidence. An explicit
- * allow-list, keyed to (file, line), covers the citation skill's existing
+ * allow-list, keyed to (file, line), covers the citation agent's existing
  * terminology guardrail, which must keep quoting the wrong phrasing back at
  * the user in order to correct it.
  */
@@ -100,16 +100,16 @@ function findMatchesInFile(abs: string, rel: string): Match[] {
 // reason; this is not an escape hatch for "the lint is inconvenient."
 const ALLOWLIST: Array<{ relPath: string; lineNo: number; reason: string }> = [
   {
-    relPath: "skills/citation/SKILL.md",
-    lineNo: 622,
+    relPath: "agents/citation.md",
+    lineNo: 672,
     reason:
       'terminology guardrail: quotes the user\'s "primary source"/"secondary source" phrasing back at them in order to correct it',
   },
   {
-    relPath: "skills/citation/SKILL.md",
-    lineNo: 653,
+    relPath: "agents/citation.md",
+    lineNo: 703,
     reason:
-      "terminology guardrail decision-rule row: same correction context as line 622",
+      "terminology guardrail decision-rule row: same correction context as line 672",
   },
 ];
 
@@ -158,7 +158,7 @@ describe("GPS terminology lint", () => {
 
   // Symmetric to enum-drift.test.ts's stale/missing checks: an allow-list
   // entry whose line no longer contains the forbidden term would otherwise
-  // silently widen the allow-list for nothing, e.g. if citation/SKILL.md is
+  // silently widen the allow-list for nothing, e.g. if agents/citation.md is
   // edited and the guardrail text moves or is reworded away.
   describe("allow-list entries are still needed", () => {
     for (const { relPath, lineNo, reason } of ALLOWLIST) {

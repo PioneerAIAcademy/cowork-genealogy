@@ -1,6 +1,7 @@
 import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  FS_ACCESS_TOKEN_LIFETIME_S,
   exchangeCodeForTokens,
   refreshAccessToken,
   getValidToken,
@@ -141,6 +142,35 @@ describe("refreshAccessToken", () => {
     const result = await refreshAccessToken("old-ref");
     expect(result.accessToken).toBe("new-acc");
     expect(result.refreshToken).toBe("new-ref");
+  });
+
+  it("stores 8 h when the response names no lifetime — FamilySearch's never does", async () => {
+    // The real response, measured 2026-09-23: access_token, token_type, refresh_token.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ access_token: "new-acc", token_type: "family_search", refresh_token: "new-ref" }),
+    });
+    const before = Date.now();
+    const result = await refreshAccessToken("old-ref");
+    const after = Date.now();
+    expect(FS_ACCESS_TOKEN_LIFETIME_S).toBe(8 * 60 * 60);
+    expect(result.expiresAt).toBeGreaterThanOrEqual(before + 8 * 3600 * 1000);
+    expect(result.expiresAt).toBeLessThanOrEqual(after + 8 * 3600 * 1000);
+  });
+
+  it("still honours an expires_in the response does name", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ access_token: "new-acc", token_type: "Bearer", expires_in: 600 }),
+    });
+    const before = Date.now();
+    const result = await refreshAccessToken("old-ref");
+    expect(result.expiresAt).toBeLessThanOrEqual(Date.now() + 600 * 1000);
+    expect(result.expiresAt).toBeGreaterThanOrEqual(before + 600 * 1000);
   });
 
   it("keeps the old refresh token when the response does not include a new one", async () => {

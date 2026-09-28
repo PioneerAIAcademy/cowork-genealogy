@@ -6,17 +6,17 @@ concluded the user's screen was broken and repeated itself. An agent one turn
 behind cannot detect that it is one turn behind, which is why this cannot be
 fixed in a prompt.
 
-The mechanism spans three files and each half looks reasonable alone:
+The mechanism spans two files and each half looks reasonable alone:
 
 1. `sandbox_server.Hub.handle` records the `user_msg` into the replay history and
    sets `_turn_active`, THEN forwards it. So the message is in the transcript the
    user is looking at.
 2. `runner.serve` dropped it on the floor with a bare `continue` when a turn was
    already running.
-3. `docs/specs/public-rest-api-spec.md` asserts the opposite - "the in-sandbox
-   runner is sequential (it won't read the next `user_msg` until the current turn
-   emits `turn_done`)" - which is the behaviour these tests pin, and which the
-   code did not have.
+
+The contract these tests pin is that the in-sandbox runner is sequential - it
+won't read the next `user_msg` until the current turn emits `turn_done` - which
+is the behaviour the code did not have.
 
 The user therefore saw their message appear, never got an answer to it, and read
 the previous turn's completion as the answer. It PERSISTS because every later
@@ -168,21 +168,21 @@ def test_every_turn_announces_itself_and_the_queued_flag_still_distinguishes():
 
     WHY. Without an announcement a turn's only frames are the agent's own plus
     the terminal `turn_done`, so before its first frame there is a silence the
-    length of a full SDK round trip, and two consumers read that silence as
+    length of a full SDK round trip, and the busy gate reads that silence as
     "idle":
 
-      * `app/v1.py::_drain_replay` returns after `_DRAIN_IDLE` of quiet, so a
-        caller could send inside the gap and then read the RUNNING turn's
-        `turn_done` as its own reply.
-      * `sandbox_server` clears `_turn_active` on every `turn_done`, so the UI
-        went idle while messages were still queued.
+      * `sandbox_server` clears `_turn_active` on every `turn_done` - once per
+        TURN, not once per backlog - so the UI went idle while messages were
+        still queued.
 
     THIS FIRED ONLY FOR QUEUED TURNS AT FIRST, and this test asserted that. The
     reasoning was "the first turn's sender already knows it sent it" - which is
-    about the SENDER, while the consumer that matters is the DRAIN. A sync
-    `POST /messages` starts an UNqueued turn, so on its 504 retry there was no
-    `turn_start` at all, `in_flight` stayed 0, and the drain returned inside the
-    running turn. Review round 3 on issue #2062.
+    about the SENDER. The load-bearing case is the QUEUED turn: `Hub` sets
+    `_turn_active` on the incoming `user_msg` and clears it on every
+    `turn_done`, so without a `turn_start` for the next queued turn the gate
+    drops to idle mid-backlog. The UNqueued arm's consumer was the public REST
+    API's replay drain, removed with `/v1`; it stays unconditional so the queued
+    case cannot regress by re-splitting the two. Review round 3 on issue #2062.
 
     The `queued` flag is asserted per turn rather than just counted, because
     emitting `turn_start` unconditionally with a hardcoded `queued: True` would

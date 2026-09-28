@@ -579,7 +579,7 @@ export const RESEARCH_SHAPES = {
   ]),
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
-    "match_score", "created", "superseded_by",
+    "core_identifier_conflict", "match_score", "created", "superseded_by",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
@@ -1165,6 +1165,15 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("confidence" in pe) {
       checkEnum(pe.confidence, "person_evidence_confidence", pp, report);
+    }
+    if ("core_identifier_conflict" in pe && pe.core_identifier_conflict != null) {
+      if (typeof pe.core_identifier_conflict !== "string" || pe.core_identifier_conflict === "") {
+        addError(
+          report,
+          pp,
+          "core_identifier_conflict must be a non-empty string or null",
+        );
+      }
     }
     if ("assertion_id" in pe) {
       checkRefExists(pe.assertion_id, ids.assertions, "assertion", pp, report);

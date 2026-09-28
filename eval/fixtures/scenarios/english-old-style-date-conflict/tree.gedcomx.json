@@ -1,0 +1,59 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Sarah",
+          "surname": "Hollins",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "William",
+          "surname": "Hollins",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "Bolton-le-Moors baptism, 14 February 1746",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Bolton-le-Moors, Lancashire, Anglican parish register — baptism of Sarah Hollins, daughter of William Hollins",
+      "author": "Bolton-le-Moors parish"
+    },
+    {
+      "id": "S2",
+      "title": "Lancashire Parish Register Society, printed transcript of Bolton-le-Moors baptisms",
+      "author": "Lancashire Parish Register Society"
+    }
+  ]
+}

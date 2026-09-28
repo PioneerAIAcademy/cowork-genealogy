@@ -3,33 +3,41 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Thomas Werdmüller and Regula Steiner had a son David, baptised 27 March 1698 at Zürich.",
+      "polarity": "avoid",
+      "description": "The agent must NOT conclude that Thomas Werdmüller (PID 9MF3-9S6, chr. 22 February 1657 Grossmünster, Zürich; d. 14 November 1704) had a son David by a Regula Steiner, and must NOT add Regula Steiner as his wife or partner. The 27 March 1698 Zürich baptism of David Werdmüller belongs to a different Thomas Werdmüller — the one married to Regula Steiner, who baptised nine children in the same Zürich parish between 4 August 1692 and 21 April 1712. That twenty-year run is a continuous marital family, not an isolated illegitimate baptism, and it continues seven and a half years past the subject's own death. The subject's wife Dorothea von Muralt, whom he married 2 March 1686, was buried at Zürich on 16 January 1735, so Regula Steiner cannot be a successor wife either. Pass = the final tree.gedcomx.json contains no Regula Steiner spouse for the subject, no David Werdmüller child, and no stub person for either.",
       "details": {
         "subject_person": "Thomas Werdmüller (9MF3-9S6)",
-        "relation": "child",
-        "target_person": {
-          "name": "David Werdmüller",
-          "baptism": "27 March 1698, Zürich, Switzerland"
-        },
-        "mother": "Regula Steiner"
+        "relation": "spouse and child",
+        "wrong_candidate": {
+          "name": "Regula Steiner as a wife or partner, and David Werdmüller (baptised 27 March 1698, Zürich) as a son, also spelled David Werdmuller without the umlaut",
+          "note": "the 1698 baptism is one of nine by a single couple across 1692-1712; the last two postdate the subject's death, and the subject's own wife was buried in 1735, ruling out both a concurrent second marriage and a successor one"
+        }
       },
       "supporting_sources": [
-        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — baptism of David Werdmüller, 27 Mar 1698, parents Thomas Werdmüller and Regula Steiner"
+        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — baptism of a son Thomas to Thomas Werdmüller and Regula Steiner, 21 Apr 1712, Zürich (ark:/61903/1:1:66JR-7TSH) — the disproving record: the same couple is still baptising children seven and a half years after the subject died on 14 November 1704",
+        "The same couple's other baptisms in that collection, all at Zürich, showing one continuous family rather than an isolated entry: 4 Aug 1692 Anna Lisabetha (ark:/61903/1:1:66JR-QXJG), 23 Aug 1693 Heinrich (ark:/61903/1:1:66JR-MQDM), 18 Dec 1694 Magdalena (ark:/61903/1:1:66JR-8GWB), 19 Aug 1696 Hans Rudolf (ark:/61903/1:1:66JR-FL1K), 27 Mar 1698 David — the hinted entry (ark:/61903/1:1:66JR-ZV3G), 23 Jul 1702 Heinrich (ark:/61903/1:1:66JR-CYCD), Sep 1705 Regula (ark:/61903/1:1:66JR-6N8J), 30 Jul 1707 Anna Magdalena (ark:/61903/1:1:66J5-RH8N). The index spells the parents inconsistently across these entries — the mother appears as \"Rägula Striner\" on the 1694 baptism and \"Regel Steiner\" on the 1705 one, and the father as \"Tomas\" on the 1707 one; these are orthographic variants within one continuous sequence in a single parish register, not separate couples",
+        "Burial of Dorothea von Muratt, 16 Jan 1735, Zürich, recorded in a couple relationship with Thomas Werdmüller (ark:/61903/1:1:66JB-RGNM) — corroboration only, not the disproof: it establishes that the subject's wife outlived him by thirty-one years, so Regula Steiner was neither a successor wife nor a widow's replacement",
+        "Baptism of a different Thomas Werdmüller, 5 May 1668, Zürich, son of Heinrich Werdmüller and Magdalena Escher (ark:/61903/1:1:66JR-XK9C) — a candidate carrier for the Regula Steiner family, aged 24 at its first child and 44 at its last. The subject, christened 22 February 1657, would have been 35 at the first child, an unremarkable age to father one, so it is the last end alone that excludes him; this is a candidate, not a proven identification",
+        "Baptism of Heinrich Werdmüller, 20 Feb 1696, Zürich, to a third couple — Thomas Werdmüller and Elsbeth Esher (ark:/61903/1:1:66JP-SL8F) — falling inside the Regula Steiner run and establishing that at least three distinct Thomas Werdmüller fathers were active in the same parish in these years"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "person",
-      "description": "Regula Steiner was a wife of Thomas Werdmüller, named as the mother on the 1698 Zürich baptism.",
+      "type": "fact",
+      "description": "Having weighed the hinted 27 March 1698 baptism against the baptismal run of the Thomas Werdmüller and Regula Steiner family itself, the agent should document a negative conclusion in its proof summary: that baptism cannot belong to this subject, because the same couple was still baptising children on 21 April 1712 (ark:/61903/1:1:66JR-7TSH), seven and a half years after his 14 November 1704 death, and his own wife Dorothea von Muralt was not buried until 1735. The conclusion must rest on that named conflicting record. A conclusion resting only on failure to confirm the hint does not satisfy this finding: a run that searched nothing and wrote \"I could not verify this\" has not met the bar. No credible substitute record makes the subject the father of the 1698 David, and the final tree records no Regula Steiner spouse and no David Werdmüller child for him.",
       "details": {
-        "person": {
-          "name": "Regula Steiner",
-          "role": "mother on the 27 March 1698 Zürich baptism"
+        "subject_person": "Thomas Werdmüller (9MF3-9S6)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion in the proof summary, resting on the 21 April 1712 baptism",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — baptism of 27 Mar 1698"
+        "No record in Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 establishes a marriage between Thomas Werdmüller and Regula Steiner; searched that collection and unrestricted across Zürich, 1680-1700, and no marriage entry for the couple is indexed",
+        "No burial record for the subject himself was found at Zürich in November 1704; Werdmüller deaths and burials were searched across 1700-1710, so the tree's 14 November 1704 death date rests on the starting tree rather than on an indexed record",
+        "No substitute record makes the subject the father of the 1698 David: every indexed baptism naming Thomas Werdmüller and Regula Steiner as parents belongs to the single 1692-1712 sequence cited on f1"
       ],
       "required": true
     }

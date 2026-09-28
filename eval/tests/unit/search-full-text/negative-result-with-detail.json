@@ -5,13 +5,27 @@
     "name": "Negative result should be logged with enough detail to support exhaustiveness",
     "type": "positive",
     "description": "Search full-text for a Flynn family member in a context where they're not expected to appear (e.g., a probate record). The fixture returns no matches. Tests negative-result handling: 'no results' on its own is not useful for the GPS exhaustive-search claim. The log must record what was searched, in which collections, with which queries — so a future exhaustive-search declaration can cite this search as evidence of due diligence.",
-    "tags": ["fulltext", "negative-result", "exhaustive-search", "log-quality", "negative-result-log"]
+    "tags": [
+      "fulltext",
+      "negative-result",
+      "exhaustive-search",
+      "log-quality",
+      "negative-result-log"
+    ]
   },
   "input": {
     "user_message": "Search for Patrick Flynn as a beneficiary or executor in Schuylkill County probate records — full-text search.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["fulltext-search-flynn-probate-empty", "fulltext-search-flynn-probate-empty-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant", "fulltext-search-flynn-prefix-wildcard-variant"],
+  "mcp_fixtures": [
+    "fulltext-search-flynn-probate-empty",
+    "fulltext-search-flynn-probate-empty-by-name",
+    "fulltext-search-flynn-flinn-variant",
+    "fulltext-search-flynn-wildcard-variant",
+    "fulltext-search-flynn-prefix-wildcard-variant",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
   "execution": {
     "max_wall_clock_seconds": 600,
     "max_turns": 30

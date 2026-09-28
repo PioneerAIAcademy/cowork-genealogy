@@ -1,0 +1,294 @@
+{
+  "run_log": "v1_2026-09-23_22-38-51.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the informant question against the record. Patrick was 5 in 1850, so a parent answered; at 15 in 1860 the household head would still normally report. The skill claimed the respondents \"may well have been different individuals\" and offered nothing to support it. Naming the possibility and then resolving it in its own favour is worse than not raising it. Conclusion is right; the claim behind it isn't earned."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All the required work is there: the conflict identified, all three competing assertions analysed, independence and weighing written, preferred assertion set, status changed. Nothing left undone."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Four calls, all resolved live, none fell through to a missing fixture. The append carried every field the conflict needed."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "This is where the fault belongs. Separate enumerations by different enumerators are independent sources, and the skill got that right, as it did excluding the Ancestry index as a derivative. But independent sources are not independent information when the same household member reports both times. For birthplace specifically, the 1850 and 1860 entries most likely trace to one informant — the parents — and that should have been said plainly."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The factors chosen are the right ones and the immigration-origin reasoning on the death certificate is sound. The problem is that the weighing counts \"two independent corroborating records\" while the independence analysis left that very question open. If it's one informant unit, that phrase can't be used. Ireland still wins on informant proximity and temporal distance alone — the conclusion didn't need the inflated count."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions addressed by name with reasons. The treatment of James Brown is genuinely good — son-in-law, not present, 63 years later, reporting the only home he knew. A reader could follow this without opening the assertions."
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the deferral against what's actually on file. One census, two candidates, no later record — nothing there can separate them, and the skill said so instead of manufacturing a preference. Status left unresolved with no preferred assertion, which is the honest answer."
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answered the question asked and named four records that would actually decide it: 1860 census for ten-year continuity, marriage record naming parents, naturalization or death certificate, parish baptisms ~1840–1850. That's a usable next step, not a gesture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Six calls, all matched, none fell through to a missing fixture. The Ireland naming-customs page was the right jurisdiction for the family's origin."
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The key point is right: both candidates trace to the same 1850 enumeration, and the Ancestry index is the same record retyped, not a second witness. Once you see there's only one source-group, no amount of reweighing inside it can settle anything. Only a new record can."
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The circular-reasoning catch is the best thing in this run. Using the Thomas Flynn household to pick which Patrick is ours assumes the parentage q_001 exists to test. Correctly refused the one-year age gap as a tie-breaker too — that's within normal census variance."
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both candidates named, the distinction explained, and the consequence spelled out — if it's dwelling 197, the whole Thomas Flynn line is irrelevant. One small thing: the skill applied the co-enumeration rule to the county census generally, where the rule as written covers the same page. The conclusion still holds — two dwellings, two households, two Patricks — so this is a note, not a deduction.\n"
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the distance against the tool response: 320 km / 199 miles, correct. More importantly the skill didn't misuse it — it said rail made that trip feasible in 1870, so distance alone proves nothing. No claim here goes past what the records support."
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Gathered the place data, ran the distance, wrote all three analysis fields, and named what would settle it: full 1870 household detail, an 1880 Schuylkill census, or a directory/church/naturalization record from the 1870s. Nothing left hanging."
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Eight calls, both counties resolved before the distance was requested, and the append carried the right conflict id and fields. Nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right call, and right reason for saying it doesn't matter here. The Allegheny and Schuylkill records are genuinely separate enumerations by different officials — independence isn't the weak point. The weak point is that a shared name is all they share."
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The three factors are the right three, and the second is the decisive one: a_014 gives a name and a county and nothing else — no age, no birthplace, no household — so there's nothing to test against a man born ~1845 in Ireland. Also credited the skill for refusing to read his absence from an 1870 Schuylkill record as evidence he'd moved. Missed enumerations are ordinary."
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Explains why the record can't be attributed and what would change that, in enough detail to act on. Noted for the record: it fetched the Irish naming customs page and never reported a conclusion from it. Nothing there applies to telling two Patrick Flynns apart, so this isn't a fault — but the write-up doesn't show that it checked."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the informant claim against the assertions. The record says \"Unknown household member (likely Thomas Flynn or wife)\" with proximity unknown; the rationale says \"almost certainly… Patrick's parents.\" That's an upgrade the record doesn't support. Mitigating: the inference is reasonable for a five-year-old in 1850, and it was used partly to reduce its own corroboration count rather than inflate it. Still a 2, because the weighing also leans on it to raise the census side's quality."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answered what was actually asked — the historical reason the death certificate says Pennsylvania — and gave the immigration-origin pattern in usable detail. Also flagged c_002 and c_003 as still blocking q_001."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Six calls, correct record ids, the append targeted c_001 with all required fields. Nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is the point ut_001 missed on the identical evidence. Two censuses are independent records but not independent knowledge if the same parent answered both times — \"one body of knowledge recorded on two separate occasions\" is exactly right. Noting for skill improvement: ut_001 argued the opposite on the same three assertions, so this handling looks like framing, not a settled rule.\n\n"
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Informant proximity and the 63-year gap are the right grounds and are correctly stated. Reservation: factor three counts \"both census records agree on Ireland\" as corroboration after factor one established they're one informant group. Two recordings from the same informant show consistency — useful, it rules out a transcription slip — but that isn't independent corroboration, and the write-up doesn't draw the line."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions named and dispositioned, with a_012 explained rather than dismissed. A reader could follow it without opening the assertion records."
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "Checked the run log: skills_invoked is empty and activated is false — the conflict-resolution skill never loaded, so it cannot have \"performed its own task.\" Nothing was written; file_changes is null. The test grades the no-harm invariant, not routing, and its own explanation names classifying inline with no skill loaded as accepted behaviour, citing two prior runs that did the same and passed. Marking N/A rather than agreeing with a 1 for behaviour the test permits."
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "Same basis. The test's correct_skill lists conflict-resolution as acceptable alongside record-extraction, and grade_on_invariant is true. Declining was never the required outcome, so failing to decline isn't an incompleteness. Flagging that judge_context still instructs the judge to expect routing, which contradicts the explanation and is what produced this score — an eval fix, not a skill one."
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Three calls project context and two research query for assertions and sources  all well-formed, correct project path and sections, none fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the routing on the merits, not just the label. The user asked to audit existing links to one known person and to check they're properly connected — that's person-evidence's job. Conflict-resolution is for competing candidates, and no competing candidate appears anywhere in the request. Correct hand-off. Noting that the reply is empty, so the judge's account of the skill \"identifying\" the mismatch is inferred from the hand-off rather than observed."
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing more was required of this skill than getting out of the way, and it did. Same caveat: there's no reply text behind the rationale, only the recorded hand-off to person-evidence."
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls at all, which is right for a request this skill shouldn't be working on. Nothing to grade."
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked the naming-pattern claim against the Ireland wiki page the skill had just fetched. It cites \"third son named for the father\" but illustrates it with a Thomas naming his son after his own father Patrick — that's the first-son rule. Both rules are on that page; the skill crossed them. The conclusion is unaffected, but the judge's \"no unsupported claims\" doesn't survive the check."
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Named all three conflicts, explained why c_002 comes first — identity determines whose records the other two even compare — resolved that one, and left the rest as next steps. Exactly what this test asks for."
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Calls resolved correctly, the Ireland naming-customs page matched on the URL predicate, and the append targeted c_002 with all required fields. Nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right on the point that matters: the 1860 census is a fresh observation, not a copy of 1850. It also conceded the household informant may have been the same person both times, which is the honest caveat. Three distinct recording events, none derived from another."
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The positive case is sound — the 1860 census places Patrick at 15 in Thomas's household, the right age for the 5-year-old of 1850, and the death certificate names Thomas as father. That's positive placement, which is what the rule requires. The fault is the closing sentence: \"the alternative rests on absence — the mere existence of a second Patrick Flynn.\" Existence is not absence. Household 197's Patrick is a positive record; the absence risk belongs to the skill's own argument, not the alternative's. Cutting that sentence leaves the conclusion intact and better supported."
+    },
+    {
+      "test_id": "ut_conflict_resolution_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both candidates named, the preference explained, and the chain-migration point is genuinely good — two same-aged Patrick Flynns in one anthracite county is expected, not suspicious. Carries the same muddled absence sentence as the weighing, already docked there, so not counting it twice."
+    }
+  ]
+}

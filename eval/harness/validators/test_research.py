@@ -2,8 +2,8 @@
 
 Tag-gated on ``routing`` (the AST-recognized gate tag) and
 ``routes-to:<skill-name>`` (the data tag naming the expected callee).
-Asserts the router's first delegation in ``skills_invoked`` matches the
-expected sub-skill.
+Asserts the router's first hand-off — a ``Skill`` call or an agent spawn,
+read by ``handoffs`` — matches the expected callee.
 
 ``routes-to:stop`` is the special case where the router should finish
 without invoking any sub-skill (e.g., project already completed).
@@ -31,45 +31,50 @@ def _expected_skill(test: dict) -> str | None:
     return value
 
 
-def test_routes_to_expected_skill(skills_invoked, test):
-    """The router's first sub-skill delegation must match the ``routes-to:`` tag.
+def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
+    """The router's first hand-off must match the ``routes-to:`` tag.
 
-    ``skills_invoked`` is populated from ``Skill`` tool calls only, so the
-    skill under test appears in it when the model reached it through such a
-    call and not when it was entered as a slash command.  Both shapes are
-    filtered the same way below.  Whether the skill under test ran at all is
-    gated by the harness (``orchestrator.py``), not here.
+    A hand-off is a ``Skill`` call or a main-thread agent spawn, read in call
+    order by ``handoffs``: a callee converted from a skill to an agent is
+    reached by spawn and never appears in ``skills_invoked`` (issue #2825).
+    The skill under test appears in the list when the model reached it
+    through a ``Skill`` call and not when it was entered as a slash command.
+    Both shapes are filtered the same way below.  Whether the skill under
+    test ran at all is gated by the harness (``orchestrator.py``), not here.
 
-    Graded deterministically rather than by the LLM judge because
-    ``skills_invoked`` is ground truth: the PreToolUse hook fires on the
-    real ``Skill`` call, so a response that only *narrates* a hand-off
-    ("I'll now invoke question-selection") cannot satisfy it.
+    Graded deterministically rather than by the LLM judge because the hook
+    records are ground truth: the PreToolUse hook fires on the real call, so
+    a response that only *narrates* a hand-off ("I'll now invoke
+    question-selection") cannot satisfy it.
     """
+    from harness.skill_runner import handoffs
+
     if "routing" not in test.get("tags", []):
         pytest.skip("not a routing test")
     expected = _expected_skill(test)
     if expected is None:
         pytest.skip("routing tag present but no routes-to: data tag")
+    handed = handoffs(skills_invoked, builtin_tool_calls)
     skill_under_test = test.get("skill", "")
-    if skill_under_test in skills_invoked:
-        tail = skills_invoked[skills_invoked.index(skill_under_test) + 1 :]
+    if skill_under_test in handed:
+        tail = handed[handed.index(skill_under_test) + 1 :]
     else:
-        tail = list(skills_invoked)
+        tail = list(handed)
     delegations = [s for s in tail if s != skill_under_test]
     if expected == "stop":
         assert not delegations, (
-            "Router should stop without invoking any sub-skill when "
-            f"project is completed. skills_invoked={skills_invoked}"
+            "Router should stop without handing off when project is "
+            f"completed. handoffs={handed}"
         )
     else:
         assert delegations, (
-            f"Router should invoke Skill('{expected}') but made no "
-            f"sub-skill call. skills_invoked={skills_invoked}"
+            f"Router should hand off to '{expected}' but made no "
+            f"Skill call or agent spawn. handoffs={handed}"
         )
         assert delegations[0] == expected, (
-            f"Router's first sub-skill call should be '{expected}', "
+            f"Router's first hand-off should be '{expected}', "
             f"got '{delegations[0]}'. "
-            f"Full list: {skills_invoked}"
+            f"Full list: {handed}"
         )
 
 

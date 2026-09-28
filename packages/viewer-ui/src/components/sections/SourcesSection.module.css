@@ -9,6 +9,14 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.subheading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
 .field {
   margin-bottom: var(--spacing-md);
 }

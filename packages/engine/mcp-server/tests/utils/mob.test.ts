@@ -369,3 +369,79 @@ describe("getRelativeMobs — boundary behavior", () => {
     expect(relatives).toHaveLength(40);
   });
 });
+
+describe("matchSubset — the tree side of a same_person call (#1731)", () => {
+  /** focus I1, two parents, a spouse, `kids` children, `sibs` siblings. */
+  function family(kids: number, sibs: number): SimplifiedGedcomX {
+    const persons: NonNullable<SimplifiedGedcomX["persons"]> = [
+      { id: "I1", gender: "Male", names: [{ given: "Focus" }] },
+      { id: "F", gender: "Male", names: [{ given: "Father" }] },
+      { id: "M", gender: "Female", names: [{ given: "Mother" }] },
+      { id: "S", gender: "Female", names: [{ given: "Spouse" }] },
+      { id: "OUT", gender: "Male", names: [{ given: "Stranger" }] },
+    ];
+    const relationships: NonNullable<SimplifiedGedcomX["relationships"]> = [
+      { type: "ParentChild", parent: "F", child: "I1" },
+      { type: "ParentChild", parent: "M", child: "I1" },
+      { type: "Couple", person1: "I1", person2: "S" },
+      // An edge with one endpoint outside the mob — must not be carried.
+      { type: "Couple", person1: "OUT", person2: "I1x" },
+    ];
+    for (let i = 1; i <= kids; i++) {
+      persons.push({ id: `K${i}`, names: [{ given: `Kid${i}` }] });
+      relationships.push({ type: "ParentChild", parent: "I1", child: `K${i}` });
+    }
+    for (let i = 1; i <= sibs; i++) {
+      persons.push({ id: `B${i}`, names: [{ given: `Sib${i}` }] });
+      relationships.push({ type: "ParentChild", parent: "F", child: `B${i}` });
+    }
+    return { persons, relationships };
+  }
+
+  it("is the matching mob and nothing else — no unrelated tree persons", () => {
+    const { gedcomx, dropped } = new Mob(family(2, 1), "I1").matchSubset();
+    expect(gedcomx.persons?.map((p) => p.id).sort()).toEqual(
+      ["B1", "F", "I1", "K1", "K2", "M", "S"].sort(),
+    );
+    expect(gedcomx.persons?.map((p) => p.id)).not.toContain("OUT");
+    expect(dropped).toBe(0);
+  });
+
+  it("carries only relationships whose BOTH endpoints are in the subset", () => {
+    const { gedcomx } = new Mob(family(1, 0), "I1").matchSubset();
+    for (const r of gedcomx.relationships ?? []) {
+      const ends = r.type === "Couple" ? [r.person1, r.person2] : [r.parent, r.child];
+      for (const e of ends) {
+        expect(gedcomx.persons?.some((p) => p.id === e)).toBe(true);
+      }
+    }
+    // The dangling Couple to "I1x" is gone.
+    expect(gedcomx.relationships?.some((r) => r.person2 === "I1x")).toBe(false);
+  });
+
+  it("caps at 40 and sheds SIBLINGS before children", () => {
+    // Siblings are two hops from the anchor (via a parent) and children are
+    // one, so the furthest kin go first. The agent body states the cap and the
+    // keep-set but no order between the two; this is where the order is decided.
+    const { gedcomx, dropped } = new Mob(family(30, 30), "I1").matchSubset();
+    const ids = gedcomx.persons!.map((p) => p.id!);
+    expect(ids).toHaveLength(40);
+    expect(dropped).toBe(24); // 4 kept + 30 kids + 30 sibs = 64 -> 40
+    // Every child survived; the siblings absorbed the whole trim.
+    expect(ids.filter((i) => i.startsWith("K"))).toHaveLength(30);
+    expect(ids.filter((i) => i.startsWith("B"))).toHaveLength(6);
+  });
+
+  it("never trims the focus, parents or spouses, even under a tiny cap", () => {
+    const { gedcomx } = new Mob(family(10, 10), "I1").matchSubset(2);
+    expect(gedcomx.persons?.map((p) => p.id).sort()).toEqual(["F", "I1", "M", "S"].sort());
+  });
+
+  it("handles a person with no relatives at all", () => {
+    const solo: SimplifiedGedcomX = { persons: [{ id: "I1" }], relationships: [] };
+    const { gedcomx, dropped } = new Mob(solo, "I1").matchSubset();
+    expect(gedcomx.persons).toEqual([{ id: "I1" }]);
+    expect(gedcomx.relationships).toEqual([]);
+    expect(dropped).toBe(0);
+  });
+});

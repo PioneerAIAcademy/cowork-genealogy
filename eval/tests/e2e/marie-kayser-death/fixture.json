@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 18, hint-samples.csv row 556, flag adds_death, confidence 3). Draft transcribed from a 1780 Luxembourg death entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 18, hint-samples.csv row 556, flag adds_death, confidence 3). Resolved 2026-09-22 as a true match (second opinion: Solomon Baidoo); death about 25 July 1780, burial 26 July 1780, confirmed from the register image."
 }

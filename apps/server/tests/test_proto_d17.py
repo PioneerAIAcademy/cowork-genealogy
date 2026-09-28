@@ -13,6 +13,7 @@ import shlex
 import shutil
 import stat
 import subprocess
+import sys
 from pathlib import Path
 
 import psycopg
@@ -134,6 +135,8 @@ def test_the_repos_own_fixtures_plan_in_both_layouts():
 
 
 ROOT = Path(__file__).resolve().parents[3]
+#: Windows chmod only toggles read-only, so a file mode never reads back as 0o600 there.
+POSIX_MODES = sys.platform != "win32"
 
 
 @pytest.mark.skipif(shutil.which("sh") is None, reason="env.sh needs a POSIX shell")
@@ -163,7 +166,8 @@ def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previou
     assert r.stdout.split() == ["k", "or-key-1"], "the caller's keys, exported for the worker's up"
     assert "OPENROUTER_API_KEY set" in r.stderr and "or-key-1" not in r.stderr and "k\n" not in r.stderr, "never echoed"
     assert token_file.read_text(encoding="utf-8") == "tok-1"
-    assert stat.S_IMODE(token_file.stat().st_mode) == 0o600, "the mode is set on every run, not only at creation"
+    if POSIX_MODES:
+        assert stat.S_IMODE(token_file.stat().st_mode) == 0o600, "the mode is set on every run, not only at creation"
     assert "tok-1" not in r.stderr, "never echoed"
     # No caller values: the keys come from the dotenv file and are exported; no refresh:
     # the previous token survives, and the status says so.
@@ -182,7 +186,8 @@ def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previou
     token_file.mkdir()
     r = source(FS_ACCESS_TOKEN="tok-2", ANTHROPIC_API_KEY="k")
     assert token_file.is_file() and token_file.read_text(encoding="utf-8") == "tok-2", r.stderr
-    assert stat.S_IMODE(token_file.stat().st_mode) == 0o600
+    if POSIX_MODES:
+        assert stat.S_IMODE(token_file.stat().st_mode) == 0o600
     # Nothing to refresh and nothing kept: UNSET.
     token_file.write_text("", encoding="utf-8")
     assert "UNSET" in source(ANTHROPIC_API_KEY="k").stderr

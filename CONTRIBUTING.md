@@ -21,10 +21,11 @@ Constraints to keep in mind:
   [CLAUDE.md](./CLAUDE.md) for the full architecture rule.
 - **Frontmatter shapes routing.** Each `SKILL.md` needs a
   `description` that tells Claude *when* to fire and *when not to* (the
-  positive-trigger + negative-guard pattern most of the 23 existing
-  skills use). `citation/SKILL.md` and `record-extraction/SKILL.md`
-  are good templates for the richer pattern; `search-wikipedia/SKILL.md`
-  is intentionally minimal as a copy-from starter.
+  positive-trigger + negative-guard pattern most of the existing
+  skills use). `record-extraction/SKILL.md` is a good template for the
+  richer pattern, as is `agents/citation.md` for an agent's own
+  `description`; `search-wikipedia/SKILL.md` is intentionally minimal as a
+  copy-from starter.
 - **The researcher profile is extensible.** If your skill needs new
   per-project context (e.g., `dna_companies` for a DNA-specialty
   skill, or `region_focus` for a regional researcher's profile),

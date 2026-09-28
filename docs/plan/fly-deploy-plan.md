@@ -10,8 +10,9 @@ This is the first hosted deploy of the POC. It replaces the local-server +
 Tailscale-Funnel trick with a public Fly URL as the OAuth-redirect target and
 browser ingress. E2B runs the per-user sandboxes (outbound from the container).
 
-> **Status (2026-06-08): partially shipped + amended. Read the deltas before
-> following the body below.** Since this plan was written, three things landed on
+> **Status: Superseded by [`search-agent-prototype.md`](./search-agent-prototype.md)**
+> (no Fly, no E2B in the replacement). The delta bullets below describe what
+> shipped under the original alpha deploy. Since this plan was written, three things landed on
 > `main` that change it:
 > - **DB is Neon Postgres, not SQLite-on-a-volume.** The `neon-postgres-plan.md`
 >   migration (#296) made the backend env-driven via `DATABASE_URL`. **There is no

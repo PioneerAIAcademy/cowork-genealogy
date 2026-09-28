@@ -56,6 +56,19 @@ record search, record read, image read are all permitted for **retrieval**
    the person, checking dates, places and family members against what the tree
    already has.
 
+When any image in this research is read rather than its index text taken —
+the hint record's or any other, by `image_transcribe`,
+`dev/try-image-transcribe.ts`, a model or a person reading the scan — that
+reading is checked first: read two other entries on the same page that the
+FamilySearch index already holds and compare child, father, mother and date.
+Both match: the reading is licensed for those fields. Either differs: discard
+everything that transcription read from the page. Fewer than two other
+indexed entries on the page: the reading is unlicensed, and the README says so. The check never
+licenses a farm, residence or occupation; those need a separate indexed source
+such as a church-census household. A higher-resolution image does not rescue a
+reading that failed the check. The README names the two entries checked and the
+result.
+
 The **identity judgement** is the actual GPS work the benchmark exists to
 measure, and there is no tool shortcut for *that*: no tool output decides
 whether the hint record concerns the tree person. Retrieval is a different
@@ -94,6 +107,12 @@ don't ask the genealogist to invent one, and don't accept a tree PID or the
 fixture's own `source_pid` as a substitute (issue #970's rejected shortcut —
 it carries no record provenance). See spec §3.6.1 (issue #1025).
 
+If the resolution rested on reading the original **page images** (not the
+indexes alone), also ask for the confirming/disproving record's **image** ark —
+`ark:/61903/3:1:...` or `3:2:...`, distinct from the `1:1:` index ark. The
+fixture will declare `"image_basis": true` and that image ark must land in
+`expected-findings.json` (spec §3.6.1, issue #2877).
+
 ## Step 4 — Write the files
 
 - **`expected-findings.json`**
@@ -123,10 +142,11 @@ it carries no record provenance). See spec §3.6.1 (issue #1025).
   it anyway.
 
 - **`README.md`** — replace the "DRAFT PENDING ADJUDICATION" paragraph under
-  "Notes for reviewers" with the genealogist's conclusion and reasoning. 40 of
-  65 record-hint fixtures have been resolved this way (re-derive: `grep -rl
-  '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | wc -l` against
-  `grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | wc -l`);
+  "Notes for reviewers" with the genealogist's conclusion and reasoning. Most
+  record-hint fixtures have been resolved this way (drafts remaining:
+  `comm -12 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json |
+  xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ |
+  xargs -n1 dirname | sort -u) | wc -l`);
   `eval/tests/e2e/chresten-nielsen-daughter/README.md`'s
   "Notes for reviewers" is a worked example (re-adjudicated after a graded
   run, the closest match to a correction-not-rejection outcome). Write the
@@ -136,7 +156,12 @@ it carries no record provenance). See spec §3.6.1 (issue #1025).
   distinguishes a resolved fixture from a draft.
 
 - **`fixture.json`** — update `notes` if it still describes the fixture as
-  an unverified draft.
+  an unverified draft. If the resolution rested on reading the original page
+  images, set `"image_basis": true` (a boolean, never the string `"true"`),
+  and make sure the record's image ark (`ark:/61903/3:1:` or `3:2:`) is in an
+  `expected-findings.json` `supporting_sources` entry — `make e2e-validate`
+  hard-fails an `image_basis: true` fixture that cites only index arks
+  (issue #2877). Leave the flag off when the indexes alone settled it.
 
 **Never touch** `starting-tree.gedcomx.json`, `unstripped-tree.gedcomx.json`,
 or `starting-research.json` — this task only edits the three files above;

@@ -8,7 +8,7 @@ and their reasoning*, and check any mechanic against the live source first:
 | For | Read instead |
 |---|---|
 | Run-log naming, release/candidate/active, the snapshot model | [`eval/CLAUDE.md`](../eval/CLAUDE.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
-| What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now four blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
+| What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now six blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
 | The skill-improvement loop | [`docs/skill-lifecycle.md`](skill-lifecycle.md) |
 
 **§2.4 is superseded and was never built.** The per-test `test_content_hash`
@@ -126,7 +126,7 @@ The histogram is what makes bimodality visible — a skill with 5 fails + 5 pass
 
 **Decision:** Junior genealogists may update existing tests freely. The harness writes a `test_content_hash` field per test in every run log — SHA-256 over **the resolved test**, computed as:
 
-- the test JSON minus the cosmetic fields `name`, `description`, `tags`
+- the test JSON minus the cosmetic fields `name`, `description`
 - plus the contents of the referenced scenario directory (`research.json` + `tree.gedcomx.json`)
 - plus the contents of each referenced MCP fixture file
 

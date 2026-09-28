@@ -59,8 +59,8 @@ const server = await startHttpServer({
   host: values.host as string,
   port,
   baseConfig,
-  bindStore: (projectId) =>
-    new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath }),
+  bindStore: (projectId, signal) =>
+    new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal }),
 });
 
 const address = server.address();

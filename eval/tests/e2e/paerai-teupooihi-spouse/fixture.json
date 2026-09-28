@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 12, hint-samples.csv row 397, flag adds_spouse, confidence 3). Draft transcribed from a French Polynesian civil registration entry; unverified. The addition is one step out from the subject — her son's spouse."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 12, hint-samples.csv row 397, flag adds_spouse, confidence 3). Resolved 2026-09-21 — true match: Moe Parauhia (the subject's son, 97XW-7VN) married Aufait Toehae, corroborated by an independent civil-registration entry (ark:/61903/1:1:D955-NRW2) on a different image and by the live-tree spouse. The addition is one step out from the subject — her son's spouse."
 }

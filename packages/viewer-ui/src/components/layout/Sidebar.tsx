@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
+import { treeOnlySources } from '../../lib/tree-sources'
 import styles from './Sidebar.module.css'
 
 interface SectionItem {
@@ -32,6 +33,7 @@ export default function Sidebar({
 } = {}): React.JSX.Element {
   const {
     research,
+    gedcomx,
     folderPath,
     activeSection,
     setActiveSection,
@@ -67,7 +69,12 @@ export default function Sidebar({
     { key: 'localities', label: 'Localities', countFn: () => research?.localities?.length ?? 0 },
     { key: 'plans', label: 'Plans', countFn: () => research?.plans?.length ?? 0 },
     { key: 'log', label: 'Research Log', countFn: () => research?.log?.length ?? 0 },
-    { key: 'sources', label: 'Sources', countFn: () => research?.sources?.length ?? 0 },
+    {
+      key: 'sources',
+      label: 'Sources',
+      countFn: () =>
+        (research?.sources?.length ?? 0) + treeOnlySources(research, gedcomx).length
+    },
     { key: 'assertions', label: 'Assertions', countFn: () => research?.assertions?.length ?? 0 },
     {
       key: 'person_evidence',

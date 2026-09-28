@@ -171,13 +171,21 @@ for permission. Do not explain. Do not do anything else.
 """.strip()
 
 
-def agent_md(name: str, tools: list[str], denied: list[str]) -> str:
+DESCRIPTION = (
+    "Internal capability probe. Calls convert_calendar once with fixed\n"
+    "arguments and reports whether the tool was available."
+)
+
+
+def agent_md(name: str, tools: list[str], denied: list[str], *,
+             body: str = BODY, description: str = DESCRIPTION) -> str:
     lines = [
         "---",
         f"name: {name}",
         "description: >-",
-        "  Internal capability probe. Calls convert_calendar once with fixed",
-        "  arguments and reports whether the tool was available.",
+    ]
+    lines += [f"  {line}" for line in description.splitlines()]
+    lines += [
         "model: claude-sonnet-4-6",
         "tools:",
     ]
@@ -185,7 +193,7 @@ def agent_md(name: str, tools: list[str], denied: list[str]) -> str:
     if denied:
         lines.append("disallowedTools:")
         lines += [f"  - {t}" for t in denied]
-    lines += ["---", "", BODY, ""]
+    lines += ["---", "", body, ""]
     return "\n".join(lines)
 
 

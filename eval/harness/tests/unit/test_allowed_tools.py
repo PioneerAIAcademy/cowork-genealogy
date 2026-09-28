@@ -1,9 +1,10 @@
 """Tests for harness.allowed_tools — per-skill declared-tool computation.
 
 The session grants every registered MCP tool (issue #1748). The declared
-set computed by ``compute_allowed_tools`` is advisory: it feeds the
-``test_tool_allowlist`` validator (which warns but does not gate) and the
-``ValueError`` guard on ``run_skills``. These tests verify the declared
+set computed by ``compute_allowed_tools`` is advisory: it feeds
+``allowed_tools_override`` at the SDK call and the ``ValueError`` guard on
+``run_skills``. It does NOT feed ``test_tool_allowlist``, which builds its own
+set from the frontmatter it is handed (corrected in PR #2782 review). These tests verify the declared
 set is accurate, NOT that it narrows the SDK session.
 """
 
@@ -11,7 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from harness.allowed_tools import compute_allowed_tools
+from harness.allowed_tools import (
+    bare_tool_names,
+    compute_allowed_tools,
+    declared_tools,
+    load_suite_frontmatter,
+    suite_body_path,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -549,3 +556,171 @@ def test_tool_allowlist_warns_on_attempted_mcp_calls_only():
     assert any("secret_tool" in m for m in msgs), (
         f"expected a warning about secret_tool from attempted_mcp_calls; got: {msgs}"
     )
+
+
+# ---- an agent-keyed suite declares the AGENT's tools (issue #1253) --------
+
+
+def _agent_keyed_repo(tmp_path: Path) -> tuple[Path, Path]:
+    """A plugin tree with one real skill and one agent that has no skill dir."""
+    skills = tmp_path / "skills"
+    (skills / "router").mkdir(parents=True)
+    (skills / "router" / "SKILL.md").write_text(
+        "---\nname: router\nallowed-tools:\n"
+        "  - mcp__genealogy__research_query\n---\nbody\n",
+        encoding="utf-8",
+    )
+    agents = tmp_path / "agents"
+    agents.mkdir(parents=True)
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n"
+        "  - mcp__genealogy__sidecar_read\n"
+        "  - mcp__genealogy__research_append\n---\nagent body\n",
+        encoding="utf-8",
+    )
+    # A same-named agent beside a REAL skill, to pin that the fallback does not
+    # fire there.
+    (agents / "router.md").write_text(
+        "---\nname: router\ntools:\n  - mcp__genealogy__tree_edit\n---\nagent body\n",
+        encoding="utf-8",
+    )
+    return skills, agents
+
+
+def test_agent_keyed_suite_declares_the_agents_own_tools(tmp_path: Path):
+    """`gps-mentor` has an agent file and no skill directory, so the SKILL.md
+    scan yields nothing and the declared set would otherwise be the baseline
+    alone — making `test_tool_allowlist` warn on every test in the suite."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("gps-mentor", skills, agents_dir=agents)
+    assert "mcp__genealogy__sidecar_read" in tools
+    assert "mcp__genealogy__research_append" in tools
+
+
+def test_real_skill_does_not_inherit_a_same_named_agents_tools(tmp_path: Path):
+    """The fallback fires only when the skill directory is ABSENT. A real skill
+    whose SKILL.md declares a tool set has said what it holds, and must not
+    silently gain the tools of a same-named agent it never delegates to."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("router", skills, agents_dir=agents)
+    assert "mcp__genealogy__research_query" in tools
+    assert "mcp__genealogy__tree_edit" not in tools
+
+
+def test_unknown_name_with_neither_skill_nor_agent_is_just_the_baseline(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("not-a-thing", skills, agents_dir=agents)
+    assert not [t for t in tools if t.startswith("mcp__")]
+
+
+# ---- load_suite_frontmatter / declared_tools / bare_tool_names (#1253) -----
+
+
+def test_load_suite_frontmatter_prefers_the_skill(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    fm = load_suite_frontmatter("router", skills, agents_dir=agents)
+    assert fm["name"] == "router"
+    assert "allowed-tools" in fm and "tools" not in fm
+
+
+def test_load_suite_frontmatter_falls_back_to_the_agent(tmp_path: Path):
+    """The whole point: an agent-keyed suite has no SKILL.md, so every site
+    resolving one got `{}` and silently lost both the declared tools and
+    `name` — which `test_ownership_table` skips on rather than fails."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    fm = load_suite_frontmatter("gps-mentor", skills, agents_dir=agents)
+    assert fm["name"] == "gps-mentor"
+    assert fm["tools"]
+
+
+def test_load_suite_frontmatter_does_not_fall_back_for_an_empty_skill_block(tmp_path: Path):
+    """Gated on the skill FILE being absent, not on the frontmatter being
+    empty: a skill that declares nothing has said so."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    (skills / "gps-mentor").mkdir(parents=True)
+    (skills / "gps-mentor" / "SKILL.md").write_text(
+        "---\nname: gps-mentor\n---\nbody\n", encoding="utf-8"
+    )
+    fm = load_suite_frontmatter("gps-mentor", skills, agents_dir=agents)
+    assert "tools" not in fm
+
+
+def test_load_suite_frontmatter_unknown_name_is_empty(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert load_suite_frontmatter("not-a-thing", skills, agents_dir=agents) == {}
+
+
+def test_declared_tools_reads_either_spelling():
+    assert declared_tools({"allowed-tools": ["a"]}) == ["a"]
+    assert declared_tools({"tools": ["b"]}) == ["b"]
+    assert declared_tools({}) == []
+
+
+def test_bare_tool_names_reduces_qualified_and_drops_builtins():
+    assert bare_tool_names(["mcp__genealogy__record_read"]) == ["record_read"]
+    assert bare_tool_names(["mcp__remote-devices__Genealogy_Research__record_read"]) == [
+        "record_read"
+    ]
+    assert bare_tool_names(["record_read"]) == ["record_read"]
+    # Built-ins never appear in tool_calls, so comparing against them would
+    # only produce false "undeclared" findings.
+    assert bare_tool_names(["Read", "Glob"]) == []
+
+
+# ---- the body and the frontmatter resolve to ONE file (#1253) -------------
+#
+# LATENT, not live: no agent body carries an `@plugin:` reference today
+# (`grep -rn "@plugin:" packages/engine/plugin/agents/` is empty), so these
+# exercise a population of zero in the real corpus and are written against a
+# tmp fixture for that reason. They exist because the frontmatter and the body
+# are now resolved by the same rule, and a site that read one from the agent
+# and scanned the other from a SKILL.md that does not exist is the exact
+# inconsistency this pair of helpers was introduced to remove.
+
+
+def _agent_that_delegates(tmp_path: Path) -> tuple[Path, Path]:
+    skills = tmp_path / "skills"
+    skills.mkdir(parents=True)
+    agents = tmp_path / "agents"
+    agents.mkdir(parents=True)
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n  - mcp__genealogy__sidecar_read\n---\n"
+        "Hand the page to `@plugin:image-reader` when it needs transcribing.\n",
+        encoding="utf-8",
+    )
+    (agents / "image-reader.md").write_text(
+        "---\nname: image-reader\ntools:\n  - mcp__genealogy__image_transcribe\n---\n"
+        "Agent body.\n",
+        encoding="utf-8",
+    )
+    return skills, agents
+
+
+def test_suite_body_path_prefers_the_skill(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert suite_body_path("router", skills, agents_dir=agents).name == "SKILL.md"
+
+
+def test_suite_body_path_falls_back_to_the_agent(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert suite_body_path("gps-mentor", skills, agents_dir=agents).name == "gps-mentor.md"
+
+
+def test_agent_keyed_suite_widens_by_its_own_delegations(tmp_path: Path):
+    """An agent-keyed suite's `@plugin:` refs live in the AGENT body, since
+    there is no SKILL.md to hold them. Scanning the missing skill path found
+    none, so such a suite was never widened by what it delegates to."""
+    skills, agents = _agent_that_delegates(tmp_path)
+    tools = compute_allowed_tools("gps-mentor", skills, agents_dir=agents)
+    assert "mcp__genealogy__sidecar_read" in tools  # its own
+    assert "mcp__genealogy__image_transcribe" in tools  # unioned from the delegate
+
+
+def test_a_real_skill_still_widens_from_its_skill_md(tmp_path: Path):
+    """The accept direction: resolution is unchanged wherever a SKILL.md
+    exists, which is every skill in the corpus."""
+    skills, agents = _make_skill_and_agent(
+        tmp_path, body="Delegate to `@plugin:spike-echo` for the lookup.\n"
+    )
+    tools = compute_allowed_tools("router", skills, agents_dir=agents)
+    assert "mcp__genealogy__wikipedia_search" in tools

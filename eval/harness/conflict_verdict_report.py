@@ -270,9 +270,11 @@ def scan_runlog(runlog: dict[str, Any], scenarios_dir: Path = SCENARIOS) -> LogS
     real finding of a different kind — run-to-run nondeterminism rather than two
     tests disagreeing — so each finding names which of the two it is.
 
-    The multi-`runs[]` route into that arm is latent: `runs_per_test` is pinned to
-    1 by policy AND by a schema `maximum`, so every committed test entry has one
-    run. The route that is live today is two `tests[]` entries sharing one
+    The multi-`runs[]` route into that arm is latent: test files pin
+    `runs_per_test` to 1 by a schema `maximum`, and the `--runs-per-test N`
+    override that can create multi-run entries only ever writes scratch logs,
+    which this report does not read — so every committed test entry has one run.
+    The route that is live today is two `tests[]` entries sharing one
     `test_id` — the corruption `check_runlogs.py` rule 4 exists to catch, which
     reaches this code as one test id appearing under two verdicts.
     """

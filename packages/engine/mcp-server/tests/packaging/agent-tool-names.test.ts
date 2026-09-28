@@ -3,6 +3,14 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { allToolSchemas } from "../../src/tool-schemas.js";
+import { extractList } from "./frontmatter.js";
+import {
+  BRIDGE_PREFIX,
+  HARNESS_PREFIX,
+  LOCAL_PREFIX,
+  SERVER_PREFIXES,
+  bareName,
+} from "./tool-names.js";
 
 // Plugin-agent `tools:` / `disallowedTools:` frontmatter must name every MCP
 // tool under ALL THREE server spellings.
@@ -135,72 +143,6 @@ function registeredServerKey(site: (typeof SERVER_KEY_SITES)[number]): string | 
   return site.pattern.exec(text)?.[1] ?? null;
 }
 
-const manifest = JSON.parse(
-  readFileSync(join(mcpRoot, "manifest.json"), "utf8"),
-) as { display_name: string };
-
-/** Non-alphanumeric runs collapse to a single underscore; edges trimmed. */
-function sanitizeServerSegment(name: string): string {
-  return name
-    .replace(/[^A-Za-z0-9]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
-const HARNESS_PREFIX = "mcp__genealogy__";
-const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.display_name)}__`;
-// Cowork can instead expose the bare display_name with no `remote-devices` bridge
-// in front of it. Both live Cowork spellings derive from display_name; only the
-// bridged one is namespaced. Which one a session exposes has been observed to move
-// (bare live in #1341, absent in three later censuses — macOS and Windows on
-// 2026-08-15, and a Windows session via #1732). Missing this
-// third registrar was issue #1341: record-extractor was refused there, with all 16
-// of its declared entries named unrecognized. An agent declaring the built-in
-// `Read` bare is exempt from that refusal — `Read` always resolves, so it spawns
-// holding that alone. Today that is proof-conclusion and research-exhaustiveness;
-// every other agent (gps-mentor included) is MCP-only and a registrar miss
-// refuses it, as it did record-extractor.
-const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
-
-// Longest-first so that a prefix which is itself the prefix of another can never
-// shadow it. Inert with today's three (none is a prefix of another — `mcp__genealogy__`
-// and `mcp__Genealogy_Research__` diverge on case at index 5); kept for the next one.
-const SERVER_PREFIXES = [HARNESS_PREFIX, BRIDGE_PREFIX, LOCAL_PREFIX].sort(
-  (a, b) => b.length - a.length,
-);
-
-/** Parse a named block-sequence out of YAML frontmatter. */
-function extractList(text: string, key: string): string[] {
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-  if (!frontmatter) throw new Error("no YAML frontmatter");
-
-  const lines = frontmatter[1].split(/\r?\n/);
-  const start = lines.findIndex((l) => new RegExp(`^${key}:`).test(l));
-  if (start === -1) return [];
-
-  const items: string[] = [];
-  for (let i = start + 1; i < lines.length; i++) {
-    if (/^\S/.test(lines[i]) && !/^\s*#/.test(lines[i])) break; // next top-level key
-    const item = /^\s*-\s+(.+?)\s*$/.exec(lines[i]);
-    if (item) items.push(item[1]);
-  }
-  return items;
-}
-
-function bareName(entry: string): string {
-  const prefix = SERVER_PREFIXES.find((p) => entry.startsWith(p));
-  if (prefix === undefined) {
-    // Throw rather than slice blindly. The previous form fell through to
-    // `slice(HARNESS_PREFIX.length)` on anything unrecognized, which turned
-    // `mcp__Genealogy_Research__image_transcribe` into `esearch__image_transcribe`
-    // and reported it as a missing tool instead of a missing prefix (#1341).
-    throw new Error(
-      `${entry} carries no recognized server prefix. Add the registrar's spelling to ` +
-        `SERVER_PREFIXES — do not let it be sliced against another prefix's length.`,
-    );
-  }
-  return entry.slice(prefix.length);
-}
 
 const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith(".md"));
 const knownTools = new Set(allToolSchemas.map((s) => s.name));
@@ -231,6 +173,21 @@ function grantedAndDenied(text: string): string[] {
   return [...new Set(extractList(text, "disallowedTools").map(bareOrBuiltin))]
     .filter((t) => granted.has(t))
     .sort();
+}
+
+/** Agents allowed to spawn another agent. An agent that needs another agent's
+ * work names it in its caller-facing return lines and the main thread spawns it, so every
+ * spawn stays one level deep (`docs/architecture.md`, "Agent frontmatter:
+ * spelled per registrar, exactly matched"). Add an agent here only with a lead
+ * ruling, and only once `make probe-agent-nesting` shows the spawn binds. */
+const SPAWN_ALLOWED = new Set<string>([]);
+
+/** The agent-spawning tools an agent's `tools:` grants. Strips a trailing
+ * comment and quotes, so `- Task  # why` and `- "Agent"` are still caught. */
+function spawnGrants(text: string): string[] {
+  return extractList(text, "tools")
+    .map((e) => e.replace(/\s+#.*$/, "").replace(/^(["'])(.*)\1$/, "$2"))
+    .filter((e) => e === "Task" || e === "Agent");
 }
 
 function overlapMessage(file: string, overlap: string[]): string {
@@ -391,6 +348,18 @@ describe("plugin agent tool names", () => {
             `restatements of the omission above them (\`make probe-agent-binding\`). ` +
             `If this one earns its place, say why in the frontmatter, give it all ` +
             `three spellings, keep it clear of tools:, and update this test.`,
+        ).toEqual([]);
+      });
+
+      it("grants no agent-spawning tool unless allow-listed", () => {
+        if (SPAWN_ALLOWED.has(file.replace(/\.md$/, ""))) return;
+        expect(
+          spawnGrants(text),
+          `${file} grants an agent-spawning tool. An agent never spawns another ` +
+            `agent: when a request belongs to a different agent, name that agent in ` +
+            `the caller-facing return lines and let the main thread spawn it (docs/architecture.md, "Agent ` +
+            `frontmatter: spelled per registrar, exactly matched"). The exception is ` +
+            `SPAWN_ALLOWED in this file, which takes a lead ruling.`,
         ).toEqual([]);
       });
     });
@@ -562,6 +531,30 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // OCRs host-side and returns text, so nothing accumulates in this agent's
   // context. `image_read` is deliberately NOT granted; it returns the page
   // inline and a volume browse overflows the transport (PR #718).
+  // citation (issue #2799) holds exactly what the skill it replaced declared —
+  // `research_append` and `validate_research_schema` — plus two additions with
+  // a reason each. `wiki_read`: the probate-office lookup that replaced the
+  // Pennsylvania office names in the body (ADR-0012, issue #2262). `Read`: the
+  // skill relied on the built-in, and an agent must list it; Step 1 of the body
+  // reads research.json and tree.gedcomx.json directly and rules out
+  // `project_context` by name, because that projection drops every field this
+  // agent works on. `research_query` is deliberately NOT granted: this agent
+  // reads the two files itself, and an unneeded query tool is capability a
+  // delegation can steer (docs/skill-to-agent-pair-conversion.md, section 2,
+  // measured: a routing skill told in prose not to judge, but handed a query
+  // tool, judged). `research_append` here is the BROAD grant; citation is held
+  // off `sources` creation by the ownership manifest and by its own
+  // preconditions, not by tool identity.
+  "citation.md": {
+    tools: [
+      "Read",
+      "research_append",
+      "validate_research_schema",
+      "wiki_read",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",

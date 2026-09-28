@@ -22,16 +22,15 @@ the original.
 
 ### Calendar changes
 
-England and its colonies used the Julian calendar until September
-1752, when they adopted the Gregorian calendar. The switch moved
-dates forward by 11 days and changed the start of the new year from
-March 25 to January 1. A birth recorded as "15 February 1731" under
-the Julian calendar is "15 February 1732" under the Gregorian
-calendar (because the year now started in January, not March).
+A date conflict can be an artifact of the Julian→Gregorian switch rather
+than a disagreement: the two records may be the same day expressed in two
+calendars, and where the year-start also moved, a date in the first months
+of the year can differ by a whole year with no error by either informant.
 
-Other countries adopted the Gregorian calendar at different times.
-Catholic countries switched in 1582; Russia did not switch until
-1918. Always check which calendar was in use for the time and place.
+**Do not carry adoption dates or day-offsets in your head.** `convert_calendar`
+owns the per-jurisdiction table; call it with `jurisdiction` set and read
+`applied[].offsetDays`. If the two competing dates differ by exactly that
+offset, the conflict is an artifact, not a substantive disagreement.
 
 ### Census age estimation
 
@@ -59,10 +58,12 @@ military records.
 
 Political boundaries shifted constantly. A person born in the same
 farmhouse might correctly report three different counties of birth
-across their lifetime as boundaries were redrawn. Virginia and West
-Virginia split in 1863. Counties were regularly subdivided,
-consolidated, or renamed. Always verify the jurisdiction boundaries
-for the specific date.
+across their lifetime as boundaries were redrawn — counties were
+subdivided, consolidated and renamed, and whole states were created out
+of others. **Resolve the jurisdiction for the event date rather than
+assuming today's map**: `place_search_all` returns the jurisdictions a
+place has belonged to, so the disagreement often resolves to two correct
+answers from two eras.
 
 ### Jurisdictional confusion
 

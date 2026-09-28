@@ -3385,7 +3385,12 @@ def test_v4_persisted_does_not_fire_on_digit_superstring():
 
 
 def test_v4_persisted_fires_on_exact_example_value():
-    """V4 persisted: an exact example value from SKILL.md → fail."""
+    """V4 persisted: an exact example value from the agent body → fail.
+
+    Doubles as the proof that `_harvest_skill_examples` still resolves after
+    #2799 deleted `skills/citation/`: `Will Book 9` and `p. 113` are harvested
+    out of `agents/citation.md`, and an empty deny-list would make this skip.
+    """
     before = _empty_research_state()
     after = _empty_research_state()
     # The source must exist in before (empty fields) so V4 checks its after
@@ -3413,7 +3418,7 @@ def test_v4_persisted_fires_on_exact_example_value():
     if result is None:
         pytest.skip("V4 validator did not run (SKILL.md may be absent)")
     assert result.passed is False
-    assert "example values from SKILL.md" in (result.error or "")
+    assert "example values from the citation agent body" in (result.error or "")
 
 
 def test_v4_persisted_passes_when_example_value_on_file_in_log():

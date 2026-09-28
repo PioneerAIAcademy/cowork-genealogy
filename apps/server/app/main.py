@@ -8,24 +8,17 @@ control plane is out of the streaming path (affinity-free on AWS-no-sticky).
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
-from fastapi.exception_handlers import (
-    http_exception_handler,
-    request_validation_exception_handler,
-)
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import asyncio
 import logging
 
 from sqlmodel import Session, select
 
-from . import anthropic_proxy, auth, feedback, sessions, v1
+from . import anthropic_proxy, auth, feedback, sandbox_heartbeat, sessions
 from .config import assert_production_config, get_settings
 from .db import get_engine, init_db
 from .models import FamilySearchToken, Project, User, utcnow
@@ -50,7 +43,7 @@ async def _revoke_sandboxes(provider) -> None:
         return
     try:
         with Session(get_engine()) as session:
-            provisioned = settings.allowlist | set(settings.api_key_map.values())
+            provisioned = settings.allowlist
             projects = session.exec(
                 select(Project).join(User).where(
                     User.email.not_in(provisioned),  # type: ignore[union-attr]
@@ -104,9 +97,20 @@ async def lifespan(app: FastAPI):
     app.state.provider = make_provider()
     app.state.anthropic_proxy_client = anthropic_proxy.make_upstream_client()
     await _revoke_sandboxes(app.state.provider)
+    # PR #2870 item 1d: keep a live sandbox's continuous-runtime clock running while
+    # its agent works. E2B's Hobby ceiling is 3600 s and it clocks RUNTIME, not idleness,
+    # so once one user message is a whole research job the session ages out mid-turn --
+    # at or before the corpus p90 of 107.9 minutes. See app/sandbox_heartbeat.py for the
+    # interval and what a missed beat costs.
+    app.state.heartbeat_task = asyncio.create_task(
+        sandbox_heartbeat.run_heartbeat(app.state.provider)
+    )
     try:
         yield
     finally:
+        app.state.heartbeat_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await app.state.heartbeat_task
         if hasattr(app.state.anthropic_proxy_client, "aclose"):
             await app.state.anthropic_proxy_client.aclose()
         await app.state.provider.aclose()
@@ -127,50 +131,7 @@ app.include_router(auth.router)
 app.include_router(auth.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(sessions.router)
 app.include_router(feedback.router)
-app.include_router(v1.router)
 app.include_router(anthropic_proxy.router)
-
-
-# ── /v1 error envelope ───────────────────────────────────────────
-# The public API speaks one shape for every error: {"error":{code,message}}.
-# These must be APP-level (not router-scoped): the 401 is raised inside the bearer
-# dependency and the 422 is FastAPI's RequestValidationError — both fire before/
-# outside a router's handlers. Key on the /v1 path prefix so /api/* shapes are
-# untouched (fall through to FastAPI's defaults).
-_V1_CODE_BY_STATUS = {
-    400: "validation_error", 401: "unauthorized", 403: "forbidden",
-    404: "session_not_found", 409: "session_busy", 422: "validation_error",
-    500: "internal_error", 504: "turn_timeout",
-}
-
-
-@app.exception_handler(StarletteHTTPException)
-async def _v1_http_exception_handler(request, exc: StarletteHTTPException):
-    if not request.url.path.startswith("/v1"):
-        return await http_exception_handler(request, exc)
-    detail = exc.detail
-    if isinstance(detail, dict) and "code" in detail:
-        error = {"code": detail["code"], "message": detail.get("message", "")}
-    else:
-        error = {
-            "code": _V1_CODE_BY_STATUS.get(exc.status_code, "internal_error"),
-            "message": detail if isinstance(detail, str) else "Request failed",
-        }
-    return JSONResponse(
-        status_code=exc.status_code, content={"error": error},
-        headers=getattr(exc, "headers", None),
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def _v1_validation_exception_handler(request, exc: RequestValidationError):
-    if not request.url.path.startswith("/v1"):
-        return await request_validation_exception_handler(request, exc)
-    errors = exc.errors()
-    message = errors[0].get("msg", "Invalid request") if errors else "Invalid request"
-    return JSONResponse(
-        status_code=422, content={"error": {"code": "validation_error", "message": message}},
-    )
 
 
 @app.get("/api/health")

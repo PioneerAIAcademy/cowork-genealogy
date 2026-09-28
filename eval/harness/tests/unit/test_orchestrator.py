@@ -1973,6 +1973,40 @@ def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
     )
 
 
+def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monkeypatch):
+    """The orchestrator hop of the spawn stub (issue #2825). `_stub_agents` is
+    unit-tested, but only `stub_agents=` at the `_execute_single_run` call site
+    and the retry wrapper carry it to the hook; dropping either left the suite
+    green. `gps-mentor` ships as an agent with no skill directory."""
+    import asyncio
+    import json
+
+    raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
+    raw["execution"] = {"stub_skills": ["gps-mentor", "search-records"]}
+    spec = load_test_from_dict(raw)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-22_10-00-00",
+    ))
+    assert seen.get("stub_agents") == {"gps-mentor": None}
+    assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
+
+
 # --- #2057: a failing validator no longer skips the judge --------------------
 #
 # The gate is in `_execute_single_run`, NOT in `_compute_outcome`. A test that

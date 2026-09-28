@@ -6,8 +6,10 @@ branch this was written on no longer exists. **Read with:**
 (current state). **Touches:** `apps/server/app/{config,db,models,main}.py`,
 `apps/server/pyproject.toml`, `deploy/fly.toml`.
 
-> **Status: implemented** (the code changes below + `apps/server/uv.lock`,
-> `apps/server/tests/conftest.py`). Verified locally on **SQLite** (`make
+> **Status: Superseded by [`search-agent-prototype.md`](./search-agent-prototype.md)**
+> (still in progress). This is the live alpha backend until the prototype decision,
+> then this file is deleted. Implemented: the code changes below + `apps/server/uv.lock`,
+> `apps/server/tests/conftest.py`. Verified locally on **SQLite** (`make
 > server-test`, 30 green) and against a **live Postgres** (throwaway Docker pg):
 > `/api/health` → `db:"postgres"`, `create_all()` builds all four tables, and a
 > `/v1` create → message → delete round-trip works (the message exercises the

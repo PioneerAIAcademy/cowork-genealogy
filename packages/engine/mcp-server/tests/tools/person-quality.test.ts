@@ -249,3 +249,206 @@ describe("personQualityTool", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
+
+// ─── Opt-in detail (#2225 D2) ───────────────────────────────────────────────
+// Shapes here mirror the live KD96-TV2 body documented in
+// dev/probe-person-quality-detail.ts's RESULTS header. Values are synthetic on
+// purpose: the real body is gitignored (.gitignore, probe-*.out.json) because it
+// carries a real person's names and dates, so a test reading it would pass
+// locally and fail in CI with ENOENT — and committing its contents would put
+// back exactly the data that ignore rule exists to keep out.
+describe("personQualityTool detail flag", () => {
+  // Two facts, one clean and one with an issue; three sources, one of which
+  // repeats a conclusion id inside its own conclusions[] (13 of 28 real sources
+  // do) so the uri dedupe is exercised rather than assumed.
+  function detailBody(): FSQualityResponse {
+    return {
+      isValid: true,
+      visibility: "PUBLIC",
+      personScores: {
+        pid: "AAAA-111",
+        segment: "Testland 1800 - 1900",
+        overallDisplayScore: 0.9,
+        issues: [
+          {
+            id: "COMPLETENESS:MISSING_EVENT_DATE:BURIAL:c-burial",
+            issueType: "MISSING_EVENT_DATE",
+            conclusionType: "BURIAL",
+            conclusionId: "c-burial",
+            scoreType: "COMPLETENESS",
+          },
+        ],
+        conclusionScores: [
+          {
+            conclusionId: "c-name",
+            conclusionType: "NAME",
+            affectingIssueIds: [],
+            combinedDisplayScore: 1,
+          },
+          {
+            conclusionId: "c-burial",
+            conclusionType: "BURIAL",
+            affectingIssueIds: ["COMPLETENESS:MISSING_EVENT_DATE:BURIAL:c-burial"],
+            combinedDisplayScore: 0.5,
+          },
+          {
+            conclusionId: "c-marriage",
+            conclusionType: "MARRIAGE",
+            affectingIssueIds: [],
+            combinedDisplayScore: 1,
+            relationshipId: "M111-AAA",
+          },
+        ],
+        sourceClusters: {
+          sourceClusters: [
+            {
+              sources: [
+                {
+                  uri: "https://example.org/ark:/1",
+                  title: "1900 census",
+                  // Same conclusion twice — upstream really does this.
+                  conclusions: [
+                    { id: "c-name", agreesWithSource: true },
+                    { id: "c-name", agreesWithSource: true },
+                    { id: "c-burial", agreesWithSource: false },
+                  ],
+                },
+                {
+                  uri: "https://example.org/ark:/2",
+                  title: "Death index",
+                  conclusions: [{ id: "c-name", agreesWithSource: true }],
+                },
+              ],
+            },
+          ],
+          conflicts: [],
+        },
+      },
+    };
+  }
+
+  it("omits detail entirely when the flag is off", async () => {
+    mockOk(detailBody());
+    const result = await personQualityTool({ personId: "AAAA-111" }, LOCAL);
+    // Absent, not empty: this is the byte-identical guarantee D2 rests on.
+    expect(result.detail).toBeUndefined();
+    expect("detail" in result).toBe(false);
+  });
+
+  it("returns a result identical to the flag-off one, minus detail", async () => {
+    mockOk(detailBody());
+    const off = await personQualityTool({ personId: "AAAA-111" }, LOCAL);
+    mockOk(detailBody());
+    const on = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const { detail, ...onWithoutDetail } = on;
+    expect(detail).toBeDefined();
+    expect(onWithoutDetail).toEqual(off);
+  });
+
+  it("renders each fact's affecting issues as sentences, not raw ids", async () => {
+    mockOk(detailBody());
+    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const burial = result.detail?.facts.find((f) => f.conclusionType === "BURIAL");
+    // The raw id joins onto issues[].id, which this tool's output does not
+    // carry — so passing the id through would hand the caller a dangling key.
+    expect(burial?.issues).toEqual(["The burial date is missing."]);
+    expect(burial?.score).toBe(0.5);
+    const name = result.detail?.facts.find((f) => f.conclusionType === "NAME");
+    expect(name?.issues).toEqual([]);
+  });
+
+  it("carries relationshipId only on the conclusions that have one", async () => {
+    mockOk(detailBody());
+    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const byType = new Map(
+      result.detail?.facts.map((f) => [f.conclusionType, f]) ?? [],
+    );
+    expect(byType.get("MARRIAGE")?.relationshipId).toBe("M111-AAA");
+    expect("relationshipId" in (byType.get("NAME") ?? {})).toBe(false);
+  });
+
+  it("dedupes a fact's sources by uri and keeps each source's agreement", async () => {
+    mockOk(detailBody());
+    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const name = result.detail?.facts.find((f) => f.conclusionType === "NAME");
+    // ark:/1 lists c-name twice; it must appear once.
+    expect(name?.sources).toEqual([
+      { title: "1900 census", uri: "https://example.org/ark:/1", agrees: true },
+      { title: "Death index", uri: "https://example.org/ark:/2", agrees: true },
+    ]);
+    const burial = result.detail?.facts.find((f) => f.conclusionType === "BURIAL");
+    expect(burial?.sources).toEqual([
+      { title: "1900 census", uri: "https://example.org/ark:/1", agrees: false },
+    ]);
+  });
+
+  it("leaves sources empty for a conclusion nothing is attached to", async () => {
+    mockOk(detailBody());
+    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    // Real data is sparse: only 5 of KD96-TV2's 14 conclusions have any source.
+    const marriage = result.detail?.facts.find((f) => f.conclusionType === "MARRIAGE");
+    expect(marriage?.sources).toEqual([]);
+  });
+
+  it("groups the pairwise conflict list down to one entry per disagreement", async () => {
+    // Upstream restates one disagreement once per source pair, so the raw list
+    // is quadratic in the number of sources holding the field. KD96-TV2 returns
+    // 50 entries encoding 5 real disagreements; this reproduces that shape with
+    // synthetic values and the same source counts (11, 7, 7, 6, 4).
+    const groups = [
+      { name: "Birth Date", values: ["+1876-10-02", "+1877"], sources: 11 },
+      { name: "Birth Date", values: ["+1876-10", "+1877"], sources: 7 },
+      { name: "Birth Date", values: ["+1876", "+1877"], sources: 7 },
+      { name: "Name", values: ["ALPHA ONE", "ALPHA TWO"], sources: 6 },
+      { name: "Name", values: ["BETA ONE", "ALPHA TWO"], sources: 4 },
+    ];
+    const conflicts: NonNullable<
+      NonNullable<FSQualityResponse["personScores"]>["sourceClusters"]
+    >["conflicts"] = [];
+    groups.forEach((g, gi) => {
+      // Every unordered pair within the group restates the same disagreement.
+      for (let a = 0; a < g.sources; a++) {
+        for (let b = a + 1; b < g.sources; b++) {
+          conflicts.push({
+            sourceUris: [`https://example.org/g${gi}/s${a}`, `https://example.org/g${gi}/s${b}`],
+            conflictingFields: [{ name: g.name, values: g.values }],
+          });
+        }
+      }
+    });
+    expect(conflicts.length).toBeGreaterThan(50);
+
+    const body = detailBody();
+    body.personScores!.sourceClusters!.conflicts = conflicts;
+    mockOk(body);
+    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+
+    // The number matters: `toBeLessThan(conflicts.length)` would pass on a
+    // reduction that collapsed nothing useful.
+    expect(result.detail?.conflicts).toHaveLength(5);
+    const birthDate = result.detail?.conflicts.filter((c) => c.field === "Birth Date");
+    expect(birthDate).toHaveLength(3);
+    // Values are sorted, so the grouping key is order-independent.
+    expect(birthDate?.map((c) => c.values)).toContainEqual(["+1876-10-02", "+1877"]);
+    // Each group carries every source that took part, not just the last pair.
+    const eleven = result.detail?.conflicts.find(
+      (c) => c.values.join() === ["+1876-10-02", "+1877"].join(),
+    );
+    expect(eleven?.sources).toHaveLength(11);
+  });
+
+  it("returns no conflicts when upstream sends none", async () => {
+    mockOk(detailBody());
+    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    expect(result.detail?.conflicts).toEqual([]);
+  });
+
+  it("tolerates a body with neither list present", async () => {
+    const body = detailBody();
+    delete body.personScores!.conclusionScores;
+    delete body.personScores!.sourceClusters;
+    mockOk(body);
+    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    expect(result.detail).toEqual({ facts: [], conflicts: [] });
+  });
+});

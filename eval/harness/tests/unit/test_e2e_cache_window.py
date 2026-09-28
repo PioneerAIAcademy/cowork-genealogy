@@ -118,18 +118,41 @@ def test_lost_tokens_avg_and_grow():
     assert row.gaps[("sub", CACHE_TTL_S)] == 0
     assert row.gaps[("main", 60.0)] == 1
     assert row.gaps[("main", 1800.0)] == 0
-    # 5 calls, 1 lost -> one fifth of the run's reads.
-    assert row.lost_avg == pytest.approx(100.0)
-    # depths 0,0,1,1,2 (+BASE each); the lost call is main call 2 at depth 1.
-    total = 4 + 5 * BASE_PREFIX_CALLS
+    # usage.usage is the main thread's alone, so it is spread over the 3 main calls,
+    # not all 5: 1 lost -> one third of the reads. The sub calls are not priced.
+    assert row.lost_avg == pytest.approx(500 / 3)
+    # Main depths 0,1,2 (+BASE each); the lost call is main call 2 at depth 1.
+    total = 3 + 3 * BASE_PREFIX_CALLS
     assert row.lost_grow == pytest.approx(500 * (1 + BASE_PREFIX_CALLS) / total)
-    assert row.delta_avg == pytest.approx(100 * (CACHE_WRITE_5M_PER_MTOK - CACHE_READ_PER_MTOK) / 1e6)
+    assert row.delta_avg == pytest.approx(500 / 3 * (CACHE_WRITE_5M_PER_MTOK - CACHE_READ_PER_MTOK) / 1e6)
     assert row.write_price_delta == pytest.approx(100 * (3.75 - 6.00) / 1e6)
     assert row.write_ttl == "1h"
     assert row.cost == 1.5 and not row.cost_estimated
     # The main gap spans the sub calls at 15 and 20 -> a delegation window; the
     # literal thread-agnostic rule sees 20.0 -> 400.0 as its one gap.
     assert row.delegation_gaps == 1 and row.agnostic_gaps == 1
+
+
+def test_a_sub_thread_gap_is_counted_but_not_priced():
+    # usage.usage is the main thread's alone, so a sub call after a > TTL gap has no
+    # reads of its own to lose here: it is counted as a gap and priced at 0.
+    timeline = [
+        [10.0, "assistant", ["Agent"]],
+        [11.0, "system:task_started", []],
+        [11.0, "tool_result", []],
+        [15.0, "system:task_progress", []],
+        [15.0, "assistant", ["record_read"]],
+        [15.5, "tool_result", ["record_read"]],
+        [400.0, "system:task_progress", []],
+        [400.0, "assistant", []],
+        [401.0, "tool_result", ["Agent"]],
+        [402.0, "assistant", []],
+    ]
+    row = analyze_run(_doc(timeline=timeline), fixture="fx", run="run-1")
+    assert row.gaps[("sub", CACHE_TTL_S)] == 1
+    assert row.gaps[("main", CACHE_TTL_S)] == 1, "the main thread idled 10 -> 402"
+    main_calls = row.n_calls["main"]
+    assert row.lost_avg == pytest.approx(500 / main_calls), "only the main thread's lost call is priced"
 
 
 def test_delegation_window_counts_per_thread_but_not_thread_agnostic():

@@ -9,11 +9,12 @@
       "newspaper",
       "obituary",
       "1908",
-      "src_009"
+      "src_009",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Refine the citation for src_009, Patrick Flynn's obituary in the Pottsville Republican.",
+    "delegation": "Refine the citation on src_009, Patrick Flynn's obituary in the Pottsville Republican.\n\nsourceId: src_009\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

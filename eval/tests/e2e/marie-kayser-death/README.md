@@ -28,17 +28,38 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 18, `hint-samples.csv` row 556,
-flag `adds_death`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Luxembourg, Church and Civil Registration, 1601-1923", a death entry of July 1780 at Luxembourg for Maria Philippina Kayser, naming her spouse as Theodori Hochbertz.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the July 1780 death, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-09-22 — true match, finding refined (outcome 2): same person and month as the hint, with the burial date, image citation and place corrected.**
+Adjudicated by Paaboat; second opinion from genealogist **Solomon Baidoo**, who
+read the original image independently and confirmed the match. Retrieval was
+done by hand on familysearch.org; the identity judgement is the two genealogists'.
 
-A clean, narrow candidate. The record names the husband — Theodori Hochbertz, an ordinary Latin-register form of the tree's Theodore Hochhertz — which is the single most discriminating element a death entry of this period offers, and the date sits naturally two years after the birth of the tree's younger son Nicolas (1778) and four after Jodoc Frederic (1776). A death shortly after a second confinement is the commonest shape there is for a woman of this era.
+**What decided it.** The hint's index persona (`ark:/61903/1:1:6PX5-KV4H`,
+"Luxembourg, Church and Civil Registration, 1601-1923") was checked against the
+register page image (`ark:/61903/3:1:3QS7-L9WM-9S4L`). On the image the entry
+sits among the late-July 1780 entries, under the heading "Julii 1780", with
+"Maria Philippina" in the left margin: she died about 25 July and was buried
+26 July 1780 (burial place as written: Reichstet). The husband is written
+**Hochhertz** on the image. The index's "Hochbertz" is a transcription error,
+not a second surname, and he is identified as Theodore Hochhertz, apothecary of
+Luxembourg city: the tree's husband. The entry calls her *uxor* (wife) and
+gives her age as 43 *annorum*, so she is not the couple's infant daughter of
+the same name (below). Age 43 puts her birth about 1737, which fits children
+born in 1776, 1778 and 1780. An earlier reading of 4 July was
+wrong and was corrected on re-examination. `f1` requires July 1780 at month
+precision. The place is written only as "Luxembourg": the page carries no
+parish header, and Reichstet is the burial place as written, not an established parish.
 
-The reviewer's work is mostly on the tree side, which is thin: no dates at all on the subject, and a single source drawn from "Luxembourg, Registres d'état civil, 1796-1941" — a collection that begins **sixteen years after** the hinted death, so whatever it is, it cannot be about her death and probably reaches her through a son's civil-era record. Establish what that source actually says about her before treating the tree as a constraint. If the 1780 entry holds, it also caps her lifespan and should be checked against any age it gives.
+**Consistency with the tree.** The tree's sons Jodoc Frederic (b. 1776) and
+Nicolas (b. 1778) were both born before the death, and so was a daughter,
+Maria Philippina, baptised to this couple on 12 March 1780. A death four months
+after that confinement fits the evidence. A search of the same
+collection for Hochhertz/Hochbertz baptisms at Luxembourg from 1780 to 1800
+found no child born after the death, and nothing turned up a second
+Hochhertz/Hochbertz couple. The tree's only source, an 1805 civil act
+(`ark:/61903/1:1:WQ8T-8N2M`, "Luxembourg, Registres d'état civil, 1796-1941"),
+names her in its index with name and sex only; its image, read 23 September
+2026, names her as défunte — consistent with a death in 1780.
+
+**Still unverified.**
+- *Parish.* The register page carries no parish header; the location appears
+  only on the volume's title page.

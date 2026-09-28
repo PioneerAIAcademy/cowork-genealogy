@@ -596,7 +596,7 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
 
     **Two authorization paths.** A section diff is allowed when the calling
     skill is in the section's `callers`, OR when the run called a tool the
-    section's `writerTools` names and the whole delta is explained by that
+    section's `toolAuthorized` names and the whole delta is explained by that
     tool's write. Ownership is expressed at skill granularity, but a merge is a
     tool-granular operation: `merge_tree_persons` repoints every reference to a
     collapsed person in one atomic write, and the skill that calls it is never
@@ -657,8 +657,12 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    owners = writer_sets(RESEARCH_JSON)
-    writer_tools = writer_tool_sets(RESEARCH_JSON)
+    # `subject` lets a row name this suite's own agent as a caller and still be
+    # enforced here (issue #2799). Any OTHER agent caller is DROPPED, not raised:
+    # it is authorizable on its own suite, where it is the subject, and a
+    # manifest invariant proves every one of them owns such a suite.
+    owners = writer_sets(RESEARCH_JSON, subject=skill_name)
+    identity_tools = writer_tool_sets(RESEARCH_JSON)
     called = _tools_called(tool_calls)
     remap = _merge_remap(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
@@ -674,7 +678,7 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             # whole delta is that tool's write. Anything the substitution does
             # not explain still fails, so a run cannot launder an unrelated
             # edit through a merge call.
-            if "merge_tree_persons" in (writer_tools.get(section) or set()) and (
+            if "merge_tree_persons" in (identity_tools.get(section) or set()) and (
                 "merge_tree_persons" in called
             ) and _explained_by_merge(before.get(section), after.get(section), remap):
                 continue
@@ -913,7 +917,7 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         pytest.skip("skill_frontmatter has no `name` field")
 
     owners = writer_sets(TREE_GEDCOMX_JSON)
-    writer_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
+    identity_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
     called = _tools_called(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
@@ -925,7 +929,7 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         # only for the delta that rewrite can produce. A skill that is not a
         # declared caller gets no broader access from this -- anything the
         # rewrite does not explain still fails.
-        rewriters = {"research_append", "extraction_append"} & (writer_tools.get(section) or set())
+        rewriters = {"research_append", "extraction_append"} & (identity_tools.get(section) or set())
         if (
             section == "persons"
             and rewriters & called
@@ -986,15 +990,39 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
 
+    # An agent-keyed suite (issue #1253) is handed the AGENT's frontmatter,
+    # which declares `tools` rather than `allowed-tools`, qualified rather than
+    # bare. Without this the declared set is empty for every test in such a
+    # suite and the advisory below fires unconditionally — and an advisory that
+    # always fires teaches its reader to ignore it. Only when `allowed-tools`
+    # yielded nothing, so no existing skill's set changes.
+    if not declared:
+        from harness.allowed_tools import bare_tool_names
+
+        declared = set(bare_tool_names((skill_frontmatter or {}).get("tools", []) or []))
+
     # Widen with referenced plugin agents' tools (bare MCP names only —
     # built-in tools like Read never appear in tool_calls).
-    from harness.allowed_tools import agent_refs_for_skill, load_skill_frontmatter
+    from harness.allowed_tools import (
+        agent_refs_for_skill,
+        load_skill_frontmatter,
+        suite_body_path,
+    )
     from harness.workspace import DEFAULT_PLUGIN_AGENTS
 
     _repo_root = Path(__file__).resolve().parents[3]
-    _skill_md = (
-        _repo_root / "packages" / "engine" / "plugin" / "skills"
-        / str(test.get("skill", "")) / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md.
+    # Scanning the missing path returned no refs, so such a suite was not
+    # widened by anything it delegates to. LATENT rather than live: no agent
+    # body carries an `@plugin:` reference today, so the population is empty
+    # and this changes no current run. It is here because the frontmatter this
+    # function reads is now resolved that way, and a body scanned from a
+    # different file than the frontmatter is the inconsistency that made the
+    # declared set wrong in the first place.
+    _skill_md = suite_body_path(
+        str(test.get("skill", "")),
+        _repo_root / "packages" / "engine" / "plugin" / "skills",
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     for _agent in agent_refs_for_skill(_skill_md):
         _agent_fm = load_skill_frontmatter(DEFAULT_PLUGIN_AGENTS / f"{_agent}.md")
@@ -1223,7 +1251,7 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 
 def test_activated_run_produces_response(
     activated, aborted_reason, num_turns, output_tokens, text_response, test,
-    skills_invoked,
+    skills_invoked, builtin_tool_calls,
 ):
     """An activated run that produced no output is a dead run — fail it.
 
@@ -1239,8 +1267,10 @@ def test_activated_run_produces_response(
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
-    if set(skills_invoked or []) - {test.get("skill")}:
-        return  # handed off to another skill — not a dead run
+    from harness.skill_runner import handoffs
+
+    if set(handoffs(skills_invoked, builtin_tool_calls)) - {test.get("skill")}:
+        return  # handed off to another skill or agent — not a dead run
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:
@@ -1531,10 +1561,13 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
     """No `research_append` op reached a section its caller does not own.
 
-    Two rules, both from the SHIPPED hook: `routed` — a section reserved to an
+    Four rules, all from the SHIPPED hook: `routed` — a section reserved to an
     owning agent, reached by someone else; `out_of_lane` — a known agent reaching
-    outside the sections its own skill is a declared caller for. Plus
-    `declaration`, a routed claim.
+    outside the sections its own skill is a declared caller for; `declaration` —
+    a routed claim, field-scoped and keyed on the value; `owned_field` — a routed
+    field keyed on presence alone (`project.status`). This check is rule-agnostic
+    and reports whatever `rule` the predicate returns, so a new arm needs no edit
+    here.
 
     This is the unit tier's half of a rule that already binds in Cowork, the
     hosted path and the e2e harness. Until issue #2022 this plane called the

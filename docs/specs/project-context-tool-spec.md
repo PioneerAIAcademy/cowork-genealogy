@@ -67,6 +67,9 @@ repo's identifier-casing rule):
          | "evidence-gathered" | "concluded" | "critiqued",
     nextStep: string | null,             // null = nothing outstanding
     openConflictIds: string[],           // unresolved conflicts bearing on it
+    storedStatus: string | null,         // questions[].status verbatim; null when
+                                         //   absent or not a string. DERIVED vs
+                                         //   REPORTED — see §2.2.
   }],
   persons: [{
     id: string,                          // I id (or FS id)
@@ -136,6 +139,24 @@ artifact is what every downstream check joins on.
 critique, which outranks a missing resolve, which outranks a missing summary. A
 superseded verdict does not count — a replacement is itself present and satisfies
 the join; if nothing replaced it, the critique no longer stands.
+
+**`storedStatus` is reported, `state` is derived, and they are allowed to
+disagree.** `state` is this tool's reading of the documents by the ladder above;
+`storedStatus` is `questions[].status` copied verbatim, `null` when the field is
+absent or not a string. It is never re-mapped or re-validated against the
+`question_status` enum — §2's "not a validator" rule applies, and a malformed
+entry is skipped rather than reported.
+
+The two carry different claims, so a disagreement is information rather than a
+contradiction. A question with a proof summary reads `state: "concluded"` on the
+strength of that artifact while its own `status` may still be `in_progress`;
+both are correct, and a reader given only `state` reports the question as settled
+when the project does not say so. The field is present on every entry, resolved
+questions included, because `questionStates` maps all questions rather than only
+open ones.
+
+Neither field gates anything. Adding `storedStatus` moves no rung and changes no
+`state`, `nextStep` or `openConflictIds` value.
 
 **`critiqued` is the last rung of the ladder, not the end of the work.** The
 ladder tracks what was *produced*, and the `resolved` write produces nothing, so

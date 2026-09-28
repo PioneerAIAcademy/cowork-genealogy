@@ -1,0 +1,2594 @@
+{
+  "project": {
+    "id": "rp_cruz_corona_ancestry",
+    "objective": "Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "active",
+    "created": "2026-06-19",
+    "updated": "2026-06-19"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico?",
+      "rationale": "The primary objective is to identify Mauro Cruz Corona's parents. Civil birth registrations (actas de nacimiento) and Catholic baptismal records for Michoac\u00e1n in this era routinely name both parents, making this the highest-priority question. Nueva Italia was a planned agricultural colony founded in the Tierra Caliente region of Michoac\u00e1n around 1903, so records from surrounding parishes and the civil registry of Par\u00e1cuaro or Gabriel Zamora are the most likely repositories. Answering parentage is the central goal and will likely resolve the birth date/place sub-question simultaneously.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-09-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "date_range": "1906-1915",
+          "repository": "FamilySearch",
+          "rationale": "Civil birth registration is the highest-yield source for parentage in post-1867 Mexico. Par\u00e1cuaro municipality (est. 1861) was the registering jurisdiction for Nueva Italia before M\u00fagica was created in 1942. Search CID 1916243 (Mexico, Michoac\u00e1n, Civil Registration, 1859\u20131940) \u2014 fully indexed \u2014 for Mauro Cruz Corona. Mexican naming convention confirms the paternal surname is Cruz and the maternal surname is Corona; the birth record (acta de nacimiento) would name both parents. The locality survey (loc_001) found no Par\u00e1cuaro birth volumes online for 1910\u20131916 specifically, so also check the indexed collection for records that may not appear in individual volume searches. Try Cruz, Cruces, and Corona spelling variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Par\u00e1cuaro and Apatzing\u00e1n, Michoac\u00e1n, Mexico",
+          "date_range": "1906-1915",
+          "repository": "FamilySearch",
+          "rationale": "Catholic baptismal records are the primary fallback when civil birth registration is absent or shows a gap \u2014 the locality survey (loc_001) flagged that Par\u00e1cuaro civil birth volumes for 1910\u20131916 may not be in the digitized set, and the Mexican Revolution (1910\u20131920) disrupted civil registration in Tierra Caliente. Search CID 1883388 (Mexico, Michoac\u00e1n, Catholic Church Records, 1555\u20131996), browsing by parish via Par\u00e1cuaro and the nearest larger parish, Apatzing\u00e1n. Also search Mexico Baptisms 1560\u20131950 (CID 1473011). Baptism records name the child's parents, godparents, legitimacy, and birth date \u2014 providing direct parentage evidence. Nueva Italia had no dedicated parish in 1903\u20131910; residents would have used the nearest established parish (Par\u00e1cuaro or Apatzing\u00e1n).",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Par\u00e1cuaro / Nueva Italia de Ruiz, Michoac\u00e1n, Mexico",
+          "date_range": "1930",
+          "repository": "FamilySearch",
+          "rationale": "The 1930 Mexico National Census (CID 1307314) is fully indexed and is the only available national census for this period accessible online. Mauro Cruz Corona, born c. 1910, would be approximately 20 years old in 1930 \u2014 potentially still in the parental household in Nueva Italia, or at least enumerated nearby. The census can confirm exact birth year, birth place (municipio), and relationship to head of household. If parents were still living, the household listing would directly name them. Also check at Ancestry (1930 Mexico National Census). This is an independent record type from the civil/church birth series and should be searched regardless of outcome at step 1.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "date_range": "1890-1912",
+          "repository": "FamilySearch",
+          "rationale": "A dedicated search for the parents' marriage record is required for every parentage plan. Mexican naming convention indicates Mauro's father carried Cruz as his first (paternal) surname and his mother carried Corona as her first (paternal) surname. A civil marriage record between a Cruz man and a Corona woman registered in Par\u00e1cuaro c. 1890\u20131912 (allowing time before Mauro's ~1910 birth) would: (a) confirm the couple as a married unit; (b) supply the mother's full compound surname (her maiden name) and the father's full name; (c) by its date before Mauro's birth, corroborate that this couple could be his parents. Note: the marriage record alone does not prove Mauro is their child \u2014 that requires a birth record placing him with them. Search CID 1916243 (civil registration) and Mexico Marriages 1570\u20131950 (CID 1473012) for Cruz \u00d7 Corona marriage in Par\u00e1cuaro.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "date_range": "1890-1910",
+          "repository": "FamilySearch",
+          "rationale": "Church marriage records (informaciones matrimoniales and actas de matrimonio) are the fallback when civil marriage registration is missing. The locality survey confirmed that Par\u00e1cuaro Matrimonios volumes at FamilySearch are 100% indexed for 1881\u20131930. Search CID 1883388 (Catholic Church Records) browsing Par\u00e1cuaro parish marriage registers for a Cruz \u00d7 Corona marriage. The window is sized for the parents' likely union (1890\u20131910, covering 20 years before Mauro's birth c. 1910). The Arquidi\u00f3cesis de Morelia marriage information volumes (Informaci\u00f3n matrimonial) are also indexed for many years \u2014 include those.",
+          "fallback_for": "pli_004",
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "date_range": "1895-1925",
+          "repository": "FamilySearch",
+          "rationale": "FAN item \u2014 required for a parentage question (BCG Standard 14). Three siblings are already in the tree: Miguel Cruz, Liborio Cruz, and Facundo Cruz (full names likely Cruz Corona). Their birth or baptism records, filed in the same Par\u00e1cuaro civil registry or parish, would independently name the same parents as Mauro, providing corroborating parentage evidence. Search CID 1916243 for Cruz Corona births and CID 1883388 for Cruz baptisms in Par\u00e1cuaro, 1895\u20131925 (sized to cover likely sibling birth years: if Mauro was born ~1910, siblings could be born from the mid-1890s to the mid-1920s). The window's upper bound is governed by the siblings' plausible birth years relative to the parents, not Mauro's. A sibling's record naming both parents provides independent corroboration for the parentage conclusion.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Michoac\u00e1n, Mexico (unscoped, full-text)",
+          "date_range": "1880-1930",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search for surnames Cruz and Corona in FamilySearch Catholic records \u2014 execute via search-full-text skill, not search-records. Per the record-type guide, for a compound Iberian surname (Cruz = paternal, Corona = maternal), a full-text search requiring both surnames as co-occurring terms is the highest-yield tactic when indexed search stalls. This surfaces Mauro's baptism entry, a parent's burial or marriage act, or a sibling's record from registers that are digitized but incompletely indexed. The search is unscoped (not restricted to a single collection id) to catch records across all Michoac\u00e1n volumes. Use both 'Cruz' and 'Corona' as required terms, not as a phrase, since clerks sometimes reverse or conflate the paternal/maternal order. This item complements steps 1\u20132; execute it when those return insufficient results.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Michoac\u00e1n, Mexico",
+          "date_range": "1906-1915",
+          "repository": "Ancestry",
+          "rationale": "Ancestry hosts Michoacan, Mexico, Civil Registration Births 1859\u20131934 as a separate indexed collection with images \u2014 a different index and imaging pipeline from FamilySearch's CID 1916243. A subject not found in FamilySearch may appear here due to different name standardization, OCR, or coverage. Search for Mauro Cruz Corona and spelling variants. This is a paid ($) resource. Execute as a fallback when FamilySearch civil registration (step 1) returns nothing.",
+          "fallback_for": "pli_001",
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-21T23:22:17.741Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Cruz",
+        "givenName": "Mauro",
+        "collectionId": "1916243",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 55,
+      "notes": "Broad search for Mauro Cruz birth 1905-1915 in CID 1916243 (Michoac\u00e1n Civil Registration). 55 matches statewide; highest match score 0.0015 \u2014 below the 0.01 actionable threshold. No results from Par\u00e1cuaro or Nueva Italia municipality. Top hit (Panind\u00edcuaro, Dec 1913) is wrong place. Consistent with locality guide warning of a possible coverage gap for Par\u00e1cuaro births in 1910\u20131916."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-21T23:22:17.760Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "fatherSurname": "Cruz",
+        "motherSurname": "Corona",
+        "collectionId": "1916243",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1916,
+        "recordCountry": "Mexico"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Targeted lever: searched for child named Mauro with father Cruz, mother Corona in CID 1916243. Zero results statewide \u2014 confirms no indexed birth record in this collection couples Cruz father + Corona mother for a child named Mauro in 1905-1916."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-21T23:22:17.760Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Cruz Corona",
+        "givenName": "Mauro",
+        "collectionId": "1916243",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1916
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 161,
+      "notes": "Compound surname lever: searched 'Cruz Corona, Mauro' in CID 1916243, 1905-1916. 161 matches but all with scores below 0.013 and none from Par\u00e1cuaro. No qualifying record identified. Conclusion: Mauro Cruz Corona's birth record is either absent from this indexed collection or unregistered for this period. Proceeding to church baptism records (pli_002)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-21T23:23:39.140Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Cruz",
+        "givenName": "Mauro",
+        "collectionId": "1883388",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1916,
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 844,
+      "notes": "Broad search for baptism of Mauro Cruz 1905-1916 in CID 1883388 (Michoac\u00e1n Catholic Church Records). 844 statewide matches; highest match score 0.0036 \u2014 well below the 0.01 threshold. No results from Par\u00e1cuaro or Nueva Italia. Collection coverage for Par\u00e1cuaro parish appears absent for this period. Continuing with parent-anchor lever."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-21T23:23:39.188Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "fatherSurname": "Cruz",
+        "motherSurname": "Corona",
+        "collectionId": "1883388",
+        "recordCountry": "Mexico"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1,
+      "notes": "Decisive finding: parent-anchor search (fatherSurname=Cruz, motherSurname=Corona, givenName=Mauro) in CID 1883388 returned exactly 1 result with matchScore 0.347. Record ark:/61903/1:1:XSF1-89NS is a MARRIAGE record for Mauro Cruz (Groom, born ~1912) listing father Sostenes Cruz and mother Ma Apolinar Corona. This directly names the parents sought by q_001. Must read full record for details."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-21T23:33:45.331Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "fatherGivenName": "Sostenes",
+        "collectionId": "1916243",
+        "recordCountry": "Mexico"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 185,
+      "notes": "Post-discovery lever: searched CID 1916243 for Mauro Cruz with fatherGivenName=Sostenes (newly confirmed father's name). All 50 returned results show father absent in index \u2014 CID 1916243 does not index father given names for births. No discriminating power. Birth record for Mauro Cruz Corona in Michoac\u00e1n civil registration confirmed absent/not indexed. Proceeding to 1930 census (pli_003)."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-21T23:34:41.476Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Cruz",
+        "givenName": "Sostenes",
+        "collectionId": "1307314",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "residencePlace": "Michoacan, Mexico"
+      },
+      "outcome": "partial",
+      "results_examined": 21,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 21,
+      "notes": "1930 census search for Sostenes Cruz in Michoac\u00e1n. Found 21 statewide Sostenes Cruz entries; none from Par\u00e1cuaro or Nueva Italia. Best candidates by name: born 1885 in Senguio, 1898 in Tiquicheo, 1902 in Tuxpan. All have low match scores (scored against PID-TODO/Mauro, not Sostenes himself). None conclusively identified as the father of Mauro Cruz Corona. Match scores too low to claim a hit."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-21T23:34:41.500Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Cruz",
+        "givenName": "Mauro",
+        "collectionId": "1307314",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "residencePlace": "Michoacan, Mexico"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 104,
+      "notes": "1930 census search for Mauro Cruz in Michoac\u00e1n. Top hit: 'Mauro Cruz' in Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n (the exact research location), Single, born 1914, birthPlace listed as Guerrero, Mexico; matchScore 0.0417 (above 0.01 threshold). Record ark:/61903/1:1:MP5H-ZCT, household of Feliciano Anguiano. Birth year 1914 vs. marriage record's 1912 \u2014 2-year discrepancy, within self-reporting range. Reading full record."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"M\u00e9xico, Michoac\u00e1n, registros parroquiales y diocesanos, 1555-1996\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSF1-89NS), Entry for Mauro Cruz and Sostenes Cruz, 20 de febrero de 1941; citing Par\u00e1cuaro, Michoac\u00e1n, Mexico, Church Marriage Investigation File.",
+      "citation_detail": {
+        "who": "Mauro Cruz (groom) and Esperanza Ramirez (bride)",
+        "what": "Church Marriage Investigation File (ChurchMarriageInvestigationFile)",
+        "when_created": "20\u201321 February 1941",
+        "when_accessed": "2026-09-21",
+        "where": "FamilySearch, M\u00e9xico, Michoac\u00e1n, registros parroquiales y diocesanos, 1555-1996 (Collection ID 1883388)",
+        "where_within": "Entry for Mauro Cruz and Sostenes Cruz, 20 de febrero de 1941; digital artifact ark:/61903/3:1:939L-9NX2-R"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSF1-89NS",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"M\u00e9xico censo nacional, 1930\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MP5H-ZCT : 2026), Entry for Feliciano Anguiano household, 1930.",
+      "citation_detail": {
+        "who": "Feliciano Anguiano household, including Mauro Cruz (principal)",
+        "what": "Mexico National Census, 1930 (Collection ID 1307314), household enumeration",
+        "when_created": "1930",
+        "when_accessed": "2026-09-21",
+        "where": "FamilySearch (familysearch.org), Mexico, National Census, 1930",
+        "where_within": "Feliciano Anguiano household, Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9JKD-KQ9",
+      "access_date": "2026-09-21",
+      "log_entry_id": "log_008",
+      "notes": "National census enumeration for Mexico, 1930. Coverage: Nueva Italia de Ruiz, M\u00fagica (formerly Par\u00e1cuaro), Michoac\u00e1n, Mexico. Digital artifact ARK: ark:/61903/3:1:S3HT-66R3-LH4. The 1930 Mexican census recorded relationship to head (parentesco), sex, birth year, and birthplace by state. Pre-1940 census: respondent not recorded; most biographical facts are indeterminate for information quality. Enumerator is a firsthand witness for residence.",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288382",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Mauro Cruz",
+      "structured_value": {
+        "given": "Mauro",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288382",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288382",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born approximately 1912 (stated at marriage investigation)",
+      "date": "~1912",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived from age stated by the groom at the marriage investigation; the record is a marriage file, not a birth registration. The groom has personal knowledge of his approximate birth year but was not cognitively present at the moment of his birth. Value is indirect because the record states no explicit birth date \u2014 the year is inferred from the stated age/year figure in a marriage context.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288382",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Esperanza Ramirez at Par\u00e1cuaro, Michoac\u00e1n, M\u00e9xico, 21 February 1941 (investigation opened 20 February 1941)",
+      "date": "1941-02-21",
+      "date_certainty": "exact",
+      "place": "Par\u00e1cuaro, Michoac\u00e1n, M\u00e9xico",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001",
+      "standard_place": "Par\u00e1cuaro, Michoacan, Mexico"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288382",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Sostenes Cruz",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288382",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Ma Apolinar Corona (Mar\u00eda Apolinar Corona)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288383",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Sostenes Cruz",
+      "structured_value": {
+        "given": "Sostenes",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288383",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288383",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "parent of Mauro Cruz (groom)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288384",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Ma Apolinar Corona",
+      "structured_value": {
+        "given": "Ma Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288384",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288384",
+      "record_role": "mother_of_groom",
+      "fact_type": "relationship",
+      "value": "parent of Mauro Cruz (groom)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288385",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Esperanza Ramirez",
+      "structured_value": {
+        "given": "Esperanza",
+        "surname": "Ramirez"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288385",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288385",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born approximately 1913 (stated at marriage investigation)",
+      "date": "~1913",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived from age stated by the bride at the marriage investigation; value is indirect because the record is a marriage file and states no explicit birth date \u2014 year inferred from stated age/year figure.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288385",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Mauro Cruz at Par\u00e1cuaro, Michoac\u00e1n, M\u00e9xico, 21 February 1941",
+      "date": "1941-02-21",
+      "date_certainty": "exact",
+      "place": "Par\u00e1cuaro, Michoac\u00e1n, M\u00e9xico",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001",
+      "standard_place": "Par\u00e1cuaro, Michoacan, Mexico"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288385",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Mateo Ramirez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288385",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Carmen Martinez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288386",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Mateo Ramirez",
+      "structured_value": {
+        "given": "Mateo",
+        "surname": "Ramirez"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288386",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288386",
+      "record_role": "father_of_bride",
+      "fact_type": "relationship",
+      "value": "parent of Esperanza Ramirez (bride)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288387",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Carmen Martinez",
+      "structured_value": {
+        "given": "Carmen",
+        "surname": "Martinez"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288387",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_persona_id": "p_308026288387",
+      "record_role": "mother_of_bride",
+      "fact_type": "relationship",
+      "value": "parent of Esperanza Ramirez (bride)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565290",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Feliciano Anguiano",
+      "structured_value": {
+        "given": "Feliciano",
+        "surname": "Anguiano"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565290",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565290",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1903",
+      "date": "~1903",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565290",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born in Michoac\u00e1n",
+      "place": "Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Michoacan, Mexico"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565290",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565291",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Senaida Ferrel",
+      "structured_value": {
+        "given": "Senaida",
+        "surname": "Ferrel"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565291",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565291",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1906",
+      "date": "~1906",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565291",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born in Michoac\u00e1n",
+      "place": "Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Michoacan, Mexico"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565291",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565292",
+      "record_role": "household_member_1",
+      "fact_type": "name",
+      "value": "Erculano Hern\u00e1ndez",
+      "structured_value": {
+        "given": "Erculano",
+        "surname": "Hern\u00e1ndez"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565292",
+      "record_role": "household_member_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565292",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "born 1885",
+      "date": "~1885",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565292",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "born in Michoac\u00e1n",
+      "place": "Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Michoacan, Mexico"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565292",
+      "record_role": "household_member_1",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565293",
+      "record_role": "household_member_2",
+      "fact_type": "name",
+      "value": "Primitivo Cruz",
+      "structured_value": {
+        "given": "Primitivo",
+        "surname": "Cruz"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565293",
+      "record_role": "household_member_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565293",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "born 1908",
+      "date": "~1908",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565293",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "born in Guerrero, Mexico",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565293",
+      "record_role": "household_member_2",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565294",
+      "record_role": "household_member_3",
+      "fact_type": "name",
+      "value": "Apolinar Corona",
+      "structured_value": {
+        "given": "Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Census gives 'Apolinar Corona' without 'Mar\u00eda' prefix; prior marriage record listed 'Ma Apolinar Corona'. Consistent short form of a compound first name. 1930 Mexican census did not record who answered for the household; respondent is unknown.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565294",
+      "record_role": "household_member_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565294",
+      "record_role": "household_member_3",
+      "fact_type": "birth",
+      "value": "born 1881",
+      "date": "~1881",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565294",
+      "record_role": "household_member_3",
+      "fact_type": "birth",
+      "value": "born in Guerrero, Mexico",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565294",
+      "record_role": "household_member_3",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565295",
+      "record_role": "household_member_4",
+      "fact_type": "name",
+      "value": "Maria Calder\u00f3n",
+      "structured_value": {
+        "given": "Maria",
+        "surname": "Calder\u00f3n"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565295",
+      "record_role": "household_member_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565295",
+      "record_role": "household_member_4",
+      "fact_type": "birth",
+      "value": "born 1914",
+      "date": "~1914",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565295",
+      "record_role": "household_member_4",
+      "fact_type": "birth",
+      "value": "born in Guerrero, Mexico",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565295",
+      "record_role": "household_member_4",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565296",
+      "record_role": "household_member_5",
+      "fact_type": "name",
+      "value": "Mauro Cruz",
+      "structured_value": {
+        "given": "Mauro",
+        "surname": "Cruz"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Mauro Cruz is the principal research subject. Surname 'Cruz' matches household members Primitivo, Migel, Libario, and Facundo Cruz, all from Guerrero, consistent with a sibling group. Pre-1940 census: respondent not recorded.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565296",
+      "record_role": "household_member_5",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565296",
+      "record_role": "household_member_5",
+      "fact_type": "birth",
+      "value": "born 1914",
+      "date": "~1914",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Birth year 1914 stated directly in the census. The research question estimated birth 'about 1910' \u2014 this census places it at 1914, a 4-year discrepancy meriting corroboration from a birth or baptism record in Guerrero.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565296",
+      "record_role": "household_member_5",
+      "fact_type": "birth",
+      "value": "born in Guerrero, Mexico",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Birthplace recorded as Guerrero (state level only). This shifts the birth-record search from Michoac\u00e1n to Guerrero. The specific municipality within Guerrero is unknown from this census. A birth or baptism record in Guerrero is needed to confirm the specific place and year.",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565296",
+      "record_role": "household_member_5",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565296",
+      "record_role": "household_member_5",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565297",
+      "record_role": "household_member_6",
+      "fact_type": "name",
+      "value": "Migel Cruz",
+      "structured_value": {
+        "given": "Migel",
+        "surname": "Cruz"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Name spelled 'Migel' in the census; likely Miguel Cruz, tree person p-sibling-miguel. Spanish 'gu' to 'g' is a common census spelling variant.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565297",
+      "record_role": "household_member_6",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565297",
+      "record_role": "household_member_6",
+      "fact_type": "birth",
+      "value": "born 1916",
+      "date": "~1916",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565297",
+      "record_role": "household_member_6",
+      "fact_type": "birth",
+      "value": "born in Guerrero, Mexico",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565297",
+      "record_role": "household_member_6",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565298",
+      "record_role": "household_member_7",
+      "fact_type": "name",
+      "value": "Libario Cruz",
+      "structured_value": {
+        "given": "Libario",
+        "surname": "Cruz"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Name spelled 'Libario' in census; likely Liborio Cruz, tree person p-sibling-liborio. Vowel shift 'o' to 'a' is a common census transcription variant.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565298",
+      "record_role": "household_member_7",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565298",
+      "record_role": "household_member_7",
+      "fact_type": "birth",
+      "value": "born 1918",
+      "date": "~1918",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565298",
+      "record_role": "household_member_7",
+      "fact_type": "birth",
+      "value": "born in Guerrero, Mexico",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565298",
+      "record_role": "household_member_7",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565299",
+      "record_role": "household_member_8",
+      "fact_type": "name",
+      "value": "Facundo Cruz",
+      "structured_value": {
+        "given": "Facundo",
+        "surname": "Cruz"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Likely tree person p-sibling-facundo.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565299",
+      "record_role": "household_member_8",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565299",
+      "record_role": "household_member_8",
+      "fact_type": "birth",
+      "value": "born 1920",
+      "date": "~1920",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565299",
+      "record_role": "household_member_8",
+      "fact_type": "birth",
+      "value": "born in Guerrero, Mexico",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565299",
+      "record_role": "household_member_8",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565300",
+      "record_role": "household_member_9",
+      "fact_type": "name",
+      "value": "Cebera Rivera",
+      "structured_value": {
+        "given": "Cebera",
+        "surname": "Rivera"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565300",
+      "record_role": "household_member_9",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565300",
+      "record_role": "household_member_9",
+      "fact_type": "birth",
+      "value": "born 1929",
+      "date": "~1929",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565300",
+      "record_role": "household_member_9",
+      "fact_type": "birth",
+      "value": "born in Guerrero",
+      "place": "Guerrero, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565300",
+      "record_role": "household_member_9",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565301",
+      "record_role": "household_member_10",
+      "fact_type": "name",
+      "value": "Juan Calvillo",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "Calvillo"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565301",
+      "record_role": "household_member_10",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565301",
+      "record_role": "household_member_10",
+      "fact_type": "birth",
+      "value": "born 1885",
+      "date": "~1885",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565301",
+      "record_role": "household_member_10",
+      "fact_type": "birth",
+      "value": "born in Michoac\u00e1n",
+      "place": "Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Michoacan, Mexico"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565301",
+      "record_role": "household_member_10",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566202",
+      "record_role": "household_member_11",
+      "fact_type": "name",
+      "value": "Guadalupe N\u00fa\u00f1es",
+      "structured_value": {
+        "given": "Guadalupe",
+        "surname": "N\u00fa\u00f1es"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566202",
+      "record_role": "household_member_11",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566202",
+      "record_role": "household_member_11",
+      "fact_type": "birth",
+      "value": "born 1903",
+      "date": "~1903",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566202",
+      "record_role": "household_member_11",
+      "fact_type": "birth",
+      "value": "born in Michoac\u00e1n",
+      "place": "Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Michoacan, Mexico"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566202",
+      "record_role": "household_member_11",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566203",
+      "record_role": "household_member_12",
+      "fact_type": "name",
+      "value": "Tenidad N\u00fa\u00f1es",
+      "structured_value": {
+        "given": "Tenidad",
+        "surname": "N\u00fa\u00f1es"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566203",
+      "record_role": "household_member_12",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566203",
+      "record_role": "household_member_12",
+      "fact_type": "birth",
+      "value": "born 1906",
+      "date": "~1906",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566203",
+      "record_role": "household_member_12",
+      "fact_type": "birth",
+      "value": "born in Michoac\u00e1n",
+      "place": "Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Michoacan, Mexico"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566203",
+      "record_role": "household_member_12",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566204",
+      "record_role": "household_member_13",
+      "fact_type": "name",
+      "value": "Elo\u00edsa Calvillo",
+      "structured_value": {
+        "given": "Elo\u00edsa",
+        "surname": "Calvillo"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566204",
+      "record_role": "household_member_13",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566204",
+      "record_role": "household_member_13",
+      "fact_type": "birth",
+      "value": "born 1927",
+      "date": "~1927",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566204",
+      "record_role": "household_member_13",
+      "fact_type": "birth",
+      "value": "born in Michoac\u00e1n",
+      "place": "Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Michoacan, Mexico"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578566204",
+      "record_role": "household_member_13",
+      "fact_type": "residence",
+      "value": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/1:1:MP5H-ZCT",
+      "record_persona_id": "p_578565296",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Sostenes Cruz absent from the 1930 Feliciano Anguiano household in Nueva Italia de Ruiz, Michoac\u00e1n, where Apolinar Corona and four Cruz-surnamed children from Guerrero are enumerated; no male Cruz adult present in the household",
+      "date": "1930",
+      "date_certainty": "approximate",
+      "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Researcher inference: Apolinar Corona co-resides with Primitivo, Mauro, Migel, Libario, and Facundo Cruz (all from Guerrero) but no adult male Cruz appears. Sostenes Cruz (tree I2, presumed husband of Apolinar) is absent. Alternatives: deceased before 1930; working elsewhere; indexed under a different spelling; enumerated in a separate household or location. Absence is consistent with widowhood but does not establish it. A death record for Sostenes Cruz in Guerrero or Michoac\u00e1n should be sought.",
+      "source_id": "src_002",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Record gives groom's name as 'Mauro Cruz'. Tree person I1 is Mauro Cruz Corona. Name match is exact on given name Mauro; surname Cruz is the paternal component of the compound surname Cruz Corona (father Sostenes Cruz + mother Ma Apolinar Corona = Cruz Corona), which is precisely the tree person's surname. The same_person score of 0.013 reflects a thin-subject stub with no prior family context in the tree \u2014 uninformative rather than negative evidence. Qualitative correlation is strong: (1) given name exact match; (2) compound surname construction confirmed by this very record's parentage assertions; (3) birth year 1912 is within 2 years of the tree's 'about 1910'; (4) Par\u00e1cuaro was the governing municipality for Nueva Italia in 1941 (M\u00fagica municipality not created until 1942), so place is fully consistent; (5) this record was found by a targeted parent-anchor search (father Cruz + mother Corona + given Mauro) returning exactly 1 result \u2014 no competing candidate exists. Linking at confident.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Sex assertion (Male) for groom Mauro Cruz. Consistent with tree person I1 who is male. Same identity basis as a_001.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Birth year approximately 1912, stated by groom at marriage investigation. Tree person I1 has birth 'about 1910'. The 2-year discrepancy is well within the expected range for approximate birth years stated at a marriage interview decades after the fact. No contradiction \u2014 this is corroborating evidence. Same identity basis as a_001.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Marriage assertion for groom Mauro Cruz at Par\u00e1cuaro, Michoac\u00e1n, 21 February 1941. Consistent with tree person I1 (Mauro Cruz Corona), who was alive in 1941. The marriage itself is a key identifying event for this individual. Same identity basis as a_001.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Relationship assertion: groom Mauro Cruz is child of Sostenes Cruz (father). This parentage assertion directly links I1 (Mauro Cruz Corona) to his newly discovered father I2 (Sostenes Cruz). The paternal surname Cruz in this assertion constructs the first element of the compound surname Cruz Corona. Same identity basis as a_001.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Sostenes Cruz is parent of Mauro Cruz (groom). I2 is the newly minted stub for Sostenes Cruz, father of groom. This assertion bears on I2 as the named parent. No prior tree person existed; stub minted from record persona p_308026288383. match_score is null because I2 was created from p_308026288383 \u2014 scoring a stub against the very persona it was minted from is circular and would not be informative. Confidence probable: this is the sole record introducing this person; no independent corroboration yet exists.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Relationship assertion: groom Mauro Cruz is child of Ma Apolinar Corona (mother). Directly names the mother of the research subject. The maternal surname Corona is the second element of the compound surname Cruz Corona. Same identity basis as a_001.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Ma Apolinar Corona is mother of groom Mauro Cruz. I3 is the newly minted stub for her. No prior tree person existed; stub minted from record persona p_308026288384. match_score is null because I3 was created from p_308026288384 \u2014 scoring against the source persona is circular. Confidence probable: sole record, primary-quality source.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion: father of groom is named Sostenes Cruz. I2 is the stub minted from record persona p_308026288383. match_score is null: comparing I2 against the persona it was minted from is circular. Confidence probable \u2014 sole record introducing this person.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for father_of_groom Sostenes Cruz. Stub I2 minted from p_308026288383; match_score null (circular). Same identity basis as pe_009.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Sostenes Cruz is parent of Mauro Cruz. Stub I2 minted from p_308026288383; match_score null (circular \u2014 stub minted from this persona). Same identity basis as pe_009.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Relationship assertion that Sostenes Cruz is parent of Mauro Cruz also bears on I1 as the named child. This assertion corroborates the identity of groom as I1. Same identity basis as a_001.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion: mother of groom is named 'Ma Apolinar Corona' (Mar\u00eda Apolinar Corona). Stub I3 minted from record persona p_308026288384; match_score null (circular). The 'Ma' abbreviation for Mar\u00eda is standard in Mexican Catholic records of this era. Confidence probable \u2014 sole record.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for mother_of_groom Ma Apolinar Corona. Stub I3 minted from p_308026288384; match_score null (circular). Same identity basis as pe_013.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Ma Apolinar Corona is parent of Mauro Cruz. Stub I3 minted from p_308026288384; match_score null (circular). Same identity basis as pe_013.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.013,
+      "rationale": "Relationship assertion that Ma Apolinar Corona is parent of Mauro Cruz also bears on I1 as the named child. Same identity basis as a_001.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion: bride is named Esperanza Ramirez. Stub I4 minted from record persona p_308026288385; match_score null (circular \u2014 stub minted from this persona). No prior tree person; confidence probable \u2014 sole record.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for bride Esperanza Ramirez. Stub I4 minted from p_308026288385; match_score null (circular). Same identity basis as pe_017.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year approximately 1913 for bride Esperanza Ramirez. Stub I4 minted from p_308026288385; match_score null (circular). Same identity basis as pe_017.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage assertion for bride Esperanza Ramirez at Par\u00e1cuaro, 21 February 1941. Stub I4 minted from p_308026288385; match_score null (circular). Same identity basis as pe_017.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: bride Esperanza Ramirez is child of Mateo Ramirez. Bears on I4 as the named child. Stub I4 minted from p_308026288385; match_score null (circular). Same identity basis as pe_017.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Mateo Ramirez is father of bride Esperanza Ramirez. I5 is the stub minted from record persona p_308026288386; match_score null (circular \u2014 stub minted from this persona). Confidence probable \u2014 sole record.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: bride Esperanza Ramirez is child of Carmen Martinez. Bears on I4 as the named child. Stub I4 minted from p_308026288385; match_score null (circular). Same identity basis as pe_017.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_018",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Carmen Martinez is mother of bride Esperanza Ramirez. I6 is the stub minted from record persona p_308026288387; match_score null (circular \u2014 stub minted from this persona). Confidence probable \u2014 sole record.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_019",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion: father of bride is named Mateo Ramirez. Stub I5 minted from record persona p_308026288386; match_score null (circular). Confidence probable \u2014 sole record.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for father_of_bride Mateo Ramirez. Stub I5 minted from p_308026288386; match_score null (circular). Same identity basis as pe_025.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Mateo Ramirez is parent of Esperanza Ramirez. Stub I5 minted from p_308026288386; match_score null (circular). Same identity basis as pe_025.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion that Mateo Ramirez is parent of Esperanza Ramirez also bears on I4 as the named child. Stub I4 minted from p_308026288385; match_score null (circular). Same identity basis as pe_017.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_022",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion: mother of bride is named Carmen Martinez. Stub I6 minted from record persona p_308026288387; match_score null (circular). Confidence probable \u2014 sole record.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_023",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for mother_of_bride Carmen Martinez. Stub I6 minted from p_308026288387; match_score null (circular). Same identity basis as pe_029.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_024",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Carmen Martinez is parent of Esperanza Ramirez. Stub I6 minted from p_308026288387; match_score null (circular). Same identity basis as pe_029.",
+      "created": "2026-09-21"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_024",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion that Carmen Martinez is parent of Esperanza Ramirez also bears on I4 as the named child. Stub I4 minted from p_308026288385; match_score null (circular). Same identity basis as pe_017.",
+      "created": "2026-09-21"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Michoacan, Mexico",
+      "for_place": "Nueva Italia de Ruiz, M\u00fagica (formerly Par\u00e1cuaro), Michoac\u00e1n, Mexico",
+      "time_period": "1880-1930",
+      "jurisdictions": [
+        {
+          "name": "Par\u00e1cuaro, Michoacan, Mexico",
+          "date_range": "1861\u20131942 (predecessor municipality holding civil and church records for Nueva Italia before M\u00fagica was created)"
+        },
+        {
+          "name": "M\u00fagica, Michoacan, Mexico",
+          "date_range": "1942\u2013present (current municipality)"
+        },
+        {
+          "name": "Michoacan, Mexico",
+          "date_range": "1823\u2013present (state)"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1916243",
+          "title": "Mexico, Michoac\u00e1n, Civil Registration, 1859\u20131940",
+          "date_range": "1859\u20131940"
+        },
+        {
+          "id": "1883388",
+          "title": "Mexico, Michoac\u00e1n, Catholic Church Records, 1555\u20131996",
+          "date_range": "1555\u20131996"
+        },
+        {
+          "id": "1307314",
+          "title": "Mexico National Census, 1930",
+          "date_range": "1930\u20131930"
+        },
+        {
+          "id": "1473011",
+          "title": "Mexico Baptisms, 1560\u20131950",
+          "date_range": "1560\u20131950"
+        },
+        {
+          "id": "1473012",
+          "title": "Mexico Marriages, 1570\u20131950",
+          "date_range": "1570\u20131950"
+        },
+        {
+          "id": "1473013",
+          "title": "Mexico Deaths, 1680\u20131940",
+          "date_range": "1680\u20131940"
+        },
+        {
+          "id": "1803932",
+          "title": "US Border Crossings from Mexico to United States, 1903\u20131957",
+          "date_range": "1903\u20131957"
+        }
+      ],
+      "quirks": [
+        "Nueva Italia de Ruiz was founded c. 1903 and remained part of Par\u00e1cuaro municipality until M\u00fagica was created on February 12, 1942. All civil registration and church records for Nueva Italia before 1942 are filed under Par\u00e1cuaro \u2014 never search 'M\u00fagica' for pre-1942 events.",
+        "FamilySearch wiki explicitly states no records are available online for M\u00fagica municipality (civil registration, church records, or census). Research must target Par\u00e1cuaro, the predecessor jurisdiction.",
+        "FamilySearch has 193 digitized Par\u00e1cuaro civil registration volumes (marriages 1881\u20131930 and deaths 1881\u20131930 fully indexed; birth volumes visible from 1917 in first-page results). Birth records for 1910\u20131916 may be absent or in later volume-search pages \u2014 the full 193-volume set must be checked via the indexed CID 1916243 collection search.",
+        "Several Par\u00e1cuaro Nacimientos (birth) volumes for 1926\u20131930 have 0 images \u2014 digitized but not yet scanned; not accessible online.",
+        "Mexican Revolution (1910\u20131920) and Cristero War (1926\u20131929) disrupted civil registration in Tierra Caliente. Gaps in civil records for these periods are expected; church baptismal records are the fallback.",
+        "The Mexico, Michoac\u00e1n, Catholic Church Records collection (CID 1883388) covers approximately 1549\u20131909 per the collection wiki page. Baptisms in this collection include date/place of birth, parents' names, and godparents \u2014 essential for pre-1910 parentage research.",
+        "Nueva Italia was a new colony in 1903 with no dedicated parish; residents used the nearest established Catholic parishes, most likely in Par\u00e1cuaro or Apatzing\u00e1n. Browse both when searching parish registers.",
+        "If not found in Par\u00e1cuaro, search neighboring Tierra Caliente parishes: Apatzing\u00e1n, La Huacana, and Churumuco de Morelos \u2014 families near municipal borders may have baptized at any of these.",
+        "All Michoac\u00e1n records are in Spanish. Baptism records follow a standard narrative formula: 'Yo [priest name] bautic\u00e9 a [child], hijo leg\u00edtimo de [father] y [mother]\u2026' Use the Spanish Genealogical Word List for reading."
+      ],
+      "guide_markdown": "# Locality Guide: Nueva Italia de Ruiz (Par\u00e1cuaro), Michoac\u00e1n, Mexico (1880\u20131930)\n\n## Jurisdiction overview\n- Nueva Italia de Ruiz was founded c. 1903 as a planned agricultural colony (hacienda Cusi lands) in the Tierra Caliente region of Michoac\u00e1n.\n- Modern municipality: M\u00fagica (created Feb 12, 1942). In 1910, the jurisdiction was **Par\u00e1cuaro municipality** (est. 1861).\n- All civil registration and church records for Nueva Italia before 1942 were filed under Par\u00e1cuaro.\n- Catholic archdiocese: Arquidi\u00f3cesis de Morelia.\n\n## Critical jurisdictional note\nFamilySearch wiki states explicitly: 'There are no records available online for the municipality of M\u00fagica.' Research must target Par\u00e1cuaro.\n\n## Available record types\n\n### Civil registration (Par\u00e1cuaro)\n- CID 1916243: Mexico, Michoac\u00e1n, Civil Registration, 1859\u20131940 \u2014 indexed + images at FamilySearch\n- 193 digitized Par\u00e1cuaro volumes confirmed: marriages 1881\u20131930 and deaths 1881\u20131930 (all 100% indexed). Birth volumes visible from 1917; 1910\u20131916 may be absent or in later search pages.\n- Ancestry parallel: Michoacan Civil Registration Births 1859\u20131934 ($)\n\n### Church records\n- CID 1883388: Mexico, Michoac\u00e1n, Catholic Church Records, 1555\u20131996 (wiki states coverage c. 1549\u20131909) \u2014 index only; browse by parish\n- Baptism records include: date/place of birth, parents' names, godparents\n- No dedicated Nueva Italia parish existed in 1910; use Par\u00e1cuaro and Apatzing\u00e1n parishes\n\n### Census\n- 1930 National Census (CID 1307314) \u2014 indexed + images; key resource for locating Mauro c. age 20\n\n### Border crossings\n- US Border Crossings from Mexico 1903\u20131957 (CID 1803932)\n\n## Research tips\n1. Search 'Par\u00e1cuaro' not 'Nueva Italia' or 'M\u00fagica' in civil registration.\n2. Start with indexed CID 1916243 collection search by surname.\n3. For parentage: search parents' marriage record in Par\u00e1cuaro Matrimonios (indexed 1881\u20131930).\n4. For pre-1910 baptisms: use CID 1883388; browse Par\u00e1cuaro and Apatzing\u00e1n parishes.\n5. Search the 1930 census for Mauro and household.\n6. If not found: try neighboring parishes (Apatzing\u00e1n, La Huacana, Churumuco).\n7. Revolution-era gaps (1910\u20131920): use church baptismal records when civil records are missing.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-21"
+    }
+  ]
+}

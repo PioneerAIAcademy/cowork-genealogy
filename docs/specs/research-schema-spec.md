@@ -93,6 +93,7 @@ flagged. (One row below is the exception, and says so.)
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
 | `proof_tier` | `proved`, `probable`, `possible`, `not_proved`, `disproved` | proof_summaries |
+| `proof_shortfall` | `ceiling`, `gap`, `conflict`, `none` | proof_summaries |
 | `proof_vehicle` | `statement`, `summary`, `argument` | proof_summaries |
 | `person_evidence_confidence` | `confident`, `probable`, `speculative` | person_evidence |
 | `project_status` | `active`, `paused`, `completed` | project |
@@ -129,9 +130,9 @@ closed-enum change is in CLAUDE.md's schema-change site list.
 > `record_basis` cannot represent "no evidence" honestly, and a bare enum add
 > buys that honesty at the cost of new exclusion logic in four consumers, none
 > of it validator-caught, plus an under-specified value. The retry loop it was
-> meant to fix was closed instead by a lower-blast-radius prose pin (issue #433:
+> meant to fix was closed instead by a lower-blast-radius prose pin:
 > state the valid values inline, plus "there is no `no_evidence`" and keep the
-> best-effort stated-vs-inferred value). If the honesty is ever judged worth it, do it
+> best-effort stated-vs-inferred value. If the honesty is ever judged worth it, do it
 > deliberately, not as a quick fix: settle the scalar-vs-structural mismatch
 > first, define the structural convention + eval invariant + re-classification
 > trigger, then land all ~6 definition sites, both skills, and the eval
@@ -219,11 +220,19 @@ date patterns the standardizer recognizes.
 
 Each skill writes to its own section and reads from others. Skills must never write across section boundaries.
 
-**The writer sets below are a rendering of `docs/specs/schemas/ownership.json`, which
-is the machine-readable declaration the checks read.** This table adds what the
-manifest does not carry — who *reads* each section, and how an entry is retired.
-When the two disagree, the manifest is right and this table is stale: it was, on
-four rows, until the manifest was promoted out of a pytest validator.
+**The writer sets below are a rendering of each row's `callers` in
+`docs/specs/schemas/ownership.json`, which is the machine-readable declaration
+the checks read.** This table adds what the manifest does not carry — who *reads*
+each section, and how an entry is retired. When the two disagree, the manifest is
+right and this table is stale: it was, on four rows, until the manifest was
+promoted out of a pytest validator.
+
+`callers` is the field that says **who may write**, so it is the one rendered
+here. The manifest carries two more caller fields and neither appears in these
+tables, because neither widens permission: `hookCallers` names the agent the
+plugin `PreToolUse` hook permits on a row claiming the `hook` plane, and
+`agentCallers` records the non-owner agents that write the row — both are
+described under "Who actually writes a row" below.
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
@@ -268,15 +277,133 @@ has told an agent to do exactly that: `question-selection` carried three instruc
 retire a question with `superseded` / `answered`, values `question_status` has never
 defined, and every such write was rejected on validation.
 
+### Who actually writes a row — `callers`, `hookCallers`, `agentCallers`
+
+The manifest's checks all used to run one way: every name a row lists must
+resolve to something that ships. Nothing ran the other way, so a writer that
+existed in the plugin and was missing from the manifest was invisible. The
+`record-extractor` agent held `research_log_append` under all three server
+spellings and called it a dozen times across the committed e2e corpus while
+appearing in no row — for as long as that was true, no check could see it.
+
+`ownership-manifest.test.ts` now runs both directions. The second one reads each
+agent's `tools:` and each skill's `allowed-tools:` frontmatter — parsed as YAML,
+with a string value split on commas and whitespace — and requires the manifest to
+name every holder of a writer tool on every row that tool reaches for it. An
+agent with no `tools:` key inherits every tool, so it is read as holding every
+writer. Its writer-tool vocabulary comes from the engine, never from the
+manifest's own `writerTools` — a guard that took both sides from the manifest
+would compare it to itself and pass green. It is `OK_FALSE_IS_FAILURE` in
+`src/tool-result.ts` minus `NOT_A_DOCUMENT_WRITER`, and a second test requires
+that list to equal the tools whose code writes a document: every tool module
+that reaches an `atomicWriteJson` / `atomicWriteBoth` use through its value
+imports, read from each module's TypeScript syntax tree (so comments, strings and
+type-only imports never count).
+A third fails any `ProjectStore` write made outside `src/store/` and the named
+non-document write sites, so no document write can bypass those two functions.
+
+**The check is per row.** For each (holder, writer tool), the rows the manifest
+names the holder on must equal the rows the tool reaches:
+
+- A tool a row's `toolAuthorized` names is authorized there by tool identity,
+  for every caller, so the row names no holder for it: `merge_tree_persons` on
+  the research.json rows it repoints ids in, and `research_append` /
+  `extraction_append` on tree `persons`, which they reach only through the
+  assertion-backlink fact rewrite. The unit plane reads the same field
+  (`harness/ownership.py:writer_tool_sets`) and still requires the delta to be
+  that tool's own write. Widening `callers` instead would grant the section by
+  any path, which is why these writers are not callers.
+- Every other writer tool but `research_append` writes the sections it writes
+  whoever calls it, so it reaches every row whose `writerTools` lists it.
+- An agent's `research_append` reaches the rows the plugin hook leaves it: its
+  `AGENT_WRITABLE_SECTIONS` lane, minus any section `OWNED_SECTIONS` routes to
+  another agent, and a tree row only through the one section that writes it —
+  tree `persons` via an `assertions` update, tree `sources` via a `sources`
+  append. That tool and that map are the manifest's `hookRouting`, the one
+  copy both the packaging guard and `make e2e-writer-attribution` read, and
+  `plugin-hooks.test.ts` pins the tool to the one the hook gates. Every agent
+  granted `research_append` must have a lane (`plugin-hooks.test.ts`, which
+  reads an agent with no `tools:` key as holding it), so this is always
+  decidable.
+- A skill's `research_append` is confined by nothing static — the op names the
+  section, and the hook does not lane the main thread. For that pair the check
+  asks only that some row names the skill; which sections it writes is enforced
+  at run time by the unit plane, against exactly these `callers` rows.
+
+**What a row lists for a holder differs by field.** `callers` is a permission,
+so a name there counts for every writer tool on its row. `hookCallers` is the
+hook's permission, and the hook routes `research_append` alone, so a name there
+counts for that tool only — a hook row that also lists `merge_tree_persons` does
+not list its agent for it. An `agentCallers` entry is
+`{"agent": …, "tools": […]}` and counts only for the tools it names: the writer
+tools that agent reaches the row with. `record-extractor` on tree `persons` is
+paired with `extraction_append` alone, so the seven other tree writers that row
+lists do not make it count as listed for them: grant it a new tree writer and the
+guard reds until the manifest names that tool for it on every row it reaches. A
+second test fails an entry that names no tool, a tool its row does not list, or
+one the agent is no longer granted.
+
+**The skill half reads the declared grant.** `allowed-tools:` is a grant, not a
+restriction, so a skill body calling a tool it never declared is invisible to any
+frontmatter read. `test_tool_allowlist` (`eval/harness/validators/test_universal.py`)
+is what sees that call, and it is advisory in the unit tier.
+
+Three fields make up the listed set, and which one a writer goes in is a single
+rule with no exceptions:
+
+| Field | Holds | Read by |
+|---|---|---|
+| `callers` | who **may** write the row: every permitted skill, the row's own owner when that owner is an agent, and an agent that owns a unit suite (`agent:citation`) | the unit plane (`harness/ownership.py`'s `writer_sets`), the writer tables above, the actual-writer direction (`ownership-manifest.test.ts`), `plugin-hooks.test.ts`, and `make e2e-writer-attribution` |
+| `hookCallers` | the agent the plugin `PreToolUse` hook permits, on a row claiming the `hook` plane | `plugin-hooks.test.ts`, which pins it against the hook's hardcoded map; the actual-writer direction; `make e2e-writer-attribution` |
+| `agentCallers` | the non-owner **agents** that write the row, each paired with the writer tools it reaches the row with | the actual-writer direction, `plugin-hooks.test.ts` (against the hook's lanes), and `make e2e-writer-attribution` — never as a permission |
+
+A fourth field, `toolAuthorized`, names no caller: it lists the writer tools a
+row authorizes by tool identity, for whoever calls them. The unit plane reads it
+(`writer_tool_sets`, then checks the delta is the tool's own write), and the
+actual-writer direction and `make e2e-writer-attribution` read it to skip that
+(holder, tool) pair on that row.
+
+A non-owner agent goes in `callers` only when it owns a unit suite. The unit
+plane keys on the suite subject's frontmatter `name` and has no view of which
+*other* agent made a call, so the one agent it can attribute a write to is the
+suite's own subject: `agent:citation` on `sources`, whose suite
+is `eval/tests/unit/citation/`. `writer_sets(..., subject=)` resolves it there,
+and `test_a_unit_plane_agent_caller_is_a_suite_subject` keeps the exception one
+name wide. Every other non-owner agent goes in `agentCallers` or
+`hookCallers`. The owner is the other exception — `gps-mentor` on
+`evaluations` — because a row must list its own owner among its callers.
+
+**`agentCallers` records who wrote; it does not widen who may.** Nothing reads it
+as a permission: `writer_sets` reads `callers` only and must keep doing so. That
+is what makes the field free — the unit plane already authorizes an agent's write
+through the skill whose run it happens inside, so naming the agent costs that
+plane nothing.
+
+Two alternatives were weighed when this landed (lead ruling 2026-09-18). A
+blocking guard with a waiver table was rejected because it would put the known
+gaps in the one place future drift could also hide. Dropping the `unit` plane
+from the five rows that name agent writers was rejected because it would remove
+the only enforcement plane over `tree.gedcomx.json` as a side effect of adding a
+lint.
+
+The observed counterpart is `make e2e-writer-attribution`, which reads what the
+committed corpus records a subagent actually calling. It is weaker — a writer
+that never fired is invisible to it — and it catches one thing the static side
+structurally cannot: a delegation to an `agent_type` that is not a shipped unit
+at all. `general-purpose`, the stand-in the model falls back to when a bare-name
+delegation fails to resolve, is neither a skill nor an agent and can never be
+listed in any row, so the report classifies it as its own finding rather than as
+a manifest gap.
+
 ### Ownership for `tree.gedcomx.json`
 
 Three sections (`persons`, `relationships`, `sources`) carry overlapping writer sets:
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
-| `relationships` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs. **person-evidence is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `relationships` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal) | Mutable; preserve IDs |
+| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
@@ -298,7 +425,11 @@ the skill to the `persons` writer set: correcting an assertion's
 fact already carrying that assertion's `assertion_id`
 (`tree-materialization-spec.md` §4.4). It adds or removes no person,
 fact, name or ref, and the validator admits only that exact delta, so
-adding an unsourced person or setting `primary` stays refused. The harness's
+adding an unsourced person or setting `primary` stays refused.
+`forget-and-rederive` is the fifth writer of `persons` and `relationships` and
+the only **subtractive** one: `tree_forget` removes a slice of the tree so it can
+be re-derived from records as a practice run. It mints nothing, sources nothing,
+and writes no other section. The harness's
 `test_tree_ownership_table` universal validator enforces this ownership, reading
 the same `docs/specs/schemas/ownership.json` as the research.json half — and only
 inside a paid per-skill eval run, which is the whole of this rule's enforcement
@@ -332,9 +463,9 @@ project's research objective; nothing about the researcher is asked.
 `intended_audience` and `subscriptions` are not written by it (see their rows
 below). Read
 by every skill. Skills adapt their narration density to
-`narration_guidance`, and `search-external-sites` prioritizes URLs for
-sites listed in `subscriptions`. All fields optional — absence falls
-back to default narration. To update mid-project, edit this section
+`narration_guidance`, and `search-external-sites` reads `subscriptions`
+only to flag a site the researcher has named but has no access to on
+file. All fields optional — absence falls back to default narration. To update mid-project, edit this section
 directly.
 
 | Field | Type | Required | Description |
@@ -462,8 +593,8 @@ Not every site here is commercial. `chronicling_america`, `digital_newspaper_arc
 |-------|------|----------|-------------|
 | `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, or `italian_genealogy`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
-| `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
-| `capture_filename` | string or null | no | Filename of the returned capture |
+| `capture_received` | boolean | yes | Whether the results reached the agent. A capture need not be a file: page content already present in the conversation is a capture that arrived without one, and is recorded `true` with `capture_filename` null |
+| `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file |
 
 ### 5.4.1 Sidecar result files
 
@@ -546,7 +677,7 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`). **Enforced:** `record_basis: "absent"` requires exactly `absent` (validator, both schema trees, and `research_append`); the converse is enforced by `research_append` only. See "Negative evidence" below |
-| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored. `same_person`'s explicit arm takes two GedcomX documents and a focus id inside each and never reads this field, and its project-relative arm resolves the record itself — retained sidecar, fresh read, or a persona projected from the record's own assertions — so how the assertion was retrieved does not decide scorability either. The field is still the fastest way to name the right persona when it is set. |
 | `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `stated`, computed birth year `inferred`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
@@ -630,7 +761,8 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
 | `confidence` | `person_evidence_confidence` | yes | How certain we are that this record's role IS the tree person (identity certainty). This is NOT a measure of the source's informant quality (`information_quality`/`informant_proximity`); those fields classify source reliability and belong on the assertion. A single primary-informant source with no corroborating record is `probable` on this scale, not `confident`. |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
-| `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
+| `core_identifier_conflict` | string or null | no | The core identifier this link contradicts, stated by person-evidence at the moment it writes the link (e.g. "record gives birthplace Germany; tree attests Ireland across three censuses"). Null or absent means none was found. A non-empty value caps `confidence` at `speculative` — enforced by `research_append`, not by prose |
+| `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool for this `(assertion_id, person_id)` pairing. `research_append` REFUSES an append that leaves this null where a record persona is reachable, so null is no longer a free default: it is correct where nothing can be scored (an image-, external-site- or PDF-sourced assertion, a full-text hit, a search that retained no sidecar) and it is REQUIRED where the tree person was minted out of the very record being cited, since scoring a persona against a person created from it only confirms itself |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 
@@ -954,7 +1086,7 @@ The worked example (§9) shows the evidence layer: the GedcomX birthplace "Irela
 
 ### Source ownership: record-extraction vs. citation
 
-Both `record-extraction` and `citation` write to the `sources` section. The protocol: `record-extraction` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` skill later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` skill never creates new source entries; it only refines entries created by `record-extraction`.
+Both `record-extraction` and `citation` write to the `sources` section. The protocol: `record-extraction` creates the source entry with a working citation (best-effort from available metadata) and sets `source_classification`. The `citation` agent later refines the same entry — updating `citation` and `citation_detail` fields to Evidence Explained standards. This is an in-place update to the existing `src_` entry, not a new entry. The `citation` agent never creates new source entries; it only refines entries created by `record-extraction`.
 
 ---
 

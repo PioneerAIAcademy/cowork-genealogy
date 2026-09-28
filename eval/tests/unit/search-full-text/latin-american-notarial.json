@@ -5,18 +5,35 @@
     "name": "Latin American notarial search — thin-index case, FTS strongly preferred",
     "type": "positive",
     "description": "Tests one of the skill description's primary use cases — searching Latin American notarial protocolos, where structured indexes are thin and FTS shines. The user is helping a colleague locate José Maria García in 1830s Cuban notarial records (Habana). The skill should recognise this is FTS territory (per references/search-strategies.md `When to use FTS vs. indexed Records search`: 'Latin American notarial protocolos → FTS strongly preferred'), construct a query in the recorder's likely orthography (Spanish spelling, with the diacritic), and execute the search. The fixture returns a 1834 poder otorgado naming García as the apoderado.",
-    "tags": ["latin-american", "notarial", "thin-index", "spanish-orthography", "primary-use-case"]
+    "tags": [
+      "latin-american",
+      "notarial",
+      "thin-index",
+      "spanish-orthography",
+      "primary-use-case",
+      "wiki-prework",
+      "topical-fixture-required"
+    ]
   },
   "input": {
     "user_message": "Run a full-text search of FamilySearch's Cuban notarial protocolos collection for 'José Maria García' (1830s Habana). Use the Spanish-orthography spelling (with the diacritic) rather than an Anglicised form, since FTS does not transliterate. Log the search in this project's research log as an ad-hoc query (plan_item_id: null) — do not add a new question or plan item; only the search log entry and its result sidecar should be written.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["fulltext-search-cuban-notarial", "fulltext-search-cuban-notarial-by-name"],
+  "mcp_fixtures": [
+    "fulltext-search-cuban-notarial",
+    "fulltext-search-cuban-notarial-by-name",
+    "wiki-read-cuba-naming-customs-not-found",
+    "wiki-read-spanish-word-list",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
   "judge_context": [
     "Should recognise that pre-1850 Latin American notarial protocolos are exactly the thin-index source class that the skill's references/search-strategies.md flags as FTS-preferred — and should explain the rationale briefly to the user",
     "Should construct a query whose keywords include the Spanish-orthography 'García' (with the diacritic, or at minimum the unaccented 'Garcia') — NOT an Anglicised form like 'Garcia/Garcis/Garsey'",
     "Should successfully recover the fixture's 1834 poder otorgado (recordPlace: Habana, recordType: Notarial), which records García as the apoderado on a power of attorney",
     "Should NOT mistakenly treat the prompt as out-of-scope and refuse — Latin American notarial coverage is explicitly listed in the skill's allowed scope (references/transcription-quirks.md 'Latin American notarial protocols (17th–19th c.)' under Strong coverage)",
-    "Should mention in passing that FTS searches the AI transcript and Spanish-orthography variants (e.g. accented vs unaccented) may need separate queries if the canonical query returns nothing"
+    "Should mention in passing that FTS searches the AI transcript and Spanish-orthography variants (e.g. accented vs unaccented) may need separate queries if the canonical query returns nothing",
+    "The subject is \"José Maria García\", a single surname, so SKILL.md's `{Country}_Naming_Customs` pre-work bullet does not trigger here: it fires on a compound or patronymic surname. The one REQUIRED page is `{Language}_Genealogical_Word_List`, because the record is not in English, and the skill MUST USE what it returned rather than only calling it: naming a record abbreviation the page actually carries, such as 'h.l.' for hijo legítimo, or a documented spelling variation such as 'lejítimo' for 'legítimo', is the evidence. Do NOT expect a naming-customs fetch, and do NOT expect the Cantabrian 'de la' or 'Navedas' forms: those belong to ut_search_full_text_013 and were copy-pasted onto this test in error. If the skill does reach for Cuba_Naming_Customs it will be told no such page exists, which is correct and is not a fault.",
+    "The subject is Cuban, so the pre-work bullet resolves to Cuba_Naming_Customs, which does not exist in the wiki corpus — the call returns \"No wiki page found\". The skill MUST take SKILL.md's documented gap path: report that no naming-customs page is available for the jurisdiction and proceed on the Spanish word list it did get, rather than inventing variants to stand in for the missing page. Naming a record abbreviation the word list actually carries, such as 'h.l.' for hijo legítimo, is the evidence it used what it received. Do NOT expect the Cantabrian 'de la' or 'Navedas' forms here: those belong to ut_search_full_text_013 and were copy-pasted onto this test in error."
   ]
 }

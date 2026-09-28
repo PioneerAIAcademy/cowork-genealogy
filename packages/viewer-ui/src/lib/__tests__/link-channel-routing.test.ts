@@ -56,3 +56,41 @@ describe('outbound link channel routing', () => {
     expect(read('shared/PersonCard.tsx')).not.toMatch(/href=\{person\.ark\}/)
   })
 })
+
+/**
+ * Strip single-line (`// …`) and multi-line (`/* … *​/`) comments so that
+ * prose *about* anchors does not trip the anchor-element guard.
+ */
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '')
+}
+
+function hasAnchorElement(src: string): boolean {
+  return /<a[\s>]/.test(stripComments(src))
+}
+
+describe('PersonCard — no anchor element (#2661)', () => {
+  const src = read('shared/PersonCard.tsx')
+
+  it('does not contain an anchor element in the source', () => {
+    expect(hasAnchorElement(src)).toBe(false)
+  })
+
+  it('fires on an anchor, however it is spelled', () => {
+    expect(hasAnchorElement('<a href={person.ark}>x</a>')).toBe(true)
+    expect(hasAnchorElement('<a\n  href="#"\n>x</a>')).toBe(true)
+    expect(hasAnchorElement('<a>x</a>')).toBe(true)
+  })
+
+  it('accepts legitimate neighbours', () => {
+    expect(hasAnchorElement('<aside>x</aside>')).toBe(false)
+    expect(hasAnchorElement('<article>x</article>')).toBe(false)
+  })
+
+  it('ignores comments that mention anchors', () => {
+    expect(hasAnchorElement('// Do not turn this into an <a href> element')).toBe(false)
+    expect(hasAnchorElement('{/* A <button>, not an <a href>. */}')).toBe(false)
+  })
+})

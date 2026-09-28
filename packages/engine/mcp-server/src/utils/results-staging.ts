@@ -23,16 +23,32 @@ export const STAGING_SUBDIR = "results/.staging";
 const STAGING_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
- * The tools that stage, and therefore the only tools whose log entries can carry
- * a `results_ref`. Lives here rather than in `research-log-append.ts` because
- * `unloggedStagedSearches` below needs the same predicate, and a
- * `utils/` → `tools/` import is against CLAUDE.md's no-util→tool rule. The log
- * appender imports it from here; a second copy would drift.
+ * The SEARCH-shaped staging producers: their payload is a page of results with
+ * an upstream total, so the nil-search note, the unlogged-search note and
+ * `research_log_append`'s retained-none warning apply to them and to nothing
+ * else, and the eval mock stages their canned fixtures. Mirrored byte-for-byte as
+ * `STAGING_SEARCH_TOOLS` in `eval/harness/harness/mock_mcp.py` and pinned by
+ * `test_mock_mcp.py::test_staging_tool_sets_agree_across_the_two_copies`.
  */
-export const STAGING_CAPABLE_TOOLS = new Set([
+export const STAGING_SEARCH_TOOLS = new Set([
   "record_search",
   "fulltext_search",
   "external_links_search",
+]);
+
+/**
+ * Every tool that stages: the search producers above plus the two acquisition
+ * producers. A transcription and a record fetched by ARK are retained as a
+ * ONE-element `results[]` envelope, so finalize needs no second shape. The
+ * acquisition producers carry none of the search notes: record-extraction logs
+ * an upload as `user_provided` and a `record_read` with no `stagedResultsRef`,
+ * so a nag on either would contradict the shipped skill. An unfinalized
+ * acquisition file is simply TTL-pruned.
+ */
+export const STAGING_CAPABLE_TOOLS = new Set([
+  ...STAGING_SEARCH_TOOLS,
+  "image_transcribe",
+  "record_read",
 ]);
 
 /**
@@ -354,6 +370,9 @@ export async function unloggedStagedSearches(
     try {
       if (entry.mtimeMs < cutoff) continue;
       const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
+      // An acquisition read is logged as `user_provided` or under the search that
+      // found it, never under its own tool name, so it can never pair here.
+      if (STAGING_CAPABLE_TOOLS.has(envelope.tool) && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
       const parsed = Date.parse(envelope.retrieved);
       const fallback = Number.isNaN(parsed);
       staged.push({

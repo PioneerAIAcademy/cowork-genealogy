@@ -4,7 +4,7 @@ A scripted agent whose turns end in whatever text the test hands it. `serve`
 must start a `Yes.` turn itself after a hand-back literal and nothing else:
 not after a question, not after `Research complete.`, not past the budget,
 never ahead of a message the user typed meanwhile, never after an interrupt,
-and never for a chain whose first frame opted out (the public /v1 API).
+and never for a chain whose first frame opted out (`auto_continue: false`).
 """
 import asyncio
 
@@ -212,9 +212,9 @@ async def test_disabled_never_continues():
 
 @pytest.mark.asyncio
 async def test_a_frame_that_opts_out_starts_a_chain_that_never_continues():
-    """What the public /v1 API sends: its caller reads the first turn_done as
-    the reply, so a Yes. turn behind it would be handed over as the answer to
-    the caller's next message."""
+    """What a frame carrying `auto_continue: false` asks for: a caller that
+    reads the first turn_done as the reply would otherwise be handed a Yes. turn
+    behind it as the answer to its next message."""
     agent = ScriptedAgent([LITERAL])
     events = await _drive(agent, [{"type": "user_msg", "text": "go", "auto_continue": False}],
                           auto=AutoContinue(enabled=True, max_steps=30))

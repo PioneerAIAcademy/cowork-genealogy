@@ -3,6 +3,9 @@
  *
  * - `packages/engine/plugin/skills/<name>/SKILL.md` — frontmatter parsed for `name`,
  *   `description`, `allowed-tools`.
+ * - `packages/engine/plugin/agents/<name>.md` — the same frontmatter (with
+ *   `tools` in place of `allowed-tools`), for an agent-keyed suite that has no
+ *   skill directory behind it (issue #1253).
  * - `eval/tests/unit/<name>/rubric.md` — parsed for grading
  *   dimensions per unit-test-spec.md §7.
  *
@@ -14,7 +17,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { pluginSkillsDir, testsUnitDir } from './paths';
+import { pluginAgentsDir, pluginSkillsDir, testsUnitDir } from './paths';
 import { PathEscapeError, resolveWithin } from './fs/safe-path';
 import type { SkillInfo, SkillRubricDimension } from './types';
 
@@ -22,6 +25,13 @@ interface SkillFrontmatter {
   name?: string;
   description?: string;
   'allowed-tools'?: string | string[];
+  /**
+   * A plugin agent declares its tools as `tools:`, a skill as `allowed-tools:`
+   * (`eval/harness/harness/allowed_tools.py` reads exactly this pair). Present
+   * so an agent-keyed suite reports the agent's real tool list instead of an
+   * empty one — see `readSkillMd`.
+   */
+  tools?: string | string[];
 }
 
 function parseFrontmatter(content: string): { frontmatter: SkillFrontmatter; body: string } {
@@ -172,14 +182,41 @@ export function parseRubric(content: string, filePath: string): SkillRubricDimen
   return dimensions;
 }
 
+/**
+ * Frontmatter for a suite, from its SKILL.md — or, for an agent-keyed suite
+ * with no skill directory (issue #1253), from the plugin agent file of the
+ * same name.
+ *
+ * Agents carry the same frontmatter convention as skills (`description`,
+ * `allowed-tools`/`tools`), which is why the harness's own
+ * `load_skill_frontmatter` is documented to work on either. Without the
+ * fallback `gps-mentor` would reach the picker with a null description and an
+ * empty tool list, and so be mislabelled `stateless` — the flag that tells an
+ * author their tests need no MCP fixtures.
+ */
 async function readSkillMd(skillName: string): Promise<{ frontmatter: SkillFrontmatter; body: string } | null> {
-  const filePath = path.join(pluginSkillsDir(), skillName, 'SKILL.md');
-  try {
-    const content = await fs.readFile(filePath, 'utf8');
-    return parseFrontmatter(content);
-  } catch {
-    return null;
+  const candidates = [
+    path.join(pluginSkillsDir(), skillName, 'SKILL.md'),
+    path.join(pluginAgentsDir(), `${skillName}.md`),
+  ];
+  for (const filePath of candidates) {
+    try {
+      return parseFrontmatter(await fs.readFile(filePath, 'utf8'));
+    } catch (err) {
+      // Absent is the supported answer, and the only one: an agent-keyed suite
+      // has no SKILL.md, and an ordinary skill has no same-named agent file.
+      // ENOTDIR is the same answer reached differently — a path component that
+      // exists but is not a directory. Anything else (EACCES, EISDIR, EMFILE)
+      // is a broken checkout rather than absent content, and still throws,
+      // matching `readRubricFor` below. Swallowing those would report a skill
+      // as description-less and tool-less — which reads in the picker exactly
+      // like a skill that declares nothing.
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT' || code === 'ENOTDIR') continue;
+      throw err;
+    }
   }
+  return null;
 }
 
 /**
@@ -219,21 +256,62 @@ function isStateless(allowedTools: string[]): boolean {
   return allowedTools.length === 0;
 }
 
-export async function listSkills(): Promise<SkillInfo[]> {
-  const root = pluginSkillsDir();
-  let entries: string[];
-  try {
-    entries = await fs.readdir(root);
-  } catch {
-    return [];
+/**
+ * Directory names of every suite the picker should offer: the plugin skills,
+ * plus any `eval/tests/unit/<name>/` that has no skill directory behind it.
+ *
+ * The second half is what reaches an agent-keyed suite (issue #1253).
+ * `gps-mentor` has a rubric and tests under `eval/tests/unit/` and no skill
+ * directory at all, so enumerating `pluginSkillsDir()` alone left its rubric
+ * unreachable from the UI genealogists annotate in — and `check_runlogs.py`
+ * blocks the PR until that annotation lands, so the suite could not be
+ * finished at all.
+ *
+ * Keyed on directory existence rather than a name list, so a new suite appears
+ * here the moment it lands.
+ *
+ * Deliberately NOT the same rule as the harness's `run_tests.py::_list_skills`,
+ * which requires a directory to hold at least one runnable test JSON. That is
+ * right for something about to execute a suite and wrong for a picker an author
+ * opens to write `rubric.md` before the first test exists. The guard here only
+ * drops directories that are not suites at all — no `rubric.md` and no `.json`
+ * — so a stray `__pycache__` never becomes a skill in the UI.
+ */
+async function looksLikeSuite(dir: string): Promise<boolean> {
+  const files = await fs.readdir(dir).catch(() => [] as string[]);
+  return files.some((f) => f === 'rubric.md' || f.endsWith('.json'));
+}
+
+async function suiteNames(): Promise<string[]> {
+  const names = new Set<string>();
+  // A plugin skill is listed whether or not it has tests — pre-existing
+  // behaviour, unchanged. A tests-only directory must look like a suite.
+  for (const [root, mustLookLikeSuite] of [
+    [pluginSkillsDir(), false] as const,
+    [testsUnitDir(), true] as const,
+  ]) {
+    let entries: string[];
+    try {
+      entries = await fs.readdir(root);
+    } catch {
+      continue;
+    }
+    for (const name of entries) {
+      const dir = path.join(root, name);
+      const stat = await fs.stat(dir).catch(() => null);
+      if (!stat?.isDirectory()) continue;
+      if (mustLookLikeSuite && !(await looksLikeSuite(dir))) continue;
+      names.add(name);
+    }
   }
+  return [...names];
+}
+
+export async function listSkills(): Promise<SkillInfo[]> {
   const out: SkillInfo[] = [];
-  for (const name of entries) {
-    const dir = path.join(root, name);
-    const stat = await fs.stat(dir).catch(() => null);
-    if (!stat?.isDirectory()) continue;
+  for (const name of await suiteNames()) {
     const parsed = await readSkillMd(name);
-    const allowedTools = parseAllowedTools(parsed?.frontmatter['allowed-tools']);
+    const allowedTools = parseAllowedTools(parsed?.frontmatter['allowed-tools'] ?? parsed?.frontmatter.tools);
     const rubric = await readRubricFor(name);
     out.push({
       name,
@@ -262,17 +340,32 @@ export async function readSkill(name: string): Promise<SkillInfo | null> {
   // and only writes and deletes throw. Nothing calls this today, but the reason
   // it is contained is that a route will — and that route should answer 404,
   // not surface an unhandled throw as a 500.
-  let dir: string;
+  //
+  // Both roots are resolved, and either one existing is enough: an agent-keyed
+  // suite (issue #1253) has a directory under `eval/tests/unit/` and none under
+  // `packages/engine/plugin/skills/`. Containment is still checked against each
+  // root separately, so a traversing name is refused before either stat.
+  let dirs: string[];
   try {
-    dir = resolveWithin(pluginSkillsDir(), name);
+    dirs = [
+      resolveWithin(pluginSkillsDir(), name),
+      resolveWithin(testsUnitDir(), name),
+    ];
   } catch (e) {
     if (!(e instanceof PathEscapeError)) throw e;
     return null;
   }
-  const stat = await fs.stat(dir).catch(() => null);
-  if (!stat?.isDirectory()) return null;
+  let found = false;
+  for (const dir of dirs) {
+    const stat = await fs.stat(dir).catch(() => null);
+    if (stat?.isDirectory()) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) return null;
   const parsed = await readSkillMd(name);
-  const allowedTools = parseAllowedTools(parsed?.frontmatter['allowed-tools']);
+  const allowedTools = parseAllowedTools(parsed?.frontmatter['allowed-tools'] ?? parsed?.frontmatter.tools);
   const rubric = await readRubricFor(name);
   return {
     name,

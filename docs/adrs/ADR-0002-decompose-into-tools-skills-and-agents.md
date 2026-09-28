@@ -92,7 +92,7 @@ Ruled 2026-09-11: every acquisition lane joins them (issue #2489). A page
 transcription, a `record_read`-fetched record and an uploaded PDF all become
 staged artifacts, and the engine gains a PDF reader, leaving at most one medium
 only the model can read — a page the user has open in the Claude window, which
-is unverified (issue #2207).
+is unverified.
 
 The placement rule that follows is why this sits here rather than in a tool
 spec: **acquisition is a tool call behind an agent, never a skill body.** Two

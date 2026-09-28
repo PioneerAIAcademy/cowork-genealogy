@@ -2,8 +2,8 @@
   "tool": "same_person",
   "description": "same_person — the marriage record's mother_of_groom persona (Bridget Sheehy, fully indexed) scored against the tree's Bridget Sheehy. High score on an exact, distinctive-surname match.",
   "args": {
-    "primaryId1": "M1",
-    "primaryId2": "I2"
+    "assertionId": "~",
+    "treePersonId": "I2"
   },
   "response": {
     "matched": true,

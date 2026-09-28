@@ -5,6 +5,11 @@ export interface ImageTranscribeInput {
    *  that came from the memories API. Already a direct bytes URL, so it is
    *  used as-is rather than resolved, and it is fetched WITHOUT a token. */
   memoryArtifactUrl?: string;
+  /** A project-relative POSIX path to an uploaded image or PDF inside the
+   *  project folder (`uploads/<name>` is where the hosted upload endpoint puts
+   *  them). Requires `projectPath`. Read through the ProjectStore, sniffed by
+   *  magic bytes, fetched with NO FamilySearch token (issue #2048). */
+  file?: string;
   /**
    * Optional search key — who/what to locate on the page. On a complete read it
    * sets a FOUND / NOT FOUND pointer (`found`); the pointer is withheld on a
@@ -56,14 +61,53 @@ export interface ImageTranscribeResult {
     expanded: string;
     expansions: Record<string, string[]>;
   };
+  /**
+   * The staging handle (search-result-staging-spec.md), present iff
+   * `projectPath` was given: the transcription is retained host-side as a
+   * one-element `results[]` envelope under results/.staging/ and
+   * `research_log_append({ stagedResultsRef })` finalizes it into the log
+   * entry's sidecar. `null` when staging failed (see `stagingError`).
+   */
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  /** Why `staged` is null — staging is best-effort and never fails the read. */
+  stagingError?: string;
+  /**
+   * What a caller triages on without the full text (issue #2489): the id the
+   * staged element carries, the transcription's length, a bounded excerpt, and
+   * the `found` / `truncated` markers. Present iff `projectPath` was given.
+   */
+  digest?: {
+    id: string;
+    chars: number;
+    excerpt: string;
+    found?: "FOUND" | "NOT FOUND";
+    truncated?: true;
+  };
   metadata: {
     imageId?: string;
     ark?: string;
+    /** The project-relative ref that was read, for a `file` input. */
+    file?: string;
+    /** The content type sent to the OCR model (`image/jpeg`, `application/pdf`, …). */
+    contentType: string;
     /** The OpenRouter model slug actually used. */
     model: string;
-    /** Raw FamilySearch image size (sent to OCR as-is; no pre-processing). */
+    /** Raw input size in bytes (sent to OCR as-is; no pre-processing). */
     sizeBytes: number;
   };
+}
+
+/** The element `image_transcribe` stages (snake_case: persisted project state). */
+export interface StagedTranscription {
+  /** The imageId / ark / memory URL, or `capture:<basename>` for a `file`. */
+  id: string;
+  source: { imageId?: string; ark?: string; memoryArtifactUrl?: string; file?: string };
+  content_type: string;
+  size_bytes: number;
+  model: string;
+  transcription: string;
+  truncated?: true;
+  found?: "FOUND" | "NOT FOUND";
 }
 
 /** The subset of OpenRouter's chat-completions response we read. */

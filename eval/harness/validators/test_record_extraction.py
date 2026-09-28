@@ -1314,13 +1314,16 @@ def test_refinement_preserves_extraction_fields_and_avoids_duplication(
 
 # --- Tag-gated: pre-1752 Old Style dates route to convert-dates first ---
 
-def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
+def test_old_style_date_routes_to_convert_dates(
+    skills_invoked, builtin_tool_calls, test
+):
     """A pre-adoption date must be resolved by invoking `convert-dates`
     BEFORE the record-extractor is spawned — not narrated, and not
     converted inline by the router.
 
-    Graded here rather than by the LLM judge because `skills_invoked` is
-    ground truth: the PreToolUse hook fires on the real `Skill` call, so a
+    Graded here rather than by the LLM judge because the hook records are
+    ground truth: the PreToolUse hook fires on the real `Skill` call or, once
+    convert-dates is an agent, the real spawn (`handoffs`, issue #2825), so a
     response that only *mentions* the calendar problem ("this may be Old
     Style — shall I convert it?") cannot satisfy it, and a response that
     genuinely delegates cannot be marked down for it. This is the same
@@ -1339,14 +1342,17 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
     tests must NOT reach for convert-dates, and doing so on a modern date
     is over-application, not a pass.
     """
+    from harness.skill_runner import handoffs
+
     if "convert-dates-handoff" not in test.get("tags", []):
         pytest.skip("only the pre-1752 Old Style routing test")
-    assert "convert-dates" in skills_invoked, (
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    assert "convert-dates" in handed, (
         "the record's date falls before its jurisdiction adopted the "
-        "Gregorian calendar, so the router had to invoke "
-        "Skill('convert-dates') before delegating. Narrating the problem "
+        "Gregorian calendar, so the router had to hand off to "
+        "convert-dates before delegating. Narrating the problem "
         "in prose is not resolving it. "
-        f"skills_invoked={skills_invoked}"
+        f"handoffs={handed}"
     )
 
 

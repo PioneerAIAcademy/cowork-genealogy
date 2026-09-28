@@ -506,6 +506,39 @@ if (!DSN || !ENDPOINT) {
           expect(await keysUnder(`${projectId}/results/.staging/`)).toEqual([]);
         }));
 
+      it("rolls back instead of committing when the store's signal aborts while the body runs", () =>
+        withProject(async ({ projectId }) => {
+          const disconnected = new AbortController();
+          const store = new PgS3ProjectStore(backend, {
+            projectId,
+            anchorPath: ANCHOR,
+            signal: disconnected.signal,
+          });
+          await store.writeJson(ANCHOR, "research.json", { v: "before" });
+          await expect(
+            store.withTransaction(ANCHOR, async () => {
+              await store.writeJson(ANCHOR, "research.json", { v: "inside" });
+              await store.writeJson(ANCHOR, "results/.staging/x.json", { staged: true });
+              disconnected.abort();
+              return "returned";
+            }),
+          ).rejects.toThrow(/disconnected before this write committed/);
+          expect(JSON.parse(await store.readText(ANCHOR, "research.json"))).toEqual({ v: "before" });
+          expect(await store.exists(ANCHOR, "results/.staging/x.json")).toBe(false);
+          expect(await keysUnder(`${projectId}/results/.staging/`)).toEqual([]);
+
+          // A signal that never aborts commits as before.
+          const kept = new PgS3ProjectStore(backend, {
+            projectId,
+            anchorPath: ANCHOR,
+            signal: new AbortController().signal,
+          });
+          await kept.withTransaction(ANCHOR, async () => {
+            await kept.writeJson(ANCHOR, "research.json", { v: "kept" });
+          });
+          expect(JSON.parse(await kept.readText(ANCHOR, "research.json"))).toEqual({ v: "kept" });
+        }));
+
       it("commits writes made inside a transaction whose body returns", () =>
         withProject(async ({ store }) => {
           await store.withTransaction(ANCHOR, async () => {

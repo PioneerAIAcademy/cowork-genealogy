@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Portugal_Naming_Customs, the companion to wiki-read-spain-naming-customs.json. conflict-resolution's pre-work block names Portugal_Naming_Customs among the pages it may fetch, and its Iberian rule turns on surname ORDER — which is reversed between the two countries, so the Spain fixture cannot stand in for it (Spain: father's surname then mother's; Portugal: mother's surname precedes the father's, and the father's is the one carried in formal use). Without this file a Portuguese record returns fixture_not_found and the model falls back to untested training knowledge on the one point most likely to be got backwards. Content taken from the live page on 2026-09-24; the page carries no patronymic section, and none has been invented here. NOTE ON PROVENANCE: retrieved over the web rather than through wiki_read, because this session had no genealogy MCP tools; the wording is the page's own but the excerpt was not captured through the tool path the other naming fixtures used. No test references this fixture yet — it is here so the prose and the corpus agree.",
+  "args": {
+    "url": "~Portugal_Naming_Customs"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Portugal_Naming_Customs",
+    "content": "# Portugal Naming Customs\n\n## Surnames\n\n* Where children received both parents' surnames, **the mother's surname would typically precede the father's surname**. This is the reverse of the Spanish order.\n* From the mid-20th century onward, individuals tended to include their last (father's) surname in formal settings.\n\n## Women's surnames at marriage\n\n* Women tended to retain their maiden surname throughout their life.\n* In the late 19th century it became common for women to adopt their husband's surname, but this practice faded by the end of the century.\n\n## Emigration\n\n* Most of the time the surname spelling changed to accommodate the different phonetic spelling in the English language.\n* Different branches of the same family may adopt various surname spellings."
+  }
+}

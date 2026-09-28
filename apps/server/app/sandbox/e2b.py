@@ -8,11 +8,10 @@ straight to the sandbox. `sandbox_server` spawns `agent_runner` itself on the
 first browser connection, so no host process owns the agent or watches /project.
 
 **`expose_port` is load-bearing — do not delete it.** It is what turns a
-sandbox id into the `wss://` URL the browser dials, and it has two live callers:
-`app/sessions.py` (`POST /api/sessions/{id}/connect`) and `app/v1.py` (the
-device-bridge `/connect` reuse). Both call it on every connect and reconnect,
-not just at create. `LocalProvider` implements the same method for the local
-dev path.
+sandbox id into the `wss://` URL the browser dials, and it has one live caller:
+`app/sessions.py` (`POST /api/sessions/{id}/connect`). It calls it on every
+connect and reconnect, not just at create. `LocalProvider` implements the same
+method for the local dev path.
 
 Verified against the `e2b` SDK (2.x) — Phase 0 findings:
 - `AsyncSandbox.create(template, metadata, envs, allow_internet_access, timeout,
@@ -237,6 +236,13 @@ class E2BProvider(SandboxProvider):
             "MODEL": model,
             "AUTO_CONTINUE": "1" if s.auto_continue else "0",
             "AUTO_CONTINUE_MAX_STEPS": str(s.auto_continue_max_steps),
+            # 1d: the SDK Stop hook's cap, read by real_agent INSIDE the sandbox. It has
+            # to be passed explicitly -- commands.run does not inherit the image ENV, and
+            # without it an operator setting this on the control plane changes nothing
+            # while the sandbox quietly keeps its compiled-in default. `auto_continue` is
+            # honoured because that flag already meant "one turn per message": a new
+            # mechanism that ignored it would silently remove an existing kill switch.
+            "AUTONOMOUS_MAX_NUDGES": str(s.autonomous_max_nudges if s.auto_continue else 0),
         }
         if proxy_active():
             env["ANTHROPIC_BASE_URL"] = f"{s.public_url}/api/anthropic-proxy"
@@ -361,6 +367,27 @@ class E2BProvider(SandboxProvider):
         except Exception:
             pass
         return E2BSandbox(sb, sandbox_id=sandbox_id)
+
+    async def heartbeat(self, sandbox_id: str) -> bool:
+        """1d: restart the continuous-runtime clock on a sandbox that is still working.
+
+        The same call `resume()` makes on every /connect -- the difference is only that
+        this one happens WHILE a turn runs, which is the whole point: _RUNNING_TIMEOUT_S
+        clocks continuous runtime, not idleness, so a turn longer than the ceiling used to
+        be paused mid-flight however busy it was.
+
+        `_connect` auto-resumes a paused VM, which is deliberate here too: a sandbox that
+        already aged out comes back and gets a fresh window rather than staying down until
+        someone reconnects. Returns False rather than raising on a sandbox that is gone --
+        the loop beats many and must not stop at the first one that has been deleted."""
+        from e2b.exceptions import SandboxNotFoundException
+
+        try:
+            sb = await self._connect(sandbox_id)
+        except SandboxNotFoundException:
+            return False
+        await sb.set_timeout(_RUNNING_TIMEOUT_S)
+        return True
 
     async def suspend(self, sandbox_id: str) -> None:
         sb = await self._connect(sandbox_id)

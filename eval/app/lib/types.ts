@@ -1,9 +1,10 @@
 /**
  * Shared TypeScript types for the eval app.
  *
- * Mirrors the JSON Schemas under docs/specs/schemas/. The Zod schemas
- * in lib/schema/ (generated) are the runtime validators; this file is
- * the static-typing surface.
+ * Mirrors the JSON Schemas under docs/specs/schemas/. This file is the
+ * static-typing surface; nothing in it is checked at runtime. No app code
+ * imports the generated schemas in lib/schema/ — the only read-time
+ * validation is the hand-maintained Zod schema in lib/fs/annotations.ts.
  *
  * Run log schema v3: one envelope per harness invocation, wrapping a
  * list of per-test entries. See docs/plan/eval-runlog-versioning.md.

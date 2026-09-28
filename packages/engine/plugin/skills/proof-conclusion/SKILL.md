@@ -45,7 +45,7 @@ One invocation per question. For a question that already has a `ps_NNN`, invoke 
 
 ## 3. Relay
 
-Relay the agent's returned summary as-is. Do not re-generate the narrative, re-state the argument, or add a per-assertion walkthrough — the narrative is persisted in the `proof_summaries` entry.
+Print to the user exactly the text after the final `---` in the agent's return, verbatim, and nothing above it. Do not re-generate the narrative, re-state the argument, or add a per-assertion walkthrough — the narrative is persisted in the `proof_summaries` entry.
 
 Then recommend the next step: more open questions → question-selection; all resolved → "The project is complete."
 

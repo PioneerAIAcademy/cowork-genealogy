@@ -8,7 +8,9 @@ Block a test from executing when:
   OR fails schema validation per spec §9 (unless the test sets
   `intentionally_invalid: true`, for validator skills that must run
   against broken-on-purpose scenarios)
-- the skill directory doesn't exist
+- the skill directory doesn't exist — except on a direct-agent test, whose
+  `test.skill` names a plugin agent file instead (issue #1253); see the
+  fallback in `check_runnable`
 - the skill's rubric.md is missing or malformed
 - an `execution.stub_skills` entry names a skill that doesn't exist
 """
@@ -29,6 +31,7 @@ from harness.schema_validator import (
     validate_tree_gedcomx_json,
 )
 from harness.skill_stubs import parse_stub_skills
+from harness.workspace import DEFAULT_PLUGIN_AGENTS
 
 
 # eval/harness/harness/runnability.py -> eval/harness/validators/
@@ -113,6 +116,7 @@ def check_runnable(
     skills_dir: Path,
     tests_dir: Path,
     validators_dir: Path = DEFAULT_VALIDATORS_DIR,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
 ) -> RunnabilityResult:
     if spec.scenario_notes and spec.scenario_notes.strip():
         return RunnabilityResult(False, "test has non-empty scenario_notes — scenario doesn't match")
@@ -159,9 +163,30 @@ def check_runnable(
         except InvalidFixtureError as e:
             return RunnabilityResult(False, str(e))
 
+    # `test.skill` names a skill directory on a routed test and a plugin-agent
+    # file on a direct-agent test (the #2246 arm; issue #1253). A direct test
+    # has no routing skill by construction — `stage_skills=not spec.is_direct`
+    # never stages one — and an agent-keyed suite like `gps-mentor` has no skill
+    # directory at all, so requiring one here aborts it before it runs.
+    # `_prompt_for` already resolves `agents_dir / f"{spec.skill}.md"` and
+    # raises when it is absent; this gate checks the same artifact so gate-time
+    # and run-time agree on what `test.skill` has to name.
+    #
+    # Gated on `spec.is_direct` deliberately: on a ROUTED test a missing skill
+    # directory is still a typo worth catching, and falling through to an agent
+    # of the same name would run it by a route the test did not ask for.
     skill_path = Path(skills_dir) / spec.skill
     if not skill_path.is_dir():
-        return RunnabilityResult(False, f"skill not found: {skill_path}")
+        if not spec.is_direct:
+            return RunnabilityResult(False, f"skill not found: {skill_path}")
+        agent_path = Path(agents_dir) / f"{spec.skill}.md"
+        if not agent_path.is_file():
+            return RunnabilityResult(
+                False,
+                f"skill not found: {skill_path} — and this is a direct-agent "
+                f"test, so there is no agent file at {agent_path} to fall back "
+                f"on either",
+            )
 
     # Validate execution.stub_skills entries. A stub is matched by exact
     # name in the PreToolUse hook (`skill_name in _stub_skills`), so a typo
@@ -176,14 +201,19 @@ def check_runnable(
     # and run-time agree on which names are live: parse_stub_skills applies
     # the same normalization the hook matches against (both entry forms,
     # malformed entries dropped — the JSON Schema is the gate for shape).
+    #
+    # An entry may also name an agent with no skill directory: a callee
+    # converted from a skill to an agent, whose spawn the hook stubs instead
+    # (`stub_agents`, issue #2825).
     stubbed = parse_stub_skills(spec.execution)
+    agents_dir = Path(skills_dir).parent / "agents"
     for name in stubbed:
-        if not (Path(skills_dir) / name).is_dir():
+        if not (Path(skills_dir) / name).is_dir() and not (agents_dir / f"{name}.md").is_file():
             return RunnabilityResult(
                 False,
                 f"execution.stub_skills entry '{name}' is not an existing "
-                f"skill (no directory at {skills_dir}/{name}) — the stub "
-                f"would silently never fire",
+                f"skill or agent (no directory at {skills_dir}/{name}, no "
+                f"{agents_dir}/{name}.md) — the stub would silently never fire",
             )
 
     # A callee in BOTH run_skills and stub_skills is the one combination that

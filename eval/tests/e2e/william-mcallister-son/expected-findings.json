@@ -3,17 +3,36 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "William Mc Allister (McFerran) and Mary Jane Magee had a son, Thomas John McFerran, born 4 June 1879 at Downpatrick, County Down, Ireland.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that William Mc Allister (PID LZDC-MJN, b. about 1844, Scotland) is the father of Thomas John McFerran, born 4 June 1879 at Downpatrick (Quarterland), County Down. That birth is documented twice — the civil registration (ark:/61903/1:1:QPKB-8F6F) and the church register entry (ark:/61903/1:1:FRQS-TZ1), both naming father William McFerran — and the church entry is already attached in the FamilySearch tree to a different man, William McFerran (PID GQ96-96N, christened Killinchy, County Down, 1831; married Ballygowan 1862; died 7 April 1913), whose tree already lists this child (PID GQ96-J1C). Pass = the final tree adds no Thomas John McFerran person, and the research mentions the 1879 child only as an explicitly rejected match belonging to the County Down William McFerran.",
       "details": {
-        "subject_person": "William Mc Allister (LZDC-MJN)",
+        "subject_person": "William Mc Allister (PID LZDC-MJN)",
         "relation": "child",
         "target_person": {
-          "name": "Thomas John McFerran",
-          "birth": "4 June 1879, Downpatrick, County Down, Ireland"
+          "name": "Thomas John McFerran, Ferran, McFenan"
         }
       },
       "supporting_sources": [
-        "Ireland, Civil Registration, 1845-1913 — birth entry for Thomas John McFerran, 4 Jun 1879, parents William McFerran and Mary Jane Magee McFeran"
+        "Ireland, Births and Baptisms, 1620-1881 — Thomas John McFenan, born 4 Jun 1879, Quarterland, Down, father William McFenan, mother Mary Jane McFenan Magee (ark:/61903/1:1:FRQS-TZ1) — the disproving record: the same birth event as the hint, already attached to William McFerran (GQ96-96N, 1831-1913), a different man from LZDC-MJN",
+        "Ireland, Civil Registration, 1845-1913 — birth entry for Thomas John McFerran, 4 Jun 1879, Downpatrick, parents William McFerran and Mary Jane Magee McFeran (ark:/61903/1:1:QPKB-8F6F) — the hint record examined; FamilySearch's own Possible Tree Match on it points to GQ96-96N, not LZDC-MJN"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The agent should document, from records, that the 1879 Downpatrick birth of Thomas John McFerran belongs to the family of William McFerran of Killinchy, County Down (b. about 1831, d. 1913), a man distinct from William Mc Allister (b. about 1844, Scotland), and that no independent record ties William Mc Allister to a son born in County Down in 1879. The Thomas John McFerran already cited on William Mc Allister's profile (ark:/61903/1:1:FRQY-WQD) is a separate birth of 7 December 1864 at Kilmood, County Down, not a re-index of the 1879 event. An 'I could not confirm this' answer without identifying the conflicting records does not satisfy this finding.",
+      "details": {
+        "subject_person": "William Mc Allister (PID LZDC-MJN)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: 1879 Downpatrick hint rejected",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Ireland, Births and Baptisms, 1620-1881 — Thomas John McFerran, born 7 Dec 1864, Kilmood, County Down, father William McFerran (ark:/61903/1:1:FRQY-WQD) — a distinct 1864 birth, not the 1879 event",
+        "No record in Ireland, Civil Registration Indexes, 1845-1958, McFerran births in County Down 1875-1881, other than the hint itself, ties this birth to William Mc Allister"
       ],
       "required": true
     }

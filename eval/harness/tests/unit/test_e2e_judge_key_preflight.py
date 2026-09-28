@@ -10,8 +10,17 @@ exact waste the preflight exists to prevent.
 
 `verify_judge_key` itself is covered through the unit path, so these cover the
 *call site*: that it fires before anything is spent, that `--skip-judge`
-bypasses it, and that a missing key still does not abort — the e2e path has
-never blocked on absence, unlike the unit path.
+bypasses it, and that an absent, empty or whitespace-only key aborts.
+
+That last arm changed on 2026-09-23. It previously fell through, on the
+reasoning that `--skip-judge` already owned the absent-key case. It does not:
+that flag is an explicit opt-in, so it only protects an operator who already
+knows the key is gone, and the case that actually happens is not knowing —
+`eval/.env` is gitignored, so a fresh worktree has none until
+`make worktree-link`. Measured that day: $4.87 and 28.5 min spent on an
+ungraded `catharina-gosner-daughter` run. `--skip-judge` remains the way to
+ask for an ungraded run deliberately, and is still covered below, with and
+without a key present.
 """
 
 from __future__ import annotations
@@ -109,16 +118,74 @@ def test_skip_judge_bypasses_the_preflight(tmp_path, monkeypatch):
     assert calls["n"] == 1
 
 
-def test_missing_key_does_not_abort(tmp_path, monkeypatch):
-    """The e2e path has never blocked on an absent key — `--skip-judge` owns
-    that contract. Only a present-but-rejected key aborts."""
+def test_missing_key_aborts_before_spending(tmp_path, monkeypatch, capsys):
+    """An absent key aborts: the run would otherwise complete and discard its
+    own grade. The liveness call must not be spent either — there is no key to
+    check."""
+    root = _fixture_root(tmp_path)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _no_env_file(monkeypatch)
+    _forbid_key_check(monkeypatch)
+
+    def _must_not_run(*a, **k):
+        raise AssertionError("preflight must abort before the agent runs")
+
+    monkeypatch.setattr(run_e2e, "_run_one", _must_not_run)
+
+    rc = run_e2e.main(_argv(root))
+
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "no ANTHROPIC_API_KEY is set" in err
+    assert "make worktree-link" in err, "the worktree case is the one that bites"
+    assert "--skip-judge" in err, "the operator needs the way out in the message"
+
+
+def test_empty_key_aborts(tmp_path, monkeypatch, capsys):
+    """An empty string is falsy, so it took the absent arm even before the
+    change — pinned so a later truthiness refactor cannot let it through to the
+    API as a doomed liveness call."""
+    root = _fixture_root(tmp_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    _no_env_file(monkeypatch)
+    _forbid_key_check(monkeypatch)
+    monkeypatch.setattr(
+        run_e2e, "_run_one",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not run")),
+    )
+
+    assert run_e2e.main(_argv(root)) == 2
+    assert "no ANTHROPIC_API_KEY is set" in capsys.readouterr().err
+
+
+def test_whitespace_only_key_aborts(tmp_path, monkeypatch, capsys):
+    """The arm a truthiness check misses: "   " is truthy, so before the strip
+    it reached `verify_judge_key` and failed slowly against the live API
+    instead of failing here. `_forbid_key_check` is what pins that."""
+    root = _fixture_root(tmp_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "   ")
+    _no_env_file(monkeypatch)
+    _forbid_key_check(monkeypatch)
+    monkeypatch.setattr(
+        run_e2e, "_run_one",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not run")),
+    )
+
+    assert run_e2e.main(_argv(root)) == 2
+    assert "no ANTHROPIC_API_KEY is set" in capsys.readouterr().err
+
+
+def test_skip_judge_runs_with_no_key_at_all(tmp_path, monkeypatch):
+    """The other direction: the guard must not block the legitimate ungraded
+    run. `--skip-judge` with no key is exactly what an operator who wants one
+    types, and it has to still work."""
     root = _fixture_root(tmp_path)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     _no_env_file(monkeypatch)
     _forbid_key_check(monkeypatch)
     calls = _record_run(monkeypatch)
 
-    assert run_e2e.main(_argv(root)) == 0
+    assert run_e2e.main(_argv(root) + ["--skip-judge"]) == 0
     assert calls["n"] == 1
 
 

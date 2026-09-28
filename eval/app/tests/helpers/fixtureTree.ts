@@ -44,6 +44,18 @@ export interface FixtureSkill {
   rubricMd?: string;
 }
 
+/**
+ * A plugin agent, and optionally the agent-keyed suite that grades it
+ * (issue #1253). Deliberately creates NO skill directory — that absence is
+ * the whole condition under test.
+ */
+export interface FixtureAgent {
+  name: string;
+  agentMd: string;
+  /** Rubric at `eval/tests/unit/<name>/rubric.md`. */
+  rubricMd?: string;
+}
+
 export interface FixtureTreeSpec {
   tests?: FixtureUnitTest[];
   corruptTests?: Array<{ skill: string; filename: string; body: string }>;
@@ -52,6 +64,7 @@ export interface FixtureTreeSpec {
   scenarios?: FixtureScenario[];
   fixtures?: FixtureFixture[];
   skills?: FixtureSkill[];
+  agents?: FixtureAgent[];
   /** Optional eval/harness/judge/prompt.md content. */
   judgePrompt?: string;
 }
@@ -117,6 +130,15 @@ export async function makeFixtureTree(spec: FixtureTreeSpec): Promise<FixtureTre
       await writeText(path.join(repoRoot, 'eval', 'tests', 'unit', s.name, 'rubric.md'), s.rubricMd);
     }
     await fs.mkdir(dir, { recursive: true });
+  }
+  for (const a of spec.agents ?? []) {
+    await writeText(
+      path.join(repoRoot, 'packages', 'engine', 'plugin', 'agents', `${a.name}.md`),
+      a.agentMd,
+    );
+    if (a.rubricMd !== undefined) {
+      await writeText(path.join(repoRoot, 'eval', 'tests', 'unit', a.name, 'rubric.md'), a.rubricMd);
+    }
   }
   if (spec.judgePrompt !== undefined) {
     await writeText(path.join(repoRoot, 'eval', 'harness', 'judge', 'prompt.md'), spec.judgePrompt);

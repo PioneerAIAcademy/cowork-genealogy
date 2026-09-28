@@ -266,8 +266,8 @@ async function main(): Promise<void> {
   // ── item 12: MIME x media kind (lead ruling 2026-09-15) ───────────────────
   // The two axes were reported separately, so nobody could say how many PDFs are
   // already inside the Documents. That decides the SIZE of what lands in
-  // sources[] -- the floor (Document + Story - audio) plus the keyword-matched
-  // Photos, versus that plus however many PDFs sit outside it. The rule does not
+  // sources[] -- the floor (Document - audio) plus the keyword-matched
+  // Photos and Stories (Story left the floor 2026-09-27), versus that plus however many PDFs sit outside it. The rule does not
   // depend on this; the spec sentence does.
   console.log("\n  --- item 12, MIME x media kind ---");
   const kinds = ["Photo", "Document", "Story", "(none)"];
@@ -285,14 +285,14 @@ async function main(): Promise<void> {
   const kept = corpus.filter(({ m }) => {
     if (isAV(m)) return false;                                   // stage 1: drop
     if (String(m.mediaType) === "application/pdf") return true;   // stage 2: keep
-    if (kindOf(m) === "Document" || kindOf(m) === "Story") return true;
+    if (kindOf(m) === "Document") return true;
     return RECORD.test(textOf(m));
   });
-  const floor = corpus.filter(({ m }) => !isAV(m) && (kindOf(m) === "Document" || kindOf(m) === "Story"));
-  const pdfOutside = kept.filter(({ m }) => String(m.mediaType) === "application/pdf" && kindOf(m) !== "Document" && kindOf(m) !== "Story");
-  const kwOnly = kept.filter(({ m }) => String(m.mediaType) !== "application/pdf" && kindOf(m) !== "Document" && kindOf(m) !== "Story");
+  const floor = corpus.filter(({ m }) => !isAV(m) && kindOf(m) === "Document");
+  const pdfOutside = kept.filter(({ m }) => String(m.mediaType) === "application/pdf" && kindOf(m) !== "Document");
+  const kwOnly = kept.filter(({ m }) => String(m.mediaType) !== "application/pdf" && kindOf(m) !== "Document");
   console.log("\n  --- what the ruled filter keeps, on this corpus ---");
-  console.log(`    floor (Document/Story, audio dropped) .... ${floor.length}`);
+  console.log(`    floor (Document, audio dropped) .......... ${floor.length}`);
   console.log(`    + PDFs outside that floor ................ ${pdfOutside.length}`);
   console.log(`    + keyword-only (any kind) ................ ${kwOnly.length}`);
   console.log(`    = kept ................................... ${kept.length} of ${corpus.length} (${((kept.length / corpus.length) * 100).toFixed(0)}%)`);

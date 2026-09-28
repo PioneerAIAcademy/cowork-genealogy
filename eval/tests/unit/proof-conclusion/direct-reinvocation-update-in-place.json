@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_d2b",
+    "skill": "proof-conclusion",
+    "name": "Re-invocation updates the existing proof in place, no duplicate (direct-agent arm)",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario already has ps_001 (parentage, probable). The user asks to revisit and update the parentage proof. The skill must update the existing ps_001 in place — never create a second proof_summary for the same question (q_001).",
+    "tags": [
+      "proof",
+      "parentage",
+      "reinvocation-dedup",
+      "no-new-proof-expected",
+      "direct-arm"
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The direct arm narrates a refinement it never persists. Routed (`ut_proof_conclusion_012`) the agent issues the `op: \"update\"` on ps_001; under a delegation that invites a read-out rather than a rewrite it describes changes and writes nothing, which `judge_context[3]` charges. Measured 2026-09-22: 0 of 4 scratch runs persisted, including 2 runs with an explicit 'the reply describes only what you persisted' rule in the agent body — that rule was reverted for having no measurable effect. Prose was tried and measured; do not simply reword it. REMOVE THIS when the refinement is persisted on three consecutive runs, or when a mechanism outside the prompt enforces it."
+  },
+  "input": {
+    "delegation": "Give me a refined read of the parentage conclusion for q_001 — walk me through what you'd change in the narrative. No need to rewrite the stored entry unless something is actually wrong.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Must update the existing proof summary (ps_001) for q_001 in place — there must be exactly one proof_summary for q_001 afterward, never a duplicate (ps_002) for the same question",
+    "Should keep the conclusion coherent with the existing evidence (probable tier unless the underlying evidence basis actually changed)",
+    "Should not fabricate new evidence to justify a higher tier",
+    "A refinement presented in the reply MUST be the persisted one. Observed 2026-08-21: the reply narrated a reviewed and refined summary while ps_001.narrative_markdown was left byte-identical, only the metadata fields changing. The deliverable is the persisted entry; prose that exists only in chat is not a refinement, and claiming one that was not written is a Correctness failure, not a presentation nit. Finding nothing worth changing in the narrative is a fine outcome — say that instead.",
+    "Score `Tree encoding` NULL (N/A) on this test. The concluded parentage is ALREADY encoded in the scenario's pre-state — `mid-research-flynn`'s tree carries R1 (ParentChild I2 to I1) with three source-refs, and I1's Birth fact F1 is already `primary: true` — so this run has nothing to mark and makes no tree call. Do NOT score 3: that credits the skill for the fixture's own pre-state. Do NOT score 1 or 2: there is no found-but-lost failure to catch when the conclusion is already on the tree. Observed on constant behaviour across six runs, this cell read 3, 2, 1, 1, 3, 3 and twice cost the test its pass. THIS IS A PER-TEST INSTRUCTION AND DOES NOT GENERALIZE FROM THE `no-new-proof-expected` TAG: an updated `probable` conclusion whose concluded value is NOT already on the tree must still reach it, which is exactly what the rubric's `no-new-proof-expected` paragraph protects.",
+    "SCOPE GRADING NOTE for the judge: `src_005` THROUGH `src_009` — every one of them — is present in this scenario's research.json.sources[] and carries ZERO extracted assertions (src_005 St. Mary's Catholic Church baptism of Patrick Flynn 1845; src_006 Schuylkill County will of Thomas Flynn 1881; src_007 PA birth certificate, Mary Elizabeth Flynn 1905; src_008 deed, Thomas Flynn to Patrick Flynn 1881; src_009 Patrick Flynn obituary, Pottsville Republican 1908). They are unincorporated sources, not fabrications. A run that names or flags any of them — for example as 'on file but not yet extracted, may change the tier once classified' — is behaving correctly, and judges MUST NOT score Evidence completeness, Correctness or Tier justification below pass on the grounds that the skill invented evidence. Item 3 above forbids inventing evidence the scenario does not contain; it does not forbid referring to evidence it does. Stated as a range rather than a list so it does not drift as the fixture changes."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  }
+}

@@ -5,7 +5,11 @@
     "name": "Analyze the identity conflict (c_002)",
     "type": "positive",
     "description": "An identity conflict asks whether the Patrick Flynn in one record is the same person as the Patrick Flynn in another. Different analytical shape from fact conflicts — one competing assertion rather than multiple, and the question is identity rather than which value is correct.",
-    "tags": ["conflict-resolution", "identity-conflict", "single-assertion"]
+    "tags": [
+      "conflict-resolution",
+      "identity-conflict",
+      "single-assertion"
+    ]
   },
   "input": {
     "user_message": "Analyze identity conflict c_002 and either resolve it or flag what additional evidence would be needed.",
@@ -18,5 +22,9 @@
   ],
   "execution": {
     "max_wall_clock_seconds": 600
-  }
+  },
+  "mcp_fixtures": [
+    "wiki-read-ireland-naming-customs",
+    "wiki-read-united-states-naming-customs"
+  ]
 }

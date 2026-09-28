@@ -183,7 +183,9 @@ fork whose every live option is $0, reversible, precedent-free and clear of any
 prior ruling is never a question for him.
 
 **Grep the comments for `Ruling` and `Decision` first.** A question already
-ruled in a comment gets the ruling applied, not a block and a label.
+ruled in a comment gets the ruling applied, not a block and a label, unless a
+fact it rested on has since changed (`CLAUDE.md`, "A ruling binds only while its
+premises hold"). Then write the block, naming the change.
 
 **`needs-decision` routes to the lead and nobody else.** To reach a senior
 reviewer on a PR question, @-mention them on the issue. Do not use the label.

@@ -3,15 +3,16 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Marie Philippine Kaÿser died in July 1780 in Luxembourg.",
+      "description": "Marie Philippine Kaÿser, wife of Theodore Hochhertz, died in July 1780 (about 25 July; buried 26 July 1780), recorded in a Luxembourg church register. The death must be dated to July 1780 at month precision or finer — a year-only 1780, or a range reaching outside July 1780, does not satisfy this. The place is Luxembourg; no parish is established.",
       "details": {
         "subject_person": "Marie Philippine Kaÿser (GKZY-81X)",
         "fact_type": "Death",
-        "date": "July 1780",
-        "place": "Luxembourg, Luxembourg"
+        "date": "about 25 July 1780 (burial 26 July 1780)",
+        "place": "Luxembourg"
       },
       "supporting_sources": [
-        "Luxembourg, Church and Civil Registration, 1601-1923 — entry for Maria Philippina Kayser and Theodori Hochbertz, July 1780"
+        "Luxembourg, Church and Civil Registration, 1601-1923 — burial entry for Maria Philippina, wife of Theodore Hochhertz (indexed 'Hochbertz'), July 1780: ark:/61903/1:1:6PX5-KV4H",
+        "Register page image, entries for late July 1780: ark:/61903/3:1:3QS7-L9WM-9S4L"
       ],
       "required": true
     }

@@ -2,8 +2,8 @@
   "tool": "same_person",
   "description": "same_person — very low score (0.05): the record persona and the tree candidate share little beyond the surname; identifiers conflict. Companion to same-person-flynn-conflict/variant for the weak-match/no-link boundary.",
   "args": {
-    "primaryId1": "~",
-    "primaryId2": "~"
+    "assertionId": "~",
+    "treePersonId": "~"
   },
   "response": {
     "matched": false,

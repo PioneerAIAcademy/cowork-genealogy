@@ -26,8 +26,3 @@ os.environ["DATABASE_URL"] = ""              # tests always run on SQLite, never
 # in apps/server/.env, every TestClient test would die on that refusal locally while CI
 # (which has no .env) stayed green.
 os.environ["PUBLIC_URL"] = "http://127.0.0.1:1837"
-
-# Public /v1 bearer keys. `api-bot@…` is deliberately NOT on the allowlist (above)
-# — it proves an operator-granted key mints a User the allowlist would reject.
-# `other-bot@…` is a second client used to test cross-client session isolation.
-os.environ.setdefault("API_KEYS", "sk_test:api-bot@example.com,sk_other:other-bot@example.com")

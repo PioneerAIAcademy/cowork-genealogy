@@ -21,6 +21,15 @@ one, no browser); D18's autonomous arm and export built 2026-09-20 (PR #2695;
 D17 run live 2026-09-21 — criteria 3 and 4 pass, criterion 1 FAILS on background agents
 and criterion 2 was never reached, so the run has to be repeated — and the worker's resume
 rule plus the forced token refresh that run cost built the same day (PR #2719);
+D17 re-run twice and probed 2026-09-23 — criterion 1 passes for foreground and main-thread
+kills, criterion 2 failed on a triple write (fixed as a tool precondition, PR #2850) and
+then held, and **background delegations turn out to be lost at every turn end, kill or
+not** — so the worker now forces delegations to the foreground (lead ruling), built the
+same day; **D17 PASSES** on the final run of
+2026-09-23 — criteria 1, 2 and 3 green on one valid run (see D17);
+**D18 run 2026-09-24** — both fixtures pass the fresh judge; against a same-week harness
+run on the same commit, bagley costs **1.37×** ($16.29 against $11.85), and paerai ~6.5× its
+three-day-old baseline after two ceiling kills and a resume that held (see D18);
 FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
@@ -256,7 +265,8 @@ assertion catches this and the read-only case: **frames appended > 0 per turn.**
 that no path is writable — it is that **the agent has no route to project state**, which
 lives in Postgres behind validating tools. Be precise about what is and is not denied:
 `disallowed_tools=["Bash", "WebFetch", "WebSearch", "NotebookEdit"]` (the same list the
-unit harness already ships as `DISALLOWED_BACKSTOP`). **`Write` and `Edit` stay
+unit harness already ships as `DISALLOWED_BACKSTOP`), plus `DesignSync`, `Monitor` and
+`PushNotification`, which the CLI adds only for a non-Bedrock base URL (P3g). **`Write` and `Edit` stay
 granted**, because they are whole-tool names and denying them would take the agent's
 ability to write anything at all. So the model *can* write into the ephemeral tmpfs. That is not project state, it is discarded at turn
 end, and the only thing it could corrupt is the run's own transcript. Do not claim the
@@ -306,6 +316,19 @@ nowhere to persist that the web tier would see, so: the **web tier owns the gran
 Postgres, refreshes it, and hands the worker a fresh access token per turn. The tool
 server never refreshes — it uses the bearer it is given. That also disposes of
 "the grant expires mid-turn": a turn is minutes, the grant is 8 h idle.
+**Never refresh under a live attempt.** Measured 2026-09-23: a FamilySearch refresh
+**revokes the previous access token at once** (token A answered `users/current` 200, then
+401 three seconds after a forced refresh, while the new token answered 200; probed from
+inside the church network, but revocation is the server's act). An access token lives
+**8 h of idle time, 24 h at most** (lead, 2026-09-23) — the token response carries no
+`expires_in` at all (its keys are `access_token`, `token_type` and a rotated
+`refresh_token`), so the engine's `expires_in ?? 3600` stores an *assumed* hour, and a
+token measured seven minutes past that stored expiry still answered 200. So a turn, and
+every attempt of a redelivered one, can run on one token; what kills a live attempt is a
+refresh made anywhere else on the same grant while it runs — including the needless ones
+the assumed hour triggers. One patron with two turns in flight at once (two tabs, or the
+shim's second POST) shares one grant, so a refresh for either revokes the other's token.
+That is R7's problem, not the prototype's.
 
 **The token must travel with the request, not be looked up from process state.**
 `STORAGE_DIR` is a module-level constant from `os.homedir()`; `getValidToken()` takes
@@ -350,12 +373,6 @@ that matters here: a redelivered message carries the same `turn_id`, and that cl
 be granted immediately — that *is* the resume path, and refusing it stalls every
 kill-resume iteration at D14 and D17.
 
-**The shipped `/v1` lock has a real defect, and it is not ours to fix here.** It claims a
-bare timestamp with no turn identity inside `POST /sessions/{id}/messages`, with a 600 s
-stale TTL and **no heartbeat anywhere**, against an immovable 1800 s step ceiling and a
-measured p99 segment of 1488 s — so a healthy long turn has its lock reclaimed while it is
-still running. File it as a `nothing-checks` issue against `/v1`.
-
 **Everything else about locking is deferred to R8, deliberately.** An earlier draft
 specified a full protocol here — `claim_epoch` fencing, epoch-conditioned release,
 completion-record-before-claim, a 409 refusal arm and four named residuals. That protocol
@@ -396,7 +413,7 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18 | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). **Integ half: the host we measured (P3c–P3f) is our own 0.12.0 test bed, and tap-agentgateway already has the Messages route map and aliases, so the next message asks for three things: the tap-agentgateway integ URL and a consumer key (`claude-code` or our own) for one parity run; a plan and date for agentgateway ≥ v1.6.0, since `tool_reference` does not parse on the pinned v1.5.0 and tool search fails on its second turn (P3f). Also a heads-up, not an ask: if their planned model allowlist lands, the `us.anthropic.*` ids our worker sends (main thread and subagents, P3h) must be on it. Also ask them to set `frontendPolicies.http.maxBufferSize` (32 MiB was measured to work): at the 2 MiB default a session dies with 413 at its third page scan (P3l). Notes for them: `tool-search-tool-2025-10-19`, in the default Bedrock beta allowlist, is a 400 on Converse through v1.5.0 (measured, P3l re-run); forced `tool_choice` does not reach the model (P3l); and the 1-hour cache TTL is dropped on every agentgateway release (upstream #3670, P3j).** | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18; the gateway message is drafted, not sent | — |
 | InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
 | ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
 | Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
@@ -779,6 +796,323 @@ thinking-token-count); a second model ID — every session opens with one
 `structured-outputs-2025-12-15` — and a `HEAD /api/hello` with no auth header. The proxy shows what the CLI sends, not what agentgateway keeps: that
 half is one curl against integ.
 
+**P3c — measured 2026-09-25 (curl from a laptop on VPN against integ,
+`http://agent-gateway.full-text-search-int.um.fslocal.org/bedrock`, seven one-token
+calls): the deployed route is not Messages-compatible, so the CLI cannot run through it
+yet.** Claude models are routed: `us.anthropic.claude-sonnet-4-6` and
+`us.anthropic.claude-haiku-4-5-20251001-v1:0` both return 200; the bare
+`claude-haiku-4-5-20251001` the CLI sends for the session title is a Bedrock
+`ValidationException` ("The provided model identifier is invalid."), because the model
+field is passed to Bedrock verbatim with no alias map. But every path is read and answered
+as **OpenAI chat completions**. `POST /v1/messages`, `/v1/chat/completions` and a made-up
+`/v1/zzz` return the same `"object":"chat.completion"` body with `choices[]` and
+`prompt_tokens`/`completion_tokens`. A streamed `/v1/messages` returns
+`chat.completion.chunk` events with `Content-Type: application/vnd.amazon.eventstream`.
+An Anthropic-shaped body (a `system` block array, `content` blocks) is misparsed: Bedrock
+answers "A conversation must start with a user message". Request-parse failures come back
+as `503 text/plain` ("processing failed: failed to parse request: …"), not as a
+Messages-shaped 4xx. The `HEAD /api/hello` the CLI sends with no auth header gets 503 too.
+Errors that reach Bedrock *are* Messages-shaped (`{"error":{"type":"invalid_request_error",…}}`),
+and `/v1/messages/count_tokens` also reaches Bedrock rather than a passthrough. The
+agentgateway source read on 2026-09-11 does support Messages, so this is the deployed route's
+config and not a capability gap: the route needs its `/v1/messages` (and `count_tokens`) path
+mapped to the Messages format, which is the "three-line `ai.routes` addition" R1 anticipated.
+Until APT deploys that, none of the rest of the list can be measured: the CLI's request shape,
+tool search, the seven betas, the haiku call, caching and the fourth cache point. The P3b
+proxy still needs its HTTP/port/prefix option to run that pass. Bedrock request ids:
+sonnet 767e50a9-d1cc-4a58-9cb1-9917cb541dfa, haiku bare 13b78316-c02f-4c19-885f-2c985ad1e7d2,
+streamed 50e0e943-de3a-45ad-8e80-49952bb28952, block body a6298e77-366a-4823-8131-1d6b0e17a69a.
+
+**P3d — measured 2026-09-25, same day: the CLI runs end to end through the integ
+gateway, on two env vars.** The integ host above is not APT's gateway. It is
+`fs-eng/search-fulltext-agentgateway`, which we administer, running agentgateway
+**0.12.0** as a temporary test bed. APT's permanent gateway is `fs-eng/tap-agentgateway`
+(its Dockerfile pins v1.5.0, not the v1.4.1 this plan assumed; the
+source read here was v1.4.1's, and P3f re-measured on v1.5.0), and its `/bedrock` route already maps `/v1/messages` → `messages` and
+`/v1/messages/count_tokens` → `anthropicTokenCount` (deliberately no `"*": passthrough`),
+aliases the bare Claude ids to `us.*` profiles, and gates callers by API-key consumer
+(`claude-code`, `tap`, `foundry-runner`). So the route map is already in their `master`;
+what we need from them is the URL and a key. On the test bed,
+search-fulltext-agentgateway #5 added the same route map and the haiku alias, and #6
+added `overrides: {metadata: null}`. Then Claude Code 2.1.282 with `ANTHROPIC_BASE_URL`
+at `/bedrock`, `ANTHROPIC_MODEL=us.anthropic.claude-sonnet-4-6`,
+`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` and `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1`
+completed a `-p` run with one Bash tool call (2 streamed turns, 37,272 tokens written to
+cache then 37,146 read, $0.15). Five 0.12.0 defects stood in the way, each found by
+recording the CLI's request with a local stub and replaying it. v1.4.1 source has a fix
+for each, so none is expected on the permanent gateway:
+
+| 0.12.0 defect | Symptom | v1.4.1 | Test-bed handling |
+|---|---|---|---|
+| No `ai.routes` → everything is Completions | `chat.completion` bodies | route map in tap config | #5 |
+| Anthropic `metadata` copied into Converse `requestMetadata` | bodiless 400; Bedrock rejects `user_id`'s JSON against `[a-zA-Z0-9\s:_@$#=/+,-.]{0,256}` | copy removed | #6 |
+| `thinking.type: adaptive` unknown | 503 `unknown variant adaptive`, 11 retries | `Adaptive` variant | `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` |
+| Every `anthropic-beta` forwarded | 400 `invalid beta flag` for `prompt-caching-scope-2026-01-05` and `advisor-tool-2026-03-01` (the other six pass) | allowlist, `AGENTGATEWAY_BEDROCK_ANTHROPIC_BETA_HEADERS` | `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` |
+| `count_tokens` prompt capture `unimplemented!()` (the Langfuse `llm.prompt` field) | worker panic, empty reply | guarded by `supports_prompt_guard()` | none; tap measured count_tokens 502 on `us.*` ids anyway and saw no CLI call to it |
+
+The stream's `Content-Type: application/vnd.amazon.eventstream` (v1.4.1 normalizes it to
+`text/event-stream`) did not stop the CLI. Still unmeasured through any gateway: the
+haiku session-title call (a `-p` run makes none), tool search's `advanced-tool-use` beta
+and `tool_reference` blocks, a multi-turn session, and what the two disabling env vars
+cost. v1.4.1's default beta allowlist also omits `claude-code-20250219`,
+`thinking-token-count-2026-05-13` and `afk-mode-2026-01-31`, all of which Bedrock
+accepted here.
+
+**P3e — measured 2026-09-25 on the same test bed: tool search does not survive any
+agentgateway before v1.6, and the haiku title call works.** A logging forwarder
+between the CLI and the gateway recorded every request and could filter
+`anthropic-beta` values, which let one run emulate v1.4.1's default allowlist
+(`DEFAULT_ALLOWED_BETA_HEADERS` in `crates/llm/src/conversion/bedrock.rs`). The query
+was probe_bedrock_parity's `convert_calendar` one, with `ENABLE_TOOL_SEARCH=true` and
+the genealogy MCP server.
+- *Tool search, turn 1* (12 tools, MCP tools named only, `ToolSearch` present) passes
+  only with no tool-search beta at all. Bedrock answers `advanced-tool-use-2025-11-20`,
+  which the CLI sends, with "invalid beta flag". It answers
+  `tool-search-tool-2025-10-19` with "not currently supported on the Converse and
+  ConverseStream APIs". v1.4.1's allowlist admits that second flag, so a caller that
+  sends it through v1.4.1 gets a 400.
+- *Tool search, turn 2* carries the `tool_reference` block in the ToolSearch result and
+  fails 503: "did not match any variant of untagged enum ToolResultContent". The CLI
+  retries 11 times and the run ends in error. v1.4.1's `ToolResultContentPart` has no
+  `tool_reference` variant either. Upstream added it in #3349 (2026-09-08). The first
+  tag that contains it is v1.6.0-alpha.1; v1.5.0 does not. Its golden test
+  (`tool_reference.bedrock.snap`) turns the block into text and sends the requested
+  tool's full schema in `toolConfig`.
+- *The P3d workaround turns tool search off.* With
+  `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` the CLI sends all 77 tools with no
+  deferral and no `ToolSearch` (correct answer, $0.29). Adding the beta back through
+  `ANTHROPIC_BETAS` does not restore deferral, because the client gate follows the
+  env var.
+- *Haiku title call.* The run was interactive, in a pty, since `-p` makes no title
+  call. With `ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-haiku-4-5-20251001` the CLI sent the
+  bare id, and the gateway served it as `us.anthropic.claude-haiku-4-5-20251001-v1:0`
+  (200, 0.9 s, `structured-outputs-2025-12-15` accepted). Without that var,
+  `ANTHROPIC_MODEL` also moves the title call to Sonnet, so the hosted env should set
+  both. 0.12.0 drops `output_config` entirely: the JSON schema is not enforced (the
+  title came back inside a markdown code fence), and neither is `effort`. v1.4.1 maps
+  both (`messages_output_format_to_bedrock_output_config`).
+
+So production tool search through the gateway needs tap-agentgateway on ≥ v1.6. The
+alternatives are running without tool search (every tool schema in context on every
+call) or a patched build.
+
+**P3f — measured 2026-09-25 on real Bedrock, with local gateways on the fts-int SSO
+credentials: TAP's v1.5.0 runs the CLI unmodified except for tool search, v1.6 runs it
+unmodified, and the test bed's non-streaming is one tracing field.** tap-agentgateway's
+Dockerfile pins **v1.5.0**. The local config was TAP's `/bedrock` route verbatim (route
+map, `modelAliases`), without its API-key and guardrail blocks. The CLI ran with the
+genealogy MCP server and plugin and no 0.12.0 workaround env vars (default adaptive
+thinking, `metadata`, all eight betas).
+
+| Gateway | `ENABLE_TOOL_SEARCH` | Result | Cache write / read |
+|---|---|---|---|
+| v1.5.0 | true | fails turn 2: `400 … untagged enum ToolResultContent`, not retried | 25,025 / 0 |
+| v1.5.0 | false | correct (convert-dates skill, 4 calls, $0.34) | 76,351 / 148,888 |
+| v1.6.0-alpha.2 | true | correct (3 calls, $0.17) | 40,215 / 37,228 |
+
+So the only production blocker left in the gateway's API surface is `tool_reference`. On
+v1.5.0 the fallback is tool search off, which about triples the first call's context
+(≈ 25k → ≈ 76k tokens cached per session start).
+
+*Streaming.* On int, P3d/P3e streams arrived all at once: a 9,122-token answer sent
+nothing for 163 s and then delivered all 3,962 events in 0.4 s, and chat completions
+behaved the same. Measured as time to first body byte on a 300-line count (≈ 4.2 s
+generation), locally:
+- 0.12.0 with the test bed's config: 4.3 s, the whole body at the end.
+- 0.12.0 with TAP's route and no tracing: 1.1 s.
+- 0.12.0 without `debug_vars: variables()`: 1.2 s.
+- 0.12.0 without `gen_ai.completion`: 5.2 s, still buffered.
+- v1.5.0 and v1.6, with TAP's tracing block including prompt and completion capture:
+  1.1–1.2 s, `text/event-stream`.
+
+So `debug_vars: variables()` in the test bed's tracing fields forces 0.12.0 to buffer
+the whole response. It is not int's network, and TAP's config does not have the field.
+
+**P3g — measured 2026-09-25: a gateway adds about 0.35 s of time to first byte per call,
+and a gateway session sends four tools a Bedrock-mode session does not.**
+- *Latency.* Five measured rounds after a warm-up, interleaved. Each round was a bare
+  `claude -p "Reply with exactly: ok"` with `ENABLE_TOOL_SEARCH=false` in every arm, all
+  prompt-cache hits. Median first byte, from the CLI's `[API:timing] first byte after`:
+
+  | Arm | Median | Added |
+  |---|---|---|
+  | Bedrock mode (`CLAUDE_CODE_USE_BEDROCK=1`) from the laptop | 1,194 ms | — |
+  | Local v1.5.0 | 1,523 ms | +329 ms |
+  | Local v1.6.0-alpha.2 | 1,543 ms | +349 ms |
+  | int 0.12.0 over VPN, ALB, ECS | 1,744 ms | +550 ms |
+
+  The local figure includes colima's NAT, so it is an upper bound on the gateway's own
+  cost. A research turn of 20–40 model calls pays it 20–40 times, about 7–14 s at
+  +0.35 s. The deployed TAP path is not measured.
+- *What the CLI sends through a gateway.* Full request bodies were recorded with a
+  local stub for both providers.
+  - With `ENABLE_TOOL_SEARCH` unset, Bedrock mode turns tool search on by default (12
+    tools, built-ins deferred). A gateway base URL turns it off, which is the P3b gate,
+    so 17 built-ins go in full (≈ 13k tokens).
+  - With the variable set to `false` in both modes, the gateway request still carries
+    `DesignSync` (9.3k chars), `Monitor` (7.7k), `PushNotification` (1.8k) and
+    `WebSearch` (1.9k), which Bedrock mode omits: about 5.5k tokens per call. The
+    system prompt is the same size (28.2k chars) in both.
+  - The prototype's `DISALLOWED_TOOLS` (`apps/server/dev/p1/options.py`) already denies
+    `WebSearch` but not the other three. On the v1.5.0 fallback (tool search off) they
+    ride on every call. With tool search on they would be deferred.
+
+**P3h — measured 2026-09-25: through TAP's aliases, plugin subagents cannot start, and
+the turn still reports success.** The run used the prototype's own option set
+(`dev.p1.options.build_prototype_options(store=None)`: plugin, staged agents, genealogy
+MCP, `ENABLE_TOOL_SEARCH=true`, `DISALLOWED_TOOLS`) with `dev.p1.driver`'s
+`FIXTURE_MESSAGE` (record-extraction of the inline 1850 Flynn household). The project
+was `empty-project-just-created`, the main model `us.anthropic.claude-sonnet-4-6`, and
+the gateway local v1.6.0-alpha.2 with TAP's `/bedrock` route. Seven plugin agents
+declare `model: claude-sonnet-4-6` and `gps-mentor` declares `claude-sonnet-5`. TAP
+aliases `claude-sonnet-5` but not `claude-sonnet-4-6`, and the CLI sends a subagent's
+frontmatter id verbatim.
+
+| Aliases | record-extractor | What did the extraction | Result | Cost, time |
+|---|---|---|---|---|
+| TAP's as shipped | 3 × `400 The provided model identifier is invalid` | a `general-purpose` stand-in (hook `agent_type`), with validator refusals on sources and `record_persona_id` along the way | reported "fully extracted … 22 assertions" | $1.82, 612 s |
+| + `claude-sonnet-4-6: us.anthropic.claude-sonnet-4-6` | ran, bound (hook `agent_type: record-extractor`), one `extraction_append` accepted | record-extractor | 19 assertions, 1 source, 1 log entry | $0.71, 197 s |
+
+The first row is issue #939's failure: a stand-in that binds none of the agent's
+`tools:`. It arrives by a different road, the model id rather than the agent's name,
+and nothing in the final answer shows it. Both rows had one refusal of the main
+thread's `research_log_append` note (the pre-1880 census relationship rule), which is
+unrelated to the gateway. So every model id a plugin agent declares must reach Bedrock as a
+Bedrock id. TAP passes unaliased names through unchanged (its README, as of
+tap-agentgateway #38), so the fix is ours: the hosted worker builds each
+`AgentDefinition` from the frontmatter (`proto/worker/plugin_agents.py`) and can map
+`claude-sonnet-4-6` to `us.anthropic.claude-sonnet-4-6` when the provider is a gateway,
+as `options.py` already does for the main model. The plugin frontmatter stays as it is,
+because Cowork and both harnesses read the same files without a gateway. A gateway
+alias would also work but needs no one's time. If TAP adds its planned model allowlist
+(`TODO-TAP(model-allowlist)`), the Bedrock ids we send must be on it. Built as PR #2920: `MODEL_PROVIDER=gateway` in
+`proto/worker/options.py`, with `GATEWAY_AGENT_MODELS` and tool search off unless
+`GATEWAY_TOOL_SEARCH=true`. Its live check ran the worker's own `provider_env` and
+`gateway_agent_models` through local v1.5.0 on TAP's route as shipped, with no
+`claude-sonnet-4-6` alias. All 9 requests carried `us.anthropic.*` ids and returned 200,
+`record-extractor` bound, and the output was the same 1 source and 19 assertions
+($0.90, 244 s).
+
+**P3i — measured 2026-09-25: the v1.5.0 fallback costs about a fifth more on a real
+turn.** Same fixture and option set as P3h, with TAP's route plus the
+`claude-sonnet-4-6` alias, on local v1.5.0 with `ENABLE_TOOL_SEARCH=false`:
+
+| Gateway, tool search | Main-thread tools per call | Main cache read / write | Cost | Time |
+|---|---|---|---|---|
+| v1.6.0-alpha.2, on | deferred | 184,031 / 77,427 | $0.71 | 197 s |
+| v1.5.0, off | 75 | 404,190 / 83,813 | $0.84 | 220 s |
+
+Both runs bound `record-extractor` and ended with 1 source, 19 assertions and 1 log
+entry. The subagent's own calls are about the same (≈ $0.32–0.37), since it declares
+only eight tools. The difference is the main thread carrying every tool schema. One
+run per arm, so the figures are indicative. A longer turn has more main-thread calls,
+so it pays more. The four gateway-only built-ins of P3g are not in these figures:
+`DISALLOWED_TOOLS` still lacked three of them when this ran. PR #2919 adds them, and
+search-fulltext-agentgateway #7 removes `debug_vars` so the test bed streams.
+
+**P3j — measured 2026-09-25 on local v1.5.0 with TAP's `/bedrock` route as shipped: the
+1M window and images work, resume works, and the 1-hour cache TTL does not survive.**
+- *1M window.* Through a gateway the CLI strips `[1m]` from
+  `us.anthropic.claude-sonnet-4-6[1m]` and sends `context-1m-2025-08-07`, which is on
+  v1.5.0's allowlist. It reports `contextWindow` 1,000,000 with the suffix and 200,000
+  without, and both calls returned 200. Bedrock accepted a 269,029-token prompt with no
+  beta at all and answered correctly, so the 200k limit is the CLI's own sizing, which
+  sets when it compacts. PR #2920 now sends the suffix, as `BEDROCK_MODEL` does.
+- *Images in a tool result.* An `image_read`-shaped `tool_result` carried a PNG scan
+  (the 1888 Brooklyn directory page from an e2e fixture) and a text part. It returned
+  200 plain and streamed (`text/event-stream`), 2,085 input tokens. The model read the
+  page correctly (page 466, the MUL… surnames, no Munson entry), checked against the
+  image.
+- *Resume.* Two turns with `--resume`, default adaptive thinking and the genealogy MCP.
+  Turn 2's requests resent turn 1's thinking blocks with their signatures (2 blocks,
+  both signed) and returned 200, with correct answers. That is `--resume` from the
+  CLI's on-disk transcript, not from the worker's Postgres store.
+- *1-hour TTL.* The CLI marks every cache point `ttl: "1h"` and sends
+  `extended-cache-ttl-2025-04-11` under `ENABLE_PROMPT_CACHING_1H=1`. That flag is not
+  on the allowlist, and v1.5.0's `CachePointBlock` has only a `type`, so each point
+  becomes Bedrock's 5-minute default. Measured: the write at 13:45:40 and the read 1 s
+  later hit; the call at 13:52:23 (6m43s) rewrote all 7,214 tokens and read 0. v1.6.0-
+  alpha.2 and `main` have the same struct, and upstream agentgateway #3670 ("cache_control
+  ttl is ignored, always falls back to 5m") is open. So a patron's pause over five
+  minutes costs a full cache write on any agentgateway today. That is R2 through the
+  gateway, whatever TAP's version.
+
+**P3k — measured 2026-09-25: the real worker container runs on the gateway provider.**
+`make proto-up` from PR #2920's branch with `MODEL_PROVIDER=gateway` against local
+v1.5.0 on TAP's route as shipped, then `proto/turn.py`. Two turns ran through web tier,
+queue, shim and worker, the second resuming the first from `PgSessionStore` in a fresh
+worker process, and all 14 checks passed:
+- **Gateway:** 5 model calls, all 200, on `us.anthropic.*` ids (3 Sonnet, 2 Haiku
+  title calls).
+- **Turn 1:** $0.34, 82k tokens written to cache.
+- **Turn 2:** $0.10, 60k tokens read from cache.
+
+This covers P3j's open point: resume from the store, not only from the CLI's disk
+transcript. The CLI's `HEAD /bedrock/api/hello` check returns 400 on v1.5.0 (an empty
+body parsed as an LLM request) and is harmless.
+
+**P3l — measured 2026-09-25 on local v1.5.0 with TAP's `/bedrock` route and tracing
+block: a session dies at its third page scan, compaction works, and the trace export
+carries every text message.**
+- *2 MiB request limit.* agentgateway buffers each request body up to
+  `max_buffer_size`, which defaults to 2,097,152 bytes, and answers anything larger
+  with `413 text/plain` ("failed to process LLM request: request was too large"),
+  not an Anthropic error. tap-agentgateway does not set it. A session keeps every
+  `image_read` result's base64 in its history, and the 1888 directory PNG is 743 KB
+  (≈ 990 KB encoded). A conversation holding one or two scans passed (991,527 and
+  1,982,678 bytes). The third failed with 413 at 2,973,829 bytes, and so would every
+  later call in that session. Adding `frontendPolicies.http.maxBufferSize: 33554432`
+  let 3 and 6 scans through (5,947,282 bytes, 200). That one config line is an APT
+  ask. A long text-only session reaches the limit too: the 269k-token prompt of P3j
+  was 1.18 MB. v1.6.0-alpha.2, whose `max_buffer_size` default is the same 2 MiB, took
+  12 scans (11.89 MB, all 200) on its default config, so the ≥ v1.6 upgrade clears this
+  as well. On v1.5.0 the setting is required.
+- *Compaction.* `/compact` on a resumed session: the summarisation call ("Respond with
+  TEXT ONLY…") returned 200, and the next resumed turn started from the 3-message
+  summary and recalled the converted date correctly. Autocompact makes the same call.
+  It was not forced here.
+- *Stop reasons and errors.* `max_tokens` and `stop_sequence` map to the right
+  `stop_reason`, plain and streamed. `stop_sequence` itself comes back `null` rather
+  than the matched string, which the CLI does not read. An unknown model is a
+  Messages-shaped 400 `invalid_request_error` on both paths.
+- *Forced `tool_choice` is lost.* `{"type":"tool"}` and `{"type":"any"}` both got a
+  text reply on v1.5.0 and v1.6.0-alpha.2. The same `toolChoice` sent straight to
+  Converse returned `stop_reason: tool_use`. The source maps it, so the loss is
+  somewhere after that. None of 115 CLI/SDK requests recorded today sends
+  `tool_choice`, and nothing in `apps/server` or the engine does, so it is theirs to
+  know about, not ours to fix.
+- *What the trace export carries (R11).* This was checked against a local Jaeger on
+  OTLP/HTTP, not Langfuse, with a record-extraction turn (the inline 1850 Flynn
+  household) and one image call.
+  - Each LLM span's `gen_ai.prompt` holds the system prompt (Claude Code's plus the
+    worker note), the loaded skill bodies, and every **text** message, delegation
+    prompts included. `gen_ai.completion` holds the reply.
+  - `tool_use` and `tool_result` blocks are exported as empty strings (17 of 48
+    messages). Tool-result JSON and image bytes do not leave.
+  - Patron data leaves in text all the same. The household's names, places and
+    occupations appear 31 times, from the user's message and the model's own
+    narration of what it extracted. A FamilySearch record returned by a tool would
+    not be exported raw, but the model's summary of it would.
+  - No device, session or account id and no bearer token appeared. The
+    `x-anthropic-billing-header` line of the system prompt did.
+  - Volume: the turn's 11 LLM spans carried 696,705 characters of prompt, because
+    every call re-exports the whole system prompt.
+
+**Re-running P3c–P3l.** `apps/server/dev/p1/probe_gateway_parity.py --base <route root>`
+repeats the direct-request checks: Messages shape, streaming, model ids, each beta,
+`tool_reference`, an image, the body limit, stop reasons and `tool_choice`. The 269k-token
+prompt (`--context-1m`) and the 1-hour TTL (`--cache-ttl`) are opt-in. It exits 1 on
+any FAIL and writes `--out` evidence. Its first run, 2026-09-25, against local copies of
+TAP's route:
+- v1.5.0: FAIL on `tool_reference`, `body_limit` (413 at 3 scans), `stop_reasons`
+  (`stop_sequence` null) and `tool_choice`.
+- v1.6.0-alpha.2: FAIL on `stop_reasons` and `tool_choice` only.
+- Both: the bare `claude-sonnet-4-6` is 400, and `tool-search-tool-2025-10-19` is 400
+  on Converse. The second was measured this time, not only read.
+
+For what the CLI itself sends, `passthrough_proxy.py --upstream http://host:port` now
+fronts a gateway as well as `api.anthropic.com`.
+
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
 pinned CLI and confirmed from its debug log, never measured against Bedrock; the other
@@ -800,7 +1134,9 @@ near zero without it. 96% of cache-creation tokens in the corpus are 1 h writes,
 4.6× cost multiplier rests on it — but see the corpus cache-window measurement under
 R2: on the autonomous corpus a 5-minute TTL loses 0.4–0.5% of cache reads, 1.5–1.7% of
 run cost, and the corpus's own 1 h writes came from the operator's subscription, which
-production on an API key never gets without the flag.
+production on an API key never gets without the flag. (Corrected 2026-09-24: priced on the main thread alone, as
+`usage.usage` requires, the corpus figure is 2.2–2.3%, and on the arm, whose delegations
+are forced to the foreground, 5.8% and 20.7% — see R2 and D18.)
 
 The last two are real measurements. The CLI does not strip features on Bedrock; it
 moves interleaved thinking, the 1M-context beta and **tool search** (on in production
@@ -1130,7 +1466,7 @@ without whichever Bedrock refuses.
   carrying `text` runs the turn. `session_store.py` is the `SessionStore` on
   `session_entries`, constructor-scoped on the project id with the SDK's `project_key`
   ignored; `options.py` is the option set (cwd `/project`, `setting_sources=[]`, the
-  plugin from disk, `agents=` from `plugin_agents.py`, `disallowed_tools` the four,
+  plugin from disk, `agents=` from `plugin_agents.py`, `disallowed_tools` the seven,
   `hosted-stdio.js` forked per turn as `env -u ANTHROPIC_API_KEY node …` with the store
   variables and the patron's `FS_ACCESS_TOKEN` in the server entry's env — the entry
   written to a 0600 `mcp.json` under the per-turn config dir and passed as a **path**,
@@ -1359,7 +1695,14 @@ without whichever Bedrock refuses.
   rule was not built then. **The D17 run of 2026-09-21 confirmed it on background agents,
   which makes foreground-versus-background the settled difference — a foreground
   delegation is re-run, background agents are lost to a zero-turn synthetic result — and
-  the rule is built (see D17).** But this kill differs from that run's: the kill mechanism was the
+  the rule is built (see D17).** What "the rule" means there is D17's RE-QUERY — one
+  continue prompt on a zero-turn redelivery — and that is all that was built. The guard
+  PR #2870's item 0a built is a different thing and landed separately: a
+  redelivered attempt that did no work is a FAILURE rather than a completion, bounded by
+  a cap on consecutive zero-progress attempts (`turns.zero_progress_attempts`, N = 2) that
+  answers 200 with `outcome = 'no_progress'` on exhaustion, because this queue has no
+  redrive policy and a terminal failure surfaced as an error re-runs the model forever.
+  But this kill differs from that run's: the kill mechanism was the
   shim's own (`docker kill` + `docker start`, what its `kill_worker` does at the
   `read_timeout`), but this turn ran with the Stop hook off (`proto-kill` leaves
   `AUTONOMOUS_MAX_NUDGES` at compose's 0), one foreground delegation
@@ -1370,9 +1713,14 @@ without whichever Bedrock refuses.
   still specific to the background case — and the D17 run of 2026-09-21 then observed it
   there for the second time, with the main thread's own narration naming the two agents as
   running in the background, which is what settled it and built the rule. A scripted probe
-  of the same shape still needs a switch this arm does not have: `--kill-on` fires on the
-  first `Agent` row, by name only (`tool_calls` carries no input; `session_entries` does),
-  and on the autonomous message the first `Agent` is whichever sub-skill delegates first.
+  of the same shape ~~still needs a switch this arm does not have~~ **now has one**:
+  `--kill-on` fired on the first `Agent` row by name only (`tool_calls` carries no input;
+  `session_entries` does), and on the autonomous message the first `Agent` is whichever
+  sub-skill delegates first. `--kill-on-input run_in_background=true` reads the `tool_use`
+  block out of `session_entries.entry` and selects on the input, which is the distinction
+  this paragraph identifies as the settled one. `make proto-probe-resume` wires it to the
+  other two pieces the probe needs — a message that provokes two concurrent extractions,
+  and a non-zero `AUTONOMOUS_MAX_NUDGES` — and is billed, roughly an hour a try.
 - **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
   Probed live with the five bodies then present: all register under **bare** names with
@@ -1499,7 +1847,10 @@ without whichever Bedrock refuses.
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
   **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
-  1. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
+  1. **Never source `proto/env.sh` or run `make proto-token` while a turn is in flight**
+     (2026-09-23): a FamilySearch refresh revokes the previous access token, so the
+     in-flight attempt's calls answer 401 — the Auth section's measurement. Between turns
+     it is safe. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
      make proto-up` — the harness's tree-read block (the fixture's answer sits in the live
      tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
      key and writes the FamilySearch token, refreshed from the desktop login through
@@ -1570,6 +1921,111 @@ without whichever Bedrock refuses.
   refresh before it was a no-op and the token had eight minutes left, which is why the
   protocol above now starts with `make e2e-login` — so it carries **nothing** about
   research quality, and criterion 1 has to be re-run.
+  **Re-run 2026-09-23, first attempt — VOID** (`sess_8724b92a2b834d21`, bagley, four
+  interactive turns, $7.29 by the `turns` rows). The kill was scripted rather than clicked:
+  `make proto-kill SESSION=… ARGS="--kill-on extraction_append --kill-after-s 5 …"` with
+  `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=60000` on the `tools` service (a compose override),
+  so the worker died 5 s into a held write inside `record-extractor`. **Criterion 1 PASSES,
+  foreground only**: receive 2 resumed the same SDK session in a fresh process, re-delegated
+  (`run_in_background: false`, like every delegation that session) and completed on real
+  work — 5 model turns, $3.74, `list_subkeys` 1 / 2 keys; the resume rule checked the result
+  and did not fire. **Criterion 2 FAILED**: the record was written three times onto one
+  source, 36 assertions under one `log_001`. Copy 1 was the killed attempt's own write —
+  the shared `tools` process never passes the MCP abort signal to a handler, so it
+  committed 56 s after the worker died, after the re-delegated extractor had already read
+  the empty project. Copy 2 was a retry after the CLI's MCP client timed the held call out
+  at 60,013 ms while the server still committed — the hold's fault, and the reason a hold
+  must stay well under 60 s (research-append spec §11.5). Copy 3 was the clean write. Every
+  duplicate batch took §3.4.1's `updated_existing` fold, so the tool knew and appended
+  anyway; **fixed as a writer-tool precondition, research-append spec §3.4.3, PR #2850**
+  (corpus replay: 73 of 145 folding calls refused, all same-pass re-sends). **VOID**
+  because `person-evidence`'s `record_read` got a 401 at 13:11 — caused by the operator
+  sourcing `proto/env.sh` mid-turn at 13:09 to recreate `tools`, a refresh that revoked the
+  attempt's token (inferred then, measured the same afternoon; Auth section). Criteria 3
+  and 4 pass (93 rows, 0 / 0 / 0, longest `Agent` 629 s). Export:
+  `apps/server/proto/exports/proj_bagley-father-1884_22ee97/`.
+  **Re-run 2026-09-23, second attempt — stopped at turn 4** (`sess_3c1bf327eaec41c1`, with
+  PR #2850's guard in the image, a 20 s hold, and the kill armed by a
+  `--background-only` switch on the arm — it joined each `Agent` row to its transcript
+  `tool_use` and fired only on `run_in_background: true`; it was dropped before review,
+  because once the worker forces the foreground (below) the transcript still records the
+  model's `true` and the switch would fire on delegations that ran in the foreground). Turns 1–3 ($2.11) selected the question, built the
+  locality guide and the plan. **Every delegation was foreground**, so the armed kill never
+  fired. Turn 4 ("execute the plan") outlived the step ceiling **twice**: the shim killed
+  the worker at 15:26:52 and 15:56:52 (`read_timeout`, `killed_worker: true`), both times on
+  the main thread, and each redelivery resumed the session and kept working — attempt 2
+  extracted five records. **Criterion 2 held across both resumes**: 5 sources, 43
+  assertions, no fact written twice across calls, 21 log entries with no search re-run, and
+  the guard correctly silent. But the turn never completed, so criterion 1's "and
+  completes" is not shown for it. It was stopped by hand at 16:03 on attempt 3, on a
+  diagnosis later withdrawn: attempt 2's bearer (read at 15:26) was taken to have expired
+  at 15:42, but 15:42 was the engine's *assumed* one-hour expiry — FamilySearch sends no
+  `expires_in`, and its tokens live 8 h idle (Auth section) — so the token was good and
+  the stop was unnecessary. No FamilySearch call answered 401 either way.
+  turn 4's three attempts spent ~$8.04 of tokens at Sonnet 4.6 list (984 k cache write,
+  4.1 M cache read, 208 k output), which the row does not carry. Export:
+  `apps/server/proto/exports/proj_bagley-father-1884_012776/`.
+  **A per-attempt token broker was built from that diagnosis and withdrawn before review**
+  (`make proto-token-broker`, `FS_TOKEN_URL`): it minted a token at every attempt start,
+  and worked (a `make proto-kill` with a forced refresh per ask passed 9/9; the final run
+  below used it, 5 asks, 0 failures), but it answered a token lifetime that does not
+  exist. With an 8 h token the file protocol already refreshes only between turns, which
+  is the safe moment. The real defect is the engine's assumed hour, which triggers needless
+  refreshes that revoke a token something else still holds — fixed in the engine and the
+  hosted control plane in PR #2859.
+  **Probe 2026-09-23 — background delegations are lost at EVERY turn end**
+  (`sess_74022a6fe88241a6`, a fresh bagley seed). The message asked `/record-extraction` to
+  delegate two named records "with `run_in_background: true`"; it did: both `Agent` calls
+  returned in 8 and 10 ms, one extractor reached `project_context`, and the main thread
+  closed with "Both extraction agents are running in the background. I'll present each
+  agent's closing summary for you as they complete." — then `turn_done`, 70 s in,
+  `receive_count` 1, **no `task_done`, 0 sources, 0 assertions**. No kill was involved:
+  the worker takes the main thread's `ResultMessage` as the turn and closes the CLI, and
+  the background agents die with it. The 2026-09-21 zero-turn synthetic result is the same
+  loss observed after a kill; the resume rule re-queries only a redelivery, and a turn that
+  ends normally is never redelivered, so it cannot reach this case. **Decided and built the
+  same day (lead ruling 2026-09-23): the worker forces delegations to the foreground.** Its
+  `PreToolUse` hook answers an `Agent`/`Task` call carrying `run_in_background: true` with
+  `updatedInput` setting it `false` (`DELEGATION_TOOLS`, `apps/server/proto/worker/options.py`;
+  logged `ev=foregrounded`). Parallelism survives, because several foreground `Agent` calls
+  in one message already run concurrently. The alternative — keep the SDK client open after
+  a `ResultMessage` while a `task_started` has no `task_done` — was not taken; it would have
+  needed a measurement of the pinned CLI after a result first. **Re-probed live the same
+  day** (`sess_0f079cd03727430c`, the identical message): both calls rewritten, the two
+  `Agent` calls blocking for 427 s and 333 s and overlapping, both `task_done`, 2 sources
+  and 22 assertions, `receive_count` 1, $1.24. So a background delegation cannot occur in
+  the worker any more: criterion 1's delegation case is the foreground one, which passed on
+  2026-09-20 (D14) and on the first 2026-09-23 re-run, and the resume rule keeps covering
+  a zero-turn redelivery from any other cause.
+  Probe export: `apps/server/proto/exports/proj_bagley-father-1884_5021d9/`.
+  **Final run 2026-09-23 — PASS: criteria 1, 2 and 3 green on one valid run**
+  (`sess_f1741b2fa383478b`, turn `a5c797d9-1e89-4e5b-883d-f1e82153c2af`, SDK session
+  `044e8bc0-3de9-49b9-9423-992edf2f49c4`; bagley, three interactive turns, $8.44). Built
+  from current `main` with both PRs' heads merged: PR #2850 (the §3.4.3 guard, and the HTTP
+  tool server rolling back a write whose client disconnected) and PR #2852 (forced-foreground
+  delegations, and the token broker since withdrawn — it was on for this run, 5 asks, 0
+  failures), the hold was
+  20 s, and the kill was `make proto-kill … --kill-on extraction_append --kill-after-s 5`.
+  Turns 1–2 ($1.45, $4.09) selected the question, planned, and searched (23 `record_search`,
+  6 `record_read`); turn 3 took "Yes, continue." into `record-extraction` on two vital
+  records. The worker died at 17:55:53, 5 s into the first delegated `extraction_append`
+  (shim: `connection_reset`, requeue, backoff 0). **The killed write rolled back:**
+  `research.json` stayed at the pre-kill version past the moment the hold ended, and the
+  resumed extractor's batch *created* `src_001` (`op: append`) — a committed first write
+  would have folded it onto the existing source (§3.4.1) and been refused by the guard. So
+  D17's copy 1 cannot occur, and the guard did not need to fire (0 refusals). **Criterion 1:**
+  receive 2 resumed the same SDK session in a fresh process (`resumed: true`,
+  `list_subkeys` 1, `subkeys_returned` 2), re-delegated in the foreground, and completed —
+  `outcome ok`, 6 model turns, $2.90, 1,579 s against the 1,800 s ceiling. **Criterion 2:**
+  two distinct records, one copy each (`src_001` QPQP-24HR, `src_002` QPQP-R8T8, 20
+  assertions, the only repeated key being two parentage relationships inside one batch),
+  `log` 23 → 23, `person_evidence` 0 → 24, and the reply continued the conversation; no
+  FamilySearch call answered 401. **Criterion 3:** 0 Bash, 0 allowed project reads, 2
+  denied `Glob`s. **Criterion 4:** 120 calls with a duration, 2 without (the killed
+  `Agent` and its `extraction_append`), longest 893 s (`Agent`), p50 61 ms. Export:
+  `apps/server/proto/exports/proj_bagley-father-1884_7b4922/`. Driven through the web
+  tier's REST API, not the SPA — the same `POST /messages` the SPA sends; the SPA-over-SSE
+  path was verified at D11–13.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
@@ -1725,6 +2181,133 @@ without whichever Bedrock refuses.
   number is the judge's, and it matched. One judge is sampled once, so this says the two
   gradings agreed on this run, not that grading is stable; a disagreement on a later run
   is a finding about the judge, not a bug in this command.
+  **Two parity gaps closed before the billed runs, 2026-09-23.** The second fixture is
+  `paerai-teupooihi-spouse` (French Polynesian civil registration, run 2026-09-21, pass,
+  $4.94, 32 min, no images; the other 32 qualifying fixtures were cheaper-and-older,
+  image-bound or pre-delegation). First, the tree-read block now also denies
+  `person_warnings` with `live: true` while `BLOCKED_TOOLS` is on — the harness's
+  `LIVE_TREE_ARG_TOOLS`, held equal to it by an AST read — because on that spouse
+  fixture the live mode returns the stripped spouse. Second, the http MCP entry carries
+  `"timeout": 1800000`: without it CLI 2.1.220 aborts every http tool call at 60 s (D17's
+  60,013 ms), where the harness's stdio server is cut only by its 1,800,000 ms idle
+  limit. 121 committed harness calls ran past 60 s — six of them `research_append`,
+  which #2850 would roll back — so without this the prototype could not run what the
+  harness runs. Neither fixture's committed run had one, so the D18 numbers do not hinge
+  on it.
+  **The runs, 2026-09-24**, on `main` at `2a553477f` (#2850, #2852 and #2859 in), after a
+  fresh `make e2e-login`, the first launch with `PROTO_TOKEN_MIN_LIFE=480` so the token
+  refreshed once at launch and never under a run, both with `ARGS="--ceiling-s 7200"`.
+  `proto-compare` graded both sides fresh (the fixture's Haiku judge, four calls); the
+  bagley harness run of the same day, from the same commit, is the comparison to read —
+  the July column is kept because the gap between the two harness runs is the plugin's
+  (the same-week bullet below):
+
+  | | bagley harness, 07-31 | **bagley harness, 09-24** | bagley proto | paerai harness, 09-21 | paerai proto |
+  |---|---|---|---|---|---|
+  | judge: verdict, f1 | pass, true | pass, true | pass, true | pass, true | pass, true |
+  | human blind grade: f1, proof quality | true, 2 | **partial**, 3 | — | true, 2 | — |
+  | cost | $5.29 | **$11.85** | $16.29 | $4.94 | ~$32.21 (list, off the transcript) |
+  | wall clock | 2,147 s | 4,544 s | 5,151 s, 1 attempt | 1,903 s | >14,400 s, 3 attempts |
+  | tool calls / delegations | 93 / 4 | 336 / 13 | 317 / 21 | 140 / 8 | 517 / 46 |
+  | `project.status` | — | — | `completed` | — | `active` (probable proof written) |
+
+  **bagley** (`sess_be2d0eaf5ad44d8d`): one attempt, `nudges` 2, 0 reauth hits, the one
+  deny a direct `Read` of `tree.gedcomx.json`, conclusion David Bagley at *probable*.
+  `OPENROUTER_API_KEY` was not yet in `eval/.env`, so its two `image_transcribe` calls got
+  the no-key error and the model named image confirmation as blocked. **Why 3× July's
+  run**, read
+  off the transcript (`session_entries`, per message its last entry — the sums equal the
+  `turns` row exactly): the main thread cost $6.38, the 21 subagents $9.44; output tokens
+  are 464 k against 87 k, 360 k of them subagents' (`extraction_append` payloads). Most of
+  that is the plugin, not the substrate: the harness run is from 2026-07-31, **345 plugin
+  commits** earlier (~4,800 changed lines in `research`, `person-evidence` and `agents/`),
+  and today's plugin delegated 13 extractions where July's did 2. The substrate's own
+  share is the cache: the harness corpus writes at the **1-hour** TTL (subscription OAuth,
+  `eval/harness/e2e/cache_window.py`), the prototype at the **5-minute** one (API key, as
+  production does), and a foreground delegation leaves the main thread idle — three
+  waits of 1,586 s, 436 s and 710 s each came back with `cache_read` 0 and rewrote the
+  context (272 k tokens, 37% of the main thread's writes, ~$1–1.50). Forced foreground
+  delegation (#2852) and the 5-minute TTL are now one measured cost, not two.
+  **paerai** (`sess_9c8d6603b9e54129`), the first run with the OpenRouter key: 108
+  `image_transcribe` calls (the harness run made none) — two delegations browsing the
+  Moorea birth-register volumes, a death record extracted from a transcription — and 46
+  delegations, the longest 1,151 s. Attempt 1 hit the 7,200 s ceiling (`read_timeout`,
+  `killed_worker`, requeued at 0); **the redelivery resumed the same SDK session and did
+  real work** (41 tool calls and 4 delegations in its first 1,825 s, one nudge) — the
+  resume after a ceiling kill on this arm, which 2026-09-20 had seen end in a 0-turn
+  result. Attempt 2 hit the ceiling too; the requeue raced an operator guard that stopped
+  `proto-shim` and `proto-worker` on the second `read_timeout`, so attempt 3 ran ~30 s
+  before the stop (`abandoned` 1), and `demo.py` reported FAIL at its 14,700 s deadline.
+  The answer and a *probable* proof were written; the run spent its last hours looking
+  for more. 0 reauth hits over ~4 h, 3 denied `Read`s of `research.json`, no
+  `person_warnings` with `live: true`, the longest http tool call 32.7 s (so the new
+  timeout was not exercised). **What the runs leave:**
+  - **`proto-compare` printed `$? / ? s / tokens ?/?/?/?` for paerai**: only a completing
+    attempt writes a turn's cost and tokens. Fixed: a turn with every token column NULL
+    now reads the session's transcript sums (`TRANSCRIPT_TOKENS_SQL`, the worker's
+    `TURN_USAGE_SQL` rule over the whole SDK session) and says so on the line; cost, SDK
+    turns and duration stay unknown. Checked against both live sessions before the
+    teardown — bagley's transcript sums equal its `turns` row.
+  - **The two token rows did not measure the same thing** — settled, and fixed. The
+    harness's were `ResultMessage.usage`, which counts the **main thread only**: on
+    paerai's 2026-09-21 log it equals the `main` rows of `usage.message_usage` exactly
+    (74 / 209,918 / 2,902,086), and the subagents add 59 / 223,369 / 1,182,935 on top —
+    `cache_window.py`'s "run TOTAL" is wrong on this point. The prototype's sum every
+    thread. `harness_record` now sums every thread where the log carries
+    `message_usage` (output adds `subagents[].turns[]`), giving paerai's harness
+    133 / 433,287 / 4,085,021 / 105,691, and tags a log without it (bagley's July one)
+    `MAIN THREAD ONLY`. Main thread against main thread, bagley reads 275,964 / 5,404,059 /
+    86,777 (harness) against 741,922 / 6,826,793 / 103,241 (prototype, off its transcript):
+    the output is close, and the cache writes are the 5-minute rewrites above.
+  - **The 5-minute TTL now costs far more than R2 measured.** Exactly, per message off
+    the two transcripts (a call more than 300 s after its thread's previous one, with
+    `cache_read` 0, rewrote its context): bagley 3 rewrites, 271,799 tokens, **5.8%** of
+    the run; paerai 17 rewrites, 1,935,599 tokens, **20.7%** — every one on the main
+    thread, against R2's 1.5–1.7% for the corpus. R2's figure was measured on runs whose
+    delegations went to the background, so the main thread kept calling; #2852 forces
+    them to the foreground, and the main thread now idles for the whole delegation. The
+    TTL is not the lever, though: re-priced under a 1-hour TTL (writes at $6/M, the
+    rewrites as reads) bagley costs **+12%** and paerai **−6%**. What costs is the idle
+    main thread, not the window length.
+  - **Nothing bounds image browsing** — not the plugin, not the arm. Whether to cap it is
+    the lead's decision, deferred on 2026-09-24.
+  - **The same-week harness run splits bagley's 3×: 60% plugin, 40% prototype.**
+    `make e2e-run TEST=bagley-father-1884` on 2026-09-24, from the prototype runs' own
+    commit (`2a553477f`, same engine and plugin), after the dead `wikiApiUrl` override
+    was removed from `~/.familysearch-mcp/config.json` (a first attempt was stopped at
+    4 min because every wiki call failed where the prototype's `tools` service had
+    worked): judge **pass**, f1 true, proof quality 3; **blind human grade f1 `partial`**,
+    proof quality 3 (below); **$11.85**, 4,544 s, 336 tool calls,
+    184 SDK turns, 13 delegations, 3 nudges; all-thread tokens 283 / 1,030,289 /
+    10,631,667 / 260,928, every write at the 1-hour TTL. Against July's $5.29 the plugin
+    added **$6.56**; against it the prototype adds **$4.44** — same week, the prototype
+    costs **1.37×** the harness, not 3×. The prototype's extra is where the analysis above
+    puts it: cache writes 1.56 M against 1.03 M (the 272 k main-thread rewrites, and 21
+    delegations against 13, each opening a fresh cache) and output 464 k against 261 k
+    (the eight extra delegations' `extraction_append` payloads); cache reads are level
+    (10.0 M against 10.6 M). One run a side, so the delegation count — which drives most
+    of the gap — may be sampling rather than substrate. The harness run's `compliance`
+    reads FAIL on three guardrail bypasses the detector credits to `Skill` calls only,
+    the artefact paerai's baseline carries too. **Graded blind 2026-09-25** (issue #2904,
+    PR #2906, `run-2026-09-25_01-42-24.ann.json`), after a first grade anchored on the
+    judge output was deleted (`calibrate_judge` counts every complete annotation as blind
+    whatever its notes say): **f1 `partial`**, proof quality 3. The grader's reasons: two
+    David Bagleys in the tree, the linked one (I1) with no facts, though the agent's own
+    sources gave his birth (22 Feb 1777, Newton, New Hampshire); and R4, the link from
+    Sarah Sally Andrews (LVDV-6MK) to William as his mother, deleted. So the judge
+    over-credited this run's f1 — a recorded judge/human disagreement for the
+    calibration sweep. **The prototype's bagley has a judge grade only.** Read off its
+    export, on the grader's three points: one David Bagley, carrying the 1777 New
+    Hampshire birth, his 1854 death and four census residences; R4 kept, plus a
+    duplicate mother link R8. That is a difference to grade, not a quality result: no
+    human has graded the prototype's tree. paerai's baseline is three days old, but its
+    prototype run had image reads the baseline never attempted, so its ratio is not a
+    substrate figure either.
+
+  Records (gitignored): `apps/server/proto/exports/proj_bagley-father-1884_072ee7/` and
+  `proj_paerai-teupooihi-spouse_1a8734/`. The stack was torn down with `proto-down -v`,
+  which also cleared paerai's abandoned queue message — any later `up` would otherwise
+  have started a fourth, billed attempt.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
   **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
   [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as
@@ -1828,7 +2411,7 @@ smaller one with a make target.
 
 **The prototype is a second entrypoint, never a replacement.** `src/index.ts` keeps
 stdio and every tool — 49 with `sidecar_read`, 50 if PR #2397 lands first — including
-`login`/`logout`/`auth_status`/`configure_openrouter`,
+`login`/`logout`/`auth_status`,
 which are the only way a desktop `.mcpb` user authenticates. Until PR #2405 no shipped
 artifact was built by any CI job — `mcpb` appeared in the workflows exactly once, in a
 comment saying not to fire it — so a break surfaced at release time rather than in a
@@ -1983,7 +2566,9 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
    gateway path the TTL is five minutes whatever the client asks for (R2), so the
    number to carry is the corpus-derived cost of a five-minute window: **measured
    2026-09-11 over 148 runs — 0.4–0.5% of cache reads become writes, $20–23 on $1,298
-   of runs (1.5–1.7%); human think time between turns is not in the corpus.**
+   of runs (1.5–1.7%); human think time between turns is not in the corpus.** Corrected
+   2026-09-24: 2.2–2.3% on the main-thread pricing `usage.usage` requires, and 5.8% and
+   20.7% on the two D18 runs, whose delegations are forced to the foreground (R2, D18).
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell? **Measured 2026-09-10 on the
@@ -2016,7 +2601,20 @@ emails rather than engineering.
 
 ### Could kill it
 
-**R1 — The Agent Gateway's API surface. CLOSED 2026-09-11.** It is Anthropic-Messages-
+**R1 — The Agent Gateway's API surface. NARROWED 2026-09-25 (P3c, P3d), then
+SHARPENED the same day (P3e).** The integ host P3c measured is our own 0.12.0 test bed,
+not APT's gateway. With #5 and #6 there and two CLI env vars, the CLI completes a
+tool-using run through it (P3d). APT's `tap-agentgateway` (pinned v1.5.0) already carries
+the Messages route map and model aliases. On a local copy of that route on real Bedrock,
+the unmodified CLI works with tool search off (P3f). **But tool search breaks on its
+second turn on every agentgateway before v1.6.0-alpha.1**, because the `tool_reference`
+block in a ToolSearch result does not parse (P3e, confirmed on v1.5.0 in P3f), and it
+works on v1.6.0-alpha.2 (P3f). So the risk is now an upgrade: tap-agentgateway on ≥ v1.6,
+or we run without tool search at about three times the first call's context. Also left:
+access (URL and a consumer key) and one parity run through the deployed gateway, which
+covers its auth, guardrails and network path, none of which P3f's local copy has. The
+paragraph below is the 2026-09-11 reading of the source, which still describes what
+the route *can* do; its claim that tool search survives holds for the client gate only. It is Anthropic-Messages-
 compatible (agentgateway v1.4.1, `POST /bedrock/v1/messages`, Messages→Converse both
 ways including streaming and errors), so the SDK runs unmodified with
 `ANTHROPIC_BASE_URL` at the gateway. Read from upstream source at the pinned tag rather
@@ -2028,10 +2626,18 @@ gateway from the client's side; what Messages→Converse keeps of the
 `advanced-tool-use` beta, the `tool_reference` blocks, the seven other betas, the haiku
 title call and `count_tokens` is the curl against integ. Native `bedrock-runtime` is
 not a client surface, so the prototype's Bedrock-direct results (P3) describe the
-model, not the production path. *Owner: us, one curl when integ access exists.*
+model, not the production path. Also on the API surface: requests over agentgateway's 2 MiB default
+`max_buffer_size` get `413 text/plain`, so a session dies at its third page scan unless
+TAP sets `frontendPolicies.http.maxBufferSize` (P3l). *Owner: APT for access, the
+buffer size and the ≥ v1.6 upgrade; us for the parity run through it.*
 
 **R2 — Prompt-cache health, which is also the throughput ceiling. SHARPENED 2026-09-11,
-not closed.** Caching works through the gateway; the 1-hour TTL does not survive it.
+not closed; the TTL loss MEASURED 2026-09-25 (P3j).** Caching works through the gateway;
+the 1-hour TTL does not survive it. On local v1.5.0, a call 6m43s after the write
+re-wrote all 7,214 tokens and read none. The loss is in every agentgateway release to
+date: `CachePointBlock` has no TTL field in v1.6.0-alpha.2 or `main`, and upstream #3670
+is open. So through the gateway the hosted path is on the five-minute window whatever
+TAP's version. The corpus figure below is what that costs.
 agentgateway parses `cache_control` but keeps only its presence — Bedrock's
 `CachePointType` has one variant — so `ttl: "1h"` is silently discarded, and whether
 Bedrock honours 1 h on Converse at all is unconfirmed (P3 measured it honoured on the
@@ -2044,7 +2650,15 @@ unverifiable. Two measurements are ours. The cost of a five-minute window, **mea
 re-priced as a 5-minute write; main-thread gaps over 300 s are median 0 per run, p90 2,
 max 4, in 63 of 148 runs, none over 1,800 s; 0.4–0.5% of cache reads become writes,
 $20–23 against $1,298 of runs (1.5–1.7%), per run median $0 / p90 $0.41–0.55 / max
-$1.01.** That is the whole production delta: the corpus's writes were 1 h only because
+$1.01.** **Superseded for the hosted path on 2026-09-24 (D18):** that corpus delegated to
+the background, and #2852 forces delegations to the foreground, so the main thread now
+idles through each one — measured exactly on the two D18 transcripts, the lost reads are
+5.8% and 20.7% of run cost, all main-thread; the figure here stands as a measurement of
+that corpus, not of the arm. It also rests on `usage.usage`, which is the main thread's
+alone (D18), not the run total: `cache_window.py` spread it over subagent calls too, and
+priced on the main thread only (fixed the same day) the corpus reads 0.7% of reads and
+**2.2–2.3%** of run cost — $34.73–35.75 over 177 costed runs, where the unfixed rule on
+that same corpus reads 1.6–1.7%. That is the whole production delta: the corpus's writes were 1 h only because
 the e2e harness runs on the operator's Claude subscription, whose OAuth allow-list grants
 1 h; on an API key — the hosted path, and P3b's own first-party control — writes are
 5-minute unless `ENABLE_PROMPT_CACHING_1H=1` is set, and asking for 1 h would have cost
@@ -2168,15 +2782,29 @@ document's own first blocker: with no FamilySearch-baked AMI for Python 3.12 / N
 on AL2023, test and prod deploys fail validation. Logistics rather than architecture,
 but it can block for weeks. *Owner: FS platform + DTL.*
 
-**R10 — No client auth on the LLM routes.** Today it is `TODO-TAP(authn)`; the interim
-control is an ALB security-group CIDR allowlist behind an internal ALB, so our workers
-must sit in an allowlisted range. APT-1512 is issuing API keys — ask to be in that
-batch. *Owner: APT; us to ask.*
+**R10 — Client auth on the LLM routes. Built by TAP as of tap-agentgateway #38
+(2026-09-24).** Every data-plane route carries an `apiKey` block, strict in int, plus a
+per-route consumer rule. `/bedrock` admits `claude-code`, `tap` and `foundry-runner`.
+The key goes in `ANTHROPIC_AUTH_TOKEN`, which is the `Authorization` header, not
+`x-api-key`; the worker's `MODEL_PROVIDER=gateway` sends it that way (PR #2920). What is
+left is ours to ask for: the shared `claude-code` key or our own consumer. The ALB
+security-group CIDR allowlist stays as defense in depth, so our workers must still sit
+in an allowlisted range. *Owner: APT; us to ask.*
 
-**R11 — Our prompts are logged.** Full prompts and completions go to Langfuse at 100%
-sampling, gateway-wide; ours carry patron genealogical data and transcribed record
-images. Start the InfoSec conversation rather than discover it in review. *Owner: us
-to raise; InfoSec + APT.*
+**R11 — Our prompts are logged. What leaves MEASURED 2026-09-25 (P3l, against a local
+OTLP collector, not Langfuse).** Prompts and completions go to Langfuse at 100%
+sampling, gateway-wide. TAP decided on 2026-09-21 to capture everything in int.
+- *Exported:* `gen_ai.prompt` carries the full system prompt, skill bodies and every
+  text message, delegation prompts included.
+- *Not exported:* `tool_use` and `tool_result` blocks go out as empty strings, so
+  tool-result JSON and image bytes do not leave.
+- *Patron data still leaves in text:* the patron's names and record details, as the
+  user types them and as the model narrates what it read. About 700k characters left
+  per research turn.
+
+InfoSec's question is therefore about the narration, not raw records or scans. What
+lands in Langfuse itself, and how long it is kept, is still unmeasured. *Owner: us to
+raise; InfoSec + APT.*
 
 **R12 — The SCP and the non-AWS egress.** The SCP denies direct Bedrock invoke to every
 principal in our account except `tap-gateway-invoke` and `bedrock-exception-*` — decide

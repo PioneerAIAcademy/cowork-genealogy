@@ -187,9 +187,14 @@ def test_a_main_thread_caller_reads_as_main_thread_not_empty_string():
 
 
 def test_every_denial_arm_produces_a_reason_the_validator_can_report():
-    """All three arms, so a future arm cannot be added with no payload path.
-    `declaration` is the trap one: its section is a dotted `section.field` that
-    keys neither owner map, so branching on shape rather than `rule` raises."""
+    """All four arms, so a future arm cannot be added with no payload path.
+    `declaration` and `owned_field` are the trap ones: each section is a dotted
+    `section.field` that keys neither owner map, so branching on shape rather
+    than `rule` raises. `owned_field` is paired with a MAIN-THREAD caller on
+    purpose — the `else` arm indexes `AGENT_WRITABLE_SECTIONS[caller]`, which
+    has no `""` key, so a new tag left to fall through there raises `KeyError`
+    instead of denying. In the shipped hook that exception is swallowed and the
+    call is ALLOWED, which is indistinguishable from having no opinion."""
     # Each arm paired with a section its OWN map actually holds. Getting this
     # wrong is not hypothetical: pairing `conflicts` with `routed` raises
     # KeyError, because OWNED_SECTIONS holds only {proof_summaries}. That is the
@@ -199,12 +204,57 @@ def test_every_denial_arm_produces_a_reason_the_validator_can_report():
         ("proof_summaries", "routed", "record-extractor"),
         ("conflicts", "out_of_lane", "proof-conclusion"),
         ("questions.exhaustive_declaration", "declaration", "proof-conclusion"),
+        ("project.status", "owned_field", ""),
     ]
     for denied in arms:
         reason = owned_section_denial(denied)["hookSpecificOutput"][
             "permissionDecisionReason"
         ]
         assert reason, f"no reason for arm {denied[1]}"
+
+
+def test_project_status_is_routed_to_proof_conclusion():
+    """Presence-keyed: any `status` write by a non-owner is denied, from either
+    payload key, while the co-written rest of `project` stays open.
+
+    `project` is deliberately NOT in OWNED_SECTIONS -- init-project authors the
+    section and every skill refreshes `updated` -- so a section rule would deny
+    both. Only the field is routed.
+    """
+    def payload(fields=None, entry=None, agent=None):
+        op = {"section": "project", "op": "update"}
+        if fields is not None:
+            op["fields"] = fields
+        if entry is not None:
+            op["entry"] = entry
+        p = {"tool_name": "mcp__genealogy__research_append", "tool_input": op}
+        if agent is not None:
+            p["agent_id"] = "a1"
+            p["agent_type"] = agent
+        return p
+
+    def denied(p):
+        return owner_denied(p["tool_name"], p["tool_input"], p)
+
+    assert denied(payload({"status": "completed"})) == (
+        "project.status",
+        "owned_field",
+        "",
+    ), "the main thread must not set status"
+    assert denied(payload({}, {"status": "completed"})) is not None, (
+        "an empty `fields` beside a populated `entry` is still a dict -- the "
+        "shape that defeated the declaration arm before it read both keys"
+    )
+    for spelling in ("proof-conclusion", "genealogy-research:proof-conclusion"):
+        assert denied(payload({"status": "completed"}, agent=spelling)) is None, (
+            f"the owner must not be denied its own field ({spelling})"
+        )
+    assert denied(payload({"updated": "2026-09-24"})) is None, (
+        "the `updated` activity ping is free to any writer"
+    )
+    assert denied(payload({"status": "x"}, agent="record-extractor")) is not None, (
+        "a different named agent is a non-owner too"
+    )
 
 
 # --- the wiring ---------------------------------------------------------------

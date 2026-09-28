@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 // `eval/harness/harness/workspace.py` copies each skill directory into the
 // workspace's `.claude/skills/`, and the Cowork .zip ships the whole plugin. So
 // a model that globs can read any of them. Measured, not theorised —
-// `eval/runlogs/unit/convert-dates/v1_2026-09-01_11-26-50.json`
+// `eval/runlogs/unit/convert-dates/v1_2026-09-01_11-26-50.json` (pruned; `git show 6ceb2a076:<that path>`)
 // (`ut_convert_dates_012`) globbed `**/*` and read three files that are on the
 // exemption list below, and one of them changed its answer (#1112).
 //

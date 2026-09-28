@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-09-24_19-38-32.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The record hedges three ways: unknown, most likely a household member such as Thomas Flynn or his wife, possibly a neighbour. The weighing asserts \"Thomas Flynn, almost certainly the census informant, was present at Patrick's birth.\" Two unearned claims, not one — the informant's identity, and his presence at the birth, which nothing in the record touches. Both are in a persisted field."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Conflict identified, all three assertions addressed, all four required fields written, and it noted c_001 was blocking q_001."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five calls, correct sections and entry id, nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The finding is right — partially dependent, counted as one unit at its strongest member under GPS Standard 46 — and that reasoning is sound. The 2 is for the pool it rests on: the record offers \"a household member (such as Thomas Flynn or his wife), but possibly a neighbor\", and the field narrows that to \"Thomas Flynn (head of household)\". Hedged with \"most likely\", but the wife and the neighbour are simply gone. Noting this differs from the previous run on the same test, where the persisted text kept the full hedge and the 2 was unjustified."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Right factors, right hierarchy, and the immigration-origin reasoning on the death certificate is sound. But it rests the decisive factor on an informant identity the record withholds, and adds presence at the birth, which no record establishes. If a neighbour answered, \"firsthand knowledge\" collapses entirely — and the record explicitly keeps that open."
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions addressed with reasons a reader can follow. The fault is already counted twice above."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The record says \"Unknown household member (likely Thomas Flynn or wife)\". All three persisted fields say \"almost certainly\", and two go further and call them \"Patrick's parents\" with \"direct personal knowledge\". Noting for the record that the previous run on this same test kept the hedge faithfully in every persisted field — the text got worse on re-run with no relevant change, which is skill-run variance rather than anything this PR did."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Resolved c_001, explained the immigration-origin mechanism, persisted every required field, and flagged c_002/c_003 as still blocking q_001."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Three research_query calls passed assertionId against section: \"assertions\", which doesn't accept it — that filter is valid on person_evidence, conflicts, hypotheses and proof_summaries only. The skill recovered on the fourth call and the final state is correct. Mitigation worth recording: assertionId is a declared top-level property on research_query's schema, and the per-section restriction appears only in the description prose. A model reading the schema cannot see the constraint. The repeated attempt is still sloppy, but it was invited — that's a tooling observation, not a skill defect."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The independence finding is right — partially shared knowledge, counted as one unit — but the field itself now says \"almost certainly drew on the same household informant — Thomas Flynn as head of household\", dropping the wife and the record's own hedge. Last run this field said \"unknown household member … likely\", which is why I argued it was a 3 then. It isn't now."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Right factors and right hierarchy, but it rests informant proximity on \"almost certainly Thomas Flynn or his wife — Patrick's parents — who had direct personal knowledge\". The record establishes neither the identity nor the parental relationship for the informant."
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions addressed with reasons a reader can follow. The certainty fault is counted three times already."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Resolved c_002, named the preferred assertion, explained the alternative, persisted all required fields, and flagged c_001 as still open."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correct sections, correct entry id, the Ireland page matched, nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The age chain is genuinely strong and correctly stated — 5 in 1850, 15 in 1860, a ten-year increment over ten years, with Thomas Flynn named as father in 1908. That reasoning survives even if the two censuses share an informant."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two things this got right that ut_006 got wrong on the same conflict. It says outright that \"the positive chain is self-confirming without requiring the absence of the dwelling-197 candidate\" — the exact discipline ut_006 muddled. And it states the Irish naming rule correctly, first son for the paternal grandfather, where ut_006 crossed it with the third-son rule."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge says \"no fabricated material or unsupported claims.\" The rationale asserts \"each record draws on a different informant\", where a_001's informant is recorded as unknown and a_010 has no explicit informant at all. That's a claim about the evidence the evidence doesn't make."
+    },
+    {
+      "test_id": "ut_conflict_resolution_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "This is where the fault lives and it's load-bearing. The case rests on \"three independent original records\", but the 1850 and 1860 informants are both recorded as unknown — one explicitly \"possibly a neighbor\", the other with no informant recorded at all. They may be the same household member, which would collapse two of the three into one unit. Excluding src_002 as derivative of src_001 is correct and well done; the claim of different informants is not supported."
+    },
+    {
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge says \"no unsupported claims.\" The independence analysis states the two censuses share \"no informant or creation context\", where both are recorded with informant unknown — a_001 explicitly \"possibly a neighbor\", a_010 with no informant noted. That's an assertion about the evidence the evidence doesn't make."
+    },
+    {
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Identified both conflicts, explained why c_002 comes first, resolved it fully with every required field, and deferred c_001 explicitly."
+    },
+    {
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five calls, correct section and entry id, the Ireland page matched, nothing fell through to a missing fixture."
+    },
+    {
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Same fault as ut_003 in this run, stated more strongly: \"sharing no informant or creation context\". The record establishes neither sameness nor difference for the 1850 and 1860 informants. Conservatively they may be one household member, which would collapse two of the three sources into one unit — which is exactly how ut_001 and ut_008 treated these same censuses in the other scenario, in the same run."
+    },
+    {
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Household continuity across two enumerations is the strong factor and it holds. Noting an inconsistency rather than docking it: the one-year age gap is used here as a discriminator, where ut_006 on this same conflict called a one-year gap \"squarely within the ±1–2 year variance normal for census age reporting\" and refused to let it decide. Census ages routinely drift a year; it shouldn't be carrying weight in either direction."
+    },
+    {
+      "test_id": "ut_conflict_resolution_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The single competing assertion is addressed, the alternative explained, and the Schuylkill immigration context is a fair explanation of why duplicate names cluster."
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the routing on the merits, not the label. The request is an audit of existing links to one known person; conflict-resolution is for competing candidates and none is named. Correct hand-off. Same caveat as the last two runs: the reply is empty, so the judge's account of the skill \"identifying\" the mismatch is inferred from skills_invoked rather than read from anything it wrote."
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing was required but to pass the work on, and the hand-off is recorded."
+    },
+    {
+      "test_id": "ut_conflict_resolution_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, correct for work this skill shouldn't be doing."
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the routing on the merits. \"Search for more 1860 census records\" is execution — going to find records — which is search-records' job. Conflict-resolution weighs what's already on file. The birthplace conflict appears only as the reason for searching, which is the near-miss this test is built around. Correcting the judge's wording: the skill did not \"produce no output\" — it invoked search-records. The empty transcript is the harness truncating at the hand-off, not inaction, and only skills_invoked distinguishes those two."
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing was required but to pass the work on, and the hand-off is recorded."
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, correct for work this skill shouldn't be doing."
+    }
+  ]
+}

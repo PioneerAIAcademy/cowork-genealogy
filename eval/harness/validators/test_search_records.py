@@ -399,32 +399,40 @@ def test_no_search_or_writes_on_planning_request(
     )
 
 
-def test_escalates_to_external_sites_after_fs_exhaustion(skills_invoked, test):
+def test_escalates_to_external_sites_after_fs_exhaustion(
+    skills_invoked, builtin_tool_calls, test
+):
     """After FamilySearch is exhausted across name variants, the skill must
     hand off to `search-external-sites` — not merely offer to.
 
-    Graded here rather than by the LLM judge because `skills_invoked` is
-    ground truth: the PreToolUse hook fires on the real `Skill` call, so a
-    response that only *narrates* the escalation ("Shall I generate Ancestry
-    URLs?") cannot satisfy it, and a response that genuinely delegates cannot
-    be marked down for it. The judge has gotten this wrong in both directions
-    — scoring Correctness=1 for "failed to call search-external-sites" on a
-    run where the hook recorded the call.
+    Graded here rather than by the LLM judge because the hook records are
+    ground truth: the PreToolUse hook fires on the real `Skill` call or agent
+    spawn (`handoffs`, issue #2825), so a response that only *narrates* the
+    escalation ("Shall I generate Ancestry URLs?") cannot satisfy it, and a
+    response that genuinely delegates cannot be marked down for it. The judge
+    has gotten this wrong in both directions — scoring Correctness=1 for
+    "failed to call search-external-sites" on a run where the hook recorded
+    the call.
 
     Tag-gated: only the nil-exhaustion escalation test asserts this. Ordinary
     search tests must NOT escalate, and negative routing tests are graded on
     routing instead.
     """
+    from harness.skill_runner import handoffs
+
     if "familysearch-exhausted" not in test.get("tags", []):
         pytest.skip("only the FamilySearch-exhaustion escalation test")
-    assert "search-external-sites" in skills_invoked, (
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    assert "search-external-sites" in handed, (
         "FamilySearch was exhausted across name variants, so the skill had to "
-        "invoke Skill('search-external-sites'). Offering it in prose is not "
-        f"escalating. skills_invoked={skills_invoked}"
+        "hand off to search-external-sites. Offering it in prose is not "
+        f"escalating. handoffs={handed}"
     )
 
 
-def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
+def test_live_callee_used_its_own_tools(
+    tool_calls, skills_invoked, builtin_tool_calls, test
+):
     """Tag-gated (live-callee): a test that lets `search-external-sites`
     execute must show it was actually delegated to, and that it then called
     its own tools.
@@ -444,6 +452,8 @@ def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
     returned results" when it is the fifth entry in the fixture it was
     reading. `tool_calls` is the harness's own record and cannot be misread.
     """
+    from harness.skill_runner import handoffs
+
     if "live-callee" not in test.get("tags", []):
         pytest.skip("only the live-callee seam test")
     # Delegation first: without it the tool assert below is satisfiable the
@@ -457,12 +467,12 @@ def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
     # (test_escalates_to_external_sites_after_fs_exhaustion) gates on the
     # `familysearch-exhausted` tag, which ut_search_records_026 does not carry
     # — it skips, and a skipped validator is recorded `passed: true`.
-    assert "search-external-sites" in skills_invoked, (
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    assert "search-external-sites" in handed, (
         "the callee was declared under execution.run_skills, so this test's "
-        "whole subject is the caller/callee seam — but Skill("
-        "'search-external-sites') was never invoked. Calling its tools "
-        "directly from the main thread is the failure this asserts against, "
-        f"not a pass. skills_invoked={skills_invoked}"
+        "whole subject is the caller/callee seam — but search-external-sites "
+        "was never handed off to. Calling its tools directly from the main "
+        f"thread is the failure this asserts against, not a pass. handoffs={handed}"
     )
     called = {c.get("tool", "").split("__")[-1] for c in (tool_calls or [])}
     assert "external_links_search" in called, (

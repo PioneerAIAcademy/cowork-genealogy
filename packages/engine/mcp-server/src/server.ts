@@ -24,7 +24,6 @@ import { loginTool, type LoginToolInput } from "./tools/login.js";
 import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
 import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
 import { collectionsSearchTool, type CollectionsSearchInput } from "./tools/collections-search.js";
-import { collectionReadTool, type CollectionReadInput } from "./tools/collection-read.js";
 import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
@@ -32,10 +31,6 @@ import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { imageTranscribeTool } from "./tools/image-transcribe.js";
 import type { ImageTranscribeInput } from "./types/image-transcribe.js";
-import {
-  configureOpenRouterTool,
-  type ConfigureOpenRouterInput,
-} from "./tools/configure-openrouter.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
@@ -252,21 +247,6 @@ export function createServer(principal: Principal): Server {
         };
       }
     }
-    if (request.params.name === "collection_read") {
-      try {
-        const args = request.params.arguments as unknown as CollectionReadInput;
-        const result = await collectionReadTool(args, principal);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }]
-        };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        return {
-          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
-          isError: true
-        };
-      }
-    }
     if (request.params.name === "wiki_search") {
       try {
         const args = request.params.arguments as unknown as WikiSearchInput;
@@ -349,22 +329,6 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as ImageTranscribeInput;
         const result = await imageTranscribeTool(args, principal);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }],
-        };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        return {
-          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
-          isError: true,
-        };
-      }
-    }
-    if (request.params.name === "configure_openrouter") {
-      try {
-        const args = request.params
-          .arguments as unknown as ConfigureOpenRouterInput;
-        const result = await configureOpenRouterTool(args, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],
         };
@@ -599,7 +563,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "person_warnings") {
       try {
         const args = request.params.arguments as unknown as PersonWarningsInput;
-        const result = await personWarningsTool(args);
+        const result = await personWarningsTool(args, principal);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

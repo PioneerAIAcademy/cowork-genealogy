@@ -1,0 +1,95 @@
+{
+  "log_id": "log_003",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T10:20:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "~Fl",
+      "givenName": "Patrick"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "VRNT-7M3",
+        "personName": "Patrick Flinn",
+        "score": 0.66,
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Ireland",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:VRNT-7M3",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:VRNT-7M3",
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordTitle": "Patrick Flinn in household of Thomas Flinn",
+        "treeMatches": [],
+        "primaryId": "VP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "VP1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "VN1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flinn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "VF1",
+                  "type": "Birth",
+                  "date": "1845",
+                  "place": "Ireland"
+                },
+                {
+                  "id": "VF2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "VP2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "VN2",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Flinn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "VF3",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "VR1",
+              "type": "ParentChild",
+              "parent": "VP2",
+              "child": "VP1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

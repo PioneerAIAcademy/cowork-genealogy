@@ -1,0 +1,310 @@
+{
+  "run_log": "v1_2026-09-20_13-40-15.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_k9t`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed everything the user message and input state required. All seven attached sources are accounted for: six indexed records were read and evaluated (DRIS-001 through DRIS-006), and the headstone photograph (DRIS-F) was explicitly reported as unchecked with the reason (no indexed record). The two substantive findings (marriage year indexing error and death-date source conflict) are both identified and explained. Sources that checked out clean are listed with their consistency noted. The person_quality response is mentioned as returning no issues, appropriately placed outside the findings count. No required work was omitted.\n\nJunior: (Pass -The skill fully addressed the user message and input state requirements.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_k9t`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. person_read was called with personId 'GJ72-9WD' and sourceDescriptions: true (correct). person_quality was called with personId 'GJ72-9WD' and detail: true (correct). All six record_read calls used ARKs matching the source URLs from the person_read response: DRIS-001 through DRIS-006 (correct). No tool calls landed in fixture_not_found errors. Arguments are clean and match expectations.\n\nJunior: (Pass - The skill demonstrated correct and consistent use of tool parameters across all calls.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_k9t`** — `rubric` / `Remediation doctrine`\nLLM: 3 → Junior: 3\n\n> Every remediation recommendation matches the kind of disagreement identified. Finding 1 (marriage year 1845 vs. 1849, single field, everything else matching) is correctly remedied by 're-read the original page image and correct the indexed year' with the source kept attached — the standard index-error remedy. Finding 2 (death date April 1878 vs. February 1885, source-vs-source conflict, profile records no death) is correctly routed to the conflict workflow with no detach recommended. The response explicitly states 'both name a Cornelius Driscoll who died in Sherbrooke and was born in Ireland' and 'nothing has discredited either record,' so neither detach is licensed. The 1851 census entry (Melbourne vs. Sherbrooke residence, no other detail) is not recommended for detaching; the response notes it is 'a separate town from Sherbrooke' and 'there is no conflict between recorded facts — these are different years.' The headstone photograph is reported as unchecked, not clean. No detach is recommended for any source whose disagreement is a single mis-transcribed field or a source-vs-source conflict.\n\nJunior: (Pass - The skill applied doctrine consistently and avoided the unrecoverable action of detaching where it was not licensed.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_k9t`** — `rubric` / `Classification before recommendation`\nLLM: 3 → Junior: 3\n\n> Each finding carries an explicit classification and the evidence for it. Finding 1 is classified as 'indexing error, marriage year' with the cue: 'Day, month, spouse (Margaret Hayes), and place (St. Patrick's, Sherbrooke) all agree exactly — only the year differs.' The skill explains the likely cause ('a misread of the year in a handwritten register; 1845 and 1849 can look similar in 19th-century script'). Finding 2 is classified as 'Source-vs-source conflict on death date' with explicit evidence: 'Two attached sources give incompatible death dates and cannot both be right' followed by the specific dates and sources. The 1861 census 1816/1814 variance is explicitly classified as 'ordinary variance — not a transcription error, just the normal imprecision of a census age,' with the cue that 'a two-year drift between a census (ages self-reported by whoever answered the enumerator) and a contemporaneous church baptism record is ordinary variance.' Each classification is supported by the evidence cited.\n\nJunior: (Pass - The skill consistently provided explicit classifications with evidence before recommending remedies.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_k9t`** — `rubric` / `Signal versus backend noise`\nLLM: 3 → Junior: 3\n\n> The findings list contains only user-actionable items. The person_quality response (which returned no issues and a GREEN segment score) is mentioned once in closing context outside the findings count: 'FamilySearch's own profile checklist returned no quality issues — nothing to add there.' The 1814/1816 birth-year conflict flagged by FamilySearch's detector is correctly identified as backend noise (ordinary census variance) and explained in the 1861 Census section without being counted as a finding. The response states 'The 1814/1816 birth-year flag from their conflict detector is the census-variance case addressed under the 1861 Census above,' explicitly routing the detector's output to the correct interpretation. No backend artifact appears as a numbered finding or carries a recommended action.\n\nJunior: (Pass - The skill demonstrated proper filtering: actionable findings only, backend artifacts acknowledged but not misclassified.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_k9t`** — `rubric` / `Tool selection and argument quality`\nLLM: 3 → Junior: 3\n\n> The skill reached the sources correctly. person_read was called with sourceDescriptions: true, which enumerated all seven attached sources. Each of the six indexed records carrying a 1:1: ARK was read with the ARK it actually carried (DRIS-001 through DRIS-006). The headstone photograph (DRIS-F) carries no ARK and was correctly reported as unchecked. The death-date conflict (Finding 2) involves two sources (DRIS-C and DRIS-D) that were both read; the response correctly notes that neither source contradicts the profile (which records no death date) and that they contradict each other. The response does not call source_attachments because no misattribution is claimed — both death records name Cornelius Driscoll, born in Ireland, died in Sherbrooke, and the tool responses provide no evidence of a different person holding either ARK. The tool selection and argument quality are sound.\n\nJunior: (Pass - The skill demonstrated correct choice of tools, precise arguments, and avoided unnecessary or unlicensed calls.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_k9t`** — `rubric` / `Coverage and honesty about what was not checked`\nLLM: 3 → Junior: 3\n\n> Each attached source is accounted for. The six indexed records (DRIS-001 through DRIS-006) are all read and judged. The headstone photograph (DRIS-F) is explicitly named and reported as unchecked with the reason: 'The Driscoll headstone photograph (contributor-uploaded memory) carries no indexed record. Its contents cannot be verified through the FamilySearch record index.' This is honest coverage: the unreadable source is named and the reason is stated. No source is described as clean without a tool response behind it.\n\nJunior: (Pass - The skill demonstrated proper accounting for all sources, with clear reasons for what could not be checked.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all four attached sources: read the 1900 census (HOLE-001), death index (HOLE-002), 1885 state census (HOLE-003), and reported the funeral card (SD-HOLE-D) as unchecked with reason. It performed source_attachments to verify the 1885 census's dual attachment before classifying it as misattributed. It included the FamilySearch profile checklist as a separate block outside the findings count, as required. No required work was omitted.\n\nJunior: (Pass - The skill fully addressed the user message and input state requirements, with all sources accounted for and findings correctly limited to actionable items.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed correct arguments. person_read for KD96-TV2 included sourceDescriptions: true. All three record_read calls used the correct ARKs from the source URLs (HOLE-001, HOLE-002, HOLE-003). source_attachments was called with the correct ARK before the misattribution recommendation. The follow-up person_read for KD96-WX7 was appropriate to verify the true subject. No fixture_not_found errors occurred; all calls matched their expected_args predicates.\n\nJunior: (Pass - The skill demonstrated correct tool usage, precise arguments, and thorough verification steps.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `rubric` / `Remediation doctrine`\nLLM: 3 → Junior: 3\n\n> The skill correctly applied remediation doctrine. For the 1885 census misattribution, it recommended detaching because the record describes a different person entirely (KD96-WX7, born 1852, wife Bergit, Otter Tail County), and the skill named whose record it actually is. For the death index indexing error (transposed year 1954 vs. 1945), it recommended re-reading the original and submitting a correction via FamilySearch's index-correction path, keeping the source attached—the correct remedy for a single mis-keyed field. No detach was recommended for an index error.\n\nJunior: (Pass - The skill applied doctrine consistently: misattribution → detach with true owner named; index error → re‑read and correct, keep attached; variance → note but not escalate; memory → report as unchecked.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `rubric` / `Classification before recommendation`\nLLM: 3 → Junior: 3\n\n> Each finding was explicitly classified with supporting evidence. The 1885 census was classified as misattributed with three fields failing at once (birth year off by 23 years, county Otter Tail vs. Polk, wife Bergit vs. Inger), and the skill noted the record describes a different man entirely. The death index was classified as an indexing error with the cue that every other field (name, birth year 1875, death place) matches the profile exactly, pointing to a mis-keyed year. Both classifications were supported by the evidence cited.\n\nJunior: (Pass - The skill demonstrated proper sequencing: explicit classification with evidence, followed by appropriate remedies.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `rubric` / `Signal versus backend noise`\nLLM: 3 → Junior: 3\n\n> The findings list contained only user-actionable items: the misattributed 1885 census and the death index's transposed year. Repeated internal IDs (F1, N1, P1, S1) across unrelated records were not listed as findings or given recommended actions. The FamilySearch profile-checklist block (marriage place missing city, marriage has no tagged sources) was presented as a separate named block outside the findings count, as required. The stated count of 2 findings excluded backend metadata. No backend artifacts were treated as problems to fix.\n\nJunior: (Pass - The skill demonstrated proper filtering: actionable findings only, backend artifacts acknowledged but not misclassified.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `rubric` / `Tool selection and argument quality`\nLLM: 3 → Junior: 3\n\n> The skill followed the correct path: person_read with sourceDescriptions: true to enumerate attached sources; record_read for each source carrying a 1:1: ARK (HOLE-001, HOLE-002, HOLE-003); source_attachments before the misattribution recommendation to confirm where the 1885 census actually belongs; and a follow-up person_read of KD96-WX7 to verify the true subject's facts match the indexed record. All ARKs were taken from the source URLs, not invented. The skill read all readable sources before making recommendations.\n\nJunior: (Pass - The skill demonstrated correct choice of tools, precise arguments, and thorough verification steps before issuing recommendations.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `rubric` / `Coverage and honesty about what was not checked`\nLLM: 3 → Junior: 3\n\n> All four attached sources were accounted for. The three sources with record ARKs (HOLE-001, HOLE-002, HOLE-003) were read and judged. The uploaded funeral card (SD-HOLE-D) was explicitly reported as unchecked with the reason: 'Contributor upload; no indexed record behind it.' No source was described as clean without a tool response behind it, and no attached sources went unmentioned.\n\nJunior: (Pass - The skill demonstrated proper accounting for all sources, with clear reasons for what could not be checked.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_r4k`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements. It read all four attached sources (SD-HOLE-A, SD-HOLE-B, SD-HOLE-C, SD-HOLE-D) and accounted for each: the 1900 census was evaluated and noted as fitting the profile; the death index was fully analyzed; the 1885 census was thoroughly investigated; the photograph/funeral card was explicitly noted as unchecked with the reason (contributor upload, no indexed record). The skill provided appropriate remediation recommendations for each finding: re-read and correct the index for the death year error, and detach the 1885 census with explanation of where it belongs. The FamilySearch profile checklist was included separately as required.\n\nJunior: (Pass - The skill fully addressed the user message and input state requirements, with all sources accounted for and findings correctly limited to actionable items.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_r4k`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed arguments matching the fixture's expected_args. person_read was called with sourceDescriptions: true to enumerate attached sources. Each record ARK (HOLE-001, HOLE-002, HOLE-003) was read using the exact ARK from the source's url field. source_attachments was called with the correct ARK before the misattribution recommendation. person_read for KD96-WX7 was called to verify the true subject of the 1885 census. All calls matched their expected predicates and no fixture_not_found errors occurred.\n\nJunior: (Pass - The skill demonstrated correct tool usage, precise arguments, and thorough verification steps before issuing recommendations.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_r4k`** — `rubric` / `Remediation doctrine`\nLLM: 3 → Junior: 3\n\n> The skill correctly applied remediation doctrine to both findings. For the death index (indexing error), it recommended re-reading the original record and correcting the index—the standard remedy for a single mis-transcribed field on an otherwise consistent record. It explicitly stated the source should be kept attached as good evidence. For the 1885 census (misattribution), it recommended detaching and named the true subject (KD96-WX7, b. 1852) with supporting evidence from the person_read response. The detach recommendation was licensed by the multi-field disagreement and the source_attachments verification showing the record is attached to both persons.\n\nJunior: (Pass - The skill applied doctrine correctly:\n\nIndex error → re‑read and correct, keep attached.\n\nMisattribution → detach, with true owner named.\n\nVariance → note but not escalate.\n\nMemory → report as unchecked.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_r4k`** — `rubric` / `Classification before recommendation`\nLLM: 3 → Junior: 3\n\n> Each finding carries explicit classification with supporting evidence. For the death index, the skill classified it as an indexing error and cited the matching fields: 'The day, month, death place (Erskine, Polk County), birth year (1875), and birthplace (Norway) all align with the profile — only the year is off.' For the 1885 census, it classified it as misattribution and enumerated the disagreements in a table format, then provided the decisive cue: 'if Christian P. Hole was born in 1875, he would have been ten years old in 1885 and could not be the head of this household.' Both classifications are explicit and evidence-based.\n\nJunior: (Pass - The skill demonstrated proper sequencing: explicit classification with evidence, followed by appropriate remedies.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_r4k`** — `rubric` / `Signal versus backend noise`\nLLM: 3 → Junior: 3\n\n> The skill correctly separated actionable findings from backend artifacts. The two numbered findings (death index error and misattributed census) are user-actionable items. The FamilySearch profile checklist (marriage place missing city, marriage has no tagged sources) was presented separately after the findings, outside the count, and explicitly labeled as 'suggestions for the profile, not errors in the sources, and not counted above.' No backend artifacts (repeated IDs, storage metadata) were included in the findings or their count. The skill stated 'One note on Source A' to address the 1900 census birth year variance without elevating it to a finding.\n\nJunior: (Pass - The skill demonstrated proper filtering: actionable findings only, backend artifacts acknowledged but not misclassified.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_r4k`** — `rubric` / `Tool selection and argument quality`\nLLM: 3 → Junior: 3\n\n> The skill used the correct tool sequence. It called person_read with sourceDescriptions: true to enumerate the four attached sources. It read each source carrying a 1:1: ARK using record_read with the exact ARK from the source's url field (HOLE-001, HOLE-002, HOLE-003). Before recommending detachment of the 1885 census, it called source_attachments to verify where else the ARK is attached, then called person_read on KD96-WX7 to confirm the record's true subject. This sequence allowed the skill to name where the record belongs, not just where it does not belong.\n\nJunior: (Pass - The skill demonstrated correct choice of tools, precise arguments, and thorough verification steps before issuing recommendations.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_r4k`** — `rubric` / `Coverage and honesty about what was not checked`\nLLM: 3 → Junior: 3\n\n> All four attached sources are accounted for in the report. The three sources with record ARKs (SD-HOLE-A, SD-HOLE-B, SD-HOLE-C) were read and judged. The fourth source (SD-HOLE-D, the photograph and funeral card) was explicitly named as unchecked with the reason: 'Contributor upload; no indexed record behind it. There is nothing to read or compare against the profile.' This satisfies the requirement to name unreadable sources with the reason rather than omit them.\n\nJunior: (Pass - The skill demonstrated proper accounting for all sources, with clear reasons for what could not be checked.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_h3t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_h3t`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test where the correct behavior is to decline and route to check-warnings. Claude correctly identified that the user's question about Ole C. Hole's data contradiction (1975 residence after 1960 death) is a quality/warning check, not a source evaluation task. The skill appropriately declined its own task and routed to check-warnings, which then performed the check and returned the correct warning (hasEventAfterDeath1 contradiction). The response accurately reports the warning findings without attempting source evaluation.\n\nJunior: (Pass - The skill handled the negative test properly: declined source evaluation, routed to check‑warnings, and reported the contradiction accurately.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_h3t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_h3t`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The negative test requirement is met completely. Claude declined source-evaluation's task and routed to check-warnings as instructed. The per-test context explicitly states 'Should not enumerate or read the person's attached sources -- the question does not turn on what any source says,' and Claude correctly avoided that. The routing decision was clear and appropriate, fulfilling the complete requirement of this negative test.\n\nJunior: (Pass - The skill fully satisfied the negative test’s requirements: declined source evaluation, routed to check‑warnings, and reported the contradiction in full detail.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_h3t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_h3t`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Two tool calls were made: (1) mcp__genealogy__project_context with projectPath argument — correct and necessary to identify the person and project context; (2) mcp__genealogy__person_warnings with projectPath and personId (KD96-TV4) — both arguments are correct and match the expected usage. The personId correctly identifies Ole C. Hole, and the tool call appropriately invoked the warnings check rather than source evaluation. No fixture_not_found errors occurred. Arguments are semantically correct.\n\nJunior: (Pass - The skill demonstrated correct tool usage and precise argument handling, routing to the right tools for the negative test scenario.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_c5n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_c5n`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform source-evaluation and routed the user to conflict-resolution. The response was produced by conflict-resolution (the correct skill), not source-evaluation. The per-test context explicitly states this is a negative test where source-evaluation should NOT perform its task but should route to conflict-resolution. The handoff occurred correctly with no substantive source-evaluation output.\n\nJunior: (Pass - The skill handled the negative test properly: declined its own task, routed to conflict‑resolution, and avoided producing source‑evaluation output.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_c5n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_c5n`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined and routed without producing its own audit or output. Per the per-test context, the handoff should be silent from source-evaluation's perspective, and that is what occurred. The correct skill (conflict-resolution) handled the user's question about which census record to believe, which is the appropriate resolution path for a data conflict.\n\nJunior: (Pass - The skill fully satisfied the negative test’s requirements: silent handoff, correct routing, and complete handling by conflict‑resolution.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_c5n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_source_evaluation_c5n`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by source-evaluation during this negative test. The skill correctly declined and routed without invoking person_read, record_read, or source_attachments, as required by the per-test context. N/A — zero tool calls.\n\nJunior: (N/A - he skill handled tool usage correctly by making zero calls, fulfilling the negative test requirement.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_j4s`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: it called person_read with sourceDescriptions to enumerate the seven attached sources, read all six indexed records (SD-DRIS-A through SD-DRIS-G), identified the two genuine findings (marriage year discrepancy and death-date conflict), correctly reported the unreadable headstone photograph (SD-DRIS-F) as unchecked with the reason (no indexed record), and provided appropriate remediation guidance for each finding. The response correctly distinguished between findings and non-findings (baptism precision, census drift, 1851 residence), and accounted for all sources.\n\nJunior: (Pass - The skill fully satisfied the test requirements: all sources enumerated, all indexed records read, genuine findings identified, non‑findings excluded, unreadable source reported, and appropriate remedies provided.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_j4s`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args. person_read was called with personId 'GJ72-9WD' and sourceDescriptions: true (correct). person_quality was called with personId 'GJ72-9WD' and detail: true (correct). All six record_read calls used the correct ARKs from the source URLs: DRIS-001 through DRIS-006. No calls returned fixture_not_found errors. Arguments were semantically correct throughout.\n\nJunior: (Pass - The skill demonstrated correct tool usage and precise argument handling across all calls, ensuring complete coverage of the sources.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_j4s`** — `rubric` / `Remediation doctrine`\nLLM: 3 → Junior: 3\n\n> The response correctly applies remediation doctrine. For the marriage year discrepancy (SD-DRIS-B), it recommends re-reading the original register page and correcting whichever side has the wrong year, with the source kept attached — the correct remedy for an index error in a record with images. For the death-date conflict (SD-DRIS-C vs SD-DRIS-D), it correctly identifies this as a source-versus-source disagreement (not a profile defect) and routes it to conflict-resolution workflow rather than recommending detachment. The response does not recommend detaching either death record, which is correct because the disagreement is between two sources, not between a source and the profile. No detachment is recommended for the 1851 census entry despite its ambiguity.\n\nJunior: (Pass - The skill applied doctrine consistently:\n\nIndex errors → re‑read and correct, keep attached.\n\nSource‑versus‑source conflicts → route to conflict workflow.\n\nAmbiguous census entries → keep attached, re‑read before deciding.\n\nUploaded memory → report as unchecked.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_j4s`** — `rubric` / `Classification before recommendation`\nLLM: 3 → Junior: 3\n\n> Each finding carries explicit classification with supporting evidence. The marriage discrepancy is classified as an index error: 'same day and month, year off by 4 in a church register (exact-date record, not estimated)' — the evidence that decides it is an index error rather than a different person. The death-date conflict is classified as a source-versus-source disagreement: 'Seven-year gap, two different record types, neither date on the profile — source-vs-source conflict.' The response explicitly names the cues that decide each classification, allowing readers to verify the reasoning.\n\nJunior: (Pass - The skill demonstrated proper sequencing: explicit classification with supporting evidence, followed by appropriate remedies.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_j4s`** — `rubric` / `Signal versus backend noise`\nLLM: 3 → Junior: 3\n\n> The response correctly separates user-actionable findings from backend artifacts. The numbered findings list (2 items) contains only substantive source defects. Repeated internal IDs (P1, N1, F1, S1) that appear across unrelated records are not mentioned as findings or given recommended actions. The person_quality detail response is mentioned in the closing context ('FamilySearch's quality report flagged this pair, but it doesn't survive the ordinary-variance test') but not counted among findings or given an action. The response correctly states 'No person_quality issues to report (the issues[] array was empty)' and does not treat the birth-date conflict from the detail response as a finding.\n\nJunior: (Pass - The skill demonstrated proper filtering: actionable findings only, backend artifacts acknowledged but not misclassified.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_j4s`** — `rubric` / `Tool selection and argument quality`\nLLM: 3 → Junior: 3\n\n> The skill correctly selected tools and passed appropriate arguments. person_read was called with sourceDescriptions: true, the required path to enumerate attached sources. All six indexed records were read using the ARKs carried by each source's url field from the person_read response. The response correctly identified SD-DRIS-F as unreadable (no indexed record ARK) and reported it as such. For the death-date conflict, the response correctly notes that source_attachments would be the next step if a misattribution were suspected, though it correctly does not recommend detachment here. Tool selection and argument quality are sound throughout.\n\nJunior: (Pass - The skill demonstrated correct tool choice, proper sequencing, and precise argument handling, ensuring complete and accurate coverage of the sources.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_j4s`** — `rubric` / `Coverage and honesty about what was not checked`\nLLM: 3 → Junior: 3\n\n> Each of the seven attached sources is accounted for in the response. The six indexed records (SD-DRIS-A through SD-DRIS-E, SD-DRIS-G) are all read and judged. SD-DRIS-F (the headstone photograph) is explicitly reported as unchecked with the reason: 'No indexed record sits behind it, so its contents cannot be verified from the index.' The response is honest about this limitation and notes that if the headstone gives dates, those would be worth comparing against the death-date conflict. No source is described as clean without a tool response behind it.\n\nJunior: (Pass - The skill demonstrated proper accounting for all sources, with clear reasons for what could not be checked, and avoided mislabeling or omissions.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_source_evaluation_k9t`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The response is mostly factually correct but contains one significant unsupported claim. The skill correctly identifies Finding 1 (marriage year indexing error: 1845 vs. 1849) and correctly characterizes Finding 2 as a source-vs-source conflict on death dates (April 1878 vs. February 1885). However, the response asserts that the 1851 census entry 'is consistent with more than one explanation' without calling record_read on DRIS-005 to verify what the indexed record actually contains. The tool response shows the 1851 census indexed a residence at Melbourne, not Sherbrooke, with no birth year, spouse, or household detail — but the skill's text does not cite these specifics from the tool response, instead making a general claim about what 'an index entry carrying one disagreeing field' permits. The response also correctly notes the headstone photograph cannot be checked (no indexed record), and correctly handles the 1861 census 1816/1814 variance as ordinary census drift. The core remediation advice is sound: re-read the original for the marriage year, route the death-date conflict to the conflict workflow. The unsupported framing of the 1851 entry's ambiguity is a minor mischaracterization, not a fabrication, because the tool response does support the conclusion that the entry is sparse — but the skill did not cite it.\n\nJunior: (Agree with 2. The conclusion about the 1851 census entry was factually supportable — the tool response does show a sparse entry, a Melbourne residence, no birth year, no spouse, no household detail. But the skill never called record_read on DRIS-005, and argued from what an index entry carrying one disagreeing field permits in general rather than from what this one says. Asserting what a record allows without opening it is a correctness fault even when the outcome is right. Reporting the finding as undecided was the correct call; reaching it without reading the record was not.)"
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_source_evaluation_m8q`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified two user-actionable findings: the 1885 census is genuinely misattributed (born 1852, wife Bergit, Otter Tail County vs. profile's 1875, Inger, Polk County), and the death index has a transposed year (1954 vs. 1945). The skill verified the misattribution by reading KD96-WX7 and confirming all indexed fields match that person. The 1900 census birth year variance (1877 vs. 1875) was correctly noted but not counted as a finding, per the per-test override. The uploaded funeral card was correctly reported as unchecked. All citations match tool responses. No fabricated material.\n\nJunior: (no comment)"
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_source_evaluation_r4k`** — `base` / `Correctness`\nLLM: 3 → Junior: 2\n\n> The skill correctly identified and classified both findings. For the Minnesota Death Index (SD-HOLE-B), it accurately noted the death year discrepancy (1954 in record vs. 1945 in profile) while confirming all other fields match, correctly classifying this as an indexing error. For the 1885 census (SD-HOLE-C), it correctly identified the multi-field disagreement (birth year 1852 vs. 1875, county Otter Tail vs. Polk, wife Bergit vs. Inger, child Nils vs. Ole C.) and properly classified it as misattribution. The skill verified the misattribution by reading KD96-WX7's profile, confirming all census fields match that person exactly (born 1852, resided Aurdal Otter Tail 1885, died 1919). The 1900 census birth year variance (1877 vs. 1875) was correctly noted as ordinary census age estimation variance and not flagged as a finding. All citations match the tool responses provided.\n\nJunior: (Sources A, B and C are handled correctly — death index classified as an index error and kept attached, 1885 census detached with KD96-WX7 named after a source_attachments check, 1900 census drift declined as ordinary variance. Source D fails. The citation the skill was handed reads \"Funeral card for Christian P. Hole, Erskine, Minnesota, 1945\" — the disputed field is the death year, and a funeral card is issued at the death, so that 1945 corroborates the profile against the index. The skill wrote \"there is nothing to read or compare against the profile\", contradicting the tool response it had just enumerated, then sent the researcher to Minnesota vital records for a year already corroborated in the source list. Scored 1 rather than 2 because it is not an omission but an assertion against the record in hand, on the one source bearing directly on the finding. Remediation doctrine stays 3 deliberately: the remedy ordering is inverted against #1606 doctrine, but the rubric's partial bar names only the detach-hedge failure. The same inverted ordering appears in m8q — a rubric gap, not a score.)\n\nRescored 1 → 2 on review (PR #2728, florencemashipei; accepted by promise-emmanuel). The funeral card is a memory whose title an uploader typed, often copied from the tree, so its 1945 does not independently corroborate the profile against the index, and \"nothing to read or compare\" is not an assertion against a record. Sending the researcher to the death certificate is sound. The miss is an omission: the reply never names the funeral card as an item to look at. That is a 2, not a 1."
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_source_evaluation_j4s`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The response correctly identifies the marriage year discrepancy (1845 vs 1849) and the death-date conflict between two sources (1878 vs 1885). However, it over-reports by presenting the baptism record (SD-DRIS-A) as a finding in the 'Profile gaps' section. The per-test context explicitly states that the christening date (12 March 1814) is not a contradiction of the profile's birth year (1814) — a christening is a different event that bounds the birth but does not fix it, and narrowing a country to a parish is precision refinement, not a finding. The response correctly avoids numbering this as a finding, but by listing it under 'Profile gaps the sweep turned up — not source defects, not counted above,' it still presents it as a defect when the per-test guidance states 'Offering the fuller date and parish as an improvement the researcher could adopt is not a finding and should not be penalised as one.' Additionally, the response does not explicitly state that the 1861 census's two-year birth drift (1816 vs 1814) is ordinary variance and correctly excludes it from findings, which is correct. The core findings (marriage year and death-date conflict) are accurately characterized.\n\nJunior: (Agree with 2, for a different reason than the judge gives. The skill identified both real defects and did separate the baptism note from the findings — it sits under a heading saying \"not source defects, not counted above\". The judge reads placing it there at all as over-reporting. The narrower fault: a christening date and a parish name are an improvement the researcher could adopt, and the skill framed them as a profile gap rather than an offer. An interpretation error about what kind of thing it found, not a counting error.)"
+    }
+  ]
+}

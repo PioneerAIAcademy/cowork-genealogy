@@ -12,7 +12,7 @@
         }
       },
       "supporting_sources": [
-        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry for David Young and Isabella Inglis, 25 Dec 1867, naming her parents"
+        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry for David Young and Isabella Inglis, 25 Dec 1867, naming her parents as Thomas Inglis and Jane Borthwick Inglis (ark:/61903/1:1:X9T4-M2N2)"
       ],
       "required": true
     },
@@ -24,10 +24,10 @@
         "subject_person": "Isabella Inglis (KHL9-LKF)",
         "fact_type": "Marriage",
         "date": "25 December 1867",
-        "place": "Edinburgh, Midlothian, Scotland"
+        "place": "Scotland"
       },
       "supporting_sources": [
-        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry of 25 Dec 1867"
+        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry of 25 Dec 1867 for David Young and Isabella Inglis (ark:/61903/1:1:X9T4-M2N2). The index gives no registration district, parish or county, so the place is recorded only to national level."
       ],
       "required": true
     },
@@ -42,7 +42,7 @@
         "place": "Scotland"
       },
       "supporting_sources": [
-        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry of 25 Dec 1867, giving the bride's age"
+        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry of 25 Dec 1867, giving the bride's age as 23 (ark:/61903/1:1:X9T4-M2N2)"
       ],
       "required": false
     }
