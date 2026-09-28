@@ -30,6 +30,8 @@ allowed-tools:
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
+**Mandatory first tool call:** Every turn of this skill — URL generation, nil-result logging, or capture triage — must begin by calling `place_search` to resolve the working place. Never generate a URL, write a log entry, or assess results before making that call. A turn that makes no MCP tool calls has not executed this skill.
+
 This skill never loads a page itself — it builds a pre-filled search URL,
 the user clicks it in their own browser, captures the page as a PDF, and
 uploads it back. The agent supplies the genealogical expertise; the user's
