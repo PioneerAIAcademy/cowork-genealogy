@@ -281,6 +281,7 @@ const HAS_DELAYED_BURIAL_365 = "hasDelayedBurial365";
 const HAS_NO_CHILDREN_CONFLICT = "hasNoChildrenConflict";
 const HAS_NO_COUPLE_RELATIONSHIPS_CONFLICT = "hasNoCoupleRelationshipsConflict";
 const HAS_STILLBIRTH_CONFLICT = "hasStillbirthConflict";
+const DELAYED_BURIAL_DAYS = 365;
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -1816,7 +1817,7 @@ function checkHasDiffSurnameMale(mob: Mob): PersonWarning | null {
 // relatives* variant.
 
 function checkHasDelayedBurial365(mob: Mob): PersonWarning | null {
-  if (!hasDelayedBurial(mob, 365)) return null;
+  if (!hasDelayedBurial(mob, DELAYED_BURIAL_DAYS)) return null;
   const earliestBurial = earliestDayOfSelfFacts(mob, BURIAL);
   const latestDeath = latestDayOfSelfFacts(mob, DEATH);
   // Non-null here because the predicate would have returned false otherwise.
@@ -1828,7 +1829,7 @@ function checkHasDelayedBurial365(mob: Mob): PersonWarning | null {
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BURIAL, DEATH),
-    message: `The burial date is at least ${actualDays} days after the death date, more than the 365-day threshold — burial usually happens within days of death.`,
+    message: `The burial date is at least ${actualDays} days after the death date, more than the ${DELAYED_BURIAL_DAYS}-day threshold — burial usually happens within days of death.`,
   };
 }
 
