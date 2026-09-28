@@ -97,7 +97,7 @@ export function standardPlaceToCollectionsQuery(value: string): string {
  */
 export async function fetchAllCollections(
   token: string,
-  principal?: Principal,
+  principal: Principal,
 ): Promise<FSCollectionsResponse> {
   if (
     cache &&
@@ -109,31 +109,17 @@ export async function fetchAllCollections(
 
   const url = `${FS_COLLECTIONS_URL}?count=5000&offset=0&facets=OFF`;
 
-  // Use fsFetch when principal is available (the normal tool path); fall back
-  // to a direct fetch for any legacy callers that pass only a token string.
-  const response = principal
-    ? await fsFetch(
-        principal,
-        url,
-        {
-          headers: {
-            Accept: "application/json",
-            "User-Agent": BROWSER_USER_AGENT,
-          },
-        },
-        COLLECTIONS_TIMEOUT_MS,
-      )
-    : await (await import("../utils/http.js")).fetchWithRetry(
-        url,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "User-Agent": BROWSER_USER_AGENT,
-          },
-        },
-        COLLECTIONS_TIMEOUT_MS,
-      );
+  const response = await fsFetch(
+    principal,
+    url,
+    {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
+    },
+    COLLECTIONS_TIMEOUT_MS,
+  );
 
   if (!response.ok) {
     throw new Error(

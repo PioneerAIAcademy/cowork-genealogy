@@ -117,3 +117,22 @@ describe("fsFetchWithTimeout — 401 re-read", () => {
     expect(fetchWithTimeout).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("fs-fetch — structural guarantees", () => {
+  it("never imports refreshAccessToken", async () => {
+    // fs-fetch.ts must never refresh on a 401 — a refresh revokes every other
+    // holder's token (measured in PR #2859). The guarantee is structural: the
+    // module imports only getValidToken from refresh.ts, not refreshAccessToken.
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const code = readFileSync(
+      resolve(__dirname, "../../src/utils/fs-fetch.ts"),
+      "utf-8",
+    );
+    // Strip comments (single-line and multi-line) so the JSDoc mention doesn't match.
+    const codeWithoutComments = code
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*/g, "");
+    expect(codeWithoutComments).not.toContain("refreshAccessToken");
+  });
+});
