@@ -19,8 +19,11 @@ from e2e.calibrate_judge import (
     load_annotated_runs,
     main,
 )
+from e2e import stamp_bundle_digest as bundle_stamp_mod
 from e2e import stamp_findings_hash as stamp_mod
+from e2e.blind_bundle import bundle_digest, bundle_paths
 from e2e.provenance import findings_hash
+from e2e.stamp_bundle_digest import stamp as stamp_bundle_digest
 from e2e.stamp_findings_hash import stamp as stamp_findings_hash
 
 
@@ -408,6 +411,96 @@ def test_stamp_reflects_a_fixture_edit(tmp_path):
                                  {"id": "f2", "required": True}]}),
         encoding="utf-8")
     assert stamp_findings_hash(ann_path, fr) != h1
+
+
+# --- blind-bundle provenance: blind_bundle_digest (issue #2487) -------------
+
+
+def test_loader_bundle_digest_mismatch_is_error(tmp_path):
+    # A stamped blind_bundle_digest that no longer matches the 4 graded files.
+    rr, fr, _ = _layout(tmp_path, ann={
+        "per_finding": {"f1": "true", "f2": "partial"},
+        "blind_bundle_digest": "0" * 64,  # stale/wrong digest
+    })
+    cases, problems = load_annotated_runs(rr, fr)
+    assert cases == []
+    assert [p.severity for p in problems] == ["error"]
+    assert "blind_bundle_digest mismatch" in problems[0].message
+
+
+def test_loader_absent_bundle_digest_is_grandfathered(tmp_path):
+    # Legacy grade with no blind_bundle_digest: included, flagged unverifiable.
+    rr, fr, _ = _layout(tmp_path)  # default ann carries no blind_bundle_digest
+    cases, problems = load_annotated_runs(rr, fr)
+    assert problems == []
+    assert len(cases) == 1
+    assert cases[0]["blind_bundle_digest_present"] is False
+
+
+def test_loader_matching_bundle_digest_is_verified(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path)
+    slug = "smith-1850"
+    stem = "run-2026-06-15_10-00-00"
+    paths = bundle_paths(slug, stem, fixtures_root=fr, runlogs_root=rr)
+    good = bundle_digest(paths)
+    ann_path.write_text(
+        json.dumps({"per_finding": {"f1": "true", "f2": "partial"},
+                    "blind_bundle_digest": good}),
+        encoding="utf-8")
+    cases, problems = load_annotated_runs(rr, fr)
+    assert problems == []
+    assert len(cases) == 1
+    assert cases[0]["blind_bundle_digest_present"] is True
+
+
+def test_stamp_bundle_then_load_round_trips(tmp_path):
+    # The writer's stamp and the loader's check share one implementation, so a
+    # freshly stamped annotation must verify.
+    rr, fr, ann_path = _layout(tmp_path)
+    stamp_bundle_digest(ann_path, fr, rr)
+    cases, problems = load_annotated_runs(rr, fr)
+    assert problems == []
+    assert len(cases) == 1
+    assert cases[0]["blind_bundle_digest_present"] is True
+
+
+def test_stamp_bundle_writes_digest_and_preserves_sibling_keys(tmp_path):
+    rr, fr, ann_path = _layout(
+        tmp_path, ann={"annotator": "alice", "per_finding": {"f1": "true", "f2": "partial"}})
+    h1 = stamp_bundle_digest(ann_path, fr, rr)
+    written = json.loads(ann_path.read_text(encoding="utf-8"))
+    assert written["blind_bundle_digest"] == h1
+    assert written["per_finding"] == {"f1": "true", "f2": "partial"}
+    assert written["annotator"] == "alice"
+    # Idempotent: a second stamp of unchanged files leaves it equal.
+    assert stamp_bundle_digest(ann_path, fr, rr) == h1
+    assert json.loads(ann_path.read_text(encoding="utf-8")) == written
+
+
+def test_stamp_bundle_reflects_a_tree_edit(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path)
+    h1 = stamp_bundle_digest(ann_path, fr, rr)
+    tree_path = rr / "smith-1850" / "run-2026-06-15_10-00-00.final-tree.gedcomx.json"
+    tree_path.write_text(
+        json.dumps({"persons": [{"id": "I1"}, {"id": "I2"}]}),
+        encoding="utf-8")
+    assert stamp_bundle_digest(ann_path, fr, rr) != h1
+
+
+def test_stamp_bundle_cli_main_success(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path)
+    rc = bundle_stamp_mod.main([
+        str(ann_path), "--fixtures-root", str(fr), "--runlogs-root", str(rr)])
+    assert rc == 0
+    written = json.loads(ann_path.read_text(encoding="utf-8"))
+    assert "blind_bundle_digest" in written
+
+
+def test_stamp_bundle_cli_main_missing_file_exits_1(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path, fixture=False)
+    rc = bundle_stamp_mod.main([
+        str(ann_path), "--fixtures-root", str(fr), "--runlogs-root", str(rr)])
+    assert rc == 1
 
 
 # --- stamp CLI main(): arg parsing + exit codes + path resolution ----------

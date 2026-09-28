@@ -9,7 +9,7 @@
   },
   "input": {
     "user_message": "Create the first research plan for q_001 — using Kentucky death certificates, when and where did Elijah Wilkins die?",
-    "scenario": "wilkins-first-plan"
+    "scenario": "wilkins-first-plan-surveyed"
   },
   "mcp_fixtures": [
     "place-search-muhlenberg",

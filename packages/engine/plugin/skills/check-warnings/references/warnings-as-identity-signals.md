@@ -179,11 +179,11 @@ Escalation guidance:
 - 1 `contradiction` + 1+ `implausible`s: likely identity confusion; recommend
   timeline review
 - 2+ `contradiction`s: first ask whether one wrong fact would produce
-  all of them, and settle it from the `factIds` the tool returned --
+  all of them, and settle it from the `facts` the tool returned --
   contradictions citing overlapping facts are two symptoms of one
-  wrong fact rather than two people; disjoint `factIds` mean no single
+  wrong fact rather than two people; disjoint `facts` mean no single
   fact explains them. One tag cannot take part in that test:
-  `hasEventAfterDeath1` builds its `factIds` from `selfFactIds(mob,
+  `hasEventAfterDeath1` builds its `facts` from `selfFactIds(mob,
   null)`, every typed fact the person has, so it overlaps every other
   warning by construction. Read disjointness off the narrower-scope
   contradictions -- `hasChristeningBeforeBirth` (Christening, Birth)
