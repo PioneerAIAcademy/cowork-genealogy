@@ -152,7 +152,7 @@ regardless of how directly the request named the destination.
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | `proof-conclusion` wrote `<ps_id>`, and (tier < probable, or its concluded relationship or fact is now in `tree.gedcomx.json`) | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory to invoke and record, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. "Mandatory" means the gate must run and its verdict must land in `evaluations[]` before the question can be considered done — it does NOT mean you must apply its suggested fix; see **Mentor checkpoints** for that distinction. |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified: write `project.status = "completed"` via `research_append`, then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified: invoke `@plugin:proof-conclusion` for the last-resolved question, stating that every question is resolved and both gates hold; it writes `project.status = "completed"`. Never write `project.status` yourself. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    **Record-extraction contract — enforced, not advisory.** Inline
@@ -318,7 +318,7 @@ After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
  3. **This is a hard gate — and so, separately, is the proof-critique mentor
     gate on that `<ps_id>`** (see **Mentor checkpoints** and the routing
     table): never let `question-selection` mark the question resolved, and
-    never write `project.status = "completed"`, while either check fails —
+    never let `project.status` go to `completed`, while either check fails —
     any tier-≥-probable conclusion unencoded in the tree, or any resolved
     question's `ps_id` with no `proof-critique` verdict on record. A run does
     not finish with a conclusion that never reached the tree, or that never
@@ -396,8 +396,8 @@ the literal string `"project"` if no specific target is implied.
 
 Stop when one of:
 
-- `project.status == "completed"` — the orchestrator writes this
-  via `research_append` once all questions are `resolved` **and every
+- `project.status == "completed"` — the `proof-conclusion` agent writes this
+  once all questions are `resolved` **and every
   tier-≥-probable conclusion is encoded in `tree.gedcomx.json`**
   (Tree-encoding gate; per claim where a `claims[]` breakdown exists) — see
   routing table
