@@ -333,6 +333,20 @@
             }
           }
         },
+        "agent_returns": {
+          "description": "What each spawned subagent returned, in call order. On the direct-agent arm this is the AGENT's own text, where `text_response` is the main-thread dispatcher relaying it. Absent on a routed run, which spawns nothing.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["subagent_type", "text"],
+            "additionalProperties": false,
+            "properties": {
+              "subagent_type": { "type": "string" },
+              "text": { "type": "string" },
+              "is_error": { "type": "boolean" }
+            }
+          }
+        },
         "files_created": {
           "type": "array",
           "items": { "type": "string" }

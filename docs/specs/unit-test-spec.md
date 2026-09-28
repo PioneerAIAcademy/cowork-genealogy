@@ -668,7 +668,7 @@ that spawn plus a **substantive** reply -- `derive_activated` via
 `_is_substantive`, which requires at least two sentences and ten words.
 
 **That threshold is the thing to design around, and it was measured the hard
-way.** A decline is short by definition, so a one-sentence decline leaves
+way — twice.** A decline is short by definition, so a one-sentence decline leaves
 `activated` false and a positive decline test fails on activation even when the
 agent behaved correctly and every judge dimension scored 3 or null -- observed
 on `v1_2026-09-27_22-55-04`, where `ut_search_wikipedia_008` did exactly that.
@@ -681,6 +681,18 @@ does handle -- which is better for the reader and clears the threshold. A suite
 whose decline cannot be phrased in two sentences should use a negative with
 `grade_on_invariant` instead, where `_compute_outcome` returns on the invariant
 before activation is read.
+
+**And two sentences is not sufficient either, which is why
+`ut_search_wikipedia_008` ended up as that negative.** Under
+`_SUBSTANTIVE_MIN_WORDS_LONG` (30 words) `_is_substantive` scans the reply for
+any **shipped skill name** and classifies a match as routing rather than
+substance. A correct 25-word decline reading "This agent handles genealogy
+**research** tasks …" scored `activated: false` on `v1_2026-09-28_09-49-04`
+because `research` is a skill directory — so a genealogy decline cannot use the
+word "research" and stay under 30 words. Padding it past the threshold would be
+writing prose to satisfy a heuristic. A decline test therefore belongs on
+`grade_on_invariant`, where none of this is read; the lead's 2026-09-24 ruling
+that made it a positive test predates both measurements.
 
 The workflow validators that would otherwise fail such a test skip on
 `scope-decline`; `test_reply_does_not_narrate_pending_step` deliberately does
@@ -697,7 +709,40 @@ On a direct test the harness:
 - decides the positive-test outcome on `agents_spawned` instead of
   `skills_invoked`, which is empty by construction (§7);
 - fills the judge's `{user_message}` slot with the delegation and its
-  `{skills_invoked}` slot with the spawned agent.
+  `{skills_invoked}` slot with the spawned agent;
+- grades the reply on **`output.agent_returns`**, the agent's own return, not on
+  `text_response`.
+
+**`text_response` is the MAIN THREAD's text, and on this arm the main thread is
+a dispatcher relaying someone else's work.** It paraphrases, and the paraphrase
+is not the subject under test, so any reply-shape rule read off it grades the
+dispatcher. Measured on
+`eval/runlogs/unit/search-wikipedia/v1_2026-09-28_09-49-04`: six of ten tests
+failed on reply shape while **every** deterministic validator passed 10/10, and
+two replies opened "The subagent has completed the task" / "The subagent has
+looked up …" — wording no agent body produces about itself. A live capture of
+`ut_search_wikipedia_002` the same day shows both texts from one run:
+
+    agent:       Saved the Wikipedia summary to `albert-einstein.md`.
+    main thread: The subagent has completed the task. It looked up **Albert
+                 Einstein** on Wikipedia and saved the article summary to a
+                 file named **`albert-einstein.md`** in the working folder.
+
+The agent obeyed its one-line contract and the suite was failing the
+dispatcher. `agent_returns` (`[{subagent_type, text, is_error?}]`) is collected
+off the message stream — the `PreToolUse` hook that fills `builtin_tool_calls`
+fires *before* a tool runs and structurally cannot carry a result — and the
+runtime's own trailers (`agentId: …`, `<usage>…</usage>`) are stripped at
+capture by `strip_agent_return_trailer`, since a grader reading them raw sees
+extra lines and fails a one-line return. A validator that grades reply shape
+reads `agent_returns` and falls back to `text_response`, so a **routed** test,
+whose reply genuinely is the subject's, is unaffected.
+
+**The dispatcher prompt cannot be constrained from a test.** `DIRECT_DISPATCH_PROMPT`
+is harness-owned precisely so "no test can weaken the relay instruction", so
+tightening the agent body, the delegation or the rubric cannot fix a
+dispatcher-shaped reply. Reading the agent's own return is the only fix
+available to a conversion card.
 
 **What `test.skill` names.** A skill directory under
 `packages/engine/plugin/skills/`, **or** a plugin-agent file of that name under

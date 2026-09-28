@@ -3,8 +3,8 @@
     "id": "ut_search_wikipedia_008",
     "skill": "search-wikipedia",
     "name": "Out-of-scope request — decline, search nothing, write nothing",
-    "type": "positive",
-    "description": "The delegation carries a request entirely outside the genealogy toolkit's scope. The agent must recognise it is not an encyclopedia article lookup, decline in one sentence, and neither call wikipedia_search nor save a file — it must not coerce the request into a lookup ('look up CSV on Wikipedia' is a contorted reading that ignores the actual ask). Converted from a routed out-of-scope negative to a direct decline test on the lead's ruling of 2026-09-24 (issue #2795): with the skill deleted there is no router, and a direct negative has no defined outcome path — `activated` is derived from the spawn plus a substantive reply, and the agent's return contract makes every reply substantive, so a routed `correct_skill: []` reading would abort `skill not found` and an activation reading would be vacuous. The verdict is therefore the deterministic no-harm invariant plus the judge's base dimensions. The 'wikipedia-search-any' fixture stays declared so the zero-calls assertion is falsifiable and is expected to go UNUSED (#1788, #1662 finding F6). Do not remove it as an unused fixture.",
+    "type": "negative",
+    "description": "The delegation carries a request entirely outside the genealogy toolkit's scope. The agent must recognise it is not an encyclopedia article lookup, decline, and neither call wikipedia_search nor save a file - it must not coerce the request into a lookup ('look up CSV on Wikipedia' is a contorted reading that ignores the actual ask). A DIRECT negative graded on its invariant, which unit-test-spec.md 5.2.1 documents as the one negative shape that converts: `_compute_outcome` returns on the tag-gated validator before activation is read. The lead's 2026-09-24 ruling made this a POSITIVE decline test, before either failure mode was measurable. Both then fired. A positive decline is graded on `activated`, which `derive_activated` takes from `_is_substantive`: under 30 words it scans the reply for any shipped skill name and classifies a match as routing rather than substance - so the correct 25-word decline 'This agent handles genealogy research tasks' scored activated=false purely because `research` is a skill name (v1_2026-09-28_09-49-04). Padding the decline past 30 words to clear the scan would be writing prose to satisfy a heuristic. correct_skill is empty because no agent owns a programming question. The 'wikipedia-search-any' fixture stays declared so the zero-calls clause is falsifiable and is expected to go UNUSED (#1788, #1662 finding F6). Do not remove it as an unused fixture.",
     "tags": [
       "out-of-scope",
       "no-wiki-no-write",
@@ -18,10 +18,15 @@
   },
   "judge_context": [
     "The agent should decline: the request is outside the genealogy toolkit's scope and must not be coerced into an encyclopedia lookup. It has no lane to hand this back to - historical-context, locality-guide and search-familysearch-wiki are all genealogy lanes and none owns a programming question - so a plain decline is the whole correct answer and naming another agent would be wrong.",
-    "A no-wiki-no-write invariant validator also runs on this test: no wikipedia_search call and no saved .md file. The registered fixture exists only to make that clause falsifiable; do not read it as a hint that a lookup is expected.",
-    "Two short sentences are the correct length - the scope is stated and what the agent does handle is named. Do not penalize brevity, and do not expect a summary of anything."
+    "A no-wiki-no-write invariant validator decides this test's outcome: no wikipedia_search call and no saved .md file. The registered fixture exists only to make that clause falsifiable; do not read it as a hint that a lookup is expected.",
+    "Brevity is correct. Do not expect a summary of anything, and do not penalize a decline for being short."
   ],
   "mcp_fixtures": [
     "wikipedia-search-any"
-  ]
+  ],
+  "negative": {
+    "correct_skill": [],
+    "grade_on_invariant": true,
+    "explanation": "The request is a general programming question, not genealogy. The routing-independent invariant is that search-wikipedia must not run the lookup or save a summary for a request that is not a lookup at all, gated deterministically by test_no_wiki_no_write (eval/harness/validators/test_search_wikipedia.py), whose tag gate fires on no-wiki-no-write OR scope-decline. Graded on the invariant because the acceptable no-harm behaviours all leave the agent out: it may decline in place at any length, and on the direct arm there is no router whose choice could be graded instead."
+  }
 }

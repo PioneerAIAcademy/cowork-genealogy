@@ -445,7 +445,33 @@ _NARRATION_RE = re.compile(
 )
 
 
-def test_reply_does_not_narrate_pending_step(text_response, test):
+def _graded_reply(agent_returns, text_response: str) -> str:
+    """The text this suite's reply rules apply to.
+
+    On the direct arm `text_response` belongs to the MAIN THREAD, which is a
+    dispatcher relaying the agent's return -- it paraphrases, and what it writes
+    is not the subject under test. `agent_returns` carries the agent's own text,
+    so it wins whenever the run spawned one.
+
+    Measured on `v1_2026-09-28_09-49-04` plus a live capture of
+    `ut_search_wikipedia_002` the same day, one run, two texts:
+
+        agent:       Saved the Wikipedia summary to `albert-einstein.md`.
+        main thread: The subagent has completed the task. It looked up **Albert
+                     Einstein** on Wikipedia and saved the article summary ...
+
+    The agent obeyed its one-line contract; the dispatcher did not, and the
+    dispatcher is what the suite had been failing. Falls back to
+    `text_response` so a ROUTED run -- which spawns nothing and whose reply IS
+    the subject's -- keeps grading exactly as before.
+    """
+    for entry in agent_returns or []:
+        if entry.get("subagent_type") == "search-wikipedia" and entry.get("text"):
+            return entry["text"]
+    return text_response or ""
+
+
+def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test):
     """No assistant turn announces writing the file — not just the closing one.
 
     `text_response` joins every turn's text (blocks within one turn with no
@@ -471,17 +497,18 @@ def test_reply_does_not_narrate_pending_step(text_response, test):
     # here would make this validator inert the moment the harness stopped
     # supplying `text_response` — the silent-pass failure mode this whole
     # file exists to avoid. Failing names both causes.
-    assert text_response, (
+    reply = _graded_reply(agent_returns, text_response)
+    assert reply, (
         "positive run recorded no reply; the agent's return contract requires "
         "a caller-facing line and the two summary paragraphs. If the reply WAS non-empty, "
         "the harness has stopped passing `text_response` into validators "
         "(see the run_validators call site in orchestrator.py) and this "
         "check is inert rather than passing."
     )
-    hit = _NARRATION_RE.search(text_response)
+    hit = _NARRATION_RE.search(reply)
     assert not hit, (
         f"reply narrates a pending step ({hit.group(0)!r}) instead of only "
-        f"reporting the saved file. Agent body, '## What to do': 'Do not announce "
-        f"a step before doing it.' The phrase may sit in a mid-workflow "
-        f"turn — this string joins every turn's text. Full text: {text_response!r}"
+        f"the saved file. Agent body, '## What to do': 'Do not announce "
+        f"a step before doing it.' On a direct run this is the AGENT's own "
+        f"return, not the dispatcher's relay. Full text: {reply!r}"
     )
