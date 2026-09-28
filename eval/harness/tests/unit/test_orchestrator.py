@@ -2186,8 +2186,10 @@ def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
         # Correctly routed: the skill under test declined, the accepted skill ran.
+        # Read off the fixture, so repointing NEGATIVE_TEST_PATH cannot leave a
+        # stale name here that the fixture does not accept.
         return SkillRunResult(
-            text_response="", skills_invoked=["project-status"],
+            text_response="", skills_invoked=list(spec.negative["correct_skill"][:1]),
             tool_calls=[], duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
         )
