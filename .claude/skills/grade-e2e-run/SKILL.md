@@ -41,11 +41,20 @@ Take the `run-<ts>.json` path (or "the latest run for `<slug>`" → the newest
 (`run-<ts>`). You use these only to locate the four files above — you never open
 `run-<ts>.json` itself.
 
-### 2 — Load the fixture and the agent's final state
+### 2 — Load the blind bundle
 
-Read the four blind files. `run-<ts>.final-tree.gedcomx.json` is required — no tree
-means there is nothing to grade, so stop and say so (the run was skipped or crashed
-before producing a tree). `run-<ts>.final-research.json` is optional.
+Run the blind bundle command to get exactly the four files you may read:
+
+```
+cd eval/harness && uv run python -m e2e.blind_bundle <slug> [<stem>]
+```
+
+This prints the paths and a `blind_bundle_digest`. The command physically cannot
+emit `run-<ts>.json`. If `<stem>` is omitted it uses the newest run log.
+
+Read the four files it printed. `run-<ts>.final-tree.gedcomx.json` is required —
+no tree means there is nothing to grade, so stop and say so (the run was skipped
+or crashed before producing a tree). `run-<ts>.final-research.json` is optional.
 
 ### 3 — For each finding, show the evidence and collect a label
 
@@ -129,7 +138,7 @@ Then tell the user to commit the `.ann.json`. **Do not run `calibrate_judge` —
 even `--dry-run`.** It classifies *every* annotation in the tree, not just this one.
 The developer and genealogist teams never run it; all `calibrate_judge` use
 (`--dry-run` classification and the full sweep) is the maintainer's step, run
-periodically — documented in `docs/e2e-testing-guide.md` under "Step 8 — Grade the run."
+periodically — documented in `docs/e2e-testing-guide.md` under "Step 6 — Grade the run."
 
 ## What you do not do
 
