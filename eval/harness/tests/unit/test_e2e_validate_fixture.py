@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from pathlib import Path
 
 import e2e.validate_fixture as vf
@@ -443,10 +445,16 @@ def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
 
 # --- record-hint ark citation (issue #970 / #1025) --------------------
 
-def _write_record_hint_meta(fixture_dir, *, resolved: bool, genre: str = "record-hint"):
-    (fixture_dir / "fixture.json").write_text(
-        json.dumps({"id": fixture_dir.name, "genre": genre}), encoding="utf-8"
-    )
+_UNSET = object()  # distinguishes "omit image_basis" from writing `null`
+
+
+def _write_record_hint_meta(
+    fixture_dir, *, resolved: bool, genre: str = "record-hint", image_basis=_UNSET
+):
+    meta = {"id": fixture_dir.name, "genre": genre}
+    if image_basis is not _UNSET:
+        meta["image_basis"] = image_basis  # may be a non-bool / None on purpose
+    (fixture_dir / "fixture.json").write_text(json.dumps(meta), encoding="utf-8")
     body = "Notes for reviewers\n\n" + (
         "Resolved: false match, no findable substitute."
         if resolved
@@ -549,6 +557,121 @@ def test_lint_fixture_passes_a_resolved_record_hint_fixture_with_an_ark(tmp_path
     _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
+
+
+# --- image_basis flag (issue #2877) -----------------------------------
+#
+# `image_basis` is a declared flag: a record-hint resolution that rested on
+# reading the original page images sets `"image_basis": true`, which raises the
+# citation bar from "any full ark" to "an image ark (3:1:/3:2:)". The check
+# keys on the flag, NOT on README prose about images — the pair of tests below
+# proves it, since identical findings (only index arks) pass with the flag
+# absent and fail with it on.
+
+_INDEX_ONLY = {"f1": ["marriage register (ark:/61903/1:1:6PFD-Q43C)"]}
+_WITH_IMAGE = {"f1": ["marriage register image (ark:/61903/3:1:9Q97-YSRZ-GWP)"]}
+
+
+def test_image_basis_true_requires_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY))
+    assert any("image ark" in e for e in errors)
+
+
+def test_image_basis_true_passes_with_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE)) == []
+
+
+def test_image_basis_absent_passes_with_only_index_arks(tmp_path):
+    # The other half of the meaningful pair: identical index-only findings, no
+    # flag. A one-directional test would pass even if the check ignored the flag.
+    _write_record_hint_meta(tmp_path, resolved=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY)) == []
+
+
+def test_image_basis_false_passes_with_only_index_arks(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=False)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY)) == []
+
+
+def test_image_basis_non_bool_string_is_error(tmp_path):
+    # "true" would read as truthy and wrongly enable the check; it must be a
+    # hard error instead, even though the findings carry a valid image ark.
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis="true")
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE))
+    assert any("must be a boolean" in e for e in errors)
+
+
+def test_image_basis_non_bool_int_is_error(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=1)
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE))
+    assert any("must be a boolean" in e for e in errors)
+
+
+def test_image_basis_null_is_error(tmp_path):
+    # JSON null -> Python None; caught via key presence, distinct from absent.
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=None)
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE))
+    assert any("must be a boolean" in e for e in errors)
+
+
+def test_image_basis_non_bool_does_not_also_fire_the_image_check(tmp_path):
+    # Strict `is True`: a non-bool is flagged for its type but must NOT ALSO
+    # trigger the image-ark check, or one typo yields two errors for one cause.
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis="true")
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY))
+    assert any("must be a boolean" in e for e in errors)
+    assert not any("image ark" in e for e in errors)
+
+
+def test_image_basis_ignored_on_strip_genre(tmp_path):
+    # The non-record-hint skip precedes the flag check, so a strip fixture with
+    # image_basis true and no ark at all is not checked here at all.
+    _write_record_hint_meta(tmp_path, resolved=True, genre="strip", image_basis=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings({})) == []
+
+
+def test_image_basis_ignored_on_draft(tmp_path):
+    # The draft-marker skip likewise precedes the flag check.
+    _write_record_hint_meta(tmp_path, resolved=False, image_basis=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY)) == []
+
+
+def test_lint_fixture_hard_fails_image_basis_true_without_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_avoid_pair_findings(_INDEX_ONLY),
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("image ark" in e for e in errors)
+
+
+def test_lint_fixture_passes_image_basis_true_with_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_avoid_pair_findings(_WITH_IMAGE),
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert errors == []
+
+
+@pytest.mark.parametrize(
+    "slug",
+    ["heinrich-zinsmeister-death", "katalin-horak-son", "cornelius-booysen-death"],
+)
+def test_committed_no_image_read_fixtures_still_pass(slug):
+    # These resolved record-hint fixtures mention images in their README only to
+    # record that the reading was NOT relied on; they set no image_basis flag.
+    # The check keys on the flag, not the README wording, so they must pass.
+    fixture_dir = vf.DEFAULT_FIXTURES_ROOT / slug
+    assert fixture_dir.is_dir(), f"missing corpus fixture {slug}"
+    _, errors = lint_fixture(fixture_dir)
+    assert errors == [], errors
 
 
 # --- genre-aware WARN advice (issue #2306 / PR #2634) ------------------

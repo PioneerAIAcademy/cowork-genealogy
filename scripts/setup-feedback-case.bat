@@ -115,12 +115,16 @@ REM walk recursively, so one can arrive at any depth. Claude Code loads a subtre
 REM CLAUDE.md when it reads files there, and the triage workflow reads results/.
 REM Rename rather than delete: the triager keeps the content for reproduction,
 REM but it no longer executes as config.
-for /r "!DEST_DIR!" %%F in (CLAUDE.md) do (
+REM for /r reads its root before delayed expansion runs, so a delayed-variable
+REM root was walked literally and only the top-level CLAUDE.md got renamed.
+pushd "!DEST_DIR!" >nul
+for /r %%F in (CLAUDE.md) do (
     if exist "%%F" (
         echo Note: renamed %%F to CLAUDE.md.submitted so it is not loaded as instructions.
         ren "%%F" "CLAUDE.md.submitted"
     )
 )
+popd >nul
 
 REM --- Write .feedback-repo-root ---
 > "!DEST_DIR!\.feedback-repo-root" echo !REPO_ROOT!
@@ -143,7 +147,10 @@ git init -q
 if errorlevel 1 goto :git_baseline_failed
 git add .
 if errorlevel 1 goto :git_baseline_failed
-git commit -q -m "imported"
+REM A fixed, case-local identity: GitHub Desktop sets no global
+REM user.name/user.email, so a bare commit fails and the case is left with
+REM no baseline to reset to. -c applies to this call only.
+git -c user.name="feedback-case" -c user.email="feedback-case@localhost" -c commit.gpgsign=false commit -q -m "imported"
 if errorlevel 1 goto :git_baseline_failed
 
 REM --- Per-skill junctions under .claude\skills\ ---
@@ -173,11 +180,18 @@ echo   claude
 echo.
 set "FB_JSON=!DEST_DIR!\_feedback\feedback.json"
 if exist "!FB_JSON!" (
-    echo User's prompt to issue first:
-    echo ---------------------------------------------
+    REM The heading and rules move INSIDE the one-liner. Echoing them first
+    REM printed a heading and two rules with nothing between them whenever
+    REM the tester left the box blank, and would put the left-blank message
+    REM inside a block headed "User's prompt" - where the .sh prints it
+    REM instead of one. Spec section 3 row 7 is a single guarantee over both.
+    REM Apostrophes are doubled for PowerShell. No unpaired exclamation
+    REM mark may appear anywhere in this block, comments included -
+    REM delayed expansion is on and would consume it.
     set "PS_FB=!FB_JSON:'=''!"
-    powershell -NoProfile -Command "try { (Get-Content -Raw -LiteralPath '!PS_FB!' | ConvertFrom-Json).user_prompt } catch { '(could not parse feedback.json)' }"
-    echo ---------------------------------------------
+    set "SESSION_LOG=!DEST_DIR!\_feedback\session-log.jsonl"
+    set "PS_LOG=!SESSION_LOG:'=''!"
+    powershell -NoProfile -Command "$f='!PS_FB!'; $l='!PS_LOG!'; try { $j=(Get-Content -Raw -Encoding UTF8 -LiteralPath $f -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop); if (-not ($j -is [System.Management.Automation.PSCustomObject])) { throw 'not an object' }; $p=$j.user_prompt } catch { Write-Host ('User''s prompt: see ' + $f + ' (user_prompt field)'); exit }; if ([string]::IsNullOrWhiteSpace($p)) { Write-Host ('User''s prompt: the tester left blank. Try ' + $l + ' for what they asked for - it is optional (a Cowork submission never has one), and a trimmed log drops its oldest entries, so the prompt goes first.') } else { Write-Host 'User''s prompt to issue first:'; Write-Host '---------------------------------------------'; Write-Host $p; Write-Host '---------------------------------------------' }"
 ) else (
     echo User's prompt: see !DEST_DIR!\_feedback\feedback.json ^(user_prompt field^)
 )
@@ -192,7 +206,6 @@ echo Error: could not create the git baseline in !DEST_DIR!. 1>&2
 echo The case was unpacked, but it has no baseline to reset to. 1>&2
 echo Re-import with: scripts\reset-feedback-case.bat, then retry. 1>&2
 echo A partial import leaves files behind, so the retry needs --force. 1>&2
-echo If git reported an unknown author, set user.name and user.email. 1>&2
 exit /b 1
 
 :usage

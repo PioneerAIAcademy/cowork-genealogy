@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: warn when a PR buys a paid eval run that queued work could share.
 
-A `make eval-skill` run costs ~$8-12, 45-65 minutes of machine time, and a full
-annotation pass over every test in the skill. It is bought by whichever PR first
+A `make eval-skill` run costs ~$8-12 and 45-65 minutes of machine time. It is bought by whichever PR first
 touches a snapshot input for that skill. Folding a queued fix in BEFORE the run is
 free; landing it afterwards buys a second run.
 
@@ -129,8 +128,10 @@ def path_to_skills(path: str, agent_map: dict[str, set[str]]) -> set[str]:
 
     An AGENT body expands to every skill whose SKILL.md delegates to it via
     `@plugin:<name>` -- one agent edit gates several skills, and matching the skill
-    directory instead would miss all of them. That expansion is
-    `check_runlogs.skills_referencing_agents`, not a second scan.
+    directory instead would miss all of them, and to the agent's own agent-keyed
+    suite. That expansion is `check_runlogs.skills_gated_by_agent`, the same one
+    rule 2 uses, not a second scan. Only the agent body expands: a converted
+    skill's suite file names `agent:<x>` too, but no other skill embeds it.
 
     Shared fixtures under `eval/fixtures/{scenarios,mcp}/` are absent HERE because a
     fixture belongs to every skill whose tests reference it, so it names no single
@@ -145,7 +146,13 @@ def path_to_skills(path: str, agent_map: dict[str, set[str]]) -> set[str]:
     kind, _, name = slot.partition(":")
     if kind == "skill":
         return {name}
-    return set(agent_map.get(name, ()))
+    # slot_of names every path of a converted skill `agent:<name>`, but only the
+    # agent BODY is embedded in other skills' snapshots. A suite file or a stale
+    # skill path reaches its own suite alone, as rule 2 maps it.
+    if not check_runlogs.AGENT_PATH_RE.match(path):
+        return {name}
+    return check_runlogs.skills_gated_by_agent(
+        name, agent_map, Path(touches.REPO_ROOT) / "eval" / "tests" / "unit")
 
 
 def affected_skills(paths, agent_map: dict[str, set[str]]) -> set[str]:
@@ -346,8 +353,7 @@ def _run() -> None:
             continue
         gh_warning(
             f"this PR touches `{skill}`'s eval snapshot, so it buys a paid run "
-            f"(~$8-12, 45-65 min, plus a full annotation pass over every test in "
-            f"the skill). {len(rows)} open issue(s) name a path in the same "
+            f"(~$8-12, 45-65 min). {len(rows)} open issue(s) name a path in the same "
             f"snapshot and could ride along for free — landing them afterwards buys "
             f"another run: {_listed(rows)}. Folding one in is a judgement call, not "
             f"a requirement; this is warn-only."

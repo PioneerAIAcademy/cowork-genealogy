@@ -1,12 +1,9 @@
 """Eval-slot queue depth for /merge-issues.
 
-`/fill-ready`'s Gate 4 answers "is this skill's slot taken?" — one bit per slot.
-This answers the question that decides whether to merge: **how many issues are
-queued behind that holder**, since under Gate 4 they drain one at a time and each
-one pays its own `make eval-skill` run plus a full `.ann.json` re-annotation.
-
-A queue is not a scheduling problem. It is a sizing problem, and the output below
-is what makes that countable instead of arguable.
+How many open issues change each skill's eval snapshot. Every issue that lands
+on a snapshot pays its own `make eval-skill` run, so a deep queue is where
+duplicate and subset scope concentrates and where a merge can buy a run back.
+Depth selects what to read first; it never forces a merge on its own.
 
 Reads `**Touches:**` lines via ../lib/touches.py, shared with collisions.py, so
 the two passes cannot disagree about which slot an issue holds. An issue with no
@@ -21,9 +18,14 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_HERE, "..", "lib"))
+sys.path.insert(0, os.path.join(_HERE, "..", "..", "..", "eval", "harness", "scripts"))
 
+import touches  # noqa: E402
+from check_runlogs import AGENT_PATH_RE, skills_referencing_agents  # noqa: E402
 from touches import (  # noqa: E402
     in_snapshot,
     paths_from_touches,
@@ -32,10 +34,9 @@ from touches import (  # noqa: E402
     under,
 )
 
-# A queue this deep or deeper must leave the pass merged, or with a written reason
-# per survivor. Three is the depth at which one merge still buys a run back; the
-# number is a forcing function, not a measurement, and SKILL.md owns what it means.
-MUST_CLEAR = 4
+# A queue this deep or deeper is read first. The number is a reading order, not a
+# measurement, and SKILL.md owns what it means.
+READ_FIRST = 4
 
 # The --limit every SKILL.md that calls this script passes to `gh project
 # item-list`. A pull is truncated silently iff it returns exactly this many rows,
@@ -61,13 +62,36 @@ def labels_of(issue):
     return {lb["name"] for lb in issue.get("labels") or []}
 
 
-def slots_of(entries):
+def embedders():
+    """agent name -> the skills whose SKILL.md delegates to it via `@plugin:`. The
+    scan check_runlogs.py's rule 2 uses, so an agent edit queues on exactly the
+    skills whose run logs it flips."""
+    return skills_referencing_agents(
+        Path(touches.REPO_ROOT) / "packages" / "engine" / "plugin" / "skills")
+
+
+def expand(path, slot, embedded_by):
+    """The slots a path's edit reaches. An agent BODY reaches its own slot plus
+    every skill that embeds it; a skill naming its own agent (person-evidence) is
+    one paid run, so its skill slot stands for both. Any other path -- a converted
+    skill's suite file names `agent:<x>` too -- reaches its own slot alone, since
+    build_snapshot embeds a skill's own suite and nobody else's."""
+    kind, _, name = slot.partition(":")
+    if kind != "agent" or not AGENT_PATH_RE.match(path):
+        return {slot}
+    out = {f"skill:{s}" for s in embedded_by.get(name, ())}
+    if f"skill:{name}" not in out:
+        out.add(slot)
+    return out
+
+
+def slots_of(entries, embedded_by):
     """Every eval slot an issue's Touches line puts it in."""
     out = set()
     for _, p in entries:
         s = slot_of(p)
         if s:
-            out.add(s)
+            out |= expand(p, s, embedded_by)
     return out
 
 
@@ -83,7 +107,8 @@ def main(board_path, open_path, prs_path):
               "re-pull with a higher one; gh truncates silently and every count below "
               "is then wrong.\n")
 
-    entries, pool, holders = {}, [], {}
+    embedded_by = embedders()
+    entries, pool, holders, occupants = {}, [], {}, []
     for n, issue in issues.items():
         col = status.get(n)
         labs = labels_of(issue)
@@ -92,15 +117,23 @@ def main(board_path, open_path, prs_path):
             holders[n] = col
         # The merge pool: nobody is holding these. An unassigned Ready card is in
         # it *and* holds a slot -- it is the natural merge target, being furthest
-        # along. An assigned one is someone's work and is never a merge candidate.
+        # along. An assigned card is someone's work in any column, Backlog included,
+        # and is never a merge candidate. An assigned Backlog card holds no slot --
+        # Gate 4 says Backlog holds nothing -- so it is shown as an occupant line
+        # inside a block that renders anyway, never counted in depth and never the
+        # reason a block renders.
+        if issue.get("assignees"):
+            if col == "Backlog":
+                occupants.append(n)
+            continue
         if col == "Backlog" and "icebox" not in labs:
             pool.append(n)
-        elif col == "Ready" and not issue.get("assignees"):
+        elif col == "Ready":
             pool.append(n)
 
     queues, held = {}, {}
     for n in pool:
-        for s in slots_of(entries[n]):
+        for s in slots_of(entries[n], embedded_by):
             queues.setdefault(s, []).append(n)
     for n, col in holders.items():
         # "merge INTO this one" names a merge TARGET, so it may only be said of a
@@ -113,15 +146,21 @@ def main(board_path, open_path, prs_path):
             tag = "unassigned -- merge INTO this one"
         else:
             tag = "held"
-        for s in slots_of(entries[n]):
+        for s in slots_of(entries[n], embedded_by):
             held.setdefault(s, []).append((n, col, tag))
+
+    occupied = {}
+    for n in occupants:
+        for s in slots_of(entries[n], embedded_by):
+            occupied.setdefault(s, []).append(n)
 
     pr_slots = {}
     for p in prs:
         for f in p.get("files") or []:
             s = slot_of(f["path"])
             if s and in_snapshot(f["path"]):
-                pr_slots.setdefault(s, set()).add(p["number"])
+                for slot in expand(f["path"], s, embedded_by):
+                    pr_slots.setdefault(slot, set()).add(p["number"])
 
     def describe(n):
         i = issues[n]
@@ -135,23 +174,25 @@ def main(board_path, open_path, prs_path):
             print(f"      holder: #{n} ({col}, {tag})")
         for p in sorted(pr_slots.get(slot, [])):
             print(f"      holder: PR #{p} (open, touches the snapshot)")
+        for n in sorted(occupied.get(slot, [])):
+            print(f"      occupant: #{n} (Backlog, assigned -- not a merge target)")
         for n in sorted(members, key=lambda x: -age_days(issues[x]["createdAt"], now)):
             print(describe(n))
         print()
 
-    must = {s: m for s, m in queues.items() if len(m) >= MUST_CLEAR}
-    rest = {s: m for s, m in queues.items() if 2 <= len(m) < MUST_CLEAR}
+    must = {s: m for s, m in queues.items() if len(m) >= READ_FIRST}
+    rest = {s: m for s, m in queues.items() if 2 <= len(m) < READ_FIRST}
 
-    print(f"=== eval slot queues (pool: {len(pool)} issues -- non-icebox Backlog + "
-          "unassigned Ready) ===\n")
-    print(f"--- MUST CLEAR: queue >= {MUST_CLEAR} "
+    print(f"=== eval slot queues (pool: {len(pool)} issues -- unassigned non-icebox "
+          "Backlog + unassigned Ready) ===\n")
+    print(f"--- READ FIRST: queue >= {READ_FIRST} "
           f"({len(must)} slots) ---\n")
     for s, m in sorted(must.items(), key=lambda x: (-len(x[1]), x[0])):
         block(s, m)
     if not must:
         print("  (none)\n")
 
-    print(f"--- report only: queue 2-{MUST_CLEAR - 1} ({len(rest)} slots) ---\n")
+    print(f"--- then: queue 2-{READ_FIRST - 1} ({len(rest)} slots) ---\n")
     for s, m in sorted(rest.items(), key=lambda x: (-len(x[1]), x[0])):
         block(s, m)
     if not rest:

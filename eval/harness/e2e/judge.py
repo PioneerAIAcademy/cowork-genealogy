@@ -312,6 +312,21 @@ def _recall(labels: dict[str, str], findings: list[dict[str, Any]], *, required_
     return sum(score.get(labels.get(str(f["id"])), 0.0) for f in pool) / len(pool)
 
 
+# Tolerance for comparing a freshly recomputed recall fraction against the
+# value the model reported (issue #2849) — a model rounding an exact 2/3 to
+# `0.67` must not read as a disagreement worth recording.
+_RECALL_TOLERANCE = 0.011
+
+
+def _recall_matches(derived: float, stored: Any) -> bool:
+    """Whether `stored` (the model's own recall value) is within tolerance of
+    `derived` (the harness's recompute). `False` on anything non-numeric, so a
+    missing/malformed stored value always counts as a disagreement."""
+    if not isinstance(stored, (int, float)):
+        return False
+    return abs(derived - stored) <= _RECALL_TOLERANCE
+
+
 _VERDICT_RANK = {"fail": 0, "partial": 1, "pass": 2}
 
 
@@ -321,7 +336,7 @@ def apply_component_derivation(
     expected_findings: dict[str, Any],
 ) -> dict[str, Any]:
     """Replace each finding's ``matched`` with the value derived from its own
-    ``components`` (issue #1090).
+    ``components`` (issue #1090), then recompute the run-level roll-up.
 
     Sibling of ``apply_avoid_guard`` below, and for the same reason: the judge
     is a model, and this is the step it is least reliable at. Measured on the
@@ -343,15 +358,34 @@ def apply_component_derivation(
     this exists to close, so the evidence of it stays in the run log rather than
     being silently swapped.
 
-    Recall fractions and the verdict are recomputed from the new labels. Unlike
-    ``apply_avoid_guard``'s downgrade-only recompute, this one applies in both
-    directions: that guard is a one-way safety net, whereas this is arithmetic
-    over the judge's own findings, so the derived verdict is simply correct.
+    Recall fractions and the verdict are recomputed from ``out["per_finding"]``
+    on **every** call that carries a `per_finding` — not only when a component
+    override changed a label (issue #2849). A fact-only fixture, or any fixture
+    with no eligible relationship finding and no `avoid` finding, has no
+    `overrides` and used to take an early return here, leaving the model's own
+    `verdict` / `recall_required` / `recall_total` unchecked; those disagreed
+    with this same arithmetic on 19 of 188 committed runs, none of them through
+    either guard. Unlike ``apply_avoid_guard``'s downgrade-only recompute, this
+    applies in both directions: that guard is a one-way safety net, whereas
+    this is arithmetic over the judge's own findings, so the derived verdict is
+    simply correct.
 
-    Returns the input unchanged (same object) when there is nothing to do —
-    including when the judge was skipped or errored (no ``per_finding``), and
-    when no finding carried components, so historical run logs and any future
-    schema without them keep working.
+    When the recompute disagrees with what the model reported — on `verdict`,
+    `recall_required` or `recall_total` (`0.011` tolerance on the two recall
+    fractions, so a model's rounded ``0.67`` for an exact 2/3 doesn't read as a
+    disagreement) — the model's values are recorded under
+    ``judge_output["verdict_derivation"]`` as ``{"model": {...}, "derived":
+    {...}}``, naming only the fields that actually changed, alongside any
+    ``component_derivation`` from the override loop above. Same reason as
+    ``matched_model``: the evidence that the judge mislabelled its own output
+    stays in the run log rather than being silently swapped.
+
+    Returns the input unchanged (same object) only when there is truly nothing
+    to do: no component override, **and** the recomputed `verdict`,
+    `recall_required` and `recall_total` already agree with the model's own.
+    That covers the judge-skipped-or-errored case (no `per_finding` at all)
+    and any finding with no components, so historical run logs whose stored
+    roll-up already agrees with the arithmetic keep returning unchanged.
     """
     if "per_finding" not in judge_output:
         return judge_output
@@ -392,14 +426,40 @@ def apply_component_derivation(
         entry["matched"] = derived
         entry["notes"] = f"{entry.get('notes', '')} {note}".strip()
 
-    if not overrides:
+    # Always recompute the roll-up from the (possibly just-derived) labels —
+    # not gated on `overrides`, so a fact-only fixture or any fixture with no
+    # eligible relationship finding still gets checked (issue #2849).
+    labels = {
+        str(e.get("finding_id")): str(e.get("matched"))
+        for e in out["per_finding"]
+        if isinstance(e, dict)
+    }
+    derived_recall_required = _recall(labels, findings, required_only=True)
+    derived_recall_total = _recall(labels, findings, required_only=False)
+    derived_verdict = derive_verdict(labels, findings)
+
+    model_delta: dict[str, Any] = {}
+    derived_delta: dict[str, Any] = {}
+    if derived_verdict != judge_output.get("verdict"):
+        model_delta["verdict"] = judge_output.get("verdict")
+        derived_delta["verdict"] = derived_verdict
+    if not _recall_matches(derived_recall_required, judge_output.get("recall_required")):
+        model_delta["recall_required"] = judge_output.get("recall_required")
+        derived_delta["recall_required"] = derived_recall_required
+    if not _recall_matches(derived_recall_total, judge_output.get("recall_total")):
+        model_delta["recall_total"] = judge_output.get("recall_total")
+        derived_delta["recall_total"] = derived_recall_total
+
+    if not overrides and not model_delta:
         return judge_output
 
-    labels = {str(e.get("finding_id")): str(e.get("matched")) for e in out["per_finding"]}
-    out["recall_required"] = _recall(labels, findings, required_only=True)
-    out["recall_total"] = _recall(labels, findings, required_only=False)
-    out["verdict"] = derive_verdict(labels, findings)
-    out["component_derivation"] = {"overrides": overrides}
+    out["recall_required"] = derived_recall_required
+    out["recall_total"] = derived_recall_total
+    out["verdict"] = derived_verdict
+    if overrides:
+        out["component_derivation"] = {"overrides": overrides}
+    if model_delta:
+        out["verdict_derivation"] = {"model": model_delta, "derived": derived_delta}
     return out
 
 
@@ -536,8 +596,10 @@ def run_judge(
             f"judge output was not valid JSON (stop_reason={msg.stop_reason!r}): {e}"
         ) from e
     validated = _validate_judge_output(parsed)
-    # Derive `matched` from the judge's own components before anyone sees the
-    # output. Applied here rather than at each call site so a new caller cannot
-    # forget it; `apply_avoid_guard` stays caller-applied because it needs the
-    # final tree, which this does not.
+    # Derive `matched` from the judge's own components, then recompute
+    # `verdict`/`recall_required`/`recall_total` from the resulting labels —
+    # on every call, not only when a component override fired (issue #2849) —
+    # before anyone sees the output. Applied here rather than at each call site
+    # so a new caller cannot forget it; `apply_avoid_guard` stays caller-applied
+    # because it needs the final tree, which this does not.
     return apply_component_derivation(validated, expected_findings=expected_findings)

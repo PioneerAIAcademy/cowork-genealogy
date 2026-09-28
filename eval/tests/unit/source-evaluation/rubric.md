@@ -30,10 +30,10 @@ Does the skill decide *what kind* of finding it has before saying what to do abo
 
 ## Signal versus backend noise
 
-Does the report separate what the researcher can act on from FamilySearch storage artifacts? Repeated internal fact, name and person ids across unrelated records are how the system numbers things, not defects. The tester's words in feedback case #1536: *"Having the metadata errors brought to my attention was not helpful."*
+Does the report separate what the researcher can act on from FamilySearch storage artifacts? Repeated internal fact, name and person ids across unrelated records are how the system numbers things, not defects. Distinguish two FamilySearch-originated things: storage **artifacts** (the repeated ids) are noise and stay closing-context only; the **profile checklist** returned by `person_quality` is legitimate content, permitted as one named block after the findings and outside the count. The tester's words in feedback case #1536: *"Having the metadata errors brought to my attention was not helpful."*
 
-- **pass:** The findings list and the stated count contain only user-actionable items. Backend artifacts are absent, or appear once as closing context with no action attached.
-- **partial:** Backend artifacts stay out of the numbered findings but the count or the framing still implies they are problems.
+- **pass:** The findings list and the stated count contain only user-actionable items. Backend artifacts are absent, or appear once as closing context with no action attached. A FamilySearch profile-checklist block after the findings does not count against this — it is content, not noise — provided it is outside the count and carries no recommended action. A stated tally of omitted artifacts is a pass, not a hedge.
+- **partial:** Backend artifacts stay out of the numbered findings but the framing still implies they are problems, or the checklist block is merged into the findings or their count. Stating how many artifacts were omitted is **not** this — that is the pass bar.
 - **fail:** A backend artifact appears as a numbered finding, carries a recommended action, or is counted among the errors — the researcher is handed the triage the skill was supposed to do.
 - **N/A:** Nothing in the tool responses could be mistaken for a backend artifact. Score `null`.
 

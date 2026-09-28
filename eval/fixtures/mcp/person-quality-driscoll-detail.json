@@ -1,0 +1,34 @@
+{
+  "tool": "person_quality",
+  "description": "CONSTRUCTED for the driscoll-source-audit scenario. conflicts[] carries ONLY the Birth Date pair -- the baptism's 1814 (SD-DRIS-A) against the 1861 census's 1816 -- because \"Birth Date\" and \"Name\" are the only conflictingFields.name values ever observed upstream (person-quality-tool-spec.md:99, :261, and the dev/probe RESULTS). A \"Death Date\" conflict for the 1878/1885 pair would be an invented shape, so it is deliberately absent. Note what that means for grading: the one conflict FamilySearch hands over is the ordinary variance ut_source_evaluation_v7n, _k9t and _j4s all exist to see SUPPRESSED, not the genuine 1878-vs-1885 disagreement the skill must characterise from its own sweep. That is the honest shape of the upstream data, and all three tests carry a judge_context bar for it. values keep the leading + (GedcomX formal-date syntax) because the tool passes them through ungrouped -- the skill must render them as plain dates. issues[] is empty: the Driscoll profile's gaps are not what these three tests grade, and an empty list means no checklist block is printed at all.",
+  "args": {
+    "personId": "GJ72-9WD",
+    "detail": true
+  },
+  "response": {
+    "personId": "GJ72-9WD",
+    "segment": "GREEN",
+    "overallScore": 0.94,
+    "issueCount": 0,
+    "categories": [
+      { "scoreType": "COMPLETENESS", "count": 0, "score": 1.0 },
+      { "scoreType": "VERIFIABILITY", "count": 0, "score": 1.0 },
+      { "scoreType": "CONSISTENCY", "count": 0, "score": 1.0 },
+      { "scoreType": "COHERENCE", "count": 0, "score": 1.0 }
+    ],
+    "issues": [],
+    "detail": {
+      "facts": [],
+      "conflicts": [
+        {
+          "field": "Birth Date",
+          "values": ["+1814", "+1816"],
+          "sources": [
+            { "title": "Baptism register, Skibbereen, County Cork", "uri": "https://familysearch.org/ark:/61903/1:1:DRIS-A01", "agrees": null },
+            { "title": "1861 Census of Canada East, Sherbrooke", "uri": "https://familysearch.org/ark:/61903/1:1:DRIS-E05", "agrees": null }
+          ]
+        }
+      ]
+    }
+  }
+}

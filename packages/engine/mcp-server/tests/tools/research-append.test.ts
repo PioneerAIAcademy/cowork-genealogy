@@ -23,6 +23,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
+import { recordMatchScore } from "../../src/utils/match-scores.js";
 import {
   recordImageReadCap,
   sourceImageCapState,
@@ -98,6 +99,60 @@ function baseResearch(): {
     evaluations: [],
   };
 }
+/** Record the `same_person` score that #1731 step 3 now requires.
+ *
+ *  A `person_evidence` append for a REACHABLE persona is refused without one,
+ *  and `personaReachable` treats unresolvable provenance as reachable on
+ *  purpose ("an assertion written with no log_entry_id cannot shed the
+ *  requirement by omission"). These fixtures carry no log, so every link in
+ *  them is reachable. Tests about anything OTHER than the score gate satisfy it
+ *  here, the same way production will.
+ *
+ *  Defaults match `validAssertion`: record `rec1`, role `principal`, person I1.
+ */
+async function attestPairing(
+  dir: string,
+  opts: { recordId?: string; assertionId?: string; personId?: string } = {},
+): Promise<void> {
+  await recordMatchScore(dir, {
+    record_id: opts.recordId ?? "rec1",
+    record_persona_id: null,
+    record_role: "principal",
+    tree_person_id: opts.personId ?? "I1",
+    score: 0.9,
+    matched: true,
+    assertion_id: opts.assertionId ?? "a_001",
+    record_source: "record_read",
+    computed: "2026-09-24T00:00:00Z",
+  });
+}
+
+/** Attest EVERY assertion in the project for one tree person.
+ *
+ *  The key is `(assertion_id, tree_person_id)`, so a test that is not about the
+ *  score gate should not have to name which assertion its fixture happens to
+ *  use -- naming one is how these tests broke when an unrelated fixture gained
+ *  a second assertion. Reads the project and satisfies the gate for all of
+ *  them, which is what a run that actually called `same_person` per link would
+ *  leave behind. */
+async function attestEveryAssertion(dir: string, personId = "I1"): Promise<void> {
+  const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  for (const a of (research.assertions ?? []) as any[]) {
+    if (!a || typeof a.id !== "string" || typeof a.record_id !== "string") continue;
+    await recordMatchScore(dir, {
+      record_id: a.record_id,
+      record_persona_id: null,
+      record_role: a.record_role ?? "principal",
+      tree_person_id: personId,
+      score: 0.9,
+      matched: true,
+      assertion_id: a.id,
+      record_source: "record_read",
+      computed: "2026-09-24T00:00:00Z",
+    });
+  }
+}
+
 const baseTree = {
   persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
   relationships: [],
@@ -1228,6 +1283,7 @@ describe("research_append (Phase 1)", () => {
 
   it("appends a person_evidence link, stamps created, references an existing assertion + tree person", async () => {
     await writeProject();
+    await attestPairing(dir);
     const r = await researchAppend({
       projectPath: dir,
       section: "person_evidence",
@@ -1299,6 +1355,7 @@ describe("research_append (Phase 1)", () => {
       { id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence: "probable", rationale: "first guess", created: "2026-01-01", superseded_by: null },
     ];
     await writeProject(research);
+    await attestPairing(dir);
 
     const appended = await researchAppend({
       projectPath: dir,
@@ -3729,6 +3786,11 @@ describe("research_append (batch ops)", () => {
 
   it("(d) applies a heterogeneous record in one write; assertion references a source from the same batch", async () => {
     await writeProject();
+    // The composite shape the in-batch id prediction exists for: the assertion
+    // is appended in this same call, so its id is predicted, not looked up.
+    // The attestation must name that predicted id (a_002) -- keying on the
+    // assertion is what makes the prediction load-bearing.
+    await attestPairing(dir, { assertionId: "a_002" });
     const r = await researchAppend({
       projectPath: dir,
       ops: [
@@ -4410,6 +4472,600 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     expect((errorsOf(r) ?? []).join("\n")).toMatch(/plans entry 'pl_001' is 'completed'/);
+  });
+
+  // ── (d4-logattr) completing a plan item needs a log entry naming it ────────
+  // Completing an item asserts its search was done; log[] is where a search is
+  // recorded. Both halves live in research.json, so this is a writer
+  // precondition rather than SKILL.md prose (ADR-0011's first question).
+  //
+  // Read LIVE and provably free: `log` is not a research_append section, so no
+  // op in a batch can change log[] and the live document and the pre-call
+  // snapshot carry an identical log.
+  //
+  // The accept-side cases are NOT optional — a guard fails two ways, and a
+  // replay can only test the blocking half.
+
+  /** A log entry naming `planItemId` (or nothing, when null). */
+  const logNaming = (id: string, planItemId: string | null) => ({
+    id,
+    plan_item_id: planItemId,
+    performed: "2026-05-01T10:15:00Z",
+    tool: "record_search",
+    query: { surname: "Test" },
+    outcome: "positive",
+    results_examined: 1,
+    external_site: null,
+  });
+  /** One question, one active plan, one item at `status`, and whatever log the
+   *  case needs. */
+  const attrResearch = (status: string, log: any[]) => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status }]),
+    ] as any;
+    research.log = log as any;
+    return research;
+  };
+  const completeIt = () => ({
+    projectPath: dir,
+    ops: [
+      { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "completed" }, planId: "pl_001" },
+    ],
+  });
+
+  it("(d4-logattr) refuses completing an item no log entry names — writes nothing", async () => {
+    await writeProject(attrResearch("in_progress", [logNaming("log_001", "pli_002")]));
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend(completeIt() as any);
+
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/^ops\[0\]:/);
+    expect(msg).toMatch(/no log\[\] entry names pli_001/);
+    // The remedy must be executable: research_log_append only appends, so
+    // "fix the log entry" would be an instruction the agent cannot follow.
+    expect(msg).toMatch(/research_log_append\(\{ planItemId: "pli_001"/);
+    expect(msg).toMatch(/leave this item 'in_progress'/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
+  // names it", and each reaches the helper down a different path.
+  it("(d4-logattr) refuses when log[] is empty", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) refuses when the log key is absent entirely", async () => {
+    const research = attrResearch("in_progress", []);
+    delete (research as any).log;
+    await writeProject(research);
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) refuses when every entry carries plan_item_id: null", async () => {
+    // The ut_search_images_011 shape exactly: two entries written from an
+    // image_search with plan_item_id null, then the item marked completed.
+    await writeProject(
+      attrResearch("in_progress", [logNaming("log_001", null), logNaming("log_002", null)]),
+    );
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/no log\[\] entry names pli_001/);
+    // planItemId: null is a legitimate documented shape for an ad-hoc browse,
+    // so the message must say which of the two the agent got wrong.
+    expect(msg).toMatch(/planItemId: null is only for an ad-hoc search/);
+  });
+
+  it("(d4-logattr) survives a legacy `log: [null]` rather than crashing the writer", async () => {
+    await writeProject(attrResearch("in_progress", [null]));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    // The refusal, not `Cannot read properties of null`.
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  // This helper runs BEFORE document validation, so a hand-edited research.json
+  // reaches it with any shape at all. Each of these would throw, not refuse, if
+  // a guard were dropped.
+  it("(d4-logattr) treats a non-array log as empty rather than throwing", async () => {
+    for (const bad of [{}, "not-a-list", 7]) {
+      const research = attrResearch("in_progress", []);
+      (research as any).log = bad;
+      await writeProject(research);
+      const r = await researchAppend(completeIt() as any);
+      expect(r.ok, `log=${JSON.stringify(bad)}`).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+    }
+  });
+
+  it("(d4-logattr) steps over log entries that are not objects", async () => {
+    await writeProject(attrResearch("in_progress", ["log_001", 3] as any));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) does not match a plan_item_id of the wrong type", async () => {
+    // `["pli_001"]`, not `1`: a numeric value can never equal the id under ANY
+    // comparison, so it cannot tell `===` from a coercing `==`. A one-element
+    // array can — `String(["pli_001"]) === "pli_001"` — so this reds if the
+    // comparison is ever loosened, which is what the title claims to pin.
+    await writeProject(
+      attrResearch("in_progress", [{ ...logNaming("log_001", null), plan_item_id: ["pli_001"] } as any]),
+    );
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) skips an item with no id rather than refusing it as 'undefined'", async () => {
+    // An id-less item is the document validator's problem, not this rule's, so
+    // the shape guard skips it. Drop the guard and `pid` is `undefined`, which
+    // matches no real entry — the call is refused naming "undefined", an error
+    // about the wrong thing that sends the agent hunting a log entry rather
+    // than the missing id. The log entry below MUST name something, or the
+    // dropped guard would instead match `undefined === undefined` and the case
+    // could not tell the two apart.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...validPlanItem(), status: "completed" }], // no id
+          },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).not.toMatch(/names undefined/);
+    expect(msg).not.toMatch(/no log\[\] entry names/);
+  });
+
+  it.each([[{ a: 1 }], [7], ["nope"]])(
+    "(d4-logattr) tolerates a non-array `items` (%j) on a plans op — the §5 rule owns that",
+    async (items) => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "plans", op: "append", entry: { ...noId(validPlan("x", "q_001", "active")), items } },
+        ],
+      } as any);
+      // Refused for its shape by the plans `items` rule. An object or a number is
+      // what a dropped Array.isArray guard would throw on — a string iterates
+      // its characters and cannot tell the two apart.
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/must be an array of plan items/);
+    },
+  );
+
+  it("(d4-logattr) skips an item whose id is the empty string, the same as no id", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...validPlanItem(), id: "", status: "completed" }],
+          },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).not.toMatch(/no log\[\] entry names/);
+  });
+
+  it("(d4-logattr) refuses an APPEND carrying status: completed — the id is tool-assigned", async () => {
+    // No log entry can already name an id this call is about to mint, so the
+    // append form is refused unconditionally. Same defect, different shape.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "completed" }, planId: "pl_001" },
+      ],
+    } as any);
+
+    expect(r.ok).toBe(false);
+    // The append remedy, not the update one: `in_progress` would block the
+    // question's exhaustive declaration, and `planned` would repeat the search.
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/plan_items\[pli_002\]: an appended item cannot arrive 'completed'/);
+    expect(msg).toMatch(/exhaustive_declaration\.log_entry_ids/);
+    expect(msg).not.toMatch(/leave this item 'in_progress'/);
+  });
+
+  it("(d4-logattr) a refused UPDATE keeps the in_progress remedy, not the append one", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/leave this item 'in_progress'/);
+    expect(msg).not.toMatch(/an appended item cannot arrive/);
+  });
+
+  it("(d4-logattr) ACCEPTS an update re-sending status: completed on an item already completed", async () => {
+    // Completed before this call, with no log naming it: re-stating the status
+    // changes nothing, the same skip the plans arm makes.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plan_items",
+          op: "update",
+          planId: "pl_001",
+          entryId: "pli_001",
+          fields: { status: "completed", rationale: "Reworded" },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("(d4-logattr) still refuses completing an item that was in_progress before the call", async () => {
+    // The other direction of the skip: it keys on the item's status BEFORE the
+    // call, so a call that newly completes the item is not waved through.
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plan_items",
+          op: "update",
+          planId: "pl_001",
+          entryId: "pli_001",
+          fields: { status: "completed", rationale: "Reworded" },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) refuses a batch that appends an item and completes it in the same call", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+        { section: "plan_items", op: "update", entryId: "pli_002", fields: { status: "completed" }, planId: "pl_001" },
+      ],
+    } as any);
+
+    expect(r.ok).toBe(false);
+    // Refused by the pre-existing §3.3 same-batch rule, BEFORE this arm — an
+    // id minted in this call may not be updated in it. Asserted so the test
+    // records why the arm is unreachable here rather than implying it fired.
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/appended earlier in this batch/);
+  });
+
+  it("(d4-logattr) a stringified `fields` in a BATCHED op is caught by the shape guard before this arm runs", async () => {
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", entryId: "pli_001", fields: '{"status":"completed"}', planId: "pl_001" },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    // The pre-existing guard, not this rule: `fields` must be an object.
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/update requires a `fields` object/);
+  });
+
+  it("(d4-logattr) a stringified `fields` in the SINGLE-op form is coerced, and this rule still fires", async () => {
+    // The single-op form runs `fields` through coerceJsonArg, so a string reaches
+    // the rule as an object — 6 committed search-images calls take this shape.
+    await writeProject(attrResearch("in_progress", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "plan_items",
+      op: "update",
+      planId: "pl_001",
+      entryId: "pli_001",
+      fields: '{"status":"completed"}',
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  // ── the second direction: what it must still ACCEPT ───────────────────────
+
+  it("(d4-logattr) ACCEPTS completing an item a log entry names", async () => {
+    await writeProject(attrResearch("in_progress", [logNaming("log_001", "pli_001")]));
+    const r = await researchAppend(completeIt() as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) ACCEPTS it when the naming entry was already in the starting document", async () => {
+    // Same as above stated from the other end: the entry need not be recent,
+    // only present. This is the shape every satisfying corpus run produces.
+    await writeProject(
+      attrResearch("planned", [logNaming("log_001", "pli_001"), logNaming("log_002", null)]),
+    );
+    const r = await researchAppend(completeIt() as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) NEVER refuses an in_progress or a skipped move", async () => {
+    for (const status of ["in_progress", "skipped"]) {
+      await writeProject(attrResearch("planned", []));
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "plan_items", op: "update", entryId: "pli_001", fields: { status }, planId: "pl_001" },
+        ],
+      } as any);
+      expect(errorsOf(r) ?? [], `status ${status}`).toEqual([]);
+      expect(r.ok, `status ${status}`).toBe(true);
+    }
+  });
+
+  it("(d4-logattr) ACCEPTS an unrelated edit to an item ALREADY completed with no log", async () => {
+    // Forward direction only. An item seeded `completed` in a document with an
+    // empty log is not this call's doing, and refusing every later edit to it
+    // would freeze hand-authored and legacy fixtures — the false deny
+    // ADR-0011's first limit exists to prevent.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", entryId: "pli_001", fields: { rationale: "Reworded" }, planId: "pl_001" },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  // ── the inline-items bypass, closed on the `plans` section ─────────────────
+  // `plans` append spreads the caller's entry wholesale and `plans` update
+  // copies arbitrary keys, so `items` reaches the array without any plan_items
+  // op existing. research-append-tool-spec.md §5 names inline non-empty `items`
+  // as a shape "already in use", so this is a documented route, not a corner.
+
+  it("(d4-logattr) refuses a plans APPEND whose inline items carry an unnamed completed item", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...seededPlanItem("pli_001"), status: "completed" }],
+          },
+        },
+      ],
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d4-logattr) refuses a plans UPDATE that rewrites items[] with an unnamed completed item", async () => {
+    await writeProject(attrResearch("planned", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: { items: [{ ...seededPlanItem("pli_001"), status: "completed" }] },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) ACCEPTS the corpus's own inline-items shape — every item planned", async () => {
+    // All 6 tracked `plans` appends carrying non-empty inline items carry only
+    // `planned` items, so this arm refuses nothing the corpus contains. This is
+    // the case that would break if the arm checked the wrong thing.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [seededPlanItem("pli_001"), seededPlanItem("pli_002")],
+          },
+        },
+      ],
+    } as any);
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("(d4-logattr) ACCEPTS a plans UPDATE whose completed inline item IS log-named", async () => {
+    // Without this the `plans` arm never proves it reads `log[]` at all: both
+    // its refusal tests seed an empty log, and its accept test uses only
+    // `planned` items, so the helper returns before touching `research`.
+    // Passing the arm a hard-coded `{ log: [] }` leaves every one of them
+    // green. This is the vector that reds it — and the false deny it forbids
+    // (refusing a correctly-attributed rewrite) is the ADR-0011 limit-1 shape.
+    await writeProject(attrResearch("planned", [logNaming("log_001", "pli_001")]));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: { items: [{ ...seededPlanItem("pli_001"), status: "completed" }] },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) ACCEPTS a plans APPEND whose completed inline item IS log-named", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.log = [logNaming("log_001", "pli_001")] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "append",
+          entry: {
+            ...noId(validPlan("x", "q_001", "active")),
+            items: [{ ...seededPlanItem("pli_001"), status: "completed" }],
+          },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items[0].status).toBe("completed");
+  });
+
+  it("(d4-logattr) reports one error per failing item in a single plans op", async () => {
+    await writeProject(attrResearch("planned", [logNaming("log_001", "pli_001")]));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: {
+            items: [
+              { ...seededPlanItem("pli_001"), status: "completed" }, // named — ok
+              { ...seededPlanItem("pli_002"), status: "completed" }, // not named
+              { ...seededPlanItem("pli_003"), status: "completed" }, // not named
+            ],
+          },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/names pli_002/);
+    expect(msg).toMatch(/names pli_003/);
+    expect(msg).not.toMatch(/names pli_001/);
+  });
+
+  it("(d4-logattr) ACCEPTS a plans update re-sending an item already completed in the stored plan", async () => {
+    // The item did not change in this call. Refusing it would strand a plan
+    // completed before this rule existed, whose log names nothing.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: { items: [{ ...seededPlanItem("pli_001"), status: "completed" }] },
+        },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("(d4-logattr) still refuses the item a re-sent items[] NEWLY completes, and only that one", async () => {
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "plans",
+          op: "update",
+          entryId: "pl_001",
+          fields: {
+            items: [
+              { ...seededPlanItem("pli_001"), status: "completed" },
+              { ...seededPlanItem("pli_002"), sequence: 2, status: "completed" },
+            ],
+          },
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/no log\[\] entry names pli_002/);
+    expect(msg).not.toMatch(/no log\[\] entry names pli_001/);
+  });
+
+  it("(d4-logattr) ACCEPTS a plans update that leaves items[] alone", async () => {
+    // Gated on the ops that can SET an item's status. A plan whose items were
+    // completed in an earlier call must stay editable.
+    await writeProject(attrResearch("completed", []));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "update", entryId: "pl_001", fields: { status: "completed" } },
+      ],
+    } as any);
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
   });
 
   it("(b) rolls back the whole batch on a mid-batch validation failure — writes nothing", async () => {
@@ -6120,6 +6776,9 @@ describe("research_append — person_evidence epistemic gate", () => {
   async function write(research: any) {
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    // Both records this block uses; the subject here is the [?] gate, not the
+    // score gate, so satisfy the latter the way production will.
+    await attestEveryAssertion(dir);
   }
   const link = (assertionId: string, confidence: string) => ({
     projectPath: dir,
@@ -6279,6 +6938,7 @@ describe("research_append — detected core-identifier contradiction", () => {
     const tree = JSON.parse(JSON.stringify(baseTree));
     tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await attestEveryAssertion(dir);
   }
   const link = (confidence: string) => ({
     projectPath: dir,
@@ -6359,6 +7019,7 @@ describe("research_append — declared core-identifier conflict", () => {
     const r = baseResearch();
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    await attestPairing(dir);
   }
   const link = (confidence: string, conflict: unknown) => ({
     projectPath: dir,
@@ -6468,6 +7129,8 @@ describe("research_append — worked examples are themselves valid", () => {
       },
     ];
     r.sources = [validSource("src_001"), { ...validSource("src_004") }];
+    // The person_evidence example now carries a real match_score (#1731 step 3),
+    // so the pairing it names needs a recorded score like any other link.
     r.assertions = [
       validAssertion("a_001"),
       { ...validAssertion("a_013", "src_004"), record_id: "ark:/61903/1:1:MDEF" },
@@ -6582,6 +7245,7 @@ describe("research_append — worked examples are themselves valid", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
+    await attestEveryAssertion(dir);
 
     const entry = JSON.parse(__testing.EXAMPLES[section]);
     // `plans` already has an active plan for q_002 in the fixture (the
@@ -7692,10 +8356,18 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
   });
 });
 
-// #1006: warn-only (the write still succeeds) when a `confident` person_evidence
-// link records no numeric match_score. Distinct from the epistemic gate above,
-// which REJECTS — this only adds an advisory to validation.warnings.
-describe("research_append — person_evidence match_score warning (#1006)", () => {
+// ─── person_evidence requires a RECORDED score (#1731 step 3) ──────────────
+//
+// Replaces the #1006 warning block. That block asserted a warning on a
+// SUCCESSFUL write; this is the refusal the lead's 2026-09-07 ruling sequenced
+// as step 3, after PR A made `same_person` cheap and made it record what it
+// computed. Until this shipped, `match_score` was caller-fabricable and
+// ADR-0009 constraint 2 conceded the point.
+//
+// The reachability lanes below are carried over unchanged from #1429: silent
+// where nothing could be scored, loud where something could.
+
+describe("research_append — person_evidence requires a recorded score", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "research-append-pe-score-"));
@@ -7704,102 +8376,395 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     await rm(dir, { recursive: true, force: true });
   });
 
-  // Clean reading (no [?]) so the epistemic gate never fires — isolates the
-  // match_score warning from the rejection path.
-  async function writeProject(personEvidence: any[] = []) {
+  /** a_010 is reachable: it carries a persona id. */
+  async function writeProject(tree: any = baseTree) {
     const r = baseResearch();
     r.assertions = [
       ...r.assertions,
-      { ...validAssertion("a_010"), record_id: "rec_A", fact_type: "name", value: "Father: Thomas Flynn" },
+      {
+        ...validAssertion("a_010"),
+        record_id: "rec_A",
+        record_persona_id: "P1",
+        record_role: "principal",
+        source_id: "src_010",
+        fact_type: "name",
+        value: "Father: Thomas Flynn",
+      },
     ] as any;
-    r.person_evidence = personEvidence as any;
+    // a_010 gets its OWN source. Sharing src_001 with the base assertions makes
+    // that source reach rec1 as well as rec_A, and the circular test then
+    // correctly declines to call I9 minted from rec_A alone.
+    r.sources = [...r.sources, { id: "src_010", gedcomx_source_description_id: "S1" }] as any;
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
 
-  const link = (overrides: any = {}) => ({
+  async function attest(over: Record<string, unknown> = {}) {
+    await recordMatchScore(dir, {
+      record_id: "rec_A",
+      record_persona_id: "P1",
+      record_role: "principal",
+      tree_person_id: "I1",
+      score: 0.82,
+      matched: true,
+      assertion_id: "a_010",
+      record_source: "record_read",
+      computed: "2026-09-24T00:00:00Z",
+      ...(over as any),
+    });
+  }
+
+  const link = (score: number | null, personId = "I1") => ({
     projectPath: dir,
     section: "person_evidence",
     op: "append" as const,
     entry: {
       assertion_id: "a_010",
-      person_id: "I1",
-      confidence: "confident",
-      rationale: "Names match the subject.",
-      match_score: null,
+      person_id: personId,
+      confidence: "probable",
+      rationale: "Names match.",
+      match_score: score,
       created: "2026-07-18",
       superseded_by: null,
-      ...overrides,
     },
   });
 
-  it("warns, but still writes, when a confident link records no match_score", async () => {
+  it("refuses a reachable link with no recorded score", async () => {
     await writeProject();
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true); // warn-only: the write is NOT blocked
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
-    const saved = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
-    expect(saved.person_evidence).toHaveLength(1);
+    const r = await researchAppend(link(0.82) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/no same_person score behind it/);
   });
 
-  it("does not warn when a confident link carries a numeric match_score", async () => {
+  it("refuses a reachable link carrying a null score just the same", async () => {
     await writeProject();
-    const r = await researchAppend(link({ match_score: 0.92 }));
+    expect((await researchAppend(link(null) as any)).ok).toBe(false);
+  });
+
+  it("accepts the link once the score is recorded", async () => {
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+  });
+
+  // The gate binds the PRESENCE of an attestation for the pairing, not the
+  // VALUE written against it. An agent that really called same_person and then
+  // wrote a different number is not caught here. Pinned rather than implied
+  // closed: value-binding is a separate decision, and a spec that claims it
+  // without a test is the overclaim this ADR constraint exists to avoid.
+  // --- what an adversarial review found before this shipped -----------------
+
+  // The FETCHED route resolves a real `persons[].id` where the assertion carries
+  // `record_persona_id: null`. Keyed on the party, that legitimate score was
+  // filed under what was resolved while the reader computed the key from the
+  // assertion -- so the gate refused precisely the links whose call HAD been
+  // made, and the refusal told the agent to repeat the call that wrote it.
+  it("finds a score written by the fetched route, whatever party it resolved", async () => {
+    await writeProject();
+    await attest({ record_persona_id: "PERSON1" });
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+  });
+
+  it("finds it just the same when the call resolved no party at all", async () => {
+    await writeProject();
+    await attest({ record_persona_id: null, record_role: null });
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+  });
+
+  // A person_evidence op placed BEFORE its assertion in the same batch resolved
+  // no record, so the gate returned [] and a fabricated score landed. Ordering
+  // is fully under the model's control, so this was a one-line escape.
+  it("refuses a link written BEFORE its assertion in the same batch", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "person_evidence", op: "append", entry: { ...link(0.99).entry, assertion_id: "a_011" } },
+        { section: "assertions", op: "append", entry: noId({ ...validAssertion("a_011"), record_id: "rec_A" }) },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  // The composite "append the assertion, then link it" batch is 3.5% of the
+  // corpus's link-writing calls, and it can NEVER carry a score: `same_person`
+  // reads research.json and throws on an assertion not in it, and a refusal
+  // discards the batch so the assertion never lands either. Prescribing the
+  // call verbatim sent the agent to an error, so the remedy has to be the split.
+  it("names an EXECUTABLE remedy when the assertion is created by the same call", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "append", entry: noId({ ...validAssertion("a_011"), record_id: "rec_A" }) },
+        { section: "person_evidence", op: "append", entry: { ...link(0.99).entry, assertion_id: "a_011" } },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const msg = failure(r).errors?.join(" ") ?? "";
+    expect(msg).toMatch(/is created by this same call/);
+    expect(msg).toMatch(/Split the call/);
+    // Must NOT tell the agent to score an assertion that does not exist yet.
+    expect(msg).not.toMatch(/assertionId: 'a_011'/);
+  });
+
+  it("gives the same executable remedy when the link comes first", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "person_evidence", op: "append", entry: { ...link(0.99).entry, assertion_id: "a_011" } },
+        { section: "assertions", op: "append", entry: noId({ ...validAssertion("a_011"), record_id: "rec_A" }) },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/Split the call/);
+  });
+
+  it("keeps the ordinary remedy when the assertion already exists", async () => {
+    await writeProject();
+    const msg = failure(await researchAppend(link(0.82) as any)).errors?.join(" ") ?? "";
+    expect(msg).toMatch(/assertionId: 'a_010'/);
+    expect(msg).not.toMatch(/Split the call/);
+  });
+
+  // ut_person_evidence_014's defect reached in two calls: append the circular
+  // link with a null score, then update the score in.
+  it("refuses an UPDATE that writes a score onto a circular link", async () => {
+    await writeProject(mintedTree);
+    const a = await researchAppend(link(null, "I9") as any);
+    expect(a.ok).toBe(true);
+    const entryId = (a as any).entry?.id ?? "pe_001";
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId, fields: { match_score: 0.995 },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("still allows an update that does not touch match_score", async () => {
+    // The supersede pattern. Gating every update would make a link carrying a
+    // bad score permanently unretractable, which is the same trap moved.
+    await writeProject(mintedTree);
+    const a = await researchAppend(link(null, "I9") as any);
+    const entryId = (a as any).entry?.id ?? "pe_001";
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId, fields: { rationale: "reworded" },
+    } as any);
     expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
   });
 
-  it("still warns when match_score is a number outside 0–1 — validator.ts does not bound the range", async () => {
-    // The runtime validator carries match_score in its field allow-list but does
-    // not enforce the schema's 0–1 minimum/maximum, so an out-of-range number is
-    // accepted at the write and would otherwise silence the warning (review #1550).
+  it("binds the attestation's presence, not the value written", async () => {
     await writeProject();
-    const r = await researchAppend(link({ match_score: 5 }));
-    expect(r.ok).toBe(true); // not rejected — the range is unenforced at runtime
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
+    await attest(); // records 0.82
+    expect((await researchAppend(link(0.11) as any)).ok).toBe(true);
   });
 
-  it("warns on a probable link too — the gate is reachability, not confidence (#1429)", async () => {
-    // Was the inverse assertion until #1429. Gating on `confident` meant the
-    // warning said nothing at all about the ~two-thirds of links written at
-    // `probable`, which is exactly where a skipped score hides: measured in
-    // v1_2026-08-27_11-28-52, ut_person_evidence_022/_024 each wrote probable
-    // links with a null score and no same_person call anywhere in the run.
+  // Batch semantics, decided rather than left to fall out: the refusal is a
+  // precondition, so it fails the WHOLE call. A batch carrying one unattested
+  // link lands nothing, including its valid sibling ops. The alternative --
+  // dropping just the link -- would commit an assertion whose link was rejected,
+  // which is the half-written state the atomic write exists to prevent.
+  it("fails the whole batch — a valid sibling op lands nothing either", async () => {
     await writeProject();
-    const r = await researchAppend(link({ confidence: "probable", match_score: null }));
+    const before = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).sources.length;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: validSource("src_batch") },
+        { section: "person_evidence", op: "append", entry: link(0.82).entry },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+    const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).sources.length;
+    expect(after).toBe(before);
+  });
+
+  it("names the cheap call in the refusal, not a hand-built payload", async () => {
+    await writeProject();
+    const r = await researchAppend(link(0.82) as any);
+    const msg = failure(r).errors?.join(" ") ?? "";
+    expect(msg).toMatch(/same_person\(\{ projectPath, assertionId: 'a_010'/);
+    expect(msg).not.toMatch(/gedcomx1/);
+  });
+
+  // ADR-0009 constraint 3: a SECOND persona of an already-linked record must not
+  // ride the first one's score. Under the `(assertion, tree person)` key that
+  // granularity is structural rather than argued -- an assertion carries one
+  // `record_role` and one `record_persona_id`, so it IS a (record, party) pair
+  // and a second persona is a second assertion. This pins that the record being
+  // the same is not enough.
+  it("does not accept another persona's score for the same record", async () => {
+    await writeProject();
+    await recordMatchScore(dir, {
+      record_id: "rec_A",
+      record_persona_id: "P2",
+      record_role: "witness",
+      tree_person_id: "I1",
+      score: 0.82,
+      matched: true,
+      assertion_id: "a_011", // a DIFFERENT assertion on the SAME record
+      record_source: "record_read",
+      computed: "2026-09-24T00:00:00Z",
+    });
+    const r = await researchAppend(link(0.82) as any); // links a_010
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/no same_person score behind it/);
+  });
+
+  // A `match_score: null` update is a RETRACTION. Refusing it left a bad score
+  // unremovable on any reachable link, while `confidence` on that same link
+  // stayed escalatable -- the wrong way round.
+  it("allows an update that RETRACTS a score to null", async () => {
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { match_score: null },
+    } as any);
     expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
   });
 
-  // --- the reachability gate itself (#1429) ---------------------------------
-  // Silent where nothing could be scored, loud with a named route where
-  // something could. Before #1429 this warning knew nothing about provenance:
-  // it fired on image- and full-text-sourced links nothing can ever score, and
-  // its escape ("if no comparable FamilySearch persona exists to score against,
-  // leave match_score null") invited the agent to read a null
-  // `record_persona_id` as that case. It is not: `same_person` never reads that
-  // field.
+  it("still refuses an update that writes a NUMBER with nothing behind it", async () => {
+    // The other direction: retraction is free, fabrication is not.
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { assertion_id: "a_001" },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
 
-  /** A project whose a_010 hangs off one log entry of the given shape. */
-  async function writeProjectWithProvenance(
-    logEntry: Record<string, unknown>,
-    assertionOverrides: Record<string, unknown> = {},
-  ) {
+  // The refusal used to prescribe only `same_person`. On a person minted out of
+  // the record being cited that is the circular call the agent body forbids, and
+  // the ref-less mint route reaches this message rather than the circular one.
+  it("names leaving match_score null as a legal answer, not only the call", async () => {
+    await writeProject();
+    const msg = failure(await researchAppend(link(0.82) as any)).errors?.join(" ") ?? "";
+    expect(msg).toMatch(/leave match_score null/);
+    expect(msg).toMatch(/created out of this very record/);
+  });
+
+  // `personaReachable` reads the live, partly-applied document while every other
+  // arm reads the batch map, so op ORDER decided the verdict on one batch.
+  //
+  // The fixture is built here rather than from `writeUnreachable`, because on
+  // that richer project BOTH orders are refused by an unrelated composite-source
+  // guard -- so the orders agree with or without the fix and the test pins
+  // nothing. Confirmed by mutation: reverting the fix fails this test only with
+  // the minimal project below.
+  it("gives the same verdict on an unreachable lane whichever order the ops arrive in", async () => {
+    const bare = {
+      ...validAssertion("x"), record_id: "rec_A", record_persona_id: null,
+      log_entry_id: "log_img",
+    };
+    const verdicts: boolean[] = [];
+    for (const linkFirst of [false, true]) {
+      const r = baseResearch();
+      r.log = [{
+        id: "log_img", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+        tool: "image_transcribe", query: {}, outcome: "positive",
+        results_examined: 0, external_site: null, results_ref: null,
+      }] as any;
+      r.assertions = [{ ...bare, id: "a_001" }] as any;
+      await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+      await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+      const aOp = { section: "assertions", op: "append", entry: noId(bare) };
+      const pOp = { section: "person_evidence", op: "append",
+        entry: { ...link(null).entry, assertion_id: "a_002" } };
+      const res = await researchAppend({
+        projectPath: dir, ops: linkFirst ? [pOp, aOp] : [aOp, pOp],
+      } as any);
+      verdicts.push(res.ok);
+    }
+    expect(verdicts[0]).toBe(verdicts[1]);
+    // And the agreed verdict is the CORRECT one: an unreachable lane with a null
+    // score is legal, so pinning agreement alone would still pass on two wrongs.
+    expect(verdicts[0]).toBe(true);
+  });
+
+  // A baseline whose `persons` is not an array reached `.map` and threw a raw
+  // TypeError out of prepareOps -- killing every call, including ones with no
+  // person_evidence op at all.
+  it("survives a malformed starting-tree instead of throwing out of the tool", async () => {
+    await writeProject();
+    await writeFile(
+      join(dir, "starting-tree.gedcomx.json"),
+      JSON.stringify({ persons: { notAnArray: true }, relationships: [], sources: [] }),
+    );
+    await attest();
+    await expect(researchAppend(link(0.82) as any)).resolves.toMatchObject({ ok: true });
+  });
+
+  // --- re-pointing the link, not the number --------------------------------
+  //
+  // `person_evidence` declares no `allowedFields`, so `assertion_id` and
+  // `person_id` are both updatable. Watching only `match_score` left the same
+  // two-call bypass one field over: append an attested link, then move it.
+
+  it("refuses an update that re-points assertion_id onto an unattested record", async () => {
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { assertion_id: "a_001" },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses an update that re-points person_id onto an unattested person", async () => {
+    // I2 must EXIST and be non-circular, or this passes on referential
+    // integrity / the circular arm and never exercises the gate. It carries no
+    // source refs, so `mintedFromThisRecord` returns false for it.
+    const twoPerson = {
+      ...baseTree,
+      persons: [
+        ...(baseTree as any).persons,
+        { id: "I2", names: [{ preferred: true, given: "Other", surname: "Person" }] },
+      ],
+    };
+    await writeProject(twoPerson);
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { person_id: "I2" },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("allows a re-point onto a pairing that IS attested", async () => {
+    // The other direction. Refusing every re-point would block legitimate
+    // correction, and the prefetch has to resolve an update's post-merge
+    // assertion or it loads no attestation and refuses attested work.
+    await writeProject();
+    await attest();
+    expect((await researchAppend(link(0.82) as any)).ok).toBe(true);
+    await attest({ assertion_id: "a_001", record_id: "rec1" });
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { assertion_id: "a_001" },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  // --- the reachability lanes, carried over from #1429 ----------------------
+  async function writeUnreachable(logEntry: Record<string, unknown>) {
     const r = baseResearch();
     r.log = [logEntry] as any;
     r.assertions = [
       ...r.assertions,
       {
         ...validAssertion("a_010"),
-        record_id: "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+        record_id: "rec_A",
         fact_type: "name",
         value: "Father: Thomas Flynn",
         log_entry_id: logEntry.id,
-        ...assertionOverrides,
       },
     ] as any;
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
@@ -7807,117 +8772,145 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
   }
 
   const unreachable: [string, Record<string, unknown>][] = [
-    // An FTS result carries transcript text, names and places but no gedcomx —
-    // and a retained sidecar does not change that, which is why this lane is
-    // exempt even WITH a results_ref.
     ["fulltext_search with a retained sidecar", { id: "log_001", tool: "fulltext_search", results_ref: "results/log_001.json" }],
     ["fulltext_search with no sidecar", { id: "log_001", tool: "fulltext_search", results_ref: null }],
     ["image_transcribe", { id: "log_001", tool: "image_transcribe", results_ref: null }],
     ["image_read", { id: "log_001", tool: "image_read", results_ref: null }],
     ["external_site", { id: "log_001", tool: "external_site", results_ref: null }],
-    ["record_search whose sidecar was not retained", { id: "log_001", tool: "record_search", results_ref: null }],
+    ["record_search that kept no sidecar", { id: "log_001", tool: "record_search", results_ref: null }],
   ];
-
-  it.each(unreachable)("stays silent when the assertion came from %s", async (_label, logEntry) => {
-    await writeProjectWithProvenance(logEntry);
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
+  it.each(unreachable)("stays silent on an unreachable lane: %s", async (_name, logEntry) => {
+    await writeUnreachable(logEntry);
+    expect((await researchAppend(link(null) as any)).ok).toBe(true);
   });
 
-  // Since #1731 the warning names ONE call whatever the provenance, because
-  // `same_person`'s project-relative arm resolves the record itself. The three
-  // tests these replace pinned a per-route retrieval recipe (record_read /
-  // sidecar / record_persona_id), and each told the agent to hand-build a
-  // `primaryId1` — the expensive shape the 94% skip rate was a symptom of.
-  // Still pinned: the warning names the CALL, not just the absence. A warning
-  // that only says "missing" is what the agent talked its way past.
-  for (const [name, entry] of [
-    ["record_read", { id: "log_001", tool: "record_read", results_ref: null }],
-    ["a retained sidecar", { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" }],
-  ] as const) {
-    it(`names the project-relative call when the assertion came from ${name}`, async () => {
-      await writeProjectWithProvenance(entry as any);
-      const r = await researchAppend(link({ match_score: null }));
-      expect(r.ok).toBe(true);
-      if (!r.ok) return;
-      const w = r.validation.warnings.join(" ");
-      expect(w).toMatch(/records no usable match_score/);
-      expect(w).toMatch(/call same_person\(/);
-      expect(w).toMatch(/assertionId: 'a_010'/);
-      expect(w).toMatch(/treePersonId: 'I1'/);
-      // The retired shape must not come back: naming it steers the agent
-      // straight back to the cost this card exists to remove.
-      expect(w).not.toMatch(/primaryId1/);
-      expect(w).not.toMatch(/gedcomx1/);
-    });
-  }
+  // Exempting on a MISSING field is the bypass this gate exists to refuse: if a
+  // dangling log_entry_id silenced the requirement, dropping the field would be
+  // the way out. `personaReachable` treats unresolvable provenance as reachable,
+  // so the refusal stands.
+  // ut_person_evidence_014's ACTUAL defect. A stub minted by `tree_edit
+  // add_person` carries no source ref, so the circular walk returns false, and
+  // its assertion is full-text sourced, so reachability returns false too. With
+  // the fabrication arm gated on reachability BOTH arms were off and a score
+  // copied from another pairing landed unchallenged. 274 of 711 run-added
+  // corpus persons (38%) are ref-less, so this is the common mint, not an edge.
+  it("refuses a carried score on an unreachable lane — reachability excuses a MISSING score, not a fabricated one", async () => {
+    await writeUnreachable({ id: "log_001", tool: "fulltext_search", results_ref: null });
+    expect((await researchAppend(link(0.005) as any)).ok).toBe(false);
+  });
 
-  it("tells a two-party assertion to name which party the link is about", async () => {
-    await writeProjectWithProvenance(
-      { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
-      { record_persona_id: "p_293161675629", fact_type: "relationship", record_role: "groom" },
+  it("refuses on unresolvable provenance — a dangling log_entry_id is not an exemption", async () => {
+    await writeUnreachable({ id: "log_001", tool: "record_search", results_ref: null });
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.log = [];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    expect((await researchAppend(link(null) as any)).ok).toBe(false);
+  });
+
+  // --- the circular stub, moved into the tool by the ruling ------------------
+  //
+  // An EMPTY ref set is deliberately not exempt: no refs means provenance
+  // unknown, not minted-from-this-record, and exempting it would cover 1,131 of
+  // 9,223 committed corpus links. ADR-0009 refuted that basis already.
+  const mintedTree = {
+    ...baseTree,
+    persons: [
+      ...(baseTree as any).persons,
+      { id: "I9", names: [{ preferred: true, given: "Minted", surname: "Stub", sources: [{ ref: "S1" }] }] },
+    ],
+    sources: [{ id: "S1", title: "Record A" }],
+  };
+
+  it("exempts a person minted from this very record when the score is null", async () => {
+    await writeProject(mintedTree);
+    expect((await researchAppend(link(null, "I9") as any)).ok).toBe(true);
+  });
+
+  it("refuses a circular pairing that CARRIES a score", async () => {
+    await writeProject(mintedTree);
+    const r = await researchAppend(link(0.005, "I9") as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/minted from the very record/);
+  });
+
+  // A tree source ref is written either bare (`S1`) or as a fragment (`#S1`).
+  // Mutation testing found the `#` hop pinned by nothing: dropping the strip
+  // failed zero tests, so a fragment-form ref silently stopped resolving and
+  // the circular exemption quietly went missing.
+  it("resolves a #-prefixed source ref the same as a bare one", async () => {
+    const hashTree = {
+      ...baseTree,
+      persons: [
+        ...(baseTree as any).persons,
+        { id: "I9", names: [{ preferred: true, given: "Minted", surname: "Stub", sources: [{ ref: "#S1" }] }] },
+      ],
+      sources: [{ id: "S1", title: "Record A" }],
+    };
+    await writeProject(hashTree);
+    // Circular, so a carried score is refused -- which only happens if `#S1`
+    // resolved to S1 in the first place.
+    expect((await researchAppend(link(0.005, "I9") as any)).ok).toBe(false);
+    expect((await researchAppend(link(null, "I9") as any)).ok).toBe(true);
+  });
+
+  // "Minted from this record" must mean CREATED out of it. The ref walk alone
+  // also describes a long-standing FamilySearch person who happens to have one
+  // record attached, and calling that circular hard-refused 184 legitimate
+  // committed links.
+  it("does not call a FamilySearch person minted, even with one source ref", async () => {
+    const fsTree = {
+      ...baseTree,
+      persons: [
+        ...(baseTree as any).persons,
+        { id: "LKFW-9XH", names: [{ preferred: true, given: "Anders", surname: "Monsen", sources: [{ ref: "S1" }] }] },
+      ],
+      sources: [{ id: "S1", title: "Record A" }],
+    };
+    await writeProject(fsTree);
+    await attest({ tree_person_id: "LKFW-9XH" });
+    // Not exempt, so it takes the ordinary path: attested => accepted, and the
+    // score it legitimately carries is NOT refused as circular.
+    expect((await researchAppend(link(0.82, "LKFW-9XH") as any)).ok).toBe(true);
+  });
+
+  it("does not call a starting-tree person minted", async () => {
+    const preTree = {
+      ...baseTree,
+      persons: [
+        ...(baseTree as any).persons,
+        { id: "p-sibling", names: [{ preferred: true, given: "Pre", surname: "Existing", sources: [{ ref: "S1" }] }] },
+      ],
+      sources: [{ id: "S1", title: "Record A" }],
+    };
+    await writeProject(preTree);
+    // The write-once baseline says this person predates the research, so the
+    // record cannot have minted them however their refs resolve.
+    await writeFile(
+      join(dir, "starting-tree.gedcomx.json"),
+      JSON.stringify({ persons: [{ id: "p-sibling" }], relationships: [], sources: [] }, null, 2),
     );
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/recordRole/);
-    expect(w).toMatch(/'groom'/);
+    await attest({ tree_person_id: "p-sibling" });
+    expect((await researchAppend(link(0.82, "p-sibling") as any)).ok).toBe(true);
   });
 
-  it("does NOT ask a single-party assertion to name a party", async () => {
-    // The other direction: the recordRole sentence is noise on an assertion
-    // that names only one person, and noise in a warning is how the whole
-    // warning stops being read.
-    await writeProjectWithProvenance(
-      { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
-      { record_persona_id: "p_293161675629" },
-    );
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).not.toMatch(/recordRole/);
+  it("still calls a locally-minted stub minted when no baseline exists", async () => {
+    // The fail-open direction: an absent starting-tree must not turn the
+    // exemption off wholesale, or ut_014's defect stops being catchable.
+    await writeProject(mintedTree);
+    expect((await researchAppend(link(0.005, "I9") as any)).ok).toBe(false);
   });
 
-  it("warns on unresolvable provenance — an absent log_entry_id is not an exemption", async () => {
-    // Exempting on a MISSING field is the bypass this gate exists to refuse:
-    // write the assertion with no log_entry_id and the requirement would vanish.
-    await writeProject();
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
-  });
-
-  it("names the circular case as a legitimate null, so it does not badger a minted stub", async () => {
-    // The warning drove ut_person_evidence_n7v to score the groom persona against
-    // the stub it had just minted from that persona (v1_2026-08-27_12-36-32) — a
-    // comparison that can only confirm itself. The tool cannot DETECT the case
-    // (by write time the stub is an ordinary tree person), so the text has to
-    // name it as a sanctioned exception.
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/minted from the very persona/);
-    expect(w).toMatch(/circular/);
-  });
-
-  it("tells the agent a null record_persona_id is not a reason to skip", async () => {
-    // The old text's escape, inverted. same_person takes two gedcomx documents
-    // plus a focus id inside each and never reads record_persona_id.
-    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
-    const r = await researchAppend(link({ match_score: null }));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/null record_persona_id is\s+NOT a reason to skip/);
-    expect(w).not.toMatch(/no comparable FamilySearch persona exists/);
+  it("does not exempt a person with no source refs at all", async () => {
+    const noRefs = {
+      ...baseTree,
+      persons: [...(baseTree as any).persons, { id: "I9", names: [{ preferred: true, given: "Bare", surname: "Stub" }] }],
+      sources: [{ id: "S1", title: "Record A" }],
+    };
+    await writeProject(noRefs);
+    expect((await researchAppend(link(null, "I9") as any)).ok).toBe(false);
   });
 });
+
 
 describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", () => {
   let dir: string;
@@ -7942,6 +8935,23 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       status,
     }));
     r.plans = [plan];
+    // Every item carries a log entry naming it. Without this the
+    // log-attribution precondition preempts the gates THIS block is about: a
+    // batch that flips an item to `completed` is refused on its FIRST op and
+    // the declaration op is never applied, so the snapshot-read vector below
+    // stops being exercised while its assertion still passes off the other
+    // refusal's text. Seeding the log is also the realistic shape — a
+    // completed plan item is one whose search was logged.
+    r.log = plan.items.map((it: any, i: number) => ({
+      id: `log_00${i + 1}`,
+      plan_item_id: it.id,
+      performed: "2026-05-01T10:15:00Z",
+      tool: "record_search",
+      query: { surname: "Test" },
+      outcome: "positive",
+      results_examined: 1,
+      external_site: null,
+    }));
     return r;
   }
   async function writeProject(research: any) {
@@ -7977,6 +8987,11 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     const errs = failure(r).errors.join(" ");
     expect(errs).toMatch(/pli_002/);
     expect(errs).toMatch(/in_progress/);
+    // `in_progress` now has two producers — the log-attribution refusal ends
+    // "leave this item 'in_progress'". Safe here only because this call carries
+    // a single `questions` op the other arm cannot reach; pinned so it stays
+    // safe if this test ever gains one.
+    expect(errs).toMatch(/cannot be declared exhaustive/);
   });
 
   it("refuses the antonio-lucas-spouse shape: the item flips are BATCHED ahead of the declaration", async () => {
@@ -7994,7 +9009,13 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
         { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
       ],
     } as any);
-    expect(failure(r).errors.join(" ")).toMatch(/pli_001/);
+    const errs2 = failure(r).errors.join(" ");
+    expect(errs2).toMatch(/pli_001/);
+    // The G2 WORDING, not just the id. Both this rule and the log-attribution
+    // rule below name `pli_001`, and the latter throws on op #1 — so an
+    // id-only assertion passes off the wrong refusal and stops exercising the
+    // snapshot-read vector this test exists for.
+    expect(errs2).toMatch(/cannot be declared exhaustive/);
   });
 
   it("allows a declaration when every item is completed or skipped", async () => {

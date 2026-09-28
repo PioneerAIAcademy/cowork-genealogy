@@ -606,7 +606,7 @@ back as the MCP over-limit error.
 
 Two further consumers keep the ordering load-bearing regardless: the model's own
 context window, and anything else that bounds this response without the harness's
-key preservation. #1073's Definition of Done requires the ordering in any case.
+key preservation. The Definition of Done requires the ordering in any case.
 
 The capture side was widened in the same change
 (`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
@@ -636,8 +636,9 @@ in the six committed runs. `run-<ts>.json` is committed to git, so that is the
 price of the change, stated rather than discovered later.
 
 That 2.16x is the whole cost. `_summarize_tool_response` has exactly one caller —
-`tool_calls[].response_summary`. It had a second until #1238, which rendered the
-tool-call `args` into `run-<ts>.transcript.md`; #1238 removed both the transcript
+`tool_calls[].response_summary`. It had a second until the run-log-retention
+change, which rendered the
+tool-call `args` into `run-<ts>.transcript.md`; that change removed both the transcript
 and that call site, so no other artifact grows.
 
 **`response_summary` now has two shapes.** Under the verbatim threshold it keeps

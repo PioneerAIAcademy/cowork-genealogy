@@ -38,6 +38,63 @@ import pytest
 # while an unrelated substring does not.
 _DETACH_TERMS = ("detach", "detaching", "detached", "unlink", "unlinking", "unlinked")
 
+# A detach term that is being FORBIDDEN is doctrine, not a violation of it.
+# "Do not detach -- the source is good evidence for this person with one wrong
+# field" is the rule stated correctly, and the guard flagged it (run
+# v1_2026-09-20_13-40-15, ut_source_evaluation_p2v). Matched against the window
+# immediately before each occurrence rather than anywhere in the passage: a
+# blanket "passage contains a negation" skip would wave through "do not detach
+# the death index, but detach the 1885 census" -- one negation and one real
+# recommendation in one breath, which is the failure direction that fails
+# SILENTLY and is therefore worse than the false positive it fixes.
+_NEGATORS = (
+    "do not", "don't", "do n't", "never", "not", "no need to", "rather than",
+    "instead of", "without", "avoid", "stop short of", "nothing to",
+)
+# A negator counts only when at most one word separates it from the term. Any
+# "not" in the clause was too loose: "the record is not about this man and
+# should be detached" read the "not" of "is not about" as covering the detach.
+_NEGATED_TERM = re.compile(
+    r"(?:" + "|".join(re.escape(n) for n in _NEGATORS) + r")\s+(?:\w+\s+)?$"
+)
+_NEG_WINDOW = 40
+
+
+# A negation binds only within its own clause. Without this, "do not detach the
+# death index, but detach the 1885 census" reads the leading "do not" as
+# covering BOTH terms and the real recommendation escapes -- the silent-failure
+# direction. Dashes count: this skill writes in em-dashes, so "the record is not
+# about this Christian Hole -- detach it" would otherwise read its "not" as
+# covering the detach. Pinned both ways in test_source_evaluation_validator.py.
+_CLAUSE_BREAKS = (
+    ",", ";", ":", ".", "!", "?", "\u2014", "\u2013", " - ",
+    " but ", " however ", " though ",
+)
+
+
+def _is_negated(text: str, at: int) -> bool:
+    """True when the detach term at `at` is being ruled out rather than urged.
+
+    Scoped to the term's OWN clause: the window is cut at the nearest preceding
+    clause break, so a negation belonging to an earlier clause cannot license a
+    recommendation in this one.
+    """
+    before = text[max(0, at - _NEG_WINDOW):at].lower()
+    cut = max((before.rfind(b) + len(b) for b in _CLAUSE_BREAKS if b in before), default=0)
+    return bool(_NEGATED_TERM.search(before[cut:]))
+
+
+def _recommends_detach(block: str) -> bool:
+    """A detach term in `block` that is not negated."""
+    low = block.lower()
+    for term in _DETACH_TERMS:
+        start = 0
+        while (i := low.find(term, start)) != -1:
+            if not _is_negated(low, i):
+                return True
+            start = i + len(term)
+    return False
+
 # Phrases that recommend going back to the original image. "re-read",
 # "reread" and "read the original" are all live in the skill body and in
 # a genealogist's own vocabulary.
@@ -245,7 +302,7 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
         block
         for block in _passages(text_response)
         if protected.lower() in block.lower()
-        and any(term in block.lower() for term in _DETACH_TERMS)
+        and _recommends_detach(block)
     ]
     assert not hits, (
         f"source-evaluation recommended detaching or unlinking in the same "
@@ -295,4 +352,43 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
         "read-only. Correcting an index happens on FamilySearch, by the "
         "researcher; detaching a source is a tree-edit decision the "
         "researcher makes after reading the report."
+    )
+
+
+def test_quality_detail_call_carries_detail_flag(tool_calls, test):
+    """D3 (#2225): the profile checklist rests on a call that asked for detail.
+
+    Tier 1, tag-gated on `quality-detail`. Deterministic half of
+    `ut_source_evaluation_q8p`: the judge grades how the checklist is
+    presented, which it cannot do honestly if the call never carried
+    `detail: true` -- without the flag the response has no `detail` block at
+    all (`PersonQualityDetail` is "present only when the caller passes
+    `detail: true`"), so `conflicts[]` is absent and the reply's checklist
+    could only have come from the summary `issues[]`.
+
+    Asserted here rather than in `judge_context` because it is a fact about
+    the call log, not a judgement about the prose -- unit-test-spec.md:707.
+
+    Two silent-wrong traps, both already paid for elsewhere in this repo:
+    - `tool_calls` is the run's resolved call log; reading `test["tool_calls"]`
+      returns [] and makes every run look compliant.
+    - tool names arrive fully qualified (`mcp__genealogy__person_quality`), so
+      equality-matching the bare name never fires -- use endswith().
+    """
+    if "quality-detail" not in (test.get("tags") or []):
+        pytest.skip("test does not declare quality-detail")
+
+    calls = [
+        c for c in (tool_calls or [])
+        if (c.get("tool") or "").endswith("person_quality")
+    ]
+    assert calls, (
+        "no person_quality call in the run -- the checklist this test grades "
+        "cannot have been sourced from the tool"
+    )
+    with_detail = [c for c in calls if (c.get("args") or {}).get("detail") is True]
+    assert with_detail, (
+        "person_quality was called without `detail: true`, so the response "
+        "carried no `detail` block: "
+        f"{[(c.get('args') or {}) for c in calls]}"
     )

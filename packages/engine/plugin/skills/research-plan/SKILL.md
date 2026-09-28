@@ -575,8 +575,8 @@ question, default to **review** (recap status and the next item);
 create a **new** plan only when the prior plan is `completed`; mark the
 old plan `superseded` and write a new `pl_` entry whenever new information
 invalidates the active plan's assumptions (Step 1a, supersede mode) — the user
-saying so is one such trigger, not the only one, and under `--autonomous` a
-sub-skill reporting it is another. Never edit a `completed` or `superseded`
+saying so is one such trigger, not the only one; a sub-skill reporting it is
+another. Never edit a `completed` or `superseded`
 plan's items in place.
 
 **Do not duplicate:** never leave two `pl_` entries with

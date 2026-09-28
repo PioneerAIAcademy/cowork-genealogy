@@ -1,5 +1,5 @@
 // match-scores — the `same_person` attestation: a project-local record of a
-// score the tool actually computed, keyed by (record, party, tree person).
+// score the tool actually computed, keyed by (record, assertion, tree person).
 //
 // Step 2 of issue #1731's 2026-09-07 lead ruling: "the tool writes its score to
 // a project-local record keyed by (persona, tree person) — shape is the
@@ -22,8 +22,13 @@
 // tree.gedcomx.json and starting-tree.gedcomx.json only, so a raw Write to
 // results/.scores/ from inside the VM is unguarded: the model cannot produce
 // the payload, but it can author the file. Extending that list touches
-// ADR-0005, which owns it, and is a precondition for the refusal step trusting
-// this record.
+// ADR-0005, which owns it. This was written as a PRECONDITION for the refusal
+// step; that step shipped on 2026-09-24 without it, deliberately and with the
+// threat model scoped instead (ADR-0009 constraint 2: the hook binds in Cowork
+// and on the hosted path, the hosted store is `PgS3ProjectStore` which no
+// file-write tool reaches, and the residual surface is the desktop `.mcpb` main
+// thread and the Cowork main thread). Read the ADR, not this paragraph, for
+// what was actually decided.
 //
 // WHY UNDER results/.scores/ AND NOT results/*.json. The validator's orphan
 // check lists results/ NON-recursively and errors on any top-level *.json no log
@@ -32,15 +37,26 @@
 // results/.staging/ uses. Unlike .staging, nothing prunes this: an attestation
 // outlives the session that made it.
 //
-// WHY ONE FILE PER RECORD HOLDING A MAP, rather than one file per pairing. The
-// party component of a pairing is NOT stable: `recordPersonaId` is a caller
-// override, and on the fetched route the tool resolves a real persons[].id for a
-// second party whose assertion carries `record_persona_id: null`. So the same
-// (record, persona, tree person) pairing would hash one way from the assertion
-// and another from what was resolved, and a reader computing the key from a
-// person_evidence entry's (assertion_id, person_id) would look under only one of
-// them. A per-record file is one read and lets the reader match on persona id,
-// on role, or on tree person id alone — the one token both sides always have.
+// WHY THE MAP IS KEYED ON (assertion, tree person) AND NOT ON THE PARTY.
+// The party component is NOT stable across the two routes: `recordPersonaId` is
+// a caller override, and on the FETCHED route the tool resolves a real
+// persons[].id for a party whose assertion carries `record_persona_id: null`.
+// Keying on it therefore filed a score under what was RESOLVED while every
+// reader computes the key from what the ASSERTION carries, so a legitimate score
+// written by the successful fetch could never be found again -- the gate refused
+// exactly the links whose call had been made (#1731 step 3, caught in review
+// before it shipped). `(assertion_id, tree_person_id)` is the one pair BOTH
+// sides always hold: `same_person`'s project-relative arm is called with them,
+// and a `person_evidence` entry carries them as `(assertion_id, person_id)`.
+//
+// It keeps ADR-0009 constraint 3 (persona granularity) because an assertion IS a
+// (record, party) pair -- it carries one `record_role` and one
+// `record_persona_id` -- so a second persona of an already-linked record is a
+// DIFFERENT assertion and needs its own score. BOTH halves are load-bearing and
+// they carry different cases: the assertion gives persona granularity, while the
+// tree person is what separates the 1,505 corpus assertions (of 7,684) linked to
+// more than one tree person -- the two parties of a relationship assertion.
+// Assertion alone would merge those.
 //
 // Spec: docs/specs/same-person-tool-spec.md ("The recorded score").
 
@@ -65,8 +81,9 @@ export interface RecordedMatchScore {
   /** 1-10 bucket; absent when the API treats the pair as a non-match. */
   confidence?: number;
   matched: boolean;
-  /** The assertion the call was made for, for auditing. Not part of the key:
-   *  several assertions can describe one persona. */
+  /** The assertion the call was made for. Half the map key, with
+   *  `tree_person_id` -- see the header. Null only on the explicit
+   *  two-document arm, which records nothing. */
   assertion_id: string | null;
   /** Which route assembled the record side, so a reader can tell a fetched
    *  persona from a projected one without re-deriving it. */
@@ -77,7 +94,7 @@ export interface RecordedMatchScore {
 /** The persisted per-record envelope. */
 export interface MatchScoreFile {
   record_id: string;
-  /** `<party>|<tree_person_id>` -> the score. */
+  /** `<assertion_id>|<tree_person_id>` -> the score. */
   scores: Record<string, RecordedMatchScore>;
 }
 
@@ -105,10 +122,11 @@ export function scoresRef(recordId: string): string {
   return `${SCORES_SUBDIR}/${createHash("sha256").update(norm).digest("hex")}.json`;
 }
 
-/** The map key for one pairing. `party` is the persona id when known, else the
- *  role; a reader that has only one of the two tries both. */
-export function scoreKey(party: string, treePersonId: string): string {
-  return `${party}|${treePersonId}`;
+/** The map key for one pairing: the assertion the score was computed for, and
+ *  the tree person it was computed against. Both sides of the contract hold
+ *  these two tokens verbatim, which is the whole point -- see the header. */
+export function scoreKey(assertionId: string, treePersonId: string): string {
+  return `${assertionId}|${treePersonId}`;
 }
 
 /** Read a record's attestation file, or null when there is none. Never throws:
@@ -143,33 +161,26 @@ export async function readMatchScores(
 }
 
 /**
- * The recorded score for a pairing, looked up by persona id, then role, then by
- * tree person id alone.
+ * The recorded score for one pairing: an exact lookup on
+ * `(assertion_id, tree_person_id)`.
  *
- * The last fallback is what makes the record readable from a `person_evidence`
- * entry, which carries only `(assertion_id, person_id)` — the assertion names
- * the record and the party it is *about*, but a link for the second party of a
- * relationship assertion shares that assertion id, so `person_id` is the only
- * token that distinguishes them on both sides.
+ * There is deliberately no looser arm. The persona-id/role arms this used to
+ * carry could not see a score written by the fetched route, and the
+ * tree-person-only arm that covered for them returned ANY entry for that person
+ * -- which is ADR-0009 constraint 3 verbatim: a second persona of an
+ * already-linked record attaching unscored. Both failure modes are removed by
+ * keying on the pair both sides actually hold.
  */
 export function findRecordedScore(
   file: MatchScoreFile | null,
+  assertionId: string | null,
   treePersonId: string,
-  opts: { personaId?: string | null; role?: string | null } = {},
 ): RecordedMatchScore | null {
   // Defensive on the same shape the reader above rejects, because callers may
   // hand this a file object they built themselves rather than one it returned.
   if (!file || file.scores === null || typeof file.scores !== "object") return null;
-  for (const party of [opts.personaId, opts.role]) {
-    if (typeof party === "string" && party !== "") {
-      const hit = file.scores[scoreKey(party, treePersonId)];
-      if (hit) return hit;
-    }
-  }
-  for (const entry of Object.values(file.scores)) {
-    if (entry?.tree_person_id === treePersonId) return entry;
-  }
-  return null;
+  if (typeof assertionId !== "string" || assertionId === "") return null;
+  return file.scores[scoreKey(assertionId, treePersonId)] ?? null;
 }
 
 /**
@@ -187,18 +198,15 @@ export async function recordMatchScore(
   projectPath: string,
   entry: RecordedMatchScore,
 ): Promise<void> {
-  const party =
-    entry.record_persona_id !== null && entry.record_persona_id !== ""
-      ? entry.record_persona_id
-      : entry.record_role;
-  if (party === null || party === "") {
-    // Nothing identifies the party, so nothing could look this up again.
-    // Silently skipping beats writing a record no reader can find.
+  const assertionId = entry.assertion_id;
+  if (typeof assertionId !== "string" || assertionId === "") {
+    // The explicit two-document arm has no assertion, so nothing could look this
+    // up again. Silently skipping beats writing a record no reader can find.
     return;
   }
   const existing = await readMatchScores(projectPath, entry.record_id);
   const file: MatchScoreFile = existing ?? { record_id: entry.record_id, scores: {} };
   file.record_id = entry.record_id;
-  file.scores[scoreKey(party, entry.tree_person_id)] = entry;
+  file.scores[scoreKey(assertionId, entry.tree_person_id)] = entry;
   await getProjectStore().writeJson(projectPath, scoresRef(entry.record_id), file);
 }
