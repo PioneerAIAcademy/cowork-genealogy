@@ -209,6 +209,12 @@ class LocalProvider(SandboxProvider):
             "MODEL": model,
             "AUTO_CONTINUE": "1" if settings.auto_continue else "0",
             "AUTO_CONTINUE_MAX_STEPS": str(settings.auto_continue_max_steps),
+            # 1d, set explicitly for the same reason AUTO_CONTINUE is: `**os.environ`
+            # above would otherwise let the control plane's own value leak through
+            # unfiltered, so `auto_continue: false` would turn off the synthetic-`Yes.`
+            # chain and leave the SDK Stop hook still vetoing every yield. The two
+            # providers must answer the same setting the same way.
+            "AUTONOMOUS_MAX_NUDGES": str(settings.autonomous_max_nudges if settings.auto_continue else 0),
             "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
             # The agent's own summaries carry non-ASCII (mock_agent's
             # "1 match -> logged as ..." uses U+2192), and sandbox_server prints

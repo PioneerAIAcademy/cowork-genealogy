@@ -44,21 +44,44 @@ import requests
 
 from decide import READ_TIMEOUT, decide
 
+def _env_num(name: str, default, cast):
+    """A number from the environment that cannot crash-loop the shim.
+
+    Every one of these is read at MODULE SCOPE, so a bare ``int()``/``float()`` on
+    ``"30s"`` or a stray space raises before the shim polls anything and compose restarts
+    it forever -- with no running service to read the error from. ``READ_TIMEOUT_S`` is
+    the step ceiling itself, which is exactly the knob an operator retunes by hand.
+
+    This duplicates ``app.agent.continue_policy``'s ``env_int``/``env_float``, which the worker and the alpha
+    share, and it stays duplicated: the shim is its own image and does not carry ``app``
+    (``proto/shim/Dockerfile``). An import would pass the suite -- which runs from the
+    repo root, where the whole tree is on the path -- and fail only in the container."""
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = cast(raw)
+    except ValueError:
+        print(f"{name}={raw!r} is not a number; using {default}", flush=True)
+        return default
+    return value if value >= 0 else default
+
+
 QUEUE_URL = os.environ["QUEUE_URL"]
 WORKER_URL = os.environ.get("WORKER_URL", "http://worker:8080/turn")
 WORKER_CONTAINER = os.environ.get("WORKER_CONTAINER", "proto-worker")
-HTTP_CONNECTIONS = int(os.environ.get("HTTP_CONNECTIONS", "2"))
-READ_TIMEOUT_S = float(os.environ.get("READ_TIMEOUT_S", "1800"))  # the step ceiling
-CONNECT_TIMEOUT_S = float(os.environ.get("CONNECT_TIMEOUT_S", "5"))
-BACKOFF_BASE_S = int(os.environ.get("BACKOFF_BASE_S", "5"))
-BACKOFF_MAX_S = int(os.environ.get("BACKOFF_MAX_S", "300"))
+HTTP_CONNECTIONS = _env_num("HTTP_CONNECTIONS", 2, int)
+READ_TIMEOUT_S = _env_num("READ_TIMEOUT_S", 1800.0, float)  # the step ceiling
+CONNECT_TIMEOUT_S = _env_num("CONNECT_TIMEOUT_S", 5.0, float)
+BACKOFF_BASE_S = _env_num("BACKOFF_BASE_S", 5, int)
+BACKOFF_MAX_S = _env_num("BACKOFF_MAX_S", 300, int)
 # Pause before making a connection-failed message visible again, so a worker that
 # is restarting is not hammered with a refused-connection loop in the meantime.
-REQUEUE_PAUSE_S = float(os.environ.get("REQUEUE_PAUSE_S", "1"))
+REQUEUE_PAUSE_S = _env_num("REQUEUE_PAUSE_S", 1.0, float)
 WAIT_TIME_S = 20  # SQS long-poll maximum
 # Budget between the stop signal and exit; docker-compose.yml's stop_grace_period
 # must be at least this, and it must exceed WAIT_TIME_S so the poll can return.
-STOP_GRACE_S = float(os.environ.get("STOP_GRACE_S", "30"))
+STOP_GRACE_S = _env_num("STOP_GRACE_S", 30.0, float)
 STOP_MARGIN_S = 2.0  # exit this long before compose would SIGKILL
 
 _parsed = urlparse(QUEUE_URL)

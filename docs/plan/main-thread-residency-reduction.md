@@ -136,7 +136,7 @@ argument for prioritising #2246**, because #2246 gates a queue whose top item is
 one of those results lands in the orchestrator's window. Converting it to a pair
 moves all 230,104 tokens into an agent window that is discarded when the agent
 returns — the single largest change available, and it is already on the board,
-unblocked, in `cluster:pair-conversion`.
+unblocked, in `cluster:agent-conversion`.
 
 - **Action:** prioritise **#2246** — it gates all three conversions. Start
   **#2123** alongside it (unblocked, and it gates #2243). Then **#2117**

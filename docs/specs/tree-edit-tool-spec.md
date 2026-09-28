@@ -129,7 +129,7 @@ step, run after — see §8).
 | Ad-hoc fact/name/person/relationship payload shapes + id rules + primary swap + standard_place resolution | `packages/engine/plugin/skills/tree-edit/SKILL.md:52–124` |
 | Deletion is permitted ONLY for facts/relationships on a tier downgrade | `tree-edit/SKILL.md:118–124` |
 | Simplified ids are `I/N/F/R/S`, "unique within their array, immutable once created" | `docs/specs/simplified-gedcomx-spec.md:61–69` |
-| `SimplifiedFact.primary?`, `SimplifiedName.preferred?`, relationship `parent/child` vs `person1/person2` | `src/types/gedcomx.ts:104–151` |
+| `SimplifiedFact.primary?`, `SimplifiedName.preferred?`, relationship `parent/child` vs `person1/person2` | the `SimplifiedGedcomX` interface family (`SimplifiedFact`, `SimplifiedName`, `SimplifiedRelationship`) in `src/types/gedcomx.ts` |
 | Shared write layer: `atomicWriteJson`, `assertInsideProject`, `validateParsed`, exported `validateGedcomx` | `src/utils/project-io.ts`, `src/validation/validator.ts` (shipped) |
 | compact-return + validate-before-persist pattern | `src/tools/merge-tree-persons.ts` + `src/utils/project-io.ts` (`atomicWriteJson`) |
 | Per-prefix max-id logic already exists (private) | `src/utils/merge-gedcomx.ts` `maxIdNum` |
@@ -385,8 +385,9 @@ The persisted tree shape is unchanged — `ops` changes only the number of write
 Worth stating because it was mis-filed as tool work for a month: `ops` has always
 accepted several `add_relationship` edges in one validated, atomic call, including
 an edge whose endpoint is a person another op in the same batch just minted (see
-the intra-batch id-assignment rule above; exercised by
-`tests/tools/tree-edit.test.ts:950,1012,1020,1037`). What was actually missing was
+the intra-batch id-assignment rule above; exercised by the `intra-batch cross-op:
+add_person then add_relationship referencing the predicted I id validates` test in
+`tests/tools/tree-edit.test.ts`). What was actually missing was
 that `person-evidence/SKILL.md` §7 never told the caller to *collect* a household's
 edges — it issued ~7–9 separate calls for one census household, which showed up as
 an e2e wall-clock regression. Fixed on the skill side (2026-07-26). Before adding a

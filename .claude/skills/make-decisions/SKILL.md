@@ -203,9 +203,12 @@ nothing, and he will send it back. Two properly set up beats four passed through
 item. An answer heard and not applied is worse than one never asked for.
 
 ```sh
-# 1. the durable record — his answer, in his words, on the issue
+# 1. the durable record: his answer VERBATIM, who gave it, and what it rests on.
+#    <who> is the person who answered, not whoever is running this skill:
+#    `lead` only when Dallan answered. Rests on = the one to three facts from your
+#    briefing that the answer turned on, so a later reader can tell when it is stale.
 gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --body "**Ruling:** <his answer> — <the one-line reason, if he gave one>"
+  --body "**Ruling (<who>, <date>):** <his words, verbatim> — **Rests on:** <facts>"
 
 # 2. splice the chosen option's pre-written body text in, replacing the whole
 #    `## Decision needed` block, so the next reader gets the decision and not the
@@ -232,6 +235,15 @@ gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --remove-label needs-
 The `**Ruling:**` comment is the record, not a queue. It exists so the next
 reader — a junior picking the issue up, `/audit-board`, a later run of this skill
 — sees the decision and its reasoning.
+
+**Record what he said, not what you inferred.** A one-line "go with your
+recommendation" rules on the option text he was shown and nothing else; do not
+expand it into rules he never saw, and do not carry it to a sibling issue he was
+not asked about. That issue gets its own question.
+
+**A ruling binds only while its premises hold** (`CLAUDE.md`). An item that comes
+back because a fact under an earlier ruling proved wrong is a fresh question on
+the current facts, not a request to reverse him. Say which fact changed.
 
 ## 4. Answers that are not a choice between the options
 

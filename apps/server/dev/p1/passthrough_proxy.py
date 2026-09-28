@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """A logging pass-through in front of https://api.anthropic.com — P3b's wire tap.
 
+``--upstream`` also takes ``http://host:port`` or ``https://host:port``, for an
+Anthropic-Messages gateway such as agentgateway (P3c–P3l). Point the CLI at
+``http://127.0.0.1:<port>/bedrock``: the path, prefix included, is forwarded unchanged.
+
 Used in-process by `probe_gateway_path.py` (one instance per proxy arm) and runnable
 standalone. Every request the CLI sends to ``ANTHROPIC_BASE_URL=http://127.0.0.1:<port>``
 is forwarded unchanged — method, path with its query string, headers, body — to
@@ -35,7 +39,7 @@ ONE JSON line per request is appended to ``--log``:
   error                       upstream failure text (the client got a 502)
 
     uv run python -m dev.p1.passthrough_proxy --log FILE [--host 127.0.0.1] [--port 0]
-                                              [--upstream api.anthropic.com]
+                                              [--upstream api.anthropic.com | http://host:port]
 
 Stdlib only. Hop-by-hop headers are not forwarded (RFC 7230 §6.1); ``Host`` and
 ``Content-Length`` are set for the upstream leg by http.client.
@@ -68,6 +72,22 @@ _DROP_REQUEST_HEADERS = frozenset({
 _DROP_RESPONSE_HEADERS = frozenset({
     "content-length", "transfer-encoding", "connection", "keep-alive", "trailer", "upgrade",
 })
+
+
+def parse_upstream(upstream: str) -> tuple[str, str, int]:
+    """``(scheme, host, port)`` for a bare host (https, 443) or an ``http[s]://host[:port]`` URL."""
+    scheme, sep, rest = upstream.partition("://")
+    if not sep:
+        scheme, rest = "https", upstream
+    if scheme not in ("http", "https"):
+        raise ValueError(f"upstream scheme must be http or https, not {scheme!r}")
+    hostport = rest.split("/", 1)[0]
+    host, colon, port = hostport.rpartition(":")
+    if not colon or not port.isdigit():
+        host, port = hostport, ("443" if scheme == "https" else "80")
+    if not host:
+        raise ValueError(f"upstream {upstream!r} has no host")
+    return scheme, host, int(port)
 
 
 def _now_iso() -> str:
@@ -169,6 +189,7 @@ class PassthroughServer(ThreadingHTTPServer):
         super().__init__(address, PassthroughHandler)
         self.log_path = log_path
         self.upstream = upstream
+        self.upstream_scheme, self.upstream_host, self.upstream_port = parse_upstream(upstream)
         self.upstream_timeout = upstream_timeout
         self.ssl_context = ssl.create_default_context()
         self._lock = threading.Lock()
@@ -239,10 +260,14 @@ class PassthroughHandler(BaseHTTPRequestHandler):
         }
         forward = {k: v for k, v in self.headers.items()
                    if k.lower() not in _DROP_REQUEST_HEADERS}
-        forward["Host"] = self.server.upstream
-        conn = http.client.HTTPSConnection(self.server.upstream, 443,
-                                           timeout=self.server.upstream_timeout,
-                                           context=self.server.ssl_context)
+        srv = self.server
+        default_port = 443 if srv.upstream_scheme == "https" else 80
+        forward["Host"] = srv.upstream_host if srv.upstream_port == default_port else f"{srv.upstream_host}:{srv.upstream_port}"
+        if srv.upstream_scheme == "https":
+            conn: http.client.HTTPConnection = http.client.HTTPSConnection(
+                srv.upstream_host, srv.upstream_port, timeout=srv.upstream_timeout, context=srv.ssl_context)
+        else:
+            conn = http.client.HTTPConnection(srv.upstream_host, srv.upstream_port, timeout=srv.upstream_timeout)
         try:
             conn.request(self.command, self.path, body=raw or None, headers=forward)
             resp = conn.getresponse()
@@ -350,7 +375,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--log", required=True, help="JSONL file to append one line per request to")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=0, help="0 = any free port (printed)")
-    p.add_argument("--upstream", default=DEFAULT_UPSTREAM, help="HTTPS host to forward to")
+    p.add_argument("--upstream", default=DEFAULT_UPSTREAM,
+                   help="bare HTTPS host, or http[s]://host[:port] (a gateway)")
     return p
 
 
@@ -362,7 +388,8 @@ def main(argv: list[str] | None = None) -> int:
     log_path = Path(args.log).expanduser().resolve()
     log_path.parent.mkdir(parents=True, exist_ok=True)
     server, thread = start_proxy(log_path, host=args.host, port=args.port, upstream=args.upstream)
-    print(f"listening on http://{args.host}:{server.port} -> https://{args.upstream}  "
+    print(f"listening on http://{args.host}:{server.port} -> {server.upstream_scheme}://"
+          f"{server.upstream_host}:{server.upstream_port}  "
           f"log: {log_path}", flush=True)
     try:
         while thread.is_alive():

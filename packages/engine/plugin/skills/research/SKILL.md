@@ -19,7 +19,7 @@ allowed-tools:
 
 # /research — Full GPS Research Workflow
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). Under `--autonomous` mode, suppress per-entry preambles entirely — the audit trail lives in the persisted `rationale`/`notes` fields, not in chat, so narrate only at phase boundaries (or not at all) and keep moving.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the user watches this as a live feed and it is their only view of a run that no longer stops to ask, so every phase boundary gets its line — always followed by the actual tool call in the same turn. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
 You drive the full Genealogical Proof Standard (GPS) workflow on the
 user's research objective. Rather than the user invoking each
@@ -30,36 +30,33 @@ This skill is intentionally a thin orchestrator — the GPS work
 itself happens in the sub-skills. Your job is to keep the workflow
 moving.
 
-## Autonomous mode
+## Continuous work
 
-If the user message contains `--autonomous`, proceed without pausing
-for clarifying questions. Use your best judgment for any decision
-that would normally prompt the user (which records to prioritize
-when several are plausible, how to weight conflicting evidence, when
-to declare exhaustiveness). Log the decision and your rationale in
-the appropriate research.json field (log entry, assertion rationale,
-or conflict resolution analysis) so the audit trail captures it.
+**You work continuously, in one turn, until a stop condition in
+§"When to stop" is met.** This is how every run behaves; it is not a
+mode and no flag turns it on. Proceed without pausing for clarifying
+questions: use your best judgment for any decision that would normally
+prompt the user (which records to prioritize when several are plausible,
+how to weight conflicting evidence, when to declare exhaustiveness), and
+log the decision and your rationale in the appropriate research.json
+field (log entry, assertion rationale, or conflict resolution analysis)
+so the audit trail captures it.
 
-**You are the only driver. Keep working in one continuous turn.**
-There is no human to approve a tool, answer a question, or prompt you
-onward — so do **not** end your turn to announce, plan, or ask about a
-next step. After a sub-skill returns, immediately invoke the next
-sub-skill in the **same turn**, and keep going through the full routing
-loop (§"What to do" steps 2–4) until a real stop condition is met
-(§"When to stop"). Trust the compact summaries the sub-skills and writer
-tools return plus the state you already hold in context — only re-read
-`research.json` when you're entering a phase cold without the relevant
-state in context, or when a sub-skill or the user changed the file in a
-way you don't already have. Writing something like "Next:
-research-plan" or "I'll now search records" and then yielding is a
+**You are the only driver.** Do **not** end your turn to announce, plan,
+or ask about a next step. After a sub-skill returns, immediately invoke
+the next sub-skill in the **same turn**, and keep going through the full
+routing loop (§"What to do" steps 2–4). Trust the compact summaries the
+sub-skills and writer tools return plus the state you already hold in
+context — only re-read `research.json` when you're entering a phase cold
+without the relevant state in context, or when a sub-skill or the user
+changed the file in a way you don't already have. Writing something like
+"Next: research-plan" or "I'll now search records" and then yielding is a
 **failure** — it ends the run before any research happens. Narrate
-briefly if you like, but always follow the narration with the actual
-tool call or sub-skill invocation in the same turn. The only thing that
-ends an autonomous run is `project.status == "completed"` or a genuine
-blocker you have logged.
+briefly, but always follow the narration with the actual tool call or
+sub-skill invocation in the same turn.
 
-Otherwise (interactive mode), surface meaningful decisions to the
-user as you encounter them.
+The user can type at any time and can halt you at any time. Neither is
+something you stop and wait for.
 
 ## Direct user requests name a destination, not a shortcut
 
@@ -152,7 +149,7 @@ regardless of how directly the request named the destination.
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | `proof-conclusion` wrote `<ps_id>`, and (tier < probable, or its concluded relationship or fact is now in `tree.gedcomx.json`) | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory to invoke and record, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. "Mandatory" means the gate must run and its verdict must land in `evaluations[]` before the question can be considered done — it does NOT mean you must apply its suggested fix; see **Mentor checkpoints** for that distinction. |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified: write `project.status = "completed"` via `research_append`, then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    **Record-extraction contract — enforced, not advisory.** Inline
@@ -255,8 +252,8 @@ regardless of how directly the request named the destination.
    its criteria read.
 
 3. **Iterate — without yielding.** After each sub-skill returns, route
-   to the next step **in the same turn** (under `--autonomous`; see
-   "Autonomous mode") from the sub-skill's compact return plus the state
+   to the next step **in the same turn** (see "Continuous work") from
+   the sub-skill's compact return plus the state
    you already hold — re-read `research.json` only if the sub-skill
    changed state you don't have in context, or you're routing into a
    phase cold. After a plan item completes and its evidence is analyzed,
@@ -318,7 +315,7 @@ After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
  3. **This is a hard gate — and so, separately, is the proof-critique mentor
     gate on that `<ps_id>`** (see **Mentor checkpoints** and the routing
     table): never let `question-selection` mark the question resolved, and
-    never write `project.status = "completed"`, while either check fails —
+    never let `project.status` reach `"completed"`, while either check fails —
     any tier-≥-probable conclusion unencoded in the tree, or any resolved
     question's `ps_id` with no `proof-critique` verdict on record. A run does
     not finish with a conclusion that never reached the tree, or that never
@@ -338,7 +335,7 @@ a structured verdict. It is **read-only** — it never modifies project
 files; it writes only to `evaluations/`.
 
 **One gate, at the end — mandatory to invoke and record; advisory only in
-what it recommends — identical in interactive and `--autonomous` mode.**
+what it recommends.**
 It runs *after* the answer is already persisted, so its verdict cannot force
 a rewrite of a conclusion the researcher already reached, and it never
 re-opens a resolved question by itself. But per the routing table's final
@@ -381,7 +378,7 @@ and target_id.
 | Verdict | Action |
 |---------|--------|
 | `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
-| `address_first` | Surface `narrative_for_user` and record each `must_address` item to the audit trail. **Do not block, re-open the resolved question, or force a remediation skill.** In interactive mode the watching researcher may choose to act on it; under `--autonomous`, log and continue. The mentor is a support, not a gatekeeper. |
+| `address_first` | Surface `narrative_for_user` and record each `must_address` item to the audit trail. **Do not block, re-open the resolved question, or force a remediation skill.** Log it and continue; the watching researcher may choose to act on it. The mentor is a support, not a gatekeeper. |
 | `refused` | Surface the refusal message; it names the correct target. |
 
 ### On-demand invocation
@@ -396,26 +393,31 @@ the literal string `"project"` if no specific target is implied.
 
 Stop when one of:
 
-- `project.status == "completed"` — the orchestrator writes this
-  via `research_append` once all questions are `resolved` **and every
-  tier-≥-probable conclusion is encoded in `tree.gedcomx.json`**
-  (Tree-encoding gate; per claim where a `claims[]` breakdown exists) — see
-  routing table
+- `project.status == "completed"` — **`@plugin:proof-conclusion` writes
+  this via `research_append`, never you**, once all questions are
+  `resolved` **and every tier-≥-probable conclusion is encoded in
+  `tree.gedcomx.json`** (Tree-encoding gate; per claim where a `claims[]`
+  breakdown exists) — see routing table
 - The user explicitly halts you
 - You hit a genuine blocker (no more accessible records, an
   irreducible conflict, missing access to a required repository) —
   in this case, summarize what was accomplished and what is blocked,
   then stop
+- **You need something only the user can supply** — a document only they
+  hold, access to a repository only they can reach, or a choice that
+  turns on family knowledge no record carries. Say exactly what you
+  need and what you will do with each answer, then stop
 
-In autonomous mode, do not stop just because a decision is hard.
-Make the call, log the rationale, and continue. The audit trail
-captures the choice for later review.
+Do not stop just because a decision is hard. Make the call, log the
+rationale, and continue; the audit trail captures the choice for later
+review. "Only the user can supply it" means the research cannot proceed
+without them — not that the call is difficult, contested, or slow.
 
-**These three are the *only* autonomous stop conditions.** Finishing a
+**These four are the *only* stop conditions.** Finishing a
 sub-skill is not one of them — having selected a question, written a
 plan, or run one search, you are mid-loop, not done. Do not end your
 turn to report progress or to say what you'll do next; return to step 2
-of "What to do" and invoke the next sub-skill. (See "Autonomous mode".)
+of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
 ## What this skill does not do
 
