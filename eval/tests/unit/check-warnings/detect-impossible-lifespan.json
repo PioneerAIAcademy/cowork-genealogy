@@ -15,7 +15,7 @@
     ]
   },
   "input": {
-    "delegation": "Run a warnings check on Ambrose Keane.\n\nprojectPath: <workspace>",
+    "delegation": "Run a warnings check on Ambrose Keane.\n\npersonId: I1\nprojectPath: <workspace>",
     "scenario": "keane-impossible-lifespan"
   },
   "mcp_fixtures": [

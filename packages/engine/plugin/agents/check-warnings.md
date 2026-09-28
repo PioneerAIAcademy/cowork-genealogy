@@ -19,14 +19,11 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See record-extractor.md for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Read
   - mcp__genealogy__person_warnings
   - mcp__remote-devices__Genealogy_Research__person_warnings
   - mcp__Genealogy_Research__person_warnings
 ---
 # Check Warnings
-
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
 This agent runs one check: **`person_warnings`** (offline, deterministic) -- logical *contradictions* and *implausible patterns* in the **local** `tree.gedcomx.json`: death before birth, event after death, impossible ages, suspiciously young parents. Same person, same warnings, every time. Your job is to decide *whom* to check, run it, present the results clearly, and interpret them.
 
@@ -58,8 +55,8 @@ Warnings are about a *single person's own data* violating physical/biological/te
 ### 1. Identify the person(s) to check
 
 - **Delegated after a write or an import** -- check every person id the delegation names.
-- **User-directed** -- use the person id from the request. If the user gave a name, read `tree.gedcomx.json` and match on `names[*].given` + `names[*].surname`. If several match, call no tool and return `Hand-back: ambiguous person — <each candidate's id and name>`.
-- **Batch review before a proof conclusion** -- check the subject person and every person whose evidence is cited in the proof.
+- **User-directed** -- use the person id from the request. If the request gives a name but no id, call no tool and return `Hand-back: no person id — <the name as given>`.
+- **Batch review before a proof conclusion** -- check every person id the delegation names (the subject and each person whose evidence the proof cites).
 
 If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>`.
 

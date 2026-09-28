@@ -568,10 +568,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
 
   // The folded check-warnings skill (issue #2118). `person_quality` is absent by
-  // lead ruling 2026-09-27; `Read` resolves a person's name to an id from
-  // tree.gedcomx.json. Writes nothing.
+  // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
+  // the tree and reported what it found there instead of the tool's answer (4
+  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Writes nothing.
   "check-warnings.md": {
-    tools: ["Read", "person_warnings"],
+    tools: ["person_warnings"],
     denies: [],
   },
 };
