@@ -12,11 +12,12 @@
       "record gaps",
       "territorial records",
       " jurisdiction-awareness",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Ohio around 1790, before it became a state. How does the locality guide explain boundary changes and what records are available despite gaps in early documentation?",
+    "delegation": "I'm researching ancestors in Ohio around 1790, before it became a state. How does the locality guide explain boundary changes and what records are available despite gaps in early documentation?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

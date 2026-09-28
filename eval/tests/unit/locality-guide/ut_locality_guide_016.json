@@ -11,11 +11,12 @@
       "disaster records",
       "reconstruction",
       "archives",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Chicago during the Great Fire of 1871. What records or repositories would help trace families affected by the disaster?",
+    "delegation": "I'm researching ancestors in Chicago during the Great Fire of 1871. What records or repositories would help trace families affected by the disaster?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

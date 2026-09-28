@@ -10,11 +10,12 @@
       "Land Run",
       "land records",
       "homestead",
-      "archives"
+      "archives",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Oklahoma during the Land Run of 1889. What records or repositories would help trace families?",
+    "delegation": "I'm researching ancestors in Oklahoma during the Land Run of 1889. What records or repositories would help trace families?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

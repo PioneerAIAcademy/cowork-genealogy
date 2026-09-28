@@ -940,7 +940,7 @@ Array of evaluation pointer records — a lightweight index of mentor reviews pe
 ### 5.13 `localities`
 
 Array of place/locale research records — the durable knowledge base for "how to find
-records in a place." Written exclusively by the `locality-guide` skill (which reads
+records in a place." Written exclusively by the `locality-guide` agent (which reads
 the FamilySearch Research Wiki place pages plus `place_search_all` /
 `collections_search`), and read by `research-plan` (to stage searches) and the
 Research Viewer. `search-records` does **not** read this section — `research-plan`

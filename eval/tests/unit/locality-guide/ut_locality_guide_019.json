@@ -10,11 +10,12 @@
       "Puritans",
       "colonial records",
       "church registers",
-      "town meetings"
+      "town meetings",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Massachusetts during the early 1600s Puritan settlements. What records or repositories would help trace families?",
+    "delegation": "I'm researching ancestors in Massachusetts during the early 1600s Puritan settlements. What records or repositories would help trace families?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

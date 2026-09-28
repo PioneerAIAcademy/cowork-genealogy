@@ -177,6 +177,9 @@ AGENT_WRITABLE_SECTIONS = {
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
+    # locality-guide writes one `localities` entry per surveyed place, and
+    # nothing else in research.json.
+    "locality-guide": frozenset({"localities"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

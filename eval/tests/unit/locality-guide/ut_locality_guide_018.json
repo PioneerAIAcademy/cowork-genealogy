@@ -11,11 +11,12 @@
       "occupational records",
       "unions",
       "archives",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Pennsylvania coal mining towns during the late 1800s. What records or repositories would help trace families?",
+    "delegation": "I'm researching ancestors in Pennsylvania coal mining towns during the late 1800s. What records or repositories would help trace families?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

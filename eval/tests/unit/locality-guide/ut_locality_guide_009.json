@@ -12,11 +12,12 @@
       "pensions",
       "land bounty",
       "archives",
-      "jurisdiction-awareness"
+      "jurisdiction-awareness",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Virginia during the American Revolutionary War (1775\u20131783). What records or repositories would help trace families connected to military service or wartime activities?",
+    "delegation": "I'm researching ancestors in Virginia during the American Revolutionary War (1775-1783). What records or repositories would help trace families connected to military service or wartime activities?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

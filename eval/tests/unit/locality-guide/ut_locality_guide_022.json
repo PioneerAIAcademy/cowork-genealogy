@@ -9,11 +9,12 @@
       "wiki-read",
       "server-migration",
       "uses-tool-response",
-      "pennsylvania"
+      "pennsylvania",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I'm researching Irish ancestors who worked in the Pennsylvania anthracite coal region in the 1860s-1890s. Build me a locality research guide for the coal counties and read any FamilySearch wiki page that covers specialized coal-region indexes.",
+    "delegation": "I'm researching Irish ancestors who worked in the Pennsylvania anthracite coal region in the 1860s-1890s. Build me a locality research guide for the coal counties and read any FamilySearch wiki page that covers specialized coal-region indexes.\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

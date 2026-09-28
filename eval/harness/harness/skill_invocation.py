@@ -1061,6 +1061,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # Same shape as citation (issue #2117): a converted skill. The hook lanes
+        # it to `localities` and routes nothing to it; `ownership.json` names
+        # `agent:locality-guide` on that row.
+        "locality-guide",
     }
 )
 

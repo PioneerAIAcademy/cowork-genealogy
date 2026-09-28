@@ -12,11 +12,12 @@
       "health records",
       "burial registers",
       "archives",
-      "jurisdiction-awareness"
+      "jurisdiction-awareness",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Philadelphia during the 1793 yellow fever epidemic. What records or repositories would help trace families affected by the outbreak?",
+    "delegation": "I'm researching ancestors in Philadelphia during the 1793 yellow fever epidemic. What records or repositories would help trace families affected by the outbreak?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },

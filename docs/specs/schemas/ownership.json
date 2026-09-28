@@ -410,9 +410,9 @@
     {
       "artifact": "research.json",
       "section": "localities",
-      "owner": "skill:locality-guide",
+      "owner": "agent:locality-guide",
       "callers": [
-        "skill:locality-guide"
+        "agent:locality-guide"
       ],
       "writerTools": [
         "research_append"
@@ -420,7 +420,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Declared an owner since the section shipped and never once evaluated — the section was missing from the list the unit check iterates. This promotion is what first enforces it.",
+      "notes": "Declared an owner since the section shipped and never once evaluated — the section was missing from the list the unit check iterates. This promotion is what first enforces it. locality-guide is an agent (issue #2117); `writer_sets` resolves an `agent:` caller only when it matches that subject, so this row authorizes locality-guide's own suite and nothing else.",
       "requires": "Only locality-guide surveys a place. A re-survey refreshes the existing `loc_` entry in place; there is no status field to supersede.",
       "failure": "research-plan plans from these facts. A locality entry written by a skill that did not survey the place produces plan items for record sets that do not exist for that jurisdiction or era.",
       "remedy": "Survey through locality-guide.",

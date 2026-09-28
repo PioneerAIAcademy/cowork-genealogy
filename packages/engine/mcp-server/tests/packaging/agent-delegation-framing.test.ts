@@ -359,6 +359,56 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Converted from a skill (issue #2117). Both callers spawn it directly; the
+  // research row shares the caller paragraph the three rows above pin.
+  "research -> locality-guide": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+    ],
+    exempt: {
+      side: "agent",
+      reason:
+        "locality-guide.md is the skill folded verbatim (issue #2117) and states no " +
+        "caller-pressure rule of its own. What a slanted delegation meets instead is the " +
+        "grounding rule: every collection, date and registration level must come from a " +
+        "tool result, never from the request. ut_locality_guide_027 measures it with a " +
+        "delegation that pre-states a wrong answer. Add a caller-pressure rule only if " +
+        "that test goes red, with the paid run that can measure it.",
+      mitigation: {
+        side: "agent",
+        excerpt: "**Ground every claim in tool output.**",
+      },
+    },
+  },
+
+  "historical-context -> locality-guide": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "do NOT explain how the two differ, do NOT\nwrite a multi-paragraph comparison, and do NOT call any MCP tools or read any\nfiles.",
+      },
+    ],
+    exempt: {
+      side: "agent",
+      reason:
+        "locality-guide.md is the skill folded verbatim (issue #2117) and states no " +
+        "caller-pressure rule of its own. What a slanted delegation meets instead is the " +
+        "grounding rule: every collection, date and registration level must come from a " +
+        "tool result, never from the request. ut_locality_guide_027 measures it with a " +
+        "delegation that pre-states a wrong answer. Add a caller-pressure rule only if " +
+        "that test goes red, with the paid run that can measure it.",
+      mitigation: {
+        side: "agent",
+        excerpt: "**Ground every claim in tool output.**",
+      },
+    },
+  },
+
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
@@ -419,6 +469,16 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
+  // locality-guide (issue #2117): every one is a bare-name boundary or
+  // provenance mention ("use locality-guide", "comes from `locality-guide`"),
+  // left worded as-is because each rewording buys that skill a paid run.
+  ["project-status -> locality-guide", ""],
+  ["research-plan -> locality-guide", ""],
+  ["search-external-sites -> locality-guide", ""],
+  ["search-familysearch-wiki -> locality-guide", ""],
+  ["search-records -> locality-guide", ""],
+  ["search-wikipedia -> locality-guide", ""],
+  ["translation -> locality-guide", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -598,6 +658,7 @@ describe("agent delegation framing", () => {
     "citation",
     "gps-mentor",
     "image-reader",
+    "locality-guide",
     "record-extractor",
   ];
 
