@@ -25,6 +25,7 @@
 import type {
   SimplifiedFact,
   SimplifiedPerson,
+  SimplifiedRelationship,
 } from "../types/gedcomx.js";
 import type { WarningFact } from "../types/person-warnings.js";
 import {
@@ -97,11 +98,11 @@ function collectFactDayRanges(
  * duplicate ids. Pure; used by the warning emitters to attach the specific
  * facts a check examined (`PersonWarning.facts`). Works for the anchor
  * (`mob.getPerson()`), any relative/child `SimplifiedPerson`, or a
- * relationship whose facts a check reads (a Couple's `CoupleNeverHadChildren`)
- * — only `facts` is read.
+ * `SimplifiedRelationship` whose facts a check reads (a Couple's
+ * `CoupleNeverHadChildren`). Only `facts` is read.
  */
 export function warningFactsOfPerson(
-  person: Pick<SimplifiedPerson, "facts">,
+  person: SimplifiedPerson | SimplifiedRelationship,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
 ): WarningFact[] {
