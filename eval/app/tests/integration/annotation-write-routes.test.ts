@@ -222,4 +222,25 @@ describe('PATCH /api/runlogs/annotation/[...id]', () => {
     const names = final!.corrections.map((c) => c.dimension_name).sort();
     expect(names).toEqual(['Completeness', 'Correctness']);
   });
+
+  it('PUT and a concurrent PATCH share the lock', async () => {
+    await writeAnnotation(RUN_LOG_ID, { run_log: FILENAME, annotator: 'original@example.com', corrections: [] });
+    const [put, patch] = await Promise.all([
+      callPut(RUN_LOG_ID, { corrections: [validCorrection({ dimension_name: 'X' })] }),
+      callPatch(RUN_LOG_ID, validCorrection({ dimension_name: 'Y' })),
+    ]);
+    expect([put.status, patch.status]).toEqual([200, 200]);
+    const got = (await readAnnotation(RUN_LOG_ID))!.corrections.map((c) => c.dimension_name).sort().join(',');
+    // PUT then PATCH gives X,Y; PATCH then PUT gives X. Y alone means PUT skipped the lock.
+    expect(['X', 'X,Y']).toContain(got);
+  });
+
+  it('returns 400 for a malformed JSON body', async () => {
+    const req = new NextRequest('http://localhost/api/runlogs/annotation/' + RUN_LOG_ID, {
+      method: 'PATCH', body: '{not json', headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PATCH(req, { params: Promise.resolve({ id: RUN_LOG_ID.split('/') }) });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('invalid_correction');
+  });
 });

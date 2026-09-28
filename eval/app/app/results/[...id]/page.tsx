@@ -476,13 +476,15 @@ const DimensionRow = memo(function DimensionRow({
     }
     commitComment(draft);
   };
+  const commitCommentRef = useRef(commitComment);
+  useEffect(() => { commitCommentRef.current = commitComment; });
   useEffect(() => () => {
     if (commitTimer.current) {
       clearTimeout(commitTimer.current);
-      // Read from the ref, not the stale `draft` state captured at mount time.
-      commitComment(draftRef.current);
+      // Latest commitComment and draft, not the mount-time closures.
+      commitCommentRef.current(draftRef.current);
     }
-  }, []);  // eslint-disable-line react-hooks/exhaustive-deps -- flush on unmount only
+  }, []);
 
   const handleFocus = () => onFocus({ test_id, source: dim.source, name: dim.name });
 
@@ -1336,22 +1338,19 @@ export default function RunLogDetailPage({
     (next: AnnotationFile) => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(async () => {
+        saveTimer.current = null;
         setSaving('saving');
         try {
+          // Send the latest local state, not the snapshot from when the timer
+          // was set: a PATCH may have landed in the 400ms since.
           const res = await fetch(`/api/runlogs/annotation/${runLogId}`, {
             method: 'PUT',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(next),
+            body: JSON.stringify(localAnnRef.current ?? next),
           });
           if (!res.ok) {
             setSaving('error');
             return;
-          }
-          const body = await res.json();
-          // Render from the server's response instead of triggering a refetch
-          // that would clobber in-progress local edits (issue #2487 step 4).
-          if (body.annotation) {
-            setLocalAnn(body.annotation);
           }
           setSaving('saved');
         } catch {
