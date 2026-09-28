@@ -160,6 +160,8 @@ def _make_ann(runlogs_dir: Path, slug: str, stem: str, ann: dict,
     _write_json(ann_path, ann)
     if write_tree:
         _write_json(slug_dir / f"{stem}.final-tree.gedcomx.json", {"persons": []})
+    if fixtures_dir is not None and not (fixtures_dir / slug / "fixture.json").exists():
+        _write_json(fixtures_dir / slug / "fixture.json", {"slug": slug})
     return ann_path
 
 

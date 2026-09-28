@@ -642,13 +642,34 @@ def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]
         if any(v is None for v in per_finding.values()):
             continue
 
-        # 4. fixture + expected-findings
         stem = ann_path.name[: -len(".ann.json")]
         slug = ann_path.parent.name
+
+        # 3b. blind-bundle provenance — blind_bundle_digest. Runs before rungs
+        # 4-7 so a findings/tree edit under a stamped annotation reports the
+        # always-blocking digest mismatch rather than a warn-only rung error.
+        stored_bundle = ann.get("blind_bundle_digest")
+        if stored_bundle is not None:
+            try:
+                current_bundle = _bundle_digest_local(
+                    slug, stem, fixtures_dir, runlogs_dir,
+                )
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                errors.append(f"e2e annotation `{rel}`: cannot compute blind_bundle_digest ({e})")
+                continue
+            if stored_bundle != current_bundle:
+                errors.append(
+                    f"e2e annotation `{rel}`: blind_bundle_digest mismatch — "
+                    f"one of the 4 graded files changed since grading; re-grade or delete"
+                )
+                continue
+
+        # 4. fixture + expected-findings
         fixture_dir = fixtures_dir / slug
         ef_path = fixture_dir / "expected-findings.json"
         try:
             expected = json.loads(ef_path.read_text(encoding="utf-8"))
+            json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             errors.append(f"e2e annotation `{rel}`: fixture for slug '{slug}' unreadable ({e})")
             continue
@@ -657,6 +678,14 @@ def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]
         tree_path = ann_path.parent / f"{stem}.final-tree.gedcomx.json"
         if not tree_path.exists():
             errors.append(f"e2e annotation `{rel}`: {tree_path.name} missing — nothing to grade")
+            continue
+        research_path = ann_path.parent / f"{stem}.final-research.json"
+        try:
+            json.loads(tree_path.read_text(encoding="utf-8"))
+            if research_path.exists():
+                json.loads(research_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            errors.append(f"e2e annotation `{rel}`: final tree/research unreadable ({e})")
             continue
 
         # 6. id/key drift
@@ -685,25 +714,8 @@ def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]
                 )
                 continue
 
-        # 8. blind-bundle provenance — blind_bundle_digest
-        stored_bundle = ann.get("blind_bundle_digest")
-        if stored_bundle is not None:
-            try:
-                current_bundle = _bundle_digest_local(
-                    slug, stem, fixtures_dir, runlogs_dir,
-                )
-            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
-                errors.append(f"e2e annotation `{rel}`: cannot compute blind_bundle_digest ({e})")
-                continue
-            if stored_bundle != current_bundle:
-                errors.append(
-                    f"e2e annotation `{rel}`: blind_bundle_digest mismatch — "
-                    f"one of the 4 graded files changed since grading; re-grade or delete"
-                )
-                continue
-
         # 9. enum validation
-        bad = {fid: v for fid, v in per_finding.items() if v not in _FINDING_LABELS}
+        bad = {fid: v for fid, v in per_finding.items() if not isinstance(v, str) or v not in _FINDING_LABELS}
         if bad:
             errors.append(f"e2e annotation `{rel}`: per_finding labels {bad} not in {sorted(_FINDING_LABELS)}")
             continue
@@ -851,6 +863,13 @@ def main() -> int:
                 and p.name.endswith(".ann.json")
             ):
                 touched_ann_rels.add(p.relative_to(e2e_prefix))
+            elif (
+                len(p.parts) == 5
+                and p.parts[:3] == ("eval", "tests", "e2e")
+                and p.name in ("expected-findings.json", "fixture.json")
+            ):
+                for a in (REPO_ROOT / e2e_prefix / p.parts[3]).glob("run-*.ann.json"):
+                    touched_ann_rels.add(a.relative_to(REPO_ROOT / e2e_prefix))
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass  # best-effort widening; the AR set above still covers the core case
 
