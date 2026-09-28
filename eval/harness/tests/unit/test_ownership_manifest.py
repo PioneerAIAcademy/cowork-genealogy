@@ -119,7 +119,21 @@ NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 #: point: it proves the conversion moved how a caller is SPELLED, not who may
 #: write. Editing a frozen table to drop a converted skill is the wrong fix --
 #: it makes this free suite green and the paid run red.
-SUBJECTS = ("citation", "proof-conclusion")
+#:
+#: Derived from the manifest, so the next conversion joins the union with no
+#: edit here; `test_a_unit_plane_agent_caller_is_a_suite_subject` is what
+#: keeps each of these a real suite.
+SUBJECTS = tuple(
+    sorted(
+        {
+            c[len("agent:") :]
+            for r in rows()
+            if UNIT_PLANE in (r.get("enforceableAt") or [])
+            for c in r.get("callers") or []
+            if c.startswith("agent:")
+        }
+    )
+)
 
 
 def _union_writer_sets(artifact: str) -> dict[str, set[str]]:
