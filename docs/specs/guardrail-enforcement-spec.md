@@ -1536,9 +1536,9 @@ some of them fails `make harness-test`.
   question from "has this ever happened" to "what stops it where the permission
   prompt does not", which is the form the next decision has to take.
 - **`Read` is not revoked, and should not be** until there is a way to read the
-  same data. `research_query` covers 11 of `research.json`'s ~15 top-level
-  sections (missing `project`, `researcher_profile`, `known_holdings`,
-  `localities`) and pages at 50 items per call — `offset` reaches items 51+,
+  same data. `research_query` covers 12 of `research.json`'s ~15 top-level
+  sections (missing `project`, `researcher_profile`, `known_holdings`) and
+  pages at 50 items per call — `offset` reaches items 51+,
   and `truncated` says when to use it. For
   `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
   to the tree as `research_query` stands to `research.json`. Plenty of tools
@@ -1831,7 +1831,7 @@ bypass appears in a runlog or a feedback case"* — is now met.
 **What does NOT change: a command-text matcher is still the wrong instrument.**
 `cat research.json` and `cat > research.json` remain indistinguishable without
 parsing a shell; 37 of the 40 corpus touches are reads the system depends on,
-because `research_query` covers 11 of ~15 sections and there is no tree query
+because `research_query` covers 12 of ~15 sections and there is no tree query
 surface at all; and a denial simply moves the agent to `head`, `python`, or a
 path built from a variable — the harness's own denial text suggests as much.
 
