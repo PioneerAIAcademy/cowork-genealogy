@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { getProjectStore } from "../store/project-store.js";
-import { VALIDATOR_ENUMS } from "../validation/validator.js";
+import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -1266,6 +1266,128 @@ function disputedSourceIds(research: any): Map<string, string[]> {
     }
   }
   return bySource;
+}
+
+// ─── A conflict resolved in prose must reach conflicts[] ─────────────────────
+//
+// A port of `find_unpersisted_conflict_resolutions` (eval/harness/harness/
+// skill_invocation.py). The two must agree on every case in the shared case file,
+// tests/guard-cases/unpersisted-conflict-resolution.json, which both planes replay
+// (ADR-0011, "The bar is inspection, not a rate"). Keep the vocabulary below in
+// step with the Python copy: the case file is what catches a divergence.
+
+/** A stop-criterion carrying one of these says there was no conflict to persist. */
+const NO_CONFLICT_SUBSTRINGS = [
+  "no conflict",
+  "no material conflict",
+  "no remaining conflict",
+  "no unresolved conflict",
+  "no discrepanc",
+  "without conflict",
+];
+/** Whole-field values (trimmed, lowercased) meaning the same, matched exactly. */
+const NO_CONFLICT_EXACT = new Set(["", "none", "n/a", "na", "not applicable"]);
+/** Positive resolution language. `\b` keeps `resolved` from matching inside `unresolved`. */
+const RESOLUTION_MARKER_RE =
+  /\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?|adjudicated|preferred assertion)\b/i;
+/** A stop-criterion opening by negating a resolution ("UNRESOLVED.", "Not met —"). */
+const NON_RESOLUTION_OPENER_RE = /^\s*(unresolved|not met|partial|partially met|n\/?a\b|not applicable|none)/i;
+
+/** The stop-criterion text when it claims a conflict was resolved, else null. */
+function claimedConflictResolution(question: any): string | null {
+  const cr = question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
+  if (typeof cr !== "string") return null;
+  const crl = cr.trim().toLowerCase();
+  if (NO_CONFLICT_EXACT.has(crl)) return null;
+  if (NO_CONFLICT_SUBSTRINGS.some((s) => crl.includes(s))) return null;
+  if (NON_RESOLUTION_OPENER_RE.test(crl)) return null;
+  if (!RESOLUTION_MARKER_RE.test(crl)) return null;
+  return cr;
+}
+
+const conflictKey = (value: unknown): string | null =>
+  typeof value === "string" && value !== "" ? value.toLowerCase() : null;
+
+/** A `proof_summaries` write whose question's
+ *  `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict
+ *  was resolved, while `conflicts[]` holds no record of it — the resolution lives
+ *  only in prose, the viewer's Conflicts section is blank, and every conflict
+ *  gate here passes vacuously because each one iterates the array that was never
+ *  written. research-append-tool-spec.md §5.
+ *
+ *  Backed, and allowed, when: a settled (`resolved`/`moot`) conflict is cited on
+ *  this summary's `resolved_conflict_ids` or names this question in its
+ *  `blocks_question_ids`; a `c_` id the stop-criterion names exists in
+ *  `conflicts[]` at any status; or the prose names no id and `conflicts[]` holds
+ *  any entry. The question is "was it persisted", not "was it resolved": a
+ *  recorded but open conflict is not this miss, and `proof-conclusion` is told to
+ *  write a `not_proved` summary in exactly that state. Ids compare
+ *  case-insensitively.
+ *
+ *  Scoped to the entry being written and its own question, never every summary
+ *  in the document, so one violating summary does not refuse every later write.
+ *  Reads the LIVE document for both halves: the requirement is that the record
+ *  is PRESENT, and a pre-call snapshot would refuse the very call that supplies
+ *  a same-batch `questions` update. Not tier-gated: most violations stand at
+ *  `probable`/`possible`, so a `proved`-only gate would reach almost none.
+ *
+ *  What it knowingly lets through (ADR-0011 limit 1). The reliance signal is a
+ *  text heuristic over one prose field: a stop-criterion containing "no
+ *  conflicts remain" is read as "there was no conflict", even beside a
+ *  resolution sentence. The same makes rewording the stop-criterion a way to
+ *  launder the refusal, which is why the message never suggests it. And a
+ *  resolution-claiming stop-criterion written AFTER the summary is not caught,
+ *  because the `questions` write is not gated here; in every committed run that
+ *  fires, the declaration was written first. */
+export function unpersistedConflictResolutionInvariants(entry: any, research: any): string[] {
+  if (!entry || typeof entry !== "object") return [];
+  const qid = entry.question_id;
+  if (qid === undefined || qid === null || qid === "") return [];
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  const question = questions.find((q: any) => q && typeof q === "object" && q.id && q.id === qid);
+  if (!question) return [];
+  const claimed = claimedConflictResolution(question);
+  if (claimed === null) return [];
+
+  const conflicts = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const recorded = new Set<string>();
+  const settled = new Set<string>();
+  const settledBlocked = new Set<unknown>();
+  for (const c of conflicts) {
+    if (!c || typeof c !== "object") continue;
+    const key = conflictKey(c.id);
+    if (key) recorded.add(key);
+    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+      if (key) settled.add(key);
+      for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
+    }
+  }
+  const cited = Array.isArray(entry.resolved_conflict_ids) ? entry.resolved_conflict_ids : [];
+  const named = new Set([...claimed.matchAll(/\bc_\d+\b/gi)].map((m) => m[0].toLowerCase()));
+  const backed =
+    cited.some((rc: unknown) => {
+      const key = conflictKey(rc);
+      return key !== null && settled.has(key);
+    }) ||
+    settledBlocked.has(qid) ||
+    [...named].some((id) => recorded.has(id)) ||
+    (named.size === 0 && recorded.size > 0);
+  if (backed) return [];
+
+  const quote = claimed.length > 300 ? `${claimed.slice(0, 300)}…` : claimed;
+  const missing =
+    named.size > 0
+      ? `it names ${[...named].join(", ")}, which conflicts[] does not hold`
+      : "conflicts[] is empty";
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid}'s ` +
+      `exhaustive_declaration.stop_criteria.conflict_resolution says a conflict was resolved — ` +
+      `"${quote}" — but conflicts[] holds no record of it (${missing}). A resolution that lives ` +
+      `only in prose never reaches the Conflicts section, and no conflict gate can see it. ` +
+      `Record the conflict and its resolution with conflict-resolution, the only writer of ` +
+      `conflicts[] (from an agent, hand back to the main thread and name it), then cite the ` +
+      `settled c_ id on this summary's resolved_conflict_ids and send this write again.`,
+  ];
 }
 
 /** A conclusion may not out-tier the reliability of the sources it rests on.
@@ -3354,6 +3476,10 @@ function applyOne(
     // source is invalid whether or not this call put it there. Lowering the
     // tier in the same update satisfies it, so the deny stays satisfiable.
     invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    // Also NOT tier-gated, and reads LIVE research: a conflict resolved only in
+    // prose must reach conflicts[] before any summary relies on it. See
+    // `unpersistedConflictResolutionInvariants` for scope and what it lets through.
+    invariantErrors.push(...unpersistedConflictResolutionInvariants(resultEntry, research));
     // Reads LIVE research, not the pre-call snapshot: two appends inside one
     // batch must collide with each other, not just with what was already there.
     //
