@@ -798,17 +798,28 @@ EOF
 **What that figure is, and is not.** It answers *is this collection id recorded
 as a collection elsewhere in the project document*, which is **not** the origin
 question. The origin question is not answerable from committed artifacts at
-all, and two more figures say why — both measured at 34b9843a4 on 2026-09-25,
-over the same corpus: **0 of 25 collection-scoped entries** carry a collection
-id that appears in any `external_links_search` `response_summary`, and
-**49 of 245 committed external_links_search calls** are `_summary_truncated`,
-so a summary can confirm that an id *was* staged but never that it was not.
+all, and two more figures say why. Both were measured at 34b9843a4 on
+2026-09-25 over the same corpus.
+
+**51 of 247 committed external_links_search calls** are `_summary_truncated`
+(measured at 34b9843a4), so a summary can confirm that an id *was* staged but
+never that it was not.
+
+And **0 of 25 collection-scoped entries** (measured at 34b9843a4) carry a
+collection id appearing in an `external_links_search` `response_summary` **from
+the same run** — the only reading that bears on provenance. Two do appear in a
+summary elsewhere in the corpus (`anders-monsen-ancestry` log_051 / 60606 and
+`birkeland-parents-1817` log_012 / 60092), both from a *different* run, which
+says nothing about where their own run got the id.
 
 That `0 of 25` is an absence claim, the class this repo treats as rotting into
 a falsehood rather than merely going stale — a growing corpus can only refute
-it. It is guarded on shape by `corpus-figures.test.ts`, which requires the
-stamp above, but nothing re-derives it: the first run log that lands carrying a
-collection id inside a `response_summary` makes the sentence false silently.
+it. Its scope is load-bearing and was got wrong once: stated as "appears in any
+`response_summary`" it read corpus-wide and was **false on the day it was
+measured**, because two ids do appear in some other run's summary. Same-run is
+the claim. It is guarded on shape by `corpus-figures.test.ts`, which requires
+the stamp above, but nothing re-derives it, so the first run log that stages an
+id and then uses it in the same run makes the sentence false silently.
 Re-derive it, do not quote it forward.
 
 Two further limits are structural rather than measured: the staged sidecar

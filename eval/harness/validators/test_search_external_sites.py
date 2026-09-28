@@ -1089,6 +1089,8 @@ def report_collection_scoped_url_with_no_backed_collection_id(
         "that id as a collection — so nothing in the project says where the "
         "collection came from"
     )
+
+
 def report_log_query_traces_to_url_tool_call(before_state, after_state, tool_calls, test):
     """A new `external_site` log entry's `query` should name only search
     attributes the `build_external_search_url` call it documents actually sent.
