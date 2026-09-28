@@ -34072,7 +34072,7 @@
       "args": {
         "file_path": "C:\\Users\\USER\\.familysearch-mcp\\tokens.json"
       },
-      "response_summary": "1\t{\n2\t  \"accessToken\": \"p0-EB0C9aqtazA.IvaS2xB1jAA\",\n3\t  \"refreshToken\": \"-4116117-485759-76-646-2645-12449-107-51-10428-95108-59-18-60-63-7511-25-10-7973-1615-126\",\n4\t  \"expiresAt\": 1790633111677\n5\t}",
+      "response_summary": "1\t{\n2\t  \"accessToken\": \"[REDACTED-FS-ACCESS-TOKEN]\",\n3\t  \"refreshToken\": \"[REDACTED-FS-REFRESH-TOKEN]\",\n4\t  \"expiresAt\": 1790633111677\n5\t}",
       "is_error": false,
       "result_chars": 200,
       "agent_id": null,
