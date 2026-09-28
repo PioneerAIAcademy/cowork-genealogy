@@ -17,6 +17,7 @@
 > | R5 | Phase 2's `not searched` merges into phase 3's errand work | One semantic, same SKILL.md passage — splitting pays the eval slot twice |
 > | R6 | Cold-start person pick moves ahead of phase 3's card | The pick is the plan's own root cause of #2864, and every wrong pick burns a full job |
 > | R7 | Four load-bearing figures get derivation scripts | PR #2870 shipped a derivation test because these silently drift |
+> | R9 | *not sure* continues on the **recommended** option, not "the weaker choice" | Lead, 2026-09-28. "Weaker" was undecidable, and *not sure* means deferring to the agent's judgement |
 > | R8 | Two dropped ux-findings restored; three mis-citations fixed | #2539 is not the errand card; one change-review data source does not exist |
 >
 > **Coordination, checked 2026-09-28.** `search-records/SKILL.md` is owned by PR #2971;
@@ -117,7 +118,39 @@ test and the lockstep truth-table test both pin; (3) its **label** in
 `apps/web/src/components/chatEvents.ts`; and (4) its **relation to `ok`** — there is already an
 eighth outcome, `OK_OUTCOME = "ok"` (`worker.py:172`), which `chatEvents.ts:39` deliberately
 renders as nothing. The original's inventory omits it. Decide whether `delivered` is a new value
-or `ok` given a label. "Where are we?" is a bounded request
+or `ok` given a label.
+
+**[R4, worked 2026-09-28.]** The answer to that last question is **a new value**, and the
+reasoning is worth keeping because `ok` looks like a free ride and is not. `ok` means "a turn
+ended with no terminal reason", and `chatEvents.ts` deliberately renders it as nothing: *"an
+ordinary turn that simply finished says nothing."* A bounded request is the opposite — the agent
+has something to report, namely that it did the thing and stopped on purpose. Reusing `ok` would
+either silence that or give every unremarkable turn a label.
+
+So:
+
+| | |
+|---|---|
+| **Value** | `delivered` |
+| **Clause position** | after `stopped`, before `project_completed`. Stop is the researcher's own instruction and outranks everything; `delivered` must precede the completion check because a bounded request is delivered while the project is *not* complete, which is the whole case. |
+| **Label** | says the ask was met and the job is still open, e.g. "Done — that's what you asked for. Send a message to carry on." It must not read like `completed` ("Research complete."), or a plan-only request looks like a finished project. |
+| **Relation to `ok`** | `ok` stays, unlabelled, for turns with no terminal reason. `delivered` is an explicit signal, never a fall-through. |
+
+**The carrier is the open question, and it is NOT `AskUserQuestion`.** The original says the agent
+reports delivery "with the same call that carries *I need you*". Those are different speech acts:
+an ask has `questions` and waits for an answer; a delivery waits for nothing. Overloading one
+tool leaves the hook unable to tell them apart, which is the discriminator the original never
+specifies. Two candidates, and this needs a ruling before the body edit:
+
+1. **A second dedicated tool** — symmetrical with the exit, unambiguous, and the hook reads the
+   tool name exactly as it now reads `AskUserQuestion`. Costs one tool in the catalogue.
+2. **No tool: the router decides.** The model judges whether the request was bounded and the
+   Stop hook lets that stop through. Cheaper, but it is scope judgement in prose — the class of
+   rule CLAUDE.md warns is read and not followed, and #2927 has just measured prose triggering
+   flipping about half the time.
+
+Recommendation: **(1)**. The exit's own evidence argues for it — the decision carrier works
+because a tool name is an exact match a hook can read, not a sentence a model may honour. "Where are we?" is a bounded request
 whose deliverable is the answer. Whatever re-enters the router must respect this, or every
 question becomes a job. Issue #2813's draft item 3, not yet approved, raises the same scope
 question from the single-ask side; this section builds the finish line. Its offer to escalate
@@ -298,7 +331,21 @@ a session stopped at the spend bound continues on the same project in one action
 **Decisions: one card kind, rarely.** Phase 1's exit carries it; this is the card. A decision
 blocks only what depends on it. Its options are candidates side by side, the way FamilySearch's
 Source Linker compares them, each with what the agent will do if chosen, plus *not sure* and
-*something else*; the job continues from *not sure* on the weaker choice. Keep decisions rare.
+*something else*; **[R9]** the job continues from *not sure* on **the option the agent
+recommended**, not "the weaker choice".
+
+Two reasons, and the second is the stronger. First, "weaker" was undecidable as written —
+weaker-scored candidate, or weaker-commitment option? Opposite implementations both satisfied
+the sentence. Second, *not sure* means the researcher is deferring to the agent's judgement, and
+the agent has already weighed the evidence and formed a view; carrying on with anything other
+than that view discards the reasoning the card was built to show.
+
+**A bigger model is not consulted.** It was considered and rejected on the merits, not only on
+cost: a larger model would see the same evidence the running agent saw, so it brings no
+information the recommendation lacks — it brings a second opinion on the same facts, at extra
+latency and extra spend, inside a run already bounded at $35. The place for a second opinion is
+`gps-mentor`'s proof critique, which already exists and runs on the conclusion rather than on
+every fork. Keep decisions rare.
 The live demo resolved c_002 itself, and a card on every run is an approval gate under another
 name. The pending state is control-plane by nature; the resolved outcome already has a home in
 `hypotheses`, `conflicts` or `log`.
