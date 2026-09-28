@@ -648,6 +648,73 @@
       }
     },
     {
+      "id": "was-fire-named-conflict-unresolved",
+      "expect": "silent",
+      "why": "FLIPPED from fire when the check graduated. The old pytest input, verbatim except 'open', which is not a conflict_status value: a resolution claim naming c_001 while c_001 is recorded and unresolved. The conflict is persisted, so this is not the miss the guard exists for, and firing here would refuse the not_proved summary proof-conclusion is told to write over an open conflict. An open conflict under a tier it forbids is conflictedSourceInvariants' and the completion gate's to refuse.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": []
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Birth conflict resolved (c_001)."
+              }
+            }
+          }
+        ],
+        "conflicts": [
+          {
+            "id": "c_001",
+            "status": "unresolved",
+            "blocks_question_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "was-fire-cited-conflict-unresolved",
+      "expect": "silent",
+      "why": "FLIPPED from fire for the same reason. The old pytest input: an unresolved c_001 cited on resolved_conflict_ids, the prose naming no id. The conflict is recorded, so this guard stays silent; the citation itself is refused by the validator's settled-reference check ('resolved' or 'moot' required), so the write still does not land.",
+      "write": "ps_001",
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "resolved_conflict_ids": [
+              "c_001"
+            ]
+          }
+        ],
+        "questions": [
+          {
+            "id": "q_001",
+            "exhaustive_declaration": {
+              "stop_criteria": {
+                "conflict_resolution": "Conflict resolved after weighing the records."
+              }
+            }
+          }
+        ],
+        "conflicts": [
+          {
+            "id": "c_001",
+            "status": "unresolved"
+          }
+        ]
+      }
+    },
+    {
       "id": "named-id-case-insensitive",
       "expect": "silent",
       "why": "C_001 in the prose names the recorded c_001; ids compare case-insensitively.",

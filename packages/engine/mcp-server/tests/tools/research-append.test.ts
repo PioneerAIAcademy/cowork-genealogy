@@ -9890,6 +9890,28 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
     expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
   });
 
+  it("reads the reliance signal live: a same-batch questions update that claims a resolution is seen", async () => {
+    // q_002 carries no declaration before the call, so a pre-call snapshot would
+    // see no claim and let the summary through; the live read sees the one this
+    // batch writes first.
+    await writeProject(state());
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_002",
+          fields: { status: "exhaustive_declared", exhaustive_declaration: declaration(TESTER_CR) },
+        },
+        { section: "proof_summaries", op: "append", entry: summary("q_002") },
+      ],
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain("question q_002");
+    expect(msg).toContain("conflicts[] is empty");
+  });
+
   it("is scoped to the summary written: q_002's summary passes while q_001's violates", async () => {
     const s = state();
     s.proof_summaries = [{ id: "ps_001", ...summary() }];
