@@ -1734,6 +1734,25 @@ interface BatchSuccess {
   resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
+  /** Set only by `extraction_append`'s EXTRACTOR MODE, which builds its own ops
+   *  from a record's sidecar. The caller never sees that record, so `results[]`
+   *  alone would tell it how many entries landed without saying what they say —
+   *  and reporting the extraction is the caller's job. `research_append` never
+   *  sets this. */
+  extraction?: ExtractionEcho;
+}
+
+/** What extractor mode extracted, for the caller to report. */
+export interface ExtractionEcho {
+  recordType: string;
+  /** Present only for a census: whether the schedule stated relationships,
+   *  decided by the hard-coded year table rather than by reading the field. */
+  censusStatesRelationships?: boolean;
+  assertionCount: number;
+  /** Distinct roles assigned, so a reader can see the household shape without
+   *  the assertions. */
+  roles: string[];
+  notes: string[];
 }
 export type ResearchAppendResult =
   | SingleSuccess
