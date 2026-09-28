@@ -187,12 +187,25 @@ When the log editor is called with `stagedResultsRef`, it (host-side):
    staged file's count is advisory.
 4. Wraps it as the full sidecar `{ log_id, tool, retrieved, returned_count,
    payload }` and writes `results/<log_id>.json`.
-5. Unlinks the staged file.
+5. **After `research.json` commits**, removes the staged file
+   (`consumeStagedResults`). Never before: finalize itself only writes, so a call
+   refused after finalizing — a later op in a batch, the `query`-required check, or
+   the final validation — leaves every staged file for the corrected re-send.
+
+Steps 1–3 run for every op **before any op is applied** (`checkStagedResults`), so a
+bad ref in op[1] is refused before op[0] writes a sidecar, and a batch naming one
+staged ref in two ops is refused up front: with removal deferred, both ops would
+otherwise finalize it into two sidecars.
+
+The removal is best-effort by the store's own contract (an absent ref is not an
+error) and is **not** wrapped in a catch: on the Postgres backend the whole call is
+one transaction still open at step 5, and a swallowed query error would abort it,
+so the call would report success while its `research.json` write rolled back.
 
 This is a host-side byte move — **the model never serializes the payload.** (This
 refines the log-editor spec §6's "rename the staged file" wording: it is a wrap +
-write + unlink, because `log_id` and the authoritative `returned_count` are injected
-at finalize, not a pure rename.)
+write, then a remove after the commit, because `log_id` and the authoritative
+`returned_count` are injected at finalize, not a pure rename.)
 
 If `stagedResultsRef` is absent (Option A fallback, or a nil/external-site search),
 the log editor behaves exactly as its own spec describes.
@@ -214,8 +227,8 @@ stripped value (`stripQueryPlumbing`):
 - **Ground truth.** When the caller supplies `query`, it is kept as sent, never
   rewritten, but refused if it names a filter `payloadQuery` does not carry at
   all (`research-log-editor-spec.md` §8.3). That check reads the staged file
-  before any op is finalized (`readStagedEnvelopeQuery`, read-only), because
-  step 5 unlinks it.
+  before any op is finalized (`readStagedEnvelopeQuery`, read-only), so the
+  refusal is reported before any op writes a sidecar.
 
 The eval mock echoes the call's arguments into `query` for these two tools
 rather than serving a fixture's recorded query, so the unit harness stages the
@@ -228,8 +241,12 @@ same ground truth production does.
 - **Cross-turn survival.** The staged file is on disk, so a search in one turn and
   the `research_log_append` in a later turn work without any in-memory cache — the
   reason Option B beats a token cache (§5 of the log-editor spec, Option C).
-- **Finalize consumes it.** A successful `research_log_append` unlinks the staged
-  file (§6 step 5).
+- **A successful log consumes it; a refused one never does.** `research_log_append`
+  removes the staged file only after its `research.json` write commits (§6 step 5).
+  Every refusal — whatever stage it comes from — leaves the file, so a corrected
+  re-send finds it. A ref that is missing gets a message saying each staged ref can
+  be logged once, and whether to re-run the search or leave it: already logged,
+  pruned, or never staged.
 - **Un-finalized staging files** (the LLM searched but never logged, or the turn
   died) are pruned opportunistically: on each `stageSearchResults` write, delete
   `results/.staging/*.json` older than a TTL (24h, by `mtime`). Safe unconditionally
@@ -238,7 +255,8 @@ same ground truth production does.
 - **TTL vs. long sessions.** The 24h prune can delete a staged file before a slow
   multi-turn session logs it (search early, `research_log_append` >24h later). That
   is not corruption: the stale `stagedResultsRef` simply fails the finalize guard
-  (§6 steps 1–2), and `research_log_append` writes nothing and returns a clear error.
+  (§6 steps 1–2), and `research_log_append` writes nothing and returns a clear error
+  that names the re-run.
   The **skill** recovers by re-running the search (cheap — it re-stages); the
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
