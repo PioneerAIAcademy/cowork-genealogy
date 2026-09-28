@@ -931,6 +931,16 @@ const BIRTHLIKE_OR_STILLBIRTH: ReadonlySet<string> = new Set([
   ...STILLBIRTH,
 ]);
 
+/**
+ * True when the anchor has a fact of one of `types`, whether or not it
+ * carries an `id`. `factIdsOfPersonFacts` (via `selfFactIds`) skips facts
+ * with no id — that filter exists for UI attribution, not for deciding
+ * whether the fact exists, so presence must not be decided through it.
+ */
+function hasSelfFactOfType(mob: Mob, types: ReadonlySet<string>): boolean {
+  return mob.getFacts().some((f) => f.type !== undefined && types.has(f.type));
+}
+
 /** The relationship's fact of an exact type, if any — `CoupleNeverHadChildren`
  *  lives on the Couple relationship, not on either person. */
 function relationshipFactOfType(
@@ -940,20 +950,80 @@ function relationshipFactOfType(
   return (rel.facts ?? []).find((f) => f.type === type);
 }
 
-/** True when a ParentChild relationship records `childId` as `parentId`'s child. */
-function isParentChildEdge(mob: Mob, parentId: string, childId: string): boolean {
-  return (mob.tree.relationships ?? []).some(
-    (r) => r.type === "ParentChild" && r.parent === parentId && r.child === childId,
+/**
+ * True when a ParentChild edge counts toward "this couple/person has a
+ * child" for the No Children checks. Read at FamilySearch's most-generous
+ * interpretation: a couple (or person) marked as never having children can
+ * still have raised an adopted, step, or foster child, so only a biological
+ * or unspecified link contradicts the marker. `subtype` comes from
+ * `gedcomx-convert.ts`'s `uriToSubtype`: undefined, `"Biological"`,
+ * `"Adoptive"`, `"Step"`, `"Foster"`, or `"Guardian"`.
+ */
+function isQualifyingParentChildEdge(rel: SimplifiedRelationship): boolean {
+  return (
+    rel.type === "ParentChild" &&
+    (rel.subtype === undefined || rel.subtype === "Biological")
   );
 }
 
-/** A child of BOTH p1 and p2 (a shared child of the couple), if one exists. */
-function coupleSharedChild(mob: Mob, p1: string, p2: string): SimplifiedPerson | undefined {
+/**
+ * Every parent id → the set of that parent's qualifying children, built in
+ * one pass over `relationships` so a marked-couple loop can look up a
+ * shared child in O(1) instead of rescanning relationships per couple.
+ */
+function qualifyingChildrenByParent(mob: Mob): Map<string, Set<string>> {
+  const map = new Map<string, Set<string>>();
   for (const r of mob.tree.relationships ?? []) {
-    if (r.type !== "ParentChild" || r.parent !== p1 || r.child === undefined) continue;
-    if (isParentChildEdge(mob, p2, r.child)) {
-      return mob.getAllPersons().find((p) => p.id === r.child);
+    if (!isQualifyingParentChildEdge(r) || r.parent === undefined || r.child === undefined) {
+      continue;
     }
+    let children = map.get(r.parent);
+    if (!children) {
+      children = new Set();
+      map.set(r.parent, children);
+    }
+    children.add(r.child);
+  }
+  return map;
+}
+
+/** The qualifying parent ids of `childId`, in one pass over `relationships`. */
+function qualifyingParentsOf(mob: Mob, childId: string): Set<string> {
+  const out = new Set<string>();
+  for (const r of mob.tree.relationships ?? []) {
+    if (!isQualifyingParentChildEdge(r) || r.parent === undefined || r.child !== childId) {
+      continue;
+    }
+    out.add(r.parent);
+  }
+  return out;
+}
+
+/** Any element of `set`, or undefined when it's empty or absent. */
+function firstOf<T>(set: ReadonlySet<T> | undefined): T | undefined {
+  if (!set) return undefined;
+  for (const v of set) return v;
+  return undefined;
+}
+
+/**
+ * A child qualifying under BOTH p1 and p2 (a shared child of the couple)
+ * that also resolves to an actual person. Keeps scanning past a shared
+ * child id that is missing from `persons[]` (a dangling reference) instead
+ * of giving up on the first structurally-shared id.
+ */
+function coupleSharedChild(
+  personIds: ReadonlySet<string>,
+  childrenByParent: Map<string, Set<string>>,
+  p1: string,
+  p2: string,
+): string | undefined {
+  const c1 = childrenByParent.get(p1);
+  const c2 = childrenByParent.get(p2);
+  if (!c1 || !c2) return undefined;
+  const [smaller, larger] = c1.size <= c2.size ? [c1, c2] : [c2, c1];
+  for (const childId of smaller) {
+    if (larger.has(childId) && personIds.has(childId)) return childId;
   }
   return undefined;
 }
@@ -983,19 +1053,31 @@ interface NoChildrenConflictHit {
 
 /**
  * The three FamilySearch views of NO_CHILDREN_CONFLICT: (a) the anchor's own
- * `NoChildren` fact contradicted by the anchor's own children; (b) a
- * `CoupleNeverHadChildren` fact on a Couple relationship the anchor belongs
- * to, contradicted by a child of both partners; (c) the same couple fact on
- * the anchor's OWN parents, contradicted by the anchor itself being their
- * child. Internal — the emitter re-uses this to say which view fired; the
- * exported predicate below only asks whether any of the three did.
+ * `NoChildren` fact contradicted by the anchor's own qualifying children;
+ * (b) a `CoupleNeverHadChildren` fact on a Couple relationship the anchor
+ * belongs to, contradicted by a qualifying child of both partners; (c) the
+ * same couple fact on the anchor's OWN parents, contradicted by the anchor
+ * itself being their qualifying child. Internal — the emitter re-uses this
+ * to say which view fired; the exported predicate below only asks whether
+ * any of the three did.
  */
 function findNoChildrenConflict(mob: Mob): NoChildrenConflictHit | null {
-  const selfIds = selfFactIds(mob, NO_CHILDREN);
-  if (selfIds.length > 0 && mob.getChildren().length > 0) {
-    const child = mob.getChildren().at(0);
-    return { view: "self", factIds: selfIds, relatedPersonId: child?.id };
+  const childrenByParent = qualifyingChildrenByParent(mob);
+  const anchorChildren = childrenByParent.get(mob.anchorId);
+  if (anchorChildren && anchorChildren.size > 0 && hasSelfFactOfType(mob, NO_CHILDREN)) {
+    return {
+      view: "self",
+      factIds: selfFactIds(mob, NO_CHILDREN),
+      relatedPersonId: firstOf(anchorChildren),
+    };
   }
+  const personIds = new Set(
+    mob
+      .getAllPersons()
+      .map((p) => p.id)
+      .filter((id): id is string => id !== undefined),
+  );
+  const anchorParents = qualifyingParentsOf(mob, mob.anchorId);
   for (const r of mob.tree.relationships ?? []) {
     if (r.type !== "Couple" || r.person1 === undefined || r.person2 === undefined) {
       continue;
@@ -1004,13 +1086,10 @@ function findNoChildrenConflict(mob: Mob): NoChildrenConflictHit | null {
     if (!coupleFact) continue;
     const factIds = coupleFact.id !== undefined ? [coupleFact.id] : [];
     if (r.person1 === mob.anchorId || r.person2 === mob.anchorId) {
-      const child = coupleSharedChild(mob, r.person1, r.person2);
-      if (child) return { view: "couple", factIds, relatedPersonId: child.id };
+      const childId = coupleSharedChild(personIds, childrenByParent, r.person1, r.person2);
+      if (childId) return { view: "couple", factIds, relatedPersonId: childId };
     }
-    if (
-      isParentChildEdge(mob, r.person1, mob.anchorId) &&
-      isParentChildEdge(mob, r.person2, mob.anchorId)
-    ) {
+    if (anchorParents.has(r.person1) && anchorParents.has(r.person2)) {
       return { view: "parents", factIds, relatedPersonId: r.person1 };
     }
   }
@@ -1026,7 +1105,7 @@ export function hasNoChildrenConflict(mob: Mob): boolean {
  * the anchor has a `NoCoupleRelationships` fact and also has a spouse.
  */
 export function hasNoCoupleRelationshipsConflict(mob: Mob): boolean {
-  return selfFactIds(mob, NO_COUPLE_RELATIONSHIPS).length > 0 && mob.getSpouses().length > 0;
+  return hasSelfFactOfType(mob, NO_COUPLE_RELATIONSHIPS) && mob.getSpouses().length > 0;
 }
 
 interface StillbirthConflictHit {
@@ -1037,14 +1116,15 @@ interface StillbirthConflictHit {
 
 /**
  * The three ways a `Stillbirth` fact can conflict with an adult-life event:
- * (a) a spouse, or a marriage-like fact on the anchor; (b) a child; (c)
+ * (a) a spouse, or a marriage-like fact on the anchor; (b) a child — ANY
+ * child, unfiltered by subtype, unlike the No Children checks above; (c)
  * living to at least age 1 under the most generous reading — the smallest
  * possible gap between the latest possible birth-like-or-Stillbirth day and
  * the earliest possible Death day is still >= 365 days. Internal, for the
  * same reason as `findNoChildrenConflict` above.
  */
 function findStillbirthConflict(mob: Mob): StillbirthConflictHit | null {
-  if (selfFactIds(mob, STILLBIRTH).length === 0) return null;
+  if (!hasSelfFactOfType(mob, STILLBIRTH)) return null;
   const spouse = mob.getSpouses().at(0);
   if (spouse || mob.marriageLikeFacts().length > 0) {
     return {
@@ -1819,9 +1899,18 @@ function checkHasDiffSurnameMale(mob: Mob): PersonWarning | null {
 function checkHasDelayedBurial365(mob: Mob): PersonWarning | null {
   if (!hasDelayedBurial(mob, DELAYED_BURIAL_DAYS)) return null;
   const earliestBurial = earliestDayOfSelfFacts(mob, BURIAL);
+  const latestBurial = latestDayOfSelfFacts(mob, BURIAL);
+  const earliestDeath = earliestDayOfSelfFacts(mob, DEATH);
   const latestDeath = latestDayOfSelfFacts(mob, DEATH);
   // Non-null here because the predicate would have returned false otherwise.
-  const actualDays = earliestBurial! - latestDeath!;
+  // A day count is only meaningful when both sides resolve to a single exact
+  // day — a range (e.g. "Bef 1870", or any year-only/month-year date) is
+  // capped by getDayRange, and stating a count derived from that cap would
+  // read as more precise than the data supports.
+  const exact = earliestBurial === latestBurial && earliestDeath === latestDeath;
+  const message = exact
+    ? `The burial date is ${earliestBurial! - latestDeath!} days after the death date, more than the ${DELAYED_BURIAL_DAYS}-day threshold — burial usually happens within days of death.`
+    : `The burial is dated more than ${DELAYED_BURIAL_DAYS} days after the death date — burial usually happens within days of death.`;
   return {
     scoreType: COHERENCE,
     issueType: HAS_DELAYED_BURIAL_365,
@@ -1829,7 +1918,7 @@ function checkHasDelayedBurial365(mob: Mob): PersonWarning | null {
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BURIAL, DEATH),
-    message: `The burial date is at least ${actualDays} days after the death date, more than the ${DELAYED_BURIAL_DAYS}-day threshold — burial usually happens within days of death.`,
+    message,
   };
 }
 
