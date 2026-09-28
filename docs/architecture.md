@@ -1612,7 +1612,7 @@ client's "Reconnect FamilySearch" banner. Re-injecting on connect is the only
 path by which a *fresh* login reaches a sandbox that already exists. The control
 plane is the sole refresh owner: concurrent refreshes are serialized with a
 per-user `asyncio.Lock`, and a successful refresh pushes the new token to every
-live sandbox the user has (issue #2887). The stored `access_token` /
+live sandbox the user has. The stored `access_token` /
 `refresh_token` columns are Fernet-encrypted by `crypto.EncryptedStr` at
 SQLAlchemy's Core layer, so no caller can forget to; a decrypt failure soft-fails
 to `None`, which `auth.fresh_fs_token` turns into "expired", so a legacy or

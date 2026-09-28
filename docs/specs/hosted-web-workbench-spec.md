@@ -159,7 +159,7 @@ correspondingly-numbered general sections below. The general spec remains the
   control plane writes an **access token only** (no refresh token) to
   `~/.familysearch-mcp/tokens.json` **inside the sandbox** after OAuth (zero MCP
   code change). The control plane is the sole refresh owner; the sandbox cannot
-  refresh on its own (issue #2887). The token persists across hibernation, and a
+  refresh on its own. The token persists across hibernation, and a
   fresh token is re-injected on every `/connect`. *Initial* OAuth still needs a
   hosted/tunneled redirect URI registered with FamilySearch.
 - **Feedback (refines §11):** the control plane reads the in-sandbox Agent SDK
@@ -457,7 +457,7 @@ multi-tenant web this must change:
 4. **Onboarding gate** — a user who hasn't connected FamilySearch is prompted to
    before any research tool runs.
 
-> **As built, verified 2026-08-02; updated 2026-09-28 (issue #2887).** Steps 1–3
+> **As built, verified 2026-08-02; updated 2026-09-28.** Steps 1–3
 > are in the code: hosted redirect with PKCE (`fs_oauth.py`), per-user tokens in
 > the `familysearch_tokens` table with server-side refresh
 > (`auth.fresh_fs_token`), and **option (a)** injection — the control plane
