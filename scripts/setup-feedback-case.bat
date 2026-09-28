@@ -115,12 +115,16 @@ REM walk recursively, so one can arrive at any depth. Claude Code loads a subtre
 REM CLAUDE.md when it reads files there, and the triage workflow reads results/.
 REM Rename rather than delete: the triager keeps the content for reproduction,
 REM but it no longer executes as config.
-for /r "!DEST_DIR!" %%F in (CLAUDE.md) do (
+REM for /r reads its root before delayed expansion runs, so a delayed-variable
+REM root was walked literally and only the top-level CLAUDE.md got renamed.
+pushd "!DEST_DIR!" >nul
+for /r %%F in (CLAUDE.md) do (
     if exist "%%F" (
         echo Note: renamed %%F to CLAUDE.md.submitted so it is not loaded as instructions.
         ren "%%F" "CLAUDE.md.submitted"
     )
 )
+popd >nul
 
 REM --- Write .feedback-repo-root ---
 > "!DEST_DIR!\.feedback-repo-root" echo !REPO_ROOT!
@@ -146,7 +150,7 @@ if errorlevel 1 goto :git_baseline_failed
 REM A fixed, case-local identity: GitHub Desktop sets no global
 REM user.name/user.email, so a bare commit fails and the case is left with
 REM no baseline to reset to. -c applies to this call only.
-git -c user.name="feedback-case" -c user.email="feedback-case@localhost" commit -q -m "imported"
+git -c user.name="feedback-case" -c user.email="feedback-case@localhost" -c commit.gpgsign=false commit -q -m "imported"
 if errorlevel 1 goto :git_baseline_failed
 
 REM --- Per-skill junctions under .claude\skills\ ---
@@ -187,7 +191,7 @@ if exist "!FB_JSON!" (
     set "PS_FB=!FB_JSON:'=''!"
     set "SESSION_LOG=!DEST_DIR!\_feedback\session-log.jsonl"
     set "PS_LOG=!SESSION_LOG:'=''!"
-    powershell -NoProfile -Command "$f='!PS_FB!'; $l='!PS_LOG!'; try { $p=(Get-Content -Raw -Encoding UTF8 -LiteralPath $f -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).user_prompt } catch { Write-Host ('User''s prompt: see ' + $f + ' (user_prompt field)'); exit }; if ([string]::IsNullOrWhiteSpace($p)) { Write-Host ('User''s prompt: the tester left blank. Try ' + $l + ' for what they asked for - it is optional (a Cowork submission never has one), and a trimmed log drops its oldest entries, so the prompt goes first.') } else { Write-Host 'User''s prompt to issue first:'; Write-Host '---------------------------------------------'; Write-Host $p; Write-Host '---------------------------------------------' }"
+    powershell -NoProfile -Command "$f='!PS_FB!'; $l='!PS_LOG!'; try { $j=(Get-Content -Raw -Encoding UTF8 -LiteralPath $f -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop); if (-not ($j -is [System.Management.Automation.PSCustomObject])) { throw 'not an object' }; $p=$j.user_prompt } catch { Write-Host ('User''s prompt: see ' + $f + ' (user_prompt field)'); exit }; if ([string]::IsNullOrWhiteSpace($p)) { Write-Host ('User''s prompt: the tester left blank. Try ' + $l + ' for what they asked for - it is optional (a Cowork submission never has one), and a trimmed log drops its oldest entries, so the prompt goes first.') } else { Write-Host 'User''s prompt to issue first:'; Write-Host '---------------------------------------------'; Write-Host $p; Write-Host '---------------------------------------------' }"
 ) else (
     echo User's prompt: see !DEST_DIR!\_feedback\feedback.json ^(user_prompt field^)
 )

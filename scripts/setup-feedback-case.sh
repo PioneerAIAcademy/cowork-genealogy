@@ -161,7 +161,7 @@ git add .
 # reset-feedback-case.sh. `-c` applies to this call only: it never touches
 # the user's global config and leaves nothing in the case repo's own.
 git -c user.name="feedback-case" -c user.email="feedback-case@localhost" \
-  commit -q -m "imported"
+  -c commit.gpgsign=false commit -q -m "imported"
 
 # --- Per-skill symlinks under .claude/skills/ ---
 mkdir -p .claude/skills
@@ -192,7 +192,7 @@ if [[ -f "$FB_JSON" ]]; then
     # substitution's status to 0, so jq's exit code becomes unreadable — and
     # simply dropping it would abort the script with jq's exit 5 on an
     # unparseable report, after the case has already been imported.
-    if USER_PROMPT="$(jq -r '.user_prompt // empty' "$FB_JSON" 2>/dev/null)"; then
+    if USER_PROMPT="$(jq -er 'if type == "object" then (.user_prompt // "") else error("not an object") end' "$FB_JSON" 2>/dev/null)"; then
       PROMPT_READ_OK=1
     fi
   fi

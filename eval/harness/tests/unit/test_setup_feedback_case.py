@@ -574,6 +574,15 @@ def test_imported_commit_works_with_no_git_identity(tmp_path, monkeypatch):
         f"the imported commit was authored by {author!r}. The script must pass "
         "its own identity with `git -c`, so it never depends on a global one."
     )
+    # `-c` must be the whole fix: writing the identity to any config also
+    # makes the commit succeed, and would leave it on the user's machine.
+    assert not (home / ".gitconfig").exists(), "the script wrote the user's global git config"
+    assert not (tmp_path / "xdg" / "git" / "config").exists(), "the script wrote the user's global git config"
+    local = subprocess.run(
+        ["git", "-C", str(dest), "config", "--local", "--get-regexp", r"^user\."],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert local.stdout == "", f"the script left an identity in the case repo:\n{local.stdout}"
 
 
 # --- #2878: a blank user_prompt is not a failed read ------------------
@@ -618,7 +627,8 @@ def test_missing_user_prompt_key_reads_as_blank(tmp_path, monkeypatch):
     assert _SEE_FIELD not in out, out
 
 
-def test_unreadable_feedback_json_still_points_at_the_field(tmp_path, monkeypatch):
+@pytest.mark.parametrize("body", ["NOT JSON AT ALL", "", "null", '"a string"'])
+def test_unreadable_feedback_json_still_points_at_the_field(tmp_path, monkeypatch, body):
     """The other direction. Without this, a script that prints "left blank" for
     everything passes the three tests above."""
     slug = "feedback-2026-05-25T18-22-31"
@@ -629,7 +639,7 @@ def test_unreadable_feedback_json_still_points_at_the_field(tmp_path, monkeypatc
         z.writestr("research.json", json.dumps({"project": {"id": "rp_test"}}))
         z.writestr("tree.gedcomx.json", json.dumps({"persons": []}))
         z.writestr("FEEDBACK.md", "# Feedback\n")
-        z.writestr("_feedback/feedback.json", "NOT JSON AT ALL")
+        z.writestr("_feedback/feedback.json", body)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     result = _run_script(str(zip_path))
     assert result.returncode == 0, f"stderr:\n{result.stderr}"
