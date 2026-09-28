@@ -492,6 +492,37 @@ figures drifted silently as the corpus grew, and it shipped
 `test_the_spend_cap_clears_the_costliest_run_in_the_corpus` so the sizing claim could not drift
 again. Each figure needs a script or a ledger row, or it is not used.
 
+**[R7, derived 2026-09-28.]** Built: `make e2e-narration-figures`
+(`eval/harness/e2e/narration_figures_report.py`), pure analysis over the 194 committed e2e
+runs, no API. It exits 2 on a zero-paragraph scan rather than reporting a cheerful 0%, and
+prints its denominators — 49 runs carry the `narration` capture, 2649 assistant paragraphs.
+**Two of the three figures do not survive contact with the corpus:**
+
+| Figure | Plan | Derived | Verdict |
+|---|---|---|---|
+| Paragraphs following no log write (L166) | 83.5% | **82.4%** (2183/2649) | holds |
+| Paragraphs opening "Now…"/"Let me…" | 18% | **8.8%** (234/2649) | **does not hold — about half** |
+| `research-plan` lands at median | 7 min | **4.7 min** (n=84 runs) | does not hold |
+
+The opener figure was re-measured under six definitions before being written down, per
+CLAUDE.md's rule that a measurement disagreeing with belief is re-measured, not reworded:
+anchored open 8.8%, open-of-any-line 10.8%, contains-anywhere 54.9%, per-run mean 8.6%,
+per-run median 8.5%, single-run max 25.4%. **None yields 18%.** So the between-actions rule
+is being decided on a figure roughly twice its true size, and that decision should be retaken
+against 8.8% — a rule aimed at one paragraph in six is a different proposition from one aimed
+at one in eleven.
+
+The fourth figure — the identifier validator's **22%** refusal rate — is **NOT MEASURED**. It
+is not in the narration capture and needs its own source; that is a measurement-design task,
+not a re-run, and it stays unusable until someone builds it.
+
+Two derivation defects were found and fixed while building this, both of the kind that reports
+a confident wrong number rather than failing: the `research-plan` median was gated behind the
+narration capture, which silently narrowed its denominator from 84 runs to 49 (and moved the
+answer 5.0 → 4.7 min); and a first-cut corpus filter excluding paths containing `ann` also
+dropped every fixture whose slug contains it — `anna-findejsova-daughter`,
+`hannah-earnest-children`, `johann-widmer-vitals`, `anna-macek-son` — costing 252 paragraphs.
+
 **The narration guidance is one line and the highest-leverage line in the product.**
 `init-project` writes it verbatim and every skill but `search-wikipedia`, plus five agents,
 reads it from `research.json` at runtime (re-derive with
