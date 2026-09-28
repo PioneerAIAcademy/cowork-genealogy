@@ -1788,9 +1788,9 @@ def find_relationship_writes_without_warnings_check(
     starting tree is given, treat everything as new (best-effort), matching
     ``find_effects_without_invocation``.
 
-    KEYED ON THE TOOL, not the ``check-warnings`` skill. The #1193 signal is
+    KEYED ON THE TOOL, not the ``check-warnings`` agent. The #1193 signal is
     literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
-    ``person_warnings`` call and a ``check-warnings`` skill that launches but fails
+    ``person_warnings`` call and a ``check-warnings`` agent that launches but fails
     before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
     the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
     even when it fired inside ``check-warnings``. A call counts as consulting the

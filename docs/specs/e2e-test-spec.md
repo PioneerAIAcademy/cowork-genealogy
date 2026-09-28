@@ -1706,8 +1706,8 @@ consulted before a parentage write.** `find_relationship_writes_without_warnings
 `ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
 relationships do not count) for which `person_warnings` — the cheapest, LLM-free
 guardrail — was never successfully called. It keys on the `person_warnings`
-**tool** across all server spellings, not the `check-warnings` skill, so it
-catches a direct-tool path and a skill that launches but fails before reaching the
+**tool** across all server spellings, not the `check-warnings` agent, so it
+catches a direct-tool path and an agent that launches but fails before reaching the
 tool. Like the citation-nulling check it **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
 entries carry `kind: "warnings_unchecked"` for its own bucket

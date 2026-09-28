@@ -13,7 +13,7 @@
   },
   "mcp_fixtures": ["person-warnings-no-warnings"],
   "judge_context": [
-    "Should verify the timeline is consistent across all assertions (birth ~1845, censuses 1850 and 1860 with ages 5 and 15, death 1908)",
+    "Should report that the tool found no warnings for Patrick, without re-deriving his dates or naming any year the tool did not return",
     "Should report cleanly (no warnings) if the resolved project's data is internally consistent -- false positives on completed projects are particularly bad because they prompt unnecessary reopening of resolved questions",
     "Should NOT flag structural or schema issues -- e.g. missing required fields on the resolved conflict c_001, or hypothesis/proof-summary consistency -- those belong to validate-schema, not check-warnings"
   ]

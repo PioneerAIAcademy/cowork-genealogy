@@ -57,9 +57,11 @@ Warnings are about a *single person's own data* violating physical/biological/te
 
 ### 1. Identify the person(s) to check
 
-- **Triggered by a writing skill** -- check every person whose assertions or person_evidence changed in that skill's run.
+- **Delegated after a write or an import** -- check every person id the delegation names.
 - **User-directed** -- use the person id from the request. If the user gave a name, read `tree.gedcomx.json` and match on `names[*].given` + `names[*].surname`. If several match, call no tool and return `Hand-back: ambiguous person — <each candidate's id and name>`.
 - **Batch review before a proof conclusion** -- check the subject person and every person whose evidence is cited in the proof.
+
+If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>`.
 
 The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` or `KWCJ-RN4`).
 
@@ -166,9 +168,9 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 
 ## Handoff rules
 
-- **Two sources disagreeing** -- hand off to `conflict-resolution`.
+- **Two sources disagreeing** -- hand back to `conflict-resolution` (see Steps).
 - **Warning suggests identity confusion** -- suggest rebuilding the chronological timeline first, then reassigning records once the split point is found.
-- **User asks to fix a warning** -- do NOT fix it here. Route to `person-evidence`, `conflict-resolution`, or let the user correct manually.
+- **User asks to fix a warning** -- do NOT fix it here. Hand back naming `person-evidence` or `conflict-resolution`, or leave the correction to the user.
 - **Timeline skill invoked check-warnings** -- return results to timeline's caller; do not start a new investigation.
 
 ## Re-invocation behavior
@@ -210,7 +212,7 @@ The tool emits two severities:
   socially improbable). Possible but unlikely enough to need
   corroboration. Exceptions exist; verification recommended.
 
-See `assumption-categories.md` for the framework these severities
+See Appendix C for the framework these severities
 map to.
 
 ### Fundamental violations (`severity: "contradiction"`)
@@ -496,7 +498,7 @@ Phrase all recommendations as research actions the user can
 take, not as instructions to run a specific skill. The user does
 not know which skills exist; the orchestrator will route their
 follow-up question to the right skill automatically. See
-SKILL.md Step 3's special case for `hasEventAfterDeath1`.
+Step 3's special case for `hasEventAfterDeath1`.
 
 ### Pedigree Analysis for Error Detection
 
@@ -737,7 +739,7 @@ When the `person_warnings` tool emits a warning:
      condition.
 
 2. Look at the `issueType` tag for the specific condition. See
-   `warning-checks.md` for the full catalog of tags the tool emits.
+   Appendix A for the full catalog of tags the tool emits.
 
 3. Do NOT manufacture additional warnings from unsound assumptions
    the tool deliberately skips.

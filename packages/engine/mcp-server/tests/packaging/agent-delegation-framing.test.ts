@@ -397,9 +397,13 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
         "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
         "moved by delegation wording; the agent-side pin makes that output the ground truth " +
-        "the report is built from. The caller body specifies no delegation content at " +
-        "all, so nothing on its side constrains a verdict in prose; nothing here " +
-        "measures whether one travels.",
+        "the report is built from. The caller's delegation is specified as person ids, " +
+        "pinned below; what it can still carry is a verdict in prose, which the pinned " +
+        "sentence does not stop and nothing here measures.",
+      mitigation: {
+        side: "caller",
+        excerpt: "naming by id every person the edit touched",
+      },
     },
   },
 
