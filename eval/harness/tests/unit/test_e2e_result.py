@@ -11,6 +11,7 @@ import pytest
 
 from e2e.result import (
     HARNESS_SCHEMA_VERSION,
+    _COMMITTABLE_VERDICTS,
     E2eResult,
     axes_from_runlog,
     detector_era_runlog,
@@ -303,7 +304,11 @@ def test_guardrail_bypass_does_not_touch_the_genealogical_verdict():
     )
     assert r.verdict == "pass", "the judge's genealogical result must survive"
     assert r.compliance == "fail"
-    assert r.outcome == "fail", "the combined gate still fails the run"
+    assert r.outcome == "pass", (
+        "the gate is the verdict: the §8 detectors were demoted (lead ruling "
+        "2026-09-25) and no longer veto. compliance still records the bypass "
+        "on its own axis, which is the whole of what they now do."
+    )
 
 
 @pytest.mark.parametrize(
@@ -314,11 +319,16 @@ def test_guardrail_bypass_does_not_touch_the_genealogical_verdict():
         ("fail", [], "fail"),
         ("ungraded", [], "ungraded"),
         ("skipped", [], "skipped"),
-        ("pass", ["v"], "fail"),
-        ("partial", ["v"], "fail"),
+        # Violations no longer move the gate — the §8 detectors were demoted
+        # on 2026-09-25, so each row below mirrors its violation-free twin.
+        # These five rows expected "fail" until that ruling; over the committed
+        # corpus that veto fired on 53 of 56 v1+ runs, 25 of them
+        # genealogically `pass`, which is what stopped it discriminating.
+        ("pass", ["v"], "pass"),
+        ("partial", ["v"], "partial"),
         ("fail", ["v"], "fail"),
-        ("ungraded", ["v"], "fail"),
-        ("skipped", ["v"], "fail"),
+        ("ungraded", ["v"], "ungraded"),
+        ("skipped", ["v"], "skipped"),
     ],
 )
 def test_outcome_derivation_table(verdict, violations, expected_outcome):
@@ -348,7 +358,7 @@ def test_axes_are_persisted_and_judge_output_is_left_alone(tmp_path: Path):
     payload = json.loads(paths["result"].read_text(encoding="utf-8"))
     assert payload["verdict"] == "pass"
     assert payload["compliance"] == "fail"
-    assert payload["outcome"] == "fail"
+    assert payload["outcome"] == "pass"
     assert payload["guardrail_bypass_violations"] == [
         "'same_person' was never called for 'I1'"
     ]
@@ -366,7 +376,9 @@ def test_a_judgeless_run_with_violations_stays_a_scratch_run(tmp_path: Path):
         verdict="skipped", stop_reason="error",
         guardrail_bypass_violations=["'person-evidence' was never invoked"],
     )
-    assert result.outcome == "fail"
+    # The gate is the verdict since the §8 demotion; `skipped` reaches the exit
+    # code as itself and is caught by run_e2e.FAILING_OUTCOMES, not by the veto.
+    assert result.outcome == "skipped"
     paths = write_result_files(
         result=result, runlog_dir=tmp_path,
         final_tree=None, final_research=None,
@@ -397,7 +409,7 @@ def test_ungraded_run_with_violations_is_still_committed(tmp_path: Path):
         verdict="ungraded", stop_reason="completed",
         guardrail_bypass_violations=["'person-evidence' was never invoked"],
     )
-    assert result.outcome == "fail"
+    assert result.outcome == "ungraded"
     paths = write_result_files(
         result=result, runlog_dir=tmp_path,
         final_tree={"persons": []}, final_research={},
@@ -409,12 +421,20 @@ def test_ungraded_run_with_violations_is_still_committed(tmp_path: Path):
 # --- axes_from_runlog: reading the pre-#972 corpus --------------------------
 
 
-def test_axes_from_runlog_reads_the_new_shape():
+def test_axes_from_runlog_rederives_and_ignores_a_stored_outcome():
+    """The stored key is NOT read, for any vintage.
+
+    55 of the 56 committed v1+ logs store `outcome: "fail"` under the old fused
+    rule. Reading the stored value would leave every historical run reporting
+    `fail`, so the corpus report would not move and this change would be
+    invisible — with the suite green. The fixture below is that exact shape:
+    a stored `fail` that must read back as `pass`.
+    """
     data = {
         "harness_schema_version": 1,
         "verdict": "pass", "compliance": "fail", "outcome": "fail",
     }
-    assert axes_from_runlog(data) == ("pass", "fail", "fail")
+    assert axes_from_runlog(data) == ("pass", "fail", "pass")
 
 
 def test_axes_from_runlog_derives_a_missing_outcome_rather_than_raising():
@@ -424,8 +444,9 @@ def test_axes_from_runlog_derives_a_missing_outcome_rather_than_raising():
 
 
 def test_axes_from_runlog_recovers_the_buried_verdict_from_a_legacy_log():
-    """4 of the 5 committed logs in this shape are genealogically `pass`
-    presented as `fail` — the whole reason the issue was filed."""
+    """9 of the 17 committed logs in this shape are genealogically `pass` and
+    2 are `partial`, presented as `fail` — the whole reason the issue was
+    filed. Measured at 2c00dfd76."""
     data = {
         "verdict": "fail",  # the clobbered top-level value
         "guardrail_shadow_violations": [],
@@ -434,7 +455,7 @@ def test_axes_from_runlog_recovers_the_buried_verdict_from_a_legacy_log():
             "guardrail_bypass_violations": ["'same_person' was never called"],
         },
     }
-    assert axes_from_runlog(data) == ("pass", "fail", "fail")
+    assert axes_from_runlog(data) == ("pass", "fail", "pass")
 
 
 def test_axes_from_runlog_tolerates_a_legacy_log_whose_judge_never_ran():
@@ -444,7 +465,10 @@ def test_axes_from_runlog_tolerates_a_legacy_log_whose_judge_never_ran():
         "guardrail_shadow_violations": [],
         "judge_output": {"guardrail_bypass_violations": ["v"]},
     }
-    assert axes_from_runlog(data) == ("skipped", "fail", "fail")
+    # `skipped` reaches the gate as itself now. It is the one verdict NOT in
+    # `_COMMITTABLE_VERDICTS`, so no committed log carries it at the top
+    # level — but branch 2 can still emit it, which is what this pins.
+    assert axes_from_runlog(data) == ("skipped", "fail", "skipped")
 
 
 def test_axes_from_runlog_calls_pre_detector_runs_not_checked():
@@ -545,65 +569,132 @@ def test_no_pre_v1_runlog_is_reported_compliance_pass():
         assert compliance in {"fail", "not_checked"}, path
 
 
-def test_the_gate_reproduces_todays_fused_verdict_across_the_pre_v1_corpus():
-    """Behavior-preservation proof for the exit-code change, scoped to the
-    **pre-v1** corpus that existed when the split landed.
+def test_the_pre_v1_gate_reports_the_recovered_verdict_not_the_clobbered_one():
+    """The pre-v1 corpus, re-read under the demoted-detector rule.
 
-    Before the split, a guardrail bypass forced `verdict = "fail"` and the
-    exit code keyed on that. Now it forces `outcome = "fail"` and the exit
-    code keys on THAT. Over every committed PRE-V1 run the two distributions
-    must be identical — otherwise this refactor silently changed which runs
-    fail CI.
+    This test used to prove the opposite. Before the §8 detectors were demoted
+    (lead ruling 2026-09-25) it asserted `outcome == data["verdict"]` over every
+    pre-v1 log — a behaviour-preservation proof that the exit code still failed
+    exactly the runs it failed before the three-axis split.
 
-    Deliberately excludes v1+ logs (`harness_schema_version` present): for
-    those, `verdict` and `outcome` are SUPPOSED to diverge whenever compliance
-    fails but the judge's own verdict is `pass`/`partial` — that divergence is
-    the entire reason `verdict`/`compliance`/`outcome` were split apart in the
-    first place. Asserting `outcome == verdict` for v1+ data would re-impose
-    the pre-split conflation on the very data the split exists to distinguish.
-    v1+ logs get their own fusing-correctness proof in
-    `test_v1_plus_runlogs_have_an_internally_consistent_outcome` below,
-    instead of no proof at all.
+    That premise is what this change deletes. A pre-v1 bypass CLOBBERED the
+    top-level `verdict` to "fail" and buried the judge's real verdict inside
+    `judge_output`; `axes_from_runlog` branch 2 recovers it, and the gate now
+    reports the recovered value. So for these logs `outcome` deliberately
+    DISAGREES with the on-disk `verdict`, and that disagreement is the fix.
+
+    Measured at 2c00dfd76: 17 committed logs are in this shape, 9 `pass` and
+    2 `partial` underneath a clobbered `fail`.
     """
+    disagreements = 0
     for path, data in committed_e2e_runlogs():
         if "harness_schema_version" in data:
             continue
-        _verdict, _compliance, outcome = axes_from_runlog(data)
-        assert outcome == data["verdict"], (
-            f"{path}: gate disagrees with the pre-split fused verdict"
+        verdict, _compliance, outcome = axes_from_runlog(data)
+        assert outcome == verdict, (
+            f"{path}: the gate must report the verdict axes_from_runlog recovered"
         )
+        if outcome != data.get("verdict"):
+            disagreements += 1
+
+    # The point of the change, asserted rather than assumed. If this ever hits
+    # zero, either branch 2 stopped recovering or the corpus lost every
+    # clobbered log — both need a look, not a silent pass.
+    assert disagreements > 0, (
+        "no pre-v1 log's recovered verdict differs from its clobbered on-disk "
+        "verdict — branch 2 is no longer doing anything"
+    )
 
 
-def test_v1_plus_runlogs_have_an_internally_consistent_outcome():
-    """The v1+ counterpart to the proof above.
+def test_v1_plus_stored_outcome_is_not_read_and_may_disagree():
+    """The v1+ counterpart, also inverted by the same ruling.
 
-    `outcome` is never checked against the raw `verdict` field here — for
-    v1+ logs the two are allowed to differ by design (see the previous
-    test's docstring). What must always hold instead is that `outcome` is
-    the correct FUSION of `verdict` and `compliance`: `fail` whenever
-    compliance failed, else the verdict, exactly as `overall_outcome`
-    defines it. This is what would catch a future regression in the fusing
-    logic itself (e.g. `E2eResult.__post_init__` computing it wrong before
-    a log is written).
+    This test used to assert that the persisted `data["outcome"]` equals
+    `overall_outcome(verdict, compliance)` — the FUSION. Since `outcome` is now
+    the verdict alone, and since committed logs are permanent and are never
+    rewritten, 55 of the 56 committed v1+ logs still store `fail` under the old
+    rule and 40 of those have a non-`fail` verdict. The stored key is therefore
+    wrong by construction for v1-v5, which is why `axes_from_runlog` re-derives
+    it for every vintage and never reads it.
 
-    The persisted `data["outcome"]` is compared, NOT the one
-    `axes_from_runlog` returns. That function falls back to
-    `overall_outcome(...)` when the key is missing or empty, so asserting
-    against its return value would compare the fallback to itself and pass
-    unconditionally on exactly the malformed log this test exists to catch.
+    What must hold is the pair below: the DERIVED gate equals the verdict, and
+    the stored value is allowed to differ. A future v6+ writer stores the two
+    in agreement; that is `test_a_v6_log_stores_the_verdict_as_its_outcome`.
     """
-    checked = 0
+    checked = stale = 0
     for path, data in committed_e2e_runlogs():
         if "harness_schema_version" not in data:
             continue
-        verdict, compliance, _derived = axes_from_runlog(data)
-        assert data.get("outcome") == overall_outcome(verdict, compliance), path
+        verdict, _compliance, outcome = axes_from_runlog(data)
+        assert outcome == verdict, f"{path}: the derived gate must be the verdict"
+        if data.get("outcome") != verdict:
+            stale += 1
         checked += 1
 
-    # This test is meaningless if it silently checked zero logs — if that
-    # ever happens, the premise (v1+ logs exist in the committed corpus) has
-    # changed and this test needs a second look, not a silent pass.
+    # Meaningless if it silently checked zero logs — the premise (v1+ logs
+    # exist) would have changed.
     assert checked > 0, "no v1+ runlogs found in the committed corpus"
+    # And meaningless if nothing is stale: that would mean the stored key
+    # already agrees everywhere, so re-deriving on read would be untested.
+    assert stale > 0, (
+        "every committed v1+ log's stored `outcome` already equals its verdict "
+        "— re-deriving on read is no longer exercised by the corpus"
+    )
+
+
+def test_a_v6_log_stores_the_verdict_as_its_outcome(tmp_path: Path):
+    """A log this code writes stores the two in agreement.
+
+    The counterpart to `test_v1_plus_stored_outcome_is_not_read_and_may_disagree`:
+    v1-v5 logs store a fused `outcome` that disagrees with their verdict and is
+    re-derived on read, while everything written from v6 stores the verdict
+    itself. That is the whole content of the schema bump — the key keeps its
+    name and type, and only its meaning moved.
+    """
+    result = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="pass", stop_reason="completed",
+        guardrail_bypass_violations=["'same_person' was never called for 'I1'"],
+    )
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path,
+        final_tree={"persons": []}, final_research={},
+        timestamp="2026-05-26_14-30-45",
+    )
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
+    assert payload["harness_schema_version"] >= 6
+    assert payload["outcome"] == payload["verdict"] == "pass"
+    assert payload["compliance"] == "fail", "the bypass is still recorded"
+    assert axes_from_runlog(payload) == ("pass", "fail", "pass")
+
+
+def test_ungraded_and_skipped_still_fail_the_exit_code():
+    """The veto used to mask these two.
+
+    An `ungraded` or `skipped` verdict reached the exit code already downgraded
+    to "fail" by the compliance veto whenever a detector had fired. Now it
+    arrives as itself, so `run_e2e.FAILING_OUTCOMES` is what keeps those runs
+    from exiting green — load-bearing in a way it was not before.
+
+    Imported, not restated: a test that re-types the literal set proves nothing
+    about the code under test.
+    """
+    from e2e.run_e2e import FAILING_OUTCOMES
+
+    for verdict in ("ungraded", "skipped"):
+        r = E2eResult(
+            test_id="t", captured_at="2026-05-26_14-30-45",
+            verdict=verdict, stop_reason="completed",
+            guardrail_bypass_violations=["'person-evidence' was never invoked"],
+        )
+        assert r.outcome == verdict, "the gate no longer downgrades these"
+        assert r.outcome in FAILING_OUTCOMES, (
+            f"{verdict} must still fail the run; nothing else catches it now"
+        )
+    # And the axis it is NOT derived from: `_COMMITTABLE_VERDICTS` carries
+    # `ungraded` but not `skipped`, so the two sets are not complements.
+    assert "ungraded" in _COMMITTABLE_VERDICTS
+    assert "skipped" not in _COMMITTABLE_VERDICTS
 
 
 # ---- narration (replaced .transcript.md, 2026-08-03) ----------------------
