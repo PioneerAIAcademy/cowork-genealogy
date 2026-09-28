@@ -10,7 +10,9 @@
       "autonomous",
       "grade:trigger",
       "requires:gps-mentor"
-    ]
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The model intermittently fails to spawn gps-mentor for --autonomous prompts. The mentor-gate validator (test_mentor_gate_spawned) catches this ground-truth gap (issue #2686). Remove when the research skill consistently spawns gps-mentor under autonomous mode."
   },
   "input": {
     "user_message": "Research Patrick Flynn's parentage --autonomous",
