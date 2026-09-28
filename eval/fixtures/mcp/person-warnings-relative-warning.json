@@ -14,10 +14,14 @@
         "personId": "I2",
         "personName": "Thomas Flynn",
         "message": "A relative of this person has a lifespan greater than 120 years, which is implausible.",
-        "factIds": [
-          "F3"
-        ],
-        "relatedPersonId": "I2"
+        "relatedPersonId": "I2",
+        "facts": [
+          {
+            "id": "F3",
+            "type": "Birth",
+            "date": "~1818"
+          }
+        ]
       }
     ]
   }

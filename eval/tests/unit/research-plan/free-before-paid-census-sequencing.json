@@ -17,7 +17,8 @@
     "collections-search-pennsylvania",
     "collections-search-us-national",
     "external-links-search-pa-census",
-    "validate-research-schema"
+    "validate-research-schema",
+    "external-links-search-any"
   ],
   "judge_context": [
     "For each census year (1870, 1880, 1900), the FamilySearch item must appear at a lower sequence number than any Ancestry item for the same year — free before paid",

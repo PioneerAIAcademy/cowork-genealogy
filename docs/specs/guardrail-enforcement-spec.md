@@ -147,7 +147,7 @@ depends on another shipping first.
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
-| §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
+| §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
 | §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null. ADR-0009 constraint 3 holds because an assertion is a (record, party) pair, so a second persona is a second assertion, and the tree person keeps the two links of a relationship assertion apart |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
@@ -156,6 +156,7 @@ depends on another shipping first.
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: it cannot bind a link made through a relationship assertion, because which of the two people the link is about is not decidable from the documents |
+| §5 | A logged query names only filters its search sent | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_log_append` op whose explicit `query` names a filter key, with a value, that its staged `record_search` or `fulltext_search` never sent. A differing value is allowed (mostly place normalization, observed by the eval `report_*` validators instead), as are descriptive keys, plumbing and paging. A nil search stages nothing and is never judged | **enforcing** (refuses 18 of 358 paired staged ops, 15 distinct claims, all read individually per ADR-0011 limit 2 and all true positives, measured at a1960c5af by `packages/engine/mcp-server/dev/measure-log-query-claims.ts`; 0 of the 121 paired unit-eval ops, whose misstatements were filled from a staged payload the eval mock built from a fixture's recorded query, fixed at the mock. Unstaged entries — nil searches, searches made without a `projectPath` — and external-site entries are seen only by the eval `report_*` observers in `test_search_records.py` and `test_search_external_sites.py`) |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `record_basis: "stated"` supporting assertion nor ≥2 at `record_basis: "inferred"` citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
@@ -357,7 +358,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
-| §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped |
+| §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped; 2026-09-23 read: 2/3 fires are false denies (documented negatives), stays WARNING pending a negative-conclusion signal |
 | §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 184 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
 
 The last two rows are measured 2026-09-21, not with the rest. The agreement
@@ -858,6 +859,28 @@ their own project is explicitly out of scope for this layer. The refusal message
 says so outright rather than leaving the researcher to guess. That route does
 not exist on the hosted path, where the project lives in a sandbox — see the
 ADR's two stated limits.
+
+### A logged query names only filters its search sent
+
+`research_log_append` refuses an op whose explicit `query` names a filter key
+the staged search never sent (`research-log-editor-spec.md` §8.3, the rule and
+its scope; §7, why the tool owns this and not the values). The ground truth is
+the staged payload's own echo of the call's arguments, which the caller does not
+author, so the rule is decidable from the project documents alone. It refuses
+rather than corrects: overwriting `query` would erase the only evidence of how
+often a caller misstates its filters, which an audit trail exists to keep.
+
+It is a preflight, run over every op before any op is applied, so the refusal
+comes before any op writes a sidecar. (No refusal consumes a staged handle: the
+staged file is removed only after research.json commits.) No override (ADR-0011).
+
+Its limit is the ground truth itself. A nil search stages nothing, and neither
+does a search made without a `projectPath`, so neither is judged, and the eval's
+`report_*` observers are the only plane that sees them. External-site entries
+have no staged echo either, and are observed the same way. The eval mock stages
+the call's own arguments for `record_search` and `fulltext_search`, as production
+does; before it did, it staged a fixture's recorded query, and every unit-eval
+misstatement the observers first reported was an entry filled from one.
 
 ### Plan-phase gate on `tree_forget`
 
@@ -1513,9 +1536,9 @@ some of them fails `make harness-test`.
   question from "has this ever happened" to "what stops it where the permission
   prompt does not", which is the form the next decision has to take.
 - **`Read` is not revoked, and should not be** until there is a way to read the
-  same data. `research_query` covers 11 of `research.json`'s ~15 top-level
-  sections (missing `project`, `researcher_profile`, `known_holdings`,
-  `localities`) and pages at 50 items per call — `offset` reaches items 51+,
+  same data. `research_query` covers 12 of `research.json`'s ~15 top-level
+  sections (missing `project`, `researcher_profile`, `known_holdings`) and
+  pages at 50 items per call — `offset` reaches items 51+,
   and `truncated` says when to use it. For
   `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
   to the tree as `research_query` stands to `research.json`. Plenty of tools
@@ -1808,7 +1831,7 @@ bypass appears in a runlog or a feedback case"* — is now met.
 **What does NOT change: a command-text matcher is still the wrong instrument.**
 `cat research.json` and `cat > research.json` remain indistinguishable without
 parsing a shell; 37 of the 40 corpus touches are reads the system depends on,
-because `research_query` covers 11 of ~15 sections and there is no tree query
+because `research_query` covers 12 of ~15 sections and there is no tree query
 surface at all; and a denial simply moves the agent to `head`, `python`, or a
 path built from a variable — the harness's own denial text suggests as much.
 
@@ -2067,7 +2090,7 @@ Design points that were paid for and should not be re-derived:
     `scored_ids`, and an errored `tree_edit` no longer counts as a protected
     write in `find_unguarded_protected_writes`.
 
-  Violation counts and the §8 `compliance`/`outcome` verdict are not comparable
+  Violation counts and the §8 `compliance` verdict are not comparable
   across that join. The boundary is the commit, not cleanly a version number —
   the join shipped at `harness_schema_version` 2 and the bump to 3 came after, so
   a `2` log means either thing depending on its date; `docs/specs/e2e-test-spec.md`
@@ -2125,13 +2148,35 @@ expectation that it graduates.
 ## 8. Post-run compliance detectors
 
 Three non-windowed checks over the final project state and the run's tool-call
-log; any violation sets `compliance: fail` and forces `outcome: fail`,
-regardless of what the judge said. Specified in full — including the historical
+log; any violation sets `compliance: fail`. Specified in full — including the historical
 `not_checked` handling — in `docs/specs/e2e-test-spec.md` §7.5. Implemented in
 `skill_invocation.py` (`find_effects_without_invocation`,
 `find_missing_mentor_verdicts`, `find_person_evidence_missing_same_person`).
 
-Two properties worth keeping in view here:
+**They report; they do not gate.** A violation moves the `compliance` axis and
+nothing else. Until 2026-09-25 it also forced `outcome: fail` regardless of what
+the judge said, and that veto had stopped discriminating. Measured at 2c00dfd76
+over the 56 committed e2e runs carrying a schema version, it fired on 53, and 25
+of those were genealogically `pass`. A gate
+satisfied that rarely carries about one bit and spends it on the detectors' own
+base rate rather than on whether the research was right — so a run that
+recovered every stripped finding exited exactly like one that recovered none.
+Removing the veto was chosen over keeping it and fixing only the report (the
+gate stays one bit) and over splitting the gate from the exit code (two
+definitions of `fail` for one run).
+
+Two costs come with it, both accepted:
+
+- A run that bypasses a guardrail now exits green. The bypass is still recorded
+  on the compliance axis and still printed by `make e2e-corpus`, but nothing
+  fails on it.
+- The exit code reveals pass/fail to a blind grader unconditionally, not only
+  when compliance is clean — `e2e-test-spec.md` §7.4's residual leak, widened.
+
+Both reopen if a check graduates: a promoted check earns the veto back, which
+is what the shadow-to-graduate table below is for.
+
+Two further properties worth keeping in view here:
 
 - **Whole-run scope is a real limitation, not an oversight.** "Was this skill
   invoked anywhere" passes on `bagley-father-1884`, where it was invoked 52
