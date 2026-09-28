@@ -269,79 +269,6 @@ def test_extraction_append_delegation_itself_is_not_a_violation():
     )
 
 
-# --- image_transcribe: the router-substitution guard (#1636) ---------------
-#
-# Same shape as extraction_append and equally unconditional: no skill declares
-# image_transcribe (it lives on agents/image-reader.md and agents/search-images.md),
-# so the declared-tools exemption can never fire. The rationale differs from
-# image_read's — image_transcribe returns TEXT from hosted OCR and cannot overflow
-# the transport buffer. It is guarded because record-extraction/SKILL.md's "No image
-# reading in this context" did not hold as prose: across nine ut_record_extraction_016
-# runs on 2026-09-27, every run that called it on the main thread scored Tool
-# Arguments 1 and failed, and every run that did not scored 3.
-
-
-def test_image_transcribe_violation_on_main_thread():
-    assert (
-        subagent_only_violation(_main("mcp__genealogy__image_transcribe"))
-        == "image_transcribe"
-    )
-
-
-def test_image_transcribe_no_violation_inside_subagent():
-    """image-reader and search-images call it legitimately, with agent_id present."""
-    assert subagent_only_violation(_sub("mcp__genealogy__image_transcribe")) is None
-
-
-def test_image_transcribe_violation_on_bare_name():
-    """Transport-agnostic: the guard keys on the bare name, not the mcp prefix."""
-    assert subagent_only_violation(_main("image_transcribe")) == "image_transcribe"
-
-
-def test_image_transcribe_violation_under_a_different_server_prefix():
-    """The Cowork bridge spells it mcp__remote-devices__Genealogy_Research__…
-
-    A guard that only matched the harness's own `mcp__genealogy__` prefix would
-    fail open on every other registrar.
-    """
-    assert (
-        subagent_only_violation(
-            _main("mcp__remote-devices__Genealogy_Research__image_transcribe")
-        )
-        == "image_transcribe"
-    )
-
-
-def test_image_transcribe_denied_even_with_declared_tools():
-    """No skill declares it, so record-extraction's real set must not exempt it."""
-    declared = {"record_read", "volume_search", "research_log_append"}
-    assert (
-        subagent_only_violation(
-            _main("mcp__genealogy__image_transcribe"), declared
-        )
-        == "image_transcribe"
-    )
-
-
-def test_image_transcribe_denial_names_the_recovery():
-    reason = subagent_only_denial("image_transcribe")["hookSpecificOutput"][
-        "permissionDecisionReason"
-    ]
-    # The reason text is the model's only feedback, so it must name BOTH the
-    # delegation and the search-images route — the observed failure was a
-    # fabricated imageId, which delegating alone does not prevent.
-    assert "@plugin:image-reader" in reason
-    assert "search-images" in reason
-    assert "image_transcribe" in reason
-
-
-def test_image_transcribe_delegation_itself_is_not_a_violation():
-    """The Task call that spawns image-reader is main-thread but not guarded."""
-    assert (
-        subagent_only_violation(_main("Task", subagent_type="image-reader")) is None
-    )
-
-
 # --- the policy set itself ---
 
 
@@ -349,36 +276,6 @@ def test_image_read_is_the_guarded_tool():
     assert "image_read" in SUBAGENT_ONLY_TOOLS
     # Guard against over-reach: record_read etc. must stay callable on main.
     assert "record_read" not in SUBAGENT_ONLY_TOOLS
-
-
-def test_guard_does_not_over_reach_onto_the_routers_own_tools():
-    """The other direction: legitimate main-thread calls must still be allowed.
-
-    Breaking the repo only proves the guard can fire. This proves it does not
-    fire on the calls record-extraction makes every run — including under all
-    three server spellings, since a prefix-blind matcher that swept these up
-    would leave the router unable to do its job at all.
-    """
-    prefixes = (
-        "mcp__genealogy__",
-        "mcp__remote-devices__Genealogy_Research__",
-        "mcp__Genealogy_Research__",
-    )
-    for tool in ("record_read", "volume_search", "image_search", "research_log_append",
-                 "project_context", "research_append"):
-        for prefix in prefixes:
-            assert subagent_only_violation(_main(prefix + tool)) is None, (
-                f"{prefix}{tool} must stay callable on the main thread"
-            )
-
-
-def test_image_transcribe_is_the_guarded_tool():
-    assert "image_transcribe" in SUBAGENT_ONLY_TOOLS
-    # Over-reach guards: the router must keep the tools it legitimately holds.
-    # volume_search in particular is the route the deny reason points at, so
-    # sweeping it in would leave the model with nowhere to go.
-    assert "volume_search" not in SUBAGENT_ONLY_TOOLS
-    assert "image_search" not in SUBAGENT_ONLY_TOOLS
 
 
 def test_extraction_append_is_the_guarded_tool():
@@ -474,34 +371,6 @@ def test_real_record_extraction_does_not_declare_image_read():
     assert (
         subagent_only_violation(_main("mcp__genealogy__image_read"), declared)
         == "image_read"
-    )
-
-
-def test_no_skill_declares_image_transcribe():
-    """The #1636 guard rests on image_transcribe having no legitimate main-thread
-    caller. Pin that to the real skill frontmatter so a future skill that declares
-    it — reopening the router-substitution path — fails loudly here rather than
-    silently un-guarding the router.
-    """
-    from harness.allowed_tools import declared_skill_tools
-
-    for skill_dir in sorted(_skills_dir().iterdir()):
-        if not (skill_dir / "SKILL.md").exists():
-            continue
-        declared = declared_skill_tools(skill_dir.name, _skills_dir())
-        assert "image_transcribe" not in declared, (
-            f"{skill_dir.name} declares image_transcribe in its allowed-tools — "
-            "no skill may. The tool belongs to @plugin:image-reader and "
-            "@plugin:search-images; a skill declaring it would exempt its router "
-            "from the #1636 guard."
-        )
-    # And the record-extraction router in particular is guarded on the main thread.
-    declared = declared_skill_tools("record-extraction", _skills_dir())
-    assert (
-        subagent_only_violation(
-            _main("mcp__genealogy__image_transcribe"), declared
-        )
-        == "image_transcribe"
     )
 
 

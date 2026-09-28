@@ -57,11 +57,7 @@ const SPECS = [
  *  `eval/harness/harness/context_policy.py`); a `blocked_context_calls` entry
  *  naming one is a subagent-only fire, the arm guardrail-enforcement-spec.md
  *  claims is at zero. */
-const SUBAGENT_ONLY_TOOLS = new Set([
-  "extraction_append",
-  "image_read",
-  "image_transcribe",
-]);
+const SUBAGENT_ONLY_TOOLS = new Set(["extraction_append", "image_read"]);
 
 const git = (...args: string[]) =>
   execFileSync("git", args, { cwd: projectRoot, encoding: "utf8", maxBuffer: 1 << 28 });

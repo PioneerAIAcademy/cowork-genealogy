@@ -415,8 +415,6 @@ owned-section fires the unit harness sees are gated separately, through
 (see the §6 rows above). So the two planes differ in where they put this event,
 not in whether they enforce it — measured at e1a9d9538. Whether these
 subagent-only fires now warrant folding the array into the compliance axis is open.
-`image_transcribe` joined `SUBAGENT_ONLY_TOOLS` after this measurement and has
-no fire in the committed corpus, so it does not move these figures yet.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only

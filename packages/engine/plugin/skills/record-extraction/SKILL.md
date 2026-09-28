@@ -20,6 +20,7 @@ description: >-
 allowed-tools:
   - record_read
   - volume_search
+  - image_search
   - research_log_append
 ---
 
@@ -64,8 +65,9 @@ Record data arrives in one of four ways:
 
 4. **Image** — a FamilySearch image ARK (`3:1:.../$dist`) or Image Group
    Number (an imageId like `004022578_00190`). **Do not call `image_read`
-   yourself** — delegate to the **`image-reader` subagent** by invoking
-   `@plugin:image-reader`, once per image (it reads exactly one). By
+   or `image_transcribe` yourself** — delegate to the **`image-reader`
+   subagent** by invoking `@plugin:image-reader`, once per image (it reads
+   exactly one). By
    default it OCRs the scan cheaply and fast (a hosted Gemini Flash model) and
    returns a full text transcription plus an extracted-facts list — the
    raw image never enters your context (accumulated base64 overflows the
@@ -78,6 +80,10 @@ Record data arrives in one of four ways:
    scan reads is the subagent's report to make, not yours to pre-empt.
    Reporting "image unreachable" without an actual delegation attempt is a
    completeness failure.
+
+   **Never invent an imageId.** Delegate only an ARK or image id the user
+   gave you or a tool returned. If you have neither, route to
+   `search-images` to find the page first — a guessed id reads nothing.
 
    **`looking_for` is a search key, not the answer.** Phrase it as *who
    or what* to locate — "the christening entry for a Christina born ~Jan
