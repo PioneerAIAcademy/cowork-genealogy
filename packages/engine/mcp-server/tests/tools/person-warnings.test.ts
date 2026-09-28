@@ -3381,6 +3381,16 @@ describe("hasNoChildrenConflict predicate", () => {
     expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(false);
   });
 
+  it("does NOT fire: person NoChildren fact + a child link to a person missing from the tree", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "NoChildren" }] },
+      ],
+      relationships: [{ id: "R1", type: "ParentChild", parent: "P", child: "GHOST" }],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(false);
+  });
+
   it("fires: couple CoupleNeverHadChildren fact + a child of both spouses", () => {
     const tree: SimplifiedGedcomX = {
       persons: [

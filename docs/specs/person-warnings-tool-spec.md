@@ -641,8 +641,8 @@ either side of view (b) or (c).
 **Stillbirth: the same most-generous age reading.** `hasStillbirthConflict`
 fires on a `Stillbirth` fact plus any of: a spouse, or a marriage-like fact
 on the anchor; a child — unfiltered by subtype, unlike the No Children
-views above, since a stillbirth marker is contradicted by any child living
-on, not specifically by a biological one; or living to at least age 1,
+views above, since a stillborn person cannot have raised any child, adopted
+or not; or living to at least age 1,
 where "age 1" is read the same conservative way as the burial check — the
 smallest possible gap between the latest possible birth-like-or-`Stillbirth`
 day and the earliest possible Death day is still >= 365 days (fudge 0, not

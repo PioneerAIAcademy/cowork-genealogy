@@ -952,7 +952,7 @@ function relationshipFactOfType(
 
 /**
  * True when a ParentChild edge counts toward "this couple/person has a
- * child" for the No Children checks. Read at FamilySearch's most-generous
+ * child" for the No Children checks. Read at the spec's most-generous
  * interpretation: a couple (or person) marked as never having children can
  * still have raised an adopted, step, or foster child, so only a biological
  * or unspecified link contradicts the marker. `subtype` comes from
@@ -997,13 +997,6 @@ function qualifyingParentsOf(mob: Mob, childId: string): Set<string> {
     out.add(r.parent);
   }
   return out;
-}
-
-/** Any element of `set`, or undefined when it's empty or absent. */
-function firstOf<T>(set: ReadonlySet<T> | undefined): T | undefined {
-  if (!set) return undefined;
-  for (const v of set) return v;
-  return undefined;
 }
 
 /**
@@ -1063,20 +1056,22 @@ interface NoChildrenConflictHit {
  */
 function findNoChildrenConflict(mob: Mob): NoChildrenConflictHit | null {
   const childrenByParent = qualifyingChildrenByParent(mob);
-  const anchorChildren = childrenByParent.get(mob.anchorId);
-  if (anchorChildren && anchorChildren.size > 0 && hasSelfFactOfType(mob, NO_CHILDREN)) {
-    return {
-      view: "self",
-      factIds: selfFactIds(mob, NO_CHILDREN),
-      relatedPersonId: firstOf(anchorChildren),
-    };
-  }
   const personIds = new Set(
     mob
       .getAllPersons()
       .map((p) => p.id)
       .filter((id): id is string => id !== undefined),
   );
+  const anchorChild = [...(childrenByParent.get(mob.anchorId) ?? [])].find((id) =>
+    personIds.has(id),
+  );
+  if (anchorChild !== undefined && hasSelfFactOfType(mob, NO_CHILDREN)) {
+    return {
+      view: "self",
+      factIds: selfFactIds(mob, NO_CHILDREN),
+      relatedPersonId: anchorChild,
+    };
+  }
   const anchorParents = qualifyingParentsOf(mob, mob.anchorId);
   for (const r of mob.tree.relationships ?? []) {
     if (r.type !== "Couple" || r.person1 === undefined || r.person2 === undefined) {
