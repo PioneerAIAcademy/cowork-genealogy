@@ -219,10 +219,9 @@ async def write_config(sandbox, config: dict) -> None:
     Sibling of write_tokens: the control plane owns provisioning this file, the
     same way it provisions tokens.json.
 
-    Replaces the whole document. The control plane is not the only writer —
-    `configure_openrouter` writes `openRouterModel` into this same file from
-    inside the VM — so prefer `merge_config` for any write after the sandbox has
-    run."""
+    Replaces the whole document, discarding anything else in the file (an
+    `openRouterModel` set by hand, say), so prefer `merge_config` for any write
+    after the sandbox has run."""
     await sandbox.write_file(CONFIG_PATH, json.dumps(config, indent=2).encode())
 
 
@@ -244,14 +243,11 @@ async def read_config(sandbox) -> dict:
 
 
 async def merge_config(sandbox, updates: dict) -> None:
-    """Overlay operator-owned keys without discarding what the sandbox wrote.
+    """Overlay operator-owned keys without discarding what the file already holds.
 
-    The engine's own `saveConfig` merges (`{...existing, ...patch}` in
-    src/auth/config.ts), so this is its counterpart on the control plane and
-    the two writers no longer clobber each other. Without it a per-connect
-    refresh would drop an `openRouterModel` the agent set via
-    `configure_openrouter` from inside the VM. (The key itself is written only by
-    the control plane — `configure_openrouter` does not accept one.)
+    A per-connect refresh keeps keys the control plane does not own. Without the
+    merge it would drop an `openRouterModel` set in the sandbox's file by hand.
+    (The key itself is written only by the control plane.)
 
     Operator keys win on conflict, matching `agent_secrets.write_secrets`: a
     rotated credential has to be able to reach a sandbox provisioned under the

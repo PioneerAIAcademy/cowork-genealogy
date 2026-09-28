@@ -158,9 +158,12 @@ one holds a piece of the answer. The table below is the split **as ruled** on
 Ruled 2026-08-25 on issue #1335, against a routing table that still says the orchestrator
 writes it. Three planes already match the ruling: the `project` row of the ownership
 manifest, `research_append`'s own comment, and the `PreToolUse` hook, whose
-`AGENT_WRITABLE_SECTIONS` grants the proof-conclusion agent `project`. The hook permits
-that agent; it denies the orchestrator nothing, because `project` is not in
-`OWNED_SECTIONS`.
+`AGENT_WRITABLE_SECTIONS` grants the proof-conclusion agent `project`. Since #2704 the
+hook also *enforces* the ruling rather than merely permitting the owner: `OWNED_FIELDS`
+routes `project.status` to that agent, so the orchestrator's own `status` write is
+denied. The rule is field-scoped, not section-scoped — `project` stays out of
+`OWNED_SECTIONS` because the section is co-written, and every other write to it,
+including the `updated` activity ping, is untouched.
 
 **The condition the agent fires on is not the condition that should close a project.**
 `agents/proof-conclusion.md` step 8 writes `completed` when "ALL questions are now
@@ -190,8 +193,8 @@ sibling skill.
 | **`project-status`** | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
-| **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both. Never fixes anything | `person_warnings` (deterministic; offline as the skill calls it, though the tool also has an opt-in live mode), `person_quality` (live FamilySearch); the tree only to resolve a name to an id | Nothing |
-| **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do), and reporting the kind as undecided where the profile alone cannot settle it. A precise source refining a vague conclusion is an improvement, not a finding. A **source-vs-source** disagreement the audit turns up is characterised — both values, both record types, what would settle it — with no winner picked and nothing written; a request to *resolve* one still routes to `conflict-resolution` at the front door. Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`. Reads no images — it holds no image tool, and none of those three returns an image id | Nothing |
+| **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both for a single person's own data. `source-evaluation` also reads that score, for its source-conflict list and to report the profile checklist alongside its audit. Never fixes anything | `person_warnings` (deterministic; offline as the skill calls it, though the tool also has an opt-in live mode), `person_quality` (live FamilySearch); the tree only to resolve a name to an id | Nothing |
+| **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do), and reporting the kind as undecided where the profile alone cannot settle it. A precise source refining a vague conclusion is an improvement, not a finding. A **source-vs-source** disagreement the audit turns up is characterised — both values, both record types, what would settle it — with no winner picked and nothing written; a request to *resolve* one still routes to `conflict-resolution` at the front door. Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`, `person_quality` (`detail: true`, FamilySearch-shaped ids only). Reads no images — it holds no image tool, and none of those four returns an image id | Nothing |
 | **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
 | **`translation`** | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image already in the conversation. **No MCP tool at all** | Nothing |
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
@@ -211,7 +214,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 
 | Artifact | Section | Owner | Other permitted writers | Writer tool | Enforced by |
 |---|---|---|---|---|---|
-| `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append` | unit — a diff confined to `updated` is exempt, so the activity ping is free to any writer |
+| `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append` | unit + hook — the hook routes `project.status` to the proof-conclusion agent (field-scoped; the rest of the section is co-written and untouched). A diff confined to `updated` is exempt at both, so the activity ping is free to any writer |
 | | `researcher_profile` | `init-project` | any caller, to correct a field | `research_append` | **nothing** |
 | | `known_holdings` | `init-project` | — | `research_append` | **nothing** |
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook keys on the claim `exhaustive_declaration.declared: true`, not on the section |
@@ -241,13 +244,14 @@ Two consequences worth holding onto:
   `person-evidence` — and three of the eight agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
-- **The hook carries exactly three rules**, in
+- **The hook carries exactly four rules**, in
   `packages/engine/plugin/hooks/guard_project_files.py`, and they are the only ones that
   discriminate by caller: `proof_summaries` is writable only by the proof-conclusion
   agent; a `research_append` op setting `exhaustive_declaration.declared` to `true` is
-  writable only by the research-exhaustiveness agent; and each of those two agents is
-  held to its own section set, which is what keeps the exhaustiveness agent off
-  `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
+  writable only by the research-exhaustiveness agent; `project.status` is writable only
+  by the proof-conclusion agent, field-scoped because the rest of `project` is
+  co-written; and each of those agents is held to its own section set, which is what
+  keeps the exhaustiveness agent off `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
   unit check that runs only inside a paid per-skill eval run.
 
 ---

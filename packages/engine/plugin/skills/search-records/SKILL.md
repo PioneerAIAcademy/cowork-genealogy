@@ -114,7 +114,7 @@ search*, not whether a plan exists.
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
 nobody asked for is how a session drifts off its question. The third row applies
-under `--autonomous` too — `research-plan` decides in the user's place, so route the
+with no user present too — `research-plan` decides in the user's place, so route the
 search through it rather than running it yourself.
 
 ### 2. Construct the search query

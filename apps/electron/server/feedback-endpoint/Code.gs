@@ -272,7 +272,7 @@ function appendFeedbackText(body, meta) {
   if (!fields.length && !hasVerdict) return;
 
   body.push('', '---', '', '## Feedback text', '',
-            'Submitted by the tester through the Cowork viewer, reproduced verbatim.', '');
+            'Submitted by the tester, reproduced verbatim. The Platform line above says where from: `web` is the hosted app, anything else the Cowork desktop viewer.', '');
   if (hasVerdict) {
     body.push('**Worked as expected:** ' + (meta.worked_as_expected ? 'yes' : 'no'), '');
   }

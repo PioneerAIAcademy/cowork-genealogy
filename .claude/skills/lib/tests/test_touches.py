@@ -16,9 +16,24 @@ Run: python3 -m pytest .claude/skills/lib/tests/test_touches.py
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import pytest
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_HERE, ".."))
+sys.path.insert(0, _HERE)
+
+from _tree import make_tree, pin_repo_root  # noqa: E402
+import touches  # noqa: E402
 from touches import paths_from_touches, slot_of  # noqa: E402
+
+# Read before the autouse pin replaces it: the value production computes.
+_LIVE_ROOT = touches.REPO_ROOT
+
+
+@pytest.fixture(autouse=True)
+def repo_root(tmp_path, monkeypatch):
+    """Every test reads a pinned tmp checkout, never the live one -- see _tree.py."""
+    return pin_repo_root(tmp_path, monkeypatch)
 
 
 def paths(body):
@@ -170,3 +185,45 @@ def test_a_quoted_line_still_counts_as_line_initial():
     line inside a review banner is still the card's own claim, not a mention."""
     body = "> **Touches:** packages/engine/plugin/skills/citation/SKILL.md\n"
     assert slots(body) == {"skill:citation"}
+
+
+# --- a skill converted to an agent keeps one slot, named for the agent -------------
+#
+# `repo_root` pins touches.REPO_ROOT to a tmp tree; each test here adds to it.
+
+CONVERTED = ("packages/engine/plugin/skills/zz-converted/SKILL.md",
+             "packages/engine/plugin/skills/zz-converted",
+             "eval/tests/unit/zz-converted/ut_zz_001.json",
+             "eval/tests/unit/zz-converted",
+             "packages/engine/plugin/agents/zz-converted.md")
+
+
+def test_every_path_of_a_converted_skill_names_the_agent_slot(repo_root):
+    """The skill directory is gone and the agent exists: the stale skill path, the
+    suite that stays, and the agent body are one paid run and must be one slot."""
+    make_tree(repo_root, agents=["zz-converted"])
+
+    assert {slot_of(p) for p in CONVERTED} == {"agent:zz-converted"}
+
+
+def test_a_live_skill_with_a_same_named_agent_keeps_its_skill_slot(repo_root):
+    """The other direction: a live skill with a same-named agent, as person-evidence has."""
+    make_tree(repo_root, skills=["zz-converted"], agents=["zz-converted"])
+
+    assert slot_of(CONVERTED[0]) == "skill:zz-converted"
+    assert slot_of(CONVERTED[2]) == "skill:zz-converted"
+
+
+def test_a_skill_not_yet_created_keeps_its_skill_slot(repo_root):
+    """A card creating a new skill names a directory that is not on disk yet, and no
+    agent of that name exists. That is not a conversion."""
+    assert slot_of(CONVERTED[0]) == "skill:zz-converted"
+    assert slot_of(CONVERTED[2]) == "skill:zz-converted"
+
+
+def test_repo_root_is_the_checkout_this_file_lives_in():
+    """Every other test pins REPO_ROOT, so an off-by-one here would pass them all while
+    the remap, the @plugin: expansion and check_slot_queue's own-suite arm all read a
+    directory with no skills in it -- each silently, returning nothing."""
+    assert os.path.isfile(os.path.join(_LIVE_ROOT, ".claude", "skills", "lib", "touches.py"))
+    assert os.path.isdir(os.path.join(_LIVE_ROOT, "packages", "engine", "plugin", "skills"))

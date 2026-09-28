@@ -343,7 +343,10 @@ never replaces it (see step 3).
    side carries no relatives, there is nothing to pair; move on. Feed each
    relative `score`/`confidence` into the threshold policy (step 3) exactly as
    you do the focus score, and carry the `matches` into the cross-person
-   consistency check (step 7).
+   consistency check (step 7). These triples inform the tier only: they record
+   no score, so each `person_evidence` link you then write still needs its own
+   `same_person({ projectPath, assertionId, treePersonId })` for that exact
+   pairing, or the writer refuses it.
 
 Scoring is not optional where the tool can produce a score. Skipping it and
 arguing the identity narratively is a Score discipline failure however
@@ -420,7 +423,9 @@ score should pull a tentative Strong back to Moderate. But:
   conflict-resolution's job, not something to smooth over in the match.
 - When **no score is available** (no record persona is reachable — see
   step 2), correlation analysis stands alone — the table above applies
-  unchanged.
+  unchanged. Reachable is the writer's test, not yours to judge: if it
+  refuses the link for a missing score, the persona was reachable and
+  the call is the fix, not a lower tier.
 
 **Autonomous mode (no user to pause with).** This resolution applies
 **only** to an autonomous run where no user can ever confirm (an
@@ -518,10 +523,16 @@ than retrying blindly.
   household composition, relationship fit. This is the audit trail
   for identity resolution.
 - `match_score`: The `same_person` `score` (0.0–1.0) when a record
-  persona was reachable and scored; null when none is reachable, when
-  the candidate was minted from the persona itself (step 2), and for
-  any link where no score was obtained (an input to Step 3, not the
-  verdict).
+  persona was reachable and scored; null when none is reachable and
+  when the candidate was minted from the persona itself (step 2). **The
+  writer now enforces both halves of this.** A link for a reachable
+  persona is REFUSED unless `same_person` actually scored that pairing,
+  so "no score was obtained" is no longer an option there: make the call
+  first. And a link to a person minted from this very record is refused
+  if it carries a score at all, whatever the record's retrieval route —
+  a number there came from a different comparison. Leave it null and say
+  so in the rationale. Writing the link null and then UPDATING a score in
+  is refused the same way.
 
 **Relationship edges — write vs. defer:**
 - **Household record** (census, probate with co-enumerated household

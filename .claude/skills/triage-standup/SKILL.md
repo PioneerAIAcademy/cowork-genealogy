@@ -344,13 +344,13 @@ that makes a card rank first.
 
 **And if he answers one in the room, record it before you move on.** Standup is
 where rulings get spoken and lost. Post the answer as a comment opening
-`**Ruling:**` — and stop there. **Leave the label on and do not touch the body.**
+`**Ruling (<who>, standup <date>):**`, crediting whoever actually said it — and stop there. **Leave the label on and do not touch the body.**
 `/make-decisions` sweeps for exactly this shape on its next run and applies it
 with the pre-written option text in hand, which you do not have.
 
 ```sh
 gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --body "**Ruling:** <his answer, in his words>"
+  --body "**Ruling (<who>, standup <date>):** <the answer, verbatim>"
 ```
 He takes no issues; the label is the routing. Reach for `senior` instead only
 when the item would still be hard after he answers.

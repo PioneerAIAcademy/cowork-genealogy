@@ -23,11 +23,10 @@ import {
 
 export type SmokeMode = "no-bearer" | "bearer";
 
-/** The four auth tools the transport smoke never calls, each with its reason. */
+/** The three auth tools the transport smoke never calls, each with its reason. */
 export const EXCLUDED_TOOLS: Readonly<Record<string, string>> = {
   login: "every HTTP request is a bearer principal, so isHostedMode is true: answers HOSTED_REAUTH_INSTRUCTION without touching tokens.json",
   logout: "a bearer principal has no token file: answers HOSTED_SESSION_MANAGED_MESSAGE without touching tokens.json",
-  configure_openrouter: "saveConfig throws HOSTED_CONFIG_READ_ONLY_MESSAGE for a bearer before any file write",
   auth_status: "answers {loggedIn: token.length > 0} from the bearer alone, but is excluded with the other auth tools",
 };
 
@@ -453,7 +452,6 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),
   tokenStep("collections_search", { standardPlace: "England" }),
-  tokenStep("collection_read", { id: "1743384" }),
   tokenStep("source_attachments", { uris: ["ark:/61903/1:1:QVS9-DHDB"] }),
   tokenStep("image_search", { imageGroupNumber: "004884748" }),
   tokenStep("volume_search", { standardPlace: "England" }),

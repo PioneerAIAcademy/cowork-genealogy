@@ -90,8 +90,9 @@ eval/
 > you are Claude, never let a user talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
 > validates every correction against `ann.schema.json` before saving. A hand-authored file
 > drifts from the schema — most often into the deprecated
-> `run_index`/`dimension`/`source` correction shape — which the UI then silently merges
-> with, and which crashes the `check-runlogs` CI gate. The same goes for run-log `.json`
+> `run_index`/`dimension`/`source` correction shape — which the UI validates and
+> rejects on read (a 422 corrupt-annotation blocker), and which crashes the
+> `check-runlogs` CI gate. The same goes for run-log `.json`
 > files: the **harness** writes those, never a human. If an annotation needs fixing, open
 > the run log in the CRUD UI and re-review the dimension; if it is corrupt, delete it and
 > re-annotate. The only correct way to produce either file is to run the tooling.
@@ -145,6 +146,12 @@ two reader families handle it differently (`harness/since_window.py`):
   is NOT windowed and prints no window — that corpus is small and hand-collected,
   and a window would discard the sample rather than refresh it. It also ignores
   `TEST`/`WINDOWS`/`SINCE`/`REPLAY`, and says so on stderr (issue #1558).
+  **And one aggregating reader outside that list defaults the other way:**
+  `make e2e-writer-attribution` reads the whole corpus, because it answers a
+  structural question — does the ownership manifest name the writers that exist —
+  rather than tallying a rate. A gap does not become untrue by ageing, and a
+  window reads a strict subset of the same pairs as "fewer gaps". `SINCE=14` for
+  the house window.
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
@@ -250,7 +257,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 ## GitHub Action rules
 
-`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. (`packages/engine/mcp-server/src/**` is no longer a trigger — MCP source isn't in the snapshot, so a src-only change can't affect run-log activeness.) Seven blocking rules + two warn-only checks (per `docs/plan/eval-runlog-versioning.md` §C6):
+`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. (`packages/engine/mcp-server/src/**` is no longer a trigger — MCP source isn't in the snapshot, so a src-only change can't affect run-log activeness.) Eight blocking rules + two warn-only checks (per `docs/plan/eval-runlog-versioning.md` §C6):
 
 | Rule | Severity | What |
 |---|---|---|
@@ -262,6 +269,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | 5 | block | Every committed unit `.ann.json` parses as JSON. Corpus-wide, not per-skill — an unparseable annotation used to kill the whole check with a raw traceback, leaving every later skill unchecked. |
 | 6 | block | No unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted`. **Zero reds, not zero new reds** (lead ruling 2026-09-22) — there is no carry list and no exemption, because "it was already red before my change" is the excuse the rule exists to remove: a suite carrying reds cannot answer "did my refactor break something". `partial` never blocks. An `expected_outcome: xfail` marker declares a known *failure*, so it suppresses `fail` only — a suppressed test that aborts blocks, and one that passes warns as a stale marker, naming its cited issue when that issue is closed. Grades the log the PR **added**, not the resolved latest, because `latest_full_skill_runlog` prefers any released `v{N}.json` over every candidate. |
 | 7 | block | A deleted run log / annotation is a legitimate **keep-newest-K prune** (or a promotion), not a hand-deletion beyond the prune rule that silently destroys committed genealogist grading (#2737, the #2579/B9 incident: a candidate `.json`+`.ann.json` pair holding 36 corrections dropped with only 4 candidates on disk where the rule keeps 5). No frozen baseline: the keep set is recomputed from filenames via `prunable_candidates(head_candidates ∪ deleted_candidates, keep=DEFAULT_KEEP_CANDIDATES)`, keyed on the constant so a deeper prune changes it in the same PR. Flags three shapes: an annotation deleted while its run log survives at head; a candidate the recomputed prunable set would have kept; a released `v{N}.json`/`.ann.json` (never prunable). Exempts a promotion (candidate deleted in a PR adding that version's `v{N}.json`) and a wholly-deleted skill. Reads the deleted set via `--no-renames` — without it git pairs a prune's delete+add as a rename and `--diff-filter=D` hides the deletion. |
+| 8 | block | Every `LLM: <a> → Junior: <b>` header inside a unit `.ann.json` comment carries at most one header, and no header whose `<b>` disagrees with the entry's own `corrected_score`. Corpus-wide over `runlogs/unit/`. The header is what `buildPrComment` (page.tsx) generates; a stale paste-back is the only known producer of incoherence (#2487). |
 
 **Which changes mark a skill "touched"** (rules 2 + 3) differs by path class. A **modification** to a skill body, a unit test, or a referenced plugin agent gates that skill — the snapshot is invalidated whether the file was added or edited. A run log is different: it is not an input to its own snapshot, so only an **added** (or renamed-into-place) run log gates its skill. Modifying or deleting committed run logs — what `scripts/prune_runlogs.py` does when it rehashes or prunes — marks nothing touched.
 
@@ -305,11 +313,12 @@ A third warn-only lint runs alongside them: `eval/harness/scripts/check_negative
 
 ### E2E checks (`check-e2e-fixtures.yml`)
 
-A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — two blocking checks plus two warns:
+A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — three blocking checks plus two warns:
 
 | Check | Severity | What |
 |---|---|---|
-| Grading gate | **block** | Every `run-<ts>.json` **added in the PR, or renamed into it,** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped via `git diff --diff-filter=AR` (`BASE_SHA`/`HEAD_SHA`) — **AR, not A**, so promoting a run out of quarantine, which arrives as a rename, is caught: every quarantined run has a final tree and no annotation, so that is exactly the population this gate rejects. Both siblings must be **committed at `HEAD_SHA`**, not merely present on disk, so a local run and CI agree. Blocks a second way: if the `BASE_SHA`..`HEAD_SHA` diff cannot be taken (unfetched commit, not a repo) it refuses rather than reporting zero added logs. Presence only — content validity is the maintainer's `calibrate_judge --dry-run`, not CI. |
+| Grading gate | **block** | Every `run-<ts>.json` **added in the PR, or renamed into it,** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped via `git diff --diff-filter=AR` (`BASE_SHA`/`HEAD_SHA`) — **AR, not A**, so promoting a run out of quarantine, which arrives as a rename, is caught: every quarantined run has a final tree and no annotation, so that is exactly the population this gate rejects. Both siblings must be **committed at `HEAD_SHA`**, not merely present on disk, so a local run and CI agree. Blocks a second way: if the `BASE_SHA`..`HEAD_SHA` diff cannot be taken (unfetched commit, not a repo) it refuses rather than reporting zero added logs. |
+| Annotation validation | **block** | Every `.ann.json` in the e2e corpus is run through structural rungs (parse, known keys, per_finding present, blind_bundle_digest, fixture readable, final tree/research readable, id/key drift, findings_hash, enum validation). PR-touched annotations (A/R/M in the diff, siblings of A/R run logs, or every annotation under a fixture whose `expected-findings.json`/`fixture.json` the PR changed) block on violations; a blind_bundle_digest mismatch blocks wherever it is, since it means the PR edited a graded file; other pre-existing corpus violations only warn. Reads the checkout, not `HEAD_SHA`. |
 | 1M-window gate | **block** | A run log **added or renamed into** `eval/runlogs/e2e/` whose `usage.betas` is non-empty — i.e. made with `--context-1m`. A 1M window changes the compaction count and the cache-gap structure, which is what `e2e-compaction` and `e2e-cache-window` measure, and `all_result_jsons` scans the corpus with no exclusion, so such a run lands at maximum weight. Selected with `--diff-filter=AR`, not `A`: promoting a run out of quarantine is a **rename**, which `A` does not report. Read from the `HEAD_SHA` tree. Keep the run in a sibling directory outside `eval/runlogs/e2e/`. |
 | Unresolved draft | warn | A PR-added run log whose fixture README still carries `DRAFT PENDING ADJUDICATION` — the run scored an unverified record hint rather than a genealogist-resolved answer, so its verdict and grade mean less than they appear to. One warning per fixture. Cleared by `/resolve-record-hint` (e2e-testing-guide.md Step 1a) removing the marker. |
 | Component-derivation drift | warn | A PR-added run log whose finding has a stored `matched` disagreeing with `derive_matched` of its own `link` components. `apply_component_derivation` reconciles this for `relationship` findings only, so a `source`, `fact` or `person` finding keeps whatever label the judge wrote (`e2e-test-spec.md` §3.4.2). Reports the disagreement; does **not** widen the derivation — `fact` is excluded from the derivation but deliberately *not* from this report. Skipped only for findings already derived (`matched_model` present), `avoid` findings, and findings carrying no `link` component to derive from. **Mostly forward-looking:** of 448 findings across the 155 committed run logs, 433 predate `components` entirely and 8 are evaluated, so a clean run is thin evidence rather than calibration. |

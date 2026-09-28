@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile, readdir, readFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { samePerson } from "../../src/tools/same-person.js";
+import { samePerson, buildRecordedScore } from "../../src/tools/same-person.js";
 import { notHaving } from "../helpers/narrow.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 import type { SamePersonApiResponse } from "../../src/types/same-person.js";
@@ -595,7 +595,7 @@ describe("samePerson — project-relative arm", () => {
     expect(result.recordSource).toBe("projection");
 
     const [file] = await scoresOnDisk();
-    expect(file.scores["principal|I1"]).toMatchObject({
+    expect(file.scores["a_005|I1"]).toMatchObject({
       record_id: RECORD,
       record_role: "principal",
       tree_person_id: "I1",
@@ -635,7 +635,10 @@ describe("samePerson — project-relative arm", () => {
     );
     expect(result.recordSource).toBe("record_read");
     const [file] = await scoresOnDisk();
-    expect(file.scores["MP1|I1"]).toBeTruthy();
+    // Keyed on the assertion; the resolved persona is still RECORDED on the entry,
+    // which is what `recordPersonaId` was honoured means.
+    expect(file.scores["a_005|I1"]).toBeTruthy();
+    expect(file.scores["a_005|I1"]?.record_persona_id).toBe("MP1");
   });
 
   it("passes a record_search sidecar ref to record_read", async () => {
@@ -696,7 +699,10 @@ describe("samePerson — project-relative arm", () => {
     );
     expect(result.recorded).toBe(true);
     const [file] = await scoresOnDisk();
-    expect(file.scores["bride|I2"]?.record_role).toBe("bride");
+    // The tree person is half the key, so the second party does not collide with
+    // the first even though both share assertion a_005.
+    expect(file.scores["a_005|I2"]?.record_role).toBe("bride");
+    expect(file.scores["a_005|I1"]).toBeUndefined();
   });
 
   it("resolves one record ONCE across links — the memo", async () => {
@@ -735,7 +741,8 @@ describe("samePerson — project-relative arm", () => {
       );
       expect(result.recorded).toBe(true);
       const [file] = await scoresOnDisk();
-      expect(file.scores["p_thomas|I1"]).toBeTruthy();
+      expect(file.scores["a_005|I1"]).toBeTruthy();
+      expect(file.scores["a_005|I1"]?.record_persona_id).toBe("p_thomas");
     });
 
     it("says so when recordPersonaId names no persona in the record", async () => {
@@ -839,5 +846,106 @@ describe("samePerson — project-relative arm", () => {
     );
     expect(result.recorded).toBeUndefined();
     expect(await scoresOnDisk()).toEqual([]);
+  });
+});
+
+// ─── buildRecordedScore (#1731 PR B) ────────────────────────────────────────
+//
+// Extracted so the eval harness can write a truthful attestation on a
+// fixture-served call: `same_person` is not in the unit harness's LIVE_TOOLS,
+// so this file never runs there and `results/.scores/` never exists, which
+// makes any writer-side gate that reads one untestable.
+//
+// `record_source` is the field that cannot be copied from the fetch, because a
+// mock performs none, so it is derived from the same routes `personaReachable`
+// encodes. These pin that derivation: a mutation making it constant passed the
+// whole pre-existing suite.
+
+describe("buildRecordedScore", () => {
+  const RESULT = { score: 0.82, confidence: 7, matched: true };
+  const research = (assertion: Record<string, unknown>, log: unknown[] = []) => ({
+    assertions: [assertion],
+    log,
+  });
+
+  it("returns null when the assertion is not in the project", () => {
+    expect(buildRecordedScore(research({ id: "a_001", record_id: "r1" }),
+      "a_999", "I1", undefined, RESULT)).toBeNull();
+  });
+
+  it("returns null when the assertion carries no record_id", () => {
+    expect(buildRecordedScore(research({ id: "a_001" }),
+      "a_001", "I1", undefined, RESULT)).toBeNull();
+  });
+
+  // ── record_source: the three routes that mean the record can be opened ──
+  it("reads as record_read when the assertion carries a persona id", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", record_persona_id: "P1" }),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+    expect(r?.record_persona_id).toBe("P1");
+  });
+
+  it("reads as record_read when the log entry is a record_read", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "record_read" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+  });
+
+  it("reads as record_read for a record_search that retained its sidecar", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "record_search", results_ref: "results/log_1.json" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+  });
+
+  // ── and the cases that must NOT read as fetchable ──
+  it("reads as projection for a full-text hit", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "fulltext_search", results_ref: "results/log_1.json" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("projection");
+  });
+
+  it("reads as projection for a record_search whose sidecar was not retained", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "record_search" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("projection");
+  });
+
+  it("reads as projection when the log entry is missing entirely", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_gone" }),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("projection");
+  });
+
+  // ── the rest of the record ──
+  it("prefers an explicit role over the assertion's own", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", record_role: "groom" }),
+      "a_001", "I1", "father_of_groom", RESULT);
+    expect(r?.record_role).toBe("father_of_groom");
+  });
+
+  it("falls back to the assertion's record_role", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", record_role: "groom" }),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_role).toBe("groom");
+  });
+
+  it("omits confidence when the API returned none", () => {
+    const r = buildRecordedScore(research({ id: "a_001", record_id: "r1" }),
+      "a_001", "I1", undefined, { score: 0.1, matched: false });
+    expect(r).not.toHaveProperty("confidence");
+    expect(r?.matched).toBe(false);
   });
 });

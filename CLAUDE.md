@@ -237,7 +237,7 @@ redundancy — SDK plugin loading registers agents **only** under the namespaced
 name `genealogy-research:<agent>`, while every SKILL.md delegates by the bare
 name (`@plugin:record-extractor`), so without the staging the Task call errors
 and the model silently falls back to a general-purpose stand-in that binds none
-of the `tools:`/`disallowedTools:` below (issue #939; skills are unaffected —
+of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
 what the runtime actually resolved, and no CI job covers this path.
@@ -263,11 +263,11 @@ Which spelling a Cowork session exposes has been **observed to move**: three
 censuses found every genealogy tool under
 `mcp__remote-devices__Genealogy_Research__…` ("via your device") with the
 bare `mcp__Genealogy_Research__…` spelling absent — macOS and Windows on
-2026-08-15, and a second Windows session via issue #1732 on 2026-08-19 — yet
-issue #1341 recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
+2026-08-15, and a second Windows session on 2026-08-19 — yet
+an earlier census recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
 bridged spelling among its *unrecognized* entries. The registrar moved
 between those dates (or the configurations differ in a way nobody has
-identified — same conclusion). **Run mode is a per-task setting nothing in
+identified — same conclusion; ADR-0004 keeps the dated census records). **Run mode is a per-task setting nothing in
 the plugin can see, and the spelling exposed is not stable over time.** No
 single spelling resolves everywhere; listing all three is insurance against a
 moving target, not defensive redundancy.
@@ -354,7 +354,7 @@ prefix rather than slicing it against another prefix's length.
 
 **No CI job can verify that a granted tool actually binds.** Only a
 live Cowork session can, and only for the spelling that session exposes — the
-bare form was live in #1341 but absent in the later censuses, so a green check
+bare form was live on 2026-08-04/05 but absent in the later censuses, so a green check
 proves binding for one spelling at one moment, not in general.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
@@ -380,7 +380,8 @@ bodies are self-contained — do not split them".
 
 ## Handling user feedback submissions
 
-When a user submits a feedback zip via the Cowork viewer, the workflow
+When a user submits a feedback zip (from the hosted web app or the Cowork
+desktop viewer — the issue's `Platform:` line says which), the workflow
 to triage it lives at `docs/alpha-feedback-guide.md` (a worked story,
 start to finish). The skill-improvement half it hands off to is
 `docs/skill-lifecycle.md`. The underlying spec
@@ -416,7 +417,7 @@ Three architectural rules made this design necessary:
   `~/.cowork-genealogy/` to write to.
 - **No shared SKILL.md reference loading.** Claude Code's relative-
   path resolution from SKILL.md is unreliable (upstream Claude Code issue
-  #17741). Shared
+  claude-code#17741). Shared
   reference docs across skills are duplicated, not linked from a
   `packages/engine/plugin/references/` location.
 - **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are
@@ -525,7 +526,8 @@ Two distinct config sources:
 2. **Per-user, on the user's machine:** `~/.familysearch-mcp/`
    directory, `mode: 0o600`. Holds `tokens.json` (OAuth tokens from
    `login`) and `config.json` (per-user tunables like `wikiApiUrl`).
-   `loadConfig` / `saveConfig` read and write the per-user JSON.
+   `loadConfig` reads the per-user JSON. Nothing in the engine writes
+   it: the user, the e2e harness or the hosted control plane does.
    **Do not** introduce env-var fallbacks — the files are the sole
    sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
    and are read via `loadConfig(principal)`.
@@ -537,7 +539,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl(principal)` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required
@@ -673,6 +675,16 @@ check is its own ground truth — `eval/harness/e2e/guardrail_shadow_report.py`.
 When the bug is the **second** instance of a class already fixed, write one
 shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
 per-line greps for exactly this reason.
+
+### A ruling binds only while its premises hold
+
+A ruling (a `**Ruling:**` comment, a `Decided (lead, …)` line, "lead ruling <date>"
+in a doc) is a call made on the facts shown at the time, often answered in one line.
+It is not a rule. When a fact it rested on turns out wrong, or new information bears on
+it, it stops binding: say what changed, and then either decide on the current facts
+(if the call is yours) or put it back to whoever ruled. Never enforce a ruling against
+the evidence, and never cite one as the reason something cannot change. Credit a ruling
+to the person who actually answered; `(lead, …)` means Dallan answered it himself.
 
 ### A measurement that disagrees with belief is re-measured, not reworded
 

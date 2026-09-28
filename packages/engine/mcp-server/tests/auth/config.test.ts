@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import {
   loadConfig,
-  saveConfig,
   getClientId,
   CONFIG_STORAGE_PATH,
   STORAGE_DIR,
@@ -96,26 +95,3 @@ describe("getClientId", () => {
   });
 });
 
-describe("saveConfig", () => {
-  it("merges the patch into existing config, preserves other keys, and writes JSON with mode 0o600", async () => {
-    mockedReadFile.mockResolvedValueOnce(
-      JSON.stringify({ wikiApiUrl: "http://localhost:8000", futureKey: "keep-me" })
-    );
-    mockedMkdir.mockResolvedValueOnce(undefined as unknown as string);
-    mockedWriteFile.mockResolvedValueOnce(undefined);
-
-    await saveConfig({ wikiApiUrl: "http://localhost:9000" }, LOCAL);
-
-    expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true, mode: 0o700 });
-    expect(mockedChmod).toHaveBeenCalledWith(STORAGE_DIR, 0o700);
-    expect(mockedWriteFile).toHaveBeenCalledTimes(1);
-    const [writtenPath, writtenBody, writtenOpts] =
-      mockedWriteFile.mock.calls[0];
-    expect(writtenPath).toBe(CONFIG_STORAGE_PATH);
-    expect(JSON.parse(writtenBody as string)).toEqual({
-      wikiApiUrl: "http://localhost:9000",
-      futureKey: "keep-me",
-    });
-    expect(writtenOpts).toEqual({ mode: 0o600 });
-  });
-});

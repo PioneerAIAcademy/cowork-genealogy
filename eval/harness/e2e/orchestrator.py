@@ -44,6 +44,7 @@ from e2e.mcp_stderr import read_mcp_stderr_lines
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
@@ -53,6 +54,7 @@ from harness.context_policy import (
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
+import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
@@ -116,8 +118,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MCP_SERVER_ENTRY = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
 DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
-DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
-DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
+DEFAULT_PLUGIN_SKILLS = _workspace.DEFAULT_PLUGIN_SKILLS
+DEFAULT_PLUGIN_AGENTS = _workspace.DEFAULT_PLUGIN_AGENTS
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
 # "Task" lets the /research orchestrator delegate to the gps-mentor
@@ -1861,7 +1863,7 @@ async def _run_agent(
             # for the `routed` arm. A `declaration` denial names a dotted
             # `section.field` and an `out_of_lane` one names a section the map
             # deliberately does not hold, so an unconditional lookup raises on
-            # the two arms this was widened to serve.
+            # the three arms this was widened to serve.
             if rule == "routed":
                 text = (
                     f"`{bare}` denied on `{owned}` — that section is routed to the "
@@ -1877,6 +1879,15 @@ async def _run_agent(
                     f"exhaustive is routed to the {agent} agent. Creating a question "
                     "and recording an honest `declared: false` termination are both "
                     "unaffected; delegate the claim rather than making it here."
+                )
+            elif rule == "owned_field":
+                owned_section, _, field = owned.partition(".")
+                agent = OWNED_FIELD_OWNERS[(owned_section, field)]
+                text = (
+                    f"`{bare}` denied on `{owned_section}` — setting `{field}` is "
+                    f"routed to the {agent} agent. Every other write to "
+                    f"`{owned_section}` is unaffected; delegate this field rather "
+                    "than setting it here."
                 )
             else:
                 text = (

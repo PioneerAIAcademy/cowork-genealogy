@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Seven blocking rules + two warn-only rules per
+Eight blocking rules + two warn-only rules per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -35,6 +35,9 @@ docs/plan/eval-runlog-versioning.md §C6:
              annotation deleted while its run log survives; a candidate run log
              deleted that the recomputed prunable set would have kept; a
              released `v{N}.json`/`.ann.json` deleted (never prunable).
+    Rule 8   every ``LLM: <a> → Junior: <b>`` header inside a unit
+             .ann.json comment carries at most one header, and no header
+             whose ``<b>`` disagrees with the entry's own corrected_score.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
@@ -244,6 +247,31 @@ def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
         for agent in agent_refs_in_text(text):
             mapping.setdefault(agent, set()).add(skill_md.parent.name)
     return mapping
+
+
+def skills_gated_by_agent(
+    agent: str, referencing: dict[str, set[str]], tests_root: Path | None = None
+) -> set[str]:
+    """The skills whose run-log snapshot embeds `agents/<agent>.md`.
+
+    Every skill whose SKILL.md references `@plugin:<agent>` (`referencing`, from
+    `skills_referencing_agents`), and also the agent's OWN agent-keyed suite
+    (issue #1253). `skills_referencing_agents` scans SKILL.md bodies, so it can only
+    reach suites that have one. An agent-keyed suite has none: `gps-mentor`'s tests
+    live at eval/tests/unit/gps-mentor/ and key on the agent file directly, and a
+    skill converted to an agent keeps its suite while its SKILL.md goes. Without
+    this, editing that agent gates only the skills that happen to name it and
+    leaves the suite that actually grades it ungated.
+
+    Keyed on directory existence rather than a name list, so a suite arms itself
+    when it lands instead of waiting for someone to also remember to edit a
+    constant here — the same discipline as the `exempt_suiteless` filter.
+    """
+    out = set(referencing.get(agent, set()))
+    # Read at call time, not bound as a default: tests monkeypatch TESTS_UNIT_DIR.
+    if (Path(tests_root if tests_root is not None else TESTS_UNIT_DIR) / agent).is_dir():
+        out.add(agent)
+    return out
 
 
 def skills_referencing_fixtures(tests_root: Path) -> dict[tuple[str, str], set[str]]:
@@ -1010,6 +1038,98 @@ def rule7_deletions(
     return fails
 
 
+# ---------------------------------------------------------------------------
+# Rule 8: annotation header integrity
+# ---------------------------------------------------------------------------
+
+# Matches the ``LLM: <a> → Junior: <b>`` header that buildPrComment
+# (eval/app page.tsx) generates. The arrow is Unicode U+2192; ASCII ``->``
+# is accepted as a variant.
+_HEADER_RE = re.compile(
+    r"^LLM:\s*(\S+)\s*(?:→|->)\s*Junior:\s*(\S+)\s*$",
+    re.MULTILINE,
+)
+
+
+def _parse_score(token: str) -> int | None:
+    """Parse a score token as the CRUD UI renders it: ``N/A`` → ``None``,
+    digit → ``int``.  Returns the sentinel ``-999`` on unrecognised input
+    so the caller can detect it without raising."""
+    if token.upper() == "N/A":
+        return None
+    try:
+        return int(token)
+    except ValueError:
+        return -999  # type: ignore[return-value]
+
+
+def rule8_annotation_headers(runlogs_dir: Path) -> int:
+    """Rule 8 (blocking, corpus-wide): every ``LLM: <a> → Junior: <b>``
+    header inside a unit ``.ann.json`` comment must satisfy two invariants:
+
+    Arm 1 — at most one header per comment.
+    Arm 2 — the header's ``<b>`` value must agree with the correction's own
+             ``corrected_score`` (``N/A`` ↔ ``null``).
+
+    Anchored on the full ``LLM: … → Junior: …`` line, not a bare
+    ``Junior: N``, so prose like "Junior: 3 of the 5 checks were skipped"
+    is never flagged.
+    """
+    fails = 0
+    for ann_path in sorted(runlogs_dir.rglob("*.ann.json")):
+        rel = ann_path.relative_to(runlogs_dir)
+        try:
+            data = json.loads(ann_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue  # rule 5 already catches unparseable annotations
+        if not isinstance(data, dict):
+            continue  # top-level [] or scalar — not an annotation
+        corrections = data.get("corrections", [])
+        if not isinstance(corrections, list):
+            continue
+        for c in corrections:
+            if not isinstance(c, dict):
+                continue  # string, null, or other non-dict correction
+            comment = c.get("comment")
+            if not isinstance(comment, str) or not comment:
+                continue
+            headers = _HEADER_RE.findall(comment)
+            if not headers:
+                continue
+            test_id = c.get("test_id", "?")
+            dim_source = c.get("dimension_source", "?")
+            dim_name = c.get("dimension_name", "?")
+            loc = f"`{rel}` {test_id} {dim_source}/{dim_name}"
+
+            # Arm 1: at most one header per comment.
+            if len(headers) > 1:
+                gh_error(
+                    f"rule 8: {loc} — comment contains {len(headers)} "
+                    f"LLM→Junior headers (at most 1 allowed). This usually "
+                    f"means a PR-comment block was pasted back multiple times."
+                )
+                fails += 1
+                continue  # arm 2 is redundant once arm 1 fires
+
+            # Arm 2: the header's Junior value must match corrected_score.
+            _llm_token, junior_token = headers[0]
+            header_score = _parse_score(junior_token)
+            if header_score == -999:
+                continue  # unrecognised format — not our header
+            corrected = c.get("corrected_score")
+            if header_score != corrected:
+                gh_error(
+                    f"rule 8: {loc} — header says Junior: {junior_token} "
+                    f"but corrected_score is "
+                    f"{'N/A' if corrected is None else corrected}. "
+                    f"The header is a stale snapshot from a prior copy. "
+                    f"Delete the pasted LLM→Junior block from this "
+                    f"comment, keeping your own text."
+                )
+                fails += 1
+    return fails
+
+
 def main() -> int:
     # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
     # and dies on the arrows and box glyphs this module prints; the team it is
@@ -1107,30 +1227,13 @@ def main() -> int:
             touched_fixtures.add((m.group(1), m.group(2)))
             touched_fixture_paths.add(path)
 
-    # A touched plugin agent gates every skill whose SKILL.md references
-    # `@plugin:<name>` — the agent body is part of those skills' run-log
-    # snapshots, so editing it outside eval discipline must fail rule 2 — and
-    # also its OWN agent-keyed suite, if it has one.
+    # A touched plugin agent gates every skill whose snapshot embeds it — see
+    # skills_gated_by_agent, shared with check_slot_queue.py so the PR-time slot
+    # warning and this rule cannot disagree about which skills an agent reaches.
     if touched_agents:
         referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
         for agent in sorted(touched_agents):
-            touched_skills |= referencing.get(agent, set())
-            # The agent's own suite (issue #1253). `skills_referencing_agents`
-            # scans SKILL.md bodies for `@plugin:<name>`, so it can only reach
-            # suites that have a SKILL.md. An agent-keyed suite has none:
-            # `gps-mentor`'s tests live at eval/tests/unit/gps-mentor/ and key
-            # on the agent file directly. Without this line, editing
-            # agents/gps-mentor.md gates only `research` — the one skill whose
-            # SKILL.md happens to reference it — and leaves the suite that
-            # actually grades the agent ungated, which is the same staleness
-            # the snapshot rule closes from the other side.
-            #
-            # Keyed on directory existence rather than a name list, so a suite
-            # arms itself when it lands instead of waiting for someone to also
-            # remember to edit a constant here — the same discipline as the
-            # `exempt_suiteless` filter below.
-            if (TESTS_UNIT_DIR / agent).is_dir():
-                touched_skills.add(agent)
+            touched_skills |= skills_gated_by_agent(agent, referencing)
 
     # A touched shared fixture gates every skill whose tests reference it — the
     # fixture is embedded in those skills' run-log snapshots, so editing it
@@ -1191,6 +1294,9 @@ def main() -> int:
     # Rule 5 sweeps the whole annotation corpus, not just touched skills —
     # see its docstring for why per-skill scoping is exactly what hid the bug.
     fails += rule5_annotations_parse(RUNLOGS_DIR)
+
+    # Rule 8 sweeps the annotation corpus for header-vs-score incoherence.
+    fails += rule8_annotation_headers(RUNLOGS_DIR)
 
     # Rule 7 checks that every deleted run log / annotation is a legitimate
     # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
