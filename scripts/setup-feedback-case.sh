@@ -154,7 +154,14 @@ fi
 # --- git init + initial commit ---
 git init -q
 git add .
-git commit -q -m "imported"
+# A fixed, case-local identity. The guide tells the Windows team to use
+# GitHub Desktop, which sets no global user.name/user.email, so a bare
+# commit aborts the whole run under `set -euo pipefail` — before the skill
+# links and the printout, and leaving no `imported` commit for
+# reset-feedback-case.sh. `-c` applies to this call only: it never touches
+# the user's global config and leaves nothing in the case repo's own.
+git -c user.name="feedback-case" -c user.email="feedback-case@localhost" \
+  -c commit.gpgsign=false commit -q -m "imported"
 
 # --- Per-skill symlinks under .claude/skills/ ---
 mkdir -p .claude/skills
@@ -171,10 +178,23 @@ shopt -u nullglob
 
 # --- Extract user_prompt for next-steps printout ---
 USER_PROMPT=""
+# Whether a reader actually ran, as distinct from what it returned. An
+# empty USER_PROMPT cannot carry that: the prompt box is optional, so ""
+# is a legitimate answer and looks identical to "nothing could read it".
+# Set outside the -f test below so `set -u` cannot meet it unbound at the
+# printout. Defensive rather than reachable today — feedback.json is a
+# required member and the bundle check above exits when it is absent.
+PROMPT_READ_OK=0
 FB_JSON="$DEST_DIR/_feedback/feedback.json"
 if [[ -f "$FB_JSON" ]]; then
   if command -v jq >/dev/null 2>&1; then
-    USER_PROMPT="$(jq -r '.user_prompt // empty' "$FB_JSON" 2>/dev/null || true)"
+    # Inside the `if` rather than with a trailing `|| true`: that forces the
+    # substitution's status to 0, so jq's exit code becomes unreadable — and
+    # simply dropping it would abort the script with jq's exit 5 on an
+    # unparseable report, after the case has already been imported.
+    if USER_PROMPT="$(jq -er 'if type == "object" then (.user_prompt // "") else error("not an object") end' "$FB_JSON" 2>/dev/null)"; then
+      PROMPT_READ_OK=1
+    fi
   fi
   # Try python3 then python. On Windows, `command -v python3` succeeds even with
   # no usable interpreter: Windows ships an App Execution Alias stub at
@@ -189,14 +209,25 @@ if [[ -f "$FB_JSON" ]]; then
   # lands on stdout — so trusting a failed run's stdout would print the advert
   # under "User's prompt to issue first:" for the genealogist to paste.
   for PY in python3 python; do
-    if [[ -n "$USER_PROMPT" ]]; then break; fi
+    # Gate on the flag, not on emptiness: a successful jq read of "" is an
+    # answer, and re-running python would only overwrite it with the same "".
+    if [[ "$PROMPT_READ_OK" -eq 1 ]]; then break; fi
     if command -v "$PY" >/dev/null 2>&1; then
+      # `or ''` because .get returns None for an explicit JSON null, and
+      # print(None) emits the literal string "None" — which the triager would
+      # paste into the issue as the tester's own words. Git for Windows ships
+      # no jq, so this reader is the genealogist team's default path.
+      #
+      # sys.exit(1), not pass: a handler that swallows the error exits 0 while
+      # printing nothing, which is indistinguishable from a successful read of
+      # an empty prompt. That is the whole distinction this block exists to make.
       if PY_OUT="$("$PY" -c "import json,sys
 try:
-    print(json.load(open(sys.argv[1], encoding='utf-8')).get('user_prompt',''))
+    print(json.load(open(sys.argv[1], encoding='utf-8')).get('user_prompt') or '')
 except Exception:
-    pass" "$FB_JSON" 2>/dev/null)"; then
+    sys.exit(1)" "$FB_JSON" 2>/dev/null)"; then
         USER_PROMPT="$PY_OUT"
+        PROMPT_READ_OK=1
       fi
     fi
   done
@@ -211,11 +242,19 @@ echo "  cd $DEST_DIR"
 echo "  claude"
 echo
 
-if [[ -n "$USER_PROMPT" ]]; then
+# Three outcomes, not two. Blankness is decided with whitespace stripped so
+# "   \n" reads the same here as [string]::IsNullOrWhiteSpace does in the .bat,
+# but the prompt itself is still printed verbatim — the spec guarantees that,
+# and trimming the variable would break it.
+if [[ -n "${USER_PROMPT//[[:space:]]/}" ]]; then
   echo "User's prompt to issue first:"
   echo "─────────────────────────────────────────────"
   printf '%s\n' "$USER_PROMPT"
   echo "─────────────────────────────────────────────"
+elif [[ "$PROMPT_READ_OK" -eq 1 ]]; then
+  echo "User's prompt: the tester left blank. Try $DEST_DIR/_feedback/session-log.jsonl"
+  echo "  for what they asked for — it is optional (a Cowork submission never has"
+  echo "  one), and a trimmed log drops its oldest entries, so the prompt goes first."
 else
   echo "User's prompt: see $DEST_DIR/_feedback/feedback.json (user_prompt field)"
 fi

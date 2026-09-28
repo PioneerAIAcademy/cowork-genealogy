@@ -8,7 +8,7 @@ and their reasoning*, and check any mechanic against the live source first:
 | For | Read instead |
 |---|---|
 | Run-log naming, release/candidate/active, the snapshot model | [`eval/CLAUDE.md`](../eval/CLAUDE.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
-| What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now six blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
+| What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now eight blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
 | The skill-improvement loop | [`docs/skill-lifecycle.md`](skill-lifecycle.md) |
 
 **§2.4 is superseded and was never built.** The per-test `test_content_hash`
