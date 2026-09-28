@@ -1003,12 +1003,13 @@ on the main thread. It is a Task-spawned subagent's private tool (returning a
 page scan as inline base64); a main-thread call is the router substituting for a
 *failed* spawn and doing the work itself — a shape observed in production.
 
-**`extraction_append` left this set in issue #2937.** That card routes
-extraction of a FamilySearch-indexed record through code called from the main
-thread, and `record-extraction` now declares the tool in its own
-`allowed-tools`, so a deny would refuse the shipped route on every e2e run. What
-that retires is on the `nothing-checks` register (`docs/architecture.md` §9.4
-keeps that register as a label, not a table).
+**`extraction_append` is no longer in this set.** Extraction of a
+FamilySearch-indexed record runs as code called from the main thread, and
+`record-extraction` declares the tool in its own `allowed-tools`, so a deny
+would refuse the shipped route on every e2e run. The guard that retired with it
+— catching the router substituting for a failed `record-extractor` spawn on the
+still-delegated unindexed path — is on the `nothing-checks` register
+(`docs/architecture.md` §9.4 keeps that register as a label, not a table).
 
 The discriminator is `agent_id` alone: **no skill declares `image_read`** in its
 `allowed-tools`, so a delegated subagent is its only legitimate caller and every
@@ -1845,7 +1846,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other until issue #2937), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
+| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other, until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |

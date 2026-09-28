@@ -57,12 +57,23 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * or auto-fill `record_persona_id`. A whitelist, not a blacklist: the next
  * staging producer added is treated as persona-less until it is listed here,
  * which fails safe rather than silently matching nothing on a `recordId` field
- * it does not carry (#2038). `record_search` results key on `recordId`; the
- * persona-less producers (`fulltext_search`, `external_links_search`) key on
- * `id`. Mirrors `personaReachable` in research-append.ts and `_persona_reachable`
- * in the eval harness.
+ * it does not carry (#2038). `record_search` and `record_read` results key on
+ * `recordId`; the persona-less producers (`fulltext_search`,
+ * `external_links_search`) key on `id`. Mirrors `personaReachable` in
+ * research-append.ts and `_persona_reachable` in the eval harness.
+ *
+ * `record_read` was MISSING here until issue #2937, and both mirrors already
+ * counted it — `personaReachable` returns true on `logEntry.tool ===
+ * "record_read"`, and the harness's `_persona_reachable` says the same, each
+ * because the tool returns a `SimplifiedGedcomX` with a persons array. This set
+ * was the only one of the three that disagreed, so adding it is a CORRECTION,
+ * not a widening. The omission failed precisely and silently: `record_read`
+ * stages `{ recordId, gedcomx }` (record-read.ts), but a non-persona-bearing
+ * producer is matched on `r.id`, which that envelope does not carry — so every
+ * `record_read` sidecar matched nothing, and any `record_persona_id` on an
+ * assertion drawn from one was refused outright.
  */
-export const PERSONA_BEARING_PRODUCERS = new Set(["record_search"]);
+export const PERSONA_BEARING_PRODUCERS = new Set(["record_search", "record_read"]);
 
 export interface StagedHandle {
   resultsRef: string;

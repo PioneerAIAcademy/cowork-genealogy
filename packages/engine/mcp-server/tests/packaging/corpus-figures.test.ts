@@ -56,8 +56,15 @@ const SPECS = [
  *  these through `blocked_context_calls` (SUBAGENT_ONLY_TOOLS in
  *  `eval/harness/harness/context_policy.py`); a `blocked_context_calls` entry
  *  naming one is a subagent-only fire, the arm guardrail-enforcement-spec.md
- *  claims is at zero. */
-const SUBAGENT_ONLY_TOOLS = new Set(["extraction_append", "image_read"]);
+ *  claims is at zero.
+ *
+ *  `extraction_append` left the policy in issue #2937, which routes
+ *  indexed-record extraction through a main-thread call. Historical run logs
+ *  still carry `blocked_context_calls` entries naming it, and those were real
+ *  fires when they were recorded — but the arm below counts CURRENT
+ *  subagent-only fires, so it tracks the live policy rather than the corpus's
+ *  history, and the test at the bottom binds the two. */
+const SUBAGENT_ONLY_TOOLS = new Set(["image_read"]);
 
 const git = (...args: string[]) =>
   execFileSync("git", args, { cwd: projectRoot, encoding: "utf8", maxBuffer: 1 << 28 });
