@@ -2023,9 +2023,11 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
 # out-of-scope with `correct_skill: []`) are exempt from the coercion and would
 # make this test pass for the wrong reason. 81 of the committed negative
 # fixtures qualify; this one is
-# picked because its scenario exists and OrchestratorPaths resolves it.
+# picked because its scenario exists and OrchestratorPaths resolves it, and it
+# sits in record-extraction's suite, which stays a skill (the check-warnings one
+# it replaced was deleted with that skill, issue #2118).
 NEGATIVE_TEST_PATH = (
-    REPO_ROOT / "eval/tests/unit/check-warnings/negative-project-status.json"
+    REPO_ROOT / "eval/tests/unit/record-extraction/negative-search-vs-extract.json"
 )
 
 

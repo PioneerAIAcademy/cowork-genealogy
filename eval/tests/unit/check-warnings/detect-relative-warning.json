@@ -10,11 +10,12 @@
       "detection",
       "relative-mob",
       "valid",
-      "relationship-signal"
+      "relationship-signal",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Check Patrick Flynn for any warnings.",
+    "delegation": "Check Patrick Flynn for any warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

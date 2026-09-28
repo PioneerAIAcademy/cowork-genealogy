@@ -120,18 +120,6 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
 # say it is not there); only "quotes" is held to the file.
 SUPPRESSIONS: list[dict[str, str]] = [
     {
-        "file": "eval/tests/unit/check-warnings/negative-schema-validation.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "Should route to validate-schema (or whatever skill owns the validate_research_schema MCP tool)",
-        ],
-        "reason": (
-            "cross-owner: names the destination skill of a routing test - "
-            "'Should route to validate-schema (or whatever skill owns the "
-            "validate_research_schema MCP tool)'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [

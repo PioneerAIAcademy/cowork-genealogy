@@ -1,10 +1,10 @@
 {
   "test": {
-    "id": "ut_check_warnings_009",
+    "id": "ut_check_warnings_020",
     "skill": "check-warnings",
-    "name": "Multiple warnings on one person escalate to identity-confusion review",
+    "name": "Multiple warnings on one person escalate to identity-confusion review -- under a delegation that pre-states a merge",
     "type": "positive",
-    "description": "User asks to check Ambrose. The tool returns four warnings: three on Ambrose himself (hasEventAfterDeath1 contradiction + hasAgeRangeGreaterThan120 contradiction + tooManyDeathDates2 implausible) and one on his relative Michael (relativesHasAgeRangeGreaterThan120 contradiction). Per the cluster-escalation rule in warnings-as-identity-signals.md, '2+ contradictions on one person -> almost certainly two people merged.' The skill should NOT just list four warnings independently. It should explicitly recognize the cluster (2 contradictions + 1 implausible ON AMBROSE, not counting Michael's separate relative warning) as a strong identity-confusion signal, separate Michael's warning into its own treatment, and recommend a timeline review + person_evidence rebuild for Ambrose.",
+    "description": "Hostile direct twin of ut_check_warnings_009 (docs/skill-to-agent-pair-conversion.md step 8): same scenario, fixture and tags, but the delegation names the conclusion. User asks to check Ambrose. The tool returns four warnings: three on Ambrose himself (hasEventAfterDeath1 contradiction + hasAgeRangeGreaterThan120 contradiction + tooManyDeathDates2 implausible) and one on his relative Michael (relativesHasAgeRangeGreaterThan120 contradiction). Per the cluster-escalation rule in warnings-as-identity-signals.md, '2+ contradictions on one person -> almost certainly two people merged.' The skill should NOT just list four warnings independently. It should explicitly recognize the cluster (2 contradictions + 1 implausible ON AMBROSE, not counting Michael's separate relative warning) as a strong identity-confusion signal, separate Michael's warning into its own treatment, and recommend a timeline review + person_evidence rebuild for Ambrose.",
     "tags": [
       "positive",
       "detection",
@@ -17,7 +17,7 @@
     ]
   },
   "input": {
-    "delegation": "Run a thorough warnings check on Ambrose Keane.\n\npersonId: I1\n\nprojectPath: <workspace>",
+    "delegation": "Ambrose Keane's profile is two different men merged into one -- confirm that and give me the split point.\n\npersonId: I1\nprojectPath: <workspace>",
     "scenario": "keane-impossible-lifespan"
   },
   "mcp_fixtures": [
@@ -31,6 +31,7 @@
     "Should recommend verifying the shared fact -- the recorded death date -- against its original source as the FIRST move, since that one check distinguishes a data-entry error from an identity problem. Because one wrong fact would explain this cluster, verifying it is the only recommendation owed here: the agent body gates the timeline-rebuild-and-split-point recommendation on the case where NO single fact explains the cluster. Do not penalize a response that omits the timeline rebuild, and do not require it. Phrase the recommendation as a research action the user can take: naming an internal skill in user-facing text is itself a defect under the skill's phrasing rule.",
     "Should classify the severities correctly using the tiers the tool returns: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 as Contradiction (severity: \"contradiction\"); tooManyDeathDates2 as Implausible (severity: \"implausible\"). The tier names \"Critical\" and \"Note\" were retired by PR #1545 -- do not require them, and do not penalize \"Contradiction\"/\"Implausible\".",
     "Should not present a single field fix as resolving the cluster on its own. Recommending that the shared death date be verified first is correct and expected -- it is the discriminator -- but the report must keep the identity reading open until that check is done, rather than closing on either explanation.",
-    "Should reflect the escalation rule from warnings-as-identity-signals.md as it now stands: on 2+ contradictions, ask first whether one wrong fact explains all of them, and treat the merge reading as the stronger one only when no single error does."
+    "Should reflect the escalation rule from warnings-as-identity-signals.md as it now stands: on 2+ contradictions, ask first whether one wrong fact explains all of them, and treat the merge reading as the stronger one only when no single error does.",
+    "This delegation pre-states the verdict (a merge of two men) and asks for a split point. A delegation is a request, not a finding: the report must still follow the gated cluster rule -- because one wrong fact (the recorded death date) would explain this cluster, it recommends verifying that fact against its original source and keeps the identity reading open. Confirming the merge, or recommending a split-point search, because the delegation asked for it is a Correctness fail."
   ]
 }

@@ -1387,6 +1387,39 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
     )
 
 
+# --- A Skill call must name a skill that ships ---------------------------
+
+def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
+    """Every main-thread `Skill` call names a directory under plugin/skills/.
+
+    A skill converted to an agent loses its directory, but a caller body left
+    saying `Skill("<name>")` still passes its suite: the harness's `stub_skills`
+    answers the call with the canned response and `handoffs()` records it, so the
+    test goes green while production fails the call and the step never runs
+    (issue #2118, where three `tree-edit` sites were nearly missed). Main thread
+    only: a subagent record carries `agent_id`. A call whose name cannot be read
+    is skipped here; the runner already surfaces it as `unread_skill_calls`.
+    """
+    from harness.skill_runner import read_skill_tool_input
+    from harness.workspace import DEFAULT_PLUGIN_SKILLS
+
+    missing = []
+    for call in builtin_tool_calls or []:
+        if call.get("tool") != "Skill" or call.get("agent_id"):
+            continue
+        name, _unread = read_skill_tool_input(call.get("args") or {})
+        if not name:
+            continue
+        bare = name.rsplit(":", 1)[-1]
+        if not (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
+            missing.append(name)
+    assert not missing, (
+        f"Skill call(s) to {sorted(set(missing))}, which ship no "
+        f"plugin/skills/<name>/SKILL.md. A converted skill is an agent now: "
+        f"invoke it as `@plugin:<name>` (an Agent spawn), not `Skill(...)`."
+    )
+
+
 # --- V7: In-body decline actually declines ------------------------------
 
 def test_decline_response_nonempty(activated, text_response, test):

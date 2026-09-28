@@ -1061,6 +1061,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # A converted skill that writes nothing at all (issue #2118): its only
+        # MCP tool is the read-only `person_warnings`. Listed solely because the
+        # set is asserted equal to the shipped agent files.
+        "check-warnings",
     }
 )
 
