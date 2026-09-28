@@ -1,0 +1,19 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "partial",
+    "f4": "false",
+    "f5": "false"
+  },
+  "notes": {
+    "f1": "The date is exact -- the tree carries Birth 1910-11-22 -- but the place on that fact reads only \"La Union, Mexico\", omitting Montes de Oca and Guerrero; the fuller place sits on a separate BirthRegistration fact of 1910-12-06 rather than on the birth. Against it, the same person carries a second Birth fact of 1914 with no place, so the tree asserts the right birth alongside a contradicting one. A birth claim that the tree itself contradicts is not a recovered birth.",
+    "f2": "Not recovered. The ParentChild relationship to Sostenes Cruz is present and sourced, but the target person carries no facts at all -- no birth date, no birth place, and not the fuller name Jose Sostenes Cruz Basurto the finding gives. The finding's details make birth a field of target_person, not prose. Naming a father from the parent field of one birth record is a transcription; identifying which Sostenes Cruz he was needs his own record, and the agent never sought one. The fixture lists a single supporting source for this finding and the agent stopped at it.",
+    "f3": "Partially recovered. The ParentChild relationship to Apolinar Corona is present and sourced, and unlike the father she carries a birth: 1881, Guerrero. The expected birth is \"about 1881, Coahuayutla, Guerrero\" -- the year matches and the place is the correct state but one administrative level short of the municipality. She was also reached through a second record, the 1930 census, which is the corroboration the father's identification lacks. Right person, incomplete place.",
+    "f4": "Not recovered. Neither Jesus Cruz (Jose Jesus Maria Cruz Arellano) nor Donaciana Basurto appears anywhere in the final tree, and Sostenes Cruz carries no parent relationships. Consistent with f2: the agent reached the parent generation from Mauro's birth record and never pursued the parents' own records, so the grandparent generation was never opened.",
+    "f5": "Not recovered. Neither Miguel Corona (nor the Rafael Corona variant) nor Jesus Mercado (Maria de Jesus Mercado) appears in the final tree, and Apolinar Corona carries no parent relationships. Same cause as f4 -- the parents were named from records about Mauro, not identified from records about themselves."
+  },
+  "annotator": "benter-070",
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140",
+  "blind_bundle_digest": "57adef2868e0b57e0a66cf8366678db882820edb1f1db50216bd0a213d13736e"
+}
