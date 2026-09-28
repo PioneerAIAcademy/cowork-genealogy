@@ -1,9 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, rm } from "fs/promises";
+import { readFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { researchQuery } from "../../src/tools/research-query.js";
+import {
+  researchQuery,
+  RESEARCH_QUERY_SECTIONS,
+  RESEARCH_QUERY_EXCLUDED,
+  RESEARCH_QUERY_OPTIONAL_SECTIONS,
+} from "../../src/tools/research-query.js";
 
 describe("research_query", () => {
   let dir: string;
@@ -435,5 +441,188 @@ describe("research_query", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors.join(" ")).toContain('(got "50")');
+  });
+});
+
+// --- #2936: localities, and the completeness guard -----------------------
+
+describe("research_query — localities (#2936)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-loc-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const write = (research: any) =>
+    writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+
+  it("returns locality entries when the section is present", async () => {
+    await write({
+      localities: [
+        { place: "Zulia, Venezuela", guide_markdown: "# Zulia\nCivil registration from 1873." },
+        { place: "Ontario County, New York", guide_markdown: "# Ontario\nDeath index 1880-1956." },
+      ],
+    });
+    const r: any = await researchQuery({ projectPath: dir, section: "localities" });
+    expect(r.ok).toBe(true);
+    expect(r.count).toBe(2);
+    expect(r.items[0].place).toBe("Zulia, Venezuela");
+    expect(r.truncated).toBe(false);
+  });
+
+  it("returns count 0 when the key is absent, rather than erroring", async () => {
+    // The issue #2864 case. `localities` is not in the schema's `required`
+    // list, so it is legitimately missing on every project older than the
+    // field — 90 of the 102 committed fixtures.
+    await write({ questions: [{ id: "q_001" }] });
+    const r: any = await researchQuery({ projectPath: dir, section: "localities" });
+    expect(r).toEqual({ ok: true, section: "localities", count: 0, items: [], truncated: false });
+  });
+
+  it("returns count 0 on a document that is empty but still a document", async () => {
+    // `{}` is the shape the suite's own idiom writes, and it IS a document —
+    // an object that parses with no sections yet. Distinct from the non-object
+    // cases below, which must still throw. Nothing pinned this before: the
+    // three existing `writeResearch({})` cases all query an invalid section
+    // and never reach the read site.
+    await write({});
+    const r: any = await researchQuery({ projectPath: dir, section: "localities" });
+    expect(r.ok).toBe(true);
+    expect(r.count).toBe(0);
+  });
+
+  it.each([
+    ["bare null", null],
+    ["a bare array", []],
+    ["a bare string", "x"],
+    ["a bare number", 42],
+  ])("still errors for localities when research.json is %s", async (_label, doc) => {
+    // `research?.[section]` is `undefined` for every one of these, exactly as
+    // it is for a missing key. Keying the empty result on `undefined` alone
+    // would answer a confident "no localities" on a file that is not a
+    // research document — the issue #2864 failure inverted.
+    await write(doc);
+    const r: any = await researchQuery({ projectPath: dir, section: "localities" });
+    expect(r.ok).toBe(false);
+    expect(String(r.errors)).toMatch(/missing or not an array/);
+  });
+
+  it.each([
+    ["null", null],
+    ["a string", "x"],
+    ["an object", { a: 1 }],
+  ])("still errors when localities is present but is %s", async (_label, value) => {
+    await write({ localities: value });
+    const r: any = await researchQuery({ projectPath: dir, section: "localities" });
+    expect(r.ok).toBe(false);
+    expect(String(r.errors)).toMatch(/missing or not an array/);
+  });
+
+  it("rejects a filter on localities", async () => {
+    await write({ localities: [{ place: "Zulia, Venezuela" }] });
+    const r: any = await researchQuery({
+      projectPath: dir,
+      section: "localities",
+      questionId: "q_001",
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(String(r.errors)).toMatch(/takes no filters/);
+  });
+
+  it("a REQUIRED section that is missing still errors", async () => {
+    // The optional rule is narrow: it must not widen to sections the schema
+    // says are always present.
+    await write({ localities: [] });
+    const r: any = await researchQuery({ projectPath: dir, section: "questions" });
+    expect(r.ok).toBe(false);
+    expect(String(r.errors)).toMatch(/missing or not an array/);
+  });
+});
+
+describe("research_query — every array section is queryable or deliberately excluded (#2936)", () => {
+  // Derived from the schema at runtime, never a hardcoded copy: a copy cannot
+  // fail when someone adds a section, which is exactly how `localities` stayed
+  // unreadable long enough to reach a user (issue #2864).
+  const schemaPath = join(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "..",
+    "..",
+    "docs",
+    "specs",
+    "schemas",
+    "research.schema.json",
+  );
+  const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
+
+  /** Resolve `$ref` against `$defs` until a concrete subschema falls out.
+   *
+   *  `project` and `researcher_profile` are written as bare `{"$ref": …}` with
+   *  NO `type` key, so a plain `type === "array"` scan skips them silently —
+   *  and would skip any future section written in that style, which is the one
+   *  thing this test exists to prevent. Resolving a single level would fix
+   *  today and re-arm the same trap for the next shape, so this loops, and
+   *  `classify` below throws rather than returning "not an array" when it
+   *  cannot tell. An unclassifiable shape reds this test instead of vanishing
+   *  from it.
+   */
+  function resolve(node: any, depth = 0): any {
+    if (depth > 10) throw new Error("$ref chain too deep or cyclic");
+    if (node && typeof node.$ref === "string") {
+      const name = node.$ref.replace("#/$defs/", "");
+      const target = schema.$defs?.[name];
+      if (!target) throw new Error(`unresolvable $ref: ${node.$ref}`);
+      return resolve(target, depth + 1);
+    }
+    return node;
+  }
+
+  function classify(name: string, node: any): string {
+    const resolved = resolve(node);
+    if (typeof resolved?.type !== "string") {
+      throw new Error(
+        `top-level property '${name}' has no resolvable string 'type' — this test ` +
+          `cannot tell whether it is an array section, so it would silently skip it. ` +
+          `Teach 'resolve'/'classify' the new shape rather than letting it disappear.`,
+      );
+    }
+    return resolved.type;
+  }
+
+  const props: Record<string, any> = schema.properties ?? {};
+  const required = new Set<string>(schema.required ?? []);
+  const arraySections = Object.keys(props).filter((k) => classify(k, props[k]) === "array");
+
+  it("every top-level array section is queryable or listed as excluded", () => {
+    const queryable = new Set<string>(RESEARCH_QUERY_SECTIONS);
+    const unreachable = arraySections.filter(
+      (s) => !queryable.has(s) && !(s in RESEARCH_QUERY_EXCLUDED),
+    );
+    expect(unreachable, `add these to RESEARCH_QUERY_SECTIONS or RESEARCH_QUERY_EXCLUDED`).toEqual(
+      [],
+    );
+  });
+
+  it("the optional set is exactly the queryable array sections the schema does not require", () => {
+    // NOT simply "array sections not required" — that set also holds
+    // `known_holdings`, which is excluded and so has no absence behaviour at
+    // all. Subtracting the exclusions is what makes this hold today and keeps
+    // holding when issue #2069 lands: the subtraction becomes a no-op.
+    const expected = arraySections
+      .filter((s) => !required.has(s) && !(s in RESEARCH_QUERY_EXCLUDED))
+      .sort();
+    expect([...RESEARCH_QUERY_OPTIONAL_SECTIONS].sort()).toEqual(expected);
+  });
+
+  it("every excluded section is still a top-level array section of the schema", () => {
+    // The tripwire for issue #2069. When it deletes `known_holdings` from the
+    // schema, this reds until the RESEARCH_QUERY_EXCLUDED entry goes with it —
+    // so the exclusion map cannot rot into a list of sections that no longer
+    // exist.
+    const stale = Object.keys(RESEARCH_QUERY_EXCLUDED).filter((s) => !arraySections.includes(s));
+    expect(stale, `RESEARCH_QUERY_EXCLUDED names section(s) the schema no longer has`).toEqual([]);
   });
 });

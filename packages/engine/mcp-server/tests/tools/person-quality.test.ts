@@ -5,15 +5,32 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-import { personQualityTool } from "../../src/tools/person-quality.js";
+import {
+  personQualityTool,
+  NOT_FAMILYSEARCH_ID_MESSAGE,
+  notLinkedMessage,
+} from "../../src/tools/person-quality.js";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { getValidToken } from "../../src/auth/refresh.js";
 import {
   renderIssueSentence,
   lookupTemplate,
 } from "../../src/tools/person-quality-templates.js";
-import type { FSQualityResponse } from "../../src/types/person-quality.js";
+import type {
+  FSQualityResponse,
+  PersonQualityResult,
+  PersonQualityToolResult,
+} from "../../src/types/person-quality.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
+
+/** Narrow to the scored arm; a not-FamilySearch-id answer here is a test failure. */
+function scored(r: PersonQualityToolResult): PersonQualityResult {
+  if ("reason" in r) throw new Error(`expected a scored result, got ${r.reason}`);
+  return r;
+}
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
@@ -156,7 +173,7 @@ describe("personQualityTool", () => {
       },
     });
 
-    const result = await personQualityTool({ personId: "KD96-TV2" }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "KD96-TV2" }, LOCAL));
 
     expect(result.personId).toBe("KD96-TV2");
     expect(result.segment).toBe("Norway 1816 - 1920");
@@ -185,7 +202,7 @@ describe("personQualityTool", () => {
 
   it("treats a clean person (personScores present, no issues) as zero issues", async () => {
     mockOk({ isValid: true, personScores: { overallDisplayScore: 1, issues: [] } });
-    const result = await personQualityTool({ personId: "CLEAN-1" }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "KD96-TV7" }, LOCAL));
     expect(result.issueCount).toBe(0);
     expect(result.issues).toEqual([]);
     expect(result.overallScore).toBe(1);
@@ -204,7 +221,7 @@ describe("personQualityTool", () => {
     mockOk({ isValid: true, personScores: { overallDisplayScore: 1, issues: [] } });
     const promise = personQualityTool({ personId: "KD96-TV2" }, LOCAL);
     await vi.runAllTimersAsync();
-    const result = await promise;
+    const result = scored(await promise);
     expect(result.issueCount).toBe(0);
     expect(mockFetch).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
@@ -236,8 +253,8 @@ describe("personQualityTool", () => {
   });
 
   it("surfaces the warning header on a 400 (malformed id)", async () => {
-    mockStatus(400, { warning: "Invalid j-encoded identifier: BOGUS-PID" });
-    await expect(personQualityTool({ personId: "BOGUS-PID" }, LOCAL)).rejects.toThrow(
+    mockStatus(400, { warning: "Invalid j-encoded identifier: ZZZZ-ZZ9" });
+    await expect(personQualityTool({ personId: "ZZZZ-ZZ9" }, LOCAL)).rejects.toThrow(
       /Invalid j-encoded identifier/,
     );
   });
@@ -266,7 +283,7 @@ describe("personQualityTool detail flag", () => {
       isValid: true,
       visibility: "PUBLIC",
       personScores: {
-        pid: "AAAA-111",
+        pid: "BBBB-111",
         segment: "Testland 1800 - 1900",
         overallDisplayScore: 0.9,
         issues: [
@@ -329,7 +346,7 @@ describe("personQualityTool detail flag", () => {
 
   it("omits detail entirely when the flag is off", async () => {
     mockOk(detailBody());
-    const result = await personQualityTool({ personId: "AAAA-111" }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111" }, LOCAL));
     // Absent, not empty: this is the byte-identical guarantee D2 rests on.
     expect(result.detail).toBeUndefined();
     expect("detail" in result).toBe(false);
@@ -337,9 +354,9 @@ describe("personQualityTool detail flag", () => {
 
   it("returns a result identical to the flag-off one, minus detail", async () => {
     mockOk(detailBody());
-    const off = await personQualityTool({ personId: "AAAA-111" }, LOCAL);
+    const off = scored(await personQualityTool({ personId: "BBBB-111" }, LOCAL));
     mockOk(detailBody());
-    const on = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const on = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
     const { detail, ...onWithoutDetail } = on;
     expect(detail).toBeDefined();
     expect(onWithoutDetail).toEqual(off);
@@ -347,7 +364,7 @@ describe("personQualityTool detail flag", () => {
 
   it("renders each fact's affecting issues as sentences, not raw ids", async () => {
     mockOk(detailBody());
-    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
     const burial = result.detail?.facts.find((f) => f.conclusionType === "BURIAL");
     // The raw id joins onto issues[].id, which this tool's output does not
     // carry — so passing the id through would hand the caller a dangling key.
@@ -359,7 +376,7 @@ describe("personQualityTool detail flag", () => {
 
   it("carries relationshipId only on the conclusions that have one", async () => {
     mockOk(detailBody());
-    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
     const byType = new Map(
       result.detail?.facts.map((f) => [f.conclusionType, f]) ?? [],
     );
@@ -369,7 +386,7 @@ describe("personQualityTool detail flag", () => {
 
   it("dedupes a fact's sources by uri and keeps each source's agreement", async () => {
     mockOk(detailBody());
-    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
     const name = result.detail?.facts.find((f) => f.conclusionType === "NAME");
     // ark:/1 lists c-name twice; it must appear once.
     expect(name?.sources).toEqual([
@@ -384,7 +401,7 @@ describe("personQualityTool detail flag", () => {
 
   it("leaves sources empty for a conclusion nothing is attached to", async () => {
     mockOk(detailBody());
-    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
     // Real data is sparse: only 5 of KD96-TV2's 14 conclusions have any source.
     const marriage = result.detail?.facts.find((f) => f.conclusionType === "MARRIAGE");
     expect(marriage?.sources).toEqual([]);
@@ -421,7 +438,7 @@ describe("personQualityTool detail flag", () => {
     const body = detailBody();
     body.personScores!.sourceClusters!.conflicts = conflicts;
     mockOk(body);
-    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
 
     // The number matters: `toBeLessThan(conflicts.length)` would pass on a
     // reduction that collapsed nothing useful.
@@ -439,7 +456,7 @@ describe("personQualityTool detail flag", () => {
 
   it("returns no conflicts when upstream sends none", async () => {
     mockOk(detailBody());
-    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
     expect(result.detail?.conflicts).toEqual([]);
   });
 
@@ -448,7 +465,121 @@ describe("personQualityTool detail flag", () => {
     delete body.personScores!.conclusionScores;
     delete body.personScores!.sourceClusters;
     mockOk(body);
-    const result = await personQualityTool({ personId: "AAAA-111", detail: true }, LOCAL);
+    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
     expect(result.detail).toEqual({ facts: [], conflicts: [] });
+  });
+});
+
+describe("person_quality — ids that are not FamilySearch person ids", () => {
+  // A project's local ids (and anything FamilySearch would refuse on format) are
+  // answered without a network call and without a token.
+  it.each(["I1", "i1", "P123", " I1 ", "I10"])(
+    "answers %j without fetching and without a token",
+    async (personId) => {
+      const result = await personQualityTool({ personId }, LOCAL);
+      expect(result).toEqual({
+        ok: false,
+        reason: "not_familysearch_id",
+        errors: [NOT_FAMILYSEARCH_ID_MESSAGE],
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockedGetValidToken).not.toHaveBeenCalled();
+    },
+  );
+
+  it("never tells a researcher who is not logged in to log in for such an id", async () => {
+    mockedGetValidToken.mockRejectedValue(new Error("Call the login tool to authenticate."));
+    const result = await personQualityTool({ personId: "I1" }, LOCAL);
+    expect("reason" in result && result.reason).toBe("not_familysearch_id");
+  });
+
+  it("message names no id, no id type, and claims nothing about FamilySearch linkage", () => {
+    // init-project gives imported people a local id AND keeps their FamilySearch
+    // link in `ark`, so a sentence about the person's linkage would be false for them.
+    expect(NOT_FAMILYSEARCH_ID_MESSAGE).not.toMatch(/\bI\d+\b/);
+    expect(NOT_FAMILYSEARCH_ID_MESSAGE).not.toMatch(/synthetic|local id|linked/i);
+  });
+
+  it.each(["KD96-TV2", "kd96-tv2", " KD96-TV2 "])(
+    "still asks FamilySearch for the FamilySearch id %j",
+    async (personId) => {
+      mockOk({ isValid: true, personScores: { overallDisplayScore: 1, issues: [] } });
+      const result = scored(await personQualityTool({ personId }, LOCAL));
+      expect(result.issueCount).toBe(0);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    },
+  );
+});
+
+describe("person_quality — a project's local id, looked up in the project tree", () => {
+  function project(persons: unknown[] | string): string {
+    const dir = mkdtempSync(join(tmpdir(), "pq-"));
+    writeFileSync(
+      join(dir, "tree.gedcomx.json"),
+      typeof persons === "string" ? persons : JSON.stringify({ persons }),
+      "utf-8",
+    );
+    return dir;
+  }
+  const patrick = (extra: Record<string, unknown> = {}) => ({
+    id: "I1",
+    names: [{ given: "Patrick", surname: "Flynn", preferred: true }],
+    ...extra,
+  });
+
+  it.each([
+    ["a bare tree ark", "ark:/61903/4:1:MKVT-7XR"],
+    ["a resolver URL", "https://familysearch.org/ark:/61903/4:1:MKVT-7XR"],
+  ])("scores an imported person under the id in their link (%s)", async (_label, ark) => {
+    mockOk({ isValid: true, personScores: { overallDisplayScore: 0.9, issues: [] } });
+    const projectPath = project([patrick({ ark })]);
+    const result = scored(await personQualityTool({ personId: "I1", projectPath }, LOCAL));
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toContain("/quality/person/MKVT-7XR/scores");
+    expect(result.personId).toBe("MKVT-7XR");
+  });
+
+  it("answers a person with no FamilySearch link truthfully, by name, without a network call", async () => {
+    const projectPath = project([patrick()]);
+    const result = await personQualityTool({ personId: "I1", projectPath }, LOCAL);
+    expect(result).toEqual({
+      ok: false,
+      reason: "not_familysearch_id",
+      errors: [notLinkedMessage("Patrick Flynn")],
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("treats a record-persona (1:1:) link as no tree link", async () => {
+    const projectPath = project([patrick({ ark: "ark:/61903/1:1:QPRC-WPBZ" })]);
+    const result = await personQualityTool({ personId: "I1", projectPath }, LOCAL);
+    expect("reason" in result && result.errors).toEqual([notLinkedMessage("Patrick Flynn")]);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the person's tree link holds an id that is not a FamilySearch id",
+      () => project([patrick({ ark: "https://familysearch.org/ark:/61903/4:1:KWCJ-JAM7" })])],
+    ["the person is not in the tree", () => project([{ id: "I9", names: [] }])],
+    ["the tree file is missing", () => mkdtempSync(join(tmpdir(), "pq-empty-"))],
+    ["the tree file is not JSON", () => project("{not json")],
+    ["the person has no name", () => project([{ id: "I1", names: [] }])],
+  ])("falls back to the neutral sentence when %s, without throwing", async (_label, make) => {
+    const result = await personQualityTool({ personId: "I1", projectPath: make() }, LOCAL);
+    expect(result).toEqual({
+      ok: false,
+      reason: "not_familysearch_id",
+      errors: [NOT_FAMILYSEARCH_ID_MESSAGE],
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("never puts the local id or its type into the sentence", async () => {
+    const result = await personQualityTool({ personId: "I1", projectPath: project([patrick()]) }, LOCAL);
+    const sentence = "reason" in result ? result.errors[0] : "";
+    expect(sentence).not.toMatch(/\bI1\b/);
+    expect(sentence).not.toMatch(/synthetic|local id|project id/i);
   });
 });
