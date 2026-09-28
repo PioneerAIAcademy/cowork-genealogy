@@ -874,3 +874,39 @@ def test_as_dicts_output_satisfies_the_run_log_schema():
 
     emitted = log["tests"][0]["runs"][0]["validators"]["results"]
     assert [r["outcome"] for r in emitted] == ["passed", "failed", "skipped"]
+
+
+# --- one-word skill names: a name, not the English word ---------------------
+
+_OTHERS = {"research", "timeline", "record-extraction"}
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Verbatim from ut_search_wiki_004, v1_2026-09-21_18-16-58.
+        "I'm sorry, but I only handle genealogy research tasks — looking up "
+        "Albert Einstein on Wikipedia falls outside that scope.",
+        "This request is outside this toolkit's scope. I build a timeline of events.",
+    ],
+)
+def test_a_one_word_skill_name_used_as_english_is_not_routing(text):
+    from harness.runlog import _is_substantive
+
+    assert _is_substantive(text, other_skill_names=_OTHERS) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Use the `research` skill for that.",
+        "Try /research instead.",
+        "That belongs to the research skill.",
+        "The timeline agent handles that one.",
+        "This is a record-extraction job.",
+    ],
+)
+def test_a_skill_name_written_as_a_name_is_still_routing(text):
+    from harness.runlog import _is_substantive
+
+    assert _is_substantive(text, other_skill_names=_OTHERS) is False

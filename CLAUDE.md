@@ -885,7 +885,7 @@ templates directly:
   The full site list is in `DEVELOPMENT.md` → "How to add a new feature" and
   `docs/architecture.md` → "The engine's three-way decomposition".
 - **A new capability** — under the lead's 2026-09-22 ruling a new capability is
-  an **agent**, not a skill: copy `packages/engine/plugin/agents/search-wikipedia.md`.
+  an **agent**, not a skill: copy `packages/engine/plugin/agents/search-images.md`.
   If you are editing one of the skills that remain, keep their rule: **no
   network in skill `scripts/`.**
 - **Checking an implementation against its spec** — read it against
@@ -917,13 +917,13 @@ reviews on the PR.
 
 ## Working reference agent
 
-`packages/engine/plugin/agents/search-wikipedia.md` is the canonical minimal
-example of the full plugin pipeline — it calls the `wikipedia_search`
-MCP tool, fills a markdown template inlined in its own body, and saves the
-result to a file. It shows the three tool spellings and a scope section that
-hands work back by name rather than spawning it. It does **not** show the
-`summary_for_user` return contract — it is on the PENDING list in
-`tests/packaging/agent-return-contract.test.ts` — so copy that section from
-another agent, or the new agent fails that test. Copy this structure when wiring
-a new agent to one of the other tools. Don't mutate `search-wikipedia` itself;
-create a new agent file.
+`packages/engine/plugin/agents/search-images.md` is the reference to copy when
+wiring a new agent to one of the other tools. It shows every part an agent
+needs: the invocation contract, a routing section that hands work back by name
+rather than spawning it, the three tool spellings, and the `summary_for_user`
+return contract. Don't mutate `search-images` itself; create a new agent file.
+
+Do **not** copy `search-wikipedia.md`, though it is smaller. It is exempt from
+the return contract (on the PENDING list in
+`tests/packaging/agent-return-contract.test.ts`), so an agent copied from it
+fails that test.

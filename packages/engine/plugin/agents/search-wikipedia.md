@@ -88,9 +88,7 @@ the only thing you say is the return below, after the file exists.
 the topic.** You know nothing about the topic beyond what the tool returned, and
 the article is already in the file. So state no fact about it anywhere in your
 return: not a date, not a place, not a cause, not a significance — and never
-anything drawn from your own knowledge rather than the tool response. A sentence
-explaining what the subject means for genealogy is the single most common way
-this agent fails, and it is a fabrication even when it sounds right.
+anything drawn from your own knowledge rather than the tool response.
 
 1. Call the `wikipedia_search` MCP tool with the topic as the
    `query` parameter. Exactly one call; do not re-query to "correct" a title
@@ -149,6 +147,4 @@ from the scope section instead, and no file is named because none exists.
 
 **Do not restate, summarize, paraphrase, quote or characterize the article.**
 Do not add "here is what it covers" in any wording, and do not say what the
-subject means for genealogy. The article is in the file. A sentence about the
-topic here is a fabrication risk even when it sounds right, and it is the single
-most common way this agent fails.
+subject means for genealogy.

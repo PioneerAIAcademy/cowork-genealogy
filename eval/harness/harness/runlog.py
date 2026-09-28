@@ -342,13 +342,34 @@ def _is_substantive(
     if len(text.split()) >= _SUBSTANTIVE_MIN_WORDS_LONG:
         return True
     for other in other_skill_names:
-        pattern = re.compile(r"\b" + re.escape(other) + r"\b", re.IGNORECASE)
-        if pattern.search(text):
+        if _names_skill(text, other):
             _ROUTING_FALLBACK_LOG.append(
                 {"matched_skill": other, "text_excerpt": text[:200]}
             )
             return False
     return True
+
+
+def _names_skill(text: str, skill: str) -> bool:
+    """Whether `text` names `skill` as a skill, not merely uses the word.
+
+    A hyphenated name (`record-extraction`) is never ordinary English, so a
+    bare mention counts. A one-word name (`research`, `timeline`,
+    `translation`) is, so it counts only when written as a name: backticked,
+    slash-prefixed, or followed by "skill" or "agent". Measured over the
+    committed unit run logs: 8 of 51 short replies were classified as routing
+    purely on "genealogy research", all of them declines.
+    """
+    escaped = re.escape(skill)
+    if "-" in skill:
+        return re.search(r"\b" + escaped + r"\b", text, re.IGNORECASE) is not None
+    return re.search(
+        r"`/?" + escaped + r"`"
+        r"|/" + escaped + r"\b"
+        r"|\b" + escaped + r"\s+(?:skill|agent)\b",
+        text,
+        re.IGNORECASE,
+    ) is not None
 
 
 def get_routing_fallback_log() -> list[dict[str, Any]]:
