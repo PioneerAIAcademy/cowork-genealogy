@@ -167,8 +167,7 @@ disk. If the token changed (the control plane pushed a fresh one via
 is unchanged, they return the original 401 so the tool's own handler can produce
 the right user-facing error. **They never call `refreshAccessToken` on a 401** —
 a refresh revokes every other holder's access token immediately and rotates the
-refresh token (a refresh revokes the previous access token immediately and
-rotates the refresh token). Bearer principals skip the re-read entirely
+refresh token. Bearer principals skip the re-read entirely
 (the web tier owns the grant).
 
 ---

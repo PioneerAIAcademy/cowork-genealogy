@@ -62,13 +62,6 @@ export async function fsFetch(
   const token = await getValidToken(principal);
   const authedInit = mergeAuth(token, init);
 
-  const args: [string | URL, RequestInit, ...unknown[]] = [url, authedInit];
-  if (timeoutMs !== undefined) args.push(timeoutMs);
-  if (retryOpts !== undefined) {
-    if (timeoutMs === undefined) args.push(undefined);
-    args.push(retryOpts);
-  }
-
   const response = await fetchWithRetry(
     url,
     authedInit,
