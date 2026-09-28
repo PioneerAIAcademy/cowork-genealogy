@@ -591,6 +591,34 @@ def test_2521_accepts_a_structured_collection_id_field():
     expect_passes(lambda: check_2521({}, after, POSITIVE))
 
 
+def test_2521_a_second_entry_cannot_be_backed_by_its_own_notes():
+    """Two entries on one collection, and only the SECOND carries the text.
+
+    The answer depends on which entry is being asked about, because
+    `owner_prefix` changes every time round the loop. An earlier draft cached
+    it on the collection id alone, so the first entry's answer was reused for
+    the second — and the second's only backing is its own notes, the exact
+    self-backing the owner exclusion exists to reject. Every test passed with
+    that cache in place, in both directions: text in the first entry fired on
+    two when one was unbacked, text in the second passed everything.
+
+    Correct here: entry one IS backed, by a sibling entry's notes, which is the
+    design. Entry two is not. Exactly one finding.
+    """
+    def site(entry_id, note=None):
+        e = _collection_site_entry(entry_id)
+        if note:
+            e["notes"] = note
+        return e
+
+    after = _research([site("log_011"), site("log_012", "Ancestry collection 8054 was the target.")])
+    expect_fires(lambda: check_2521({}, after, POSITIVE), "1 collection-scoped")
+
+    # The mirror image, which the same cache got wrong the other way.
+    flipped = _research([site("log_011", "Ancestry collection 8054 was the target."), site("log_012")])
+    expect_fires(lambda: check_2521({}, flipped, POSITIVE), "1 collection-scoped")
+
+
 def test_2521_is_tier_2_and_cannot_gate_a_run():
     """Ruling C says measure, do not enforce.
 

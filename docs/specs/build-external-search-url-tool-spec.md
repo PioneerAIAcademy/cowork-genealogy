@@ -835,8 +835,8 @@ Two consequences worth stating rather than rediscovering:
   `hannah-earnest-children` 8912, `pedro-chaves-spouse` 1831, `rejnic-burial`
   7115 and `wardell-parents` 7602 — and that is what the check reports. **6**
   if you also count the two whose trace says in prose that the id was never
-  curated: `johann-widmer-vitals` log_024 ("not in the curated inline set") and
-  `maria-fuenmayor-parents` log_038 ("No Ancestry-specific curated links
+  curated: `johann-widmer-vitals` log_021 ("not in the curated inline set") and
+  `maria-fuenmayor-parents` log_037 ("No Ancestry-specific curated links
   returned"). Both of those pass the check, because each is *also* recorded in
   a locality guide or a plan item — a fact about the document, not about where
   the id came from. That gap is the whole of what this measurement cannot see.

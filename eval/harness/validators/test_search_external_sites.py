@@ -1041,7 +1041,6 @@ def report_collection_scoped_url_with_no_backed_collection_id(
     log = research.get("log")
     log = log if isinstance(log, list) else []
     leaves = _flatten(research)
-    backed_cache = {}
 
     considered, unbacked = 0, []
     for index, entry in enumerate(log):
@@ -1056,11 +1055,17 @@ def report_collection_scoped_url_with_no_backed_collection_id(
             continue
         cid = match.group(1)
         considered += 1
-        if cid not in backed_cache:
-            backed_cache[cid] = _collection_id_is_backed(
-                research, cid, f"log[{index}].", leaves
-            )
-        if backed_cache[cid] is None:
+        # Evaluated per ENTRY, deliberately uncached. The answer depends on
+        # `owner_prefix`, which changes every time round this loop, so keying a
+        # cache on the collection id alone reuses the first entry's answer for
+        # every later entry naming the same collection — wrong in both
+        # directions. With the backing text in the first entry it fires on two
+        # when one is unbacked; with the text in the second it passes
+        # everything, and that second entry's only backing is its own notes,
+        # which is exactly the self-backing the owner exclusion exists to
+        # reject. `leaves` is already flattened once per run, so this costs one
+        # pass over a flat list.
+        if _collection_id_is_backed(research, cid, f"log[{index}].", leaves) is None:
             unbacked.append((entry.get("id"), cid))
 
     # Skip ONLY when there was nothing of this shape to judge, rather than
