@@ -507,7 +507,7 @@ imprecise dates are widened per § Date Parsing Rules.
 | `tooManyDeathDates2` | implausible | Two or more distinct exact-DMY Death dates spaced more than 14 days apart | As above |
 | `deathRangeGreaterThan2` | implausible | Death-like dates span more than 2 years | Unreconciled conflicting death records |
 | `hasBurialAfterDeath31` | implausible | Earliest Burial is more than 31 days before the latest Death (despite the Java name, fires on burial-before-death outliers; preserved for parity) | Conflicting or mis-typed burial/death dates |
-| `hasDelayedBurial365` | implausible | The earliest possible Burial is more than 365 days after the latest possible Death (most-generous bounds, fudge 0) | A reburial, a later interment of ashes, or a data error |
+| `hasDelayedBurial365` | implausible | The earliest possible Burial is more than 365 days after the latest possible Death (most-generous bounds, fudge 0) | A funeral delayed about a year (legitimate in some places), a reburial, a later interment of ashes, or a data error |
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
 | `hasCloseChildBirthsIgnoreSimilarChildren` | implausible | Two of this person's children (that are not already flagged as similar) have Birth dates suspiciously close together | Two records of one child attached as two children |
@@ -594,8 +594,9 @@ schema change was needed.
 
 **Delayed burial: 365-day threshold, most-generous bounds.** Burial
 normally happens within days of death, so a gap over a year is most likely a
-data error — real reburials and a later interment of ashes can also trip
-it, which is why the severity is `implausible`, not `contradiction`. The
+data error. But a funeral delayed about a year is legitimate in some places,
+and reburials and a later interment of ashes can also trip it, which is why
+the severity is `implausible`, not `contradiction`. The
 check reads the earliest possible Burial day minus the latest possible
 Death day, with `imperfectDateFudgeDays` at 0 rather than 365: that pairing
 is already the most generous reading, and widening it further would swallow

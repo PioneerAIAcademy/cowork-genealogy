@@ -109,6 +109,36 @@ Always investigate.
 - Cause: data error or wrong mother attribution.
 - Action: verify dates.
 
+### `hasNoChildrenConflict`
+- Rule: a "No Children" marker the tree contradicts: the person's
+  own `NoChildren` fact while they have a child; a
+  `CoupleNeverHadChildren` fact on one of their couple
+  relationships while the couple has a child of both partners; or
+  the person is a child of a couple carrying that fact.
+- Cause: the marker was recorded before research found the child,
+  a wrong parent-child link, or the marker belongs to a different
+  couple.
+- Action: check the source for the child's link to this person or
+  couple; if it holds, the "No Children" marker is out of date.
+
+### `hasNoCoupleRelationshipsConflict`
+- Rule: the person has a `NoCoupleRelationships` fact but also has
+  a spouse.
+- Cause: the marker was recorded before a marriage was found, or a
+  wrong spouse link.
+- Action: check the source for the couple relationship; if it
+  holds, the marker is out of date.
+
+### `hasStillbirthConflict`
+- Rule: the person has a `Stillbirth` fact but also has a spouse, a
+  marriage, a child, or a death at least one year after birth (read
+  at the most generous dates).
+- Cause: the stillbirth record belongs to a different child of the
+  same parents (a later sibling sometimes received the same name),
+  or the later facts belong to someone else.
+- Action: check which record carries the stillbirth and whether it
+  belongs to this person.
+
 ## Valid violations (`severity: "implausible"`)
 
 These conditions are improbable but not impossible. Exceptions are
@@ -134,6 +164,7 @@ treating as established.
 - `tooManyDeathDates2` -- two or more distinct perfect-DMY death dates spaced > 14 days apart.
 - `deathRangeGreaterThan2` -- death-like dates span more than 2 years.
 - `hasBurialAfterDeath31` -- earliest burial is more than 31 days before the latest death. (Despite the Java name, this fires on "burial before death" outliers; preserved for parity.)
+- `hasDelayedBurial365` -- the earliest burial is more than 365 days after the latest death (read at the most generous dates). A burial delayed about a year for a later funeral can be real in some places, as can a reburial or a later burial of ashes. A burial 3 or more calendar years late also fires `deathRangeGreaterThan2`.
 
 ### Family structure
 - `tooManyChildren18` -- 18 or more children.
