@@ -31,6 +31,10 @@ import {
   hasDeathBeforeChildBirthLike,
   childMarriageToMarriage,
   hasDiffSurname,
+  hasDelayedBurial,
+  hasNoChildrenConflict,
+  hasNoCoupleRelationshipsConflict,
+  hasStillbirthConflict,
   calculateWarnings,
 } from "../../src/tools/person-warnings.js";
 import { Mob } from "../../src/utils/mob.js";
@@ -3189,5 +3193,469 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     );
     expect(w).toBeDefined();
     expect(w?.factIds).toBeUndefined();
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// person_quality parity checks (#2967): hasDelayedBurial, hasNoChildrenConflict,
+// hasNoCoupleRelationshipsConflict, hasStillbirthConflict
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasDelayedBurial predicate", () => {
+  it("fires when exact Burial is 400 days after exact Death", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Late", surname: "Burial" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
+            { id: "F2", type: "Burial", date: "5 Feb 1901", standard_date: "5 Feb 1901" },
+          ],
+        },
+      ],
+    };
+    expect(hasDelayedBurial(new Mob(tree, "I1"), 365)).toBe(true);
+  });
+
+  it("does NOT fire when Burial is 30 days after Death", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Normal", surname: "Burial" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
+            { id: "F2", type: "Burial", date: "31 Jan 1900", standard_date: "31 Jan 1900" },
+          ],
+        },
+      ],
+    };
+    expect(hasDelayedBurial(new Mob(tree, "I1"), 365)).toBe(false);
+  });
+
+  it("does NOT fire for year-only Death 1887 + Burial 1888 (conservative bound)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Only" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1887", standard_date: "1887" },
+            { id: "F2", type: "Burial", date: "1888", standard_date: "1888" },
+          ],
+        },
+      ],
+    };
+    expect(hasDelayedBurial(new Mob(tree, "I1"), 365)).toBe(false);
+  });
+
+  it("fires for year-only Death 1887 + Burial 1889 (separates fudge 0 from 365)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Year", surname: "Gap" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1887", standard_date: "1887" },
+            { id: "F2", type: "Burial", date: "1889", standard_date: "1889" },
+          ],
+        },
+      ],
+    };
+    expect(hasDelayedBurial(new Mob(tree, "I1"), 365)).toBe(true);
+  });
+
+  it("fires for year-only Death 1887 + Burial 1891", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Wide", surname: "Gap" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1887", standard_date: "1887" },
+            { id: "F2", type: "Burial", date: "1891", standard_date: "1891" },
+          ],
+        },
+      ],
+    };
+    expect(hasDelayedBurial(new Mob(tree, "I1"), 365)).toBe(true);
+  });
+
+  it("does NOT fire when the earliest of two Burials is soon after Death (reinterment)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Reburied", surname: "Ancestor" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
+            { id: "F2", type: "Burial", date: "8 Jan 1900", standard_date: "8 Jan 1900" },
+            { id: "F3", type: "Burial", date: "1 Jan 1906", standard_date: "1 Jan 1906" },
+          ],
+        },
+      ],
+    };
+    expect(hasDelayedBurial(new Mob(tree, "I1"), 365)).toBe(false);
+  });
+
+  it("returns false when Burial or Death is missing", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Only", surname: "Death" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+          ],
+        },
+      ],
+    };
+    expect(hasDelayedBurial(new Mob(tree, "I1"), 365)).toBe(false);
+  });
+});
+
+describe("hasNoChildrenConflict predicate", () => {
+  it("fires: person NoChildren fact + a child", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "NoChildren" }] },
+        { id: "C", gender: "Female", names: [{ given: "C", surname: "S" }] },
+      ],
+      relationships: [{ id: "R", type: "ParentChild", parent: "P", child: "C" }],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(true);
+  });
+
+  it("does NOT fire: person NoChildren fact, no child", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "NoChildren" }] },
+      ],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(false);
+  });
+
+  it("fires: couple CoupleNeverHadChildren fact + a child of both spouses", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }] },
+        { id: "S", gender: "Female", names: [{ given: "S", surname: "T" }] },
+        { id: "C", gender: "Female", names: [{ given: "C", surname: "S" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "P", person2: "S", facts: [{ id: "F1", type: "CoupleNeverHadChildren" }] },
+        { id: "R2", type: "ParentChild", parent: "P", child: "C" },
+        { id: "R3", type: "ParentChild", parent: "S", child: "C" },
+      ],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(true);
+  });
+
+  it("does NOT fire: couple fact + child belongs to only one spouse (another partner)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }] },
+        { id: "S", gender: "Female", names: [{ given: "S", surname: "T" }] },
+        { id: "X", gender: "Male", names: [{ given: "X", surname: "U" }] },
+        { id: "C", gender: "Female", names: [{ given: "C", surname: "U" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "P", person2: "S", facts: [{ id: "F1", type: "CoupleNeverHadChildren" }] },
+        { id: "R2", type: "ParentChild", parent: "S", child: "C" },
+        { id: "R3", type: "ParentChild", parent: "X", child: "C" },
+      ],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(false);
+  });
+
+  it("fires: anchor is a child of a CoupleNeverHadChildren couple", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "M1", gender: "Male", names: [{ given: "M1", surname: "S" }] },
+        { id: "M2", gender: "Female", names: [{ given: "M2", surname: "T" }] },
+        { id: "I1", gender: "Female", names: [{ given: "I1", surname: "S" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "M1", person2: "M2", facts: [{ id: "F1", type: "CoupleNeverHadChildren" }] },
+        { id: "R2", type: "ParentChild", parent: "M1", child: "I1" },
+        { id: "R3", type: "ParentChild", parent: "M2", child: "I1" },
+      ],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("does NOT fire when none of the three views apply", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }] },
+        { id: "C", gender: "Female", names: [{ given: "C", surname: "S" }] },
+      ],
+      relationships: [{ id: "R", type: "ParentChild", parent: "P", child: "C" }],
+    };
+    expect(hasNoChildrenConflict(new Mob(tree, "P"))).toBe(false);
+  });
+});
+
+describe("hasNoCoupleRelationshipsConflict predicate", () => {
+  it("fires: NoCoupleRelationships fact + a spouse", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "NoCoupleRelationships" }] },
+        { id: "S", gender: "Female", names: [{ given: "S", surname: "T" }] },
+      ],
+      relationships: [{ id: "R", type: "Couple", person1: "P", person2: "S" }],
+    };
+    expect(hasNoCoupleRelationshipsConflict(new Mob(tree, "P"))).toBe(true);
+  });
+
+  it("does NOT fire: NoCoupleRelationships fact, no spouse", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "NoCoupleRelationships" }] },
+      ],
+    };
+    expect(hasNoCoupleRelationshipsConflict(new Mob(tree, "P"))).toBe(false);
+  });
+});
+
+describe("hasStillbirthConflict predicate", () => {
+  it("fires: Stillbirth fact + a spouse", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "Stillbirth" }] },
+        { id: "S", gender: "Female", names: [{ given: "S", surname: "T" }] },
+      ],
+      relationships: [{ id: "R", type: "Couple", person1: "P", person2: "S" }],
+    };
+    expect(hasStillbirthConflict(new Mob(tree, "P"))).toBe(true);
+  });
+
+  it("fires: Stillbirth fact + a child", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "P", gender: "Male", names: [{ given: "P", surname: "S" }], facts: [{ id: "F1", type: "Stillbirth" }] },
+        { id: "C", gender: "Female", names: [{ given: "C", surname: "S" }] },
+      ],
+      relationships: [{ id: "R", type: "ParentChild", parent: "P", child: "C" }],
+    };
+    expect(hasStillbirthConflict(new Mob(tree, "P"))).toBe(true);
+  });
+
+  it("fires: Stillbirth fact + Death 5 years after Birth", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "I1", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Stillbirth", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
+            { id: "F2", type: "Birth", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
+            { id: "F3", type: "Death", date: "1 Jan 1905", standard_date: "1 Jan 1905" },
+          ],
+        },
+      ],
+    };
+    expect(hasStillbirthConflict(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("fires: year-only Stillbirth 1880 + Death 1882 (separates fudge 0 from 365)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ given: "I1", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Stillbirth", date: "1880", standard_date: "1880" },
+            { id: "F2", type: "Death", date: "1882", standard_date: "1882" },
+          ],
+        },
+      ],
+    };
+    expect(hasStillbirthConflict(new Mob(tree, "I1"))).toBe(true);
+  });
+
+  it("does NOT fire: Stillbirth fact + Death on the same day (no spouse or child)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "I1", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Stillbirth", date: "1 Jun 1900", standard_date: "1 Jun 1900" },
+            { id: "F2", type: "Death", date: "1 Jun 1900", standard_date: "1 Jun 1900" },
+          ],
+        },
+      ],
+    };
+    expect(hasStillbirthConflict(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire: year-only Birth and Death in the same year", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "I1", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Stillbirth" },
+            { id: "F2", type: "Birth", date: "1880", standard_date: "1880" },
+            { id: "F3", type: "Death", date: "1880", standard_date: "1880" },
+          ],
+        },
+      ],
+    };
+    expect(hasStillbirthConflict(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  it("does NOT fire when there is no Stillbirth fact", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "I1", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1880", standard_date: "1880" },
+            { id: "F2", type: "Death", date: "1882", standard_date: "1882" },
+          ],
+        },
+      ],
+    };
+    expect(hasStillbirthConflict(new Mob(tree, "I1"))).toBe(false);
+  });
+});
+
+describe("calculateWarnings — person_quality parity emitters (#2967)", () => {
+  it("emits hasDelayedBurial365 alongside deathRangeGreaterThan2 on the bagley-father-1884 LVDV-6MK shape", () => {
+    // Death "19 Mar 1847", Burial "Mar 1947" — a 100-year gap. Burial is in
+    // the death-like family, so a burial 3+ calendar years late already
+    // trips deathRangeGreaterThan2; both are expected to fire together.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "LVDV-6MK",
+          gender: "Male",
+          names: [{ given: "Bagley", surname: "Father" }],
+          facts: [
+            { id: "F1", type: "Death", date: "19 Mar 1847", standard_date: "19 Mar 1847" },
+            { id: "F2", type: "Burial", date: "Mar 1947", standard_date: "Mar 1947" },
+          ],
+        },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "LVDV-6MK")).map((w) => w.issueType);
+    expect(tags).toContain("hasDelayedBurial365");
+    expect(tags).toContain("deathRangeGreaterThan2");
+  });
+
+  it("acceptance check: No Children conflict on the alvro-taylor R1 shape (CoupleNeverHadChildren + shared child)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "KWJZ-ZNT", gender: "Male", names: [{ given: "Alvro", surname: "Taylor" }] },
+        { id: "LFK9-HG4", gender: "Female", names: [{ given: "Spouse", surname: "Taylor" }] },
+        { id: "C1", gender: "Female", names: [{ given: "Child", surname: "Taylor" }] },
+      ],
+      relationships: [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "KWJZ-ZNT",
+          person2: "LFK9-HG4",
+          facts: [
+            { id: "MARRIAGE-1", type: "Marriage", date: "25 Apr 1931", standard_date: "25 Apr 1931" },
+            { id: "NEVER-HAD-CHILDREN-1", type: "CoupleNeverHadChildren" },
+          ],
+        },
+        { id: "R2", type: "ParentChild", parent: "KWJZ-ZNT", child: "C1" },
+        { id: "R3", type: "ParentChild", parent: "LFK9-HG4", child: "C1" },
+      ],
+    };
+    const w = finalWarnings(new Mob(tree, "KWJZ-ZNT")).find(
+      (x) => x.issueType === "hasNoChildrenConflict",
+    );
+    expect(w).toBeDefined();
+    expect(w?.severity).toBe("contradiction");
+    expect(w?.factIds).toEqual(["NEVER-HAD-CHILDREN-1"]);
+    expect(w?.relatedPersonId).toBe("C1");
+  });
+
+  it("emits hasNoCoupleRelationshipsConflict with severity, factIds and relatedPersonId", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ given: "P", surname: "S" }],
+          facts: [{ id: "F1", type: "NoCoupleRelationships" }],
+        },
+        { id: "S", gender: "Female", names: [{ given: "S", surname: "T" }] },
+      ],
+      relationships: [{ id: "R", type: "Couple", person1: "P", person2: "S" }],
+    };
+    const w = finalWarnings(new Mob(tree, "P")).find(
+      (x) => x.issueType === "hasNoCoupleRelationshipsConflict",
+    );
+    expect(w).toBeDefined();
+    expect(w?.severity).toBe("contradiction");
+    expect(w?.factIds).toEqual(["F1"]);
+    expect(w?.relatedPersonId).toBe("S");
+  });
+
+  it("emits hasStillbirthConflict with severity, factIds and relatedPersonId", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ given: "P", surname: "S" }],
+          facts: [{ id: "F1", type: "Stillbirth" }],
+        },
+        { id: "S", gender: "Female", names: [{ given: "S", surname: "T" }] },
+      ],
+      relationships: [{ id: "R", type: "Couple", person1: "P", person2: "S" }],
+    };
+    const w = finalWarnings(new Mob(tree, "P")).find(
+      (x) => x.issueType === "hasStillbirthConflict",
+    );
+    expect(w).toBeDefined();
+    expect(w?.severity).toBe("contradiction");
+    expect(w?.factIds).toEqual(["F1"]);
+    expect(w?.relatedPersonId).toBe("S");
+  });
+
+  it("emits hasDelayedBurial365 with implausible severity and factIds", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "I1", surname: "S" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
+            { id: "F2", type: "Burial", date: "5 Feb 1901", standard_date: "5 Feb 1901" },
+          ],
+        },
+      ],
+    };
+    const w = finalWarnings(new Mob(tree, "I1")).find(
+      (x) => x.issueType === "hasDelayedBurial365",
+    );
+    expect(w).toBeDefined();
+    expect(w?.severity).toBe("implausible");
+    // selfFactIds(mob, BURIAL, DEATH) unions the Burial family before the
+    // Death family, so the Burial fact id (F2) comes first.
+    expect(w?.factIds).toEqual(["F2", "F1"]);
   });
 });

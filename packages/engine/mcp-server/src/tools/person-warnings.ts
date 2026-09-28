@@ -14,8 +14,10 @@ import type { Principal } from "../auth/principal.js";
 import { personReadTool } from "./person-read.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
+  SimplifiedFact,
   SimplifiedGedcomX,
   SimplifiedPerson,
+  SimplifiedRelationship,
 } from "../types/gedcomx.js";
 import {
   BIRTH,
@@ -273,6 +275,12 @@ const SIMILAR_SPOUSES_CONFLICTING_DATES = "similarSpousesConflictingDates";
 const HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN = "hasCloseChildBirthsIgnoreSimilarChildren";
 const HAS_CLOSE_CHILD_CHRISTENINGS_6_30 = "hasCloseChildChristenings6_30";
 const HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR = "hasDissimilarSpousesWithSameMarriageYear";
+
+// person_quality parity tags (#2967) — model FamilySearch's own issueTypes, not warnings.java.
+const HAS_DELAYED_BURIAL_365 = "hasDelayedBurial365";
+const HAS_NO_CHILDREN_CONFLICT = "hasNoChildrenConflict";
+const HAS_NO_COUPLE_RELATIONSHIPS_CONFLICT = "hasNoCoupleRelationshipsConflict";
+const HAS_STILLBIRTH_CONFLICT = "hasStillbirthConflict";
 
 // ─── Predicate ports of Java MobWarnings ────────────────────────────────────
 // These mirror the boolean predicate methods in warnings.java exactly:
@@ -908,6 +916,156 @@ export function hasDiffSurname(mob: Mob): boolean {
     if (foundDiff && !foundSame) return true;
   }
   return false;
+}
+
+// ─── person_quality parity predicates (#2967) ───────────────────────────────
+// Not a warnings.java port — FamilySearch publishes no Java source for these.
+
+const NO_CHILDREN: ReadonlySet<string> = new Set(["NoChildren"]);
+const COUPLE_NEVER_HAD_CHILDREN = "CoupleNeverHadChildren";
+const NO_COUPLE_RELATIONSHIPS: ReadonlySet<string> = new Set(["NoCoupleRelationships"]);
+const STILLBIRTH: ReadonlySet<string> = new Set(["Stillbirth"]);
+const BIRTHLIKE_OR_STILLBIRTH: ReadonlySet<string> = new Set([
+  ...BIRTHLIKE_FACT_TYPES,
+  ...STILLBIRTH,
+]);
+
+/** The relationship's fact of an exact type, if any — `CoupleNeverHadChildren`
+ *  lives on the Couple relationship, not on either person. */
+function relationshipFactOfType(
+  rel: SimplifiedRelationship,
+  type: string,
+): SimplifiedFact | undefined {
+  return (rel.facts ?? []).find((f) => f.type === type);
+}
+
+/** True when a ParentChild relationship records `childId` as `parentId`'s child. */
+function isParentChildEdge(mob: Mob, parentId: string, childId: string): boolean {
+  return (mob.tree.relationships ?? []).some(
+    (r) => r.type === "ParentChild" && r.parent === parentId && r.child === childId,
+  );
+}
+
+/** A child of BOTH p1 and p2 (a shared child of the couple), if one exists. */
+function coupleSharedChild(mob: Mob, p1: string, p2: string): SimplifiedPerson | undefined {
+  for (const r of mob.tree.relationships ?? []) {
+    if (r.type !== "ParentChild" || r.parent !== p1 || r.child === undefined) continue;
+    if (isParentChildEdge(mob, p2, r.child)) {
+      return mob.getAllPersons().find((p) => p.id === r.child);
+    }
+  }
+  return undefined;
+}
+
+/**
+ * FamilySearch `person_quality` DELAYED_BURIAL. True when the earliest
+ * possible Burial day is more than `days` days after the latest possible
+ * Death day — exact Burial and exact Death types, the same pairing
+ * `hasBurialAfterDeath` uses. `imperfectDateFudgeDays` is left at 0 (the
+ * helpers' default): earliest-Burial-minus-latest-Death is already the most
+ * generous reading, so a year-only pair stays conservative without extra
+ * slack. Null on either side → false. Using the *earliest* Burial means an
+ * original burial plus a later reinterment does not fire.
+ */
+export function hasDelayedBurial(mob: Mob, days: number): boolean {
+  const earliestBurial = earliestDayOfSelfFacts(mob, BURIAL);
+  const latestDeath = latestDayOfSelfFacts(mob, DEATH);
+  if (earliestBurial === null || latestDeath === null) return false;
+  return earliestBurial - latestDeath > days;
+}
+
+interface NoChildrenConflictHit {
+  view: "self" | "couple" | "parents";
+  factIds: string[];
+  relatedPersonId?: string;
+}
+
+/**
+ * The three FamilySearch views of NO_CHILDREN_CONFLICT: (a) the anchor's own
+ * `NoChildren` fact contradicted by the anchor's own children; (b) a
+ * `CoupleNeverHadChildren` fact on a Couple relationship the anchor belongs
+ * to, contradicted by a child of both partners; (c) the same couple fact on
+ * the anchor's OWN parents, contradicted by the anchor itself being their
+ * child. Internal — the emitter re-uses this to say which view fired; the
+ * exported predicate below only asks whether any of the three did.
+ */
+function findNoChildrenConflict(mob: Mob): NoChildrenConflictHit | null {
+  const selfIds = selfFactIds(mob, NO_CHILDREN);
+  if (selfIds.length > 0 && mob.getChildren().length > 0) {
+    const child = mob.getChildren().at(0);
+    return { view: "self", factIds: selfIds, relatedPersonId: child?.id };
+  }
+  for (const r of mob.tree.relationships ?? []) {
+    if (r.type !== "Couple" || r.person1 === undefined || r.person2 === undefined) {
+      continue;
+    }
+    const coupleFact = relationshipFactOfType(r, COUPLE_NEVER_HAD_CHILDREN);
+    if (!coupleFact) continue;
+    const factIds = coupleFact.id !== undefined ? [coupleFact.id] : [];
+    if (r.person1 === mob.anchorId || r.person2 === mob.anchorId) {
+      const child = coupleSharedChild(mob, r.person1, r.person2);
+      if (child) return { view: "couple", factIds, relatedPersonId: child.id };
+    }
+    if (
+      isParentChildEdge(mob, r.person1, mob.anchorId) &&
+      isParentChildEdge(mob, r.person2, mob.anchorId)
+    ) {
+      return { view: "parents", factIds, relatedPersonId: r.person1 };
+    }
+  }
+  return null;
+}
+
+export function hasNoChildrenConflict(mob: Mob): boolean {
+  return findNoChildrenConflict(mob) !== null;
+}
+
+/**
+ * FamilySearch `person_quality` NO_COUPLE_RELATIONSHIPS_CONFLICT. True when
+ * the anchor has a `NoCoupleRelationships` fact and also has a spouse.
+ */
+export function hasNoCoupleRelationshipsConflict(mob: Mob): boolean {
+  return selfFactIds(mob, NO_COUPLE_RELATIONSHIPS).length > 0 && mob.getSpouses().length > 0;
+}
+
+interface StillbirthConflictHit {
+  branch: "spouse" | "child" | "age";
+  factIds: string[];
+  relatedPersonId?: string;
+}
+
+/**
+ * The three ways a `Stillbirth` fact can conflict with an adult-life event:
+ * (a) a spouse, or a marriage-like fact on the anchor; (b) a child; (c)
+ * living to at least age 1 under the most generous reading — the smallest
+ * possible gap between the latest possible birth-like-or-Stillbirth day and
+ * the earliest possible Death day is still >= 365 days. Internal, for the
+ * same reason as `findNoChildrenConflict` above.
+ */
+function findStillbirthConflict(mob: Mob): StillbirthConflictHit | null {
+  if (selfFactIds(mob, STILLBIRTH).length === 0) return null;
+  const spouse = mob.getSpouses().at(0);
+  if (spouse || mob.marriageLikeFacts().length > 0) {
+    return {
+      branch: "spouse",
+      factIds: selfFactIds(mob, MARRIAGELIKE_FACT_TYPES),
+      relatedPersonId: spouse?.id,
+    };
+  }
+  const child = mob.getChildren().at(0);
+  if (child) {
+    return { branch: "child", factIds: [], relatedPersonId: child.id };
+  }
+  const earliestDeath = earliestDayOfSelfFacts(mob, DEATH);
+  const latestBirth = latestDayOfSelfFacts(mob, BIRTHLIKE_OR_STILLBIRTH);
+  if (earliestDeath !== null && latestBirth !== null && earliestDeath - latestBirth >= 365) {
+    return { branch: "age", factIds: selfFactIds(mob, DEATH) };
+  }
+  return null;
+}
+
+export function hasStillbirthConflict(mob: Mob): boolean {
+  return findStillbirthConflict(mob) !== null;
 }
 
 // ─── factIds attribution helpers ────────────────────────────────────────────
@@ -1650,6 +1808,85 @@ function checkHasDiffSurnameMale(mob: Mob): PersonWarning | null {
     personName: getPersonName(mob.getPerson()),
     message:
       "This person (male) has at least one surname that doesn't match the others, suggesting conflated identities.",
+  };
+}
+
+// ─── Self emitters for the four FamilySearch person_quality checks (#2967) ──
+// Each reads only the anchor's own facts and one-hop relationships — no
+// relatives* variant.
+
+function checkHasDelayedBurial365(mob: Mob): PersonWarning | null {
+  if (!hasDelayedBurial(mob, 365)) return null;
+  const earliestBurial = earliestDayOfSelfFacts(mob, BURIAL);
+  const latestDeath = latestDayOfSelfFacts(mob, DEATH);
+  // Non-null here because the predicate would have returned false otherwise.
+  const actualDays = earliestBurial! - latestDeath!;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DELAYED_BURIAL_365,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, BURIAL, DEATH),
+    message: `The burial date is ${actualDays} days after the death date, more than the 365-day threshold — burial usually happens within days of death.`,
+  };
+}
+
+function checkHasNoChildrenConflict(mob: Mob): PersonWarning | null {
+  const hit = findNoChildrenConflict(mob);
+  if (!hit) return null;
+  const message =
+    hit.view === "self"
+      ? 'This person has children but has a fact listed as "No Children."'
+      : hit.view === "couple"
+        ? 'This person and a spouse have a child together, but have a fact listed as "No Children."'
+        : 'This person was born to a couple who have a fact listed as "No Children."';
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_NO_CHILDREN_CONFLICT,
+    severity: "contradiction",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    factIds: hit.factIds,
+    ...(hit.relatedPersonId ? { relatedPersonId: hit.relatedPersonId } : {}),
+    message,
+  };
+}
+
+function checkHasNoCoupleRelationshipsConflict(mob: Mob): PersonWarning | null {
+  if (!hasNoCoupleRelationshipsConflict(mob)) return null;
+  const spouse = mob.getSpouses().at(0);
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_NO_COUPLE_RELATIONSHIPS_CONFLICT,
+    severity: "contradiction",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, NO_COUPLE_RELATIONSHIPS),
+    ...(spouse?.id ? { relatedPersonId: spouse.id } : {}),
+    message:
+      'This person has one or more couple relationships but has a fact listed as "No Couple Relationships."',
+  };
+}
+
+function checkHasStillbirthConflict(mob: Mob): PersonWarning | null {
+  const hit = findStillbirthConflict(mob);
+  if (!hit) return null;
+  const message =
+    hit.branch === "spouse"
+      ? "This person is marked as stillborn but has a spouse or marriage recorded."
+      : hit.branch === "child"
+        ? "This person is marked as stillborn but has a child recorded."
+        : "This person is marked as stillborn but lived to at least age 1.";
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_STILLBIRTH_CONFLICT,
+    severity: "contradiction",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, STILLBIRTH), hit.factIds),
+    ...(hit.relatedPersonId ? { relatedPersonId: hit.relatedPersonId } : {}),
+    message,
   };
 }
 
@@ -2823,6 +3060,10 @@ export const ALL_WARNING_TAGS = [
   HAS_EVENTS_OUTSIDE_LIFESPAN_NEAR,
   BIRTH_LIKE_RANGE_GREATER_THAN_8,
   BIRTH_RANGE_GREATER_THAN_3,
+  HAS_DELAYED_BURIAL_365,
+  HAS_NO_CHILDREN_CONFLICT,
+  HAS_NO_COUPLE_RELATIONSHIPS_CONFLICT,
+  HAS_STILLBIRTH_CONFLICT,
 ] as const;
 
 /**
@@ -3333,6 +3574,18 @@ export function calculateWarnings(
 
   const burial = checkHasBurialAfterDeath31(mergedMob);
   if (burial) warnings.push(burial);
+
+  const delayedBurial = checkHasDelayedBurial365(mergedMob);
+  if (delayedBurial) warnings.push(delayedBurial);
+
+  const noChildrenConflict = checkHasNoChildrenConflict(mergedMob);
+  if (noChildrenConflict) warnings.push(noChildrenConflict);
+
+  const noCoupleRelationshipsConflict = checkHasNoCoupleRelationshipsConflict(mergedMob);
+  if (noCoupleRelationshipsConflict) warnings.push(noCoupleRelationshipsConflict);
+
+  const stillbirthConflict = checkHasStillbirthConflict(mergedMob);
+  if (stillbirthConflict) warnings.push(stillbirthConflict);
 
   const youngParent12 = checkEarliestChildBirthToBirth12(mergedMob);
   if (youngParent12) warnings.push(youngParent12);
