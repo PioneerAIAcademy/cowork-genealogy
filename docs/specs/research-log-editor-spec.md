@@ -493,11 +493,11 @@ finalize to report. The check runs over every op before any op is applied,
 because finalizing a staged handle deletes it, and a refusal after that would
 consume the handle the corrected re-send needs.
 
-Measured at 032a31caa with `dev/measure-log-query-claims.ts`, which pairs each
+Measured at a1960c5af with `dev/measure-log-query-claims.ts`, which pairs each
 logged op to the call whose response staged its handle and judges it with the
 tool's own `neverSentFilterClaims` against that call's arguments. Re-derive
 rather than quote; a re-run replaces a skill's run log. Of the staged ops with an
-explicit query, 344 pair to their search, and the rule refuses 18 of them: 15
+explicit query, 358 pair to their search, and the rule refuses 18 of them: 15
 distinct claims, the rest re-sends of a call refused for another reason. Every
 one was read, and every one is a true positive — a claimed `collectionId`,
 `recordType`, `sex` or `recordCountry` the search never sent, a mother-name
