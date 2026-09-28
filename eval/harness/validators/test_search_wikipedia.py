@@ -4,8 +4,14 @@
 direct-agent test and every "SKILL.md step N" reference below has been
 repointed at `packages/engine/plugin/agents/search-wikipedia.md`. The agent
 body has no numbered step 5: its closing instruction is the `## Return
-contract`, one caller-facing line followed by `---` and two `summary_for_user`
-paragraphs.
+contract`, exactly one line naming the saved file. It carries no
+`summary_for_user` paragraphs (PENDING in `agent-return-contract.test.ts`).
+
+`ut_search_wikipedia_008`, the decline, is a direct `grade_on_invariant`
+negative, so every validator below that skips non-positive tests skips it, and
+`test_no_wiki_no_write` alone decides it. The `scope-decline` skips below only
+fire on a positive decline test, which the corpus does not carry today; they
+stay because the shape of `_008` is an open question for the lead.
 
 Mechanical checks live here; narrative judgment lands on the
 search-wikipedia `rubric.md` dimensions plus the base Correctness +
@@ -31,12 +37,9 @@ def test_only_wikipedia_search_called(tool_calls, test):
     """Positive search-wikipedia tests must call wikipedia_search and nothing
     else.
 
-    Deliberately NOT skipped on `scope-decline`: a declined request makes no
-    MCP call at all, so this passes vacuously there and stays as the check that
-    the agent did not reach for some other tool while declining.
-
-    The negative branch is vestigial since #2795 — the suite has no negative
-    left — and is kept so the file stays correct if one returns.
+    Skips `ut_search_wikipedia_008`, which is a negative. On a positive
+    `scope-decline` test it would run, and pass only if no other MCP tool was
+    called while declining.
     """
     if test.get("type") != "positive":
         pytest.skip("activation rules handle negative tests")
@@ -489,9 +492,9 @@ def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test)
     """
     if test.get("type") != "positive":
         pytest.skip("step narration is graded on positive runs")
-    # NOT skipped on `scope-decline`. A decline is a reply like any other and is
-    # graded for narration like any other (issue #2795): "Let me check whether
-    # this is in scope" is the same defect whether or not a file follows.
+    # NOT skipped on `scope-decline`, so a positive decline test would be
+    # graded for narration like any other reply. `ut_search_wikipedia_008` is a
+    # negative and skips on the line above.
     # Deliberately NOT a skip. An empty reply on a positive run is itself a
     # step-5 violation ("Tell the user the file was created"), and skipping
     # here would make this validator inert the moment the harness stopped
@@ -500,7 +503,7 @@ def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test)
     reply = _graded_reply(agent_returns, text_response)
     assert reply, (
         "positive run recorded no reply; the agent's return contract requires "
-        "a caller-facing line and the two summary paragraphs. If the reply WAS non-empty, "
+        "one line naming the saved file. If the reply WAS non-empty, "
         "the harness has stopped passing `text_response` into validators "
         "(see the run_validators call site in orchestrator.py) and this "
         "check is inert rather than passing."

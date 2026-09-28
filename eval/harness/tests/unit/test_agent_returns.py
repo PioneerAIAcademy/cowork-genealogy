@@ -97,3 +97,99 @@ def test_ignores_a_non_text_part_rather_than_repring_it():
 
 def test_none_content_is_empty_not_a_crash():
     assert _tool_result_text(None) == ""
+
+
+# --- run_skill: the capture wiring, end to end ------------------------------
+
+
+class _Stream:
+    def __init__(self, messages):
+        self._messages = list(messages)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self._messages:
+            raise StopAsyncIteration
+        return self._messages.pop(0)
+
+    async def aclose(self):
+        return None
+
+
+def test_run_skill_attributes_each_spawn_result_to_its_spawn(tmp_path, monkeypatch):
+    """The helpers above prove the strip; this proves the WIRING. A spawn's
+    ToolResultBlock is matched to its ToolUseBlock by id, trailers are stripped
+    at capture, an errored spawn keeps `is_error`, and a result for a non-spawn
+    tool or an unknown id is not recorded."""
+    import asyncio
+
+    from claude_agent_sdk import (
+        AssistantMessage,
+        ResultMessage,
+        TextBlock,
+        ToolResultBlock,
+        ToolUseBlock,
+        UserMessage,
+    )
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    messages = [
+        AssistantMessage(
+            content=[
+                ToolUseBlock(
+                    id="spawn-1",
+                    name="Agent",
+                    input={"subagent_type": "search-wikipedia", "prompt": "Look up X"},
+                ),
+                ToolUseBlock(id="read-1", name="Read", input={"file_path": "/p/x.md"}),
+                ToolUseBlock(
+                    id="spawn-2",
+                    name="Task",
+                    input={"subagent_type": "image-reader", "prompt": "Read img"},
+                ),
+            ],
+            model="claude-sonnet-4-6",
+        ),
+        UserMessage(
+            content=[
+                ToolResultBlock(
+                    tool_use_id="spawn-1",
+                    content=[{"type": "text", "text": LIVE_RETURN}],
+                ),
+                ToolResultBlock(tool_use_id="read-1", content="file body"),
+                ToolResultBlock(tool_use_id="unknown", content="stray"),
+                ToolResultBlock(
+                    tool_use_id="spawn-2", content="agent crashed", is_error=True
+                ),
+            ]
+        ),
+        AssistantMessage(content=[TextBlock(text="done")], model="claude-sonnet-4-6"),
+        ResultMessage(
+            subtype="result",
+            duration_ms=1,
+            duration_api_ms=1,
+            is_error=False,
+            num_turns=2,
+            session_id="S1",
+        ),
+    ]
+
+    monkeypatch.setattr(sr, "query", lambda **kw: _Stream(messages))
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        )
+    )
+
+    assert result.agent_returns == [
+        {"subagent_type": "search-wikipedia", "text": CLEAN},
+        {"subagent_type": "image-reader", "text": "agent crashed", "is_error": True},
+    ]

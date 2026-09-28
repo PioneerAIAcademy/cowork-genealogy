@@ -22,7 +22,7 @@ Proven in both directions, which is the part a single break would miss:
     `ut_search_wikipedia_008` graded by nothing while this file stayed green.
 
 The four `scope-decline` SKIPS added in the same change are pinned too, in the
-same both-directions shape: each must skip on the decline test and must still
+same both-directions shape: each must skip on a positive decline test and must still
 run -- and still be able to fail -- on an ordinary saved-file run. A skip that
 leaked onto the saved-file arm would silently retire the suite's file checks.
 """
@@ -67,7 +67,10 @@ GOOD_AFTER = {"files": {"schuylkill-county-pennsylvania.md": _SAVED}}
 
 
 def decline_test(tags):
-    return {"id": "ut_search_wikipedia_008", "type": "positive", "tags": list(tags)}
+    """A POSITIVE decline test. Synthetic: the corpus's decline,
+    `ut_search_wikipedia_008`, is a negative, so these pin the `scope-decline`
+    skips for the shape the lead's 2026-09-24 ruling asked for."""
+    return {"id": "ut_search_wikipedia_decline", "type": "positive", "tags": list(tags)}
 
 
 def saved_file_test():
@@ -188,8 +191,8 @@ def test_no_wiki_no_write_is_inert_without_either_tag():
 
 def test_the_file_validators_skip_the_decline_test():
     """A decline saves nothing, so the four workflow validators must stand
-    down. Without the skips `ut_search_wikipedia_008` fails four checks for
-    behaving exactly as its body requires."""
+    down. Without the skips a positive decline test would fail four checks for
+    behaving exactly as the agent body requires."""
     t = decline_test(["no-wiki-no-write", "scope-decline", "direct-arm"])
     assert _run(check_one_call, tool_calls=[], test=t) == "skipped"
     assert _run(check_one_md, before_state=EMPTY, after_state=EMPTY, test=t) == "skipped"
