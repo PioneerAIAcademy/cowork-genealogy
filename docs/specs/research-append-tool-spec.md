@@ -1558,6 +1558,14 @@ census collections against 6/6, 8/8 and 4/4 from the raw `record_read` body. A
 search sidecar therefore cannot feed a per-person role rule. Evidence:
 `packages/engine/mcp-server/dev/probe-census-persona-fields.ts`.
 
+**What that costs, stated rather than assumed.** Requiring a live read adds one
+FamilySearch round trip per record that a search had already returned. What it
+removes is a `record-extractor` spawn: about 136 s per document, 82% of it model
+reasoning, and 2.10 spawns per run across the committed corpus. The trade is
+heavily favourable — a round trip against an episode — but it is a real addition
+on a card whose warrant is turns and latency, and a reader should see both
+numbers rather than only the saving.
+
 #### The census relationship-column year table
 
 | Jurisdiction | Schedule states a relationship from |

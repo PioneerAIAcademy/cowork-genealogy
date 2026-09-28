@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { single } from "../helpers/narrow.js";
-import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
+import { mkdtemp, writeFile, readFile, rm, mkdir } from "fs/promises";
+import { readFileSync } from "fs";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -441,5 +444,318 @@ describe("extraction_append debug holds", () => {
     const t0 = Date.now();
     expect((await appendSource(extractionAppend)).ok).toBe(true);
     expect(Date.now() - t0).toBeGreaterThanOrEqual(600);
+  });
+});
+
+// ─── EXTRACTOR MODE (issue #2937) ───────────────────────────────────────────
+//
+// The dispatch, not the pure function — `tests/utils/record-extract.test.ts`
+// covers the rule itself. What is exercised here is mode entry, the
+// both-arguments refusal, the sidecar resolution, and what the mode gives back.
+//
+// Driven by a REAL captured `record_read` sidecar (an 1870 US census household),
+// staged into a temp project exactly as `record_read` + `research_log_append`
+// would leave it, so the join this mode depends on is the real one.
+
+describe("extraction_append — extractor mode", () => {
+  let dir: string;
+
+  const CENSUS_1870 = JSON.parse(
+    readFileSync(
+      join(
+        dirname(fileURLToPath(import.meta.url)),
+        "..",
+        "fixtures",
+        "record-extract",
+        "census-1870-no-relationship-column.json",
+      ),
+      "utf8",
+    ),
+  ).element;
+
+  /** A project whose log entry l_001 points at a finalized sidecar holding the
+   *  captured record — the state a live `record_read` + `research_log_append`
+   *  leaves behind. */
+  async function seedProject(element: unknown = CENSUS_1870) {
+    const research = {
+      project: {
+        id: "rp_001",
+        objective: "extractor mode",
+        status: "active",
+        created: "2026-01-01",
+        updated: "2026-01-01",
+      },
+      questions: [],
+      plans: [],
+      log: [
+        {
+          id: "l_001",
+          tool: "record_read",
+          query: { recordId: "MZGS-1BH" },
+          outcome: "positive",
+          performed: "2026-01-01T00:00:00.000Z",
+          results_available: 1,
+          results_examined: 1,
+          results_ref: "results/l_001.json",
+          repository: "FamilySearch",
+        },
+      ],
+      sources: [],
+      assertions: [],
+      person_evidence: [],
+      conflicts: [],
+      hypotheses: [],
+      timelines: [],
+      proof_summaries: [],
+      evaluations: [],
+    };
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      // SD-001 exists so the ops-form control below can cite it; extractor mode
+      // creates its own S entry and does not use it.
+      JSON.stringify(
+        { persons: [], relationships: [], sources: [{ id: "SD-001", title: "Test source" }] },
+        null,
+        2,
+      ),
+    );
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "l_001.json"),
+      JSON.stringify(
+        {
+          log_id: "l_001",
+          tool: "record_read",
+          retrieved: "2026-01-01T00:00:00.000Z",
+          returned_count: 1,
+          payload: { query: { recordId: "MZGS-1BH" }, results: [element] },
+        },
+        null,
+        2,
+      ),
+    );
+  }
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "extractor-mode-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("extracts a real record end to end and reports what it wrote", async () => {
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+      questionIds: ["q_001"],
+    } as any);
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+
+    // The echo — the caller never sees the record, so this is what it reports.
+    expect(r.extraction.recordType).toBe("census");
+    expect(r.extraction.censusStatesRelationships).toBe(false);
+    expect(r.extraction.assertionCount).toBeGreaterThan(20);
+    expect(r.extraction.roles).toContain("head_of_household");
+    expect(r.extraction.roles).toContain("wife");
+
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(1);
+    expect(research.assertions.length).toBe(r.extraction.assertionCount);
+    // `derivative`, always: what was read is the INDEX, not the schedule.
+    expect(research.sources[0].source_classification).toBe("derivative");
+    expect(research.sources[0].log_entry_id).toBe("l_001");
+    // Every assertion cites the created source and the log entry.
+    for (const a of research.assertions) {
+      expect(a.source_id).toBe(research.sources[0].id);
+      expect(a.log_entry_id).toBe("l_001");
+      expect(a.extracted_for_question_ids).toEqual(["q_001"]);
+    }
+  });
+
+  it("resolves a persona PER assertion from the record_read sidecar", async () => {
+    // The auto-fill bug this replaces stamped the searched persona's id onto
+    // assertions about someone else, 16 times in the e2e corpus. A record_read
+    // sidecar could not resolve a persona at all before `record_read` joined
+    // PERSONA_BEARING_PRODUCERS.
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+      questionIds: [],
+    } as any);
+    expect(r.ok).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const personas = new Set(research.assertions.map((a: any) => a.record_persona_id));
+    const known = new Set((CENSUS_1870.gedcomx.persons ?? []).map((p: any) => p.id));
+    expect(personas.size).toBeGreaterThan(1);
+    for (const p of personas) expect(known.has(p)).toBe(true);
+  });
+
+  it("writes the caller's absent persons as negative evidence", async () => {
+    // The extractor never mints an absence — a claim about who is MISSING
+    // cannot be read off a document.
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+      questionIds: [],
+      absentPersons: [{ name: "Peter Boyer", note: "Peter Boyer is not in this household" }],
+    } as any);
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const absent = research.assertions.filter((a: any) => a.record_role === "absent");
+    expect(absent).toHaveLength(1);
+    expect(absent[0].record_basis).toBe("absent");
+    expect(absent[0].informant_proximity).toBe("researcher");
+    expect(absent[0].value).toContain("Peter Boyer");
+    // And the extractor produced none of its own.
+    expect(
+      research.assertions.filter((a: any) => a.record_role === "absent" && !/Peter/.test(a.value)),
+    ).toHaveLength(0);
+  });
+
+  // ── the both-arguments guard, broken and then shown to accept each shape ──
+
+  it("refuses logEntryId AND ops together, naming both", async () => {
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+      ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors[0]).toMatch(/logEntryId/);
+    expect(r.errors[0]).toMatch(/ops/);
+  });
+
+  it("refuses them together even when `ops` is empty", async () => {
+    // `[]` is present-but-empty: a shape that reads as "no ops" and would slip
+    // past a truthiness test.
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+      ops: [],
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors[0]).toMatch(/logEntryId/);
+  });
+
+  it("writes NOTHING when it refuses them together", async () => {
+    await seedProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+      ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
+    } as any);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // ── the other direction: each shape ALONE still works ──
+
+  it("still accepts the ops form with no logEntryId", async () => {
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: noId(validSource("x")),
+    } as any);
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+  });
+
+  it("still enforces the lane in extractor mode", async () => {
+    // Mode entry must not become a way around the section gate.
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident" },
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  // ── the failure paths, each naming its own fix ──
+
+  it("refuses a log entry that does not exist", async () => {
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_999",
+      recordId: "MZGS-1BH",
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors[0]).toMatch(/l_999/);
+    expect(r.errors[0]).toMatch(/research_log_append/);
+  });
+
+  it("refuses a log entry with no sidecar, and says to re-read LIVE", async () => {
+    // The trap this card exists around: `record_read` with `resultsRef` stages
+    // nothing, so the entry has no `results_ref` and the message has to name
+    // the live call rather than just the missing field.
+    await seedProject();
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    research.log[0].results_ref = null;
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors[0]).toMatch(/resultsRef/);
+    expect(r.errors[0]).toMatch(/omitted/i);
+  });
+
+  it("refuses a record the sidecar does not hold, listing what it does", async () => {
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "NOT-A-RECORD",
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors[0]).toMatch(/NOT-A-RECORD/);
+    expect(r.errors[0]).toMatch(/expected one of/);
+  });
+
+  it("warns when a multi-person record carries no index fields", async () => {
+    // The shape of a `record_search` sidecar. Not refused — a record type may
+    // legitimately carry none — but roles would be assigned from names and ages
+    // with nothing to say so, which is the silent failure worth a line.
+    const { indexFields: _dropped, ...withoutFields } = CENSUS_1870;
+    await seedProject(withoutFields);
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+    } as any);
+    expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+    const warning = r.validation.warnings.find((w: string) => /NO\s+per-person index fields/.test(w));
+    expect(warning, "expected the missing-index-fields warning").toBeTruthy();
+    expect(warning).toMatch(/record_search/);
+  });
+
+  it("stays silent about index fields when they are present", async () => {
+    await seedProject();
+    const r: any = await extractionAppend({
+      projectPath: dir,
+      logEntryId: "l_001",
+      recordId: "MZGS-1BH",
+    } as any);
+    expect(r.ok).toBe(true);
+    expect(
+      r.validation.warnings.some((w: string) => /per-person index fields/.test(w)),
+    ).toBe(false);
   });
 });

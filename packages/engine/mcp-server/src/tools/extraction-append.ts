@@ -135,13 +135,22 @@ async function extractorMode(
     );
   }
 
+  // Not fatal — a non-census record legitimately carries no index fields — but a
+  // multi-person record with none is almost always a `record_search` sidecar,
+  // where only the searched persona has them. Roles would then be assigned from
+  // names and ages alone, silently, for the whole household. Warned rather than
+  // refused, because the caller may legitimately be extracting a record type
+  // that has no index data at all.
+  const sidecarWarnings: string[] = [];
   if (!match.indexFields && (match.gedcomx?.persons ?? []).length > 1) {
-    // Not fatal — a non-census record legitimately carries none — but a
-    // multi-person record with no index fields is almost always a `record_search`
-    // sidecar, where only the searched persona has them. Roles would be assigned
-    // from names and ages alone, silently, for the whole household.
-    // Warned rather than refused: the caller may be extracting a record type
-    // that has no index data at all.
+    sidecarWarnings.push(
+      `record '${input.recordId}' has ${(match.gedcomx?.persons ?? []).length} personas and NO ` +
+        "per-person index fields. That is the shape of a `record_search` sidecar, which carries " +
+        "them for the searched persona only — roles for the other personas are then assigned " +
+        "from names and ages with nothing to say so. If this is a FamilySearch record, re-read it " +
+        "live with `record_read({ recordId, projectPath })`, `resultsRef` OMITTED, and log that " +
+        "read. If it is a record type that simply carries no index data, this is expected.",
+    );
   }
 
   const { ops, sourceDescription, extraction } = buildExtractionOps(
@@ -177,6 +186,7 @@ async function extractorMode(
       ...result.validation,
       warnings: [
         ...result.validation.warnings,
+        ...sidecarWarnings,
         ...extraction.defaultedClassifications,
         ...extraction.notes,
       ],
@@ -210,8 +220,6 @@ export interface ExtractionModeInput {
     factType?: string;
     note?: string;
   }[];
-  /** Overrides the derived citation when the caller has a better one. */
-  citation?: string;
 }
 
 /** Today, as `YYYY-MM-DD`. */
@@ -254,7 +262,6 @@ export function buildExtractionOps(
   // (GPS step 2), and this tool deliberately does not attempt Evidence
   // Explained form.
   const citation =
-    input.citation ??
     recordSd?.citation ??
     `${title}, FamilySearch (${url ?? doc.recordId} : accessed ${accessed}).`;
 

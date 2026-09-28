@@ -10,7 +10,11 @@ import { toArk, arkToBareId, isDocumentImageArk } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
-import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
+import type {
+  RecordReadInput,
+  RecordReadResult,
+  StagedRecordReadElement,
+} from "../types/record-read.js";
 
 const RECAPI_BASE =
   "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
@@ -312,10 +316,16 @@ async function readFromSidecar(
   // Validate the CALLER's id before reading the sidecar, so a 1:2:/3:1: ARK is
   // refused on this path too rather than only on the live one.
   const wanted = extractEntityId(recordId);
+  // `StagedRecordReadElement`, not `RecordSearchResult`: this path reads back
+  // BOTH shapes — a `record_search` sidecar and a `record_read` one — and only
+  // the former is a search result. The two differ by `indexFields`, which a
+  // record_read sidecar carries and a search sidecar does not, and typing the
+  // read-back as the search shape left that field unrepresented on the one path
+  // that reads it.
   const results = (await readStagedResults(
     projectPath,
     resultsRef,
-  )) as RecordSearchResult[];
+  )) as StagedRecordReadElement[];
   // Reduce each STAGED id with the lenient arkToBareId, not the validating
   // extractEntityId above. These values are stored data, not caller input: a
   // record_search sidecar carries 1:1: personas, but if one ever did not, a
