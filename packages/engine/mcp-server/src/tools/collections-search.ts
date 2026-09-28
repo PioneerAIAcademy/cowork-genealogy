@@ -1,7 +1,7 @@
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   FSCollectionData,
@@ -96,7 +96,8 @@ export function standardPlaceToCollectionsQuery(value: string): string {
  * Fetch all collections from FamilySearch (cached for 1 hour per token).
  */
 export async function fetchAllCollections(
-  token: string
+  token: string,
+  principal?: Principal,
 ): Promise<FSCollectionsResponse> {
   if (
     cache &&
@@ -108,17 +109,31 @@ export async function fetchAllCollections(
 
   const url = `${FS_COLLECTIONS_URL}?count=5000&offset=0&facets=OFF`;
 
-  const response = await fetchWithRetry(
-    url,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-        "User-Agent": BROWSER_USER_AGENT,
-      },
-    },
-    COLLECTIONS_TIMEOUT_MS,
-  );
+  // Use fsFetch when principal is available (the normal tool path); fall back
+  // to a direct fetch for any legacy callers that pass only a token string.
+  const response = principal
+    ? await fsFetch(
+        principal,
+        url,
+        {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": BROWSER_USER_AGENT,
+          },
+        },
+        COLLECTIONS_TIMEOUT_MS,
+      )
+    : await (await import("../utils/http.js")).fetchWithRetry(
+        url,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "User-Agent": BROWSER_USER_AGENT,
+          },
+        },
+        COLLECTIONS_TIMEOUT_MS,
+      );
 
   if (!response.ok) {
     throw new Error(
@@ -213,7 +228,7 @@ export async function collectionsSearchTool(
   const scope = standardPlaceToCollectionsQuery(input.standardPlace);
 
   const token = await getValidToken(principal);
-  const data = await fetchAllCollections(token);
+  const data = await fetchAllCollections(token, principal);
   const entries = data.entries ?? [];
 
   // Title match first; totalForPlace is this count, BEFORE any date filter.

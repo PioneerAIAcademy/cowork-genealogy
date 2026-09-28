@@ -714,11 +714,11 @@ describe("volumeSearchTool", () => {
     await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
     const searchCall = mockFetch.mock.calls[0];
-    const headers = searchCall[1].headers;
-    expect(headers["Authorization"]).toBe("Bearer test-token");
-    expect(headers["Content-Type"]).toBe("application/json");
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
-    expect(headers["FS-User-Agent-Chain"]).toBe("chesworth");
+    const headers = new Headers(searchCall[1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+    expect(headers.get("FS-User-Agent-Chain")).toBe("chesworth");
   });
 
   // Bonus: unresolvable place
