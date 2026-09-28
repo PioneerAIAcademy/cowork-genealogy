@@ -197,6 +197,30 @@ at finalize, not a pure rename.)
 If `stagedResultsRef` is absent (Option A fallback, or a nil/external-site search),
 the log editor behaves exactly as its own spec describes.
 
+**The staged `query` (`payloadQuery`).** `record_search` and `fulltext_search`
+stage their whole response, which carries `query: echoQuery(input)`: every
+argument the call sent, `undefined` dropped and `null` kept. No other producer
+stages an echo of its arguments — `external_links_search` stages only its links,
+and `image_transcribe` and `record_read` stage an identifier they build
+themselves. Finalize returns that `query` with host plumbing removed
+(`projectPath`, an absolute host path meaningless on another machine, and
+`subjectId`, a tree id) as `payloadQuery`, or nothing when the payload's `query`
+is not a plain object. The log editor uses it two ways, and both read the same
+stripped value (`stripQueryPlumbing`):
+
+- **Default.** When the caller omits `query`, the entry's `query` is
+  `payloadQuery`, so the model never re-serializes an ARK-dense object it can
+  only get wrong.
+- **Ground truth.** When the caller supplies `query`, it is kept as sent, never
+  rewritten, but refused if it names a filter `payloadQuery` does not carry at
+  all (`research-log-editor-spec.md` §8.3). That check reads the staged file
+  before any op is finalized (`readStagedEnvelopeQuery`, read-only), because
+  step 5 unlinks it.
+
+The eval mock echoes the call's arguments into `query` for these two tools
+rather than serving a fixture's recorded query, so the unit harness stages the
+same ground truth production does.
+
 ---
 
 ## 7. Lifecycle & cleanup

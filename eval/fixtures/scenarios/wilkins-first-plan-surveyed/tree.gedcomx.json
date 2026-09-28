@@ -1,0 +1,35 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Elijah",
+          "surname": "Wilkins"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1814",
+          "standard_date": "1814",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Muhlenberg County, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

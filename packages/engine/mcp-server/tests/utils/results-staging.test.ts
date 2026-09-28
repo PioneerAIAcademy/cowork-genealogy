@@ -6,6 +6,8 @@ import {
   stageSearchResults,
   finalizeStagedResults,
   unloggedStagedSearches,
+  stripQueryPlumbing,
+  readStagedEnvelopeQuery,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -100,6 +102,43 @@ describe("results-staging", () => {
       const remaining = await stagingFiles();
       expect(remaining).not.toContain("stale.json");
       expect(remaining).toHaveLength(1); // the fresh one
+    });
+  });
+
+  describe("stripQueryPlumbing / readStagedEnvelopeQuery (#1779)", () => {
+    it("strips projectPath and subjectId and keeps every other key", () => {
+      expect(stripQueryPlumbing({ surname: "A", recordType: "birth", projectPath: "/p", subjectId: "I1" })).toEqual({
+        surname: "A",
+        recordType: "birth",
+      });
+    });
+
+    it.each([["null", null], ["a string", "{}"], ["an array", []], ["undefined", undefined]])(
+      "returns undefined for %s",
+      (_label, value) => {
+        expect(stripQueryPlumbing(value)).toBeUndefined();
+      },
+    );
+
+    it("reads a staged handle's tool and stripped query without consuming it", async () => {
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "A", projectPath: "/p" }, results: [{ recordId: "R1" }] },
+      });
+      expect(await readStagedEnvelopeQuery(dir, handle!.resultsRef)).toEqual({
+        tool: "record_search",
+        query: { surname: "A" },
+      });
+      expect(await stagingFiles()).toHaveLength(1);
+    });
+
+    it("returns undefined for a ref outside the staging dir, a missing file, or a traversal", async () => {
+      await mkdir(join(dir, "results"), { recursive: true });
+      await writeFile(join(dir, "results", "log_001.json"), JSON.stringify({ tool: "record_search", payload: { query: {} } }));
+      expect(await readStagedEnvelopeQuery(dir, "results/log_001.json")).toBeUndefined();
+      expect(await readStagedEnvelopeQuery(dir, `${STAGING_SUBDIR}/missing.json`)).toBeUndefined();
+      expect(await readStagedEnvelopeQuery(dir, "../outside.json")).toBeUndefined();
     });
   });
 
