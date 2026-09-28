@@ -1,0 +1,482 @@
+{
+  "_why": "US 1850: no relationship column AND no relationship field at all",
+  "_capturedFrom": "MXQP-96T",
+  "element": {
+    "recordId": "MXQP-96T",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_344062315",
+          "ark": "ark:/61903/1:1:MXQP-96R",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "44239e05-65e0-4166-ad2e-3d7602e5849c",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Martin"
+            }
+          ],
+          "facts": [
+            {
+              "id": "6b4a7830-7140-4bab-811a-326b7b78bfd0",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "id": "18b68ea0-9c4a-4a62-80ad-8350ee0b6d0f",
+              "type": "Birth",
+              "date": "1798",
+              "standard_date": "1798",
+              "place": "Ohio"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_344062316",
+          "ark": "ark:/61903/1:1:MXQP-96T",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "f639e1c1-d4f8-4449-8ed8-64473d487eec",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Mary"
+            }
+          ],
+          "facts": [
+            {
+              "id": "e94ab18c-a7eb-41de-9f61-d1e63a66be49",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "id": "0d69b452-ede9-4c61-bc26-b2ea37a47ca7",
+              "type": "Birth",
+              "date": "1798",
+              "standard_date": "1798",
+              "place": "Maryland"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_344062317",
+          "ark": "ark:/61903/1:1:MXQP-96Y",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "a32019d3-a9c9-4ab7-86d2-2a335177f53a",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Susanna"
+            }
+          ],
+          "facts": [
+            {
+              "id": "39863831-2d0e-486b-8f0a-1296b3a485ae",
+              "type": "Birth",
+              "date": "1818",
+              "standard_date": "1818",
+              "place": "Maryland"
+            },
+            {
+              "id": "24386350-b90f-4951-997a-c31471548b9d",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_344062318",
+          "ark": "ark:/61903/1:1:MXQP-96B",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "4a73399a-6a44-426d-ab5a-979c35538a1d",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Henry"
+            }
+          ],
+          "facts": [
+            {
+              "id": "2e64fc1a-5cb0-4654-9a2c-0a5bb3cd6b83",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "id": "ebe29436-ae05-4db5-985f-d44d4378b83e",
+              "type": "Birth",
+              "date": "1830",
+              "standard_date": "1830",
+              "place": "Maryland"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_344062319",
+          "ark": "ark:/61903/1:1:MXQP-961",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "cd5f7137-b566-4a19-b778-8db92c99892b",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Sanford"
+            }
+          ],
+          "facts": [
+            {
+              "id": "d135af8e-89da-475c-b4de-593e1d34315d",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "id": "a676b76b-5819-4f54-8c61-1625b51d82fd",
+              "type": "Birth",
+              "date": "1832",
+              "standard_date": "1832",
+              "place": "Ohio"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_344062320",
+          "ark": "ark:/61903/1:1:MXQP-9XM",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "e29a6819-c2c8-44d4-a038-4e0327132b93",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Wilson"
+            }
+          ],
+          "facts": [
+            {
+              "id": "7878053b-8278-4707-9bcc-46a4c2baa86d",
+              "type": "Birth",
+              "date": "1835",
+              "standard_date": "1835",
+              "place": "Ohio"
+            },
+            {
+              "id": "2e6abb4d-a8c8-491a-b76b-7a98270fa1dc",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_344062321",
+          "ark": "ark:/61903/1:1:MXQP-9X9",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "827f2c54-43e3-4a0d-ae7c-dd280afba7ae",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Mary J"
+            }
+          ],
+          "facts": [
+            {
+              "id": "f3a35183-2a04-44af-bc05-97997173a65e",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "id": "e25deee5-214a-4fed-ae70-729def29c65b",
+              "type": "Birth",
+              "date": "1838",
+              "standard_date": "1838",
+              "place": "Ohio"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_344062322",
+          "ark": "ark:/61903/1:1:MXQP-9XS",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "cd7244aa-d048-46da-a168-61fe74d16810",
+              "type": "BirthName",
+              "surname": "Gwynn",
+              "given": "Eliza"
+            }
+          ],
+          "facts": [
+            {
+              "id": "5375ee91-0896-429d-81c4-9c0e3029564c",
+              "type": "Birth",
+              "date": "1836",
+              "standard_date": "1836",
+              "place": "Ohio"
+            },
+            {
+              "id": "fd239688-2087-471e-9a9b-a7a31ad29a7f",
+              "type": "Census",
+              "primary": true,
+              "date": "1850",
+              "standard_date": "1850",
+              "place": "Grand Prairie Township, Marion, Ohio, United States"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "src_r_208968076",
+          "resource_type": "Record",
+          "title": "Household of Martin Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:MHJ1-NGN",
+          "coverage": {
+            "place_rep_id": "4813809",
+            "date_range": "1850",
+            "record_type": "Census",
+            "standard_place": "Grand Prairie Township, Marion, Ohio, United States"
+          }
+        },
+        {
+          "id": "sd_c_1401638",
+          "resource_type": "Collection",
+          "title": "United States, Census, 1850",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "1850/1850",
+            "record_type": "Census",
+            "standard_place": "United States"
+          }
+        },
+        {
+          "id": "sd_da1",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6QKQ-G5M",
+          "coverage": {
+            "place_rep_id": "394856",
+            "date_range": "1850",
+            "record_type": "Census",
+            "standard_place": "Marion, Ohio, United States"
+          }
+        },
+        {
+          "id": "sd_p_344062316",
+          "resource_type": "Person",
+          "title": "Mary Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-96T"
+        },
+        {
+          "id": "sd_p_344062315",
+          "resource_type": "Person",
+          "title": "Martin Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-96R"
+        },
+        {
+          "id": "sd_p_344062320",
+          "resource_type": "Person",
+          "title": "Wilson Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-9XM"
+        },
+        {
+          "id": "sd_p_344062317",
+          "resource_type": "Person",
+          "title": "Susanna Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-96Y"
+        },
+        {
+          "id": "sd_p_344062321",
+          "resource_type": "Person",
+          "title": "Mary J Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-9X9"
+        },
+        {
+          "id": "sd_p_344062319",
+          "resource_type": "Person",
+          "title": "Sanford Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-961"
+        },
+        {
+          "id": "sd_p_344062318",
+          "resource_type": "Person",
+          "title": "Henry Miller, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-96B"
+        },
+        {
+          "id": "sd_p_344062322",
+          "resource_type": "Person",
+          "title": "Eliza Gwynn, \"United States, Census, 1850\"",
+          "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXQP-96R : Sun Jan 19 10:10:28 UTC 2025), Entry for Martin Miller and Mary Miller, 1850.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MXQP-9XS"
+        },
+        {
+          "id": "sd_auto_M9JT-92D",
+          "resource_type": "auto",
+          "title": "United States, Residences, Census, from 1793 to 1964",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+            "standard_place": "United States"
+          }
+        }
+      ],
+      "places": [
+        {
+          "id": "place_4813809"
+        }
+      ]
+    },
+    "indexFields": {
+      "p_344062315": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_000",
+        "householdId": "1148",
+        "age": "52"
+      },
+      "p_344062316": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_001",
+        "householdId": "1148",
+        "age": "52"
+      },
+      "p_344062317": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_002",
+        "householdId": "1148",
+        "age": "32"
+      },
+      "p_344062318": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_003",
+        "householdId": "1148",
+        "age": "20"
+      },
+      "p_344062319": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_004",
+        "householdId": "1148",
+        "age": "18"
+      },
+      "p_344062320": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_005",
+        "householdId": "1148",
+        "age": "15"
+      },
+      "p_344062321": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_006",
+        "householdId": "1148",
+        "age": "12"
+      },
+      "p_344062322": {
+        "sortKey": "0000000004204493_00301_12407_0000000208968076_007",
+        "householdId": "1148",
+        "age": "14"
+      }
+    }
+  }
+}

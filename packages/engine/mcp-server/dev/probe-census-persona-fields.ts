@@ -479,7 +479,8 @@ async function runOrderPool(collectionId: string, surname: string): Promise<void
     if (plausible) headFirstPlausible++;
 
     console.log(
-      `\n  ${entityId}  ${persons.length} persons  sortOrder${differs ? " DIFFERS from" : " == "}arrayOrder  head-first:${plausible ? "PLAUSIBLE" : "NO"}`,
+      `\n  ${entityId}  ${persons.length} persons  sortOrder${differs ? " DIFFERS from" : " == "}arrayOrder  ` +
+        `statesHead:${statesHead ? "yes" : "NO"}  headIsFirst:${statesHead ? (plausible ? "YES" : "NO") : "n/a"}`,
     );
     for (let i = 0; i < sorted.length; i++) {
       const p = sorted[i];
@@ -503,13 +504,18 @@ async function runOrderPool(collectionId: string, surname: string): Promise<void
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   if (argv[0] === "--order") {
-    // Pre-1880 US collections: the population the positional rule actually runs
-    // on. Ids are unverified inputs; each pool prints the title it received.
-    for (const [cid, sn] of [
-      ["1401638", "Miller"], // expected: United States, Census, 1850
-      ["1473181", "Miller"], // expected: United States, Census, 1860
-      ["1438024", "Miller"], // expected: United States, Census, 1870
-    ] as const) {
+    // Pre-1880 US collections by default: the population the positional rule
+    // actually runs on. Ids are unverified inputs; each pool prints the title it
+    // received. Pass collection ids after --order to probe others.
+    const pools: [string, string][] =
+      argv.length > 1
+        ? argv.slice(1).map((cid) => [cid, "Miller"] as [string, string])
+        : [
+            ["1401638", "Miller"], // expected: United States, Census, 1850
+            ["1473181", "Miller"], // expected: United States, Census, 1860
+            ["1438024", "Miller"], // expected: United States, Census, 1870
+          ];
+    for (const [cid, sn] of pools) {
       try {
         await runOrderPool(cid, sn);
       } catch (e) {

@@ -1,0 +1,122 @@
+{
+  "_why": "principal -> deceased; parents from edges",
+  "_capturedFrom": "ark:/61903/1:1:F6X7-CHH",
+  "element": {
+    "recordId": "F6X7-CHH",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_11262383348",
+          "ark": "ark:/61903/1:1:F6X7-CHH",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "43c220b4-c573-47f9-88ac-35926799764e",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "William"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Unknown"
+            },
+            {
+              "type": "Occupation",
+              "value": "Laborer"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "id": "e16b6d3b-bbdb-4bca-bf0f-ad59074f4512",
+              "type": "Birth",
+              "date": "1854",
+              "standard_date": "1854",
+              "place": "Jackson Co., O."
+            },
+            {
+              "id": "d2a96f86-23cd-4e4c-a38a-e4e01359811a",
+              "type": "Death",
+              "primary": true,
+              "date": "1879",
+              "standard_date": "1879",
+              "place": "Jackson, Ohio, United States"
+            },
+            {
+              "id": "fb071c98-5773-4aa6-aa70-0c2c771140dd",
+              "type": "Residence",
+              "place": "Scioto T.P., Jackson, Ohio"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "src_r_358271508",
+          "resource_type": "Record",
+          "title": "Entry for William Miller, \"Ohio, County Death Records, 1840-2001\"",
+          "citation": "\"Ohio, County Death Records, 1840-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F6X7-CHH : Sun Mar 10 08:35:39 UTC 2024), Entry for William Miller, 1879.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:MXGC-C6V",
+          "coverage": {
+            "record_type": "Death"
+          }
+        },
+        {
+          "id": "sd_c_2128172",
+          "resource_type": "Collection",
+          "title": "Ohio, County Death Records, 1840-2001",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/2128172",
+          "coverage": {
+            "place_rep_id": "357",
+            "date_range": "1840/2001",
+            "record_type": "Death",
+            "standard_place": "Ohio, United States"
+          }
+        },
+        {
+          "id": "sd_da1",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99ZR-J9CZ-5",
+          "coverage": {
+            "place_rep_id": "393214",
+            "date_range": "1900–1908",
+            "record_type": "Death",
+            "standard_place": "Jackson, Ohio, United States"
+          }
+        },
+        {
+          "id": "sd_p_11262383348",
+          "resource_type": "Person",
+          "title": "William Miller, \"Ohio, County Death Records, 1840-2001\"",
+          "citation": "\"Ohio, County Death Records, 1840-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F6X7-CHH : Sun Mar 10 08:35:39 UTC 2024), Entry for William Miller, 1879.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:F6X7-CHH"
+        },
+        {
+          "id": "sd_auto_M9J1-9HK",
+          "resource_type": "auto",
+          "title": "United States, Ohio, Deaths, from 0025 to 9223",
+          "coverage": {
+            "place_rep_id": "357",
+            "date_range": "+0025-01-01T00:00:00Z/+9223-12-31T23:59:59Z",
+            "standard_place": "Ohio, United States"
+          }
+        }
+      ]
+    },
+    "indexFields": {
+      "p_11262383348": {
+        "sortKey": "000587330339#09_000",
+        "age": "25"
+      }
+    }
+  }
+}
