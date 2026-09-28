@@ -63,10 +63,6 @@ const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
     why: "151 lines of init decision rules and vague-data interpretation; 4 of 23 terms in the body",
   },
   {
-    path: "record-extraction/references/information-classification-at-extraction.md",
-    why: "147 lines of informant analysis incl. the three-informant death-certificate worked example; 2 of 22 terms in the body",
-  },
-  {
     path: "record-extraction/references/note-taking-standards.md",
     why: "151 lines mapping GPS note-taking standards 25-33 to assertion extraction; 0 of 18 terms in the body",
   },
