@@ -661,14 +661,28 @@ into `input.delegation`, the `negative` block is deleted, and the test gains
 validator (no `wikipedia_search` call, no new `.md`) plus the base dimensions,
 which is what the routed version's `grade_on_invariant` sibling would have had.
 
-Converting it as a negative was considered and does not work, in either
-reading. As a *routed* negative it aborts `skill not found` the moment the
-skill directory is deleted. As a *direct* negative it grades nothing: a direct
-test's outcome is decided on the spawn, `activated` is derived from that spawn
-plus a substantive reply, and an agent's return contract makes **every** reply
-substantive -- one caller-facing line plus two `summary_for_user` paragraphs --
-so `activated` is true whatever the agent decided, including on the correct
-decline. The workflow validators that would otherwise fail such a test skip on
+Converting it as a negative was considered. As a *routed* negative it aborts
+`skill not found` the moment the skill directory is deleted. As a *direct*
+negative its outcome is decided on the spawn, and `activated` is derived from
+that spawn plus a **substantive** reply -- `derive_activated` via
+`_is_substantive`, which requires at least two sentences and ten words.
+
+**That threshold is the thing to design around, and it was measured the hard
+way.** A decline is short by definition, so a one-sentence decline leaves
+`activated` false and a positive decline test fails on activation even when the
+agent behaved correctly and every judge dimension scored 3 or null -- observed
+on `v1_2026-09-27_22-55-04`, where `ut_search_wikipedia_008` did exactly that.
+An earlier draft of this section asserted that an agent's return contract makes
+every reply substantive; that is false, both because a decline path can bypass
+the contract and because `search-wikipedia` does not carry one (see the PENDING
+list in `tests/packaging/agent-return-contract.test.ts`). The agent body
+therefore instructs a **two-sentence** decline -- the scope, then what the agent
+does handle -- which is better for the reader and clears the threshold. A suite
+whose decline cannot be phrased in two sentences should use a negative with
+`grade_on_invariant` instead, where `_compute_outcome` returns on the invariant
+before activation is read.
+
+The workflow validators that would otherwise fail such a test skip on
 `scope-decline`; `test_reply_does_not_narrate_pending_step` deliberately does
 not, because a decline is graded for narration like any other reply.
 

@@ -17,9 +17,9 @@
     "scenario": null
   },
   "judge_context": [
-    "The agent should reply briefly that the request is outside the genealogy toolkit's scope, rather than coercing it into an encyclopedia lookup. It has no lane to hand this back to — historical-context, locality-guide and search-familysearch-wiki are all genealogy lanes and none of them owns a programming question — so a plain decline is the whole correct answer and naming another agent would be wrong.",
+    "The agent should decline: the request is outside the genealogy toolkit's scope and must not be coerced into an encyclopedia lookup. It has no lane to hand this back to - historical-context, locality-guide and search-familysearch-wiki are all genealogy lanes and none owns a programming question - so a plain decline is the whole correct answer and naming another agent would be wrong.",
     "A no-wiki-no-write invariant validator also runs on this test: no wikipedia_search call and no saved .md file. The registered fixture exists only to make that clause falsifiable; do not read it as a hint that a lookup is expected.",
-    "Grade the reply's economy exactly as on a saved-file run: the decline sentence, then the two summary paragraphs. No file is named because none exists."
+    "Two short sentences are the correct length - the scope is stated and what the agent does handle is named. Do not penalize brevity, and do not expect a summary of anything."
   ],
   "mcp_fixtures": [
     "wikipedia-search-any"

@@ -30,16 +30,10 @@ Did the query the agent sent target the article the delegation asked for, and di
 
 ## Reply economy
 
-The agent body's `## Return contract` defines a three-part return, and this dimension grades that shape. Nothing else in the suite does: the validators check the saved file and the absence of step narration, and neither can see whether the return is the right *shape*.
+The agent body's `## Return contract`: **exactly one line naming the saved file, and nothing else.** "Saved the Wikipedia summary to `albert-einstein.md`." is the complete and correct return. The article goes in the file, not into the reply.
 
-The required shape:
+This agent carries no `summary_for_user` paragraphs, and that is deliberate rather than an omission — it is on the PENDING list in `tests/packaging/agent-return-contract.test.ts` with the measurement behind it. Do not reward a return that adds them, and do not penalize one for lacking them.
 
-1. **One caller-facing line** naming the saved file — and on a decline, one sentence saying the request is out of scope or naming the agent that owns it (`historical-context`, `locality-guide`, `search-familysearch-wiki`). Nothing else above the `---`.
-2. A line containing only `---`.
-3. **Exactly two unlabeled paragraphs.** The first is for a reader who has never done genealogy: what was looked up and what the entry covers, in plain words. The second is one sentence on what happens next. **Neither may name a file**, an identifier, a tool or a field.
-
-Grade the whole return, not the closing sentence. Note that the file name belongs *above* the `---` and must not appear below it — that inversion is the specific defect this dimension exists to catch, because a validator cannot tell a filename in paragraph one from a filename in the caller-facing line.
-
-- **pass:** All three parts present and in order. The caller-facing line names the saved file (or declines, on the decline test). The two paragraphs name no file and restate nothing from the article.
-- **partial:** The shape is right but something leaks — a file name, a tool name or a field name appears below the `---`; there are three paragraphs instead of two, or one; the caller-facing half runs to several sentences; the paragraphs characterize the article in passing ("a useful overview of the county's mining history"); or a label or heading is attached to either paragraph.
-- **fail:** The `---` and the two paragraphs are absent altogether, so the caller has nothing to relay to the researcher; or the return restates, summarizes or quotes the article content, duplicating in chat what the file already holds.
+- **pass:** One line naming the saved file. Nothing else. On the decline test, two short sentences declining — or naming the owning agent — and nothing else.
+- **partial:** Mid-workflow narration reaches the reply ("Now I'll write the filled template to a file…"), or the reply runs to several sentences, or it characterizes the article in passing ("a useful overview of the county's mining history") — anything beyond naming the file.
+- **fail:** The reply restates, summarizes or quotes the article content, duplicating in chat what the file already holds; or it asserts what the subject means for genealogy, which is a fabrication risk even when the extract supports it.

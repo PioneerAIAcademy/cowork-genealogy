@@ -35,6 +35,28 @@ const PENDING: Record<string, string> = {
   "research-exhaustiveness.md": "lands with its next body edit",
   "gps-mentor.md":
     "lands with the narrative_for_user split (spec §8, §11.1) on its next body edit",
+  // NOT "lands with its next body edit" like the three above. This one is a
+  // measured conflict, and the premise of the 2026-09-18 ruling does not hold
+  // for it: that ruling exists because "an agent body without the field is an
+  // agent whose work reaches the researcher as nothing", and this agent's
+  // deliverable is a markdown file the researcher opens, announced by a
+  // caller-facing line the router already relays verbatim.
+  //
+  // Its suite grades reply brevity from three directions at once
+  // (`test_reply_does_not_narrate_pending_step`, the `Reply economy` rubric
+  // dimension, and base Correctness, which failed one test for a single
+  // interpretive clause), so two paragraphs of researcher-facing prose written
+  // straight after reading the article is space the extract flows into.
+  // Measured. The one-line return scored 12/12 pass three runs running, in the
+  // committed logs v1_2026-07-28_09-35-42, v1_2026-08-22_10-20-08 (one partial)
+  // and v1_2026-09-03_11-36-25. Adding the contract scored 7 fails, and 5 on a
+  // second wording, with every score of 1 tracing to article content in the
+  // reply; those two runs are NOT in the corpus, because rule 6 forbids
+  // committing a run log carrying a fail, so the figures are quoted from the
+  // PR that measured them rather than from a file here. Whether the contract
+  // should apply to a file-deliverable agent at all is on issue #2795.
+  "search-wikipedia.md":
+    "measured conflict with its own suite's reply-brevity grading; premise of the 2026-09-18 ruling does not hold for a file-deliverable agent (#2795)",
 };
 
 function stripFences(text: string): string {
