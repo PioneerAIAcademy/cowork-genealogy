@@ -1061,6 +1061,17 @@ tool against the write-once `starting-tree.gedcomx.json` baseline.
   shipped has no `starting-tree.gedcomx.json`; the check returns no warning rather
   than treating every fact as new. Fires only on the call that *sets* `completed`,
   so it never re-warns on a later write to an already-completed project.
+- **2026-09-23 reading of the 3 fires.**
+  `anders-monsen-ancestry/run-2026-07-09_18-51-04.json` is a true positive: a
+  bounded Marriage fact (date and place both recovered) was encodable but not
+  encoded. The other two are false denies — documented negative conclusions
+  with nothing to encode: `joseph-david-daughter/run-2026-07-27_20-46-04.json`
+  ("did not have a daughter named Elizabeth A.") and
+  `mary-mcandrew-son/run-2026-08-23_03-19-50.json` ("five recorded children
+  are the only ones"). 2 of 3 fires being false denies on documented negatives
+  is why this stays warn-only. The condition to revisit it: a machine-readable
+  signal that a conclusion has nothing to encode, so a negative conclusion
+  stops reading as a missed one.
 
 ### 5.3 Corrected-assertion-with-no-linked-fact nudge (warning, not a precondition)
 
