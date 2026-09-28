@@ -147,7 +147,7 @@ depends on another shipping first.
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
-| §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
+| §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
 | §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null. ADR-0009 constraint 3 holds because an assertion is a (record, party) pair, so a second persona is a second assertion, and the tree person keeps the two links of a relationship assertion apart |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
@@ -1536,9 +1536,9 @@ some of them fails `make harness-test`.
   question from "has this ever happened" to "what stops it where the permission
   prompt does not", which is the form the next decision has to take.
 - **`Read` is not revoked, and should not be** until there is a way to read the
-  same data. `research_query` covers 11 of `research.json`'s ~15 top-level
-  sections (missing `project`, `researcher_profile`, `known_holdings`,
-  `localities`) and pages at 50 items per call — `offset` reaches items 51+,
+  same data. `research_query` covers 12 of `research.json`'s ~15 top-level
+  sections (missing `project`, `researcher_profile`, `known_holdings`) and
+  pages at 50 items per call — `offset` reaches items 51+,
   and `truncated` says when to use it. For
   `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
   to the tree as `research_query` stands to `research.json`. Plenty of tools
@@ -1831,7 +1831,7 @@ bypass appears in a runlog or a feedback case"* — is now met.
 **What does NOT change: a command-text matcher is still the wrong instrument.**
 `cat research.json` and `cat > research.json` remain indistinguishable without
 parsing a shell; 37 of the 40 corpus touches are reads the system depends on,
-because `research_query` covers 11 of ~15 sections and there is no tree query
+because `research_query` covers 12 of ~15 sections and there is no tree query
 surface at all; and a denial simply moves the agent to `head`, `python`, or a
 path built from a variable — the harness's own denial text suggests as much.
 
@@ -2090,7 +2090,7 @@ Design points that were paid for and should not be re-derived:
     `scored_ids`, and an errored `tree_edit` no longer counts as a protected
     write in `find_unguarded_protected_writes`.
 
-  Violation counts and the §8 `compliance`/`outcome` verdict are not comparable
+  Violation counts and the §8 `compliance` verdict are not comparable
   across that join. The boundary is the commit, not cleanly a version number —
   the join shipped at `harness_schema_version` 2 and the bump to 3 came after, so
   a `2` log means either thing depending on its date; `docs/specs/e2e-test-spec.md`
@@ -2148,13 +2148,35 @@ expectation that it graduates.
 ## 8. Post-run compliance detectors
 
 Three non-windowed checks over the final project state and the run's tool-call
-log; any violation sets `compliance: fail` and forces `outcome: fail`,
-regardless of what the judge said. Specified in full — including the historical
+log; any violation sets `compliance: fail`. Specified in full — including the historical
 `not_checked` handling — in `docs/specs/e2e-test-spec.md` §7.5. Implemented in
 `skill_invocation.py` (`find_effects_without_invocation`,
 `find_missing_mentor_verdicts`, `find_person_evidence_missing_same_person`).
 
-Two properties worth keeping in view here:
+**They report; they do not gate.** A violation moves the `compliance` axis and
+nothing else. Until 2026-09-25 it also forced `outcome: fail` regardless of what
+the judge said, and that veto had stopped discriminating. Measured at 2c00dfd76
+over the 56 committed e2e runs carrying a schema version, it fired on 53, and 25
+of those were genealogically `pass`. A gate
+satisfied that rarely carries about one bit and spends it on the detectors' own
+base rate rather than on whether the research was right — so a run that
+recovered every stripped finding exited exactly like one that recovered none.
+Removing the veto was chosen over keeping it and fixing only the report (the
+gate stays one bit) and over splitting the gate from the exit code (two
+definitions of `fail` for one run).
+
+Two costs come with it, both accepted:
+
+- A run that bypasses a guardrail now exits green. The bypass is still recorded
+  on the compliance axis and still printed by `make e2e-corpus`, but nothing
+  fails on it.
+- The exit code reveals pass/fail to a blind grader unconditionally, not only
+  when compliance is clean — `e2e-test-spec.md` §7.4's residual leak, widened.
+
+Both reopen if a check graduates: a promoted check earns the veto back, which
+is what the shadow-to-graduate table below is for.
+
+Two further properties worth keeping in view here:
 
 - **Whole-run scope is a real limitation, not an oversight.** "Was this skill
   invoked anywhere" passes on `bagley-father-1884`, where it was invoked 52
