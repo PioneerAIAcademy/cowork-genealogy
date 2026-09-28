@@ -186,10 +186,11 @@ never rediscover it.
 ## Step 2 — Identify roles in the record
 
 List every person mentioned and assign a `record_role`:
-- Naming convention: `head_of_household`, `wife`, `child_1`, `child_2`,
-  `deceased`, `informant`, `father_of_bride`, `mother_of_groom`,
-  `grantee`, `grantor`, `testator`, `heir_1`, `witness_1`, `godparent_1`,
-  `consent_signer_1`. Number roles sequentially.
+- Naming convention: `head_of_household`, `wife`, `husband`, `child_1`,
+  `household_member_1`, `boarder_1`, `deceased`, `informant`, `bride`,
+  `groom`, `father_of_bride`, `mother_of_groom`, `grantee`, `grantor`,
+  `registrant`, `testator`, `heir_1`, `witness_1`, `godparent_1`,
+  `consent_signer_1`, `other_1`. Number roles sequentially.
 - Negative evidence uses `absent` — the exact string, lowercase, no
   prefix or qualifier. Never invent variants (`subject_absent`,
   `not_listed`, `missing`): downstream validators and skills key off the
@@ -209,14 +210,16 @@ List every person mentioned and assign a `record_role`:
   relationship while labelling the doubt, and the correlation it belongs
   to happens downstream, not here.** Say what you noticed in your
   summary — that is how the hypothesis reaches the next skill.
-  - **`record_role` = apparent within-group structure, not raw position
-    after the head.** Don't number everyone after the head `child_1,
-    child_2, …` — that fabricates a parent-child link the record never
-    states (pre-1880 has no relationship column). A co-resident family
-    keeps its own `head`/`wife`/`child_N`; an adult too old to be the
-    head's child isn't `child_N` of that head. Unknown tie to the head →
-    label by the person's own role, leave the cross-group link to a
-    hypothesis.
+  - **Role a pre-1880 household positionally.** First in source order is
+    `head_of_household`. The next adult of the opposite sex sharing the
+    head's surname, with a plausible age gap, is `wife`. Later persons
+    with the head's surname young enough to be the couple's are
+    `child_N`. Everyone else — a different surname, an adult too old to
+    be the head's child, an unknown tie — is `household_member_N`, never
+    `child_N`. These are the same tokens a later census states.
+    **They are labels and produce no relationship assertion**: the rule
+    above still binds, and a `child_N` here asserts nothing about
+    parentage.
 - **Obituaries — read the survivor list precisely.** A name with a
   parenthetical follows one of two conventions; disambiguate by *what is in
   the parens*:
