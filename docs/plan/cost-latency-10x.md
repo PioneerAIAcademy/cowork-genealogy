@@ -490,7 +490,7 @@ recall drop; 3 runs × 3 fixtures detects **0.355**; detecting 0.20 needs **28
 runs/arm**, 0.10 needs **113**. So a three-run arm is a **collapse detector, not a
 measurement**, and the repo's "3 runs, all pass" convention false-fails a genuinely
 0.90-quality config **27%** of the time. Score on `judge_output.recall_required`, never
-`outcome` or `verdict` — `compliance: fail` is the norm and forces `outcome: fail`
+`outcome` or `verdict` — `compliance: fail` is the norm, and until 2026-09-25 it forced `outcome: fail`
 regardless of research quality.
 
 Fixture selection: `cruz-corona-ancestry` scores `[0.6, 0.833, 1.0, 1.0, 1.0, 1.0]`
