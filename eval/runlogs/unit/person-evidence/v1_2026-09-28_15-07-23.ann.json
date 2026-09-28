@@ -680,14 +680,6 @@
     {
       "test_id": "ut_person_evidence_026",
       "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI minted both Henry and Margaret via materialize_facts but the parent-child edges connecting them to George were malformed or not fully resolved."
-    },
-    {
-      "test_id": "ut_person_evidence_026",
-      "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": null,
       "corrected_score": null
@@ -814,6 +806,14 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "The AI minted Henry and Margaret and created person_evidence entries but something in the connecting edge structure was wrong."
+    },
+    {
+      "test_id": "ut_person_evidence_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The AI minted both Henry and Margaret via materialize_facts but the parent-child edges connecting them to George were not fully resolved."
     }
   ]
 }
