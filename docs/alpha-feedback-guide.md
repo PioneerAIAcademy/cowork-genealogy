@@ -231,7 +231,7 @@ The script:
 - prints **Marta's original prompt** — copy it. You'll paste it in Step 3, and
   again on every retry. Re-asking the question in your own words is the easiest
   way to fail to reproduce a bug. The form does not require that box, so some
-  submissions print a pointer to an empty field instead of a prompt: take the
+  submissions print "the tester left blank" instead of a prompt: take the
   prompt from `_feedback/session-log.jsonl` when the bundle has one — check its
   head for a `_truncation_note`, since an oversized log is trimmed oldest-first
   and the opening prompt is the oldest entry — and otherwise reconstruct the
