@@ -97,12 +97,12 @@ function normalizeKey(s: string): string {
 }
 
 /** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
- *  The `\)\s*$` anchor together with `[^)]+` (which cannot cross a `)`)
- *  is what forces the LAST parenthesised group to be treated as the type. */
+ *  The `\)\s*$` anchor forces the LAST parenthesised group to be the type;
+ *  the group admits one nested pair because FamilySearch types include `Island(s)`. */
 function parseTypeSuffix(
   input: string,
 ): { bareName: string; type: string } | null {
-  const match = /^(.+?)\s*\(([^)]+)\)\s*$/.exec(input);
+  const match = /^(.+?)\s*\(((?:[^()]|\([^()]*\))+)\)\s*$/.exec(input);
   if (!match) return null;
   return { bareName: match[1].trim(), type: match[2].trim() };
 }

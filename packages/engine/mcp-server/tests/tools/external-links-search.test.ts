@@ -363,6 +363,18 @@ describe("externalLinksSearchTool — handler-level guards", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("passes a (Type)-suffixed standardPlace through verbatim and searches its placeId", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "resolved", placeId: "3172" });
+    mockFetch.mockResolvedValueOnce(singlePage([]));
+    await externalLinksSearchTool({
+      standardPlace: "Baltimore, Maryland, United States (Independent City)",
+    });
+    expect(mockResolveStandardPlaceToPlaceId).toHaveBeenCalledWith(
+      "Baltimore, Maryland, United States (Independent City)"
+    );
+    expect(String(mockFetch.mock.calls[0][0])).toContain("q.placeId=3172");
+  });
+
   it("names the candidates when the standard place is ambiguous", async () => {
     mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
       kind: "ambiguous",

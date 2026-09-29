@@ -72,6 +72,19 @@ describe("populationTool", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("passes a (Type)-suffixed standardPlace through verbatim and queries its placeId", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "resolved", placeId: "3172" });
+    mockFetch.mockResolvedValueOnce(okJson(SAMPLE));
+    await populationTool(
+      { standardPlace: "Baltimore, Maryland, United States (Independent City)" },
+      LOCAL
+    );
+    expect(mockResolveStandardPlaceToPlaceId).toHaveBeenCalledWith(
+      "Baltimore, Maryland, United States (Independent City)"
+    );
+    expect(mockFetch.mock.calls[0][0] as string).toContain("place_id=3172");
+  });
+
   it("names the candidates when the standard place is ambiguous", async () => {
     mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
       kind: "ambiguous",
