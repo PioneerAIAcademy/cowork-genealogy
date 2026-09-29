@@ -123,7 +123,7 @@ way project state changes.
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory artifact URL, or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter) and return **text**; with `projectPath` the transcription is also staged (`staged.resultsRef` + a `digest`). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. The `image-reader` subagent's reader. | OpenRouter (+ OAuth for imageId/ark) |
-| `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads the local tree by default — offline. `live: true` fetches the person from FamilySearch instead, for auditing a profile with no local project | None, or OAuth with `live: true` |
+| `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
 
@@ -159,7 +159,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 27 skills covering the full GPS research cycle. Skills
+The plugin ships 26 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -202,7 +202,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **person-evidence** | Links assertions to persons. Evaluates identity matches with threshold enforcement. Creates stub persons when needed. | "Is this the same person?" / "Link all roles in this record" |
 | **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
 | **conflict-resolution** | Analyzes conflicting evidence — independence analysis + preponderance hierarchy. | "These sources disagree" |
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
@@ -265,7 +264,7 @@ don't load it explicitly.
 | **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
 | **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. The `proof-conclusion` skill delegates to it; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | (not invoked directly — `proof-conclusion` delegates) |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
-| **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (not invoked directly — the `person-evidence` skill delegates) |
+| **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
@@ -284,17 +283,16 @@ don't load it explicitly.
                              (evidence classifications are written
                              here and are final at extraction)
 6. citation (agent)          Polish citations to Evidence Explained standards
-7. person-evidence           Link assertions to persons in the tree
-8. timeline                  Build chronological timeline, find gaps
-9. conflict-resolution       Resolve disagreements between sources
-10. hypothesis-tracking      Track competing candidates
-11. research-exhaustiveness  Gate before proof — applies the seven
+7. timeline                  Build chronological timeline, find gaps
+8. conflict-resolution       Resolve disagreements between sources
+9. hypothesis-tracking       Track competing candidates
+10. research-exhaustiveness  Gate before proof — applies the seven
                              stop criteria. If not yet exhaustive, loop
                              back to step 3 (extend plan) or step 2
                              (FAN pivot). If exhaustive, advance.
-12. proof-conclusion         Write the GPS conclusion
+11. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
-13. project-status           "Where are we? What's next?"
+12. project-status           "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at
@@ -314,7 +312,7 @@ The `/research` orchestrator handles this routing automatically.
 | File | Purpose | Updated by |
 |------|---------|-----------|
 | `research.json` | GPS audit trail — all analytical state | Most skills |
-| `tree.gedcomx.json` | Simplified GedcomX — resolved persons, relationships, sources | init-project, record-extraction (sources), person-evidence (stubs), proof-conclusion (facts/relationships), tree-edit |
+| `tree.gedcomx.json` | Simplified GedcomX — resolved persons, relationships, sources | init-project, record-extraction (sources), person-evidence agent (stubs), proof-conclusion (facts/relationships), tree-edit |
 
 Specs: `docs/specs/research-schema-spec.md` and
 `docs/specs/simplified-gedcomx-spec.md`.
@@ -479,7 +477,7 @@ What's shipped:
 - **48 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **27 shipped skills.** Full GPS research cycle from `init-project`
+- **26 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three
@@ -490,7 +488,7 @@ What's shipped:
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
-  the only caller that may declare one exhaustive), `person-evidence` (identity
+  the only caller that may declare one exhaustive), `person-evidence` agent (identity
   resolution, and the only writer of `person_evidence`), `citation` (Evidence
   Explained refinement of citations on sources that already exist),
   `search-images` (page-by-page browse of an unindexed volume) and

@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 55491,
+    "CLAUDE.md": 56111,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/gps-mentor.md": 40252,
     "packages/engine/plugin/agents/image-reader.md": 9101,
@@ -23,7 +23,6 @@
     "packages/engine/plugin/skills/hypothesis-tracking/SKILL.md": 13498,
     "packages/engine/plugin/skills/init-project/SKILL.md": 28871,
     "packages/engine/plugin/skills/locality-guide/SKILL.md": 20751,
-    "packages/engine/plugin/skills/person-evidence/SKILL.md": 3107,
     "packages/engine/plugin/skills/project-status/SKILL.md": 11447,
     "packages/engine/plugin/skills/proof-conclusion/SKILL.md": 4914,
     "packages/engine/plugin/skills/question-selection/SKILL.md": 3651,
@@ -65,7 +64,7 @@
     "tool:person_read": 1265,
     "tool:person_record_matches": 1115,
     "tool:person_search": 7970,
-    "tool:person_warnings": 1400,
+    "tool:person_warnings": 640,
     "tool:place_distance": 630,
     "tool:place_population": 906,
     "tool:place_search": 1027,

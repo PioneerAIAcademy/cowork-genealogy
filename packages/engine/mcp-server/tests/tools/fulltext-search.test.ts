@@ -382,16 +382,16 @@ describe("fulltextSearchTool natural-language query", () => {
     await fulltextSearchTool({ nlQuery: q }, LOCAL);
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toContain(`nlQuery=${encodeURIComponent(q)}`);
-    const headers = init.headers as Record<string, string>;
-    expect(headers["X-FS-Feature-Tag"]).toBe("search_naturalLanguageSupport");
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("X-FS-Feature-Tag")).toBe("search_naturalLanguageSupport");
   });
 
   it("16. omits the feature header for a non-nlQuery search", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
     await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["X-FS-Feature-Tag"]).toBeUndefined();
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("X-FS-Feature-Tag")).toBeNull();
   });
 });
 
@@ -816,10 +816,10 @@ describe("fulltextSearchTool request headers", () => {
     await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers.Authorization).toBe("Bearer test-token");
-    expect(headers.Accept).toBe("application/json");
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
+    expect(headers.get("Accept")).toBe("application/json");
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
   });
 });
 

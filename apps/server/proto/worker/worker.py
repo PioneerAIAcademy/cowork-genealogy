@@ -67,11 +67,10 @@ surfaced as an error is redelivered forever, which is the paid loop the guard ex
 prevent.
 
 Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
-written), ENGINE_DIR, ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under
-it), MODEL_PROVIDER + ANTHROPIC_API_KEY / the Bedrock variables / GATEWAY_BASE_URL,
-GATEWAY_API_KEY and GATEWAY_TOOL_SEARCH, the GENEALOGY_* store
-variables and FS_ACCESS_TOKEN (see options.py). Startup applies ../sql/*.sql (all
-idempotent) and parses the plugin's agents once. ``GET /healthz`` -> 200.
+written), ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
+MODEL_PROVIDER + ANTHROPIC_API_KEY / GATEWAY_BASE_URL, GATEWAY_API_KEY and
+GATEWAY_TOOL_SEARCH, TOOL_SERVER_URL and FS_ACCESS_TOKEN (see options.py). Startup
+applies ../sql/*.sql (all idempotent) and parses the plugin's agents once. ``GET /healthz`` -> 200.
 ThreadingHTTPServer, so a second POST is served while a turn is running.
 """
 
@@ -134,7 +133,6 @@ QUEUE_URL = os.environ.get("QUEUE_URL", "")
 PORT = env_int("PORT", 8080)
 WORKER_CWD = os.environ.get("WORKER_CWD", "/project")
 _REPO = HERE.parents[3]  # apps/server/proto/worker -> the repo root (venv runs only)
-ENGINE_DIR = os.environ.get("ENGINE_DIR", str(_REPO / "packages" / "engine" / "mcp-server"))
 ENGINE_PLUGIN_DIR = os.environ.get("ENGINE_PLUGIN_DIR", str(_REPO / "packages" / "engine" / "plugin"))
 SCHEMA_RETRIES = 30
 
@@ -155,9 +153,9 @@ EXPECTED_AGENTS = frozenset({
     "search-images",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 27
-# skills registers 27 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 27
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 26
+# skills registers 26 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 26
 
 _stdout_lock = threading.Lock()
 
@@ -753,7 +751,7 @@ def prepare() -> None:
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
         blocked_tools=sorted(_BLOCKED), autonomous_max_nudges=_AUTONOMOUS_MAX_NUDGES,
-        error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR, engine_dir=ENGINE_DIR,
+        error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR,
         cli_version=cli_version,
     )
 
@@ -992,7 +990,6 @@ async def run_turn(
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
-            engine_dir=ENGINE_DIR,
             plugin_dir=ENGINE_PLUGIN_DIR,
             agents=agents,
             store=store,

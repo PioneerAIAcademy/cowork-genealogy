@@ -143,10 +143,11 @@ describe("samePerson", () => {
         "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
       );
       expect(opts.method).toBe("POST");
-      expect(opts.headers.Authorization).toBe("Bearer test-token");
-      expect(opts.headers.Accept).toBe("application/json");
-      expect(opts.headers["Content-Type"]).toBe("application/json");
-      expect(opts.headers["User-Agent"]).toContain("Mozilla");
+      const headers = new Headers(opts.headers as HeadersInit);
+      expect(headers.get("Authorization")).toBe("Bearer test-token");
+      expect(headers.get("Accept")).toBe("application/json");
+      expect(headers.get("Content-Type")).toBe("application/json");
+      expect(headers.get("User-Agent")).toContain("Mozilla");
     });
 
     it("appends a sourceDescription with about=#<primaryId> to each entry", async () => {

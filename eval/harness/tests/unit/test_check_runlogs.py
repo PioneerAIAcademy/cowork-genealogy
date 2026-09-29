@@ -1352,6 +1352,50 @@ def test_rule6_an_empty_tests_array_is_allowed():
     assert _rule6([]) == 0
 
 
+# --- rule 9: aggregate outcome enum, corpus-wide (#2842) -------------------------
+
+
+def _write_runlog(dir_path, filename, outcomes):
+    """Write a minimal committed-shaped run log with the given aggregate
+    ``tests[].outcome`` values."""
+    d = dir_path / "some-skill"
+    d.mkdir(parents=True, exist_ok=True)
+    tests = [{"test_id": f"ut_s_{i}", "outcome": o} for i, o in enumerate(outcomes)]
+    (d / filename).write_text(json.dumps({"tests": tests}), encoding="utf-8")
+
+
+@pytest.mark.parametrize("retired", ["xfail", "xpass"])
+def test_rule9_blocks_a_retired_aggregate_outcome(tmp_path, retired, capsys):
+    """The straggler class: a committed run log whose aggregate `outcome` is a
+    retired value. Rule 6 cannot see it — it reads per-run outcomes and only on
+    PR-added logs — so this corpus-wide rule is what catches one landed by merge.
+    Break the enum narrowing (put xfail/xpass back on `_RUN_OUTCOMES`) and this
+    goes green: the falsifiability check."""
+    _write_runlog(tmp_path, "v1.json", ["pass", retired])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert retired in out and "v1.json" in out
+
+
+def test_rule9_accepts_every_value_the_schema_allows(tmp_path):
+    """The other direction — a log of legitimate aggregates must pass."""
+    _write_runlog(tmp_path, "v1.json", ["pass", "partial", "fail", "aborted"])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+
+
+def test_rule9_skips_scratch_and_annotation_files(tmp_path, capsys):
+    """A retired value in a scratch log (gitignored, never committed) or inside an
+    `.ann.json` (a different shape) must NOT trip the rule — the reach guard, so
+    the check cannot be dodged by mislabelling and cannot false-flag an annotation."""
+    _write_runlog(tmp_path, "scratch_2026-09-28_10-00-00.json", ["xfail"])
+    d = tmp_path / "some-skill"
+    (d / "v1.ann.json").write_text(
+        json.dumps({"corrections": [{"outcome": "xpass"}]}), encoding="utf-8"
+    )
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+    assert capsys.readouterr().out == ""
+
+
 # --- marker owners, read from the committed test corpus --------------------------
 
 

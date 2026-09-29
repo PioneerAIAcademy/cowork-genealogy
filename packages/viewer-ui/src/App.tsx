@@ -50,7 +50,7 @@ function WelcomeScreen(): React.JSX.Element {
         <h1 className={styles.welcomeTitle}>Research Viewer</h1>
         <p className={styles.welcomeDesc}>
           Watch your AI genealogy research assistant work in real time. Evidence gathered,
-          hypotheses tested, proof summaries written.
+          hypotheses tested, findings written.
         </p>
         <div className={styles.welcomeDivider}>&#9830;</div>
         <button className={styles.welcomeButton} onClick={selectFolder}>
