@@ -1603,20 +1603,23 @@ match the flow above. There is no idle-suspend loop, and no Ably code anywhere i
 `apps/server/tests/conftest.py` and `deploy/fly.toml`.
 
 **FamilySearch tokens are injected, and encrypted at rest.**
-`sessions.sync_fs_token` refreshes the user's grant and writes it into the
-sandbox's `~/.familysearch-mcp/tokens.json` on session create *and again on every
+`sessions.sync_fs_token` refreshes the user's grant and writes **an access token
+only** (no refresh token) into the sandbox's
+`~/.familysearch-mcp/tokens.json` on session create *and again on every
 `/connect`*, returning an `ok` / `expired` / `none` state that drives the
 client's "Reconnect FamilySearch" banner. Re-injecting on connect is the only
-path by which a *fresh* login reaches a sandbox that already exists. The stored
-`access_token` / `refresh_token` columns are Fernet-encrypted by
-`crypto.EncryptedStr` at SQLAlchemy's Core layer, so no caller can forget to; a
-decrypt failure soft-fails to `None`, which `auth.fresh_fs_token` turns into
-"expired", so a legacy or wrong-key row self-heals on the next login rather than
-500-ing. **The copy inside the sandbox stays plaintext by design** — the
-in-sandbox MCP needs it, and both copies die on the same FS grant clock (8h idle
-/ 24h absolute). That 24h ceiling is why the at-rest encryption is
-belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
-**it is not a gap and no decision waits on it.**
+path by which a *fresh* login reaches a sandbox that already exists. The control
+plane is the sole refresh owner: concurrent refreshes are serialized with a
+per-user `asyncio.Lock`, and a successful refresh pushes the new token to every
+live sandbox the user has. The stored `access_token` /
+`refresh_token` columns are Fernet-encrypted by `crypto.EncryptedStr` at
+SQLAlchemy's Core layer, so no caller can forget to; a decrypt failure soft-fails
+to `None`, which `auth.fresh_fs_token` turns into "expired", so a legacy or
+wrong-key row self-heals on the next login rather than 500-ing. **The copy inside
+the sandbox stays plaintext by design** — the in-sandbox MCP needs it, and both
+copies die on the same FS grant clock (8h idle / 24h absolute). That 24h ceiling
+is why the at-rest encryption is belt-and-braces rather than a gate on anything:
+it costs nothing at runtime, and **it is not a gap and no decision waits on it.**
 
 **Known gaps:**
 

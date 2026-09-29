@@ -147,31 +147,35 @@ def expires_at_from(token_json: dict) -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0) + timedelta(seconds=seconds)
 
 
-def tokens_file_bytes(
-    access_token: str, refresh_token: str | None, expires_at: datetime
-) -> bytes:
-    """Serialize the engine-shaped tokens.json the in-sandbox MCP self-refreshes
-    from: ``{accessToken, refreshToken, expiresAt}`` with ``expiresAt`` an
-    absolute epoch-**ms** (matches getValidToken's isExpired in
-    packages/engine/mcp-server/src/auth/refresh.ts)."""
+def tokens_file_bytes(access_token: str, expires_at: datetime) -> bytes:
+    """Serialize the engine-shaped tokens.json for the in-sandbox MCP:
+    ``{accessToken, expiresAt}`` with ``expiresAt`` an absolute epoch-**ms**
+    (matches getValidToken's isExpired in
+    packages/engine/mcp-server/src/auth/refresh.ts).
+
+    No ``refreshToken`` is included: the control plane is the sole refresh
+    owner (issue #2887). Without a refresh token the engine cannot refresh,
+    and ``getValidToken`` already maps that to the hosted reconnect error."""
     # DB datetimes can come back naive (SQLite); treat naive as UTC so the epoch
     # is correct rather than shifted by the local tz offset.
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     payload = {
         "accessToken": access_token,
-        "refreshToken": refresh_token,
         "expiresAt": int(expires_at.timestamp() * 1000),
     }
     return json.dumps(payload, indent=2).encode()
 
 
 async def write_tokens(
-    sandbox, access_token: str, refresh_token: str | None, expires_at: datetime
+    sandbox, access_token: str, expires_at: datetime
 ) -> None:
-    """Inject the FamilySearch token into a sandbox at TOKENS_PATH."""
+    """Inject the FamilySearch access token into a sandbox at TOKENS_PATH.
+
+    Only the access token and expiry are written -- no refresh token.
+    The control plane is the sole refresh owner (issue #2887)."""
     await sandbox.write_file(
-        TOKENS_PATH, tokens_file_bytes(access_token, refresh_token, expires_at)
+        TOKENS_PATH, tokens_file_bytes(access_token, expires_at)
     )
 
 
