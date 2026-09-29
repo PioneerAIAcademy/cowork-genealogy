@@ -114,6 +114,37 @@ an indistinguishable `tool_name = "Skill"` row.
 
 ## R4 — the `delivered` outcome
 
+**RULED (user, 2026-09-29): a second dedicated tool.** The exit's own evidence argues for
+it — the decision carrier works because a tool name is an exact match a hook can read, not
+a sentence a model may honour.
+
+**Asymmetry to name up front.** The decision exit matches `AskUserQuestion`, a **built-in**
+the model already has. `delivered` has no built-in equivalent, so it costs a real MCP tool
+and the full documented site list. That is the price of the ruling, not a surprise.
+
+| Layer | Site |
+|---|---|
+| Engine | `src/tools/research-delivered.ts`; `allToolSchemas` (`src/tool-schemas.ts`); dispatch (`src/server.ts`); `tools` array in `manifest.json`; a row in `dev/smoke-calls.ts`; a spec |
+| Worker | `TERMINAL_DELIVERED` + clause in `should_continue_run` / `terminal_reason` (`continue_policy.py`); `DELIVERED_TOOL` + hook arm beside the decision arm (`options.py`); `on_delivered` (`worker.py`) |
+| Web | one row in `TURN_OUTCOME_LABELS` (`chatEvents.ts`) |
+| Tests | `test_continue_policy_parity.py` (`test_the_shared_copy_is_the_one_with_the_new_clauses` enumerates the flags); the outcome-table comment at `continue_policy.py:29-42`; the engine packaging drift tests |
+
+**Clause position: immediately before `project_completed`**, i.e. after `pending_decision`.
+A delivery arriving with a patron message already queued reads as `queued`, which is right —
+the researcher has moved the conversation on.
+
+**What the tool does when nothing intercepts it.** On the hosted path the `PreToolUse` hook
+halts the turn before the tool executes, so its body never runs. In **Cowork and the unit
+harness there is no such hook**, and the tool is advertised to all 27 skills. It must
+therefore return something harmless and truthful rather than erroring or claiming an effect
+it did not have. It writes no project state.
+
+**Acceptance.** Not "the enum exists". A turn that calls the tool ends `delivered` and its
+label renders; and — the arm that is easy to skip — a turn that does **not** call it is
+unaffected, so an ordinary run is not quietly re-routed through a new exit. Both arms
+scripted in `apps/server/tests/test_proto_worker.py`, beside the decision-exit tests, which
+are the template.
+
 Pinned in the parent plan: a NEW enum value, labelled so it does not read like
 `completed`, with `ok` left unlabelled. **Clause position pinned to a single slot:**
 "after `stopped`, before `project_completed`" spans three clauses —
