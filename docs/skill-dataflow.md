@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 26 skills and 8 agents. Besides the `research` orchestrator itself, its routing
+There are 25 skills and 8 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 14 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -344,14 +344,13 @@ from a routing-table row — so the row's absence no longer implies it cannot fi
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
 from this list as evidence either way.
 
-The two **thin skill halves** of the paired rows join this list. Rows 7 and 10
-route to `@plugin:<agent>`, so `skills/person-evidence/` and
-`skills/research-exhaustiveness/` are no longer
-on the in-loop route — they stay on disk as the direct-user entry point and as
-the unit-eval entry point, and an autonomous run never enters them.
-`skills/proof-conclusion/` was a third until issue #2822 deleted it on
-2026-09-26; row 11 already routed to the agent, so the deletion removed the
-direct-user and unit-eval entry point rather than an in-loop one.
+The one remaining **thin skill half** of a paired row joins this list. Row 10
+routes to `@plugin:research-exhaustiveness`, so `skills/research-exhaustiveness/`
+is no longer on the in-loop route — it stays on disk as the direct-user entry
+point and as the unit-eval entry point, and an autonomous run never enters it.
+Rows 7 and 11 were the other two thin halves: `skills/person-evidence/` and
+`skills/proof-conclusion/` have both been deleted (issues #2821 and #2822), so
+each agent is now its own direct entry point and unit-eval entry point.
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

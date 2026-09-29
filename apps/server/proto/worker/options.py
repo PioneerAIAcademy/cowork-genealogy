@@ -11,15 +11,12 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
   names, parsed once at worker start by ``plugin_agents.py``) -- never staged into cwd.
 - the shell is removed with ``disallowed_tools`` -- the only lever that reaches the
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
-- the tool server is ``build/hosted-stdio.js``, forked per turn, configured entirely
-  through the server entry's ``env``: the store variables from the worker's own
-  environment, ``GENEALOGY_PROJECT_ID`` from the turn, and the patron's
-  ``FS_ACCESS_TOKEN`` from the message -- per request, never process state. The entry
-  is written to a 0600 ``mcp.json`` under the per-turn config dir and passed as a
-  PATH (``--mcp-config <path>``): a dict is serialised onto the CLI's argv, where the
-  secret key and the bearer are ``ps``-visible to every process in the container. The
-  fork is ``env -u ANTHROPIC_API_KEY node …`` so the model key the CLI holds is not
-  inherited by a process that never reads it.
+- the tool server is the shared Streamable HTTP ``tools`` service at ``TOOL_SERVER_URL``;
+  the entry carries the patron's bearer as ``Authorization`` and the turn's project id as
+  ``X-Genealogy-Project-Id`` -- per request, never process state. The entry is written
+  to a 0600 ``mcp.json`` under the per-turn config dir and passed as a PATH
+  (``--mcp-config <path>``): a dict is serialised onto the CLI's argv, where the bearer
+  is ``ps``-visible to every process in the container.
 - the transcript mirrors to ``PgSessionStore`` with ``session_store_flush="eager"`` so a
   mid-turn kill loses at most one frame; ``CLAUDE_CONFIG_DIR`` is a fresh directory
   under ``TMPDIR`` per turn (on a resumed turn the SDK repoints it to its own).
@@ -27,11 +24,8 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
   ``resume=`` when the store holds entries -- exactly one, never both (the SDK's own
   rule without ``fork_session``).
 - the model is pinned per ``MODEL_PROVIDER``: ``anthropic`` (default) is
-  ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``bedrock`` sets
-  ``CLAUDE_CODE_USE_BEDROCK``, ``ANTHROPIC_MODEL`` and the 1 h cache flag explicitly,
-  because an unpinned default is Opus and every cost figure is then wrong by several-fold;
-  ``gateway`` points the CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``,
-  ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
+  ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the CLI at an
+  Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
   every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
@@ -47,7 +41,6 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
-import posixpath
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -76,9 +69,8 @@ from proto.worker.deny import project_read_denied
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
 DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
-BEDROCK_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
-# [1m] as on Bedrock: the CLI strips it, sends context-1m-2025-08-07 and sizes its window
-# (and so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+# [1m]: the CLI strips it, sends context-1m-2025-08-07 and sizes its window (and so its
+# compaction) at 1M; without it a gateway session gets 200k (plan P3j).
 GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
 GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 # Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
@@ -95,22 +87,6 @@ PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 MAX_BUFFER_BYTES = 8 * 1024 * 1024
 PRETOOL_TIMEOUT_S = 10.0
 MCP_CONFIG_NAME = "mcp.json"
-# Stripped from the tool server's inherited environment: the CLI holds the model key,
-# hosted-stdio.js never reads it.
-TOOL_SERVER_ENV_UNSET = ("ANTHROPIC_API_KEY",)
-
-# The store's configuration, copied from the worker's environment into the tool
-# server's; GENEALOGY_PROJECT_ID is per turn and deliberately absent here.
-STORE_ENV_KEYS = (
-    "GENEALOGY_PG_DSN",
-    "GENEALOGY_S3_ENDPOINT",
-    "GENEALOGY_S3_BUCKET",
-    "GENEALOGY_S3_ACCESS_KEY",
-    "GENEALOGY_S3_SECRET_KEY",
-    "GENEALOGY_ANCHOR_PATH",
-)
-# The per-user config the desktop reads from config.json; passed through when set.
-PER_USER_ENV_KEYS = ("WIKI_API_URL", "POP_STATS_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL")
 
 # The e2e harness's tree-read block (eval/harness/e2e/orchestrator.py BLOCKED_TREE_TOOLS):
 # every e2e fixture's answer still sits in the live FamilySearch tree, so a fixture run
@@ -163,17 +139,11 @@ WRITE_DENY_REASON = (
 
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
-    that pin the provider. Bedrock's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
+    that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
     suffix is read off that string), so ``model`` is None there."""
     provider = (worker_env.get("MODEL_PROVIDER") or "anthropic").strip().lower()
     if provider == "anthropic":
         return ANTHROPIC_MODEL, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
-    if provider == "bedrock":
-        return None, {
-            "CLAUDE_CODE_USE_BEDROCK": "1",
-            "ANTHROPIC_MODEL": BEDROCK_MODEL,
-            "ENABLE_PROMPT_CACHING_1H_BEDROCK": "1",
-        }
     if provider == "gateway":
         base_url = (worker_env.get("GATEWAY_BASE_URL") or "").strip()
         if not base_url:
@@ -190,7 +160,7 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
             # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
             "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
         }
-    raise ValueError(f"MODEL_PROVIDER must be anthropic, bedrock or gateway, not {provider!r}")
+    raise ValueError(f"MODEL_PROVIDER must be anthropic or gateway, not {provider!r}")
 
 
 def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
@@ -203,19 +173,6 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
             agent = dataclasses.replace(agent, model=GATEWAY_AGENT_MODELS[model])
         out[name] = agent
     return out
-
-
-def tool_server_env(
-    worker_env: Mapping[str, str], *, project_id: str, fs_access_token: str | None
-) -> dict[str, str]:
-    """The environment of the per-turn ``hosted-stdio.js`` fork."""
-    env = {k: worker_env[k] for k in STORE_ENV_KEYS if worker_env.get(k)}
-    env["GENEALOGY_PROJECT_ID"] = project_id
-    env["FS_ACCESS_TOKEN"] = bearer_token(worker_env, fs_access_token)
-    for key in PER_USER_ENV_KEYS:
-        if worker_env.get(key):
-            env[key] = worker_env[key]
-    return env
 
 
 def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
@@ -239,11 +196,9 @@ def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
 # contract is the two headers the entrypoint reads, both per request and never process
 # state: `Authorization: Bearer <patron token>` becomes the request's principal, and
-# `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore -- the same store the
-# stdio fork gets from GENEALOGY_PROJECT_ID. Missing, the project tools answer an
-# instruction naming the header; malformed, the request is a 400. No turn header. The CLI
-# opens the MCP session once per process, once per turn.
-TOOL_SERVER_DEFAULT = "http"
+# `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore. Missing, the project
+# tools answer an instruction naming the header; malformed, the request is a 400. No turn
+# header. The CLI opens the MCP session once per process, once per turn.
 TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 # The http entry's per-server `timeout` (ms). Without it CLI 2.1.220 aborts every
@@ -269,41 +224,20 @@ def tool_server_headers(
 
 
 def tool_server_entry(
-    engine_dir: str,
     worker_env: Mapping[str, str],
     *,
     project_id: str,
     fs_access_token: str | None,
 ) -> dict[str, Any]:
-    """The ``genealogy`` MCP server entry. ``TOOL_SERVER=http`` (the default since
-    2026-09-20, and what compose sets): the shared Streamable HTTP tool server, one
-    process for every turn. ``TOOL_SERVER=stdio``:
-    ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
-    of ``tool_server_env``. The http entry is ``TOOL_SERVER_URL`` with the bearer as
-    ``Authorization`` and the turn's project id as ``X-Genealogy-Project-Id``; its
-    per-user config is the ``tools`` service's own environment, not the request's."""
-    # One default, here and in compose, so a worker started without its environment does
-    # not quietly do something production never does. TOOL_SERVER_DEFAULT is the single
-    # source; test_proto_config reads compose against it.
-    mode = worker_env.get("TOOL_SERVER") or TOOL_SERVER_DEFAULT
-    if mode == "http":
-        return {
-            "type": "http",
-            "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
-            "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
-            "timeout": MCP_HTTP_TIMEOUT_MS,
-        }
-    if mode != "stdio":
-        raise ValueError(f"TOOL_SERVER must be stdio or http, not {mode!r}")
+    """The ``genealogy`` MCP server entry: the shared Streamable HTTP tool server, one
+    process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``
+    and the turn's project id as ``X-Genealogy-Project-Id``. Its per-user config is the
+    ``tools`` service's own environment, not the request's."""
     return {
-        "type": "stdio",
-        "command": "env",
-        "args": [
-            *(flag for name in TOOL_SERVER_ENV_UNSET for flag in ("-u", name)),
-            "node",
-            posixpath.join(engine_dir, "build", "hosted-stdio.js"),
-        ],
-        "env": tool_server_env(worker_env, project_id=project_id, fs_access_token=fs_access_token),
+        "type": "http",
+        "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
+        "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
+        "timeout": MCP_HTTP_TIMEOUT_MS,
     }
 
 
@@ -370,7 +304,10 @@ def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
 # the main thread's ResultMessage and closes the CLI, so a background agent still running
 # then dies with it -- measured 2026-09-23 (plan D17: both background extractors lost, the
 # patron told their summaries would follow). Forcing the foreground keeps parallelism: several
-# Agent calls in one message still run concurrently. Lead ruling 2026-09-23.
+# Agent calls in one message still run concurrently. Lead ruling 2026-09-23, reaffirmed as the
+# design 2026-09-29. Every call that is not explicitly `False` is rewritten: CLI 2.1.220 runs an
+# agent in the background when the flag is absent, and the two extractors lost on 2026-09-21
+# (sess_25297de9b15b4ef5) carried no flag at all.
 DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
 
@@ -471,7 +408,7 @@ def make_pretool_hook(
             if log is not None:
                 log(ev="deny", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id, reason=reason)
             return _deny(reason or "denied")
-        if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is True:
+        if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is not False:
             if log is not None:
                 log(ev="foregrounded", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id)
             return _foregrounded(tool_input)
@@ -638,7 +575,6 @@ def build_worker_options(
     *,
     project_id: str,
     cwd: str,
-    engine_dir: str,
     plugin_dir: str,
     agents: Mapping[str, Any],
     store: Any,
@@ -700,7 +636,7 @@ def build_worker_options(
             config_dir,
             {
                 "genealogy": tool_server_entry(
-                    engine_dir, env_in, project_id=project_id, fs_access_token=fs_access_token
+                    env_in, project_id=project_id, fs_access_token=fs_access_token
                 )
             },
         ),

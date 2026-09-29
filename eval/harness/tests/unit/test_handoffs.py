@@ -248,13 +248,14 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
 
 
 def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn():
-    """`route-shortcut-guard.json` stubs two paired names that ship as both a
-    skill and an agent; their compliant spawn must keep running.
+    """`route-shortcut-guard.json` stubs one paired name that ships as both a
+    skill and an agent; its compliant spawn must keep running.
 
-    `proof-conclusion` was a third until issue #2822 deleted its skill half, so
-    it now takes the converted-callee path below with `gps-mentor`.
+    `proof-conclusion` (issue #2822) and `person-evidence` (issue #2821) were
+    paired too until each lost its skill half, so both now take the
+    converted-callee path below with `gps-mentor`.
     """
-    spec = _stub_spec(["research-exhaustiveness", "person-evidence"])
+    spec = _stub_spec(["research-exhaustiveness"])
     assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") is None
 
 
@@ -265,6 +266,7 @@ def test_a_stub_with_no_skill_directory_is_stubbed_at_its_spawn():
     assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") == {
         "proof-conclusion": None,
         "gps-mentor": None,
+        "person-evidence": None,
     }
 
 

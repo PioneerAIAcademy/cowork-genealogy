@@ -25,13 +25,13 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
   never a third); a FIRST delivery is never re-queried -- neither a fresh turn's nor one
   whose session already holds entries, where the continue prompt would discard the
   patron's new message; and every guard above binds on the re-query too;
-- the option set: cwd, setting_sources=[], agents=, the tool server's per-turn env in a
-  0600 mcp.json (never argv) under ``env -u ANTHROPIC_API_KEY``, session_id/resume
-  exactly one, the eager store flush, the model pin per provider; the ``TOOL_SERVER=http``
-  arm's two per-turn headers (project id always, bearer only when there is a token);
+- the option set: cwd, setting_sources=[], agents=, the http tool server entry in a
+  0600 mcp.json (never argv), session_id/resume exactly one, the eager store flush, the
+  model pin per provider (an unknown provider refused); the entry's two per-turn headers
+  (project id always, bearer only when there is a token);
 - the container: tmpfs for TMPDIR, the key passed through (never a literal, never baked
-  into the image), /project present, no tokens.json, optional deps kept, the SDK
-  pinned, 004 additive only;
+  into the image), /project present, no tokens.json, no Node, no engine and no store
+  credentials, the SDK pinned, 004 additive only;
 - D18's Stop hook: ``should_continue_run`` on the harness's own truth table, the hook's
   block with the harness's reason text verbatim (read off orchestrator.py), its cap, its
   no-progress arm, that it never raises; the ``Stop`` matcher bound only when a hook is
@@ -508,12 +508,20 @@ def test_a_background_delegation_is_forced_to_the_foreground_and_still_logged(tm
 
 @pytest.mark.parametrize("tool_input", [
     {"subagent_type": "x", "prompt": "p"},
-    {"subagent_type": "x", "prompt": "p", "run_in_background": False},
     {"subagent_type": "x", "prompt": "p", "run_in_background": "true"},
-], ids=["absent", "false", "a string is not the flag"])
-def test_a_foreground_delegation_passes_untouched(tmp_path, tool_input):
+    {"subagent_type": "x", "prompt": "p", "run_in_background": None},
+], ids=["absent: the CLI backgrounds it by default", "a string", "null"])
+def test_a_delegation_not_explicitly_foreground_is_rewritten(tmp_path, tool_input):
     rows: list[dict] = []
     hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    out = _call(hook, {"tool_name": "Agent", "tool_input": tool_input})
+    assert out["hookSpecificOutput"]["updatedInput"] == {**tool_input, "run_in_background": False}
+
+
+def test_an_explicitly_foreground_delegation_passes_untouched(tmp_path):
+    rows: list[dict] = []
+    hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    tool_input = {"subagent_type": "x", "prompt": "p", "run_in_background": False}
     assert _call(hook, {"tool_name": "Agent", "tool_input": tool_input}) == {}
 
 
@@ -659,17 +667,17 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 27, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=27) == []
+    assert options.check_registration(_info(AGENTS, 26, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=26) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 27, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=27)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 26, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=26)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 26), expected_agents=AGENTS, expected_skills=27)
-    assert problems == ["26 genealogy-research:* commands registered, expected 27"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=27)
+    problems = options.check_registration(_info(AGENTS, 25), expected_agents=AGENTS, expected_skills=26)
+    assert problems == ["25 genealogy-research:* commands registered, expected 26"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=26)
 
 
 def test_the_plugin_ships_eight_agents_and_twenty_six_skills():
@@ -714,24 +722,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Eight agents and 26 skills registered: clean. Seven, or 25: the miss, whatever loaded --
+    # Eight agents and 25 skills registered: clean. Seven, or 24: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 26)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 26, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 25)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 25, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 25)) == ["25 genealogy-research:* commands registered, expected 26"]
+    assert worker.registration_problems(_info(AGENTS, 24)) == ["24 genealogy-research:* commands registered, expected 25"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 25, and a count of that same copy would have expected 25.
+    # registers 24, and a count of that same copy would have expected 24.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 25
+    assert worker.count_skills(str(copy)) == 24
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "25 genealogy-research:* commands registered, expected 26"
+        "24 genealogy-research:* commands registered, expected 25"
     ]
 
 
@@ -740,22 +748,14 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
 
 WORKER_ENV = {
     "ANTHROPIC_API_KEY": "sk-test",
-    "GENEALOGY_PG_DSN": "postgresql://postgres:proto@postgres:5432/proto",
-    "GENEALOGY_S3_ENDPOINT": "http://minio:9000",
-    "GENEALOGY_S3_BUCKET": "projects",
-    "GENEALOGY_S3_ACCESS_KEY": "proto",
-    "GENEALOGY_S3_SECRET_KEY": "protoproto",
-    "GENEALOGY_ANCHOR_PATH": "/project",
     "FS_ACCESS_TOKEN": "env-token",
-    "WIKI_API_URL": "http://wiki:8000",
     "TMPDIR": "/tmp",
-    "UNRELATED": "x",
 }
 
 
 def _options(**overrides):
     kwargs = dict(
-        project_id="proj-1", cwd="/project", engine_dir="/opt/genealogy/engine",
+        project_id="proj-1", cwd="/project",
         plugin_dir="/opt/genealogy/plugin", agents={"gps-mentor": object()}, store=object(),
         config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {},
@@ -791,35 +791,26 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert "projectPath '/project'" in opts.system_prompt["append"]
 
 
-def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_argv(tmp_path):
-    # The stdio fork is the named opt-out since 2026-09-20; this is its shape.
-    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token",
-                    worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"})
+def test_the_tool_server_entry_is_in_a_0600_file_not_argv(tmp_path):
+    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token")
     # A str is handed to the CLI as `--mcp-config <path>`; a dict would be json.dumps'd
-    # onto argv, where the bearer and the S3 secret are visible in `ps`.
+    # onto argv, where the bearer is visible in `ps`.
     assert isinstance(opts.mcp_servers, str) and opts.mcp_servers == str(tmp_path / "mcp.json")
     if POSIX_MODES:
         assert stat.S_IMODE(Path(opts.mcp_servers).stat().st_mode) == 0o600
     server = _server(opts)
-    assert server["type"] == "stdio"
-    assert server["command"] == "env", "the fork strips the model key the CLI holds"
-    assert server["args"] == ["-u", "ANTHROPIC_API_KEY", "node", "/opt/genealogy/engine/build/hosted-stdio.js"]
-    env = server["env"]
-    assert env["GENEALOGY_PROJECT_ID"] == "proj-1"
-    assert env["FS_ACCESS_TOKEN"] == "turn-token", "the message's token beats the worker env's"
-    assert all(env[k] == WORKER_ENV[k] for k in options.STORE_ENV_KEYS)
-    assert env["WIKI_API_URL"] == "http://wiki:8000" and "POP_STATS_URL" not in env
-    assert "UNRELATED" not in env and "ANTHROPIC_API_KEY" not in env
+    assert server["type"] == "http"
+    assert server["headers"]["Authorization"] == "Bearer turn-token", "the message's token beats the worker env's"
 
 
 def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
     path = tmp_path / "mcp.json"
     path.write_text("{}", encoding="utf-8")
     path.chmod(0o644)
-    assert options.write_mcp_config(str(tmp_path), {"genealogy": {"type": "stdio"}}) == str(path)
+    assert options.write_mcp_config(str(tmp_path), {"genealogy": {"type": "http"}}) == str(path)
     if POSIX_MODES:
         assert stat.S_IMODE(path.stat().st_mode) == 0o600
-    assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "stdio"}}}
+    assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "http"}}}
 
 
 def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
@@ -837,12 +828,10 @@ def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
 
 
 def test_the_token_falls_back_to_the_worker_env_then_empty():
-    """The stdio fork carries the token in its env; the http arm's same fallback is
-    asserted as `Authorization: Bearer env-token` in the http test below."""
-    stdio = {**WORKER_ENV, "TOOL_SERVER": "stdio"}
-    assert _server(_options(worker_env=stdio))["env"]["FS_ACCESS_TOKEN"] == "env-token"
-    env = {k: v for k, v in stdio.items() if k != "FS_ACCESS_TOKEN"}
-    assert _server(_options(worker_env=env))["env"]["FS_ACCESS_TOKEN"] == ""
+    assert _server(_options())["headers"]["Authorization"] == "Bearer env-token", \
+        "the worker env's token when the message has none"
+    env = {k: v for k, v in WORKER_ENV.items() if k != "FS_ACCESS_TOKEN"}
+    assert "Authorization" not in _server(_options(worker_env=env))["headers"]
 
 
 def test_resume_is_set_only_when_given():
@@ -860,15 +849,10 @@ def test_session_id_and_resume_are_exactly_one():
         _options(resume=sid, session_id=sid)
 
 
-def test_bedrock_pins_the_model_and_the_cache_flag_explicitly():
-    opts = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "bedrock"})
-    assert opts.model is None
-    assert opts.env["CLAUDE_CODE_USE_BEDROCK"] == "1"
-    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]"
-    assert opts.env["ENABLE_PROMPT_CACHING_1H_BEDROCK"] == "1"
-    assert "ANTHROPIC_API_KEY" not in opts.env
-    with pytest.raises(ValueError):
-        _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "vertex"})
+@pytest.mark.parametrize("provider", ["vertex", "bedrock"])
+def test_an_unknown_provider_is_refused(provider):
+    with pytest.raises(ValueError, match="anthropic or gateway"):
+        _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": provider})
 
 
 GATEWAY_ENV = {**WORKER_ENV, "MODEL_PROVIDER": "gateway",
@@ -882,7 +866,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
     assert opts.env["ANTHROPIC_API_KEY"] == "", "blanked, or the inherited Anthropic key rides to the gateway"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
-    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window, as on Bedrock"
+    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
     on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
@@ -909,9 +893,8 @@ def test_gateway_maps_every_agent_model_to_its_bedrock_id():
         "unset": None,
     }
     assert got["record-extractor"].prompt == "p", "only the model changes"
-    for provider in ("anthropic", "bedrock"):
-        kept = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": provider}, agents=agents()).agents
-        assert kept["record-extractor"].model == "claude-sonnet-4-6", provider
+    kept = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "anthropic"}, agents=agents()).agents
+    assert kept["record-extractor"].model == "claude-sonnet-4-6"
 
 
 def test_every_shipped_agent_model_has_a_gateway_id():
@@ -943,7 +926,10 @@ def test_worker_build_context_is_the_repo_root():
     build = _compose()["services"]["worker"]["build"]
     assert build == {"context": "../../..", "dockerfile": "apps/server/proto/worker/Dockerfile"}
     ignore = (SERVER.parents[1] / ".dockerignore").read_text(encoding="utf-8").splitlines()
-    assert "**/node_modules" in ignore and not any(line.strip() == "**/build" for line in ignore)
+    assert "**/node_modules" in ignore
+    assert not any(line.strip() == "**/build" for line in ignore), (
+        "e2b.Dockerfile COPYs packages/engine/mcp-server/build"
+    )
 
 
 def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
@@ -953,7 +939,6 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     env = _env(svc)
     assert any(env["TMPDIR"] == m or env["TMPDIR"].startswith(m.rstrip("/") + "/") for m in mounts)
     assert env["ANTHROPIC_API_KEY"].startswith("${ANTHROPIC_API_KEY"), "never a literal in the compose file"
-    assert env["OPENROUTER_API_KEY"].startswith("${OPENROUTER_API_KEY"), "image_transcribe's key, passed through like the model key"
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
     for key in ("GATEWAY_BASE_URL", "GATEWAY_API_KEY", "GATEWAY_TOOL_SEARCH"):
         assert env[key].startswith("${" + key), f"{key} is passed through, never a literal"
@@ -982,10 +967,12 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means off, not the arm's default"
     assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
     assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
-    assert env["GENEALOGY_PG_DSN"].startswith("postgresql://") and "@postgres:5432" in env["GENEALOGY_PG_DSN"]
-    assert env["GENEALOGY_S3_ENDPOINT"] == "http://minio:9000"
-    assert env["WORKER_CWD"] == "/project" == env["GENEALOGY_ANCHOR_PATH"]
-    assert svc["depends_on"]["minio"] == {"condition": "service_healthy"}
+    assert env["WORKER_CWD"] == "/project"
+    # The tools are the `tools` service's: the store credentials and image_transcribe's
+    # key stay out of the process that runs the agent loop.
+    assert not [k for k in env if k.startswith("GENEALOGY_")], "the worker holds no store credentials"
+    assert "OPENROUTER_API_KEY" not in env and "TOOL_SERVER" not in env
+    assert "minio" not in svc["depends_on"]
 
 
 def test_worker_dockerfile_shape():
@@ -993,8 +980,9 @@ def test_worker_dockerfile_shape():
     body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
     assert re.search(r"^FROM ubuntu:24\.04", body, re.M)
     assert "claude-agent-sdk==0.2.128" in body and "psycopg[binary]" in body
-    assert re.search(r"npm ci --omit=dev", body) and "--omit=optional" not in body, "hosted-stdio.js needs pg and the S3 client"
-    assert re.search(r"^COPY packages/engine/mcp-server/build\s", body, re.M)
+    # The tools are the `tools` service; the SDK wheel's CLI is a native binary.
+    assert not re.search(r"\b(node|nodejs|npm)\b", body), "the worker image carries no Node"
+    assert "packages/engine/mcp-server" not in body, "the worker image carries no engine"
     assert re.search(r"^COPY packages/engine/plugin\s", body, re.M)
     assert re.search(r"^COPY apps/server/app\s", body, re.M) and re.search(r"^COPY apps/server/proto/sql\s", body, re.M)
     # 1b's handover imports `proto.enqueue` inside the image. The Dockerfile copies
@@ -1012,7 +1000,6 @@ def test_worker_dockerfile_shape():
     # the Dockerfile must never carry it as an ENV/ARG or a literal.
     assert not re.search(r"^\s*(ENV|ARG)\s+ANTHROPIC_API_KEY", body, re.M), "the key is passed at run time, never baked"
     assert "sk-ant-" not in body
-    assert '{"hosted": true}' in body and ".familysearch-mcp/config.json" in body
     assert re.search(r"^ENV PYTHONPATH=/opt/genealogy/server", body, re.M)
     assert "--break-system-packages" in body
     # The CLI refuses bypassPermissions as root ("--dangerously-skip-permissions cannot
@@ -1043,7 +1030,7 @@ def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_pat
     # The shared server's contract is two per-request headers: `Authorization: Bearer
     # <patron token>` -> principal, `X-Genealogy-Project-Id` -> the request's store. The
     # project header is always sent; the default URL is the compose `tools` service.
-    env = {**WORKER_ENV, "TOOL_SERVER": "http"}
+    env = WORKER_ENV
     server = _server(_options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env))
     assert server == {
         "type": "http",
@@ -1051,19 +1038,13 @@ def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_pat
         "headers": {"Authorization": "Bearer turn-token", "X-Genealogy-Project-Id": "proj-1"},
         "timeout": 1_800_000,
     }
-    # CLI 2.1.220 cuts an http MCP call at 60 s without a per-server timeout; the stdio
-    # entry needs none, its own idle limit is already the 1,800,000 ms this matches.
-    stdio = _server(_options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"}))
-    assert "timeout" not in stdio
+    # CLI 2.1.220 cuts an http MCP call at 60 s without a per-server timeout.
     custom = _server(_options(
         config_dir=str(tmp_path), fs_access_token="", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
     assert custom["url"] == "http://127.0.0.1:8787/mcp"
     assert custom["headers"] == {"X-Genealogy-Project-Id": "proj-1"}, \
         "an empty bearer sends only the project header, not a malformed `Bearer `"
-    fallback = _server(_options(config_dir=str(tmp_path), worker_env=env))
-    assert fallback["headers"] == {"Authorization": "Bearer env-token", "X-Genealogy-Project-Id": "proj-1"}, \
-        "the worker env's token when the message has none"
     other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", fs_access_token="t", worker_env=env))
     assert other["headers"]["X-Genealogy-Project-Id"] == "proj-2", "the header is the turn's id, not a constant"
     assert "GENEALOGY_PROJECT_ID" not in json.dumps(server), "over http the id travels as a header, never as env"
@@ -1075,19 +1056,6 @@ def test_tool_server_headers_require_a_project_id():
     with pytest.raises(TypeError):
         options.tool_server_headers(WORKER_ENV, fs_access_token="t")  # type: ignore[call-arg]
     assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
-
-
-def test_tool_server_defaults_to_http_and_refuses_an_unknown_mode(tmp_path):
-    # The lead's call, 2026-09-20: the shared `tools` service is what production runs, so
-    # it is what an unqualified worker runs. stdio is the named opt-out, and an empty
-    # value is "unset", not a third mode.
-    assert options.TOOL_SERVER_DEFAULT == "http"
-    assert _server(_options(config_dir=str(tmp_path)))["type"] == "http"
-    assert _server(_options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": ""}))["type"] == "http"
-    assert _server(_options(config_dir=str(tmp_path),
-                            worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"}))["type"] == "stdio"
-    with pytest.raises(ValueError, match="stdio or http"):
-        _options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "grpc"})
 
 
 # ── run_turn: every guard seen firing, on a fake client ──────────────────────────
@@ -1216,7 +1184,7 @@ def turn_env(monkeypatch, tmp_path):
 
 
 def _run(state: dict, messages: list[Any], info: dict | None = None, *, receive_count: int = 1) -> dict:
-    state["client"] = FakeClient(messages, _info(AGENTS, 26) if info is None else info, state)
+    state["client"] = FakeClient(messages, _info(AGENTS, 25) if info is None else info, state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1316,7 +1284,7 @@ def _run_passes(
     ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
     shape, a second delivery of a resumed turn."""
     state["entries"] = entries
-    state["client"] = TwoPassClient(streams, _info(AGENTS, 26), state)
+    state["client"] = TwoPassClient(streams, _info(AGENTS, 25), state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -2640,7 +2608,7 @@ def test_turn_max_nudges_prefers_the_body_and_falls_back_on_anything_unusable(me
 def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 60}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 26), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 25), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert callable(turn_env["options"]["stop_hook"]), \
         "the browser's turn arms the Stop hook even though the worker's own cap is 0"
@@ -2651,7 +2619,7 @@ def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_en
     # container and the value rides the message.
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 0}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 26), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 25), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["options"]["stop_hook"] is None and summary["max_nudges"] == 0
 
@@ -2728,7 +2696,7 @@ class NudgingClient(FakeClient):
 
 def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, 26), turn_env)
+    turn_env["client"] = NudgingClient(_info(AGENTS, 25), turn_env)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
