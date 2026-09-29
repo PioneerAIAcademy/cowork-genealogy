@@ -244,3 +244,31 @@ is why it is written down as a step rather than pretended away.
 writes the shipped novice profile; **no slash command**; and the objective typed as a
 researcher would type it. Export with `proto/export.py --session <id>`, which now writes
 `feed.json` beside the project.
+
+
+## Settled: what "invokes `research` in its first turn" means
+
+R2's acceptance says a new browser session must invoke `research` **in its first turn**. The
+captured run entered the router 6th of 42 calls, so the wording decides whether that is a
+pass — and the plan never said. Settled here, before anyone measures it three times, because
+a criterion read two ways cannot be measured at all.
+
+**It means DURING the first turn, not AS the first call.** The argument is structural, not a
+preference: the web client prefixes every new session's first message with `OPENING_TURN`
+(`chatEvents.ts:112-116`) so `init-project` runs and consumes the objective. `init-project`
+therefore ALWAYS holds the first call in a new session — the capture confirms it, call 1 of
+42. So "as the first call" would be unsatisfiable by construction, and a reading that no run
+can ever meet cannot be the intended one.
+
+It also matches what R1 is for. The failure being guarded is that the default web path
+**never enters the router at all** — "it hands to `question-selection` and `research-plan`,
+and nothing in that chain invokes `research`". The concern is entry, not ordering. "First
+turn" rules out needing a SECOND user message to get there, which is the real risk.
+
+**Consequence for the scorecard:** the 2026-09-29 capture MEETS this criterion — `research`
+was invoked at call 6, within the run's single turn, after
+`init-project → check-warnings → question-selection → research-plan → locality-guide`.
+
+A measurement that would want the stricter reading should say so in different words —
+e.g. "before any sub-skill other than `init-project`" — and should first check that a run can
+satisfy it.

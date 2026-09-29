@@ -77,7 +77,7 @@ Everything is BUILT. The acceptance is a separate bar and is **not** met yet —
 | Ends `completed` or `decision`, never `budget`/`no_progress` | **met** — `completed` |
 | Its feed committed to the repo | **met** — 2,697 events, 282 paragraphs |
 | No body ends a reply with an offer the run overrides | **met** — 0 offers in 282 paragraphs |
-| Invokes `research` in its first turn | **partial** — the router WAS entered (6th of 42 calls, after init-project → check-warnings → question-selection → research-plan → locality-guide), in the run's single turn. Whether "in its first turn" means *during* it or *as the first call* decides this one |
+| Invokes `research` in its first turn | **met** — settled 2026-09-29: it means DURING the first turn, not AS the first call. `init-project` always holds call 1 because the web client prefixes `OPENING_TURN`, so the strict reading is unsatisfiable by construction. The router was entered at call 6 of 42, within the run's single turn |
 | **Three consecutive runs** | **NOT met** — one run |
 | "…but leave it at that" ends with the delivered outcome | **NOT met** — scenario not run |
 | "where are we?" ends after the answer, delivered, no new log entry | **NOT met** — scenario not run |
