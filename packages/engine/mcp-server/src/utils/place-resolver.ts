@@ -97,12 +97,12 @@ function normalizeKey(s: string): string {
 }
 
 /** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
- *  The `\)\s*$` anchor together with `[^)]+` (which cannot cross a `)`)
- *  is what forces the LAST parenthesised group to be treated as the type. */
+ *  The `\)\s*$` anchor forces the LAST parenthesised group to be the type;
+ *  the group admits one nested pair because FamilySearch types include `Island(s)`. */
 function parseTypeSuffix(
   input: string,
 ): { bareName: string; type: string } | null {
-  const match = /^(.+?)\s*\(([^)]+)\)\s*$/.exec(input);
+  const match = /^(.+?)\s*\(((?:[^()]|\([^()]*\))+)\)\s*$/.exec(input);
   if (!match) return null;
   return { bareName: match[1].trim(), type: match[2].trim() };
 }
@@ -626,6 +626,23 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
 const MAX_PLACE_CANDIDATES = 8;
 
 /**
+ * Build the LLM-instruction error for an ambiguous place resolution. Three
+ * callers (volume_search, external_links_search, place_population) throw this
+ * on the `ambiguous` arm of `resolveStandardPlaceToPlaceId`.
+ */
+export function ambiguousPlaceError(
+  standardPlace: string,
+  candidates: string[],
+): Error {
+  return new Error(
+    `"${standardPlace}" matches more than one place: ` +
+      `${candidates.join("; ")}. ` +
+      "Pass one of these exactly as listed, including the parenthesised type, " +
+      "as standardPlace, or call place_search to see the full list."
+  );
+}
+
+/**
  * The outcome of resolving a `standardPlace` to a placeId.
  *
  * `standardPlaceToPlaceId` collapses all three to `string | null`, which is why
@@ -724,11 +741,10 @@ export async function resolveStandardPlaceToPlaceId(
 }
 
 /**
- * The `string | null` form, kept because three of the four call sites only need
- * that much: `external-links-search.ts`, `wiki-place-page.ts` and
- * `place-population.ts` all treat both failures identically today, and widening
- * their messages is not this change. A thin wrapper rather than a parallel copy,
- * per CLAUDE.md § Code reuse.
+ * The `string | null` form. After the ambiguity-naming change (issue #2935),
+ * only `wiki-place-page.ts` calls this — as a fallback for alternate-name
+ * resolution, not an error surface. A thin wrapper rather than a parallel
+ * copy, per CLAUDE.md § Code reuse.
  */
 export async function standardPlaceToPlaceId(
   standardPlace: string,
