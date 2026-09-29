@@ -130,30 +130,58 @@ removed, and her birth date corrected from `1866` to `about 10 May 1866`.
 `starting-tree.gedcomx.json` and `unstripped-tree.gedcomx.json` are **unchanged
 and still byte-identical** — the snapshot is the benchmark input, the agent is
 meant to see the wrong parents, and re-snapshotting would silently rewrite the
-test (`docs/specs/e2e-test-spec.md` §3.5). `snapshot --check` now reports five
-further DRIFT lines for this, on top of the 16 that predate it.
+test (`docs/specs/e2e-test-spec.md` §3.5). `snapshot --check` went from **16
+DRIFT lines to 19**: five added and two removed, not five on top of sixteen. The
+two `person changed upstream` lines for `PQWR-XH7` and `PQWR-QB9` were **replaced
+by** `person gone upstream` lines, because the pair are no longer her relatives
+at all. Added:
 
-Still **not** done, and outside what was authorised: source `7PM9-W5S`
+```
+person gone upstream: PQWR-XH7 (Angelo Vaglio)
+person gone upstream: PQWR-QB9 (Maria Fereccio)
+relationship gone upstream: Couple PQWR-XH7 PQWR-QB9
+relationship gone upstream: ParentChild PQWR-XH7 G4Z4-RJ1
+relationship gone upstream: ParentChild PQWR-QB9 G4Z4-RJ1
+```
+
+**Open question — needs a ruling, and does not yet have one.** Source `7PM9-W5S`
 (`ark:/61903/1:1:X3G7-XG52`) is Paolo Andrea Vaglio's own persona on the marriage
-act and is still attached to her, which asserts she *is* him. Recorded on issue
-#2908.
+act and is **still attached** to `G4Z4-RJ1`, which asserts she *is* him — the
+likeliest route by which his parents reached her, and a generator of further bad
+hints. It was not detached because the authorised scope was parents and birth
+date only, set before the second opinion found it. Issue #2908 is closed, so this
+is recorded here rather than there. Whoever answers it should record the answer
+in this paragraph.
 
 **Lima, not Genova — there is no birthplace conflict.** An earlier revision of
 this README recorded one; that was wrong and is corrected here. `SYXS-SC8`
-(`ark:/61903/1:1:QVR6-Q9DC`) gives *20 May 1866 at Genova*, but reading the image
-shows it is a **transcription**: on 9 Nov 1877 Giuseppe brought a
-Spanish-language certificate to the Genova registry to be copied in. The original
-is a baptism at the Parish of Sant'Anna, **Lima**. Genova is the place of filing,
-not of birth, so Lima — which the tree and the marriage record both carry — is
-correct and the two sources never disagreed. Ikennaya Mbadiwe's finding.
+(`ark:/61903/1:1:QVR6-Q9DC`) indexes a **birth, 20 May 1866, at San Rocco Sopra
+Principe, Genova**. Reading the image shows the entry is a **transcription**:
+Giuseppe brought a Spanish-language certificate to the Genova registry to be
+copied in, and the original is a baptism at the Parish of Sant'Anna, **Lima**.
+The record's own metadata agrees — its `DigitalArtifact` coverage is
+`1877/1877`, so the volume is 1877 while the act it carries is 1866. Genova is
+where the paperwork was filed, not where she was born, so Lima — which the tree
+and the marriage record both carry — is correct and the two sources never
+disagreed. Ikennaya Mbadiwe's finding.
+
+**What the 20 May 1866 date is has NOT been established.** It is the date the
+entry itself carries (`coverage.date_range` reads *"20 maggio 1866"*), so it is
+neither a filing date — the volume is 1877 — nor an indexer's invention. But it
+is one day *before* the baptism of 21 May, so it is not the baptism either, and
+it is ten days after the birth it implies. Whether it is the date of the original
+Lima act, or a transcription slip for the 21st, needs the image re-read. An
+earlier revision of this README asserted it was "the filing date read as a birth
+date"; that was wrong and is withdrawn.
 
 **On the age question — settled: 17.** Issue #2314 asked whether the subject was
 16 or 17 on 30 August 1883, her tree birth fact being year-only (`1866`). She was
 baptised 21 May 1866 aged eleven days, so born **about 10 May 1866** — making her
-17 years 3 months at the 1883 birth. (An earlier revision gave 20 May, reading
-the transcription's filing date as a birth date.) That was legal and unremarkable
-in 1880s Liguria, so age never could have disproved the hint on its own — and in
-the event the call turned on her marriage, not her age.
+17 years 3 months at the 1883 birth. The answer is 17 on any reading of the
+paragraph above: 20 May and 21 May 1866 both give the same age in August 1883.
+That was legal and unremarkable in 1880s Liguria, so age never could have
+disproved the hint on its own — and in the event the call turned on her marriage,
+not her age.
 
 **On the avoid guard and the two WARNs.** `f1` carries `polarity: "avoid"`, which
 is what switches `apply_avoid_guard` on for this fixture — before adjudication it
