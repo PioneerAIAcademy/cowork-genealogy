@@ -1,7 +1,7 @@
 # Research as a job — phase 2 status log
 
 **Branch:** `research-as-a-job-phase2` (pushed to origin; **no PR yet, by instruction**).
-**Last updated:** 2026-09-29 (R4 complete). Update this file whenever the branch moves.
+**Last updated:** 2026-09-29 (R1 + R4 built, feed captured; only the stall item is left). Update this file whenever the branch moves.
 
 This is a status log, not a plan. The plan is
 [`docs/plan/research-as-a-job-phase2.md`](./plan/research-as-a-job-phase2.md); the parent
@@ -57,12 +57,19 @@ see findings below. That is deliberate, not unfinished work.
 
 | Item | State | Needs |
 |---|---|---|
+| R1 router re-entry | **BUILT** — per-turn system prompt, plus the ledger recording which callee a Skill/Task call names | Nothing |
 | R4 `delivered` outcome | **BUILT** end to end — tool, hook arm, outcome, label, spec | Nothing. No skill body instructs its use yet (the enforcement half) |
 | "Not every turn is a job" finish line | Not started | R4's tool first |
-| Capture a real feed | Code half done (`export.py`) | A live hosted run. **Deferred by the user 2026-09-29** — do it when someone can watch the result. Token supplied; the stack is down |
+| Capture a real feed | **DONE 2026-09-29** — `docs/captures/2026-09-29-mcandrew-children/`. 133 min, outcome `completed`, 2,697 events, 282 narration paragraphs | Nothing |
 | `sdk_stream_silence` | Diagnosed, not fixed | Decide: retry budget or per-test cap for 400s+ suites |
 | #2927 | **OPEN — do NOT fix here.** Its own board note says it is moot once #2793 lands, and the small patch would edit the file #2793 deletes | Cia-3 (asked to prioritise 2026-09-29) |
 | #2793 | OPEN, **assigned to Cia-3**, must land serially with #2792 and #2798 | Cia-3 |
+
+## The one item still open and owned here
+
+`sdk_stream_silence` — diagnosed (it tracks test duration; `research-plan` owns the four
+longest tests) but not fixed. It blocks validating anything on that suite, which is why five
+consecutive runs there produced no red-free log.
 
 ## Process notes worth keeping
 
@@ -71,6 +78,9 @@ see findings below. That is deliberate, not unfinished work.
   completion on a clean tree, alone.
 - **Do not resolve "the latest run log" by mtime.** A `git checkout` of pruned logs
   rewrites timestamps; use `check_runlogs.latest_full_skill_runlog`, which is what CI uses.
+- **`make proto-up` needs rootless Docker on a machine whose user is not in the `docker`
+  group**, and the first rootless run doubles as a clean-machine test — its empty image store
+  is what exposed the broken `minio/minio` pull. Ask before setting it up.
 - **Remaining UNPINNED hunks under `make server-test` are wrong-suite, not gaps** — the
   Makefile target, `narration_figures_report.py`, `orchestrator.py` and
   `setup-feedback-case.sh` are guarded by `make harness-test`.
