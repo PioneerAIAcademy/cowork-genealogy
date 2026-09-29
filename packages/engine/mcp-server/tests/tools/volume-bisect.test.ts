@@ -159,6 +159,72 @@ describe("refuses to converge on a non-monotonic film", () => {
   });
 });
 
+describe("stops when the bracket closes", () => {
+  it("spends no probe once the bracket is adjacent", async () => {
+    // 297 and 298 are adjacent and both dated, so no image lies between them.
+    // Without the closed-bracket check `nextPosition` steps OUTWARD from the
+    // midpoint across the whole sub-volume, hands back a next image outside the
+    // bracket, and bills an OCR probe on every following call — with the agent
+    // told to keep calling. This is the line that fails on that regression.
+    const result = await volumeBisectTool(
+      {
+        imageGroupNumber: GROUP,
+        targetYear: 1700,
+        readings: [
+          { position: 297, imageId: imageIdAt(297), year: 1699 },
+          { position: 298, imageId: imageIdAt(298), year: 1701 },
+        ],
+      },
+      LOCAL,
+    );
+
+    expect(ocr).not.toHaveBeenCalled();
+    expect(result.confidence).toBe("resolved");
+    expect(result.nextImageId).toBeUndefined();
+    expect(result.stopped).toContain("297");
+    expect(result.stopped).toContain("298");
+  });
+
+  it("still probes while a gap remains between the ends", async () => {
+    // The other direction: one image apart is closed, two is not. A check that
+    // fired here would stop the bisect one probe early, every time.
+    nextProbeYear = 1700;
+    const result = await volumeBisectTool(
+      {
+        imageGroupNumber: GROUP,
+        targetYear: 1700,
+        readings: [
+          { position: 297, imageId: imageIdAt(297), year: 1699 },
+          { position: 299, imageId: imageIdAt(299), year: 1701 },
+        ],
+      },
+      LOCAL,
+    );
+
+    expect(ocr).toHaveBeenCalledOnce();
+    expect(result.reading).toMatchObject({ position: 298 });
+  });
+
+  it("does not treat an unseeded bracket as closed", async () => {
+    // An unseeded bracket defaults to 0/lastPosition with null years. On a
+    // two-image volume those ends are adjacent, so a check that read positions
+    // without requiring both years would resolve without reading anything.
+    search.mockResolvedValue({ imageIds: [imageIdAt(0), imageIdAt(1)] });
+    // 1650, not the target: a probe that lands ON the target makes low and high
+    // the same reading, which IS resolved. Here only the low end is dated and
+    // the high end is the position default, so the "both ends dated" half of the
+    // check is what keeps this open.
+    nextProbeYear = 1650;
+    const result = await volumeBisectTool(
+      { imageGroupNumber: GROUP, targetYear: 1700 },
+      LOCAL,
+    );
+
+    expect(ocr).toHaveBeenCalledOnce();
+    expect(result.confidence).not.toBe("resolved");
+  });
+});
+
 describe("input domain", () => {
   it("refuses a bare image-group prefix and names volume_search", async () => {
     await expect(
@@ -231,37 +297,46 @@ describe("input domain", () => {
 
 describe("browse budget", () => {
   /**
-   * Drive `n` further probes on one continuing hunt, echoing each returned
-   * reading back so the tool picks a NEW position every call — a fresh
-   * `readings: []` would re-probe the midpoint and charge nothing, which is the
-   * shape that made this check pass vacuously the first time it was written.
+   * Drive `n` probes that each land on a DISTINCT image, so the counter has 20
+   * real reads to count.
+   *
+   * Each call is its own hunt, seeded one image further along than the last: a
+   * seed at position `2i` puts the midpoint at `249 + i`, so the probed position
+   * moves by one every call. Two shapes are wrong here and both pass vacuously —
+   * a fresh `readings: []` re-probes the same midpoint and charges once, and
+   * echoing every reading back ON the target year closes the bracket after the
+   * first probe (low and high become the same reading) so the tool resolves and
+   * stops. The seed year is below the target, so the high end stays undated and
+   * the bracket cannot close.
    */
-  async function probe(
-    n: number,
-    projectPath: string | undefined,
-    readings: VolumeBisectReading[] = [],
-  ) {
+  async function probe(n: number, projectPath: string | undefined, fromSeed = 0) {
     let last!: Awaited<ReturnType<typeof volumeBisectTool>>;
+    const probed: VolumeBisectReading[] = [];
     for (let i = 0; i < n; i++) {
+      const seedPosition = 2 * (fromSeed + i);
       last = await volumeBisectTool(
-        { imageGroupNumber: GROUP, targetYear: 1700, readings, projectPath },
+        {
+          imageGroupNumber: GROUP,
+          targetYear: 1700,
+          readings: [
+            { position: seedPosition, imageId: imageIdAt(seedPosition), year: 1600 },
+          ],
+          projectPath,
+        },
         LOCAL,
       );
-      // Echo it back on the target year: every reading agrees, so the run stays
-      // monotone and never trips the null-run or contradiction stops. What is
-      // measured here is the counter, not the bracket.
-      if (last.reading) readings.push({ ...last.reading, year: 1700 });
+      if (last.reading) probed.push(last.reading);
     }
-    return { last, readings };
+    return { last, probed };
   }
 
   it("does not fire below the bound and fires once past it", async () => {
     const under = await probe(20, "/projects/alpha");
-    expect(under.readings).toHaveLength(20);
-    expect(new Set(under.readings.map((r) => r.imageId)).size).toBe(20);
+    expect(under.probed).toHaveLength(20);
+    expect(new Set(under.probed.map((r) => r.imageId)).size).toBe(20);
     expect(under.last.browseBudget).toBeUndefined();
 
-    const over = await probe(1, "/projects/alpha", under.readings);
+    const over = await probe(1, "/projects/alpha", 20);
     expect(over.last.browseBudget).toMatchObject({
       imageGroup: PREFIX,
       distinctImagesRead: 21,
@@ -273,21 +348,21 @@ describe("browse budget", () => {
   });
 
   it("charges the project's key, not a shared one", async () => {
-    const alpha = await probe(20, "/projects/alpha");
+    await probe(20, "/projects/alpha");
     // Keyed on the group alone, or on the `<no-project>` sentinel, this 21st
     // read lands in alpha's bucket and fires. Keyed on the project, it is
     // beta's first.
-    const beta = await probe(1, "/projects/beta", [...alpha.readings]);
+    const beta = await probe(1, "/projects/beta", 20);
     expect(beta.last.browseBudget).toBeUndefined();
 
-    const sentinel = await probe(1, undefined, [...alpha.readings]);
+    const sentinel = await probe(1, undefined, 21);
     expect(sentinel.last.browseBudget).toBeUndefined();
   });
 
   it("normalizes the project path before keying", async () => {
-    const alpha = await probe(20, "/projects/alpha");
+    await probe(20, "/projects/alpha");
     // The same project spelled differently must not get a fresh budget.
-    const same = await probe(1, "/projects/alpha/", alpha.readings);
+    const same = await probe(1, "/projects/alpha/", 20);
     expect(same.last.browseBudget).toBeDefined();
   });
 });

@@ -152,6 +152,28 @@ function nextPosition(
   return undefined;
 }
 
+/** The bisect has gone as far as the volume allows: both ends of the bracket are
+ *  dated readings and no image lies between them. `nextPosition` steps outward
+ *  from the midpoint across the whole sub-volume, so without this it walks OUT of
+ *  a closed bracket and bills an OCR probe per call that cannot narrow anything —
+ *  and the agent is told to keep calling. Both ends must be dated: an unseeded
+ *  bracket defaults to 0/lastPosition, which is not a reading. */
+function isClosed(bracket: VolumeBisectBracket): boolean {
+  return (
+    bracket.lowYear !== null &&
+    bracket.highYear !== null &&
+    bracket.highPosition - bracket.lowPosition <= 1
+  );
+}
+
+function closedMessage(bracket: VolumeBisectBracket): string {
+  return (
+    `The target falls between position ${bracket.lowPosition} (${bracket.lowYear}) and ` +
+    `position ${bracket.highPosition} (${bracket.highYear}), which are adjacent — no ` +
+    `image lies between them, so no further probe can narrow this. Read those pages.`
+  );
+}
+
 function trailingNullRun(readings: VolumeBisectReading[]): number {
   let n = 0;
   for (let i = readings.length - 1; i >= 0 && readings[i].year === null; i--) n++;
@@ -224,6 +246,13 @@ export async function volumeBisectTool(
 
   const probed = new Set(readings.map((r) => r.position));
   const bracketBefore = bracketFrom(readings, input.targetYear, lastPosition);
+  if (isClosed(bracketBefore)) {
+    return {
+      bracket: bracketBefore,
+      confidence: "resolved",
+      stopped: closedMessage(bracketBefore),
+    };
+  }
   const position = nextPosition(bracketBefore, probed, lastPosition);
   if (position === undefined) {
     return {
@@ -273,6 +302,16 @@ export async function volumeBisectTool(
       stopped:
         `Position ${a.position} reads ${a.year} but the later position ${b.position} ` +
         `reads ${b.year}. Year headings are not resolving this sub-volume.`,
+    };
+  }
+
+  if (isClosed(bracket)) {
+    return {
+      bracket,
+      confidence: "resolved",
+      reading,
+      ...(browseBudget ? { browseBudget } : {}),
+      stopped: closedMessage(bracket),
     };
   }
 
