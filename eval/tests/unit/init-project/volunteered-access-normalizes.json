@@ -25,6 +25,7 @@
     "Every value written must be one of the canonical spellings: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`",
     "The skill must NOT ask the user about site access -- the question was dropped. Recording what the user volunteered is correct; prompting for it, or asking a follow-up to confirm it, is not",
     "Dropping the bare FamilySearch mention must not collapse the whole list to `[\"none\"]` or `[]` here, because Ancestry and the family history centre remain",
+    "The exact stored `subscriptions` values are checked by a deterministic validator, not by this judge -- do not re-derive them, and do not lower Correctness for the presence of a correctly-normalized volunteered subscription",
     "`researcher_profile.experience_level` should be `novice` and `narration_guidance` the fixed house-style string. The user's 'some research under my belt' is NOT persisted as a level: the profile is fixed and never asked (lead ruling 2026-09-18).",
     "Should still create both research.json and tree.gedcomx.json in a single pass and seed the Patrick Flynn stub from person-read-flynn -- volunteered access must not stop or delay the initialization"
   ],
