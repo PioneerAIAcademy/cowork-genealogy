@@ -28,6 +28,6 @@
     "SCOPE — must not widen. No question about a person the objective does not cover. If a question targets someone other than Patrick (or his parents, who are the objective's subject matter), it is out of scope.",
     "`selection_basis` should be `objective_decomposition` — that remains the correct closed-enum value for a first question derived from the objective, even though a single-fact objective yields one question at the objective's own scope rather than several narrower ones.",
     "`depends_on` and `unblocks` should both be explicitly `[]` for a first question, and `exhaustive_declaration` must be unstarted (`declared: false`, empty `log_entry_ids`, null `stop_criteria`).",
-    "PRESENTATION: should state the question text in full, not merely report the assigned `q_` id — 'q_001 written.' alone is a fail. The id should be glossed on first use, the objective-vs-question distinction explained once, and the next step offered in plain language rather than by naming the research-plan skill."
+    "PRESENTATION: the reply has two parts, split by a final line containing only `---`. Above it are terse caller-facing lines, which may carry the `q_` id and a routing hint such as `research-plan`; do not penalize either there. Everything after the final `---` is what the researcher reads, and is graded: it must state the chosen question in plain words, never as a `q_` id alone ('q_001 written.' is a fail); explain the objective-vs-question distinction once; and give the next step in plain language, without naming a skill, tool or field."
   ]
 }

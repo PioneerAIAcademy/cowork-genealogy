@@ -1,24 +1,28 @@
-# Converting a skill into a skill-agent pair
+# Converting a skill into an agent
 
-**Read this before converting anything.** It is the measured record of the first
-two conversions (`proof-conclusion`, 2026-08-19/20; `research-exhaustiveness`,
-2026-08-23) and the rules that follow from them. The first took nine paid eval
-runs; most of that was avoidable, and this document exists so the next one does
-not repeat it.
+**We no longer keep skills at all — only agents.** A conversion ends with the
+agent authored and `skills/<name>/` deleted in the same PR. There is no
+skill-agent pair and no thin routing skill (lead ruling 2026-09-22, recorded in
+`docs/specs/unit-test-spec.md`; restated by chesworthrm on PR #3000,
+2026-09-29). Worked cases: `citation` (#2799, PR #2861), `person-evidence`,
+`search-wikipedia` (#2795), `proof-conclusion` (#2822), `question-selection`
+(#2115, PR #3000).
 
-The pair framing that follows predates the lead's 2026-09-22 ruling (recorded
-in `docs/specs/unit-test-spec.md`) and is kept for its measured record, not as
-current instruction.
+**Read this before converting anything.** It is the measured record of the
+conversions so far and the rules that follow from them. The first
+(`proof-conclusion` as a pair, 2026-08-19/20) took nine paid eval runs; most of
+that was avoidable, and this document exists so the next one does not repeat
+it. Much of what follows was measured on pairs, when the routing skill still
+existed. It is kept for those measurements, not as instruction to build one:
+wherever it says "the routing skill", read "the caller" — on the deleted-skill
+path that is the orchestrator or the main thread.
 
-Pairs are still the right instrument. Nothing below argues against pairing — it
-argues about *what to move, in what order*.
-
-**Three skills are exempt from the lead's 2026-09-22 ruling that every skill
-becomes an agent and the skill is deleted:** `research` (the orchestrator),
+**Three exemptions predate the restatement:** `research` (the orchestrator),
 `record-extraction` (ruled 2026-09-21), and `forget-and-rederive` (ruled
 2026-09-25, issue #2791), whose confirmation step and its rule never to read
 the FamilySearch tree for the rest of the project must bind the main thread
-after setup, which an agent's single return cannot do.
+after setup, which an agent's single return cannot do. Whether they survive
+"no skills at all" is the lead's call and is open on PR #3000.
 
 **Two rationales reach a pair, and they buy different work.** This document was
 written for the first:

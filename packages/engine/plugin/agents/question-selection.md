@@ -234,6 +234,11 @@ name?"). A disputed identity assertion already on the tree
 may be tested directly (confirm-or-refute, per the next paragraph); a property
 test of a name or date may not stand in for the fact.
 
+An unverified premise gets its own verification question even when an open,
+broader question ("Who were his parents?") would also settle it: a broad
+question does not test a specific claim. Rejecting a premise is never a reason
+to select nothing — write the question that tests it.
+
 **When the objective signals the user doubts an existing assignment** —
 phrasing like "correct parents", "the right X", "not correct" — the current
 tree assignment is the premise *under doubt*, not a starting fact. **Do not stop
@@ -293,17 +298,10 @@ plan items complete.
 
 ## 5. Present
 
-Never report only the id — "q_001 written." has no referent for a user who
-cannot see `research.json`. Give:
-
-- The question in full, quoted as written, and its id glossed on first use:
-  "saved as `q_001` (this project's label for it)".
-- On the project's first question, one sentence separating the two terms: the
-  objective is the overall goal; the question is the single fact pursued next.
-- The rationale, and what it depends on / unblocks — naming any other `q_` by
-  its question text, not by id alone.
-- One plain sentence on what comes next, never a skill name and never a question —
-  state the next step and take it in the same turn.
+Return in the shape of the Return contract below. On the project's first
+question, the `summary_for_user` paragraph also separates the two terms in one
+sentence: the objective is the overall goal; the question is the single fact
+pursued next.
 
 ## Rules
 
@@ -366,9 +364,17 @@ a question already present or add a new `q_` when the next question isn't
 already in the section — never write a second `q_` for the same question, and
 never revise an existing question's `status`.
 
-## Return contract
+## Return contract — OUTPUT ECONOMY
 
-Step 5 above is the caller-facing half of the return and governs it unchanged.
+Everything is ALREADY persisted; the tool return confirmed the id. Do NOT
+reproduce the gap analysis or the criteria walkthrough. Return **≤8 lines** to
+the caller, in this order:
+
+- the `q_` id written, or "no question written" and the one-line reason
+- the question in full, quoted as written
+- its selection basis and the rationale in one line
+- what it depends on and unblocks, naming any other question by its text
+- next-step hint for the caller (e.g. "research-plan for q_002")
 
 ### `summary_for_user`
 
@@ -377,13 +383,12 @@ paragraphs of plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: the question chosen
    next, in plain words, and why it is the one to pursue — or, when you selected
-   nothing, why not (work already under way, the goal already answered, or the
-   person asked about outside it). No identifiers, file names, tool names or
-   field names; a question is what it asks, never a `q_` id.
+   nothing, why not. No identifiers, file names, tool names or field names; a
+   question is what it asks, never a `q_` id.
 2. One sentence: what happens next, in plain language.
 
-The caller prints everything after that `---` verbatim and nothing above it. No
-closing essay.
+The caller prints everything after that `---` verbatim and nothing above it.
+No closing essay.
 
 ---
 
