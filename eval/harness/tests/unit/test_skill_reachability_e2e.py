@@ -70,9 +70,12 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     #2795), and is likewise NOT re-listed. Same caveat: its dark reading was
 #     never disproved either, and `agents/search-wikipedia.md` is reachable only
 #     by auto-delegation, which nothing in this file measures.
+#   - `convert-dates` was on this list until 2026-09-29 and is NOT re-listed,
+#     for the same reason: issue #2790 deleted the skill. Its successor
+#     `agents/convert-dates.md` is reachable by auto-delegation from its own
+#     description, which this set does not measure.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
-        "convert-dates",
         "forget-and-rederive",
         "historical-context",
         "hypothesis-tracking",

@@ -7,6 +7,7 @@
   "prompts": {
     "CLAUDE.md": 56851,
     "packages/engine/plugin/agents/citation.md": 44479,
+    "packages/engine/plugin/agents/convert-dates.md": 11387,
     "packages/engine/plugin/agents/gps-mentor.md": 40242,
     "packages/engine/plugin/agents/image-reader.md": 9101,
     "packages/engine/plugin/agents/person-evidence.md": 61598,
@@ -17,7 +18,6 @@
     "packages/engine/plugin/agents/search-wikipedia.md": 6843,
     "packages/engine/plugin/skills/check-warnings/SKILL.md": 22506,
     "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
-    "packages/engine/plugin/skills/convert-dates/SKILL.md": 8567,
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13208,
     "packages/engine/plugin/skills/historical-context/SKILL.md": 15449,
     "packages/engine/plugin/skills/hypothesis-tracking/SKILL.md": 13498,

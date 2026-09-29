@@ -556,6 +556,18 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // convert-dates (issue #2790) holds the one tool the skill it replaced
+  // declared, `convert_calendar`, plus `Read` for the Narration line's read of
+  // research.json. It persists nothing, so it holds no writer tool and no hook
+  // routes anything to it.
+  "convert-dates.md": {
+    tools: [
+      "Read",
+      "convert_calendar",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",
