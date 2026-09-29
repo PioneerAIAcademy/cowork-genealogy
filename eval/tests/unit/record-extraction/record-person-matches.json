@@ -17,6 +17,7 @@
     "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": [
+    "record-read-mxhy-tp4-flynn-1850",
     "record-person-matches-flynn",
     "validate-research-schema"
   ],

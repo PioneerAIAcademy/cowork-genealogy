@@ -27,6 +27,7 @@
     "Should NOT fabricate facts absent from a record — no occupation for Mary Flynn, no birth date for anyone the records do not date.",
     "Should not silently skip a record it finds difficult. If one cannot be extracted, say which and why."
   ],
+  "execution": { "max_turns": 60, "max_wall_clock_seconds": 1200, "sdk_message_silence_seconds": 300 },
   "expected_classifications": [
     { "record_role": "head_of_household", "fact_type": "name", "record_basis": "stated" },
     { "record_role": "head_of_household", "fact_type": "age", "record_basis": "stated" },
