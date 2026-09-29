@@ -53,7 +53,7 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
     "project": {"init-project", "proof-conclusion"},
     "questions": {"question-selection", "research-exhaustiveness"},
     "plans": {"research-plan", "search-records", "search-external-sites",
-              "search-full-text", "search-images", "record-extraction"},
+              "search-full-text", "record-extraction"},
     "log": {"search-records", "search-external-sites", "record-extraction",
             "search-full-text", "search-images"},
     "sources": {"record-extraction", "citation"},
@@ -98,7 +98,19 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 #: Declaring it here rather than editing the frozen literal above is the point:
 #: the literal stays a verbatim copy of what was enforced before, and every
 #: departure from it is a line someone had to write.
-NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
+#:
+#: `log` loses `search-images`. The caller spelling changed from
+#: `skill:search-images` to `agent:search-images` (issue #2268, thin-skill
+#: deletion). The unit plane resolves an `agent:` caller only when that agent
+#: IS the suite subject (`SUBJECT = "citation"` here, not "search-images"),
+#: so the agent caller is dropped from the resolved set. `plans` lost
+#: `search-images` entirely — the hook grants the agent only `plan_items`,
+#: not `plans`, so the caller was removed rather than re-spelled. `plan_items`
+#: has `enforceableAt: []` so it never reaches the unit plane and needs no entry.
+NARROWED: dict[str, set[str]] = {
+    "assertions": {"convert-dates"},
+    "log": {"search-images"},
+}
 
 
 # The suite subject the research.json rows need to resolve (issue #2799). The

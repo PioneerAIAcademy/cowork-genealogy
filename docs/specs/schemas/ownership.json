@@ -135,7 +135,6 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
         "skill:record-extraction"
       ],
       "writerTools": [
@@ -144,7 +143,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "requires": "research-plan owns plan and item structure. The search skills, the search-images agent, and record-extraction may update only `items[].status` after executing or extracting from an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
       "override": "none"
@@ -158,7 +157,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
@@ -188,7 +187,7 @@
         "skill:search-records",
         "skill:search-external-sites",
         "skill:search-full-text",
-        "skill:search-images",
+        "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [

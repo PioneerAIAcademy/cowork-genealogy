@@ -159,7 +159,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 27 skills covering the full GPS research cycle. Skills
+The plugin ships 26 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -188,7 +188,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages by delegating to the `image-reader` subagent. | "Browse the unindexed Schuylkill County probate films" |
 | **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, and ten other genealogy sites (`build_external_search_url`'s full site list). Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
@@ -278,7 +277,6 @@ don't load it explicitly.
 3. research-plan             "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
-   search-images             ...or browse unindexed digitized image volumes
    search-external-sites     ...or on Ancestry/MyHeritage/FindMyPast
 5. record-extraction         Extract assertions from found records
                              (evidence classifications are written
@@ -479,7 +477,7 @@ What's shipped:
 - **48 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **27 shipped skills.** Full GPS research cycle from `init-project`
+- **26 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three

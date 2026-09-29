@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import new_log_entries as _new_log_entries
+
 _ROUTES_TO_PREFIX = "routes-to:"
 
 
@@ -167,4 +169,139 @@ def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
         f"the top. Expected route: {allowed!r}. "
         f"spawned_agents={spawned_agents(builtin_tool_calls)} "
         f"skills_invoked={list(skills_invoked)}"
+    )
+
+
+# ── Moved from test_search_images.py (issue #2268) ───────────────────────
+
+
+def _new_result_sidecars(before_state, after_state) -> list[str]:
+    """results/*.json paths present in after_state but not before."""
+    before_files = (before_state or {}).get("files", {}) or {}
+    after_files = (after_state or {}).get("files", {}) or {}
+    return sorted(
+        path for path in after_files
+        if path.startswith("results/")
+        and path.endswith(".json")
+        and path not in before_files
+    )
+
+
+def test_no_browse_or_writes_on_planning_request(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (no-browse-no-write): the search-images no-harm invariant
+    for a planning/strategy request that should route to research-plan.
+
+    search-images executes a browse and logs it; a pure planning question
+    ("which unindexed record sets should I browse next?") must not cause a
+    browse to be EXECUTED or anything to be persisted. This is the
+    deterministic gate for the grade_on_invariant negative
+    ut_research_016: which skill wins the route is a known-unstable
+    model prior (the router picks research-plan directly on some runs,
+    search-images on others, project-status on others), but the state-harm
+    invariant holds under every one of those routes and is what we assert.
+
+    Since the pair conversion (issue #2121) the redirect lives in
+    agents/search-images.md's ROUTING section, not in SKILL.md: the routing
+    skill delegates first and the AGENT holds volume_search and image_search,
+    so the redirect must fire before the agent's first tool call or this
+    invariant fails. That is the intended reading of a red here — a gate that
+    moved into the agent but did not stay ahead of the tools.
+    See docs/specs/unit-test-spec.md.
+
+    Fails iff the run:
+      - made a `volume_search` or `image_search` MCP call (a browse was
+        executed), or
+      - appended a new `log` entry (search-images logs every browse it
+        runs; research-plan — the acceptable route — never writes `log`,
+        so any new log entry means a search/browse skill actually ran), or
+      - wrote a new `results/` sidecar file.
+
+    Deliberately does NOT flag other research.json writes: routing to
+    research-plan legitimately writes `plans`/`questions`, which is
+    correct behavior, not harm.
+    """
+    if "no-browse-no-write" not in test.get("tags", []):
+        pytest.skip("not a no-browse-no-write scenario")
+
+    # 1. No browse executed.
+    browsed = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] in ("volume_search", "image_search")
+    ]
+    assert not browsed, (
+        "planning request must not execute a browse; got "
+        f"{[(c.get('tool', '').split('__')[-1], c.get('args')) for c in browsed]}"
+    )
+
+    # 2. No new browse log entry (research-plan never writes `log`).
+    new_entries = _new_log_entries(before_state, after_state)
+    assert not new_entries, (
+        "planning request must not append a browse log entry; new log "
+        f"ids: {[e.get('id') for e in new_entries]}"
+    )
+
+    # 3. No new results/ sidecar file.
+    sidecars = _new_result_sidecars(before_state, after_state)
+    assert not sidecars, (
+        f"planning request must not write a results/ sidecar; got: {sidecars}"
+    )
+
+
+def test_no_browse_executed_on_indexed_search(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (no-browse-on-indexed): the search-images no-harm invariant
+    for an INDEXED name/date/place search that should route to search-records.
+
+    A sibling of test_no_browse_or_writes_on_planning_request, not a copy, and
+    the difference is the point. That one forbids ANY new `log` entry because
+    its acceptable route (research-plan) never writes `log`. Here the
+    acceptable route is search-records, which logs every search it runs — so a
+    blanket no-log assertion would fail the correct behaviour, which is the
+    second direction CLAUDE.md requires a guard be proven against. This asserts
+    only what cannot be legitimate: that no browse was EXECUTED, and that
+    nothing claimed one in the audit trail.
+
+    The gate this backstops moved into agents/search-images.md's ROUTING
+    section with the pair conversion (issue #2121). Measured on run
+    v1_2026-09-22_01-41-09: the agent treated an indexed 1850-census request as
+    a browse, and when the browse tools were not available appended a `log`
+    entry with `tool: image_search` and told the user the browse "could not be
+    conducted" because the tools were "unavailable in this session" — blaming
+    the environment for a request it should have redirected. The judge scored
+    that a fail on one run and a pass on five others; this makes it a one-line
+    deterministic verdict instead of an opinion that moves between runs.
+
+    Fails iff the run:
+      - made a `volume_search` or `image_search` MCP call (a browse was
+        executed), or
+      - appended a new `log` entry whose `tool` names one of those (a browse
+        was claimed in the audit trail, whether or not one ran).
+
+    Deliberately does NOT flag a new `log` entry from search-records itself
+    (`tool: record_search`), nor a `results/` sidecar: both are what the
+    correct route legitimately produces.
+    """
+    if "no-browse-on-indexed" not in test.get("tags", []):
+        pytest.skip("not a no-browse-on-indexed scenario")
+
+    browsed = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] in ("volume_search", "image_search")
+    ]
+    assert not browsed, (
+        "an indexed search must not execute a browse; got "
+        f"{[(c.get('tool', '').split('__')[-1], c.get('args')) for c in browsed]}"
+    )
+
+    claimed = [
+        e for e in _new_log_entries(before_state, after_state)
+        if ("image_search" in (e.get("tool") or ""))
+        or ("volume_search" in (e.get("tool") or ""))
+    ]
+    assert not claimed, (
+        "an indexed search must not append a browse log entry; got "
+        f"{[(e.get('id'), e.get('tool')) for e in claimed]}"
     )

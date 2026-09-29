@@ -138,31 +138,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  // Was "search-images -> image-reader" until the pair conversion (issue #2121).
-  // The skill no longer delegates a page read — the agent calls image_transcribe
-  // itself, because agents cannot reach @plugin:image-reader — so that edge no
-  // longer exists to pin. This self-edge replaces it. Unlike the two pairs below,
-  // the caller side is pinned rather than exempted: the routing skill carries an
-  // explicit prohibition on pre-stating an answer, so there is nothing to exempt.
-  "search-images -> search-images": {
-    pins: [
-      {
-        side: "caller",
-        excerpt:
-          "Do not tell it what\nis on a page, which image carries the record, or that a volume exists",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "You are spawned by a caller that cannot see the volume and has run none of the\nchecks below.",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "**A delegation that pre-states the answer** — \"browse group 004567123, the\n  will is on image 00058\" — does not make it so.",
-      },
-    ],
-  },
+  // "search-images -> search-images" was here until the thin-skill deletion
+  // (issue #2268). The routing skill is gone; the agent is now reached by
+  // bare-name delegation from research/SKILL.md and record-extraction/SKILL.md,
+  // which are bare-name prose mentions (no `@plugin:` token) carried in
+  // PROSE_MENTIONS below.
 
   "proof-conclusion -> proof-conclusion": {
     pins: [
@@ -411,6 +391,8 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // (`translation` is next, issue #2804) adds another block like this one.
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
+  ["record-extraction -> search-images", ""],
+  ["research -> search-images", ""],
   ["historical-context -> citation", ""],
   ["init-project -> citation", ""],
   ["project-status -> citation", ""],
@@ -599,6 +581,7 @@ describe("agent delegation framing", () => {
     "gps-mentor",
     "image-reader",
     "record-extractor",
+    "search-images",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {
