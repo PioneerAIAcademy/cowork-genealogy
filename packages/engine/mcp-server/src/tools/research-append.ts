@@ -690,20 +690,47 @@ export interface PersonLink {
   person_id: string;
 }
 
-/** Links the gate can see for this call: the project's live, unsuperseded
- *  person_evidence plus every person_evidence append in this batch, whatever
- *  order the ops arrive in. */
+/** The record party an assertion describes: `record_persona_id` when the
+ *  sidecar kept one, `record_role` otherwise (required on every assertion). The
+ *  same key `record-persona.ts` groups by; the contradiction gate and its
+ *  two-party arm both read it from here so the two cannot drift apart. */
+function partyKey(a: any): string | null {
+  return a?.record_persona_id ?? a?.record_role ?? null;
+}
+
+/** Links the gate can see for this call: the project's live person_evidence
+ *  with this batch's person_evidence ops replayed over it, whatever order the
+ *  ops arrive in. An update that supersedes a link removes it, and one that
+ *  re-points `person_id` or `assertion_id` moves it, so a link retired in the
+ *  same call cannot pair and a link moved onto a person does. */
 function batchPersonLinks(research: any, ops: ResearchAppendOp[]): PersonLink[] {
-  const out: PersonLink[] = [];
-  const push = (e: any) => {
-    if (e && typeof e.assertion_id === "string" && typeof e.person_id === "string") {
-      out.push({ assertion_id: e.assertion_id, person_id: e.person_id });
-    }
-  };
+  const byId = new Map<string, { assertion_id: unknown; person_id: unknown; superseded: boolean }>();
+  const appended: { assertion_id: unknown; person_id: unknown; superseded: boolean }[] = [];
   const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
-  for (const e of live) if (!e?.superseded_by) push(e);
+  for (const e of live) {
+    if (e && typeof e.id === "string") {
+      byId.set(e.id, { assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+    }
+  }
   for (const op of ops) {
-    if (op.section === "person_evidence" && op.op === "append") push((op as any).entry);
+    if (op.section !== "person_evidence") continue;
+    if (op.op === "append") {
+      const e = (op as any).entry;
+      if (e) appended.push({ assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+    } else if (op.op === "update" && typeof op.entryId === "string") {
+      const cur = byId.get(op.entryId);
+      const f = (op as any).fields ?? {};
+      if (!cur) continue;
+      if (Object.prototype.hasOwnProperty.call(f, "superseded_by")) cur.superseded = !!f.superseded_by;
+      if (typeof f.person_id === "string") cur.person_id = f.person_id;
+      if (typeof f.assertion_id === "string") cur.assertion_id = f.assertion_id;
+    }
+  }
+  const out: PersonLink[] = [];
+  for (const l of [...byId.values(), ...appended]) {
+    if (!l.superseded && typeof l.assertion_id === "string" && typeof l.person_id === "string") {
+      out.push({ assertion_id: l.assertion_id, person_id: l.person_id });
+    }
   }
   return out;
 }
@@ -716,19 +743,15 @@ function ownPartyLinkedTo(
   linked: any,
   entry: any,
   recordId: string,
-  assertions: any[],
+  assertionById: ReadonlyMap<string, any>,
   personLinks?: ReadonlyArray<PersonLink>,
-  batchAssertions?: Map<string, any>,
 ): boolean {
   if (!personLinks || personLinks.length === 0) return false;
-  const partyKey = (a: any) => a?.record_persona_id ?? a?.record_role ?? null;
   const party = partyKey(linked);
   if (party === null) return false;
-  const byId = (id: string) =>
-    batchAssertions?.get(id) ?? assertions.find((a: any) => a?.id === id);
   return personLinks.some((l) => {
     if (l.person_id !== entry.person_id || l.assertion_id === entry.assertion_id) return false;
-    const other = byId(l.assertion_id);
+    const other = assertionById.get(l.assertion_id);
     if (!other) return false;
     if (RELATIONAL_FACT_TYPES.has(String(other.fact_type ?? "").toLowerCase())) return false;
     return (other.record_id ?? other.source_id ?? null) === recordId && partyKey(other) === party;
@@ -745,8 +768,22 @@ export function coreIdentifierContradictionInvariants(
   batchAssertions?: Map<string, any>,
 ): string[] {
   if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
-  const assertions: any[] = research.assertions ?? [];
-  const linked = assertions.find((a: any) => a?.id === entry.assertion_id);
+  // A superseded link is being retired, not asserted. Refusing it would make a
+  // confident link on a contradicted persona permanently unretractable through
+  // the section 6 supersede pattern (append the corrected link, then set
+  // `superseded_by` on the old one) -- the trap the score gate avoids too.
+  if (entry.superseded_by) return [];
+  // Every assertion this call can resolve: the document's, plus this batch's
+  // predicted appends. Reading only `research.assertions` let a batch that puts
+  // its assertion appends AFTER the person_evidence ops silence this gate, the
+  // ordering bypass the score gate already closed.
+  const assertionById = new Map<string, any>();
+  for (const a of (research.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const assertions: any[] = [...assertionById.values()];
+  const linked = assertionById.get(entry.assertion_id);
   if (!linked) return [];
   const recordId = linked.record_id ?? linked.source_id ?? null;
   if (recordId == null) return [];
@@ -777,7 +814,7 @@ export function coreIdentifierContradictionInvariants(
   // already refuses every one-party link of that persona. No new class.
   const twoParty = RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase());
   if (twoParty) {
-    if (!ownPartyLinkedTo(linked, entry, recordId, assertions, personLinks, batchAssertions)) {
+    if (!ownPartyLinkedTo(linked, entry, recordId, assertionById, personLinks)) {
       return [];
     }
   }
@@ -797,7 +834,6 @@ export function coreIdentifierContradictionInvariants(
   // are all one household, not one contradiction. The party key is the same one
   // `record-persona.ts` groups by -- `record_persona_id` when the sidecar kept
   // one, `record_role` otherwise, which is required on every assertion.
-  const partyKey = (a: any) => a?.record_persona_id ?? a?.record_role ?? null;
   const linkedParty = partyKey(linked);
   const sameRecord = assertions.filter(
     (a: any) =>
