@@ -932,6 +932,24 @@ two parents need genuinely different research plans (different jurisdictions,
 different record sets) — not merely different evidence strength, which
 `claims` now covers without forcing a split.
 
+**Display labels — what the researcher reads.** Stored values never change; the viewer
+maps them to these labels (`statusLabelMap` in `packages/viewer-ui/src/components/shared/StatusBadge.tsx`,
+keyed on the value). A value with no row renders with underscores as spaces. The
+researcher is never shown "proof", "proved", "GPS" or "exhaustive" (lead ruling
+2026-09-14). **A proof summary is a *finding* below `proved` and a *conclusion* at
+`proved`**. "Conclusion" is reserved to the top tier, and the section is titled
+Findings.
+
+| stored value | shown |
+|---|---|
+| `proved` / `probable` / `possible` / `not_proved` / `disproved` | well established / likely / tentative / not established / ruled out |
+| `probable` as a `person_evidence_confidence` | likely (the map is keyed on the value) |
+| `original` / `derivative` / `authored` (`source_classification`) | Record image / Index or transcript / Compiled work |
+| `exhaustive_declared` (question status), and a declared `exhaustive_declaration` | all reachable searched |
+| `ceiling` / `gap` / `conflict` (`shortfall`) | limit of online records / evidence missing / conflicting evidence |
+| `none` (`shortfall`) | no badge |
+| `proof_summaries` (section) | Findings |
+
 ### 5.12 `evaluations`
 
 Array of evaluation pointer records — a lightweight index of mentor reviews performed in the project. The full verdict content lives in `evaluations/<file>.json` on the filesystem; the entry here is a pointer, not a duplicate. Written exclusively by the `gps-mentor` plugin agent (see `docs/specs/gps-mentor-agent-spec.md`); never edited by any other skill.

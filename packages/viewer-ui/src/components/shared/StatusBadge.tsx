@@ -74,6 +74,25 @@ const statusColorMap: Record<string, BadgeColor> = {
   low: 'gray'
 }
 
+// What the researcher reads, keyed on the stored VALUE like the colour map. A value
+// with no entry renders with underscores as spaces. Display vocabulary:
+// docs/specs/research-schema-spec.md §5.11.
+const statusLabelMap: Record<string, string> = {
+  exhaustive_declared: 'all reachable searched',
+  original: 'Record image',
+  derivative: 'Index or transcript',
+  authored: 'Compiled work',
+  ceiling: 'limit of online records',
+  gap: 'evidence missing',
+  conflict: 'conflicting evidence',
+  // Proof tier; `probable` is also a person-evidence confidence, "likely" in both.
+  proved: 'well established',
+  probable: 'likely',
+  possible: 'tentative',
+  not_proved: 'not established',
+  disproved: 'ruled out'
+}
+
 interface StatusBadgeProps {
   value?: string | null
   color?: BadgeColor
@@ -83,6 +102,6 @@ export default function StatusBadge({ value, color }: StatusBadgeProps): React.J
   if (value == null) return null
   const resolvedColor = color ?? statusColorMap[value] ?? 'gray'
   return (
-    <span className={`${styles.badge} ${styles[resolvedColor]}`}>{value.replace(/_/g, ' ')}</span>
+    <span className={`${styles.badge} ${styles[resolvedColor]}`}>{statusLabelMap[value] ?? value.replace(/_/g, ' ')}</span>
   )
 }

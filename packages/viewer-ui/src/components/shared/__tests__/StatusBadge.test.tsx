@@ -8,6 +8,17 @@ describe('StatusBadge', () => {
     expect(screen.getByText('in progress')).toBeInTheDocument()
   })
 
+  it('renders a mapped value as its researcher-facing label', () => {
+    render(<StatusBadge value="not_proved" />)
+    expect(screen.getByText('not established')).toBeInTheDocument()
+    expect(screen.queryByText('not proved')).toBeNull()
+  })
+
+  it('labels probable "likely" in both enums that store it', () => {
+    render(<StatusBadge value="probable" />)
+    expect(screen.getByText('likely')).toBeInTheDocument()
+  })
+
   it('renders nothing when value is undefined', () => {
     const { container } = render(<StatusBadge value={undefined} />)
     expect(container.innerHTML).toBe('')

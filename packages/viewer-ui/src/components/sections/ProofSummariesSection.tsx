@@ -14,10 +14,11 @@ export default function ProofSummariesSection(): React.JSX.Element {
   if (items.length === 0) {
     return (
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Proof Summaries</h2>
+        <h2 className={styles.sectionTitle}>Findings</h2>
         <p className={styles.empty}>
-          No proof summaries recorded. The written argument that ties the
-          evidence to a conclusion is composed during the proof-conclusion step.
+          No findings yet. A finding is the written answer to a research question,
+          with the evidence behind it. It is added once the search for that
+          question is done.
         </p>
       </div>
     )
@@ -25,7 +26,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
 
   return (
     <div className={styles.section}>
-      <h2 className={styles.sectionTitle}>Proof Summaries</h2>
+      <h2 className={styles.sectionTitle}>Findings</h2>
       {items.map((ps) => {
         const questionEntry = getById(ps.question_id)
         const question = questionEntry?.item as Question | undefined
@@ -40,7 +41,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
               <>
                 <StatusBadge value={ps.tier} />
                 <StatusBadge value={ps.vehicle} />
-                <StatusBadge value={ps.shortfall} />
+                {ps.shortfall !== 'none' && <StatusBadge value={ps.shortfall} />}
               </>
             }
             summary={ps.exhaustive_search_summary}
@@ -74,7 +75,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
                     <div key={c.claim} className={styles.claim}>
                       <span className={styles.claimLabel}>{c.claim}</span>
                       <StatusBadge value={c.proof_tier} />
-                      {c.shortfall && <StatusBadge value={c.shortfall} />}
+                      {c.shortfall && c.shortfall !== 'none' && <StatusBadge value={c.shortfall} />}
                       <span className={styles.claimEndpoint}>
                         {c.relationship.type}: {c.relationship.parent} → {c.relationship.child}
                       </span>

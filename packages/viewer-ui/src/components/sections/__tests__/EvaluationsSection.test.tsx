@@ -61,14 +61,14 @@ describe('EvaluationsSection', () => {
     mockResearch({ evaluations: [proofCritique] })
     render(<EvaluationsSection />)
     await expandFirstCard()
-    expect(screen.getByText(/proof summary/i)).toBeInTheDocument()
+    expect(screen.getByText('finding')).toBeInTheDocument()
     expect(screen.getByText('ps_001')).toBeInTheDocument()
   })
 
   it('names the checkpoint in words rather than the raw enum', () => {
     mockResearch({ evaluations: [proofCritique] })
     render(<EvaluationsSection />)
-    expect(screen.getByText('Proof critique')).toBeInTheDocument()
+    expect(screen.getByText('Review of the finding')).toBeInTheDocument()
   })
 
   it('does not try to cross-link a project-level evaluation', async () => {
@@ -101,7 +101,7 @@ describe('EvaluationsSection', () => {
     mockResearch({ evaluations: [proofCritique] })
     const { container } = render(<EvaluationsSection />)
     await expandFirstCard()
-    expect(container.textContent).toContain('proof summary')  // body really is open
+    expect(container.textContent).toContain('finding')  // body really is open
     expect(container.textContent).not.toContain('/host/only/ev_001.md')
   })
 
