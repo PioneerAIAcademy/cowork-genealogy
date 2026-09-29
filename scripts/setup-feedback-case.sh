@@ -192,7 +192,12 @@ if [[ -f "$FB_JSON" ]]; then
     # substitution's status to 0, so jq's exit code becomes unreadable — and
     # simply dropping it would abort the script with jq's exit 5 on an
     # unparseable report, after the case has already been imported.
-    if USER_PROMPT="$(jq -er 'if type == "object" then (.user_prompt // "") else error("not an object") end' "$FB_JSON" 2>/dev/null)"; then
+    # --slurpfile, not a bare filter: jq reading an EMPTY (or whitespace-only)
+    # file produces no output and exits 0, so the bare form recorded a
+    # successful read of a blank prompt and printed "left blank" for a report
+    # nothing could read -- the exact failure this block's flag exists to tell
+    # apart. Slurping makes "no input at all" observable as length 0.
+    if USER_PROMPT="$(jq -ern --slurpfile d "$FB_JSON" 'if ($d|length) == 0 then error("empty") elif ($d[0]|type) == "object" then ($d[0].user_prompt // "") else error("not an object") end' 2>/dev/null)"; then
       PROMPT_READ_OK=1
     fi
   fi

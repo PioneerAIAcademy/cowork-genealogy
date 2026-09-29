@@ -2380,3 +2380,68 @@ def test_a_matched_suppressed_call_cannot_mask_an_earlier_uncovered_one():
         "an executed, fixture-matching reaction call raised `covered` and "
         "masked the earlier unregistered call"
     )
+
+
+# --- A correct callee reached by an AGENT SPAWN (issue: skill->agent conversion) ---
+#
+# Four callees ship as BOTH a skill and a plugin agent (person-evidence,
+# proof-conclusion, research-exhaustiveness, search-images), and the conversion
+# direction is to delete the skill. A converted callee is SPAWNED by the router,
+# not loaded via the Skill tool, so it never reaches `skills_invoked` — and the
+# routing verdict read only that field, failing a negative test that routed
+# correctly. Observed live on ut_conflict_resolution_009, which routed to the
+# person-evidence AGENT (builtin `Agent` call) and was scored `fail` with every
+# judge dimension at 3.
+
+def test_negative_passes_when_the_correct_callee_was_spawned_as_an_agent():
+    spec = _negative_spec(correct=["person-evidence"])
+    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=dims,
+        aborted_reason=None, activated=False, skills_invoked=[],
+        agents_spawned_all=["person-evidence"],
+    ) == "pass"
+
+
+def test_negative_still_fails_when_a_different_agent_was_spawned():
+    """The widening must not turn the verdict into 'any agent will do'."""
+    spec = _negative_spec(correct=["person-evidence"])
+    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=dims,
+        aborted_reason=None, activated=False, skills_invoked=[],
+        agents_spawned_all=["record-extractor"],
+    ) == "fail"
+
+
+def test_the_widening_does_not_reach_the_out_of_scope_branch():
+    """`correct_skill: []` is graded on its base dimensions, not on routing, so
+    the new field must not change its verdict in either direction. Whether a
+    spawn SHOULD fail an out-of-scope negative is a real question and a
+    different decision -- it is deliberately not made here, because it would
+    flip committed outcomes across skills this change never looked at."""
+    spec = _negative_spec(correct=[])
+    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
+    without = _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=dims,
+        aborted_reason=None, activated=False, skills_invoked=[],
+    )
+    with_field = _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=dims,
+        aborted_reason=None, activated=False, skills_invoked=[],
+        agents_spawned_all=["person-evidence"],
+    )
+    assert without == with_field == "pass"
+
+
+def test_the_direct_test_discriminator_is_untouched_by_the_widening():
+    """`agents_spawned` (singular meaning: this is a DIRECT test) must keep its
+    meaning. Passing the new field must not make a routed test look direct."""
+    spec = _negative_spec(correct=["person-evidence"])
+    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
+    # agents_spawned stays None (routed), agents_spawned_all carries the evidence.
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=dims,
+        aborted_reason=None, activated=False, skills_invoked=[],
+        agents_spawned=None, agents_spawned_all=["person-evidence"],
+    ) == "pass"

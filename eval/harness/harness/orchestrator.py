@@ -778,6 +778,11 @@ async def _execute_single_run(
         # — the same shape `derive_activated` is fed above, and the thing
         # `_compute_outcome` keys the arm on.
         agents_spawned=agents_spawned if spec.is_direct else None,
+        # ALWAYS the real spawn list, direct or routed. The negative routing
+        # verdict needs it on a ROUTED run -- a callee that ships as a plugin
+        # agent is spawned, never Skill-called -- which is exactly the run where
+        # `agents_spawned` above is pinned to None by design.
+        agents_spawned_all=agents_spawned,
     )
 
     skill_input, skill_cached, skill_cache_write, skill_output, per_model = (
@@ -1645,6 +1650,7 @@ def _compute_outcome(
     skills_invoked: list[str],
     judge_skipped: bool = False,
     agents_spawned: list[str] | None = None,
+    agents_spawned_all: list[str] | None = None,
 ) -> str:
     """v1 per-run outcome per spec §7.
 
@@ -1810,9 +1816,22 @@ def _compute_outcome(
         # tests' concern, not this test's. The judge runs base-only and
         # diagnostically (see `_run_judge`); its scores must NOT flip a
         # correctly-routed test.
-        if not any(s in skills_invoked for s in correct):
-            # Skill didn't fire, but didn't route to an acceptable
-            # alternative — the correct_skill array was not satisfied.
+        # A callee that ships as a plugin agent is SPAWNED by the router, not
+        # loaded through the Skill tool, so it never reaches `skills_invoked`
+        # even though routing was correct. Four callees ship as both today and
+        # the conversion direction deletes the skill, so reading only
+        # `skills_invoked` fails a correctly-routed test — observed on
+        # ut_conflict_resolution_009, which spawned the person-evidence agent
+        # and was scored `fail` with every judge dimension at 3.
+        #
+        # `agents_spawned_all` is a SEPARATE field from `agents_spawned`: the
+        # latter's None-ness is the routed/direct discriminator that
+        # `derive_activated` keys on, so widening it here would make every
+        # routed test look direct.
+        routed_to = set(skills_invoked) | set(agents_spawned_all or [])
+        if not any(s in routed_to for s in correct):
+            # Skill didn't fire, and neither a Skill call nor an agent spawn
+            # reached an acceptable alternative.
             return "fail"
         return "pass"
 
