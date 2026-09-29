@@ -46,6 +46,27 @@ def aggregate_per_run_outcome(per_run: list[str]) -> str:
     return _modal_with_tiebreak_down(per_run, _OUTCOME_RANK)
 
 
+# ---- Suppression predicates ----------------------------------------------
+#
+# `outcome` is the real aggregate (pass/partial/fail/aborted); suppression is
+# read from the `expected_outcome` marker beside it (issue #2842). These two
+# predicates name the two rows an `expected_outcome: "xfail"` marker used to
+# relabel, so exit code, the console mark and mandatory-annotation selection all
+# decide the same way from one place instead of re-deriving it. They live here,
+# not in `runlog.py`, so a bare-interpreter consumer (`review_sample.py`, which
+# `check_runlogs.py` imports) can read them without pulling in `jsonschema`.
+
+
+def suppressed_failure(outcome: str, expected_outcome: str | None) -> bool:
+    """A declared-xfail test that failed as declared — non-failing, exit 0."""
+    return expected_outcome == "xfail" and outcome == "fail"
+
+
+def unexpected_pass(outcome: str, expected_outcome: str | None) -> bool:
+    """A declared-xfail test that passed — a regression / stale marker, exit 1."""
+    return expected_outcome == "xfail" and outcome == "pass"
+
+
 def _modal_with_tiebreak_down(values, rank):
     if not values:
         raise ValueError("empty values list")

@@ -52,6 +52,8 @@ import re
 
 import pytest
 
+from harness.skill_runner import agent_return_text
+
 
 _URL_RE = re.compile(r"https?://[^\s<>()\[\]]+")
 
@@ -330,7 +332,7 @@ _SEPARATOR_RE = re.compile(r"^[ \t]*---[ \t]*$", re.M)
 
 
 def report_reply_does_not_restate_the_saved_file(
-    before_state, after_state, text_response
+    before_state, after_state, text_response, agent_returns=None
 ):
     """The agent's "Return contract": one line naming the file and the fact of
     a Sources section, and "do not restate, summarize, list or quote it". Tier 2
@@ -383,6 +385,12 @@ def report_reply_does_not_restate_the_saved_file(
     headings (`**Union Soldiers:**`). Not added as a fifth arm here -- bold is
     common in legitimate brief replies, so it wants its own evidence.
 
+    **Graded on the agent's own return on a direct test.** There
+    `text_response` is the relaying main thread, which paraphrases and recites
+    on its own; `agent_returns` carries what the agent itself said. Selection is
+    `skill_runner.agent_return_text`, the call the judge makes, falling back to
+    `text_response` when the agent made no return (a routed run).
+
     Gated on the file diff rather than a tag, so it cannot be silently
     disarmed by a tag rename (#1757).
 
@@ -405,7 +413,10 @@ def report_reply_does_not_restate_the_saved_file(
     # recitation would arrive (#2577 review). It also made the word count below
     # describe the post-strip text, so a 13-word reply wrapping a fenced
     # document was reported to the judge as "runs to 3 words".
-    scannable = _SEPARATOR_RE.sub("", text_response or "", count=1)
+    reply = agent_return_text(agent_returns, "search-familysearch-wiki") or (
+        text_response or ""
+    )
+    scannable = _SEPARATOR_RE.sub("", reply, count=1)
 
     counts = []
     for label, pattern in _RECITATION_CONSTRUCTS:

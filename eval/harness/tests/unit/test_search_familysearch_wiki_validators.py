@@ -507,6 +507,41 @@ def test_brevity_still_fires_on_a_recitation_after_the_separator():
         check_brevity(EMPTY, _SAVED, "Saved.\n---\n- one\n- two\n")
 
 
+def test_brevity_grades_the_agent_return_not_the_relay():
+    """On a direct test the relaying main thread may recite on its own; the
+    agent's own clean return is what is graded."""
+    check_brevity(
+        EMPTY,
+        _SAVED,
+        _RECITING_REPLY,
+        [{"subagent_type": "search-familysearch-wiki",
+          "text": "Saved the guidance to `german-church-records.md`."}],
+    )
+
+
+def test_brevity_fires_on_a_reciting_agent_return():
+    with pytest.raises(AssertionError, match="do not restate"):
+        check_brevity(
+            EMPTY,
+            _SAVED,
+            "Saved.",
+            [{"subagent_type": "search-familysearch-wiki",
+              "text": "Saved.\n\n- one\n- two\n"}],
+        )
+
+
+def test_brevity_falls_back_to_the_reply_when_the_agent_made_no_return():
+    """A return from another agent is not this agent's; a routed run grades
+    `text_response`."""
+    with pytest.raises(AssertionError, match="do not restate"):
+        check_brevity(
+            EMPTY,
+            _SAVED,
+            _RECITING_REPLY,
+            [{"subagent_type": "record-extractor", "text": "Saved."}],
+        )
+
+
 def test_brevity_skips_when_no_file_was_saved():
     """The rule is scoped to runs that saved a file - the empty-results path
     and a hand-back must not be reported on."""

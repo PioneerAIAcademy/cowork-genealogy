@@ -221,12 +221,12 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **25** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **9** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **23** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **10** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The eight agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The ten agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
-`search-images` and `citation`.
+`search-images`, `citation`, `search-wikipedia` and `search-familysearch-wiki`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -350,7 +350,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-16 of the 25 skills carry a `references/` folder, loaded on demand, in-session,
+16 of the 23 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -715,8 +715,13 @@ Architecturally:
 > canonical template was one of the non-FS tools — which is part of why it and
 > its two siblings were removed.
 
-**Add a skill.** Copy `packages/engine/plugin/skills/search-wikipedia/` — the
-canonical minimal example of the full pipeline. Don't mutate it. Then:
+**Add a skill.** Note first that under the lead's 2026-09-22 ruling a new
+capability is an **agent**, not a skill — copy
+`packages/engine/plugin/agents/search-images.md`, the smallest agent that
+carries the `summary_for_user` return contract, and see "Agent frontmatter"
+below. **Do not copy `agents/search-wikipedia.md`**: it is exempt from that
+contract, and a copy of it fails `agent-return-contract.test.ts`. What follows
+applies to the skills that remain. Don't mutate the reference file. Then:
 `docs/skill-authoring-guide.md` for the body; the `description` is linted twice
 at 1024 chars (§3.2); a skill meant to run inside `/research` also needs a
 **routing row** (§4) or it will never be reached; no network in `scripts/`; no
@@ -1077,6 +1082,20 @@ driver must wait.
 > percent of all tool calls across the committed e2e corpus *while the flag is
 > set to `true`*. This does not change the bare-name rule above, which is
 > correct either way.
+>
+> **Exception: `ALWAYS_LOAD` (`src/tool-schemas.ts`).** Those tools carry
+> `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which the Claude Code
+> CLI honors under any server name (verified on 2.1.139 and 2.1.220; unverified in
+> Cowork). The set is sized from the September e2e corpus. 76 of 82
+> `research_append` re-loads follow a `compact_boundary`, which is consistent with
+> compaction dropping a ToolSearch-loaded schema. An always-loaded one is not
+> dropped.
+> `record_search` stays deferred, because its 18.5 KB schema costs more than the
+> calls it would save. **The unit harness still defers the set**, because
+> `mock_mcp.py` copies only `name`/`description`/`inputSchema` into its catalog
+> and the SDK's `@tool` cannot emit that `_meta` key. So `make eval-skill`
+> diverges from production here. Nothing on the unit plane grades ToolSearch
+> counts.
 
 ### 5.3 Capability restriction by tool identity
 
@@ -1446,8 +1465,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-24 of the 25 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 22 of them as the first line of the body,
+All 23 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 21 of them as the first line of the body,
 the other two further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1766,8 +1785,10 @@ Other environment differences that bite:
   **shipped** `protected_target` predicate and returns the deny. So the raw-write
   class is gated at call time here too — what differs between the tiers is the
   permission mode, not the lockdown.
-- **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
-  no control over it, so `ToolSearch` is the real load path there (§5.2).
+- **Tool deferral.** Cowork defers tool schemas above a size threshold, so
+  `ToolSearch` is the real load path there (§5.2) for every tool outside
+  `ALWAYS_LOAD` (`src/tool-schemas.ts`), whose `_meta` `anthropic/alwaysLoad` opts
+  it out of deferral. Whether Cowork honors that key is unverified.
 - **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
   repo does not set — no `MCP_TOOL_TIMEOUT`/`MCP_TIMEOUT` or equivalent per-tool
   ceiling is defined anywhere in the code — and cannot change from the plugin or

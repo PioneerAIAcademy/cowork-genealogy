@@ -5355,7 +5355,7 @@
       "mcp_fixtures": [
         "wiki-read-pennsylvania-vital-records"
       ],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -7703,7 +7703,7 @@
       "mcp_fixtures": [
         "wiki-read-pennsylvania-vital-records"
       ],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
