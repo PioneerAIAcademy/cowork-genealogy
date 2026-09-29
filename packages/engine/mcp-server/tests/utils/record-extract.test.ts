@@ -215,6 +215,72 @@ describe("a death record", () => {
   });
 });
 
+describe("a burial record", () => {
+  // Hand-built, like the defaulted-report doc below: the rule under test is the
+  // classification row, which keys on record type alone, not on any index field
+  // whose live shape could be misremembered.
+  const doc: ExtractDocument = {
+    recordId: "rec_burial",
+    gedcomx: {
+      sources: [
+        {
+          resource_type: "http://gedcomx.org/Collection",
+          title: "Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986",
+        },
+      ],
+      persons: [
+        {
+          id: "p1",
+          principal: true,
+          names: [{ given: "Johanna", surname: "Becker" }],
+          facts: [
+            { type: "http://gedcomx.org/Burial", date: "12 Mar 1887", place: "Cincinnati, Hamilton, Ohio" },
+            { type: "http://gedcomx.org/Death", date: "9 Mar 1887" },
+          ],
+        },
+        { id: "p2", names: [{ given: "John", surname: "Becker" }] },
+      ],
+      relationships: [{ type: "http://gedcomx.org/ParentChild", person1: "p2", person2: "p1" }],
+    },
+  };
+  const out = extractRecord(doc, { logEntryId: "l_001", questionIds: [] });
+
+  it("types as a burial, not a death", () => {
+    expect(out.recordType).toBe("burial");
+  });
+
+  it("classifies every fact unknown/indeterminate — the death date included", () => {
+    // A burial index names no informant. The death-certificate row would give the
+    // death date `official_duty`/`primary` and the biography `family_not_present`;
+    // `burial-index-parents-indirect` pins unknown/indeterminate on both.
+    expect(out.assertions.length).toBeGreaterThan(0);
+    for (const a of out.assertions) {
+      expect(a.informant_proximity).toBe("unknown");
+      expect(a.information_quality).toBe("indeterminate");
+    }
+    expect(out.assertions.some((a) => a.fact_type === "death")).toBe(true);
+  });
+
+  it("is a real row, so nothing is reported as defaulted", () => {
+    expect(out.defaultedClassifications).toEqual([]);
+  });
+
+  it("types Find a Grave as a burial though it carries a death date", () => {
+    const g = structuredClone(doc);
+    g.gedcomx.sources![0].title = "Find a Grave Index";
+    expect(detectRecordType(g.gedcomx)).toBe("burial");
+  });
+
+  it("still types a death certificate that states the burial as a death", () => {
+    // The other direction: the captured death fixture plus a Burial fact, as a
+    // certificate's funeral-director block supplies.
+    const d = load("death");
+    const principal = d.gedcomx.persons!.find((p) => p.principal)!;
+    principal.facts = [...(principal.facts ?? []), { type: "http://gedcomx.org/Burial", place: "Spring Grove" }];
+    expect(detectRecordType(d.gedcomx)).toBe("death");
+  });
+});
+
 describe("a christening record", () => {
   const out = run("baptism");
 

@@ -1534,7 +1534,7 @@ else may read them. Keep a hold well under 60 s: the CLI's MCP client times the 
 60,013 ms (measured, D17 2026-09-23) while the server still commits when the hold
 ends, so the agent reads a committed write as a failure and retries it.
 
-### 11.5 Extractor mode — a FamilySearch record extracted in code
+### 11.6 Extractor mode — a FamilySearch record extracted in code
 
 Supplying `logEntryId` switches `extraction_append` out of the ops form: it
 resolves the record from that log entry's sidecar, decides roles, the three
@@ -1660,11 +1660,21 @@ accuracy.
 | census | everything else | unknown household member | `household_member` | `indeterminate` |
 | marriage | a party's or parent's facts | the party | `self` | `primary` |
 | marriage | a witness's facts | the witness | `witness` | `primary` |
-| death / burial | the death event | the certifying official | `official_duty` | `primary` |
-| death / burial | the decedent's biography | the personal informant | `family_not_present` | `secondary` |
+| death | the death event | the certifying official | `official_duty` | `primary` |
+| death | the decedent's biography | the personal informant | `family_not_present` | `secondary` |
+| burial | anything | unknown | `unknown` | `indeterminate` |
 | christening / birth | the event | the officiant | `official_duty` | `primary` |
 | christening / birth | everything else | the presenting parent | `household_member` | `primary` |
 | **anything else** | **anything** | **unknown** | **`unknown`** | **`indeterminate`** |
+
+The burial row is a real row, not the default: a burial or cemetery index names
+no informant at all (a funeral director is an informant only on a death
+certificate that names one), so it is not listed as a gap.
+A record carrying **both** a Death and a Burial fact is typed by its collection
+title, because both shapes are common: a burial index states the death date, and
+a death certificate states the burial. 20 of the 319 role-scorer corpus records
+carry both. Find a Grave (11) and Norway Burials (2) are burial indexes, and NYC
+and Texas Deaths are death records.
 
 The census row is `household_member` and never `self` because a pre-1940 census
 does not record who answered. The christening row is never `self` because a

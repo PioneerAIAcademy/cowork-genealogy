@@ -149,11 +149,14 @@ export type RecordType =
   | "draft_registration"
   | "other";
 
+/** `grave` for Find a Grave, the commonest burial index in the scorer corpus. */
+const BURIAL_TITLE = /burial|cemeter|interment|\bgraves?\b/i;
+
 const TITLE_TO_RECORD: [RegExp, RecordType][] = [
   [/census/i, "census"],
   [/marriage/i, "marriage"],
   [/death|mortality/i, "death"],
-  [/burial|cemeter|interment/i, "burial"],
+  [BURIAL_TITLE, "burial"],
   [/christen|baptis/i, "christening"],
   [/birth/i, "birth"],
   // `land` must NOT be a bare substring. `/land/i` matches Scotland, Ireland,
@@ -215,8 +218,18 @@ export function detectRecordType(gx: SimplifiedGedcomX): RecordType {
 
   if (has(/^census$|^municipalcensus$/i)) return "census";
   if (has(/^marriage$|^marriagebanns$/i) || coupleBetweenPrincipals) return "marriage";
-  if (has(/^death$/i)) return "death";
-  if (has(/^burial$|^cremation$/i)) return "burial";
+  // A record carrying BOTH is common in both directions — a burial index
+  // states the death date, and a death certificate states the burial — so the
+  // facts cannot decide it and the collection title does. 20 of the 319
+  // scorer-corpus records carry both: Find a Grave (11) and Norway Burials (2)
+  // are burial indexes; NYC and Texas Deaths are death records.
+  const hasDeath = has(/^death$/i);
+  const hasBurial = has(/^burial$|^cremation$/i);
+  if (hasDeath && hasBurial) {
+    return BURIAL_TITLE.test(collectionTitle(gx) ?? "") ? "burial" : "death";
+  }
+  if (hasDeath) return "death";
+  if (hasBurial) return "burial";
   if (has(/^christening$|^baptism$/i)) return "christening";
 
   const title = collectionTitle(gx) ?? "";
@@ -648,7 +661,23 @@ function classify(
     };
   }
 
-  if (recordType === "death" || recordType === "burial") {
+  // A burial or cemetery index identifies no informant at all — not a funeral
+  // director (that row is scoped to a death certificate that names one), not
+  // the index compiler, not the cemetery. So every fact on it is unknown /
+  // indeterminate, the death date included. A REAL row, not the default: it is
+  // what the record establishes, and naming it as a gap on every burial would
+  // be noise. Pinned by `burial-index-dates-direct` and
+  // `burial-index-parents-indirect`.
+  if (recordType === "burial") {
+    return {
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+      bias: "a burial or cemetery index names no informant",
+    };
+  }
+
+  if (recordType === "death") {
     if (factClass === "event") {
       return {
         informant: "the certifying official",
