@@ -170,8 +170,7 @@ BASELINE_ALLOWED_TOOLS = [
 # records itself); record_person_matches / record_record_matches (keyed
 # off a RECORD the agent already found, not the subject); source_attachments
 # (confirms a found record's attachment — real GPS work); person_warnings
-# WITHOUT `live` (it then reads the local stripped tree, not the live one —
-# a `live: true` call is blocked below, see LIVE_TREE_ARG_TOOLS).
+# (reads the local stripped tree, not the live one).
 #
 # See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
 # `mcp__<server>__` prefix).
@@ -208,12 +207,8 @@ def is_turn_cap_error(detail: str | None) -> bool:
 
 
 # Tools that read the live tree only in one MODE, so the bare name cannot decide
-# it. `person_warnings` is local by default and fetches the subject plus their
-# parents, spouses and children from the live tree when called with `live: true`
-# — and each warning carries `personId`, `personName` and `relatedPersonId`, so
-# on a parents fixture the live mode hands back a stripped relative's name and
-# PID. That is the read `person_read` heads BLOCKED_TREE_TOOLS for.
-LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+# it. Currently empty — kept for the next tool whose block depends on an argument.
+LIVE_TREE_ARG_TOOLS = {}
 
 
 def is_blocked_tree_tool(
@@ -2353,12 +2348,13 @@ async def _run_agent(
         # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
         #
         # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred and re-discovered via
-        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
-        # calls across recent runs). Idea 3a of the speedup plan wanted the
-        # opposite; flipping to "false" is a separate, tracked decision that
-        # requires re-measuring the tool mix, so the value is left as it has been
-        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # genealogy server's schemas are deferred (except ALWAYS_LOAD in
+        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
+        # 17x in the spriggs run, ~11% of all tool calls across recent runs).
+        # Idea 3a of the speedup plan wanted the opposite; flipping to "false"
+        # is a separate, tracked decision that requires re-measuring the tool
+        # mix, so the value is left as it has been running. `env` MERGES onto
+        # the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -2611,8 +2607,9 @@ async def _run_agent(
                                     # AFTER init, when there is no init message
                                     # left to read. Absence surfaces only as
                                     # ToolSearch finding nothing (the genealogy
-                                    # schemas are deferred under
-                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # schemas outside ALWAYS_LOAD are
+                                    # deferred under ENABLE_TOOL_SEARCH),
+                                    # so count consecutive
                                     # no-match lookups while not one `mcp__`
                                     # call has ever succeeded. Threshold and
                                     # reset rule are calibrated against the
