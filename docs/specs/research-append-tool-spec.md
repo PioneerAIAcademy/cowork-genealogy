@@ -1673,14 +1673,23 @@ accuracy.
 | marriage | a witness's facts | the witness | `witness` | `primary` |
 | death | the death event | the certifying official | `official_duty` | `primary` |
 | death | the decedent's biography | the personal informant | `family_not_present` | `secondary` |
-| burial | anything | unknown | `unknown` | `indeterminate` |
+| burial, church register | the burial event | the officiant | `official_duty` | `primary` |
+| burial, church register | everything else | unknown | `unknown` | `indeterminate` |
+| burial, cemetery or grave index | anything | unknown | `unknown` | `indeterminate` |
 | christening / birth | the event | the officiant | `official_duty` | `primary` |
 | christening / birth | everything else | the presenting parent | `household_member` | `primary` |
 | **anything else** | **anything** | **unknown** | **`unknown`** | **`indeterminate`** |
 
-The burial row is a real row, not the default: a burial or cemetery index names
-no informant at all (a funeral director is an informant only on a death
-certificate that names one), so it is not listed as a gap.
+The burial rows are real rows, not the default, so neither is listed as a gap.
+A cemetery or grave index names no informant at all (a funeral director is an
+informant only on a death certificate that names one). On a church burial
+register, the officiant recorded the burial they conducted, so the event is
+theirs, as on the christening row (genealogist ruling, 2026-09-29). The two are
+told apart by collection title, in `burialSourceKind`: cemetery words win, then
+church words (`church`, `catholic`, `parish`, `diocese`, `Kirchenbücher`,
+`Burials`, …), and a title matching neither is read as an index, since `unknown`
+claims less. Over the 20 burial-typed scorer-corpus records, that gives 12
+indexes (Find a Grave 11, Chile Cemetery Records 1) and 8 registers.
 A record carrying **both** a Death and a Burial fact is typed by its collection
 title, because both shapes are common: a burial index states the death date, and
 a death certificate states the burial. 20 of the 319 role-scorer corpus records

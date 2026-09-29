@@ -23,6 +23,7 @@ import {
   normalizeFactType,
   censusKin,
   EXTRACTED_SOURCE_CLASSIFICATION,
+  burialSourceKind,
   type ExtractDocument,
   type ExtractedAssertion,
 } from "../../src/utils/record-extract.js";
@@ -278,6 +279,82 @@ describe("a burial record", () => {
     const principal = d.gedcomx.persons!.find((p) => p.principal)!;
     principal.facts = [...(principal.facts ?? []), { type: "http://gedcomx.org/Burial", place: "Spring Grove" }];
     expect(detectRecordType(d.gedcomx)).toBe("death");
+  });
+});
+
+describe("burial: church register vs cemetery index (genealogist ruling 2026-09-29)", () => {
+  const burialDoc = (title: string): ExtractDocument => ({
+    recordId: "rec_b",
+    gedcomx: {
+      sources: [{ resource_type: "http://gedcomx.org/Collection", title }],
+      persons: [
+        {
+          id: "p1",
+          principal: true,
+          names: [{ given: "Ole", surname: "Hansen" }],
+          facts: [
+            { type: "http://gedcomx.org/Burial", date: "4 Mar 1850", place: "Stavanger, Norway" },
+            { type: "http://gedcomx.org/Death", date: "28 Feb 1850" },
+          ],
+        },
+      ],
+    },
+  });
+  const cls = (title: string, factType: string) =>
+    extractRecord(burialDoc(title), { logEntryId: "l_001", questionIds: [] }).assertions.find(
+      (a) => a.fact_type === factType,
+    )!;
+
+  it("reads every corpus burial title the way the ruling intends", () => {
+    for (const t of [
+      "Norway, Burials, 1666-1927",
+      "England, Deaths and Burials, 1538-1991",
+      "Costa Rica, Catholic Church Records, 1595-2022",
+      "Spain, Diocese of Albacete, Catholic Church Records, 1504-1979",
+      "England, Gloucestershire, Non-Conformist Church Records, 1581-1997",
+      "Deutschland, Baden, Erzbistum Freiburg, katholische Kirchenbücher, 1463-1931",
+    ]) {
+      expect(burialSourceKind(t), t).toBe("church_register");
+    }
+    for (const t of ["Find a Grave Index", "Chile, Cemetery Records, 1701-2021", "Some Unnamed Collection"]) {
+      expect(burialSourceKind(t), t).toBe("cemetery_index");
+    }
+  });
+
+  it("gives a church register's burial EVENT to the officiant at official_duty/primary", () => {
+    const ev = cls("Norway, Burials, 1666-1927", "burial");
+    expect(ev.informant).toBe("the officiant");
+    expect(ev.informant_proximity).toBe("official_duty");
+    expect(ev.information_quality).toBe("primary");
+  });
+
+  it("keeps everything else on a church register unknown/indeterminate", () => {
+    for (const f of ["death", "name"]) {
+      const a = cls("Norway, Burials, 1666-1927", f);
+      expect(a.informant_proximity, f).toBe("unknown");
+      expect(a.information_quality, f).toBe("indeterminate");
+    }
+  });
+
+  it("keeps a cemetery index's burial event unknown/indeterminate", () => {
+    const ev = cls("Find a Grave Index", "burial");
+    expect(ev.informant_proximity).toBe("unknown");
+    expect(ev.information_quality).toBe("indeterminate");
+  });
+});
+
+describe("a stated-relationship census whose head is recorded 'Self'", () => {
+  // The head lookup was `/^head|^self<U+0008>/`: a backspace byte where ``
+  // was meant, so a "Self" head was never found and no relationship was written.
+  const doc = load("census-1880-with-relationship-column");
+  for (const f of Object.values(doc.indexFields ?? {})) {
+    if (/^head$/i.test(f.relationshipToHead ?? "")) f.relationshipToHead = "Self";
+  }
+  const out = extractRecord(doc, { logEntryId: "l_001", questionIds: [] });
+
+  it("finds the head and writes the stated relationships", () => {
+    expect(rels(out.assertions).length).toBeGreaterThan(0);
+    expect(out.notes.some((n) => /no persona is the head/.test(n))).toBe(false);
   });
 });
 
