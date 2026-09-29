@@ -382,7 +382,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> proof-conclusion", ""],
   ["hypothesis-tracking -> proof-conclusion", ""],
   ["project-status -> proof-conclusion", ""],
-  ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
   ["tree-edit -> proof-conclusion", ""],
