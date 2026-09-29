@@ -338,3 +338,37 @@ def test_feed_payload_does_not_mutate_the_rows_it_is_given():
     events = [{"seq": 3, "kind": "a", "payload": {}}, {"seq": 1, "kind": "b", "payload": {}}]
     export.feed_payload("s", "p", events=events, turns=[])
     assert [e["seq"] for e in events] == [3, 1]
+
+
+def test_main_writes_the_feed_beside_the_export(tmp_path, monkeypatch, capsys):
+    """The wiring, not the shaping. mutation-check flagged this hunk UNPINNED: the
+    pure seams were tested and the call site that runs them was not, so deleting the
+    wiring left every test green -- dead code and working code look identical from
+    the outside."""
+    monkeypatch.setattr(export, "resolve_project", lambda dsn, sid: "proj_z")
+    monkeypatch.setattr(export, "export", lambda *a, **k: 0)
+    monkeypatch.setattr(
+        export, "read_feed",
+        lambda dsn, sid, pid: export.feed_payload(
+            sid, pid, events=[{"seq": 1, "kind": "text", "payload": {}}], turns=[]),
+    )
+    assert export.main(["--session", "sess_z", "--out", str(tmp_path)]) == 0
+    written = export.feed_path(tmp_path, "proj_z")
+    assert written.is_file(), "main() must write the feed file"
+    assert json.loads(written.read_text(encoding="utf-8"))["counts"]["events"] == 1
+    assert "feed" in capsys.readouterr().out
+
+
+def test_main_does_not_claim_a_feed_it_could_not_write(tmp_path, monkeypatch, capsys):
+    """The other direction: an unreadable feed must not fail a good document export,
+    and must not print a path that does not exist."""
+    monkeypatch.setattr(export, "resolve_project", lambda dsn, sid: "proj_z")
+    monkeypatch.setattr(export, "export", lambda *a, **k: 0)
+
+    def boom(dsn, sid, pid):
+        raise OSError("no feed for you")
+
+    monkeypatch.setattr(export, "read_feed", boom)
+    assert export.main(["--session", "sess_z", "--out", str(tmp_path)]) == 0
+    assert not export.feed_path(tmp_path, "proj_z").exists()
+    assert "feed not written" in capsys.readouterr().err
