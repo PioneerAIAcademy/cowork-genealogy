@@ -149,6 +149,10 @@ with no decision behind them, filed there deliberately; `/review-icebox` owns
 that pool and promotes one by removing the label, at which point it ranks here
 normally.
 
+**Exclude `label:volunteer` from the Backlog and Ready when ranking and when
+counting the pools.** Those cards are reserved for the volunteer developers
+(`docs/volunteer-program.md`), who take them in their own order.
+
 **Exclude `label:needs-decision` from the Backlog when ranking**, senior or not.
 The lead answers them in `/make-decisions`; the label coming off is what makes
 the item rankable here.
