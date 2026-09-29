@@ -51,14 +51,71 @@ def test_fs_token_expired_is_fail(monkeypatch, tmp_path):
     assert "e2e-login" in detail or "login" in detail.lower()
 
 
+def _build_tree(tmp_path, *, src_names=("tools/x.ts",), build_newer=True):
+    """A throwaway build+src pair with the mtime ordering the caller wants."""
+    build = tmp_path / "build" / "index.js"
+    src = tmp_path / "src"
+    src.mkdir(parents=True, exist_ok=True)
+    for name in src_names:
+        f = src / name
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("//", encoding="utf-8")
+    build.parent.mkdir(parents=True, exist_ok=True)
+    build.write_text("//", encoding="utf-8")
+    if src_names:
+        newest = max((src / n).stat().st_mtime for n in src_names)
+        t = newest + (600 if build_newer else -600)
+        os.utime(build, (t, t))
+    return build, src
+
+
 def test_mcp_build_check(monkeypatch, tmp_path):
     monkeypatch.setattr(pf, "MCP_BUILD", tmp_path / "index.js")
+    monkeypatch.setattr(pf, "MCP_SRC", tmp_path / "src")
     status, detail = pf._check_mcp_build()
     assert status == "FAIL"
     assert "build" in detail.lower()
-    (tmp_path / "index.js").write_text("//", encoding="utf-8")
+    build, src = _build_tree(tmp_path, build_newer=True)
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
     status, _ = pf._check_mcp_build()
     assert status == "OK"
+
+
+def test_mcp_build_stale_warns_and_names_the_newer_file(monkeypatch, tmp_path):
+    """The case that slipped through three consecutive e2e runs: the build is
+    present, so the old existence-only check said OK while it was days behind."""
+    build, src = _build_tree(tmp_path, src_names=("tools/x.ts",), build_newer=False)
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
+    status, detail = pf._check_mcp_build()
+    assert status == "WARN"
+    assert "STALE" in detail
+    assert "src/tools/x.ts" in detail
+
+
+def test_mcp_build_warns_when_the_source_tree_is_empty(monkeypatch, tmp_path):
+    """A check that cannot see its own tree must not report green. With no
+    source files there is nothing to compare against, so staleness is unknown."""
+    build, src = _build_tree(tmp_path, src_names=(), build_newer=True)
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
+    status, detail = pf._check_mcp_build()
+    assert status == "WARN"
+    assert "staleness could not be established" in detail
+
+
+def test_mcp_build_fresh_build_is_not_flagged(monkeypatch, tmp_path):
+    """The other direction: a legitimately current build stays OK, including
+    when several source files exist and only the newest one matters."""
+    build, src = _build_tree(
+        tmp_path, src_names=("tools/x.ts", "utils/y.ts", "a/b/c.json"), build_newer=True
+    )
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
+    status, detail = pf._check_mcp_build()
+    assert status == "OK"
+    assert "STALE" not in detail
 
 
 def test_api_key_from_env(monkeypatch):
