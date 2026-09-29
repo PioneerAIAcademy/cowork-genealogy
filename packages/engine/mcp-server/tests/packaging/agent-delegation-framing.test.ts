@@ -195,6 +195,34 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     },
   },
 
+  "question-selection -> question-selection": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "**Read nothing else, and judge nothing.**",
+      },
+      {
+        side: "caller",
+        excerpt:
+          '**Do not ask it to "add a question."**',
+      },
+    ],
+    exempt: {
+      side: "agent",
+      reason:
+        "The agent body was folded VERBATIM from a skill that was never half of a pair " +
+        "(issue #2115), so it carries no delegation-framing sentence to pin -- it was " +
+        "written for a caller that was the user, not a router. Inventing one here would " +
+        "break the fold-verbatim rule the conversion process exists to enforce, and would " +
+        "do it in the same commit that claims the fold is verbatim. The caller-side pins " +
+        "carry the guarantee instead: the router is forbidden to read or judge, and " +
+        "forbidden to phrase the delegation as an instruction to add, which is the " +
+        "construction that would override the agent's own stop conditions. If a later " +
+        "card edits the agent body for its own reasons, an agent-side pin belongs with " +
+        "that edit rather than with the fold.",
+    },
+  },
   "research-exhaustiveness -> research-exhaustiveness": {
     pins: [
       {

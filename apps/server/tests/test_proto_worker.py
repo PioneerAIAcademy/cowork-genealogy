@@ -76,7 +76,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"citation", "gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-images"}
+AGENTS = {"citation", "gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-images"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -672,7 +672,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=27)
 
 
-def test_the_plugin_ships_eight_agents_and_twenty_seven_skills():
+def test_the_plugin_ships_nine_agents_and_twenty_seven_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
