@@ -113,7 +113,7 @@ export default function AssertionsSection(): React.JSX.Element {
   )
 
   const evidenceTypes = useMemo(
-    () => Array.from(new Set(assertions.map((a) => a.record_basis))).sort(),
+    () => Array.from(new Set(assertions.map((a) => a.record_basis).filter(Boolean))).sort(),
     [assertions]
   )
 

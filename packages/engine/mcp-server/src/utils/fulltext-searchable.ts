@@ -1,5 +1,6 @@
-import { fetchWithRetry } from "./http.js";
+import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fsFetch } from "./fs-fetch.js";
 import type { FulltextGroupNumberResponse } from "../types/volume-search.js";
 
 const FULLTEXT_GROUP_URL =
@@ -22,16 +23,15 @@ const FULLTEXT_GROUP_URL =
  */
 export async function fetchFulltextSearchable(
   groupNames: string[],
-  token: string,
+  principal: Principal,
 ): Promise<Set<string> | null> {
   if (groupNames.length === 0) return null;
   const ids = groupNames.join(",");
   const url = `${FULLTEXT_GROUP_URL}?ids=${encodeURIComponent(ids)}`;
 
   try {
-    const response = await fetchWithRetry(url, {
+    const response = await fsFetch(principal, url, {
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         Accept: "application/json",
         "User-Agent": BROWSER_USER_AGENT,

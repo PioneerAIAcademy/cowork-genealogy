@@ -1,7 +1,7 @@
 # person-evidence — prohibition list (Step 1 of the deep dive)
 
 Built 2026-08-24 for issue #1646, against
-`packages/engine/plugin/skills/person-evidence/SKILL.md` at `11c8e2cb` (725 lines).
+`packages/engine/plugin/agents/person-evidence.md` (formerly `skills/person-evidence/SKILL.md` at `11c8e2cb`, 725 lines; skill deleted in issue #2821).
 
 Every line below is a rule the body states and that **can be checked against a
 transcript** — the response text, `output.tool_calls`, or `output.file_changes`.

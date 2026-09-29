@@ -1,7 +1,6 @@
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import { toArk } from "../utils/ark.js";
 import type {
   MatchApiEntry,
@@ -69,13 +68,10 @@ async function matchById(
   // scope difference here to point at. Settling it needs FamilySearch, not
   // another probe from us.
 
-  const token = await getValidToken(principal);
-
   let response: Response;
   try {
-    response = await fetchWithRetry(url.toString(), {
+    response = await fsFetch(principal, url.toString(), {
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: "application/json",
         "User-Agent": BROWSER_USER_AGENT,
       },
