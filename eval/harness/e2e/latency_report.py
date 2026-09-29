@@ -351,7 +351,7 @@ def format_breakdown(bd: LatencyBreakdown) -> str:
             # Only the total is persisted, so where it landed is unknown: the
             # tool or non-tool gap it interrupted, or stall/idle if it ended the run.
             lines.append(
-                f"  host sleep:      {_fmt_min(bd.counted_sleep_s)}  (Windows standby; already inside tool, non-tool or stall/idle above, and not model or tool work)"
+                f"  host sleep:      {_fmt_min(bd.counted_sleep_s)}  (Windows standby; already counted in tool, non-tool or stall/idle, and not model or tool work)"
             )
         if bd.stall_s and bd.stall_s > 60:
             lines.append(
