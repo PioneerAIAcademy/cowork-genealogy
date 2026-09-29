@@ -54,6 +54,7 @@ from harness.context_policy import (
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
+from harness.redact import redact_secrets
 import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
@@ -1378,7 +1379,10 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     `bool | None`, `None` when the call succeeded) into a clean bool the gates
     and the acceptance test can rely on.
     """
-    entry["response_summary"] = summary
+    # Scrub any credential the agent's Read of a host secret file (e.g.
+    # ~/.familysearch-mcp/config.json or tokens.json) captured verbatim into the
+    # summary, before it is persisted to the run log. Best-effort; never raises.
+    entry["response_summary"] = redact_secrets(summary)
     entry["is_error"] = block.is_error is True
     # The untruncated length, which `response_summary` cannot carry past
     # `_RUNLOG_MAX_CHARS`. See `_raw_result_chars`.
