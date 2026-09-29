@@ -39,7 +39,7 @@ actual 418 rows, 2026-09-29): running the existing transitive merge over
 every row collapses the table into 230 groups, the largest holding 86 names;
 "fred" lands in an 53-name group that wrongly includes "albert" and "alan" —
 neither shares a row with "fred" — because they reach it through the hub
-name "al" (11 rows), "bert" (9 rows), etc. Dallan's own example gives "fred"
+name "al" (15 rows), "bert" (10 rows), etc. Dallan's own example gives "fred"
 exactly 6 names. **v1 does not reuse `buildTable`/the transitive-merge path
 for this table.** It gets its own loader (step 1a below) that unions only
 the names sharing a literal row with the query, across every row the query

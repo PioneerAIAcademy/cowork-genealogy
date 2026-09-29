@@ -13,6 +13,9 @@ const TABLE_A = resolve(FIXTURES_DIR, "table-a.json");
 const TABLE_B = resolve(FIXTURES_DIR, "table-b.json");
 const NO_GROUPS = resolve(FIXTURES_DIR, "no-groups.json");
 const MISSING = resolve(FIXTURES_DIR, "does-not-exist.json");
+const MALFORMED_GROUP = resolve(FIXTURES_DIR, "malformed-group.json");
+const INVALID_JSON = resolve(FIXTURES_DIR, "invalid.json");
+const MIXED_CASE = resolve(FIXTURES_DIR, "mixed-case.json");
 
 beforeEach(() => {
   __clearVariantCacheForTests();
@@ -93,5 +96,24 @@ describe("lookupNameVariants (loader-level, against small fixture tables)", () =
 
   it("throws for a table with no groups array under strict", () => {
     expect(() => lookupNameVariants("anything", NO_GROUPS, { strict: true })).toThrow();
+  });
+
+  it("throws for a table with a malformed group (empty-string entry) under strict", () => {
+    expect(() => lookupNameVariants("anything", MALFORMED_GROUP, { strict: true })).toThrow();
+  });
+
+  it("throws for a table that is not valid JSON under strict", () => {
+    expect(() => lookupNameVariants("anything", INVALID_JSON, { strict: true })).toThrow();
+  });
+
+  it("does not treat a case/diacritic variant within one row as a distinct variant, and still excludes the query's own form", () => {
+    // Proves the BUILD-PHASE normalizeString calls, not just the query-side
+    // one: the group ["Ann", "ann", "Anne", "Nan"] has two case-only forms of
+    // the same name. A case-sensitive build phase would wrongly return "ann"
+    // as if it were a variant of "Ann", rather than recognizing it as the
+    // same name.
+    const result = lookupNameVariants("Ann", MIXED_CASE, { strict: true });
+    expect(result.sort()).toEqual(["Anne", "Nan"].sort());
+    expect(result).not.toContain("ann");
   });
 });

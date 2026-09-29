@@ -77,8 +77,8 @@ merges any two entries that share even one form, repeated to a fixed point).
 Reusing that algorithm for this table produces wrong answers: simulated
 against the real 418 rows, the transitive merge collapses the table into 230
 groups (the largest holding 86 names), and pulls unrelated names together
-through hub names that appear on many rows — "al" appears on 11 rows, "bert"
-on 9. Concretely: `fred` should return exactly 6 names (below), but the
+through hub names that appear on many rows — "al" appears on 15 rows, "bert"
+on 10. Concretely: `fred` should return exactly 6 names (below), but the
 transitive merge puts it in a 53-name group that wrongly includes `albert`
 and `alan`, neither of which shares a row with `fred`.
 

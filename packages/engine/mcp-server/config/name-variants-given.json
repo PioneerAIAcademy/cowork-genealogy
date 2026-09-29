@@ -5,8 +5,7 @@
     "source_commit": "30ccc4ababcd204d80d2ad077949edcb35efbbab",
     "retrieved": "2026-09-29",
     "license": "MIT (rootsdev/nama)",
-    "algorithm": "Each group is one source row. A name's variants are every other name sharing a group with it, unioned across every group it appears in. This is NOT transitive: two names that never share a group are not related, even if each shares a group with some third name.",
-    "issue": "https://github.com/PioneerAIAcademy/cowork-genealogy/issues/2325"
+    "algorithm": "Each group is one source row. A name's variants are every other name sharing a group with it, unioned across every group it appears in. This is NOT transitive: two names that never share a group are not related, even if each shares a group with some third name."
   },
   "groups": [
     [
