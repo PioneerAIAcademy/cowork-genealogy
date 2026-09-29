@@ -40,6 +40,7 @@ NO_WIKI_PAGE = '{"error":"No wiki page found for \\"Bohemia\\"."}'
 NO_POP_SERIES = '{"error":"Place not found","place_id":"1355104"}'
 NO_POP_SERIES_2 = '{"place": {"place_id": "1926993", "name": "Isle of Man", "level": "country"}}'
 UNRESOLVABLE = '{"error":"Could not resolve \\"County Waterford, Ireland\\" to a single FamilySearch place."}'
+AMBIGUOUS = '{"error":"\\"Baltimore, Maryland, United States\\" matches more than one place: Baltimore, Maryland, United States (Independent City); Baltimore, Maryland, United States (County). Pass one of these exactly as listed, including the parenthesised type, as standardPlace, or call place_search to see the full list."}'
 LEGACY_DIR = '{"error":"Wiki markdown directory is not configured. Add wikiMarkdownDir."}'
 WIKI_SEARCH_OK = '{"query": "Bohemia genealogy", "total_chunks_searched": 1240565, "results": []}'
 WIKI_PAGE_OK = '{"url": "https://www.familysearch.org/en/wiki/Norway_Genealogy", "content": "# Norway"}'
@@ -55,6 +56,7 @@ def test_each_service_failure_bucket_in_both_shapes():
         ("wiki_place_page", NO_WIKI_PAGE, "no_wiki_page"),
         ("place_population", NO_POP_SERIES, "no_population_series"),
         ("place_population", UNRESOLVABLE, "unresolvable_place"),
+        ("place_population", AMBIGUOUS, "unresolvable_place"),
         ("wiki_place_page", LEGACY_DIR, "legacy_markdown_dir"),
     ]
     for tool, doc, expected in cases:
