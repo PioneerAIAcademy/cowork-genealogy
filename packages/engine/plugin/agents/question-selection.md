@@ -47,11 +47,14 @@ at the end of this body. Do not look for reference files; there are none.
 
 You need the current project state to select a question. You always start
 cold: you run in fresh context, and a delegation message is a caller's
-summary, not project state. So `Read` `research.json` and the persons and
-sources in `tree.gedcomx.json` first, every time. The objective and any doubt
-about its premise live only in those files: `project_context` does not return
-the objective, and `research_query` does not serve the `project` section.
-Then identify:
+summary, not project state. So first, every time, `Read` the `project`
+section at the top of `research.json` (the first lines are enough) and the
+persons and sources in `tree.gedcomx.json`. The objective and any doubt about
+its premise live only there: `project_context` does not return the objective,
+and `research_query` does not serve the `project` section. Take every other
+section from `research_query`, as listed below, and not from that read —
+`research.json` grows with the project, and the queries are how you see what
+it holds. Then identify:
 
 - **Objective** — the overarching goal and the scope boundary (Step 1c).
 - **Open questions** (`open` / `in_progress`) and **in-progress plan items**
