@@ -221,12 +221,13 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **22** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **11** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **21** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **12** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The eleven agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twelve agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
-`search-images`, `citation`, `search-wikipedia`, `convert-dates` and `search-familysearch-wiki`.
+`search-images`, `citation`, `search-wikipedia`, `convert-dates`, `search-familysearch-wiki`
+and `conflict-resolution`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -1152,11 +1153,14 @@ itself:
    `proof_summaries` to `proof-conclusion` and `person_evidence` to
    `person-evidence`, `OWNED_DECLARATIONS` reserves
    `questions.exhaustive_declaration` to `research-exhaustiveness`, and
-   `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`. The three
-   differ in granularity and key: a whole section, a field at a particular claim
-   value, and a field on presence alone. `project` is co-written — `init-project`
-   authors it and any writer may refresh `updated` — so only the one field is
-   routed.
+   `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
+   `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
+   or any of its analysis fields set — to `conflict-resolution`. The four differ
+   in granularity and key: a whole section, a field at a particular claim value,
+   a field on presence alone, and a claim spread over several fields of one
+   section. `project` is co-written — `init-project` authors it and any writer
+   may refresh `updated` — so only the one field is routed; `conflicts` is
+   opened by six skills, so only the analysis is.
 3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops every agent that holds
    `research_append` writing *outside* its own set (a test requires the lane),
    added after a measured 2026-08-19 incident in which

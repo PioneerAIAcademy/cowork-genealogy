@@ -341,19 +341,46 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     return None
 
 
+def _decoded(value):
+    """`value` parsed from JSON when it is a string, else `value` unchanged.
+
+    `research_append` runs `coerceJsonArg` on `ops`, `entry` and `fields`, so a
+    stringified argument is parsed and applied there. Reading only lists and
+    dicts here let the same write through unexamined. Never raises: a string
+    that does not parse is returned as-is and matches nothing.
+    """
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except (ValueError, RecursionError):
+        return value
+
+
+def _with_payloads_decoded(op: dict) -> dict:
+    """`op` with its `fields` and `entry` decoded, for the same reason."""
+    out = dict(op)
+    for key in ("fields", "entry"):
+        if key in out:
+            out[key] = _decoded(out[key])
+    return out
+
+
 def _ops(tool_input: dict):
     """Every op in a `research_append` call, batch or single.
 
     A batch puts them in `ops`; a single call carries `section` at the top
-    level. Both shapes reach the same sections, so both are walked.
+    level. Both shapes reach the same sections, so both are walked. Each is read
+    after `_decoded`, as the tool reads it.
     """
-    ops = (tool_input or {}).get("ops")
+    ops = _decoded((tool_input or {}).get("ops"))
     if isinstance(ops, list):
         for op in ops:
+            op = _decoded(op)
             if isinstance(op, dict):
-                yield op
+                yield _with_payloads_decoded(op)
     elif tool_input:
-        yield tool_input
+        yield _with_payloads_decoded(tool_input)
 
 
 def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | None:
@@ -469,9 +496,11 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)
         # A routed CLAIM spread over several fields, reached by anyone but its
-        # owning agent. After the lane check, so an agent with no business in the
-        # section at all is told that, not that the claim belongs elsewhere. Both payload keys, for the same fail-open reason as the
-        # two loops above.
+        # owning agent. After the lane check, so an agent with no business in
+        # the section at all is told that, not that the claim belongs
+        # elsewhere. Both payload keys, for the same fail-open reason as the two
+        # loops above. A moot is claimed too: the tool refuses one without a
+        # `resolution_rationale`, which is a claim field.
         claim = OWNED_CLAIMS.get(section)
         if claim is not None and caller != claim[0]:
             _owner, claim_fields, claim_status = claim

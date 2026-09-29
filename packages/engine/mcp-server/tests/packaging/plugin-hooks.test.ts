@@ -724,7 +724,6 @@ describe("the guard script's decisions", () => {
   it.each([
     ["a main-thread skeleton open, append", { section: "conflicts", op: "append", entry: SKELETON }],
     ["a main-thread re-open", { section: "conflicts", op: "update", entryId: "c_001", fields: { status: "unresolved" } }],
-    ["a main-thread moot", { section: "conflicts", op: "update", entryId: "c_001", fields: { status: "moot" } }],
     // Falsy claim fields claim nothing: clearing a stale winner on a re-open.
     ["a re-open clearing the winner", { section: "conflicts", op: "update", entryId: "c_001", fields: { status: "unresolved", preferred_assertion_id: null } }],
   ])("allows research_append on conflicts — %s", (_label, tool_input) => {
@@ -740,6 +739,9 @@ describe("the guard script's decisions", () => {
     ["resolution_rationale alone", { resolution_rationale: "..." }],
     ["resolution_kind alone", { resolution_kind: "tree" }],
     ["resolved_value alone", { resolved_value: "1850" }],
+    // The only moot the tool accepts carries a rationale, so a moot is the
+    // agent's too. Pinned so nobody "fixes" the hook to let one through.
+    ["a moot, with the rationale the tool requires", { status: "moot", resolution_rationale: "a different Patrick" }],
   ])("denies the main thread a conflict claim — %s", (_label, fields) => {
     const out = runGuard({
       tool_name: "mcp__genealogy__research_append",
@@ -761,6 +763,29 @@ describe("the guard script's decisions", () => {
   ])("denies the main thread a conflict claim — %s", (_label, tool_input) => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  // `research_append` parses a stringified `ops`, `entry` or `fields`
+  // (coerceJsonArg) and applies it, so the hook must read the same shape — a
+  // guard that only walks lists and dicts lets the identical write through.
+  it.each([
+    ["stringified fields", { section: "conflicts", op: "update", entryId: "c_001", fields: JSON.stringify({ status: "resolved" }) }],
+    ["stringified entry", { section: "conflicts", op: "append", entry: JSON.stringify({ ...SKELETON, weighing_analysis: "..." }) }],
+    ["stringified ops", { ops: JSON.stringify([{ section: "conflicts", op: "update", entryId: "c_001", fields: { status: "resolved" } }]) }],
+    ["stringified proof_summaries ops", { ops: JSON.stringify([{ section: "proof_summaries", op: "append", entry: {} }]) }],
+  ])("denies a stringified argument — %s", (_label, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  it.each([
+    ["a stringified skeleton open", { section: "conflicts", op: "append", entry: JSON.stringify(SKELETON) }],
+    // Does not parse: matches nothing, and the script must still answer.
+    ["unparseable fields", { section: "conflicts", op: "update", entryId: "c_001", fields: "{status: resolved" }],
+    ["unparseable ops", { ops: "[{" }],
+  ])("allows, without raising — %s", (_label, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input });
+    expect(out.hookSpecificOutput).toBeUndefined();
   });
 
   it.each([

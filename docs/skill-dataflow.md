@@ -241,17 +241,18 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `search-external-sites` — and five of the eleven agents. Everything else that needs project
+  `search-external-sites` — and five of the twelve agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
-- **The hook carries exactly four rules**, in
+- **The hook carries exactly five rules**, in
   `packages/engine/plugin/hooks/guard_project_files.py`, and they are the only ones that
   discriminate by caller: `proof_summaries` is writable only by the proof-conclusion
   agent; a `research_append` op setting `exhaustive_declaration.declared` to `true` is
   writable only by the research-exhaustiveness agent; `project.status` is writable only
   by the proof-conclusion agent, field-scoped because the rest of `project` is
-  co-written; and each of those agents is held to its own section set, which is what
-  keeps the exhaustiveness agent off `plan_items` so it cannot clear its own blocker. Every other row above is prose plus a
+  co-written; a conflict's resolve, moot or analysis fields are writable only by the
+  conflict-resolution agent, claim-scoped because six skills open conflicts; and each of those agents is held to its own section set, which is what
+  keeps the exhaustiveness agent off `plan_items` so it cannot clear its own blocker. Every other row above (bar the `conflicts` row) is prose plus a
   unit check that runs only inside a paid per-skill eval run.
 
 ---
