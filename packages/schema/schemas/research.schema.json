@@ -517,6 +517,13 @@
           ]
         },
         "resolution_rationale": { "type": ["string", "null"] },
+        "resolution_kind": {
+          "anyOf": [
+            { "$ref": "enums.schema.json#/$defs/resolution_kind" },
+            { "type": "null" }
+          ]
+        },
+        "resolved_value": { "type": ["string", "null"] },
         "status": { "$ref": "enums.schema.json#/$defs/conflict_status" },
         "blocks_question_ids": {
           "type": "array",

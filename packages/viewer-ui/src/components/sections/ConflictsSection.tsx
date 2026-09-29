@@ -6,6 +6,13 @@ import CrossLink from '../shared/CrossLink'
 import Linkify from '../shared/Linkify'
 import styles from './ConflictsSection.module.css'
 
+/** How a resolved conflict was settled, in a researcher's words. */
+const RESOLUTION_KIND_LABELS: Record<string, string> = {
+  competitor: "One record's version was preferred",
+  tree: "The tree's existing conclusion was kept",
+  synthesis: 'A value built from several records',
+}
+
 export default function ConflictsSection(): React.JSX.Element {
   const { research, getById } = useResearchData()
   const items = research?.conflicts ?? []
@@ -93,6 +100,22 @@ export default function ConflictsSection(): React.JSX.Element {
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Weighing Analysis</div>
                   <p className={styles.analysis}><Linkify text={conflict.weighing_analysis} /></p>
+                </div>
+              )}
+
+              {conflict.resolution_kind && (
+                <div className={styles.subsection}>
+                  <div className={styles.subLabel}>Resolved As</div>
+                  <p className={styles.analysis}>
+                    {RESOLUTION_KIND_LABELS[conflict.resolution_kind] ?? conflict.resolution_kind}
+                  </p>
+                </div>
+              )}
+
+              {conflict.resolved_value && (
+                <div className={styles.subsection}>
+                  <div className={styles.subLabel}>Resolved Value</div>
+                  <p className={styles.analysis}><Linkify text={conflict.resolved_value} /></p>
                 </div>
               )}
 

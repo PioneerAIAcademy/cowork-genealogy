@@ -1662,6 +1662,7 @@ describe("research_append (Phase 2)", () => {
         weighing_analysis: "census outweighs the later record",
         resolution_rationale: "primary informant",
         preferred_assertion_id: "a_001",
+        resolution_kind: "competitor",
       },
     });
     expect(r.ok).toBe(true);
@@ -3369,8 +3370,9 @@ describe("research_append (project singleton section)", () => {
     expect(msg).toMatch(/a_002/);
     expect(msg).toMatch(/q_001/);
     // And the shape that settles a conflict nobody can settle, since neither
-    // 'resolved' nor 'moot' reads true for one that was weighed and deferred.
-    expect(msg).toMatch(/preferred_assertion_id/);
+    // 'resolved' nor 'moot' reads true for one that was weighed and deferred:
+    // resolved with resolution_kind 'tree', which owes no winner.
+    expect(msg).toMatch(/resolution_kind 'tree'/);
     const research = await readResearch();
     expect(research.project.status).toBe("active"); // nothing written
   });
@@ -9514,6 +9516,7 @@ describe("supported evidence floor (#2086)", () => {
       fields: {
         status: "resolved",
         preferred_assertion_id: "a_133",
+        resolution_kind: "competitor",
         independence_analysis: "Two separately created records, no shared informant.",
         weighing_analysis: "The earlier enumeration is closer to the event.",
         resolution_rationale: "a_133 preferred; a_135 is a later derivative reading.",
@@ -9752,4 +9755,209 @@ describe("supported evidence floor (#2086)", () => {
     expect(promote.ok).toBe(true);
   });
 
+});
+
+describe("research_append — a resolve names how it was settled (resolution_kind, #1852)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-1852-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const conflict = (over: Record<string, unknown> = {}) => ({
+    id: "c_001",
+    conflict_type: "fact",
+    description: "Patrick Flynn's birth year: 1845 (1850 census) vs. 1843 (delayed birth certificate)",
+    disputed_attribute: "birth_year",
+    identity_question: null,
+    competing_assertion_ids: ["a_013", "a_025"],
+    independence_analysis: null,
+    weighing_analysis: null,
+    preferred_assertion_id: null,
+    resolution_rationale: null,
+    status: "unresolved",
+    blocks_question_ids: [],
+    ...over,
+  });
+  const state = (c = conflict()) => ({
+    project: { objective: "x" },
+    questions: [{ id: "q_001", question: "When was Patrick born?", status: "open" }],
+    sources: [{ id: "src_001", citation: "1850 census" }, { id: "src_004", citation: "Delayed birth certificate" }],
+    assertions: [
+      { id: "a_013", source_id: "src_001", value: "1845" },
+      { id: "a_025", source_id: "src_004", value: "1843" },
+    ],
+    conflicts: [c],
+  });
+  const ANALYSES = {
+    independence_analysis: "Different informants, no shared derivation.",
+    weighing_analysis: "The census is closer to the event.",
+  };
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const resolve = (fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "conflicts", op: "update", entryId: "c_001", fields });
+  const raw = () => readFile(join(dir, "research.json"), "utf-8");
+
+  it("refuses a resolve with no resolution_kind, naming all three kinds and what each requires, and writes nothing", async () => {
+    await writeProject(state());
+    const before = await raw();
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      preferred_assertion_id: "a_013",
+      resolution_rationale: "The census wins.",
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain("a resolved conflict requires 'resolution_kind'");
+    for (const kind of ["'competitor'", "'tree'", "'synthesis'"]) expect(msg).toContain(kind);
+    expect(msg).toContain("preferred_assertion_id");
+    expect(msg).toContain("resolved_value");
+    expect(msg).toContain("at least two src_/a_ ids");
+    expect(await raw()).toBe(before);
+  });
+
+  it("teaches the three worked resolves on that refusal", async () => {
+    await writeProject(state());
+    const r = await resolve({ status: "resolved", ...ANALYSES, resolution_rationale: "x" });
+    const msg = failure(r).errors.join("\n");
+    for (const kind of ['"competitor"', '"tree"', '"synthesis"']) expect(msg).toContain(`"resolution_kind": ${kind}`);
+  });
+
+  it("refuses an unknown kind", async () => {
+    await writeProject(state());
+    const r = await resolve({ status: "resolved", ...ANALYSES, resolution_kind: "vote", resolution_rationale: "x" });
+    expect(failure(r).errors.join(" ")).toMatch(/resolution_kind.*"vote"|not one of/);
+  });
+
+  it.each([
+    ["no winner", { preferred_assertion_id: null }],
+    ["a blank winner", { preferred_assertion_id: "  " }],
+  ])("refuses 'competitor' with %s", async (_label, over) => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "competitor",
+      resolution_rationale: "The census wins.",
+      ...over,
+    });
+    expect(failure(r).errors.join(" ")).toContain("resolution_kind 'competitor' requires preferred_assertion_id");
+  });
+
+  it("refuses 'competitor' whose winner is not a competing assertion", async () => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "competitor",
+      preferred_assertion_id: "a_099",
+      resolution_rationale: "x",
+    });
+    expect(failure(r).errors.join(" ")).toMatch(/competing_assertion_ids/);
+  });
+
+  it("refuses a bare 'synthesis': no resolved_value and a rationale citing fewer than two ids", async () => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "synthesis",
+      resolution_rationale: "Both records together suggest about 1844 (a_013).",
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain("resolution_kind 'synthesis' requires resolved_value");
+    expect(msg).toContain("citing at least two distinct src_/a_ ids");
+    expect(msg).toContain("(it cites 1)");
+  });
+
+  it("does not count the same id twice toward the two a synthesis cites", async () => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "synthesis",
+      resolved_value: "about 1844",
+      resolution_rationale: "a_013 says 1845; a_013 again, read closely, allows 1844.",
+    });
+    expect(failure(r).errors.join(" ")).toContain("(it cites 1)");
+  });
+
+  it.each(["competitor", "tree", "synthesis"] as const)("accepts the shipped worked '%s' resolve", async (kind) => {
+    await writeProject(state());
+    const fields = JSON.parse(__testing.RESOLVE_EXAMPLES[kind]);
+    const r = await resolve(fields);
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+    const c = JSON.parse(await raw()).conflicts[0];
+    expect(c.resolution_kind).toBe(kind);
+    if (kind === "synthesis") expect(c.resolved_value).toBe("about 1844");
+  });
+
+  it("accepts an append that lands resolved with a kind", async () => {
+    await writeProject(state());
+    const { id: _id, ...entry } = conflict({
+      ...ANALYSES,
+      status: "resolved",
+      resolution_kind: "competitor",
+      preferred_assertion_id: "a_013",
+      resolution_rationale: "The census wins.",
+    });
+    const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("refuses an append that lands resolved with no kind", async () => {
+    await writeProject(state());
+    const { id: _id, ...entry } = conflict({
+      ...ANALYSES,
+      status: "resolved",
+      preferred_assertion_id: "a_013",
+      resolution_rationale: "The census wins.",
+    });
+    const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+    expect(failure(r).errors.join(" ")).toContain("a resolved conflict requires 'resolution_kind'");
+  });
+
+  it("leaves an unrelated edit to a conflict resolved before the rule alone", async () => {
+    await writeProject(
+      state(
+        conflict({
+          ...ANALYSES,
+          status: "resolved",
+          preferred_assertion_id: "a_013",
+          resolution_rationale: "Resolved before resolution_kind existed.",
+        }),
+      ),
+    );
+    const r = await resolve({ blocks_question_ids: ["q_001"] });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("re-judges a legacy resolved conflict when an update touches its resolution", async () => {
+    await writeProject(
+      state(
+        conflict({
+          ...ANALYSES,
+          status: "resolved",
+          preferred_assertion_id: "a_013",
+          resolution_rationale: "Resolved before resolution_kind existed.",
+        }),
+      ),
+    );
+    const r = await resolve({ resolution_rationale: "Revised rationale." });
+    expect(failure(r).errors.join(" ")).toContain("a resolved conflict requires 'resolution_kind'");
+  });
+
+  it("leaves moot and unresolved writes to their own rules", async () => {
+    await writeProject(state());
+    const moot = await resolve({ status: "moot", resolution_rationale: "The second record is another family." });
+    expect(moot.ok, JSON.stringify(errorsOf(moot))).toBe(true);
+    await writeProject(state());
+    const open = await resolve({ ...ANALYSES });
+    expect(open.ok, JSON.stringify(errorsOf(open))).toBe(true);
+  });
 });

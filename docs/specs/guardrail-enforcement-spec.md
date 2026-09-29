@@ -157,6 +157,7 @@ depends on another shipping first.
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: it cannot bind a link made through a relationship assertion, because which of the two people the link is about is not decidable from the documents |
 | §5 | A logged query names only filters its search sent | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_log_append` op whose explicit `query` names a filter key, with a value, that its staged `record_search` or `fulltext_search` never sent. A differing value is allowed (mostly place normalization, observed by the eval `report_*` validators instead), as are descriptive keys, plumbing and paging. A nil search stages nothing and is never judged | **enforcing** (refuses 18 of 358 paired staged ops, 15 distinct claims, all read individually per ADR-0011 limit 2 and all true positives, measured at a1960c5af by `packages/engine/mcp-server/dev/measure-log-query-claims.ts`; 0 of the 121 paired unit-eval ops, whose misstatements were filled from a staged payload the eval mock built from a fixture's recorded query, fixed at the mock. Unstaged entries — nil searches, searches made without a `projectPath` — and external-site entries are seen only by the eval `report_*` observers in `test_search_records.py` and `test_search_external_sites.py`) |
+| §5 | A resolve names how it was settled | engine (MCP tool) — so Cowork, hosted, both harnesses | a `conflicts` write landing `resolved`, or an update touching its resolution, with no `resolution_kind`, or with `competitor` and no winner among `competing_assertion_ids`, or with `synthesis` and no `resolved_value` or a rationale citing fewer than two distinct `src_`/`a_` ids. `tree` owes nothing more. An unrelated edit to a conflict resolved before the rule is not re-judged | **enforcing** (since 2026-09-30; lead ruling 2026-09-25, which shipped the gate with the agent conversion; the kinds from the 2026-09-07 ruling on the eleven winnerless resolves). No committed op carries the kind, so the replay reports three numbers rather than a refusal rate, measured at 76a923448 by `eval/harness/scripts/measure_resolution_kind.py`: of 138 landed resolve ops, 70 name a winner among the competitors and pass as `competitor` once they name it; 68 name none and need `tree` or `synthesis`; of those 68, only 5 rationales already cite two ids. Final states: 68 resolved conflicts, 12 with no winner, 2 of those citing two ids. Read against the genealogist adjudication of the eleven winnerless resolves, the two it labels `tree` pass once named, the five it labels `synthesis` cite 0 or 1 ids and are refused until the rationale names its records — the intended cost, recovered by the refusal text, which names all three kinds and shows one worked resolve for each |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `record_basis: "stated"` supporting assertion nor ≥2 at `record_basis: "inferred"` citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
@@ -881,6 +882,33 @@ have no staged echo either, and are observed the same way. The eval mock stages
 the call's own arguments for `record_search` and `fulltext_search`, as production
 does; before it did, it staged a fixture's recorded query, and every unit-eval
 misstatement the observers first reported was an entry filled from one.
+
+### A resolve names how it was settled
+
+`research_append` refuses a conflict write that lands `resolved` — an append, or
+an update touching its status, kind, winner, value or rationale — unless
+`resolution_kind` says how it was settled and the write carries what that kind
+requires (`research-append-tool-spec.md` §5). `competitor`: the winning
+assertion, one of `competing_assertion_ids`. `tree`: the tree's existing
+conclusion stands; nothing more. `synthesis`: a `resolved_value` no single
+assertion states, and a rationale citing at least two distinct `src_`/`a_` ids.
+
+Before it, a resolve could name no winner and say nothing about why. The
+conflict-resolution body already said a resolved conflict always names a winner,
+and that rule was prose; a genealogist's reading of the eleven committed
+winnerless resolves then showed the winner is often not a competing assertion at
+all — the tree's value, or a value built from several records — so requiring a
+winner outright would have been a false deny on seven of them. The kind is what
+lets the rule refuse only a resolve that says nothing. `synthesis` is not free:
+it owes the records it was built from, or it would be the label an agent reaches
+for to dodge naming a winner.
+
+Scoped like the place-containment rule on the same section, so a conflict
+resolved before the rule existed can still take an unrelated edit. No override
+(ADR-0011, 2026-08-24). What it cannot see: whether the kind named is the right
+one — a `tree` claim is taken at its word, since which value the tree held is not
+recorded on the conflict. The eval validator in `test_conflict_resolution.py`
+applies the same per-kind requirements to a run's final state.
 
 ### Plan-phase gate on `tree_forget`
 

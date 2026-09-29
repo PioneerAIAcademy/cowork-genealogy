@@ -45,6 +45,7 @@ const CLOSED_ENUMS = {
   record_basis: new Set(["stated", "inferred", "absent"]),
   conflict_type: new Set(["fact", "identity"]),
   conflict_status: new Set(["unresolved", "resolved", "moot"]),
+  resolution_kind: new Set(["competitor", "tree", "synthesis"]),
   hypothesis_status: new Set(["active", "supported", "ruled_out"]),
   proof_tier: new Set(["proved", "probable", "possible", "not_proved", "disproved"]),
   proof_vehicle: new Set(["statement", "summary", "argument"]),
@@ -586,6 +587,7 @@ export const RESEARCH_SHAPES = {
     "identity_question", "competing_assertion_ids", "status",
     "preferred_assertion_id", "resolution_rationale",
     "independence_analysis", "weighing_analysis", "blocks_question_ids",
+    "resolution_kind", "resolved_value",
   ]),
   hypothesis: new Set([
     "id", "claim", "status", "supporting_assertion_ids",
@@ -1198,6 +1200,15 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("conflict_type" in c) {
       checkEnum(c.conflict_type, "conflict_type", cp, report);
+    }
+    // Both optional and nullable: a conflict resolved before these fields
+    // existed carries neither, and only a resolve op is required to name its
+    // kind (research_append's resolution-kind precondition).
+    if (c.resolution_kind != null) {
+      checkEnum(c.resolution_kind, "resolution_kind", cp, report);
+    }
+    if (c.resolved_value != null && typeof c.resolved_value !== "string") {
+      addError(report, cp, `resolved_value must be a string or null, got ${typeof c.resolved_value}`);
     }
     if ("status" in c) {
       checkEnum(c.status, "conflict_status", cp, report);

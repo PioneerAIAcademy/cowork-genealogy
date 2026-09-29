@@ -2470,3 +2470,55 @@ def test_calendar_skips_when_tags_are_absent_entirely():
     with pytest.raises(BaseException) as e:
         check_calendar_from_tool(tool_calls=[], test={})
     assert type(e.value).__name__ == "Skipped"
+
+
+# --- resolved conflicts carry what their resolution_kind requires (#1852) -----
+
+check_required_fields = _VALIDATOR.test_resolved_conflicts_have_required_fields
+
+
+def _kind_resolved(**over):
+    c = {
+        "id": "c_001",
+        "status": "resolved",
+        "competing_assertion_ids": ["a_013", "a_025"],
+        "resolution_rationale": "Weighed.",
+        "preferred_assertion_id": None,
+    }
+    c.update(over)
+    return {"research_json": {"conflicts": [c]}}
+
+
+@pytest.mark.parametrize(
+    "over",
+    [
+        {"resolution_kind": "competitor", "preferred_assertion_id": "a_013"},
+        {"resolution_kind": "tree"},
+        {
+            "resolution_kind": "synthesis",
+            "resolved_value": "about 1844",
+            "resolution_rationale": "a_013 (src_001) and a_025 (src_004) together allow about 1844.",
+        },
+        {"preferred_assertion_id": "a_013"},  # resolved before resolution_kind existed
+    ],
+    ids=["competitor", "tree", "synthesis", "pre-kind-with-winner"],
+)
+def test_required_fields_accept_each_kind_carrying_its_proof(over):
+    check_required_fields({}, _kind_resolved(**over))
+
+
+@pytest.mark.parametrize(
+    "over, needle",
+    [
+        ({"resolution_kind": "competitor"}, "resolved as competitor but no preferred_assertion_id"),
+        ({}, "resolved as a pre-kind resolve but no preferred_assertion_id"),
+        ({"resolution_kind": "synthesis", "resolution_rationale": "a_013 alone."}, "resolved as synthesis but no resolved_value"),
+        ({"resolution_kind": "synthesis", "resolved_value": "about 1844", "resolution_rationale": "a_013 and a_013."}, "cites 1 src_/a_ id(s)"),
+        ({"resolution_kind": "vote"}, "is not competitor, tree or synthesis"),
+    ],
+    ids=["competitor-no-winner", "pre-kind-no-winner", "synthesis-no-value", "synthesis-one-id", "unknown-kind"],
+)
+def test_required_fields_refuse_a_kind_missing_its_proof(over, needle):
+    with pytest.raises(AssertionError) as e:
+        check_required_fields({}, _kind_resolved(**over))
+    assert needle in str(e.value)
