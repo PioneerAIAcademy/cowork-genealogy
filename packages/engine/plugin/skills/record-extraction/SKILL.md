@@ -121,8 +121,9 @@ Record data arrives in one of four ways:
    the index alone.** When the element that *keys identity* — a
    patronymic, a surname, a father's name on a baptism — looks like a
    likely mistranscription (an out-of-place patronymic, a spelling no
-   other record corroborates), treat the indexed value as a lead: route
-   to search-images for the original register image to confirm the
+   other record corroborates), treat the indexed value as a lead: call
+   `volume_search` to locate the register volume, then route to
+   search-images for the original register page to confirm the
    spelling before it is recorded as established (the original scan
    usually settles a suspect index reading). If the image is
    unreachable, tell the extractor to
@@ -289,7 +290,8 @@ directly** — persistence belongs to the record-extractor agent's tools.
 
 - **No inline extraction or classification** — every assertion, source,
   and classification is written by the `record-extractor` agent.
-- **No image reading in this context** — `@plugin:image-reader` only.
+- **No image reading in this context** — never call `image_transcribe`
+  or `image_read`; delegate to `@plugin:image-reader`.
 - **No searching** — search-records / search-external-sites find
   records; this skill processes ones already found or provided.
 - **No citation polishing** — the agent writes working citations; the
