@@ -16,8 +16,9 @@
 //      AsyncLocalStorage for every store call in `fn`'s async continuation
 //      (tool body, utils, validator, staging sweeps). A shared server that
 //      serves many projects binds one store per request this way.
-//   2. per process — `setProjectStore(store)`; the per-turn hosted fork and
-//      tests. Absent both, the first use constructs `FsProjectStore`.
+//   2. per process — `setProjectStore(store)`; the HTTP server's
+//      `unboundProjectStore` and tests. Absent both, the first use constructs
+//      `FsProjectStore`.
 // Why an ALS here when auth/principal.ts refuses one for the credential: the
 // principal must be un-forgettable at the call site — a tool that never
 // received one fails to compile. The store is a hidden singleton already,

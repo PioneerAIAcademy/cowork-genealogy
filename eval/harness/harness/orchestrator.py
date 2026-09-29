@@ -50,6 +50,7 @@ from harness.skill_runner import (
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     SKILL_TOOL_NAME_KEYS,
     SkillRunResult,
+    agent_return_text,
     direct_dispatch_prompt,
     run_skill,
     spawn_prompts,
@@ -609,6 +610,7 @@ async def _execute_single_run(
         # prompts. `skills_invoked` cannot answer "did the agent run" on a
         # direct test, which invokes no skill at all.
         builtin_tool_calls=result.builtin_tool_calls,
+        agent_returns=getattr(result, "agent_returns", []) or [],
         activated=activated,
         num_turns=_num_turns,
         output_tokens=_output_tokens,
@@ -826,6 +828,13 @@ async def _execute_single_run(
             **(
                 {"builtin_tool_calls": result.builtin_tool_calls}
                 if result.builtin_tool_calls
+                else {}
+            ),
+            # Same omit-when-empty rule as the field above: a routed run spawns
+            # nothing and writes the run_output it always has.
+            **(
+                {"agent_returns": getattr(result, "agent_returns", []) or []}
+                if getattr(result, "agent_returns", None)
                 else {}
             ),
             **({"file_changes": file_changes} if file_changes else {}),
@@ -1876,6 +1885,7 @@ def _run_judge(
     # the unsearched Massachusetts birth registration. Without this the arm grades
     # backwards: a twin that survives the attack is failed for surviving it, and
     # intermittently, since the same test passed its four previous runs.
+    judge_text = result.text_response
     if spec.is_direct:
         judge_user_message = (
             "(NO USER TURN. This test exercises the direct-agent route, so the text "
@@ -1894,6 +1904,24 @@ def _run_judge(
             f"{name} (agent, spawned directly — no skill was invoked)"
             for name in _spawned
         ]
+        # Grade the AGENT's own return, not the dispatcher's relay of it.
+        # `result.text_response` is main-thread text, and on this arm the main
+        # thread only forwards someone else's work -- it paraphrases, and the
+        # paraphrase is not the subject under test. Measured on
+        # eval/runlogs/unit/search-wikipedia/v1_2026-09-28_09-49-04: six tests
+        # failed on reply shape while every deterministic validator passed
+        # 10/10, and a live capture of ut_search_wikipedia_002 the same day
+        # showed the agent returning its one required line while the dispatcher
+        # rewrote it as "The subagent has completed the task. It looked up ...".
+        #
+        # Falls back to `text_response` when the spawn returned nothing, so a
+        # run whose agent produced no text is still graded on what there is
+        # rather than on silence.
+        _returns = agent_return_text(
+            getattr(result, "agent_returns", None), spec.skill
+        )
+        if _returns:
+            judge_text = _returns
     else:
         judge_user_message = spec.user_message
         judge_ran = result.skills_invoked
@@ -1903,7 +1931,7 @@ def _run_judge(
         scenario_readme=scenario_readme,
         user_message=judge_user_message,
         skills_invoked=judge_ran,
-        text_response=result.text_response,
+        text_response=judge_text,
         file_changes_summary=_summarize_changes(
             file_changes, result.tool_calls, include_content=spec.judge_reads_files
         ),

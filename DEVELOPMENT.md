@@ -119,7 +119,7 @@ Example: adding a "list providers" feature.
    - Add its schema to `allToolSchemas` in `packages/engine/mcp-server/src/tool-schemas.ts`
      and its dispatch case to the `CallTool` handler in
      `packages/engine/mcp-server/src/server.ts` (`createServer`; the entrypoints
-     `src/index.ts`, `src/hosted-stdio.ts` and `src/http.ts` only bind a principal),
+     `src/index.ts` and `src/http.ts` only bind a principal),
      plus a row in `packages/engine/mcp-server/dev/smoke-calls.ts` — `make engine-smoke-http`
      fails on an advertised tool it neither calls nor lists as an exclusion (it needs
      the compose store up, `make proto-up-store`, so Docker)
@@ -147,8 +147,9 @@ Example: adding a "list providers" feature.
 4. **Manually test by installing both artifacts in Claude Desktop.**
 
 Copy the templates for steps 1 and 2: `src/tools/wikipedia.ts` plus its sibling
-four files for a tool, and `packages/engine/plugin/skills/search-wikipedia/` for
-a skill. Before the PR, read the implementation against its
+four files for a tool, and `packages/engine/plugin/agents/search-images.md`
+for a capability — under the lead's 2026-09-22 ruling a new capability is an
+agent, not a skill. Before the PR, read the implementation against its
 `docs/specs/<tool>-tool-spec.md` and quote both sides on any drift.
 
 (The `mcp-tool-scaffolder`, `cowork-skill-builder`, and `spec-review` subagents
@@ -334,8 +335,7 @@ since mid-2026 was verified without one. Verification is automated:
    test`**, which is `test-js` + `server-test` and reaches neither the
    harness nor the engine.
 4. **The transport smokes** — `make engine-smoke-stdio` drives the built
-   server over stdio and calls every offline tool once (`make engine-smoke-stdio-pg`
-   does the same through `build/hosted-stdio.js` on Postgres + minio);
+   server over stdio and calls every offline tool once;
    `make engine-smoke-http` starts `build/http.js` on the compose Postgres + minio
    store (`make proto-up-store`, so Docker), calls every advertised tool but the
    four auth exclusions over Streamable HTTP under a fresh `smoke-<uuid>` project id
@@ -357,12 +357,12 @@ skill tells it to — write a file to the selected folder. If that
 round-trip works, the full pipeline is wired: host → MCP server → SDK
 bridge → VM → Claude → file write.
 
-The `search-wikipedia` skill in `packages/engine/plugin/` is a working reference
-example showing the full plugin pipeline — it calls the
-`wikipedia_search` MCP tool, populates a markdown template, and saves
-the result to a file. Copy this structure when wiring a new skill to
-one of the other tools. Don't mutate `search-wikipedia` itself; create a
-new skill folder.
+`packages/engine/plugin/agents/search-images.md` is the reference agent to copy
+when wiring a new agent to one of the other tools: invocation contract, routing
+hand-back, the three tool spellings and the `summary_for_user` return contract.
+Don't mutate `search-images` itself; create a new agent file. Do not copy
+`search-wikipedia.md`: it is exempt from the return contract, so a copy fails
+`agent-return-contract.test.ts`.
 
 ## Running the hosted web workbench locally
 

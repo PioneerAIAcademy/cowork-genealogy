@@ -32,6 +32,27 @@ answer first, the human anchors on it and the calibration number becomes a rubbe
 stamp. Do not read the run log, and do not report the judge's grades — they are the
 maintainer's calibration output, not part of grading.
 
+## Grading a prototype run
+
+A Search Agent prototype run has no `run-<ts>.json`, only the project export from
+`make proto-export SESSION=<id>`. Its grade goes beside the harness grades and counts
+in calibration the same way.
+
+- **Someone other than the grader** copies the export's `tree.gedcomx.json` and
+  `research.json` into `eval/runlogs/e2e/<slug>/` as `run-<ts>.final-tree.gedcomx.json`
+  and `run-<ts>.final-research.json`. `<ts>` is the run's date-time as
+  `YYYY-MM-DD_HH-MM-SS`, and must not match a stem already in that directory. Copy
+  only the two documents, never a `compare-*/` folder (it holds the judge's JSON).
+- **Always name the stem.** Pass it to `blind_bundle` in step 2 and write the
+  annotation under it in step 6 (the stamp commands read the stem from the `.ann.json`
+  filename). With no stem, `blind_bundle` picks the newest harness `run-<ts>.json`:
+  you grade the wrong tree, and for `bagley-father-1884` writing that `.ann.json`
+  overwrites PR #2906's grade. "The latest run" never means a prototype run.
+- **The grader must not have seen the judge's result**: `make proto-grade` or
+  `make proto-compare` output, `docs/search-agent-prototype-report.md`,
+  `docs/plan/familysearch-handoff.md`, `docs/plan/search-agent-prototype.md`, or
+  issue #2904. If you have, someone else grades.
+
 ## Steps
 
 ### 1 — Identify the run (do not read it)

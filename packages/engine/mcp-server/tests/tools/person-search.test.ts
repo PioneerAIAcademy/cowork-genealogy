@@ -352,18 +352,18 @@ describe("personSearchTool request headers", () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
     await personSearchTool(VALID_QUERY, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["Accept-Language"]).toBe("en");
-    expect(headers["Accept"]).toBe("application/x-gedcomx-atom+json");
-    expect(headers["Authorization"]).toBe("Bearer test-token");
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("Accept-Language")).toBe("en");
+    expect(headers.get("Accept")).toBe("application/x-gedcomx-atom+json");
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
   });
 
   it("14. does NOT send a User-Agent header (platform host needs none)", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
     await personSearchTool(VALID_QUERY, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["User-Agent"]).toBeUndefined();
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("User-Agent")).toBeNull();
   });
 });
 

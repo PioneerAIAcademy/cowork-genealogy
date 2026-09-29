@@ -8,10 +8,10 @@
 //                                     for the request through runWithProjectStore
 // The process store is an `unboundProjectStore`, so a code path that runs
 // outside a request binding fails instead of reaching the file backend. The
-// Pg/S3 configuration is the one process-wide thing, read from the same
-// GENEALOGY_* environment hosted-stdio.ts reads (minus GENEALOGY_PROJECT_ID,
-// which is the header here); a missing variable is one stderr line and exit 2
-// before listen.
+// Pg/S3 configuration is the one process-wide thing, read from the
+// GENEALOGY_* environment (store/pg-s3-env.ts; the project id is the header,
+// never a variable); a missing variable is one stderr line and exit 2 before
+// listen.
 import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
@@ -50,10 +50,9 @@ setProjectStore(
 // (~/.familysearch-mcp/config.json — sidecar URLs, OpenRouter key, hosted
 // flag). Every tool call binds a per-request bearer instead (http-server.ts).
 //
-// The environment overlays it (hosted-config-env.ts, shared with hosted-stdio.js):
-// without that, `image_transcribe` has no OpenRouter key here while the per-turn stdio
-// fork has one, so the tool would start failing the moment the worker's default moved
-// to http (2026-09-20).
+// The environment overlays it (hosted-config-env.ts): a container receives the
+// OpenRouter key as environment, so without the overlay `image_transcribe` has no key
+// here.
 const baseConfig = configFromEnv(process.env, await loadConfig(LOCAL));
 const server = await startHttpServer({
   host: values.host as string,
