@@ -51,6 +51,8 @@ from .outcomes import (  # noqa: E402,F401
     _modal_with_tiebreak_down,
     _OUTCOME_RANK,
     aggregate_per_run_outcome,
+    suppressed_failure,
+    unexpected_pass,
 )
 
 
@@ -424,12 +426,11 @@ def assemble_test_entry(
     aggregated = aggregate_per_run_outcome(per_run_outcomes)
     flaky = len(set(per_run_outcomes)) > 1
 
+    # `outcome` is the real aggregate. An `expected_outcome: "xfail"` marker no
+    # longer relabels it to `xfail`/`xpass`; downstream readers consult the
+    # marker (via `suppressed_failure` / `unexpected_pass`) to decide what a
+    # failure or pass means.
     outcome = aggregated
-    if expected_outcome == "xfail":
-        if aggregated == "fail":
-            outcome = "xfail"
-        elif aggregated == "pass":
-            outcome = "xpass"
 
     aggregated_dims = aggregate_dimensions(runs)
     # The rows a human annotates: the aggregate whenever it has any, else — when

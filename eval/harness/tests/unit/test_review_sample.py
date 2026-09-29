@@ -460,25 +460,55 @@ def test_a_failed_test_with_clean_dimensions_is_mandatory():
     assert _FREE_ID in select_review_sample(tests=suite, seed=0)["tests"]
 
 
-def test_a_declared_xfail_is_not_mandatory_but_an_xpass_is():
-    """Pins both halves of `_NON_FAILING_OUTCOMES` against each other.
+def test_a_declared_xfail_failure_is_not_mandatory_but_an_unexpected_pass_is():
+    """Pins both halves of `_is_non_failing` against each other (issue #2842).
 
-    `xfail` is a failure someone declared in advance, so it must NOT be
-    mandatory — otherwise every suite carrying one pays for it on every run
-    forever, and the slot is uncapped. `xpass` is the same test unexpectedly
-    passing, which must be. Narrowing the set to `{"pass"}` — or rewriting the
-    check as `outcome != "pass"`, which looks like a simplification — breaks the
-    first half, and nothing else in the suite notices.
+    A declared-xfail test that FAILED as declared (`outcome: fail` +
+    `expected_outcome: xfail`) is a failure someone declared in advance, so it
+    must NOT be mandatory — otherwise every suite carrying one pays for it on
+    every run forever, and the slot is uncapped. The same test unexpectedly
+    PASSING (`outcome: pass` + the marker) must be. Narrowing the non-failing
+    rule to a plain `outcome == "pass"`, or to `expected_outcome == "xfail"`
+    alone, breaks one half, and nothing else in the suite notices.
     """
     suite = _clean_15()
     entry = next(t for t in suite if t["test_id"] == _FREE_ID)
     entry["expected_outcome"] = "xfail"
 
-    entry["outcome"] = "xfail"
+    # Declared-xfail failure: suppressed, not mandatory.
+    entry["outcome"] = "fail"
+    assert is_mandatory(entry) is False
     assert _FREE_ID not in select_review_sample(tests=suite, seed=0)["tests"]
 
-    entry["outcome"] = "xpass"
+    # Declared-xfail that passed: an unexpected pass, mandatory.
+    entry["outcome"] = "pass"
+    assert is_mandatory(entry) is True
     assert _FREE_ID in select_review_sample(tests=suite, seed=0)["tests"]
+
+
+def test_a_declared_xfail_partial_or_aborted_is_still_mandatory():
+    """The suppression covers only a declared FAILURE. A declared-xfail test that
+    lands `partial` or `aborted` is neither a suppressed failure nor an ordinary
+    pass, so it stays mandatory (issue #2842 preserves this row unchanged)."""
+    suite = _clean_15()
+    entry = next(t for t in suite if t["test_id"] == _FREE_ID)
+    entry["expected_outcome"] = "xfail"
+
+    for outcome in ("partial", "aborted"):
+        entry["outcome"] = outcome
+        assert is_mandatory(entry) is True, outcome
+
+
+def test_an_ordinary_pass_without_a_marker_is_not_mandatory():
+    """The non-failing rule must not swallow an ordinary pass into mandatory, nor
+    treat a plain pass as an unexpected pass when no xfail marker is present."""
+    suite = _clean_15()
+    entry = next(t for t in suite if t["test_id"] == _FREE_ID)
+    entry["expected_outcome"] = "pass"
+    entry["outcome"] = "pass"
+    assert is_mandatory(entry) is False
+    entry["outcome"] = "fail"
+    assert is_mandatory(entry) is True
 
 
 def test_mandatory_picks_count_toward_the_sweep_cursor():
