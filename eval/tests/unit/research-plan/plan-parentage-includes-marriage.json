@@ -32,7 +32,8 @@
     "wiki-search-pennsylvania-probate",
     "wiki-place-page-pennsylvania-research-tips",
     "wiki-place-page-pennsylvania-online-records",
-    "volume-search-schuylkill"
+    "volume-search-schuylkill",
+    "collections-search-us-national"
   ],
   "judge_context": [
     "The plan MUST include at least one plan item that searches for the PARENTS' marriage record (e.g., the marriage of Thomas Flynn, the hypothesized father) — an item distinct from records about Patrick himself. Pennsylvania marriage collections are available in the collections-search-pennsylvania fixture (Pennsylvania County Marriages 1885-1950, Civil Marriages 1677-1950, Compiled Marriages 1700-1900).",

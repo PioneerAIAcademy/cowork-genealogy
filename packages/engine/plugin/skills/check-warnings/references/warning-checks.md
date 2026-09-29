@@ -133,7 +133,7 @@ treating as established.
 - `tooManyBirthDates2` -- two or more distinct perfect-DMY birth dates spaced > 30 days apart.
 - `tooManyDeathDates2` -- two or more distinct perfect-DMY death dates spaced > 14 days apart.
 - `deathRangeGreaterThan2` -- death-like dates span more than 2 years.
-- `hasBurialAfterDeath31` -- earliest burial is more than 31 days before the latest death. (Despite the Java name, this fires on "burial before death" outliers; preserved for parity.)
+- `hasBurialAfterDeath31` -- the latest possible burial is more than 31 days before the earliest possible death. (Despite the Java name, this fires on "burial before death" outliers.) Imprecise dates are read at their closest, so a year-only burial in the same year as the death does not fire.
 
 ### Family structure
 - `tooManyChildren18` -- 18 or more children.

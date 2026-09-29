@@ -84,10 +84,11 @@ describe("URL construction", () => {
     mockJson(EMPTY_BODY);
     await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     const [, init] = mockFetch.mock.calls[0];
-    expect(init.headers.Authorization).toBe("Bearer test-token");
-    expect(init.headers.Accept).toBe("application/json");
-    expect(typeof init.headers["User-Agent"]).toBe("string");
-    expect((init.headers["User-Agent"] as string).length).toBeGreaterThan(10);
+    const hdrs = new Headers(init.headers as HeadersInit);
+    expect(hdrs.get("Authorization")).toBe("Bearer test-token");
+    expect(hdrs.get("Accept")).toBe("application/json");
+    expect(typeof hdrs.get("User-Agent")).toBe("string");
+    expect((hdrs.get("User-Agent") as string).length).toBeGreaterThan(10);
   });
 });
 

@@ -157,6 +157,12 @@ BASELINE_ALLOWED_TOOLS = [
 #   person_person_matches(subjectPID)
 #       surfaces tree persons matched to the subject — can leak a stripped
 #       relative in a parents/siblings fixture.
+#   person_quality(subjectPID)
+#       reads FamilySearch's quality issues for the subject's live profile.
+#       Its sentences interpolate values straight off that profile ("… is
+#       missing a standardized date for {originalDate}"), so a stripped date or
+#       place can come back verbatim. Committed e2e runs made 39 such calls
+#       across 20 fixtures before this was blocked.
 #
 # NOT blocked (legitimate research): record_search / record_read /
 # fulltext_search / image_* / collections_search (the agent must find
@@ -175,6 +181,7 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_ancestors",
         "person_record_matches",
         "person_person_matches",
+        "person_quality",
     }
 )
 
@@ -3117,8 +3124,10 @@ async def run_e2e_test(
             judge_seconds = time.monotonic() - judge_start
 
         # The COMPLIANCE axis (§4.4). Deliberately does not touch `verdict` —
-        # `E2eResult` derives `compliance` and the combined `outcome` gate
-        # from these violations. See check_guardrail_compliance.
+        # `E2eResult` derives `compliance` from these violations, and since the
+        # §8 detectors were demoted (lead ruling 2026-09-25) that is ALL it
+        # derives: they no longer move the `outcome` gate.
+        # See check_guardrail_compliance.
         guardrail_bypass_violations = check_guardrail_compliance(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
@@ -3129,7 +3138,8 @@ async def run_e2e_test(
         # `guardrail_shadow_violations` field, discriminated by its `kind` key so
         # the shadow report counts it in its own bucket. Logs; never fails the
         # run — unlike guardrail_bypass_violations above, this does not feed
-        # compliance/outcome. Promotion to a hard gate, or a mandatory call in the
+        # compliance. (Neither feeds `outcome` any more: the §8 detectors were
+        # demoted from the gate, so the contrast is now only about compliance.) Promotion to a hard gate, or a mandatory call in the
         # `/research` orchestrator so an inlined write is still gated, is gated on
         # measuring this fire rate across the corpus (issue #1193, question b).
         warnings_unchecked_shadow = find_relationship_writes_without_warnings_check(
