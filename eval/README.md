@@ -397,10 +397,13 @@ longer in real time. The harness detects a sleep, leaves it out of the reported
 wall-clock time, and prints a `machine slept ~N min` note. Treat that note as
 your cue to set one of these up. On macOS and Linux a sleep does not count
 against the run's time caps. **On Windows it does:** Modern Standby still uses
-up the wall-clock and inactivity caps, so a long sleep can end the run as a
-`timeout` or `inactivity` that says nothing about the agent (issue #2974). A
-sleep during setup or the judge call, after the agent finishes, is not
-detected at all.
+up the wall-clock and inactivity caps. A long sleep (`>= caps.inactivity_seconds`
+of counted sleep) no longer books that as an agent `timeout`/`inactivity`,
+though — the run stops as `host_slept`: committed so you can see it, but not
+graded and excluded from the outcome rates (issue #2974). You still want the
+machine awake — a slept run is a wasted run — but it can no longer masquerade as
+a capability failure. A sleep during setup or the judge call, after the agent
+finishes, is not detected at all.
 
 - **Windows:** there's no per-command keep-awake tool, so set the power plan
   once — `powercfg /change standby-timeout-ac 0` (add `powercfg /change
