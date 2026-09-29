@@ -19,7 +19,9 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         <>
           <StatusBadge value={question.status} />
           <StatusBadge value={question.priority} />
-          {exhaustive_declaration?.declared && <StatusBadge value="exhaustive" color="blue" />}
+          {exhaustive_declaration?.declared && question.status !== 'exhaustive_declared' && (
+            <StatusBadge value="exhaustive_declared" />
+          )}
         </>
       }
       summary={question.rationale}

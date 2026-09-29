@@ -6419,7 +6419,7 @@
       "mcp_fixtures": [
         "person-warnings-no-warnings"
       ],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [

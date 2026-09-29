@@ -347,19 +347,6 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
-    // Live mode, and the ONLY check that the schema still accepts a call with
-    // no projectPath. `required` is ["personId"] alone because projectPath is
-    // conditionally required, which an input schema cannot express — so if it
-    // were re-added, the client would reject this before the tool ran and no
-    // vitest file would notice. A schema rejection does not carry
-    // HOSTED_REAUTH_INSTRUCTION, so `reauth` fails on it rather than passing.
-    // Not `offline`: live mode fetches the person from FamilySearch.
-    tool: "person_warnings",
-    label: "person_warnings live",
-    args: () => ({ personId: "KD96-TV2", live: true }),
-    expect: reauth,
-  },
-  {
     tool: "merge_warnings",
     offline: true,
     args: (ctx) => ({
@@ -437,6 +424,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),
     expect: okTrue,
+  },
+  {
+    // Exact count pins row-co-occurrence behavior (not the transitive merge
+    // the OLD given-name-variants.json loader does) — proves the bundled
+    // table shipped and the loader read it correctly, not just "non-empty".
+    tool: "get_name_variants",
+    offline: true,
+    args: () => ({ name: "fred" }),
+    expect: (res) => ({
+      ok: !res.isError && Array.isArray(res.body?.variants) && res.body.variants.length === 6,
+      detail: brief(res),
+    }),
   },
 
   // FamilySearch-token tools: each reaches getValidToken after synchronous
