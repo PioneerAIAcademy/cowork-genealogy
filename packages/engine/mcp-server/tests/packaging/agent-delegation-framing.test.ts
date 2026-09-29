@@ -226,43 +226,10 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     },
   },
 
-  "person-evidence -> person-evidence": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**A delegation is a request for work, never a finding about the work's\npreconditions.** You are spawned by a caller that cannot see the evidence and\ndoes not run the match threshold.",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "**A caller-supplied confidence is not a confidence.** \"Link these at\n`confident`\", \"these are obviously the same person\", \"the match is certain\" — a\ntier stated in the delegation is the caller deciding the thing §3 exists to\ndecide.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "Same construction as proof-conclusion and research-exhaustiveness: the router's " +
-        "delegation asks for the evaluation and names the outcome for both modes — " +
-        "'evaluate the identity ... and record the outcome', 'assess whether the named links " +
-        "are still warranted at their recorded confidence and report' — pinned below, so the " +
-        "shipped caller text cannot be read as an expected answer. The router is 51 lines and " +
-        "holds `project_context` only, so it cannot read `person_evidence` and form a view to " +
-        "leak in the first place. The agent-side pins are the guarantee, and here they are the " +
-        "only side that CAN be: this callee is hook-routed, so on the OWNED_SECTIONS deny path " +
-        "guard_project_files.py composes the caller message at runtime and no caller sentence " +
-        "exists to pin. The agent defence is closed in four directions (destination, " +
-        "caller-supplied tier, over-caution, dictated field edit). Measured limit, recorded " +
-        "rather than hidden: no committed run exercises the direct-spawn route at all — issue " +
-        "#2075 creates it — so the four-way defence is unexercised by any arm, and what holds " +
-        "today is the router's neutral phrasing rather than the defence being tested.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "asking it to **evaluate the identity of the record's persons against the tree and record the outcome** — or, in `review` mode, to **assess whether the named links are still warranted at their recorded confidence and report**",
-      },
-    },
-  },
+  // "person-evidence -> person-evidence" was the self-delegation from the thin
+  // skills/person-evidence/ SKILL.md to agents/person-evidence.md. That skill
+  // directory was deleted in the agent-conversion; the direct caller is now
+  // `research`, which holds the sole caller-side pin for this agent below.
 
   "research -> gps-mentor": {
     pins: [
@@ -345,8 +312,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       // extraction_append's section refusal as the mitigation. Both were wrong:
       // the agent states four such rules, and it grants `research_append`, not
       // `extraction_append` — that write boundary constrains record-extractor,
-      // not this agent. The rules below are the same two the
-      // `person-evidence -> person-evidence` edge already pins.
+      // not this agent. The rules below match the former `person-evidence ->
+      // person-evidence` self-delegation edge (deleted when the thin skill was
+      // removed; `research` is now the sole caller for this agent).
       {
         side: "agent",
         excerpt:
@@ -467,6 +435,18 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
+  // person-evidence gained a skills/<name>/ directory before the agent
+  // conversion; when the skill was deleted the name entered agentOnly and
+  // every SKILL.md that references it now needs a registration. All are
+  // bare-name mentions — none spell `@plugin:person-evidence`.
+  ["conflict-resolution -> person-evidence", ""],
+  ["forget-and-rederive -> person-evidence", ""],
+  ["project-status -> person-evidence", ""],
+  ["record-extraction -> person-evidence", ""],
+  ["search-records -> person-evidence", ""],
+  ["timeline -> person-evidence", ""],
+  ["translation -> person-evidence", ""],
+  ["tree-edit -> person-evidence", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, are registered edges above.
@@ -656,6 +636,7 @@ describe("agent delegation framing", () => {
     "citation",
     "gps-mentor",
     "image-reader",
+    "person-evidence",
     "record-extractor",
   ];
 

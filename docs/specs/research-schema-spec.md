@@ -373,11 +373,25 @@ name wide. Every other non-owner agent goes in `agentCallers` or
 `hookCallers`. The owner is the other exception — `gps-mentor` on
 `evaluations` — because a row must list its own owner among its callers.
 
-**`agentCallers` records who wrote; it does not widen who may.** Nothing reads it
-as a permission: `writer_sets` reads `callers` only and must keep doing so. That
-is what makes the field free — the unit plane already authorizes an agent's write
-through the skill whose run it happens inside, so naming the agent costs that
-plane nothing.
+When a thin-skill pair converts to direct delegation (the skill directory is
+deleted, the agent becomes the direct entry point), ownership rows are updated
+per-field rather than a simple prefix swap. For the `person_evidence`
+research.json row the `callers` entry (`skill:person-evidence`) is dropped and
+`hookCallers` gets `agent:person-evidence` — signalling that the agent
+authorizes only via `research_append`, not all writerTools. For tree.gedcomx.json
+rows (`persons`, `relationships`) the `callers` entry is dropped and a new
+`unitCallers` field carries `agent:person-evidence` — unit-plane authorization
+only; `listed_writers` (e2e attribution) does not read `unitCallers`, so e2e
+enforcement is unaffected. `writer_sets` reads all three fields (`callers`,
+`hookCallers`, `unitCallers`) and resolves an `agent:X` entry to `X` when `X`
+is the suite subject. `agent:person-evidence` on `person_evidence`, `persons`,
+and `relationships` is the first instance of this pattern.
+
+**`agentCallers` records who wrote; it does not widen who may.** Nothing reads
+it as a permission grant: `writer_sets` reads `callers`, `hookCallers`, and
+`unitCallers` — not `agentCallers`. That is what makes the field free: you can
+name an agent in `agentCallers` for attribution without authorizing it at the
+unit plane, because the loader never reaches that field.
 
 Two alternatives were weighed when this landed (lead ruling 2026-09-18). A
 blocking guard with a waiver table was rejected because it would put the known

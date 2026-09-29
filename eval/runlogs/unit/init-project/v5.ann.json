@@ -1,23 +1,7 @@
 {
   "run_log": "v5.json",
-  "annotator": "eruth937@gmail.com",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
     {
       "test_id": "ut_init_project_009",
       "dimension_source": "base",
@@ -69,6 +53,14 @@
     {
       "test_id": "ut_init_project_001",
       "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
       "corrected_score": 3,
@@ -99,7 +91,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_001",
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
       "dimension_source": "rubric",
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
@@ -116,8 +140,8 @@
     },
     {
       "test_id": "ut_init_project_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -131,102 +155,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_init_project_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -235,6 +163,62 @@
       "comment": null
     },
     {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_init_project_vqx",
       "dimension_source": "rubric",
       "dimension_name": "Known-holdings capture",
@@ -289,6 +273,134 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI should have flagged the hasEventBeforeBirth warning as suspicious since Sarah's only tree fact is her birth, making the warning a likely tool artifact."
     },
     {
       "test_id": "ut_init_project_vqx",
@@ -296,87 +408,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The response contains a concrete factual error by presenting Josephine's missing relationship subtype as “Structural Problem #3.” The fixture explicitly says that an absent subtype is not an init-project error and should not be treated as a defect. The response also makes unsupported claims that a marriage relationship is missing and that Jean Baptiste's death lacks a source. Sources are attached at the person level, so the absence of a fact-level source reference does not establish that the death is unsourced."
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "The AI stated Jean Baptiste's death has no source but the Death fact in the tree it just wrote carries a source reference to S7, making this a self-contradicting error."
     }
   ]
 }
