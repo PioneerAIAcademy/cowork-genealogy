@@ -1,0 +1,454 @@
+{
+  "run_log": "v6_2026-09-28_23-42-42.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated Margaret Mercer’s FamilySearch data and handled the census fertility-gap analysis appropriately. It accurately identified the discrepancies between children born and children living in the 1900 and 1910 censuses and correctly inferred the two missing-child research targets without fabricating identities. The tree preserved known information with proper FamilySearch sourcing (S1, quality 1), and the objective and project metadata were supported by the available data. No unsupported claims or invented facts were introduced."
+    },
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the required workflow. It retrieved Margaret Mercer’s FamilySearch data, created the tree with the expected persons and relationships, initialized the project metadata, performed the required consistency checks, and established the first research question focused on the post-1900 missing living child. The final report correctly identified both research targets—the child who died before 1900 and the child born between 1900–1910 who was living in 1910. No required steps were omitted, and no unsupported claims were introduced."
+    },
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The person_read call used the correct personId (MRCR-MOM) with the required relatives and sourceDescriptions options. The project_create call received the expected tree structure with the correct person IDs (I1–I8), relationships, and sources. The research_append call correctly updated the researcher profile with the required novice setting and exact narration guidance string. The person_warnings and person_quality calls used the correct local person IDs. No critical argument errors or fixture_not_found responses occurred."
+    },
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the tree structure and source fidelity. The tree.gedcomx.json representation preserves only known information, avoids guessing missing details, and correctly sources FamilySearch-derived facts to S1 with quality 1. Local person IDs are used consistently. Unknown fields such as death dates are appropriately omitted rather than fabricated. The discrepancy between the expected number of children and the current tree is correctly identified as a research target rather than silently resolved."
+    },
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the research.json project initialization. The project block contains all required elements, including the project ID, clear objective, subject person IDs, status, timestamps, and concise title. The title is appropriately distinct from the full objective. Required sections are present, including researcher_profile, known_holdings, sources, assertions, and populated research_questions. The file conforms to the expected schema with correct field types and no unnecessary fields."
+    },
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the researcher profile setup. It confirms that experience_level was set to “novice”, the required narration_guidance was preserved verbatim, and the subscriptions field was correctly omitted. It also correctly notes that no user-provided objective was available in the opening turn and that the skill proceeded appropriately using the project context rather than inventing a specific personal research direction. The profile initialization was completed correctly alongside the project setup."
+    },
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the place-handling workflow. All places were sourced from person_read tool responses and the returned standard_place values were preserved exactly in the tree. No unnecessary place_search calls were made because no new hand-entered places required standardization. The tree maintains the FamilySearch-provided place data accurately, with no alterations or fabricated location values."
+    },
+    {
+      "test_id": "ut_init_project_q4v",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the holdings survey. Since the user did not provide any family documents, prior research, GEDCOM files, or oral knowledge, the skill appropriately left known_holdings as an empty array in research.json. It did not fabricate holdings or incorrectly promote any information into sources or assertions. The clean skip was the correct behavior for the available input."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the tree and source fidelity. Facts extracted from person_read were accurately preserved with the correct dates, places, and relationships, and FamilySearch-derived facts were properly sourced to S1 with quality 1. The Bridget Doyle residence fact from 1880 was correctly retained despite the warning result, following the per-test requirement. The summary accurately reflects the identified data gap and reports the Bridget death/residence discrepancy using the warning tool’s framing rather than adding unsupported interpretations or fabricated explanations."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the required workflow. It retrieved Thomas Doyle’s FamilySearch record (MKVT-7XR), imported the four people, captured the five relationships, preserved the three sources, created the project with the correct objective and title, initialized the researcher profile, and ran check-warnings for all four individuals. The final summary appropriately covered the identified gaps, data issues, historical context, and next steps. No major required elements were omitted."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The person_read call used the correct personId (MKVT-7XR) with relatives and sourceDescriptions enabled. The project_create call included the correct objective, title, subject person ID (I1), and complete tree structure with persons, relationships, and sources. The research_append call correctly updated the researcher_profile section with the proper operation and fields. No fixture_not_found errors occurred, and all tool calls matched their expected signatures."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the tree representation and source fidelity. The tree preserves all known facts without fabrication, including Thomas’s and Bridget’s life events, John and Kate’s known birth information, and the correct omission of unknown parent details. FamilySearch-derived facts are properly sourced to S1 with quality 1, and local I-prefixed IDs are used consistently. The missing parent information for Thomas is correctly treated as a research gap and reported in the summary rather than being filled with unsupported assumptions."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research.json project block is complete and correctly structured. It includes the required project ID, objective, subject person IDs, status, timestamps, and a concise title that is distinct from the full objective. Required sections are present, including researcher_profile, known_holdings, sources, and assertions. The file conforms to the schema, and validation confirms valid=true with no warnings. No required project elements were omitted."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The researcher profile was correctly initialized. The experience_level was set to “novice”, the narration_guidance matched the required house-style string exactly, and no subscriptions field was written. The skill correctly used the user-provided objective about identifying Thomas Doyle’s origins and did not apply unnecessary default-objective logic. No unsupported profile information was added."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the place-handling workflow. All place values in the tree were taken from person_read tool responses and preserved exactly, including the returned standard_place values. No unnecessary place_search calls were made because the places were already standardized by the tool. The skill did not alter, refine, or fabricate any location data, and all places remain faithful to the source response."
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the holdings survey. Since the user did not provide any known holdings, the skill appropriately skipped the survey and initialized known_holdings as an empty array in research.json. It did not fabricate documents, prior research, or other holdings. The summary accurately reflects that the project begins only with the available FamilySearch information."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated the FamilySearch extraction and project setup. It accurately represented Patrick Flynn’s known facts, including the approximate 1845 birth in Ireland and 1908 death in Schuylkill County, Pennsylvania, with proper sourcing to S1 at quality 1. The research.json structure and objective were correctly created. The event-before-birth warning was appropriately treated as a possible artifact caused by approximate date handling and was flagged for verification rather than incorrectly resolved or ignored. No unsupported facts or fabricated details were introduced."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the required workflow. It retrieved Patrick Flynn’s FamilySearch record, created the complete tree including the required death information, initialized research.json with the correct project metadata, set the researcher profile, and completed the required data-quality checks. It also correctly explained the next step for a forget-and-rederive exercise without performing that separate action prematurely. No required work was omitted, and no unsupported information was introduced."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The person_read call used the correct personId (LZNY-BRF) with the required relatives and sourceDescriptions options. The project_create call included the correct objective, title, subject person IDs, and complete tree structure with properly sourced facts. The research_append call correctly updated the researcher profile using the required novice setting and exact narration guidance string. The person_warnings and person_quality calls used the correct local person ID (I1) and project path. No fixture_not_found errors occurred, and all calls matched the expected tool definitions."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the tree representation for Patrick Flynn. It confirms that all known facts are preserved, including the approximate birth in Ireland and death in Schuylkill County, Pennsylvania, with both facts properly sourced to S1 at quality 1. Unknown relationships were appropriately omitted rather than fabricated, and the local I1 identifier was used consistently. The event-before-birth discrepancy was correctly surfaced as a warning for review rather than silently resolved. No unsupported relatives, placeholder stubs, or fabricated details were introduced."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research.json initialization was correctly evaluated. The project block contains all required elements, including the project ID, objective, subject person IDs, status, timestamps, and a concise title that is distinct from the full objective. Required sections are present, including researcher_profile and known_holdings as an empty array. The file conforms to the expected schema with correct field types and required fields populated. No unnecessary or unsupported fields were added."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The researcher profile was correctly initialized. The experience_level was set to “novice”, the narration_guidance matched the required house-style string, and no subscriptions field was added. The user’s objective was explicitly provided, so the skill correctly captured it rather than applying a default objective. No conflicting or unsupported profile values were persisted."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the place-handling workflow. Both places were taken directly from the person_read tool response and preserved without alteration. The returned standard_place values were maintained exactly in the tree, and no unnecessary place_search calls were made because no hand-entered places required standardization. No location data was fabricated or modified."
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the holdings survey behavior. Since the user did not provide any known holdings, the skill appropriately left known_holdings as an empty array in research.json. The invitation for the user to share future documents or records is appropriate and does not create fabricated entries. No unsupported holdings were added or promoted into sources."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the FamilySearch extraction workflow. It imported Patrick Flynn’s record (LZNY-BRF), created the six-person tree using only supported information, and avoided fabricating missing relatives or placeholder facts. FamilySearch-derived facts were correctly sourced to S1 at quality 1, local I-IDs were used consistently, and standardized places and dates were preserved from the tool response. The birthplace conflict between the user’s Pennsylvania claim and FamilySearch’s Ireland value was properly identified, and the missing mother was accurately reported as unavailable for import rather than invented. All claims were supported by the tool data."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the required workflow. It retrieved Patrick Flynn’s FamilySearch record with relatives, preserved the stated objective, initialized the researcher profile with the correct novice setting and narration guidance, recorded the granddaughter’s memoir as a source, completed warning checks for all six persons, and provided a complete summary of the identified issues, including the birthplace conflict, missing mother, and data-quality concerns. No major required elements were omitted."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The person_read call used the correct personId (LZNY-BRF) with relatives: true and sourceDescriptions: true. The project_create call included the complete tree structure with the correct local I-IDs, relationships, and sources. The research_append calls correctly updated the researcher profile and added the granddaughter’s memoir source. The person_warnings and person_quality calls used the correct local person IDs (I1–I6). No calls resulted in fixture_not_found, and all tool interactions matched the expected patterns."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly preserved the tree data without adding unsupported information. All six persons contain only known facts, with unknown details such as the mother’s identity and Michael’s death information appropriately omitted rather than guessed. FamilySearch-derived facts are correctly sourced to S1 at quality 1, and local person IDs (I1–I6) are used consistently. The birthplace discrepancy between the user’s Pennsylvania claim and FamilySearch’s Ireland value was properly identified, and the missing mother was accurately reported as unavailable for import rather than fabricated."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research.json project block is complete and correctly structured. It includes the required project ID, objective, subject person ID, status, timestamps, and a concise title distinct from the objective. Required sections are properly initialized, including the populated sources array, empty assertions and known_holdings arrays, and research_questions prepared for later question selection. The file conforms to the schema with correct field types and no unnecessary fields."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The researcher profile was correctly initialized. The experience_level was set to “novice”, and the narration_guidance matched the required house-style string exactly. The subscriptions field was correctly omitted. The skill appropriately used the user’s stated objective rather than inventing a generic placeholder or asking for unnecessary clarification. No unsupported profile information was persisted."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the place-handling workflow. All places were sourced from person_read tool responses and the returned standardized_place values were preserved exactly in the tree. No unnecessary place_search calls were made because no new hand-entered places required standardization. The skill did not alter, refine, or fabricate any place information, and all location data remains faithful to the tool output."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the holdings survey. Since the user did not provide any holdings such as documents, prior research, GEDCOM files, or oral knowledge, the skill appropriately skipped the holdings survey and initialized known_holdings as an empty array in research.json. It accurately communicated that no holdings were recorded and did not fabricate or promote any unsupported information into sources or assertions."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled Patrick Flynn’s record and project setup. It retrieved the correct person (LZNY-BRF), accurately preserved the known facts (name, gender, approximate birth in Ireland, and death in Schuylkill County, Pennsylvania), created the project with the appropriate tree structure, and initialized the researcher profile with the required fixed values. The coherence warning about an event occurring before the birth date was appropriately surfaced and explained rather than ignored or silently changed. No unsupported facts or fabricated information were introduced."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill completed the required initialization workflow. It retrieved the person record, handled the research objective step appropriately, proceeded without blocking, initialized the project, created the tree with the subject person, wrote the researcher profile, performed the required data check, and presented the findings. All major required components were addressed, and no significant omissions were identified."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The person_read call used the correct personId (LZNY-BRF) with the required relatives and sourceDescriptions flags. The project_create call included the correct tree structure with local person ID I1, the proper source reference S1 with quality 1, and the correct objective and title. The research_append call correctly updated the researcher_profile section with the required fixed values. The person_warnings and person_quality calls used the correct local person ID (I1). No fixture_not_found errors occurred, and all tool calls matched their expected patterns."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly preserved the known information for Patrick Flynn (I1) without adding unsupported details. The tree includes the known name, gender, birth information, and death information, with the original standardized place values retained from the tool response. Both facts are properly sourced to S1 at quality 1. Unknown relationships such as parents, spouse, and children are appropriately omitted rather than guessed. The local I1 identifier is used consistently, and no fabricated information was introduced."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research.json project block is complete and correctly structured. It includes the required project ID, objective, subject person ID, status, timestamps, and a concise title that is distinct from the objective. All required sections are present, including researcher_profile, known_holdings, sources, and assertions. The written file conforms to the expected schema with correct field types and no unnecessary fields."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The researcher profile was correctly initialized. The skill stored experience_level: \"novice\" and preserved the required narration_guidance string exactly. It appropriately asked about the research objective, proceeded without blocking, and correctly used the default objective when the user did not provide one. The subscriptions field was correctly omitted, and no unnecessary questions about the researcher were asked."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the place-handling workflow. Both places were taken directly from the person_read tool response and preserved exactly in the tree. The returned standard_place values were not altered, refined, or fabricated. Since no hand-entered places were provided, no place_search call was required. The skill handled the location data correctly and maintained source fidelity."
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the known holdings survey. Since the user did not provide any documents, prior research, GEDCOM files, or oral knowledge, it appropriately skipped the survey and initialized known_holdings as an empty array. The response accurately communicated that no personal records or family documents were mentioned, and no unsupported holdings were created or promoted."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Mostly correct, but it wrongly flagged Josephine’s missing relationship subtype as an error. The setup, sources, and other identified issues were handled correctly."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill completed all required tasks. It fetched the person data, created the project, initialized the researcher profile correctly, ran warning and quality checks, identified issues, and selected a research question. The response covered the tree, sources, data checks, and research gaps with no major omissions."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. All calls used the expected arguments, including the correct person ID, project details, researcher profile update, and person checks for all local IDs (I1–I4). No incorrect identifiers, fixture errors, or unnecessary arguments were used."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tree was correctly represented without fabrication. Known facts were preserved, unknown details were omitted, sources were correctly attached to S1 with quality 1, and local IDs were used consistently. The missing marriage link was properly flagged as a discrepancy rather than silently changed."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research.json project block is complete and correctly structured. It includes the required project ID, objective, subject person ID, status, timestamps, and concise title. Required sections are present, including researcher_profile, known_holdings, sources, assertions, and seeded research_questions. The title is distinct from the objective, and the file conforms to the expected schema with no unnecessary fields."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The researcher profile was correctly initialized. experience_level was set to “novice”, narration_guidance matched the required house-style string exactly, and no subscriptions field was added. The user’s stated objective was captured directly, with no unnecessary defaulting or unsupported profile information persisted."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The place handling was correct. All locations came from the person_read response and the standard_place values were preserved exactly in the tree. No unnecessary place_search calls were made, and no places were fabricated or modified."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The holdings survey was handled correctly. Since the user did not provide any personal documents, prior research, GEDCOMs, or oral knowledge, the skill appropriately left known_holdings empty. No unsupported holdings were created or promoted into sources."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill handled the data correctly. Patrick Flynn’s known facts were accurately captured, the tree avoided fabricated information, and FamilySearch facts were properly sourced to S1 at quality 1. The date contradiction was correctly flagged instead of silently changed. The researcher profile was also correctly configured with the stated subscriptions, novice experience level, and required narration guidance. No unsupported claims were introduced."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill completed all required tasks. It retrieved Patrick Flynn’s data, created the project, initialized the tree stub, configured the researcher profile correctly, recorded the volunteered prior research as a known holding, ran the required checks, and seeded the first research question. Both research.json and tree.gedcomx.json were created successfully, with no major omissions."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The person_read call used the correct personId (LZNY-BRF) with the required options. The project_create call included the correct tree structure, fact IDs, source references, and objective/title. The research_append call correctly updated the researcher profile and added the known holdings entry with the required fields. The person_warnings and person_quality calls used the correct identifiers and paths. No incorrect arguments or fixture_not_found errors occurred."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tree accurately preserves Patrick Flynn’s known information without adding unsupported details. Known facts, sourcing, and local ID usage are correct. Unknown relationships were omitted rather than guessed, and the missing parents issue was properly flagged instead of silently resolved. No fabricated facts or placeholder data were added."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research.json project block is complete and correctly structured. It includes the required project ID, objective, subject person ID, status, timestamps, and concise title. All required sections are present, including researcher_profile, known_holdings, sources, and seeded research_questions. The title is brief and distinct from the objective, and the file conforms to the schema with correct field types and no extra fields."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The researcher profile was correctly handled. experience_level remained “novice” according to the fixed rule, the narration_guidance matched the required house-style string, and volunteered subscriptions were recorded correctly (Ancestry, LibraryAccess) while FamilySearch was appropriately omitted. The skill did not ask unnecessary access questions and correctly used the user’s stated objective without defaulting."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The place handling was correct. The tree preserved the standard_place values exactly as returned by person_read (Ireland and Schuylkill, Pennsylvania, United States). No unnecessary place_search call was made for user-mentioned locations, and no place values were fabricated or altered."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly recorded the user’s volunteered prior research as a known_holdings entry with the proper structure and did not promote it into sources or assertions. Access information (Ancestry and family history centre) was correctly handled as subscriptions rather than holdings. No holdings were fabricated, and the entry follows the expected schema."
+    }
+  ]
+}
