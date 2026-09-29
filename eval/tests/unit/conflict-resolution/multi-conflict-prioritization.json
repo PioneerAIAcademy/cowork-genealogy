@@ -9,11 +9,12 @@
       "conflict-resolution",
       "prioritization",
       "multi-conflict",
-      "identity-vs-fact"
+      "identity-vs-fact",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "There are several unresolved conflicts in this research. Take a look and start working on whichever should come first.",
+    "delegation": "There are several unresolved conflicts in this research. Take a look and start working on whichever should come first.\n\nprojectPath: <workspace>",
     "scenario": "flynn-multi-conflict"
   },
   "judge_context": [

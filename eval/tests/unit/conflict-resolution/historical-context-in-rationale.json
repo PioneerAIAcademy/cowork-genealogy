@@ -12,11 +12,12 @@
       "part-four",
       "informant-error",
       "delayed-birth-certificate",
-      "flynn-identity-geographic"
+      "flynn-identity-geographic",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Resolve conflict c_001 — the birthplace discrepancy between the census records and the death certificate. I want to understand the historical reason why the death certificate says Pennsylvania when both census records say Ireland.",
+    "delegation": "Resolve conflict c_001 — the birthplace discrepancy between the census records and the death certificate. I want to understand the historical reason why the death certificate says Pennsylvania when both census records say Ireland.\n\nconflictId: c_001\nprojectPath: <workspace>",
     "scenario": "flynn-identity-geographic"
   },
   "judge_context": [

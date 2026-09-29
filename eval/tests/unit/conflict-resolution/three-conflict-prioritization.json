@@ -10,11 +10,12 @@
       "three-conflict",
       "multi-conflict",
       "fact-vs-identity",
-      "flynn-identity-geographic"
+      "flynn-identity-geographic",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "There are three unresolved conflicts in this research. Review all of them and resolve whichever is most important.",
+    "delegation": "There are three unresolved conflicts in this research. Review all of them and resolve whichever is most important.\n\nprojectPath: <workspace>",
     "scenario": "flynn-identity-geographic"
   },
   "judge_context": [
