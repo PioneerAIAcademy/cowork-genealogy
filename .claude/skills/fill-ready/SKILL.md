@@ -195,7 +195,7 @@ the ranking. Report the mix; do not swap a card out to hit a number.
 # The first of the two budgeted `item-list` passes (§ 0 "Board facts"). Everything
 # downstream reads this file; do not fetch the board again until the rebuild.
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
-jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0) | .labels ]
+jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0 and ((.labels|index("volunteer"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
                      senior: map(select((index("developer")) and index("senior")))|length,
                      high_priority: map(select((index("developer")) and index("high-priority")))|length },
