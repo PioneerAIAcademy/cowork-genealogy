@@ -139,7 +139,7 @@ _FAILURE_MATCHERS: tuple[tuple[str, tuple[str, ...]], ...] = (
     # upstream status is rare and falls to `unclassified` honestly.
     ("upstream_5xx", ("wiki-query-api error: 5", "Population API error: 5")),
     ("no_wiki_page", ("No wiki page found for",)),
-    ("unresolvable_place", ("to a single FamilySearch place",)),
+    ("unresolvable_place", ("to a single FamilySearch place", "matches more than one place")),
     # place-population.ts passes the upstream 200 body through unread, so a place
     # with no series arrives as `{"error":"Place not found","place_id":...}`.
     ("no_population_series", ("Place not found",)),

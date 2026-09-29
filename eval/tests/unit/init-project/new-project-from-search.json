@@ -18,7 +18,8 @@
   },
   "mcp_fixtures": [
     "person-search-flynn",
-    "person-read-flynn"
+    "person-read-flynn",
+    "person-quality-clean-LZNY-BRF"
   ],
   "judge_context": [
     "Should call person_search (not person_read) first — no FamilySearch ID was provided",
