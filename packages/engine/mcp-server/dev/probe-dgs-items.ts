@@ -22,7 +22,12 @@
  *     Catalog `film_note` entries, then beside the film's own item cards.
  *   SECTION C, Q3. Is "Image K" the K-th entry of the item's sorted image
  *     list? Throws unless DGS 004528134 Item 5 Image 10 is `004528134_00632`
- *     and unless 004528112's groups open on its ITEM start cards.
+ *     and unless 004528112's groups open on its ITEM start cards. A group's
+ *     image list is re-requested once when defective. A list that is refused,
+ *     or all null, makes positions unreliable: S keeps that film out of its
+ *     position counts, B skips it and its start cards, and C reports Q3 as not
+ *     checkable if it falls before group 14 of 004528112. A list still partly
+ *     null shifts only that group's own images, and C's tiling skips the film.
  *
  * RESULTS (measured 2026-09-29 against the live service; a full run takes about 3 minutes).
  *
@@ -317,23 +322,60 @@ async function childIds(apid: string, quiet = false): Promise<string[]> {
   return JSON.parse(r.text) as string[];
 }
 
-// Same filter as image_search's usableImageIds: a null value is a defective
-// response, not an image, and counting it would shift every index after it.
+// Mirrors image_search's usableImageIds and its single retry. A null
+// value is a defective response that stands in for a real image: filtering it
+// keeps the null out of the list, but the real image is still missing, so a
+// defective response is re-requested once and the better of the two kept.
 async function childImages(
   id: string,
 ): Promise<{ images: string[]; dropped: number; status: number }> {
-  const r = await send(
-    "GET",
-    `${ARTIFACT_BASE}/artifact/group/${encodeURIComponent(id)}/children/names`,
-    undefined,
-    { quiet: true },
+  const fetchOnce = async (): Promise<{ images: string[]; dropped: number; status: number }> => {
+    const r = await send(
+      "GET",
+      `${ARTIFACT_BASE}/artifact/group/${encodeURIComponent(id)}/children/names`,
+      undefined,
+      { quiet: true },
+    );
+    if (r.status !== 200) return { images: [], dropped: 0, status: r.status };
+    const values = Object.values(JSON.parse(r.text) as Record<string, unknown>);
+    const images = values
+      .filter((v): v is string => typeof v === "string" && v.length > 0)
+      .sort();
+    return { images, dropped: values.length - images.length, status: r.status };
+  };
+  const first = await fetchOnce();
+  if (first.status !== 200 || first.dropped === 0) return first;
+  let retry: { images: string[]; dropped: number; status: number };
+  try {
+    retry = await fetchOnce();
+  } catch {
+    return first; // as image_search does: a failed retry keeps the first list
+  }
+  const better =
+    retry.status === 200 &&
+    (retry.images.length > first.images.length ||
+      (retry.images.length === first.images.length && retry.dropped < first.dropped));
+  return better ? retry : first;
+}
+
+/**
+ * Children that make POSITION untrustworthy: a refused list (non-200), or one
+ * whose every value was null, so the child looks image-less. Either one drops
+ * out of the image-bearing count and shifts every later N.
+ */
+function positionUnreliable(children: FilmChild[]): FilmChild[] {
+  return children.filter(
+    (c) => c.imagesStatus !== 200 || (c.images.length === 0 && c.dropped > 0),
   );
-  if (r.status !== 200) return { images: [], dropped: 0, status: r.status };
-  const values = Object.values(JSON.parse(r.text) as Record<string, unknown>);
-  const images = values
-    .filter((v): v is string => typeof v === "string" && v.length > 0)
-    .sort();
-  return { images, dropped: values.length - images.length, status: r.status };
+}
+
+/**
+ * Children with a list still defective after the retry (some values null). N is
+ * unaffected, but the child is missing an image, so its own "Image K" indices and
+ * the tiling count are off.
+ */
+function imagesDefective(children: FilmChild[]): FilmChild[] {
+  return children.filter((c) => c.dropped > 0 && c.images.length > 0);
 }
 
 // Sections S, B and C all walk the same films; one listing per film per run.
@@ -633,11 +675,19 @@ async function sectionS(): Promise<void> {
           (c.dropped ? `  dropped ${c.dropped}` : ""),
       );
     });
-    const unlisted = children.filter((c) => c.imagesStatus !== 200);
+    const unlisted = positionUnreliable(children);
     if (unlisted.length > 0) {
       unknownImages++;
       console.log(
-        `    image list NOT served for ${unlisted.map((c) => `${c.id} (${c.imagesStatus})`).join(", ")}: positions after it are unreliable`,
+        `    image list refused or empty-by-nulls for ${unlisted.map((c) => `${c.id} (status ${c.imagesStatus}, dropped ${c.dropped})`).join(", ")}: ` +
+          "positions after it are unreliable; this film is left out of the first two counts",
+      );
+    }
+    const defective = imagesDefective(children);
+    if (defective.length > 0) {
+      console.log(
+        `    image list still defective after a retry for ${defective.map((c) => `${c.id} (dropped ${c.dropped})`).join(", ")}: ` +
+          "its Image K indices are off; positions are unaffected",
       );
     }
     const created = new Map<string, number[]>();
@@ -653,12 +703,12 @@ async function sectionS(): Promise<void> {
     }
     const readable = segments.filter((s): s is number => s !== null);
     const sequential = segments.every((s, i) => s === null || s === i + 1);
-    if (!sequential) nonSequential++;
+    if (!sequential && unlisted.length === 0) nonSequential++;
     // Position among imaged children is only the item number if no image-less
     // child sits between two imaged ones.
     const lastImaged = Math.max(...withImages.map((c) => c.position));
     const emptyFirst = children.filter((c) => c.images.length === 0 && c.position < lastImaged);
-    if (emptyFirst.length > 0) interleaved++;
+    if (emptyFirst.length > 0 && unlisted.length === 0) interleaved++;
     console.log(
       `    readable segments ${readable.length}/${segments.length}; sequential by position: ${sequential}; ` +
         `image-less children all after the imaged ones: ${emptyFirst.length === 0}`,
@@ -667,7 +717,8 @@ async function sectionS(): Promise<void> {
   console.log(
     `\n  => ${checked} split films checked, ${nonSequential} with segments that differ from position, ` +
       `${interleaved} with an image-less child among the imaged ones, ` +
-      `${unknownImages} with an image list not served, ${multiDate} with groups created on more than one date`,
+      `${unknownImages} with a refused or all-null image list (left out of the first two counts), ` +
+      `${multiDate} with groups created on more than one date`,
   );
 }
 
@@ -676,8 +727,11 @@ async function sectionB(): Promise<void> {
   console.log("  Ground truth: Catalog film_note.items (every q.filmNumber hit).");
   const discovered = await discover();
   let shown = 0;
+  let tried = 0;
   for (const dgs of new Set([FILM, BLOUNT_FILM, CARD_FILM, ...discovered.keys()])) {
-    if (shown >= 4) break;
+    // `tried` caps the walk even when every film is skipped.
+    if (shown >= 4 || tried >= 8) break;
+    tried++;
     const all = await listFilmChildren(dgs);
     const children = all.filter((c) => c.images.length > 0);
     const known = new Map(
@@ -689,6 +743,10 @@ async function sectionB(): Promise<void> {
     for (const c of catalog) for (const n of catalogItemNumbers(c.items)) byItem.set(n, c);
     if (byItem.size === 0) {
       console.log(`\n  ${dgs}: no Catalog film_note carries an item number; skipped`);
+      continue;
+    }
+    if (positionUnreliable(all).length > 0) {
+      console.log(`\n  ${dgs}: an image list is refused or empty-by-nulls, so positions are unreliable; skipped`);
       continue;
     }
     shown++;
@@ -724,14 +782,23 @@ async function sectionB(): Promise<void> {
 
   console.log("\n  Second ground truth, the film's own start cards: which RMS group opens on each?");
   for (const card of FILM_ITEM_START_CARDS) {
-    const children = (await listFilmChildren(card.dgs)).filter((c) => c.images.length > 0);
+    const all = await listFilmChildren(card.dgs);
+    const children = all.filter((c) => c.images.length > 0);
     const at = children.findIndex((c) => c.images.includes(card.imageId));
+    if (at === -1 || positionUnreliable(all).length > 0) {
+      console.log(
+        `    film ITEM ${String(card.filmItem).padStart(2)} card ${card.imageId} -> ` +
+          (at === -1 ? "card not found in any served image list" : "positions unreliable on this film") +
+          "; no verdict",
+      );
+      continue;
+    }
     const group = children[at];
-    const opens = group?.images[0] === card.imageId;
+    const opens = group.images[0] === card.imageId;
     console.log(
       `    film ITEM ${String(card.filmItem).padStart(2)} card ${card.imageId} -> RMS position ${at + 1} ` +
-        `(${group?.groupName ?? "name unreadable"}), opens the group: ${opens} => ` +
-        `${at + 1 === card.filmItem ? "segment = film item" : "segment DIFFERS from film item"}`,
+        `(${group.groupName ?? "name unreadable"}), opens the group: ${opens} => ` +
+        `${at + 1 === card.filmItem ? "position = film item" : "position DIFFERS from film item"}`,
     );
   }
 }
@@ -750,7 +817,27 @@ async function sectionC(): Promise<void> {
   // Off the worked example: on a film whose RMS groups each hold one film item,
   // image 1 of group N must be the film's own ITEM N start card.
   console.log(`\n  ${CARD_FILM}: image 1 of each RMS group against the film's start cards:`);
-  const cardChildren = (await listFilmChildren(CARD_FILM)).filter((c) => c.images.length > 0);
+  const cardAll = await listFilmChildren(CARD_FILM);
+  // Only children up to the last checked group can move groups 2 and 14; a
+  // refused list among the trailing image-less children cannot.
+  const lastChecked = Math.max(
+    ...FILM_ITEM_START_CARDS.filter((c) => c.dgs === CARD_FILM).map((c) => c.filmItem),
+  );
+  let imaged = 0;
+  const upTo: FilmChild[] = [];
+  for (const c of cardAll) {
+    if (imaged >= lastChecked) break;
+    upTo.push(c);
+    if (c.images.length > 0) imaged++;
+  }
+  const cardUnreliable = positionUnreliable(upTo);
+  if (cardUnreliable.length > 0) {
+    throw new Error(
+      `Q3 not checkable: ${CARD_FILM} image list refused or empty-by-nulls for ` +
+        cardUnreliable.map((c) => `${c.id} (status ${c.imagesStatus}, dropped ${c.dropped})`).join(", "),
+    );
+  }
+  const cardChildren = cardAll.filter((c) => c.images.length > 0);
   for (const card of FILM_ITEM_START_CARDS.filter((c) => c.dgs === CARD_FILM)) {
     const group = cardChildren[card.filmItem - 1];
     const first = group?.images[0];
@@ -765,8 +852,13 @@ async function sectionC(): Promise<void> {
   console.log("\n  Items tile each film with no gap or overlap (so K-th child is well defined):");
   await discover();
   for (const dgs of sweepFilms()) {
-    const children = (await listFilmChildren(dgs)).filter((c) => c.images.length > 0);
+    const all = await listFilmChildren(dgs);
+    const children = all.filter((c) => c.images.length > 0);
     if (children.length < 2) continue;
+    if (positionUnreliable(all).length > 0 || imagesDefective(all).length > 0) {
+      console.log(`    ${dgs}: an image list is refused or defective; not checked`);
+      continue;
+    }
     const problems: string[] = [];
     for (let i = 1; i < children.length; i++) {
       const prevLast = imageNumber(children[i - 1].images[children[i - 1].images.length - 1]);
