@@ -446,13 +446,14 @@ Keep the whole per-conflict summary to the 2-4 sentences above, not a
 paragraph of re-argued analysis; the full argument belongs in the
 persisted `conflicts` entry, not echoed here.
 
-State the next step and take it:
-- Resolved conflict → update the hypothesis (hypothesis-tracking);
-  when the question is answered, write the proof conclusion
-  (proof-conclusion)
-- Unresolved → create a research question targeting the specific
+Name the next step. Do not take it, and do not take it as licence
+to resolve a conflict this skill was not asked to resolve:
+- Resolved conflict → next is updating the hypothesis
+  (hypothesis-tracking); once the question is answered, a proof
+  conclusion (proof-conclusion)
+- Unresolved → next is a research question targeting the specific
   evidence that would resolve it (question-selection)
-- Identity conflict → build candidate timelines to test whether the
+- Identity conflict → next is candidate timelines testing whether the
   records are the same person (timeline)
 
 ## Important rules

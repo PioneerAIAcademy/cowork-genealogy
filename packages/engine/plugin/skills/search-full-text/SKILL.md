@@ -249,7 +249,7 @@ each record is already attached to a tree person.
 - **Unattached** → prioritize for extraction — this is new evidence.
 
 Present triage with match quality, document role, and attachment
-status, then examine the prioritized records in that order.
+status, ordered so the prioritized records come first.
 
 ### 7. Retain results and write the log entry
 
