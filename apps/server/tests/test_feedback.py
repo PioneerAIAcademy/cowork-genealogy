@@ -3,10 +3,12 @@ zip and POSTs the {timestamp, email, filename, zipBase64} envelope to the Drive
 endpoint (mocked here — no real upload, no local-disk write)."""
 import asyncio
 import base64
+import re
 import io
 import json
 import zipfile
 from datetime import date
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -621,7 +623,9 @@ _TREE = {
             "facts": [{"id": "f2", "type": "Birth", "date": "3 March 1985",
                        "place": "Riverside, CA"}],
         },
-        # No `living` flag at all — absent is NOT deceased.
+        # No `living` flag at all. Absent is no longer living unconditionally —
+        # P3 stays redacted only because a 1990 birth is neither 110 years back
+        # nor evidence of death. Changing this date changes the expected outcome.
         {
             "id": "P3", "gender": "Male",
             "names": [{"id": "n3", "given": "Bobby", "surname": "Spriggs"}],
@@ -1025,12 +1029,31 @@ def _p(**extra):
     }
 
 
-def _redacts(person, now=_NOW):
-    """1 when the person was redacted, 0 when they shipped unredacted."""
-    tree = {"persons": [person], "relationships": [], "sources": []}
-    files = [("tree.gedcomx.json", json.dumps(tree).encode("utf-8"))]
-    _, count = fb._redact_living(files, now)
-    return count
+_SENTINEL = {
+    "id": "SENTINEL",
+    "gender": "Female",
+    "living": True,
+    "names": [{"id": "ns", "given": "Jane Marie", "surname": "Sentinel"}],
+}
+
+
+def _redacts(person, now=_NOW, name="tree.gedcomx.json"):
+    """1 when the subject was redacted, 0 when they shipped unredacted.
+
+    Every tree also carries a person explicitly flagged living, and this asserts
+    they came back redacted. Without it a bare count of 0 is ambiguous:
+    _redact_living's `except` also returns 0 with the file passed through
+    untouched. The sentinel is the only thing that makes a swallowed raise
+    visible.
+    """
+    tree = {"persons": [person, _SENTINEL], "relationships": [], "sources": []}
+    out, count = fb._redact_living([(name, json.dumps(tree).encode("utf-8"))], now)
+    result = json.loads(dict(out)[name])
+    sentinel = _person(result, "SENTINEL")
+    assert sentinel["names"][0]["given"] == fb.LIVING_GIVEN, (
+        "sentinel survived unredacted — the file was passed through by the except"
+    )
+    return count - 1
 
 
 # 1-3: each death-type fact alone decides it. Birth 1990 keeps the age
@@ -1132,10 +1155,11 @@ def test_2988_birth_year_falls_through_an_unparseable_birth_fact():
 
 
 def test_2988_defaults_to_the_real_clock_when_no_now_is_passed():
-    """The production caller passes nothing; only the tests pin a date."""
-    tree = {"persons": [_p(facts=[_BIRTH_1990])], "relationships": [], "sources": []}
-    _, count = fb._redact_living([("tree.gedcomx.json", json.dumps(tree).encode("utf-8"))])
-    assert count == 1
+    """Born 1900, so the answer flips on what the default clock actually is: the
+    real one ships them, while the epoch, a NaN date and a deleted fallback all
+    redact. A 1990 birth would pass under every one of those."""
+    person = _p(facts=[{"id": "b", "type": "Birth", "date": "1900"}])
+    assert _redacts(person, None) == 0
 
 
 # --------------------------------------------------------------------------
@@ -1231,3 +1255,155 @@ def test_2988_bundle_2932_shape_end_to_end():
         if name == "tree.gedcomx.json":
             continue
         assert b"Bobby Living" not in buf
+
+
+# --------------------------------------------------------------------------
+# Review findings on the #2988 fix.
+# --------------------------------------------------------------------------
+
+
+def test_review_redacts_a_tree_copy_the_walker_has_no_reason_to_drop():
+    """A researcher's own duplicate is not `.bak` and not `.tmp-`, so nothing
+    skips it. Keying redaction on the two canonical names shipped it whole."""
+    person = _p(facts=[{"id": "b", "type": "Birth", "date": "1990"}])
+    assert _redacts(person, name="tree-backup.gedcomx.json") == 1
+    assert _redacts(person, name="tree.gedcomx copy.json") == 1
+
+
+def test_review_leaves_a_non_tree_json_document_alone():
+    """Shape-based selection must not rewrite project JSON with no `persons`."""
+    raw = json.dumps({"project": {"id": "rp_x"}, "log": []}).encode("utf-8")
+    out, count = fb._redact_living([("research.json", raw)], _NOW)
+    assert count == 0
+    assert dict(out)["research.json"] == raw
+
+
+def test_review_ignores_a_non_string_date():
+    """`str({...})` shows the contents and would find 1823 here; JavaScript's
+    `String({...})` gives "[object Object]". The guard is what keeps the two
+    bundles identical — without it this side ships someone the desktop redacts."""
+    person = _p(facts=[{"id": "b", "type": "Birth", "date": {"original": "14 May 1823"}}])
+    assert _redacts(person) == 1
+
+
+def test_review_ships_an_ancestor_known_only_from_a_census_or_residence():
+    """No birth, no death — the record type an ancestor is most likely to have
+    exactly one of. A birth-only heuristic left these blanked."""
+    person = _p(
+        facts=[
+            {"id": "c", "type": "Census", "date": "1850"},
+            {"id": "r", "type": "Residence", "date": "1860"},
+        ]
+    )
+    assert _redacts(person) == 0
+
+
+def test_review_treats_a_probate_fact_as_evidence_of_death():
+    assert _redacts(_p(facts=[{"id": "pr", "type": "Probate", "date": "1994"}])) == 0
+
+
+def test_review_is_not_fooled_by_a_posthumous_ordinance():
+    """A Baptism long after death would date this 1823 person to 1960 and blank
+    them. An explicit Birth fact wins regardless of list order."""
+    person = _p(
+        facts=[
+            {"id": "o", "type": "Baptism", "date": "12 Mar 1960"},
+            {"id": "b", "type": "Birth", "date": "14 May 1823"},
+        ]
+    )
+    assert _redacts(person) == 0
+
+
+def test_review_still_redacts_someone_whose_only_dated_fact_is_recent():
+    """The reverse of the census case: a living person with a 1990 residence
+    must not be shipped by the last-seen-alive rule."""
+    assert _redacts(_p(facts=[{"id": "r", "type": "Residence", "date": "1990"}])) == 1
+
+
+def test_review_stale_skip_is_case_insensitive():
+    """The genealogist team is on Windows, where `.BAK` is readily produced."""
+    assert "tree.gedcomx.json.BAK" not in _walk(["tree.gedcomx.json", "tree.gedcomx.json.BAK"])
+
+
+def test_review_stale_skip_keeps_a_file_merely_containing_the_temp_substring():
+    """Anchored to a trailing uuid run, so an ordinary file is not eaten."""
+    assert "notes.tmp-draft.md" in _walk(["notes.tmp-draft.md"])
+
+
+def test_review_the_walker_collects_the_stale_copies_it_dropped():
+    names = ["tree.gedcomx.json", "tree.gedcomx.json.bak", _STALE_TMP]
+    files = {f"{PROJECT_DIR}/{n}": b"{}" for n in names}
+    stale: list[str] = []
+    asyncio.run(fb._walk_project(_FakeSandbox(files), stale))
+    assert sorted(stale) == sorted(["tree.gedcomx.json.bak", _STALE_TMP])
+
+
+def test_review_stale_copies_are_named_in_feedback_md_not_dropped_silently(monkeypatch):
+    """End to end through the real route. Every other drop reason is reported;
+    a silent one leaves a triager reproducing against a folder quietly missing a
+    file. Asserted on the shipped bundle rather than on the walker's sink,
+    because the sink being right does not mean it is wired to the markdown."""
+    captured = _capture_upload(monkeypatch)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        proj = client.post("/api/sessions", json={"sample": True}).json()
+        sid = proj["id"]
+
+        root = app.state.provider._root(proj["sandbox_id"])  # LocalProvider
+        project_dir = root / PROJECT_DIR.lstrip("/")
+        project_dir.mkdir(parents=True, exist_ok=True)
+        (project_dir / "tree.gedcomx.json.bak").write_text('{"persons":[]}', encoding="utf-8")
+
+        r = client.post(
+            "/api/feedback",
+            json={"sessionId": sid, "email": "t@example.com", "userPrompt": "x",
+                  "agentDid": "y", "agentShouldHave": "z", "workedAsExpected": False},
+        )
+        assert r.status_code == 200
+
+        zf = zipfile.ZipFile(io.BytesIO(base64.b64decode(captured["envelope"]["zipBase64"])))
+        assert "tree.gedcomx.json.bak" not in set(zf.namelist())
+        md = zf.read("FEEDBACK.md").decode("utf-8")
+        assert "tree.gedcomx.json.bak (stale copy)" in md
+        assert "## Files not included" in md, "named a list that is not rendered"
+
+        client.delete(f"/api/sessions/{sid}")
+
+
+# --------------------------------------------------------------------------
+# Parity guard. The rule is duplicated across two languages by design (neither
+# app may import the other, nor eval code), linked only by "mirrors" comments.
+# That drift is not hypothetical: the string-coercion divergence above shipped
+# in the first draft of this very change.
+# --------------------------------------------------------------------------
+
+_TS_SOURCE = (
+    Path(__file__).resolve().parents[3] / "apps/electron/src/main/feedback.ts"
+)
+
+
+def _ts_set(name: str) -> set[str]:
+    src = _TS_SOURCE.read_text(encoding="utf-8")
+    match = re.search(rf"const {name} = new Set\(\[(.*?)\]\)", src, re.S)
+    assert match, f"{name} not found in feedback.ts — did it get renamed?"
+    return set(re.findall(r"'([^']+)'", match.group(1)))
+
+
+def test_parity_fact_type_sets_match_the_electron_copy():
+    assert _ts_set("DEATH_FACT_TYPES") == set(fb._DEATH_FACT_TYPES)
+    assert _ts_set("BIRTH_FACT_TYPES") == set(fb._BIRTH_FACT_TYPES)
+
+
+def test_parity_presumed_living_years_matches_the_electron_copy():
+    src = _TS_SOURCE.read_text(encoding="utf-8")
+    match = re.search(r"export const PRESUMED_LIVING_YEARS = (\d+)", src)
+    assert match, "PRESUMED_LIVING_YEARS not found in feedback.ts"
+    assert int(match.group(1)) == fb.PRESUMED_LIVING_YEARS
+
+
+def test_parity_year_regex_matches_the_electron_copy():
+    src = _TS_SOURCE.read_text(encoding="utf-8")
+    match = re.search(r"const EMBEDDED_YEAR_RE = /(.+?)/\n", src)
+    assert match, "EMBEDDED_YEAR_RE not found in feedback.ts"
+    assert match.group(1) == fb._EMBEDDED_YEAR_RE.pattern
