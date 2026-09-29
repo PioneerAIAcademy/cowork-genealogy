@@ -66,7 +66,7 @@ describe('section empty states', () => {
 // strict: a NEW section with no alias must contain its own slug.
 const PROSE_ALIASES: Record<string, string> = {
   known_holdings: 'project is initialized',
-  proof_summaries: 'once the search for that question is done',
+  proof_summaries: 'as the evidence for a question comes together',
 }
 
 // `log` (owner null, append-only and multi-writer) and `evaluations` (owner is

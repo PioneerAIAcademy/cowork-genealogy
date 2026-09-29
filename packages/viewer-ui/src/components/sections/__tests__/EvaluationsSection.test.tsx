@@ -101,7 +101,7 @@ describe('EvaluationsSection', () => {
     mockResearch({ evaluations: [proofCritique] })
     const { container } = render(<EvaluationsSection />)
     await expandFirstCard()
-    expect(container.textContent).toContain('finding')  // body really is open
+    expect(container.textContent).toContain('ps_001')  // body really is open
     expect(container.textContent).not.toContain('/host/only/ev_001.md')
   })
 

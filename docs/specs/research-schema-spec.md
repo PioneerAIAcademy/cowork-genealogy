@@ -934,11 +934,13 @@ different record sets) — not merely different evidence strength, which
 
 **Display labels — what the researcher reads.** Stored values never change; the viewer
 maps them to these labels (`statusLabelMap` in `packages/viewer-ui/src/components/shared/StatusBadge.tsx`,
-keyed on the value). A value with no row renders with underscores as spaces. The
-researcher is never shown "proof", "proved", "GPS" or "exhaustive" (lead ruling
-2026-09-14). **A proof summary is a *finding* below `proved` and a *conclusion* at
-`proved`**. "Conclusion" is reserved to the top tier, and the section is titled
-Findings.
+keyed on the value). A value with no row renders with underscores as spaces. No
+viewer label, badge or heading says "proof", "proved", "GPS" or "exhaustive" (lead
+ruling 2026-09-14). Agent-written text the viewer shows verbatim
+(`narrative_markdown`, `exhaustive_search_summary`, question text) and the chat
+are outside this table. **A proof summary is a *finding* below `proved`,
+`disproved` included, and a *conclusion* at `proved`**. "Conclusion" is reserved
+to the top tier, and the section is titled Findings.
 
 | stored value | shown |
 |---|---|

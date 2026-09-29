@@ -43,7 +43,7 @@ const statusColorMap: Record<string, BadgeColor> = {
   inferred: 'amber',
   absent: 'gray',
   // Proof shortfall — why a conclusion is not higher. `gap` and `conflict` are
-  // the two a researcher can act on, so they carry the warning colours.
+  // the two a researcher can act on, so they carry the warning colors.
   ceiling: 'blue',
   gap: 'amber',
   conflict: 'red',
@@ -74,7 +74,7 @@ const statusColorMap: Record<string, BadgeColor> = {
   low: 'gray'
 }
 
-// What the researcher reads, keyed on the stored VALUE like the colour map. A value
+// What the researcher reads, keyed on the stored VALUE like the color map. A value
 // with no entry renders with underscores as spaces. Display vocabulary:
 // docs/specs/research-schema-spec.md §5.11.
 const statusLabelMap: Record<string, string> = {

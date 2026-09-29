@@ -17,8 +17,8 @@ export default function ProofSummariesSection(): React.JSX.Element {
         <h2 className={styles.sectionTitle}>Findings</h2>
         <p className={styles.empty}>
           No findings yet. A finding is the written answer to a research question,
-          with the evidence behind it. It is added once the search for that
-          question is done.
+          with the evidence behind it. One is written as the evidence for a
+          question comes together.
         </p>
       </div>
     )
@@ -70,7 +70,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
             <div className={styles.body}>
               {ps.claims && ps.claims.length > 0 && (
                 <div className={styles.claims}>
-                  <span className={styles.footerLabel}>Per-claim tiers:</span>
+                  <span className={styles.footerLabel}>Each claim:</span>
                   {ps.claims.map((c) => (
                     <div key={c.claim} className={styles.claim}>
                       <span className={styles.claimLabel}>{c.claim}</span>

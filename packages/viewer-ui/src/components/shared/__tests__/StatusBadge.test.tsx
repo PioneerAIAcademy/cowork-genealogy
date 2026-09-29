@@ -14,6 +14,24 @@ describe('StatusBadge', () => {
     expect(screen.queryByText('not proved')).toBeNull()
   })
 
+  it.each([
+    ['proved', 'well established'],
+    ['probable', 'likely'],
+    ['possible', 'tentative'],
+    ['not_proved', 'not established'],
+    ['disproved', 'ruled out'],
+    ['original', 'Record image'],
+    ['derivative', 'Index or transcript'],
+    ['authored', 'Compiled work'],
+    ['exhaustive_declared', 'all reachable searched'],
+    ['ceiling', 'limit of online records'],
+    ['gap', 'evidence missing'],
+    ['conflict', 'conflicting evidence']
+  ])('labels %s as "%s"', (value, label) => {
+    render(<StatusBadge value={value} />)
+    expect(screen.getByText(label)).toBeInTheDocument()
+  })
+
   it('labels probable "likely" in both enums that store it', () => {
     render(<StatusBadge value="probable" />)
     expect(screen.getByText('likely')).toBeInTheDocument()
