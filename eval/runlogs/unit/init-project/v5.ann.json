@@ -1,5 +1,5 @@
 {
-  "run_log": "v5_2026-09-29_09-27-36.json",
+  "run_log": "v5.json",
   "annotator": "eruth937@gmail.com",
   "corrections": [
     {
@@ -356,6 +356,22 @@
     },
     {
       "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_q7b",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_q7b",
       "dimension_source": "rubric",
       "dimension_name": "Known-holdings capture",
       "llm_score": 3,
