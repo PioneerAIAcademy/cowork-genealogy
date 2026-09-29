@@ -20063,7 +20063,7 @@
       "mcp_fixtures": [
         "record-read-doyle-1900-census"
       ],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
