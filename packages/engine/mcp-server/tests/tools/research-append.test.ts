@@ -6998,6 +6998,101 @@ describe("research_append — detected core-identifier contradiction", () => {
   });
 });
 
+// ─── The two-party arm of the detected contradiction (#2272) ────────────────
+//
+// A relationship assertion names two people, so by default it is out of scope:
+// linked to the FATHER, a child's baptism date is not his birth. But when the
+// same record party is also linked to the same person through a one-party
+// assertion, the link is about the assertion's own party. ut_person_evidence_024
+// (2026-09-29): a_003 (the christening, 1858) was capped at `speculative` on I1,
+// and a_001 (the same child's "son of Thomas and Bridget") persisted at
+// `confident` on that same I1.
+
+describe("research_append — detected contradiction, two-party assertions", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-two-party-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function write(existingLinks: any[] = []) {
+    const r = baseResearch();
+    const onRecord = {
+      record_id: "rec_bapt",
+      record_role: "child",
+      information_quality: "primary",
+      informant_proximity: "official_duty",
+    };
+    r.assertions = [
+      ...r.assertions,
+      { ...validAssertion("a_060"), ...onRecord, fact_type: "relationship",
+        value: "Patrick, son of Thomas Flynn and Bridget Doyle", date: null, place: null },
+      { ...validAssertion("a_061"), ...onRecord, fact_type: "christening",
+        value: "Christened 12 March 1858", date: "12 March 1858", place: null },
+    ] as any;
+    (r as any).person_evidence = [...((r as any).person_evidence ?? []), ...existingLinks];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
+    tree.persons.push({ id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }],
+      facts: [{ id: "F2", type: "Birth", date: "~1818", place: "Ireland" }] });
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await attestEveryAssertion(dir);
+  }
+  const entry = (assertion_id: string, person_id: string, confidence: string) => ({
+    assertion_id, person_id, confidence,
+    rationale: "Name and parents match.", match_score: 0.85,
+    created: "2026-09-29", superseded_by: null,
+  });
+  const batch = (...entries: any[]) => ({
+    projectPath: dir,
+    ops: entries.map((e) => ({ section: "person_evidence", op: "append" as const, entry: e })),
+  });
+
+  it("refuses 'confident' on the relationship assertion when its christening links the same person", async () => {
+    await write();
+    const r = await researchAppend(batch(entry("a_061", "I1", "speculative"), entry("a_060", "I1", "confident")) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/christening in 1858/);
+  });
+
+  it("refuses it whichever order the batch carries the two links in", async () => {
+    await write();
+    const r = await researchAppend(batch(entry("a_060", "I1", "confident"), entry("a_061", "I1", "speculative")) as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses it when the one-party link was persisted by an earlier call", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    expect((await researchAppend(batch(entry("a_060", "I1", "confident")) as any)).ok).toBe(false);
+  });
+
+  it("allows 'speculative' on the relationship assertion", async () => {
+    await write();
+    const r = await researchAppend(batch(entry("a_061", "I1", "speculative"), entry("a_060", "I1", "speculative")) as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does NOT cap the relationship assertion linked to the OTHER party (the father)", async () => {
+    await write();
+    await attestEveryAssertion(dir, "I2");
+    const r = await researchAppend(batch(entry("a_061", "I1", "speculative"), entry("a_060", "I2", "confident")) as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does NOT cap a relationship assertion with no one-party link to the same person", async () => {
+    await write();
+    expect((await researchAppend(batch(entry("a_060", "I1", "confident")) as any)).ok).toBe(true);
+  });
+
+  it("does NOT count a superseded one-party link", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative"), superseded_by: "pe_901" }]);
+    expect((await researchAppend(batch(entry("a_060", "I1", "confident")) as any)).ok).toBe(true);
+  });
+});
+
 // ─── Declared core-identifier conflict caps the tier (#2272) ────────────────
 //
 // The prose form of this rule was in the agent body twice — once stating the
