@@ -148,11 +148,11 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
         "tool": "tree_correct",
         "quotes": [
-            "nothing in this skill's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
+            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
         ],
         "reason": (
-            "negative mention: names the tool to say the skill lacks it - "
-            "'nothing in this skill's toolset can raise the gender "
+            "negative mention: names the tool to say the agent lacks it - "
+            "'nothing in this agent's toolset can raise the gender "
             "afterwards, since `tree_correct update_person` is not granted "
             "to it'"
         ),
