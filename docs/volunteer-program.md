@@ -25,15 +25,17 @@ exception to the no-queue-file rule in `CLAUDE.md`, and it ends at filing.
   the hiring signal.
 - **Their cards carry a `volunteer` label**, which `/fill-ready` excludes, so
   they never enter the team's Ready pools.
+- **Each volunteer has a senior mentor.** A volunteer runs `/review` on their
+  own PR first; the mentor does the second review, and at the end gives the
+  lead a hire / no-hire recommendation.
 
 ## Before week 1 (lead)
 
-- Give the track 4 volunteer an Anthropic API key for the off-topic
-  guardrail's live check.
+- Give the track 4 volunteer an Anthropic API key before month 2, for the
+  off-topic guardrail's live check.
 - Wait for PR #3004 to merge before the week-1 doc fix; it rewrites
   `DEVELOPMENT.md` and the install path.
-- Assign each volunteer a standing reviewer, ideally a strong current junior,
-  so review load does not all land on the lead.
+- Assign each volunteer a senior mentor, who is also their second reviewer.
 - Create the `volunteer` label and file the drafts below.
 
 ## Why the web workbench first
@@ -44,18 +46,19 @@ junior-sized leaf work, and the current juniors draw from that pool. Skill
 work shares an eval snapshot with other open issues on the same skill, so a
 slow PR forces someone else's re-run.
 
-The web lane is not fully isolated. Watch two overlaps:
-
-- issue #2813 (the lead's single-ask design) will reshape viewer `App.tsx`
-  and `sections/`;
-- issue #2788 (assigned) edits `apps/web/src/styles.css`, which tracks 1
-  and 2 also touch — a merge nuisance only.
+The web lane is not fully isolated. issue #2788 (assigned) edits
+`apps/web/src/styles.css`, which tracks 1 and 2 also touch — a merge nuisance
+only.
 
 ## Needs your decision
 
+- **The issue #2813 design (single-ask users).** Its draft design is marked
+  "not approved". Approve items 1, 2 and 5, and they become drafts V21–V23
+  below; items 3 and 4 change agent behaviour and stay with a senior.
 - **A family view in the viewer.** No section shows the tree's people and
-  relationships as a family group or pedigree chart. It is a strong
-  month-2/3 project, but it overlaps issue #2813.
+  relationships as a family group or pedigree chart. A strong month-2/3
+  project; decide it alongside issue #2813, since both change what the viewer
+  leads with.
 - **Hebrew calendar in `convert_calendar`.** Useful for Jewish records and
   gravestones; it needs a spec before code. Say whether it is wanted.
 
@@ -237,7 +240,17 @@ save a PDF of their project.
 
 ### Track 4: server and engine
 
-#### V17. Keep the hosted agent on genealogy
+#### V17. Unit tests for untested engine utilities
+
+**Touches:** `packages/engine/mcp-server/tests/`
+
+`utils/gedcomx-ids.ts`, `utils/source-ref-resolver.ts`,
+`utils/coerce-json-arg.ts`, and the error branches of `tools/wikipedia.ts`
+and `tools/validate-research-schema.ts` have no tests of their own. Add a
+`dev/try-convert-calendar.ts` smoke script (offline; copy
+`try-place-distance.ts`) and list it in `DEVELOPMENT.md`.
+
+#### V18. Keep the hosted agent on genealogy (month 2)
 
 **Touches:** `apps/server/app/agent/real_agent.py`, `apps/server/proto/worker/options.py`, their tests
 
@@ -261,16 +274,6 @@ real hosted session (needs an Anthropic API key; `make server-mock` has no
 model), with each outcome recorded in the PR. The lead reviews the wording;
 this changes every hosted turn.
 
-#### V18. Unit tests for untested engine utilities
-
-**Touches:** `packages/engine/mcp-server/tests/`
-
-`utils/gedcomx-ids.ts`, `utils/source-ref-resolver.ts`,
-`utils/coerce-json-arg.ts`, and the error branches of `tools/wikipedia.ts`
-and `tools/validate-research-schema.ts` have no tests of their own. Add a
-`dev/try-convert-calendar.ts` smoke script (offline; copy
-`try-place-distance.ts`) and list it in `DEVELOPMENT.md`.
-
 #### V19. Take issue #1621 (French Republican calendar)
 
 Add the `volunteer` label to the existing issue. The tool half is pure
@@ -282,6 +285,41 @@ run; a genealogist reviews that part. A month-2 task.
 
 Once issue #2941 and PR #2994 land. Template-like: one more `check*`
 function in `person-warnings.ts`, reusing `countryConsistency`.
+
+### Issue #2813 split (months 2–3, once the lead approves its design)
+
+These replace issue #2813's viewer half. File them as new issues and close
+issue #2813 into them.
+
+#### V21. Group the research tabs and show counts
+
+**Touches:** `packages/viewer-ui/src/components/layout/Sidebar.tsx`, `packages/viewer-ui/src/App.tsx`
+
+Always show the tabs any activity can fill (Sources, Log, the tree's people).
+Group Questions, Plans, Localities, Hypotheses and Proof under "Research",
+collapsed until the first question exists, with a count on each tab.
+
+**Done when:** the sample project and an empty project both render sensibly,
+with screenshots of each in the PR.
+
+#### V22. Empty tabs explain what fills them
+
+**Touches:** `packages/viewer-ui/src/components/sections/` (the empty states)
+
+Each empty tab says in one line what fills it. `emptyStates.test.tsx` is the
+existing test to extend. Once V23 lands, add a "Start research on <person>"
+button that uses its send method.
+
+#### V23. Actions on a person card
+
+**Touches:** `packages/viewer-ui/src/components/shared/PersonCard.tsx`
+
+Offer the single-ask tasks from issue #2813 ("verify this person's sources",
+"verify this person's facts") as buttons on a person card that send a
+prepared request to the chat. This needs one new method on
+`ResearchTransport` (`packages/viewer-ui/src/transport.ts`), implemented by
+both the web app and Electron, and a matching check in `contract.ts`; the
+mentor reviews that interface change first.
 
 ## Month 3: one real issue each
 
@@ -295,9 +333,10 @@ themselves. Candidates:
 - a decision from "Needs your decision" above, if the lead says yes;
 - something they found themselves in months 1–2.
 
-## What to watch for the hiring decision
+## What mentors watch for the hiring decision
 
-With Claude Code, speed says little. Every PR carries a screenshot and a
+Each mentor gives the lead a hire / no-hire recommendation at the end of
+month 3. With Claude Code, speed says little. Every PR carries a screenshot and a
 "how I verified this" section. Watch:
 
 - PR size, and whether they split work sensibly;
