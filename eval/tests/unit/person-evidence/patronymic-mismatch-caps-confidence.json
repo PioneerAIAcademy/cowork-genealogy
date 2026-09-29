@@ -15,7 +15,7 @@
     ]
   },
   "input": {
-    "user_message": "Link assertion a_001 — the 1875 census 'Anders Pedersen' record — to the right person in the tree.",
+    "delegation": "Link assertion a_001 — the 1875 census 'Anders Pedersen' record — to the right person in the tree.\n\nprojectPath: <workspace>",
     "scenario": "norwegian-patronymic-conflict-link"
   },
   "mcp_fixtures": [
