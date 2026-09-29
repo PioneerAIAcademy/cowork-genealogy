@@ -241,9 +241,9 @@ def test_a_unit_plane_agent_caller_is_a_suite_subject():
     `evaluations` (`agent:gps-mentor`) stays off the unit plane and is untouched
     by this: it claims no plane, so it never reaches the filter below.
 
-    Checked across `callers` and `unitCallers` — both fields resolve agent
-    callers through the same `writer_sets` path, so both must satisfy the
-    same structural invariant.
+    Checked across `callers`, `hookCallers`, and `unitCallers` — all three
+    fields resolve agent callers through the same `writer_sets` path, so
+    all must satisfy the same structural invariant.
     """
     repo_root = REPO_ROOT
     agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
@@ -254,7 +254,9 @@ def test_a_unit_plane_agent_caller_is_a_suite_subject():
         if UNIT_PLANE not in (r.get("enforceableAt") or []):
             continue
         agent_callers = (
-            list(r.get("callers") or []) + list(r.get("unitCallers") or [])
+            list(r.get("callers") or [])
+            + list(r.get("hookCallers") or [])
+            + list(r.get("unitCallers") or [])
         )
         for c in agent_callers:
             if not c.startswith("agent:"):
