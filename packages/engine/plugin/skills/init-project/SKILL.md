@@ -230,9 +230,7 @@ the FamilySearch PID or `ark`, even when the tree summary below lists both),
 and asking it to check all of them.** Fold what it returns into the findings
 below exactly as check-warnings frames it — never restate a timeline
 impossibility as one more line on the "Obvious error detection" list below,
-which is a smaller, separate check. `person_quality` will not fire for a
-local id (check-warnings skips it silently); the offline `person_warnings`
-half still runs and still reports.
+which is a smaller, separate check.
 
 Analyze imported data before presenting results:
 

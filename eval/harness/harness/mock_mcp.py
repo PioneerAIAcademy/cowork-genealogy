@@ -53,6 +53,10 @@ Current live tools:
   same live-registration rationale. Kept as a separate tool so a skill's
   allowed-tools can grant additions without granting identity rewrites (the
   record-extractor authority split).
+- person_quality: runs the compiled tool's no-network resolution step against
+  the workspace tree. A person with no FamilySearch link gets the tool's real
+  answer; one that resolves to a FamilySearch id gets the test's fixture keyed on
+  that id, or a refusal naming the missing fixture.
 - project_context: calls the compiled TS tool to project the workspace's
   research.json + tree.gedcomx.json into the compact read-only shape the
   record-extractor agent consumes instead of reading project files. A
@@ -95,21 +99,21 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
-    # Local by default, and that is the only mode this harness permits: the
-    # default path computes every tag from the workspace tree, so a live
-    # handler is both possible and more faithful than a canned answer. It is
-    # NOT that the tool cannot reach the network -- since #2225 D1 a
-    # `live: true` call fetches from FamilySearch via `personReadTool` and
-    # `getValidToken`. What keeps it safe here is that the compiled-tool
-    # handler REFUSES `live: true` outright (see `_COMPILED_TOOLS_WITH_PRINCIPAL`
-    # below); measured, an unrefused live call really does reach FamilySearch
-    # from a suite whose contract is that it makes none. Live since 2026-09-03
-    # (lead ruling on PR #2151): it was fixture-backed, no person-evidence test
-    # declared a `person-warnings-*` fixture, so every call in every committed
-    # person-evidence run log since August reported the tool missing -- the
-    # skill launched, the check never ran. `person_quality` is NOT here and must
-    # not be: it calls FamilySearch.
+    # Local-only: reads tree.gedcomx.json from the workspace. The compiled-tool
+    # handler computes every tag deterministically from the workspace tree, so a
+    # live handler is more faithful than a canned answer. Live since 2026-09-03
+    # (lead ruling on PR #2151). `person_quality` is NOT here and must not be:
+    # it calls FamilySearch.
     "person_warnings",
+    # Served by its own handler (`_make_person_quality_handler`), registered
+    # outside both loops below. The tool first decides what to score with no
+    # network call: a project's local id is looked up in the workspace tree and
+    # resolved to the person's FamilySearch link; a person with no link gets the
+    # tool's own sentence, which is safe and faithful to run for real. A call that
+    # resolves to a FamilySearch id is answered from the test's person_quality
+    # fixtures keyed on THAT id, or refused. Kept in this set because
+    # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
+    "person_quality",
     "project_context",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
@@ -145,6 +149,10 @@ LIVE_TOOLS: set[str] = {
     # network dependency, so a canned fixture would supply the exact URL string
     # search-external-sites' eval exists to measure.
     "build_external_search_url",
+    # Same rationale as convert_calendar: a pure table lookup with no workspace
+    # or network dependency. Nothing calls it until issue #1828; kept live so
+    # that PR's eval doesn't quietly get the answer from a canned fixture.
+    "get_name_variants",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -363,6 +371,20 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
 STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
+
+# The search tools whose production response carries `query: echoQuery(input)`
+# (record-search.ts, fulltext-search.ts). person_search echoes too but is
+# served live, never from a fixture here.
+ECHOING_SEARCH_TOOLS: frozenset[str] = frozenset({"record_search", "fulltext_search"})
+
+
+def echo_query(args: dict[str, Any]) -> dict[str, Any]:
+    """Every argument the call sent — `echoQuery`'s semantics
+    (`src/utils/search-helpers.ts`). It drops only `undefined`, which a JSON
+    call cannot carry: an omitted argument is absent here, and one sent as
+    `null` is kept, exactly as production keeps it."""
+    return dict(args)
+
 
 # Verbatim copy of RANKING_SKIPPED_NOTE in
 # packages/engine/mcp-server/src/tools/record-search.ts. The two cannot share a
@@ -759,6 +781,8 @@ def create_mock_server(
 
     tools = []
     for tool_name, bucket in manifest.items():
+        if tool_name == "person_quality":
+            continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
@@ -816,6 +840,19 @@ def create_mock_server(
                 and "error" not in response
             ):
                 entry["attested"] = _record_match_score(_workspace, args, response)
+
+            # Production's record_search and fulltext_search return (and stage)
+            # `query: echoQuery(input)` — every argument the call sent — while a
+            # fixture carries whatever query it was recorded with, and a
+            # predicate matches only a subset of the args. Echo the args, so the
+            # staged payload is the ground truth research_log_append checks an
+            # explicit query against, and the query it defaults from.
+            if (
+                _name in ECHOING_SEARCH_TOOLS
+                and isinstance(response, dict)
+                and "error" not in response
+            ):
+                response = {**response, "query": echo_query(args)}
 
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
@@ -990,7 +1027,7 @@ def create_mock_server(
     # reason this is a skip rather than a precedence rule -- fixtures are
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
-    for live_tool_name in sorted(LIVE_TOOLS - fixture_backed):
+    for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
         live_handler = _make_live_handler(live_tool_name, workspace, call_log)
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
@@ -1004,6 +1041,22 @@ def create_mock_server(
         )
         decorated = tool(live_tool_name, description, input_schema)(live_handler)
         tools.append(decorated)
+
+    # person_quality: one handler whether or not the test declared fixtures — it
+    # needs both the real resolution step and the test's fixtures keyed on the
+    # FamilySearch id that step finds.
+    pq_handler = _make_person_quality_handler(
+        workspace,
+        call_log,
+        list((manifest.get("person_quality") or {}).get("predicated") or []),
+    )
+    tools.append(
+        tool(
+            "person_quality",
+            tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
+            (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
+        )(pq_handler)
+    )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
     tools_by_name = {t.name: t for t in tools}
@@ -1029,6 +1082,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrl"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
+    "get_name_variants": ("name-variants.js", "getNameVariants"),
 }
 
 #: Compiled tools whose exported function takes a `Principal` as its last
@@ -1037,7 +1091,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
 #: handler script below is built from a Python f-string, no typechecker catches
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
-_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"person_warnings"})
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
 
 
 def _make_live_handler(
@@ -1254,6 +1308,98 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
     return handler
 
 
+PERSON_QUALITY_REFUSAL = (
+    "person_quality: this person resolves to a FamilySearch id ({fsid}), and the "
+    "unit harness does not contact FamilySearch. Declare a person-quality fixture "
+    "keyed on that id."
+)
+
+
+def _make_person_quality_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    predicated: list,
+):
+    """Build person_quality's handler.
+
+    (a) Run the compiled tool's `resolvePersonQualityTarget` against the
+    workspace tree — no network, no token, no principal. (b) A person with no
+    FamilySearch link gets that real answer. (c) A person who resolves to a
+    FamilySearch id is answered from the test's person_quality fixtures matched
+    on `{...args without projectPath, personId: <resolved id>}`, so a fixture
+    answers for a FamilySearch person whatever local id reached it; with no match
+    the call is refused.
+
+    Every answer is logged `matched.kind = "live"` with `expected_args = None`:
+    the judge is shown `args` beside `expected_args` and fails a wrong
+    identifier, so a fixture keyed `LZNY-BRF` answering a call made with `I1`
+    must not be presented as an expected-argument mismatch. A refusal is logged
+    `kind = "none"` so the uncovered-call warning names the missing fixture.
+    """
+    pq_js = _MCP_BUILD / "tools" / "person-quality.js"
+
+    async def handler(args, _ws=workspace, _js=pq_js, _pred=predicated):
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__person_quality",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:person_quality",
+        }
+        response: dict[str, Any]
+        if not _js.exists():
+            response = {"ok": False, "errors": [f"person_quality: build not found: {_js}"]}
+        else:
+            js_posix = str(_js).replace("\\", "/").replace("'", "\\'")
+            js_url = ("file:///" + js_posix) if sys.platform == "win32" else js_posix
+            input_obj = dict(args)
+            # Rebase only a projectPath the skill actually sent: filling one in
+            # would hide a skill that drops it, which in production quietly
+            # reverts every imported person to the neutral sentence.
+            if _ws is not None and "projectPath" in args:
+                input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            script = (
+                f"import {{ resolvePersonQualityTarget }} from '{js_url}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const r = await resolvePersonQualityTarget(input);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            failure: str | None = None
+            target: Any = None
+            try:
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    target = json.loads(proc.stdout)
+                else:
+                    failure = (proc.stderr or "").strip()[:500] or f"no output (exit {proc.returncode})"
+            except Exception as e:  # surfaced to the run as an error response
+                failure = str(e)
+            if not isinstance(target, dict):
+                response = {
+                    "ok": False,
+                    "errors": [f"person_quality: resolution failed: {failure or 'unrecognised output'}"],
+                }
+            elif target.get("kind") == "answer":
+                response = target["result"]
+            else:
+                fsid = target.get("familySearchId", "")
+                query = {k: v for k, v in args.items() if k != "projectPath"}
+                query["personId"] = fsid
+                hit = next(((resp, src) for (pred, resp, src) in _pred if matches(pred, query)), None)
+                if hit is not None:
+                    response, entry["response_fixture"] = hit
+                else:
+                    entry["matched"] = {"kind": "none", "index": None}
+                    entry["response_fixture"] = None
+                    response = {"ok": False, "errors": [PERSON_QUALITY_REFUSAL.format(fsid=fsid)]}
+        entry["response"] = response
+        call_log.append(entry)
+        return _tool_envelope("person_quality", response)
+
+    return handler
+
+
 def _make_compiled_tool_handler(
     tool_name: str,
     js_filename: str,
@@ -1275,22 +1421,7 @@ def _make_compiled_tool_handler(
     tool_js = _MCP_BUILD / "tools" / js_filename
 
     async def handler(args, _ws=workspace, _tjs=tool_js):
-        if tool_name in _COMPILED_TOOLS_WITH_PRINCIPAL and args.get("live"):
-            # Refused, not run. This suite is hermetic — every response is a
-            # fixture — and a compiled tool's live mode is real code that makes an
-            # authenticated FamilySearch request. Measured: without this it really
-            # does fetch. Injecting projectPath instead would be worse: the tool
-            # rejects projectPath and live together, so the judge would score the
-            # refusal against a skill that called correctly. This names the harness.
-            response: dict[str, Any] = {
-                "ok": False,
-                "errors": [
-                    f"{tool_name}: live mode is not available in the unit harness "
-                    "(it makes a real FamilySearch request and this suite is "
-                    "hermetic). Pass projectPath to check the workspace tree."
-                ],
-            }
-        elif _ws is None or not _tjs.exists():
+        if _ws is None or not _tjs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
             response = {
                 "ok": False,
@@ -1302,17 +1433,6 @@ def _make_compiled_tool_handler(
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
-            #
-            # A live-mode call is REFUSED here rather than run. The unit harness is
-            # hermetic — every response is a fixture — and person_warnings' live
-            # mode is real compiled code behind `_COMPILED_TOOLS`, so letting it
-            # through makes an authenticated FamilySearch request from a suite whose
-            # whole contract is that it makes none. Measured: it really does fetch.
-            #
-            # Injecting the workspace instead would be worse than refusing. The tool
-            # rejects projectPath and live together (they read different trees), so
-            # the skill would be blamed by the judge for a call it made correctly.
-            # This error names the harness as the limitation.
             input_obj = dict(args)
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 

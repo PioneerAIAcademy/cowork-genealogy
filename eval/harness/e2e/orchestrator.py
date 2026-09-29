@@ -54,6 +54,7 @@ from harness.context_policy import (
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
+from harness.redact import redact_secrets
 import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
@@ -157,14 +158,19 @@ BASELINE_ALLOWED_TOOLS = [
 #   person_person_matches(subjectPID)
 #       surfaces tree persons matched to the subject — can leak a stripped
 #       relative in a parents/siblings fixture.
+#   person_quality(subjectPID)
+#       reads FamilySearch's quality issues for the subject's live profile.
+#       Its sentences interpolate values straight off that profile ("… is
+#       missing a standardized date for {originalDate}"), so a stripped date or
+#       place can come back verbatim. Committed e2e runs made 39 such calls
+#       across 20 fixtures before this was blocked.
 #
 # NOT blocked (legitimate research): record_search / record_read /
 # fulltext_search / image_* / collections_search (the agent must find
 # records itself); record_person_matches / record_record_matches (keyed
 # off a RECORD the agent already found, not the subject); source_attachments
 # (confirms a found record's attachment — real GPS work); person_warnings
-# WITHOUT `live` (it then reads the local stripped tree, not the live one —
-# a `live: true` call is blocked below, see LIVE_TREE_ARG_TOOLS).
+# (reads the local stripped tree, not the live one).
 #
 # See e2e-test-spec.md §6.1. Matched on the bare tool name (after the
 # `mcp__<server>__` prefix).
@@ -175,6 +181,7 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_ancestors",
         "person_record_matches",
         "person_person_matches",
+        "person_quality",
     }
 )
 
@@ -200,12 +207,8 @@ def is_turn_cap_error(detail: str | None) -> bool:
 
 
 # Tools that read the live tree only in one MODE, so the bare name cannot decide
-# it. `person_warnings` is local by default and fetches the subject plus their
-# parents, spouses and children from the live tree when called with `live: true`
-# — and each warning carries `personId`, `personName` and `relatedPersonId`, so
-# on a parents fixture the live mode hands back a stripped relative's name and
-# PID. That is the read `person_read` heads BLOCKED_TREE_TOOLS for.
-LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
+# it. Currently empty — kept for the next tool whose block depends on an argument.
+LIVE_TREE_ARG_TOOLS = {}
 
 
 def is_blocked_tree_tool(
@@ -1371,7 +1374,10 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     `bool | None`, `None` when the call succeeded) into a clean bool the gates
     and the acceptance test can rely on.
     """
-    entry["response_summary"] = summary
+    # Scrub any credential the agent's Read of a host secret file (e.g.
+    # ~/.familysearch-mcp/config.json or tokens.json) captured verbatim into the
+    # summary, before it is persisted to the run log. Best-effort; never raises.
+    entry["response_summary"] = redact_secrets(summary)
     entry["is_error"] = block.is_error is True
     # The untruncated length, which `response_summary` cannot carry past
     # `_RUNLOG_MAX_CHARS`. See `_raw_result_chars`.
@@ -1544,6 +1550,91 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
         # null cost; this only ever fills a FUTURE aborted run.
         "total_cost_usd_estimated": pricing.estimate_cost_usd(usage_tokens),
         "usage": usage_tokens,
+    }
+
+
+class SleepDetector:
+    """Counts host sleep that `time.monotonic()` did NOT leave out (issue #2983).
+
+    On macOS/Linux monotonic pauses while the machine sleeps, so `real - active`
+    already measures the sleep. On Windows it keeps advancing through Modern
+    Standby, so that difference reads ~0. A heartbeat that should tick every
+    `tick_seconds` sees such a sleep as one monotonic gap far above the interval;
+    `gap - tick_seconds` of it is counted. A sleep monotonic left out shows no
+    monotonic gap and adds nothing, so the two cases never double-count.
+
+    A blocked event loop produces the same gap and is counted as sleep too.
+    Nothing distinguishes the two: the guarantee is structural, via
+    `run_with_heartbeat`, which observes only a window that never blocks.
+    """
+
+    def __init__(
+        self,
+        *,
+        tick_seconds: float = 5.0,
+        gap_threshold_seconds: float = 60.0,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self.tick_seconds = tick_seconds
+        self.gap_threshold_seconds = gap_threshold_seconds
+        self._monotonic = monotonic
+        self._last = monotonic()
+        self.counted_sleep_seconds = 0.0
+
+    def tick(self) -> None:
+        now = self._monotonic()
+        gap = now - self._last
+        self._last = now
+        if gap > self.gap_threshold_seconds:
+            self.counted_sleep_seconds += gap - self.tick_seconds
+
+
+async def run_with_heartbeat(coro, detector: SleepDetector):
+    """Await `coro` with `detector` ticking alongside it, and only alongside it.
+
+    The heartbeat starts here and is cancelled and awaited before this returns,
+    so a gap before or after `coro` (workspace build, the judge) is never
+    observed. The last `tick()` in `finally` counts a sleep that ends as a cap
+    fires, rather than leaving it to timer-heap order.
+    """
+
+    async def _beat() -> None:
+        while True:
+            await asyncio.sleep(detector.tick_seconds)
+            detector.tick()
+
+    beat = asyncio.create_task(_beat())
+    try:
+        return await coro
+    finally:
+        detector.tick()
+        beat.cancel()
+        try:
+            await beat
+        except asyncio.CancelledError:
+            # The heartbeat's own cancel is expected; an outer cancel that
+            # landed during this `finally` must still propagate.
+            current = asyncio.current_task()
+            if current is not None and current.cancelling():
+                raise
+
+
+def sleep_usage_fields(
+    active_seconds: float, real_seconds: float, counted_sleep_seconds: float
+) -> dict[str, float]:
+    """The run log's clock fields (spec §6 "Clocks").
+
+    `active_seconds` is monotonic, `real_seconds` is `time.time()`. Sleep is the
+    part monotonic left out (`real - active`, macOS/Linux) plus the part the
+    heartbeat counted (Windows), and `wall_clock_seconds` is active time with the
+    counted part removed, so it means the same thing on all three platforms.
+    """
+    return {
+        "wall_clock_seconds": active_seconds - counted_sleep_seconds,
+        "real_clock_seconds": real_seconds,
+        "slept_seconds": max(0.0, real_seconds - active_seconds)
+        + counted_sleep_seconds,
+        "counted_sleep_seconds": counted_sleep_seconds,
     }
 
 
@@ -2257,12 +2348,13 @@ async def _run_agent(
         # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
         #
         # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred and re-discovered via
-        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
-        # calls across recent runs). Idea 3a of the speedup plan wanted the
-        # opposite; flipping to "false" is a separate, tracked decision that
-        # requires re-measuring the tool mix, so the value is left as it has been
-        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # genealogy server's schemas are deferred (except ALWAYS_LOAD in
+        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
+        # 17x in the spriggs run, ~11% of all tool calls across recent runs).
+        # Idea 3a of the speedup plan wanted the opposite; flipping to "false"
+        # is a separate, tracked decision that requires re-measuring the tool
+        # mix, so the value is left as it has been running. `env` MERGES onto
+        # the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -2515,8 +2607,9 @@ async def _run_agent(
                                     # AFTER init, when there is no init message
                                     # left to read. Absence surfaces only as
                                     # ToolSearch finding nothing (the genealogy
-                                    # schemas are deferred under
-                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # schemas outside ALWAYS_LOAD are
+                                    # deferred under ENABLE_TOOL_SEARCH),
+                                    # so count consecutive
                                     # no-match lookups while not one `mcp__`
                                     # call has ever succeeded. Threshold and
                                     # reset rule are calibrated against the
@@ -2712,8 +2805,14 @@ async def _run_agent(
             )
             last_progress["t"] = time.monotonic()
 
+    # Spans exactly `_consume()`: the judge and workspace build stay outside it,
+    # because a blocked loop there would read as a Windows sleep (issue #2983).
+    sleep_detector = SleepDetector()
     try:
-        await asyncio.wait_for(_consume(), timeout=fixture.caps.wall_clock_seconds)
+        await asyncio.wait_for(
+            run_with_heartbeat(_consume(), sleep_detector),
+            timeout=fixture.caps.wall_clock_seconds,
+        )
     except asyncio.TimeoutError:
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {fixture.caps.wall_clock_seconds}s"
@@ -2753,6 +2852,8 @@ async def _run_agent(
         "message_usage": _message_usage,
         "thread_windows": _thread_windows,
         "continue_nudges": continue_nudges["n"],
+        # Read by run_e2e_test's clock fields (sleep_usage_fields).
+        "counted_sleep_seconds": sleep_detector.counted_sleep_seconds,
         # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING the
         # terminal one, so a hook-terminated run carries one more than
         # continue_nudges — but NOT universally: a run killed by the wall clock, the
@@ -2984,7 +3085,9 @@ async def run_e2e_test(
         )
 
     started_at = time.time()  # real clock (counts system sleep)
-    started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
+    # Pauses during macOS/Linux sleep but NOT Windows Modern Standby; the
+    # heartbeat in _run_agent counts that part (sleep_usage_fields).
+    started_mono = time.monotonic()
     # Provenance (#1091), captured at run start from the repo files this run
     # stages — the prompt identity, so a committed run ties back to what produced
     # it. `agents_dir` MUST match the one `build_workspace` uses below (it takes
@@ -3110,8 +3213,10 @@ async def run_e2e_test(
             judge_seconds = time.monotonic() - judge_start
 
         # The COMPLIANCE axis (§4.4). Deliberately does not touch `verdict` —
-        # `E2eResult` derives `compliance` and the combined `outcome` gate
-        # from these violations. See check_guardrail_compliance.
+        # `E2eResult` derives `compliance` from these violations, and since the
+        # §8 detectors were demoted (lead ruling 2026-09-25) that is ALL it
+        # derives: they no longer move the `outcome` gate.
+        # See check_guardrail_compliance.
         guardrail_bypass_violations = check_guardrail_compliance(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
@@ -3122,7 +3227,8 @@ async def run_e2e_test(
         # `guardrail_shadow_violations` field, discriminated by its `kind` key so
         # the shadow report counts it in its own bucket. Logs; never fails the
         # run — unlike guardrail_bypass_violations above, this does not feed
-        # compliance/outcome. Promotion to a hard gate, or a mandatory call in the
+        # compliance. (Neither feeds `outcome` any more: the §8 detectors were
+        # demoted from the gate, so the contrast is now only about compliance.) Promotion to a hard gate, or a mandatory call in the
         # `/research` orchestrator so an inlined write is still gated, is gated on
         # measuring this fire rate across the corpus (issue #1193, question b).
         warnings_unchecked_shadow = find_relationship_writes_without_warnings_check(
@@ -3172,19 +3278,21 @@ async def run_e2e_test(
                 guardrail_shadow_violations + tree_encoding_shadow
             )
 
-        # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
-        # matches the wall-clock cap and the stall watchdog (also monotonic) and
-        # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
-        # elapsed (time.time); `slept_seconds` (their gap) is ≈ time the machine
-        # slept, so a long idle never masquerades as a stall again. `judge_seconds`
-        # is the post-agent judge call, kept separate from the agent run.
-        active_seconds = time.monotonic() - started_mono
-        real_seconds = time.time() - started_at
+        # Clocks: spec §6 "Clocks". `wall_clock_seconds` is active time: monotonic
+        # minus the sleep the heartbeat counted, which matters on Windows, where
+        # monotonic advances through Modern Standby. `slept_seconds` adds the
+        # part monotonic left out (macOS/Linux) to that counted part. The caps
+        # and watchdogs still run on raw monotonic, so on Windows a standby still
+        # consumes them (what a slept run becomes: issue #2974). Sleep during the
+        # workspace build or the judge falls outside the heartbeat and is not
+        # counted. `judge_seconds` is the post-agent judge call.
         usage = {
             **usage,
-            "wall_clock_seconds": active_seconds,
-            "real_clock_seconds": real_seconds,
-            "slept_seconds": max(0.0, real_seconds - active_seconds),
+            **sleep_usage_fields(
+                time.monotonic() - started_mono,
+                time.time() - started_at,
+                usage.get("counted_sleep_seconds") or 0.0,
+            ),
             "judge_seconds": judge_seconds,
             # Reasoning config, so a run is self-describing when A/B'ing effort ×
             # output-budget × model vs subagents[] behavior. `agent_model` is the

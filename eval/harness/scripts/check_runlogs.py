@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Seven blocking rules + two warn-only rules per
+Eight blocking rules + two warn-only rules per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -35,6 +35,9 @@ docs/plan/eval-runlog-versioning.md §C6:
              annotation deleted while its run log survives; a candidate run log
              deleted that the recomputed prunable set would have kept; a
              released `v{N}.json`/`.ann.json` deleted (never prunable).
+    Rule 8   every ``LLM: <a> → Junior: <b>`` header inside a unit
+             .ann.json comment carries at most one header, and no header
+             whose ``<b>`` disagrees with the entry's own corrected_score.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
@@ -773,10 +776,11 @@ def rule6_outcomes(
     remove, because a suite carrying reds cannot answer "did my refactor break
     something", which is the one question it exists to answer.
 
-    Resolution is from `runs[].outcome`, whose enum is pass/partial/fail/aborted,
-    so this never meets the aggregate's xfail/xpass remap. Aggregation is
-    `harness.outcomes.aggregate_per_run_outcome` -- the same function the runner
-    uses, so the gate and `run_tests.py` cannot drift.
+    Resolution is from `runs[].outcome`, whose enum is pass/partial/fail/aborted.
+    The aggregate `outcome` shares that enum — suppression is read from the
+    `expected_outcome` marker beside it, not from a distinct outcome value.
+    Aggregation is `harness.outcomes.aggregate_per_run_outcome` -- the same
+    function the runner uses, so the gate and `run_tests.py` cannot drift.
 
     `partial` never blocks (lead ruling 2026-09-18: "tests must pass, or
     partial, consistently"). An `expected_outcome: xfail` marker declares a known
@@ -1035,6 +1039,150 @@ def rule7_deletions(
     return fails
 
 
+# ---------------------------------------------------------------------------
+# Rule 8: annotation header integrity
+# ---------------------------------------------------------------------------
+
+# Matches the ``LLM: <a> → Junior: <b>`` header that buildPrComment
+# (eval/app page.tsx) generates. The arrow is Unicode U+2192; ASCII ``->``
+# is accepted as a variant.
+_HEADER_RE = re.compile(
+    r"^LLM:\s*(\S+)\s*(?:→|->)\s*Junior:\s*(\S+)\s*$",
+    re.MULTILINE,
+)
+
+
+def _parse_score(token: str) -> int | None:
+    """Parse a score token as the CRUD UI renders it: ``N/A`` → ``None``,
+    digit → ``int``.  Returns the sentinel ``-999`` on unrecognised input
+    so the caller can detect it without raising."""
+    if token.upper() == "N/A":
+        return None
+    try:
+        return int(token)
+    except ValueError:
+        return -999  # type: ignore[return-value]
+
+
+def rule8_annotation_headers(runlogs_dir: Path) -> int:
+    """Rule 8 (blocking, corpus-wide): every ``LLM: <a> → Junior: <b>``
+    header inside a unit ``.ann.json`` comment must satisfy two invariants:
+
+    Arm 1 — at most one header per comment.
+    Arm 2 — the header's ``<b>`` value must agree with the correction's own
+             ``corrected_score`` (``N/A`` ↔ ``null``).
+
+    Anchored on the full ``LLM: … → Junior: …`` line, not a bare
+    ``Junior: N``, so prose like "Junior: 3 of the 5 checks were skipped"
+    is never flagged.
+    """
+    fails = 0
+    for ann_path in sorted(runlogs_dir.rglob("*.ann.json")):
+        rel = ann_path.relative_to(runlogs_dir)
+        try:
+            data = json.loads(ann_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue  # rule 5 already catches unparseable annotations
+        if not isinstance(data, dict):
+            continue  # top-level [] or scalar — not an annotation
+        corrections = data.get("corrections", [])
+        if not isinstance(corrections, list):
+            continue
+        for c in corrections:
+            if not isinstance(c, dict):
+                continue  # string, null, or other non-dict correction
+            comment = c.get("comment")
+            if not isinstance(comment, str) or not comment:
+                continue
+            headers = _HEADER_RE.findall(comment)
+            if not headers:
+                continue
+            test_id = c.get("test_id", "?")
+            dim_source = c.get("dimension_source", "?")
+            dim_name = c.get("dimension_name", "?")
+            loc = f"`{rel}` {test_id} {dim_source}/{dim_name}"
+
+            # Arm 1: at most one header per comment.
+            if len(headers) > 1:
+                gh_error(
+                    f"rule 8: {loc} — comment contains {len(headers)} "
+                    f"LLM→Junior headers (at most 1 allowed). This usually "
+                    f"means a PR-comment block was pasted back multiple times."
+                )
+                fails += 1
+                continue  # arm 2 is redundant once arm 1 fires
+
+            # Arm 2: the header's Junior value must match corrected_score.
+            _llm_token, junior_token = headers[0]
+            header_score = _parse_score(junior_token)
+            if header_score == -999:
+                continue  # unrecognised format — not our header
+            corrected = c.get("corrected_score")
+            if header_score != corrected:
+                gh_error(
+                    f"rule 8: {loc} — header says Junior: {junior_token} "
+                    f"but corrected_score is "
+                    f"{'N/A' if corrected is None else corrected}. "
+                    f"The header is a stale snapshot from a prior copy. "
+                    f"Delete the pasted LLM→Junior block from this "
+                    f"comment, keeping your own text."
+                )
+                fails += 1
+    return fails
+
+
+def rule9_outcome_enum(runlogs_dir: Path) -> int:
+    """Rule 9 (blocking, corpus-wide): every committed run log's aggregate
+    ``tests[].outcome`` is in the schema enum (pass/partial/fail/aborted).
+
+    Corpus-wide, because the straggler this closes arrives by MERGE, not as a
+    PR-added file. Rule 6 grades only the logs a PR adds, and it reads
+    ``runs[].outcome`` -- it recomputes the aggregate and never validates the
+    STORED ``outcome`` field. So the run-log schema's narrowed ``outcome`` enum
+    (#2842) was enforced only on the harness write path (``validate_run_log``),
+    never on committed logs: a log written before the narrowing, or one landed on
+    main concurrently with it, kept a retired ``xfail``/``xpass`` aggregate that
+    no check could see (a run log carrying one merged clean on this very PR).
+
+    Cheap enough to run unconditionally: a few hundred small files, parse only.
+    Malformed files are skipped, not reported -- JSON validity of a run log is
+    not this rule's contract, and re-running the harness is the only fix anyway.
+    """
+    bad = 0
+    for path in sorted(runlogs_dir.rglob("*.json")):
+        if path.name.endswith(".ann.json"):
+            continue
+        if classify(path.name).kind not in ("released", "candidate"):
+            continue  # scratch / unrecognized: gitignored or not ours
+        rel = _format_path(path)
+        try:
+            log = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        for test in log.get("tests") or []:
+            # Only a PRESENT aggregate outside the enum -- the straggler class is a
+            # retired string value (`xfail`/`xpass`), not a missing field. A
+            # missing/absent `outcome` is a `required`-schema violation the harness
+            # write path (`validate_run_log`) already rejects, so it is out of scope
+            # here; flagging it would also false-fail minimal fixtures that carry
+            # only `runs[]`.
+            if "outcome" not in test:
+                continue
+            outcome = test["outcome"]
+            if outcome not in _RUN_OUTCOMES:
+                gh_error(
+                    f"run log `{rel}` test `{test.get('test_id', '<no id>')}` has "
+                    f"aggregate outcome {outcome!r}, outside the schema enum "
+                    f"{sorted(_RUN_OUTCOMES)}. Suppression of a declared-xfail "
+                    f"failure is read from the `expected_outcome` marker beside it, "
+                    f"not from a distinct outcome value (#2842). Re-run the harness "
+                    f"rather than hand-editing the log.",
+                    file=rel,
+                )
+                bad += 1
+    return bad
+
+
 def main() -> int:
     # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
     # and dies on the arrows and box glyphs this module prints; the team it is
@@ -1199,6 +1347,14 @@ def main() -> int:
     # Rule 5 sweeps the whole annotation corpus, not just touched skills —
     # see its docstring for why per-skill scoping is exactly what hid the bug.
     fails += rule5_annotations_parse(RUNLOGS_DIR)
+
+    # Rule 8 sweeps the annotation corpus for header-vs-score incoherence.
+    fails += rule8_annotation_headers(RUNLOGS_DIR)
+
+    # Rule 9 sweeps the run-log corpus for an aggregate `outcome` outside the
+    # schema enum — the straggler class rule 6 (PR-added logs, per-run field)
+    # cannot see (#2842).
+    fails += rule9_outcome_enum(RUNLOGS_DIR)
 
     # Rule 7 checks that every deleted run log / annotation is a legitimate
     # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune

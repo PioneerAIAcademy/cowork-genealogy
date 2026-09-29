@@ -183,11 +183,11 @@ it("sends correct headers on children/names call", async () => {
   await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL);
 
   const init = mockFetch.mock.calls[0][1] as RequestInit;
-  const hdrs = init.headers as Record<string, string>;
-  expect(hdrs["Authorization"]).toBe("Bearer test-token");
-  expect(hdrs["Accept"]).toBe("application/json");
-  expect(hdrs["User-Agent"]).toBe(BROWSER_USER_AGENT);
-  expect(hdrs["FS-User-Agent-Chain"]).toBe("chesworth");
+  const hdrs = new Headers(init.headers as HeadersInit);
+  expect(hdrs.get("Authorization")).toBe("Bearer test-token");
+  expect(hdrs.get("Accept")).toBe("application/json");
+  expect(hdrs.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+  expect(hdrs.get("FS-User-Agent-Chain")).toBe("chesworth");
 });
 
 // ---------------------------------------------------------------------------

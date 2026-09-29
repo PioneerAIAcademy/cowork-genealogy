@@ -73,7 +73,8 @@
     { "name": "extraction_append" },
     { "name": "research_query" },
     { "name": "project_create" },
-    { "name": "sidecar_read" }
+    { "name": "sidecar_read" },
+    { "name": "get_name_variants" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

@@ -389,7 +389,8 @@ export const imageTranscribeToolSchema = {
         description:
           "A FamilySearch document-image ARK when no imageId is available — " +
           "ark:/61903/3:1:... or 3:2:... (e.g. fulltext_search's `id`), a bare " +
-          "3:1:.../3:2:... id, a resolver URL for one, or a resolved distribution URL. " +
+          "3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), " +
+          "a resolver URL for one, or a resolved distribution URL. " +
           "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +
           "film/register — the bare ARK can silently resolve to the WRONG image " +
           "within that group. If the record was reached via a FamilySearch page " +

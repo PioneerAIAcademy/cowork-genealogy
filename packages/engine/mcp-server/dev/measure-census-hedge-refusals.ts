@@ -34,18 +34,16 @@
  *   npx tsx dev/measure-census-hedge-refusals.ts [--baseline <module>] [--list]
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import * as current from "../src/tools/research-log-append.js";
+import { bareName, opsOf, readRunLog, repoRoot, responseOf, runLogFiles, toolCalls } from "./runlog-calls.js";
 
 type Gate = {
   requirePre1880CensusHedge: (notes: string, years?: readonly number[]) => void;
   stagedPre1880UsCensusYears?: (rows: readonly unknown[]) => number[];
 };
 
-const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, "..", "..", "..", "..");
 const argv = process.argv.slice(2);
 const baselinePath = argv.includes("--baseline") ? argv[argv.indexOf("--baseline") + 1] : undefined;
 const list = argv.includes("--list");
@@ -64,59 +62,17 @@ const refuses = (gate: Gate, notes: string, rows?: unknown[]): boolean => {
   }
 };
 
-/** A tool call's response as an object: the structured one, or the parsed summary. */
-function responseOf(call: any): any {
-  if (call.response && typeof call.response === "object") return call.response;
-  if (typeof call.response_summary !== "string") return undefined;
-  try {
-    let r = JSON.parse(call.response_summary);
-    if (Array.isArray(r)) r = r[0];
-    if (r && typeof r.text === "string") r = JSON.parse(r.text);
-    return r;
-  } catch {
-    return undefined; // truncated or not JSON
-  }
-}
-
-function* toolCalls(node: unknown): Generator<any> {
-  if (!node || typeof node !== "object") return;
-  const o = node as any;
-  if (typeof o.tool === "string" && o.args && typeof o.args === "object") {
-    yield o;
-    return;
-  }
-  for (const v of Array.isArray(o) ? o : Object.values(o)) yield* toolCalls(v);
-}
-
-const opsOf = (args: any): any[] => {
-  let ops = args.ops;
-  if (typeof ops === "string") {
-    try {
-      ops = JSON.parse(ops);
-    } catch {
-      ops = undefined;
-    }
-  }
-  return Array.isArray(ops) ? ops : [args];
-};
-
-const files = execFileSync("git", ["ls-files", "eval/runlogs"], { cwd: repoRoot, encoding: "utf-8" })
-  .split("\n")
-  .filter((f) => f.endsWith(".json") && !f.endsWith(".ann.json"));
+const files = runLogFiles();
 
 const notes = new Set<string>();
 const payloadOps: { notes: string; ref: string }[] = [];
 const stagedRows = new Map<string, unknown[]>();
 
 for (const f of files) {
-  let doc: unknown;
-  try {
-    doc = JSON.parse(readFileSync(join(repoRoot, f), "utf-8"));
-  } catch {
-    continue;
-  }
+  const doc = readRunLog(f);
+  if (doc === undefined) continue;
   for (const call of toolCalls(doc)) {
-    const name = call.tool.split("__").pop();
+    const name = bareName(call);
     if (name === "record_search") {
       const r = responseOf(call);
       const ref = r?.staged?.resultsRef;

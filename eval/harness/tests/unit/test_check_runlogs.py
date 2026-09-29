@@ -1352,6 +1352,50 @@ def test_rule6_an_empty_tests_array_is_allowed():
     assert _rule6([]) == 0
 
 
+# --- rule 9: aggregate outcome enum, corpus-wide (#2842) -------------------------
+
+
+def _write_runlog(dir_path, filename, outcomes):
+    """Write a minimal committed-shaped run log with the given aggregate
+    ``tests[].outcome`` values."""
+    d = dir_path / "some-skill"
+    d.mkdir(parents=True, exist_ok=True)
+    tests = [{"test_id": f"ut_s_{i}", "outcome": o} for i, o in enumerate(outcomes)]
+    (d / filename).write_text(json.dumps({"tests": tests}), encoding="utf-8")
+
+
+@pytest.mark.parametrize("retired", ["xfail", "xpass"])
+def test_rule9_blocks_a_retired_aggregate_outcome(tmp_path, retired, capsys):
+    """The straggler class: a committed run log whose aggregate `outcome` is a
+    retired value. Rule 6 cannot see it — it reads per-run outcomes and only on
+    PR-added logs — so this corpus-wide rule is what catches one landed by merge.
+    Break the enum narrowing (put xfail/xpass back on `_RUN_OUTCOMES`) and this
+    goes green: the falsifiability check."""
+    _write_runlog(tmp_path, "v1.json", ["pass", retired])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert retired in out and "v1.json" in out
+
+
+def test_rule9_accepts_every_value_the_schema_allows(tmp_path):
+    """The other direction — a log of legitimate aggregates must pass."""
+    _write_runlog(tmp_path, "v1.json", ["pass", "partial", "fail", "aborted"])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+
+
+def test_rule9_skips_scratch_and_annotation_files(tmp_path, capsys):
+    """A retired value in a scratch log (gitignored, never committed) or inside an
+    `.ann.json` (a different shape) must NOT trip the rule — the reach guard, so
+    the check cannot be dodged by mislabelling and cannot false-flag an annotation."""
+    _write_runlog(tmp_path, "scratch_2026-09-28_10-00-00.json", ["xfail"])
+    d = tmp_path / "some-skill"
+    (d / "v1.ann.json").write_text(
+        json.dumps({"corrections": [{"outcome": "xpass"}]}), encoding="utf-8"
+    )
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+    assert capsys.readouterr().out == ""
+
+
 # --- marker owners, read from the committed test corpus --------------------------
 
 
@@ -1599,3 +1643,184 @@ def test_touched_agent_with_no_suite_is_untouched_by_the_identity_rule(
     rc = check_runlogs.main()
     assert rc == 0
     assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+# --- Rule 8: annotation header integrity -----------------------------------
+
+
+def _make_ann(runlogs_dir: Path, skill: str, corrections: list[dict]) -> None:
+    """Write a unit .ann.json under ``runlogs_dir/<skill>/``."""
+    skill_dir = runlogs_dir / skill
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    (skill_dir / "v1_2026-01-01_00-00-00.ann.json").write_text(
+        json.dumps(
+            {"run_log": "v1_2026-01-01_00-00-00.json", "annotator": "t", "corrections": corrections}
+        ),
+        encoding="utf-8",
+    )
+
+
+def _correction(
+    corrected_score: int | None, comment: str | None, *, test_id: str = "ut_x_001"
+) -> dict:
+    return {
+        "test_id": test_id,
+        "dimension_source": "base",
+        "dimension_name": "Correctness",
+        "llm_score": 1,
+        "corrected_score": corrected_score,
+        "comment": comment,
+    }
+
+
+def test_rule8_multi_header_blocks(tmp_path, capsys):
+    """Arm 1: more than one LLM→Junior header in a single comment blocks."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 1\nsome text\nLLM: 1 → Junior: 3"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "2 LLM→Junior headers" in capsys.readouterr().out
+
+
+def test_rule8_disagreeing_header_blocks(tmp_path, capsys):
+    """Arm 2: header says Junior: 1 but corrected_score is 3."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 1\nActual reasoning here"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 1" in capsys.readouterr().out
+
+
+def test_rule8_na_on_numeric_blocks(tmp_path, capsys):
+    """Arm 2: header says Junior: N/A but corrected_score is 2."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "LLM: 3 → Junior: N/A"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: N/A" in capsys.readouterr().out
+
+
+def test_rule8_numeric_on_null_blocks(tmp_path, capsys):
+    """Arm 2: header says Junior: 3 but corrected_score is null."""
+    _make_ann(tmp_path, "s", [
+        _correction(None, "LLM: 1 → Junior: 3"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 3" in capsys.readouterr().out
+
+
+def test_rule8_stale_header_after_override_blocks(tmp_path, capsys):
+    """Arm 2: score was changed to 2 after the header was pasted (still says 1)."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "LLM: 3 → Junior: 1\nChanged my mind, partial pass"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 1" in capsys.readouterr().out
+
+
+def test_rule8_ascii_arrow_blocks(tmp_path, capsys):
+    """Arm 2: ASCII ``->`` variant with a disagreeing score."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 -> Junior: 1"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 1
+    assert "header says Junior: 1" in capsys.readouterr().out
+
+
+def test_rule8_agreeing_header_passes(tmp_path):
+    """A header that agrees with corrected_score is fine."""
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 3\nOverride rationale"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_prose_junior_passes(tmp_path):
+    """Prose containing 'Junior: 3 of the 5 checks' is not a header."""
+    _make_ann(tmp_path, "s", [
+        _correction(1, "Junior: 3 of the 5 checks were skipped"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_cross_test_reference_passes(tmp_path):
+    """A comment mentioning another test id is legitimate."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "See ut_citation_002 for the same pattern"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_na_on_na_passes(tmp_path):
+    """N/A entry with N/A header agrees."""
+    _make_ann(tmp_path, "s", [
+        _correction(None, "LLM: N/A → Junior: N/A"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_no_header_passes(tmp_path):
+    """A comment with no header at all is always fine."""
+    _make_ann(tmp_path, "s", [
+        _correction(2, "This is a plain comment with no pasted block"),
+    ])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_top_level_list_does_not_crash(tmp_path):
+    """A top-level [] (wrong shape) must not raise."""
+    skill_dir = tmp_path / "s"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    (skill_dir / "v1_2026-01-01_00-00-00.ann.json").write_text("[]", encoding="utf-8")
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_string_correction_does_not_crash(tmp_path):
+    """A string in the corrections list must not raise."""
+    _make_ann(tmp_path, "s", ["not a dict"])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_null_correction_does_not_crash(tmp_path):
+    """A null correction entry must not raise."""
+    _make_ann(tmp_path, "s", [None])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_int_comment_does_not_crash(tmp_path):
+    """An int comment value must not raise."""
+    _make_ann(tmp_path, "s", [{
+        "test_id": "ut_x_001", "dimension_source": "base",
+        "dimension_name": "Correctness", "llm_score": 1,
+        "corrected_score": 3, "comment": 42,
+    }])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_list_comment_does_not_crash(tmp_path):
+    """A list comment value must not raise."""
+    _make_ann(tmp_path, "s", [{
+        "test_id": "ut_x_001", "dimension_source": "base",
+        "dimension_name": "Correctness", "llm_score": 1,
+        "corrected_score": 3, "comment": ["LLM: 1 → Junior: 3"],
+    }])
+    assert check_runlogs.rule8_annotation_headers(tmp_path) == 0
+
+
+def test_rule8_pinned_in_main(tmp_path, monkeypatch, capsys):
+    """Rule 8 must be wired into main(). Removing the call leaves tests green
+    without this guard — the other 11 tests call the function directly."""
+    # Point RUNLOGS_DIR at a tmp dir containing a stale-header annotation.
+    _make_ann(tmp_path, "s", [
+        _correction(3, "LLM: 1 → Junior: 1\nStale header"),
+    ])
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    # Suppress all per-skill rules by returning no changes / no touched paths.
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [])
+
+    rc = check_runlogs.main()
+    assert rc == 1
+    captured = capsys.readouterr().out
+    assert "rule 8:" in captured

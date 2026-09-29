@@ -1752,7 +1752,10 @@ async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX 
  * person_evidence for (person_evidence is the only link table). Deliberately
  * broad — it warns only when NONE of those persons gained ANY structure — because
  * the measured fire rate is low and a noisy warning on correct work is worse than
- * a missed one. Fails open when the baseline is absent (legacy projects). */
+ * a missed one. Fails open when the baseline is absent (legacy projects).
+ *
+ * Corpus reading (3 fires, 2 false denies on documented negatives) confirmed
+ * warning-only; see docs/specs/research-append-tool-spec.md §5.2. */
 function treeEncodingCompletionWarnings(
   research: any,
   currentTree: SimplifiedGedcomX,

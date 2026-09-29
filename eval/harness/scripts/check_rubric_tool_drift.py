@@ -132,36 +132,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_quality",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/init-project/check-warnings-relative-impossibility.json",
-        "tool": "person_warnings",
-        "quotes": [
-            "check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
-        ],
-        "reason": (
-            "cross-owner: both are check-warnings' tools, and "
-            "check-warnings is a stub_skill in this test's execution block "
-            "- 'check-warnings' own doctrine skips `person_quality` "
-            "silently for a non-FamilySearch-PID-shaped id. Only the "
-            "offline `person_warnings` half is expected to have run.' "
-            "init-project never makes either call"
-        ),
-    },
-    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
@@ -178,11 +148,11 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
         "tool": "tree_correct",
         "quotes": [
-            "nothing in this skill's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
+            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
         ],
         "reason": (
-            "negative mention: names the tool to say the skill lacks it - "
-            "'nothing in this skill's toolset can raise the gender "
+            "negative mention: names the tool to say the agent lacks it - "
+            "'nothing in this agent's toolset can raise the gender "
             "afterwards, since `tree_correct update_person` is not granted "
             "to it'"
         ),
@@ -201,7 +171,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json",
+        "file": "eval/tests/unit/proof-conclusion/direct-no-image-claim-without-tool-confirmation.json",
         "tool": "record_read",
         "quotes": [
             "record_read was never called to check for a digitized image",
@@ -213,7 +183,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json",
+        "file": "eval/tests/unit/proof-conclusion/direct-no-image-claim-without-tool-confirmation.json",
         "tool": "record_search",
         "quotes": [
             "Its notes and log_001 explicitly state that record_search returned no imageId/artifacts field for this hit",
@@ -1366,6 +1336,56 @@ def main() -> int:
                             f"can't make — update judge_context.",
                             file=rel_file,
                         )
+
+    # A suite whose subject is an AGENT, not a skill. The loop above keys on
+    # SKILLS_DIR, so a skill-to-agent conversion silently took that suite's
+    # rubric.md and judge_context out of this check entirely -- `citation`
+    # (issue #2799) and `proof-conclusion` (issue #2822) both left by that
+    # door, and `gps-mentor` was never in. The declared set is the agent's
+    # own `tools:`; there is no skill frontmatter to union in.
+    if TESTS_DIR.is_dir():
+        for suite_dir in sorted(TESTS_DIR.iterdir()):
+            suite = suite_dir.name
+            if not suite_dir.is_dir() or (SKILLS_DIR / suite).is_dir():
+                continue
+            agent_md = AGENTS_DIR / f"{suite}.md"
+            if not agent_md.exists():
+                continue
+            declared, _disallowed = agent_declared_tools(agent_md)
+
+            rubric_md = suite_dir / "rubric.md"
+            for tool in sorted(rubric_mentions(rubric_md, vocabulary, declared=declared)):
+                rel_file = f"eval/tests/unit/{suite}/rubric.md"
+                if is_suppressed(rel_file, tool):
+                    suppressed_count += 1
+                    continue
+                drift_hits += 1
+                gh_warning(
+                    f"agent `{suite}`'s rubric.md mentions `{tool}`, which is "
+                    f"not in its `tools:` {sorted(declared) or '[]'}. If "
+                    f"`{tool}` was folded into another tool, update the "
+                    f"grading prose — don't fail runs for not calling a tool "
+                    f"the agent can't call.",
+                    file=rel_file,
+                )
+
+            for test_path in sorted(suite_dir.glob("*.json")):
+                for tool in sorted(
+                    judge_context_mentions(test_path, vocabulary, declared=declared)
+                ):
+                    rel_file = f"eval/tests/unit/{suite}/{test_path.name}"
+                    if is_suppressed(rel_file, tool):
+                        suppressed_count += 1
+                        continue
+                    drift_hits += 1
+                    gh_warning(
+                        f"test `{test_path.name}` (agent `{suite}`) has a "
+                        f"judge_context mentioning `{tool}`, which is not in "
+                        f"its `tools:` {sorted(declared) or '[]'}. The judge is "
+                        f"being told to expect a call the agent can't make "
+                        f"— update judge_context.",
+                        file=rel_file,
+                    )
 
     if AGENTS_DIR.is_dir():
         for agent_md in sorted(AGENTS_DIR.glob("*.md")):

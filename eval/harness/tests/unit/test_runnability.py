@@ -16,11 +16,18 @@ SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 TESTS = REPO_ROOT / "eval/tests/unit"
 
 
+# The synthetic specs below name `record-extraction`, not `search-wikipedia`.
+# Issue #2795 deleted that skill directory, and these tests pass the REAL
+# `skills_dir`, so a routed spec naming it now aborts `skill not found` before
+# reaching the rubric, fixture, stub and invariant gates each of these tests is
+# actually about. The lead's 2026-09-22 ruling names `research` and
+# `record-extraction` as the two skills that never convert, so this name cannot
+# rot out from under the next conversion card.
 def _runnable_test_dict():
     return {
         "test": {
             "id": "ut_runnability_001",
-            "skill": "search-wikipedia",
+            "skill": "record-extraction",
             "name": "rn",
             "type": "positive",
             "description": "x",
@@ -118,7 +125,7 @@ def test_runnable_when_rubric_missing(tmp_path):
     NOT a runnability failure — the skill is graded on base dimensions
     only."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "search-wikipedia").mkdir(parents=True)
+    (fake_tests / "record-extraction").mkdir(parents=True)
     # no rubric.md
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
@@ -131,8 +138,8 @@ def test_blocks_when_rubric_empty(tmp_path):
     CRUD UI's parser, so letting it through here would grade the run on base
     dimensions while breaking the skills list the annotator needs."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "search-wikipedia").mkdir(parents=True)
-    (fake_tests / "search-wikipedia" / "rubric.md").write_text("", encoding="utf-8")
+    (fake_tests / "record-extraction").mkdir(parents=True)
+    (fake_tests / "record-extraction" / "rubric.md").write_text("", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False
@@ -141,8 +148,8 @@ def test_blocks_when_rubric_empty(tmp_path):
 
 def test_blocks_when_rubric_malformed(tmp_path):
     fake_tests = tmp_path / "tests"
-    (fake_tests / "search-wikipedia").mkdir(parents=True)
-    (fake_tests / "search-wikipedia" / "rubric.md").write_text("no proper structure here", encoding="utf-8")
+    (fake_tests / "record-extraction").mkdir(parents=True)
+    (fake_tests / "record-extraction" / "rubric.md").write_text("no proper structure here", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False
@@ -352,11 +359,11 @@ def _invariant_test_dict(tags):
 
 
 def _validators_dir(tmp_path, body):
-    """A validators dir holding one validator file for search-wikipedia
+    """A validators dir holding one validator file for record-extraction
     (the skill `_runnable_test_dict` uses)."""
     v = tmp_path / "validators"
     v.mkdir()
-    (v / "test_search_wikipedia.py").write_text(body, encoding="utf-8")
+    (v / "test_record_extraction.py").write_text(body, encoding="utf-8")
     return v
 
 
@@ -466,6 +473,33 @@ def _corpus_invariant_specs():
     return out
 
 
+# Tests blocked by the skill-to-agent conversion WINDOW, not by the vacuous
+# class this check is about. `{test id: (callee, issue that deletes it)}`.
+#
+# Issue #2825 ruling C: a converted callee's negatives in a not-yet-converted
+# suite abort `not_runnable` until that suite's own conversion card lands, and
+# "that is an aborted row, not a wrong verdict, and it is accepted". The lead
+# also rejected widening the `correct_skill` gate to resolve an agent, as
+# harness work spent keeping alive tests that are about to be deleted.
+#
+# So the block is ruled, expected and time-boxed -- but it is a DIFFERENT block
+# from the one this check exists for, and letting it red the suite would mean
+# either deleting another suite's test or editing it, which stales that skill's
+# run log and buys a paid re-run it does not otherwise owe. (Measured
+# 2026-09-27 against a detached origin/main worktree: `search-familysearch-wiki`'s
+# v1_2026-09-21_18-16-58 is ACTIVE with zero snapshot diffs, so the re-run would
+# be caused entirely by this edit.) Issue #2795 decided to leave it.
+#
+# SHRINK-ONLY, and asserted in both directions: an entry whose test has become
+# runnable fails here ("the window closed -- delete this entry"), and an entry
+# whose test is blocked for any OTHER reason fails too. The vacuous-validator
+# class is still asserted for these ids, because the reason is pinned to the
+# `correct_skill` one and a vacuous fixture produces a different reason.
+CONVERSION_WINDOW = {
+    "ut_search_wiki_004": ("search-wikipedia", "#2794"),
+}
+
+
 @pytest.mark.parametrize("path", _corpus_invariant_specs())
 def test_every_corpus_grade_on_invariant_test_has_a_live_validator(path):
     """The real corpus, against the real validators dir. This is the check
@@ -473,10 +507,59 @@ def test_every_corpus_grade_on_invariant_test_has_a_live_validator(path):
     grade_on_invariant test must have a validator its tags actually reach."""
     from harness.loader import load_test
 
+    spec = load_test(path)
     result = check_runnable(
-        load_test(path), scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
         skills_dir=SKILLS, tests_dir=TESTS,
     )
+
+    if spec.id in CONVERSION_WINDOW:
+        callee, closing_issue = CONVERSION_WINDOW[spec.id]
+        assert result.runnable is False, (
+            f"{spec.id} is runnable again, so the conversion window that "
+            f"CONVERSION_WINDOW excuses it for has closed. Delete its entry "
+            f"rather than leaving a carve-out nothing needs."
+        )
+        reason = result.reason or ""
+        assert "negative.correct_skill" in reason and callee in reason, (
+            f"{spec.id} is blocked for a reason CONVERSION_WINDOW does not "
+            f"excuse -- it excuses ONLY a correct_skill naming the converted "
+            f"callee {callee!r}, and this check's own class (a "
+            f"grade_on_invariant tag that reaches no validator) is not "
+            f"excused. Reason was: {reason}"
+        )
+        assert (SKILLS.parent / "agents" / f"{callee}.md").is_file(), (
+            f"{callee} is neither a skill nor an agent, so this is not the "
+            f"conversion window at all -- it is a plain typo. Fix the test."
+        )
+
+        # `check_runnable` returns on its FIRST failure and the correct_skill
+        # gate runs ahead of the grade_on_invariant one, so the assertions above
+        # would pass on a fixture that is ALSO vacuous -- the very class this
+        # file exists for, hidden by the carve-out. Measured: dropping
+        # `no-wiki-search` (ut_search_wiki_004's gating tag) left this green.
+        # So re-run the check with only the conversion obstacle removed, and
+        # require the rest of the gate to pass exactly as it does for every
+        # other fixture.
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw["negative"]["correct_skill"] = [
+            n for n in raw["negative"]["correct_skill"] if n != callee
+        ]
+        without = check_runnable(
+            load_test_from_dict(raw), scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+            skills_dir=SKILLS, tests_dir=TESTS,
+        )
+        assert without.runnable is True, (
+            f"{spec.id} is excused for naming the converted callee {callee!r}, "
+            f"but it fails the gate for a second, unexcused reason as well: "
+            f"{without.reason}. {closing_issue} deletes this test; fix or delete "
+            f"it now rather than letting the carve-out cover this."
+        )
+        pytest.skip(
+            f"{spec.id} blocked by the #2825 conversion window; {closing_issue} "
+            f"deletes it"
+        )
+
     assert result.runnable is True, result.reason
 
 

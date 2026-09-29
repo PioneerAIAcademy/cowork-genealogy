@@ -33,8 +33,9 @@ That means all of:
   score;
 - the top-level **`verdict`** — this is the judge's genealogical conclusion
   verbatim;
-- the top-level **`outcome`** — the combined gate, which equals `verdict`
-  whenever `compliance` is `pass`, so reporting it leaks the verdict.
+- the top-level **`outcome`** — the gate, which since the §8 detectors were
+  demoted simply IS `verdict`, so reporting it leaks the verdict always rather
+  than only when `compliance` is `pass`.
 
 Those are the judge's *grades*: the thing the maintainer calibrates, and
 unnecessary for explaining what the agent did. The user runs `/grade-e2e-run`
@@ -318,7 +319,7 @@ These are the regression causes:
   capture change, not FS drift. The later
   `tool_calls[].is_error` boundary does **not** affect
   `response_summary`, so a drift comparison still holds across it; what
-  it does move is `compliance` / `outcome` and the guardrail violation
+  it does move is `compliance` — no longer `outcome` — and the guardrail violation
   counts, which get stricter once the key is present (an errored call no
   longer counts as a successful invocation). That boundary is the commit
   main `4541a4c5`, not cleanly a version — a `3` log has the key, a `2`

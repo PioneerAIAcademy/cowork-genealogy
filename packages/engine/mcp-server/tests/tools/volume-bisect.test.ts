@@ -198,7 +198,11 @@ describe("input domain", () => {
       LOCAL,
       expect.objectContaining({ timeoutMs: expect.any(Number) }),
     );
-    expect(result.reading).toMatchObject({ position: 374, year: 1700 });
+    // Unseeded, the first probe is the midpoint of the whole index. Derived,
+    // not hardcoded: a literal here silently becomes an assertion about the
+    // index's length rather than about bisecting.
+    const midpoint = Math.floor((0 + (INDEX_LENGTH - 1)) / 2);
+    expect(result.reading).toMatchObject({ position: midpoint, year: 1700 });
   });
 
   it("refuses a target year outside the register range", async () => {

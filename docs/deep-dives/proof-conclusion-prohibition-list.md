@@ -10,8 +10,9 @@ list was built against. Before relying on a rule, run
 `git diff 94292657d -- packages/engine/plugin/agents/proof-conclusion.md`; if it returns
 anything, re-read the affected sections, because a rule quoted here may no longer be in the
 body.
-`packages/engine/plugin/skills/proof-conclusion/SKILL.md` is a 63-line routing stub and
-contributes only section R below. Drafted from the two bodies **before** reading any
+`packages/engine/plugin/skills/proof-conclusion/SKILL.md` was a 63-line routing stub and
+contributed only section R below; issue #2822 deleted it on 2026-09-26, so section R is
+retired for any run log dated after that. Drafted from the two bodies **before** reading any
 transcript, per Step 2 of the guide.
 
 Every line below is checkable by eye against a run-log entry — `output.text_response`,
@@ -207,7 +208,12 @@ rebuilding it.**
     prove or disprove."
 66. Must not resolve a conflict here — recommend `conflict-resolution`.
 
-## R. The routing stub (`SKILL.md`) — checkable at the skill layer
+## R. The routing stub (`SKILL.md`) — RETIRED 2026-09-26 (issue #2822)
+
+The skill is deleted; `/research` spawns the agent directly. Rules 67–71 still apply
+when grading a run log recorded before that date. Rules 69 and 70 did not disappear with
+the skill — they moved to whoever builds the delegation message, which in an autonomous
+run is the `research` orchestrator.
 
 67. Resolve the request to ONE `q_` id via `project_context`; ask which if several are
     open and none is named.

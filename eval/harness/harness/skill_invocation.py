@@ -833,7 +833,7 @@ def find_person_evidence_missing_same_person(
     receives a **scoreable** `person_evidence` link must have been the subject
     of at least one `same_person` call somewhere in the run.
 
-    The authority is `person-evidence/SKILL.md`, the skill that owns the
+    The authority is `agents/person-evidence.md`, the agent that owns the
     identity decision — not `research/SKILL.md`'s one-line orchestrator
     paraphrase ("scores every cross-record link with `same_person` before it
     links"), which this docstring used to cite. The narrower owning contract
@@ -1061,6 +1061,17 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
+        # Same shape as `search-images` and `citation` (issue #2795): a
+        # cost-motivated conversion, no hook route, and it writes no project
+        # state at all -- one standalone markdown file in the working folder. It
+        # is listed because the set is asserted equal to the shipped agent
+        # files. Do not read its presence here as evidence of a hook route.
+        "search-wikipedia",
+        # Same shape again (issue #2794): a converted skill with no hook route
+        # that writes no project state -- one markdown file in the working
+        # folder. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "search-familysearch-wiki",
     }
 )
 

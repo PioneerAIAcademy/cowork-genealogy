@@ -114,6 +114,11 @@ export interface PersonQualityInput {
    * tool serve both without either paying for the other's context.
    */
   detail?: boolean;
+  /**
+   * Absolute path of the project folder. Lets a project's local tree id resolve
+   * to the person's FamilySearch link (`ark`) so an imported person is scored.
+   */
+  projectPath?: string;
 }
 
 // One rendered issue. The sentence is the primary payload; conclusionType +
@@ -178,3 +183,18 @@ export interface PersonQualityResult {
   /** Opt-in only (`detail: true`). Absent — not empty — when the flag is off. */
   detail?: PersonQualityDetail;
 }
+
+/**
+ * The answer for an id that is not a FamilySearch person id, returned without a
+ * network call. Same `{ ok, reason, errors }` shape as the no-project answer
+ * (`utils/project-io.ts` `noProjectResult`, `PersonWarningsResult`).
+ */
+export interface PersonQualityNotFamilySearchId {
+  ok: false;
+  reason: "not_familysearch_id";
+  errors: string[];
+}
+
+export type PersonQualityToolResult =
+  | PersonQualityResult
+  | PersonQualityNotFamilySearchId;

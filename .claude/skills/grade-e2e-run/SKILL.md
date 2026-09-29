@@ -32,6 +32,27 @@ answer first, the human anchors on it and the calibration number becomes a rubbe
 stamp. Do not read the run log, and do not report the judge's grades — they are the
 maintainer's calibration output, not part of grading.
 
+## Grading a prototype run
+
+A Search Agent prototype run has no `run-<ts>.json`, only the project export from
+`make proto-export SESSION=<id>`. Its grade goes beside the harness grades and counts
+in calibration the same way.
+
+- **Someone other than the grader** copies the export's `tree.gedcomx.json` and
+  `research.json` into `eval/runlogs/e2e/<slug>/` as `run-<ts>.final-tree.gedcomx.json`
+  and `run-<ts>.final-research.json`. `<ts>` is the run's date-time as
+  `YYYY-MM-DD_HH-MM-SS`, and must not match a stem already in that directory. Copy
+  only the two documents, never a `compare-*/` folder (it holds the judge's JSON).
+- **Always name the stem.** Pass it to `blind_bundle` in step 2 and write the
+  annotation under it in step 6 (the stamp commands read the stem from the `.ann.json`
+  filename). With no stem, `blind_bundle` picks the newest harness `run-<ts>.json`:
+  you grade the wrong tree, and for `bagley-father-1884` writing that `.ann.json`
+  overwrites PR #2906's grade. "The latest run" never means a prototype run.
+- **The grader must not have seen the judge's result**: `make proto-grade` or
+  `make proto-compare` output, `docs/search-agent-prototype-report.md`,
+  `docs/plan/familysearch-handoff.md`, `docs/plan/search-agent-prototype.md`, or
+  issue #2904. If you have, someone else grades.
+
 ## Steps
 
 ### 1 — Identify the run (do not read it)
@@ -41,11 +62,20 @@ Take the `run-<ts>.json` path (or "the latest run for `<slug>`" → the newest
 (`run-<ts>`). You use these only to locate the four files above — you never open
 `run-<ts>.json` itself.
 
-### 2 — Load the fixture and the agent's final state
+### 2 — Load the blind bundle
 
-Read the four blind files. `run-<ts>.final-tree.gedcomx.json` is required — no tree
-means there is nothing to grade, so stop and say so (the run was skipped or crashed
-before producing a tree). `run-<ts>.final-research.json` is optional.
+Run the blind bundle command to get exactly the four files you may read:
+
+```
+cd eval/harness && uv run python -m e2e.blind_bundle <slug> [<stem>]
+```
+
+This prints the paths and a `blind_bundle_digest`. The command physically cannot
+emit `run-<ts>.json`. If `<stem>` is omitted it uses the newest run log.
+
+Read the four files it printed. `run-<ts>.final-tree.gedcomx.json` is required —
+no tree means there is nothing to grade, so stop and say so (the run was skipped
+or crashed before producing a tree). `run-<ts>.final-research.json` is optional.
 
 ### 3 — For each finding, show the evidence and collect a label
 
@@ -95,11 +125,12 @@ Write `eval/runlogs/e2e/<slug>/run-<ts>.ann.json` with **only** these keys:
 | `notes` | no | `{ "<finding_id>": "text" }` — keys ⊆ `per_finding` keys |
 | `annotator` | no | the grader's team identifier (git blame is the fallback if omitted) |
 
-Hand-write **only** these keys. The one other allowed key, `findings_hash`, is
-added by the stamp command in step 7 — do **not** write it by hand. The loader
-hard-errors on any *other* unknown key — in particular do **not** write
-`llm_score`, `corrected_score`, or `verdict`. Those are the *unit*-annotation
-shape and the derived verdict; neither belongs in an e2e annotation.
+Hand-write **only** these keys. The two other allowed keys, `findings_hash` and
+`blind_bundle_digest`, are added by the stamp commands in step 7 — do **not**
+write them by hand. The loader hard-errors on any *other* unknown key — in
+particular do **not** write `llm_score`, `corrected_score`, or `verdict`. Those
+are the *unit*-annotation shape and the derived verdict; neither belongs in an
+e2e annotation.
 
 ### 7 — Self-check, stamp, then hand off for commit
 
@@ -114,31 +145,37 @@ First verify the file you just wrote — you have every input to do this without
   `expected-findings.json`, so this holds by construction — confirm it);
 - any `notes` key is one of those finding ids.
 
-Then stamp the fixture fingerprint into the annotation:
+Then stamp the provenance fingerprints into the annotation:
 
 ```
 cd eval/harness && uv run python -m e2e.stamp_findings_hash eval/runlogs/e2e/<slug>/run-<ts>.ann.json
 ```
 
-This adds the `findings_hash` key so a later edit to `expected-findings.json`
-cannot silently invalidate this grade. It is **not** `calibrate_judge`, makes no
-judge API calls, and is **exempt** from the "do not run `calibrate_judge`" rule
-below — run it every time.
+```
+cd eval/harness && uv run python -m e2e.stamp_bundle_digest eval/runlogs/e2e/<slug>/run-<ts>.ann.json
+```
+
+The first adds `findings_hash` (fingerprint of `expected-findings.json`); the
+second adds `blind_bundle_digest` (fingerprint of all 4 files the blind grader
+reads). Neither is `calibrate_judge`, neither makes judge API calls, and both
+are **exempt** from the "do not run `calibrate_judge`" rule below — run them
+every time.
 
 Then tell the user to commit the `.ann.json`. **Do not run `calibrate_judge` — not
 even `--dry-run`.** It classifies *every* annotation in the tree, not just this one.
 The developer and genealogist teams never run it; all `calibrate_judge` use
 (`--dry-run` classification and the full sweep) is the maintainer's step, run
-periodically — documented in `docs/e2e-testing-guide.md` under "Step 8 — Grade the run."
+periodically — documented in `docs/e2e-testing-guide.md` under "Step 6 — Grade the run."
 
 ## What you do not do
 
 - **Never open `run-<ts>.json`** or otherwise surface the judge's grades. Grading is
   blind; revealing the judge's labels defeats the calibration.
 - Do not run `calibrate_judge` at all — not even `--dry-run`. (The
-  `stamp_findings_hash` command in step 7 is a *different* tool — run it; it is not
-  `calibrate_judge`.) Self-validate the one file you wrote; whole-set classification
-  and the calibration sweep are the maintainer's job, per the guide.
+  `stamp_findings_hash` and `stamp_bundle_digest` commands in step 7 are
+  *different* tools — run them; they are not `calibrate_judge`.) Self-validate
+  the one file you wrote; whole-set classification and the calibration sweep are
+  the maintainer's job, per the guide.
 - Do not derive or write a `verdict` — the loader derives it from `per_finding`.
 - Do not edit fixtures, skills, the judge prompt, the run log, or the tree.
 - Do not label findings yourself — surface the evidence; the genealogist decides.

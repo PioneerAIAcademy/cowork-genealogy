@@ -17,9 +17,9 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   (cut 2026-09-10);
 - the D16 tool server runs read-only with /tmp its only tmpfs (no /projects: project
   state is in Postgres/S3, bound per request from X-Genealogy-Project-Id), publishes on
-  loopback only, waits on postgres and minio being healthy, carries the worker's
-  GENEALOGY_* store block byte for byte (one store, two readers), and is waited on by
-  proto-up but never by proto-up-core (the D3 smoke must not gate on the engine image).
+  loopback only, waits on postgres and minio being healthy, reads the Postgres the worker
+  reads under the worker's anchor, and is waited on by proto-up but never by
+  proto-up-core (the D3 smoke must not gate on the engine image).
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -245,13 +245,15 @@ def test_tools_depends_on_the_store_services():
 
 
 def test_tools_and_worker_read_one_store():
-    """The stdio fork (worker) and the shared HTTP server (tools) are two readers of one
-    store: their GENEALOGY_* blocks must be identical, or a TOOL_SERVER flip silently
-    moves the project tools onto a store the rest of the stack never reads."""
+    """The tools write research.json into Postgres and the worker's Stop hook reads it back
+    on its own connection, and the worker tells the model its cwd is the projectPath the
+    tools anchor on. A different database or anchor would leave the worker reading a
+    project nobody writes, or every project tool refusing the path."""
     compose = _load(COMPOSE)
     tools = {k: v for k, v in _env(_service(compose, "tools")).items() if k.startswith("GENEALOGY_")}
-    worker = {k: v for k, v in _env(_service(compose, "worker")).items() if k.startswith("GENEALOGY_")}
-    assert tools == worker, f"tools and worker GENEALOGY_* differ: {tools} vs {worker}"
+    worker = _env(_service(compose, "worker"))
+    assert tools["GENEALOGY_PG_DSN"] == worker["PG_DSN"], "the tools' Postgres is the worker's"
+    assert tools["GENEALOGY_ANCHOR_PATH"] == worker["WORKER_CWD"], "the tools' anchor is the worker's cwd"
     assert set(tools) == {
         "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
         "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
@@ -276,39 +278,26 @@ def _compose_default(value: str) -> tuple[str | None, str]:
     return (match.group(1), match.group(2)) if match else (None, value.strip())
 
 
-def test_tools_carries_the_per_user_config_the_stdio_fork_used_to_pass():
-    """With http the default, the shared service is where image_transcribe's key has to be:
-    the per-turn fork got it from the worker's env and the two headers the service reads
-    carry no config. Three copies of that list exist -- the worker's PER_USER_ENV_KEYS, the
-    engine's PER_USER_ENV, and this service's environment -- and a key added to one alone
-    makes a tool work on one arm and fail on the other, so they are held equal here rather
-    than spelled out a fourth time. Passed through, never a literal."""
-    from proto.worker import options
-
+def test_tools_carries_the_per_user_config_the_engine_reads():
+    """The shared service is where image_transcribe's key has to be: the two headers it
+    reads carry no config. The engine's PER_USER_ENV names the keys http.js reads from its
+    environment, and a key there that compose does not pass makes that tool fail on the
+    prototype only, so the service's environment is held to the engine's list rather than
+    spelled out a second time. Passed through, never a literal."""
     engine = re.search(r"export const PER_USER_ENV = \[([^\]]*)\]",
                        (ROOT / "packages/engine/mcp-server/src/hosted-config-env.ts").read_text(encoding="utf-8"))
     assert engine, "hosted-config-env.ts no longer exports PER_USER_ENV as a literal list"
-    assert tuple(re.findall(r'"(\w+)"', engine.group(1))) == options.PER_USER_ENV_KEYS, \
-        "the engine entrypoints and the worker must read the same per-user keys"
+    names = re.findall(r'"(\w+)"', engine.group(1))
+    assert names, "PER_USER_ENV names no keys"
     env = _env(_service(_load(COMPOSE), "tools"))
-    for name in options.PER_USER_ENV_KEYS:
+    for name in names:
+        assert name in env, f"the tools service does not pass {name}"
         var, default = _compose_default(env[name])
         assert var == name and default == "", f"{name} must pass the caller's value through, empty when unset"
 
 
-def test_worker_tool_server_default_is_http_and_matches_the_workers_own_fallback():
-    """The lead's call, 2026-09-20: an unqualified `make proto-up` runs the shared `tools`
-    service, the shape production runs, and TOOL_SERVER=stdio is the opt-out. Compose and
-    options.py must agree, or a worker started outside compose quietly does the other thing."""
-    from proto.worker import options
-
-    var, default = _compose_default(_env(_service(_load(COMPOSE), "worker"))["TOOL_SERVER"])
-    assert var == "TOOL_SERVER", "the interpolation must read the name the recipes and the lead export"
-    assert default == options.TOOL_SERVER_DEFAULT == "http"
-
-
-def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn_on_the_default():
-    """With http as the default a worker reaches `tools` over the compose network, so every
+def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn():
+    """A worker reaches `tools` over the compose network, so every
     recipe that runs a REAL turn has to bring it up. proto-up-core deliberately does not (the
     D3 smoke's stub arms never build worker options, so they never reach a tool server)."""
     def brings_tools_up(target: str, seen: frozenset = frozenset()) -> bool:
@@ -326,7 +315,7 @@ def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn_on_the_default
 
     for target in ("proto-up", "proto-turn", "proto-demo", "proto-kill", "proto-demo-auto"):
         assert brings_tools_up(target), \
-            f"{target} runs a real turn on the http default: it must wait for `tools` or delegate to one that does"
+            f"{target} runs a real turn: it must wait for `tools` or delegate to one that does"
     # The exception, with its reason: the D3 smoke's stub arms never build worker options.
     assert not any(re.search(r"\btools\b", line) for line in _recipe("proto-up-core"))
 
