@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 26 skills and 9 agents. Besides the `research` orchestrator itself, its routing
+There are 25 skills and 9 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 13 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -343,11 +343,13 @@ the row's absence no longer implies either cannot fire.
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
 from this list as evidence either way.
 
-The three **thin skill halves** of the paired rows join this list. Rows 7, 10
-and 11 route to `@plugin:<agent>`, so `skills/person-evidence/`,
-`skills/research-exhaustiveness/` and `skills/proof-conclusion/` are no longer
-on the in-loop route — they stay on disk as the direct-user entry point and as
-the unit-eval entry point, and an autonomous run never enters them.
+The two **thin skill halves** of the paired rows join this list. Rows 10
+and 11 route to `@plugin:<agent>`, so `skills/research-exhaustiveness/` and
+`skills/proof-conclusion/` are no longer on the in-loop route — they stay on
+disk as the direct-user entry point and as the unit-eval entry point, and an
+autonomous run never enters them. (Row 7 was the third thin half; its
+`skills/person-evidence/` directory has been deleted — the agent is now the
+direct entry point and the unit-eval entry point.)
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

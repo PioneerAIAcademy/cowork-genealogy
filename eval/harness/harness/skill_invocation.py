@@ -833,7 +833,7 @@ def find_person_evidence_missing_same_person(
     receives a **scoreable** `person_evidence` link must have been the subject
     of at least one `same_person` call somewhere in the run.
 
-    The authority is `person-evidence/SKILL.md`, the skill that owns the
+    The authority is `agents/person-evidence.md`, the agent that owns the
     identity decision — not `research/SKILL.md`'s one-line orchestrator
     paraphrase ("scores every cross-record link with `same_person` before it
     links"), which this docstring used to cite. The narrower owning contract

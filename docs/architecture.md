@@ -1451,7 +1451,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 26 skills carry a `**Narration:**` line (`init-project` spells it
+All 25 skills carry a `**Narration:**` line (`init-project` spells it
 `**Narration**`, without the colon) — 24 of them as the first line of the body,
 the other two further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
@@ -1898,9 +1898,9 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 27 skill suites. **446** committed
+  run logs, and negative routing tests across 26 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 27 live suites the latest run log per suite
+  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
   totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
