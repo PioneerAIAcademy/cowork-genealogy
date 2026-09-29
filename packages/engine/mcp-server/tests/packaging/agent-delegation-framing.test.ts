@@ -400,6 +400,13 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["timeline -> person-evidence", ""],
   ["translation -> person-evidence", ""],
   ["tree-edit -> person-evidence", ""],
+  // convert-dates entered agentOnly when issue #2790 deleted its skill. All
+  // three are routing-boundary prose naming it as the owner of a calendar
+  // conversion ("use convert-dates", "route to convert-dates"), none spells
+  // `@plugin:convert-dates`.
+  ["historical-context -> convert-dates", ""],
+  ["record-extraction -> convert-dates", ""],
+  ["translation -> convert-dates", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -577,6 +584,7 @@ describe("agent delegation framing", () => {
   // fails here and the author says in the diff which it was.
   const PROSE_ARM_COVERS = [
     "citation",
+    "convert-dates",
     "gps-mentor",
     "image-reader",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is

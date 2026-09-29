@@ -161,7 +161,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 23 skills covering the full GPS research cycle. Skills
+The plugin ships 22 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -234,7 +234,6 @@ skills per the validation protocol.
 |-------|-------------|-------------|
 | **validate-schema** | Validates both project files against the published schemas. Required fields, enum values, ID prefixes, cross-references. | Every writing skill invokes this after writing. You can also say "validate the files." |
 | **check-warnings** | Flags genealogical impossibilities (married before 12, died after 120, child born after parent's death). | Writing skills invoke after adding assertions/person_evidence. You can say "check for warnings." |
-| **convert-dates** | Converts dates at calendar boundaries — Julian/Gregorian, Old Style/New Style, Quaker double-dating. | When dates from pre-Gregorian periods are encountered. You can say "convert this date." |
 
 ### Benchmark suite (not shipped — repo-local dev tooling)
 
@@ -255,7 +254,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships nine Cowork agents. Unlike skills, an agent runs in
+The plugin ships eleven Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -272,6 +271,7 @@ don't load it explicitly.
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
+| **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. It writes nothing. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |
 
 ## Recommended workflow
 
@@ -481,13 +481,13 @@ What's shipped:
 - **50 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **23 shipped skills.** Full GPS research cycle from `init-project`
+- **22 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion, plus reference skills (locality-guide,
   historical-context, translation)
-  and guardrails (validate-schema, check-warnings, convert-dates). The three
+  and guardrails (validate-schema, check-warnings). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **10 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+- **11 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
@@ -495,7 +495,8 @@ What's shipped:
   the only caller that may declare one exhaustive), `person-evidence` agent (identity
   resolution, and the only writer of `person_evidence`), `citation` (Evidence
   Explained refinement of citations on sources that already exist),
-  `search-images` (page-by-page browse of an unindexed volume),
+  `convert-dates` (calendar-system date conversion), `search-images`
+  (page-by-page browse of an unindexed volume),
   `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
   as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file) and
   `image-reader` (page OCR).
