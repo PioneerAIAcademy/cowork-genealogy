@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 56111,
+    "CLAUDE.md": 56851,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/gps-mentor.md": 40252,
     "packages/engine/plugin/agents/image-reader.md": 9101,
@@ -15,6 +15,7 @@
     "packages/engine/plugin/agents/record-extractor.md": 59236,
     "packages/engine/plugin/agents/research-exhaustiveness.md": 22557,
     "packages/engine/plugin/agents/search-images.md": 21550,
+    "packages/engine/plugin/agents/search-wikipedia.md": 6843,
     "packages/engine/plugin/skills/check-warnings/SKILL.md": 22506,
     "packages/engine/plugin/skills/conflict-resolution/SKILL.md": 27656,
     "packages/engine/plugin/skills/convert-dates/SKILL.md": 8567,
@@ -34,7 +35,6 @@
     "packages/engine/plugin/skills/search-full-text/SKILL.md": 19118,
     "packages/engine/plugin/skills/search-images/SKILL.md": 2983,
     "packages/engine/plugin/skills/search-records/SKILL.md": 61270,
-    "packages/engine/plugin/skills/search-wikipedia/SKILL.md": 3896,
     "packages/engine/plugin/skills/source-evaluation/SKILL.md": 16823,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833,
     "packages/engine/plugin/skills/translation/SKILL.md": 10741,
@@ -49,6 +49,7 @@
     "tool:external_links_search": 2332,
     "tool:extraction_append": 6025,
     "tool:fulltext_search": 3414,
+    "tool:get_name_variants": 375,
     "tool:image_read": 1664,
     "tool:image_search": 716,
     "tool:image_transcribe": 3192,

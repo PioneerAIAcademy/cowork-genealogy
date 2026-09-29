@@ -1075,6 +1075,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # an unnamed-delegate bypass. Do not read its presence here as evidence
         # of a hook route.
         "question-selection",
+        # Same shape as `search-images` and `citation` (issue #2795): a
+        # cost-motivated conversion, no hook route, and it writes no project
+        # state at all -- one standalone markdown file in the working folder. It
+        # is listed because the set is asserted equal to the shipped agent
+        # files. Do not read its presence here as evidence of a hook route.
+        "search-wikipedia",
     }
 )
 

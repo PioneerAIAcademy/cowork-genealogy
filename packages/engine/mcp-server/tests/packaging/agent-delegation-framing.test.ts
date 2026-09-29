@@ -406,6 +406,20 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["search-records -> citation", ""],
   ["source-evaluation -> citation", ""],
   ["translation -> citation", ""],
+  // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
+  // name is not an ordinary English word, so the arm DOES discriminate for it,
+  // and all three mentions below are boundary prose telling the reader this is
+  // the other lane — "a general Wikipedia summary of the place (use
+  // search-wikipedia)", "use the `search-wikipedia` skill instead", "→
+  // search-wikipedia, not translation". None is a delegation: under the lead's
+  // 2026-09-23 hand-back ruling nothing spawns this agent from a skill body.
+  // #2795 decided to leave all three wordings alone — the name survives as the
+  // agent's name, and rewording them would flip three more skills' eval
+  // snapshots for no behavioural gain. All three are bare-name mentions, so all
+  // three take `""` and none can suppress a real delegation edge.
+  ["locality-guide -> search-wikipedia", ""],
+  ["search-familysearch-wiki -> search-wikipedia", ""],
+  ["translation -> search-wikipedia", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
@@ -615,6 +629,7 @@ describe("agent delegation framing", () => {
     "person-evidence",
     "question-selection",
     "record-extractor",
+    "search-wikipedia",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {
