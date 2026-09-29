@@ -22,6 +22,8 @@ allowed-tools:
   - volume_search
   - research_log_append
   - extraction_append
+  - record_person_matches
+  - record_record_matches
 ---
 
 # Record Extraction (router)
@@ -226,11 +228,15 @@ composite `extraction_append`, and returns a ≤10-line summary for you, then a
 household skeleton (member stubs + parent-child edges) is minted by
 person-evidence at link time via `materialize_facts`.
 
-**Match checks belong to the extractor, not you.** When the user asks
-to check FamilySearch matches, relay it as the flag above — never call
-`record_person_matches` / `record_record_matches` yourself (they are
-not in this skill's allowed-tools, and the extractor already holds the
-`recordId` they key on).
+**Match checks, when the user asks for them.** For a FamilySearch record,
+call them yourself after `extraction_append` succeeds:
+`record_person_matches({ id: "<recordId>" })` (is the record already attached
+to a tree person? report accepted/pending) and/or
+`record_record_matches({ id: "<recordId>" })` (collateral records matched to
+the same person; mention confidence ≥ 4). Pass the record's ARK or bare pid as
+`id` — never a `record_persona_id`, which FamilySearch rejects. Report the
+results; never write them to `research.json`. For a record delegated to
+`record-extractor`, relay the request as the flag above instead.
 
 **Check the calendar before delegating, not after.** When a record's
 date may fall before its jurisdiction adopted the Gregorian calendar,
@@ -288,8 +294,8 @@ record is not a reason to keep going.
 
 ## Tool availability
 
-**If `record_read`, `volume_search`, `research_log_append` or
-`extraction_append` are not immediately available** (e.g., shown as deferred), call ToolSearch first.
+**If `record_read`, `volume_search`, `research_log_append`,
+`extraction_append` or the match tools are not immediately available** (e.g., shown as deferred), call ToolSearch first.
 **Search by bare tool name, never by a fully-qualified `select:` list** —
 the MCP server prefix differs per deployment, and there are three of them,
 so a hardcoded qualified name resolves to nothing in some environments.
