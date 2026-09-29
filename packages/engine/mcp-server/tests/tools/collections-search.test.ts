@@ -372,7 +372,7 @@ describe("collectionsSearchTool — User-Agent contract", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
   });
 });
