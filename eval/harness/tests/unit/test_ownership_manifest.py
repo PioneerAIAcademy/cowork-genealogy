@@ -107,18 +107,16 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 #: unchanged: from person-evidence's own subject perspective it still owns all three
 #: sections it held before the conversion.
 #:
-#: `log` loses `search-images`. The caller spelling changed from
-#: `skill:search-images` to `agent:search-images` (issue #2268, thin-skill
-#: deletion). The unit plane resolves an `agent:` caller only when that agent
-#: IS the suite subject (`SUBJECT = "citation"` here, not "search-images"),
-#: so the agent caller is dropped from the resolved set. `plans` lost
-#: `search-images` entirely — the hook grants the agent only `plan_items`,
-#: not `plans`, so the caller was removed rather than re-spelled. `plan_items`
-#: has `enforceableAt: []` so it never reaches the unit plane and needs no entry.
+#: `log`'s `search-images` caller changed from `skill:` to `agent:` (issue
+#: #2268, thin-skill deletion). With SUBJECTS iterating every agent caller,
+#: `search-images` resolves when `subject="search-images"`, so the union still
+#: sees it — no NARROWED entry needed for `log`. `plans` lost `search-images`
+#: entirely — the hook grants the agent only `plan_items`, not `plans`, so the
+#: caller was removed rather than re-spelled. `plan_items` has
+#: `enforceableAt: []` so it never reaches the unit plane and needs no entry.
 NARROWED: dict[str, set[str]] = {
     "assertions": {"convert-dates"},
     "person_evidence": {"person-evidence"},
-    "log": {"search-images"},
 }
 
 
