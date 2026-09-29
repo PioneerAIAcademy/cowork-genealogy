@@ -628,7 +628,12 @@ def test_refresh_margin_covers_running_timeout():
     let a sandbox outlive its token with no way to self-refresh (issue #2887)."""
     from app.auth import _FS_REFRESH_MARGIN
     from app.sessions import _RUNNING_TIMEOUT_S
-    assert _FS_REFRESH_MARGIN >= timedelta(seconds=_RUNNING_TIMEOUT_S), (
+    from app.sandbox.e2b import _RUNNING_TIMEOUT_S as _E2B_RUNNING_TIMEOUT_S
+    assert _RUNNING_TIMEOUT_S == _E2B_RUNNING_TIMEOUT_S, (
+        f"sessions._RUNNING_TIMEOUT_S ({_RUNNING_TIMEOUT_S}) has drifted from "
+        f"e2b._RUNNING_TIMEOUT_S ({_E2B_RUNNING_TIMEOUT_S})"
+    )
+    assert _FS_REFRESH_MARGIN >= timedelta(seconds=_E2B_RUNNING_TIMEOUT_S), (
         f"_FS_REFRESH_MARGIN ({_FS_REFRESH_MARGIN}) must be >= "
-        f"_RUNNING_TIMEOUT_S ({_RUNNING_TIMEOUT_S}s)"
+        f"_RUNNING_TIMEOUT_S ({_E2B_RUNNING_TIMEOUT_S}s)"
     )
