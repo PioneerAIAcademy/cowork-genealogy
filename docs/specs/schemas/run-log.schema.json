@@ -116,7 +116,7 @@
           "items": { "type": "string" }
         },
         "outcome": {
-          "enum": ["pass", "partial", "fail", "aborted", "xfail", "xpass"]
+          "enum": ["pass", "partial", "fail", "aborted"]
         },
         "flaky": { "type": "boolean" },
         "grading_mode": {

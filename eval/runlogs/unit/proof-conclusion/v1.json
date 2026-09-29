@@ -2530,7 +2530,7 @@
       "expected_outcome": "xfail",
       "scenario": "wilkins-bounded-death",
       "mcp_fixtures": [],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -7197,7 +7197,7 @@
       "expected_outcome": "xfail",
       "scenario": "flynn-with-birthplace-conflict",
       "mcp_fixtures": [],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [

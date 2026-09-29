@@ -323,7 +323,7 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                 />
                 <Select
                   label="Expected outcome"
-                  description="Mark a test xfail when you know it fails for a documented reason and you don't want that failure read as a regression. Its failures report as xfail instead of fail; if it starts passing, the harness reports xpass so you know to investigate and remove the marker."
+                  description="Mark a test xfail when you know it fails for a documented reason and you don't want that failure read as a regression. Its outcome stays fail, but that failure is treated as suppressed (not a regression); if it starts passing, the pass beside the xfail marker is flagged as unexpected so you know to investigate and remove the marker."
                   data={[
                     { value: 'pass', label: 'pass — the test should pass' },
                     { value: 'xfail', label: 'xfail — known failure, not a regression' },
