@@ -16,9 +16,8 @@ Last reviewed: **2026-09-21**.
 
 **Reachability, once, up front — across the two JS trees.** The engine's production tree
 (`packages/engine/mcp-server`) audits clean — `found 0 vulnerabilities` on
-`npm audit --omit=dev`. `eval/app` is no longer audited separately: it is a pnpm
-workspace member, so `pnpm audit` at the root covers it and `npm audit` cannot
-run there at all. The only production-reachable findings
+`npm audit --omit=dev`; `eval/app` is covered by the root `pnpm audit --prod`.
+The only production-reachable findings
 are `electron` and `extract-zip` in `apps/electron`, reached via
 `@electron-toolkit/utils` → `electron` (peer) → `extract-zip` (see the two
 paragraphs below). Everything else lives in **devDependencies** — dev tooling
