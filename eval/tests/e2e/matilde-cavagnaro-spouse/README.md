@@ -144,14 +144,21 @@ relationship gone upstream: ParentChild PQWR-XH7 G4Z4-RJ1
 relationship gone upstream: ParentChild PQWR-QB9 G4Z4-RJ1
 ```
 
-**Open question — needs a ruling, and does not yet have one.** Source `7PM9-W5S`
+**Open question — asked 2026-09-29, still unruled.** Source `7PM9-W5S`
 (`ark:/61903/1:1:X3G7-XG52`) is Paolo Andrea Vaglio's own persona on the marriage
 act and is **still attached** to `G4Z4-RJ1`, which asserts she *is* him — the
 likeliest route by which his parents reached her, and a generator of further bad
 hints. It was not detached because the authorised scope was parents and birth
-date only, set before the second opinion found it. Issue #2908 is closed, so this
-is recorded here rather than there. Whoever answers it should record the answer
-in this paragraph.
+date only, set before the second opinion found it.
+
+It was put to the lead on 2026-09-29, naming the record and the proposed action.
+His reply was *"I have reviewed and everything looks okay"* — which addresses the
+work already done and does not grant the detach, so **the source was left
+attached**. Ikennaya Mbadiwe's position is that it should come off.
+
+Issue #2908 is closed, so this lives here. Anyone revisiting it needs an explicit
+yes or no, and should record it in this paragraph — a recorded "no" is as useful
+as a yes and stops the next reader re-deriving the whole question.
 
 **Lima, not Genova — there is no birthplace conflict.** An earlier revision of
 this README recorded one; that was wrong and is corrected here. `SYXS-SC8`
