@@ -248,9 +248,9 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
 
 
 def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn():
-    """`route-shortcut-guard.json` stubs three paired names that ship as both a
+    """`route-shortcut-guard.json` stubs two paired names that ship as both a
     skill and an agent; their compliant spawn must keep running."""
-    spec = _stub_spec(["proof-conclusion", "research-exhaustiveness", "person-evidence"])
+    spec = _stub_spec(["proof-conclusion", "research-exhaustiveness"])
     assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") is None
 
 

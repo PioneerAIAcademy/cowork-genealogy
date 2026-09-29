@@ -156,10 +156,12 @@ correspondingly-numbered general sections below. The general spec remains the
   `research_updated` / `gedcomx_updated` / `sidecar_updated` over the WS. This
   viewer path is control-plane↔E2B and is independent of the chat channel.
 - **FamilySearch token (overrides §5.2 option choice):** option **(a)** — the
-  control plane writes the token to `~/.familysearch-mcp/tokens.json` **inside the
-  sandbox** after OAuth (zero MCP code change); the in-sandbox MCP server refreshes
-  it; it persists across hibernation. *Initial* OAuth still needs a hosted/tunneled
-  redirect URI registered with FamilySearch.
+  control plane writes an **access token only** (no refresh token) to
+  `~/.familysearch-mcp/tokens.json` **inside the sandbox** after OAuth (zero MCP
+  code change). The control plane is the sole refresh owner; the sandbox cannot
+  refresh on its own. The token persists across hibernation, and a
+  fresh token is re-injected on every `/connect`. *Initial* OAuth still needs a
+  hosted/tunneled redirect URI registered with FamilySearch.
 - **Feedback (refines §11):** the control plane reads the in-sandbox Agent SDK
   transcript (`~/.claude/projects/<…>/*.jsonl`) + `/project` files via E2B
   `files.read` and bundles them — the existing `feedback.ts` logic, repointed at
@@ -455,13 +457,17 @@ multi-tenant web this must change:
 4. **Onboarding gate** — a user who hasn't connected FamilySearch is prompted to
    before any research tool runs.
 
-> **As built, verified 2026-08-02 — shipped as specced.** Steps 1–3 are in the
-> code: hosted redirect with PKCE (`fs_oauth.py`), per-user tokens in the
-> `familysearch_tokens` table with server-side refresh (`auth.fresh_fs_token`),
-> and **option (a)** injection — the control plane writes
-> `~/.familysearch-mcp/tokens.json` into the sandbox, zero MCP change
-> (`fs_oauth.write_tokens`). Option (b) was not pursued; `getValidToken(principal)` still
-> reads the file. Two implementation details worth knowing:
+> **As built, verified 2026-08-02; updated 2026-09-28.** Steps 1–3
+> are in the code: hosted redirect with PKCE (`fs_oauth.py`), per-user tokens in
+> the `familysearch_tokens` table with server-side refresh
+> (`auth.fresh_fs_token`), and **option (a)** injection — the control plane
+> writes **an access token only** (no refresh token) to
+> `~/.familysearch-mcp/tokens.json` inside the sandbox, zero MCP change
+> (`fs_oauth.write_tokens`). The control plane is the sole refresh owner;
+> concurrent refreshes are serialized with a per-user `asyncio.Lock`, and a
+> successful refresh pushes the new token to every live sandbox the user has.
+> Option (b) was not pursued; `getValidToken(principal)` still reads the file.
+> Two implementation details worth knowing:
 >
 > - **The redirect reuses the desktop OAuth registration**, so the callback lives
 >   at a top-level `/callback` rather than `/familysearch/callback`, and the web
@@ -821,9 +827,6 @@ every healthy session.
 > new session auto-sends an opening turn that triggers `init-project` (§0.5) —
 > and the §7.4 this section twice points at **does not exist**; the spec has no
 > §7.4. It means §0.5's onboarding bullet.
->
-> `docs/plan/3-pane-workbench-ui.md` proposes replacing this two-pane layout; as
-> of this audit none of that plan has landed.
 
 ---
 

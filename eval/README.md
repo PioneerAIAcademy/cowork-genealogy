@@ -392,11 +392,15 @@ headless run. Re-seed a fresh project (wiping any work) with `FORCE=1`.
 ### Keep the machine awake during a run
 
 A run is long (20–60 min) and the machine must **not sleep** partway through.
-If it does, the work pauses until the machine wakes — the result is still
-valid, but the run takes much longer in real time. The harness measures
-**active** time (so a sleep does not corrupt the wall-clock metric) and prints
-a `machine slept ~N min` note when it detects one — treat that note as your cue
-to set one of these up:
+If it does, the work pauses until the machine wakes, and the run takes much
+longer in real time. The harness detects a sleep, leaves it out of the reported
+wall-clock time, and prints a `machine slept ~N min` note. Treat that note as
+your cue to set one of these up. On macOS and Linux a sleep does not count
+against the run's time caps. **On Windows it does:** Modern Standby still uses
+up the wall-clock and inactivity caps, so a long sleep can end the run as a
+`timeout` or `inactivity` that says nothing about the agent (issue #2974). A
+sleep during setup or the judge call, after the agent finishes, is not
+detected at all.
 
 - **Windows:** there's no per-command keep-awake tool, so set the power plan
   once — `powercfg /change standby-timeout-ac 0` (add `powercfg /change

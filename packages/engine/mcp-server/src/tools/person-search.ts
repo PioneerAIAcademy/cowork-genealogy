@@ -1,6 +1,5 @@
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import {
   toSimplified,
   standardizePlaces,
@@ -273,12 +272,10 @@ export async function personSearchTool(
 ): Promise<PersonSearchToolResponse> {
   validateInput(input);
 
-  const token = await getValidToken(principal);
   const url = buildSearchUrl(input);
 
-  const response = await fetchWithRetry(url, {
+  const response = await fsFetch(principal, url, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
       "Accept-Language": "en",
     },

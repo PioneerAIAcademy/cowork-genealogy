@@ -1,5 +1,4 @@
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import {
   toSimplified,
@@ -49,7 +48,7 @@ import {
   annotateResultsWithRanking,
 } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
@@ -897,19 +896,18 @@ export async function recordSearchTool(
   }
   const paired = applyAltNameAutoPair(normalizedInput);
 
-  const token = await getValidToken(principal);
   const url = buildSearchUrl(paired);
 
-  // #1316 / #2054: fetchWithRetry wraps fetchWithTimeout with automatic retry
-  // of transient failures (429/5xx, network errors, timeouts). getValidToken(principal)
-  // stays outside the retry so an auth failure surfaces immediately.
+  // #1316 / #2054: fsFetch wraps fetchWithRetry with automatic retry
+  // of transient failures (429/5xx, network errors, timeouts) and handles
+  // Authorization internally. On a 401 under LOCAL it re-reads tokens.json once.
   let response: Response;
   try {
-    response = await fetchWithRetry(
+    response = await fsFetch(
+      principal,
       url,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
           Accept: "application/json",
           "Accept-Language": "en",
           "User-Agent": BROWSER_USER_AGENT,

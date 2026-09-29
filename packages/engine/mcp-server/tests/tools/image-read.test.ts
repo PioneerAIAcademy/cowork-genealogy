@@ -68,8 +68,8 @@ describe("imageReadTool — imageId input", () => {
     await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
   });
 
   it("rejects an image that exceeds the inline size cap", async () => {
@@ -313,9 +313,8 @@ describe("imageReadTool — memoryArtifactUrl input", () => {
     mockImageResponse();
     await imageReadTool({ memoryArtifactUrl: ART }, LOCAL);
     expect(mockedGetValidToken).not.toHaveBeenCalled();
-    const headers = (mockFetch.mock.calls[0][1]?.headers ?? {}) as Record<string, string>;
-    const names = Object.keys(headers).map((h) => h.toLowerCase());
-    expect(names).not.toContain("authorization");
+    const headers = new Headers(mockFetch.mock.calls[0][1]?.headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
   });
 
   it("still sends the bearer for an ordinary imageId, so the flag is not stuck on", async () => {
@@ -324,9 +323,8 @@ describe("imageReadTool — memoryArtifactUrl input", () => {
     mockImageResponse();
     await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
     expect(mockedGetValidToken).toHaveBeenCalled();
-    const headers = (mockFetch.mock.calls[0][1]?.headers ?? {}) as Record<string, string>;
-    const auth = Object.entries(headers).find(([k]) => k.toLowerCase() === "authorization");
-    expect(auth?.[1]).toBe("Bearer test-token");
+    const headers = new Headers(mockFetch.mock.calls[0][1]?.headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
   });
 
   it("refuses an artifact URL on any other host", async () => {
