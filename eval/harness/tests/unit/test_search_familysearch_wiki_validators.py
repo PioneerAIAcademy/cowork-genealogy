@@ -43,7 +43,6 @@ from test_search_familysearch_wiki import (  # noqa: E402
     test_census_era_boundaries_preserved as check_census_eras,
     test_expected_slug as check_slug,
     test_no_file_on_empty_results as check_no_file_on_empty,
-    test_no_wiki_no_write as check_no_wiki_no_write,
     test_sources_section_matches_wiki_results as check_sources,
     test_wrote_exactly_one_markdown_file as check_one_md,
 )
@@ -322,23 +321,6 @@ def test_empty_results_fires_when_a_file_is_written():
         )
 
 
-# --- test_no_wiki_no_write ---------------------------------------------
-
-
-def test_boundary_negative_passes_with_no_write():
-    check_no_wiki_no_write(EMPTY, EMPTY, _tags("no-wiki-search", type="negative"))
-
-
-def test_boundary_negative_fires_when_a_summary_is_saved():
-    """The gap this closes: the search arm alone would pass a run that
-    answered from training knowledge without calling the tool."""
-    with pytest.raises(AssertionError, match="must not save a wiki summary"):
-        check_no_wiki_no_write(
-            EMPTY, _state(**{"albert-einstein.md": "x"}),
-            _tags("no-wiki-search", type="negative"),
-        )
-
-
 # --- test_sources_section_matches_wiki_results -------------------------
 
 
@@ -493,21 +475,41 @@ _COMPLIANT_REPLY = (
 def test_brevity_fires_on_the_observed_ut_003_recitation():
     """The observed violation: a correct closing sentence, then the document
     recited back with a horizontal rule and bullets."""
-    with pytest.raises(AssertionError, match="Keep it brief"):
+    with pytest.raises(AssertionError, match="do not restate"):
         check_brevity(EMPTY, _SAVED, _RECITING_REPLY)
 
 
 def test_brevity_passes_on_the_observed_compliant_reply():
-    """The guard that kept this check off the file for months: SKILL.md:24
-    mandates a one-line preamble per action and `text_response` carries every
+    """The guard that kept this check off the file for months: the skill's
+    `**Narration:**` line mandated a one-line preamble per action and `text_response` carries every
     turn, so a naive length rule fires on required narration. This reply has
     both preambles and passes."""
     check_brevity(EMPTY, _SAVED, _COMPLIANT_REPLY)
 
 
+def test_brevity_passes_on_the_return_contract_separator():
+    """The contract's single `---` before `summary_for_user` is not a
+    recitation; flagging it would note every compliant run."""
+    check_brevity(
+        EMPTY,
+        _SAVED,
+        "Saved the guidance to `german-church-records.md`; it includes a "
+        "Sources section citing the wiki pages used.\n---\n"
+        "You asked how to find German church records. The guidance is saved "
+        "with the wiki pages it came from.\n\nNext, pick a parish to search.",
+    )
+
+
+def test_brevity_still_fires_on_a_recitation_after_the_separator():
+    """The exemption removes the separator only: a list after it still
+    reports."""
+    with pytest.raises(AssertionError, match="2 list markers"):
+        check_brevity(EMPTY, _SAVED, "Saved.\n---\n- one\n- two\n")
+
+
 def test_brevity_skips_when_no_file_was_saved():
     """The rule is scoped to runs that saved a file - the empty-results path
-    and the boundary negatives must not be reported on."""
+    and a hand-back must not be reported on."""
     with pytest.raises(pytest.skip.Exception):
         check_brevity(EMPTY, EMPTY, _RECITING_REPLY)
 
@@ -521,7 +523,7 @@ def test_brevity_reports_a_recitation_inside_a_fence():
     fence at all. Stripping bought nothing and opened the likeliest bypass —
     "here is the file" inside a fenced markdown block (#2577 review).
     """
-    with pytest.raises(AssertionError, match="Keep it brief"):
+    with pytest.raises(AssertionError, match="do not restate"):
         check_brevity(
             EMPTY,
             _SAVED,
@@ -535,7 +537,9 @@ def test_brevity_reports_a_recitation_inside_a_fence():
     [
         ("heading", "Saved.\n\n## Summary\n\nProse."),
         ("table row", "Saved.\n\n| Repo | Years |\n|---|---|\n| A | 1850 |\n"),
-        ("horizontal rule", "Saved.\n\n---\n\nProse."),
+        # One `---` is the return contract's separator and is exempt; a second
+        # is counted.
+        ("horizontal rule", "Saved.\n\n---\n\nProse.\n\n---\n\nMore."),
         ("list marker", "Saved.\n\n- one\n- two\n"),
         # The #2577 blocker: 4 runs recited as a numbered list and scored
         # clean, and the list arm was the only arm with any hits at all.

@@ -66,6 +66,11 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     that every name here still ships as one. Its successor `agents/citation.md`
 #     is reachable by auto-delegation from its own description, which this set
 #     does not measure and never did.
+#   - `search-familysearch-wiki` was on this list until 2026-09-29 and is NOT
+#     re-listed, for the same reason: issue #2794 deleted the skill. Its
+#     successor `agents/search-familysearch-wiki.md` is reachable by
+#     auto-delegation from its own description, which this set does not
+#     measure.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
         "convert-dates",
@@ -73,7 +78,6 @@ DARK_SKILLS_2026_09_01 = frozenset(
         "historical-context",
         "hypothesis-tracking",
         "project-status",
-        "search-familysearch-wiki",
         "search-wikipedia",
         "source-evaluation",
         "timeline",

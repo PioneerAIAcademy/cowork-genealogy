@@ -555,6 +555,24 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // search-familysearch-wiki (issue #2794) holds the one tool the skill it
+  // replaced declared, `wiki_search`, plus two built-ins it relied on from the
+  // main thread. `Write`: the deliverable IS a markdown file, and handing the
+  // save back to the main thread would take it out of the graded subject, so
+  // the file validators could no longer tell the agent failed. This is the
+  // first plugin agent holding `Write`; the plugin hook's `Write` matcher still
+  // keeps research.json and tree.gedcomx.json off-limits to any caller. `Read`:
+  // `Write` refuses to overwrite a file it has not read, and a repeat
+  // invocation overwrites the topic file in place.
+  "search-familysearch-wiki.md": {
+    tools: [
+      "Read",
+      "Write",
+      "wiki_search",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",

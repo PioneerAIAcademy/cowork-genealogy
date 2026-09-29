@@ -1,6 +1,6 @@
-"""Skill-specific validators for the search-familysearch-wiki skill.
+"""Validators for the search-familysearch-wiki agent.
 
-search-familysearch-wiki searches the FamilySearch Research Wiki via the
+search-familysearch-wiki (`agents/search-familysearch-wiki.md`) searches the FamilySearch Research Wiki via the
 `wiki_search` tool and saves a markdown summary to the working folder. Its
 graded deliverable is therefore a **loose `.md` file**, not research.json —
 which is why the checks here read `after_state["files"]` directly.
@@ -26,7 +26,7 @@ Note: the FamilySearch wiki tool is `wiki_search`; search-wikipedia's tool
 is `wikipedia_search` (which does NOT contain the substring "wiki_search"),
 so `.endswith("wiki_search")` cleanly targets only the FS-wiki tool.
 
-The closing-message rule (SKILL.md step 5, "Keep it brief") is enforced here
+The closing-message rule (the agent's "Return contract": one line, "do not restate, summarize, list or quote it") is enforced here
 as **tier 2** — `report_reply_does_not_restate_the_saved_file`. It was held off
 this file for months on the grounds that it would "fail every positive test at
 once" and, via `_compute_outcome`, destroy the dimension scores that diagnose
@@ -115,57 +115,11 @@ def _wiki_results(tool_calls) -> list[dict]:
     return out
 
 
-# --- Boundary-negative invariants (tag-gated) --------------------------
-
-
-def test_no_spurious_wiki_search(tool_calls, test):
-    """Invariant behind the `grade_on_invariant` flag on search-familysearch-wiki
-    boundary negatives, gated on the `no-wiki-search` tag.
-
-    When a request belongs to a sibling skill, search-familysearch-wiki must
-    not handle it by running its own FamilySearch-wiki search. Whether the
-    router declines the request or routes it to the correct sibling, this
-    skill must not call `wiki_search`. Deterministic check: `wiki_search` was
-    never invoked. This is the real gate that keeps grade_on_invariant from
-    passing vacuously.
-    """
-    if "no-wiki-search" not in (test.get("tags") or []):
-        pytest.skip("only applies to no-wiki-search negative tests")
-    called = [
-        tc["tool"] for tc in tool_calls
-        if tc.get("tool", "").endswith("wiki_search")
-    ]
-    assert not called, (
-        "this boundary negative must not trigger a FamilySearch-wiki search; "
-        f"wiki_search was invoked: {called}"
-    )
-
-
-def test_no_wiki_no_write(before_state, after_state, test):
-    """The write half of the same boundary-negative invariant.
-
-    `test_no_spurious_wiki_search` above asserts the *search* did not happen;
-    this asserts the *summary file* was not written. Both arms are needed —
-    a run that answered from training knowledge without calling the tool
-    would pass the search arm while still leaving a bogus guide in the
-    working folder. search-wikipedia's `test_no_wiki_no_write` already
-    asserts this pair for the sibling skill; this side had only the search
-    arm (#1755 request 5).
-    """
-    if "no-wiki-search" not in (test.get("tags") or []):
-        pytest.skip("only applies to no-wiki-search negative tests")
-    new_md = sorted(_new_md_files(before_state, after_state))
-    assert not new_md, (
-        "an out-of-scope request must not save a wiki summary; wrote: "
-        f"{new_md}"
-    )
-
-
 # --- File-count and filename enforcement ------------------------------
 
 
 def test_no_file_on_empty_results(before_state, after_state, test):
-    """SKILL.md step 3: empty `results` → tell the user and save no file.
+    """Agent body, "What to do" step 3: empty `results` → tell the user and save no file.
 
     Gated on the `no-results` tag. Only the *file* arm is asserted. The
     "and stop" half of that sentence is deliberately not checked: a
@@ -185,8 +139,8 @@ def test_no_file_on_empty_results(before_state, after_state, test):
 def test_wrote_exactly_one_markdown_file(before_state, after_state, test):
     """A results-returning positive test writes exactly one new `.md`.
 
-    Zero means the skill skipped the save step — SKILL.md step 4 says
-    "**Actually invoke the file-write tool to save it** (don't just describe
+    Zero means the agent skipped the save step — "What to do" step 4 says
+    "**Actually invoke the `Write` tool to save it** (don't just describe
     the save)". More than one violates the "**Never duplicate**" rule in the
     re-invocation section.
 
@@ -210,7 +164,7 @@ def test_wrote_exactly_one_markdown_file(before_state, after_state, test):
 def test_expected_slug(before_state, after_state, test):
     """The saved file's name matches the slug the test declares.
 
-    SKILL.md step 4 derives `<topic-slug>` from the core noun phrase — the
+    The agent body's step 4 derives `<topic-slug>` from the core noun phrase — the
     record type plus any qualifying jurisdiction, origin, or period — with
     leading verbs and qualifiers stripped, lowercased and hyphenated.
 
@@ -274,7 +228,7 @@ def test_census_era_boundaries_preserved(before_state, after_state, test):
 def test_sources_section_matches_wiki_results(before_state, after_state, tool_calls, test):
     """Every wiki result is cited in the file, and no URL is invented.
 
-    SKILL.md step 4: "Sources: one bullet per result — `- [page_title —
+    "What to do" step 4: "Sources: one bullet per result — `- [page_title —
     section_heading](source_url)` — using the exact values from the tool
     response."
 
@@ -328,10 +282,11 @@ def test_sources_section_matches_wiki_results(before_state, after_state, tool_ca
         )
 
     allowed = {(r.get("source_url") or "").rstrip(").,") for r in results}
-    # HTML comments are stripped first. `templates/wiki-search-summary.md`
-    # ships its own citation-format reminder carrying a placeholder URL
-    # (`…/en/wiki/...`), and the skill routinely leaves that comment in the
-    # filled file. It is invisible in rendered markdown and is the template's
+    # HTML comments are stripped first. The skill's former
+    # `templates/wiki-search-summary.md` shipped a citation-format reminder
+    # carrying a placeholder URL (`…/en/wiki/...`), and the skill routinely
+    # left that comment in the filled file. The agent's inlined template drops
+    # the comment, but the strip stays for the pre-conversion corpus. It is invisible in rendered markdown and is the template's
     # own text, not a fabricated citation — flagging it made this check fail
     # every positive test on first live run.
     scannable = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
@@ -370,20 +325,30 @@ _RECITATION_CONSTRUCTS = (
 )
 
 
+# The return contract's `summary_for_user` separator: a line of exactly `---`.
+_SEPARATOR_RE = re.compile(r"^[ \t]*---[ \t]*$", re.M)
+
+
 def report_reply_does_not_restate_the_saved_file(
     before_state, after_state, text_response
 ):
-    """SKILL.md step 5: name the file and the fact of a Sources section, and
-    "Keep it brief". Tier 2 by design.
+    """The agent's "Return contract": one line naming the file and the fact of
+    a Sources section, and "do not restate, summarize, list or quote it". Tier 2
+    by design.
 
     On a run that saved a file, a list marker (bulleted or numbered), heading,
     table row or horizontal rule in the reply is the saved document being
-    recited back into chat, which step 5 asks the skill not to do. 57 of the 60
+    recited back into chat, which the return contract forbids. 57 of the 60
     file-saving runs in the five committed run logs carry at least one.
 
     Attributing the prohibition to the body's "Never duplicate" rule, as an
-    earlier revision did, was wrong: `SKILL.md:65` is about not creating a
-    second file for the same topic-slug. Step 5 carries this point alone.
+    earlier revision did, was wrong: that rule is about not creating a second
+    file for the same topic-slug. The return contract carries this point alone.
+
+    **One `---` line is exempt.** The return contract puts a `---` line between
+    the caller-facing line and the two `summary_for_user` paragraphs, so every
+    compliant run carries exactly one. Counting it would hand the judge a false
+    "horizontal rule" note on every run; a second rule is still counted.
 
     **Why tier 2, not tier 1.** A failing gating validator still forces the
     run's outcome: `if not validators_passed: return "fail"`
@@ -396,8 +361,8 @@ def report_reply_does_not_restate_the_saved_file(
     filtered out of `compute_validators_passed` (issue #1749), so this reports
     without gating.
 
-    **Why this does not fire on required narration.** `SKILL.md:24` mandates a
-    one-line preamble per action, and `text_response` is every assistant turn,
+    **Why this does not fire on narration.** The skill's `**Narration:**` line
+    mandated a one-line preamble per action (the agent carries no such line), and `text_response` is every assistant turn,
     not the closing message alone -- the objection that held this check off the
     file. Checked against the corpus: the runs that stay clean carry their
     preambles ("Searching the FamilySearch Research Wiki now.", "Now let me
@@ -422,7 +387,7 @@ def report_reply_does_not_restate_the_saved_file(
     disarmed by a tag rename (#1757).
 
     Known gap, unfixed here: `_new_md_files` is a set difference, so a repeat
-    invocation -- which `SKILL.md:63` tells the skill to satisfy by overwriting
+    invocation -- which the agent's re-invocation rule satisfies by overwriting
     in place -- creates no new file and skips this check entirely. No fixture in
     the corpus exercises that path, so a fix could not be proven to fail
     (#2577 review).
@@ -440,7 +405,7 @@ def report_reply_does_not_restate_the_saved_file(
     # recitation would arrive (#2577 review). It also made the word count below
     # describe the post-strip text, so a 13-word reply wrapping a fenced
     # document was reported to the judge as "runs to 3 words".
-    scannable = text_response or ""
+    scannable = _SEPARATOR_RE.sub("", text_response or "", count=1)
 
     counts = []
     for label, pattern in _RECITATION_CONSTRUCTS:
@@ -456,8 +421,8 @@ def report_reply_does_not_restate_the_saved_file(
     # anchor the grade.
     assert False, (
         f"the reply on a run that saved {saved[0].split('/')[-1]} carries "
-        f"{', '.join(counts)} and runs to {words} words. SKILL.md step 5 asks "
-        "for the filename and the fact of a Sources section, and says "
-        '"Keep it brief".'
+        f"{', '.join(counts)} and runs to {words} words. The return contract "
+        "asks for one line naming the file and the fact of a Sources section, "
+        'and says "do not restate, summarize, list or quote it".'
     )
 

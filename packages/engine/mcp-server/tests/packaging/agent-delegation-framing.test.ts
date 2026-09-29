@@ -400,6 +400,13 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["timeline -> person-evidence", ""],
   ["translation -> person-evidence", ""],
   ["tree-edit -> person-evidence", ""],
+  // search-familysearch-wiki entered agentOnly when issue #2794 deleted its
+  // skill. All three are routing-boundary prose naming it as the owner of a
+  // FamilySearch-wiki request ("use search-familysearch-wiki"), none a
+  // delegation, and none spells `@plugin:search-familysearch-wiki`.
+  ["historical-context -> search-familysearch-wiki", ""],
+  ["locality-guide -> search-familysearch-wiki", ""],
+  ["search-wikipedia -> search-familysearch-wiki", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -581,6 +588,7 @@ describe("agent delegation framing", () => {
     "image-reader",
     "person-evidence",
     "record-extractor",
+    "search-familysearch-wiki",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {
