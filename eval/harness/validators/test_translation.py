@@ -116,7 +116,7 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
         pytest.skip("negative tests are not applicable to the direct-arm agent")
     if "no-record-lookup" in (test.get("tags") or []):
         pytest.skip(
-            "no-record lookups are exempt per SKILL.md Step 5 — a bare "
+            "no-record lookups are exempt per the translation agent body — a bare "
             "definition or date conversion needs no workflow hand-off offer"
         )
     if "direct-arm" in (test.get("tags") or []):
@@ -215,7 +215,7 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
         re.I,
     ):
         pytest.skip(
-            "response invokes SKILL.md's pre-Gregorian carve-out (Old Style / "
+            "response invokes the translation agent's pre-Gregorian carve-out (Old Style / "
             "indeterminate calendar); withholding the ISO form is required "
             "there, so the ISO floor does not apply"
         )
