@@ -65,11 +65,37 @@ see findings below. That is deliberate, not unfinished work.
 | #2927 | **OPEN — do NOT fix here.** Its own board note says it is moot once #2793 lands, and the small patch would edit the file #2793 deletes | Cia-3 (asked to prioritise 2026-09-29) |
 | #2793 | OPEN, **assigned to Cia-3**, must land serially with #2792 and #2798 | Cia-3 |
 
+## Before-phase-2 acceptance scorecard (R2/R3), measured against the capture
+
+Everything is BUILT. The acceptance is a separate bar and is **not** met yet — R2 requires
+**three consecutive runs**, not one, because the behaviour it measures is known to flap.
+
+| Criterion | State |
+|---|---|
+| New browser session, shipped profile, no slash command | **met** — `docs/captures/2026-09-29-mcandrew-children/` |
+| Objective checked not on the live tree *before* the run | **met** — the five children were confirmed present, and the question asks past them |
+| Ends `completed` or `decision`, never `budget`/`no_progress` | **met** — `completed` |
+| Its feed committed to the repo | **met** — 2,697 events, 282 paragraphs |
+| No body ends a reply with an offer the run overrides | **met** — 0 offers in 282 paragraphs |
+| Invokes `research` in its first turn | **partial** — the router WAS entered (6th of 42 calls, after init-project → check-warnings → question-selection → research-plan → locality-guide), in the run's single turn. Whether "in its first turn" means *during* it or *as the first call* decides this one |
+| **Three consecutive runs** | **NOT met** — one run |
+| "…but leave it at that" ends with the delivered outcome | **NOT met** — scenario not run |
+| "where are we?" ends after the answer, delivered, no new log entry | **NOT met** — scenario not run |
+| #2927 fixed first, or the measurement means nothing | **NOT met** — open, Cia-3 |
+
+`project-status` was NOT chosen in the captured run, so the #2927 coin flip did not land badly
+here — but one run cannot show that it won't, which is exactly why R2 asks for three.
+
 ## The one item still open and owned here
 
-`sdk_stream_silence` — diagnosed (it tracks test duration; `research-plan` owns the four
-longest tests) but not fixed. It blocks validating anything on that suite, which is why five
-consecutive runs there produced no red-free log.
+~~`sdk_stream_silence`~~ — **FIXED** (`74b477107`). The threshold was not the defect: in
+successful runs the non-API gap peaks at 58.7s against a 180s window. The RETRY was — a
+1s→2s→4s backoff put all three attempts within ~7s of a three-minute stall, straight back
+into the same dead upstream. A stall now waits out a meaningful fraction of the window that
+declared it.
+
+Nothing else here is owned by this branch. What remains is the acceptance above, and it is
+gated on #2927 (Cia-3).
 
 ## Process notes worth keeping
 
