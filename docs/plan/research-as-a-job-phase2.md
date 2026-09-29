@@ -206,3 +206,41 @@ prompt-injection half first — it is decidable from the code today. **Nothing h
 be validated by a `research-plan` eval run until the stall item above is addressed**:
 five consecutive runs failed to produce a red-free log there, and that cost belongs to
 the plan, not to the change under test.
+
+
+## Capture a real feed — the detailed pass the parent plan deferred
+
+The parent leaves one thing open: *"Which objective, and how its answer stays off the
+tree, is this section's detailed pass."* Settled here so the run can be started without
+re-deciding it.
+
+**The trap to avoid.** The `strip`-genre e2e fixtures look like the answer, and are not.
+They work by the HARNESS BLOCKING TREE READS (`blocked_tree_reads` on every run log). A
+browser session blocks nothing, so for a capture the answer must be genuinely absent from
+the live tree — a property of the QUESTION, not something the runner enforces. Reusing a
+strip fixture unchanged would produce a run that reads the answer off the tree in one call
+and narrates nothing, which is the one outcome that makes the capture worthless.
+
+**Shortlist** — `strip`-genre, medium/hard, each with a committed run proving it is
+solvable from live FamilySearch:
+
+| Slug | Why it fits |
+|---|---|
+| `broyles-siblings` | Siblings are assembled from census + vitals across households; a tree read returns one person, not the set |
+| `clark-migration` | A migration claim: answered by placing records in sequence, which no single tree field holds |
+| `jens-nielsen` | Emigration + settlement, spanning two countries' record sets |
+
+**Recommend `broyles-siblings`.** A sibling set is the shape most likely to force the
+full loop — search, extract, link, resolve a conflict between duplicate entries — which
+is exactly the narration phase 2 is designed around. `clark-migration` is the fallback
+if its answer turns out to sit on the tree.
+
+**The one check that still needs live data**, and it costs a minute at capture time, not
+a run: open the anchor person on FamilySearch and confirm the answer is not simply
+readable there. If it is, take the next candidate. This cannot be settled offline, which
+is why it is written down as a step rather than pretended away.
+
+**Run conditions**, from the parent: a NEW session so the opener fires and `init-project`
+writes the shipped novice profile; **no slash command**; and the objective typed as a
+researcher would type it. Export with `proto/export.py --session <id>`, which now writes
+`feed.json` beside the project.
