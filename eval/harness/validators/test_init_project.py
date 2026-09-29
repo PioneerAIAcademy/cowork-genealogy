@@ -120,6 +120,42 @@ def test_profile_defaults_when_all_default(after_state, test):
     )
 
 
+def test_volunteered_subscriptions_normalized(after_state, test):
+    """Tag-gated on `volunteered-access`: when the researcher volunteers site
+    access unprompted, it is normalized onto the closed `subscriptions` enum and
+    persisted. A local family history centre is `LibraryAccess` (not `other`); a
+    bare FamilySearch account is dropped (it is the baseline every researcher on
+    this product has, not a value on the enum).
+
+    This is the deterministic guard the docstring of
+    `test_profile_defaults_when_all_default` promises but does not itself apply:
+    that check is gated on `opening-turn-all-defaults` and only pins the DEFAULT
+    direction (absent / not `["none"]` / not `[]`). The exact normalized set is
+    fixed by the scenario, so pinning it here takes the field off the flaky judge
+    -- the test's judge_context tells the grader this validator owns it."""
+    if "volunteered-access" not in test.get("tags", []):
+        pytest.skip("not a volunteered-access scenario")
+    research = after_state.get("research_json")
+    if research is None:
+        assert False, "volunteered-access requires research.json to exist"
+    profile = research.get("researcher_profile") or {}
+    subs = profile.get("subscriptions")
+    assert isinstance(subs, list), (
+        "researcher_profile.subscriptions must be written when the researcher "
+        f"volunteered access unprompted, got: {subs!r}"
+    )
+    assert "FamilySearch" not in subs, (
+        "a bare FamilySearch account is the baseline every researcher has and is "
+        f"not a value on the closed enum -- it must not be stored, got: {subs!r}"
+    )
+    assert set(subs) == {"Ancestry", "LibraryAccess"}, (
+        "the volunteered access (Ancestry, plus a local family history centre) "
+        "normalizes onto the closed enum as exactly Ancestry + LibraryAccess -- "
+        "the family history centre is `LibraryAccess`, not `other`, and nothing "
+        f"else is added or dropped, got: {subs!r}"
+    )
+
+
 # --- Empty-section enforcement at init time (tag-gated) ----------------
 
 # Per init-project's bootstrap rule, research.json at creation has empty
