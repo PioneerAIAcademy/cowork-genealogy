@@ -53,11 +53,10 @@ directly, the record names the bride **Matilde Carmela Emanuela Cavagnaro**,
 born **1866 at Lima**, *Maestra Elementare*, daughter of **Giuseppe** and
 **Maddalena Bitano** — parents, birth year and birthplace all matching
 `G4Z4-RJ1`. That is a firm identification of the tree person, not a namesake.
-(On birthplace, note what the agreement is worth: the record's *Lima* agrees
-with the **tree's own claim**, which is itself unsourced, not with independent
-record evidence — her birth entry says Genova. The identification rests on the
-parents and the birth year; Lima is corroboration of the tree, not of the
-record. See the birthplace conflict below.)
+(On birthplace, see "Lima, not Genova" below: the apparent Genova/Lima conflict
+was resolved in Lima's favour after this fixture was first written, so the
+record's *Lima* is genuine corroboration and not merely agreement with the
+tree's own claim.)
 The groom is Paolo Andrea Vaglio, b. 1867 Bogliasco, *Segretario Comunale*, son
 of **Angelo** and **Maria Fereccio**.
 
@@ -106,36 +105,55 @@ record**, indexed under the groom's line as *Paolo Andrea Vaglio and Angelo,
 from **Angelo** and **Maria Fereccio** to *Paolo Andrea Vaglio*, and separately
 from **Giuseppe** and **Maddalena Bitano** to the bride. So Angelo Vaglio and
 Maria Fereccio are the **groom's** parents, the subject's parents-in-law,
-attached to her in error from that record. The sources belong on her; the parent
-edges derived from them do not. `SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her
-birth entry, 20 May 1866.
+attached to her in error from that record. `SYXS-SC8`
+(`ark:/61903/1:1:QVR6-Q9DC`) is the 1877 Genova transcription of her Lima baptism
+(see "Lima, not Genova" below).
+
+Of the three "Vaglio" sources, **two belong on her and one does not**. `7PM9-ZQP`
+(`X3L8-MFLR`) and `7PM9-W4L` (`X3G7-XG5Y`) are her own personas on the act and are
+correctly attached. `7PM9-W5S` (`X3G7-XG52`) is **Paolo's** persona, titled for
+him, and attaching it asserts that she *is* him — which is the likeliest route by
+which his parents were pulled onto her, and a generator of further bad hints. It
+is still attached: see the upstream note below.
 
 (The three cite two ark families — `X3L8-MFL*` and `X3G7-XG5*` — and their
 `url` and `citation` fields disagree on the ark, as issue #2314 noted. They
 resolve to per-person arks on the same 26 Jul 1900 act; `X3L8-MFLR` is the
 bride's persona, which is why it is the one cited above.)
 
-**Nothing was corrected upstream.** Ikennaya's review recommends detaching the
-Vaglio parents on the live tree; that is deliberately **not** done here, because
-issue #2314 forbids editing live FamilySearch during adjudication so
-`starting-tree.gedcomx.json` and `unstripped-tree.gedcomx.json` stay
-byte-identical and `snapshot --check` can still audit drift. Tracked in issue
+**Corrected upstream 2026-09-29 (issue #2908) — the committed snapshot
+deliberately still carries the old state.** Issue #2314 forbade editing live
+FamilySearch during adjudication, so PR #2900 left the defect in place and filed
+it separately. It has since been fixed on the live tree: the three ParentChild
+edges attaching Angelo Vaglio (twice) and Maria Fereccio to `G4Z4-RJ1` were
+removed, and her birth date corrected from `1866` to `about 10 May 1866`.
+`starting-tree.gedcomx.json` and `unstripped-tree.gedcomx.json` are **unchanged
+and still byte-identical** — the snapshot is the benchmark input, the agent is
+meant to see the wrong parents, and re-snapshotting would silently rewrite the
+test (`docs/specs/e2e-test-spec.md` §3.5). `snapshot --check` now reports five
+further DRIFT lines for this, on top of the 16 that predate it.
+
+Still **not** done, and outside what was authorised: source `7PM9-W5S`
+(`ark:/61903/1:1:X3G7-XG52`) is Paolo Andrea Vaglio's own persona on the marriage
+act and is still attached to her, which asserts she *is* him. Recorded on issue
 #2908.
 
-**A birthplace conflict, documented not resolved.** Her birth record
-(`ark:/61903/1:1:QVR6-Q9DC`) gives **20 May 1866 at Genova**. The marriage record
-reports **Lima**, and the tree follows Lima with no day or month. The birth
-record is the stronger evidence, but the conflict is recorded here rather than
-silently resolved. It is deliberately *not* encoded as a graded finding: the
-fixture's question is about her spouse, and grading a birthplace conflict would
-widen what the benchmark scores beyond the question asked.
+**Lima, not Genova — there is no birthplace conflict.** An earlier revision of
+this README recorded one; that was wrong and is corrected here. `SYXS-SC8`
+(`ark:/61903/1:1:QVR6-Q9DC`) gives *20 May 1866 at Genova*, but reading the image
+shows it is a **transcription**: on 9 Nov 1877 Giuseppe brought a
+Spanish-language certificate to the Genova registry to be copied in. The original
+is a baptism at the Parish of Sant'Anna, **Lima**. Genova is the place of filing,
+not of birth, so Lima — which the tree and the marriage record both carry — is
+correct and the two sources never disagreed. Ikennaya Mbadiwe's finding.
 
 **On the age question — settled: 17.** Issue #2314 asked whether the subject was
-16 or 17 on 30 August 1883, her tree birth fact being year-only (`1866`).
-`SYXS-SC8` (`ark:/61903/1:1:QVR6-Q9DC`) is her birth entry, **20 May 1866**, so
-she was 17 years 3 months. That was legal and unremarkable in 1880s Liguria, so
-age never could have disproved the hint on its own — and in the event the call
-turned on her marriage, not her age.
+16 or 17 on 30 August 1883, her tree birth fact being year-only (`1866`). She was
+baptised 21 May 1866 aged eleven days, so born **about 10 May 1866** — making her
+17 years 3 months at the 1883 birth. (An earlier revision gave 20 May, reading
+the transcription's filing date as a birth date.) That was legal and unremarkable
+in 1880s Liguria, so age never could have disproved the hint on its own — and in
+the event the call turned on her marriage, not her age.
 
 **On the avoid guard and the two WARNs.** `f1` carries `polarity: "avoid"`, which
 is what switches `apply_avoid_guard` on for this fixture — before adjudication it
