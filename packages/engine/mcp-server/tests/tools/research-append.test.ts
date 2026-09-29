@@ -3080,6 +3080,7 @@ describe("research_append (project singleton section)", () => {
     // for — so the object has to appear on the first REAL write. Without
     // createWhenAbsent the singleton branch throws "missing or not an object"
     // and the section stays writable by nothing.
+    const r0 = baseResearch();
     expect((r0 as Record<string, unknown>).researcher_profile).toBeUndefined();
     await writeProject(r0);
     const r = await researchAppend({
@@ -3149,6 +3150,7 @@ describe("research_append (project singleton section)", () => {
   it("sets objective, title and subject_person_ids once on a fresh project", async () => {
     // The whole point of the widening: init-project holds no writer tool today
     // and creates the project with a bare `Write`, which the lockdown denies.
+    const r0 = baseResearch();
     r0.project = { ...r0.project, objective: "", subject_person_ids: [] };
     delete (r0.project as Record<string, unknown>).title;
     await writeProject(r0);
@@ -3172,6 +3174,7 @@ describe("research_append (project singleton section)", () => {
   it("treats an empty string and an empty array as unset, not as set", async () => {
     // `subject_person_ids` is seeded as `[]` rather than omitted, so a
     // truthiness test would have refused the very first legitimate write.
+    const r0 = baseResearch();
     r0.project = { ...r0.project, objective: "   ", subject_person_ids: [] };
     await writeProject(r0);
     const r = await researchAppend({
@@ -3466,6 +3469,7 @@ describe("research_append (project singleton section)", () => {
   // this gate: 0 refusals across all 150 questions that ever reached resolved.
 
   it("refuses status resolved when no proof summary references the question", async () => {
+    const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     await writeProject(r0);
     const r = await researchAppend({
@@ -3489,6 +3493,7 @@ describe("research_append (project singleton section)", () => {
     // an ungated synonym, so an agent refused above could reach the same state
     // by writing the date instead — and `project_context` would then report the
     // question resolved while this gate had never seen it.
+    const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     await writeProject(r0);
     const r = await researchAppend({
@@ -3506,6 +3511,7 @@ describe("research_append (project singleton section)", () => {
   });
 
   it("allows status resolved once a summary references it", async () => {
+    const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     r0.proof_summaries.push(summary());
     await writeProject(r0);
@@ -3524,6 +3530,7 @@ describe("research_append (project singleton section)", () => {
     // one author's conclusion, unlike the mentor verdict which must come from a
     // different actor. 7 of 154 corpus resolve-calls do exactly this, all with
     // the summary ordered first — a pre-call snapshot would refuse all 7.
+    const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     await writeProject(r0);
     // tier `possible` — a proved/probable summary additionally requires a prior
@@ -3549,6 +3556,7 @@ describe("research_append (project singleton section)", () => {
   it("does not re-trigger on an unrelated update to an already-resolved question", async () => {
     // The op must be the one SETTING status, or every later edit to a resolved
     // question re-runs the gate — the same discipline the tier invariant uses.
+    const r0 = baseResearch();
     r0.questions.push(resolvedQuestion());
     r0.proof_summaries.push(summary());
     await writeProject(r0);
@@ -3707,6 +3715,7 @@ describe("research_append (project singleton section)", () => {
     // this pins is that an already-seeded document still LOADS and completes —
     // a gate on a transition must not retroactively invalidate documents that
     // predate it.
+    const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
     await writeProject(r0);
     const r = await complete();
@@ -3718,6 +3727,7 @@ describe("research_append (project singleton section)", () => {
     // a date-resolved question's summary escaped the mentor gate entirely.
     // `question-state.ts` has always read this field as truthy-or-not, so the
     // two disagreed about the same question.
+    const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "exhaustive_declared" });
     r0.proof_summaries.push(summary());
     await writeProject(r0);
@@ -3728,6 +3738,7 @@ describe("research_append (project singleton section)", () => {
   });
 
   it("ignores a summary whose question is not resolved", async () => {
+    const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     r0.proof_summaries.push(summary());
     await writeProject(r0);
