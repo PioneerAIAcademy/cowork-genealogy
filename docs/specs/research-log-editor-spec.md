@@ -110,9 +110,14 @@ batching does differently from its siblings: finalizing a staged sidecar is a
 mutation held until the final commit — so a batch call tracks every sidecar it
 creates and unlinks all of them (not just the failing op's) on any later
 failure, extending the single-call path's existing orphan-cleanup rather than
-introducing a new invariant. The §8.2 census check and the §8.3 query check are
-the exceptions to per-op ordering: they run over every op before any op is
-applied, so a refusal consumes no staged file.
+introducing a new invariant. **No refusal consumes a staged file**: finalize only
+writes the sidecar, and the staged files are removed after `research.json` commits,
+so a corrected re-send finds every one. Several checks run over every op before any
+op is applied: the staged ref itself (it exists under `results/.staging/` and its
+`tool` matches), a staged ref named by two ops (`ops[j]: stagedResultsRef '…' is also
+ops[i]'s` — with removal deferred, both would finalize it), the §8.2 census check,
+and the §8.3 query check. So a bad ref in op[1] is refused before op[0] writes a
+sidecar.
 
 **Success response.** `{ ok: true, logId, performed, resultsRef, returnedCount,
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
@@ -196,7 +201,8 @@ why the merge tools read the tree from disk rather than take it as an argument).
 (`results/.staging/<token>.json`) and returns `{ stagedResultsRef, returnedCount }`
 alongside the model-facing results. `research_log_append` takes `stagedResultsRef`;
 the server finalizes that file into `results/<log_id>.json` (wrap with the assigned
-`log_id` + recompute `returned_count` + write + unlink) and **the payload never
+`log_id` + recompute `returned_count` + write, then remove the staged file once
+`research.json` commits) and **the payload never
 round-trips through the model.** This is the symmetric analog of the merge tools
 reading the tree from disk, and it composes with validation: the staged file becomes
 the on-disk sidecar, so validate-before-persist sees it.
@@ -225,8 +231,9 @@ Sequence:
 2. If results are retained (`stagedResultsRef` given), materialize the sidecar at
    `results/<log_id>.json`: read the staged file, recompute `returned_count` from
    `payload.results.length` (never trusted from the caller), wrap it with the
-   assigned `log_id`, write it, and unlink the staged file (a host-side byte move —
-   see `search-result-staging-spec.md` §6). Nil searches and external-site searches
+   assigned `log_id`, and write it (a host-side byte move — see
+   `search-result-staging-spec.md` §6). The staged file is **kept** here; it is
+   removed only after step 4 commits. Nil searches and external-site searches
    write **no** sidecar and set `results_ref: null` (`research-schema-spec.md`
    §5.4.1).
 3. **Validate** with `validateParsed(research, tree, { projectPath })`
@@ -235,14 +242,18 @@ Sequence:
    the sidecar checks (`returned_count`, `log_id` match, orphan, D5) all run against
    the would-be-committed state. `tree.gedcomx.json` is read unchanged for cross-file
    checks.
-4. If valid → commit `research.json` (temp + rename). If invalid → **unlink the
-   sidecar just written** and write nothing to `research.json`; return
+4. If valid → commit `research.json` (temp + rename), then remove each staged file
+   the call finalized. If invalid → **unlink the sidecar just written**, write
+   nothing to `research.json`, and leave every staged file; return
    `{ ok: false, errors }`.
 
 This yields the never-invalid guarantee. Known minor: a crash between steps 2 and 4
 can leave an orphan sidecar (written, not yet referenced on disk); the next
 `validate_research_schema` surfaces it as an orphan error, and a re-run is safe
-(the tool allocates a fresh `log_id`). Acceptable for v1; an in-memory-sidecar
+(the tool allocates a fresh `log_id`). Likewise, on the file backend a crash
+between the step-4 commit and the staged-file removal leaves a staged file whose
+search is already logged; `unloggedStagedSearches` then reports it as unlogged, and
+logging it again would write a duplicate entry. Acceptable for v1; an in-memory-sidecar
 validation path (validate before any disk write) is the future cleanup.
 
 **Validation cost.** Step 3 runs the *full* project validator, and `validateSidecars`
@@ -332,8 +343,10 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
-| Appended entry introduces a project-validation error | **write nothing** (unlink staged sidecar); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
+| Appended entry introduces a project-validation error | **write nothing** (unlink the new sidecar; every staged file is kept); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
+| `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
+| a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 
@@ -396,8 +409,9 @@ in the project folder, which is ADR-0011's test for a writer-tool precondition.
 No later call can change the answer. The refusal is also always actionable — the
 note becomes compliant by saying what is true ("family structure inferred from
 surname, ages and order, not stated"), so it costs a turn rather than losing
-work. A batch runs the check on every op before any op is applied, so a refusal
-consumes no op's staged file and a corrected re-send still finds them all.
+work. A batch runs the check on every op before any op is applied, so the refusal
+comes before any op writes a sidecar. (No refusal consumes a staged file in any
+case — see §4, batch form.)
 
 Scope, and why it is this narrow:
 
@@ -489,9 +503,8 @@ producing tool's schema; it is a filter (§7); the caller gave it a value (`null
 the search sent with a different value is allowed. No staged handle means no
 ground truth, so a nil search, which stages nothing, is never judged; an omitted
 `query` is filled rather than judged; an unreadable staged file is left for
-finalize to report. The check runs over every op before any op is applied,
-because finalizing a staged handle deletes it, and a refusal after that would
-consume the handle the corrected re-send needs.
+finalize to report. The check runs over every op before any op is applied, so
+the refusal comes before any op writes a sidecar.
 
 Measured at a1960c5af with `dev/measure-log-query-claims.ts`, which pairs each
 logged op to the call whose response staged its handle and judges it with the
