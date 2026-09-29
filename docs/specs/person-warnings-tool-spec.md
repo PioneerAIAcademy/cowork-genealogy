@@ -459,6 +459,14 @@ day-level tolerance, `30_10` = a 300-day exact-day window, `2` = a
 count-of-two). Tolerances are day-level unless the rule says otherwise;
 imprecise dates are widened per § Date Parsing Rules.
 
+**Not every tag fires in `person_warnings`.** A row whose Rule begins
+"Merge-mode only" fires only from `merge_warnings`, for one of two reasons.
+Either the check compares a target record with a candidate, which cannot
+differ when `person_warnings` passes one record as target, candidate and
+merged. Or the check sits in `calculateNonFinalWarnings`, which
+`person_warnings` skips by calling `calculateWarnings` with
+`isFinalWarnings: true`.
+
 #### Contradictions (`severity: "contradiction"`) — physically impossible
 
 | Tag | Severity | Rule | Cause |
@@ -514,7 +522,7 @@ imprecise dates are widened per § Date Parsing Rules.
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
 | `hasCloseChildBirthsIgnoreSimilarChildren` | implausible | Two of this person's children (that are not already flagged as similar) have Birth dates suspiciously close together | Two records of one child attached as two children |
-| `hasCloseChildChristenings6_30` | implausible | Two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
+| `hasCloseChildChristenings6_30` | implausible | Merge-mode only: two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
 | `similarChildren` | implausible | Two children look like the same individual recorded twice (similar names and dates) | One child duplicated under two records |
 | `similarChildrenConflictingDates` | implausible | Two children have similar names but conflicting dates | Same child recorded twice with a date discrepancy |
 | `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
@@ -560,8 +568,8 @@ reason (§ The four `person_quality` parity checks).
 | `missingFactsAndRelatives` | implausible | Empty stub: no facts other than `GenderChange`, and no relatives | An unfinished record |
 | `hasBlankName` | implausible | A name entry carries a blank (empty-string) given name or surname part — distinct from a name part that is simply absent (see `missingSurnames`/`missingGivenNamesWithoutExactBirthLikeDate`) | An incomplete record |
 | `hasDiffSurnameMale` | implausible | Male anchor has surnames that do not match each other (similarity ≤ 0.5) | Records from two same-given-name men merged |
-| `missingSurnames` | implausible | No recorded surname | Incomplete record; hard to distinguish from same-given-name persons |
-| `missingGivenNamesWithoutExactBirthLikeDate` | implausible | No recorded given name AND no exact birth-like date | Record too sparse to identify |
+| `missingSurnames` | implausible | Merge-mode only: no recorded surname | Incomplete record; hard to distinguish from same-given-name persons |
+| `missingGivenNamesWithoutExactBirthLikeDate` | implausible | Merge-mode only: no recorded given name AND no exact birth-like date | Record too sparse to identify |
 
 #### Relative-mob mirrors (`implausible`)
 
@@ -573,21 +581,22 @@ severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
 `personId`/`personName`. Prefix conventions: `relatives*` = any relative,
 `maleRelatives*`/`femaleRelatives*` = gender-restricted. See each row's
-mirrored self-check for the rule.
+mirrored self-check for the rule. Ten of the 27 variants fire only in merge
+mode, marked below, so `person_warnings` can emit 17 of them.
 
 | Tag | Severity | Mirrors |
 |-----|----------|---------|
-| `relativesHasEventBeforeBirth365_2` | implausible | `hasEventBeforeBirth365_2` |
-| `relativesHasEventAfterDeath1` | implausible | `hasEventAfterDeath1` |
+| `relativesHasEventBeforeBirth365_2` | implausible | `hasEventBeforeBirth365_2` (merge-mode only) |
+| `relativesHasEventAfterDeath1` | implausible | `hasEventAfterDeath1` (merge-mode only) |
 | `relativesHasAgeRangeGreaterThan120` | implausible | `hasAgeRangeGreaterThan120` |
 | `relativesHasEventBeforeChristening365_3` | implausible | `hasEventBeforeChristening365_3` |
-| `relativesHasBurialBeforeDeath` | implausible | `hasBurialBeforeDeath` |
-| `relativesHasBurialAfterDeath31` | implausible | `hasBurialAfterDeath31` |
+| `relativesHasBurialBeforeDeath` | implausible | `hasBurialBeforeDeath` (merge-mode only) |
+| `relativesHasBurialAfterDeath31` | implausible | `hasBurialAfterDeath31` (merge-mode only) |
 | `relativesDeathRangeGreaterThan2` | implausible | `deathRangeGreaterThan2` |
-| `relativesTooManyBirthDates2` | implausible | `tooManyBirthDates2` |
-| `relativesTooManyDeathDates2` | implausible | `tooManyDeathDates2` |
-| `relativesBirthLikeRangeGreaterThan8` | implausible | `birthLikeRangeGreaterThan8` |
-| `relativesChildBirthRange40` | implausible | `childBirthRange40` |
+| `relativesTooManyBirthDates2` | implausible | `tooManyBirthDates2` (merge-mode only) |
+| `relativesTooManyDeathDates2` | implausible | `tooManyDeathDates2` (merge-mode only) |
+| `relativesBirthLikeRangeGreaterThan8` | implausible | `birthLikeRangeGreaterThan8` (merge-mode only) |
+| `relativesChildBirthRange40` | implausible | `childBirthRange40` (merge-mode only) |
 | `relativesEarliestChildBirthToBirth12` | implausible | `earliestChildBirthToBirth12` |
 | `maleRelativesEarliestChildBirthToBirth14` | implausible | `earliestChildBirthToBirthMale14` |
 | `relativesLatestChildBirthToBirth80` | implausible | `latestChildBirthToBirth80` |
@@ -601,8 +610,8 @@ mirrored self-check for the rule.
 | `relativesHasDeathBeforeChildBirth365_2` | implausible | `hasDeathBeforeChildBirth365_2` |
 | `femaleRelativesHasDeathBeforeChildBirth365` | implausible | `hasDeathBeforeChildBirthFemale365` |
 | `femaleRelativesHasDeathBeforeChildBirth2` | implausible | `hasDeathBeforeChildBirthFemale2` |
-| `relativesHasEarlyMarriage14` | implausible | `hasEarlyMarriage14` |
-| `relativesHasLateMarriage90` | implausible | `hasLateMarriage90` |
+| `relativesHasEarlyMarriage14` | implausible | `hasEarlyMarriage14` (merge-mode only) |
+| `relativesHasLateMarriage90` | implausible | `hasLateMarriage90` (merge-mode only) |
 | `maleRelativesHasDiffSurname` | implausible | `hasDiffSurnameMale` |
 
 ### The four `person_quality` parity checks
