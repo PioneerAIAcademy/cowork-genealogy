@@ -31,7 +31,8 @@
     "place-population-schuylkill",
     "wiki-place-page-pennsylvania-research-tips",
     "wiki-place-page-pennsylvania-online-records",
-    "volume-search-schuylkill"
+    "volume-search-schuylkill",
+    "collections-search-us-national"
   ],
   "judge_context": [
     "Background on what the test author was looking for. None of it is a dimension. Grade what it describes inside the dimensions you were given, and do not add one named after anything below.",

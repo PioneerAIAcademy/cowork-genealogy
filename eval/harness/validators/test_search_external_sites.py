@@ -17,6 +17,7 @@ signature contract. The `test` argument is the parsed test JSON dict
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -28,7 +29,11 @@ from validators_lib import assert_log_append_only as _assert_log_append_only
 from validators_lib import (
     assert_only_writes_to_sections as _assert_only_writes_to_sections,
 )
+from validators_lib import as_mapping as _as_mapping
 from validators_lib import bare_tool_name as _bare_tool_name
+from validators_lib import filter_claim_findings as _filter_claim_findings
+from validators_lib import hashable_key as _hashable_key
+from validators_lib import tool_input_keys as _tool_input_keys
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -84,32 +89,6 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
                 f"{detail.get('capture_received')!r}"
             )
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
-
-
-def _as_mapping(value):
-    """A tool argument a model may have serialized as a JSON string.
-
-    `build_external_search_url` recovers from this itself (`coerceJsonArg`), so
-    the call SUCCEEDS and the URL is built — a rejected value reaches the site
-    exactly as if the argument had been well-formed. Reading it raw here raised
-    `AttributeError` instead of grading, and a crash in a `test_`-prefixed
-    validator is not an observation: `validator_runner` builds the result
-    without `reporting_only`, so it gates and the run scores `fail`. The judge
-    still grades — since #2057 only an aborted run or a raising judge skips it —
-    but it sees an opaque validator NAME in `validator_failures` rather than the
-    graded observation this check exists to produce. So the mis-serialized call
-    was the one shape this check could not survive.
-
-    Anything that is not a mapping after one parse attempt reads as absent,
-    which is the same thing an omitted argument does — this helper never
-    invents a value, so it cannot turn a passing call into a firing one.
-    """
-    if isinstance(value, str):
-        try:
-            value = json.loads(value)
-        except (ValueError, TypeError):
-            return {}
-    return value if isinstance(value, dict) else {}
 
 
 def _place_matches_rejected(birth_place: str, rejected_place: str) -> bool:
@@ -906,3 +885,289 @@ def test_the_log_is_append_only(before_state, after_state, test):
         before_state.get("research_json") or {},
         after_state.get("research_json") or {},
     )
+
+
+# --- #2521 Half 2: collection-ID provenance (reporting-only) ----------
+
+#: Case-INSENSITIVE. Case A base URLs arrive verbatim from `external_links_search`
+#: curated links and the tool never re-encodes them (spec §3.2), so the host and
+#: path casing is whatever the curator wrote. A case-sensitive pattern made
+#: `https://www.Ancestry.com/...` skip the whole check silently, and a tier-2
+#: skip is indistinguishable from a clean run in the run log.
+_COLLECTION_URL = re.compile(r"ancestry\.[a-z.]+/search/collections/(\d+)", re.I)
+
+#: Field names that ARE a collection id, so the value needs no prose context.
+#: `research_log_append` writes `query.collectionId`; a source may carry
+#: `collection_id`. Matching only prose scored the structured field that
+#: actually records provenance as no provenance at all, while free text counted.
+_ID_FIELD_NAMES = frozenset({"collectionid", "collection_id"})
+
+#: The collection-naming token must sit IMMEDIATELY before the id, allowing
+#: only a separator ("collection 8054", "collections/8054", "col. no. 8054").
+#: Two weaker rules were tried and both admitted coincidences: matching the
+#: token anywhere in the string let "Collection of 8054 letters, Smith family
+#: papers" back collection 8054, and so did a 24-character proximity window,
+#: because "Collection of " is only 14 characters wide. Word order is what
+#: separates a backing from a count that happens to follow the word.
+_CTX_WINDOW = 24
+_CTX_TOKEN = re.compile(r"(?:collections?|col\.)\s*/?\s*(?:no\.?|#)?\s*$", re.I)
+
+#: Sections whose mention of a collection id counts as backing. `questions` and
+#: `proof_summaries` are excluded: both are written downstream of the search, so
+#: a mention there restates the URL rather than recording where the collection
+#: came from.
+_TRACE_SECTIONS = ("assertions", "sources", "plans", "localities", "log")
+
+
+def _mentions_collection(path, value, cid, bound):
+    """Does this one leaf record that `cid` is a collection?
+
+    Three accepted shapes, each measured against the committed corpus and the
+    `search-external-sites` fixtures:
+
+    - a field whose NAME is a collection id (`query.collectionId`);
+    - the `record_id` form `ancestry:<cid>:<slug>`, which record-extraction
+      writes and `mid-research-flynn` carries — note the cid must be in the
+      collection position, so `ancestry:1234:john-8054` does NOT back 8054;
+    - prose naming a collection within `_CTX_WINDOW` characters before the id.
+    """
+    leaf = path.rsplit(".", 1)[-1].split("[")[0].lower()
+    if leaf in _ID_FIELD_NAMES and str(value).strip() == cid:
+        return True
+    if not isinstance(value, str):
+        return False
+    match = bound.search(value)
+    if match is None:
+        return False
+    if re.search(r"ancestry:" + re.escape(cid) + r":", value, re.I):
+        return True
+    return _CTX_TOKEN.search(value[max(0, match.start() - _CTX_WINDOW):match.start()]) is not None
+
+
+def _collection_id_is_backed(research, cid, owner_prefix, leaves=None):
+    """Is `cid` recorded as a collection anywhere outside the owner entry?
+
+    Returns the first matching path, or None. `leaves` is an optional
+    pre-flattened [(path, value)] list — the caller builds it once and reuses it
+    across every URL in the run rather than re-walking the document per id.
+
+    Two exclusions carry the design:
+
+    - **The owner entry.** `research_log_append` writes `query.collectionId`
+      into the SAME entry as `external_site.url_generated`, so counting it makes
+      every id self-backing and the check vacuous.
+    - **Every `url_generated`, on any entry.** A second entry emitting a URL
+      against the same collection is the repeat-search case this check exists to
+      catch — one run searching a collection for two people, or regenerating a
+      URL after a failed capture. Excluding only the owner let two such entries
+      back each other and the check went silent on exactly that shape.
+    """
+    cid = str(cid)
+    bound = re.compile(r"(?<!\d)" + re.escape(cid) + r"(?!\d)")
+    for path, value in (leaves if leaves is not None else _flatten(research)):
+        if path.startswith(owner_prefix) or path.endswith(".url_generated"):
+            continue
+        if not path.startswith(_TRACE_SECTIONS):
+            continue
+        if _mentions_collection(path, value, cid, bound):
+            return path
+    return None
+
+
+def _flatten(node, path=""):
+    """[(dotted path, leaf)] for the whole document, built once per run."""
+    out = []
+    stack = [(node, path)]
+    while stack:
+        cur, cur_path = stack.pop()
+        if isinstance(cur, dict):
+            for k, v in cur.items():
+                stack.append((v, f"{cur_path}.{k}" if cur_path else str(k)))
+        elif isinstance(cur, list):
+            for i, v in enumerate(cur):
+                stack.append((v, f"{cur_path}[{i}]"))
+        else:
+            out.append((cur_path, cur))
+    return out
+
+
+def report_collection_scoped_url_with_no_backed_collection_id(
+    before_state, after_state, test
+):
+    """#2521 Half 2, ruling C (lead 2026-09-24): measure, do not yet enforce.
+
+    A `build_external_search_url` call can emit a perfectly-formed URL that
+    searches the wrong collection — the tester's report on the feedback bundle
+    got Michigan marriages for a New York death query. The tool cannot know: on
+    the Case A path it appends parameters to a caller-supplied baseUrl and has
+    no idea which collection an id names.
+
+    **Reporting-only on purpose.** `report_*` is tier 2
+    (`validator_runner.split_observations`): it hands the judge an anonymous
+    observation and cannot gate a run. The accept-set is re-decided by the lead
+    on the count this produces, so a gating `test_*` would enforce a rule nobody
+    has chosen and red the skill's next paid eval on 4 committed instances.
+
+    **Judges only the entries THIS run appended.** Every positive test in the
+    suite runs on a scenario whose seeded log already carries a
+    collection-scoped URL, so reading the whole after-state made the check
+    evaluate a URL the agent never wrote, on every test. That also means a crash
+    here is not merely a bad observation: `validator_runner` builds a crash
+    result WITHOUT `reporting_only` ("a crash is a validator bug, so it gates
+    whatever the prefix"), so an unguarded `.get()` on a malformed entry gates a
+    paid run. Every access below is isinstance-guarded for that reason.
+
+    **What this knowingly lets through.** It asks whether the collection id is
+    recorded elsewhere in the document, which is NOT the origin question. Two
+    corpus entries carry a trace whose own prose says the id was never staged —
+    `johann-widmer-vitals` log_021 ("not in the curated inline set") and
+    `maria-fuenmayor-parents` log_037 ("No Ancestry-specific curated links
+    returned") — and both pass. The origin question is not answerable from
+    committed artifacts at all: no collection id on a generated URL appears in
+    any `external_links_search` `response_summary`, 49 of 245 committed calls
+    are `_summary_truncated`, the staged sidecar is not committed, and
+    `validators/conftest.py` exposes no sidecar fixture.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests generate URLs")
+    research = after_state.get("research_json")
+    if not isinstance(research, dict):
+        pytest.skip("no research.json in scenario")
+
+    new_ids = {
+        e.get("id") for e in _new_log_entries(before_state, after_state)
+        if isinstance(e, dict)
+    }
+    log = research.get("log")
+    log = log if isinstance(log, list) else []
+    leaves = _flatten(research)
+
+    considered, unbacked = 0, []
+    for index, entry in enumerate(log):
+        if not isinstance(entry, dict) or entry.get("id") not in new_ids:
+            continue
+        detail = _as_mapping(entry.get("external_site"))
+        url = detail.get("url_generated") if isinstance(detail, dict) else None
+        if not isinstance(url, str):
+            continue
+        match = _COLLECTION_URL.search(url)
+        if match is None:
+            continue
+        cid = match.group(1)
+        considered += 1
+        # Evaluated per ENTRY, deliberately uncached. The answer depends on
+        # `owner_prefix`, which changes every time round this loop, so keying a
+        # cache on the collection id alone reuses the first entry's answer for
+        # every later entry naming the same collection — wrong in both
+        # directions. With the backing text in the first entry it fires on two
+        # when one is unbacked; with the text in the second it passes
+        # everything, and that second entry's only backing is its own notes,
+        # which is exactly the self-backing the owner exclusion exists to
+        # reject. `leaves` is already flattened once per run, so this costs one
+        # pass over a flat list.
+        if _collection_id_is_backed(research, cid, f"log[{index}].", leaves) is None:
+            unbacked.append((entry.get("id"), cid))
+
+    # Skip ONLY when there was nothing of this shape to judge, rather than
+    # whenever `unbacked` is empty.
+    #
+    # Be clear about what this does and does not buy. Outside this repo's unit
+    # suite the two are indistinguishable: `validator_runner.as_dicts` drops
+    # every `reporting_only` result and `split_observations` forwards only
+    # tier-2 results that FAILED, so a clean pass and a skip both reach the
+    # judge and the run log as nothing at all. The distinction is enforceable
+    # only here, by `skip_blind.expect_passes` in the companion suite — which is
+    # the point: it is what stops a skip gate that over-matches from reading as
+    # a clean run forever. It does not make a retired check visible in
+    # production, and nothing in this design does.
+    if considered == 0:
+        pytest.skip("this run appended no collection-scoped external-site URL")
+    if not unbacked:
+        return
+
+    named = ", ".join(f"{cid} (entry {eid})" for eid, cid in unbacked)
+    plural = "s" if len(unbacked) > 1 else ""
+    raise AssertionError(
+        f"{len(unbacked)} collection-scoped Ancestry URL{plural} generated this "
+        f"run name{'' if plural else 's'} collection {named}, and no plan item, "
+        "assertion, source, locality or other log entry in research.json records "
+        "that id as a collection — so nothing in the project says where the "
+        "collection came from"
+    )
+
+
+def report_log_query_traces_to_url_tool_call(before_state, after_state, tool_calls, test):
+    """A new `external_site` log entry's `query` should name only search
+    attributes the `build_external_search_url` call it documents actually sent.
+
+    Reports two classes, labelled: a claimed attribute the call never sent (the
+    class `research_log_append` refuses for a staged search, which an external
+    site never is), and a value that differs from the one sent (mostly place
+    normalization, never a gate). Only keys in the tool's own `attributes`
+    vocabulary count, read from the compiled schema: most keys in these entries
+    are descriptive context the tool has no parameter for (`recordType`,
+    `collection`), and checking every key flags nearly every test.
+
+    Paired exactly where it can be: the call whose returned `url` is the entry's
+    `external_site.url_generated`, so a step-6 re-log of the same URL pairs with
+    the same call. Otherwise site-keyed and positional among calls no entry has
+    claimed; an entry past the last call for its site is left alone.
+
+    **Reporting-only.** The skill's body is due to be replaced by an agent, and
+    promoting this to a gate without a prose rule to go with it would fail the
+    next paid run for behaviour nobody was asked for.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "external_site" and _as_mapping(e.get("query"))
+    ]
+    if not entries:
+        pytest.skip("no new external_site log entries with a query")
+    calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "build_external_search_url"]
+    if not calls:
+        pytest.skip("no build_external_search_url calls this turn")
+    vocabulary = _tool_input_keys("build_external_search_url", "attributes")
+    if vocabulary is None:
+        pytest.skip("the compiled tool schema is unavailable, so the attribute vocabulary is unknown")
+
+    by_url: dict[str, dict] = {}
+    for c in calls:
+        url = (c.get("response") or {}).get("url") if isinstance(c.get("response"), dict) else None
+        if isinstance(url, str) and url:
+            by_url.setdefault(url, c)
+
+    pairs: list[tuple[dict, dict, str]] = []
+    claimed: set[int] = set()
+    unpaired: list[dict] = []
+    for e in entries:
+        call = by_url.get(_as_mapping(e.get("external_site")).get("url_generated"))
+        if call is not None:
+            pairs.append((e, call, "same url"))
+            claimed.add(id(call))
+        else:
+            unpaired.append(e)
+    free: dict[str, list[dict]] = {}
+    for c in calls:
+        if id(c) not in claimed:
+            free.setdefault(_hashable_key(_as_mapping(c.get("args")).get("site")), []).append(c)
+    positions: dict[str, int] = {}
+    for e in unpaired:
+        site = _as_mapping(e.get("external_site")).get("site")
+        group = _hashable_key(site)
+        i = positions.get(group, 0)
+        positions[group] = i + 1
+        pool = free.get(group, [])
+        if i < len(pool):
+            pairs.append((e, pool[i], f"position {i} among unpaired {site} calls"))
+
+    errors = []
+    for e, call, how in pairs:
+        sent = _as_mapping(_as_mapping(call.get("args")).get("attributes"))
+        never_sent, differs = _filter_claim_findings(e.get("query"), sent, vocabulary)
+        for claim in never_sent:
+            errors.append(f"log entry {e.get('id')} ({how}) claims {claim}, which the call never sent")
+        for claim in differs:
+            errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
+    assert not errors, "external_site log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)
