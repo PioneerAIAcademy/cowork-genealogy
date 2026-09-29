@@ -3070,11 +3070,21 @@ def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
     assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
 
 
-def test_the_delivery_instruction_is_absent_on_the_opening_turn(tmp_path):
-    """Same exemption as the router instruction: turn 1 is init-project's, and
-    there is nothing delivered yet."""
+def test_the_delivery_instruction_is_on_the_opening_turn_TOO(tmp_path):
+    """NOT exempted like the router instruction, and the difference matters.
+
+    The router exemption is justified by there being no project to route on turn 1
+    -- the opener forces init-project. That reasoning does NOT carry to delivering:
+    "start a project on X and just give me a plan" is a legitimate turn-1 bounded
+    request, and #2932's complaint is precisely a run that would not stop when asked.
+    Binding both to `resume is not None` was over-application, found by trying to
+    test the scenario."""
     opts = _options(config_dir=str(tmp_path))
-    assert options.DELIVERY_GUIDANCE not in opts.system_prompt["append"]
+    assert opts.resume is None
+    assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+    assert options.ROUTER_REENTRY not in opts.system_prompt["append"], (
+        "the ROUTER instruction keeps its turn-1 exemption"
+    )
 
 
 def test_the_instruction_names_the_tool_it_is_about():

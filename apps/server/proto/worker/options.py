@@ -830,11 +830,16 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
-    # NOT on a session's first turn: the web tier prefixes that message with
-    # OPENING_TURN so init-project runs and consumes the objective, and there is no
-    # project to route yet. `resume is None` is exactly that turn.
+    # The DELIVERY rule binds on every turn, the ROUTER rule does not, and the
+    # asymmetry is deliberate. Turn 1 has no project to route -- the web tier prefixes
+    # OPENING_TURN so init-project runs and consumes the objective -- so a routing
+    # instruction there competes with the opener. But "start a project on X and just
+    # give me a plan" IS a legitimate turn-1 bounded request, and #2932's complaint is
+    # exactly a run that would not stop when asked. Binding both to the same condition
+    # was over-application.
+    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
     if resume is not None:
-        project_note = f"{project_note}\n\n{ROUTER_REENTRY}\n\n{DELIVERY_GUIDANCE}"
+        project_note = f"{project_note}\n\n{ROUTER_REENTRY}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CONFIG_DIR": config_dir,
