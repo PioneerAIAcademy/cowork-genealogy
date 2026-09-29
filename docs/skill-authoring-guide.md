@@ -9,9 +9,11 @@ the doc index at the end.
 
 Two other things write toward this guide, so keep it current:
 
-- Anyone scaffolding a new skill from
-  `packages/engine/plugin/skills/search-wikipedia/` needs this guide for body
-  style and frontmatter limits.
+- Anyone scaffolding a new capability from
+  `packages/engine/plugin/agents/search-images.md` needs this guide for body
+  style and frontmatter limits. Do not scaffold from
+  `agents/search-wikipedia.md`: it is exempt from the `summary_for_user` return
+  contract, so a copy fails `agent-return-contract.test.ts`.
 - The skill-improver loop (see [`docs/skill-lifecycle.md`](skill-lifecycle.md))
   proposes edits to existing skills and is told to write toward this
   standard.
@@ -120,13 +122,18 @@ Cowork's orchestrator decides whether to invoke a skill from its
 - **Open with the Narration line.** Every skill starts with:
   `**Narration:** Read research.json's researcher_profile.narration_guidance
   and apply it as your narration style for this invocation.` Copy it
-  verbatim from an existing skill. **One exception, and it is
-  load-bearing:** `search-wikipedia` carries no Narration line, because the
-  fallback that line defines ("a one-line preamble per action") is the
-  behaviour its `test_reply_does_not_narrate_pending_step` validator fails
-  it for. Do not "fix" it.
-  `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` is the
-  current exception list.
+  verbatim from an existing skill. Every shipped skill carries it. **One
+  exception, and it is load-bearing:** the `search-wikipedia` **agent** carries
+  no Narration line, because the fallback that line defines ("a one-line
+  preamble per action") is the behaviour its
+  `test_reply_does_not_narrate_pending_step` validator fails it for. Do not
+  "fix" it. The exception moved from the skills to the agents when issue #2795
+  replaced that skill with an agent, and it is pinned by
+  `tests/packaging/search-wikipedia-no-narration.test.ts`. Re-derive both lists
+  with `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
+  `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md` — three other
+  agents also carry no line, but `search-wikipedia` is the only one whose
+  absence is a rule.
 - **End with `## Re-invocation behavior`.** State what the skill
   **Writes**, what happens **On repeat invocation**, and a **Do not
   duplicate** rule.
