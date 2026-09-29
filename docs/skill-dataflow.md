@@ -337,11 +337,13 @@ from a routing-table row — so the row's absence no longer implies it cannot fi
 unmeasured until a committed e2e run postdates the conversion. Do not read its removal
 from this list as evidence either way.
 
-The three **thin skill halves** of the paired rows join this list. Rows 7, 10
-and 11 route to `@plugin:<agent>`, so `skills/person-evidence/`,
-`skills/research-exhaustiveness/` and `skills/proof-conclusion/` are no longer
-on the in-loop route — they stay on disk as the direct-user entry point and as
-the unit-eval entry point, and an autonomous run never enters them.
+The two **thin skill halves** of the paired rows join this list. Rows 10
+and 11 route to `@plugin:<agent>`, so `skills/research-exhaustiveness/` and
+`skills/proof-conclusion/` are no longer on the in-loop route — they stay on
+disk as the direct-user entry point and as the unit-eval entry point, and an
+autonomous run never enters them. (Row 7 was the third thin half; its
+`skills/person-evidence/` directory has been deleted — the agent is now the
+direct entry point and the unit-eval entry point.)
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

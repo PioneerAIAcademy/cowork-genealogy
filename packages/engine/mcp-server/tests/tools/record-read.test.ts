@@ -253,8 +253,8 @@ describe("recordReadTool", () => {
     mockOk(MINIMAL_RECORD);
     await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     const callOptions = mockFetch.mock.calls[0][1] as RequestInit;
-    const headers = callOptions.headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe("Bearer my-secret-token");
+    const headers = new Headers(callOptions.headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer my-secret-token");
   });
 
   // 5. Relationships: simplified relationships are returned when present

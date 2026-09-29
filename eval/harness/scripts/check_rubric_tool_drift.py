@@ -145,32 +145,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
-        "tool": "tree_correct",
-        "quotes": [
-            "nothing in this skill's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
-        ],
-        "reason": (
-            "negative mention: names the tool to say the skill lacks it - "
-            "'nothing in this skill's toolset can raise the gender "
-            "afterwards, since `tree_correct update_person` is not granted "
-            "to it'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
-        "tool": "record_search",
-        "quotes": [
-            "this assertion is record_search-sourced (record_persona_id CP1 is non-null), so same_person is available here",
-        ],
-        "reason": (
-            "descriptive provenance, not a call: names where the assertion "
-            "came from - 'this assertion is record_search-sourced "
-            "(record_persona_id CP1 is non-null), so same_person is "
-            "available here'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json",
         "tool": "record_read",
         "quotes": [

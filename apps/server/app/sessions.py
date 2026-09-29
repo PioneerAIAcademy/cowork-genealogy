@@ -5,8 +5,9 @@ SandboxProvider and records the user→sandbox map in `projects`.
 from __future__ import annotations
 
 import json
+import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel
@@ -21,6 +22,10 @@ from .sandbox import SandboxProvider, SandboxSpec
 from .sandbox.base import PROJECT_DIR, SANDBOX_WS_PORT
 from .ws_token import mint_token
 from .seed import seed_sample_project
+
+logger = logging.getLogger(__name__)
+
+_RUNNING_TIMEOUT_S = 3600
 
 # Sidecar log ids are filenames; constrain them so a crafted id can't escape the
 # results dir (the validate_research_schema path-traversal concern, spec §13).
@@ -119,31 +124,86 @@ def _maybe_backfill_title(session: Session, project: Project, research: object) 
         session.refresh(project)
 
 
-async def sync_fs_token(session: Session, user: User, sandbox) -> str:
+async def push_token_to_live_sandboxes(
+    session: Session,
+    user_id: str,
+    access_token: str,
+    expires_at: datetime,
+    provider: SandboxProvider,
+    exclude_sandbox_id: str | None = None,
+) -> None:
+    """Push a refreshed access token to every recently-active sandbox the user
+    has, excluding the one that triggered the refresh (it already got its token
+    from sync_fs_token).
+
+    "Recently active" means last_active within _RUNNING_TIMEOUT_S. Sandboxes
+    outside that window are paused/dead and will get a fresh token on their next
+    /connect via sync_fs_token.
+
+    Uses provider.get() -- not resume() -- so the running timeout is not
+    extended. Both auto-resume a paused VM via _connect(), but only resume()
+    calls set_timeout(). The last_active filter means targeted sandboxes are
+    likely still running, so the auto-resume is a no-op in practice.
+
+    Failures are swallowed and logged per sandbox: a failed push to one sandbox
+    must not break the connecting sandbox's /connect."""
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=_RUNNING_TIMEOUT_S)
+    projects = session.exec(
+        select(Project).where(
+            Project.user_id == user_id,
+            Project.status == "active",
+            Project.last_active >= cutoff,
+        )
+    ).all()
+    for project in projects:
+        if project.sandbox_id == exclude_sandbox_id:
+            continue
+        try:
+            sb = await provider.get(project.sandbox_id)
+            await fs_oauth.write_tokens(sb, access_token, expires_at)
+        except Exception:
+            logger.warning(
+                "push_token_to_live_sandboxes: failed for sandbox %s (project %s), skipping",
+                project.sandbox_id, project.id, exc_info=True,
+            )
+
+
+async def sync_fs_token(
+    session: Session, user: User, sandbox, provider: SandboxProvider | None = None,
+) -> str:
     """Refresh the user's FamilySearch grant if needed and (re-)inject it into
     `sandbox`. Returns the state the client renders: `ok` | `expired` | `none`.
 
     **Why on every connect and not just at create.** FS caps a grant at 8h idle
     / 24h absolute, so the token baked in at sandbox-create is dead by the next
-    day no matter how diligently the in-sandbox MCP self-refreshes. Re-injecting
-    here is also the only path by which a *fresh* front-door login reaches a
-    sandbox that already exists — which is what makes the "Reconnect
-    FamilySearch" banner actually able to fix anything.
+    day. Re-injecting here is also the only path by which a *fresh* front-door
+    login reaches a sandbox that already exists -- which is what makes the
+    "Reconnect FamilySearch" banner actually able to fix anything.
 
-    `none` (the user never had a grant — dev-login / mock mode) is deliberately
+    `none` (the user never had a grant -- dev-login / mock mode) is deliberately
     distinct from `expired`: only the latter is worth interrupting someone over.
 
     On `expired` the sandbox's own tokens.json is left ALONE rather than
-    cleared. The in-sandbox MCP refreshes on its own schedule, so its copy can
-    outlive the control plane's by a few minutes; clobbering it would turn a
-    stale-but-working session into a broken one.
-    """
-    if session.get(FamilySearchToken, user.id) is None:
+    cleared. The sandbox holds only an access token (no refresh token -- the
+    control plane is the sole refresh owner, issue #2887), so clearing it gives
+    the sandbox nothing; the user must reconnect via the web app.
+
+    When `provider` is given and a refresh happened, the new token is pushed to
+    every other recently-active sandbox the user has (step 3 of issue #2887)."""
+    existing = session.get(FamilySearchToken, user.id)
+    if existing is None:
         return "none"
+    old_access = existing.access_token
     row = await fresh_fs_token(session, user.id)
     if row is None:
         return "expired"
-    await fs_oauth.write_tokens(sandbox, row.access_token, row.refresh_token, row.expires_at)
+    await fs_oauth.write_tokens(sandbox, row.access_token, row.expires_at)
+    # If a refresh happened, push the new token to every other live sandbox.
+    if provider is not None and row.access_token != old_access:
+        await push_token_to_live_sandboxes(
+            session, user.id, row.access_token, row.expires_at,
+            provider, exclude_sandbox_id=sandbox.id,
+        )
     return "ok"
 
 
@@ -172,7 +232,7 @@ async def create_project(
     # (mock-agent) path has none and needs none — mock mode never reads it.
     # Refreshes first if the stored grant is stale — creating a session hours
     # after signing in must not hand the sandbox an already-dead token.
-    await sync_fs_token(session, user, sandbox)
+    await sync_fs_token(session, user, sandbox, provider=provider)
     # Provision the sandbox's ~/.familysearch-mcp/config.json. `hosted` tells the
     # in-sandbox MCP it is running in the VM, where the desktop `login` tool's
     # loopback OAuth flow can never complete — see fs_oauth.hosted_config().
@@ -453,7 +513,7 @@ async def connect_session(
     # tells the client whether to show the "Reconnect" banner. Every reconnect
     # lands here (WsSessionConnection re-fetches credentials per attempt), which
     # is what makes a tab left open overnight recover on its own.
-    fs_state = await sync_fs_token(session, user, sandbox)
+    fs_state = await sync_fs_token(session, user, sandbox, provider=provider)
     conn = await sandbox.expose_port(SANDBOX_WS_PORT)
     token = mint_token(project.sandbox_id)
     project.last_active = utcnow()
